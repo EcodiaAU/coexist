@@ -23,7 +23,22 @@ function ensureSocialLogin(provider: 'google' | 'apple'): Promise<void> {
 
   let config: Parameters<typeof SocialLogin.initialize>[0]
   if (provider === 'google') {
-    config = { google: { webClientId: import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID } }
+    // The webClientId MUST be the Google Cloud "Web application" OAuth client ID
+    // (client_type 3 in google-services.json), NOT the Android client. Android
+    // sign-in via CredentialManager requires the web client ID even though the
+    // call happens on a phone. Fall back to the known project value so a missing
+    // env var on a build machine doesn't silently break Google sign-in.
+    const webClientId =
+      import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID ||
+      '528428779228-8ggdoqckphnq0hcvj0pr2b4r124530st.apps.googleusercontent.com'
+    const iOSClientId = import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID
+    config = {
+      google: {
+        webClientId,
+        ...(iOSClientId ? { iOSClientId, iOSServerClientId: webClientId } : {}),
+        mode: 'online',
+      },
+    }
   } else {
     const appleServiceId = import.meta.env.VITE_APPLE_SERVICE_ID
     // On Android the Apple plugin requires a Service ID + redirectUrl (web OAuth flow).

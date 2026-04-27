@@ -46,7 +46,6 @@ import {
     useRegisterForEvent,
     useCancelRegistration,
     useCancelEvent,
-    useDuplicateEvent,
     useInviteCollective,
     formatEventDate,
     formatEventTime,
@@ -427,14 +426,11 @@ export default function EventDetailPage() {
 
   const handleDuplicate = useCallback(() => {
     if (!event) return
-    duplicateEventMutation.mutate(event.id, {
-      onSuccess: (newEvent) => {
-        toast.success('Event duplicated')
-        navigate(`/events/${newEvent.id}/edit`)
-      },
-      onError: () => toast.error('Failed to duplicate event'),
-    })
-  }, [event, duplicateEventMutation, navigate, toast])
+    // Open the create wizard prefilled from this event. No DB row is
+    // inserted until the user confirms — they pick a new date and tweak
+    // anything they want before publishing.
+    navigate(`/events/create?from=${event.id}`)
+  }, [event, navigate])
 
   const alreadyInvited = event?.has_been_invited ?? false
 
@@ -1111,8 +1107,7 @@ export default function EventDetailPage() {
                 <button
                   type="button"
                   onClick={handleDuplicate}
-                  disabled={duplicateEventMutation.isPending}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none disabled:opacity-50"
+                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
                 >
                   <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center group-hover:scale-105 transition-transform">
                     <Copy size={16} className="text-violet-600" />
