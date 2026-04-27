@@ -428,14 +428,11 @@ export default function EventDetailPage() {
 
   const handleDuplicate = useCallback(() => {
     if (!event) return
-    duplicateEventMutation.mutate(event.id, {
-      onSuccess: (newEvent) => {
-        toast.success('Event duplicated')
-        navigate(`/events/${newEvent.id}/edit`)
-      },
-      onError: () => toast.error('Failed to duplicate event'),
-    })
-  }, [event, duplicateEventMutation, navigate, toast])
+    // Open the create wizard prefilled from this event. No DB row is
+    // inserted until the user confirms — they pick a new date and tweak
+    // anything they want before publishing.
+    navigate(`/events/create?from=${event.id}`)
+  }, [event, navigate])
 
   const alreadyInvited = event?.has_been_invited ?? false
 
