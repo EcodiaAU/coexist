@@ -15,7 +15,7 @@ export function StepNameHandle({ displayName, instagramHandle, onChange, onNext,
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <div className="flex-1 flex flex-col px-6 pt-8">
+    <div className="flex-1 flex flex-col px-4 pt-8">
       <motion.div
         className="flex-1"
         variants={shouldReduceMotion ? undefined : stagger}

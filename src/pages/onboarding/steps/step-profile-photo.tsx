@@ -40,7 +40,7 @@ export function StepProfilePhoto({ avatarUrl, onUpload, onNext, onSkip }: StepPr
   }
 
   return (
-    <div className="flex-1 flex flex-col px-6 pt-8">
+    <div className="flex-1 flex flex-col px-4 pt-8">
       <motion.div
         className="flex-1 flex flex-col items-center"
         variants={shouldReduceMotion ? undefined : stagger}

@@ -33,7 +33,7 @@ export function StepInterests({ selected, onChange, onNext, onSkip }: StepIntere
   }
 
   return (
-    <div className="flex-1 flex flex-col px-6 pt-8 min-h-0">
+    <div className="flex-1 flex flex-col px-4 pt-8 min-h-0">
       <motion.div
         className="flex-1"
         variants={shouldReduceMotion ? undefined : stagger}

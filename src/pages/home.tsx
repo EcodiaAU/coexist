@@ -1077,7 +1077,7 @@ export default function HomePage() {
           <HomeHero rm={rm} />
 
           {/* Greeting */}
-          <div className="px-6 pt-6 mb-2">
+          <div className="px-4 pt-6 mb-2">
             <motion.p
               initial={rm ? {} : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1098,7 +1098,7 @@ export default function HomePage() {
 
           {/* Error fallback */}
           {initialError && (
-            <div className="px-6 py-8">
+            <div className="px-4 py-8">
               <EmptyState
                 illustration="error"
                 title="Something went wrong"

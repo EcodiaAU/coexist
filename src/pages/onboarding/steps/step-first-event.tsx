@@ -73,7 +73,7 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
   }
 
   return (
-    <div className="flex-1 flex flex-col px-6 pt-8 min-h-0">
+    <div className="flex-1 flex flex-col px-4 pt-8 min-h-0">
       <motion.div
         className="flex-1 overflow-y-auto"
         variants={shouldReduceMotion ? undefined : stagger}

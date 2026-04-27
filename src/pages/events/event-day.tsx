@@ -60,7 +60,7 @@ function CheckInCodeDisplay({ checkInCode, title }: { checkInCode: string | null
       <p className="text-caption text-neutral-500 mb-4">
         Tell your attendees this code to check in
       </p>
-      <div className="px-8 py-6 rounded-2xl bg-white shadow-md">
+      <div className="px-5 py-5 rounded-2xl bg-white shadow-md">
         <p className="text-[11px] uppercase tracking-wider text-neutral-500 text-center mb-2">Check-in code</p>
         <p className="text-5xl font-heading font-bold text-neutral-900 tracking-[0.4em] text-center">
           {checkInCode ?? '---'}

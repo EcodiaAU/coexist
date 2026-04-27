@@ -85,7 +85,7 @@ export default function LeaderEventsPage() {
     return (
       <div className="relative min-h-dvh overflow-x-hidden bg-white">
         <Header title="Events" back transparent className="absolute left-0 right-0 z-30" />
-        <div className="relative z-10 px-6 pt-14 space-y-6">
+        <div className="relative z-10 px-4 sm:px-6 lg:px-8 pt-14 space-y-6">
           <div className="flex flex-col items-center gap-2 pb-2">
             <div className="h-3 w-16 rounded-full bg-moss-200/40 animate-pulse" />
             <div className="h-8 w-40 rounded-lg bg-moss-200/30 animate-pulse" />

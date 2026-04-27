@@ -169,7 +169,7 @@ export default function CheckoutPage() {
       {/* ── Hero ── */}
       <div className="bg-white border-b border-neutral-100">
         <div
-          className="px-6 pb-5 flex items-center gap-4"
+          className="px-4 pb-5 flex items-center gap-4"
           style={{ paddingTop: '3.5rem' }}
         >
           <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-neutral-50 shrink-0 border border-neutral-100">

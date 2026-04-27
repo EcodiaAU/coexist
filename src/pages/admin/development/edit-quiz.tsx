@@ -85,7 +85,7 @@ export default function AdminEditQuizPage() {
         <QuestionBuilder questions={questions} onChange={setQuestions} />
       </motion.div>
 
-      <motion.div variants={fadeUp} className="sticky bottom-0 z-20 -mx-6 -mb-6 px-6 py-3 bg-white/95 backdrop-blur-sm border-t border-neutral-100 flex items-center justify-between gap-3">
+      <motion.div variants={fadeUp} className="sticky bottom-0 z-20 -mx-4 sm:-mx-6 lg:-mx-8 -mb-4 sm:-mb-6 lg:-mb-8 px-4 sm:px-6 lg:px-8 py-3 bg-white/95 backdrop-blur-sm border-t border-neutral-100 flex items-center justify-between gap-3">
         <p className="text-[11px] font-semibold text-neutral-400">{questions.length} question{questions.length !== 1 ? 's' : ''} · {questions.reduce((s, q) => s + (q.points ?? 1), 0)} pts</p>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate('/admin/development')}>Cancel</Button>
