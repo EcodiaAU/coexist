@@ -785,7 +785,7 @@ async function syncFromExcel(
         const collectiveId =
           COLLECTIVE_ALIASES[collectiveNameLc] ?? collectiveNameToId.get(collectiveNameLc)
         if (!collectiveId) {
-          errors.push(`${rowLabel}: no collective match for "${collectiveName}" — skipped`)
+          errors.push(`${rowLabel}: no collective match for "${collectiveName}" - skipped`)
           skippedNoCollective++
           continue
         }
