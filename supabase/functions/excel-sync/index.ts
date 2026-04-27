@@ -79,6 +79,22 @@ const SYNC_CUTOFF_DATE = '2026-01-01'
 // causes duplicate rows on the next sync run.
 const FORMS_NAMESPACE_UUID = '6b9c8f4a-2e3d-5c7a-8b1f-4a9e6d2c1b0f'
 
+// ---- Collective aliases ----
+// Legacy collective names on the Forms sheet that should resolve to a different
+// canonical collective_id on reverse-sync. Key = lowercase + trimmed legacy name
+// as it appears in sheet col-3. Value = canonical collective UUID in the DB.
+//
+// Adding a new alias is a coordinated change:
+//   1. Add the row in `clients/coexist.md` "Collective Aliases" table (doctrine).
+//   2. Add the entry below.
+//   3. Redeploy this Edge Function.
+//   4. Plan the data migration if the alias has its own row with events.
+//
+// See ~/ecodiaos/patterns/excel-sync-collectives-migration.md "Collective aliases".
+const COLLECTIVE_ALIASES: Record<string, string> = {
+  'byron bay': '9a2f9919-26b9-420d-b6f5-ddeb9a37b1b3', // -> Northern Rivers
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -760,9 +776,14 @@ async function syncFromExcel(
         // event_impact. The UUID is a pure function of the integer ID — re-running is safe.
         const rowLabel = `Row ${i + 1} (Forms ID ${excelId})`
 
-        // Resolve collective from col 3
+        // Resolve collective from col 3. Check the alias map FIRST so that legacy
+        // names (e.g. "Byron Bay") map to their canonical UUID even after the
+        // underlying alias row has been deleted from collectives. Fall back to the
+        // name-to-id lookup built from the collectives table.
         const collectiveName = String(row[3] ?? '').trim()
-        const collectiveId = collectiveNameToId.get(collectiveName.toLowerCase())
+        const collectiveNameLc = collectiveName.toLowerCase()
+        const collectiveId =
+          COLLECTIVE_ALIASES[collectiveNameLc] ?? collectiveNameToId.get(collectiveNameLc)
         if (!collectiveId) {
           errors.push(`${rowLabel}: no collective match for "${collectiveName}" — skipped`)
           skippedNoCollective++
