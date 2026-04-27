@@ -1728,7 +1728,10 @@ export default function CreateEventPage() {
           is_external_collaboration: form.fields.is_external_collaboration,
           external_registration_url: form.fields.external_registration_url || null,
           checkin_window_minutes: extra.checkin_window_minutes,
-          status: isDraft ? 'draft' : 'published',
+          // Cast keeps the literal type when this object is reused below for
+          // recurring-event fan-out — without it the spread loses contextual
+          // narrowing and 'status' widens to plain `string`.
+          status: (isDraft ? 'draft' : 'published') as Database['public']['Enums']['event_status'],
           series_id: seriesId,
         }
 

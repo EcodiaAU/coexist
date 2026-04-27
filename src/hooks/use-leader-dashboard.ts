@@ -173,24 +173,29 @@ export interface CollectiveFullStats {
 async function fetchCollectiveFullStats(collectiveId: string): Promise<CollectiveFullStats | null> {
   const now = new Date().toISOString()
 
-  const [{ rows, legacyRows, eventIds, eventCount, shareByEventId }, membersRes, eventsRes, cleanupRes, leadersCountRes] =
+  const [{ rows, legacyRows, eventIds, eventCount, shareByEventId }, membersRes, leadersCountRes] =
     await Promise.all([
-      // All-time: include legacy rows for full historical picture
+      // All-time: include legacy rows for full historical picture. fetchImpactRows
+      // already resolves via event_hosts internally.
       fetchImpactRows({ collectiveId, timeRange: 'all-time', includeLegacy: true }),
       supabase.from('collective_members').select('id', { count: 'exact', head: true })
         .eq('collective_id', collectiveId).eq('status', 'active'),
-      // Cohosted events count too: resolve via event_hosts so this collective's
-      // events_logged matches the impact rollup.
-      supabase.from('event_hosts').select('event_id', { count: 'exact', head: true })
-        .eq('collective_id', collectiveId),
-      supabase.from('event_hosts').select('event_id, events!inner(activity_type, date_start)', { count: 'exact', head: true })
-        .eq('collective_id', collectiveId)
-        .eq('events.activity_type', 'clean_up')
-        .lt('events.date_start', now),
       supabase.from('app_settings').select('value')
         .eq('key', 'leaders_empowered:' + collectiveId).single(),
     ])
-  void eventsRes // legacy reference — replaced by eventCount returned from fetchImpactRows
+
+  // Cleanup-site count uses the same event id set as the impact rollup so it
+  // includes co-hosted events. eventIds is already host-scoped.
+  let cleanupCount = 0
+  if (eventIds.length > 0) {
+    const { count } = await supabase
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .in('id', eventIds)
+      .eq('activity_type', 'clean_up')
+      .lt('date_start', now)
+    cleanupCount = count ?? 0
+  }
 
   const allRows = [...rows, ...legacyRows] as Record<string, unknown>[]
 
@@ -219,12 +224,12 @@ async function fetchCollectiveFullStats(collectiveId: string): Promise<Collectiv
     treesPlanted:        sumW('trees_planted'),
     invasiveWeedsPulled: sumW('invasive_weeds_pulled'),
     rubbishKg:           Math.round(sumW('rubbish_kg') * 10) / 10,
-    cleanupSites:        cleanupRes.count ?? 0,
+    cleanupSites:        cleanupCount,
     coastlineCleanedM:   Math.round(sumW('coastline_cleaned_m')),
     leadersEmpowered:    (leadersCountRes.data?.value as { count?: number })?.count ?? 0,
     eventsLogged:        eventCount,
     totalMembers:        membersRes.count ?? 0,
-    totalEvents:         eventsRes.count ?? 0,
+    totalEvents:         eventCount,
     attendanceRate,
   }
 }

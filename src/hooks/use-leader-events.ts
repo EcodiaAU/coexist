@@ -31,43 +31,37 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
   const now = new Date().toISOString()
 
   // Resolve via event_hosts so co-hosted events show up in the leader's list
-  // too — not just events where this collective is the primary host.
-  let hostsQ = supabase
+  // too — not just events where this collective is the primary host. Two-step
+  // (event_hosts → ids → events) is used instead of an embedded join because
+  // PostgREST FK inference through a view isn't reliable for filtering.
+  const { data: hostRows } = await supabase
     .from('event_hosts')
-    .select(
-      'event_id, events!inner(id, title, date_start, date_end, address, cover_image_url, activity_type, status, event_registrations(count))',
-    )
+    .select('event_id')
     .eq('collective_id', collectiveId)
-    .order('events(date_start)', { ascending: filter === 'upcoming' })
+  const candidateIds = (hostRows ?? [])
+    .map((r) => r.event_id)
+    .filter((id): id is string => !!id)
+  if (candidateIds.length === 0) return [] as LeaderEvent[]
+
+  let eventsQ = supabase
+    .from('events')
+    .select('id, title, date_start, date_end, address, cover_image_url, activity_type, status, event_registrations(count)')
+    .in('id', candidateIds)
+    .order('date_start', { ascending: filter === 'upcoming' })
 
   if (filter === 'upcoming') {
-    hostsQ = hostsQ.gte('events.date_start', now)
-      .neq('events.status', 'draft').neq('events.status', 'cancelled')
+    eventsQ = eventsQ.gte('date_start', now)
+      .neq('status', 'draft').neq('status', 'cancelled')
   } else if (filter === 'past') {
-    hostsQ = hostsQ.lt('events.date_start', now)
-      .neq('events.status', 'draft').neq('events.status', 'cancelled')
+    eventsQ = eventsQ.lt('date_start', now)
+      .neq('status', 'draft').neq('status', 'cancelled')
   } else if (filter === 'draft') {
-    hostsQ = hostsQ.eq('events.status', 'draft')
+    eventsQ = eventsQ.eq('status', 'draft')
   }
 
-  const { data: hostRows } = await hostsQ.limit(50)
-  if (!hostRows?.length) return [] as LeaderEvent[]
+  const { data: events } = await eventsQ.limit(50)
+  if (!events?.length) return [] as LeaderEvent[]
 
-  type HostRow = {
-    event_id: string
-    events: {
-      id: string
-      title: string
-      date_start: string
-      date_end: string | null
-      address: string | null
-      cover_image_url: string | null
-      activity_type: Event['activity_type']
-      status: Event['status']
-      event_registrations: { count: number }[]
-    }
-  }
-  const events = (hostRows as unknown as HostRow[]).map((r) => r.events)
   const eventIds = events.map((e) => e.id)
 
   // Co-host names: pull every (event_id, collective_id) → name and bucket per
@@ -136,23 +130,30 @@ export interface LeaderEventStats {
 async function fetchEventStats(collectiveId: string): Promise<LeaderEventStats> {
   const now = new Date().toISOString()
 
-  // Host-aware: count via event_hosts so co-hosted events also appear in the
-  // leader's stats.
-  const [totalRes, upcomingRes, pastRes, draftRes] = await Promise.all([
-    supabase.from('event_hosts').select('event_id', { count: 'exact', head: true })
-      .eq('collective_id', collectiveId),
-    supabase.from('event_hosts').select('event_id, events!inner(date_start, status)', { count: 'exact', head: true })
-      .eq('collective_id', collectiveId).gte('events.date_start', now)
-      .neq('events.status', 'draft').neq('events.status', 'cancelled'),
-    supabase.from('event_hosts').select('event_id, events!inner(date_start, status)', { count: 'exact', head: true })
-      .eq('collective_id', collectiveId).lt('events.date_start', now)
-      .neq('events.status', 'draft').neq('events.status', 'cancelled'),
-    supabase.from('event_hosts').select('event_id, events!inner(status)', { count: 'exact', head: true })
-      .eq('collective_id', collectiveId).eq('events.status', 'draft'),
+  // Host-aware: collect every event id this collective hosts (primary or
+  // co-host), then run separate count queries against the events table.
+  const { data: hostRows } = await supabase
+    .from('event_hosts')
+    .select('event_id')
+    .eq('collective_id', collectiveId)
+  const ids = (hostRows ?? [])
+    .map((r) => r.event_id)
+    .filter((id): id is string => !!id)
+  if (ids.length === 0) return { total: 0, upcoming: 0, past: 0, drafts: 0 }
+
+  const [upcomingRes, pastRes, draftRes] = await Promise.all([
+    supabase.from('events').select('id', { count: 'exact', head: true })
+      .in('id', ids).gte('date_start', now)
+      .neq('status', 'draft').neq('status', 'cancelled'),
+    supabase.from('events').select('id', { count: 'exact', head: true })
+      .in('id', ids).lt('date_start', now)
+      .neq('status', 'draft').neq('status', 'cancelled'),
+    supabase.from('events').select('id', { count: 'exact', head: true })
+      .in('id', ids).eq('status', 'draft'),
   ])
 
   return {
-    total: totalRes.count ?? 0,
+    total: ids.length,
     upcoming: upcomingRes.count ?? 0,
     past: pastRes.count ?? 0,
     drafts: draftRes.count ?? 0,

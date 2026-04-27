@@ -198,24 +198,36 @@ async function fetchReportData(
 
     if (def.key === '__attendance') {
       // Count attended registrations in date range. For collective scope we
-      // first resolve the events (including co-hosted) via event_hosts.
+      // first resolve the events (including co-hosted) via a two-step:
+      // event_hosts → event ids → events table for date filtering.
       if (scope === 'collective' && selectedCollective) {
         const { data: hostRows } = await supabase
           .from('event_hosts')
-          .select('event_id, events!inner(date_start)')
+          .select('event_id')
           .eq('collective_id', selectedCollective)
-          .gte('events.date_start', dateRange.start)
-          .lte('events.date_start', dateRange.end)
-        const eventIds = (hostRows ?? []).map((r) => r.event_id)
-        if (eventIds.length === 0) {
+        const candidateIds = (hostRows ?? [])
+          .map((r) => r.event_id)
+          .filter((id): id is string => !!id)
+        if (candidateIds.length === 0) {
           results.push({ metric: def.label, value: '0' })
         } else {
-          const { count } = await supabase
-            .from('event_registrations')
-            .select('id', { count: 'exact', head: true })
-            .in('event_id', eventIds)
-            .eq('status', 'attended')
-          results.push({ metric: def.label, value: String(count ?? 0) })
+          const { data: eventRows } = await supabase
+            .from('events')
+            .select('id')
+            .in('id', candidateIds)
+            .gte('date_start', dateRange.start)
+            .lte('date_start', dateRange.end)
+          const eventIds = (eventRows ?? []).map((e) => e.id)
+          if (eventIds.length === 0) {
+            results.push({ metric: def.label, value: '0' })
+          } else {
+            const { count } = await supabase
+              .from('event_registrations')
+              .select('id', { count: 'exact', head: true })
+              .in('event_id', eventIds)
+              .eq('status', 'attended')
+            results.push({ metric: def.label, value: String(count ?? 0) })
+          }
         }
       } else {
         const { count } = await supabase
@@ -229,14 +241,25 @@ async function fetchReportData(
 
     } else if (def.key === '__cleanup_events') {
       if (scope === 'collective' && selectedCollective) {
-        const { count } = await supabase
+        const { data: hostRows } = await supabase
           .from('event_hosts')
-          .select('event_id, events!inner(activity_type, date_start)', { count: 'exact', head: true })
+          .select('event_id')
           .eq('collective_id', selectedCollective)
-          .eq('events.activity_type', 'clean_up')
-          .gte('events.date_start', dateRange.start)
-          .lte('events.date_start', dateRange.end)
-        results.push({ metric: def.label, value: String(count ?? 0) })
+        const candidateIds = (hostRows ?? [])
+          .map((r) => r.event_id)
+          .filter((id): id is string => !!id)
+        if (candidateIds.length === 0) {
+          results.push({ metric: def.label, value: '0' })
+        } else {
+          const { count } = await supabase
+            .from('events')
+            .select('id', { count: 'exact', head: true })
+            .in('id', candidateIds)
+            .eq('activity_type', 'clean_up')
+            .gte('date_start', dateRange.start)
+            .lte('date_start', dateRange.end)
+          results.push({ metric: def.label, value: String(count ?? 0) })
+        }
       } else {
         const { count } = await supabase
           .from('events')

@@ -5302,6 +5302,33 @@ export type Database = {
         }
         Relationships: []
       }
+      // Hand-written until next `supabase gen types` run after migration
+      // 20260427000000_event_hosts_view.sql is applied to the live DB.
+      event_hosts: {
+        Row: {
+          event_id: string | null
+          collective_id: string | null
+          host_index: number | null
+          host_count: number | null
+          host_added_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_collective_id_fkey"
+            columns: ["collective_id"]
+            isOneToOne: false
+            referencedRelation: "collectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       _postgis_deprecate: {

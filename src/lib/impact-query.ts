@@ -140,38 +140,53 @@ export async function fetchImpactRows(scope: ImpactScope = {}): Promise<FetchImp
     eventCount = providedEventIds.length
   } else if (collectiveId) {
     // Multi-host attribution: resolve via event_hosts so events where this
-    // collective is the primary OR an accepted co-host both count. Apply the
-    // events-side date / status filter via a join through events.id.
-    let hostsQ = supabase
+    // collective is the primary OR an accepted co-host both count. Two-step
+    // (event_hosts → ids → events) is used instead of an embedded join because
+    // PostgREST FK inference through a view isn't reliable for filtering.
+    const { data: hostRows, error: hostsErr } = await supabase
       .from('event_hosts')
-      .select('event_id, host_index, host_count, events!inner(id, date_start, status)')
+      .select('event_id, host_index, host_count')
       .eq('collective_id', collectiveId)
-      .lt('events.date_start', now)
-    if (!includeLegacy) {
-      hostsQ = hostsQ.in('events.status', ['published', 'completed'])
-    }
-    if (effectiveStart) {
-      hostsQ = hostsQ.gte('events.date_start', effectiveStart)
-    }
-    const { data: hostRows, error: hostsErr } = await hostsQ
     if (hostsErr) throw hostsErr
 
     type HostRow = {
-      event_id: string
-      host_index: number
-      host_count: number
+      event_id: string | null
+      host_index: number | null
+      host_count: number | null
     }
-    const seen = new Set<string>()
-    for (const r of (hostRows ?? []) as unknown as HostRow[]) {
-      if (seen.has(r.event_id)) continue
-      seen.add(r.event_id)
-      shareByEventId.set(r.event_id, {
-        host_index: r.host_index,
-        host_count: r.host_count,
+    const candidateShare = new Map<string, EventHostShare>()
+    for (const r of (hostRows ?? []) as HostRow[]) {
+      if (!r.event_id || candidateShare.has(r.event_id)) continue
+      candidateShare.set(r.event_id, {
+        host_index: r.host_index ?? 0,
+        host_count: r.host_count ?? 1,
       })
     }
-    resolvedEventIds = Array.from(seen)
-    eventCount = resolvedEventIds.length
+    const candidateIds = Array.from(candidateShare.keys())
+
+    if (candidateIds.length === 0) {
+      resolvedEventIds = []
+      eventCount = 0
+    } else {
+      // Filter the candidate ids by the events table: status, date floor, etc.
+      let q = supabase
+        .from('events')
+        .select('id')
+        .in('id', candidateIds)
+        .lt('date_start', now)
+      if (!includeLegacy) q = q.in('status', ['published', 'completed'])
+      if (effectiveStart) q = q.gte('date_start', effectiveStart)
+      const { data: eventRows, error: eventsErr } = await q
+      if (eventsErr) throw eventsErr
+
+      const matchedIds = (eventRows ?? []).map((e) => e.id)
+      for (const id of matchedIds) {
+        const share = candidateShare.get(id)
+        if (share) shareByEventId.set(id, share)
+      }
+      resolvedEventIds = matchedIds
+      eventCount = matchedIds.length
+    }
   } else if (effectiveStart) {
     // National / time-scoped (no collective filter): unweighted, every event
     // counts once. Stays on the events table since event_hosts adds no value
