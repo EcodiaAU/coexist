@@ -306,7 +306,6 @@ export default function EventDetailPage() {
   const registerMutation = useRegisterForEvent()
   const cancelMutation = useCancelRegistration()
   const cancelEventMutation = useCancelEvent()
-  const duplicateEventMutation = useDuplicateEvent()
   const inviteCollectiveMutation = useInviteCollective()
 
   // Ticketed events
