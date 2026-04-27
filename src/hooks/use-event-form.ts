@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useCamera } from '@/hooks/use-camera'
 import { useImageUpload } from '@/hooks/use-image-upload'
+import { useToast } from '@/components/toast'
 import type { Database } from '@/types/database.types'
 
 export type ActivityType = Database['public']['Enums']['activity_type']
@@ -55,6 +56,7 @@ export function useEventForm({ initial }: UseEventFormOptions) {
     ...INITIAL_FORM_FIELDS,
     ...initial,
   })
+  const { toast } = useToast()
 
   const updateFields = useCallback((updates: Partial<EventFormFields>) => {
     setFields((prev) => ({ ...prev, ...updates }))
@@ -82,10 +84,12 @@ export function useEventForm({ initial }: UseEventFormOptions) {
     try {
       const uploaded = await upload(result.blob)
       setFields((prev) => ({ ...prev, cover_image_url: uploaded.url }))
-    } catch {
-      // error handled by hook
+    } catch (err) {
+      console.error('[event-form] upload failed:', err)
+      const msg = err instanceof Error ? err.message : 'unknown'
+      toast.error(`Image upload failed: ${msg}`)
     }
-  }, [pickFromGallery, upload])
+  }, [pickFromGallery, upload, toast])
 
   const handleUploadFromCamera = useCallback(async () => {
     const result = await capture()
@@ -93,10 +97,12 @@ export function useEventForm({ initial }: UseEventFormOptions) {
     try {
       const uploaded = await upload(result.blob)
       setFields((prev) => ({ ...prev, cover_image_url: uploaded.url }))
-    } catch {
-      // error handled by hook
+    } catch (err) {
+      console.error('[event-form] upload failed:', err)
+      const msg = err instanceof Error ? err.message : 'unknown'
+      toast.error(`Image upload failed: ${msg}`)
     }
-  }, [capture, upload])
+  }, [capture, upload, toast])
 
   const removeCoverImage = useCallback(() => {
     setFields((prev) => ({ ...prev, cover_image_url: '' }))

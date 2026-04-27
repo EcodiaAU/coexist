@@ -19,8 +19,6 @@ import {
     Sprout,
     Footprints,
     BookOpen,
-    Droplets,
-    Flower2,
     Repeat,
     Accessibility,
     Mountain,
@@ -274,7 +272,7 @@ function StepCard({
         'border-l-[3px]',
         cardBorder,
         cardGlow,
-        'p-5',
+        'p-4 sm:p-5',
         className,
       )}
     >
@@ -1880,8 +1878,9 @@ export default function CreateEventPage() {
         navigate(`/events/${event.id}`, { replace: true })
       } catch (err) {
         console.error('[create-event] publish failed:', err)
+        const msg = err instanceof Error ? err.message : String(err)
         toastApi.error(
-          isDraft ? 'Failed to save draft' : 'Failed to publish event',
+          isDraft ? `Failed to save draft: ${msg}` : `Failed to publish: ${msg}`,
         )
       }
     },
@@ -2016,7 +2015,7 @@ export default function CreateEventPage() {
       }
     >
       {/* ---- Gradient hero header area ---- */}
-      <div className="pt-3 pb-1 px-4">
+      <div className="pt-3 pb-1 px-3 sm:px-4">
         {/* Progress bar */}
         <ProgressStepper currentStep={step} totalSteps={STEPS.length} />
 
@@ -2058,7 +2057,7 @@ export default function CreateEventPage() {
       </div>
 
       {/* ---- Step content with slide animation ---- */}
-      <div className="pt-4 pb-4 min-h-[400px] px-4">
+      <div className="pt-4 pb-4 min-h-[400px] px-3 sm:px-4">
         <StepColorCtx.Provider value={{ cardBorder: currentStep.cardBorder, cardGlow: currentStep.cardGlow }}>
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div

@@ -121,5 +121,5 @@ export function useDraggablePin({ map, center, onDragEnd }: DraggablePinProps) {
       markerRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, !!center])
+  }, [map, center?.lat, center?.lng])
 }
