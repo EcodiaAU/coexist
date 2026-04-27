@@ -59,6 +59,11 @@ export function KeepAlive() {
   const path = location.pathname
 
   const cacheRef = useRef<CachedPage[]>([])
+  // Track both pathname and search so a re-entry with a new query string
+  // (e.g. /events/create?from=A then later ?from=B) updates the frozen
+  // location instead of replaying the original. Without this, pages that
+  // read query params via useSearchParams() get stuck on whichever value
+  // was active when they were first cached.
   const lastProcessedRef = useRef<string | null>(null)
   const wrappersRef = useRef<Map<string, HTMLDivElement>>(new Map())
   const prevPathRef = useRef<string | null>(null)
@@ -73,16 +78,23 @@ export function KeepAlive() {
   // included in the render output. Updating refs in effects caused a
   // blank-frame bug: the render would iterate a stale cache (new path
   // not yet added) → every cached page hidden → blank screen.
+  const fingerprint = path + location.search
   // eslint-disable-next-line react-hooks/refs
-  if (outlet && lastProcessedRef.current !== path) {
+  if (outlet && lastProcessedRef.current !== fingerprint) {
     const cache = cacheRef.current
-    lastProcessedRef.current = path
+    lastProcessedRef.current = fingerprint
 
     const existingIdx = cache.findIndex((c) => c.path === path)
     if (existingIdx >= 0) {
       const entry = cache[existingIdx]
       cache.splice(existingIdx, 1)
       cache.push(entry)
+      // Search string changed for this cached path — refresh the frozen
+      // location so children that read query params see the new values.
+      const frozen = frozenLocationsRef.current.get(path)
+      if (frozen && frozen.search !== location.search) {
+        frozenLocationsRef.current.set(path, { ...location })
+      }
     } else {
       frozenLocationsRef.current.set(path, { ...location })
       if (cache.length >= MAX_CACHED) {

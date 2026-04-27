@@ -1575,11 +1575,19 @@ export default function CreateEventPage() {
   // ?from=:eventId we fetch that event and prefill the form, opening the
   // wizard at the Basics step so the user can tweak details before publishing.
   // No DB row is inserted until the user hits Publish.
+  //
+  // We track *every* source ID that has been prefilled in this component
+  // instance — not just the most recent one. The wizard lives inside
+  // KeepAlive's frozen-location cache, so even after we navigate away
+  // post-publish, useSearchParams() can keep returning the same ?from=
+  // value. Without a per-id ledger, resetting state post-publish would
+  // make the prefill effect re-fire and pull the user back into a
+  // pre-filled wizard instead of staying on the new event detail page.
   const fromEventId = searchParams.get('from')
-  const prefilledRef = useRef<string | null>(null)
+  const prefilledIdsRef = useRef<Set<string>>(new Set())
   useEffect(() => {
-    if (!fromEventId || prefilledRef.current === fromEventId) return
-    prefilledRef.current = fromEventId
+    if (!fromEventId || prefilledIdsRef.current.has(fromEventId)) return
+    prefilledIdsRef.current.add(fromEventId)
 
     let cancelled = false
     ;(async () => {
@@ -1871,9 +1879,12 @@ export default function CreateEventPage() {
         // Reset wizard state BEFORE navigating away. KeepAlive caches this
         // page, so without an explicit reset the next visit (e.g. creating a
         // second event) would reopen the wizard on the last step with the
-        // previous event's details still prefilled.
+        // previous event's details still prefilled. We DON'T clear
+        // prefilledIdsRef — keeping the source id in the ledger prevents the
+        // prefill effect from re-firing on the next render and dragging the
+        // user back into the wizard with the just-published event prefilled
+        // (the cached frozen URL still carries the ?from= we already used).
         resetWizard()
-        prefilledRef.current = null
 
         navigate(`/events/${event.id}`, { replace: true })
       } catch (err) {
