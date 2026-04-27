@@ -29,7 +29,7 @@ import { ConfirmationSheet } from '@/components/confirmation-sheet'
 import { WhatsNext } from '@/components/whats-next'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useToast } from '@/components/toast'
-import { parseLocationPoint } from '@/lib/geo'
+import { resolveCollectiveCoords } from '@/lib/geo'
 
 import {
     useCollective,
@@ -129,7 +129,12 @@ export default function CollectiveDetailPage() {
     }
   }
 
-  if (showLoading) {
+  // Show the skeleton both during the long-load delay window AND while
+  // there's still a request in flight without data — without this, the
+  // first ~150ms (before useDelayedLoading flips and before the network
+  // returns) renders the "Collective not found" empty state, causing a
+  // flash of the wrong screen on every navigation in.
+  if (showLoading || (isLoading && !collective)) {
     return (
       <Page swipeBack header={<Header title="Collective" back />}>
         <CollectiveDetailSkeleton />
@@ -161,7 +166,10 @@ export default function CollectiveDetailPage() {
     )
   }
 
-  const pos = parseLocationPoint(collective.location_point)
+  // Resolve map coords with the same fallback the explore map uses, so a
+  // collective missing location_point still gets a pin (city-centre default
+  // by slug) instead of zooming out to no marker.
+  const pos = resolveCollectiveCoords(collective.location_point, collective.slug)
 
   return (
     <Page
@@ -545,7 +553,7 @@ export default function CollectiveDetailPage() {
           <div className="relative overflow-hidden">
             <MapView
               center={pos ?? undefined}
-              zoom={pos ? 14 : 5}
+              zoom={pos ? 11 : 5}
               markers={pos ? [{ id: collective.id, position: pos, variant: 'collective', label: collective.name }] : undefined}
               interactive={false}
               aria-label={`${collective.name} location`}
