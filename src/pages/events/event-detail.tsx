@@ -537,20 +537,20 @@ export default function EventDetailPage() {
     }
 
     if (userStatus === 'registered') {
-      // One primary button. When check-in is open it's tappable and reads
-      // "Check In Now". When it's not yet open the same button is disabled
-      // and shows when check-in opens, so we don't burn an extra row on a
-      // separate "You're registered" pill.
-      const checkinOpensSoon =
-        !past && checkInOpensAt && now < checkInOpensAt.getTime()
+      // One primary button.
+      //   * Check-in open: tappable, reads "Check In Now"
+      //   * Check-in not yet open: disabled, reads "Check-in opens at 9:00 AM"
+      //   * Time unknown: disabled, reads "You're registered"
+      // Leaders force-open via the warning row at the top of the Leader
+      // Actions block, so this button stays disabled for everyone here.
       const checkinTime = checkInOpensAt?.toLocaleTimeString([], {
         hour: 'numeric',
         minute: '2-digit',
       })
       const buttonLabel = isEventActive
         ? 'Check In Now'
-        : checkinOpensSoon
-          ? `Check-in opens ${checkinTime}`
+        : checkinTime
+          ? `Check-in opens at ${checkinTime}`
           : "You're registered"
 
       return (
@@ -571,17 +571,6 @@ export default function EventDetailPage() {
           >
             {buttonLabel}
           </Button>
-          {/* Leader override: open check-in early */}
-          {!past && !isEventActive && isLeaderOrAbove && (
-            <Button
-              variant="secondary"
-              fullWidth
-              icon={<Hash size={18} />}
-              onClick={() => setCheckInForcedOpen(true)}
-            >
-              Open Check-in Now
-            </Button>
-          )}
           <Button
             variant="ghost"
             fullWidth
