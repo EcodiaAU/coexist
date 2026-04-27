@@ -19,8 +19,18 @@ import { CookieConsentBanner } from '@/components/cookie-consent'
 import { initSentry, SentryErrorBoundary } from '@/lib/sentry'
 import { Capacitor } from '@capacitor/core'
 import { SplashScreen } from '@capacitor/splash-screen'
+import { clearChunkReloadGuard } from '@/lib/lazy-with-retry'
 import App from './App'
 import './styles/globals.css'
+
+// If we got here, the entry bundle (which lazily imports App + every page
+// chunk reference) loaded successfully. That proves we're on a fresh build,
+// so it's safe to release the chunk-reload guard now — before any lazy
+// import runs and before App.tsx mounts. Doing it inside App's useEffect
+// (the previous behaviour) was too late: a failed lazy import on a deep
+// route would prevent App from ever mounting, leaving the guard latched
+// and turning every subsequent refresh into a permanent white screen.
+clearChunkReloadGuard()
 
 // Dismiss the Capacitor SplashScreen plugin overlay immediately on native.
 // The system splash (Android 12+ Theme.SplashScreen / iOS LaunchScreen) covers

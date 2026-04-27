@@ -11,7 +11,10 @@
  * Hashed assets are safe to cache indefinitely (new hash = new URL).
  */
 
-const CACHE_VERSION = 3
+// Bump on any sw.js change. v4: route navigation HTML cache through a single
+// stable key (/index.html) instead of the visited URL, so deep-link refreshes
+// can't surface a stale shell with dead chunk hashes.
+const CACHE_VERSION = 4
 const SHELL_CACHE = `coexist-shell-v${CACHE_VERSION}`
 const ASSET_CACHE = `coexist-assets-v${CACHE_VERSION}`
 
@@ -113,19 +116,25 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Navigation requests (HTML): network-first with offline fallback
+  // Navigation requests (HTML): network-first with offline fallback.
+  //
+  // The cached copy is keyed under a single stable URL ('/index.html') rather
+  // than the visited route, because the SPA serves the same shell for every
+  // route. Caching per-URL meant a deep-link refresh after a deploy could
+  // serve a stale shell whose chunk hashes no longer exist on the CDN, which
+  // landed users on a permanent white screen.
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
           if (response.ok) {
             const clone = response.clone()
-            caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone))
+            caches.open(SHELL_CACHE).then((cache) => cache.put('/index.html', clone))
           }
           return response
         })
         .catch(() =>
-          caches.match(request).then((cached) =>
+          caches.match('/index.html').then((cached) =>
             cached || caches.match('/offline.html'),
           ),
         ),
