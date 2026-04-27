@@ -85,7 +85,7 @@ export default function CreateUpdatePage() {
         if (url.startsWith('blob:')) URL.revokeObjectURL(url)
       }
     }
-    // Revoke only on unmount. Deliberately NOT tracking previews changes —
+    // Revoke only on unmount. Deliberately NOT tracking previews changes -
     // per-item revocation already happens in removeImage, and revoking on
     // every re-render would pull the rug from under still-visible <img>s.
     // eslint-disable-next-line react-hooks/exhaustive-deps
