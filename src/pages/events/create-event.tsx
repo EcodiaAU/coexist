@@ -1875,7 +1875,7 @@ export default function CreateEventPage() {
         resetWizard()
         prefilledRef.current = null
 
-        navigate(`/events/${event.id}`, { replace: true })
+        navigate('/admin/events', { replace: true })
       } catch (err) {
         console.error('[create-event] publish failed:', err)
         const msg = err instanceof Error ? err.message : String(err)
