@@ -12,23 +12,44 @@ import type { Database } from '@/types/database.types'
 /*  One-time SocialLogin initialization (native only)                  */
 /* ------------------------------------------------------------------ */
 
-let socialLoginReady: Promise<void> | null = null
+const initialized = new Set<'google' | 'apple'>()
+const initInFlight = new Map<'google' | 'apple', Promise<void>>()
 
-function ensureSocialLogin(): Promise<void> {
+function ensureSocialLogin(provider: 'google' | 'apple'): Promise<void> {
   if (!Capacitor.isNativePlatform()) return Promise.resolve()
-  if (!socialLoginReady) {
-    socialLoginReady = SocialLogin.initialize({
-      google: { webClientId: import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID },
+  if (initialized.has(provider)) return Promise.resolve()
+  const existing = initInFlight.get(provider)
+  if (existing) return existing
+
+  let config: Parameters<typeof SocialLogin.initialize>[0]
+  if (provider === 'google') {
+    config = { google: { webClientId: import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID } }
+  } else {
+    const appleServiceId = import.meta.env.VITE_APPLE_SERVICE_ID
+    // On Android the Apple plugin requires a Service ID + redirectUrl (web OAuth flow).
+    // iOS uses native Sign in with Apple and ignores these.
+    if (Capacitor.getPlatform() === 'android' && !appleServiceId) {
+      return Promise.reject(
+        new Error('Apple sign-in is not yet configured for Android. Please use Google or email.'),
+      )
+    }
+    config = {
       apple: {
+        clientId: appleServiceId,
         redirectUrl: `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/callback`,
       },
-    }).catch((err) => {
-      console.error('[social-login] init failed:', err)
-      socialLoginReady = null // allow retry on next attempt
+    }
+  }
+
+  const p = SocialLogin.initialize(config)
+    .then(() => { initialized.add(provider) })
+    .catch((err) => {
+      console.error(`[social-login] init failed for ${provider}:`, err)
       throw err
     })
-  }
-  return socialLoginReady
+    .finally(() => { initInFlight.delete(provider) })
+  initInFlight.set(provider, p)
+  return p
 }
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -549,7 +570,7 @@ export function useAuthProvider(): AuthContextValue {
     // Native: use Google SDK → get ID token → pass to Supabase
     if (Capacitor.isNativePlatform()) {
       try {
-        await ensureSocialLogin()
+        await ensureSocialLogin('google')
         const result = await SocialLogin.login({ provider: 'google', options: { scopes: ['email', 'profile'] } })
         const idToken = (result?.result as unknown as Record<string, unknown>)?.idToken as string | undefined
         if (!idToken) return { error: { message: 'No ID token received from Google', status: 400 } as unknown as AuthError }
@@ -574,7 +595,7 @@ export function useAuthProvider(): AuthContextValue {
     // Native: use Apple SDK → get ID token → pass to Supabase
     if (Capacitor.isNativePlatform()) {
       try {
-        await ensureSocialLogin()
+        await ensureSocialLogin('apple')
         const result = await SocialLogin.login({ provider: 'apple', options: { scopes: ['email', 'name'] } })
         const idToken = (result?.result as unknown as Record<string, unknown>)?.idToken as string | undefined
         if (!idToken) return { error: { message: 'No ID token received from Apple', status: 400 } as unknown as AuthError }

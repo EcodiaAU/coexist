@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo, createContext, useContext } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useCallback, useMemo, useEffect, useRef, createContext, useContext } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
     ChevronLeft,
@@ -46,6 +46,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useEventForm } from '@/hooks/use-event-form'
 import type { EventFormFields, ActivityType } from '@/hooks/use-event-form'
+import { parseLocationPoint } from '@/lib/geo'
 import {
     DateTimeFields
 } from './components/event-form-fields'
@@ -1548,6 +1549,7 @@ function ProgressStepper({
 
 export default function CreateEventPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   const shouldReduceMotion = useReducedMotion()
 
@@ -1561,6 +1563,77 @@ export default function CreateEventPage() {
   const createEvent = useCreateEvent()
   const inviteCollective = useInviteCollective()
   const { toast: toastApi } = useToast()
+
+  // Reset everything (used after a successful publish, so that re-entering this
+  // page from KeepAlive cache does not show the previous event's draft).
+  const resetWizard = useCallback(() => {
+    setStep(0)
+    setDirection(1)
+    setExtra(INITIAL_EXTRA)
+    form.resetFields({})
+  }, [form])
+
+  // Duplicate / "create from existing" support: when the URL includes
+  // ?from=:eventId we fetch that event and prefill the form, opening the
+  // wizard at the Basics step so the user can tweak details before publishing.
+  // No DB row is inserted until the user hits Publish.
+  const fromEventId = searchParams.get('from')
+  const prefilledRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!fromEventId || prefilledRef.current === fromEventId) return
+    prefilledRef.current = fromEventId
+
+    let cancelled = false
+    ;(async () => {
+      const { data: source, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', fromEventId)
+        .single()
+      if (cancelled || error || !source) return
+
+      // Pull collaborator collectives so the duplicate keeps multi-host setup
+      const { data: collabs } = await supabase
+        .from('collective_event_collaborators')
+        .select('collective_id')
+        .eq('event_id', fromEventId)
+        .eq('status', 'accepted')
+      if (cancelled) return
+
+      const pos = parseLocationPoint(source.location_point)
+      form.resetFields({
+        title: `${source.title} (Copy)`,
+        activity_type: source.activity_type,
+        description: source.description ?? '',
+        date_start: null, // force user to pick a new date
+        date_end: null,
+        address: source.address ?? '',
+        location_lat: pos?.lat ?? null,
+        location_lng: pos?.lng ?? null,
+        capacity: source.capacity ? String(source.capacity) : '',
+        cover_image_url: source.cover_image_url ?? '',
+        is_public: source.is_public ?? true,
+        is_external_collaboration: source.is_external_collaboration ?? false,
+        external_registration_url: source.external_registration_url ?? '',
+      })
+      setExtra((prev) => ({
+        ...prev,
+        selected_collective_ids: [
+          source.collective_id,
+          ...(collabs?.map((c) => c.collective_id) ?? []),
+        ],
+        is_ticketed: source.is_ticketed ?? false,
+        checkin_window_minutes: (source as unknown as { checkin_window_minutes?: number }).checkin_window_minutes ?? 30,
+      }))
+      // Jump past the collective step since it's already chosen
+      setStep(1)
+
+      // Clear the query string so re-entering the page later doesn't re-prefill
+      setSearchParams({}, { replace: true })
+    })()
+
+    return () => { cancelled = true }
+  }, [fromEventId, form, setSearchParams])
 
   const isLastStep = step === STEPS.length - 1
   const isFirstStep = step === 0
@@ -1615,7 +1688,30 @@ export default function CreateEventPage() {
         const primaryCollectiveId = selectedIds[0]
         const additionalCollectiveIds = selectedIds.slice(1)
 
-        const event = await createEvent.mutateAsync({
+        // For recurring events, generate a series_id so all occurrences share it.
+        let seriesId: string | null = null
+        if (extra.is_recurring && extra.recurring_count > 1 && !isDraft) {
+          const { data: series, error: seriesErr } = await supabase
+            .from('event_series')
+            .insert({
+              collective_id: primaryCollectiveId,
+              created_by: user.id,
+              title_template: form.fields.title,
+              recurrence_rule: {
+                type: extra.recurring_type,
+                count: extra.recurring_count,
+              },
+            })
+            .select('id')
+            .single()
+          if (seriesErr) {
+            console.error('[create-event] series insert error:', seriesErr)
+          } else {
+            seriesId = series?.id ?? null
+          }
+        }
+
+        const baseInsert = {
           collective_id: primaryCollectiveId,
           title: form.fields.title,
           description: form.fields.description || null,
@@ -1633,12 +1729,10 @@ export default function CreateEventPage() {
           external_registration_url: form.fields.external_registration_url || null,
           checkin_window_minutes: extra.checkin_window_minutes,
           status: isDraft ? 'draft' : 'published',
-          ...(extra.is_recurring && {
-            is_recurring: true,
-            recurring_type: extra.recurring_type,
-            recurring_count: extra.recurring_count,
-          }),
-        })
+          series_id: seriesId,
+        }
+
+        const event = await createEvent.mutateAsync(baseInsert)
 
         // Insert ticket types if ticketed
         if (extra.is_ticketed && extra.ticket_tiers.length > 0) {
@@ -1659,6 +1753,63 @@ export default function CreateEventPage() {
               .from('event_ticket_types')
               .insert(ticketTypeRows)
             if (ttErr) console.error('[create-event] ticket type insert error:', ttErr)
+          }
+        }
+
+        // Recurring events: fan out N-1 additional occurrences sharing the
+        // same series_id. Each occurrence is a fully independent event row
+        // (so registrations/check-ins/impact are tracked per-date) but they
+        // can be queried as a series via series_id.
+        if (extra.is_recurring && extra.recurring_count > 1 && seriesId && !isDraft) {
+          const intervalDays =
+            extra.recurring_type === 'weekly' ? 7
+            : extra.recurring_type === 'fortnightly' ? 14
+            : 0 // monthly handled via setMonth below
+
+          const recurringRows: typeof baseInsert[] = []
+          for (let i = 1; i < extra.recurring_count; i++) {
+            const start = new Date(form.fields.date_start!.getTime())
+            const end = form.fields.date_end ? new Date(form.fields.date_end.getTime()) : null
+            if (extra.recurring_type === 'monthly') {
+              start.setMonth(start.getMonth() + i)
+              if (end) end.setMonth(end.getMonth() + i)
+            } else {
+              start.setDate(start.getDate() + intervalDays * i)
+              if (end) end.setDate(end.getDate() + intervalDays * i)
+            }
+            recurringRows.push({
+              ...baseInsert,
+              date_start: start.toISOString(),
+              date_end: end ? end.toISOString() : null,
+            })
+          }
+
+          if (recurringRows.length > 0) {
+            const { data: extraEvents, error: recErr } = await supabase
+              .from('events')
+              .insert(recurringRows.map((r) => ({ ...r, created_by: user.id })))
+              .select()
+            if (recErr) {
+              console.error('[create-event] recurring insert error:', recErr)
+            } else if (extraEvents && extra.is_ticketed && extra.ticket_tiers.length > 0) {
+              // Replicate ticket tiers to each new occurrence
+              const tierRows = extraEvents.flatMap((ev) =>
+                extra.ticket_tiers
+                  .filter((t) => t.name.trim())
+                  .map((t, idx) => ({
+                    event_id: ev.id,
+                    name: t.name.trim(),
+                    description: t.description.trim() || null,
+                    price_cents: Math.round(parseFloat(t.price_dollars || '0') * 100),
+                    capacity: t.capacity ? parseInt(t.capacity, 10) : null,
+                    sort_order: idx,
+                    is_active: true,
+                  })),
+              )
+              if (tierRows.length > 0) {
+                await supabase.from('event_ticket_types').insert(tierRows)
+              }
+            }
           }
         }
 
@@ -1716,6 +1867,13 @@ export default function CreateEventPage() {
           }
         }
 
+        // Reset wizard state BEFORE navigating away. KeepAlive caches this
+        // page, so without an explicit reset the next visit (e.g. creating a
+        // second event) would reopen the wizard on the last step with the
+        // previous event's details still prefilled.
+        resetWizard()
+        prefilledRef.current = null
+
         navigate(`/events/${event.id}`, { replace: true })
       } catch (err) {
         console.error('[create-event] publish failed:', err)
@@ -1724,7 +1882,7 @@ export default function CreateEventPage() {
         )
       }
     },
-    [user, form, extra, saveAsDraft, createEvent, inviteCollective, navigate, toastApi],
+    [user, form, extra, saveAsDraft, createEvent, inviteCollective, navigate, toastApi, resetWizard],
   )
 
   const goNext = useCallback(() => {
