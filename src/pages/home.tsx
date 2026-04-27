@@ -858,14 +858,14 @@ function HomeImpactSection({
           </motion.div>
 
           {/* Toggles */}
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-6 flex-nowrap min-w-0">
             {/* Scope toggle: National / Collective (with dropdown if multiple) */}
             <div className="flex rounded-full bg-[#f4f2ec]/15 p-0.5">
               <button
                 type="button"
                 onClick={() => setScope('national')}
                 className={cn(
-                  'px-3.5 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.95] cursor-pointer select-none',
+                  'px-3.5 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.95] cursor-pointer select-none whitespace-nowrap',
                   scope === 'national'
                     ? 'bg-white/90 text-primary-900 shadow-sm'
                     : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
@@ -936,7 +936,7 @@ function HomeImpactSection({
                 type="button"
                 onClick={() => setTimeRange('all-time')}
                 className={cn(
-                  'px-3 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.95] cursor-pointer select-none',
+                  'px-3 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.95] cursor-pointer select-none whitespace-nowrap',
                   timeRange === 'all-time'
                     ? 'bg-white/90 text-primary-900 shadow-sm'
                     : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
@@ -948,7 +948,7 @@ function HomeImpactSection({
                 type="button"
                 onClick={() => setTimeRange('current-year')}
                 className={cn(
-                  'px-3 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.95] cursor-pointer select-none',
+                  'px-3 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.95] cursor-pointer select-none whitespace-nowrap',
                   timeRange === 'current-year'
                     ? 'bg-white/90 text-primary-900 shadow-sm'
                     : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',

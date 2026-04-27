@@ -138,8 +138,8 @@ function DonationForm({ rm }: { rm: boolean }) {
   }
 
   return (
-    <div className="relative bg-white border border-neutral-100 shadow-sm rounded-2xl">
-      <div className="p-6">
+    <div>
+      <div>
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-11 h-11 rounded-2xl bg-primary-50 flex items-center justify-center shrink-0">
@@ -210,25 +210,36 @@ function DonationForm({ rm }: { rm: boolean }) {
           />
         </div>
 
-        {/* Impact equivalency */}
-        {isValid && impactText && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="mb-5 px-4 py-3.5 rounded-2xl bg-white border border-neutral-100 shadow-sm"
+        {/* Impact equivalency.
+            Reserves a fixed height (large enough for 2 lines on monthly +
+            a wrapped impact line) so changing the donation amount doesn't
+            shrink/grow the page and stutter the layout. Fades the text
+            content rather than animating the whole block in/out. */}
+        <div
+          className="mb-5 px-4 py-3.5 rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden"
+          style={{ minHeight: '88px' }}
+        >
+          <motion.p
+            key={`${impactText ?? ''}-${amount}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isValid && impactText ? 1 : 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="text-sm text-neutral-900 leading-relaxed font-medium"
           >
-            <p className="text-sm text-neutral-900 leading-relaxed font-medium">
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-primary-50 mr-1.5 -mt-0.5 align-middle"><Leaf size={11} className="text-primary-600" /></span>
-              ${amount} {impactText}
-            </p>
-            {frequency === 'monthly' && (
-              <p className="text-xs text-neutral-500 mt-1.5 pl-[22px]">
-                That&apos;s <span className="font-semibold text-neutral-900">${amount * 12}/year</span> of sustained impact
-              </p>
-            )}
-          </motion.div>
-        )}
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-primary-50 mr-1.5 -mt-0.5 align-middle"><Leaf size={11} className="text-primary-600" /></span>
+            {isValid && impactText
+              ? <>${amount} {impactText}</>
+              : <span className="text-neutral-400">Choose an amount to see your impact</span>}
+          </motion.p>
+          <motion.p
+            initial={false}
+            animate={{ opacity: isValid && impactText && frequency === 'monthly' ? 1 : 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="text-xs text-neutral-500 mt-1.5 pl-[22px]"
+          >
+            That&apos;s <span className="font-semibold text-neutral-900">${amount * 12}/year</span> of sustained impact
+          </motion.p>
+        </div>
 
         {/* Divider */}
         <div className="h-px bg-gradient-to-r from-transparent via-neutral-100 to-transparent mb-5" />

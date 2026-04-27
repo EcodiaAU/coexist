@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase, escapeIlike } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
-import { sumMetric } from '@/lib/impact-metrics'
+import { sumMetricWeighted } from '@/lib/impact-metrics'
 import { fetchImpactRows } from '@/lib/impact-query'
 import { COLLECTIVE_ROLE_RANK } from '@/lib/constants'
 import type {
@@ -218,18 +218,14 @@ export function useCollectiveStats(collectiveId: string | undefined) {
     queryFn: async () => {
       if (!collectiveId) throw new Error('No collective ID')
 
-      // Parallelize initial queries
-      const now = new Date().toISOString()
-      const [eventsCountRes, eventsRes, membersRes] = await Promise.all([
-        supabase
-          .from('events')
-          .select('*', { count: 'exact', head: true })
-          .eq('collective_id', collectiveId)
-          .in('status', ['published', 'completed'])
-          .lt('date_start', now),
-        supabase.from('events').select('id').eq('collective_id', collectiveId)
-          .in('status', ['published', 'completed'])
-          .lt('date_start', now),
+      // Parallelize initial queries.
+      //
+      // Multi-host: events_count + impact rollup go through fetchImpactRows
+      // (which resolves via event_hosts) so events where this collective is a
+      // co-host count too. Per-host shares are applied so co-hosted events
+      // don't inflate the national total.
+      const [{ rows: impactRows, eventIds, eventCount, shareByEventId }, membersRes] = await Promise.all([
+        fetchImpactRows({ collectiveId, timeRange: 'all-time', includeLegacy: true }),
         supabase
           .from('collective_members')
           .select('*', { count: 'exact', head: true })
@@ -237,11 +233,8 @@ export function useCollectiveStats(collectiveId: string | undefined) {
           .eq('status', 'active'),
       ])
 
-      if (eventsCountRes.error) throw eventsCountRes.error
-      if (eventsRes.error) throw eventsRes.error
       if (membersRes.error) throw membersRes.error
 
-      const eventIds = eventsRes.data?.map((e) => e.id) ?? []
       let totalTreesPlanted = 0
       let totalRubbishKg = 0
       let totalHours = 0
@@ -251,21 +244,20 @@ export function useCollectiveStats(collectiveId: string | undefined) {
       let attendanceRate = 0
 
       if (eventIds.length > 0) {
-        const [{ rows: impactRows }, registeredRes, attendedRes] = await Promise.all([
-          // All-time collective stats: include legacy rows for full historical picture
-          fetchImpactRows({ eventIds, includeLegacy: true, skipBaselineDateFilter: true }),
+        const [registeredRes, attendedRes] = await Promise.all([
           supabase.from('event_registrations').select('id', { count: 'exact', head: true })
             .in('event_id', eventIds).in('status', ['registered', 'attended']),
           supabase.from('event_registrations').select('id', { count: 'exact', head: true })
             .in('event_id', eventIds).eq('status', 'attended'),
         ])
 
-        totalTreesPlanted   = sumMetric(impactRows, 'trees_planted')
-        totalRubbishKg      = sumMetric(impactRows, 'rubbish_kg')
-        totalHours          = sumMetric(impactRows, 'hours_total')
-        totalAreaRestored   = sumMetric(impactRows, 'area_restored_sqm')
-        totalNativePlants   = sumMetric(impactRows, 'native_plants')
-        totalWildlifeSightings = sumMetric(impactRows, 'wildlife_sightings')
+        const sumW = (key: string) => sumMetricWeighted(impactRows, key, shareByEventId)
+        totalTreesPlanted   = sumW('trees_planted')
+        totalRubbishKg      = sumW('rubbish_kg')
+        totalHours          = sumW('hours_total')
+        totalAreaRestored   = sumW('area_restored_sqm')
+        totalNativePlants   = sumW('native_plants')
+        totalWildlifeSightings = sumW('wildlife_sightings')
 
         const totalRegistered = registeredRes.count ?? 0
         const totalAttended   = attendedRes.count ?? 0
@@ -275,7 +267,7 @@ export function useCollectiveStats(collectiveId: string | undefined) {
       }
 
       return {
-        totalEvents: eventsCountRes.count ?? 0,
+        totalEvents: eventCount,
         totalTreesPlanted,
         totalRubbishKg,
         totalHours,

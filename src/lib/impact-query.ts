@@ -17,7 +17,7 @@
  */
 
 import { supabase } from '@/lib/supabase'
-import { IMPACT_SELECT_COLUMNS } from '@/lib/impact-metrics'
+import { IMPACT_SELECT_COLUMNS, type EventHostShare } from '@/lib/impact-metrics'
 
 /* ------------------------------------------------------------------ */
 /*  Baseline constants — single source of truth                        */
@@ -72,6 +72,13 @@ export interface FetchImpactResult {
   eventIds: string[]
   /** Count of events that matched the scope */
   eventCount: number
+  /**
+   * Per-event host share, populated when scope.collectiveId is set. Use with
+   * sumMetricWeighted() to attribute multi-host events fairly so per-collective
+   * totals add to the national total without double counting. National scope
+   * (no collectiveId) returns an empty map — sums are unweighted.
+   */
+  shareByEventId: Map<string, EventHostShare>
 }
 
 /* ------------------------------------------------------------------ */
@@ -123,29 +130,63 @@ export async function fetchImpactRows(scope: ImpactScope = {}): Promise<FetchImp
 
   let resolvedEventIds: string[]
   let eventCount: number
+  // Populated only for collective scope. Maps event_id -> this collective's
+  // host share for that event so sumMetricWeighted can attribute fairly.
+  const shareByEventId = new Map<string, EventHostShare>()
 
   if (providedEventIds) {
     // Caller already knows the event IDs (e.g. user's attended events)
     resolvedEventIds = providedEventIds
     eventCount = providedEventIds.length
-  } else if (collectiveId || effectiveStart) {
-    // Resolve from events table — always reliable, avoids embedded join bugs.
-    // When including legacy rows we need IDs from ALL events (including backfill/import
-    // which may be 'draft'), but eventCount should only reflect real published/completed events.
+  } else if (collectiveId) {
+    // Multi-host attribution: resolve via event_hosts so events where this
+    // collective is the primary OR an accepted co-host both count. Apply the
+    // events-side date / status filter via a join through events.id.
+    let hostsQ = supabase
+      .from('event_hosts')
+      .select('event_id, host_index, host_count, events!inner(id, date_start, status)')
+      .eq('collective_id', collectiveId)
+      .lt('events.date_start', now)
+    if (!includeLegacy) {
+      hostsQ = hostsQ.in('events.status', ['published', 'completed'])
+    }
+    if (effectiveStart) {
+      hostsQ = hostsQ.gte('events.date_start', effectiveStart)
+    }
+    const { data: hostRows, error: hostsErr } = await hostsQ
+    if (hostsErr) throw hostsErr
+
+    type HostRow = {
+      event_id: string
+      host_index: number
+      host_count: number
+    }
+    const seen = new Set<string>()
+    for (const r of (hostRows ?? []) as unknown as HostRow[]) {
+      if (seen.has(r.event_id)) continue
+      seen.add(r.event_id)
+      shareByEventId.set(r.event_id, {
+        host_index: r.host_index,
+        host_count: r.host_count,
+      })
+    }
+    resolvedEventIds = Array.from(seen)
+    eventCount = resolvedEventIds.length
+  } else if (effectiveStart) {
+    // National / time-scoped (no collective filter): unweighted, every event
+    // counts once. Stays on the events table since event_hosts adds no value
+    // here and only makes the query more expensive.
     const buildQuery = (statusFilter: boolean) => {
       let q = supabase
         .from('events')
         .select('id', { count: 'exact' })
         .lt('date_start', now)
       if (statusFilter) q = q.in('status', ['published', 'completed'])
-      if (collectiveId) q = q.eq('collective_id', collectiveId)
       if (effectiveStart) q = q.gte('date_start', effectiveStart)
       return q
     }
 
     if (includeLegacy) {
-      // Fetch all event IDs (no status filter) for impact row scoping,
-      // plus a count of real events for display purposes.
       const [allEventsRes, realEventsRes] = await Promise.all([
         buildQuery(false),
         buildQuery(true),
@@ -177,7 +218,7 @@ export async function fetchImpactRows(scope: ImpactScope = {}): Promise<FetchImp
   // ── Step 2: fetch impact rows ────────────────────────────────────────
 
   if (resolvedEventIds.length === 0) {
-    return { rows: [], legacyRows: [], eventIds: [], eventCount: 0 }
+    return { rows: [], legacyRows: [], eventIds: [], eventCount: 0, shareByEventId }
   }
 
   // Build the base query scoped to the resolved event IDs.
@@ -220,6 +261,7 @@ export async function fetchImpactRows(scope: ImpactScope = {}): Promise<FetchImp
     legacyRows,
     eventIds: resolvedEventIds,
     eventCount,
+    shareByEventId,
   }
 }
 

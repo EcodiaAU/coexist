@@ -15,7 +15,8 @@ import { Chip } from '@/components/chip'
 import { Toggle } from '@/components/toggle'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
-import { IMPACT_SELECT_COLUMNS, sumMetric } from '@/lib/impact-metrics'
+import { IMPACT_SELECT_COLUMNS, sumMetric, sumMetricWeighted, type EventHostShare } from '@/lib/impact-metrics'
+import { fetchImpactRows } from '@/lib/impact-query'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
 /* ------------------------------------------------------------------ */
@@ -141,35 +142,53 @@ async function fetchReportData(
 ): Promise<{ metric: string; value: string }[]> {
   const results: { metric: string; value: string }[] = []
 
-  // Build the scope filter helper
-  const addScopeFilter = <T extends { eq: (col: string, val: string) => T }>(query: T): T => {
-    if (scope === 'collective' && selectedCollective) {
-      return query.eq('collective_id', selectedCollective)
-    }
-    return query
-  }
-
   // Fetch impact rows if any impact-related metrics are selected
   const impactKeys = Array.from(selectedMetrics).filter(
     (m) => METRIC_MAP[m] && !METRIC_MAP[m].key.startsWith('__'),
   )
   const needsImpact = impactKeys.length > 0
 
-  // Fetch event_impact rows with date + scope filtering via joined events
+  // Fetch event_impact rows with date + scope filtering via joined events.
+  //
+  // Multi-host: for collective scope we resolve via event_hosts (so co-hosted
+  // events count) and apply share weighting at sum time. National scope keeps
+  // the direct events join — every event counts once.
   let impactRows: Record<string, unknown>[] = []
+  let shareByEventId: Map<string, EventHostShare> = new Map()
   if (needsImpact) {
-    let q = supabase
-      .from('event_impact')
-      .select(`${IMPACT_SELECT_COLUMNS}, events!inner(collective_id, date_start)`)
-      .gte('events.date_start', dateRange.start)
-      .lte('events.date_start', dateRange.end)
-      .range(0, 9999)
     if (scope === 'collective' && selectedCollective) {
-      q = q.eq('events.collective_id', selectedCollective)
+      const result = await fetchImpactRows({
+        collectiveId: selectedCollective,
+        timeRange: 'custom',
+        rangeStart: dateRange.start,
+      })
+      shareByEventId = result.shareByEventId
+      // Trim events that started after dateRange.end (fetchImpactRows only
+      // applies the lower bound).
+      if (result.eventIds.length > 0) {
+        const { data: dateRows } = await supabase
+          .from('events')
+          .select('id, date_start')
+          .in('id', result.eventIds)
+          .gt('date_start', dateRange.end)
+        const tooLate = new Set((dateRows ?? []).map((r) => r.id))
+        impactRows = result.rows.filter(
+          (r) => !tooLate.has(r.event_id as string),
+        )
+        for (const id of tooLate) shareByEventId.delete(id)
+      } else {
+        impactRows = result.rows
+      }
+    } else {
+      const { data, error } = await supabase
+        .from('event_impact')
+        .select(`${IMPACT_SELECT_COLUMNS}, events!inner(collective_id, date_start)`)
+        .gte('events.date_start', dateRange.start)
+        .lte('events.date_start', dateRange.end)
+        .range(0, 9999)
+      if (error) throw error
+      impactRows = (data ?? []) as unknown as Record<string, unknown>[]
     }
-    const { data, error } = await q
-    if (error) throw error
-    impactRows = (data ?? []) as unknown as Record<string, unknown>[]
   }
 
   // Process each selected metric
@@ -178,30 +197,55 @@ async function fetchReportData(
     if (!def) continue
 
     if (def.key === '__attendance') {
-      // Count attended registrations in date range
-      let q = supabase
-        .from('event_registrations')
-        .select('id, events!inner(collective_id, date_start)', { count: 'exact', head: true })
-        .eq('status', 'attended')
-        .gte('events.date_start', dateRange.start)
-        .lte('events.date_start', dateRange.end)
+      // Count attended registrations in date range. For collective scope we
+      // first resolve the events (including co-hosted) via event_hosts.
       if (scope === 'collective' && selectedCollective) {
-        q = q.eq('events.collective_id', selectedCollective)
+        const { data: hostRows } = await supabase
+          .from('event_hosts')
+          .select('event_id, events!inner(date_start)')
+          .eq('collective_id', selectedCollective)
+          .gte('events.date_start', dateRange.start)
+          .lte('events.date_start', dateRange.end)
+        const eventIds = (hostRows ?? []).map((r) => r.event_id)
+        if (eventIds.length === 0) {
+          results.push({ metric: def.label, value: '0' })
+        } else {
+          const { count } = await supabase
+            .from('event_registrations')
+            .select('id', { count: 'exact', head: true })
+            .in('event_id', eventIds)
+            .eq('status', 'attended')
+          results.push({ metric: def.label, value: String(count ?? 0) })
+        }
+      } else {
+        const { count } = await supabase
+          .from('event_registrations')
+          .select('id, events!inner(date_start)', { count: 'exact', head: true })
+          .eq('status', 'attended')
+          .gte('events.date_start', dateRange.start)
+          .lte('events.date_start', dateRange.end)
+        results.push({ metric: def.label, value: String(count ?? 0) })
       }
-      const { count } = await q
-      results.push({ metric: def.label, value: String(count ?? 0) })
 
     } else if (def.key === '__cleanup_events') {
-      let q = addScopeFilter(
-        supabase
+      if (scope === 'collective' && selectedCollective) {
+        const { count } = await supabase
+          .from('event_hosts')
+          .select('event_id, events!inner(activity_type, date_start)', { count: 'exact', head: true })
+          .eq('collective_id', selectedCollective)
+          .eq('events.activity_type', 'clean_up')
+          .gte('events.date_start', dateRange.start)
+          .lte('events.date_start', dateRange.end)
+        results.push({ metric: def.label, value: String(count ?? 0) })
+      } else {
+        const { count } = await supabase
           .from('events')
           .select('id', { count: 'exact', head: true })
           .in('activity_type', ['clean_up'])
           .gte('date_start', dateRange.start)
-          .lte('date_start', dateRange.end),
-      )
-      const { count } = await q
-      results.push({ metric: def.label, value: String(count ?? 0) })
+          .lte('date_start', dateRange.end)
+        results.push({ metric: def.label, value: String(count ?? 0) })
+      }
 
     } else if (def.key === '__collectives') {
       const { count } = await supabase
@@ -219,8 +263,12 @@ async function fetchReportData(
       results.push({ metric: def.label, value: String(count) })
 
     } else {
-      // Standard impact column - aggregate from fetched rows
-      const raw = sumMetric(impactRows, def.key)
+      // Standard impact column - aggregate from fetched rows. For collective
+      // scope, weight by host share so co-hosted events split fairly across
+      // collectives. National scope sums every row once (unweighted).
+      const raw = scope === 'collective' && selectedCollective
+        ? sumMetricWeighted(impactRows, def.key, shareByEventId)
+        : sumMetric(impactRows, def.key)
       const formatted = def.transform ? def.transform(raw) : String(Math.round(raw))
       results.push({ metric: def.label, value: formatted })
     }

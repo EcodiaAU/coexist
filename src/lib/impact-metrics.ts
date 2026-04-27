@@ -96,7 +96,7 @@ export const FALLBACK_METRIC_DEFS: readonly ImpactMetricDef[] = [
  * This is static because built-in columns never change at runtime.
  */
 export const IMPACT_SELECT_COLUMNS =
-  Array.from(BUILTIN_COLUMNS).join(', ') + ', custom_metrics, notes, logged_by'
+  Array.from(BUILTIN_COLUMNS).join(', ') + ', custom_metrics, notes, logged_by, event_id'
 
 /**
  * Sum a specific metric key across an array of impact rows.
@@ -111,6 +111,66 @@ export function sumMetric(rows: Record<string, unknown>[], key: string): number 
     const cm = r.custom_metrics as Record<string, unknown> | null
     return s + (Number(cm?.[key]) || 0)
   }, 0)
+}
+
+/* ------------------------------------------------------------------ */
+/*  Multi-host attribution                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Per-host share of an event's impact. host_index is the deterministic order
+ * of the host inside event_hosts (primary = 0). With host_count=3 and
+ * host_index=0 the host gets ceil(value/3); the remaining hosts get
+ * floor(value/3). Per-collective totals therefore add up exactly to the
+ * full event total — no double counting, no fractional units shown.
+ */
+export interface EventHostShare {
+  /** Total number of host collectives for the event */
+  host_count: number
+  /** This host's index (0 = primary). Determines who absorbs the remainder */
+  host_index: number
+}
+
+/**
+ * Distribute an integer value across `host_count` hosts so the per-host
+ * portions sum to the original value, with the remainder going to the
+ * earliest hosts (host_index 0..r-1). Decimal-style metrics (e.g. kg) are
+ * rounded the same way — call sites that care about decimals should round
+ * once at the very end.
+ */
+export function shareValue(value: number, share: EventHostShare): number {
+  if (!value || share.host_count <= 1) return value
+  const base = Math.floor(value / share.host_count)
+  const remainder = value - base * share.host_count
+  // The first `remainder` hosts (by host_index) get one extra unit.
+  return share.host_index < remainder ? base + 1 : base
+}
+
+/**
+ * Sum a metric across rows weighted by each row's host share. Pass a
+ * `shareByEventId` map (built from the event_hosts view, scoped to the
+ * collective being aggregated). Rows without a matching share entry are
+ * dropped — they belong to a different collective.
+ */
+export function sumMetricWeighted(
+  rows: Record<string, unknown>[],
+  key: string,
+  shareByEventId: Map<string, EventHostShare>,
+): number {
+  const isCustom = !BUILTIN_COLUMNS.has(key)
+  let total = 0
+  for (const r of rows) {
+    const eventId = r.event_id as string | undefined
+    if (!eventId) continue
+    const share = shareByEventId.get(eventId)
+    if (!share) continue
+    const raw = isCustom
+      ? Number((r.custom_metrics as Record<string, unknown> | null)?.[key]) || 0
+      : Number(r[key]) || 0
+    if (!raw) continue
+    total += shareValue(raw, share)
+  }
+  return total
 }
 
 /**

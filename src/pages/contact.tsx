@@ -196,7 +196,7 @@ export default function ContactPage() {
       </div>
 
       <motion.div
-        className="px-4 sm:px-6 lg:px-8 space-y-6 pb-10 pt-6"
+        className="px-3 space-y-6 pb-10 pt-6"
         initial="hidden"
         animate="visible"
         variants={shouldReduceMotion ? undefined : stagger}

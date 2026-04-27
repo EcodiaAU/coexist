@@ -133,7 +133,12 @@ export const Input = forwardRef<
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type
 
   const sharedClasses = cn(
-    'peer w-full rounded-lg px-4',
+    'peer w-full rounded-lg px-4 box-border',
+    // Native date inputs on iOS render their picker button at intrinsic
+    // width, which can push the field past its container. appearance-none
+    // strips the platform chrome so the field obeys w-full like a regular
+    // text input.
+    isDate && 'appearance-none min-w-0 max-w-full',
     isCompact ? 'py-3' : 'pt-7 pb-2',
     inputClassName ?? 'bg-surface-3',
     'text-[16px] leading-normal text-neutral-900',

@@ -311,9 +311,10 @@ export default function LeadACollectivePage() {
         <WaveTransition fill="fill-primary-50" />
       </div>
 
-      {/* Form */}
+      {/* Form. No outer horizontal padding — each section card uses its own
+          internal padding so we don't double up against the page chrome. */}
       <motion.form
-        className="px-5 space-y-5 pb-12 pt-5"
+        className="space-y-4 pb-12 pt-5 px-3"
         initial="hidden"
         animate="visible"
         variants={shouldReduceMotion ? undefined : stagger}
@@ -380,7 +381,7 @@ export default function LeadACollectivePage() {
             inputClassName="bg-neutral-50 border border-neutral-200"
           />
 
-          <div className="rounded-xl bg-neutral-50 border border-neutral-200 px-4 py-3">
+          <div className="rounded-xl bg-neutral-50 border border-neutral-200 px-4 flex items-center min-h-11 [&>label]:items-center [&>label_span:first-child]:mt-0">
             <Checkbox
               checked={newsOptIn}
               onChange={setNewsOptIn}
@@ -444,7 +445,7 @@ export default function LeadACollectivePage() {
             inputClassName="border border-neutral-200"
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 items-end">
             <Input
               label="Suburb"
               value={suburb}
@@ -454,11 +455,10 @@ export default function LeadACollectivePage() {
               inputClassName="border border-neutral-200"
             />
             <Dropdown
-              label="State"
               options={AUSTRALIAN_STATES}
               value={state}
               onChange={setState}
-              placeholder="Select state"
+              placeholder="State"
               triggerClassName="border border-neutral-200"
             />
           </div>

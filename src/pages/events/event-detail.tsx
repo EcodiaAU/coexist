@@ -561,22 +561,29 @@ export default function EventDetailPage() {
         )
       }
 
+      // Registered but check-in not yet open: collapse "You're registered" +
+      // separate "Check-in opens at X" note into a single disabled button so
+      // we don't waste vertical space.
+      const checkinOpensSoon =
+        !past && checkInOpensAt && now < checkInOpensAt.getTime()
+      const checkinTime = checkInOpensAt?.toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+      })
       return (
         <div className="space-y-2">
-          <div className={cn(
-            'flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-bold border',
-            accent.bg, accent.text, accent.border,
-          )}>
-            <CheckCircle2 size={18} />
-            You're registered
-          </div>
-          {/* Show when check-in opens */}
-          {!past && checkInOpensAt && now < checkInOpensAt.getTime() && (
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-50 text-neutral-500 text-sm">
-              <Clock size={15} className="shrink-0" />
-              Check-in opens at {checkInOpensAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-            </div>
-          )}
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            icon={<CheckCircle2 size={18} />}
+            disabled
+            className={cn('!opacity-100 bg-gradient-to-r', accent.gradient)}
+          >
+            {checkinOpensSoon
+              ? `You're registered — check-in opens ${checkinTime}`
+              : `You're registered`}
+          </Button>
           {/* Leader override: open check-in early */}
           {!past && !isEventActive && isLeaderOrAbove && (
             <Button
@@ -865,6 +872,125 @@ export default function EventDetailPage() {
         initial="hidden"
         animate="visible"
       >
+        {/* ── Leader quick-actions grid (top-of-page for leaders) ── */}
+        {isStaff && !collectiveRole.isLoading && (
+          <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-6 h-6 rounded-lg bg-moss-50 flex items-center justify-center">
+                <Sparkles size={11} className="text-moss-600" />
+              </div>
+              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Leader Actions</span>
+            </div>
+            {/* Leader override: force-open check-in before the window */}
+            {!past && !checkInForcedOpen && !isEventActive && event.status !== 'cancelled' && (
+              <div className="mb-2.5 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-warning-50 border border-warning-200/40">
+                <Clock size={14} className="text-warning-600 shrink-0" />
+                <p className="text-xs text-warning-700 flex-1">
+                  Check-in opens at {checkInOpensAt?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) ?? '-'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCheckInForcedOpen(true)}
+                  className="text-xs font-bold text-warning-700 underline underline-offset-2 cursor-pointer shrink-0"
+                >
+                  Open now
+                </button>
+              </div>
+            )}
+            {checkInForcedOpen && (
+              <div className="mb-2.5 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-success-50 border border-success-200/40">
+                <CheckCircle2 size={14} className="text-success-600 shrink-0" />
+                <p className="text-xs text-success-700">Check-in is open (manual override)</p>
+              </div>
+            )}
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => navigate(`/events/${event.id}/day`)}
+                className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+              >
+                <div className="w-9 h-9 rounded-lg bg-moss-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <ClipboardList size={16} className="text-moss-600" />
+                </div>
+                <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Event Day</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQrSheet(true)}
+                className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+              >
+                <div className="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Hash size={16} className="text-primary-600" />
+                </div>
+                <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Check-in Code</span>
+              </button>
+              {isLeaderOrAbove && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/events/${event.id}/impact`)}
+                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-sprout-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Leaf size={16} className="text-sprout-600" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Log Impact</span>
+                </button>
+              )}
+              {isLeaderOrAbove && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/events/${event.id}/edit`)}
+                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-sky-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Pencil size={16} className="text-sky-600" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Edit</span>
+                </button>
+              )}
+              {isLeaderOrAbove && (
+                <button
+                  type="button"
+                  onClick={handleDuplicate}
+                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Copy size={16} className="text-violet-600" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Duplicate</span>
+                </button>
+              )}
+              {isLeaderOrAbove && !past && event.status !== 'cancelled' && (
+                <button
+                  type="button"
+                  onClick={handleOpenInviteSheet}
+                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                >
+                  <div className={cn(
+                    'w-9 h-9 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform',
+                    alreadyInvited ? 'bg-sky-50' : 'bg-amber-50',
+                  )}>
+                    {alreadyInvited ? <Bell size={16} className="text-sky-600" /> : <Send size={16} className="text-amber-600" />}
+                  </div>
+                  <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">{alreadyInvited ? 'Remind' : 'Invite'}</span>
+                </button>
+              )}
+              {isLeaderOrAbove && event.status !== 'cancelled' && (
+                <button
+                  type="button"
+                  onClick={() => setShowCancelEventSheet(true)}
+                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-error-100/60 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-error-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Ban size={16} className="text-error-600" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-error-600 leading-tight text-center">Cancel</span>
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* ── Key info card ── */}
         <motion.div
           variants={shouldReduceMotion ? undefined : fadeUp}
@@ -1027,124 +1153,7 @@ export default function EventDetailPage() {
           fadeUpVariants={shouldReduceMotion ? undefined : fadeUp}
         />
 
-        {/* ── Leader quick-actions grid ── */}
-        {isStaff && !collectiveRole.isLoading && (
-          <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
-            <div className="flex items-center gap-2 mb-2.5">
-              <div className="w-6 h-6 rounded-lg bg-moss-50 flex items-center justify-center">
-                <Sparkles size={11} className="text-moss-600" />
-              </div>
-              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Leader Actions</span>
-            </div>
-            {/* Leader override: force-open check-in before the window */}
-            {!past && !checkInForcedOpen && !isEventActive && event.status !== 'cancelled' && (
-              <div className="mb-2.5 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-warning-50 border border-warning-200/40">
-                <Clock size={14} className="text-warning-600 shrink-0" />
-                <p className="text-xs text-warning-700 flex-1">
-                  Check-in opens at {checkInOpensAt?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) ?? '-'}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setCheckInForcedOpen(true)}
-                  className="text-xs font-bold text-warning-700 underline underline-offset-2 cursor-pointer shrink-0"
-                >
-                  Open now
-                </button>
-              </div>
-            )}
-            {checkInForcedOpen && (
-              <div className="mb-2.5 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-success-50 border border-success-200/40">
-                <CheckCircle2 size={14} className="text-success-600 shrink-0" />
-                <p className="text-xs text-success-700">Check-in is open (manual override)</p>
-              </div>
-            )}
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => navigate(`/events/${event.id}/day`)}
-                className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
-              >
-                <div className="w-9 h-9 rounded-lg bg-moss-50 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <ClipboardList size={16} className="text-moss-600" />
-                </div>
-                <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Event Day</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowQrSheet(true)}
-                className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
-              >
-                <div className="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Hash size={16} className="text-primary-600" />
-                </div>
-                <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Check-in Code</span>
-              </button>
-              {isLeaderOrAbove && (
-                <button
-                  type="button"
-                  onClick={() => navigate(`/events/${event.id}/impact`)}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-sprout-50 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Leaf size={16} className="text-sprout-600" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Log Impact</span>
-                </button>
-              )}
-              {isLeaderOrAbove && (
-                <button
-                  type="button"
-                  onClick={() => navigate(`/events/${event.id}/edit`)}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-sky-50 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Pencil size={16} className="text-sky-600" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Edit</span>
-                </button>
-              )}
-              {isLeaderOrAbove && (
-                <button
-                  type="button"
-                  onClick={handleDuplicate}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Copy size={16} className="text-violet-600" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Duplicate</span>
-                </button>
-              )}
-              {isLeaderOrAbove && !past && event.status !== 'cancelled' && (
-                <button
-                  type="button"
-                  onClick={handleOpenInviteSheet}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
-                >
-                  <div className={cn(
-                    'w-9 h-9 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform',
-                    alreadyInvited ? 'bg-sky-50' : 'bg-amber-50',
-                  )}>
-                    {alreadyInvited ? <Bell size={16} className="text-sky-600" /> : <Send size={16} className="text-amber-600" />}
-                  </div>
-                  <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">{alreadyInvited ? 'Remind' : 'Invite'}</span>
-                </button>
-              )}
-              {isLeaderOrAbove && event.status !== 'cancelled' && (
-                <button
-                  type="button"
-                  onClick={() => setShowCancelEventSheet(true)}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-error-100/60 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-error-50 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Ban size={16} className="text-error-600" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-error-600 leading-tight text-center">Cancel</span>
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
+        {/* Leader quick-actions are now rendered above the key-info card. */}
 
         {/* ── Ticket Sales (ticketed events, leader+ only) ── */}
         {isTicketed && isStaff && (

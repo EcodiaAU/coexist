@@ -28,18 +28,18 @@ export function EventActions({ past, fadeUpVariants, onCalendarOpen, onShare }: 
       <Button
         variant="secondary"
         size="md"
-        icon={<CalendarPlus size={16} />}
+        icon={<CalendarPlus size={14} />}
         onClick={onCalendarOpen}
-        className="flex-1"
+        className="flex-1 text-xs whitespace-nowrap px-2"
       >
         Add to Calendar
       </Button>
       <Button
         variant="secondary"
         size="md"
-        icon={<Share2 size={16} />}
+        icon={<Share2 size={14} />}
         onClick={onShare}
-        className="flex-1"
+        className="flex-1 text-xs whitespace-nowrap px-2"
       >
         Share
       </Button>

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, escapeIlike } from '@/lib/supabase'
-import { sumMetric } from '@/lib/impact-metrics'
+import { sumMetricWeighted } from '@/lib/impact-metrics'
 import { fetchImpactRows } from '@/lib/impact-query'
 import { logAudit } from '@/lib/audit'
 import { countByField, STATUS_FILTERS } from '@/lib/query-builders'
@@ -240,12 +240,14 @@ export function useAdminCollectiveStats(collectiveId: string | undefined) {
 
       // RPC uses COALESCE(SUM(...), 0) so unmeasured metrics aggregate to 0,
       // which is the correct semantic for dashboard totals (vs null in raw rows).
+      // The RPC is multi-host aware: it resolves via event_hosts and applies
+      // share weighting so co-hosted events don't double-count.
       const [rpcRes, impactResult] = await Promise.all([
         supabase.rpc('get_collective_stats', { p_collective_id: collectiveId }),
         fetchImpactRows({ collectiveId, timeRange: 'all-time', includeLegacy: true }),
       ])
       if (rpcRes.error) throw rpcRes.error
-      const impactRows = impactResult.rows
+      const { rows: impactRows, shareByEventId } = impactResult
 
       const rpcData = rpcRes.data as {
         member_count: number
@@ -260,9 +262,12 @@ export function useAdminCollectiveStats(collectiveId: string | undefined) {
         invasive_weeds_pulled: number
       }
 
+      // hours_total is overridden client-side because the legacy estimate
+      // (attendees × duration) lives in TS, not the RPC. Weight by share so
+      // co-hosted events split hours across hosts.
       return {
         ...rpcData,
-        hours_total: Math.round(sumMetric(impactRows, 'hours_total')),
+        hours_total: Math.round(sumMetricWeighted(impactRows, 'hours_total', shareByEventId)),
       }
     },
     enabled: !!collectiveId,

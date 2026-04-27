@@ -267,18 +267,18 @@ export default function ProfilePage() {
           <Button
             variant="primary"
             size="sm"
-            icon={<Pencil size={15} />}
+            icon={<Pencil size={14} />}
             onClick={() => navigate('/profile/edit')}
-            className="shadow-sm bg-white !text-neutral-700 hover:!bg-neutral-50 border border-neutral-200"
+            className="shadow-sm bg-white !text-neutral-700 hover:!bg-neutral-50 border border-neutral-200 whitespace-nowrap text-xs"
           >
             Edit Profile
           </Button>
           <Button
             variant="secondary"
             size="sm"
-            icon={<Ticket size={15} />}
+            icon={<Ticket size={14} />}
             onClick={() => navigate('/profile/tickets')}
-            className="shadow-sm bg-white !text-neutral-700 hover:!bg-neutral-50 border border-neutral-200"
+            className="shadow-sm bg-white !text-neutral-700 hover:!bg-neutral-50 border border-neutral-200 whitespace-nowrap text-xs"
           >
             Tickets
           </Button>

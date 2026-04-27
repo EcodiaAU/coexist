@@ -275,6 +275,12 @@ export default function LeaderEventsPage() {
                           {event.address}
                         </p>
                       )}
+                      {event.cohost_names.length > 0 && (
+                        <p className="text-[11px] text-sprout-600 font-medium truncate flex items-center gap-1 mt-0.5">
+                          <Users size={10} className="shrink-0" />
+                          Co-hosted with {event.cohost_names.join(', ')}
+                        </p>
+                      )}
                       <div className="flex items-center gap-3 mt-1.5">
                         <span className="text-[11px] font-semibold text-neutral-400 flex items-center gap-1">
                           <Users size={11} />

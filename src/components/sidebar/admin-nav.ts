@@ -4,7 +4,6 @@ import {
   ShoppingBag,
   Megaphone,
   MapPin,
-  Handshake,
   ClipboardList,
   ClipboardCheck,
   FileText,
@@ -68,7 +67,7 @@ export const adminNavCategories: NavCategory[] = [
     items: [
       { label: 'Organisational Policies', path: '/admin/legal-pages', icon: icon(FileText), capability: 'manage_system' },
       { label: 'Applications', path: '/admin/applications', icon: icon(ClipboardList), capability: 'manage_users' },
-      { label: 'Partners', path: '/admin/partners', icon: icon(Handshake), capability: 'manage_partners' },
+      // Partners admin config hidden until the public partners page is back.
       { label: 'Contacts', path: '/admin/contacts', icon: icon(Phone), capability: 'manage_users' },
       { label: 'Dev Tools', path: '/admin/dev-tools', icon: icon(Bug), devOnly: true },
     ],

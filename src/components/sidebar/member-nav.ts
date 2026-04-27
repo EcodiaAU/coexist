@@ -4,7 +4,6 @@ import {
   Heart,
   Megaphone,
   Users,
-  Handshake,
   Mail,
   MessageCircle,
   Home,
@@ -37,7 +36,8 @@ export const memberNavCategories: NavCategory[] = [
       { label: 'Shop', path: '/shop', icon: icon(ShoppingBag) },
       { label: 'Donate', path: '/donate', icon: icon(Heart) },
       { label: 'Leadership Opportunities', path: '/leadership', icon: icon(Users) },
-      { label: 'Our Partners', path: '/partners', icon: icon(Handshake) },
+      // Our Partners: hidden from the sidebar for now; route still exists.
+      // Re-add when the partners page content is ready.
       { label: 'Contact Us', path: '/contact', icon: icon(Mail) },
     ],
   },

@@ -1,6 +1,6 @@
 import { useQuery, keepPreviousData, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { sumMetric } from '@/lib/impact-metrics'
+import { sumMetricWeighted } from '@/lib/impact-metrics'
 import { fetchImpactRows } from '@/lib/impact-query'
 
 /* ------------------------------------------------------------------ */
@@ -173,24 +173,30 @@ export interface CollectiveFullStats {
 async function fetchCollectiveFullStats(collectiveId: string): Promise<CollectiveFullStats | null> {
   const now = new Date().toISOString()
 
-  const [{ rows, legacyRows, eventIds, eventCount }, membersRes, eventsRes, cleanupRes, leadersCountRes] =
+  const [{ rows, legacyRows, eventIds, eventCount, shareByEventId }, membersRes, eventsRes, cleanupRes, leadersCountRes] =
     await Promise.all([
       // All-time: include legacy rows for full historical picture
       fetchImpactRows({ collectiveId, timeRange: 'all-time', includeLegacy: true }),
       supabase.from('collective_members').select('id', { count: 'exact', head: true })
         .eq('collective_id', collectiveId).eq('status', 'active'),
-      supabase.from('events').select('id', { count: 'exact', head: true })
-        .eq('collective_id', collectiveId).lt('date_start', now)
-        .neq('status', 'cancelled').neq('status', 'draft'),
-      supabase.from('events').select('id', { count: 'exact', head: true })
+      // Cohosted events count too: resolve via event_hosts so this collective's
+      // events_logged matches the impact rollup.
+      supabase.from('event_hosts').select('event_id', { count: 'exact', head: true })
+        .eq('collective_id', collectiveId),
+      supabase.from('event_hosts').select('event_id, events!inner(activity_type, date_start)', { count: 'exact', head: true })
         .eq('collective_id', collectiveId)
-        .in('activity_type', ['clean_up'])
-        .lt('date_start', now),
+        .eq('events.activity_type', 'clean_up')
+        .lt('events.date_start', now),
       supabase.from('app_settings').select('value')
         .eq('key', 'leaders_empowered:' + collectiveId).single(),
     ])
+  void eventsRes // legacy reference — replaced by eventCount returned from fetchImpactRows
 
   const allRows = [...rows, ...legacyRows] as Record<string, unknown>[]
+
+  // Multi-host aware sum: each row contributes only this collective's share so
+  // co-hosted events don't double-count when summed across collectives.
+  const sumW = (key: string) => sumMetricWeighted(allRows, key, shareByEventId)
 
   let attendanceCount = 0
   let attendanceRate = 0
@@ -209,12 +215,12 @@ async function fetchCollectiveFullStats(collectiveId: string): Promise<Collectiv
 
   return {
     eventsAttended:      attendanceCount,
-    volunteerHours:      Math.round(sumMetric(allRows, 'hours_total')),
-    treesPlanted:        sumMetric(allRows, 'trees_planted'),
-    invasiveWeedsPulled: sumMetric(allRows, 'invasive_weeds_pulled'),
-    rubbishKg:           Math.round(sumMetric(allRows, 'rubbish_kg') * 10) / 10,
+    volunteerHours:      Math.round(sumW('hours_total')),
+    treesPlanted:        sumW('trees_planted'),
+    invasiveWeedsPulled: sumW('invasive_weeds_pulled'),
+    rubbishKg:           Math.round(sumW('rubbish_kg') * 10) / 10,
     cleanupSites:        cleanupRes.count ?? 0,
-    coastlineCleanedM:   Math.round(sumMetric(allRows, 'coastline_cleaned_m')),
+    coastlineCleanedM:   Math.round(sumW('coastline_cleaned_m')),
     leadersEmpowered:    (leadersCountRes.data?.value as { count?: number })?.count ?? 0,
     eventsLogged:        eventCount,
     totalMembers:        membersRes.count ?? 0,

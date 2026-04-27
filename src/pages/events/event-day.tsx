@@ -408,17 +408,17 @@ export default function EventDayPage() {
         <div className="flex gap-3">
           <Button
             variant="secondary"
-            icon={<Hash size={18} />}
+            icon={<Hash size={16} />}
             onClick={() => setShowQr(true)}
-            className="flex-1 ring-1 ring-primary-200/60"
+            className="flex-1 ring-1 ring-primary-200/60 text-xs whitespace-nowrap px-2"
           >
             Show Code
           </Button>
           <Button
             variant="primary"
-            icon={<CheckCheck size={18} />}
+            icon={<CheckCheck size={16} />}
             onClick={() => setShowBulkConfirm(true)}
-            className="flex-1 shadow-md shadow-success-300/30"
+            className="flex-1 shadow-md shadow-success-300/30 text-xs whitespace-nowrap px-2"
             disabled={stats.checkedIn === stats.registered}
           >
             Mark All Present
