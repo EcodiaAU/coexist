@@ -36,14 +36,17 @@ const config: CapacitorConfig = {
     },
 
     // Splash Screen
+    // The system splash (Android 12+ Theme.SplashScreen / iOS LaunchScreen) shows
+    // until the WebView is ready. After that, the React `SplashPage` component
+    // handles the in-app splash → no need for the Capacitor plugin overlay.
+    // Setting launchShowDuration: 0 skips the post-WebView overlay entirely.
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 0,
       launchAutoHide: true,
-      launchFadeOutDuration: 300,
-      backgroundColor: '#fafaf8', // neutral-50
+      backgroundColor: '#fafaf8', // matches system splash + React SplashPage bg
       showSpinner: false,
       androidSplashResourceName: 'splash',
-      androidScaleType: 'CENTER_CROP',
+      androidScaleType: 'CENTER_INSIDE',
       splashFullScreen: true,
       splashImmersive: true,
     },

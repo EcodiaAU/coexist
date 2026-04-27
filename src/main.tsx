@@ -17,8 +17,19 @@ import {
 } from '@/lib/offline-sync'
 import { CookieConsentBanner } from '@/components/cookie-consent'
 import { initSentry, SentryErrorBoundary } from '@/lib/sentry'
+import { Capacitor } from '@capacitor/core'
+import { SplashScreen } from '@capacitor/splash-screen'
 import App from './App'
 import './styles/globals.css'
+
+// Dismiss the Capacitor SplashScreen plugin overlay immediately on native.
+// The system splash (Android 12+ Theme.SplashScreen / iOS LaunchScreen) covers
+// the launch gap; the React `SplashPage` component handles the in-app splash.
+// The plugin's WebView overlay would otherwise flash a stretched/cropped image
+// between the system splash and the React splash.
+if (Capacitor.isNativePlatform()) {
+  SplashScreen.hide({ fadeOutDuration: 0 }).catch(() => { /* plugin not present */ })
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {

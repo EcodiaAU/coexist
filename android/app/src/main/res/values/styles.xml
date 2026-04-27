@@ -21,7 +21,14 @@
     </style>
 
 
+    <!-- Launch theme: Android 12+ system splash API.
+         Android 12+ ignores android:background on Theme.SplashScreen and instead
+         uses windowSplashScreenBackground + windowSplashScreenAnimatedIcon.
+         The icon is auto-centered (~108dp inside a 288dp safe area).
+         postSplashScreenTheme hands off to the normal app theme once the WebView is ready. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/splashBackground</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>
