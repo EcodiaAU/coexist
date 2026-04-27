@@ -537,39 +537,22 @@ export default function EventDetailPage() {
     }
 
     if (userStatus === 'registered') {
-      if (isEventActive) {
-        return (
-          <div className="space-y-2">
-            <Button
-              variant="primary"
-              size="lg"
-              fullWidth
-              icon={<CheckCircle2 size={20} />}
-              onClick={() => setShowCheckInSheet(true)}
-              className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
-            >
-              Check In Now
-            </Button>
-            <Button
-              variant="ghost"
-              fullWidth
-              onClick={() => setShowCancelSheet(true)}
-            >
-              Cancel Registration
-            </Button>
-          </div>
-        )
-      }
-
-      // Registered but check-in not yet open: collapse "You're registered" +
-      // separate "Check-in opens at X" note into a single disabled button so
-      // we don't waste vertical space.
+      // One primary button. When check-in is open it's tappable and reads
+      // "Check In Now". When it's not yet open the same button is disabled
+      // and shows when check-in opens, so we don't burn an extra row on a
+      // separate "You're registered" pill.
       const checkinOpensSoon =
         !past && checkInOpensAt && now < checkInOpensAt.getTime()
       const checkinTime = checkInOpensAt?.toLocaleTimeString([], {
         hour: 'numeric',
         minute: '2-digit',
       })
+      const buttonLabel = isEventActive
+        ? 'Check In Now'
+        : checkinOpensSoon
+          ? `Check-in opens ${checkinTime}`
+          : "You're registered"
+
       return (
         <div className="space-y-2">
           <Button
@@ -577,12 +560,16 @@ export default function EventDetailPage() {
             size="lg"
             fullWidth
             icon={<CheckCircle2 size={18} />}
-            disabled
-            className={cn('!opacity-100 bg-gradient-to-r', accent.gradient)}
+            disabled={!isEventActive}
+            onClick={isEventActive ? () => setShowCheckInSheet(true) : undefined}
+            className={cn(
+              'bg-gradient-to-r shadow-sm',
+              accent.gradient,
+              isEventActive && accent.glow,
+              !isEventActive && '!opacity-100',
+            )}
           >
-            {checkinOpensSoon
-              ? `You're registered — check-in opens ${checkinTime}`
-              : `You're registered`}
+            {buttonLabel}
           </Button>
           {/* Leader override: open check-in early */}
           {!past && !isEventActive && isLeaderOrAbove && (
