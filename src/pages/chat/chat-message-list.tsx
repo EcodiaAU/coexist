@@ -11,6 +11,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Lock } from 'lucide-react'
 import { ChatBubble, PollCard, AnnouncementCard } from '@/components/chat-bubble'
 import { HtmlChatBubble } from '@/components/html-chat-bubble'
+import { MessageReactions } from '@/components/message-reactions'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { useToast } from '@/components/toast'
@@ -375,21 +376,38 @@ export function ChatMessageList({
       )
     }
 
+    // Reactions are gated on: collective chat, non-optimistic message,
+    // we know the collective id (needed for RLS + realtime filter).
+    const reactionsEnabled =
+      isCollective &&
+      !!msgCollectiveId &&
+      !msg._optimistic &&
+      !msg.id.startsWith('optimistic-')
+
     if (messageType === 'html') {
       return (
-        <HtmlChatBubble
-          htmlContent={msg.content ?? ''}
-          sent={isSent}
-          timestamp={new Date(msg.created_at!)}
-          senderName={msg.profiles?.display_name ?? undefined}
-          senderAvatar={msg.profiles?.avatar_url ?? undefined}
-          senderId={msg.user_id ?? undefined}
-          roleBadge={roleBadge}
-          skipAnimation={msg._confirmed}
-          onAvatarTap={(userId) => onProfileTap(userId)}
-          onSenderTap={(userId) => onProfileTap(userId)}
-          onLongPress={() => onMessageLongPress(msg)}
-        />
+        <>
+          <HtmlChatBubble
+            htmlContent={msg.content ?? ''}
+            sent={isSent}
+            timestamp={new Date(msg.created_at!)}
+            senderName={msg.profiles?.display_name ?? undefined}
+            senderAvatar={msg.profiles?.avatar_url ?? undefined}
+            senderId={msg.user_id ?? undefined}
+            roleBadge={roleBadge}
+            skipAnimation={msg._confirmed}
+            onAvatarTap={(userId) => onProfileTap(userId)}
+            onSenderTap={(userId) => onProfileTap(userId)}
+            onLongPress={() => onMessageLongPress(msg)}
+          />
+          {reactionsEnabled && (
+            <MessageReactions
+              messageId={msg.id}
+              collectiveId={msgCollectiveId!}
+              sent={isSent}
+            />
+          )}
+        </>
       )
     }
 
@@ -437,6 +455,13 @@ export function ChatMessageList({
             )}>
               (edited)
             </p>
+          )}
+          {reactionsEnabled && (
+            <MessageReactions
+              messageId={msg.id}
+              collectiveId={msgCollectiveId!}
+              sent={isSent}
+            />
           )}
         </div>
       )
