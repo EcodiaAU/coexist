@@ -12,8 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "cap:sync": "npx cap sync",
-    "build:android": "npm run build && npx cap sync android",
-    "build:ios": "npm run build && npx cap sync ios"
+    "build:android": "CAPACITOR_BUILD=true npm run build && npx cap sync android",
+    "build:ios": "CAPACITOR_BUILD=true npm run build && npx cap sync ios"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^8.0.1",
