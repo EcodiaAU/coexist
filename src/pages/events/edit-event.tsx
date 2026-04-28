@@ -82,6 +82,8 @@ export default function EditEventPage() {
         location_lng: pos?.lng ?? null,
         capacity: event.capacity ? String(event.capacity) : '',
         cover_image_url: event.cover_image_url ?? '',
+        cover_image_position_x: (event as { cover_image_position_x?: number | null }).cover_image_position_x ?? 50,
+        cover_image_position_y: (event as { cover_image_position_y?: number | null }).cover_image_position_y ?? 50,
         is_public: event.is_public ?? true,
         is_external_collaboration: event.is_external_collaboration ?? false,
         external_registration_url: event.external_registration_url ?? '',
@@ -137,6 +139,8 @@ export default function EditEventPage() {
         location_point: locationPoint,
         capacity: form.parsedCapacity(),
         cover_image_url: form.fields.cover_image_url || null,
+        cover_image_position_x: form.fields.cover_image_position_x,
+        cover_image_position_y: form.fields.cover_image_position_y,
         is_public: form.fields.is_public,
         is_external_collaboration: form.fields.is_external_collaboration,
         external_registration_url: form.fields.external_registration_url || null,
@@ -350,6 +354,9 @@ export default function EditEventPage() {
             uploadProgress={form.uploadProgress}
             uploadError={form.uploadError}
             disabled={isDayOfMode}
+            positionX={form.fields.cover_image_position_x}
+            positionY={form.fields.cover_image_position_y}
+            onPositionChange={form.setCoverImagePosition}
           />
         </motion.div>
 

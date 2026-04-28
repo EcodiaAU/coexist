@@ -17,6 +17,8 @@ import {
 import type { MapCenter } from '@/components'
 import { PlaceAutocomplete } from '@/components/place-autocomplete'
 import type { PlaceResult } from '@/components/place-autocomplete'
+import { CoverImageFocalPointPicker } from '@/components/cover-image-focal-point-picker'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 import { cn } from '@/lib/cn'
 
 /* ------------------------------------------------------------------ */
@@ -183,6 +185,12 @@ interface CoverImageFieldsProps {
   uploadProgress: number | null
   uploadError: string | null
   disabled?: boolean
+  /** Focal point x percent (0-100). Defaults to 50. */
+  positionX?: number
+  /** Focal point y percent (0-100). Defaults to 50. */
+  positionY?: number
+  /** Fired when admin moves the focal point. */
+  onPositionChange?: (x: number, y: number) => void
 }
 
 export function CoverImageFields({
@@ -194,26 +202,43 @@ export function CoverImageFields({
   uploadProgress,
   uploadError,
   disabled,
+  positionX = 50,
+  positionY = 50,
+  onPositionChange,
 }: CoverImageFieldsProps) {
   return (
     <>
       {coverImageUrl ? (
-        <div className="relative rounded-xl overflow-hidden">
-          <img
-            src={coverImageUrl}
-            alt="Cover preview"
-            className="w-full object-cover"
-            style={{ aspectRatio: '16/9' }}
-          />
-          {!disabled && (
-            <button
-              type="button"
-              onClick={onRemove}
-              className="absolute top-2 right-2 min-w-11 min-h-11 rounded-full bg-black/50 text-white flex items-center justify-center cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
-              aria-label="Remove cover image"
-            >
-              <X size={16} />
-            </button>
+        <div className="space-y-3">
+          <div className="relative rounded-xl overflow-hidden">
+            <img
+              src={coverImageUrl}
+              alt="Cover preview"
+              className="w-full object-cover"
+              style={{
+                aspectRatio: '16/9',
+                ...coverImagePositionStyle(positionX, positionY),
+              }}
+            />
+            {!disabled && (
+              <button
+                type="button"
+                onClick={onRemove}
+                className="absolute top-2 right-2 min-w-11 min-h-11 rounded-full bg-black/50 text-white flex items-center justify-center cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
+                aria-label="Remove cover image"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          {onPositionChange && (
+            <CoverImageFocalPointPicker
+              imageUrl={coverImageUrl}
+              x={positionX}
+              y={positionY}
+              onChange={onPositionChange}
+              disabled={disabled}
+            />
           )}
         </div>
       ) : (

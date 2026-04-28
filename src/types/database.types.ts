@@ -1143,6 +1143,8 @@ export type Database = {
       }
       collectives: {
         Row: {
+          cover_image_position_x: number
+          cover_image_position_y: number
           cover_image_url: string | null
           created_at: string | null
           description: string | null
@@ -1158,6 +1160,8 @@ export type Database = {
           state: string | null
         }
         Insert: {
+          cover_image_position_x?: number
+          cover_image_position_y?: number
           cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
@@ -1173,6 +1177,8 @@ export type Database = {
           state?: string | null
         }
         Update: {
+          cover_image_position_x?: number
+          cover_image_position_y?: number
           cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
@@ -2977,6 +2983,8 @@ export type Database = {
           check_in_code: string | null
           checkin_window_minutes: number | null
           collective_id: string
+          cover_image_position_x: number
+          cover_image_position_y: number
           cover_image_url: string | null
           created_at: string | null
           created_by: string | null
@@ -3001,6 +3009,8 @@ export type Database = {
           check_in_code?: string | null
           checkin_window_minutes?: number | null
           collective_id: string
+          cover_image_position_x?: number
+          cover_image_position_y?: number
           cover_image_url?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -3025,6 +3035,8 @@ export type Database = {
           check_in_code?: string | null
           checkin_window_minutes?: number | null
           collective_id?: string
+          cover_image_position_x?: number
+          cover_image_position_y?: number
           cover_image_url?: string | null
           created_at?: string | null
           created_by?: string | null

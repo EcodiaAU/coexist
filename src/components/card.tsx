@@ -17,6 +17,7 @@ import {
     Leaf,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 import { OptimizedImage } from './optimized-image'
 
 /* ------------------------------------------------------------------ */
@@ -157,6 +158,10 @@ interface CardImageProps {
   alt: string
   aspectRatio?: string
   className?: string
+  /** Focal point x percent (0-100). Defaults to 50. */
+  positionX?: number | null
+  /** Focal point y percent (0-100). Defaults to 50. */
+  positionY?: number | null
 }
 
 function CardImage({
@@ -164,6 +169,8 @@ function CardImage({
   alt,
   aspectRatio = '16/9',
   className,
+  positionX,
+  positionY,
 }: CardImageProps) {
   const { variant } = useCard()
   const hasGradient = variant === 'event'
@@ -176,6 +183,7 @@ function CardImage({
         aspectRatio={aspectRatio}
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
         className="absolute inset-0"
+        imgStyle={coverImagePositionStyle(positionX, positionY)}
       />
       {hasGradient && (
         <div
@@ -199,6 +207,10 @@ interface CardOverlayProps {
   className?: string
   /** Gradient direction: 'bottom' (default) or 'top' */
   gradientFrom?: 'bottom' | 'top'
+  /** Focal point x percent (0-100). Defaults to 50. */
+  positionX?: number | null
+  /** Focal point y percent (0-100). Defaults to 50. */
+  positionY?: number | null
 }
 
 function CardOverlay({
@@ -208,6 +220,8 @@ function CardOverlay({
   children,
   className,
   gradientFrom = 'bottom',
+  positionX,
+  positionY,
 }: CardOverlayProps) {
   const gradientClass = gradientFrom === 'top'
     ? 'bg-gradient-to-b from-black/60 via-black/25 to-transparent'
@@ -221,6 +235,7 @@ function CardOverlay({
         aspectRatio={aspectRatio}
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
         className="absolute inset-0"
+        imgStyle={coverImagePositionStyle(positionX, positionY)}
       />
       <div className={cn('absolute inset-0', gradientClass)} aria-hidden="true" />
       <div className="absolute inset-0 flex flex-col justify-end p-4">

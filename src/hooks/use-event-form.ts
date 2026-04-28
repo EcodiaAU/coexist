@@ -4,6 +4,13 @@ import { useImageUpload } from '@/hooks/use-image-upload'
 import { useToast } from '@/components/toast'
 import type { Database } from '@/types/database.types'
 
+function clampPercent(n: number): number {
+  if (!Number.isFinite(n)) return 50
+  if (n < 0) return 0
+  if (n > 100) return 100
+  return Math.round(n)
+}
+
 export type ActivityType = Database['public']['Enums']['activity_type']
 
 /* ------------------------------------------------------------------ */
@@ -21,6 +28,8 @@ export interface EventFormFields {
   location_lng: number | null
   capacity: string
   cover_image_url: string
+  cover_image_position_x: number
+  cover_image_position_y: number
   is_public: boolean
   is_external_collaboration: boolean
   external_registration_url: string
@@ -37,6 +46,8 @@ export const INITIAL_FORM_FIELDS: EventFormFields = {
   location_lng: null,
   capacity: '',
   cover_image_url: '',
+  cover_image_position_x: 50,
+  cover_image_position_y: 50,
   is_public: true,
   is_external_collaboration: false,
   external_registration_url: '',
@@ -83,7 +94,14 @@ export function useEventForm({ initial }: UseEventFormOptions) {
     if (!result) return
     try {
       const uploaded = await upload(result.blob)
-      setFields((prev) => ({ ...prev, cover_image_url: uploaded.url }))
+      // Reset focal point to centre when a new image is uploaded - the old
+      // focal point is meaningless against a different image.
+      setFields((prev) => ({
+        ...prev,
+        cover_image_url: uploaded.url,
+        cover_image_position_x: 50,
+        cover_image_position_y: 50,
+      }))
     } catch (err) {
       console.error('[event-form] upload failed:', err)
       const msg = err instanceof Error ? err.message : 'unknown'
@@ -96,7 +114,12 @@ export function useEventForm({ initial }: UseEventFormOptions) {
     if (!result) return
     try {
       const uploaded = await upload(result.blob)
-      setFields((prev) => ({ ...prev, cover_image_url: uploaded.url }))
+      setFields((prev) => ({
+        ...prev,
+        cover_image_url: uploaded.url,
+        cover_image_position_x: 50,
+        cover_image_position_y: 50,
+      }))
     } catch (err) {
       console.error('[event-form] upload failed:', err)
       const msg = err instanceof Error ? err.message : 'unknown'
@@ -105,7 +128,22 @@ export function useEventForm({ initial }: UseEventFormOptions) {
   }, [capture, upload, toast])
 
   const removeCoverImage = useCallback(() => {
-    setFields((prev) => ({ ...prev, cover_image_url: '' }))
+    setFields((prev) => ({
+      ...prev,
+      cover_image_url: '',
+      cover_image_position_x: 50,
+      cover_image_position_y: 50,
+    }))
+  }, [])
+
+  const setCoverImagePosition = useCallback((x: number, y: number) => {
+    const clampedX = clampPercent(x)
+    const clampedY = clampPercent(y)
+    setFields((prev) => ({
+      ...prev,
+      cover_image_position_x: clampedX,
+      cover_image_position_y: clampedY,
+    }))
   }, [])
 
   /* Validation: minimum required fields */
@@ -140,6 +178,7 @@ export function useEventForm({ initial }: UseEventFormOptions) {
     handleUploadFromGallery,
     handleUploadFromCamera,
     removeCoverImage,
+    setCoverImagePosition,
 
     // Validation
     isBasicsValid,
