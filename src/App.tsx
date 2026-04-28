@@ -176,9 +176,6 @@ const LearnCompletePage = lazy(() => import('@/pages/learn/complete'))
 const ReportsPage = lazy(() => import('@/pages/reports/index'))
 const NationalImpactPage = lazy(() => import('@/pages/impact/national'))
 
-// Temp map page
-const MapPage = lazy(() => import('@/pages/map'))
-
 /* ------------------------------------------------------------------ */
 /*  Eager preload moved to useRolePrefetch hook (role-aware).          */
 /*  Downloads the user's top 5 pages first based on their role,        */
@@ -343,18 +340,6 @@ function App() {
             <RequireAuth>
               <AppShell bare>
                 <WelcomeBackPage />
-              </AppShell>
-            </RequireAuth>
-          }
-        />
-
-        {/* ---- Map (auth required, bare shell - no sidebar/tabs) ---- */}
-        <Route
-          path="/map"
-          element={
-            <RequireAuth>
-              <AppShell bare>
-                <MapPage />
               </AppShell>
             </RequireAuth>
           }
