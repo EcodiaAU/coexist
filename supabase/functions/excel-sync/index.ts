@@ -79,6 +79,24 @@ const SYNC_CUTOFF_DATE = '2026-01-01'
 // causes duplicate rows on the next sync run.
 const FORMS_NAMESPACE_UUID = '6b9c8f4a-2e3d-5c7a-8b1f-4a9e6d2c1b0f'
 
+// ---- Collective aliases ----
+// Legacy / divergent collective names on the Forms sheet that should resolve to a
+// different canonical collective_id on reverse-sync. Key = lowercase + trimmed
+// legacy name as it appears in sheet col-3. Value = canonical collective UUID
+// in the DB.
+//
+// Adding a new alias is a coordinated change:
+//   1. Add the row in `clients/coexist.md` "Collective Aliases" table (doctrine).
+//   2. Add the entry below.
+//   3. Redeploy this Edge Function.
+//   4. Plan the data migration if the alias has its own row with events.
+//
+// See ~/ecodiaos/patterns/excel-sync-collectives-migration.md "Collective aliases".
+const COLLECTIVE_ALIASES: Record<string, string> = {
+  'byron bay': '9a2f9919-26b9-420d-b6f5-ddeb9a37b1b3', // -> Northern Rivers
+  'melbourne city': 'b6cae731-d6bf-4bf1-9640-0117feaa3755', // -> Melbourne
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -597,9 +615,11 @@ async function syncToExcel(
   updated: number
   skipped: number
   skippedDuplicates: number
+  weakDedupWarnings: { eventId: string; collective: string; date: string; title: string; existingFormsTitle: string }[]
   errors: string[]
 }> {
   const errors: string[] = []
+  const weakDedupWarnings: { eventId: string; collective: string; date: string; title: string; existingFormsTitle: string }[] = []
   let appended = 0
   let updated = 0
   let skipped = 0
@@ -625,7 +645,15 @@ async function syncToExcel(
   // If an app event's signature matches a Forms row, it is skipped — not appended.
   // This prevents double-entries during the transition from Forms to the app for any
   // collective that had real events logged via both systems on the same date.
+  //
+  // ALSO build a WEAK signature index: (collective_lc, date_iso) -> existing Forms title.
+  // This catches the "same event, different title" case (Apr 11 Adelaide
+  // 'Craigburn Farm Hike' vs 'Craigburn Nature Hike'). Strict signature misses
+  // it because titles differ. We do NOT auto-skip on weak match (false positives
+  // would lose data when two genuinely-distinct events fall on the same day for
+  // the same collective). Instead we surface a warning the admin can act on.
   const formsSignatures = new Set<string>()
+  const formsWeakIndex = new Map<string, string>() // 'collective_lc|date_iso' -> existing Forms title
   for (let i = 1; i < excelState.rows.length; i++) {
     const row = excelState.rows[i]
     const id = String(row[0] ?? '')
@@ -639,6 +667,8 @@ async function syncToExcel(
     const collective = String(row[3] ?? '')
     if (!title || !dateIso) continue
     formsSignatures.add(sigOf(collective, dateIso, title))
+    const weakKey = `${collective.trim().toLowerCase()}|${dateIso.slice(0, 10)}`
+    if (!formsWeakIndex.has(weakKey)) formsWeakIndex.set(weakKey, title)
   }
 
   // Determine which events to sync
@@ -698,6 +728,25 @@ async function syncToExcel(
           errors.push(`Event ${eid}: skipped (matches Forms row signature ${eventSig})`)
           continue
         }
+
+        // Weak (collective, date) match warning. Strict signature missed it
+        // because the titles differ (typically leader free-text drift between
+        // Forms title and app title for the same event). We do NOT auto-skip
+        // — admin reconciliation. The warning surfaces the suspect pair so
+        // monitoring can flag it for review.
+        const dateIso = (data.date_start ?? '').slice(0, 10)
+        const weakKey = `${(data.collective_name ?? '').trim().toLowerCase()}|${dateIso}`
+        const existingFormsTitle = formsWeakIndex.get(weakKey)
+        if (existingFormsTitle && existingFormsTitle.trim().toLowerCase() !== (data.title ?? '').trim().toLowerCase()) {
+          weakDedupWarnings.push({
+            eventId: eid,
+            collective: data.collective_name ?? '',
+            date: dateIso,
+            title: data.title ?? '',
+            existingFormsTitle,
+          })
+        }
+
         newRows.push(row)
         appended++
       }
@@ -739,7 +788,7 @@ async function syncToExcel(
     }
   }
 
-  return { appended, updated, skipped, skippedDuplicates, errors }
+  return { appended, updated, skipped, skippedDuplicates, weakDedupWarnings, errors }
 }
 
 // ---- Sync: Excel -> Supabase (Excel is source of truth) ----
@@ -861,9 +910,15 @@ async function syncFromExcel(
         // for events that were never created in the app still land cleanly.
         const rowLabel = `Row ${i + 1} (Forms ID ${excelId})`
 
-        // Resolve collective from col 3
+        // Resolve collective from col 3. Check the alias map FIRST so legacy
+        // / divergent sheet names (e.g. "Byron Bay" -> Northern Rivers,
+        // "Melbourne City" -> Melbourne) map to their canonical UUID even when
+        // the alias row no longer exists in the collectives table. Fall back
+        // to the name-to-id lookup built from the collectives table.
         const collectiveName = String(row[3] ?? '').trim()
-        const collectiveId = collectiveNameToId.get(collectiveName.toLowerCase())
+        const collectiveNameLc = collectiveName.toLowerCase()
+        const collectiveId =
+          COLLECTIVE_ALIASES[collectiveNameLc] ?? collectiveNameToId.get(collectiveNameLc)
         if (!collectiveId) {
           errors.push(`${rowLabel}: no collective match for "${collectiveName}" — skipped`)
           skippedNoCollective++
@@ -1107,6 +1162,45 @@ Deno.serve(async (req: Request) => {
 
     if (direction === 'to-excel' || direction === 'full') {
       results.toExcel = await syncToExcel(supabase, graphToken, eventId)
+    }
+
+    // ---- Monitoring heartbeat: write a summary row to excel_sync_runs ----
+    // Captures per-run metrics so a daily aggregator can spot dark windows,
+    // surging dupe-warnings, or repeated sync failures. Failure to write the
+    // monitoring row is logged but does not fail the sync response.
+    try {
+      const fromEx = (results.fromExcel ?? null) as null | {
+        synced?: number; syncedFormsRows?: number; skippedNoCollective?: number; skippedLegacy?: number; errors?: string[]
+      }
+      const toEx = (results.toExcel ?? null) as null | {
+        appended?: number; updated?: number; skipped?: number; skippedDuplicates?: number;
+        weakDedupWarnings?: unknown[]; errors?: string[]
+      }
+      const sheetRows = (fromEx as any)?._sheetRows ?? null // hook for future surfacing
+      await supabase.from('excel_sync_runs').insert({
+        run_at: new Date().toISOString(),
+        direction,
+        event_id: eventId ?? null,
+        from_excel_synced: fromEx?.synced ?? null,
+        from_excel_forms_rows_synced: fromEx?.syncedFormsRows ?? null,
+        from_excel_skipped_no_collective: fromEx?.skippedNoCollective ?? null,
+        from_excel_skipped_legacy: fromEx?.skippedLegacy ?? null,
+        from_excel_error_count: (fromEx?.errors ?? []).length,
+        to_excel_appended: toEx?.appended ?? null,
+        to_excel_updated: toEx?.updated ?? null,
+        to_excel_skipped: toEx?.skipped ?? null,
+        to_excel_skipped_duplicates: toEx?.skippedDuplicates ?? null,
+        to_excel_weak_dedup_warning_count: (toEx?.weakDedupWarnings ?? []).length,
+        to_excel_error_count: (toEx?.errors ?? []).length,
+        summary: {
+          fromExcel: fromEx,
+          toExcel: toEx,
+          sheetRows,
+        },
+      })
+    } catch (mErr) {
+      // Non-fatal — monitoring failure shouldn't fail the sync.
+      console.warn(`excel_sync_runs insert failed: ${(mErr as Error).message}`)
     }
 
     return new Response(JSON.stringify({ ok: true, direction, ...results }), {
