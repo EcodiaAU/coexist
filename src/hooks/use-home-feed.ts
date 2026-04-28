@@ -206,7 +206,7 @@ export function useMyCollective() {
       const nowStr = new Date().toISOString()
       const { data: nextEvent, error: nextEventError } = await supabase
         .from('events')
-        .select('id, title, date_start, date_end, address, cover_image_url, collective_id, status')
+        .select('id, title, date_start, date_end, address, cover_image_url, cover_image_position_x, cover_image_position_y, collective_id, status')
         .eq('collective_id', collective.id)
         .eq('status', 'published')
         .or(`date_start.gte.${nowStr},date_end.gte.${nowStr}`)

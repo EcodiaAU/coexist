@@ -435,6 +435,8 @@ function NextEventCard({
               src={nextEvent.cover_image_url}
               alt=""
               aspectRatio="4/3"
+              positionX={nextEvent.cover_image_position_x}
+              positionY={nextEvent.cover_image_position_y}
             >
               {cardContent}
             </Card.Overlay>
@@ -525,6 +527,8 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
                     src={event.cover_image_url}
                     alt=""
                     aspectRatio="4/3"
+                    positionX={event.cover_image_position_x}
+                    positionY={event.cover_image_position_y}
                   >
                     {/* Date badge */}
                     <div className="flex items-center gap-2 mb-2">
@@ -632,7 +636,13 @@ function NationalEventsSection({ rm }: { rm: boolean }) {
                 aria-label={event.title}
               >
                 {event.cover_image_url ? (
-                  <Card.Overlay src={event.cover_image_url} alt="" aspectRatio="16/9">
+                  <Card.Overlay
+                    src={event.cover_image_url}
+                    alt=""
+                    aspectRatio="16/9"
+                    positionX={event.cover_image_position_x}
+                    positionY={event.cover_image_position_y}
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white/90">
                         {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : formatEventDate(event.date_start)}

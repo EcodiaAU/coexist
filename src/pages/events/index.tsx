@@ -291,7 +291,13 @@ export default function ExplorePage() {
                               >
                                 <div className="relative">
                                   {event.cover_image_url ? (
-                                    <Card.Image src={event.cover_image_url} alt={event.title} aspectRatio="2/1" />
+                                    <Card.Image
+                                      src={event.cover_image_url}
+                                      alt={event.title}
+                                      aspectRatio="2/1"
+                                      positionX={event.cover_image_position_x}
+                                      positionY={event.cover_image_position_y}
+                                    />
                                   ) : (
                                     <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2/1' }}>
                                       <div className={cn('absolute inset-0 bg-gradient-to-br opacity-10', meta?.gradient ?? 'from-primary-400 to-moss-500')} />

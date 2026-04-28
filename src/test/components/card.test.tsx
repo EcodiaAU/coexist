@@ -93,6 +93,31 @@ describe('Card.Image', () => {
     )
     expect(screen.getByAltText('Test')).toHaveAttribute('loading', 'lazy')
   })
+
+  it('forwards focal point position to the rendered img object-position', () => {
+    render(
+      <Card>
+        <Card.Image
+          src="/test.jpg"
+          alt="Focal"
+          positionX={20}
+          positionY={80}
+        />
+      </Card>,
+    )
+    const img = screen.getByAltText('Focal') as HTMLImageElement
+    expect(img.style.objectPosition).toBe('20% 80%')
+  })
+
+  it('falls back to 50% 50% when focal point is null/undefined', () => {
+    render(
+      <Card>
+        <Card.Image src="/test.jpg" alt="Default" />
+      </Card>,
+    )
+    const img = screen.getByAltText('Default') as HTMLImageElement
+    expect(img.style.objectPosition).toBe('50% 50%')
+  })
 })
 
 describe('Card.Title', () => {
