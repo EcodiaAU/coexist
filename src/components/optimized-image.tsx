@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, type CSSProperties } from 'react'
 import { cn } from '@/lib/cn'
 import { getSrcSet, getPlaceholderUrl, getTransformUrl, isSupabaseStorageUrl } from '@/lib/image-utils'
 
@@ -23,6 +23,8 @@ export interface OptimizedImageProps {
   className?: string
   /** Additional class on the wrapper div */
   wrapperClassName?: string
+  /** Inline style merged onto the <img> element (e.g. focal point object-position). */
+  imgStyle?: CSSProperties
   /** Callback when the image finishes loading */
   onLoad?: () => void
 }
@@ -50,6 +52,7 @@ export function OptimizedImage({
   priority = false,
   className,
   wrapperClassName,
+  imgStyle,
   onLoad,
 }: OptimizedImageProps) {
   const [loaded, setLoaded] = useState(false)
@@ -128,6 +131,7 @@ export function OptimizedImage({
           loaded && 'opacity-100 transition-opacity duration-300',
           className,
         )}
+        style={imgStyle}
       />
     </div>
   )

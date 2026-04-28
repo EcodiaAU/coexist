@@ -48,6 +48,8 @@ import { parseLocationPoint } from '@/lib/geo'
 import {
     DateTimeFields
 } from './components/event-form-fields'
+import { CoverImageFocalPointPicker } from '@/components/cover-image-focal-point-picker'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 import type { Database } from '@/types/database.types'
 import {
     Page,
@@ -763,6 +765,9 @@ function StepCoverImage({
   cameraLoading,
   uploadProgress,
   uploadError,
+  positionX,
+  positionY,
+  onPositionChange,
 }: {
   coverImageUrl: string
   onUploadGallery: () => void
@@ -772,6 +777,9 @@ function StepCoverImage({
   cameraLoading: boolean
   uploadProgress: number | null
   uploadError: string | null
+  positionX: number
+  positionY: number
+  onPositionChange: (x: number, y: number) => void
 }) {
   return (
     <div className="space-y-4">
@@ -797,7 +805,10 @@ function StepCoverImage({
               src={coverImageUrl}
               alt="Cover preview"
               className="w-full object-cover"
-              style={{ aspectRatio: '16/9' }}
+              style={{
+                aspectRatio: '16/9',
+                ...coverImagePositionStyle(positionX, positionY),
+              }}
             />
           ) : (
             <div className="flex flex-col items-center">
@@ -826,6 +837,15 @@ function StepCoverImage({
         error={uploadError}
         variant="bar"
       />
+
+      {coverImageUrl && (
+        <CoverImageFocalPointPicker
+          imageUrl={coverImageUrl}
+          x={positionX}
+          y={positionY}
+          onChange={onPositionChange}
+        />
+      )}
 
       {/* Action buttons */}
       <div className="flex gap-2">
@@ -1618,6 +1638,8 @@ export default function CreateEventPage() {
         location_lng: pos?.lng ?? null,
         capacity: source.capacity ? String(source.capacity) : '',
         cover_image_url: source.cover_image_url ?? '',
+        cover_image_position_x: (source as { cover_image_position_x?: number | null }).cover_image_position_x ?? 50,
+        cover_image_position_y: (source as { cover_image_position_y?: number | null }).cover_image_position_y ?? 50,
         is_public: source.is_public ?? true,
         is_external_collaboration: source.is_external_collaboration ?? false,
         external_registration_url: source.external_registration_url ?? '',
@@ -1729,6 +1751,8 @@ export default function CreateEventPage() {
           location_point: form.buildLocationPoint(),
           capacity: form.parsedCapacity(),
           cover_image_url: form.fields.cover_image_url || null,
+          cover_image_position_x: form.fields.cover_image_position_x,
+          cover_image_position_y: form.fields.cover_image_position_y,
           is_public: form.fields.is_public,
           is_ticketed: extra.is_ticketed,
           is_external_collaboration: form.fields.is_external_collaboration,
@@ -1955,6 +1979,9 @@ export default function CreateEventPage() {
       cameraLoading={form.cameraLoading}
       uploadProgress={form.uploadProgress}
       uploadError={form.uploadError}
+      positionX={form.fields.cover_image_position_x}
+      positionY={form.fields.cover_image_position_y}
+      onPositionChange={form.setCoverImagePosition}
     />,
     <StepVisibility fields={form.fields} onChange={form.updateFields} />,
     <StepTicketing extra={extra} onExtraChange={updateExtra} />,
