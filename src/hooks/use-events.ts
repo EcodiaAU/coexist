@@ -854,6 +854,8 @@ export function useCreateEvent() {
       queryClient.invalidateQueries({ queryKey: ['home', 'featured-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'upcoming-nearby'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'collective-upcoming-events'] })
+      // Refresh the Leaflet collective map: nextEvent projection may have changed
+      queryClient.invalidateQueries({ queryKey: ['collective-map-data'] })
     },
   })
 }
@@ -919,6 +921,9 @@ export function useUpdateEvent() {
       queryClient.invalidateQueries({ queryKey: ['home', 'featured-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'upcoming-nearby'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'collective-upcoming-events'] })
+      // Refresh the Leaflet collective map: title/date/collective_id changes
+      // can move the nextEvent projection for the collective the event belongs to.
+      queryClient.invalidateQueries({ queryKey: ['collective-map-data'] })
     },
   })
 }
@@ -1007,6 +1012,9 @@ export function useCancelEvent() {
       queryClient.invalidateQueries({ queryKey: ['home', 'featured-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'upcoming-nearby'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'collective-upcoming-events'] })
+      // Cancelling an event can demote it out of the nextEvent projection
+      // shown on the Leaflet collective map.
+      queryClient.invalidateQueries({ queryKey: ['collective-map-data'] })
     },
   })
 }

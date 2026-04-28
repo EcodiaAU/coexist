@@ -1,5 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { subscribeWithReconnect } from '@/lib/realtime'
 import { resolveCollectiveCoords } from '@/lib/geo'
 
 /* ------------------------------------------------------------------ */
@@ -20,13 +22,17 @@ export interface MapCollective {
   nextEvent: { title: string; date_start: string } | null
 }
 
+const MAP_QUERY_KEY = ['collective-map-data'] as const
+
 /* ------------------------------------------------------------------ */
 /*  Hook: fetch all active collectives with next upcoming event        */
 /* ------------------------------------------------------------------ */
 
 export function useCollectiveMapData() {
-  return useQuery({
-    queryKey: ['collective-map-data'],
+  const queryClient = useQueryClient()
+
+  const query = useQuery({
+    queryKey: MAP_QUERY_KEY,
     queryFn: async () => {
       // Fetch active collectives
       const { data: collectives, error } = await supabase
@@ -83,6 +89,46 @@ export function useCollectiveMapData() {
 
       return result
     },
+    // Realtime keeps this fresh; the long staleTime is now a fallback
+    // for cases where the realtime channel is degraded.
     staleTime: 10 * 60 * 1000,
   })
+
+  /* ---------------------------------------------------------------- */
+  /*  Realtime: invalidate the map query when any event or collective  */
+  /*  row changes. Covers cross-user updates (a second viewer sees a   */
+  /*  new event appear without a refresh) and the same-user case where */
+  /*  a mutation succeeds in another tab.                              */
+  /*                                                                   */
+  /*  In-tab mutations also call invalidateQueries directly from       */
+  /*  useCreateEvent / useUpdateEvent / useCancelEvent for an instant   */
+  /*  same-tab refresh that does not depend on the realtime round trip.*/
+  /* ---------------------------------------------------------------- */
+  useEffect(() => {
+    const channel = supabase
+      .channel('collective-map-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEY })
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'collectives' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEY })
+        },
+      )
+
+    const cleanup = subscribeWithReconnect(channel)
+
+    return () => {
+      cleanup()
+      supabase.removeChannel(channel)
+    }
+  }, [queryClient])
+
+  return query
 }
