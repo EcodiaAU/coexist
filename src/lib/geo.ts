@@ -60,6 +60,8 @@ export const COLLECTIVE_SLUG_COORDS: Record<string, MapCenter> = {
   'mornington-peninsula': { lat: -38.2833, lng: 145.1667 },
   'melbourne-city': { lat: -37.8136, lng: 144.9631 },
   melbourne: { lat: -37.8136, lng: 144.9631 },
+  // Wangaratta city centre - covers Wodonga, Wangaratta, Benalla, Beechworth and surrounds
+  'north-east-victoria': { lat: -36.3551, lng: 146.3194 },
   hobart: { lat: -42.8821, lng: 147.3272 },
   sydney: { lat: -33.8688, lng: 151.2093 },
   'northern-rivers': { lat: -28.8131, lng: 153.276 },
@@ -74,10 +76,27 @@ export const COLLECTIVE_SLUG_COORDS: Record<string, MapCenter> = {
 /**
  * Resolve coords for a collective: prefer the PostGIS location_point,
  * fall back to the slug-keyed city centre.
+ *
+ * Safeguard: when both fail and a slug is provided, log a dev-mode warning so
+ * a newly created collective with no PostGIS coords AND no slug entry surfaces
+ * loudly in the console instead of silently disappearing from the map. The
+ * admin "create collective" form does not currently capture coords, so any
+ * new slug must be added to COLLECTIVE_SLUG_COORDS or the row will not pin.
  */
 export function resolveCollectiveCoords(
   point: unknown,
   slug: string | null | undefined,
 ): MapCenter | null {
-  return parseLocationPoint(point) ?? (slug ? COLLECTIVE_SLUG_COORDS[slug] ?? null : null)
+  const fromPoint = parseLocationPoint(point)
+  if (fromPoint) return fromPoint
+  if (slug) {
+    const fallback = COLLECTIVE_SLUG_COORDS[slug]
+    if (fallback) return fallback
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[collective-map] no coords for slug "${slug}". Add to COLLECTIVE_SLUG_COORDS in src/lib/geo.ts or populate location_point on the row, otherwise this collective will not appear on the map.`,
+      )
+    }
+  }
+  return null
 }
