@@ -434,6 +434,101 @@ async function formsIdToUuid(formsId: string | number): Promise<string> {
   return await uuidv5(FORMS_NAMESPACE_UUID, data)
 }
 
+// ---- Title-similarity helpers (used by Forms-row to app-event matcher) ----
+
+/** Normalise a title for fuzzy comparison: lowercase, strip punctuation,
+ *  collapse whitespace. */
+function normaliseTitle(s: string): string {
+  return (s ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/** Word-level Jaccard similarity on normalised titles. Robust to word-order
+ *  drift ("Tree Planting w/ OzFish" vs "Ozfish x Coexist Tree planting").
+ *  Threshold 0.34 is permissive enough to catch leader title drift while
+ *  staying above unrelated events on the same date. */
+function titleSimilarity(a: string, b: string): number {
+  const tokensA = new Set(normaliseTitle(a).split(' ').filter(Boolean))
+  const tokensB = new Set(normaliseTitle(b).split(' ').filter(Boolean))
+  if (tokensA.size === 0 || tokensB.size === 0) return 0
+  let intersect = 0
+  for (const t of tokensA) if (tokensB.has(t)) intersect++
+  const union = tokensA.size + tokensB.size - intersect
+  return union === 0 ? 0 : intersect / union
+}
+
+/** Detect Forms-synthetic event UUIDs by inspecting the version digit.
+ *  formsIdToUuid uses UUID v5 (deterministic), so position 14 in the
+ *  canonical string form is the literal '5'. App events are inserted with
+ *  Postgres uuid_generate_v4(), where position 14 is '4'. Filtering on this
+ *  digit cleanly excludes ALL synthetic events from the matcher candidate
+ *  pool, so a Forms row never matches itself or another synthetic. */
+function isSyntheticFormsUuid(id: string): boolean {
+  return id.length >= 15 && id.charAt(14) === '5'
+}
+
+/** Find the best-matching app-created event for a Forms row. Returns the
+ *  app event_id if a match is found, otherwise null.
+ *
+ *  Two-tier match criteria:
+ *  Tier 1 (close-date, low-title-bar): same collective, app-created (UUID v4),
+ *    |date - formsDate| <= 1 day, Jaccard similarity >= 0.34. Catches the
+ *    common timezone-drift case (Forms midnight UTC+10 vs app local time).
+ *  Tier 2 (wide-date, high-title-bar): same collective, app-created,
+ *    |date - formsDate| <= 31 days, Jaccard similarity >= 0.55. Catches the
+ *    real-world case where the leader submitted the Form with a wrong date.
+ *
+ *  Tier 1 is preferred when both apply (closer dates win). When multiple
+ *  candidates within a tier match, picks the highest similarity then the
+ *  closest date. Synthetic events (UUID v5 from formsIdToUuid) are excluded
+ *  so the matcher never matches a Forms row to itself or another synthetic. */
+async function findMatchingAppEvent(
+  supabase: ReturnType<typeof createClient>,
+  collectiveId: string,
+  formsDateIso: string,
+  formsTitle: string,
+): Promise<string | null> {
+  const formsDate = new Date(formsDateIso)
+  const dayMs = 24 * 60 * 60 * 1000
+  // Pull the wide window (Tier 2) and tier candidates in JS.
+  const winStart = new Date(formsDate.getTime() - 31 * dayMs).toISOString()
+  const winEnd = new Date(formsDate.getTime() + 31 * dayMs).toISOString()
+
+  const { data: candidates } = await supabase
+    .from('events')
+    .select('id, title, date_start, created_by')
+    .eq('collective_id', collectiveId)
+    .gte('date_start', winStart)
+    .lte('date_start', winEnd)
+
+  if (!candidates || candidates.length === 0) return null
+
+  let best: { id: string; sim: number; deltaMs: number; tier: number } | null = null
+  for (const c of candidates as { id: string; title: string; date_start: string }[]) {
+    if (isSyntheticFormsUuid(c.id)) continue
+    const sim = titleSimilarity(c.title, formsTitle)
+    const deltaMs = Math.abs(new Date(c.date_start).getTime() - formsDate.getTime())
+    let tier: number | null = null
+    if (deltaMs <= dayMs && sim >= 0.34) tier = 1
+    else if (deltaMs <= 31 * dayMs && sim >= 0.55) tier = 2
+    if (tier === null) continue
+    // Lower tier number wins (Tier 1 > Tier 2). Within a tier: higher sim,
+    // then closer date.
+    if (
+      !best
+      || tier < best.tier
+      || (tier === best.tier && sim > best.sim)
+      || (tier === best.tier && sim === best.sim && deltaMs < best.deltaMs)
+    ) {
+      best = { id: c.id, sim, deltaMs, tier }
+    }
+  }
+  return best?.id ?? null
+}
+
 // Reverse-map sheet cols 12/13/14 back to a DB activity_type enum value.
 //   col[12]: "Conservation" | "Recreation" | label
 //   col[13]: conservation-specific label (when col[12] is "Conservation")
@@ -756,8 +851,14 @@ async function syncFromExcel(
 
         synced++
       } else {
-        // Forms integer ID: synthesise a deterministic UUID v5 and upsert into events +
-        // event_impact. The UUID is a pure function of the integer ID — re-running is safe.
+        // Forms integer ID: try to LINK the impact data to an existing app-
+        // created event in the same collective on the same date (within +/- 1
+        // day) with a similar title. This is the primary fix for Jess's bug
+        // (Apr 28 2026): without linkage, the synthetic event got the impact
+        // row but the leader's app-created event stayed empty, so the
+        // "Submit Impact Form" virtual task never cleared. If no app match
+        // exists, fall back to the synthetic-event path so Forms submissions
+        // for events that were never created in the app still land cleanly.
         const rowLabel = `Row ${i + 1} (Forms ID ${excelId})`
 
         // Resolve collective from col 3
@@ -782,12 +883,80 @@ async function syncFromExcel(
           continue
         }
 
-        const syntheticId = await formsIdToUuid(excelId)
         const title = String(row[1] ?? '').trim() || `Forms Event ${excelId}`
         const address = String(row[4] ?? '').trim()
         const activityType = mapSheetActivityType(row, errors, rowLabel)
 
-        // Upsert the event row
+        const attendees = row[11] ? Number(row[11]) : null
+        const rubbishKg = row[15] ? Number(row[15]) : null
+        const treesPlanted = row[16] ? Number(row[16]) : null
+
+        // Try to match an existing app event before synthesising. If matched,
+        // write event_impact directly to the app event_id so the leader's
+        // "Submit Impact Form" task clears.
+        const matchedAppEventId = await findMatchingAppEvent(
+          supabase,
+          collectiveId,
+          dateIso,
+          title,
+        )
+
+        if (matchedAppEventId) {
+          // Link path: write impact to the app event without touching the
+          // event row (the leader owns the title/date/status). Additive
+          // upsert so we never clobber leader-logged values: the trigger
+          // already wired up by survey_responses (PR #8) and the Log Impact
+          // UI take precedence; this just fills the gap when neither has
+          // run yet.
+          const { error: existingErr, data: existing } = await supabase
+            .from('event_impact')
+            .select('event_id')
+            .eq('event_id', matchedAppEventId)
+            .maybeSingle()
+
+          if (existingErr) {
+            errors.push(`${rowLabel}: lookup failed for app event ${matchedAppEventId}: ${existingErr.message}`)
+            continue
+          }
+
+          if (!existing) {
+            const { error: insertErr } = await supabase
+              .from('event_impact')
+              .insert({
+                event_id: matchedAppEventId,
+                attendees: attendees ?? 0,
+                rubbish_kg: rubbishKg ?? 0,
+                trees_planted: treesPlanted ?? 0,
+                logged_at: dateIso,
+                logged_by: systemUserId,
+                custom_metrics: { auto_derived_from_forms: true, forms_id: String(excelId) },
+                notes: 'Auto-derived from Microsoft Forms submission via excel sync. Leader can refine via Log Impact.',
+              })
+
+            if (insertErr) {
+              errors.push(`${rowLabel}: link-to-app insert failed: ${insertErr.message}`)
+              continue
+            }
+            errors.push(`INFO ${rowLabel}: linked Forms impact to app event ${matchedAppEventId} (title="${title}")`)
+            syncedFormsRows++
+            continue
+          }
+
+          // App event already has event_impact (leader logged via the app
+          // path, or PR #8 trigger already fired). Don't clobber. Skip the
+          // synthetic write too: linkage is the source of truth now.
+          errors.push(`INFO ${rowLabel}: app event ${matchedAppEventId} already has impact; skipped (linked)`)
+          syncedFormsRows++
+          continue
+        }
+
+        // Fallback: no app match. Create synthetic event + impact as before.
+        // This preserves the canonical record for Forms submissions made
+        // without a matching app-created event (legacy data, leaders who
+        // skip the app entirely, etc.). Deterministic UUID v5 keeps re-runs
+        // idempotent.
+        const syntheticId = await formsIdToUuid(excelId)
+
         const { error: eventError } = await supabase
           .from('events')
           .upsert(
@@ -810,11 +979,6 @@ async function syncFromExcel(
           errors.push(`${rowLabel}: event upsert failed: ${eventError.message}`)
           continue
         }
-
-        // Upsert impact metrics — only the fields the sheet actually carries
-        const attendees = row[11] ? Number(row[11]) : null
-        const rubbishKg = row[15] ? Number(row[15]) : null
-        const treesPlanted = row[16] ? Number(row[16]) : null
 
         const { error: impactError } = await supabase
           .from('event_impact')
