@@ -18,18 +18,29 @@ import { cn } from '@/lib/cn'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
 
+interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 interface ToastItem {
   id: string
   type: ToastType
   message: string
   duration: number
+  action?: ToastAction
+}
+
+interface ToastOptions {
+  duration?: number
+  action?: ToastAction
 }
 
 interface ToastApi {
-  success: (message: string, duration?: number) => void
-  error: (message: string, duration?: number) => void
-  info: (message: string, duration?: number) => void
-  warning: (message: string, duration?: number) => void
+  success: (message: string, options?: ToastOptions | number) => void
+  error: (message: string, options?: ToastOptions | number) => void
+  info: (message: string, options?: ToastOptions | number) => void
+  warning: (message: string, options?: ToastOptions | number) => void
 }
 
 interface ToastContextValue {
@@ -109,9 +120,14 @@ export function ToastProvider({ children, className }: ToastProviderProps) {
   }, [])
 
   const add = useCallback(
-    (type: ToastType, message: string, duration = DEFAULT_DURATION) => {
+    (type: ToastType, message: string, options?: ToastOptions | number) => {
+      const opts: ToastOptions =
+        typeof options === 'number' ? { duration: options } : options ?? {}
+      const duration = opts.duration ?? DEFAULT_DURATION
       const id = `toast-${++idCounter.current}`
-      setToasts((prev) => [{ id, type, message, duration }, ...prev].slice(0, MAX_VISIBLE))
+      setToasts((prev) =>
+        [{ id, type, message, duration, action: opts.action }, ...prev].slice(0, MAX_VISIBLE),
+      )
 
       if (duration > 0) {
         setTimeout(() => dismiss(id), duration)
@@ -121,10 +137,10 @@ export function ToastProvider({ children, className }: ToastProviderProps) {
   )
 
   const toast: ToastApi = {
-    success: (msg, dur) => add('success', msg, dur),
-    error: (msg, dur) => add('error', msg, dur),
-    info: (msg, dur) => add('info', msg, dur),
-    warning: (msg, dur) => add('warning', msg, dur),
+    success: (msg, opts) => add('success', msg, opts),
+    error: (msg, opts) => add('error', msg, opts),
+    info: (msg, opts) => add('info', msg, opts),
+    warning: (msg, opts) => add('warning', msg, opts),
   }
 
   return (
@@ -167,12 +183,16 @@ const ToastCard = memo(function ToastCard({
   item: ToastItem
   dismiss: (id: string) => void
 }) {
-  const { type, message } = item
+  const { type, message, action } = item
   const config = typeConfig[type]
   const Icon = config.icon
   const shouldReduceMotion = useReducedMotion()
   const transition = shouldReduceMotion ? instantTransition : springTransition
   const handleDismiss = useCallback(() => dismiss(item.id), [dismiss, item.id])
+  const handleAction = useCallback(() => {
+    action?.onClick()
+    dismiss(item.id)
+  }, [action, dismiss, item.id])
 
   return (
     <motion.div
@@ -188,12 +208,20 @@ const ToastCard = memo(function ToastCard({
       }}
       className={cn(
         'pointer-events-auto w-full max-w-sm gpu-panel',
-        'flex items-start gap-3 rounded-xl px-4 py-3 shadow-lg',
+        'flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg',
         config.bgClass,
       )}
     >
-      <Icon size={20} className={cn('shrink-0 mt-0.5', config.iconClass)} aria-hidden="true" />
+      <Icon size={20} className={cn('shrink-0', config.iconClass)} aria-hidden="true" />
       <p className="flex-1 text-sm font-medium text-neutral-900">{message}</p>
+      {action && (
+        <button
+          onClick={handleAction}
+          className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold text-primary-700 hover:bg-primary-50 active:scale-[0.97] transition-[colors,transform] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+        >
+          {action.label}
+        </button>
+      )}
       <button
         onClick={handleDismiss}
         className="shrink-0 rounded-full p-0.5 text-neutral-400 transition-[colors,transform] duration-150 hover:bg-black/5 hover:text-neutral-500 active:scale-[0.90] cursor-pointer"

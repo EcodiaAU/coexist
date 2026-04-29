@@ -31,6 +31,8 @@ import { queueOfflineAction } from '@/lib/offline-sync'
 import {
     useMyTasks,
     useCompleteTask,
+    useUpdateTaskNotes,
+    useUndoCompleteTask,
     useSkipTask,
     useGenerateTaskInstances,
     useGroupedTasks,
@@ -136,14 +138,18 @@ function toDateKey(d: Date): string {
 
 function TaskCard({ task }: { task: MyTask }) {
   const [expanded, setExpanded] = useState(false)
-  const [notes, setNotes] = useState('')
+  const initialNotes = (task as MyTask & { completion_notes?: string | null }).completion_notes ?? ''
+  const [notes, setNotes] = useState(initialNotes)
   const [showSurvey, setShowSurvey] = useState(false)
   const { toast } = useToast()
   const { user } = useAuth()
   const { isOffline } = useOffline()
   const completeMutation = useCompleteTask()
+  const updateNotesMutation = useUpdateTaskNotes()
+  const undoCompleteMutation = useUndoCompleteTask()
   const skipMutation = useSkipTask()
   const shouldReduceMotion = useReducedMotion()
+  const noteDirty = notes !== initialNotes
 
   const hasSurvey = !!task.template?.survey_id
 
@@ -165,7 +171,7 @@ function TaskCard({ task }: { task: MyTask }) {
       }
 
       // Insert survey response FIRST and verify success. Previously the error
-      // was unchecked — if RLS rejected the insert or a duplicate hit the
+      // was unchecked - if RLS rejected the insert or a duplicate hit the
       // unique index, the survey response was silently lost but the task
       // was still marked complete, leaving the leader thinking they'd
       // submitted data that never reached the DB.
@@ -378,7 +384,7 @@ function TaskCard({ task }: { task: MyTask }) {
                   </p>
                 </div>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="primary"
                   size="sm"
@@ -388,13 +394,29 @@ function TaskCard({ task }: { task: MyTask }) {
                     if (hasSurvey) {
                       setShowSurvey(true)
                     } else {
+                      const noteAtCompletion = notes
                       completeMutation.mutate(
                         { instanceId: task.id, notes: notes || undefined },
                         {
                           onSuccess: () => {
-                            toast.success('Task completed!')
+                            toast.success('Task marked complete', {
+                              action: {
+                                label: 'Undo',
+                                onClick: () => {
+                                  undoCompleteMutation.mutate(task.id, {
+                                    onSuccess: () => {
+                                      // Restore the note the leader had typed
+                                      setNotes(noteAtCompletion)
+                                      setExpanded(true)
+                                      toast.info('Restored - task is pending again')
+                                    },
+                                    onError: () => toast.error('Could not undo'),
+                                  })
+                                },
+                              },
+                              duration: 8000,
+                            })
                             setExpanded(false)
-                            setNotes('')
                           },
                           onError: () => toast.error('Failed to complete task'),
                         },
@@ -402,8 +424,29 @@ function TaskCard({ task }: { task: MyTask }) {
                     }
                   }}
                 >
-                  {hasSurvey ? 'Complete & Fill Survey' : 'Done'}
+                  {hasSurvey ? 'Complete & Fill Survey' : 'Mark complete'}
                 </Button>
+                {!hasSurvey && noteDirty && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={<FileText size={14} />}
+                    loading={updateNotesMutation.isPending}
+                    onClick={() => {
+                      updateNotesMutation.mutate(
+                        { instanceId: task.id, notes },
+                        {
+                          onSuccess: () => {
+                            toast.success('Note saved')
+                          },
+                          onError: () => toast.error('Failed to save note'),
+                        },
+                      )
+                    }}
+                  >
+                    Save note
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -925,22 +968,19 @@ function TodoModal({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Any extra details..."
         />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 min-w-0">
           <Input
             label="Due date"
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
           />
-          <div>
-            <label className="text-sm font-medium text-neutral-900 mb-1.5 block">Time</label>
-            <input
-              type="time"
-              value={dueTime}
-              onChange={(e) => setDueTime(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-colors"
-            />
-          </div>
+          <Input
+            label="Time"
+            type="time"
+            value={dueTime}
+            onChange={(e) => setDueTime(e.target.value)}
+          />
         </div>
 
         {/* Priority selector */}
@@ -1290,12 +1330,18 @@ function CalendarView({
 /*  Todos tab content                                                  */
 /* ------------------------------------------------------------------ */
 
-function TodosTabContent({ rm }: { rm: boolean }) {
+interface TodosTabContentProps {
+  rm: boolean
+  /** Lifted to page level so the Add button is reachable from the Tasks tab too. */
+  showCreate: boolean
+  setShowCreate: (open: boolean) => void
+}
+
+function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps) {
   const { toast } = useToast()
 
   const [view, setView] = useState<'list' | 'calendar'>('list')
   const [editMode, setEditMode] = useState(false)
-  const [showCreate, setShowCreate] = useState(false)
   const [editTodo, setEditTodo] = useState<LeaderTodo | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
@@ -1576,10 +1622,19 @@ function TodosTabContent({ rm }: { rm: boolean }) {
 /* ================================================================== */
 
 export default function LeaderTasksPage() {
-  const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
   const rm = !!shouldReduceMotion
   const [activeTab, setActiveTab] = useState<ActiveTab>('tasks')
+  /**
+   * `showCreate` lifted to page level (was previously local to TodosTabContent).
+   * Reasons:
+   *  - Issue 2: leaders reported they "can't make tasks for myself". The
+   *    create-todo affordance was only visible when the Todos tab was active
+   *    AND scrolled to the toolbar row. Surfacing the Add button at page level
+   *    means it's reachable from either tab.
+   *  - Lifts the modal state out of the tab subtree so it survives tab toggles.
+   */
+  const [showCreate, setShowCreate] = useState(false)
 
   useLeaderHeader('Tasks', { fullBleed: true })
 
@@ -1605,9 +1660,9 @@ export default function LeaderTasksPage() {
           <h1 className="font-heading text-2xl font-extrabold text-primary-900">Tasks & To-Dos</h1>
         </motion.div>
 
-        {/* ── Segmented toggle ── */}
+        {/* ── Segmented toggle + page-level Add button ── */}
         <motion.div
-          className="flex justify-center"
+          className="flex items-center justify-center gap-3"
           variants={rm ? undefined : { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } } }}
         >
           <SegmentedControl
@@ -1619,33 +1674,43 @@ export default function LeaderTasksPage() {
             onChange={setActiveTab}
             aria-label="View tasks or personal todos"
           />
+          <button
+            type="button"
+            onClick={() => {
+              // Personal items live on the Todos tab. Switch the user there
+              // before opening the modal so when the save completes they
+              // land on the tab where the new todo will appear.
+              setActiveTab('todos')
+              setShowCreate(true)
+            }}
+            aria-label="Add a personal to-do for yourself"
+            className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-primary-700 text-white shadow-md hover:bg-primary-800 active:scale-[0.97] cursor-pointer transition-[colors,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1"
+          >
+            <Plus size={18} />
+          </button>
         </motion.div>
 
-        {/* ── Tab content ── */}
-        <AnimatePresence mode="wait">
-          {activeTab === 'tasks' ? (
-            <motion.div
-              key="tasks"
-              initial={rm ? undefined : { opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={rm ? undefined : { opacity: 0, x: 12 }}
-              transition={{ duration: 0.2 }}
-            >
-              <TasksTabContent rm={rm} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="todos"
-              initial={rm ? undefined : { opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={rm ? undefined : { opacity: 0, x: -12 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-5"
-            >
-              <TodosTabContent rm={rm} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/*
+          ── Tab content ──
+          Issue 1 (Samsung blank-screen on tab toggle): we previously used
+          AnimatePresence mode="wait" to crossfade tabs. On Samsung WebView
+          / mid-tier Android, rapid toggling could leave AnimatePresence
+          waiting for an exit animation that never resolved, mounting nothing
+          for the new tab. Result: blank screen until full page reload.
+
+          Fix: render BOTH tabs always; just hide the inactive one with `hidden`
+          + aria-hidden. No unmount, no exit animation, no race. Tabs preserve
+          internal state (scroll position, edit mode, expanded cards) across
+          toggles, which leaders consistently want anyway.
+        */}
+        <div>
+          <div hidden={activeTab !== 'tasks'} aria-hidden={activeTab !== 'tasks'}>
+            <TasksTabContent rm={rm} />
+          </div>
+          <div hidden={activeTab !== 'todos'} aria-hidden={activeTab !== 'todos'} className="space-y-5">
+            <TodosTabContent rm={rm} showCreate={showCreate} setShowCreate={setShowCreate} />
+          </div>
+        </div>
       </motion.div>
     </div>
   )

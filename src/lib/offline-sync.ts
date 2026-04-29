@@ -25,6 +25,8 @@ export type OfflineActionType =
   | 'chat-message'
   | 'profile-update'
   | 'task-complete'
+  | 'task-update-notes'
+  | 'task-undo-complete'
   | 'task-skip'
   | 'todo-create'
   | 'todo-update'
@@ -92,7 +94,7 @@ function safeSet(key: string, value: unknown): boolean {
     localStorage.setItem(key, JSON.stringify(value))
     return true
   } catch {
-    // Storage full — try evicting query cache first (action queue is higher priority)
+    // Storage full - try evicting query cache first (action queue is higher priority)
     if (key !== CACHE_KEY) {
       try {
         localStorage.removeItem(CACHE_KEY)
@@ -149,7 +151,7 @@ export async function syncOfflineCheckIns(): Promise<number> {
     if (error) {
       remaining.push(item)
     } else if (count === 0) {
-      // Registration was cancelled or already attended — discard silently
+      // Registration was cancelled or already attended - discard silently
       synced++
     } else {
       synced++
@@ -329,6 +331,42 @@ async function processTaskSkip(action: OfflineAction): Promise<{ ok: boolean; co
     .update({ status: 'skipped' })
     .eq('id', instanceId)
   if (error) return { ok: false, conflict: 'Task skip sync failed.' }
+  return { ok: true }
+}
+
+async function processTaskUpdateNotes(action: OfflineAction): Promise<{ ok: boolean; conflict?: string }> {
+  const { instanceId, notes } = action.payload as { instanceId: string; notes: string }
+
+  // Notes-only update is safe to apply regardless of current status -
+  // if the task was completed offline-then-online we'd still want the note.
+  const { error } = await supabase
+    .from('task_instances')
+    .update({ completion_notes: notes || null })
+    .eq('id', instanceId)
+  if (error) return { ok: false, conflict: 'Task note sync failed.' }
+  return { ok: true }
+}
+
+async function processTaskUndoComplete(action: OfflineAction): Promise<{ ok: boolean; conflict?: string }> {
+  const { instanceId } = action.payload as { instanceId: string }
+
+  // Idempotent: if already pending, nothing to do.
+  const { data: existing } = await supabase
+    .from('task_instances')
+    .select('status')
+    .eq('id', instanceId)
+    .single()
+  if (existing?.status === 'pending') return { ok: true }
+
+  const { error } = await supabase
+    .from('task_instances')
+    .update({
+      status: 'pending',
+      completed_at: null,
+      completed_by: null,
+    })
+    .eq('id', instanceId)
+  if (error) return { ok: false, conflict: 'Task undo sync failed.' }
   return { ok: true }
 }
 
@@ -755,7 +793,7 @@ async function processQuizSubmit(action: OfflineAction): Promise<{ ok: boolean; 
 }
 
 /* ------------------------------------------------------------------ */
-/*  Process a single action — router                                   */
+/*  Process a single action - router                                   */
 /* ------------------------------------------------------------------ */
 
 async function processAction(action: OfflineAction): Promise<{ ok: boolean; conflict?: string }> {
@@ -768,6 +806,10 @@ async function processAction(action: OfflineAction): Promise<{ ok: boolean; conf
       return processProfileUpdate(action)
     case 'task-complete':
       return processTaskComplete(action)
+    case 'task-update-notes':
+      return processTaskUpdateNotes(action)
+    case 'task-undo-complete':
+      return processTaskUndoComplete(action)
     case 'task-skip':
       return processTaskSkip(action)
     case 'todo-create':
@@ -822,7 +864,7 @@ async function ensureFreshAuth(): Promise<boolean> {
     const nowSecs = Math.floor(Date.now() / 1000)
     if (expiresAt > nowSecs + 60) return true
 
-    // Token is expired or nearly expired — force refresh
+    // Token is expired or nearly expired - force refresh
     const { data, error } = await supabase.auth.refreshSession()
     if (error || !data.session) {
       console.warn('[offline-sync] Auth refresh failed:', error?.message)
@@ -838,7 +880,7 @@ async function ensureFreshAuth(): Promise<boolean> {
 export async function syncAllOfflineActions(): Promise<SyncResult> {
   const result: SyncResult = { synced: 0, failed: 0, conflicts: [] }
 
-  // Refresh auth token before attempting any sync — it may have expired while offline
+  // Refresh auth token before attempting any sync - it may have expired while offline
   const hasAuth = await ensureFreshAuth()
   if (!hasAuth) {
     const totalPending = getPendingCheckInCount() + getActionQueue().length
@@ -850,7 +892,7 @@ export async function syncAllOfflineActions(): Promise<SyncResult> {
     return result
   }
 
-  // Auth is good — clear any previous auth-expired issue
+  // Auth is good - clear any previous auth-expired issue
   onSyncIssue?.(null)
 
   // Sync legacy check-in queue first

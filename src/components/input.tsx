@@ -10,7 +10,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Search, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
-type InputType = 'text' | 'email' | 'password' | 'search' | 'textarea' | 'date' | 'tel' | 'number'
+type InputType = 'text' | 'email' | 'password' | 'search' | 'textarea' | 'date' | 'time' | 'tel' | 'number'
 
 export interface InputProps {
   type?: InputType
@@ -125,8 +125,13 @@ export const Input = forwardRef<
   )
 
   const isDate = type === 'date'
+  const isTime = type === 'time'
+  // Native date/time inputs always show their picker affordance, so the
+  // floating label needs to start in the floated position to avoid colliding
+  // with the picker glyph.
+  const isPicker = isDate || isTime
   const isCompact = compact && !label
-  const isFloating = focused || filled || isDate
+  const isFloating = focused || filled || isPicker
   const isTextarea = type === 'textarea'
   const isSearch = type === 'search'
   const isPassword = type === 'password'
@@ -134,11 +139,11 @@ export const Input = forwardRef<
 
   const sharedClasses = cn(
     'peer w-full rounded-lg px-4 box-border',
-    // Native date inputs on iOS render their picker button at intrinsic
-    // width, which can push the field past its container. appearance-none
-    // strips the platform chrome so the field obeys w-full like a regular
-    // text input.
-    isDate && 'appearance-none min-w-0 max-w-full',
+    // Native date/time inputs on iOS+Android render their picker button at
+    // intrinsic width, which can push the field past its container.
+    // appearance-none strips the platform chrome so the field obeys w-full
+    // like a regular text input.
+    isPicker && 'appearance-none min-w-0 max-w-full',
     isCompact ? 'py-3' : 'pt-7 pb-2',
     inputClassName ?? 'bg-surface-3',
     'text-[16px] leading-normal text-neutral-900',
