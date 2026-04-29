@@ -254,16 +254,6 @@ export function BentoStatGrid({
   )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Legacy theme exports - kept for any external consumers             */
-/* ------------------------------------------------------------------ */
-
-export type BentoTheme = string
-
-export function bentoBoldTheme(_i: number): BentoTheme {
-  return 'moss'
-}
-
-export function bentoMixedTheme(_i: number): BentoTheme {
-  return 'moss-soft'
-}
+// Legacy theme exports moved to ./bento-stats-themes (bentoBoldTheme,
+// bentoMixedTheme, BentoTheme) so this file only exports components,
+// satisfying react-refresh/only-export-components.

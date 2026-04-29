@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { parseSurveyQuestions, type SurveyQuestion } from '@/components/survey-questions'
+import { parseSurveyQuestions, type SurveyQuestion } from '@/components/survey-questions-utils'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */

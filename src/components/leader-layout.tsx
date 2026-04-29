@@ -8,7 +8,7 @@ import {
     Home,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { WAVE_PATHS } from '@/components/wave-transition'
+import { WAVE_PATHS } from '@/components/wave-paths'
 import { useCollective } from '@/hooks/use-collective'
 import { useLayout } from '@/hooks/use-layout'
 import { BottomTabBar, type Tab } from '@/components/bottom-tab-bar'

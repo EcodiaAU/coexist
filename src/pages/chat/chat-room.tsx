@@ -36,7 +36,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useCamera } from '@/hooks/use-camera'
 import { useImageUpload } from '@/hooks/use-image-upload'
 import { useLayout } from '@/hooks/use-layout'
-import { useKeyboardOpen } from '@/components/app-shell'
+import { useKeyboardOpen } from '@/components/app-shell-context'
 import { useCollective } from '@/hooks/use-collective'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import {

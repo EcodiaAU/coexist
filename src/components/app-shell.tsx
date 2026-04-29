@@ -1,4 +1,4 @@
-import { type ReactNode, memo, Suspense, useMemo, createContext, useContext } from 'react'
+import { type ReactNode, memo, Suspense, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { cn } from '@/lib/cn'
@@ -8,6 +8,7 @@ import { UnifiedSidebar } from '@/components/unified-sidebar'
 import { WebFooter } from '@/components/web-footer'
 import { OfflineBanner } from '@/components/offline-banner'
 import { SyncStatusBanner } from '@/components/sync-status-banner'
+import { KeyboardOpenContext, useKeyboardOpen } from '@/components/app-shell-context'
 import { MenuSheetProvider, useMenuSheet } from '@/hooks/use-menu-sheet'
 import { useSyncManager } from '@/hooks/use-sync-manager'
 import { usePushRegistration } from '@/hooks/use-push'
@@ -23,10 +24,6 @@ interface AppShellProps {
   /** Hide all navigation chrome (for splash, onboarding, auth) */
   bare?: boolean
 }
-
-/** Context so child components can know when the keyboard is open */
-const KeyboardOpenContext = createContext(false)
-export function useKeyboardOpen() { return useContext(KeyboardOpenContext) }
 
 export function AppShell({ children, bare = false }: AppShellProps) {
   // Scroll focused inputs into view when native keyboard opens
