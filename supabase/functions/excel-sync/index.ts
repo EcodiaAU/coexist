@@ -702,8 +702,45 @@ async function syncToExcel(
   const newRows: (string | number | null)[][] = []
   const updateRows: { rowIndex: number; row: (string | number | null)[] }[] = []
 
+  // Pre-fetch the created_by status for the candidate events so we can skip
+  // synthetic events (those created by the from-excel reverse-sync). Synthetic
+  // events have created_by IS NULL because their data ORIGINATED from the
+  // sheet — pushing them back creates duplicate rows. The trigger
+  // excel_sync_on_event_impact fires for every event_impact INSERT/UPDATE
+  // (including the ones from-excel just inserted), so without this guard each
+  // sheet→DB sync produces N spurious to-excel calls that try to write the
+  // synthetic data back to the sheet under a (potentially differently-aliased)
+  // collective name, missing the dedup signature and appending duplicates.
+  // App-created events (created_by IS NOT NULL) and test-prefix events flow as
+  // before. See ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
+  const syntheticEventIds = new Set<string>()
+  if (eventIds.length > 0) {
+    try {
+      const { data: syntheticEvents } = await supabase
+        .from('events')
+        .select('id, title, created_by')
+        .in('id', eventIds)
+      for (const e of (syntheticEvents ?? []) as { id: string; title: string; created_by: string | null }[]) {
+        // Test-prefix events bypass the synthetic guard (legacy test-mode flow).
+        if (e.created_by === null && !/^test/i.test(e.title ?? '')) {
+          syntheticEventIds.add(e.id)
+        }
+      }
+    } catch {
+      // Non-fatal — fall through and let the dedup signature catch what it can.
+    }
+  }
+
   for (const eid of eventIds) {
     try {
+      // Skip synthetic events. Their data is already on the sheet (that's where
+      // it came from). Pushing back would create a (collective_alias-confused)
+      // duplicate.
+      if (syntheticEventIds.has(eid)) {
+        skipped++
+        continue
+      }
+
       const data = await fetchEventData(supabase, eid)
       if (!data) {
         skipped++
