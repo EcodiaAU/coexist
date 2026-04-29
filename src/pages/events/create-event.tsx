@@ -1910,7 +1910,7 @@ export default function CreateEventPage() {
         // (the cached frozen URL still carries the ?from= we already used).
         resetWizard()
 
-        navigate(`/events/${event.id}`, { replace: true })
+        navigate('/admin/events', { replace: true })
       } catch (err) {
         console.error('[create-event] publish failed:', err)
         const msg = err instanceof Error ? err.message : String(err)

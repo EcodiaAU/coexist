@@ -9,7 +9,6 @@ import {
     ChevronRight,
     TrendingUp,
     Package,
-    Heart,
     Shirt,
     Backpack,
     StickyNote,
@@ -59,7 +58,7 @@ const slideInRight: Variants = {
  * 5. Subtle dot grid in alternating bands
  * 6. Static blurred color orbs for depth
  */
-function ShopBackground({ rm }: { rm: boolean }) {
+function ShopBackground({ rm: _rm }: { rm: boolean }) {
   return (
     <div className="sticky top-0 h-[100dvh] -mb-[100dvh] pointer-events-none overflow-hidden">
       <div className="absolute inset-0 bg-white" />
@@ -211,7 +210,7 @@ function ShopHero({
 /*  Product card - with colored accent & hover depth                   */
 /* ------------------------------------------------------------------ */
 
-function ProductCard({ product, onClick, index }: { product: Product; onClick: () => void; index: number }) {
+function ProductCard({ product, onClick, index: _index }: { product: Product; onClick: () => void; index: number }) {
   const inStock = product.variants.some((v) => v.stock > 0 && v.is_active)
   const lowStock = product.variants.every((v) => v.stock <= 5) && inStock
 
@@ -336,7 +335,7 @@ function FeaturedProduct({ product, onClick }: { product: Product; onClick: () =
 /* ------------------------------------------------------------------ */
 
 function SectionHeader({
-  icon: Icon,
+  icon: _Icon,
   title,
   action,
 }: {
@@ -464,7 +463,7 @@ export default function ShopPage() {
 
   const showFeatured = featured && !search && activeCategory === CATEGORY_ALL
 
-  const handleRefresh = useCallback(async () => {
+  const _handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['shop'] })
     await queryClient.invalidateQueries({ queryKey: ['products'] })
   }, [queryClient])
@@ -542,7 +541,7 @@ export default function ShopPage() {
                   )}
 
                   {/* Product grid - on a lightly tinted panel */}
-                  {!gridProducts || gridProducts.length === 0 ? (
+                  {(!gridProducts || gridProducts.length === 0) && !isLoading ? (
                     <EmptyState
                       illustration="search"
                       title={search ? 'No results' : 'Coming soon'}
@@ -554,7 +553,7 @@ export default function ShopPage() {
                             : 'Our merch store is getting stocked up!'
                       }
                     />
-                  ) : (
+                  ) : gridProducts && gridProducts.length > 0 ? (
                     <div>
                       <SectionHeader
                         icon={Package}
@@ -574,7 +573,7 @@ export default function ShopPage() {
                         ))}
                       </motion.div>
                     </div>
-                  )}
+                  ) : null}
 
                 </div>
               </motion.div>
