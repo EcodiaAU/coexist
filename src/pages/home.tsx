@@ -1156,7 +1156,17 @@ export default function HomePage() {
               </motion.div>
             )}
 
-            {/* 2. Your Next Event */}
+            {/* 2. Impact section */}
+            <HomeImpactSection
+              collectives={myCollectives.data ?? []}
+              rm={rm}
+              showCollectiveToggle={isStaff || (myCollectives.data ?? []).length > 1}
+            />
+
+            {/* 3. Upcoming Events carousel (collectives the user is part of) */}
+            <UpcomingEventsCarousel rm={rm} />
+
+            {/* 4. Your Next Event */}
             <NextEventCard
               events={myEvents.data}
               isLoading={myEvents.isLoading}
@@ -1164,23 +1174,13 @@ export default function HomePage() {
               rm={rm}
             />
 
-            {/* 3. Upcoming Events carousel */}
-            <UpcomingEventsCarousel rm={rm} />
-
-            {/* 3b. National Events (retreats, campouts) */}
+            {/* 5. National Events (retreats, campouts) */}
             <NationalEventsSection rm={rm} />
 
-            {/* 4. Updates section */}
+            {/* 6. Updates section */}
             <UpdatesSection rm={rm} />
 
-            {/* 5. Impact section */}
-            <HomeImpactSection
-              collectives={myCollectives.data ?? []}
-              rm={rm}
-              showCollectiveToggle={isStaff || (myCollectives.data ?? []).length > 1}
-            />
-
-            {/* 6. Donate + Shop CTA cards */}
+            {/* 7. Donate + Shop CTA cards */}
             <CtaCards rm={rm} />
           </motion.div>
         </div>
