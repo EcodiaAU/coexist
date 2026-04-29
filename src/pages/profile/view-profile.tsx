@@ -31,6 +31,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useProfile, useProfileCollectives, useProfileStats, useMutualConnections } from '@/hooks/use-profile'
 import { useIsBlocked } from '@/hooks/use-user-blocks'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
+import { REDACTED_PLACEHOLDER } from '@/lib/profile-visibility'
 
 function ViewProfileSkeleton() {
   return (
@@ -61,6 +62,11 @@ export default function ViewProfilePage() {
   const { data: mutualData } = useMutualConnections(userId ?? '')
   const isBlocked = useIsBlocked(userId)
   const isOwnProfile = user?.id === userId
+  // Defense-in-depth tier flag from get_user_profile_v1 RPC. The DB drops
+  // sensitive fields to NULL for non-staff viewers; this flag drives the
+  // [redacted]-style UI gating so a non-staff viewer sees an explicit
+  // privacy notice rather than blank fields.
+  const canSeeSensitive = profile?.viewer_can_see_sensitive !== false
 
   const [showReportSheet, setShowReportSheet] = useState(false)
   const [showBlockSheet, setShowBlockSheet] = useState(false)
@@ -128,7 +134,8 @@ export default function ViewProfilePage() {
           )}
 
           <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
-            {profile.location && (
+            {/* Location is staff-only PII (suburb/town); hidden from non-staff viewers */}
+            {canSeeSensitive && profile.location && (
               <span className="flex items-center gap-1 text-sm text-neutral-500">
                 <MapPin size={14} />
                 {profile.location}
@@ -235,8 +242,25 @@ export default function ViewProfilePage() {
           </motion.section>
         )}
 
-        {/* Location mini-map */}
-        {(() => {
+        {/* Privacy notice for non-staff viewers (replaces sensitive sections) */}
+        {!isOwnProfile && !canSeeSensitive && (
+          <motion.section variants={fadeUp} className="mt-6">
+            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 flex items-start gap-3">
+              <div className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0 bg-neutral-200 text-neutral-600">
+                <ShieldOff size={14} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-neutral-900">Personal details hidden</p>
+                <p className="text-xs text-neutral-600 mt-0.5">
+                  {REDACTED_PLACEHOLDER} - leaders can see contact, location and emergency info; participants only see public profile.
+                </p>
+              </div>
+            </div>
+          </motion.section>
+        )}
+
+        {/* Location mini-map (staff-only - geo PII) */}
+        {canSeeSensitive && (() => {
           const pos = parseLocationPoint(profile.location_point)
           if (!pos) return null
           return (
