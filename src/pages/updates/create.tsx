@@ -79,6 +79,18 @@ export default function CreateUpdatePage() {
     subtitle: 'Compose and publish a blog-post update',
   })
 
+  useEffect(() => {
+    return () => {
+      for (const url of previews) {
+        if (url.startsWith('blob:')) URL.revokeObjectURL(url)
+      }
+    }
+    // Revoke only on unmount. Deliberately NOT tracking previews changes -
+    // per-item revocation already happens in removeImage, and revoking on
+    // every re-render would pull the rug from under still-visible <img>s.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Only admin staff can create updates
   if (!isAdmin) {
     return (
@@ -123,18 +135,6 @@ export default function CreateUpdatePage() {
       return prev.filter((_, i) => i !== index)
     })
   }
-
-  useEffect(() => {
-    return () => {
-      for (const url of previews) {
-        if (url.startsWith('blob:')) URL.revokeObjectURL(url)
-      }
-    }
-    // Revoke only on unmount. Deliberately NOT tracking previews changes —
-    // per-item revocation already happens in removeImage, and revoking on
-    // every re-render would pull the rug from under still-visible <img>s.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   /* ---- Submit ---- */
 
