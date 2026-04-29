@@ -29,6 +29,7 @@ import { MapView } from '@/components'
 import { useProfile, useProfileCollectives, useProfileStats, useMutualConnections } from '@/hooks/use-profile'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
+import { REDACTED_PLACEHOLDER } from '@/lib/profile-visibility'
 
 function ProfileModalSkeleton() {
   return (
@@ -93,7 +94,14 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
       })
     : ''
 
-  const hasDetails = profile && (profile.first_name || profile.email || profile.phone || profile.age || profile.postcode || profile.gender)
+  // viewer_can_see_sensitive is set by useProfile (own=true, staff=true,
+  // non-staff non-self=false). For backward-compat treat undefined as
+  // visible (own profile path).
+  const canSeeSensitive = profile?.viewer_can_see_sensitive !== false
+  const hasDetails = profile && canSeeSensitive && (
+    profile.first_name || profile.email || profile.phone ||
+    profile.age || profile.postcode || profile.gender
+  )
 
   return (
     <BottomSheet open={open} onClose={onClose} snapPoints={[0.92]}>
@@ -124,7 +132,8 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
             )}
 
             <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
-              {profile.location && (
+              {/* Location is staff-only PII (suburb/town); hidden from non-staff viewers */}
+              {canSeeSensitive && profile.location && (
                 <span className="flex items-center gap-1 text-sm text-neutral-500">
                   <MapPin size={14} />
                   {profile.location}
@@ -230,8 +239,25 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
             </motion.section>
           )}
 
-          {/* Emergency Contact */}
-          {profile.emergency_contact_name && (
+          {/* Privacy notice - shown to non-staff viewers in place of sensitive sections */}
+          {!canSeeSensitive && (
+            <motion.section variants={fadeUp} className="mt-6">
+              <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 flex items-start gap-3">
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0 bg-neutral-200 text-neutral-600">
+                  <Shield size={14} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-neutral-900">Personal details hidden</p>
+                  <p className="text-xs text-neutral-600 mt-0.5">
+                    {REDACTED_PLACEHOLDER} - leaders can see contact and emergency info; participants only see public profile.
+                  </p>
+                </div>
+              </div>
+            </motion.section>
+          )}
+
+          {/* Emergency Contact (staff-tier only) */}
+          {canSeeSensitive && profile.emergency_contact_name && (
             <motion.section variants={fadeUp} className="mt-5">
               <h3 className="font-heading text-base font-semibold text-neutral-900 mb-3 flex items-center gap-2">
                 <div className="flex items-center justify-center w-6 h-6 rounded-md bg-warning-600 text-white">
@@ -296,8 +322,8 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
             </motion.section>
           )}
 
-          {/* Location mini-map */}
-          {(() => {
+          {/* Location mini-map (staff-only - geo PII) */}
+          {canSeeSensitive && (() => {
             const pos = parseLocationPoint(profile.location_point)
             if (!pos) return null
             return (

@@ -9,21 +9,64 @@ import { fetchImpactRows } from '@/lib/impact-query'
 import type { Database } from '@/types/database.types'
 
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
+type ProfileBaseRow = Database['public']['Tables']['profiles']['Row']
+
+/**
+ * Tier-aware profile shape returned by useProfile().
+ *
+ * - Own profile: full ProfileBaseRow + visibility flags forced to true.
+ * - Viewing another user: payload from get_user_profile_v1 RPC. Sensitive
+ *   fields are NULL for non-staff viewers; viewer_can_see_sensitive=false
+ *   tells the UI to render [redacted] placeholders.
+ *
+ * Security boundary: supabase/migrations/079_profile_visibility_tiering.sql
+ */
+export type ProfileRow = ProfileBaseRow & {
+  viewer_can_see_sensitive?: boolean
+  is_self?: boolean
+}
 
 export function useProfile(userId?: string) {
   const { user } = useAuth()
   const id = userId ?? user?.id
+  const isOwnProfile = !!id && id === user?.id
 
   return useQuery({
-    queryKey: ['profile', id],
+    queryKey: ['profile', id, isOwnProfile ? 'own' : 'view'],
     queryFn: async () => {
       if (!id) throw new Error('No user ID')
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .single()
-      if (error) throw error
+
+      // Own profile: read the full row directly. The user is always allowed
+      // to see all of their own fields (edit-profile uses this same row).
+      if (isOwnProfile) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', id)
+          .single()
+        if (error) throw error
+        return {
+          ...data,
+          // Mark own-profile reads as fully-visible so consumers that
+          // branch on viewer_can_see_sensitive (ProfileModal etc) treat
+          // the user's own data as visible.
+          viewer_can_see_sensitive: true,
+          is_self: true,
+        }
+      }
+
+      // Viewing another user: route through the role-tiered RPC. Non-staff
+      // viewers receive null for sensitive fields; staff see everything.
+      // Security boundary lives in get_user_profile_v1 (migration 079).
+      // Cast: this RPC is added in migration 079 and not yet present in
+      // generated database.types.ts; safe to cast since the SQL function
+      // is the canonical signature.
+      const rpc = supabase.rpc as unknown as (
+        fn: 'get_user_profile_v1',
+        args: { target_user_id: string },
+      ) => Promise<{ data: ProfileRow | null; error: unknown }>
+      const { data, error } = await rpc('get_user_profile_v1', { target_user_id: id })
+      if (error) throw error as Error
       return data
     },
     enabled: !!id,
