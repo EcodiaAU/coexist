@@ -42,7 +42,7 @@ function meetsRoleRequirement(userRole: string, requiredRole: string): boolean {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useMyTasks — current + recent tasks for current user               */
+/*  useMyTasks - current + recent tasks for current user               */
 /* ------------------------------------------------------------------ */
 
 export function useMyTasks() {
@@ -109,7 +109,7 @@ export function useMyTasks() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useCollectiveTasks — tasks for a specific collective               */
+/*  useCollectiveTasks - tasks for a specific collective               */
 /* ------------------------------------------------------------------ */
 
 export function useCollectiveTasks(collectiveId: string | undefined) {
@@ -152,7 +152,7 @@ export function useCollectiveTasks(collectiveId: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useCompleteTask — mark a task instance as completed                */
+/*  useCompleteTask - mark a task instance as completed                */
 /* ------------------------------------------------------------------ */
 
 export function useCompleteTask() {
@@ -220,7 +220,7 @@ export function useCompleteTask() {
       if (!isOffline) queryClient.invalidateQueries({ queryKey: ['collective-tasks'] })
     },
     onSuccess: () => {
-      if (isOffline) toast.info('Task completion saved offline — will sync when back online')
+      if (isOffline) toast.info('Task completion saved offline - will sync when back online')
     },
     onSettled: () => {
       if (isOffline) return
@@ -232,7 +232,114 @@ export function useCompleteTask() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useSkipTask — mark a task instance as skipped                      */
+/*  useUpdateTaskNotes - save a note WITHOUT completing the task       */
+/* ------------------------------------------------------------------ */
+
+export function useUpdateTaskNotes() {
+  const queryClient = useQueryClient()
+  const { isOffline } = useOffline()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: async ({
+      instanceId,
+      notes,
+    }: {
+      instanceId: string
+      notes: string
+    }) => {
+      if (isOffline) {
+        queueOfflineAction('task-update-notes', { instanceId, notes })
+        return
+      }
+
+      const { error } = await supabase
+        .from('task_instances')
+        .update({ completion_notes: notes || null })
+        .eq('id', instanceId)
+
+      if (error) throw error
+    },
+    onMutate: async ({ instanceId, notes }) => {
+      await queryClient.cancelQueries({ queryKey: ['my-tasks'] })
+      await queryClient.cancelQueries({ queryKey: ['collective-tasks'] })
+      const updater = (old: MyTask[] | undefined) =>
+        old?.map((t) =>
+          t.id === instanceId ? { ...t, completion_notes: notes || null } : t,
+        )
+      queryClient.setQueriesData<MyTask[]>({ queryKey: ['my-tasks'] }, updater)
+      queryClient.setQueriesData<MyTask[]>({ queryKey: ['collective-tasks'] }, updater)
+    },
+    onSuccess: () => {
+      if (isOffline) toast.info('Note saved offline - will sync when back online')
+    },
+    onSettled: () => {
+      if (isOffline) return
+      queryClient.invalidateQueries({ queryKey: ['my-tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['collective-tasks'] })
+    },
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/*  useUndoCompleteTask - revert a task instance back to pending       */
+/* ------------------------------------------------------------------ */
+
+export function useUndoCompleteTask() {
+  const queryClient = useQueryClient()
+  const { isOffline } = useOffline()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: async (instanceId: string) => {
+      if (isOffline) {
+        queueOfflineAction('task-undo-complete', { instanceId })
+        return
+      }
+
+      const { error } = await supabase
+        .from('task_instances')
+        .update({
+          status: 'pending',
+          completed_at: null,
+          completed_by: null,
+        })
+        .eq('id', instanceId)
+
+      if (error) throw error
+    },
+    onMutate: async (instanceId) => {
+      await queryClient.cancelQueries({ queryKey: ['my-tasks'] })
+      await queryClient.cancelQueries({ queryKey: ['collective-tasks'] })
+      const updater = (old: MyTask[] | undefined) =>
+        old?.map((t) =>
+          t.id === instanceId
+            ? {
+                ...t,
+                status: 'pending' as const,
+                completed_at: null,
+                completed_by: null,
+                completer: null,
+              }
+            : t,
+        )
+      queryClient.setQueriesData<MyTask[]>({ queryKey: ['my-tasks'] }, updater)
+      queryClient.setQueriesData<MyTask[]>({ queryKey: ['collective-tasks'] }, updater)
+    },
+    onSuccess: () => {
+      if (isOffline) toast.info('Undo saved offline - will sync when back online')
+    },
+    onSettled: () => {
+      if (isOffline) return
+      queryClient.invalidateQueries({ queryKey: ['my-tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['collective-tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-kpi-dashboard'] })
+    },
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/*  useSkipTask - mark a task instance as skipped                      */
 /* ------------------------------------------------------------------ */
 
 export function useSkipTask() {
@@ -263,7 +370,7 @@ export function useSkipTask() {
       queryClient.setQueriesData<MyTask[]>({ queryKey: ['collective-tasks'] }, updater)
     },
     onSuccess: () => {
-      if (isOffline) toast.info('Task skip saved offline — will sync when back online')
+      if (isOffline) toast.info('Task skip saved offline - will sync when back online')
     },
     onSettled: () => {
       if (isOffline) return
@@ -274,7 +381,7 @@ export function useSkipTask() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useGenerateTaskInstances — lazy generation for current period      */
+/*  useGenerateTaskInstances - lazy generation for current period      */
 /* ------------------------------------------------------------------ */
 
 interface TemplateRow {
@@ -357,7 +464,7 @@ export function useGenerateTaskInstances() {
       }
 
       // --- Handle collective recurring templates (weekly/monthly) ---
-      // One instance per collective per period — any qualifying staff can complete
+      // One instance per collective per period - any qualifying staff can complete
       // Batch all upserts to avoid N+1 sequential DB calls
       {
         const collectiveRows: Array<{
@@ -640,7 +747,7 @@ export function useGenerateTaskInstances() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useGroupedTasks — group tasks by collective for display            */
+/*  useGroupedTasks - group tasks by collective for display            */
 /* ------------------------------------------------------------------ */
 
 export function useGroupedTasks(tasks: MyTask[] | undefined): CollectiveTaskGroup[] {
