@@ -952,7 +952,15 @@ function TodoModal({
 
   return (
     <BottomSheet open={open} onClose={onClose}>
-      <div className="px-5 pt-2 pb-6 space-y-4">
+      {/*
+        Layout note (Issue 2 fix, 2026-04-29): the Save action lives at the
+        BOTTOM of the BottomSheet's scroll container. On Android the soft
+        keyboard often hides the action button - users see "no Save button
+        anywhere" (Brendan, Samsung leader). We pin the action bar with
+        sticky bottom-0 so it stays visible above keyboard insets even when
+        keyboardHeight reporting from Capacitor lags or fails.
+      */}
+      <div className="pt-2 pb-2 space-y-4">
         <h2 className="font-heading text-lg font-bold text-neutral-900">{isEdit ? 'Edit To-Do' : 'New To-Do'}</h2>
         <Input
           label="What do you need to do?"
@@ -1009,7 +1017,17 @@ function TodoModal({
             })}
           </div>
         </div>
+      </div>
 
+      {/*
+        Sticky action bar - lives inside the BottomSheet scroll container so
+        it pins to the bottom of the visible area even when the keyboard is
+        up. White background + top border so it reads as a separate band.
+      */}
+      <div
+        className="sticky bottom-0 left-0 right-0 -mx-5 px-5 py-3 bg-surface-0 border-t border-neutral-100"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 0.75rem)' }}
+      >
         <Button
           variant="primary"
           fullWidth
