@@ -6,6 +6,7 @@ import { Capacitor } from '@capacitor/core'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 import { Skeleton } from '@/components/skeleton'
 import { OGMeta, SITE_URL } from '@/components/og-meta'
 import { APP_NAME, TAGLINE } from '@/lib/constants'
@@ -253,6 +254,7 @@ export default function PublicCollectivePage() {
               src={collective.cover_image_url}
               alt=""
               className="h-full w-full object-cover"
+              style={coverImagePositionStyle(collective.cover_image_position_x, collective.cover_image_position_y)}
               aria-hidden="true"
             />
           ) : (

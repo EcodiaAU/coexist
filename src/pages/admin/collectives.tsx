@@ -27,6 +27,7 @@ import { BottomSheet } from '@/components/bottom-sheet'
 import { ConfirmationSheet } from '@/components/confirmation-sheet'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 import {
   useAdminCollectives,
   useCreateCollective,
@@ -288,6 +289,7 @@ export default function AdminCollectivesPage() {
                           src={c.cover_image_url}
                           alt=""
                           className="w-14 h-14 rounded-xl object-cover shrink-0"
+                          style={coverImagePositionStyle(c.cover_image_position_x, c.cover_image_position_y)}
                         />
                       ) : (
                         <div className="w-14 h-14 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">

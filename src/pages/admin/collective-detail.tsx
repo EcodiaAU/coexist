@@ -49,6 +49,8 @@ import { useCountUp } from '@/components/stat-card'
 import { WaveTransition } from '@/components/wave-transition'
 import { SegmentedControl } from '@/components/segmented-control'
 import { useImageUpload } from '@/hooks/use-image-upload'
+import { CoverImageFocalPointPicker } from '@/components/cover-image-focal-point-picker'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 import {
     useAdminCollectiveDetail,
     useAdminCollectiveMembers,
@@ -975,6 +977,8 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [fileInputKey, setFileInputKey] = useState(0)
+  const [positionX, setPositionX] = useState<number>(50)
+  const [positionY, setPositionY] = useState<number>(50)
 
   // Initialize form when detail loads (or re-initialize when collectiveId changes)
   if (detail && initializedFor !== collectiveId) {
@@ -984,6 +988,8 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
     setState(detail.state ?? '')
     setSlug(detail.slug)
     setCoverPreview(detail.cover_image_url)
+    setPositionX(detail.cover_image_position_x ?? 50)
+    setPositionY(detail.cover_image_position_y ?? 50)
     setInitializedFor(collectiveId)
   }
 
@@ -995,9 +1001,16 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
     try {
       const result = await upload(file)
       setCoverPreview(result.url)
+      // Reset focal point to centre when a fresh image is uploaded
+      setPositionX(50)
+      setPositionY(50)
       await updateCollective.mutateAsync({
         collectiveId,
-        updates: { cover_image_url: result.url },
+        updates: {
+          cover_image_url: result.url,
+          cover_image_position_x: 50,
+          cover_image_position_y: 50,
+        },
       })
       toast.success('Cover image updated')
     } catch {
@@ -1009,13 +1022,24 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
     try {
       await updateCollective.mutateAsync({
         collectiveId,
-        updates: { cover_image_url: null },
+        updates: { cover_image_url: null, cover_image_position_x: 50, cover_image_position_y: 50 },
       })
       setCoverPreview(null)
+      setPositionX(50)
+      setPositionY(50)
       toast.success('Cover image removed')
     } catch {
       toast.error('Failed to remove image')
     }
+  }
+
+  const handleFocalPointChange = (x: number, y: number) => {
+    setPositionX(x)
+    setPositionY(y)
+    updateCollective.mutate({
+      collectiveId,
+      updates: { cover_image_position_x: x, cover_image_position_y: y },
+    })
   }
 
   const handleSave = async () => {
@@ -1074,7 +1098,13 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
         <div className="p-5">
           <div className="relative rounded-xl overflow-hidden bg-neutral-50" style={{ aspectRatio: '16/9' }}>
             {coverPreview ? (
-              <img src={coverPreview} alt="Cover" loading="lazy" className="w-full h-full object-cover" />
+              <img
+                src={coverPreview}
+                alt="Cover"
+                loading="lazy"
+                className="w-full h-full object-cover"
+                style={coverImagePositionStyle(positionX, positionY)}
+              />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-neutral-300 gap-2">
                 <ImagePlus size={32} />
@@ -1125,6 +1155,17 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
               </Button>
             )}
           </div>
+          {coverPreview && (
+            <div className="mt-4">
+              <CoverImageFocalPointPicker
+                imageUrl={coverPreview}
+                x={positionX}
+                y={positionY}
+                onChange={handleFocalPointChange}
+                disabled={uploading}
+              />
+            </div>
+          )}
           <p className="text-[11px] text-neutral-400 mt-2">
             Recommended: 1200x675px (16:9). Shown on the collective page and discovery cards.
           </p>
@@ -1369,6 +1410,7 @@ export default function AdminCollectiveDetailPage() {
             src={detail.cover_image_url}
             alt={detail.name}
             className="w-full block"
+            style={coverImagePositionStyle(detail.cover_image_position_x, detail.cover_image_position_y)}
           />
           {/* Rocky wave overlay */}
           <WaveTransition className="-bottom-px z-10" />

@@ -30,6 +30,7 @@ import { WhatsNext } from '@/components/whats-next'
 import { OptimizedImage } from '@/components/optimized-image'
 import { useToast } from '@/components/toast'
 import { resolveCollectiveCoords } from '@/lib/geo'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 
 import {
     useCollective,
@@ -246,6 +247,7 @@ export default function CollectiveDetailPage() {
             priority
             sizes="100vw"
             wrapperClassName="h-full w-full"
+            imgStyle={coverImagePositionStyle(collective.cover_image_position_x, collective.cover_image_position_y)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-800 to-primary-950">
