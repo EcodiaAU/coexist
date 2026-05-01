@@ -264,8 +264,12 @@ function MobileSheet({
         {/* Scrollable content */}
         <div
           ref={scrollRef}
-          className="overflow-y-auto overscroll-contain px-5 pb-6 flex-1 min-h-0 hide-scrollbar"
-          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.5rem)' }}
+          className="overflow-y-auto overscroll-contain px-5 flex-1 min-h-0 hide-scrollbar"
+          style={{
+            paddingBottom: keyboardHeight > 0
+              ? `calc(${keyboardHeight}px + 1.5rem)`
+              : 'max(env(safe-area-inset-bottom, 0px), 1.5rem)',
+          }}
         >
           {children}
         </div>

@@ -20,9 +20,14 @@ export default function SplashPage({ onReady }: SplashProps) {
     return () => clearTimeout(timer)
   }, [])
 
-  if (minTimePassed && !authLoading && !dismissing) {
-    setDismissing(true)
-  }
+  // Trigger dismiss only from an effect, never during render, to avoid
+  // state-during-render violations that can cause a second splash flash
+  // on Android WebView.
+  useEffect(() => {
+    if (minTimePassed && !authLoading && !dismissing) {
+      setDismissing(true)
+    }
+  }, [minTimePassed, authLoading, dismissing])
 
   return (
     <AnimatePresence onExitComplete={onReady}>
