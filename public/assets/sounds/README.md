@@ -15,5 +15,4 @@ Place sound files here (<50KB each). Used by `src/hooks/use-sound.ts`.
 - All files must be <50KB
 - MP3 format for maximum compatibility
 - Lazy loaded via Web Audio API
-- Paired with Capacitor Haptics on native
 - Respect system mute + user settings toggle

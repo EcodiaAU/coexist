@@ -10,8 +10,6 @@ interface PlatformFeatures {
   isIOS: boolean
   /** Android native */
   isAndroid: boolean
-  /** Haptic feedback available */
-  haptics: boolean
   /** Native camera available */
   camera: boolean
   /** Push notifications available */
@@ -34,7 +32,6 @@ export function usePlatform(): PlatformFeatures {
       isWeb: !isNative,
       isIOS,
       isAndroid,
-      haptics: isNative,
       camera: isNative,
       push: isNative,
       biometrics: isNative,

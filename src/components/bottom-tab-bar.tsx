@@ -95,20 +95,11 @@ export function BottomTabBar({
   const location = useLocation()
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
-  const { haptics, isAndroid } = usePlatform()
+  const { isAndroid } = usePlatform()
 
   const tabs = customTabs ?? baseTabs
 
-  const handleTabPress = async (tab: Tab) => {
-    if (haptics) {
-      try {
-        const { Haptics, ImpactStyle } = await import('@capacitor/haptics')
-        await Haptics.impact({ style: ImpactStyle.Light })
-      } catch {
-        // Haptics not available
-      }
-    }
-
+  const handleTabPress = (tab: Tab) => {
     if (tab.isMore && onMorePress) {
       onMorePress()
       return
