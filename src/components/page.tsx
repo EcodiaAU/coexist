@@ -1,6 +1,7 @@
 import { type ReactNode, useRef } from 'react'
 import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
+import { Capacitor } from '@capacitor/core'
 
 interface PageProps {
   /** Optional header component (e.g. <Header />) */
@@ -65,12 +66,23 @@ export function Page({
           fullBleed ? 'px-0' : 'px-4 lg:px-6',
           // Small gap between sidebar and page content on desktop
           !fullBleed && isDesktopNav && 'pl-4',
-          // Pad bottom: tab bar height + safe area (content bleeds behind drag handle)
-          hasBottomTabs
-            ? 'pb-[calc(3.5rem+var(--safe-bottom))]'
-            : 'pb-[var(--safe-bottom)]',
           className,
         )}
+        style={
+          // On native, add keyboard height to bottom padding so content
+          // above the keyboard remains scrollable when the keyboard is open.
+          Capacitor.isNativePlatform()
+            ? {
+                paddingBottom: hasBottomTabs
+                  ? 'calc(3.5rem + var(--safe-bottom) + var(--kb-height, 0px))'
+                  : 'calc(var(--safe-bottom) + var(--kb-height, 0px))',
+              }
+            : {
+                paddingBottom: hasBottomTabs
+                  ? 'calc(3.5rem + var(--safe-bottom))'
+                  : 'var(--safe-bottom)',
+              }
+        }
       >
         {/* Atmospheric background - sticky so it stays viewport-pinned while
             content scrolls over it. Negative margin collapses it out of flow. */}
@@ -104,6 +116,8 @@ export function Page({
             paddingBottom: hasBottomTabs
               ? `calc(3.5rem + var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`
               : `calc(var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`,
+            transform: 'translateY(calc(-1 * var(--kb-height, 0px)))',
+            transition: 'transform 0.25s ease',
           }}
         >
           {footer}
