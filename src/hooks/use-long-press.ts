@@ -28,7 +28,7 @@ export function useLongPress(onLongPress?: () => void): LongPressHandlers {
       // Haptic confirmation that the long-press gesture has triggered.
       // Kept (per haptic pruning policy) because long-press is a discrete
       // intentional gesture; users benefit from a confirmation pulse that
-      // distinguishes it from a normal tap. Web Vibration API only — silent
+      // distinguishes it from a normal tap. Web Vibration API only - silent
       // on iOS, fires on Android browsers + WebView.
       if ('vibrate' in navigator) {
         navigator.vibrate(15)
