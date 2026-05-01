@@ -68,6 +68,7 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { parseLocationPoint } from '@/lib/geo'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
+import { useGeocodeAddress } from '@/hooks/use-geocode-address'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { useEventTicketTypes, useMyEventTicket, useCreateTicketCheckout, useCancelPendingTicket, useTicketSalesSummary, useEventTickets } from '@/hooks/use-event-tickets'
 import { MapView } from '@/components'
@@ -334,6 +335,13 @@ export default function EventDetailPage() {
   }, [])
 
   const accent = event ? (activityAccent[event.activity_type] ?? defaultAccent) : defaultAccent
+
+  // Map position: prefer saved location_point; fall back to geocoding the
+  // address text so legacy events (created before the location_point RPC fix)
+  // still render a pin instead of hiding the map entirely.
+  const savedPos = useMemo(() => parseLocationPoint(event?.location_point), [event?.location_point])
+  const { data: geocodedPos } = useGeocodeAddress(event?.address, !savedPos)
+  const mapPos = savedPos ?? geocodedPos ?? null
   const past = event ? isPastEvent(event) : false
   const isAtCapacity = event?.capacity ? event.registration_count >= event.capacity : false
 
@@ -998,22 +1006,35 @@ export default function EventDetailPage() {
         </motion.div>
 
         {/* ── Location map ── */}
-        {event.address && (() => {
-          const pos = parseLocationPoint(event.location_point)
-          if (!pos) return null
-          return (
-            <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
-              <MapView
-                center={pos}
-                zoom={15}
-                markers={[{ id: event.id, position: pos, variant: 'event', label: event.title }]}
-                interactive={false}
-                aria-label={`${event.title} location`}
-                className="aspect-video rounded-2xl shadow-sm border border-neutral-100"
-              />
-            </motion.div>
-          )
-        })()}
+        {event.address && mapPos && (
+          <motion.div
+            variants={shouldReduceMotion ? undefined : fadeUp}
+            className="relative"
+          >
+            <MapView
+              center={mapPos}
+              zoom={15}
+              markers={[{ id: event.id, position: mapPos, variant: 'event', label: event.title }]}
+              interactive
+              aria-label={`${event.title} location`}
+              className="aspect-[4/3] sm:aspect-video rounded-2xl shadow-sm border border-neutral-100"
+            />
+            <button
+              type="button"
+              onClick={handleGetDirections}
+              className={cn(
+                'absolute bottom-3 right-3 z-[1000]',
+                'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-bold',
+                'bg-white text-neutral-700 shadow-md border border-neutral-200',
+                'cursor-pointer select-none active:scale-[0.97] transition-transform duration-150',
+              )}
+              aria-label="Get directions"
+            >
+              <Compass size={14} />
+              Directions
+            </button>
+          </motion.div>
+        )}
 
         {/* ── Description (About this event) ── */}
         {event.description && (

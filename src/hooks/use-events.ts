@@ -830,12 +830,40 @@ export function useCreateEvent() {
     mutationFn: async (eventData: Omit<TablesInsert<'events'>, 'created_by'>) => {
       if (!user) throw new Error('Must be signed in')
 
+      // Same PostgREST + geography(Point,4326) limitation as updates: a WKT
+      // string sent inline can't be cast on insert, so the column comes back
+      // NULL. Strip it from the insert payload and write it via RPC after the
+      // row exists.
+      const rawPoint = (eventData as { location_point?: unknown }).location_point
+      const insertData = { ...eventData, created_by: user.id }
+      delete (insertData as { location_point?: unknown }).location_point
+
       const { data, error } = await supabase
         .from('events')
-        .insert({ ...eventData, created_by: user.id })
+        .insert(insertData)
         .select()
         .single()
       if (error) throw error
+
+      let lat: number | null = null
+      let lng: number | null = null
+      if (typeof rawPoint === 'string') {
+        const m = rawPoint.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/)
+        if (m) {
+          lng = parseFloat(m[1])
+          lat = parseFloat(m[2])
+        }
+      }
+
+      if (lat !== null && lng !== null) {
+        const { error: locErr } = await supabase.rpc('update_event_location', {
+          p_event_id: data.id,
+          p_lat: lat,
+          p_lng: lng,
+        })
+        if (locErr) throw locErr
+      }
+
       return data as Event
     },
     onMutate: async () => {
