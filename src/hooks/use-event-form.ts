@@ -152,10 +152,13 @@ export function useEventForm({ initial }: UseEventFormOptions) {
   const isDateInPast = fields.date_start !== null && fields.date_start < new Date()
   const hasLocation = fields.address.trim().length > 0 || (fields.location_lat !== null && fields.location_lng !== null)
 
-  /** Build PostGIS-compatible POINT string from lat/lng */
+  /** Build PostGIS-compatible EWKT string from lat/lng.
+   *  EWKT (with SRID prefix) is required for PostgREST to implicitly cast
+   *  text → geography(Point,4326). Plain WKT silently fails to persist,
+   *  which is why edits used to "lose" the pin and snap back to default. */
   const buildLocationPoint = useCallback(() => {
     return fields.location_lat != null && fields.location_lng != null
-      ? `POINT(${fields.location_lng} ${fields.location_lat})`
+      ? `SRID=4326;POINT(${fields.location_lng} ${fields.location_lat})`
       : null
   }, [fields.location_lat, fields.location_lng])
 

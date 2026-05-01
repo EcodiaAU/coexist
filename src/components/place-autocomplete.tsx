@@ -42,6 +42,13 @@ interface NominatimResult {
   lat: string
   lon: string
   address: {
+    house_number?: string
+    road?: string
+    pedestrian?: string
+    footway?: string
+    cycleway?: string
+    path?: string
+    neighbourhood?: string
     suburb?: string
     city?: string
     town?: string
@@ -56,13 +63,17 @@ interface NominatimResult {
 }
 
 function buildShortName(addr: NominatimResult['address']): string {
+  const street =
+    addr.road || addr.pedestrian || addr.footway || addr.cycleway || addr.path || ''
+  const streetLine = addr.house_number && street
+    ? `${addr.house_number} ${street}`
+    : street
   const locality =
-    addr.suburb || addr.city || addr.town || addr.village || addr.hamlet || addr.municipality || addr.county || ''
+    addr.suburb || addr.city || addr.town || addr.village || addr.hamlet || addr.neighbourhood || addr.municipality || addr.county || ''
   const state = addr.state || ''
-  if (locality && state) return `${locality}, ${state}`
-  if (locality) return locality
-  if (state) return state
-  return ''
+
+  const parts = [streetLine, locality, state].filter(Boolean)
+  return parts.join(', ')
 }
 
 /* ------------------------------------------------------------------ */
@@ -117,8 +128,11 @@ async function searchPlaces(
     q: query,
     format: 'json',
     addressdetails: '1',
-    limit: '5',
+    limit: '8',
     countrycodes: countryCode,
+    // Bias Nominatim toward building/street-level matches (zoom 18 = building)
+    // so "12 Smith St Byron" returns the actual address, not just the suburb.
+    zoom: '18',
   })
 
   const res = await fetch(

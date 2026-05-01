@@ -610,9 +610,9 @@ function StepLocation({
           center={
             fields.location_lat != null && fields.location_lng != null
               ? { lat: fields.location_lat, lng: fields.location_lng }
-              : { lat: -33.8688, lng: 151.2093 }
+              : { lat: -25.0, lng: 134.0 }
           }
-          zoom={13}
+          zoom={fields.location_lat != null && fields.location_lng != null ? 17 : 4}
           draggable
           onDragEnd={(pos: MapCenter) =>
             onChange({ location_lat: pos.lat, location_lng: pos.lng })
