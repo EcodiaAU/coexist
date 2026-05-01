@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       app_images: {
@@ -1148,6 +1123,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string | null
           description: string | null
+          forms_migrated_at: string | null
           id: string
           is_active: boolean | null
           is_national: boolean | null
@@ -1165,6 +1141,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
+          forms_migrated_at?: string | null
           id?: string
           is_active?: boolean | null
           is_national?: boolean | null
@@ -1182,6 +1159,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
+          forms_migrated_at?: string | null
           id?: string
           is_active?: boolean | null
           is_national?: boolean | null
@@ -3084,6 +3062,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      excel_sync_runs: {
+        Row: {
+          created_at: string
+          direction: string
+          event_id: string | null
+          from_excel_error_count: number | null
+          from_excel_forms_rows_synced: number | null
+          from_excel_skipped_legacy: number | null
+          from_excel_skipped_no_collective: number | null
+          from_excel_synced: number | null
+          id: string
+          run_at: string
+          summary: Json | null
+          to_excel_appended: number | null
+          to_excel_error_count: number | null
+          to_excel_skipped: number | null
+          to_excel_skipped_duplicates: number | null
+          to_excel_updated: number | null
+          to_excel_weak_dedup_warning_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          direction: string
+          event_id?: string | null
+          from_excel_error_count?: number | null
+          from_excel_forms_rows_synced?: number | null
+          from_excel_skipped_legacy?: number | null
+          from_excel_skipped_no_collective?: number | null
+          from_excel_synced?: number | null
+          id?: string
+          run_at?: string
+          summary?: Json | null
+          to_excel_appended?: number | null
+          to_excel_error_count?: number | null
+          to_excel_skipped?: number | null
+          to_excel_skipped_duplicates?: number | null
+          to_excel_updated?: number | null
+          to_excel_weak_dedup_warning_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          event_id?: string | null
+          from_excel_error_count?: number | null
+          from_excel_forms_rows_synced?: number | null
+          from_excel_skipped_legacy?: number | null
+          from_excel_skipped_no_collective?: number | null
+          from_excel_synced?: number | null
+          id?: string
+          run_at?: string
+          summary?: Json | null
+          to_excel_appended?: number | null
+          to_excel_error_count?: number | null
+          to_excel_skipped?: number | null
+          to_excel_skipped_duplicates?: number | null
+          to_excel_updated?: number | null
+          to_excel_weak_dedup_warning_count?: number | null
+        }
+        Relationships: []
       }
       impact_areas: {
         Row: {
@@ -5286,6 +5324,16 @@ export type Database = {
       }
     }
     Views: {
+      event_hosts: {
+        Row: {
+          collective_id: string | null
+          event_id: string | null
+          host_added_at: string | null
+          host_count: number | null
+          host_index: number | null
+        }
+        Relationships: []
+      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -5369,33 +5417,6 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"] | null
         }
         Relationships: []
-      }
-      // Hand-written until next `supabase gen types` run after migration
-      // 20260427000000_event_hosts_view.sql is applied to the live DB.
-      event_hosts: {
-        Row: {
-          event_id: string | null
-          collective_id: string | null
-          host_index: number | null
-          host_count: number | null
-          host_added_at: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "events_collective_id_fkey"
-            columns: ["collective_id"]
-            isOneToOne: false
-            referencedRelation: "collectives"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "events_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Functions: {
@@ -5545,11 +5566,12 @@ export type Database = {
             }
             Returns: {
               avatar_url: string
+              collective_count: number
               created_at: string
               display_name: string
               email: string
               id: string
-              is_suspended: boolean
+              last_sign_in_at: string
               role: string
             }[]
           }
@@ -5585,6 +5607,8 @@ export type Database = {
       check_user_suspended: { Args: { uid: string }; Returns: Json }
       cleanup_deleted_accounts: { Args: never; Returns: number }
       cleanup_expired_reservations: { Args: never; Returns: number }
+      cron_excel_from_sync: { Args: never; Returns: undefined }
+      cron_excel_to_sync: { Args: never; Returns: undefined }
       decrement_stock: {
         Args: {
           p_product_id: string
@@ -5627,7 +5651,9 @@ export type Database = {
       email_subscriber_count: { Args: never; Returns: number }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      event_host_count: { Args: { p_event_id: string }; Returns: number }
       expire_stale_pending_tickets: { Args: never; Returns: number }
+      generate_event_check_in_code: { Args: never; Returns: string }
       generate_ticket_code: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
@@ -5764,14 +5790,20 @@ export type Database = {
           activity_type: Database["public"]["Enums"]["activity_type"]
           address: string | null
           capacity: number | null
+          check_in_code: string | null
+          checkin_window_minutes: number | null
           collective_id: string
+          cover_image_position_x: number
+          cover_image_position_y: number
           cover_image_url: string | null
           created_at: string | null
           created_by: string | null
           date_end: string | null
           date_start: string
           description: string | null
+          external_registration_url: string | null
           id: string
+          is_external_collaboration: boolean | null
           is_public: boolean | null
           is_ticketed: boolean | null
           location_point: unknown
@@ -5810,6 +5842,7 @@ export type Database = {
         }[]
       }
       get_user_impact_stats: { Args: { p_user_id: string }; Returns: Json }
+      get_user_profile_v1: { Args: { target_user_id: string }; Returns: Json }
       gettransactionid: { Args: never; Returns: unknown }
       handle_announcement_rsvp: {
         Args: { p_event_id: string; p_response: string }
@@ -5854,6 +5887,7 @@ export type Database = {
         Args: { cid: string; uid: string }
         Returns: boolean
       }
+      is_collective_staff_or_above: { Args: { uid: string }; Returns: boolean }
       is_fellow_collective_member: {
         Args: { caller_uid: string; target_collective_id: string }
         Returns: boolean
@@ -5944,6 +5978,9 @@ export type Database = {
         Args: { p_accept: boolean; p_collaboration_id: string }
         Returns: undefined
       }
+      role_rank: { Args: { r: string }; Returns: number }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -6531,6 +6568,10 @@ export type Database = {
         Returns: undefined
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      update_event_location: {
+        Args: { p_event_id: string; p_lat: number; p_lng: number }
+        Returns: undefined
+      }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
@@ -6544,14 +6585,28 @@ export type Database = {
     }
     Enums: {
       activity_type:
-        | "clean_up"
+        | "shore_cleanup"
         | "tree_planting"
+        | "land_regeneration"
+        | "nature_walk"
+        | "camp_out"
+        | "retreat"
+        | "film_screening"
+        | "marine_restoration"
+        | "workshop"
+        | "clean_up"
         | "ecosystem_restoration"
         | "nature_hike"
-        | "camp_out"
         | "spotlighting"
         | "other"
-      collective_role: "participant" | "assist_leader" | "co_leader" | "leader" | "manager" | "admin"
+      collective_role:
+        | "member"
+        | "assist_leader"
+        | "co_leader"
+        | "leader"
+        | "participant"
+        | "manager"
+        | "admin"
       dev_assignment_scope: "collective" | "individual"
       dev_category: "learning" | "leadership_development" | "onboarding"
       dev_content_type: "text" | "video" | "file" | "slideshow" | "quiz"
@@ -6581,7 +6636,14 @@ export type Database = {
       timeline_anchor: "next_event" | "next_event_of_type" | "event_series"
       update_priority: "normal" | "urgent"
       update_target: "all" | "leaders" | "collective_specific"
-      user_role: "participant" | "assist_leader" | "co_leader" | "leader" | "manager" | "admin"
+      user_role:
+        | "participant"
+        | "national_leader"
+        | "manager"
+        | "admin"
+        | "assist_leader"
+        | "co_leader"
+        | "leader"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -6715,21 +6777,33 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       activity_type: [
-        "clean_up",
+        "shore_cleanup",
         "tree_planting",
+        "land_regeneration",
+        "nature_walk",
+        "camp_out",
+        "retreat",
+        "film_screening",
+        "marine_restoration",
+        "workshop",
+        "clean_up",
         "ecosystem_restoration",
         "nature_hike",
-        "camp_out",
         "spotlighting",
         "other",
       ],
-      collective_role: ["participant", "assist_leader", "co_leader", "leader", "manager", "admin"],
+      collective_role: [
+        "member",
+        "assist_leader",
+        "co_leader",
+        "leader",
+        "participant",
+        "manager",
+        "admin",
+      ],
       dev_assignment_scope: ["collective", "individual"],
       dev_category: ["learning", "leadership_development", "onboarding"],
       dev_content_type: ["text", "video", "file", "slideshow", "quiz"],
@@ -6762,7 +6836,15 @@ export const Constants = {
       timeline_anchor: ["next_event", "next_event_of_type", "event_series"],
       update_priority: ["normal", "urgent"],
       update_target: ["all", "leaders", "collective_specific"],
-      user_role: ["participant", "assist_leader", "co_leader", "leader", "manager", "admin"],
+      user_role: [
+        "participant",
+        "national_leader",
+        "manager",
+        "admin",
+        "assist_leader",
+        "co_leader",
+        "leader",
+      ],
     },
   },
 } as const

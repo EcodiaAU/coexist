@@ -90,7 +90,7 @@ function useAdminUsers(search: string, roleFilter: string) {
         offset_val: pageParam,
       })
       if (error) throw error
-      return (data ?? []) as AdminUserRow[]
+      return (data ?? []) as unknown as AdminUserRow[]
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>

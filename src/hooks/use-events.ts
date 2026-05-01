@@ -887,8 +887,8 @@ export function useUpdateEvent() {
       if (pointSent) {
         const { error: locErr } = await supabase.rpc('update_event_location', {
           p_event_id: eventId,
-          p_lat: lat,
-          p_lng: lng,
+          p_lat: lat as number,
+          p_lng: lng as number,
         })
         if (locErr) throw locErr
       }
