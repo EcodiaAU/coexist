@@ -111,6 +111,7 @@ function useTrends() {
       }
 
       for (const row of data ?? []) {
+        if (!row.logged_at) continue
         const d = new Date(row.logged_at)
         const key = `${d.getFullYear()}-${d.getMonth()}`
         if (buckets.has(key)) {
