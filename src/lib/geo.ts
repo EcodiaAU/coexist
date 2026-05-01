@@ -1,8 +1,25 @@
 import type { MapCenter } from '@/components/map/use-map'
 
 /**
+ * Decode a little-endian IEEE-754 double from a WKB hex string at byte offset.
+ * offset is in bytes (each byte = 2 hex chars).
+ */
+function wkbDouble(hex: string, byteOffset: number): number {
+  const buf = new ArrayBuffer(8)
+  const view = new DataView(buf)
+  for (let i = 0; i < 8; i++) {
+    view.setUint8(i, parseInt(hex.slice((byteOffset + i) * 2, (byteOffset + i) * 2 + 2), 16))
+  }
+  return view.getFloat64(0, true) // little-endian
+}
+
+/**
  * Parse a PostGIS location_point (unknown) into { lat, lng }.
- * Handles GeoJSON Point objects, WKT strings, and plain {lat,lng} objects.
+ * Handles:
+ *   - WKB hex strings (what PostgREST returns for geography columns)
+ *   - GeoJSON Point objects
+ *   - WKT/EWKT strings
+ *   - Plain {lat,lng} objects
  * Returns null if unparseable.
  */
 export function parseLocationPoint(point: unknown): MapCenter | null {
@@ -35,11 +52,42 @@ export function parseLocationPoint(point: unknown): MapCenter | null {
     }
   }
 
-  // WKT: "POINT(lng lat)" or "SRID=4326;POINT(lng lat)"
   if (typeof point === 'string') {
-    const match = point.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/)
-    if (match) {
-      return { lat: parseFloat(match[2]), lng: parseFloat(match[1]) }
+    // WKT: "POINT(lng lat)" or "SRID=4326;POINT(lng lat)"
+    const wktMatch = point.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/)
+    if (wktMatch) {
+      return { lat: parseFloat(wktMatch[2]), lng: parseFloat(wktMatch[1]) }
+    }
+
+    // WKB hex (PostgREST returns geography columns as EWKB hex).
+    // Layout (little-endian):
+    //   1 byte  byteOrder (01 = LE)
+    //   4 bytes wkbType  (with SRID flag 0x20000000 set for EWKB)
+    //   4 bytes SRID     (only present when SRID flag set)
+    //   8 bytes X (lng)
+    //   8 bytes Y (lat)
+    const hex = point.trim().toUpperCase()
+    if (/^[0-9A-F]+$/.test(hex) && hex.length >= 42) {
+      try {
+        const byteOrder = parseInt(hex.slice(0, 2), 16)
+        if (byteOrder === 1) { // little-endian only
+          const wkbTypeBuf = new ArrayBuffer(4)
+          const wkbTypeView = new DataView(wkbTypeBuf)
+          for (let i = 0; i < 4; i++) {
+            wkbTypeView.setUint8(i, parseInt(hex.slice(2 + i * 2, 4 + i * 2), 16))
+          }
+          const wkbType = wkbTypeView.getUint32(0, true)
+          const hasSrid = (wkbType & 0x20000000) !== 0
+          const coordOffset = hasSrid ? 9 : 5 // bytes: 1 + 4 + (4 if SRID)
+          const lng = wkbDouble(hex, coordOffset)
+          const lat = wkbDouble(hex, coordOffset + 8)
+          if (isFinite(lat) && isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            return { lat, lng }
+          }
+        }
+      } catch {
+        // fall through
+      }
     }
   }
 
