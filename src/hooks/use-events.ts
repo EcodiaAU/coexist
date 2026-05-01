@@ -865,6 +865,45 @@ export function useUpdateEvent() {
 
   return useMutation({
     mutationFn: async ({ eventId, ...updates }: { eventId: string } & Partial<Event>) => {
+      // PostgREST cannot cast text → geography(Point,4326) on UPDATE, so the
+      // location_point column silently stays unchanged when sent inline.
+      // Pull lat/lng out of the location_point WKT/EWKT (or pass null to
+      // clear), call the update_event_location RPC for that field, and let
+      // the rest of the update go through normally.
+      const rawPoint = (updates as { location_point?: unknown }).location_point
+      const pointSent = 'location_point' in updates
+      delete (updates as { location_point?: unknown }).location_point
+
+      let lat: number | null = null
+      let lng: number | null = null
+      if (typeof rawPoint === 'string') {
+        const m = rawPoint.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/)
+        if (m) {
+          lng = parseFloat(m[1])
+          lat = parseFloat(m[2])
+        }
+      }
+
+      if (pointSent) {
+        const { error: locErr } = await supabase.rpc('update_event_location', {
+          p_event_id: eventId,
+          p_lat: lat,
+          p_lng: lng,
+        })
+        if (locErr) throw locErr
+      }
+
+      // If location_point was the only field, just fetch and return the row.
+      if (Object.keys(updates).length === 0) {
+        const { data, error } = await supabase
+          .from('events')
+          .select()
+          .eq('id', eventId)
+          .single()
+        if (error) throw error
+        return data as Event
+      }
+
       const { data, error } = await supabase
         .from('events')
         .update(updates)

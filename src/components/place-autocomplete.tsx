@@ -128,11 +128,9 @@ async function searchPlaces(
     q: query,
     format: 'json',
     addressdetails: '1',
-    limit: '8',
+    limit: '10',
     countrycodes: countryCode,
-    // Bias Nominatim toward building/street-level matches (zoom 18 = building)
-    // so "12 Smith St Byron" returns the actual address, not just the suburb.
-    zoom: '18',
+    dedupe: '0',
   })
 
   const res = await fetch(
@@ -150,12 +148,24 @@ async function searchPlaces(
 
   const data: NominatimResult[] = await res.json()
 
-  return data.map((r) => ({
+  const queryHasNumber = /\d/.test(query)
+
+  const mapped = data.map((r) => ({
     display_name: r.display_name,
     lat: parseFloat(r.lat),
     lng: parseFloat(r.lon),
-    short_name: buildShortName(r.address) || r.display_name.split(',').slice(0, 2).join(',').trim(),
+    short_name: buildShortName(r.address) || r.display_name.split(',').slice(0, 3).join(',').trim(),
+    _hasHouseNumber: !!r.address.house_number,
   }))
+
+  // When the user typed a number, surface results that actually have a
+  // house number first — Nominatim otherwise mixes street-only matches in
+  // and the picker grabs whichever comes first.
+  if (queryHasNumber) {
+    mapped.sort((a, b) => Number(b._hasHouseNumber) - Number(a._hasHouseNumber))
+  }
+
+  return mapped.map(({ _hasHouseNumber: _ignore, ...rest }) => rest)
 }
 
 /* ------------------------------------------------------------------ */
