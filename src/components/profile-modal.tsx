@@ -79,7 +79,7 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
-  const { data: profile, isLoading } = useProfile(userId ?? undefined)
+  const { data: profile, isLoading, isError } = useProfile(userId ?? undefined)
   const showLoading = useDelayedLoading(isLoading && !!userId)
   const { data: collectives } = useProfileCollectives(userId ?? undefined)
   const { data: stats } = useProfileStats(userId ?? undefined)
@@ -105,8 +105,13 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
 
   return (
     <BottomSheet open={open} onClose={onClose} snapPoints={[0.92]}>
-      {showLoading || !profile ? (
+      {showLoading ? (
         <ProfileModalSkeleton />
+      ) : isError || !profile ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-neutral-500">
+          <User size={32} className="text-neutral-300" />
+          <p className="text-sm">Could not load profile</p>
+        </div>
       ) : (
         <motion.div
           variants={shouldReduceMotion ? undefined : stagger}

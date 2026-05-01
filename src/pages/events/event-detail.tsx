@@ -366,8 +366,8 @@ export default function EventDetailPage() {
   const userStatus = event?.user_registration?.status ?? null
   // Only show leader tools if user has a role in THIS event's collective (or is global staff)
   const belongsToCollective = collectiveRole.role !== null
-  const isLeaderOrAbove = (belongsToCollective && (collectiveRole.isCoLeader || collectiveRole.isLeader)) || isGlobalStaff
-  const isStaff = (belongsToCollective && collectiveRole.isAssistLeader) || isGlobalStaff
+  const isLeaderOrAbove = (belongsToCollective && collectiveRole.isAssistLeader) || isGlobalStaff
+  const isStaff = isLeaderOrAbove
 
   const capacityText = useMemo(() => {
     if (!event) return ''
