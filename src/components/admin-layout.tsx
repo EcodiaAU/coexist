@@ -5,7 +5,6 @@ import { AdminCollectiveScopeContext, useAdminCollectiveScopeProvider } from '@/
 import { WAVE_PATHS } from '@/components/wave-transition'
 
 import {
-    LayoutDashboard,
     Users,
     CalendarDays,
     MapPin,
@@ -25,6 +24,7 @@ import {
     BarChart3,
     Leaf,
     GraduationCap,
+    MessageCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
@@ -245,12 +245,11 @@ const adminBottomTabs: Tab[] = [
     activeIcon: <Home size={21} strokeWidth={2.2} />,
   },
   {
-    key: 'admin-home',
-    label: 'Overview',
-    path: '/admin',
-    exact: true,
-    icon: <LayoutDashboard size={21} strokeWidth={1.5} />,
-    activeIcon: <LayoutDashboard size={21} strokeWidth={2.2} />,
+    key: 'chat',
+    label: 'Chat',
+    path: '/chat',
+    icon: <MessageCircle size={21} strokeWidth={1.5} />,
+    activeIcon: <MessageCircle size={21} strokeWidth={2.2} />,
   },
   {
     key: 'admin-collectives',

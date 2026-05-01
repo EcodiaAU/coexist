@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
@@ -68,15 +68,31 @@ function SectionHeader({ title, count, action }: { title: string; count?: number
 
 function ExploreHero({ rm }: { rm: boolean }) {
   const { bgRef, fgRef, textRef } = useParallaxLayers({ textRange: 180, withScale: false })
+  const [ready, setReady] = useState(false)
+
+  // Decode both images in parallel before showing either. This prevents the
+  // foreground layer flashing in before the background has painted.
+  useEffect(() => {
+    const bg = new Image()
+    const fg = new Image()
+    bg.src = '/img/explore-hero-bg.webp'
+    fg.src = '/img/explore-hero-fg.webp'
+    Promise.all([bg.decode().catch(() => {}), fg.decode().catch(() => {})]).then(() => setReady(true))
+  }, [])
 
   return (
     <div className="relative">
-      <div className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
+      <div
+        className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden transition-opacity duration-300"
+        style={{ opacity: ready ? 1 : 0 }}
+      >
         <div ref={rm ? undefined : bgRef} className="h-full will-change-transform">
           <img
             src="/img/explore-hero-bg.webp"
             alt="Conservation landscape"
             className="w-full h-full object-cover object-center sm:h-auto sm:object-fill block"
+            loading="eager"
+            fetchPriority="high"
           />
         </div>
 
@@ -85,6 +101,8 @@ function ExploreHero({ rm }: { rm: boolean }) {
             src="/img/explore-hero-fg.webp"
             alt=""
             className="w-full h-full object-cover object-center sm:h-auto sm:object-fill block"
+            loading="eager"
+            fetchPriority="high"
           />
         </div>
 
