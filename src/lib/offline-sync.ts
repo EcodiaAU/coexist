@@ -138,23 +138,28 @@ export async function syncOfflineCheckIns(): Promise<number> {
   let synced = 0
   const remaining: PendingCheckIn[] = []
 
-  for (const item of queue) {
-    // Only update if the user is still in a checkable status (registered/invited)
-    // to prevent re-checking-in a cancelled user
-    const { error, count } = await supabase
-      .from('event_registrations')
-      .update({ status: 'attended', checked_in_at: item.timestamp })
-      .eq('event_id', item.eventId)
-      .eq('user_id', item.userId)
-      .in('status', ['registered', 'invited'])
-
-    if (error) {
-      remaining.push(item)
-    } else if (count === 0) {
-      // Registration was cancelled or already attended - discard silently
-      synced++
-    } else {
-      synced++
+  const BATCH = 5
+  for (let i = 0; i < queue.length; i += BATCH) {
+    const batch = queue.slice(i, i + BATCH)
+    const results = await Promise.allSettled(
+      batch.map(async (item) => {
+        const { error, count } = await supabase
+          .from('event_registrations')
+          .update({ status: 'attended', checked_in_at: item.timestamp })
+          .eq('event_id', item.eventId)
+          .eq('user_id', item.userId)
+          .in('status', ['registered', 'invited'])
+        return { item, error, count }
+      }),
+    )
+    for (const r of results) {
+      if (r.status === 'rejected') {
+        remaining.push(batch[results.indexOf(r)])
+      } else if (r.value.error) {
+        remaining.push(r.value.item)
+      } else {
+        synced++
+      }
     }
   }
 
@@ -899,24 +904,40 @@ export async function syncAllOfflineActions(): Promise<SyncResult> {
   const checkinsSynced = await syncOfflineCheckIns()
   result.synced += checkinsSynced
 
-  // Sync generic action queue
+  // Sync generic action queue (batched to avoid blocking UI)
   const queue = getActionQueue()
   if (queue.length === 0) return result
 
   const remaining: OfflineAction[] = []
 
-  for (const action of queue) {
-    const { ok, conflict } = await processAction(action)
-    if (ok) {
-      result.synced++
-    } else if (conflict) {
-      result.conflicts.push(conflict)
-      // Don't retry conflicts - server wins
-    } else if (action.retries < MAX_RETRIES) {
-      remaining.push({ ...action, retries: action.retries + 1 })
-      result.failed++
-    } else {
-      result.conflicts.push(`Action ${action.type} failed after ${MAX_RETRIES} retries`)
+  const BATCH = 5
+  for (let i = 0; i < queue.length; i += BATCH) {
+    const batch = queue.slice(i, i + BATCH)
+    const results = await Promise.allSettled(
+      batch.map(async (action) => {
+        const res = await processAction(action)
+        return { action, ...res }
+      }),
+    )
+    for (const r of results) {
+      if (r.status === 'rejected') {
+        const action = batch[results.indexOf(r)]
+        if (action.retries < MAX_RETRIES) {
+          remaining.push({ ...action, retries: action.retries + 1 })
+          result.failed++
+        } else {
+          result.conflicts.push(`Action ${action.type} failed after ${MAX_RETRIES} retries`)
+        }
+      } else if (r.value.ok) {
+        result.synced++
+      } else if (r.value.conflict) {
+        result.conflicts.push(r.value.conflict)
+      } else if (r.value.action.retries < MAX_RETRIES) {
+        remaining.push({ ...r.value.action, retries: r.value.action.retries + 1 })
+        result.failed++
+      } else {
+        result.conflicts.push(`Action ${r.value.action.type} failed after ${MAX_RETRIES} retries`)
+      }
     }
   }
 

@@ -100,7 +100,7 @@ export function useDataPrefetch() {
       staleTime: 5 * 60 * 1000,
     })
 
-    // /chat page — unread counts
+    // /chat page — unread counts (batched in chunks of 5 to limit burst)
     queryClient.prefetchQuery({
       queryKey: ['unread-counts', userId],
       queryFn: async () => {
@@ -118,27 +118,30 @@ export function useDataPrefetch() {
         const receiptMap = new Map(receipts?.map((r) => [r.collective_id, r.last_read_at]) ?? [])
         const counts: Record<string, number> = {}
 
-        // Batch: fetch unread counts for all collectives in parallel instead of N+1
-        const results = await Promise.all(
-          memberships.map(async (m) => {
-            const lastRead = receiptMap.get(m.collective_id)
-            let query = supabase
-              .from('chat_messages')
-              .select('id', { count: 'exact', head: true })
-              .eq('collective_id', m.collective_id)
-              .eq('is_deleted', false)
-              .neq('user_id', userId)
-            if (lastRead) query = query.gt('created_at', lastRead)
-            const { count } = await query
-            return { collective_id: m.collective_id, count }
-          }),
-        )
-        for (const r of results) {
-          if (r.count && r.count > 0) counts[r.collective_id] = r.count
+        const BATCH_SIZE = 5
+        for (let i = 0; i < memberships.length; i += BATCH_SIZE) {
+          const batch = memberships.slice(i, i + BATCH_SIZE)
+          const results = await Promise.all(
+            batch.map(async (m) => {
+              const lastRead = receiptMap.get(m.collective_id)
+              let query = supabase
+                .from('chat_messages')
+                .select('id', { count: 'exact', head: true })
+                .eq('collective_id', m.collective_id)
+                .eq('is_deleted', false)
+                .neq('user_id', userId)
+              if (lastRead) query = query.gt('created_at', lastRead)
+              const { count } = await query
+              return { collective_id: m.collective_id, count }
+            }),
+          )
+          for (const r of results) {
+            if (r.count && r.count > 0) counts[r.collective_id] = r.count
+          }
         }
         return counts
       },
-      staleTime: STALE_TIME,
+      staleTime: 5 * 60 * 1000,
     })
 
     // ── Participant-specific ──

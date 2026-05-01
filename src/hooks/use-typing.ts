@@ -21,6 +21,7 @@ export function useTyping(collectiveId: string | undefined) {
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([])
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastTrackRef = useRef(0)
 
   // Subscribe to presence for typing indicators
   useEffect(() => {
@@ -65,10 +66,14 @@ export function useTyping(collectiveId: string | undefined) {
     }
   }, [collectiveId, user, profile?.display_name])
 
-  // Send typing indicator
+  // Send typing indicator (throttled to 1 broadcast per 500ms)
   const sendTyping = useCallback(() => {
     const channel = channelRef.current
     if (!channel || !user) return
+
+    const now = Date.now()
+    if (now - lastTrackRef.current < 500) return
+    lastTrackRef.current = now
 
     channel.track({
       displayName: profile?.display_name ?? 'Someone',

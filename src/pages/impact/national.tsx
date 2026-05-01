@@ -41,24 +41,30 @@ function useTopCollectives() {
   return useQuery({
     queryKey: ['top-collectives'],
     queryFn: async () => {
+      const { data: events } = await supabase
+        .from('events')
+        .select('collective_id')
+
+      if (!events?.length) return []
+
+      const countMap = new Map<string, number>()
+      for (const e of events) {
+        countMap.set(e.collective_id, (countMap.get(e.collective_id) ?? 0) + 1)
+      }
+
+      const topIds = [...countMap.entries()]
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([id]) => id)
+
       const { data: collectives } = await supabase
         .from('collectives')
         .select('id, name')
+        .in('id', topIds)
 
-      if (!collectives?.length) return []
-
-      const enriched = await Promise.all(
-        collectives.map(async (c) => {
-          const { count } = await supabase
-            .from('events')
-            .select('id', { count: 'exact', head: true })
-            .eq('collective_id', c.id)
-
-          return { ...c, eventCount: count ?? 0 }
-        }),
-      )
-
-      return enriched.sort((a, b) => b.eventCount - a.eventCount).slice(0, 5)
+      return (collectives ?? [])
+        .map((c) => ({ ...c, eventCount: countMap.get(c.id) ?? 0 }))
+        .sort((a, b) => b.eventCount - a.eventCount)
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -89,28 +95,36 @@ function useTrends() {
   return useQuery({
     queryKey: ['national-impact-trends'],
     queryFn: async () => {
-      const months: { month: string; impact: number }[] = []
       const now = new Date()
+      const rangeStart = new Date(now.getFullYear(), now.getMonth() - 5, 1)
 
+      const { data } = await supabase
+        .from('event_impact')
+        .select('hours_total, logged_at')
+        .gte('logged_at', rangeStart.toISOString())
+        .lt('logged_at', now.toISOString())
+
+      const buckets = new Map<string, number>()
       for (let i = 5; i >= 0; i--) {
-        const start = new Date(now.getFullYear(), now.getMonth() - i, 1)
-        const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1) // first of next month
-
-        const { data } = await supabase
-          .from('event_impact')
-          .select('hours_total')
-          .gte('logged_at', start.toISOString())
-          .lt('logged_at', end.toISOString())
-
-        const hours = (data ?? []).reduce((s, r) => s + (r.hours_total ?? 0), 0)
-
-        months.push({
-          month: start.toLocaleDateString('en-AU', { month: 'short' }),
-          impact: Math.round(hours),
-        })
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        buckets.set(`${d.getFullYear()}-${d.getMonth()}`, 0)
       }
 
-      return months
+      for (const row of data ?? []) {
+        const d = new Date(row.logged_at)
+        const key = `${d.getFullYear()}-${d.getMonth()}`
+        if (buckets.has(key)) {
+          buckets.set(key, buckets.get(key)! + (row.hours_total ?? 0))
+        }
+      }
+
+      return [...buckets.entries()].map(([key, hours]) => {
+        const [year, month] = key.split('-').map(Number)
+        return {
+          month: new Date(year, month, 1).toLocaleDateString('en-AU', { month: 'short' }),
+          impact: Math.round(hours),
+        }
+      })
     },
     staleTime: 10 * 60 * 1000,
   })
@@ -124,7 +138,7 @@ function useByActivity() {
         .from('events')
         .select('activity_type, collectives(state)')
         .lt('date_start', new Date().toISOString())
-        .limit(10000)
+        .limit(2000)
 
       const events = (data ?? []) as { activity_type?: string; collectives?: { state?: string } | null }[]
 
