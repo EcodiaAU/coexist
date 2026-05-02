@@ -6,8 +6,9 @@ import { ACTIVITY_TYPE_LABELS, getCountdown } from '@/hooks/use-events'
 import { cn } from '@/lib/cn'
 import type { EventDetailData } from '@/hooks/use-events'
 import { activityToBadge } from '@/lib/activity-types'
-
-export { activityToBadge }
+// Re-export removed (was unused) so this file only exports components,
+// satisfying react-refresh/only-export-components. Consumers import
+// activityToBadge directly from '@/lib/activity-types'.
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */

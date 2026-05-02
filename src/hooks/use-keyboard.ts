@@ -25,7 +25,7 @@ function isTextInput(el: Element | null): el is HTMLInputElement | HTMLTextAreaE
   return false
 }
 
-function scrollFocusedIntoView() {
+function scrollFocusedIntoView(delay = 300) {
   const el = document.activeElement
   if (!isTextInput(el)) return
 
@@ -35,8 +35,10 @@ function scrollFocusedIntoView() {
     // Re-check — focus may have moved during the delay
     const current = document.activeElement
     if (!isTextInput(current)) return
-    current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  }, 300)
+    // 'center' keeps the field visible in the middle of the viewport above the
+    // keyboard rather than at the extreme top/bottom edge ('nearest' behaviour).
+    current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, delay)
 }
 
 /**
@@ -72,9 +74,7 @@ export function useKeyboard() {
     const onFocusIn = (e: FocusEvent) => {
       if (!keyboardVisible) return
       if (!isTextInput(e.target as Element)) return
-      setTimeout(() => {
-        ;(e.target as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-      }, 150)
+      scrollFocusedIntoView(150)
     }
 
     document.addEventListener('focusin', onFocusIn, { passive: true })

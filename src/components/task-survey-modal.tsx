@@ -6,12 +6,12 @@ import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { SurveyQuestionRenderer } from '@/components/survey-questions'
 import {
-  SurveyQuestionRenderer,
   resolveOtherValues,
   parseSurveyQuestions,
   type SurveyQuestion,
-} from '@/components/survey-questions'
+} from '@/components/survey-questions-utils'
 
 /* ------------------------------------------------------------------ */
 /*  Hook                                                               */

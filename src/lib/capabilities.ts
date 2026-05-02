@@ -1,5 +1,5 @@
 /** Unified role type - same values for profiles.role and collective_members.role */
-type UnifiedRole = 'participant' | 'assist_leader' | 'co_leader' | 'leader' | 'manager' | 'admin'
+type UnifiedRole = 'participant' | 'assist_leader' | 'co_leader' | 'leader' | 'national_leader' | 'manager' | 'admin'
 
 /* ------------------------------------------------------------------ */
 /*  Capability definitions                                             */
@@ -63,6 +63,11 @@ export const ROLE_DEFAULT_CAPS: Record<UnifiedRole, readonly string[]> = {
   assist_leader: [],
   co_leader: [],
   leader: [
+    'manage_content',
+    'manage_events',
+    'view_reports',
+  ],
+  national_leader: [
     'manage_content',
     'manage_events',
     'view_reports',

@@ -93,6 +93,10 @@ export function useDraggablePin({ map, center, onDragEnd }: DraggablePinProps) {
   const markerRef = useRef<L.Marker | null>(null)
   const onDragEndRef = useRef(onDragEnd)
   onDragEndRef.current = onDragEnd
+  // Track whether the last position change came from a drag (vs. external prop update).
+  // When it did, we skip setLatLng so we don't snap the marker back to the form
+  // state that was just written by the drag itself.
+  const draggedRef = useRef(false)
 
   useEffect(() => {
     if (!map || !center) return
@@ -100,7 +104,11 @@ export function useDraggablePin({ map, center, onDragEnd }: DraggablePinProps) {
     const icon = createPinIcon('event')
 
     if (markerRef.current) {
-      markerRef.current.setLatLng([center.lat, center.lng])
+      if (!draggedRef.current) {
+        // External center change (e.g. autocomplete selection) — move the marker.
+        markerRef.current.setLatLng([center.lat, center.lng])
+      }
+      draggedRef.current = false
       return
     }
 
@@ -111,6 +119,7 @@ export function useDraggablePin({ map, center, onDragEnd }: DraggablePinProps) {
 
     marker.on('dragend', () => {
       const pos = marker.getLatLng()
+      draggedRef.current = true
       onDragEndRef.current?.({ lat: pos.lat, lng: pos.lng })
     })
 

@@ -1,0 +1,35 @@
+/**
+ * Wave paths - organic SVG dividers used by WaveTransition and any
+ * layout that draws its own wave divider directly (admin-layout,
+ * leader-layout).
+ *
+ * Lives in its own module (not wave-transition.tsx) so that fast-refresh
+ * works on WaveTransition - the rule requires component files to export
+ * only components.
+ */
+
+/* Default variants (viewBox 1440x70) - the primary divider set. */
+export const WAVE_PATHS = [
+  // 0 - Gentle rolling hills with rocky spikes (default)
+  'M0,25 C60,22 100,18 140,20 C180,22 200,15 220,18 L228,8 L234,5 L240,10 C280,18 340,24 400,20 C440,16 470,22 510,25 C560,28 600,20 640,22 C670,24 690,18 710,20 L718,10 L722,6 L728,12 C760,20 820,26 880,22 C920,18 950,24 990,26 C1020,28 1050,20 1080,18 C1100,16 1120,22 1140,24 L1148,12 L1153,7 L1158,9 L1165,16 C1200,22 1260,26 1320,22 C1360,18 1400,24 1440,22 L1440,70 L0,70 Z',
+  // 1 - Soft dunes with single peak
+  'M0,30 C120,28 200,22 320,26 C440,30 520,18 600,20 C680,22 720,14 760,16 L768,6 L774,4 L780,10 C820,18 920,28 1040,24 C1120,20 1200,26 1280,30 C1360,32 1400,28 1440,26 L1440,70 L0,70 Z',
+  // 2 - Double crest ridge
+  'M0,28 C80,24 160,20 240,22 C320,24 360,12 400,14 L408,5 L414,3 L420,8 C460,16 540,26 640,24 C740,22 800,18 880,20 C960,22 1000,10 1040,12 L1048,4 L1054,2 L1060,7 C1100,16 1180,28 1280,26 C1360,24 1400,28 1440,26 L1440,70 L0,70 Z',
+  // 3 - Asymmetric shelf drop
+  'M0,22 C100,20 200,24 300,26 C400,28 480,30 560,28 C640,26 700,22 780,20 C860,18 900,14 940,16 L948,7 L954,4 L960,9 C1000,16 1080,24 1160,28 C1240,32 1320,30 1400,26 L1440,24 L1440,70 L0,70 Z',
+  // 4 - Choppy reef
+  'M0,26 C40,24 80,20 120,22 L128,12 L133,8 L138,14 C180,22 240,28 320,24 C400,20 440,16 480,18 C520,20 560,26 640,28 C720,30 760,24 800,22 L808,14 L813,10 L818,16 C860,24 920,28 1000,26 C1080,24 1120,20 1160,22 L1168,14 L1173,10 L1178,16 C1220,24 1300,28 1380,26 C1410,24 1440,22 1440,22 L1440,70 L0,70 Z',
+] as const
+
+/* Tall variants (viewBox 1440x200) for large hero sections */
+export const WAVE_PATHS_TALL = [
+  // 0 - Tall sweeping ridge
+  'M0,80 C80,68 160,56 240,62 C320,68 360,34 400,40 L408,14 L414,8 L420,22 C460,46 540,74 640,68 C740,62 800,50 880,56 C960,62 1000,28 1040,34 L1048,12 L1054,6 L1060,20 C1100,46 1180,80 1280,74 C1360,68 1400,80 1440,74 L1440,200 L0,200 Z',
+] as const
+
+/* Small variants (viewBox 1440x40) for subtle dividers */
+export const WAVE_PATHS_SMALL = [
+  // 0 - Gentle ripple
+  'M0,20 C120,8 240,28 360,18 C480,8 600,28 720,16 C840,4 960,24 1080,14 C1200,4 1320,22 1440,18 L1440,40 L0,40 Z',
+] as const

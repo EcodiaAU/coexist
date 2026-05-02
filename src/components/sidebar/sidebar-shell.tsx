@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn'
 import { APP_NAME } from '@/lib/constants'
 import { useAuth } from '@/hooks/use-auth'
 import { Avatar } from '@/components/avatar'
-import { getAccentClasses } from './nav-list'
+import { getAccentClasses } from './accent'
 
 /* ------------------------------------------------------------------ */
 /*  Widths                                                             */

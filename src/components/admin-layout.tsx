@@ -2,10 +2,9 @@ import { type ReactNode, useState, useEffect, useRef, createContext, useContext,
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { AdminCollectiveScopeContext, useAdminCollectiveScopeProvider } from '@/hooks/use-admin-collective-scope'
-import { WAVE_PATHS } from '@/components/wave-transition'
+import { WAVE_PATHS } from '@/components/wave-paths'
 
 import {
-    LayoutDashboard,
     Users,
     CalendarDays,
     MapPin,
@@ -25,6 +24,7 @@ import {
     BarChart3,
     Leaf,
     GraduationCap,
+    MessageCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
@@ -245,12 +245,11 @@ const adminBottomTabs: Tab[] = [
     activeIcon: <Home size={21} strokeWidth={2.2} />,
   },
   {
-    key: 'admin-home',
-    label: 'Overview',
-    path: '/admin',
-    exact: true,
-    icon: <LayoutDashboard size={21} strokeWidth={1.5} />,
-    activeIcon: <LayoutDashboard size={21} strokeWidth={2.2} />,
+    key: 'chat',
+    label: 'Chat',
+    path: '/chat',
+    icon: <MessageCircle size={21} strokeWidth={1.5} />,
+    activeIcon: <MessageCircle size={21} strokeWidth={2.2} />,
   },
   {
     key: 'admin-collectives',

@@ -35,7 +35,8 @@ import { EmptyState } from '@/components/empty-state'
 import { useAuth } from '@/hooks/use-auth'
 import { useProfile, useProfileCollectives, useProfileStats } from '@/hooks/use-profile'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
-import { BentoStatCard, BentoStatGrid, bentoMixedTheme } from '@/components/bento-stats'
+import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
+import { bentoMixedTheme } from '@/components/bento-stats-themes'
 import { cn } from '@/lib/cn'
 
 /* ------------------------------------------------------------------ */

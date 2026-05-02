@@ -89,7 +89,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
         </p>
       </div>
 
-      <div className="space-y-4 max-h-[55vh] overflow-y-auto px-0.5 -mx-0.5">
+      <div className="space-y-4 overflow-y-auto px-0.5 -mx-0.5" style={{ maxHeight: 'calc(55vh - var(--kb-height, 0px))' }}>
         {/* Personal */}
         <div>
           <div className="flex items-center gap-2 mb-2.5">
