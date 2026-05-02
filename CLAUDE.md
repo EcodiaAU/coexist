@@ -159,7 +159,7 @@ import { Capacitor } from '@capacitor/core';
 const isNative = Capacitor.isNativePlatform();
 const isWeb = !isNative;
 ```
-Use this to conditionally enable: haptics, camera, push notifications, native share, biometrics.
+Use this to conditionally enable: camera, push notifications, native share, biometrics.
 
 ---
 
@@ -307,7 +307,7 @@ const { user, profile, role, isLeader, isAssistLeader, isStaff, isAdmin, isSuper
 - **List items**: staggered fade-in, 30ms between items
 - **Stat counters**: count-up on load, sequenced left to right
 - **Skeleton loading**: shimmer. Never blank screens. Never spinners for initial loads.
-- **Confetti**: on check-in, badge unlock, tier up - particles + haptic
+- **Confetti**: on check-in, badge unlock, tier up - particles only
 - **Always respect `prefers-reduced-motion`** - disable all non-essential animation
 
 ### Shared Element Transitions
@@ -317,8 +317,15 @@ const { user, profile, role, isLeader, isAssistLeader, isStaff, isAdmin, isSuper
 
 ### Sound (Optional)
 - Gated behind settings toggle + system silent mode
-- Paired with haptics. <50KB each. Lazy loaded.
+- <50KB each. Lazy loaded.
 - Check-in: wooden chime. Badge: ascending tone. Send message: whoosh. Error: soft bonk.
+
+### Haptics
+- Pruned to discrete-intentional-gesture confirmation only. Kept on long-press
+  (`use-long-press.ts`, Web Vibration API, Android-only). Removed from tab
+  navigation, message-reaction taps, and any decorative tap/scroll feedback.
+- Do not add Haptics.impact / @capacitor/haptics back unless the trigger is a
+  critical CTA, an error/destructive confirmation, or a scan/capture success.
 
 ---
 

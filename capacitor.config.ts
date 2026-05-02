@@ -19,9 +19,6 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
 
-    // Haptic feedback
-    Haptics: {},
-
     // Preferences (key-value storage)
     Preferences: {},
 

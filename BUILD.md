@@ -144,14 +144,13 @@ npx cap run android --livereload --external
 npx cap run ios --livereload --external
 ```
 
-## Capacitor Plugins (10 installed)
+## Capacitor Plugins (9 installed)
 
 | Plugin | Purpose |
 |--------|---------|
 | @capacitor/app | App lifecycle, back button |
 | @capacitor/camera | Photo capture for events/profiles |
 | @capacitor/geolocation | Location for nearby events, check-in |
-| @capacitor/haptics | Tactile feedback |
 | @capacitor/keyboard | Keyboard management |
 | @capacitor/network | Online/offline detection |
 | @capacitor/preferences | Local key-value storage |

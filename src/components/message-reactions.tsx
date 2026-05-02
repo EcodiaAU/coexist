@@ -9,22 +9,6 @@ import {
 } from '@/hooks/use-message-reactions'
 
 /* ------------------------------------------------------------------ */
-/*  Helpers                                                            */
-/* ------------------------------------------------------------------ */
-
-async function fireHaptic() {
-  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-    navigator.vibrate(10)
-  }
-  try {
-    const { Haptics, ImpactStyle } = await import('@capacitor/haptics')
-    await Haptics.impact({ style: ImpactStyle.Light })
-  } catch {
-    // Non-native or plugin unavailable — silent.
-  }
-}
-
-/* ------------------------------------------------------------------ */
 /*  Picker popover                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -129,7 +113,6 @@ export function MessageReactions({
   const handleToggle = useCallback(
     (emoji: ReactionEmoji) => {
       if (disabled) return
-      fireHaptic()
       toggle.mutate({ messageId, collectiveId, emoji })
     },
     [toggle, messageId, collectiveId, disabled],
