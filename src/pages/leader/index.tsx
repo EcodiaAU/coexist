@@ -1089,7 +1089,7 @@ export default function LeaderDashboardPage() {
   ]
 
   // Build impact cards - only show non-zero
-  const impactCards: { value: number; label: string; unit?: string; icon: React.ReactElement; theme: import('@/components/bento-stats').BentoTheme }[] = impactStats ? [
+  const impactCards: { value: number; label: string; unit?: string; icon: React.ReactElement; theme: import('@/components/bento-stats-themes').BentoTheme }[] = impactStats ? [
     { value: impactStats.totalEvents, label: 'Events Held', icon: <CalendarDays size={16} />, theme: 'warning' as const },
     { value: impactStats.eventsAttended, label: 'Attendances', icon: <Users size={16} />, theme: 'primary' as const },
     { value: impactStats.volunteerHours, label: 'Vol. Hours', unit: 'hrs', icon: <Clock size={16} />, theme: 'moss' as const },

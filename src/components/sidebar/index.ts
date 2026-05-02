@@ -1,5 +1,6 @@
 export { SidebarShell } from './sidebar-shell'
-export { SidebarNavList, getAccentClasses } from './nav-list'
+export { SidebarNavList } from './nav-list'
+export { getAccentClasses } from './accent'
 export { adminHomeItem, adminNavCategories } from './admin-nav'
 export { leaderHomeItem, leaderNavCategories } from './leader-nav'
 export { memberHomeItem, memberNavCategories } from './member-nav'

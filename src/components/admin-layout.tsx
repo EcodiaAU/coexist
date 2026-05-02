@@ -2,7 +2,7 @@ import { type ReactNode, useState, useEffect, useRef, createContext, useContext,
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { AdminCollectiveScopeContext, useAdminCollectiveScopeProvider } from '@/hooks/use-admin-collective-scope'
-import { WAVE_PATHS } from '@/components/wave-transition'
+import { WAVE_PATHS } from '@/components/wave-paths'
 
 import {
     Users,
