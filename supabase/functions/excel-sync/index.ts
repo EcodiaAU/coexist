@@ -9,12 +9,11 @@
  *   direction and never writes to the sheet.
  * - Pre-2026 data in Excel is UNTOUCHABLE. Never written to by the app.
  * - to-excel writes app-created completed events that pass the migration gate:
- *     (a) events whose title starts with "test" (dev/test, always sync regardless of
- *         collective state), OR
- *     (b) events whose collective has forms_migrated_at set AND whose date_start is
- *         on or after forms_migrated_at (collective has cut over from Forms to the app).
+ *   events whose collective has forms_migrated_at set AND whose date_start is on or
+ *   after forms_migrated_at (collective has cut over from Forms to the app).
  *   Collectives with NULL forms_migrated_at are still using Forms for real events — their
  *   app events are NOT pushed to the sheet, preventing double-entries during transition.
+ *   The migration gate is the SOLE filter; there is no test-title bypass.
  * - DEDUP: before appending any app-generated row, the function builds a signature set
  *   from all integer-ID (Forms-origin) rows already on the sheet. Signature format is
  *   (collective | date_iso | title), lowercased and trimmed. If an app event's signature
@@ -678,9 +677,9 @@ async function syncToExcel(
   } else {
     // Batch mode: completed 2026+ events that pass the migration gate.
     // Pull collective forms_migrated_at and filter in JS:
-    //   (a) test-prefixed titles always sync (dev/test events, regardless of collective state)
-    //   (b) non-test events only sync if their collective has forms_migrated_at set AND
-    //       date_start >= forms_migrated_at (the collective has cut over from Forms)
+    //   events only sync if their collective has forms_migrated_at set AND
+    //   date_start >= forms_migrated_at (the collective has cut over from Forms).
+    //   No test-title bypass - gate-only doctrine post 2026-05-04 cutover.
     const { data: events } = await supabase
       .from('events')
       .select('id, title, date_start, collective_id, collectives(forms_migrated_at)')
@@ -689,7 +688,6 @@ async function syncToExcel(
       .order('date_start', { ascending: true })
 
     const filtered = ((events ?? []) as any[]).filter((e: any) => {
-      if (/^test/i.test(e.title)) return true
       const migratedAt = (e.collectives as any)?.forms_migrated_at
       if (!migratedAt) return false
       return new Date(e.date_start) >= new Date(migratedAt)
@@ -711,8 +709,10 @@ async function syncToExcel(
   // sheet→DB sync produces N spurious to-excel calls that try to write the
   // synthetic data back to the sheet under a (potentially differently-aliased)
   // collective name, missing the dedup signature and appending duplicates.
-  // App-created events (created_by IS NOT NULL) and test-prefix events flow as
-  // before. See ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
+  // App-created events (created_by IS NOT NULL) flow as before. The legacy
+  // test-prefix bypass was removed at the 2026-05-04 cutover - every synthetic
+  // event is now skipped regardless of title.
+  // See ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
   const syntheticEventIds = new Set<string>()
   if (eventIds.length > 0) {
     try {
@@ -721,8 +721,7 @@ async function syncToExcel(
         .select('id, title, created_by')
         .in('id', eventIds)
       for (const e of (syntheticEvents ?? []) as { id: string; title: string; created_by: string | null }[]) {
-        // Test-prefix events bypass the synthetic guard (legacy test-mode flow).
-        if (e.created_by === null && !/^test/i.test(e.title ?? '')) {
+        if (e.created_by === null) {
           syntheticEventIds.add(e.id)
         }
       }
