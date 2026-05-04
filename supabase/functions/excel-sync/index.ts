@@ -670,10 +670,36 @@ async function syncToExcel(
     if (!formsWeakIndex.has(weakKey)) formsWeakIndex.set(weakKey, title)
   }
 
-  // Determine which events to sync
+  // Determine which events to sync.
+  //
+  // The migration gate (collective.forms_migrated_at IS NOT NULL AND
+  // event.date_start >= forms_migrated_at) is applied in BOTH single-event
+  // mode (eventId passed in by the pg_cron trigger or manual call) and
+  // batch mode. Otherwise the trigger-driven per-event path silently
+  // bypasses the gate and leaks events from non-migrated collectives onto
+  // the sheet. See ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
   let eventIds: string[] = []
   if (eventId) {
-    eventIds = [eventId]
+    // Single-event mode: apply the SAME migration gate as batch mode.
+    const { data: ev } = await supabase
+      .from('events')
+      .select('id, title, date_start, collective_id, collectives(forms_migrated_at)')
+      .eq('id', eventId)
+      .single()
+    if (!ev) {
+      eventIds = []
+    } else {
+      const migratedAt = (ev.collectives as any)?.forms_migrated_at
+      if (!migratedAt) {
+        // Collective has not migrated; gate blocks. Skip silently.
+        eventIds = []
+      } else if (new Date(ev.date_start as string) < new Date(migratedAt as string)) {
+        // Event predates the collective's cutover; gate blocks. Skip silently.
+        eventIds = []
+      } else {
+        eventIds = [eventId]
+      }
+    }
   } else {
     // Batch mode: completed 2026+ events that pass the migration gate.
     // Pull collective forms_migrated_at and filter in JS:
