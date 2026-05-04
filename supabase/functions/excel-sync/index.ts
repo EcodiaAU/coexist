@@ -70,8 +70,15 @@ const DRIVE_ID = 'b!jB_eUPJMbUWf3eip_Me-34G0StMYwYdHtdf4sTNow-uVV9nof_IvQprzswNp
 const ITEM_ID = '01RJHFBL37QUUGOQUVL5DJ67A53VKNDAGE'
 const SHEET_NAME = 'Post Event Review'
 
-// Only sync events from 2026 onwards - historical data is Excel-only
-const SYNC_CUTOFF_DATE = '2026-01-01'
+// Only sync events from 2026-05-04 onwards - historical 2026 Forms data has
+// already landed via prior sync runs; the cutover boundary going forward is
+// the date Sunshine Coast + Melbourne flipped to app-canonical.
+//
+// Pre-2026-05-04: untouched (DB has the legacy backfill rows; sheet keeps
+// its Forms-origin rows). 2026-05-04+: only post-cutover rows for non-migrated
+// collectives flow sheet -> DB; only post-cutover events for migrated
+// collectives (Sunshine Coast + Melbourne) flow DB -> sheet.
+const SYNC_CUTOFF_DATE = '2026-05-04'
 
 // Fixed namespace UUID for Forms-sourced synthetic events. Embedded as a literal
 // and MUST NEVER CHANGE — changing it invalidates all existing synthetic UUIDs and
@@ -95,6 +102,29 @@ const COLLECTIVE_ALIASES: Record<string, string> = {
   'byron bay': '9a2f9919-26b9-420d-b6f5-ddeb9a37b1b3', // -> Northern Rivers
   'melbourne city': 'b6cae731-d6bf-4bf1-9640-0117feaa3755', // -> Melbourne
 }
+
+// ---- Title aliases ----
+// Token-level expansions applied during fuzzy title matching. The classic case
+// is acronyms vs full names ("OCCA" vs "Oxley Creek Catchment Association")
+// where the leader wrote one form on the Form and another in the app for the
+// same event. Keys are LOWERCASED single tokens or token-bigrams found in
+// either source. Values are the canonical multi-token expansion.
+//
+// Adding a new alias is a single-source change; no DB migration. Order is not
+// significant - the matcher applies all aliases before tokenisation.
+const TITLE_ALIASES: Record<string, string> = {
+  occa: 'oxley creek catchment association',
+}
+
+// Stopwords stripped before token-overlap fuzzy matching. Generic event-noise
+// words that would otherwise dominate the overlap count for unrelated events
+// on the same date. Note 'tree' and 'planting' are stopworded because virtually
+// every conservation event uses them - the discriminator is the location /
+// partner-org token, not the activity type.
+const TITLE_STOPWORDS = new Set([
+  'the', 'a', 'an', 'and', 'at', 'of', 'in', 'on', 'for', 'to', 'from',
+  'with', 'w', 'by', 'project', 'planting', 'tree', 'event',
+])
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -477,6 +507,36 @@ function titleSimilarity(a: string, b: string): number {
   return union === 0 ? 0 : intersect / union
 }
 
+/** Reduce a title to a stopword-stripped, alias-expanded token set. Used by
+ *  the anti-resynthesis matcher: titles that share 2+ content tokens after
+ *  this normalisation are treated as the same event. The 165-synth-dupe
+ *  sweep on 2026-05-04 used this exact algorithm to cluster
+ *  "Oxley Creek Catchment Association" with "OCCA" - a Jaccard pass alone
+ *  missed it because OCCA is one short token vs four long tokens. Token
+ *  overlap >= 2 is robust to that asymmetry. */
+function titleContentTokens(s: string): Set<string> {
+  // Apply title aliases BEFORE tokenisation so 'occa' expands to four tokens.
+  let normalised = normaliseTitle(s)
+  for (const [alias, expansion] of Object.entries(TITLE_ALIASES)) {
+    // Whole-token replacement so we don't accidentally replace inside a longer
+    // token. Word boundary regex on the lowercase normalised form.
+    const re = new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g')
+    normalised = normalised.replace(re, expansion)
+  }
+  const tokens = normalised.split(' ').filter(Boolean).filter(t => !TITLE_STOPWORDS.has(t))
+  return new Set(tokens)
+}
+
+/** Count of shared tokens between two titles after stopword strip + alias
+ *  expansion. 2+ shared tokens = same event for anti-resynthesis purposes. */
+function titleTokenOverlap(a: string, b: string): number {
+  const tokensA = titleContentTokens(a)
+  const tokensB = titleContentTokens(b)
+  let overlap = 0
+  for (const t of tokensA) if (tokensB.has(t)) overlap++
+  return overlap
+}
+
 /** Detect Forms-synthetic event UUIDs by inspecting the version digit.
  *  formsIdToUuid uses UUID v5 (deterministic), so position 14 in the
  *  canonical string form is the literal '5'. App events are inserted with
@@ -490,13 +550,18 @@ function isSyntheticFormsUuid(id: string): boolean {
 /** Find the best-matching app-created event for a Forms row. Returns the
  *  app event_id if a match is found, otherwise null.
  *
- *  Two-tier match criteria:
- *  Tier 1 (close-date, low-title-bar): same collective, app-created (UUID v4),
+ *  Three-tier match criteria:
+ *  Tier 1 (close-date, low-Jaccard-bar): same collective, app-created (UUID v4),
  *    |date - formsDate| <= 1 day, Jaccard similarity >= 0.34. Catches the
  *    common timezone-drift case (Forms midnight UTC+10 vs app local time).
- *  Tier 2 (wide-date, high-title-bar): same collective, app-created,
+ *  Tier 2 (wide-date, high-Jaccard-bar): same collective, app-created,
  *    |date - formsDate| <= 31 days, Jaccard similarity >= 0.55. Catches the
  *    real-world case where the leader submitted the Form with a wrong date.
+ *  Tier 3 (anti-resynthesis token-overlap): same collective, app-created,
+ *    |date - formsDate| <= 1 day, content-token overlap >= 2 after stopword
+ *    strip + TITLE_ALIASES expansion. Catches the OCCA/Oxley case where
+ *    Jaccard misses (one token vs four) but token overlap clearly identifies
+ *    the same event. Origin: 165-synth-dupe sweep 2026-05-04.
  *
  *  Tier 1 is preferred when both apply (closer dates win). When multiple
  *  candidates within a tier match, picks the highest similarity then the
@@ -527,13 +592,16 @@ async function findMatchingAppEvent(
   for (const c of candidates as { id: string; title: string; date_start: string }[]) {
     if (isSyntheticFormsUuid(c.id)) continue
     const sim = titleSimilarity(c.title, formsTitle)
+    const overlap = titleTokenOverlap(c.title, formsTitle)
     const deltaMs = Math.abs(new Date(c.date_start).getTime() - formsDate.getTime())
     let tier: number | null = null
     if (deltaMs <= dayMs && sim >= 0.34) tier = 1
     else if (deltaMs <= 31 * dayMs && sim >= 0.55) tier = 2
+    else if (deltaMs <= dayMs && overlap >= 2) tier = 3
     if (tier === null) continue
-    // Lower tier number wins (Tier 1 > Tier 2). Within a tier: higher sim,
-    // then closer date.
+    // Lower tier number wins (Tier 1 > Tier 2 > Tier 3). Within a tier:
+    // higher sim, then closer date. For Tier 3, sim may be low - that's
+    // expected; the tier ordering already protects against false positives.
     if (
       !best
       || tier < best.tier
@@ -863,6 +931,8 @@ async function syncFromExcel(
   skippedLegacy: number
   syncedFormsRows: number
   skippedNoCollective: number
+  cancelledViaSheetAbsence: number
+  skippedPostCutoverMigrated: number
   errors: string[]
 }> {
   const errors: string[] = []
@@ -870,6 +940,17 @@ async function syncFromExcel(
   let skippedLegacy = 0
   let syncedFormsRows = 0
   let skippedNoCollective = 0
+  let cancelledViaSheetAbsence = 0
+  // Counts sheet rows skipped because their collective has flipped to
+  // app-canonical mode (forms_migrated_at IS NOT NULL) and the row date is at
+  // or after the cutover. Those rows shouldn't flow sheet -> DB; their app
+  // counterpart owns the data and goes the other direction (DB -> sheet).
+  let skippedPostCutoverMigrated = 0
+  // Track event_ids observed during this run (linked-app-events + synthetic
+  // events). Used by the tail reconciliation phase to flip migrated-collective
+  // events that are absent from the sheet to status='cancelled'.
+  const seenEventIds = new Set<string>()
+  const runStartedAt = new Date()
 
   // Read all Excel data
   let rows: unknown[][]
@@ -882,21 +963,34 @@ async function syncFromExcel(
       skippedLegacy,
       syncedFormsRows,
       skippedNoCollective,
+      cancelledViaSheetAbsence,
+      skippedPostCutoverMigrated,
       errors: [`Failed to read Excel: ${(err as Error).message}`],
     }
   }
 
   if (rows.length < 2) {
-    return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, errors: ['No data rows in Excel'] }
+    return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, cancelledViaSheetAbsence, skippedPostCutoverMigrated, errors: ['No data rows in Excel'] }
   }
 
   // Build a collective name -> id lookup to avoid a DB query per Forms row.
   // Normalised to lowercase for case-insensitive matching against sheet values.
+  // Also track forms_migrated_at per collective_id so the row processing loop
+  // can skip rows that belong to a migrated collective at or after their
+  // cutover date - those events are app-canonical and should not flow back
+  // from sheet to DB. Tate, 4 May 2026 18:25: "only sunshine coast and
+  // melbourne are syncing 4/05/2026 and onwards events to the sheet but that
+  // all other collectives are syncing all events from 4/05 and beyond from
+  // sheet to db".
   const collectiveNameToId = new Map<string, string>()
+  const collectiveMigratedAt = new Map<string, string | null>()
   try {
-    const { data: collectives } = await supabase.from('collectives').select('id, name')
-    for (const c of (collectives ?? []) as { id: string; name: string }[]) {
+    const { data: collectives } = await supabase
+      .from('collectives')
+      .select('id, name, forms_migrated_at')
+    for (const c of (collectives ?? []) as { id: string; name: string; forms_migrated_at: string | null }[]) {
       collectiveNameToId.set(c.name.trim().toLowerCase(), c.id)
+      collectiveMigratedAt.set(c.id, c.forms_migrated_at)
     }
   } catch (err) {
     errors.push(`Failed to load collectives: ${(err as Error).message}`)
@@ -960,6 +1054,8 @@ async function syncFromExcel(
           }
         }
 
+        // Direct UUID row - the app event itself is on the sheet, mark seen.
+        seenEventIds.add(excelId)
         synced++
       } else {
         // Forms integer ID: try to LINK the impact data to an existing app-
@@ -995,8 +1091,21 @@ async function syncFromExcel(
         } else if (typeof dateRaw === 'string' && dateRaw.match(/\d{4}-\d{2}-\d{2}/)) {
           dateIso = dateRaw.includes('T') ? dateRaw : dateRaw + 'T00:00:00+10:00'
         } else {
-          errors.push(`${rowLabel}: unparseable date "${dateRaw}" — skipped`)
+          errors.push(`${rowLabel}: unparseable date "${dateRaw}" - skipped`)
           skippedLegacy++
+          continue
+        }
+
+        // Migrated-collective skip: if this row belongs to a collective that
+        // has flipped to app-canonical and the row date is on or after the
+        // cutover, skip. The app event is the source of truth going forward;
+        // sheet rows for these collectives at this date are either stale
+        // imports or accidental manual writes - either way, don't pull back.
+        const migratedAtForCollective = collectiveMigratedAt.get(collectiveId)
+        if (migratedAtForCollective &&
+            new Date(dateIso).getTime() >= new Date(migratedAtForCollective).getTime()) {
+          errors.push(`INFO ${rowLabel}: collective is post-cutover migrated (${migratedAtForCollective}); skipped from-excel`)
+          skippedPostCutoverMigrated++
           continue
         }
 
@@ -1055,6 +1164,7 @@ async function syncFromExcel(
               continue
             }
             errors.push(`INFO ${rowLabel}: linked Forms impact to app event ${matchedAppEventId} (title="${title}")`)
+            seenEventIds.add(matchedAppEventId)
             syncedFormsRows++
             continue
           }
@@ -1063,6 +1173,7 @@ async function syncFromExcel(
           // path, or PR #8 trigger already fired). Don't clobber. Skip the
           // synthetic write too: linkage is the source of truth now.
           errors.push(`INFO ${rowLabel}: app event ${matchedAppEventId} already has impact; skipped (linked)`)
+          seenEventIds.add(matchedAppEventId)
           syncedFormsRows++
           continue
         }
@@ -1113,9 +1224,10 @@ async function syncFromExcel(
 
         if (impactError) {
           errors.push(`${rowLabel}: impact upsert failed: ${impactError.message}`)
-          // Event was created — count the row regardless of impact failure
+          // Event was created - count the row regardless of impact failure
         }
 
+        seenEventIds.add(syntheticId)
         syncedFormsRows++
       }
     } catch (err) {
@@ -1123,7 +1235,68 @@ async function syncFromExcel(
     }
   }
 
-  return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, errors }
+  // ---- Tail reconciliation phase: sheet-canonical delete propagation ----
+  //
+  // Tate, 4 May 2026 18:22 AEST: "i jsut need the db to update if the sheet
+  // gets a row deleted, so that if they do delete the OCCA event entry that
+  // we left, then it takes it from the db as well yk? Just make their sheet
+  // canonical."
+  //
+  // Find migrated-collective events that exist in the DB at status
+  // completed/published from the cutover onwards but were NOT seen in this
+  // sync run's sheet-row pass. Those have effectively been deleted from the
+  // canonical sheet. Mark them cancelled and stamp cancelled_via_sheet_sync_at
+  // for audit. Do NOT cascade-delete event_impact / event_registrations -
+  // historical accountability is preserved; a leader can manually un-cancel
+  // via the app if the deletion was accidental.
+  //
+  // Scope: only events whose collective.forms_migrated_at IS NOT NULL AND
+  // event.date_start >= forms_migrated_at. Non-migrated collectives are
+  // sheet-canonical for their own rows (sheet -> DB direction); their app
+  // events should be left alone. The 60-second guard excludes events created
+  // mid-run to avoid flapping.
+  try {
+    const cutoffMs = runStartedAt.getTime() - 60_000
+    const cutoffIso = new Date(cutoffMs).toISOString()
+    const { data: candidates, error: candidatesErr } = await supabase
+      .from('events')
+      .select('id, collective_id, date_start, status, created_at, collectives(forms_migrated_at)')
+      .in('status', ['completed', 'published'])
+      .gte('date_start', SYNC_CUTOFF_DATE)
+      .lt('created_at', cutoffIso)
+
+    if (candidatesErr) {
+      errors.push(`reconciliation candidate query failed: ${candidatesErr.message}`)
+    } else {
+      for (const c of (candidates ?? []) as Array<{
+        id: string
+        collective_id: string
+        date_start: string
+        status: string
+        created_at: string
+        collectives: { forms_migrated_at: string | null } | null
+      }>) {
+        const migratedAt = c.collectives?.forms_migrated_at ?? null
+        if (!migratedAt) continue
+        if (new Date(c.date_start).getTime() < new Date(migratedAt).getTime()) continue
+        if (seenEventIds.has(c.id)) continue
+        const { error: cancelErr } = await supabase
+          .from('events')
+          .update({ status: 'cancelled', cancelled_via_sheet_sync_at: new Date().toISOString() })
+          .eq('id', c.id)
+        if (cancelErr) {
+          errors.push(`reconciliation cancel failed for ${c.id}: ${cancelErr.message}`)
+          continue
+        }
+        cancelledViaSheetAbsence++
+        errors.push(`INFO reconciliation: cancelled ${c.id} (absent from sheet during this run)`)
+      }
+    }
+  } catch (err) {
+    errors.push(`reconciliation phase threw: ${(err as Error).message}`)
+  }
+
+  return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, cancelledViaSheetAbsence, skippedPostCutoverMigrated, errors }
 }
 
 // ---- Delete: Remove event row from Excel (dev/test only, no auto-trigger) ----
