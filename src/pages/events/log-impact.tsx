@@ -794,6 +794,15 @@ export default function LogImpactPage() {
     [attendees],
   )
 
+  // Editable participant count: defaults to live signed-in count but the
+  // leader can override (e.g. people came who didn't sign in, or signed in
+  // but didn't actually attend). Persisted to event_impact.attendees on
+  // save. Hours math uses this value, not the raw checkedInCount.
+  // Tate, 4 May 2026 18:39 AEST: "just make sure that the numbe of attendees
+  // defalts to total signed in for that event, but is still editable."
+  const [attendeesValue, setAttendeesValue] = useState<string>('')
+  const [attendeesOverridden, setAttendeesOverridden] = useState(false)
+
   useEffect(() => {
     if (existingImpact) {
       startTransition(() => {
@@ -807,12 +816,30 @@ export default function LogImpactPage() {
           if (Array.isArray(cm.wildlife_sightings_detail)) setWildlifeSightings(cm.wildlife_sightings_detail as WildlifeSighting[])
           if (cm.drawn_area && typeof cm.drawn_area === 'object') setDrawnArea(cm.drawn_area as Record<string, unknown>)
         }
-        if (existingImpact.hours_total && checkedInCount > 0) {
-          setEventDurationHours(String(Math.round((existingImpact.hours_total / checkedInCount) * 10) / 10))
+        // Prefer existingImpact.attendees (the saved value, possibly an override).
+        // Fall back to checkedInCount if no row yet. Only derive duration from
+        // attendees if non-zero to avoid divide-by-zero on legacy rows.
+        const savedAttendees = existingImpact.attendees ?? null
+        const effectiveCount = savedAttendees && savedAttendees > 0 ? savedAttendees : checkedInCount
+        setAttendeesValue(String(effectiveCount))
+        if (savedAttendees != null && savedAttendees !== checkedInCount) {
+          setAttendeesOverridden(true)
+        }
+        if (existingImpact.hours_total && effectiveCount > 0) {
+          setEventDurationHours(String(Math.round((existingImpact.hours_total / effectiveCount) * 10) / 10))
         }
       })
     }
   }, [existingImpact, checkedInCount])
+
+  // Sync attendeesValue to checkedInCount when there's no existing impact row
+  // and the leader hasn't manually overridden. Keeps the default in step with
+  // last-second check-ins right up until they tap into the input.
+  useEffect(() => {
+    if (existingImpact) return
+    if (attendeesOverridden) return
+    setAttendeesValue(String(checkedInCount))
+  }, [checkedInCount, existingImpact, attendeesOverridden])
 
   useEffect(() => {
     if (event?.date_end && !existingImpact) {
@@ -825,10 +852,15 @@ export default function LogImpactPage() {
     }
   }, [event, existingImpact])
 
+  const finalAttendeeCount = useMemo(() => {
+    const parsed = parseInt(attendeesValue, 10)
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
+  }, [attendeesValue])
+
   const computedHoursTotal = useMemo(() => {
     const duration = parseFloat(eventDurationHours) || 0
-    return Math.round(duration * checkedInCount * 10) / 10
-  }, [eventDurationHours, checkedInCount])
+    return Math.round(duration * finalAttendeeCount * 10) / 10
+  }, [eventDurationHours, finalAttendeeCount])
 
   const activityType = event?.activity_type
 
@@ -920,6 +952,7 @@ export default function LogImpactPage() {
       await logImpact.mutateAsync({
         event_id: eventId,
         hours_total: computedHoursTotal,
+        attendees: finalAttendeeCount,
         notes: notes || null,
         custom_metrics: mergedCustom as unknown as Json,
         trees_planted: postSyncImpact?.trees_planted ?? null,
@@ -947,7 +980,7 @@ export default function LogImpactPage() {
     } finally {
       setIsSubmitting(false)
     }
-  }, [eventId, user, isSubmitting, existingImpact, surveyData, surveyQuestions, surveyAnswers, species, wildlifeSightings, photos, beforePhotos, afterPhotos, drawnArea, logImpact, computedHoursTotal, notes, queryClient, validKeys, metricDefsPlaceholder, toast])
+  }, [eventId, user, isSubmitting, existingImpact, surveyData, surveyQuestions, surveyAnswers, species, wildlifeSightings, photos, beforePhotos, afterPhotos, drawnArea, logImpact, computedHoursTotal, finalAttendeeCount, notes, queryClient, validKeys, metricDefsPlaceholder, toast])
 
   const isLoading = eventLoading || impactLoading || roleLoading || surveyLoading
   const showLoading = useDelayedLoading(isLoading)
@@ -1142,9 +1175,38 @@ export default function LogImpactPage() {
 
               <div className="h-12 w-px bg-neutral-100" />
 
-              <div className="flex-1 text-right">
-                <p className="text-xs text-neutral-500 font-medium mb-1">Total hours</p>
-                <p className="text-2xl font-bold text-violet-700">{computedHoursTotal}</p>
+              <div className="flex-1">
+                <label className="block text-xs text-neutral-500 font-medium mb-1.5">
+                  Participants
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={attendeesValue}
+                    onChange={(e) => {
+                      setAttendeesValue(e.target.value)
+                      setAttendeesOverridden(true)
+                    }}
+                    placeholder={String(checkedInCount)}
+                    className="w-20 rounded-xl bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-right font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent"
+                    min="0"
+                    step="1"
+                  />
+                  <span className="text-sm text-neutral-500 font-medium">people</span>
+                </div>
+                {attendeesOverridden && finalAttendeeCount !== checkedInCount && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAttendeesValue(String(checkedInCount))
+                      setAttendeesOverridden(false)
+                    }}
+                    className="mt-1 text-[11px] text-violet-600 font-medium hover:underline"
+                  >
+                    Reset to {checkedInCount} signed in
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1152,15 +1214,21 @@ export default function LogImpactPage() {
               <span className="text-xs text-violet-700">
                 <span className="font-bold">{eventDurationHours || '0'} hrs</span>
                 <span className="text-violet-400 mx-1.5">×</span>
-                <span className="font-bold">{checkedInCount} checked in</span>
+                <span className="font-bold">{finalAttendeeCount} {finalAttendeeCount === 1 ? 'person' : 'people'}</span>
                 <span className="text-violet-400 mx-1.5">=</span>
                 <span className="font-bold">{computedHoursTotal} volunteer hours</span>
               </span>
             </div>
 
-            {checkedInCount === 0 && (
+            {finalAttendeeCount === 0 && (
               <p className="mt-2 text-xs text-amber-600 font-medium">
-                No attendees checked in yet - check in on the Event Day page first.
+                No participants yet - check in on the Event Day page or enter the count above.
+              </p>
+            )}
+
+            {attendeesOverridden && finalAttendeeCount !== checkedInCount && (
+              <p className="mt-2 text-xs text-neutral-500">
+                {checkedInCount} signed in via the app, you've set {finalAttendeeCount} total.
               </p>
             )}
           </SectionCard>
