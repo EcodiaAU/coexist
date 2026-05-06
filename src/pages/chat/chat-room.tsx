@@ -70,7 +70,7 @@ import { CreateCarpoolSheet, type CreateCarpoolSubmitData } from '@/components/c
 import { useTyping } from '@/hooks/use-typing'
 import { useOffline } from '@/hooks/use-offline'
 import { useCollectiveMembers } from '@/hooks/use-collective'
-import { resolveMentionedUserIds, type MentionCandidate } from '@/components/mention-picker'
+import { resolveMentionedUserIds, type MentionCandidate } from '@/components/mention-picker-utils'
 import {
     queueOfflineAction,
     saveChatDraft,

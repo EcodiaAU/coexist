@@ -17,12 +17,12 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { containsProfanity } from '@/lib/profanity'
+import { MentionPicker } from '@/components/mention-picker'
 import {
-    MentionPicker,
     detectActiveMention,
     applyMention,
     type MentionCandidate,
-} from '@/components/mention-picker'
+} from '@/components/mention-picker-utils'
 
 interface MessageInputProps {
   onSend: (message: string) => void
