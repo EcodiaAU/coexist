@@ -66,7 +66,7 @@ export function ChatBubble({
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
       className={cn(
-        'flex gap-2.5',
+        'flex gap-2.5 min-w-0',
         sent ? 'flex-row-reverse' : 'flex-row',
         'w-full',
         className,
@@ -101,16 +101,16 @@ export function ChatBubble({
       {/* Bubble content */}
       <div
         className={cn(
-          'flex max-w-[78%] flex-col gap-0.5',
+          'flex min-w-0 max-w-[82%] flex-col gap-0.5',
           sent ? 'items-end' : 'items-start',
         )}
       >
         {/* Sender name + role badge (received only) */}
         {!sent && senderName && (
-          <div className="flex items-center gap-2 px-1 mb-1">
+          <div className="flex items-center gap-2 px-1 mb-0.5">
             <button
               type="button"
-              className="text-[13px] font-bold text-neutral-700 hover:text-neutral-900 min-h-11 flex items-center justify-center cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
+              className="text-[12px] font-semibold text-neutral-500 hover:text-neutral-700 min-h-11 flex items-center justify-center cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
               onClick={() => senderId && onSenderTap?.(senderId)}
             >
               {senderName}
@@ -130,10 +130,10 @@ export function ChatBubble({
         {/* Bubble */}
         <div
           className={cn(
-            'rounded-2xl px-4 py-3 transition-colors duration-150',
+            'min-w-0 max-w-full rounded-2xl px-4 py-2.5',
             sent
-              ? 'rounded-br-md bg-primary-100 text-neutral-900'
-              : 'rounded-bl-md bg-neutral-50 text-neutral-900 ring-1 ring-neutral-100',
+              ? 'rounded-br-md bg-primary-200 text-neutral-900'
+              : 'rounded-bl-md bg-neutral-200 text-neutral-900',
           )}
         >
           {/* Reply quote */}
@@ -177,7 +177,7 @@ export function ChatBubble({
 
           {/* Message text */}
           {message && (
-            <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">
+            <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[14px] leading-[1.45]">
               {message}
             </p>
           )}
@@ -185,8 +185,8 @@ export function ChatBubble({
           {/* Timestamp */}
           <p
             className={cn(
-              'mt-1.5 text-[11px] font-medium tabular-nums',
-              sent ? 'text-neutral-400 text-right' : 'text-neutral-400',
+              'mt-1 text-[10px] font-medium tabular-nums text-neutral-500/80',
+              sent ? 'text-right' : 'text-left',
             )}
           >
             <time dateTime={timestamp.toISOString()}>

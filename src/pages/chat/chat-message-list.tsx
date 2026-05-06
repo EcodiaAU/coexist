@@ -475,7 +475,7 @@ export function ChatMessageList({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth px-3 py-2"
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth px-3 py-2"
         role="log"
         aria-label={isChannel ? 'Staff chat messages' : 'Chat messages'}
         aria-live="polite"

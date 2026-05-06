@@ -147,7 +147,7 @@ export function HtmlChatBubble({
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
       className={cn(
-        'flex gap-2.5',
+        'flex gap-2.5 min-w-0',
         sent ? 'flex-row-reverse' : 'flex-row',
         'w-full',
         className,
@@ -182,7 +182,7 @@ export function HtmlChatBubble({
       {/* Bubble content */}
       <div
         className={cn(
-          'flex flex-col gap-0.5',
+          'flex min-w-0 flex-col gap-0.5',
           'w-full max-w-[92%] sm:max-w-[85%]',
           sent ? 'items-end' : 'items-start',
         )}
