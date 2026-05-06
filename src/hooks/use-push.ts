@@ -211,7 +211,15 @@ export function usePushRegistration() {
 
       const platform = Capacitor.getPlatform() // 'ios' | 'android'
 
-      // Token received (initial registration or refresh)
+      // Token received (initial registration or refresh).
+      // On iOS this is the APNs device token. AppDelegate forwards it to Firebase via
+      // Messaging.messaging().apnsToken, Firebase mints a corresponding FCM token, and
+      // MessagingDelegate.didReceiveRegistrationToken stores it to UserDefaults under
+      // key 'fcmToken' (which @capacitor/preferences v8 reads from by default). We poll
+      // Preferences for that FCM token after 'registration' fires, and upsert it over
+      // the APNs token so the send-push edge function (FCM HTTP v1) has a real FCM
+      // registration token to target. On Android the plugin already gives us the FCM
+      // token directly, so the upsert poll is a no-op there.
       const regListener = await plugin.addListener(
         'registration',
         async (token: unknown) => {
@@ -235,6 +243,42 @@ export function usePushRegistration() {
               }
             }, 3000)
             timersRef.current.push(retryTimer)
+          }
+
+          // iOS-only: poll for the FCM token written by AppDelegate.MessagingDelegate.
+          // Firebase needs apnsToken set first then makes a network round-trip to mint
+          // the FCM token, so it usually arrives 1-5s after this 'registration' event.
+          if (platform === 'ios') {
+            try {
+              const { Preferences } = await import('@capacitor/preferences')
+              const apnsToken = t.value
+              const startedAt = Date.now()
+              const pollIntervalMs = 1000
+              const totalBudgetMs = 30000
+              const poll = async () => {
+                if (!mounted) return
+                const got = await Preferences.get({ key: 'fcmToken' })
+                if (got?.value && got.value !== apnsToken) {
+                  console.info('[push] fcm token resolved:', got.value.slice(0, 12) + '…')
+                  // Replace the APNs row in push_tokens with the FCM row, then drop the
+                  // stale APNs row so the edge function only sees the FCM token.
+                  tokenRef.current = got.value
+                  await storeToken(user!.id, got.value, platform)
+                  await removeToken(user!.id, apnsToken)
+                  return
+                }
+                if (Date.now() - startedAt < totalBudgetMs && mounted) {
+                  const tNext = setTimeout(poll, pollIntervalMs)
+                  timersRef.current.push(tNext)
+                } else if (mounted) {
+                  console.warn('[push] FCM token did not arrive within budget; APNs token stays in push_tokens (degraded)')
+                }
+              }
+              const t1 = setTimeout(poll, pollIntervalMs)
+              timersRef.current.push(t1)
+            } catch (err) {
+              console.warn('[push] FCM bridge poll setup failed:', err)
+            }
           }
         },
       )
