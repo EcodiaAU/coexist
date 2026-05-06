@@ -65,6 +65,8 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useBlockedUsers } from '@/hooks/use-user-blocks'
 import { useInviteCollaborator } from '@/hooks/use-events'
+import { useCreateCarpool } from '@/hooks/use-carpool'
+import { CreateCarpoolSheet, type CreateCarpoolSubmitData } from '@/components/create-carpool-sheet'
 import { useTyping } from '@/hooks/use-typing'
 import { useOffline } from '@/hooks/use-offline'
 import {
@@ -228,6 +230,7 @@ export default function ChatRoomPage() {
   const collectivePin = usePinMessage()
   const createPoll = useCreatePoll()
   const createAnnouncement = useCreateAnnouncement()
+  const createCarpool = useCreateCarpool()
   const inviteCollaborator = useInviteCollaborator()
   const { typingText, sendTyping, stopTyping } = useTyping(isCollective ? collectiveId : undefined)
   const { isOffline } = useOffline()
@@ -319,6 +322,7 @@ export default function ChatRoomPage() {
   const [showAnnouncementSheet, setShowAnnouncementSheet] = useState(false)
   const [announcementType, setAnnouncementType] = useState<'announcement' | 'event_invite' | 'rsvp'>('announcement')
   const [showBroadcastSheet, setShowBroadcastSheet] = useState(false)
+  const [showCarpoolSheet, setShowCarpoolSheet] = useState(false)
   const [showManageMembers, setShowManageMembers] = useState(false)
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
   const [creatingPoll, setCreatingPoll] = useState(false)
@@ -641,6 +645,30 @@ export default function ChatRoomPage() {
       .catch(() => toast.error('Some invites failed to send'))
   }
 
+  /* ---- Carpool creation (collective only) ---- */
+  const handleCreateCarpool = (data: CreateCarpoolSubmitData) => {
+    if (!isCollective || !collectiveId) {
+      toast.error('Carpools can only be created in a collective chat')
+      return
+    }
+    setShowCarpoolSheet(false)
+    toast.info('Posting carpool...')
+    createCarpool.mutate(
+      {
+        collective_id: collectiveId,
+        event_id: data.event_id,
+        departure_point_text: data.departure_point_text,
+        departure_time: data.departure_time,
+        seats_total: data.seats_total,
+        notes: data.notes,
+      },
+      {
+        onSuccess: () => toast.success('Carpool posted!'),
+        // useCreateCarpool already shows an error toast on failure.
+      },
+    )
+  }
+
   /* ---- Broadcast ---- */
   const handleBroadcast = (data: { title: string; body: string }) => {
     const bcCollectiveId = effectiveCollectiveId
@@ -918,8 +946,20 @@ export default function ChatRoomPage() {
             setAnnouncementType('announcement')
             setShowAnnouncementSheet(true)
           }}
+          onCreateCarpool={isCollective ? () => setShowCarpoolSheet(true) : undefined}
           onBroadcastNotification={() => setShowBroadcastSheet(true)}
         />
+
+        {/* Carpool creation sheet (collective only) */}
+        {isCollective && (
+          <CreateCarpoolSheet
+            open={showCarpoolSheet}
+            onClose={() => setShowCarpoolSheet(false)}
+            onSubmit={handleCreateCarpool}
+            loading={createCarpool.isPending}
+            collectiveId={collectiveId}
+          />
+        )}
       </motion.div>
 
       {/* Message actions sheet */}

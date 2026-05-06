@@ -12,6 +12,7 @@ import {
     BarChart3,
     Megaphone,
     Bell,
+    Car,
     X,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
@@ -34,6 +35,7 @@ interface MessageInputProps {
   onCreatePoll?: () => void
   onCreateAnnouncement?: () => void
   onCreateEventInvite?: () => void
+  onCreateCarpool?: () => void
   onBroadcastNotification?: () => void
 }
 
@@ -52,6 +54,7 @@ export function MessageInput({
   isLeader = false,
   onCreatePoll,
   onCreateAnnouncement,
+  onCreateCarpool,
   onBroadcastNotification,
 }: MessageInputProps) {
   const shouldReduceMotion = useReducedMotion()
@@ -121,6 +124,7 @@ export function MessageInput({
   const leaderActions = [
     { icon: BarChart3, label: 'Poll', onClick: onCreatePoll, color: 'text-white bg-primary-600 shadow-sm' },
     { icon: Megaphone, label: 'Announce', onClick: onCreateAnnouncement, color: 'text-white bg-accent-600 shadow-sm' },
+    { icon: Car, label: 'Carpool', onClick: onCreateCarpool, color: 'text-white bg-success-600 shadow-sm' },
     { icon: Bell, label: 'Push Alert', onClick: onBroadcastNotification, color: 'text-white bg-warning-600 shadow-sm' },
   ]
 

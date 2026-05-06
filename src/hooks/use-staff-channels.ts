@@ -65,6 +65,10 @@ export function useMyStaffChannels() {
       return (data ?? [])
         .map((row: Record<string, unknown>) => row.chat_channels as StaffChannel)
         .filter(Boolean)
+        // Hide carpool_breakout channels from the main collective/staff chat list.
+        // Carpool breakouts are surfaced under the event detail page's
+        // "Coordination" subsection instead. Worker 3 (fork_motgygqh_0531ff).
+        .filter((c: StaffChannel) => (c.type as string) !== 'carpool_breakout')
         .sort((a: StaffChannel, b: StaffChannel) => {
           // National first, then state, then collective
           const typeOrder = { staff_national: 0, staff_state: 1, staff_collective: 2 }

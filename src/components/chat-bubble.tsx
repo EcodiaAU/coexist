@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import { Megaphone, CalendarPlus, ClipboardCheck, ListChecks, MapPin, Calendar, Clock } from 'lucide-react'
+import { Megaphone, CalendarPlus, ClipboardCheck, ListChecks, MapPin, Calendar, Clock, Car, Users } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatTime, formatCardDate, formatCardTime } from '@/lib/date-format'
 import { ROLE_COLORS } from '@/lib/constants'
@@ -553,6 +553,261 @@ export function AnnouncementCard({
           <p className="text-[11px] text-neutral-500">
             {responses.length} response{responses.length !== 1 ? 's' : ''}
           </p>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Carpool Card (rendered inline in chat)                             */
+/* ------------------------------------------------------------------ */
+
+export interface CarpoolCardPassenger {
+  id: string
+  passenger_id: string
+  display_name: string | null
+  avatar_url: string | null
+}
+
+export type CarpoolCardStatus = 'open' | 'full' | 'cancelled' | 'archived'
+
+interface CarpoolCardProps {
+  status: CarpoolCardStatus
+  creatorName?: string
+  /** Driver's free-text departure point (visible to all collective members). */
+  departurePointText: string
+  departureTime: string
+  seatsTotal: number
+  /** Passengers with status='confirmed'. Pickup addresses are NEVER passed in. */
+  confirmedPassengers: CarpoolCardPassenger[]
+  notes?: string | null
+  /** Event preview details (pulled by parent via useEventDetail). */
+  eventDetails?: EventDetailsForCard | null
+  eventTitle?: string | null
+  /** Whether the current viewer has already taken a seat (and seat is confirmed). */
+  viewerHasSeat: boolean
+  /** Whether the current viewer is the driver. */
+  viewerIsDriver: boolean
+  sent: boolean
+  onSaveSeat?: () => void
+  onCancelSeat?: () => void
+  onViewEvent?: (eventId: string) => void
+  eventId?: string | null
+}
+
+export function CarpoolCard({
+  status,
+  creatorName,
+  departurePointText,
+  departureTime,
+  seatsTotal,
+  confirmedPassengers,
+  notes,
+  eventDetails,
+  eventTitle,
+  viewerHasSeat,
+  viewerIsDriver,
+  sent,
+  onSaveSeat,
+  onCancelSeat,
+  onViewEvent,
+  eventId,
+}: CarpoolCardProps) {
+  const shouldReduceMotion = useReducedMotion()
+  const confirmedCount = confirmedPassengers.length
+  const seatsRemaining = Math.max(0, seatsTotal - confirmedCount)
+  const isOpen = status === 'open'
+  const isFull = status === 'full' || (isOpen && seatsRemaining === 0)
+  const isCancelled = status === 'cancelled'
+  const isArchived = status === 'archived'
+  const isMuted = isCancelled || isArchived
+
+  const hasEventImage = eventDetails?.coverImageUrl
+
+  return (
+    <motion.div
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 8, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className={cn(
+        'w-full max-w-[85%] min-w-0 rounded-2xl overflow-hidden',
+        'bg-white border border-neutral-100 shadow-sm',
+        sent ? 'ml-auto' : 'mr-auto',
+        isMuted && 'opacity-70',
+      )}
+    >
+      {/* Event cover image */}
+      {hasEventImage && (
+        <div className="relative w-full h-32">
+          <img
+            src={eventDetails.coverImageUrl!}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          {eventDetails.activityType && (
+            <span className="absolute bottom-2 left-3 text-[10px] font-bold uppercase tracking-wider text-white/90 bg-black/30 px-2 py-0.5 rounded-full">
+              {ACTIVITY_LABELS[eventDetails.activityType] ?? eventDetails.activityType}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="p-5 min-w-0 overflow-hidden">
+        {/* Header chip */}
+        <div className="flex items-center gap-3 mb-3 min-w-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-success-50 text-success-600">
+            <Car size={20} strokeWidth={2.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-extrabold uppercase tracking-wider truncate text-success-600">
+              Carpool
+            </p>
+            {creatorName && (
+              <p className="text-[11px] font-medium text-neutral-500 truncate">
+                from {creatorName}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Linked event preview */}
+        {(eventTitle || eventDetails) && (
+          <div className="rounded-xl bg-neutral-50 p-3 mb-3 space-y-1.5 min-w-0 overflow-hidden">
+            {eventTitle && (
+              <p className="text-[13px] font-bold text-neutral-900 truncate">{eventTitle}</p>
+            )}
+            {eventDetails && (
+              <>
+                <div className="flex items-center gap-2 min-w-0">
+                  <Calendar size={13} className="text-neutral-400 shrink-0" />
+                  <span className="text-xs font-semibold text-neutral-700 truncate">
+                    {formatCardDate(eventDetails.dateStart)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <Clock size={13} className="text-neutral-400 shrink-0" />
+                  <span className="text-xs text-neutral-500 truncate">
+                    {formatCardTime(eventDetails.dateStart)}
+                    {eventDetails.dateEnd && ` - ${formatCardTime(eventDetails.dateEnd)}`}
+                  </span>
+                </div>
+                {eventDetails.address && (
+                  <div className="flex items-center gap-2 min-w-0">
+                    <MapPin size={13} className="text-neutral-400 shrink-0" />
+                    <span className="text-xs text-neutral-500 truncate min-w-0 flex-1">
+                      {eventDetails.address}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+            {eventId && onViewEvent && (
+              <button
+                type="button"
+                onClick={() => onViewEvent(eventId)}
+                className="text-[11px] font-semibold text-primary-600 hover:text-primary-700 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
+              >
+                View Event Details
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Driver section */}
+        <div className="mb-3 space-y-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <MapPin size={14} className="text-success-600 shrink-0" />
+            <span className="text-sm font-semibold text-neutral-900 truncate">
+              Leaving from {departurePointText}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 min-w-0">
+            <Clock size={14} className="text-neutral-400 shrink-0" />
+            <span className="text-xs text-neutral-600 truncate">
+              {formatCardDate(departureTime)} · {formatCardTime(departureTime)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 min-w-0">
+            <Users size={14} className="text-neutral-400 shrink-0" />
+            <span className="text-xs font-semibold text-neutral-700">
+              {seatsRemaining} of {seatsTotal} seat{seatsTotal !== 1 ? 's' : ''} remaining
+            </span>
+          </div>
+          {notes && (
+            <p className="text-xs text-neutral-600 leading-relaxed pt-1 break-words">
+              {notes}
+            </p>
+          )}
+        </div>
+
+        {/* Live passenger list (display_name only - pickup addresses NEVER shown here) */}
+        {confirmedPassengers.length > 0 && (
+          <div className="mb-3">
+            <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 mb-1.5">
+              Passengers
+            </p>
+            <ul className="space-y-1">
+              {confirmedPassengers.map((p) => (
+                <li
+                  key={p.id}
+                  className="flex items-center gap-2 text-xs text-neutral-700"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-success-500 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{p.display_name ?? 'Passenger'}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Status / CTA */}
+        {isCancelled ? (
+          <p className="text-xs font-semibold text-neutral-500 italic">
+            Carpool cancelled
+          </p>
+        ) : isArchived ? (
+          <p className="text-xs font-semibold text-neutral-500 italic">
+            Carpool archived
+          </p>
+        ) : viewerIsDriver ? (
+          <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-lg px-3 py-2 text-center">
+            You are the driver
+          </p>
+        ) : viewerHasSeat ? (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-lg px-3 py-2 text-center">
+              You took a seat
+            </p>
+            {onCancelSeat && (
+              <button
+                type="button"
+                onClick={onCancelSeat}
+                className="w-full rounded-xl bg-neutral-50 ring-1 ring-neutral-200 py-2.5 text-center text-sm font-semibold text-neutral-700 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-neutral-100"
+              >
+                Cancel my seat
+              </button>
+            )}
+          </div>
+        ) : isFull ? (
+          <button
+            type="button"
+            disabled
+            className="w-full rounded-xl bg-neutral-100 py-2.5 text-center text-sm font-semibold text-neutral-400 cursor-not-allowed select-none min-h-11"
+          >
+            Carpool full
+          </button>
+        ) : (
+          onSaveSeat && (
+            <button
+              type="button"
+              onClick={onSaveSeat}
+              className="w-full rounded-xl bg-success-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-success-700 shadow-sm"
+            >
+              Save me a seat
+            </button>
+          )
         )}
       </div>
     </motion.div>

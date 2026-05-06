@@ -4,12 +4,13 @@ import {
   useRef,
   useEffect,
   useLayoutEffect,
+  useState,
   type RefObject,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Lock } from 'lucide-react'
-import { ChatBubble, PollCard, AnnouncementCard } from '@/components/chat-bubble'
+import { ChatBubble, PollCard, AnnouncementCard, CarpoolCard } from '@/components/chat-bubble'
 import { HtmlChatBubble } from '@/components/html-chat-bubble'
 import { MessageReactions } from '@/components/message-reactions'
 import { Skeleton } from '@/components/skeleton'
@@ -29,6 +30,8 @@ import type { ChannelMessageWithSender } from '@/hooks/use-staff-channels'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useEventDetail, type EventDetailData } from '@/hooks/use-events'
+import { useCarpool, useCarpoolSeats, useSaveSeat, useCancelSeat } from '@/hooks/use-carpool'
+import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import type { Tables, Json } from '@/types/database.types'
 
 type EventRegistration = Tables<'event_registrations'>
@@ -225,6 +228,102 @@ function InlineAnnouncement({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Inline Carpool Renderer                                            */
+/* ------------------------------------------------------------------ */
+
+function InlineCarpool({
+  carpoolId,
+  sent,
+}: {
+  carpoolId: string
+  sent: boolean
+}) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { data: carpool } = useCarpool(carpoolId)
+  const { data: seats = [] } = useCarpoolSeats(carpoolId)
+  const saveSeat = useSaveSeat()
+  const cancelSeat = useCancelSeat()
+  const [saveSheetOpen, setSaveSheetOpen] = useState(false)
+
+  const eventId = carpool?.event_id
+  const { data: eventDetail } = useEventDetail(eventId)
+
+  if (!carpool) return null
+
+  const confirmedSeats = seats.filter((s) => s.status === 'confirmed')
+  const viewerSeat = confirmedSeats.find((s) => s.passenger_id === user?.id)
+  const viewerHasSeat = !!viewerSeat
+  const viewerIsDriver = carpool.driver_id === user?.id
+
+  const confirmedPassengers = confirmedSeats.map((s) => ({
+    id: s.id,
+    passenger_id: s.passenger_id,
+    display_name: s.passenger?.display_name ?? null,
+    avatar_url: s.passenger?.avatar_url ?? null,
+  }))
+
+  const eventDetails = eventDetail
+    ? {
+        coverImageUrl: eventDetail.cover_image_url,
+        dateStart: eventDetail.date_start,
+        dateEnd: eventDetail.date_end,
+        address: eventDetail.address,
+        activityType: eventDetail.activity_type,
+        collectiveName: eventDetail.collectives?.name,
+      }
+    : null
+
+  const handleSaveSeatSubmit = (data: { pickup_address_text: string }) => {
+    saveSeat.mutate(
+      {
+        carpool_id: carpoolId,
+        pickup_address_text: data.pickup_address_text,
+      },
+      {
+        onSuccess: () => setSaveSheetOpen(false),
+      },
+    )
+  }
+
+  const handleCancelSeat = () => {
+    if (!viewerSeat) return
+    cancelSeat.mutate({ seat_id: viewerSeat.id, carpool_id: carpoolId })
+  }
+
+  return (
+    <>
+      <CarpoolCard
+        status={carpool.status}
+        creatorName={carpool.driver?.display_name ?? undefined}
+        departurePointText={carpool.departure_point_text}
+        departureTime={carpool.departure_time}
+        seatsTotal={carpool.seats_total}
+        confirmedPassengers={confirmedPassengers}
+        notes={carpool.notes}
+        eventDetails={eventDetails}
+        eventTitle={eventDetail?.title ?? null}
+        eventId={eventId ?? null}
+        viewerHasSeat={viewerHasSeat}
+        viewerIsDriver={viewerIsDriver}
+        sent={sent}
+        onSaveSeat={() => setSaveSheetOpen(true)}
+        onCancelSeat={handleCancelSeat}
+        onViewEvent={(evId) => navigate(`/events/${evId}`)}
+      />
+      <SaveSeatSheet
+        open={saveSheetOpen}
+        onClose={() => setSaveSheetOpen(false)}
+        onSubmit={handleSaveSeatSubmit}
+        loading={saveSeat.isPending}
+        driverName={carpool.driver?.display_name ?? null}
+        eventTitle={eventDetail?.title ?? null}
+      />
+    </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Props                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -364,6 +463,14 @@ export function ChatMessageList({
 
     if (messageType === 'announcement' && msg.announcement_id) {
       return <InlineAnnouncement announcementId={msg.announcement_id} sent={isSent} />
+    }
+
+    // TODO: regen types after migration applied - `carpool` message_type
+    // and `carpool_id` column are not yet present in database.types.ts.
+    const carpoolMessageType = (msg as unknown as { message_type?: string }).message_type
+    const carpoolId = (msg as unknown as { carpool_id?: string | null }).carpool_id
+    if (carpoolMessageType === 'carpool' && carpoolId) {
+      return <InlineCarpool carpoolId={carpoolId} sent={isSent} />
     }
 
     if (messageType === 'system') {

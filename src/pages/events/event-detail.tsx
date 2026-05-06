@@ -34,6 +34,7 @@ import {
     Bell,
     Ticket,
     ExternalLink,
+    Car,
 } from 'lucide-react'
 import { EventHero, EventHeroOverlay } from './event-hero'
 import { EventActions } from './event-actions'
@@ -71,6 +72,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useGeocodeAddress } from '@/hooks/use-geocode-address'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { useEventTicketTypes, useMyEventTicket, useCreateTicketCheckout, useCancelPendingTicket, useTicketSalesSummary, useEventTickets } from '@/hooks/use-event-tickets'
+import { useEventCarpools } from '@/hooks/use-event-carpools'
 import { MapView } from '@/components'
 import { activityAccent, defaultAccent } from '@/lib/activity-types'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
@@ -314,6 +316,9 @@ export default function EventDetailPage() {
   const { data: myTicket } = useMyEventTicket(isTicketed ? id : undefined)
   const ticketCheckout = useCreateTicketCheckout()
   const cancelPendingTicket = useCancelPendingTicket()
+
+  // Coordination - carpool breakout chats for this event (Worker 3)
+  const { data: eventCarpools } = useEventCarpools(id)
   const [selectedTicketType, setSelectedTicketType] = useState<string | null>(null)
 
   const [showCancelSheet, setShowCancelSheet] = useState(false)
@@ -463,7 +468,7 @@ export default function EventDetailPage() {
   const handleDuplicate = useCallback(() => {
     if (!event) return
     // Open the create wizard prefilled from this event. No DB row is
-    // inserted until the user confirms — they pick a new date and tweak
+    // inserted until the user confirms - they pick a new date and tweak
     // anything they want before publishing.
     navigate(`/events/create?from=${event.id}`)
   }, [event, navigate])
@@ -1244,6 +1249,54 @@ export default function EventDetailPage() {
           onCalendarOpen={() => setShowCalendarSheet(true)}
           onShare={handleShare}
         />
+
+        {/* ── Coordination (carpool breakouts for this event) ── */}
+        {eventCarpools && eventCarpools.length > 0 && (
+          <motion.div
+            variants={shouldReduceMotion ? undefined : fadeUp}
+            className="rounded-2xl p-4 bg-white border border-neutral-100 shadow-sm"
+          >
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-6 h-6 rounded-lg bg-primary-50 flex items-center justify-center">
+                <Car size={11} className="text-primary-600" />
+              </div>
+              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
+                Coordination
+              </span>
+            </div>
+            <div className="space-y-2">
+              {eventCarpools.map((cp) => {
+                const departure = new Date(cp.departure_time)
+                const departureLabel = departure.toLocaleString([], {
+                  weekday: 'short',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })
+                return (
+                  <button
+                    key={cp.carpool_id}
+                    type="button"
+                    onClick={() => navigate(`/chat/channel/${cp.channel_id}`)}
+                    className="w-full flex items-center gap-3 min-h-11 p-2 rounded-lg hover:bg-neutral-50 active:scale-[0.98] transition-[opacity,transform] duration-150 text-left cursor-pointer"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center shrink-0">
+                      <Car size={15} className="text-primary-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-neutral-900 truncate">
+                        {cp.channel_name || `Carpool from ${cp.departure_point_text}`}
+                      </p>
+                      <p className="text-[11px] text-neutral-500 truncate">
+                        {departureLabel} · {cp.seats_taken}/{cp.seats_total} seats
+                      </p>
+                    </div>
+                    <ChevronRight size={14} className="ml-auto shrink-0 text-neutral-400" />
+                  </button>
+                )
+              })}
+            </div>
+          </motion.div>
+        )}
 
         {/* ── Collaborating collectives ── */}
         {event.collaborators && event.collaborators.length > 0 && (
