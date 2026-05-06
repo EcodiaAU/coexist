@@ -454,21 +454,27 @@ export default function CollectiveDetailPage() {
             />
           ) : (
             <div className="grid grid-cols-1 gap-2.5">
-              {upcomingEvents.slice(0, 3).map((event, i) => (
+              {upcomingEvents.slice(0, 3).map((event, i) => {
+                // Up Next hero source: prefer the event's own cover, fall back
+                // to the collective's hero so cards never render the blank
+                // gradient placeholder when the collective has its own art.
+                // Mirrors event-detail / event-hero precedence.
+                const heroSrc = event.cover_image_url || collective.cover_image_url || null
+                return (
                 <Link
                   key={event.id}
                   to={`/events/${event.id}`}
                   className={`group relative overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-150 active:scale-[0.98] ${
-                    i === 0 ? 'p-0' : 'p-3.5'
+                    i === 0 ? 'p-0' : 'p-2'
                   }`}
                 >
                   {i === 0 ? (
                     /* Featured first event - large card with hero image + date overlay */
                     <div className="relative">
                       <div className="relative aspect-[2.5/1] overflow-hidden bg-gradient-to-br from-primary-100 to-primary-50">
-                        {event.cover_image_url ? (
+                        {heroSrc ? (
                           <OptimizedImage
-                            src={event.cover_image_url}
+                            src={heroSrc}
                             alt=""
                             sizes="(min-width: 1024px) 800px, 100vw"
                             wrapperClassName="absolute inset-0"
@@ -499,17 +505,35 @@ export default function CollectiveDetailPage() {
                       </div>
                     </div>
                   ) : (
-                    /* Compact event rows */
-                    <div className="flex items-center gap-3.5">
-                      <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-primary-50 text-primary-600">
-                        <span className="text-[10px] font-bold uppercase leading-tight">
-                          {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short' })}
-                        </span>
-                        <span className="font-heading text-lg font-extrabold leading-none">
-                          {new Date(event.date_start).getDate()}
-                        </span>
+                    /* Compact event rows - small hero thumbnail on the left for visual continuity */
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-primary-100 to-primary-50">
+                        {heroSrc ? (
+                          <OptimizedImage
+                            src={heroSrc}
+                            alt=""
+                            sizes="56px"
+                            wrapperClassName="absolute inset-0"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-primary-600">
+                            <span className="text-[9px] font-bold uppercase leading-tight">
+                              {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short' })}
+                            </span>
+                            <span className="font-heading text-base font-extrabold leading-none">
+                              {new Date(event.date_start).getDate()}
+                            </span>
+                          </div>
+                        )}
+                        {heroSrc && (
+                          <div className="absolute top-1 left-1 rounded-md bg-white/95 backdrop-blur-sm px-1 py-0.5 shadow-sm">
+                            <span className="font-heading text-[11px] font-extrabold leading-none text-primary-900">
+                              {new Date(event.date_start).getDate()}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 py-1">
                         <p className="text-sm font-semibold text-neutral-900 truncate">
                           {event.title}
                         </p>
@@ -517,11 +541,12 @@ export default function CollectiveDetailPage() {
                           <p className="text-xs text-neutral-500 truncate">{event.address}</p>
                         )}
                       </div>
-                      <ChevronRight size={16} className="text-neutral-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                      <ChevronRight size={16} className="text-neutral-400 shrink-0 group-hover:translate-x-0.5 transition-transform mr-1" />
                     </div>
                   )}
                 </Link>
-              ))}
+                )
+              })}
             </div>
           )}
         </motion.section>

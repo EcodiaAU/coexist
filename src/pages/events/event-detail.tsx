@@ -413,14 +413,21 @@ export default function EventDetailPage() {
     setShowCancelSheet(false)
   }, [event, cancelMutation, toast])
 
+  // True iff we can build a meaningful directions URL for this event.
+  // Used to render the Directions button as visibly disabled (rather than
+  // letting it fire and open a broken / blank map) when neither saved
+  // coords nor an address are available.
+  const hasDirectionsDestination = !!(mapPos || event?.address)
+
   const handleGetDirections = useCallback(() => {
     if (!event) return
 
     // Prefer exact lat/lng (saved location_point or geocoded fallback) over
     // address-text geocoding, which can land on a nearby road or wrong side
     // of a building. Only fall back to encoded address when no coords exist.
+    // Bail silently if neither - never open a malformed URL.
     const coords = mapPos
-    const labelParam = event.address ? `&q=${encodeURIComponent(event.address)}` : ''
+    if (!coords && !event.address) return
 
     // Detect Apple platforms (iOS, iPadOS, macOS) - use Apple Maps where
     // available so deep-links open natively in the Maps app.
@@ -429,23 +436,27 @@ export default function EventDetailPage() {
 
     let url: string
     if (coords) {
+      // Coords destination: most precise form on both Maps providers.
+      // Drop the address-string overlay (&q=) when using coords on Apple
+      // Maps - that param adds a search overlay that can land on the wrong
+      // pin instead of using the exact lat,lng we just supplied.
       const dest = `${coords.lat},${coords.lng}`
       if (isApple) {
-        // maps.apple.com supports daddr=lat,lng + dirflg=d (driving)
-        url = `https://maps.apple.com/?daddr=${dest}&dirflg=d${labelParam}`
+        url = `https://maps.apple.com/?daddr=${dest}&dirflg=d`
       } else {
-        // Google Maps URLs API - destination via lat,lng is the most precise form
-        url = `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`
+        // dir_action=navigate starts navigation immediately on supported
+        // clients instead of dropping the user on the route preview.
+        url = `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving&dir_action=navigate`
       }
-    } else if (event.address) {
-      const encoded = encodeURIComponent(event.address)
+    } else {
+      // No coords - fall back to address string. Geocoded by the maps
+      // provider on the other end.
+      const encoded = encodeURIComponent(event.address as string)
       if (isApple) {
         url = `https://maps.apple.com/?daddr=${encoded}&dirflg=d`
       } else {
-        url = `https://www.google.com/maps/dir/?api=1&destination=${encoded}&travelmode=driving`
+        url = `https://www.google.com/maps/dir/?api=1&destination=${encoded}&travelmode=driving&dir_action=navigate`
       }
-    } else {
-      return
     }
 
     window.open(url, Capacitor.isNativePlatform() ? '_system' : '_blank')
@@ -1039,29 +1050,38 @@ export default function EventDetailPage() {
         </motion.div>
 
         {/* ── Location map ── */}
-        {event.address && mapPos && (
+        {/* Render the map block when we have either saved coords (mapPos) or
+            an address. The button is visibly disabled when neither yields a
+            usable directions destination so it never fires a malformed URL. */}
+        {(mapPos || event.address) && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
             className="relative"
           >
-            <MapView
-              center={mapPos}
-              zoom={15}
-              markers={[{ id: event.id, position: mapPos, variant: 'event', label: event.title }]}
-              interactive
-              aria-label={`${event.title} location`}
-              className="aspect-[4/3] sm:aspect-video rounded-2xl shadow-sm border border-neutral-100"
-            />
+            {mapPos && (
+              <MapView
+                center={mapPos}
+                zoom={15}
+                markers={[{ id: event.id, position: mapPos, variant: 'event', label: event.title }]}
+                interactive
+                aria-label={`${event.title} location`}
+                className="aspect-[4/3] sm:aspect-video rounded-2xl shadow-sm border border-neutral-100"
+              />
+            )}
             <button
               type="button"
               onClick={handleGetDirections}
+              disabled={!hasDirectionsDestination}
               className={cn(
-                'absolute bottom-3 right-3 z-[1000]',
+                mapPos ? 'absolute bottom-3 right-3 z-[1000]' : 'mt-1',
                 'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-bold',
                 'bg-white text-neutral-700 shadow-md border border-neutral-200',
-                'cursor-pointer select-none active:scale-[0.97] transition-transform duration-150',
+                hasDirectionsDestination
+                  ? 'cursor-pointer select-none active:scale-[0.97] transition-transform duration-150'
+                  : 'opacity-50 cursor-not-allowed',
               )}
               aria-label="Get directions"
+              aria-disabled={!hasDirectionsDestination}
             >
               <Compass size={14} />
               Directions
