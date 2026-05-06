@@ -308,6 +308,20 @@ Deno.serve(async (req: Request) => {
       // Check if notification type is disabled
       if (userPrefs[notifType] === false) return false
 
+      // Master gate: chat_messages toggle disables ALL chat_* subtypes.
+      // The "Chat Messages" toggle in /settings/notifications is the primary
+      // toggle - if user turned that OFF, they expect silence on every chat
+      // event (replies, images, polls, mentions, announcements) regardless of
+      // the granular toggle state. Mirrors the UX intent.
+      if (
+        typeof notifType === 'string' &&
+        notifType.startsWith('chat_') &&
+        notifType !== 'chat_messages' &&
+        userPrefs.chat_messages === false
+      ) {
+        return false
+      }
+
       // Check quiet hours (using user's timezone, not server UTC)
       if (userPrefs.quiet_hours_enabled) {
         const userTz = (userPrefs.timezone as string) || 'Australia/Sydney'

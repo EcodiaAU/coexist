@@ -276,7 +276,7 @@ export default function AdminCollectivesPage() {
                     <Link
                       to={`/admin/collectives/${c.id}`}
                       className={cn(
-                        'flex items-center gap-4 p-4 rounded-xl',
+                        'flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl',
                         'bg-white shadow-sm',
                         'active:scale-[0.99] transition-[color,background-color,transform] duration-150',
                         !c.is_active && 'opacity-60',
@@ -287,11 +287,12 @@ export default function AdminCollectivesPage() {
                         <img
                           src={c.cover_image_url}
                           alt=""
-                          className="w-14 h-14 rounded-xl object-cover shrink-0"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-14 h-14 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
-                          <MapPin size={24} className="text-neutral-400" />
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
+                          <MapPin size={20} className="text-neutral-400 sm:hidden" />
+                          <MapPin size={24} className="text-neutral-400 hidden sm:block" />
                         </div>
                       )}
 
@@ -302,34 +303,35 @@ export default function AdminCollectivesPage() {
                             {c.name}
                           </p>
                           {!c.is_active && (
-                            <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500 shrink-0">
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500 shrink-0">
                               Archived
                             </span>
                           )}
                         </div>
                         {(c.region || c.state) && (
-                          <p className="text-xs text-neutral-400 flex items-center gap-1">
-                            <MapPin size={12} />
-                            {[c.region, c.state].filter(Boolean).join(', ')}
+                          <p className="text-[11px] sm:text-xs text-neutral-400 flex items-center gap-1 truncate">
+                            <MapPin size={12} className="shrink-0" />
+                            <span className="truncate">{[c.region, c.state].filter(Boolean).join(', ')}</span>
                           </p>
                         )}
-                        <div className="flex items-center gap-3 mt-1 text-xs text-neutral-400">
-                          <span className="flex items-center gap-1">
-                            <Users size={12} /> {c.memberCount} members
+                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1 text-[11px] sm:text-xs text-neutral-400">
+                          <span className="flex items-center gap-1 shrink-0">
+                            <Users size={12} className="shrink-0" /> {c.memberCount} <span className="hidden sm:inline">members</span><span className="sm:hidden">m</span>
                           </span>
-                          <span className="flex items-center gap-1">
-                            <CalendarDays size={12} /> {c.eventCount} events
+                          <span className="flex items-center gap-1 shrink-0">
+                            <CalendarDays size={12} className="shrink-0" /> {c.eventCount} <span className="hidden sm:inline">events</span><span className="sm:hidden">ev</span>
                           </span>
                           {c.leaderName && (
-                            <span className="flex items-center gap-1 truncate">
-                              <Crown size={12} /> {c.leaderName}
+                            <span className="flex items-center gap-1 min-w-0 max-w-full">
+                              <Crown size={12} className="shrink-0" />
+                              <span className="truncate">{c.leaderName}</span>
                             </span>
                           )}
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -337,12 +339,12 @@ export default function AdminCollectivesPage() {
                             e.stopPropagation()
                             setArchiveTarget(c)
                           }}
-                          className="flex items-center justify-center min-w-11 min-h-11 rounded-lg text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.93] transition-[colors,transform]"
+                          className="flex items-center justify-center min-w-10 min-h-10 sm:min-w-11 sm:min-h-11 rounded-lg text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.93] transition-[colors,transform]"
                           aria-label={c.is_active ? `Archive ${c.name}` : `Restore ${c.name}`}
                         >
                           {c.is_active ? <Archive size={16} /> : <RotateCcw size={16} />}
                         </button>
-                        <ChevronRight size={16} className="text-neutral-300" />
+                        <ChevronRight size={16} className="text-neutral-300 hidden sm:block" />
                       </div>
                     </Link>
                   </motion.div>

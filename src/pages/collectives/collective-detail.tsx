@@ -463,13 +463,24 @@ export default function CollectiveDetailPage() {
                   }`}
                 >
                   {i === 0 ? (
-                    /* Featured first event - large card with date overlay */
+                    /* Featured first event - large card with hero image + date overlay */
                     <div className="relative">
-                      <div className="aspect-[2.5/1] bg-gradient-to-br from-primary-100 to-primary-50 flex items-center justify-center">
-                        <CalendarDays size={32} className="text-primary-300" />
+                      <div className="relative aspect-[2.5/1] overflow-hidden bg-gradient-to-br from-primary-100 to-primary-50">
+                        {event.cover_image_url ? (
+                          <OptimizedImage
+                            src={event.cover_image_url}
+                            alt=""
+                            sizes="(min-width: 1024px) 800px, 100vw"
+                            wrapperClassName="absolute inset-0"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <CalendarDays size={32} className="text-primary-300" />
+                          </div>
+                        )}
                       </div>
                       <div className="absolute top-3 left-3">
-                        <div className="rounded-xl bg-white/90 backdrop-blur-sm px-3 py-1.5 shadow-sm">
+                        <div className="rounded-xl bg-white/95 backdrop-blur-sm px-3 py-1.5 shadow-sm">
                           <span className="text-[10px] font-bold uppercase text-primary-500 block leading-tight">
                             {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short' })}
                           </span>

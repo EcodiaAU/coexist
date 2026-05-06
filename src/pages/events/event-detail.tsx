@@ -409,14 +409,42 @@ export default function EventDetailPage() {
   }, [event, cancelMutation, toast])
 
   const handleGetDirections = useCallback(() => {
-    if (!event?.address) return
-    const encoded = encodeURIComponent(event.address)
-    if (Capacitor.isNativePlatform()) {
-      window.open(`https://maps.google.com/maps?daddr=${encoded}`, '_system')
+    if (!event) return
+
+    // Prefer exact lat/lng (saved location_point or geocoded fallback) over
+    // address-text geocoding, which can land on a nearby road or wrong side
+    // of a building. Only fall back to encoded address when no coords exist.
+    const coords = mapPos
+    const labelParam = event.address ? `&q=${encodeURIComponent(event.address)}` : ''
+
+    // Detect Apple platforms (iOS, iPadOS, macOS) - use Apple Maps where
+    // available so deep-links open natively in the Maps app.
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    const isApple = /iPad|iPhone|iPod|Mac/.test(ua) && !(/Android/.test(ua))
+
+    let url: string
+    if (coords) {
+      const dest = `${coords.lat},${coords.lng}`
+      if (isApple) {
+        // maps.apple.com supports daddr=lat,lng + dirflg=d (driving)
+        url = `https://maps.apple.com/?daddr=${dest}&dirflg=d${labelParam}`
+      } else {
+        // Google Maps URLs API - destination via lat,lng is the most precise form
+        url = `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`
+      }
+    } else if (event.address) {
+      const encoded = encodeURIComponent(event.address)
+      if (isApple) {
+        url = `https://maps.apple.com/?daddr=${encoded}&dirflg=d`
+      } else {
+        url = `https://www.google.com/maps/dir/?api=1&destination=${encoded}&travelmode=driving`
+      }
     } else {
-      window.open(`https://maps.google.com/maps?daddr=${encoded}`, '_blank')
+      return
     }
-  }, [event])
+
+    window.open(url, Capacitor.isNativePlatform() ? '_system' : '_blank')
+  }, [event, mapPos])
 
   const handleCancelEvent = useCallback(() => {
     if (!event) return

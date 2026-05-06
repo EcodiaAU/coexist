@@ -160,26 +160,27 @@ function ShopHero({
   return (
     <div className="relative">
       {/*
-       * The bg (1920×1080) always fits full-width → container is
-       * sized by the bg's natural aspect ratio via the leading img.
-       * The fg (1080×1080) is 56.25% of the bg width to keep the
-       * ratio between the two constant at every screen size.
+       * The bg (1920×1080) always fits full-width on sm+ breakpoints.
+       * On mobile, container height is forced taller (110vw, min 480px) to
+       * match the homepage hero - bg uses object-cover/center so the
+       * landscape gets cropped horizontally rather than crushed vertically.
+       * Foreground (1080×1080) stays 56.25% width centered + bottom-aligned.
        */}
-      <div className="relative w-full overflow-hidden">
+      <div className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
 
-        {/* ── Layer 0: Background landscape - drives the container height ── */}
-        <div>
+        {/* ── Layer 0: Background landscape ── */}
+        <div className="h-full">
           <img
             src="/img/merch-hero-1.webp"
             alt="Australian landscape"
-            className="w-full h-auto block"
+            className="w-full h-full object-cover object-center sm:h-auto sm:object-fill block"
           />
         </div>
 
         {/* ── Layer 1: Foreground people ── */}
         {/* 56.25% width = 1080/1920, centered, bottom-aligned */}
         <div className="absolute bottom-0 inset-x-0 z-[3] flex justify-center">
-          <div style={{ width: '56.25%' }}>
+          <div className="w-[80%] sm:w-[56.25%]">
             <img
               src="/img/merch-hero-2.webp"
               alt="Co-Exist members"
@@ -371,7 +372,7 @@ function ShopSkeleton() {
     <div className="space-y-6">
       {/* Hero skeleton */}
       <div className="relative">
-        <Skeleton className="w-full h-[280px] sm:h-[340px] rounded-none" />
+        <Skeleton className="w-full h-[110vw] min-h-[480px] sm:h-[340px] rounded-none" />
         <div className="relative -mt-1 z-10">
           <div className="h-6 sm:h-10 bg-white" />
         </div>

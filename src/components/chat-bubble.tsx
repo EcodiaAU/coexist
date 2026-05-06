@@ -429,7 +429,7 @@ export function AnnouncementCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        'w-full max-w-[85%] rounded-2xl overflow-hidden',
+        'w-full max-w-[85%] min-w-0 rounded-2xl overflow-hidden',
         'bg-white border border-neutral-100 shadow-sm',
         sent ? 'ml-auto' : 'mr-auto',
       )}
@@ -451,50 +451,50 @@ export function AnnouncementCard({
         </div>
       )}
 
-      <div className="p-5">
+      <div className="p-5 min-w-0 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3 mb-3 min-w-0">
           <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl', typeInfo.iconBg, typeInfo.iconColor)}>
             <IconComponent size={20} strokeWidth={2.5} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className={cn('text-[11px] font-extrabold uppercase tracking-wider', typeInfo.labelColor)}>{typeInfo.label}</p>
+            <p className={cn('text-[11px] font-extrabold uppercase tracking-wider truncate', typeInfo.labelColor)}>{typeInfo.label}</p>
             {creatorName && (
-              <p className="text-[11px] font-medium text-neutral-500">from {creatorName}</p>
+              <p className="text-[11px] font-medium text-neutral-500 truncate">from {creatorName}</p>
             )}
           </div>
         </div>
 
         {/* Content */}
-        <h4 className="text-[15px] font-extrabold text-neutral-900 mb-1.5">{title}</h4>
+        <h4 className="text-[15px] font-extrabold text-neutral-900 mb-1.5 break-words">{title}</h4>
         {body && (
-          <p className="text-sm text-neutral-600 leading-relaxed mb-2">{body}</p>
+          <p className="text-sm text-neutral-600 leading-relaxed mb-2 break-words">{body}</p>
         )}
 
         {/* Event details summary */}
         {eventDetails && (
-          <div className="rounded-xl bg-neutral-50 p-3 mb-3 space-y-1.5">
-            <div className="flex items-center gap-2">
+          <div className="rounded-xl bg-neutral-50 p-3 mb-3 space-y-1.5 min-w-0 overflow-hidden">
+            <div className="flex items-center gap-2 min-w-0">
               <Calendar size={13} className="text-neutral-400 shrink-0" />
-              <span className="text-xs font-semibold text-neutral-700">
+              <span className="text-xs font-semibold text-neutral-700 truncate">
                 {formatCardDate(eventDetails.dateStart)}
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <Clock size={13} className="text-neutral-400 shrink-0" />
-              <span className="text-xs text-neutral-500">
+              <span className="text-xs text-neutral-500 truncate">
                 {formatCardTime(eventDetails.dateStart)}
                 {eventDetails.dateEnd && ` - ${formatCardTime(eventDetails.dateEnd)}`}
               </span>
             </div>
             {eventDetails.address && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <MapPin size={13} className="text-neutral-400 shrink-0" />
-                <span className="text-xs text-neutral-500 truncate">{eventDetails.address}</span>
+                <span className="text-xs text-neutral-500 truncate min-w-0 flex-1">{eventDetails.address}</span>
               </div>
             )}
             {eventDetails.collectiveName && !hasEventImage && (
-              <p className="text-[11px] text-neutral-400 mt-0.5">
+              <p className="text-[11px] text-neutral-400 mt-0.5 truncate">
                 Hosted by {eventDetails.collectiveName}
               </p>
             )}

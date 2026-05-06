@@ -69,17 +69,17 @@ function Section({
 }) {
   return (
     <section className={cn(className)} aria-label={title}>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading text-sm font-bold text-neutral-500 uppercase tracking-widest">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h2 className="font-heading text-sm font-bold text-neutral-500 uppercase tracking-widest min-w-0 truncate">
           {title}
         </h2>
         {action && (
           <Link
             to={action.to}
-            className="flex items-center gap-0.5 text-xs font-semibold text-neutral-600 hover:text-neutral-900 active:scale-[0.97] transition-[colors,transform] duration-150"
+            className="flex items-center gap-0.5 text-xs font-semibold text-neutral-600 hover:text-neutral-900 active:scale-[0.97] transition-[colors,transform] duration-150 whitespace-nowrap shrink-0"
           >
             {action.label}
-            <ChevronRight size={14} />
+            <ChevronRight size={14} className="shrink-0" />
           </Link>
         )}
       </div>
@@ -343,7 +343,7 @@ function NextEventCard({
         {nextEvent.title}
       </h3>
 
-      <div className="flex items-center gap-4 mt-3 text-sm text-white/70">
+      <div className="flex items-center gap-4 mt-3 text-sm text-white">
         <span className="flex items-center gap-1.5">
           <Calendar size={14} aria-hidden="true" />
           {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : formatEventDate(nextEvent.date_start)}
@@ -355,7 +355,7 @@ function NextEventCard({
       </div>
 
       {nextEvent.collectives && (
-        <p className="mt-2 text-xs text-white/50 flex items-center gap-1.5">
+        <p className="mt-2 text-xs text-white flex items-center gap-1.5">
           <MapPin size={12} aria-hidden="true" />
           {nextEvent.collectives.name}
         </p>
@@ -406,7 +406,7 @@ function NextEventCard({
           </Button>
         </div>
       ) : (
-        <div className="mt-4 flex items-center text-sm font-semibold text-white/80">
+        <div className="mt-4 flex items-center text-sm font-semibold text-white">
           View details
           <ChevronRight size={16} className="ml-0.5" />
         </div>
