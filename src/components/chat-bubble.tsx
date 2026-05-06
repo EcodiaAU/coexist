@@ -392,7 +392,15 @@ interface AnnouncementCardProps {
   body?: string | null
   creatorName?: string
   metadata?: Record<string, unknown>
-  responses?: { response: string; user_id: string }[]
+  responses?: {
+    response: string
+    user_id: string
+    profiles?: {
+      id?: string
+      display_name?: string | null
+      avatar_url?: string | null
+    } | null
+  }[]
   userResponse?: string | null
   isActive: boolean
   sent: boolean
@@ -454,14 +462,17 @@ export function AnnouncementCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        'w-full max-w-[85%] min-w-0 rounded-2xl overflow-hidden',
+        // 1.8.4 item 10: explicit min-w-0 + max-w + overflow-hidden chain
+        // ensures cover-image badge + RSVP scroll-strip clip at the card
+        // boundary on narrow phones rather than bleeding into the chat list.
+        'w-full max-w-[88%] min-w-0 rounded-2xl overflow-hidden',
         'bg-white border border-neutral-100 shadow-sm',
         sent ? 'ml-auto' : 'mr-auto',
       )}
     >
       {/* Event cover image */}
       {hasEventImage && (
-        <div className="relative w-full h-32">
+        <div className="relative w-full h-32 overflow-hidden">
           <img
             src={eventDetails.coverImageUrl!}
             alt=""
@@ -469,7 +480,7 @@ export function AnnouncementCard({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {eventDetails.activityType && (
-            <span className="absolute bottom-2 left-3 text-[10px] font-bold uppercase tracking-wider text-white/90 bg-black/30 px-2 py-0.5 rounded-full">
+            <span className="absolute bottom-2 left-3 max-w-[calc(100%-1.5rem)] truncate text-[10px] font-bold uppercase tracking-wider text-white/90 bg-black/30 px-2 py-0.5 rounded-full">
               {ACTIVITY_LABELS[eventDetails.activityType] ?? eventDetails.activityType}
             </span>
           )}
@@ -537,48 +548,116 @@ export function AnnouncementCard({
           </button>
         )}
 
-        {/* RSVP buttons */}
+        {/*
+          RSVP buttons - 1.8.4 item 10 (fork_motzkqf5_016150).
+          Was a 3-flex-1 row that clipped "Can't Make It" + count on narrow
+          phones. Now a horizontal scroll window with snap so labels render
+          full-width and the user can pan smoothly without text breaking.
+          `min-w-[8.5rem]` keeps each chip touch-target wide; snap-x +
+          scroll-smooth handles the smoothness; -mx-1 px-1 + hide-scrollbar
+          gives clean boundary clipping at the card edge.
+        */}
         {rsvpOptions.length > 0 && isActive && onRespond && (
-          <div className="flex gap-2 mb-2">
-            {rsvpOptions.map((opt) => {
-              const isSelected = userResponse === opt
-              const label = opt === 'going' ? 'Going' : opt === 'maybe' ? 'Maybe' : 'Can\'t Make It'
-              const count = responseCounts[opt] ?? 0
+          <div className="-mx-1 px-1 mb-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-smooth hide-scrollbar">
+            <div className="flex gap-2 min-w-min">
+              {rsvpOptions.map((opt) => {
+                const isSelected = userResponse === opt
+                const label = opt === 'going' ? 'Going' : opt === 'maybe' ? 'Maybe' : "Can't Make It"
+                const count = responseCounts[opt] ?? 0
 
-              return (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => onRespond(opt)}
-                  className={cn(
-                    'flex-1 rounded-xl py-2 text-center text-xs font-semibold transition-transform duration-150 min-h-11',
-                    'active:scale-[0.95] cursor-pointer select-none',
-                    isSelected
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-neutral-50 text-neutral-700 hover:bg-neutral-100',
-                  )}
-                >
-                  {label}
-                  {count > 0 && (
-                    <span className={cn(
-                      'ml-1 text-[11px]',
-                      isSelected ? 'text-white/70' : 'text-neutral-400',
-                    )}>
-                      ({count})
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => onRespond(opt)}
+                    className={cn(
+                      'snap-start shrink-0 min-w-[8.5rem] rounded-xl py-2 px-3 text-center text-xs font-semibold transition-transform duration-150 min-h-11',
+                      'active:scale-[0.95] cursor-pointer select-none',
+                      isSelected
+                        ? 'bg-primary-500 text-white shadow-sm'
+                        : 'bg-neutral-50 text-neutral-700 hover:bg-neutral-100',
+                    )}
+                  >
+                    <span className="whitespace-nowrap">{label}</span>
+                    {count > 0 && (
+                      <span className={cn(
+                        'ml-1 text-[11px]',
+                        isSelected ? 'text-white/70' : 'text-neutral-400',
+                      )}>
+                        ({count})
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
 
-        {/* Response summary */}
-        {responses.length > 0 && (
-          <p className="text-[11px] text-neutral-500">
-            {responses.length} response{responses.length !== 1 ? 's' : ''}
-          </p>
-        )}
+        {/*
+          Response summary - 1.8.4 item 10 (fork_motzkqf5_016150).
+          When responses have profiles attached (joined by useAnnouncementDetail),
+          render a horizontal-scroll snap strip of avatars + display names.
+          Falls back to the plain count text when profiles haven't loaded yet.
+          Uses scroll-smooth + snap-x to fix the broken-scroll bug.
+        */}
+        {responses.length > 0 && (() => {
+          const withProfiles = responses.filter((r) => r.profiles?.id)
+          if (withProfiles.length === 0) {
+            return (
+              <p className="text-[11px] text-neutral-500">
+                {responses.length} response{responses.length !== 1 ? 's' : ''}
+              </p>
+            )
+          }
+          return (
+            <div className="mt-1 -mx-2 px-2">
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 mb-1.5">
+                {responses.length} response{responses.length !== 1 ? 's' : ''}
+              </p>
+              <div
+                className="flex gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-smooth hide-scrollbar pb-1"
+                role="list"
+                aria-label="Responses"
+              >
+                {withProfiles.slice(0, 24).map((r) => {
+                  const name = r.profiles?.display_name ?? 'Member'
+                  const initials = name.charAt(0).toUpperCase()
+                  return (
+                    <div
+                      key={`${r.user_id}-${r.response}`}
+                      role="listitem"
+                      className="snap-start shrink-0 flex flex-col items-center gap-1 min-w-[3.5rem]"
+                    >
+                      {r.profiles?.avatar_url ? (
+                        <img
+                          src={r.profiles.avatar_url}
+                          alt=""
+                          loading="lazy"
+                          className="h-9 w-9 rounded-full object-cover ring-2 ring-white shadow-sm"
+                        />
+                      ) : (
+                        <div className="h-9 w-9 rounded-full bg-neutral-200 ring-2 ring-white shadow-sm flex items-center justify-center text-[11px] font-extrabold text-white" aria-hidden="true">
+                          {initials}
+                        </div>
+                      )}
+                      <span className="text-[10px] font-semibold text-neutral-600 truncate max-w-[3.5rem] text-center leading-tight">
+                        {name}
+                      </span>
+                    </div>
+                  )
+                })}
+                {withProfiles.length > 24 && (
+                  <div className="snap-start shrink-0 flex flex-col items-center gap-1 min-w-[3.5rem]">
+                    <div className="h-9 w-9 rounded-full bg-neutral-100 flex items-center justify-center text-[10px] font-extrabold text-neutral-500">
+                      +{withProfiles.length - 24}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
       </div>
     </motion.div>
   )

@@ -7,7 +7,6 @@ import {
     User, Shield,
     Heart,
     Sparkles,
-    Eye,
     Compass,
     Accessibility
 } from 'lucide-react'
@@ -52,8 +51,6 @@ const DISCOVERY_OPTIONS = [
   'News or media',
   'Other',
 ]
-
-type Visibility = 'public' | 'collective-only' | 'private'
 
 /* ------------------------------------------------------------------ */
 /*  Section card wrapper                                               */
@@ -125,7 +122,6 @@ export default function EditProfilePage() {
   const [location, setLocation] = useState('')
   const [phone, setPhone] = useState('')
   const [interests, setInterests] = useState<string[]>([])
-  const [visibility, setVisibility] = useState<Visibility>('public')
 
   // New fields
   const [firstName, setFirstName] = useState('')
@@ -552,54 +548,14 @@ export default function EditProfilePage() {
             </SectionCard>
           </motion.div>
 
-          {/* ---- Privacy ---- */}
-          <motion.div variants={fadeUp}>
-            <SectionCard
-              icon={<Eye size={17} className="text-info-600" />}
-              iconBg="bg-info-200/80"
-              headerBg="bg-info-50/60"
-              title="Privacy Settings"
-              description="Control who can see your profile"
-            >
-              <div className="space-y-2">
-                {([
-                  { value: 'public' as const, label: 'Public', desc: 'Anyone can see your profile' },
-                  {
-                    value: 'collective-only' as const,
-                    label: 'Collective Only',
-                    desc: 'Only members of your collectives can see',
-                  },
-                  { value: 'private' as const, label: 'Private', desc: 'Only you can see your profile' },
-                ] as const).map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setVisibility(opt.value)}
-                    className={cn(
-                      'w-full flex items-start gap-3 rounded-xl px-4 py-3 text-left transition-transform duration-150 active:scale-[0.98]',
-                      visibility === opt.value
-                        ? 'ring-2 ring-primary-500 bg-primary-50 shadow-sm'
-                        : 'bg-surface-1 border border-neutral-200 hover:border-neutral-300',
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        'mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
-                        visibility === opt.value ? 'border-primary-500' : 'border-neutral-300',
-                      )}
-                    >
-                      {visibility === opt.value && (
-                        <div className="w-2 h-2 rounded-full bg-primary-500" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-neutral-900">{opt.label}</p>
-                      <p className="text-xs text-neutral-500">{opt.desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </SectionCard>
-          </motion.div>
+          {/*
+            Privacy settings live on /settings/privacy as the canonical surface
+            (1.8.4 item 4, fork_motzkqf5_016150). Removed the duplicate inline
+            section that was never wired to a save handler. /profile/edit
+            stays focused on profile content - identity, bio, interests,
+            emergency contacts. Toggles for visibility / marketing / blocked
+            users belong with the rest of Settings.
+          */}
         </motion.div>
       </div>
     </Page>

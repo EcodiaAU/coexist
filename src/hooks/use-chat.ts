@@ -87,6 +87,9 @@ export interface ChatAnnouncementResponse {
   user_id: string
   response: string
   created_at: string
+  /** Profile populated by useAnnouncementDetail's secondary join. Optional
+   *  because optimistic responses in onMutate don't have it yet. */
+  profiles?: Pick<Profile, 'id' | 'display_name' | 'avatar_url'> | null
 }
 
 export interface BroadcastLogEntry {
@@ -1015,10 +1018,11 @@ export function useAnnouncementDetail(announcementId: string | undefined) {
 
       if (error) throw error
 
-      // Get responses
+      // Get responses with profile (for the horizontal-scroll avatar strip
+      // on the announcement event-invite card - 1.8.4 item 10).
       const { data: responses } = await supabase
         .from('chat_announcement_responses')
-        .select('*')
+        .select('*, profiles(id, display_name, avatar_url)')
         .eq('announcement_id', announcementId)
 
       return { ...data, responses: responses ?? [] } as unknown as ChatAnnouncement

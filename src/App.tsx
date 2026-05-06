@@ -381,6 +381,10 @@ function App() {
           <Route path="/settings" element={<PageTransition><SettingsPage /></PageTransition>} />
           <Route path="/settings/notifications" element={<PageTransition><SettingsNotificationsPage /></PageTransition>} />
           <Route path="/settings/privacy" element={<PageTransition><SettingsPrivacyPage /></PageTransition>} />
+          {/* 1.8.4 item 4 (fork_motzkqf5_016150) - canonical privacy lives at
+              /settings/privacy; legacy deep-links from earlier builds resolve here. */}
+          <Route path="/profile/privacy" element={<Navigate to="/settings/privacy" replace />} />
+          <Route path="/privacy/settings" element={<Navigate to="/settings/privacy" replace />} />
           <Route path="/settings/account" element={<PageTransition><SettingsAccountPage /></PageTransition>} />
 
           <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
