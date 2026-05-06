@@ -8,6 +8,9 @@ import { useLongPress } from '@/hooks/use-long-press'
 interface ReplyTo {
   message: string
   senderName: string
+  /** Parent message id - when present, the reply quote becomes a tappable
+   *  jump-to-parent affordance (Insta-DM thread browsing). */
+  parentId?: string
 }
 
 interface ChatBubbleProps {
@@ -26,6 +29,8 @@ interface ChatBubbleProps {
   onAvatarTap?: (userId: string) => void
   onSenderTap?: (userId: string) => void
   onLongPress?: () => void
+  /** Tap handler for the reply-quote chip. Receives the parent message id. */
+  onReplyTap?: (parentId: string) => void
   'aria-label'?: string
 }
 

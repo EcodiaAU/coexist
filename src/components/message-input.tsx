@@ -17,6 +17,12 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { containsProfanity } from '@/lib/profanity'
+import {
+    MentionPicker,
+    detectActiveMention,
+    applyMention,
+    type MentionCandidate,
+} from '@/components/mention-picker'
 
 interface MessageInputProps {
   onSend: (message: string) => void
@@ -37,6 +43,10 @@ interface MessageInputProps {
   onCreateEventInvite?: () => void
   onCreateCarpool?: () => void
   onBroadcastNotification?: () => void
+  /** Collective context for the @mention picker. Omit to disable mentions. */
+  mentionCollectiveId?: string
+  /** Hide the current user from mention suggestions. */
+  mentionSelfUserId?: string
 }
 
 export function MessageInput({
@@ -56,11 +66,15 @@ export function MessageInput({
   onCreateAnnouncement,
   onCreateCarpool,
   onBroadcastNotification,
+  mentionCollectiveId,
+  mentionSelfUserId,
 }: MessageInputProps) {
   const shouldReduceMotion = useReducedMotion()
   const [value, setValue] = useState(initialValue)
   const [showLeaderActions, setShowLeaderActions] = useState(false)
   const [profanityWarning, setProfanityWarning] = useState(false)
+  /** Active in-progress @mention. null when no mention is being typed. */
+  const [mentionState, setMentionState] = useState<{ atIndex: number; query: string } | null>(null)
   // Sync when initialValue changes (e.g. entering edit mode)
   useEffect(() => {
     setValue(initialValue)
@@ -93,6 +107,7 @@ export function MessageInput({
 
     onSend(trimmed)
     setValue('')
+    setMentionState(null)
     setProfanityWarning(false)
     requestAnimationFrame(() => {
       if (textareaRef.current) {
@@ -103,12 +118,35 @@ export function MessageInput({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Close mention picker on Escape without losing typed text.
+      if (e.key === 'Escape' && mentionState) {
+        e.preventDefault()
+        setMentionState(null)
+        return
+      }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
         handleSend()
       }
     },
-    [handleSend],
+    [handleSend, mentionState],
+  )
+
+  /**
+   * Recompute mention state from current textarea value + selection.
+   * Pulled into a helper so we can call it from onChange (typing) and
+   * onSelect (caret moved without text change, e.g. arrow keys).
+   */
+  const refreshMentionState = useCallback(
+    (text: string, caret: number) => {
+      if (!mentionCollectiveId) {
+        setMentionState((prev) => (prev === null ? prev : null))
+        return
+      }
+      const detected = detectActiveMention(text, caret)
+      setMentionState(detected)
+    },
+    [mentionCollectiveId],
   )
 
   const handleChange = useCallback(
@@ -117,8 +155,41 @@ export function MessageInput({
       setValue(newVal)
       onValueChange?.(newVal)
       onTyping?.()
+      const caret = e.target.selectionStart ?? newVal.length
+      refreshMentionState(newVal, caret)
     },
-    [maxLength, onValueChange, onTyping],
+    [maxLength, onValueChange, onTyping, refreshMentionState],
+  )
+
+  const handleSelect = useCallback(
+    (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+      const target = e.currentTarget
+      refreshMentionState(target.value, target.selectionStart ?? target.value.length)
+    },
+    [refreshMentionState],
+  )
+
+  const handlePickMention = useCallback(
+    (candidate: MentionCandidate) => {
+      const textarea = textareaRef.current
+      if (!textarea || !mentionState) {
+        setMentionState(null)
+        return
+      }
+      const caret = textarea.selectionStart ?? value.length
+      const next = applyMention(value, mentionState.atIndex, caret, candidate.display_name)
+      setValue(next.text)
+      onValueChange?.(next.text)
+      setMentionState(null)
+      // Restore caret + focus after React paints.
+      requestAnimationFrame(() => {
+        const el = textareaRef.current
+        if (!el) return
+        el.focus()
+        el.setSelectionRange(next.caret, next.caret)
+      })
+    },
+    [mentionState, value, onValueChange],
   )
 
   const leaderActions = [
@@ -191,6 +262,18 @@ export function MessageInput({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mention picker - sits above the input bar so it never overlaps the soft keyboard */}
+      {mentionCollectiveId && (
+        <MentionPicker
+          collectiveId={mentionCollectiveId}
+          query={mentionState?.query ?? ''}
+          open={mentionState !== null}
+          onPick={handlePickMention}
+          onClose={() => setMentionState(null)}
+          selfUserId={mentionSelfUserId}
+        />
+      )}
 
       {/* Profanity warning */}
       <AnimatePresence>
@@ -276,7 +359,12 @@ export function MessageInput({
             ref={textareaRef}
             value={value}
             onChange={handleChange}
+            onSelect={handleSelect}
             onKeyDown={handleKeyDown}
+            onBlur={() => {
+              // Defer so onMouseDown on the picker has time to land.
+              setTimeout(() => setMentionState(null), 100)
+            }}
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
