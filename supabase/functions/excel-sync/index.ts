@@ -769,15 +769,31 @@ async function syncToExcel(
       }
     }
   } else {
-    // Batch mode: completed 2026+ events that pass the migration gate.
+    // Batch mode: app-created events that pass the migration gate.
     // Pull collective forms_migrated_at and filter in JS:
     //   events only sync if their collective has forms_migrated_at set AND
     //   date_start >= forms_migrated_at (the collective has cut over from Forms).
     //   No test-title bypass - gate-only doctrine post 2026-05-04 cutover.
+    //
+    // STATUS GATE: 'published' AND 'completed'. App-created events for migrated
+    // collectives appear on the sheet IMMEDIATELY when published (within the
+    // hourly to-excel cron) so leaders see their event reflected in the canonical
+    // sheet. Impact data fills in later when the impact survey is logged
+    // (handled by the per-event syncToExcel trigger which UPDATES the existing
+    // sheet row by ID match). 'draft' events stay off the sheet (work in
+    // progress); 'cancelled' events stay off (deletion intent).
+    //
+    // This MUST stay symmetric with the syncFromExcel reconciliation candidate
+    // selector - reconciliation cancels migrated-collective events that are in
+    // the DB but absent from the sheet, and that selector must be a SUBSET of
+    // (or equal to) what to-excel pushes. Otherwise reconciliation cancels
+    // events that to-excel never pushed = the bug fixed in this commit.
+    // See ~/ecodiaos/patterns/sync-back-must-filter-synthetic-from-source.md
+    // and ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
     const { data: events } = await supabase
       .from('events')
       .select('id, title, date_start, collective_id, collectives(forms_migrated_at)')
-      .eq('status', 'completed')
+      .in('status', ['published', 'completed'])
       .gte('date_start', SYNC_CUTOFF_DATE)
       .order('date_start', { ascending: true })
 
@@ -1243,7 +1259,7 @@ async function syncFromExcel(
   // canonical."
   //
   // Find migrated-collective events that exist in the DB at status
-  // completed/published from the cutover onwards but were NOT seen in this
+  // published/completed from the cutover onwards but were NOT seen in this
   // sync run's sheet-row pass. Those have effectively been deleted from the
   // canonical sheet. Mark them cancelled and stamp cancelled_via_sheet_sync_at
   // for audit. Do NOT cascade-delete event_impact / event_registrations -
@@ -1253,15 +1269,32 @@ async function syncFromExcel(
   // Scope: only events whose collective.forms_migrated_at IS NOT NULL AND
   // event.date_start >= forms_migrated_at. Non-migrated collectives are
   // sheet-canonical for their own rows (sheet -> DB direction); their app
-  // events should be left alone. The 60-second guard excludes events created
-  // mid-run to avoid flapping.
+  // events should be left alone. The grace-period guard excludes events
+  // recently created so reconciliation never races the to-excel push cron.
+  //
+  // GRACE PERIOD: 2 hours. The to-excel batch cron runs every hour on the
+  // hour (jobid 10). The from-excel cron runs every 30 minutes (jobid 9).
+  // A new app-created event needs at least one to-excel cycle to land on
+  // the sheet before reconciliation may treat its absence as deletion.
+  // 2 hours = (max to-excel period) + (one safety buffer cycle) so even if
+  // a to-excel run fails or is mid-flight, reconciliation still won't
+  // false-cancel a freshly-created event. Per the bug fixed 2026-05-06
+  // (fork_motntxi7_add578): the prior 60-second guard cancelled an event
+  // created at 01:57:56 by 02:00:29 - 2.5 minutes - because reconciliation
+  // ran on the half-hour and the event hadn't reached the sheet yet.
+  // See ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
+  //
+  // STATUS GATE: 'published' AND 'completed' - matches the to-excel batch
+  // selector exactly. If the to-excel push selector ever changes, this
+  // selector must change in lockstep, otherwise reconciliation will cancel
+  // events the push path never made eligible.
   try {
-    const cutoffMs = runStartedAt.getTime() - 60_000
+    const cutoffMs = runStartedAt.getTime() - 2 * 60 * 60 * 1000 // 2 hours
     const cutoffIso = new Date(cutoffMs).toISOString()
     const { data: candidates, error: candidatesErr } = await supabase
       .from('events')
       .select('id, collective_id, date_start, status, created_at, collectives(forms_migrated_at)')
-      .in('status', ['completed', 'published'])
+      .in('status', ['published', 'completed'])
       .gte('date_start', SYNC_CUTOFF_DATE)
       .lt('created_at', cutoffIso)
 
