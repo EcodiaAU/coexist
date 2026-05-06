@@ -1,5 +1,10 @@
 import { useEffect, useMemo } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { subscribeWithReconnect } from '@/lib/realtime'
 import { useAuth } from '@/hooks/use-auth'
@@ -39,18 +44,131 @@ function reactionSortValue(emoji: string): number {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Module-level shared subscription registry                          */
+/* ------------------------------------------------------------------ */
+/*
+ * <MessageReactions> mounts once per visible message bubble. Each
+ * instance calls useCollectiveReactions(collectiveId), which previously
+ * registered its own postgres_changes subscription. Supabase v2 dedupes
+ * `supabase.channel(topic)` by topic - the second instance got back the
+ * already-subscribed channel and crashed when it tried to register
+ * another `.on('postgres_changes', ...)` callback after `.subscribe()`.
+ *
+ * Fix: ref-counted singleton subscription per collectiveId. The first
+ * hook instance creates and subscribes the channel; subsequent
+ * instances bump the refcount; last unmount tears it down. Any number
+ * of components can call the hook safely.
+ */
+
+interface SubscriptionEntry {
+  count: number
+  cleanup: () => void
+}
+
+const reactionSubscriptions = new Map<string, SubscriptionEntry>()
+
+function buildReactionChannel(
+  collectiveId: string,
+  queryClient: QueryClient,
+) {
+  return supabase
+    .channel(`reactions:${collectiveId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'message_reactions',
+        filter: `collective_id=eq.${collectiveId}`,
+      },
+      (payload) => {
+        const row = payload.new as MessageReactionRow
+        queryClient.setQueryData<MessageReactionRow[]>(
+          ['message-reactions', collectiveId],
+          (old) => {
+            if (!old) return [row]
+            if (old.some((r) => r.id === row.id)) return old
+            // Drop any optimistic placeholder for this (message,user,emoji)
+            // tuple, then prepend the real row.
+            const filtered = old.filter(
+              (r) =>
+                !(
+                  r.id.startsWith('optimistic-') &&
+                  r.message_id === row.message_id &&
+                  r.user_id === row.user_id &&
+                  r.emoji === row.emoji
+                ),
+            )
+            return [row, ...filtered]
+          },
+        )
+      },
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'message_reactions',
+        filter: `collective_id=eq.${collectiveId}`,
+      },
+      (payload) => {
+        const oldRow = payload.old as Partial<MessageReactionRow>
+        if (!oldRow.id) return
+        queryClient.setQueryData<MessageReactionRow[]>(
+          ['message-reactions', collectiveId],
+          (old) => (old ? old.filter((r) => r.id !== oldRow.id) : old),
+        )
+      },
+    )
+}
+
+function acquireReactionSubscription(
+  collectiveId: string,
+  queryClient: QueryClient,
+): () => void {
+  const existing = reactionSubscriptions.get(collectiveId)
+  if (existing) {
+    existing.count += 1
+  } else {
+    const channel = buildReactionChannel(collectiveId, queryClient)
+    const stop = subscribeWithReconnect(channel)
+    reactionSubscriptions.set(collectiveId, {
+      count: 1,
+      cleanup: () => {
+        stop()
+        supabase.removeChannel(channel)
+      },
+    })
+  }
+
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    const entry = reactionSubscriptions.get(collectiveId)
+    if (!entry) return
+    entry.count -= 1
+    if (entry.count <= 0) {
+      entry.cleanup()
+      reactionSubscriptions.delete(collectiveId)
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /*  Query: all reactions for a collective                              */
 /* ------------------------------------------------------------------ */
 /*
  * One query per collective. Fetches every reaction row visible to the
  * current user. The chat-room view is small enough that this is cheap
  * and lets us aggregate per-message in O(n) on the client without a
- * second round trip per message. Realtime keeps the cache in sync.
+ * second round trip per message. Realtime keeps the cache in sync via
+ * the module-level shared subscription above.
  */
 
 export function useCollectiveReactions(collectiveId: string | undefined) {
   const queryClient = useQueryClient()
-  const { user } = useAuth()
 
   const query = useQuery({
     queryKey: ['message-reactions', collectiveId],
@@ -67,68 +185,11 @@ export function useCollectiveReactions(collectiveId: string | undefined) {
     staleTime: 30 * 1000,
   })
 
-  /* Realtime: keep the cache fresh. INSERT/DELETE both flow through here. */
+  /* Realtime: ref-counted shared subscription per collectiveId. */
   useEffect(() => {
     if (!collectiveId) return
-
-    const channel = supabase
-      .channel(`reactions:${collectiveId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'message_reactions',
-          filter: `collective_id=eq.${collectiveId}`,
-        },
-        (payload) => {
-          const row = payload.new as MessageReactionRow
-          queryClient.setQueryData<MessageReactionRow[]>(
-            ['message-reactions', collectiveId],
-            (old) => {
-              if (!old) return [row]
-              if (old.some((r) => r.id === row.id)) return old
-              // Drop any optimistic placeholder for this (message,user,emoji)
-              // tuple, then prepend the real row.
-              const filtered = old.filter(
-                (r) =>
-                  !(
-                    r.id.startsWith('optimistic-') &&
-                    r.message_id === row.message_id &&
-                    r.user_id === row.user_id &&
-                    r.emoji === row.emoji
-                  ),
-              )
-              return [row, ...filtered]
-            },
-          )
-        },
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'message_reactions',
-          filter: `collective_id=eq.${collectiveId}`,
-        },
-        (payload) => {
-          const oldRow = payload.old as Partial<MessageReactionRow>
-          if (!oldRow.id) return
-          queryClient.setQueryData<MessageReactionRow[]>(
-            ['message-reactions', collectiveId],
-            (old) => (old ? old.filter((r) => r.id !== oldRow.id) : old),
-          )
-        },
-      )
-
-    const cleanup = subscribeWithReconnect(channel)
-
-    return () => {
-      cleanup()
-      supabase.removeChannel(channel)
-    }
-  }, [collectiveId, queryClient, user?.id])
+    return acquireReactionSubscription(collectiveId, queryClient)
+  }, [collectiveId, queryClient])
 
   return query
 }
