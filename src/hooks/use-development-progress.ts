@@ -175,7 +175,7 @@ export function useUpsertModuleProgress() {
         started_at: now,
       }
 
-      // Only set fields that were explicitly provided — avoid clobbering with defaults
+      // Only set fields that were explicitly provided - avoid clobbering with defaults
       if (input.last_content_id !== undefined) row.last_content_id = input.last_content_id
       if (input.progress_pct !== undefined) row.progress_pct = input.progress_pct
       if (input.time_spent_sec !== undefined) row.time_spent_sec = input.time_spent_sec
@@ -194,7 +194,7 @@ export function useUpsertModuleProgress() {
         .maybeSingle()
 
       if (existing) {
-        // Update — preserve started_at, only set completed_at on completion
+        // Update - preserve started_at, only set completed_at on completion
         const updateRow: TablesInsert<'dev_user_module_progress'> = {
           user_id: user.id,
           module_id: input.module_id,
@@ -214,7 +214,7 @@ export function useUpsertModuleProgress() {
         if (error) throw error
         return data as ModuleProgress
       } else {
-        // Insert — set started_at
+        // Insert - set started_at
         row.started_at = now
         const { data, error } = await supabase
           .from('dev_user_module_progress')
@@ -228,7 +228,7 @@ export function useUpsertModuleProgress() {
     onSuccess: (_data, vars) => {
       if (!user) return
       if (isOffline) {
-        toast.info('Progress saved offline — will sync when back online')
+        toast.info('Progress saved offline - will sync when back online')
         return
       }
       qc.invalidateQueries({ queryKey: keys.moduleProgress(user.id, vars.module_id) })
@@ -421,7 +421,7 @@ export function useSubmitQuiz() {
     onSuccess: (_data, vars) => {
       if (!user) return
       if (isOffline) {
-        toast.info('Quiz submitted offline — will sync when back online')
+        toast.info('Quiz submitted offline - will sync when back online')
         return
       }
       qc.invalidateQueries({ queryKey: keys.quizAttempts(user.id, vars.quiz_id) })

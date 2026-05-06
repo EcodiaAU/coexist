@@ -27,7 +27,7 @@ export interface UserCollectiveRole {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useUserCollectiveRoles — all collective memberships for a user     */
+/*  useUserCollectiveRoles - all collective memberships for a user     */
 /* ------------------------------------------------------------------ */
 
 export function useUserCollectiveRoles(userId: string | undefined) {
@@ -57,7 +57,7 @@ export function useUserCollectiveRoles(userId: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useAdminAssignCollectiveRole — add/update user collective role     */
+/*  useAdminAssignCollectiveRole - add/update user collective role     */
 /* ------------------------------------------------------------------ */
 
 export function useAdminAssignCollectiveRole() {
@@ -135,7 +135,7 @@ export function useAdminAssignCollectiveRole() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useAdminRemoveFromCollective — remove user from collective         */
+/*  useAdminRemoveFromCollective - remove user from collective         */
 /* ------------------------------------------------------------------ */
 
 export function useAdminRemoveFromCollective() {
@@ -182,7 +182,7 @@ export function useAdminRemoveFromCollective() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useAdminUpdateCapabilities — update staff_roles.permissions        */
+/*  useAdminUpdateCapabilities - update staff_roles.permissions        */
 /* ------------------------------------------------------------------ */
 
 export function useAdminUpdateCapabilities() {
@@ -230,7 +230,7 @@ export function useAdminUpdateCapabilities() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useUserResolvedCapabilities — fetch and resolve caps for any user  */
+/*  useUserResolvedCapabilities - fetch and resolve caps for any user  */
 /* ------------------------------------------------------------------ */
 
 export function useUserResolvedCapabilities(userId: string | undefined) {
@@ -256,7 +256,7 @@ export function useUserResolvedCapabilities(userId: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useUserManagedCollectives — which collectives a manager oversees   */
+/*  useUserManagedCollectives - which collectives a manager oversees   */
 /* ------------------------------------------------------------------ */
 
 export function useUserManagedCollectives(userId: string | undefined) {
@@ -278,7 +278,7 @@ export function useUserManagedCollectives(userId: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useAdminUpdateManagedCollectives — set which collectives a manager */
+/*  useAdminUpdateManagedCollectives - set which collectives a manager */
 /*  is responsible for                                                 */
 /* ------------------------------------------------------------------ */
 

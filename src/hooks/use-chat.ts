@@ -24,7 +24,7 @@ export interface ChatMessageWithSender extends Omit<ChatMessage, 'message_type'>
   /** Client-only: optimistic message not yet confirmed by server */
   _optimistic?: boolean
   _optimisticId?: string
-  /** Client-only: was optimistic, now confirmed — skip entrance animation */
+  /** Client-only: was optimistic, now confirmed - skip entrance animation */
   _confirmed?: boolean
 }
 
@@ -469,7 +469,7 @@ export function useSendMessage() {
       }
     },
     onSettled: (_data, _err, input) => {
-      // Sender just read the latest message — reset their unread count
+      // Sender just read the latest message - reset their unread count
       queryClient.invalidateQueries({ queryKey: ['unread-counts'] })
     },
   })
@@ -836,7 +836,7 @@ export function usePollVote() {
       if (!isOffline && context?.previous) queryClient.setQueryData(['chat-poll', pollId], context.previous)
     },
     onSuccess: () => {
-      if (isOffline) toast.info('Vote saved offline — will sync when back online')
+      if (isOffline) toast.info('Vote saved offline - will sync when back online')
     },
     onSettled: (result) => {
       if (isOffline) return
@@ -1094,7 +1094,7 @@ export function useRespondToAnnouncement() {
       if (!isOffline && context?.previous) queryClient.setQueryData(['chat-announcement', announcementId], context.previous)
     },
     onSuccess: () => {
-      if (isOffline) toast.info('Response saved offline — will sync when back online')
+      if (isOffline) toast.info('Response saved offline - will sync when back online')
     },
     onSettled: (_, __, { announcementId }) => {
       if (isOffline) return

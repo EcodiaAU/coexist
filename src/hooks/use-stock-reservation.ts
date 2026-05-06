@@ -39,7 +39,7 @@ export interface AvailableStockEntry {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useReserveStock — reserve/release a single variant                 */
+/*  useReserveStock - reserve/release a single variant                 */
 /* ------------------------------------------------------------------ */
 
 export function useReserveStock() {
@@ -97,7 +97,7 @@ export function useReserveStock() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useAvailableStock — fetch available stock for a product            */
+/*  useAvailableStock - fetch available stock for a product            */
 /*  (total - other users' reservations)                                */
 /* ------------------------------------------------------------------ */
 
@@ -178,7 +178,7 @@ export function useAvailableStock(productId: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useMyReservations — track current user's active reservations        */
+/*  useMyReservations - track current user's active reservations        */
 /* ------------------------------------------------------------------ */
 
 export interface MyReservation {
@@ -245,7 +245,7 @@ export function useMyReservations() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useReservationCountdown — seconds remaining on a reservation       */
+/*  useReservationCountdown - seconds remaining on a reservation       */
 /* ------------------------------------------------------------------ */
 
 export function useReservationCountdown(expiresAt: string | undefined) {
@@ -274,7 +274,7 @@ export function useReservationCountdown(expiresAt: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useCartReservationSync — keeps reservations in sync with cart      */
+/*  useCartReservationSync - keeps reservations in sync with cart      */
 /*  Call this once at the cart/checkout level. It reserves stock for   */
 /*  every cart item and releases when items are removed.               */
 /* ------------------------------------------------------------------ */
@@ -311,7 +311,7 @@ export function useCartReservationSync(cartItems: { product: { id: string }; var
   }, [cartItems, reserve, toast])
 
   // Release all on unmount (e.g. user leaves checkout flow)
-  // Note: we do NOT release on unmount by default — reservations
+  // Note: we do NOT release on unmount by default - reservations
   // are time-bound and should persist across page navigations.
   // They auto-expire after RESERVATION_DURATION_MINUTES.
 

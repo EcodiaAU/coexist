@@ -159,7 +159,7 @@ async function searchPlaces(
   }))
 
   // When the user typed a number, surface results that actually have a
-  // house number first — Nominatim otherwise mixes street-only matches in
+  // house number first - Nominatim otherwise mixes street-only matches in
   // and the picker grabs whichever comes first.
   if (queryHasNumber) {
     mapped.sort((a, b) => Number(b._hasHouseNumber) - Number(a._hasHouseNumber))
@@ -169,7 +169,7 @@ async function searchPlaces(
 }
 
 /* ------------------------------------------------------------------ */
-/*  Portal dropdown – escapes overflow:hidden parents                  */
+/*  Portal dropdown - escapes overflow:hidden parents                  */
 /* ------------------------------------------------------------------ */
 
 function DropdownPortal({

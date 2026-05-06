@@ -126,7 +126,7 @@ async function persistProfile(profile: Profile | null) {
       await Preferences.remove({ key: PROFILE_STORAGE_KEY })
     }
   } catch {
-    // Non-critical — worst case user sees a brief loading state
+    // Non-critical - worst case user sees a brief loading state
   }
 }
 
@@ -370,7 +370,7 @@ export function useAuthProvider(): AuthContextValue {
           await supabase.auth.setSession(restored)
         }
         // If no restored session, onAuthStateChange INITIAL_SESSION
-        // will fire with null — handled below.
+        // will fire with null - handled below.
       })
     }
 
@@ -386,7 +386,7 @@ export function useAuthProvider(): AuthContextValue {
 
         if (newSession?.user) {
           const userId = newSession.user.id
-          // Defer loadUserData — calling it inside onAuthStateChange can
+          // Defer loadUserData - calling it inside onAuthStateChange can
           // deadlock because the Supabase JS client holds an internal auth
           // lock during token recovery, blocking any fetch that needs auth.
           setTimeout(async () => {

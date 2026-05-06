@@ -35,7 +35,7 @@ export function EventHero({ event, past, userStatus, accent, onShare }: EventHer
           Image bleeds behind the status bar / camera notch (intentional);
           the title block sits at the bottom safely below it. The activity
           pill is grouped with the title so it doesn't get clipped by the
-          notch — the back button up top is the only chrome that needs to
+          notch - the back button up top is the only chrome that needs to
           live in the safe area. */}
       {event.cover_image_url && (
         <div className="relative -mx-4 lg:-mx-6">
@@ -103,7 +103,7 @@ export function EventHero({ event, past, userStatus, accent, onShare }: EventHer
         <>
           <motion.div
             // Clear the back button. The button is sticky at top: var(--safe-top)
-            // with a 56px tap target — without this padding the title loads
+            // with a 56px tap target - without this padding the title loads
             // underneath it before the user scrolls.
             className="pb-1"
             style={{ paddingTop: 'calc(var(--safe-top, 0px) + 3.5rem + 0.5rem)' }}

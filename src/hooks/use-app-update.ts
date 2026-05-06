@@ -56,7 +56,7 @@ export function useAppUpdate(): UpdateStatus {
 
         if (error || !data) return
 
-        // value is jsonb — could be string, boolean, number, etc.
+        // value is jsonb - could be string, boolean, number, etc.
         const config: Record<string, string> = {}
         for (const row of data) {
           const v = row.value
@@ -75,7 +75,7 @@ export function useAppUpdate(): UpdateStatus {
           setStatus({ updateAvailable, latestVersion, forceUpdate, maintenanceMode, maintenanceMessage })
         }
       } catch {
-        // Network error — keep previous status, don't crash
+        // Network error - keep previous status, don't crash
       }
     }
 

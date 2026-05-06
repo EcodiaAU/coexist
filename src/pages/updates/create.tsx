@@ -50,7 +50,7 @@ const audienceOptions: {
 ]
 
 /* ------------------------------------------------------------------ */
-/*  Create update page – blog-post style, admin-only                   */
+/*  Create update page - blog-post style, admin-only                   */
 /* ------------------------------------------------------------------ */
 
 export default function CreateUpdatePage() {
@@ -115,7 +115,7 @@ export default function CreateUpdatePage() {
    * Previews use object URLs (synchronous) so preview[i] always lines up
    * with selectedFiles[i]. The previous FileReader approach was async per
    * file, so a small file could finish ahead of a large one and the two
-   * arrays would drift out of order — removing index 0 then removed the
+   * arrays would drift out of order - removing index 0 then removed the
    * wrong preview. Object URLs are revoked on removal and on unmount to
    * avoid memory leaks.
    */
@@ -550,7 +550,7 @@ export default function CreateUpdatePage() {
         </div>
       </motion.div>
 
-      {/* Preview sheet – blog-post style */}
+      {/* Preview sheet - blog-post style */}
       <BottomSheet
         open={showPreview}
         onClose={() => setShowPreview(false)}

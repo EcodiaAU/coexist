@@ -69,7 +69,7 @@ function AssignTagsSheet({
     onClose()
 
     try {
-      // Must check the delete error — otherwise a failed delete combined with
+      // Must check the delete error - otherwise a failed delete combined with
       // a successful insert leaves the old tags in place AND adds the new
       // ones (duplicates), with no indication to the admin anything went wrong.
       const { error: delErr } = await supabase.from('profile_tags').delete().eq('profile_id', profileId)

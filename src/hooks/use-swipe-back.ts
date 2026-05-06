@@ -18,7 +18,7 @@ interface SwipeBackOptions {
   commitFraction?: number
   /** Min velocity (px/ms) to commit even below commitFraction (default: 0.4) */
   velocityThreshold?: number
-  /** Edge zone width in px — swipe must start within this zone (default: 28) */
+  /** Edge zone width in px - swipe must start within this zone (default: 28) */
   edgeWidth?: number
   /** Custom back handler instead of navigate(-1) */
   onBack?: () => void
@@ -30,7 +30,7 @@ interface SwipeBackOptions {
  * Live swipe-right-from-left-edge to navigate back on mobile/native.
  * Returns real-time drag state so the UI can translate the page.
  *
- * The user can hold the page at any position mid-drag — only releasing
+ * The user can hold the page at any position mid-drag - only releasing
  * commits or cancels. Commitment is based on either the drag fraction
  * of screen width OR the release velocity, whichever triggers first.
  */
@@ -78,12 +78,12 @@ export function useSwipeBack({
       const dy = Math.abs(touch.clientY - touchStart.current.y)
 
       // Only check direction at the very start: if the first significant
-      // movement is vertical, this is a scroll — cancel. Once the user has
+      // movement is vertical, this is a scroll - cancel. Once the user has
       // moved even a small amount horizontally, the gesture is locked in
       // and vertical wobble is completely ignored.
       if (!committed.current) {
         if (dy > 10 && dy > dx * 2) {
-          // First meaningful movement is clearly vertical — it's a scroll
+          // First meaningful movement is clearly vertical - it's a scroll
           cancelled.current = true
           setState({ offsetX: 0, swiping: false, animating: false })
           return

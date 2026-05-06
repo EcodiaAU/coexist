@@ -106,7 +106,7 @@ const DEFAULT_HERO: LeaderHeroCfg = { hue: 'from-moss-600 via-moss-700 to-primar
    0 = gentle hills, 1 = soft dunes, 2 = double crest, 3 = asymmetric shelf, 4 = choppy reef */
 
 /* ------------------------------------------------------------------ */
-/*  Shape formations – unique decorative geometry per page             */
+/*  Shape formations - unique decorative geometry per page             */
 /* ------------------------------------------------------------------ */
 
 type LeaderShapeFormation = Array<{ className: string }>

@@ -301,7 +301,7 @@ export default function NationalImpactPage() {
       <EmptyState
         illustration="error"
         title="Failed to load impact data"
-        description="Something went wrong loading the national impact data. This page is used for stakeholder reporting — please try again or contact support."
+        description="Something went wrong loading the national impact data. This page is used for stakeholder reporting - please try again or contact support."
         action={{ label: 'Retry', onClick: () => window.location.reload() }}
       />
     )

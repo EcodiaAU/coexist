@@ -592,7 +592,7 @@ function usePushTestRunner() {
           if ((resp?.sent ?? 0) > 0) throw new Error(`Sent ${resp.sent} despite opt-out!`)
           return 'Correctly blocked. 0 delivered.'
         } finally {
-          // Always restore — otherwise a thrown error between disable and
+          // Always restore - otherwise a thrown error between disable and
           // restore leaves the admin's event_reminder pref stuck at false.
           await supabase
             .from('profiles')
@@ -642,7 +642,7 @@ function usePushTestRunner() {
           if ((resp?.sent ?? 0) > 0) throw new Error(`Sent ${resp.sent} despite quiet hours! TZ: ${tz}`)
           return `Correctly blocked during ${quietPrefs.quiet_hours_start}-${quietPrefs.quiet_hours_end} (${tz}).`
         } finally {
-          // Always restore — an in-between throw would otherwise leave the
+          // Always restore - an in-between throw would otherwise leave the
           // admin stuck in quiet hours mode until they manually fix it.
           await supabase
             .from('profiles')

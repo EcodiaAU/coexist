@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 
 /**
  * Base upload state hook.
- * Owns `uploading`, `progress`, `error`, and `reset` — the state management
+ * Owns `uploading`, `progress`, `error`, and `reset` - the state management
  * that was duplicated between use-image-upload.ts and use-file-upload.ts.
  *
  * Accepts a generic `uploadFn` so callers can wrap any storage operation

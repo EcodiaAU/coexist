@@ -58,7 +58,7 @@ export function useNearbyEvents(
         return (data ?? []) as EventWithCollective[]
       }
 
-      // Fallback: no location — return all upcoming published events
+      // Fallback: no location - return all upcoming published events
       const now = new Date().toISOString()
       let query = supabase
         .from('events')

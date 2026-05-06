@@ -270,7 +270,7 @@ export function useTriggerSurveyNotifications() {
         user_id: userId,
         type: 'survey_request',
         title: 'How was your event?',
-        body: `Tell us about "${eventTitle}" — your feedback helps improve future events.`,
+        body: `Tell us about "${eventTitle}" - your feedback helps improve future events.`,
         data: { event_id: eventId },
       }))
 

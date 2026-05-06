@@ -5,17 +5,17 @@
  * Generates digital wallet passes for Co-Exist membership cards.
  *
  * Supports:
- *   - Apple Wallet (.pkpass) — signed ZIP bundle
- *   - Google Wallet — returns a JWT save link
+ * - Apple Wallet (.pkpass) - signed ZIP bundle
+ * - Google Wallet - returns a JWT save link
  *
  * Env vars required:
- *   APPLE_PASS_TYPE_ID        — e.g. "pass.org.coexistaus.membership"
- *   APPLE_TEAM_ID             — Apple Developer Team ID
- *   APPLE_PASS_CERT_BASE64    — Base64-encoded .p12 signing certificate
- *   APPLE_PASS_CERT_PASSWORD  — Password for the .p12
- *   APPLE_WWDR_CERT_BASE64    — Base64-encoded Apple WWDR intermediate cert
- *   GOOGLE_WALLET_ISSUER_ID   — Google Wallet issuer ID
- *   GOOGLE_WALLET_SA_KEY_B64  — Base64-encoded service account JSON key
+ *   APPLE_PASS_TYPE_ID - e.g. "pass.org.coexistaus.membership"
+ *   APPLE_TEAM_ID - Apple Developer Team ID
+ *   APPLE_PASS_CERT_BASE64 - Base64-encoded .p12 signing certificate
+ *   APPLE_PASS_CERT_PASSWORD - Password for the .p12
+ *   APPLE_WWDR_CERT_BASE64 - Base64-encoded Apple WWDR intermediate cert
+ *   GOOGLE_WALLET_ISSUER_ID - Google Wallet issuer ID
+ *   GOOGLE_WALLET_SA_KEY_B64 - Base64-encoded service account JSON key
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'

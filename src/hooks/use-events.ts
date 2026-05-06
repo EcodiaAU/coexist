@@ -190,7 +190,7 @@ export function useMyEvents(tab: 'upcoming' | 'invited' | 'past') {
           } else if (tab === 'past') {
             return endMs < now
           }
-          return true // invited tab — show all
+          return true // invited tab - show all
         })
         .map((r) => ({
           ...(r.events as EventWithCollective),
@@ -288,7 +288,7 @@ export function useEventDetail(eventId: string | undefined) {
 
 /**
  * Prefetch event detail data into the query cache so navigating to
- * /events/:id is instant. Safe to call multiple times — TanStack Query
+ * /events/:id is instant. Safe to call multiple times - TanStack Query
  * deduplicates and respects staleTime.
  */
 export function prefetchEventDetail(
@@ -549,7 +549,7 @@ export function useRegisterForEvent() {
             .in('status', ['registered', 'attended']),
         ])
         if (eventData?.capacity && (regCount ?? 0) >= eventData.capacity) {
-          // Capacity is full — auto-switch to waitlist
+          // Capacity is full - auto-switch to waitlist
           asWaitlist = true
         }
       }
@@ -736,7 +736,7 @@ export function useCheckIn() {
 
   return useMutation({
     mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
-      // Must chain .select() to get the updated rows back — otherwise
+      // Must chain .select() to get the updated rows back - otherwise
       // supabase-js returns count=null and the "not checkable" guard below
       // never fires, silently succeeding even when the user is already
       // cancelled/attended.
@@ -1180,7 +1180,7 @@ async function triggerSurveyNotifications(eventId: string, eventTitle: string) {
       user_id: userId,
       type: 'survey_request',
       title: 'How was your event?',
-      body: `Tell us about "${eventTitle}" — your feedback helps improve future events.`,
+      body: `Tell us about "${eventTitle}" - your feedback helps improve future events.`,
       data: { event_id: eventId },
     })),
   )
@@ -1252,7 +1252,7 @@ export function useLogImpact() {
     },
     onSuccess: async (data) => {
       if (isOffline) {
-        toast.info('Impact data saved offline — will sync when back online')
+        toast.info('Impact data saved offline - will sync when back online')
         return
       }
       // Trigger auto-survey notifications for attendees
@@ -1348,7 +1348,7 @@ export function useInviteCollective() {
           .gte('created_at', twentyFourHoursAgo)
           .limit(5)
         if (recentReminders && recentReminders.length >= 3) {
-          throw new Error('Too many announcements in the last 24h — try again later')
+          throw new Error('Too many announcements in the last 24h - try again later')
         }
 
         // Create a rich announcement in the chat

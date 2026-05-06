@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, startTransition } from 'react'
 
 /**
  * Returns true only when `isLoading` has been true for longer than `delayMs`.
- * This prevents loading skeletons from flashing on fast connections — the UI
- * simply appears — while still showing a sense of progress on slower loads.
+ * This prevents loading skeletons from flashing on fast connections - the UI
+ * simply appears - while still showing a sense of progress on slower loads.
  */
 export function useDelayedLoading(isLoading: boolean, delayMs = 1000): boolean {
   const [show, setShow] = useState(false)

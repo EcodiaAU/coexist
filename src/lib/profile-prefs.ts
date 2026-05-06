@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase'
  *
  * The concrete bug: users setting profile_visible=false on /settings/privacy
  * would later find it flipped back to true after visiting /settings/notifications
- * — because the notifications page initialised profileVisible=true locally,
+ * - because the notifications page initialised profileVisible=true locally,
  * then wrote the full JSONB with that default before the hydration effect had
  * replaced it with the real DB value.
  *

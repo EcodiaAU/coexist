@@ -164,7 +164,7 @@ async function notifyAttendees(
     })
 
     // Also create in-app notifications
-    // Note: read_at defaults to null in the DB schema — do NOT pass a `read` column
+    // Note: read_at defaults to null in the DB schema - do NOT pass a `read` column
     const notifications = toNotify.map((userId: string) => ({
       user_id: userId,
       type: pushType,

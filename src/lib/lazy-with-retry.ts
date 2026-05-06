@@ -13,7 +13,7 @@ import { lazy, type ComponentType } from 'react'
  * `index.html`/asset manifest will try to fetch chunks with old hashed
  * filenames (e.g. `map-view-inner-BtVAFhm2.js`). Those no longer exist on
  * the CDN, so the import rejects and the user hits the ErrorBoundary. A
- * one-shot reload fixes it for 99% of cases — the user gets the new client
+ * one-shot reload fixes it for 99% of cases - the user gets the new client
  * and everything just works.
  *
  * The reload is gated behind sessionStorage so we don't loop forever if
@@ -63,7 +63,7 @@ async function retryImport<T>(
       window.location.reload()
       return new Promise<T>(() => {})
     }
-    // We already tried reloading in this session — stop the loop and let
+    // We already tried reloading in this session - stop the loop and let
     // ErrorBoundary catch it so the user gets the proper error screen with
     // a manual reload button.
   }
@@ -73,7 +73,7 @@ async function retryImport<T>(
 
 // Matches React.lazy's signature so callers can swap `lazy` for
 // `lazyWithRetry` with zero type friction. The `any` here mirrors
-// React's own lazy typing — it's a generic component factory.
+// React's own lazy typing - it's a generic component factory.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function lazyWithRetry<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,

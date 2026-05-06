@@ -2,10 +2,10 @@
  * Service worker for Co-Exist PWA.
  *
  * Strategy:
- *   - Pre-cache: app shell (index.html, offline fallback)
- *   - Cache-first: hashed static assets (/assets/*, content-hashed by Vite)
- *   - Network-first: non-hashed statics (manifest, icons) + HTML navigation
- *   - Skip: Supabase API calls (handled by React Query cache)
+ * - Pre-cache: app shell (index.html, offline fallback)
+ * - Cache-first: hashed static assets (/assets/*, content-hashed by Vite)
+ * - Network-first: non-hashed statics (manifest, icons) + HTML navigation
+ * - Skip: Supabase API calls (handled by React Query cache)
  *
  * Cache versioning: bump CACHE_VERSION to force a full cache clear on deploy.
  * Hashed assets are safe to cache indefinitely (new hash = new URL).
@@ -31,7 +31,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(SHELL_CACHE).then((cache) => cache.addAll(PRECACHE)),
   )
-  // Don't skipWaiting() immediately — wait for the client to opt in
+  // Don't skipWaiting() immediately - wait for the client to opt in
   // via postMessage so users aren't surprised by a mid-session reload.
 })
 

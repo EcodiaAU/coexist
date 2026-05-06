@@ -16,7 +16,7 @@ const SIZE_CONFIG: Record<WaveSize, { viewBox: string; className: string }> = {
 interface WaveTransitionProps {
   /** Wave path index (into WAVE_PATHS / WAVE_PATHS_TALL / WAVE_PATHS_SMALL). Default 0. */
   wave?: number
-  /** Size preset – controls viewBox and rendered height. Default 'md'. */
+  /** Size preset - controls viewBox and rendered height. Default 'md'. */
   size?: WaveSize
   /** Tailwind fill class for the wave shape. Default 'fill-white'. */
   fill?: string

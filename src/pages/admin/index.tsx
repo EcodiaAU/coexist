@@ -108,7 +108,7 @@ function AdminHero({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Section heading – editorial style                                  */
+/*  Section heading - editorial style                                  */
 /* ------------------------------------------------------------------ */
 
 function SectionHeader({
@@ -147,7 +147,7 @@ function SectionHeader({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Bar chart – elevated style                                         */
+/*  Bar chart - elevated style                                         */
 /* ------------------------------------------------------------------ */
 
 function TrendChart({

@@ -11,14 +11,14 @@
  * - to-excel writes app-created completed events that pass the migration gate:
  *   events whose collective has forms_migrated_at set AND whose date_start is on or
  *   after forms_migrated_at (collective has cut over from Forms to the app).
- *   Collectives with NULL forms_migrated_at are still using Forms for real events — their
+ *   Collectives with NULL forms_migrated_at are still using Forms for real events - their
  *   app events are NOT pushed to the sheet, preventing double-entries during transition.
  *   The migration gate is the SOLE filter; there is no test-title bypass.
  * - DEDUP: before appending any app-generated row, the function builds a signature set
  *   from all integer-ID (Forms-origin) rows already on the sheet. Signature format is
  *   (collective | date_iso | title), lowercased and trimmed. If an app event's signature
  *   matches a Forms row, the app event is SKIPPED (not appended) and logged in errors as
- *   `skippedDuplicates`. Admin must reconcile the Forms row manually — no auto-overwrite.
+ *   `skippedDuplicates`. Admin must reconcile the Forms row manually - no auto-overwrite.
  * - from-excel is the PRIORITY direction. Run it first in full sync.
  *
  * Directions:
@@ -35,7 +35,7 @@
  *   4:  Location              <- events.address
  *   5:  Postcode              <- extracted from address
  *   6:  Primary Organiser     <- constant "Co-Exist" (matches Forms convention; partner-org
- *                                support will come via event_organisations table — see TODO)
+ *                                support will come via event_organisations table - see TODO)
  *   7:  Other Group Attended  <- survey answer q1
  *   8:  Which Landcare Group  <- survey answer q2
  *   9:  Which OzFish group    <- survey answer q3
@@ -81,7 +81,7 @@ const SHEET_NAME = 'Post Event Review'
 const SYNC_CUTOFF_DATE = '2026-05-04'
 
 // Fixed namespace UUID for Forms-sourced synthetic events. Embedded as a literal
-// and MUST NEVER CHANGE — changing it invalidates all existing synthetic UUIDs and
+// and MUST NEVER CHANGE - changing it invalidates all existing synthetic UUIDs and
 // causes duplicate rows on the next sync run.
 const FORMS_NAMESPACE_UUID = '6b9c8f4a-2e3d-5c7a-8b1f-4a9e6d2c1b0f'
 
@@ -442,7 +442,7 @@ const SHEET_LABEL_TO_ACTIVITY_TYPE: Record<string, string> = {
   'workshop': 'workshop',
 }
 
-// Token-CONTAINS fallback for Layer 4 — ordered most-specific first so longer tokens win.
+// Token-CONTAINS fallback for Layer 4 - ordered most-specific first so longer tokens win.
 const TOKEN_TO_ACTIVITY_TYPE: [string, string][] = [
   ['marine restoration', 'marine_restoration'],
   ['reef restoration',   'marine_restoration'],
@@ -475,7 +475,7 @@ const TOKEN_TO_ACTIVITY_TYPE: [string, string][] = [
 ]
 
 // Generate a deterministic UUID v5 from a Forms integer ID.
-// Pure function of formsId — re-running sync is safe (upserts are no-ops when unchanged).
+// Pure function of formsId - re-running sync is safe (upserts are no-ops when unchanged).
 async function formsIdToUuid(formsId: string | number): Promise<string> {
   const data = new TextEncoder().encode(`forms-${formsId}`)
   return await uuidv5(FORMS_NAMESPACE_UUID, data)
@@ -709,7 +709,7 @@ async function syncToExcel(
   }
 
   // Build a signature set from Forms rows (integer IDs only) for dedup protection.
-  // If an app event's signature matches a Forms row, it is skipped — not appended.
+  // If an app event's signature matches a Forms row, it is skipped - not appended.
   // This prevents double-entries during the transition from Forms to the app for any
   // collective that had real events logged via both systems on the same date.
   //
@@ -725,7 +725,7 @@ async function syncToExcel(
     const row = excelState.rows[i]
     const id = String(row[0] ?? '')
     if (!id) continue
-    // Only integer IDs are Forms rows — UUIDs are app rows and don't belong in the dedup set
+    // Only integer IDs are Forms rows - UUIDs are app rows and don't belong in the dedup set
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-/.test(id)) continue
 
     const title = String(row[1] ?? '')
@@ -813,7 +813,7 @@ async function syncToExcel(
   // Pre-fetch the created_by status for the candidate events so we can skip
   // synthetic events (those created by the from-excel reverse-sync). Synthetic
   // events have created_by IS NULL because their data ORIGINATED from the
-  // sheet — pushing them back creates duplicate rows. The trigger
+  // sheet - pushing them back creates duplicate rows. The trigger
   // excel_sync_on_event_impact fires for every event_impact INSERT/UPDATE
   // (including the ones from-excel just inserted), so without this guard each
   // sheet→DB sync produces N spurious to-excel calls that try to write the
@@ -836,7 +836,7 @@ async function syncToExcel(
         }
       }
     } catch {
-      // Non-fatal — fall through and let the dedup signature catch what it can.
+      // Non-fatal - fall through and let the dedup signature catch what it can.
     }
   }
 
@@ -878,7 +878,7 @@ async function syncToExcel(
         // Weak (collective, date) match warning. Strict signature missed it
         // because the titles differ (typically leader free-text drift between
         // Forms title and app title for the same event). We do NOT auto-skip
-        // — admin reconciliation. The warning surfaces the suspect pair so
+        // - admin reconciliation. The warning surfaces the suspect pair so
         // monitoring can flag it for review.
         const dateIso = (data.date_start ?? '').slice(0, 10)
         const weakKey = `${(data.collective_name ?? '').trim().toLowerCase()}|${dateIso}`
@@ -1010,7 +1010,7 @@ async function syncFromExcel(
     }
   } catch (err) {
     errors.push(`Failed to load collectives: ${(err as Error).message}`)
-    // Non-fatal — Forms rows will all land in skippedNoCollective
+    // Non-fatal - Forms rows will all land in skippedNoCollective
   }
 
   // Resolve a system user for created_by / logged_by on synthetic Forms events.
@@ -1026,7 +1026,7 @@ async function syncFromExcel(
       .single()
     systemUserId = (adminUser as { id: string } | null)?.id ?? null
   } catch {
-    // null is acceptable — created_by may be nullable on the events table
+    // null is acceptable - created_by may be nullable on the events table
   }
 
   // Process each data row (skip header row)
@@ -1040,7 +1040,7 @@ async function syncFromExcel(
       const isFormsId = /^\d+$/.test(excelId)
 
       if (!isUuid && !isFormsId) {
-        // Unrecognised ID format — not a UUID and not a plain integer
+        // Unrecognised ID format - not a UUID and not a plain integer
         skippedLegacy++
         continue
       }
@@ -1094,7 +1094,7 @@ async function syncFromExcel(
         const collectiveId =
           COLLECTIVE_ALIASES[collectiveNameLc] ?? collectiveNameToId.get(collectiveNameLc)
         if (!collectiveId) {
-          errors.push(`${rowLabel}: no collective match for "${collectiveName}" — skipped`)
+          errors.push(`${rowLabel}: no collective match for "${collectiveName}" - skipped`)
           skippedNoCollective++
           continue
         }
@@ -1467,7 +1467,7 @@ Deno.serve(async (req: Request) => {
         },
       })
     } catch (mErr) {
-      // Non-fatal — monitoring failure shouldn't fail the sync.
+      // Non-fatal - monitoring failure shouldn't fail the sync.
       console.warn(`excel_sync_runs insert failed: ${(mErr as Error).message}`)
     }
 

@@ -26,10 +26,10 @@ async function loadBrandContext(): Promise<string> {
       }
     }
   } catch {
-    // Non-critical — proceed without dynamic assets
+    // Non-critical - proceed without dynamic assets
   }
 
-  return `You are an email template designer for Co-Exist Australia — a youth-led environmental charity.
+  return `You are an email template designer for Co-Exist Australia - a youth-led environmental charity.
 
 ABOUT CO-EXIST:
 - Full name: Co-Exist Australia
@@ -43,14 +43,14 @@ ABOUT CO-EXIST:
 - Instagram: https://www.instagram.com/coexistaus (@coexistaus)
 - Facebook: https://www.facebook.com/coexistaus
 - Contact: hello@coexistaus.org
-- Country: Australia (Southern Hemisphere — summer is Dec-Feb)
+- Country: Australia (Southern Hemisphere - summer is Dec-Feb)
 
 BRAND COLOURS:
 - Primary sage green: #4A7C59
 - Secondary earth: #8B6F47
 - Accent orange (CTAs): #E8913A
 - Background: #F9F7F4 (warm off-white)
-- Text: #2D3748 (warm charcoal — NEVER pure black #000)
+- Text: #2D3748 (warm charcoal - NEVER pure black #000)
 - Light sage: #E8F0EB (subtle bg accents)
 - Light earth: #F0EBE4 (warm card bg)
 
@@ -66,13 +66,13 @@ ${emailHeaderUrl ? `- Email header banner: ${emailHeaderUrl}` : '- Email header 
 
 EDITABLE FIELD SYSTEM:
 Templates use {{double_braces}} for fields the admin fills in when creating a campaign. Common variables:
-- {{name}} — recipient's first name (always available, auto-filled by the system)
-- {{subject}} — email subject (auto-filled)
+- {{name}} - recipient's first name (always available, auto-filled by the system)
+- {{subject}} - email subject (auto-filled)
 Any other {{variables}} you create are editable fields the admin will fill in per campaign. Use descriptive names like {{event_title}}, {{event_date}}, {{event_location}}, {{cta_url}}, {{hero_image_url}}, {{announcement_text}}, etc. The admin will see these as form fields.
 
 HTML EMAIL RULES:
 - Inline CSS only (many email clients strip <style> blocks)
-- Table-based layout (no flexbox/grid — email clients don't support them)
+- Table-based layout (no flexbox/grid - email clients don't support them)
 - Max width: 600px, centered with margin: 0 auto
 - Images: use width/height attributes AND inline styles for consistency
 - Mobile: tables should be 100% width so they collapse on small screens
@@ -82,11 +82,11 @@ HTML EMAIL RULES:
 - Always include alt text on images
 
 STRUCTURE (suggested, not rigid):
-1. Header — sage green background (#4A7C59) with white Co-Exist wordmark image or text
-2. Hero — main visual/message area
-3. Body — content sections with clear hierarchy
-4. CTA — prominent button in accent orange (#E8913A)
-5. Footer — social links, unsubscribe text, mailing address line
+1. Header - sage green background (#4A7C59) with white Co-Exist wordmark image or text
+2. Hero - main visual/message area
+3. Body - content sections with clear hierarchy
+4. CTA - prominent button in accent orange (#E8913A)
+5. Footer - social links, unsubscribe text, mailing address line
 
 FOOTER (always include):
 - "You're receiving this because you opted in to Co-Exist marketing emails."
@@ -162,7 +162,7 @@ ${prompt}
 
 ${subject ? `The default subject line should be: "${subject}"` : ''}
 
-IMPORTANT: This is a TEMPLATE — use {{editable_field_name}} placeholders for any content the admin should customise each time they send. The {{name}} variable is always available for the recipient's name. Create sensible {{field_name}} variables for things like event details, dates, URLs, announcements, etc. Make the template flexible enough to be reused.`
+IMPORTANT: This is a TEMPLATE - use {{editable_field_name}} placeholders for any content the admin should customise each time they send. The {{name}} variable is always available for the recipient's name. Create sensible {{field_name}} variables for things like event details, dates, URLs, announcements, etc. Make the template flexible enough to be reused.`
     } else {
       userMessage = `Create a ready-to-send email based on this description:
 
@@ -170,7 +170,7 @@ ${prompt}
 
 ${subject ? `Subject line: "${subject}"` : ''}
 
-Use {{name}} for the recipient's first name. This is a one-off email, not a template — fill in all the content directly.`
+Use {{name}} for the recipient's first name. This is a one-off email, not a template - fill in all the content directly.`
     }
 
     const resp = await fetch('https://api.anthropic.com/v1/messages', {

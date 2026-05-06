@@ -129,7 +129,7 @@ export default function AdminChallengesPage() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('challenges').delete().eq('id', id)
       if (error) throw error
-      // Log AFTER success — previously the audit entry was written before
+      // Log AFTER success - previously the audit entry was written before
       // the delete, so a failed delete still produced an audit record saying
       // it happened. Now the log only reflects actual completed deletes.
       await logAudit({ action: 'challenge_deleted', target_type: 'challenge', target_id: id })

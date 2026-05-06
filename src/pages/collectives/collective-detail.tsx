@@ -130,7 +130,7 @@ export default function CollectiveDetailPage() {
   }
 
   // Show the skeleton both during the long-load delay window AND while
-  // there's still a request in flight without data — without this, the
+  // there's still a request in flight without data - without this, the
   // first ~150ms (before useDelayedLoading flips and before the network
   // returns) renders the "Collective not found" empty state, causing a
   // flash of the wrong screen on every navigation in.

@@ -28,7 +28,7 @@ const keys = {
 }
 
 /* ------------------------------------------------------------------ */
-/*  My content — modules/sections targeted at my roles                 */
+/*  My content - modules/sections targeted at my roles                 */
 /* ------------------------------------------------------------------ */
 
 export function useMyTargetedContent() {
@@ -74,9 +74,9 @@ export function useMyTargetedContent() {
       if (secErr) throw secErr
 
       // Show content where:
-      //  - target_roles overlaps with user's effective roles, OR
-      //  - target_user_ids includes user's ID, OR
-      //  - no targeting set (empty arrays = visible to all)
+      // - target_roles overlaps with user's effective roles, OR
+      // - target_user_ids includes user's ID, OR
+      // - no targeting set (empty arrays = visible to all)
       const filteredModules = (modules as DevModule[]).filter((m) => {
         if (m.target_roles.length === 0 && m.target_user_ids.length === 0) return true
         if (m.target_user_ids.includes(uid)) return true

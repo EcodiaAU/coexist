@@ -48,14 +48,14 @@ const config: CapacitorConfig = {
       splashImmersive: true,
     },
 
-    // Status Bar – style only, no backgroundColor (deprecated in Android 15+; edge-to-edge
+    // Status Bar - style only, no backgroundColor (deprecated in Android 15+; edge-to-edge
     // draws transparent bars and the web layer controls appearance via CSS).
     StatusBar: {
       style: 'LIGHT',
       overlaysWebView: true,
     },
 
-    // Keyboard – use 'none' so iOS doesn't fight our own visualViewport-based
+    // Keyboard - use 'none' so iOS doesn't fight our own visualViewport-based
     // keyboard avoidance (--kb-height CSS variable set by useKeyboardHeight).
     // 'body' resize is unreliable on modern iOS WKWebView.
     Keyboard: {
@@ -71,7 +71,7 @@ const config: CapacitorConfig = {
     // Background modes for silent push
     backgroundColor: '#f8f9f5',
     scheme: 'coexist',
-    // Required for ML Kit barcode scanner — do not restrict to app-bound domains
+    // Required for ML Kit barcode scanner - do not restrict to app-bound domains
     limitsNavigationsToAppBoundDomains: false,
     // Info.plist permissions are declared in Xcode:
     // - NSCameraUsageDescription

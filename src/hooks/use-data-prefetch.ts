@@ -24,7 +24,7 @@ import { prefetchCreateSummary } from '@/hooks/use-admin-create'
 /*  Role-based DATA prefetch                                           */
 /*                                                                     */
 /*  Warms TanStack Query cache for the user's most-used pages so       */
-/*  navigating to them renders the final state instantly — no loading   */
+/*  navigating to them renders the final state instantly - no loading   */
 /*  spinners, no skeleton shimmer.                                     */
 /*                                                                     */
 /*  This complements the chunk prefetch (useRolePrefetch) which        */
@@ -85,7 +85,7 @@ export function useDataPrefetch() {
       staleTime: STALE_TIME,
     })
 
-    // /chat page — my collectives list
+    // /chat page - my collectives list
     queryClient.prefetchQuery({
       queryKey: ['my-collectives', userId],
       queryFn: async () => {
@@ -100,7 +100,7 @@ export function useDataPrefetch() {
       staleTime: 5 * 60 * 1000,
     })
 
-    // /chat page — unread counts (batched in chunks of 5 to limit burst)
+    // /chat page - unread counts (batched in chunks of 5 to limit burst)
     queryClient.prefetchQuery({
       queryKey: ['unread-counts', userId],
       queryFn: async () => {
@@ -147,7 +147,7 @@ export function useDataPrefetch() {
     // ── Participant-specific ──
 
     if (!isStaff && !isLeader) {
-      // /events page — upcoming registrations
+      // /events page - upcoming registrations
       queryClient.prefetchQuery({
         queryKey: ['my-events', 'upcoming', userId],
         queryFn: async () => {
@@ -172,7 +172,7 @@ export function useDataPrefetch() {
         staleTime: STALE_TIME,
       })
 
-      // /events page — discover feed
+      // /events page - discover feed
       queryClient.prefetchQuery({
         queryKey: ['discover-events', undefined, undefined],
         queryFn: async () => {
@@ -190,7 +190,7 @@ export function useDataPrefetch() {
         staleTime: 5 * 60 * 1000,
       })
 
-      // /shop page — products
+      // /shop page - products
       queryClient.prefetchQuery({
         queryKey: ['products'],
         queryFn: async () => {
@@ -215,18 +215,18 @@ export function useDataPrefetch() {
       const collectiveId = leaderMembership?.collective_id
 
       if (collectiveId) {
-        // /leader — dashboard overview, stats, engagement, pending items
+        // /leader - dashboard overview, stats, engagement, pending items
         prefetchLeaderDashboard(queryClient, collectiveId)
         prefetchCollectiveFullStats(queryClient, collectiveId)
         prefetchEngagementScores(queryClient, collectiveId)
         prefetchPendingItems(queryClient, collectiveId)
 
-        // /leader/events — events list + stats
+        // /leader/events - events list + stats
         prefetchLeaderCollectiveEvents(queryClient, collectiveId)
         prefetchLeaderEventStats(queryClient, collectiveId)
       }
 
-      // /leader/tasks — task instances
+      // /leader/tasks - task instances
       const staffCollectiveIds = collectiveRoles
         .filter((m) => ['leader', 'co_leader', 'assist_leader'].includes(m.role))
         .map((m) => m.collective_id)
@@ -257,17 +257,17 @@ export function useDataPrefetch() {
     // ── Staff/admin-specific ──
 
     if (isStaff) {
-      // /admin — overview (default "all" range) + trends
+      // /admin - overview (default "all" range) + trends
       prefetchAdminOverview(queryClient)
       prefetchTrendData(queryClient)
 
-      // /admin/events — full events dashboard
+      // /admin/events - full events dashboard
       prefetchAdminEventsData(queryClient)
 
-      // /admin/create — summary stats
+      // /admin/create - summary stats
       prefetchCreateSummary(queryClient)
 
-      // /admin/collectives — uses useAdminCollectives from shared hook
+      // /admin/collectives - uses useAdminCollectives from shared hook
       // (already in hooks/use-admin-collectives.ts, fetched on mount)
     }
   }, [user, profile, collectiveRoles, isStaff, isLeader, queryClient])

@@ -121,7 +121,7 @@ export default function CheckInPage() {
   const isLeaderOrAbove = collectiveRole.isCoLeader || collectiveRole.isLeader || isGlobalStaff
 
   const [state, setState] = useState<CheckInState>('idle')
-  // 3-digit check-in code. Sized to match the 3 inputs rendered below —
+  // 3-digit check-in code. Sized to match the 3 inputs rendered below - 
   // previously was length 4 with dead slice logic that never triggered
   // because the 4th input was never rendered.
   const [digits, setDigits] = useState(['', '', ''])

@@ -88,7 +88,7 @@ function getDateRange(preset: string, customStart: string, customEnd: string): {
         end: new Date(year, 11, 31, 23, 59, 59).toISOString(),
       }
     case 'last-fy':
-      // Australian financial year: 1 Jul – 30 Jun
+      // Australian financial year: 1 Jul - 30 Jun
       // If before July, last FY = (year-2)/(year-1). If July+, last FY = (year-1)/year
       if (month < 6) {
         return {
@@ -152,7 +152,7 @@ async function fetchReportData(
   //
   // Multi-host: for collective scope we resolve via event_hosts (so co-hosted
   // events count) and apply share weighting at sum time. National scope keeps
-  // the direct events join — every event counts once.
+  // the direct events join - every event counts once.
   let impactRows: Record<string, unknown>[] = []
   let shareByEventId: Map<string, EventHostShare> = new Map()
   if (needsImpact) {

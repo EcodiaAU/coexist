@@ -1,4 +1,4 @@
-// Deno Edge Function — notify admins when a content report is created
+// Deno Edge Function - notify admins when a content report is created
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
         },
       })
     } catch (pushErr) {
-      // Push is best-effort — don't fail the function
+      // Push is best-effort - don't fail the function
       console.error('Push notification failed:', pushErr)
     }
 

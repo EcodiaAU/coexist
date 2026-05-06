@@ -30,11 +30,11 @@ A mobile-first app for Co-Exist Australia - a national youth-led environmental n
 
 ### Build & Deploy Pipeline
 
-> **Ship rule**: when a change needs to reach a device or store to matter, run the full pipeline. Don't stop at "assets generated" or "code updated" — commit, push, switch instances, pull, install, build, sync, archive, upload. If blocked, say so explicitly.
+> **Ship rule**: when a change needs to reach a device or store to matter, run the full pipeline. Don't stop at "assets generated" or "code updated" - commit, push, switch instances, pull, install, build, sync, archive, upload. If blocked, say so explicitly.
 
 **Corazon (this Windows machine)** is where code lives: `D:/.code/coexist`. Always start here, end with `git push`.
 
-**SY094 (Mac-in-Cloud)** is the only place iOS archives get built + uploaded to App Store Connect. Reach it via API. Signing creds are pre-configured there — don't rotate them.
+**SY094 (Mac-in-Cloud)** is the only place iOS archives get built + uploaded to App Store Connect. Reach it via API. Signing creds are pre-configured there - don't rotate them.
 
 #### Android ship (Corazon, end-to-end)
 ```
@@ -46,7 +46,7 @@ npx cap sync android            # copy into native shell
 cd android && ./gradlew bundleRelease    # signed AAB at android/app/build/outputs/bundle/release/
 # → upload AAB to Play Console → internal testing track
 ```
-Rebuild fully after any res/ change (splash, icons) — Gradle caches res aggressively.
+Rebuild fully after any res/ change (splash, icons) - Gradle caches res aggressively.
 
 #### iOS ship (Corazon → SY094 handoff)
 1. **On Corazon:** commit, `git push`. Both local and remote must be in sync.

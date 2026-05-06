@@ -55,7 +55,7 @@ export default function OnboardingPage() {
   const completeOnboarding = useCallback(async () => {
     if (!user) return
     // Guard against double-submit. Step components don't receive isSubmitting
-    // so they can't visually disable their Next buttons — if the user
+    // so they can't visually disable their Next buttons - if the user
     // double-taps the final step, we'd otherwise fire two parallel profile
     // upserts plus two sets of emails.
     if (isSubmitting) return

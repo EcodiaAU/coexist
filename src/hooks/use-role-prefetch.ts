@@ -83,7 +83,7 @@ function getPriorityImports(
   isStaff: boolean,
   isLeader: boolean,
 ): ChunkImport[] {
-  // Staff/admin takes precedence — they spend most time in admin suite
+  // Staff/admin takes precedence - they spend most time in admin suite
   if (isStaff) return STAFF_PRIORITY
   if (isLeader) return LEADER_PRIORITY
   return PARTICIPANT_PRIORITY
@@ -92,7 +92,7 @@ function getPriorityImports(
 /**
  * Prefetches page chunks in priority order based on the user's role.
  *
- * Phase 1 (idle): role's priority pages — the tabs/sidebar they actually see.
+ * Phase 1 (idle): role's priority pages - the tabs/sidebar they actually see.
  * Phase 2 (idle after phase 1): remaining common pages for cross-navigation.
  *
  * Each import() is a no-op if the chunk is already cached, so duplicates

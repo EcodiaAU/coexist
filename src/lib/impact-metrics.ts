@@ -6,7 +6,7 @@
  * FALLBACK_METRIC_DEFS array provides instant rendering while
  * the DB query loads.
  *
- * "Leaders Trained/Empowered" is NOT an impact metric — it's
+ * "Leaders Trained/Empowered" is NOT an impact metric - it's
  * a cumulative counter in app_settings, incremented by DB trigger
  * when users are assigned leadership roles.
  */
@@ -42,7 +42,7 @@ export interface ImpactMetricDef {
 /**
  * The set of metric keys that map to real columns on event_impact.
  * Custom (admin-created) keys are stored in the custom_metrics jsonb
- * column instead. This set is immutable — DB schema changes are the
+ * column instead. This set is immutable - DB schema changes are the
  * only way to add a built-in column.
  */
 export const BUILTIN_COLUMNS = new Set([
@@ -56,7 +56,7 @@ export const BUILTIN_COLUMNS = new Set([
   'hours_total',
   'attendees',
   // Column exists in DB (added in migration 041) but is intentionally not
-  // displayed or aggregated — "leaders empowered" uses a cumulative counter
+  // displayed or aggregated - "leaders empowered" uses a cumulative counter
   // in app_settings (migration 073), not event logging. Listed here so
   // isBuiltinMetric() routes it correctly if it ever appears as an impact_metric
   // tag on a survey question, instead of silently dumping it into custom_metrics.
@@ -106,7 +106,7 @@ export function sumMetric(rows: Record<string, unknown>[], key: string): number 
   if (BUILTIN_COLUMNS.has(key)) {
     return rows.reduce((s, r) => s + (Number(r[key]) || 0), 0)
   }
-  // Custom metric — stored in custom_metrics jsonb
+  // Custom metric - stored in custom_metrics jsonb
   return rows.reduce((s, r) => {
     const cm = r.custom_metrics as Record<string, unknown> | null
     return s + (Number(cm?.[key]) || 0)
@@ -122,7 +122,7 @@ export function sumMetric(rows: Record<string, unknown>[], key: string): number 
  * of the host inside event_hosts (primary = 0). With host_count=3 and
  * host_index=0 the host gets ceil(value/3); the remaining hosts get
  * floor(value/3). Per-collective totals therefore add up exactly to the
- * full event total — no double counting, no fractional units shown.
+ * full event total - no double counting, no fractional units shown.
  */
 export interface EventHostShare {
   /** Total number of host collectives for the event */
@@ -135,7 +135,7 @@ export interface EventHostShare {
  * Distribute an integer value across `host_count` hosts so the per-host
  * portions sum to the original value, with the remainder going to the
  * earliest hosts (host_index 0..r-1). Decimal-style metrics (e.g. kg) are
- * rounded the same way — call sites that care about decimals should round
+ * rounded the same way - call sites that care about decimals should round
  * once at the very end.
  */
 export function shareValue(value: number, share: EventHostShare): number {
@@ -150,7 +150,7 @@ export function shareValue(value: number, share: EventHostShare): number {
  * Sum a metric across rows weighted by each row's host share. Pass a
  * `shareByEventId` map (built from the event_hosts view, scoped to the
  * collective being aggregated). Rows without a matching share entry are
- * dropped — they belong to a different collective.
+ * dropped - they belong to a different collective.
  */
 export function sumMetricWeighted(
   rows: Record<string, unknown>[],

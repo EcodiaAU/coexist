@@ -206,7 +206,7 @@ function HeroStat({
         </>
       )}
       {variant === 'default' && (
-        <>{/* decorative circle removed – design system */}</>
+        <>{/* decorative circle removed - design system */}</>
       )}
       <div className="relative z-10">
         <span className={cn('flex items-center justify-center w-9 h-9 rounded-xl mb-3', iconBg[variant], iconColor[variant])} aria-hidden="true">

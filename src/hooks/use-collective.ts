@@ -371,7 +371,7 @@ export function useLeaveCollective() {
     mutationFn: async (collectiveId: string) => {
       if (!user) throw new Error('Not authenticated')
 
-      // Prevent leaders from leaving — they must transfer leadership first
+      // Prevent leaders from leaving - they must transfer leadership first
       const { data: membership } = await supabase
         .from('collective_members')
         .select('role')

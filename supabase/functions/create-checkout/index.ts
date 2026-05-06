@@ -2,11 +2,11 @@
  * create-checkout - Supabase Edge Function
  *
  * Creates Stripe Checkout sessions for:
- *   - One-time donations
- *   - Recurring donations (Stripe Subscriptions)
- *   - Merch purchases (with promo code support)
- *   - Event ticket purchases (with atomic capacity management)
- *   - Subscription cancellation
+ * - One-time donations
+ * - Recurring donations (Stripe Subscriptions)
+ * - Merch purchases (with promo code support)
+ * - Event ticket purchases (with atomic capacity management)
+ * - Subscription cancellation
  *
  * Returns: `{ session_id: string, url: string }` for checkout types,
  *          `{ success: true }` for cancel.
@@ -471,7 +471,7 @@ Deno.serve(async (req: Request) => {
               price_data: {
                 currency: 'aud',
                 product_data: {
-                  name: `${evt.title} — ${ticketType.name}`,
+                  name: `${evt.title} - ${ticketType.name}`,
                   ...(evt.cover_image_url ? { images: [evt.cover_image_url] } : {}),
                 },
                 unit_amount: unitPriceCents,

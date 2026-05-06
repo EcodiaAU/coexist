@@ -14,7 +14,7 @@ export function useGeocodeAddress(address: string | null | undefined, enabled = 
   return useQuery({
     queryKey: ['geocode', address],
     enabled: enabled && !!address && address.trim().length > 0,
-    staleTime: 24 * 60 * 60 * 1000, // 1 day — addresses don't move
+    staleTime: 24 * 60 * 60 * 1000, // 1 day - addresses don't move
     queryFn: async (): Promise<MapCenter | null> => {
       if (!address) return null
       const params = new URLSearchParams({

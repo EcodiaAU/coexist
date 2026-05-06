@@ -30,7 +30,7 @@ export function useLegalPage(slug: string) {
   })
 }
 
-/** Fetch all legal pages (admin — includes unpublished) */
+/** Fetch all legal pages (admin - includes unpublished) */
 export function useAllLegalPages() {
   return useQuery({
     queryKey: ['legal-pages-admin'],

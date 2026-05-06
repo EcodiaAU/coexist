@@ -46,13 +46,13 @@ export interface AdminOverviewData {
 }
 
 /**
- * Admin overview stats — optionally scoped to a single collective.
+ * Admin overview stats - optionally scoped to a single collective.
  *
  * Scope handling:
  * - collectiveId='' / undefined → national (all collectives), baseline applied when all-time
  * - collectiveId=<uuid>         → that collective only, NEVER apply national baseline
  *   (baseline constants are national totals and wouldn't make sense added to one
- *   collective's numbers — would double-attribute history).
+ *   collective's numbers - would double-attribute history).
  *
  * Member/collective counts stay national regardless of scope because they're
  * not impact-scoped (a member belongs to the app, not a single collective).
@@ -81,7 +81,7 @@ async function fetchAdminOverview(dateRange: DateRange, collectiveId?: string): 
         timeRange: isAllTime ? 'all-time' : 'custom',
         rangeStart: rangeStart ?? undefined,
       }),
-      // Baselines are national all-time constants — only apply when we're ACTUALLY
+      // Baselines are national all-time constants - only apply when we're ACTUALLY
       // asking for the national all-time view. Never add them to a single-collective
       // view (they're not that collective's history) and never when a date range
       // cuts off pre-2026 data.

@@ -31,7 +31,7 @@ html {
 }
 
 @theme {
-  /* Brand — Co-Exist olive green */
+  /* Brand - Co-Exist olive green */
   --color-brand: #869e62;
 
   /* Primary - Olive Green (#869e62) scale */
@@ -86,7 +86,7 @@ html {
   --color-neutral-900: #171717;
   --color-neutral-950: #0a0a0a;
 
-  /* Semantic – Success (Fern green) */
+  /* Semantic - Success (Fern green) */
   --color-success-50:  #f0f7f1;
   --color-success-100: #dceedd;
   --color-success-200: #b8ddb9;
@@ -99,7 +99,7 @@ html {
   --color-success-900: #1b4829;
   --color-success:     #4ade80;
 
-  /* Semantic – Warning (Ochre / Honey) */
+  /* Semantic - Warning (Ochre / Honey) */
   --color-warning-50:  #fdf8eb;
   --color-warning-100: #faedc4;
   --color-warning-200: #f5d98a;
@@ -112,7 +112,7 @@ html {
   --color-warning-900: #543d0c;
   --color-warning:     #fbbf24;
 
-  /* Semantic – Error (Terracotta) */
+  /* Semantic - Error (Terracotta) */
   --color-error-50:  #fef2f2;
   --color-error-100: #fce1e1;
   --color-error-200: #f9c4c4;
@@ -125,7 +125,7 @@ html {
   --color-error-900: #652424;
   --color-error:     #f87171;
 
-  /* Semantic – Info (Sage teal) */
+  /* Semantic - Info (Sage teal) */
   --color-info-50:  #f0f5fa;
   --color-info-100: #dce8f4;
   --color-info-200: #b8d0e9;
@@ -138,7 +138,7 @@ html {
   --color-info-900: #1e3650;
   --color-info:     #60a5fa;
 
-  /* Semantic – Plum (special statuses, orders, violet replacement) */
+  /* Semantic - Plum (special statuses, orders, violet replacement) */
   --color-plum-50:  #f6f3f8;
   --color-plum-100: #ece5f0;
   --color-plum-200: #d6c9e0;
@@ -150,7 +150,7 @@ html {
   --color-plum-800: #433352;
   --color-plum-900: #382b44;
 
-  /* Semantic – Bark (warm brown, for wildlife/nature_walk) */
+  /* Semantic - Bark (warm brown, for wildlife/nature_walk) */
   --color-bark-50:  #faf6f1;
   --color-bark-100: #f0e8db;
   --color-bark-200: #e0cfb5;
@@ -162,7 +162,7 @@ html {
   --color-bark-800: #57422d;
   --color-bark-900: #473627;
 
-  /* Semantic – Coral (pink replacement, fundraising) */
+  /* Semantic - Coral (pink replacement, fundraising) */
   --color-coral-50:  #fdf4f3;
   --color-coral-100: #fbe6e3;
   --color-coral-200: #f7ccc6;
@@ -174,7 +174,7 @@ html {
   --color-coral-800: #762e29;
   --color-coral-900: #632a26;
 
-  /* Semantic – Sky (beach/water activities) */
+  /* Semantic - Sky (beach/water activities) */
   --color-sky-50:  #f0f7fb;
   --color-sky-100: #dcedf6;
   --color-sky-200: #b6d9ed;
@@ -186,7 +186,7 @@ html {
   --color-sky-800: #274a65;
   --color-sky-900: #243e55;
 
-  /* Semantic – Moss (teal/cyan replacement, monitoring) */
+  /* Semantic - Moss (teal/cyan replacement, monitoring) */
   --color-moss-50:  #f0f6f5;
   --color-moss-100: #dcece9;
   --color-moss-200: #b8d9d3;
@@ -198,7 +198,7 @@ html {
   --color-moss-800: #294744;
   --color-moss-900: #253c39;
 
-  /* Semantic – Sprout (lime replacement, restoration) */
+  /* Semantic - Sprout (lime replacement, restoration) */
   --color-sprout-50:  #f5f8ef;
   --color-sprout-100: #e7edda;
   --color-sprout-200: #d0ddb7;
@@ -210,7 +210,7 @@ html {
   --color-sprout-800: #3d4f2b;
   --color-sprout-900: #354328;
 
-  /* Surface layers — use these for visual hierarchy without borders */
+  /* Surface layers - use these for visual hierarchy without borders */
   --color-surface-0: #ffffff;
   --color-surface-1: #fafafa;
   --color-surface-2: #f5f5f5;
@@ -350,7 +350,7 @@ h6, .h6 { font-family: var(--font-heading); font-size: var(--text-h6); font-weig
   100% { transform: translate(var(--burst-x, 0), var(--burst-y, 0)) scale(0); opacity: 0; }
 }
 
-/* ── Leader page decorative animations — GPU-composited, no JS overhead ── */
+/* ── Leader page decorative animations - GPU-composited, no JS overhead ── */
 @keyframes breathe {
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.04); }
@@ -376,7 +376,7 @@ h6, .h6 { font-family: var(--font-heading); font-size: var(--text-h6); font-weig
   to   { transform: rotate(360deg); }
 }
 
-/* Particle container — prevents layout thrash */
+/* Particle container - prevents layout thrash */
 .particle-layer {
   position: fixed;
   inset: 0;
@@ -450,7 +450,7 @@ select:focus-visible {
   white-space: normal;
 }
 
-/* Hide scrollbars — apply .hide-scrollbar to specific containers, not globally.
+/* Hide scrollbars - apply .hide-scrollbar to specific containers, not globally.
    Global * selector removed to avoid hiding scroll position on web/Android. */
 .hide-scrollbar {
   -ms-overflow-style: none;
@@ -494,7 +494,7 @@ html, body {
 
 /* ===== 60fps Scroll Performance ===== */
 
-/* GPU-accelerate all scrollable containers (exclude body — its inline
+/* GPU-accelerate all scrollable containers (exclude body - its inline
    overflow:hidden set by modals would create a containing block that
    breaks fixed-position overlays) */
 [style*="overflow"]:not(body), .overflow-y-auto, .overflow-x-auto, .overflow-auto,
@@ -516,7 +516,7 @@ html, body {
   }
 }
 
-/* Horizontal scroll strips — snap & GPU composite */
+/* Horizontal scroll strips - snap & GPU composite */
 .snap-x {
   -webkit-overflow-scrolling: touch;
 }
@@ -541,7 +541,7 @@ button, a, [role="button"], [role="tab"], nav {
   user-select: none;
 }
 
-/* Full-collapse sticky overlay header — cancels the header's full height
+/* Full-collapse sticky overlay header - cancels the header's full height
    (h-14 + safe-top) so the hero sits flush at the viewport top. */
 .collapse-header {
   margin-bottom: -3.5rem;
@@ -559,7 +559,7 @@ button, a, [role="button"], [role="tab"], nav {
   }
 }
 
-/* ===== MLKit Barcode Scanner — transparent WebView ===== */
+/* ===== MLKit Barcode Scanner - transparent WebView ===== */
 /* When the native MLKit scanner is active it renders behind the WebView.
    We must make html/body/root fully transparent so the camera feed shows through. */
 body.scanner-active,
@@ -582,7 +582,7 @@ body.scanner-active .scanner-show {
   visibility: visible;
 }
 
-/* ===== HTML Chat Bubble — rendered HTML content ===== */
+/* ===== HTML Chat Bubble - rendered HTML content ===== */
 /* Responsive styling for raw HTML rendered inside chat bubbles.
    Ensures images, tables, and other block elements don't overflow. */
 .html-chat-content {

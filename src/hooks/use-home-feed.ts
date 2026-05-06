@@ -128,7 +128,7 @@ export function useUpcomingNearby() {
 }
 
 /**
- * National events — org-wide retreats, campouts, cross-collective activities.
+ * National events - org-wide retreats, campouts, cross-collective activities.
  * Suggested to users whose collective is within 500km of the event.
  */
 export function useNationalEvents(userLocation?: { lat: number; lng: number } | null) {
@@ -157,7 +157,7 @@ export function useNationalEvents(userLocation?: { lat: number; lng: number } | 
         return (withCollectives ?? []) as EventWithCollective[]
       }
 
-      // No location — show all upcoming national events
+      // No location - show all upcoming national events
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives!inner(id, name, is_national)')

@@ -31,7 +31,7 @@ export interface EventSurveyData {
  *  1. Survey directly linked to this event (surveys.event_id)
  *  2. Auto-send survey matching the event's activity type
  *
- * This distinction is critical — impact forms are for leaders to log
+ * This distinction is critical - impact forms are for leaders to log
  * conservation outcomes, NOT for attendee feedback. Attendees should
  * only see auto_send_after_event surveys.
  */
@@ -68,7 +68,7 @@ export function useEventSurvey(
           : null)
 
       // 3. Fallback: auto-send survey for this activity type (attendee-facing only).
-      //    Leaders should NOT see attendee feedback surveys on the impact form page —
+      //    Leaders should NOT see attendee feedback surveys on the impact form page - 
       //    those questions are irrelevant and have no impact_metric tags.
       const survey =
         (direct ?? impactForm) ??

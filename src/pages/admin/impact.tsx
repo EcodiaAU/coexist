@@ -32,7 +32,7 @@ import { AdminHeroStat, AdminHeroStatRow, type HeroStatColor } from '@/component
 import { Dropdown } from '@/components/dropdown'
 import { SearchBar } from '@/components/search-bar'
 import { Badge } from '@/components/badge'
-// TabBar removed — single-tab page now
+// TabBar removed - single-tab page now
 import { adminVariants } from '@/lib/admin-motion'
 import { cn } from '@/lib/cn'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
@@ -50,7 +50,7 @@ import {
   useImpactMetricDefs,
 } from '@/hooks/use-impact-metric-defs'
 import type { ImpactMetricDef } from '@/lib/impact-metrics'
-// isBuiltinMetric removed — metrics config UI removed
+// isBuiltinMetric removed - metrics config UI removed
 import { dateRangeOptions, type DateRange } from '@/hooks/use-admin-dashboard'
 import { ACTIVITY_TYPE_OPTIONS, ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
 import { useCollectives } from '@/hooks/use-collective'
@@ -58,7 +58,7 @@ import { useNotifyLeadersForImpactForm } from '@/hooks/use-impact-form-tasks'
 import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
 import { useToast } from '@/components/toast'
-// supabase direct import removed — metrics config UI removed
+// supabase direct import removed - metrics config UI removed
 
 /* ------------------------------------------------------------------ */
 /*  Icon registry                                                       */
@@ -389,7 +389,7 @@ function DataQualityPanel() {
   )
 }
 
-// NOTE: MetricForm and MetricsTab removed — scope simplification.
+// NOTE: MetricForm and MetricsTab removed - scope simplification.
 // Impact metrics are now controlled directly in the database.
 // Admin metric config UI will be a future paid feature.
 

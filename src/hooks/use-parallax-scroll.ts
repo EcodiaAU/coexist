@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useCallback, type RefObject } from 'react'
 
 /**
- * DOM-driven parallax hook – bypasses framer-motion's React render cycle
+ * DOM-driven parallax hook - bypasses framer-motion's React render cycle
  * so transforms update every frame on mobile (iOS WebKit + Capacitor).
  *
  * Returns a `register` function: call it with a ref and parallax config
@@ -57,7 +57,7 @@ export function useParallaxEngine() {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  // Grab scroll container – prefer #main-content (Page), fall back to
+  // Grab scroll container - prefer #main-content (Page), fall back to
   // [data-parallax-scroll] (AdminLayout) so parallax works everywhere.
   useLayoutEffect(() => {
     containerRef.current =
@@ -65,7 +65,7 @@ export function useParallaxEngine() {
       document.querySelector<HTMLElement>('[data-parallax-scroll]')
   })
 
-  // The animation tick – reads scroll, writes transforms
+  // The animation tick - reads scroll, writes transforms
   const tick = useCallback(() => {
     if (reducedMotion.current) return
 
@@ -83,7 +83,7 @@ export function useParallaxEngine() {
       const scale = scaleEnd !== 1 ? lerp(scroll, scaleScrollEnd, 1, scaleEnd) : 1
       const opacity = opacityEnd !== 1 ? lerp(scroll, opacityScrollEnd, 1, opacityEnd) : -1 // -1 = don't touch
 
-      // Write directly – no React, no framer-motion
+      // Write directly - no React, no framer-motion
       el.style.transform = `translate3d(0, ${y}px, 0) scale(${scale})`
       if (opacity >= 0) {
         el.style.opacity = String(opacity)
@@ -94,7 +94,7 @@ export function useParallaxEngine() {
   // Set up scroll listeners + continuous rAF loop for mobile
   // Mobile WebKit (iOS Safari + Capacitor) throttles scroll events during
   // momentum scrolling, so event-driven updates stall. Instead we run a
-  // continuous rAF loop that polls scroll position every frame – guarantees
+  // continuous rAF loop that polls scroll position every frame - guarantees
   // smooth parallax on all platforms including mobile momentum scroll.
   useEffect(() => {
     // Seed initial position
@@ -143,7 +143,7 @@ export function useParallaxEngine() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Convenience hook – pre-built 3-layer hero (bg, fg, text)           */
+/*  Convenience hook - pre-built 3-layer hero (bg, fg, text)           */
 /* ------------------------------------------------------------------ */
 
 export function useParallaxLayers(opts?: {
@@ -188,7 +188,7 @@ export function useParallaxLayers(opts?: {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Legacy compat – useParallaxScroll still exported for shop hero     */
+/*  Legacy compat - useParallaxScroll still exported for shop hero     */
 /* ------------------------------------------------------------------ */
 
 export function useParallaxScroll() {

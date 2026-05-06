@@ -64,7 +64,7 @@ function useImpactFormSurveys() {
  * 4. The user is a leader/co-leader/assist-leader of the event's collective
  * 5. Impact form config is enabled
  *
- * This creates "virtual" task instances — they're not stored in
+ * This creates "virtual" task instances - they're not stored in
  * task_instances because the impact form is a first-class concept
  * tied directly to event_impact, not the generic task workflow.
  */
@@ -169,7 +169,7 @@ export function usePendingImpactFormTasks() {
         (existingImpact ?? []).map((i) => [i.event_id, i]),
       )
 
-      // Build task list — only events WITHOUT impact logged
+      // Build task list - only events WITHOUT impact logged
       const tasks: ImpactFormTask[] = []
       for (const event of relevantEvents) {
         const survey = surveyMap.get(event.activity_type)
@@ -239,7 +239,7 @@ export function useNotifyLeadersForImpactForm() {
         user_id: l.user_id,
         type: 'survey_request' as const,
         title: 'Impact form ready',
-        body: `Log the impact for "${eventTitle}" — any leader in your collective can fill this out.`,
+        body: `Log the impact for "${eventTitle}" - any leader in your collective can fill this out.`,
         data: { event_id: eventId, type: 'impact_form' },
       }))
 

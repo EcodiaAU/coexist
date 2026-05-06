@@ -151,7 +151,7 @@ export function useCreateTodo() {
     },
     onSuccess: () => {
       if (isOffline) {
-        toast.info('Todo saved offline — will sync when back online')
+        toast.info('Todo saved offline - will sync when back online')
       }
       queryClient.invalidateQueries({ queryKey: ['leader-todos'] })
     },
@@ -194,7 +194,7 @@ export function useUpdateTodo() {
       )
     },
     onSuccess: () => {
-      if (isOffline) toast.info('Todo update saved offline — will sync when back online')
+      if (isOffline) toast.info('Todo update saved offline - will sync when back online')
     },
     onSettled: () => {
       if (isOffline) return
@@ -250,7 +250,7 @@ export function useToggleTodo() {
       )
     },
     onSuccess: () => {
-      if (isOffline) toast.info('Todo saved offline — will sync when back online')
+      if (isOffline) toast.info('Todo saved offline - will sync when back online')
     },
     onSettled: () => {
       if (isOffline) return
@@ -289,7 +289,7 @@ export function useDeleteTodo() {
       )
     },
     onSuccess: () => {
-      if (isOffline) toast.info('Todo deleted offline — will sync when back online')
+      if (isOffline) toast.info('Todo deleted offline - will sync when back online')
     },
     onSettled: () => {
       if (isOffline) return

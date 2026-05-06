@@ -140,7 +140,7 @@ export default function ContactPage() {
       className="!px-0 bg-white"
       stickyOverlay={<Header title="" back transparent className="collapse-header" />}
     >
-      {/* Hero – layered image parallax */}
+      {/* Hero - layered image parallax */}
       <div className="relative -mt-px">
         <div className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
           {/* Background layer */}

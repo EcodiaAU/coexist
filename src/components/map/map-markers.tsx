@@ -105,7 +105,7 @@ export function useDraggablePin({ map, center, onDragEnd }: DraggablePinProps) {
 
     if (markerRef.current) {
       if (!draggedRef.current) {
-        // External center change (e.g. autocomplete selection) — move the marker.
+        // External center change (e.g. autocomplete selection) - move the marker.
         markerRef.current.setLatLng([center.lat, center.lng])
       }
       draggedRef.current = false

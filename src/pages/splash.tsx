@@ -14,7 +14,7 @@ export default function SplashPage({ onReady }: SplashProps) {
   const [minTimePassed, setMinTimePassed] = useState(false)
   const [dismissing, setDismissing] = useState(false)
 
-  // Minimum display time — short enough that we hand off quickly when auth is ready.
+  // Minimum display time - short enough that we hand off quickly when auth is ready.
   useEffect(() => {
     const timer = setTimeout(() => startTransition(() => setMinTimePassed(true)), 600)
     return () => clearTimeout(timer)

@@ -117,7 +117,7 @@ export function useMapDraw({ map, onAreaChange }: UseMapDrawOptions) {
     }
 
     // _controlCorners is set by Leaflet during initControls, which runs as part of
-    // map initialisation. If it's missing the map isn't ready yet — wait for 'load'.
+    // map initialisation. If it's missing the map isn't ready yet - wait for 'load'.
     if ((m as unknown as { _controlCorners?: unknown })._controlCorners) {
       setup()
     } else {

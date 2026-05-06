@@ -25,7 +25,7 @@ import './styles/globals.css'
 
 // If we got here, the entry bundle (which lazily imports App + every page
 // chunk reference) loaded successfully. That proves we're on a fresh build,
-// so it's safe to release the chunk-reload guard now — before any lazy
+// so it's safe to release the chunk-reload guard now - before any lazy
 // import runs and before App.tsx mounts. Doing it inside App's useEffect
 // (the previous behaviour) was too late: a failed lazy import on a deep
 // route would prevent App from ever mounting, leaving the guard latched

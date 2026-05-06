@@ -31,7 +31,7 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
   const now = new Date().toISOString()
 
   // Resolve via event_hosts so co-hosted events show up in the leader's list
-  // too — not just events where this collective is the primary host. Two-step
+  // too - not just events where this collective is the primary host. Two-step
   // (event_hosts → ids → events) is used instead of an embedded join because
   // PostgREST FK inference through a view isn't reliable for filtering.
   const { data: hostRows } = await supabase

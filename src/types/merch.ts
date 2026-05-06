@@ -1,6 +1,6 @@
 /** Merch store types for Co-Exist */
 
-/** Fixed set of product categories — used in admin dropdown + shop filter pills */
+/** Fixed set of product categories - used in admin dropdown + shop filter pills */
 export const PRODUCT_CATEGORIES = [
   'clothing',
   'accessories',
@@ -86,7 +86,7 @@ export interface Order {
   shipping_cents: number
   discount_cents: number
   total_cents: number
-  /** Legacy DB column – prefer total_cents */
+  /** Legacy DB column - prefer total_cents */
   total?: number
   promo_code_id: string | null
   shipping_address: ShippingAddress
@@ -94,7 +94,7 @@ export interface Order {
   stripe_payment_intent_id: string | null
   created_at: string
   updated_at: string
-  /** Client-side only — set optimistically when a return is requested */
+  /** Client-side only - set optimistically when a return is requested */
   return_requested?: boolean
 }
 

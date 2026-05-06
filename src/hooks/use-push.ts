@@ -53,7 +53,7 @@ async function loadPushPlugin() {
 /*  Token storage (module-level, shared by both hooks)                 */
 /* ------------------------------------------------------------------ */
 
-/** Current device's token — kept in memory so logout can remove just this one */
+/** Current device's token - kept in memory so logout can remove just this one */
 let currentDeviceToken: string | null = null
 
 function getDeviceInfo(): Record<string, string> {
@@ -120,11 +120,11 @@ let registrationInFlight = false
 /**
  * Attempt to get push permission and register with FCM/APNs.
  * Returns true if registration was triggered (token will arrive via listener).
- * Deduplicated — concurrent calls are no-ops.
+ * Deduplicated - concurrent calls are no-ops.
  */
 async function requestAndRegister(plugin: NonNullable<typeof PushNotifications>): Promise<boolean> {
   if (registrationInFlight) {
-    console.info('[push] registration already in flight — skipping')
+    console.info('[push] registration already in flight - skipping')
     return false
   }
   registrationInFlight = true
@@ -146,9 +146,9 @@ async function _doRequestAndRegister(plugin: NonNullable<typeof PushNotification
     permState = 'prompt'
   }
 
-  // If denied, we can't do anything — user must enable in system settings
+  // If denied, we can't do anything - user must enable in system settings
   if (permState === 'denied') {
-    console.warn('[push] permission denied — user must enable in system settings')
+    console.warn('[push] permission denied - user must enable in system settings')
     return false
   }
 
@@ -169,10 +169,10 @@ async function _doRequestAndRegister(plugin: NonNullable<typeof PushNotification
     return false
   }
 
-  // Permission granted — register with FCM/APNs to get a token
+  // Permission granted - register with FCM/APNs to get a token
   try {
     await plugin.register()
-    console.info('[push] register() called — waiting for token via listener')
+    console.info('[push] register() called - waiting for token via listener')
     return true
   } catch (err) {
     console.error('[push] register() failed:', err)
@@ -181,15 +181,15 @@ async function _doRequestAndRegister(plugin: NonNullable<typeof PushNotification
 }
 
 /* ------------------------------------------------------------------ */
-/*  usePushRegistration — mount ONCE at app root (AppShell)            */
+/*  usePushRegistration - mount ONCE at app root (AppShell)            */
 /*                                                                     */
 /*  Handles:                                                           */
-/*    - Requesting permission + registering with FCM/APNs              */
-/*    - Listening for token refresh and persisting to push_tokens      */
-/*    - Deep-link routing when user taps a notification                */
-/*    - Re-registering on app resume (handles token rotation)          */
-/*    - Clearing badge count on foreground                             */
-/*    - Retry on transient failures                                    */
+/* - Requesting permission + registering with FCM/APNs              */
+/* - Listening for token refresh and persisting to push_tokens      */
+/* - Deep-link routing when user taps a notification                */
+/* - Re-registering on app resume (handles token rotation)          */
+/* - Clearing badge count on foreground                             */
+/* - Retry on transient failures                                    */
 /* ------------------------------------------------------------------ */
 
 export function usePushRegistration() {
@@ -220,7 +220,7 @@ export function usePushRegistration() {
 
           // Skip if we already stored this exact token (rapid resume dedup)
           if (tokenRef.current === t.value) {
-            console.info('[push] token unchanged — skipping store')
+            console.info('[push] token unchanged - skipping store')
             return
           }
           tokenRef.current = t.value
@@ -280,7 +280,7 @@ export function usePushRegistration() {
         },
       )
 
-      // Notification tapped — deep link routing + mark in-app notification read
+      // Notification tapped - deep link routing + mark in-app notification read
       const actionListener = await plugin.addListener(
         'pushNotificationActionPerformed',
         async (action: unknown) => {
@@ -312,14 +312,14 @@ export function usePushRegistration() {
               queryClient.invalidateQueries({ queryKey: ['notifications-unread', user!.id] })
             }
           } catch {
-            // Best-effort — don't block navigation on mark-read failure
+            // Best-effort - don't block navigation on mark-read failure
           }
         },
       )
 
       listenersRef.current = [regListener, errListener, receivedListener, actionListener]
 
-      // Register — listeners are already attached so the token callback will fire
+      // Register - listeners are already attached so the token callback will fire
       await requestAndRegister(plugin)
     }
 
@@ -365,9 +365,9 @@ export function usePushRegistration() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  usePush — imperative actions (settings page, logout, dev tools)    */
+/*  usePush - imperative actions (settings page, logout, dev tools)    */
 /*                                                                     */
-/*  NOT responsible for registration side-effects — that's             */
+/*  NOT responsible for registration side-effects - that's             */
 /*  usePushRegistration above. This hook is for explicit user actions. */
 /* ------------------------------------------------------------------ */
 
@@ -386,7 +386,7 @@ export function usePush() {
   const unregister = useCallback(async () => {
     if (!user) return
     if (currentDeviceToken) {
-      // Only remove this device's token — other devices keep theirs
+      // Only remove this device's token - other devices keep theirs
       await removeToken(user.id, currentDeviceToken)
       currentDeviceToken = null
     } else {

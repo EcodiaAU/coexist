@@ -142,7 +142,7 @@ export async function uploadWithProgress({
     xhr.setRequestHeader('Authorization', `Bearer ${token}`)
     xhr.setRequestHeader('x-upsert', 'true')
     xhr.timeout = 120000
-    xhr.addEventListener('timeout', () => reject(new Error('Upload timed out — check your connection and try again.')))
+    xhr.addEventListener('timeout', () => reject(new Error('Upload timed out - check your connection and try again.')))
     xhr.send(file)
   })
 }

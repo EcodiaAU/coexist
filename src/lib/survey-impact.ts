@@ -30,7 +30,7 @@ export async function syncSurveyImpact(
     if (!knownKey) {
       console.warn(
         `[syncSurveyImpact] Question "${q.id}" has impact_metric="${q.impact_metric}" ` +
-        `which is not a builtin metric or known metric def — skipping. ` +
+        `which is not a builtin metric or known metric def - skipping. ` +
         `Check for typos or deleted metrics in the survey builder.`,
       )
       continue
@@ -66,7 +66,7 @@ export async function syncSurveyImpact(
   } = existing ?? ({} as any)
   const existingCustom = (existing?.custom_metrics as Record<string, unknown>) ?? {}
 
-  // Clear legacy notes when real survey data overwrites — otherwise
+  // Clear legacy notes when real survey data overwrites - otherwise
   // the "Legacy import: …" notes cause the row to be excluded from
   // post-baseline impact sums.
   const isLegacyRow = ((existing?.notes as string) ?? '').startsWith('Legacy import')

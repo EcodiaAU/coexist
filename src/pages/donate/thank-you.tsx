@@ -153,7 +153,7 @@ export default function DonateThankYouPage() {
       try {
         await navigator.share({ text, url: 'https://coexistaus.org/donate' })
       } catch (err) {
-        // AbortError = user dismissed the share sheet — silent. Anything else
+        // AbortError = user dismissed the share sheet - silent. Anything else
         // is a real failure and we should fall back to clipboard.
         if (err instanceof Error && err.name === 'AbortError') return
         try {

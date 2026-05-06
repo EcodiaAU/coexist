@@ -20,7 +20,7 @@ interface UseFileUploadReturn {
 }
 
 /**
- * General-purpose file upload (PDFs, docs, images — no compression).
+ * General-purpose file upload (PDFs, docs, images - no compression).
  * Uploads directly to Supabase Storage and returns the public URL.
  */
 export function useFileUpload({

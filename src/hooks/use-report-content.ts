@@ -64,7 +64,7 @@ export function useReportContent() {
     },
     onSuccess: () => {
       if (isOffline) {
-        toast.info('Report saved offline — will be submitted when back online')
+        toast.info('Report saved offline - will be submitted when back online')
         return
       }
       queryClient.invalidateQueries({ queryKey: ['moderation-queue'] })

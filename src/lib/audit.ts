@@ -11,7 +11,7 @@ interface AuditEntry {
 
 /**
  * Log an admin action to the audit_log table.
- * Non-throwing — logs errors to console but never blocks the caller.
+ * Non-throwing - logs errors to console but never blocks the caller.
  */
 export async function logAudit(entry: AuditEntry): Promise<void> {
   try {

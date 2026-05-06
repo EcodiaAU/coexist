@@ -971,12 +971,12 @@ export default function LogImpactPage() {
 
       setSubmitted(true)
     } catch (err) {
-      // Previously this whole block had no catch — a failed upsert or network
+      // Previously this whole block had no catch - a failed upsert or network
       // error silently returned the form with no indication anything was wrong,
       // so leaders would re-submit or assume it saved. Now surface it.
       console.error('Failed to log impact:', err)
       const msg = err instanceof Error ? err.message : 'Failed to save impact'
-      toast.error(`Could not save impact — ${msg}`)
+      toast.error(`Could not save impact - ${msg}`)
     } finally {
       setIsSubmitting(false)
     }

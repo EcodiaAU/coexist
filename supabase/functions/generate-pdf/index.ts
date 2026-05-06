@@ -429,7 +429,7 @@ Deno.serve(async (req: Request) => {
 
     const html = buildHtmlTable(title, headers, rows, dateRange)
 
-    // ---- Return HTML directly — frontend opens a blob URL and prints it ----
+    // ---- Return HTML directly - frontend opens a blob URL and prints it ----
     return new Response(
       JSON.stringify({ html }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

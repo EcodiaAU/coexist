@@ -115,7 +115,7 @@ async function moderateImage(imageUrl: string): Promise<ModerationResult> {
 
 Deno.serve(async (req: Request) => {
   try {
-    // Validate auth — extract user from JWT
+    // Validate auth - extract user from JWT
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401 })

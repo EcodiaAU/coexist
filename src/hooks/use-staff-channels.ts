@@ -44,7 +44,7 @@ export interface ChannelMessageWithSender {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useMyStaffChannels — channels the user is a member of              */
+/*  useMyStaffChannels - channels the user is a member of              */
 /* ------------------------------------------------------------------ */
 
 export function useMyStaffChannels() {
@@ -81,7 +81,7 @@ export function useMyStaffChannels() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useChannelMessages — paginated messages for a channel              */
+/*  useChannelMessages - paginated messages for a channel              */
 /* ------------------------------------------------------------------ */
 
 const PAGE_SIZE = 40
@@ -247,7 +247,7 @@ export function useChannelMessages(channelId: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useSendChannelMessage — send a message to a channel                */
+/*  useSendChannelMessage - send a message to a channel                */
 /* ------------------------------------------------------------------ */
 
 export function useSendChannelMessage() {
@@ -364,7 +364,7 @@ export function useSendChannelMessage() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useDeleteChannelMessage — soft delete (own or moderator)           */
+/*  useDeleteChannelMessage - soft delete (own or moderator)           */
 /* ------------------------------------------------------------------ */
 
 export function useDeleteChannelMessage() {
@@ -405,7 +405,7 @@ export function useDeleteChannelMessage() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  usePinChannelMessage — pin / unpin (moderator)                     */
+/*  usePinChannelMessage - pin / unpin (moderator)                     */
 /* ------------------------------------------------------------------ */
 
 export function usePinChannelMessage() {
@@ -446,7 +446,7 @@ export function usePinChannelMessage() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useChannelUnreadCounts — unread counts per channel                 */
+/*  useChannelUnreadCounts - unread counts per channel                 */
 /* ------------------------------------------------------------------ */
 
 export function useChannelUnreadCounts() {
@@ -516,7 +516,7 @@ export function useChannelUnreadCounts() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  useMarkChannelRead — update read receipt for a channel             */
+/*  useMarkChannelRead - update read receipt for a channel             */
 /* ------------------------------------------------------------------ */
 
 export function useMarkChannelRead() {

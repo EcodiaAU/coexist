@@ -14,7 +14,7 @@ export type RegistrationValidationResult =
  * Validates a user's registration for an event against the database.
  * Returns a discriminated union so callers can handle each outcome.
  *
- * Does NOT perform the check-in itself — that remains the caller's responsibility
+ * Does NOT perform the check-in itself - that remains the caller's responsibility
  * so each context (page vs sheet) can react to the result in its own way.
  */
 export function useCheckInValidation() {

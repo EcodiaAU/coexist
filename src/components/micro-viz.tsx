@@ -2,10 +2,10 @@
  * Micro-visualizations for stat cards.
  *
  * Each metric type gets a display that communicates what the number *means*:
- *   - MiniBar:      horizontal fill bar for quantities with a known max (hours, kg, etc.)
- *   - MiniRing:     small donut for percentages / ratios
- *   - MiniSparkline: tiny line chart for trend data
- *   - DeltaMark:    small +/- pill for changes
+ * - MiniBar:      horizontal fill bar for quantities with a known max (hours, kg, etc.)
+ * - MiniRing:     small donut for percentages / ratios
+ * - MiniSparkline: tiny line chart for trend data
+ * - DeltaMark:    small +/- pill for changes
  */
 
 import { motion, useReducedMotion } from 'framer-motion'

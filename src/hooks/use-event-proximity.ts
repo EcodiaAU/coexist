@@ -65,7 +65,7 @@ const PROXIMITY_RADIUS_M = 500
 /** How often to re-check location (ms) */
 const CHECK_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
 
-/** How far ahead/behind to look for events (ms) — max 30 min before start */
+/** How far ahead/behind to look for events (ms) - max 30 min before start */
 const TIME_WINDOW_MS = 30 * 60 * 1000 // 30 minutes before start, during event
 
 /* ------------------------------------------------------------------ */
@@ -86,7 +86,7 @@ export function useEventProximity(): UseEventProximityReturn {
     setIsChecking(true)
 
     try {
-      // Get current position — use Capacitor plugin on native, web API as fallback
+      // Get current position - use Capacitor plugin on native, web API as fallback
       let position: GeolocationPosition
       if (Capacitor.isNativePlatform()) {
         const { Geolocation } = await import('@capacitor/geolocation')
@@ -119,7 +119,7 @@ export function useEventProximity(): UseEventProximityReturn {
 
           // Phase 2 (warm the GPS for next interval): if coarse accuracy is
           // poor, kick off a high-accuracy fetch in the background. We don't
-          // await it or use the result here — it primes the OS location cache
+          // await it or use the result here - it primes the OS location cache
           // so the next CHECK_INTERVAL_MS tick has a recent precise fix to
           // work with via maximumAge. Dropped silently on failure.
           if (coarseCoords.coords.accuracy > 500) {
@@ -129,7 +129,7 @@ export function useEventProximity(): UseEventProximityReturn {
             }).catch(() => {})
           }
         } catch {
-          // Coarse fix failed — try high-accuracy as last resort with longer timeout
+          // Coarse fix failed - try high-accuracy as last resort with longer timeout
           try {
             const fallbackCoords = await Geolocation.getCurrentPosition({
               enableHighAccuracy: true,
@@ -137,7 +137,7 @@ export function useEventProximity(): UseEventProximityReturn {
             })
             position = fallbackCoords as GeolocationPosition
           } catch {
-            setLocationError("Couldn't get your location — check GPS settings are enabled.")
+            setLocationError("Couldn't get your location - check GPS settings are enabled.")
             setNearbyEvent(null)
             return
           }
@@ -172,11 +172,11 @@ export function useEventProximity(): UseEventProximityReturn {
               })
               position = precise
             } catch {
-              // Use the coarse position — it's better than nothing
+              // Use the coarse position - it's better than nothing
             }
           }
         } catch {
-          // Coarse failed — try high-accuracy as last resort
+          // Coarse failed - try high-accuracy as last resort
           position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               enableHighAccuracy: true,
@@ -262,9 +262,9 @@ export function useEventProximity(): UseEventProximityReturn {
         setLocationError('Location unavailable. Check that location services are enabled.')
       } else if (e?.code === 3) {
         // TIMEOUT
-        setLocationError("Couldn't get your location — check GPS settings are enabled.")
+        setLocationError("Couldn't get your location - check GPS settings are enabled.")
       } else {
-        setLocationError(null) // transient/unknown — don't persist
+        setLocationError(null) // transient/unknown - don't persist
       }
       setNearbyEvent(null)
     } finally {
@@ -300,7 +300,7 @@ export function useEventProximity(): UseEventProximityReturn {
  * Trigger a proximity check-in notification for all registered attendees
  * of an event. Called from the event-day-notify Edge Function.
  *
- * This is the client-side counterpart — it checks if the current user
+ * This is the client-side counterpart - it checks if the current user
  * is near an event and shows a local notification prompt.
  */
 export async function sendLocalCheckInPrompt(eventTitle: string, eventId: string): Promise<void> {

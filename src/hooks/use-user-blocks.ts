@@ -123,7 +123,7 @@ export function useBlockUser() {
     },
     onSuccess: () => {
       if (isOffline) {
-        toast.info('User blocked offline — will sync when back online')
+        toast.info('User blocked offline - will sync when back online')
         return
       }
       queryClient.invalidateQueries({ queryKey: ['blocked-users'] })
@@ -173,7 +173,7 @@ export function useUnblockUser() {
     },
     onSuccess: () => {
       if (isOffline) {
-        toast.info('User unblocked offline — will sync when back online')
+        toast.info('User unblocked offline - will sync when back online')
         return
       }
       queryClient.invalidateQueries({ queryKey: ['blocked-users'] })

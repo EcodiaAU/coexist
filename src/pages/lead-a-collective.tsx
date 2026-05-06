@@ -101,7 +101,7 @@ export default function LeadACollectivePage() {
   const { profile } = useAuth()
   const toast = useToast()
 
-  // Form state – autofill from profile where possible
+  // Form state - autofill from profile where possible
   const [firstName, setFirstName] = useState(profile?.first_name ?? profile?.display_name?.split(' ')[0] ?? '')
   const [lastName, setLastName] = useState(profile?.last_name ?? profile?.display_name?.split(' ').slice(1).join(' ') ?? '')
   const [email, setEmail] = useState(profile?.email ?? '')
@@ -311,7 +311,7 @@ export default function LeadACollectivePage() {
         <WaveTransition fill="fill-primary-50" />
       </div>
 
-      {/* Form. No outer horizontal padding — each section card uses its own
+      {/* Form. No outer horizontal padding - each section card uses its own
           internal padding so we don't double up against the page chrome. */}
       <motion.form
         className="space-y-4 pb-12 pt-5 px-3"

@@ -69,7 +69,7 @@ function getImages(update: AdminUpdate): string[] {
 /*  Render content with clickable links (for preview)                  */
 /* ------------------------------------------------------------------ */
 
-// Module-level /g pattern retains lastIndex across calls — must reset
+// Module-level /g pattern retains lastIndex across calls - must reset
 // before each use or later renders skip matches near the start of the text.
 const LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<]+)/g
 
@@ -201,7 +201,7 @@ function ComposeModal({
   // Previews use object URLs (synchronous) so preview[i] always lines up
   // with selectedFiles[i]. FileReader readAsDataURL is async per file, so a
   // small file could finish ahead of a large one and the two arrays drift
-  // out of order — removing index 0 then removed the wrong preview. Object
+  // out of order - removing index 0 then removed the wrong preview. Object
   // URLs are revoked on per-item removal and on unmount.
   const handleFilesSelected = (files: FileList | null) => {
     if (!files) return

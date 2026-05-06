@@ -140,7 +140,7 @@ export function useProfileStats(userId?: string) {
 
       if (eventIds.length > 0) {
         // User profile: include all rows for attended events regardless of date
-        // (skipBaselineDateFilter=true — user impact is their personal record, not a national aggregate)
+        // (skipBaselineDateFilter=true - user impact is their personal record, not a national aggregate)
         const { rows: impactRows } = await fetchImpactRows({
           eventIds,
           includeLegacy: true,
@@ -167,7 +167,7 @@ export function useProfileStats(userId?: string) {
         wildlifeSightings: totalWildlifeSightings,
         invasiveWeedsPulled: totalInvasiveWeedsPulled,
         coastlineCleanedM: Math.round(totalCoastlineM),
-        /** Activity types attended — used to decide which stats to show even when 0 */
+        /** Activity types attended - used to decide which stats to show even when 0 */
         activityTypeCounts: Object.fromEntries(activityTypeCounts) as Record<string, number>,
       }
     },
@@ -247,7 +247,7 @@ export function useUpdateProfile() {
       if (!isOffline && context?.previous) queryClient.setQueryData(['profile', user?.id], context.previous)
     },
     onSuccess: () => {
-      if (isOffline) toast.info('Profile update saved offline — will sync when back online')
+      if (isOffline) toast.info('Profile update saved offline - will sync when back online')
     },
     onSettled: () => {
       if (isOffline) return

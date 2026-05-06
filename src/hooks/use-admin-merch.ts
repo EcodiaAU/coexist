@@ -116,7 +116,7 @@ export function useUpdateProduct() {
         .select()
       if (error) throw error
       if (!data || data.length === 0) {
-        throw new Error('Update had no effect — check RLS policies')
+        throw new Error('Update had no effect - check RLS policies')
       }
       // Return the mapped product so the cache stays in sync
       return fromDbProduct(data[0])
@@ -279,7 +279,7 @@ export function useRefundOrder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (orderId: string) => {
-      // Mark order as refunded — actual Stripe refund should be processed
+      // Mark order as refunded - actual Stripe refund should be processed
       // via Stripe dashboard. The charge.refunded webhook handles inventory
       // restoration automatically.
       const { error } = await supabase

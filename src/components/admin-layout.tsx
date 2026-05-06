@@ -130,7 +130,7 @@ const DEFAULT_HERO: HeroCfg = { hue: 'from-primary-800 via-primary-900 to-primar
 
 
 /* ------------------------------------------------------------------ */
-/*  Shape formations – unique decorative geometry per page             */
+/*  Shape formations - unique decorative geometry per page             */
 /* ------------------------------------------------------------------ */
 
 type ShapeFormation = Array<{ className: string }>

@@ -174,12 +174,12 @@ export default function SettingsPrivacyPage() {
       if (!user || !hydrated) return
       const prev = profileVisible
       setProfileVisible(value)
-      // Merge-write via helper — never touches fields owned by other pages.
+      // Merge-write via helper - never touches fields owned by other pages.
       patchNotificationPrefs(user.id, { profile_visible: value }).then(({ error }) => {
         if (error) {
           console.error('Failed to save profile visibility:', error)
           setProfileVisible(prev)
-          toast.error('Could not save — try again')
+          toast.error('Could not save - try again')
         }
       })
     },
@@ -199,7 +199,7 @@ export default function SettingsPrivacyPage() {
           if (error) {
             console.error('Failed to save marketing opt-in:', error)
             setMarketingOptIn(prev)
-            toast.error('Could not save — try again')
+            toast.error('Could not save - try again')
           }
         })
     },

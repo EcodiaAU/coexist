@@ -26,7 +26,7 @@ export interface MapMarker {
 export const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 export const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 
-/** Centre of Australia — sensible fallback instead of defaulting to Sydney */
+/** Centre of Australia - sensible fallback instead of defaulting to Sydney */
 export const DEFAULT_CENTER: MapCenter = { lat: -25.0, lng: 134.0 }
 export const DEFAULT_ZOOM_FALLBACK = 4 // zoom out to show all of Australia
 

@@ -1,11 +1,11 @@
 /**
- * Shared animation variants + helpers — used app-wide.
+ * Shared animation variants + helpers - used app-wide.
  *
  * Goals:
- *  - GPU-composited only (transform + opacity) — no layout-triggering properties
- *  - Silky 60 fps with short, optimistic durations
- *  - Respect prefers-reduced-motion via `useReducedMotion`
- *  - Single source of truth so every page animates consistently
+ * - GPU-composited only (transform + opacity) - no layout-triggering properties
+ * - Silky 60 fps with short, optimistic durations
+ * - Respect prefers-reduced-motion via `useReducedMotion`
+ * - Single source of truth so every page animates consistently
  */
 
 import type { Variants, Transition } from 'framer-motion'
@@ -14,7 +14,7 @@ import type { Variants, Transition } from 'framer-motion'
 /*  Reusable variant factories                                         */
 /* ------------------------------------------------------------------ */
 
-/** Container stagger — use on the outer wrapper, pairs with `fadeUp`. */
+/** Container stagger - use on the outer wrapper, pairs with `fadeUp`. */
 export const stagger = (gap = 0.04): Variants => ({
   hidden: {},
   visible: { transition: { staggerChildren: gap } },
@@ -28,7 +28,7 @@ export const adminStagger: Variants = {
 
 /**
  * Fade-up child variant.
- * Uses `translate3d` via framer-motion's `y` — stays on the compositor.
+ * Uses `translate3d` via framer-motion's `y` - stays on the compositor.
  */
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 12 },

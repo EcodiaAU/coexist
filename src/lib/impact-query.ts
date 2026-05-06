@@ -2,7 +2,7 @@
  * Canonical impact data fetcher.
  *
  * Single source of truth for all event_impact queries across the app.
- * Every dashboard, hook, and page MUST go through fetchImpactRows() —
+ * Every dashboard, hook, and page MUST go through fetchImpactRows() - 
  * never query event_impact directly for aggregation purposes.
  *
  * Rules enforced here (and nowhere else):
@@ -12,7 +12,7 @@
  *     excluded from live queries (they are pre-baseline attendance records).
  *     Pass includeLegacy=true only when a collective needs all-time totals.
  *  3. Scope: collective and user scopes always use a two-step event-IDs-first
- *     approach — embedded PostgREST join filters are unreliable for scoping.
+ *     approach - embedded PostgREST join filters are unreliable for scoping.
  *  4. Baseline constants: defined once here, re-exported for all consumers.
  */
 
@@ -20,7 +20,7 @@ import { supabase } from '@/lib/supabase'
 import { IMPACT_SELECT_COLUMNS, type EventHostShare } from '@/lib/impact-metrics'
 
 /* ------------------------------------------------------------------ */
-/*  Baseline constants — single source of truth                        */
+/*  Baseline constants - single source of truth                        */
 /* ------------------------------------------------------------------ */
 
 export const IMPACT_BASELINE_DATE      = '2026-01-01'
@@ -47,7 +47,7 @@ export interface ImpactScope {
   /**
    * Include legacy import rows (notes LIKE 'Legacy import:%').
    * Only set true for collective all-time queries that need pre-2026 attendance.
-   * National queries never include legacy rows — the baseline constants cover them.
+   * National queries never include legacy rows - the baseline constants cover them.
    */
   includeLegacy?: boolean
   /**
@@ -66,7 +66,7 @@ export type ImpactRow = Record<string, unknown>
 export interface FetchImpactResult {
   /** Live (non-legacy) rows from post-baseline events */
   rows: ImpactRow[]
-  /** Legacy import rows — only populated when includeLegacy=true */
+  /** Legacy import rows - only populated when includeLegacy=true */
   legacyRows: ImpactRow[]
   /** All event IDs that matched the scope (post-baseline) */
   eventIds: string[]
@@ -76,7 +76,7 @@ export interface FetchImpactResult {
    * Per-event host share, populated when scope.collectiveId is set. Use with
    * sumMetricWeighted() to attribute multi-host events fairly so per-collective
    * totals add to the national total without double counting. National scope
-   * (no collectiveId) returns an empty map — sums are unweighted.
+   * (no collectiveId) returns an empty map - sums are unweighted.
    */
   shareByEventId: Map<string, EventHostShare>
 }
@@ -88,8 +88,8 @@ export interface FetchImpactResult {
 /**
  * Fetch impact rows for the given scope.
  *
- * Step 1 — resolve event IDs for the scope (if needed).
- * Step 2 — fetch event_impact rows scoped to those IDs.
+ * Step 1 - resolve event IDs for the scope (if needed).
+ * Step 2 - fetch event_impact rows scoped to those IDs.
  *
  * Returns live rows and optionally legacy rows separately so callers
  * can combine them or keep them apart as needed.
@@ -113,7 +113,7 @@ export async function fetchImpactRows(scope: ImpactScope = {}): Promise<FetchImp
   // so the baseline date floor must not apply to the ID resolution query.
   let effectiveStart: string | null
   if (includeLegacy) {
-    // All-time collective view: no lower bound — pick up everything
+    // All-time collective view: no lower bound - pick up everything
     effectiveStart = null
   } else if (skipBaselineDateFilter) {
     effectiveStart = null
@@ -216,7 +216,7 @@ export async function fetchImpactRows(scope: ImpactScope = {}): Promise<FetchImp
       eventCount = eventsRes.count ?? 0
     }
   } else {
-    // National / global — no event ID pre-filter needed; date filter applied via
+    // National / global - no event ID pre-filter needed; date filter applied via
     // a separate events query in step 2 approach. We still need IDs to avoid
     // pulling 999_backfill rows. Fetch all post-baseline event IDs.
     const eventsRes = await supabase

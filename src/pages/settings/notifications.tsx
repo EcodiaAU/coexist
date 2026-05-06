@@ -98,7 +98,7 @@ export default function SettingsNotificationsPage() {
   // Notification preferences
   // IMPORTANT: hydrate-before-write. Writes are gated on `hydrated` so we can
   // never persist a default value before loading the real one. Also: this page
-  // NEVER writes profile_visible — that's owned by /settings/privacy and our
+  // NEVER writes profile_visible - that's owned by /settings/privacy and our
   // merge-write helper preserves it regardless of what lives in local state.
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFERENCES)
   const [soundEnabled, setSoundEnabled] = useState(true)
@@ -127,7 +127,7 @@ export default function SettingsNotificationsPage() {
         const updated = { ...prev, [key]: value }
         const rollback = prev
         // Merge-write only the single key the user just changed.
-        // DO NOT include sound_enabled here — that's owned by handleSoundToggle,
+        // DO NOT include sound_enabled here - that's owned by handleSoundToggle,
         // and including it means a stale soundEnabled closure could overwrite a
         // more recent value written by the sound toggle.
         patchNotificationPrefs(user.id, { [key]: value }).then(({ error }) => {
@@ -228,7 +228,7 @@ export default function SettingsNotificationsPage() {
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <SectionHeader label="Sound & Schedule" />
             <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
-              {/* Outer is a div, not a button — can't nest <button> inside <button>
+              {/* Outer is a div, not a button - can't nest <button> inside <button>
                   (the Toggle is itself a button). Row remains tappable via its own
                   onClick; the Toggle's click is stopped from bubbling so a tap on
                   the switch doesn't fire the row handler too. */}

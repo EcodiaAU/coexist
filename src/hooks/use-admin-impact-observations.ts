@@ -97,7 +97,7 @@ function getMetricValue(row: Record<string, unknown>, key: string): number | nul
     const v = row[key]
     return v != null ? Number(v) || 0 : null
   }
-  // Custom metric — inside custom_metrics jsonb
+  // Custom metric - inside custom_metrics jsonb
   const cm = row.custom_metrics as Record<string, unknown> | null
   const v = cm?.[key]
   return v != null ? Number(v) || 0 : null
@@ -140,12 +140,12 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       // BUT: for the national all-time view, the BASELINE_* constants already
       // represent pre-2026 history. If we also pulled in legacy rows there,
       // pre-2026 contributions would be counted twice (once from the constants,
-      // once from the legacy row sum) — this was the /admin/impact doubling bug.
+      // once from the legacy row sum) - this was the /admin/impact doubling bug.
       // Only include legacy rows when the view is scoped to a specific collective
       // or activity type (where baselines aren't added).
       //
       // For scoped date ranges (week/month/quarter/year), we never want
-      // legacy pre-2026 data — those represent rolled-up past contributions
+      // legacy pre-2026 data - those represent rolled-up past contributions
       // and don't make sense in a "this week" view.
       const isNationalAllTime = isAllTime && !filters.collectiveId && !filters.activityType
       const includeLegacy = isAllTime && !isNationalAllTime
@@ -157,13 +157,13 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       //
       // Previously this query used embedded PostgREST filters
       // (`events!inner(...).eq('events.collective_id', id)`). The canonical
-      // fetchImpactRows explicitly avoids that pattern — see impact-query.ts
+      // fetchImpactRows explicitly avoids that pattern - see impact-query.ts
       // doc comment: "embedded PostgREST join filters are unreliable for
       // scoping". This was the root cause of /admin/impact showing unfiltered
       // (effectively national) numbers when a collective was selected.
       //
-      // The two-step approach — filter events first, then fetch impact rows
-      // scoped to those IDs — is reliable and matches the rest of the codebase.
+      // The two-step approach - filter events first, then fetch impact rows
+      // scoped to those IDs - is reliable and matches the rest of the codebase.
       let eventsQuery = supabase
         .from('events')
         .select('id, title, date_start, date_end, collective_id, activity_type, created_by, collectives(name)')
@@ -184,7 +184,7 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       // ── Step 2: fetch impact rows for those event IDs (chunked) ──
       //
       // When includeLegacy is true, we make a second pass per chunk that
-      // fetches ONLY legacy rows (notes LIKE 'Legacy import:%') — these
+      // fetches ONLY legacy rows (notes LIKE 'Legacy import:%') - these
       // carry pre-2026 historical attendance/metrics for the events in
       // scope (typically backfill events attached to a collective).
       type ImpactRowRaw = Record<string, unknown> & { event_id: string }
@@ -238,7 +238,7 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       const filtered = searchLower
         ? rawRows.filter((r) => r.events.title.toLowerCase().includes(searchLower))
         : rawRows
-      // Apply the same title search to legacy rows — otherwise summary totals
+      // Apply the same title search to legacy rows - otherwise summary totals
       // diverge from the displayed row list when the user searches.
       const filteredLegacy = searchLower
         ? legacyRawRows.filter((r) => r.events.title.toLowerCase().includes(searchLower))
@@ -280,19 +280,19 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
         }
       })
 
-      // Summary — sum from the returned rows (live + legacy where applicable).
+      // Summary - sum from the returned rows (live + legacy where applicable).
       //
       // Baseline handling:
       // - Global all-time view (no collective/activity filter): add national
       //   baseline constants (pre-2026 totals that weren't imported as rows).
       // - Collective all-time view: do NOT add baseline constants (those are
-      //   national-scope historical totals, not any single collective's) —
+      //   national-scope historical totals, not any single collective's) - 
       //   instead the legacy import rows we fetched above cover the
       //   pre-2026 history for that collective specifically.
       const showNationalBaseline = isAllTime && !filters.collectiveId && !filters.activityType
 
       // Combined source for metric summation (live + legacy when included).
-      // Uses filteredLegacy so a title search narrows BOTH lists in lockstep —
+      // Uses filteredLegacy so a title search narrows BOTH lists in lockstep - 
       // otherwise summary totals diverge from the displayed rows.
       const summableRows: Record<string, unknown>[] = [
         ...(filtered as unknown as Record<string, unknown>[]),
@@ -315,7 +315,7 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       const liveAttendeeSum = Math.round(sumMetric(filtered as unknown as Record<string, unknown>[], 'attendees'))
       let legacyAttendeeSum = 0
       for (const r of filteredLegacy) {
-        // Don't use `||` — a legitimate 0 attendees would fall through to the
+        // Don't use `||` - a legitimate 0 attendees would fall through to the
         // notes parse. Prefer explicit column, fall back to notes only if null.
         const att = r.attendees != null
           ? Number(r.attendees) || 0
@@ -336,7 +336,7 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
         metrics: summaryMetrics,
       }
 
-      // Collective breakdown — fold both live event rows and legacy imports.
+      // Collective breakdown - fold both live event rows and legacy imports.
       // Legacy rows are per-collective historical aggregates attached to
       // backfill events; on an all-time view they should be visible in the
       // breakdown so collectives with pre-2026 history aren't under-counted.
@@ -365,7 +365,7 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
           })
         }
       }
-      // Fold legacy rows into the breakdown — don't bump eventCount (they
+      // Fold legacy rows into the breakdown - don't bump eventCount (they
       // represent rolled-up history, not distinct events), but do add their
       // metrics/attendees/hours to the right collective bucket.
       for (const r of filteredLegacy) {

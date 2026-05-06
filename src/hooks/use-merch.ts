@@ -148,7 +148,7 @@ export async function validatePromoCode(code: string) {
   if (data.valid_from && new Date(data.valid_from) > now) return { valid: false, promo: null }
   if (data.max_uses && (data.uses_count ?? 0) >= data.max_uses) return { valid: false, promo: null }
 
-  // Map DB row directly — field names now match the PromoCode interface
+  // Map DB row directly - field names now match the PromoCode interface
   const promo: import('@/types/merch').PromoCode = {
     id: data.id,
     code: data.code,

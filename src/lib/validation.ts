@@ -198,7 +198,7 @@ export function validate<T>(schema: z.ZodSchema<T>, data: unknown): T {
   return schema.parse(data)
 }
 
-/** Validate without throwing — returns { success, data, error } */
+/** Validate without throwing - returns { success, data, error } */
 export function safeValidate<T>(schema: z.ZodSchema<T>, data: unknown) {
   const result = schema.safeParse(data)
   if (result.success) {

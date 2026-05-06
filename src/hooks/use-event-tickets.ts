@@ -271,7 +271,7 @@ export function useTicketCheckIn() {
       if (!ticket) throw new Error('Ticket not found. Check the code and try again.')
       if (ticket.event_id !== eventId) throw new Error('This ticket is for a different event.')
       if (ticket.status === 'checked_in') throw new Error('Already checked in.')
-      if (ticket.status !== 'confirmed') throw new Error(`Ticket status is "${ticket.status}" — cannot check in.`)
+      if (ticket.status !== 'confirmed') throw new Error(`Ticket status is "${ticket.status}" - cannot check in.`)
 
       // Update ticket status
       const { error: updateErr } = await supabase

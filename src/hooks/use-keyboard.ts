@@ -32,7 +32,7 @@ function scrollFocusedIntoView(delay = 300) {
   // Use setTimeout to let the WebView body resize settle before scrolling.
   // requestAnimationFrame alone fires before Capacitor's body resize completes.
   setTimeout(() => {
-    // Re-check — focus may have moved during the delay
+    // Re-check - focus may have moved during the delay
     const current = document.activeElement
     if (!isTextInput(current)) return
     // 'center' keeps the field visible in the middle of the viewport above the
@@ -65,7 +65,7 @@ export function useKeyboard() {
       keyboardVisible = false
     }
 
-    // Use keyboardDidShow for the scroll — by this point the body
+    // Use keyboardDidShow for the scroll - by this point the body
     // resize has completed and scrollIntoView targets the right position.
     const showListener = Keyboard.addListener('keyboardDidShow', onKeyboardShow)
     const hideListener = Keyboard.addListener('keyboardDidHide', onKeyboardHide)

@@ -165,7 +165,7 @@ export function useUnreadUpdateCount() {
     queryFn: async () => {
       if (!user) return 0
 
-      // Fetch all announcement IDs (lightweight — id + audience fields only)
+      // Fetch all announcement IDs (lightweight - id + audience fields only)
       const { data: announcements } = await supabase
         .from('updates')
         .select('id, target_audience, target_collective_id')

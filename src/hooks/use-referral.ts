@@ -35,7 +35,7 @@ export function useReferralCode() {
         .from('referral_codes')
         .insert({ user_id: user.id, code })
       if (error) {
-        // If unique constraint on user_id, code already exists — fetch it
+        // If unique constraint on user_id, code already exists - fetch it
         if (error.code === '23505') {
           const { data } = await supabase
             .from('referral_codes')

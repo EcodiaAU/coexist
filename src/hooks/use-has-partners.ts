@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
-/** Lightweight check — returns true when at least one organisation exists. */
+/** Lightweight check - returns true when at least one organisation exists. */
 export function useHasPartners() {
   const { data: hasPartners = false, isLoading } = useQuery({
     queryKey: ['has-partners'],

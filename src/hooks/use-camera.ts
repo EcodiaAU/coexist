@@ -107,7 +107,7 @@ export function useCamera(): UseCameraReturn {
         const msg = e instanceof Error ? e.message : 'Camera error'
         const name = e instanceof Error ? e.name : ''
 
-        // User cancelled — not an error
+        // User cancelled - not an error
         if (msg.includes('cancelled') || msg.includes('User cancelled')) {
           return null
         }
@@ -118,7 +118,7 @@ export function useCamera(): UseCameraReturn {
           return null
         }
 
-        // SecurityError — camera blocked by browser policy
+        // SecurityError - camera blocked by browser policy
         if (name === 'NotAllowedError' || name === 'SecurityError') {
           setError('Camera access was blocked. Please allow camera access in your browser or device settings.')
           return null

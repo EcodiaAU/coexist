@@ -51,7 +51,7 @@ export interface AdminCollectiveDetail extends Collective {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Collectives list (admin view — includes archived)                  */
+/*  Collectives list (admin view - includes archived)                  */
 /* ------------------------------------------------------------------ */
 
 export function useAdminCollectives(filters: {
@@ -154,7 +154,7 @@ export function useAdminCollectiveDetail(collectiveId: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Members list (admin — includes ALL statuses)                       */
+/*  Members list (admin - includes ALL statuses)                       */
 /* ------------------------------------------------------------------ */
 
 export function useAdminCollectiveMembers(collectiveId: string | undefined, statusFilter: 'active' | 'all' = 'active') {
@@ -410,7 +410,7 @@ export function useArchiveCollective() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Delete collective (super admin only — hard delete)                 */
+/*  Delete collective (super admin only - hard delete)                 */
 /* ------------------------------------------------------------------ */
 
 export function useDeleteCollective() {
@@ -545,7 +545,7 @@ export function useAdminRestoreMember() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Add member (admin — can add any user to any collective)            */
+/*  Add member (admin - can add any user to any collective)            */
 /* ------------------------------------------------------------------ */
 
 export function useAdminAddMember() {

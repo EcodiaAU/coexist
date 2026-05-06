@@ -32,7 +32,7 @@ export default defineConfig({
       external: ['@capacitor-mlkit/barcode-scanning', 'posthog-js'],
       output: {
         manualChunks(id) {
-          // Admin pages — only downloaded by staff, not participants
+          // Admin pages - only downloaded by staff, not participants
           if (id.includes('/pages/admin/')) return 'admin'
           if (id.includes('react-dom') || id.includes('react-router')) return 'vendor'
           if (id.includes('@supabase')) return 'supabase'

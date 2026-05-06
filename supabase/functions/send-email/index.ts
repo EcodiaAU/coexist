@@ -98,7 +98,7 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
   payment_failed: {
     category: 'transactional',
     description: 'Recurring payment failed. Data: { name, amount, update_url }',
-    subject: () => 'Payment failed — action needed',
+    subject: () => 'Payment failed - action needed',
   },
   subscription_cancelled: {
     category: 'transactional',
@@ -185,7 +185,7 @@ const C = {
   success: '#869e62',
 }
 
-/** Outer email shell — logo header, gradient banner, content area, footer */
+/** Outer email shell - logo header, gradient banner, content area, footer */
 function emailShell(opts: {
   heroTitle: string
   heroSubtitle?: string
@@ -316,11 +316,11 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     heroSubtitle: 'You\'re part of the movement now.',
     heroEmoji: '\u{1F331}',
     body: greeting(d.name) +
-      p('Thanks for joining Co-Exist — a youth-led conservation community making a real difference across Australia.') +
+      p('Thanks for joining Co-Exist - a youth-led conservation community making a real difference across Australia.') +
       p('Here\'s how to get started:') +
       `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
         <tr><td style="padding:8px 0;font-size:15px;color:${C.text};line-height:1.6;">\u{1F50D} &nbsp;<strong>Find a Collective</strong> near you and join your local crew</td></tr>
-        <tr><td style="padding:8px 0;font-size:15px;color:${C.text};line-height:1.6;">\u{1F4C5} &nbsp;<strong>Register for an event</strong> — beach clean-ups, tree plantings, habitat restoration</td></tr>
+        <tr><td style="padding:8px 0;font-size:15px;color:${C.text};line-height:1.6;">\u{1F4C5} &nbsp;<strong>Register for an event</strong> - beach clean-ups, tree plantings, habitat restoration</td></tr>
         <tr><td style="padding:8px 0;font-size:15px;color:${C.text};line-height:1.6;">\u{1F3C5} &nbsp;<strong>Earn badges</strong> and level up as you contribute to real conservation impact</td></tr>
       </table>`,
     footerCta: { label: 'Open the App', url: d.app_url as string || APP_URL },
@@ -346,7 +346,7 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     heroSubtitle: d.event_title as string,
     heroEmoji: '\u{23F0}',
     body: greeting(d.name) +
-      p(`Just a heads up — <strong>${d.event_title}</strong> is happening ${d.time_until || 'soon'}.`) +
+      p(`Just a heads up - <strong>${d.event_title}</strong> is happening ${d.time_until || 'soon'}.`) +
       infoCard([
         ['Event', d.event_title],
         ['When', d.event_date],
@@ -382,7 +382,7 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     heroSubtitle: 'A spot opened up just for you.',
     heroEmoji: '\u{1F389}',
     body: greeting(d.name) +
-      p(`Great news — a spot has opened up for <strong>${d.event_title}</strong>!`) +
+      p(`Great news - a spot has opened up for <strong>${d.event_title}</strong>!`) +
       infoCard([
         ['Event', d.event_title],
         ['Date', d.event_date],
@@ -468,7 +468,7 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     heroSubtitle: 'We\'ll miss your support.',
     heroEmoji: '\u{1F49B}',
     body: greeting(d.name) +
-      p('Your recurring donation has been cancelled. Thank you for the support you\'ve given — every contribution made a real impact.') +
+      p('Your recurring donation has been cancelled. Thank you for the support you\'ve given - every contribution made a real impact.') +
       p('If you\'d ever like to support us again, even a one-time donation makes a difference.'),
     footerCta: { label: 'Make a Donation', url: d.donate_url as string || `${APP_URL}/donate` },
   }),
@@ -528,7 +528,7 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
           ${statBlock(d.rubbish_kg, 'kg Rubbish', '\u{267B}\u{FE0F}')}
         </tr>
       </table>` +
-      p('Every event, every hour, every seedling — it all adds up. Thank you for showing up.'),
+      p('Every event, every hour, every seedling - it all adds up. Thank you for showing up.'),
     footerCta: { label: 'View Full Stats', url: `${APP_URL}/profile` },
   }),
 

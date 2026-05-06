@@ -304,7 +304,7 @@ if (unmatchedCollectives.size > 0) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Generate SQL — individual INSERT statements with subqueries        */
+/*  Generate SQL - individual INSERT statements with subqueries        */
 /* ------------------------------------------------------------------ */
 
 console.log('\nGenerating SQL migration...')
@@ -342,7 +342,7 @@ lines.push(`  ORDER BY p.created_at`)
 lines.push(`  LIMIT 1;`)
 lines.push(``)
 lines.push(`IF _user_id IS NULL THEN`)
-lines.push(`  RAISE EXCEPTION 'No super_admin user found — cannot attribute legacy imports';`)
+lines.push(`  RAISE EXCEPTION 'No super_admin user found - cannot attribute legacy imports';`)
 lines.push(`END IF;`)
 lines.push(``)
 

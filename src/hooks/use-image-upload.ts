@@ -112,7 +112,7 @@ export function useImageUpload({
         if (outcome.status === 'fulfilled') {
           results.push(outcome.value)
         } else {
-          // Previously failed uploads were silently dropped — the caller got
+          // Previously failed uploads were silently dropped - the caller got
           // back fewer results with no way to detect that photos failed.
           // Now they surface in failedUploads and can be retried.
           const msg = outcome.reason instanceof Error ? outcome.reason.message : 'Upload failed'

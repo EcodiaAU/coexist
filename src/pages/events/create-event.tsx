@@ -1597,7 +1597,7 @@ export default function CreateEventPage() {
   // No DB row is inserted until the user hits Publish.
   //
   // We track *every* source ID that has been prefilled in this component
-  // instance — not just the most recent one. The wizard lives inside
+  // instance - not just the most recent one. The wizard lives inside
   // KeepAlive's frozen-location cache, so even after we navigate away
   // post-publish, useSearchParams() can keep returning the same ?from=
   // value. Without a per-id ledger, resetting state post-publish would
@@ -1759,7 +1759,7 @@ export default function CreateEventPage() {
           external_registration_url: form.fields.external_registration_url || null,
           checkin_window_minutes: extra.checkin_window_minutes,
           // Cast keeps the literal type when this object is reused below for
-          // recurring-event fan-out — without it the spread loses contextual
+          // recurring-event fan-out - without it the spread loses contextual
           // narrowing and 'status' widens to plain `string`.
           status: (isDraft ? 'draft' : 'published') as Database['public']['Enums']['event_status'],
           series_id: seriesId,
@@ -1904,7 +1904,7 @@ export default function CreateEventPage() {
         // page, so without an explicit reset the next visit (e.g. creating a
         // second event) would reopen the wizard on the last step with the
         // previous event's details still prefilled. We DON'T clear
-        // prefilledIdsRef — keeping the source id in the ledger prevents the
+        // prefilledIdsRef - keeping the source id in the ledger prevents the
         // prefill effect from re-firing on the next render and dragging the
         // user back into the wizard with the just-published event prefilled
         // (the cached frozen URL still carries the ?from= we already used).

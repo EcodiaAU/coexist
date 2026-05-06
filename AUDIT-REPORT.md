@@ -1,9 +1,9 @@
-# Co-Exist App — Full Audit Report
+# Co-Exist App - Full Audit Report
 
 **Date:** 2026-04-11
 **Auditor:** EcodiaOS
 **Scope:** Schema, data integrity, UI consistency, role flows, error states, performance, polish
-**Status:** COMPLETE — 5 phases executed
+**Status:** COMPLETE - 5 phases executed
 
 ---
 
@@ -40,7 +40,7 @@
 - Added `--color-surface-warm` to theme for auth page backgrounds
 
 ### Still Open (require schema/infrastructure changes)
-These issues from Phase 1 require database migrations or credential rotation — outside the scope of frontend code fixes:
+These issues from Phase 1 require database migrations or credential rotation - outside the scope of frontend code fixes:
 - **C1**: Credential rotation + git history scrub (.env.development)
 - **C2**: Race condition in impact logging (needs DB transaction/upsert RPC)
 - **C6**: Hardcoded seed admin UUID (needs schema change: is_legacy_import flag)
@@ -75,7 +75,7 @@ These issues from Phase 1 require database migrations or credential rotation —
 
 ### C1. `.env.development` committed to git with real credentials
 - **File:** `.env.development` (tracked in git despite `.gitignore` rule)
-- **What's wrong:** Contains real Supabase anon key, database password (`pBLr9h1vZe2cEfVx`), Firebase service account JSON with private key, Resend API key, and Stripe test keys — all in plaintext, all in git history.
+- **What's wrong:** Contains real Supabase anon key, database password (`pBLr9h1vZe2cEfVx`), Firebase service account JSON with private key, Resend API key, and Stripe test keys - all in plaintext, all in git history.
 - **Fix:** Rotate ALL exposed credentials immediately. Remove file from git tracking with `git rm --cached .env.development`. Use `git filter-branch` or `bfg` to scrub from history. Keep only `.env.example` in version control.
 
 ### C2. Race condition in impact logging (concurrent leader writes)
@@ -119,12 +119,12 @@ These issues from Phase 1 require database migrations or credential rotation —
 
 ### H3. No CHECK constraint on `challenges.end_date > start_date`
 - **Schema:** `challenges` table
-- **What's wrong:** Same as H2 but for challenges. Additionally, both `status` (enum) and `is_active` (boolean) columns exist — unclear which is authoritative.
+- **What's wrong:** Same as H2 but for challenges. Additionally, both `status` (enum) and `is_active` (boolean) columns exist - unclear which is authoritative.
 - **Fix:** Add date CHECK constraint. Drop `is_active` column and use `status` exclusively. Migrate any code referencing `is_active`.
 
 ### H4. `content_reports.content_id` has no FK constraint
 - **Schema:** `content_reports` table
-- **What's wrong:** `content_id` is a UUID that can reference posts, comments, photos, or chat messages — but has no FK constraint. If the referenced content is deleted, the report points to nothing. Moderators reviewing reports would see broken references.
+- **What's wrong:** `content_id` is a UUID that can reference posts, comments, photos, or chat messages - but has no FK constraint. If the referenced content is deleted, the report points to nothing. Moderators reviewing reports would see broken references.
 - **Fix:** This is a polymorphic FK pattern. Options: (a) add separate nullable FK columns for each content type, or (b) add a trigger that validates existence on insert, or (c) accept the limitation and handle missing content gracefully in the moderation UI.
 
 ### H5. `chat_messages.reply_to_id` can cross collective boundaries
@@ -139,7 +139,7 @@ These issues from Phase 1 require database migrations or credential rotation —
 
 ### H7. Dual amount columns in donations and merch
 - **Schema:** `donations` (amount + amount_cents), `merch_products` (price + base_price_cents), `merch_orders` (total + total_cents)
-- **What's wrong:** Two representations of the same value exist. If one is updated without the other, they desync. The CLAUDE.md for the parent business says "All financials in AUD integer cents" — the decimal `amount`/`price`/`total` columns contradict this.
+- **What's wrong:** Two representations of the same value exist. If one is updated without the other, they desync. The CLAUDE.md for the parent business says "All financials in AUD integer cents" - the decimal `amount`/`price`/`total` columns contradict this.
 - **Fix:** Deprecate the decimal columns. Migrate all code to use `_cents` columns exclusively. Drop decimal columns after migration.
 
 ### H8. `event_tickets.quantity` has no CHECK > 0
@@ -185,7 +185,7 @@ These issues from Phase 1 require database migrations or credential rotation —
 
 ### M4. `promo_codes.code` is case-sensitive UNIQUE
 - **Schema:** `promo_codes` table
-- **What's wrong:** Users might enter "SAVE10" and "save10" — both would be stored as different codes. Use `UNIQUE(LOWER(code))`.
+- **What's wrong:** Users might enter "SAVE10" and "save10" - both would be stored as different codes. Use `UNIQUE(LOWER(code))`.
 
 ### M5. Deprecated tables still in schema
 - **Tables:** `badges`, `user_badges` (dropped in migration 017, recreated in 047), `product_reviews` (dropped in 050), `post_event_survey_*` tables
@@ -201,7 +201,7 @@ These issues from Phase 1 require database migrations or credential rotation —
 
 ### M8. `task_templates` missing mutual exclusion CHECK
 - **Schema:** `task_templates` table
-- **What's wrong:** Should have exactly one of `day_of_week`, `day_of_month`, or `event_offset_days` set for the schedule type. No CHECK enforces this — a template could have conflicting schedule data.
+- **What's wrong:** Should have exactly one of `day_of_week`, `day_of_month`, or `event_offset_days` set for the schedule type. No CHECK enforces this - a template could have conflicting schedule data.
 
 ### M9. Offline sync null handling inconsistency
 - **File:** `src/lib/offline-sync.ts:256, 297, 320, 456, 557, 642, 817`
@@ -241,7 +241,7 @@ These issues from Phase 1 require database migrations or credential rotation —
 
 ### M18. `post_comments` has no `reply_to_id` for nested threading
 - **Schema:** `post_comments` table
-- **What's wrong:** Comments are flat. No way to thread replies. `is_deleted` is boolean, not timestamp — can't track when deletion occurred.
+- **What's wrong:** Comments are flat. No way to thread replies. `is_deleted` is boolean, not timestamp - can't track when deletion occurred.
 
 ---
 
@@ -249,7 +249,7 @@ These issues from Phase 1 require database migrations or credential rotation —
 
 ### L1. `email_reminders_sent` has RLS with no user policies (intentional)
 - **Schema:** `email_reminders_sent` table
-- **What's wrong:** Nothing — by design. Service-role-only table for cron idempotency. Documented.
+- **What's wrong:** Nothing - by design. Service-role-only table for cron idempotency. Documented.
 
 ### L2. Dev-tools page has hardcoded collective UUID
 - **File:** `src/pages/admin/dev-tools.tsx:78`
@@ -264,8 +264,8 @@ These issues from Phase 1 require database migrations or credential rotation —
 - **What's wrong:** `test@example.com` in skipped test. Not deployed, not a risk.
 
 ### L5. Real developer email in `.env.development`
-- **File:** `.env.development:6` — `VITE_DEV_EMAILS=tate@ecodia.au`
-- **What's wrong:** Minor — developer email exposed. Not a security risk but adds noise.
+- **File:** `.env.development:6` - `VITE_DEV_EMAILS=tate@ecodia.au`
+- **What's wrong:** Minor - developer email exposed. Not a security risk but adds noise.
 
 ### L6. Console.error statements in auth hook
 - **File:** `src/hooks/use-auth.ts:26, 176-183`
@@ -289,19 +289,19 @@ These issues from Phase 1 require database migrations or credential rotation —
 
 ### L11. Account deletion page query unhandled
 - **File:** `src/pages/public/account-deletion.tsx:25`
-- **What's wrong:** Minor — public-facing deletion request page query doesn't check error.
+- **What's wrong:** Minor - public-facing deletion request page query doesn't check error.
 
 ---
 
 ## RLS STATUS
 
-**Coverage: 100%** — All 88 active tables have RLS enabled with explicit policies. This is solid.
+**Coverage: 100%** - All 88 active tables have RLS enabled with explicit policies. This is solid.
 
 Notable patterns:
 - User-scoped: `USING (user_id = auth.uid())`
 - Role-based: `USING (is_admin_or_staff(auth.uid()))`
 - Collective membership: `USING (is_collective_member(auth.uid(), collective_id))`
-- Service-role-only: 1 table (email_reminders_sent) — intentional
+- Service-role-only: 1 table (email_reminders_sent) - intentional
 
 No tables found without RLS. The security hardening migration (068) added additional service role restrictions.
 
@@ -309,15 +309,15 @@ No tables found without RLS. The security hardening migration (068) added additi
 
 ## PRIORITY FIX ORDER
 
-1. **C1** — Rotate credentials, remove `.env.development` from git (IMMEDIATE — before any stakeholder demo)
-2. **C2, C3** — Fix race condition and unhandled upsert in impact logging
-3. **C4, C5, C6** — Fix silent query failures in stakeholder-facing pages
-4. **H1** — Add member_count sync trigger
-5. **H2, H3, H8** — Add missing CHECK constraints
-6. **H7** — Standardize on integer cents columns
-7. **H4, H5, H6** — Fix referential integrity gaps
-8. **H9-H12** — Fix error handling and type safety issues
-9. **M1-M18** — Address medium issues in order of user impact
+1. **C1** - Rotate credentials, remove `.env.development` from git (IMMEDIATE - before any stakeholder demo)
+2. **C2, C3** - Fix race condition and unhandled upsert in impact logging
+3. **C4, C5, C6** - Fix silent query failures in stakeholder-facing pages
+4. **H1** - Add member_count sync trigger
+5. **H2, H3, H8** - Add missing CHECK constraints
+6. **H7** - Standardize on integer cents columns
+7. **H4, H5, H6** - Fix referential integrity gaps
+8. **H9-H12** - Fix error handling and type safety issues
+9. **M1-M18** - Address medium issues in order of user impact
 
 ---
 

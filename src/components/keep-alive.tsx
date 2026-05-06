@@ -89,7 +89,7 @@ export function KeepAlive() {
       const entry = cache[existingIdx]
       cache.splice(existingIdx, 1)
       cache.push(entry)
-      // Search string changed for this cached path — refresh the frozen
+      // Search string changed for this cached path - refresh the frozen
       // location so children that read query params see the new values.
       const frozen = frozenLocationsRef.current.get(path)
       if (frozen && frozen.search !== location.search) {

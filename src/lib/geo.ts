@@ -16,10 +16,10 @@ function wkbDouble(hex: string, byteOffset: number): number {
 /**
  * Parse a PostGIS location_point (unknown) into { lat, lng }.
  * Handles:
- *   - WKB hex strings (what PostgREST returns for geography columns)
- *   - GeoJSON Point objects
- *   - WKT/EWKT strings
- *   - Plain {lat,lng} objects
+ * - WKB hex strings (what PostgREST returns for geography columns)
+ * - GeoJSON Point objects
+ * - WKT/EWKT strings
+ * - Plain {lat,lng} objects
  * Returns null if unparseable.
  */
 export function parseLocationPoint(point: unknown): MapCenter | null {
@@ -97,7 +97,7 @@ export function parseLocationPoint(point: unknown): MapCenter | null {
 /**
  * City-centre fallback coords keyed by collective slug. Used everywhere a
  * collective needs a map pin but doesn't have a populated location_point
- * yet — the explore map and the collective detail page both pull from
+ * yet - the explore map and the collective detail page both pull from
  * this so a missing PostGIS value never silently zooms out to "no pin
  * over the whole country".
  */
