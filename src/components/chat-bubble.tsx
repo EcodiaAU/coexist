@@ -49,6 +49,7 @@ export function ChatBubble({
   onAvatarTap,
   onSenderTap,
   onLongPress,
+  onReplyTap,
   'aria-label': ariaLabel,
 }: ChatBubbleProps) {
   const shouldReduceMotion = useReducedMotion()
@@ -141,34 +142,53 @@ export function ChatBubble({
               : 'rounded-bl-md bg-neutral-200 text-neutral-900',
           )}
         >
-          {/* Reply quote */}
-          {replyTo && (
-            <div
-              className={cn(
-                'mb-2.5 rounded-xl border-l-[3px] px-3 py-2',
-                sent
-                  ? 'border-neutral-200 bg-neutral-50'
-                  : 'border-neutral-300 bg-white',
-              )}
-            >
-              <p
-                className={cn(
-                  'text-[11px] font-extrabold',
-                  sent ? 'text-neutral-700' : 'text-neutral-700',
-                )}
-              >
-                {replyTo.senderName}
-              </p>
-              <p
-                className={cn(
-                  'line-clamp-2 text-xs mt-0.5',
-                  sent ? 'text-neutral-500' : 'text-neutral-500',
-                )}
-              >
-                {replyTo.message}
-              </p>
-            </div>
-          )}
+          {/* Reply quote - tappable when parentId + onReplyTap provided */}
+          {replyTo && (() => {
+            const tappable = !!replyTo.parentId && !!onReplyTap
+            const inner = (
+              <>
+                <p
+                  className={cn(
+                    'text-[11px] font-extrabold',
+                    sent ? 'text-neutral-700' : 'text-neutral-700',
+                  )}
+                >
+                  {replyTo.senderName}
+                </p>
+                <p
+                  className={cn(
+                    'line-clamp-2 text-xs mt-0.5',
+                    sent ? 'text-neutral-500' : 'text-neutral-500',
+                  )}
+                >
+                  {replyTo.message}
+                </p>
+              </>
+            )
+            const wrapperClass = cn(
+              'mb-2.5 rounded-xl border-l-[3px] px-3 py-2 w-full text-left',
+              sent
+                ? 'border-neutral-200 bg-neutral-50'
+                : 'border-neutral-300 bg-white',
+              tappable && 'transition-transform duration-150 active:scale-[0.985] cursor-pointer hover:brightness-95',
+            )
+            if (tappable) {
+              return (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onReplyTap!(replyTo.parentId!)
+                  }}
+                  aria-label={`Jump to message from ${replyTo.senderName}`}
+                  className={wrapperClass}
+                >
+                  {inner}
+                </button>
+              )
+            }
+            return <div className={wrapperClass}>{inner}</div>
+          })()}
 
           {/* Photo */}
           {photo && (

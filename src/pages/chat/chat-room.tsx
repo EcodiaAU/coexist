@@ -69,6 +69,8 @@ import { useCreateCarpool } from '@/hooks/use-carpool'
 import { CreateCarpoolSheet, type CreateCarpoolSubmitData } from '@/components/create-carpool-sheet'
 import { useTyping } from '@/hooks/use-typing'
 import { useOffline } from '@/hooks/use-offline'
+import { useCollectiveMembers } from '@/hooks/use-collective'
+import { resolveMentionedUserIds, type MentionCandidate } from '@/components/mention-picker'
 import {
     queueOfflineAction,
     saveChatDraft,
@@ -235,6 +237,19 @@ export default function ChatRoomPage() {
   const { typingText, sendTyping, stopTyping } = useTyping(isCollective ? collectiveId : undefined)
   const { isOffline } = useOffline()
   const { data: blockedUsers } = useBlockedUsers()
+  // Member roster used to resolve `@DisplayName` strings → user_ids on send.
+  const { data: collectiveMembers } = useCollectiveMembers(isCollective ? collectiveId : undefined)
+  const mentionCandidates = useMemo<MentionCandidate[]>(
+    () =>
+      (collectiveMembers ?? [])
+        .filter((m) => m.profiles?.id && m.profiles?.display_name)
+        .map((m) => ({
+          user_id: m.profiles!.id,
+          display_name: m.profiles!.display_name!,
+          avatar_url: m.profiles!.avatar_url ?? null,
+        })),
+    [collectiveMembers],
+  )
   const blockedIds = useMemo(
     () => new Set((blockedUsers ?? []).map((b) => b.blocked_id)),
     [blockedUsers],
@@ -394,11 +409,24 @@ export default function ChatRoomPage() {
       }
 
       try {
-        await collectiveSend.mutateAsync({
+        const sentRow = await collectiveSend.mutateAsync({
           collectiveId,
           content: text,
           replyToId: replyTo?.id,
         })
+        // Resolve @mentions and fire notifications via SECURITY DEFINER RPC.
+        // Best-effort, non-blocking: a failure here doesn't unsend the message.
+        const mentionedIds = resolveMentionedUserIds(text, mentionCandidates)
+        if (mentionedIds.length > 0 && sentRow?.id) {
+          supabase
+            .rpc('notify_chat_mentions', {
+              p_message_id: sentRow.id,
+              p_mentioned_user_ids: mentionedIds,
+            })
+            .then(({ error }) => {
+              if (error) console.warn('[chat] mention RPC failed:', error.message)
+            })
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Message failed to send'
         toast.error(msg)
@@ -948,6 +976,8 @@ export default function ChatRoomPage() {
           }}
           onCreateCarpool={isCollective ? () => setShowCarpoolSheet(true) : undefined}
           onBroadcastNotification={() => setShowBroadcastSheet(true)}
+          mentionCollectiveId={isCollective ? collectiveId : undefined}
+          mentionSelfUserId={user?.id}
         />
 
         {/* Carpool creation sheet (collective only) */}

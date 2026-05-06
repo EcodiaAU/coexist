@@ -381,6 +381,44 @@ export function ChatMessageList({
   const shouldReduceMotion = useReducedMotion()
   const initialScrollDone = useRef(false)
 
+  /**
+   * Reply quote tap → scroll to parent message + briefly highlight it.
+   * Tracks the highlighted parent id; cleared on a timeout so the ring
+   * fades when navigation settles. Insta-DM thread browsing pattern.
+   */
+  const [highlightedId, setHighlightedId] = useState<string | null>(null)
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleReplyTap = useCallback(
+    (parentId: string) => {
+      const container = scrollContainerRef.current
+      if (!container) return
+      const target = container.querySelector<HTMLElement>(
+        `[data-message-id="${CSS.escape(parentId)}"]`,
+      )
+      if (!target) {
+        // Parent message likely lives in an older page. Fetch more history
+        // and surface a toast - cheaper than full thread expansion in v1.
+        if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+        return
+      }
+      target.scrollIntoView({
+        behavior: shouldReduceMotion ? 'auto' : 'smooth',
+        block: 'center',
+      })
+      setHighlightedId(parentId)
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+      highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 1600)
+    },
+    [scrollContainerRef, hasNextPage, isFetchingNextPage, fetchNextPage, shouldReduceMotion],
+  )
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+    }
+  }, [])
+
   // Reset scroll on message count change (first load)
   const roomKeyRef = useRef(allMessages.length)
 
@@ -533,11 +571,13 @@ export function ChatMessageList({
         onAvatarTap={(userId) => onProfileTap(userId)}
         onSenderTap={(userId) => onProfileTap(userId)}
         onLongPress={() => onMessageLongPress(msg)}
+        onReplyTap={handleReplyTap}
         replyTo={
           msg.reply_message
             ? {
                 message: msg.reply_message.content ?? '',
                 senderName: allMessages.find((m) => m.id === msg.reply_message!.id)?.profiles?.display_name ?? 'Someone',
+                parentId: msg.reply_message.id,
               }
             : undefined
         }
@@ -636,11 +676,16 @@ export function ChatMessageList({
                 {/* Messages */}
                 {group.messages.map((msg) => {
                   const isSent = msg.user_id === user?.id
+                  const isHighlighted = highlightedId === msg.id
 
                   return (
                     <div
                       key={msg.id}
-                      className="py-1"
+                      data-message-id={msg.id}
+                      className={cn(
+                        'py-1 rounded-2xl transition-shadow duration-300',
+                        isHighlighted && 'ring-2 ring-primary-400 ring-offset-2 ring-offset-white shadow-md',
+                      )}
                       onContextMenu={(e) => {
                         e.preventDefault()
                         onMessageLongPress(msg)
