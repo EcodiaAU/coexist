@@ -128,9 +128,9 @@ export function useSwipeBack({
       const shouldCommit = dx >= vw * commitFraction || velocity >= velocityThreshold
 
       if (shouldCommit && dx > 20) {
-        // Animate page fully off-screen, then navigate
+        // Animate page fully off-screen, then navigate. Duration matches
+        // the iOS UIKit interactive pop transition (~350ms with spring curve).
         setState({ offsetX: vw, swiping: true, animating: true })
-        // Let the CSS transition play, then navigate
         requestAnimationFrame(() => {
           setTimeout(() => {
             setState({ offsetX: 0, swiping: false, animating: false })
@@ -139,16 +139,15 @@ export function useSwipeBack({
             } else {
               navigate(-1)
             }
-          }, 250)
+          }, 350)
         })
       } else {
-        // Animate back to resting position
+        // Animate back to resting position with the same iOS spring duration
         setState({ offsetX: 0, swiping: true, animating: true })
-        // Clear animating flag after spring-back completes
         requestAnimationFrame(() => {
           setTimeout(() => {
             setState({ offsetX: 0, swiping: false, animating: false })
-          }, 250)
+          }, 350)
         })
       }
     },
