@@ -23,13 +23,21 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * collective (RLS on carpool_widgets enforces this; we double-check here for
  * a clean 403 instead of an opaque RLS rejection).
  *
+ * Geocoding (added 7 May 2026, fork_mouu2eqy_b0ba8b):
+ *   If the caller does not provide both departure_lat and departure_lng, we
+ *   geocode departure_point_text via OSM Nominatim (countrycodes=au, limit=1).
+ *   Results are cached in carpool_geocode_cache with a 90d TTL to stay under
+ *   Nominatim's 1-req/sec usage policy. On geocode failure we return 422 with
+ *   { error: "couldnt_geocode", departure_point_text } rather than silently
+ *   nulling lat/lng (per ~/ecodiaos/patterns/edge-function-safe-defaults.md).
+ *
  * Returns:
- *   { widget_id: uuid, message_id: uuid }
+ *   { success: true, widget_id: uuid, message_id: uuid }
  *
  * Safe-defaults rule (~/ecodiaos/patterns/edge-function-safe-defaults.md):
  *   This function is a write-only endpoint. There is no mode/direction switch.
  *   Missing body fields are validated up-front and rejected with 400 before
- *   any mutation occurs. Missing auth = 401.
+ *   any mutation occurs. Missing auth = 401. Geocode failure = 422.
  */
 
 interface CreateWidgetBody {
@@ -48,6 +56,128 @@ function bad(status: number, message: string) {
     JSON.stringify({ success: false, error: message }),
     { status, headers: { 'Content-Type': 'application/json' } },
   )
+}
+
+function badJson(status: number, payload: Record<string, unknown>) {
+  return new Response(
+    JSON.stringify({ success: false, ...payload }),
+    { status, headers: { 'Content-Type': 'application/json' } },
+  )
+}
+
+const NOMINATIM_USER_AGENT = 'Ecodia Co-Exist (code@ecodia.au)'
+const GEOCODE_CACHE_TTL_MS = 90 * 24 * 60 * 60 * 1000 // 90 days
+
+interface GeocodeResult {
+  lat: number
+  lng: number
+  display_name?: string | null
+  source: 'cache' | 'nominatim' | 'caller'
+}
+
+/**
+ * Resolve lat/lng for a departure point.
+ *
+ * Priority:
+ *   1. Caller-supplied numeric lat+lng (skip geocoding entirely)
+ *   2. carpool_geocode_cache hit within 90d TTL
+ *   3. OSM Nominatim live lookup (then upsert into cache)
+ *
+ * Throws an Error with code 'couldnt_geocode' if 1, 2, and 3 all fail.
+ */
+async function resolveCoords(
+  admin: ReturnType<typeof createClient>,
+  text: string,
+  callerLat: number | null | undefined,
+  callerLng: number | null | undefined,
+): Promise<GeocodeResult> {
+  // 1. Caller-supplied
+  if (
+    typeof callerLat === 'number' && Number.isFinite(callerLat) &&
+    typeof callerLng === 'number' && Number.isFinite(callerLng)
+  ) {
+    return { lat: callerLat, lng: callerLng, source: 'caller' }
+  }
+
+  const cacheKey = text.trim().toLowerCase()
+
+  // 2. Cache lookup
+  const { data: cached, error: cacheErr } = await admin
+    .from('carpool_geocode_cache')
+    .select('lat, lng, display_name, cached_at')
+    .eq('text_normalized', cacheKey)
+    .maybeSingle()
+  if (cacheErr) {
+    console.error('[carpool-create-widget] cache lookup error:', cacheErr.message)
+    // fall through to Nominatim
+  }
+  if (cached) {
+    const ageMs = Date.now() - new Date(cached.cached_at as string).getTime()
+    if (ageMs < GEOCODE_CACHE_TTL_MS) {
+      return {
+        lat: Number(cached.lat),
+        lng: Number(cached.lng),
+        display_name: (cached.display_name as string | null) ?? null,
+        source: 'cache',
+      }
+    }
+  }
+
+  // 3. Nominatim
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=1&countrycodes=au`
+  let arr: Array<{ lat: string; lon: string; display_name?: string }>
+  try {
+    const resp = await fetch(url, {
+      headers: { 'User-Agent': NOMINATIM_USER_AGENT, 'Accept': 'application/json' },
+    })
+    if (!resp.ok) {
+      console.error(`[carpool-create-widget] nominatim http ${resp.status} for "${text}"`)
+      const e = new Error('couldnt_geocode')
+      ;(e as Error & { code?: string }).code = 'couldnt_geocode'
+      throw e
+    }
+    arr = await resp.json()
+  } catch (e) {
+    const err = e as Error & { code?: string }
+    if (err.code !== 'couldnt_geocode') {
+      console.error(`[carpool-create-widget] nominatim fetch error for "${text}":`, err.message)
+    }
+    const out = new Error('couldnt_geocode')
+    ;(out as Error & { code?: string }).code = 'couldnt_geocode'
+    throw out
+  }
+
+  if (!Array.isArray(arr) || arr.length === 0) {
+    const e = new Error('couldnt_geocode')
+    ;(e as Error & { code?: string }).code = 'couldnt_geocode'
+    throw e
+  }
+
+  const lat = parseFloat(arr[0].lat)
+  const lng = parseFloat(arr[0].lon)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    const e = new Error('couldnt_geocode')
+    ;(e as Error & { code?: string }).code = 'couldnt_geocode'
+    throw e
+  }
+  const display_name = arr[0].display_name ?? null
+
+  // Upsert into cache (best-effort, don't fail the request if the cache write fails)
+  try {
+    const { error: upsertErr } = await admin
+      .from('carpool_geocode_cache')
+      .upsert(
+        { text_normalized: cacheKey, lat, lng, display_name, cached_at: new Date().toISOString() },
+        { onConflict: 'text_normalized' },
+      )
+    if (upsertErr) {
+      console.error('[carpool-create-widget] cache upsert error:', upsertErr.message)
+    }
+  } catch (e) {
+    console.error('[carpool-create-widget] cache upsert threw:', (e as Error).message)
+  }
+
+  return { lat, lng, display_name, source: 'nominatim' }
 }
 
 Deno.serve(async (req: Request) => {
@@ -84,6 +214,8 @@ Deno.serve(async (req: Request) => {
   if (!Number.isInteger(seats_total) || seats_total <= 0) {
     return bad(400, 'seats_total must be a positive integer')
   }
+
+  const trimmedDeparturePoint = departure_point_text.trim()
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -130,6 +262,27 @@ Deno.serve(async (req: Request) => {
     return bad(400, 'event does not belong to this collective')
   }
 
+  // Resolve coords (caller -> cache -> nominatim). 422 on geocode failure
+  // rather than silently nulling lat/lng.
+  let resolvedLat: number
+  let resolvedLng: number
+  try {
+    const coords = await resolveCoords(admin, trimmedDeparturePoint, departure_lat, departure_lng)
+    resolvedLat = coords.lat
+    resolvedLng = coords.lng
+  } catch (e) {
+    const err = e as Error & { code?: string }
+    if (err.code === 'couldnt_geocode') {
+      return badJson(422, {
+        error: 'couldnt_geocode',
+        departure_point_text: trimmedDeparturePoint,
+        hint: 'Try a more specific or well-known location (suburb, landmark, or street + suburb).',
+      })
+    }
+    console.error('[carpool-create-widget] resolveCoords unexpected error:', err.message)
+    return bad(500, 'geocode lookup failed')
+  }
+
   // 1. Insert carpool_widgets
   const { data: widget, error: widgetErr } = await admin
     .from('carpool_widgets')
@@ -137,9 +290,9 @@ Deno.serve(async (req: Request) => {
       collective_id,
       event_id,
       driver_id: driverId,
-      departure_point_text: departure_point_text.trim(),
-      departure_lat,
-      departure_lng,
+      departure_point_text: trimmedDeparturePoint,
+      departure_lat: resolvedLat,
+      departure_lng: resolvedLng,
       departure_time,
       seats_total,
       notes,
