@@ -35,9 +35,14 @@ function scrollFocusedIntoView(delay = 300) {
     // Re-check - focus may have moved during the delay
     const current = document.activeElement
     if (!isTextInput(current)) return
-    // 'center' keeps the field visible in the middle of the viewport above the
-    // keyboard rather than at the extreme top/bottom edge ('nearest' behaviour).
-    current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // 'nearest' scrolls only as much as needed to bring the input into the
+    // visible scrollport. Keyboard avoidance is handled declaratively by the
+    // global `scroll-margin-bottom: var(--kb-height)` rule on form fields, so
+    // 'nearest' lands the input just above the keyboard line instead of
+    // shooting to the top of the screen ('start') or recentering far above
+    // the keyboard top ('center', which overshoots when Capacitor Keyboard
+    // resize:'none' leaves window.innerHeight at the full WebView height).
+    current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, delay)
 }
 

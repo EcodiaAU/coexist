@@ -401,6 +401,22 @@ textarea {
   font-size: 16px;
 }
 
+/* Keyboard-aware scroll target. When scrollIntoView({block:'nearest'}) is
+   called on a focused field while the soft keyboard is open, the browser
+   computes "in view" as the scrollport minus this margin - which means the
+   field rests just above the keyboard line instead of being hidden behind
+   it OR overshooting toward the top of the screen.
+
+   --kb-height is set on <html> by useKeyboardHeight (visualViewport +
+   Capacitor Keyboard plugin events). 24px buffer = breathing room. */
+input,
+select,
+textarea,
+[contenteditable="true"] {
+  scroll-margin-bottom: calc(var(--kb-height, 0px) + 24px);
+  scroll-margin-top: calc(var(--safe-top, 0px) + 24px);
+}
+
 /* Text scaling support - up to 200% (§41 item 57) */
 html {
   font-size: 100%;
