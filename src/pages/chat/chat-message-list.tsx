@@ -486,13 +486,10 @@ export function ChatMessageList({
     const roleBadge = isCollective && msg.user_id ? memberRoles.get(msg.user_id) : undefined
 
     if (isDeleted) {
-      return (
-        <div className={cn('flex py-1', isSent ? 'justify-end' : 'justify-start')}>
-          <p className="text-xs italic text-neutral-400 font-medium px-3.5 py-2.5 rounded-2xl bg-neutral-50 ring-1 ring-neutral-100">
-            Message removed
-          </p>
-        </div>
-      )
+      // Deleted messages disappear entirely - no placeholder, no "Message removed".
+      // Defense-in-depth: query, realtime UPDATE handler, and optimistic delete all
+      // remove deleted messages from cache, but if one slips through it renders nothing.
+      return null
     }
 
     if (messageType === 'poll' && msg.poll_id) {
@@ -674,7 +671,9 @@ export function ChatMessageList({
                 </div>
 
                 {/* Messages */}
-                {group.messages.map((msg) => {
+                {group.messages
+                  .filter((msg) => !msg.is_deleted)
+                  .map((msg) => {
                   const isSent = msg.user_id === user?.id
                   const isHighlighted = highlightedId === msg.id
 

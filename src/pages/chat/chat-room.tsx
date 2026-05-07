@@ -507,7 +507,7 @@ export default function ChatRoomPage() {
           channelId,
         })
       }
-      toast.info('Message removed')
+      toast.info('Message deleted')
     } catch {
       toast.error('Failed to delete message')
     }

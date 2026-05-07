@@ -128,6 +128,7 @@ export function useChatMessages(collectiveId: string | undefined) {
         `)
         .eq('collective_id', collectiveId)
         .is('channel_id', null)
+        .eq('is_deleted', false)
         .order('created_at', { ascending: false })
         .limit(PAGE_SIZE)
 
@@ -141,6 +142,7 @@ export function useChatMessages(collectiveId: string | undefined) {
       const messages = (data ?? []) as unknown as ChatMessageWithSender[]
 
       // Resolve reply_message client-side (self-referencing FK not in PostgREST cache)
+      // Replies to deleted parents resolve to null so the reply-context preview also disappears.
       const replyIds = messages
         .map((m) => m.reply_to_id)
         .filter((id): id is string => !!id)
@@ -150,6 +152,7 @@ export function useChatMessages(collectiveId: string | undefined) {
           .from('chat_messages')
           .select('id, content, user_id')
           .in('id', replyIds)
+          .eq('is_deleted', false)
 
         const replyMap = new Map((replies ?? []).map((r) => [r.id, r]))
         for (const msg of messages) {
@@ -264,15 +267,34 @@ export function useChatMessages(collectiveId: string | undefined) {
           if ((payload.new as Record<string, unknown>).channel_id) return
 
           const { profiles: _profiles, reply_message: _reply, ...columnUpdates } = payload.new as Record<string, unknown>
+          const becameDeleted = (payload.new as Record<string, unknown>).is_deleted === true
+          const targetId = payload.new.id
           queryClient.setQueryData(
             ['chat-messages', collectiveId],
             (old: { pages: ChatMessageWithSender[][]; pageParams: (string | null)[] } | undefined) => {
               if (!old) return old
+              if (becameDeleted) {
+                // Soft-delete arrived via realtime: remove from local cache so it
+                // disappears from the thread (no "Message removed" placeholder).
+                // Also clear reply_message references that pointed at this id.
+                return {
+                  ...old,
+                  pages: old.pages.map((page) =>
+                    page
+                      .filter((msg) => msg.id !== targetId)
+                      .map((msg) =>
+                        msg.reply_message?.id === targetId
+                          ? { ...msg, reply_message: null }
+                          : msg,
+                      ),
+                  ),
+                }
+              }
               return {
                 ...old,
                 pages: old.pages.map((page) =>
                   page.map((msg) =>
-                    msg.id === payload.new.id ? { ...msg, ...columnUpdates } : msg,
+                    msg.id === targetId ? { ...msg, ...columnUpdates } : msg,
                   ),
                 ),
               }
@@ -539,7 +561,19 @@ export function useDeleteMessage() {
         ['chat-messages', collectiveId],
         (old: { pages: ChatMessageWithSender[][]; pageParams: (string | null)[] } | undefined) => {
           if (!old) return old
-          return { ...old, pages: old.pages.map(page => page.map(msg => msg.id === messageId ? { ...msg, is_deleted: true } : msg)) }
+          // Optimistic delete: remove the message from local cache entirely so
+          // it disappears from the thread (no "Message removed" placeholder).
+          // Also clear any reply_message preview pointing at the deleted id.
+          return {
+            ...old,
+            pages: old.pages.map((page) =>
+              page
+                .filter((msg) => msg.id !== messageId)
+                .map((msg) =>
+                  msg.reply_message?.id === messageId ? { ...msg, reply_message: null } : msg,
+                ),
+            ),
+          }
         },
       )
       return { previous }
