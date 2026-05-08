@@ -44,24 +44,8 @@ export function useCamera(): UseCameraReturn {
             '@capacitor/camera'
           )
 
-          // Request permissions on first use
-          const perms = await Camera.checkPermissions()
-          if (
-            (source === 'camera' && perms.camera !== 'granted') ||
-            (source === 'gallery' && perms.photos !== 'granted')
-          ) {
-            const requested = await Camera.requestPermissions({
-              permissions: [source === 'camera' ? 'camera' : 'photos'],
-            })
-            const key = source === 'camera' ? 'camera' : 'photos'
-            if (requested[key] === 'denied') {
-              setError(
-                `${source === 'camera' ? 'Camera' : 'Photo library'} access denied. Please enable in Settings.`,
-              )
-              return null
-            }
-          }
-
+          // Let Camera.getPhoto handle permission prompts natively — manual
+          // checkPermissions can hang on iOS when status is 'limited'.
           const photo = await Camera.getPhoto({
             quality: 80,
             allowEditing: false,
@@ -72,6 +56,9 @@ export function useCamera(): UseCameraReturn {
                 : CameraSource.Photos,
             width: 1200,
             height: 1200,
+            promptLabelHeader: source === 'camera' ? 'Take Photo' : 'Choose Photo',
+            promptLabelPhoto: 'From Gallery',
+            promptLabelPicture: 'From Gallery',
           })
 
           if (!photo.dataUrl) return null
@@ -108,7 +95,13 @@ export function useCamera(): UseCameraReturn {
         const name = e instanceof Error ? e.name : ''
 
         // User cancelled - not an error
-        if (msg.includes('cancelled') || msg.includes('User cancelled')) {
+        if (msg.includes('cancelled') || msg.includes('User cancelled') || msg.includes('pickImages')) {
+          return null
+        }
+
+        // Capacitor Camera permission denied
+        if (msg.includes('denied') || msg.includes('permission') || msg.includes('access')) {
+          setError('Photo access denied. Please enable in your device Settings.')
           return null
         }
 
@@ -173,16 +166,29 @@ function pickFileWeb(
     input.type = 'file'
     input.accept = 'image/*'
     if (mode === 'camera') input.capture = 'environment'
+    // iOS WKWebView requires the input to be in the DOM
+    input.style.position = 'fixed'
+    input.style.opacity = '0'
+    input.style.pointerEvents = 'none'
+    document.body.appendChild(input)
+
+    const cleanup = () => {
+      input.remove()
+    }
 
     input.onchange = () => {
       const file = input.files?.[0]
-      if (!file) return resolve(null)
+      if (!file) {
+        cleanup()
+        return resolve(null)
+      }
 
       const reader = new FileReader()
       reader.onload = () => {
         const dataUrl = reader.result as string
         const img = new Image()
         img.onload = () => {
+          cleanup()
           resolve({
             dataUrl,
             blob: file,
@@ -190,12 +196,24 @@ function pickFileWeb(
             height: img.naturalHeight,
           })
         }
-        img.onerror = () => resolve(null)
+        img.onerror = () => { cleanup(); resolve(null) }
         img.src = dataUrl
       }
-      reader.onerror = () => resolve(null)
+      reader.onerror = () => { cleanup(); resolve(null) }
       reader.readAsDataURL(file)
     }
+
+    // Handle cancel (focus returns to window without change event)
+    const onFocus = () => {
+      setTimeout(() => {
+        if (!input.files?.length) {
+          cleanup()
+          resolve(null)
+        }
+        window.removeEventListener('focus', onFocus)
+      }, 300)
+    }
+    window.addEventListener('focus', onFocus)
 
     input.click()
   })

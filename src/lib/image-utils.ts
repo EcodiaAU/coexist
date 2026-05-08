@@ -140,6 +140,7 @@ export async function uploadWithProgress({
 
     xhr.open('POST', `${supabaseUrl}/storage/v1/object/${bucket}/${path}`)
     xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.setRequestHeader('Content-Type', file.type || 'image/jpeg')
     xhr.setRequestHeader('x-upsert', 'true')
     xhr.timeout = 120000
     xhr.addEventListener('timeout', () => reject(new Error('Upload timed out - check your connection and try again.')))
@@ -160,9 +161,9 @@ export function getTransformUrl(
   opts: { width?: number; height?: number; quality?: number } = {},
 ): string {
   const { width, height, quality = 80 } = opts
-  // Supabase transform URL pattern:
-  // /storage/v1/render/image/public/{bucket}/{path}?width=W&height=H&quality=Q
-  const transformed = publicUrl.replace(
+  // Strip existing query params (e.g. cache-buster ?t=...) before building transform URL
+  const [baseUrl] = publicUrl.split('?')
+  const transformed = baseUrl.replace(
     '/storage/v1/object/public/',
     '/storage/v1/render/image/public/',
   )

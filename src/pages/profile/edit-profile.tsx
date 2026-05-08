@@ -188,7 +188,9 @@ export default function EditProfilePage() {
       const path = `${authProfile.id}/avatar.jpg`
       const uploaded = await upload(result.blob, path)
 
-      await updateProfile.mutateAsync({ avatar_url: uploaded.url })
+      // Append cache-buster so CDN/browser always shows the new image
+      const bustUrl = `${uploaded.url}?t=${Date.now()}`
+      await updateProfile.mutateAsync({ avatar_url: bustUrl })
 
       toast.success('Avatar updated!')
     } catch {
