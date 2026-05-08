@@ -21,7 +21,7 @@ interface UseCameraReturn {
 }
 
 /**
- * Wraps the Capacitor Camera plugin for native, and falls back to
+ * Wraps the Capacitor Camera plugin (v8 APIs) for native, and falls back to
  * an `<input type="file">` for web.
  *
  * All results are compressed client-side (<500KB) and EXIF-corrected
@@ -37,48 +37,48 @@ export function useCamera(): UseCameraReturn {
       setError(null)
 
       try {
-        let raw: CameraResult | null = null
+        let blob: Blob | null = null
 
         if (Capacitor.isNativePlatform()) {
-          const { Camera, CameraResultType, CameraSource } = await import(
-            '@capacitor/camera'
-          )
+          const { Camera } = await import('@capacitor/camera')
 
-          // Let Camera.getPhoto handle permission prompts natively — manual
-          // checkPermissions can hang on iOS when status is 'limited'.
-          const photo = await Camera.getPhoto({
-            quality: 80,
-            allowEditing: false,
-            resultType: CameraResultType.DataUrl,
-            source:
-              source === 'camera'
-                ? CameraSource.Camera
-                : CameraSource.Photos,
-            width: 1200,
-            height: 1200,
-            promptLabelHeader: source === 'camera' ? 'Take Photo' : 'Choose Photo',
-            promptLabelPhoto: 'From Gallery',
-            promptLabelPicture: 'From Gallery',
-          })
+          if (source === 'camera') {
+            // v8 API: takePhoto returns MediaResult with webPath
+            const result = await Camera.takePhoto({
+              quality: 80,
+              targetWidth: 1200,
+              targetHeight: 1200,
+              correctOrientation: true,
+            })
 
-          if (!photo.dataUrl) return null
+            if (!result.webPath) return null
+            const response = await fetch(result.webPath)
+            blob = await response.blob()
+          } else {
+            // v8 API: chooseFromGallery returns MediaResults
+            const result = await Camera.chooseFromGallery({
+              quality: 80,
+              targetWidth: 1200,
+              targetHeight: 1200,
+              correctOrientation: true,
+            })
 
-          const blob = dataUrlToBlob(photo.dataUrl)
-          raw = {
-            dataUrl: photo.dataUrl,
-            blob,
-            width: 1200,
-            height: 1200,
+            const photo = result.results?.[0]
+            if (!photo?.webPath) return null
+            const response = await fetch(photo.webPath)
+            blob = await response.blob()
           }
         } else {
           // Web fallback: use file input
-          raw = await pickFileWeb(source === 'camera' ? 'camera' : 'gallery')
+          const raw = await pickFileWeb(source === 'camera' ? 'camera' : 'gallery')
+          if (!raw) return null
+          blob = raw.blob
         }
 
-        if (!raw) return null
+        if (!blob) return null
 
         // Compress (also fixes EXIF orientation via createImageBitmap)
-        const compressed = await compressImage(raw.blob)
+        const compressed = await compressImage(blob)
         const compressedUrl = URL.createObjectURL(compressed)
 
         // Get dimensions of compressed result
@@ -95,7 +95,7 @@ export function useCamera(): UseCameraReturn {
         const name = e instanceof Error ? e.name : ''
 
         // User cancelled - not an error
-        if (msg.includes('cancelled') || msg.includes('User cancelled') || msg.includes('pickImages')) {
+        if (msg.includes('cancelled') || msg.includes('User cancelled') || msg.includes('pickImages') || msg.includes('No image')) {
           return null
         }
 
@@ -136,17 +136,6 @@ export function useCamera(): UseCameraReturn {
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-function dataUrlToBlob(dataUrl: string): Blob {
-  const [header, data] = dataUrl.split(',')
-  const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg'
-  const binary = atob(data)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i)
-  }
-  return new Blob([bytes], { type: mime })
-}
-
 function getImageDimensions(
   src: string,
 ): Promise<{ width: number; height: number }> {
@@ -160,7 +149,7 @@ function getImageDimensions(
 
 function pickFileWeb(
   mode: 'camera' | 'gallery',
-): Promise<CameraResult | null> {
+): Promise<{ blob: Blob } | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
@@ -182,25 +171,8 @@ function pickFileWeb(
         cleanup()
         return resolve(null)
       }
-
-      const reader = new FileReader()
-      reader.onload = () => {
-        const dataUrl = reader.result as string
-        const img = new Image()
-        img.onload = () => {
-          cleanup()
-          resolve({
-            dataUrl,
-            blob: file,
-            width: img.naturalWidth,
-            height: img.naturalHeight,
-          })
-        }
-        img.onerror = () => { cleanup(); resolve(null) }
-        img.src = dataUrl
-      }
-      reader.onerror = () => { cleanup(); resolve(null) }
-      reader.readAsDataURL(file)
+      cleanup()
+      resolve({ blob: file })
     }
 
     // Handle cancel (focus returns to window without change event)

@@ -12,27 +12,24 @@
 -- (a policy on event_registrations cannot query event_registrations directly).
 -- ============================================================================
 
--- Helper: check if a user is registered for a given event (bypasses RLS)
-CREATE OR REPLACE FUNCTION is_registered_for_event(uid uuid, eid uuid)
-RETURNS boolean AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM event_registrations
-    WHERE event_id = eid
-      AND user_id = uid
-      AND status IN ('registered', 'attended', 'waitlisted')
-  );
-$$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
-
 -- Drop the old restrictive policy
 DROP POLICY IF EXISTS "registrations_select_own_or_leader" ON event_registrations;
+DROP POLICY IF EXISTS "registrations_select_visible" ON event_registrations;
 
--- New policy: see your own registrations OR registrations for events you're
--- registered for OR you're a collective leader/admin/staff.
+-- Drop the helper function if it was created by a prior version of this migration
+DROP FUNCTION IF EXISTS is_registered_for_event(uuid, uuid);
+
+-- New policy: any authenticated user can see registrations for published events.
+-- This lets users see attendee counts/avatars before deciding to register.
+-- Leaders and admins retain full access regardless of event status.
 CREATE POLICY "registrations_select_visible"
   ON event_registrations FOR SELECT TO authenticated
   USING (
     user_id = auth.uid()
-    OR is_registered_for_event(auth.uid(), event_id)
+    OR EXISTS (
+      SELECT 1 FROM events e
+      WHERE e.id = event_id AND e.status = 'published'
+    )
     OR EXISTS (
       SELECT 1 FROM events e
       WHERE e.id = event_id AND is_collective_leader_or_above(auth.uid(), e.collective_id)

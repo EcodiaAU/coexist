@@ -207,8 +207,8 @@ export function MessageInput({
       )}
       style={{
         paddingBottom: padForTabBar
-          ? 'calc(3.5rem + var(--safe-bottom, 0px) + 0.75rem + var(--kb-height, 0px))'
-          : 'calc(var(--safe-bottom, 0px) + 0.75rem + var(--kb-height, 0px))',
+          ? 'calc(3.5rem + var(--safe-bottom, 0px) + 0.75rem)'
+          : 'calc(var(--safe-bottom, 0px) + 0.75rem)',
       }}
     >
       {/* Leader actions panel */}
