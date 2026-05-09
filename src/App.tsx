@@ -419,8 +419,14 @@ function App() {
             <Route path="reports" element={<LeaderReportsPage />} />
           </Route>
 
-          {/* ---- Admin routes (staff+) ---- */}
-          <Route path="/admin" element={<RequireRole minRole="leader"><ErrorBoundary><AdminLayoutRoute /></ErrorBoundary></RequireRole>}>
+          {/* ---- Admin routes (manager+) - 1.8.5 item 7, fork_moy0xmrx_158384.
+              Tate verbatim 16:44 AEST 9 May 2026: "leaders can't see or access
+              admin pages." Global 'leader' (national_leader alias) and below
+              are denied; managers + admins only.
+              Defence-in-depth: also gated by per-page <RequireCapability> +
+              capability resolver in capabilities.ts (leader caps now empty)
+              + RLS is_admin_tier() helper in 20260509300000_admin_rls_audit.sql. */}
+          <Route path="/admin" element={<RequireRole minRole="manager"><ErrorBoundary><AdminLayoutRoute /></ErrorBoundary></RequireRole>}>
             <Route index element={<AdminDashboardPage />} />
             <Route path="collectives" element={<RequireCapability cap="manage_collectives"><AdminCollectivesPage /></RequireCapability>} />
             <Route path="collectives/:collectiveId" element={<RequireCapability cap="manage_collectives"><AdminCollectiveDetailPage /></RequireCapability>} />

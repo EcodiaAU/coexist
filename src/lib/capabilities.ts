@@ -57,21 +57,33 @@ export const CATEGORY_LABELS: Record<CapabilityDef['category'], string> = {
 /*  Role → default capabilities mapping                                */
 /* ------------------------------------------------------------------ */
 
-/** Which capabilities each role gets by default */
+/**
+ * Which capabilities each role gets by default.
+ *
+ * 1.8.5 polish item 7 (fork_moy0xmrx_158384). Tate verbatim 16:44 AEST
+ * 9 May 2026: "leaders can't see or access admin pages."
+ *
+ * Admin pages (under /admin) are gated by these capabilities AND the
+ * minRole=manager route guard on /admin in App.tsx. Collective leaders +
+ * co_leaders + assist_leaders use /leader (the leader dashboard) for
+ * their collective-scoped operations. The global 'leader' role
+ * (national_leader legacy alias) is therefore an audit / observation
+ * tier with NO admin-page caps - global admin operations require
+ * manager or admin.
+ *
+ * Per-user grants via staff_roles.permissions can still elevate a
+ * specific leader to a specific cap if needed; the route guard at
+ * /admin (minRole=manager) still blocks them from the admin shell, so
+ * any per-user grant requires also bumping the user's role.
+ */
 export const ROLE_DEFAULT_CAPS: Record<UnifiedRole, readonly string[]> = {
   participant: [],
   assist_leader: [],
   co_leader: [],
-  leader: [
-    'manage_content',
-    'manage_events',
-    'view_reports',
-  ],
-  national_leader: [
-    'manage_content',
-    'manage_events',
-    'view_reports',
-  ],
+  // Global 'leader' role (and national_leader legacy alias): no admin-page
+  // caps. Collective-scope work happens through /leader + RequireLeaderAccess.
+  leader: [],
+  national_leader: [],
   manager: [
     'manage_users',
     'manage_collectives',

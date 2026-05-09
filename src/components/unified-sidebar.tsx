@@ -363,7 +363,11 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
   const { navMode } = useLayout()
   const shouldReduceMotion = useReducedMotion()
   const [collapsed, setCollapsed] = useState(false)
-  const { user, profile, collectiveRoles, isStaff, isSuperAdmin, hasCapability } = useAuth()
+  const { user, profile, collectiveRoles, isStaff, isManager, isSuperAdmin, hasCapability } = useAuth()
+  // 1.8.5 item 7 (fork_moy0xmrx_158384) - admin sidebar gated by isManager
+  // (manager+admin), not isStaff (which includes national_leader). Per Tate
+  // verbatim 16:44 AEST 9 May 2026: "leaders can't see or access admin pages."
+  const isAdminTier = isManager
   const { hasPartners } = useHasPartners()
 
   const isDevUser = import.meta.env.DEV &&
@@ -393,9 +397,11 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
   const availableSuites = useMemo<Suite[]>(() => {
     const suites: Suite[] = ['main']
     if (isAnyLeader) suites.push('leader')
-    if (isStaff) suites.push('admin')
+    // 1.8.5 item 7 - admin suite is manager+admin only, not "isStaff" which
+    // includes national_leader. Leaders use /leader for collective scope.
+    if (isAdminTier) suites.push('admin')
     return suites
-  }, [isAnyLeader, isStaff])
+  }, [isAnyLeader, isAdminTier])
 
   /** Paths to hide from member nav when their backing data is empty */
   const hiddenPaths = useMemo(() => {
@@ -414,7 +420,7 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
     result.main = memberNavCategories
       .map((cat) => ({ ...cat, items: filterMemberItems(cat.items) }))
       .filter((cat) => cat.items.length > 0)
-    if (isStaff) {
+    if (isAdminTier) {
       result.admin = adminNavCategories
         .filter((cat) => !cat.superAdminOnly || isSuperAdmin)
         .map((cat) => ({
@@ -430,22 +436,25 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
       result.leader = leaderNavCategories
     }
     return result
-  }, [isSuperAdmin, hasCapability, isAnyLeader, isStaff, isDevUser, filterMemberItems])
+  }, [isSuperAdmin, hasCapability, isAnyLeader, isAdminTier, isDevUser, filterMemberItems])
 
   const flatCategories = useMemo(() => {
-    const highestHome = isStaff ? adminHomeItem : isAnyLeader ? leaderHomeItem : memberHomeItem
+    // 1.8.5 item 7 - admin home + admin nav appear only for manager+admin tier.
+    // Leaders default to leader-home; collective leaders without admin tier
+    // get the leader suite via isAnyLeader below.
+    const highestHome = isAdminTier ? adminHomeItem : isAnyLeader ? leaderHomeItem : memberHomeItem
 
     const updatesItem: NavItem = { label: 'Updates', path: '/updates', icon: <Megaphone size={17} strokeWidth={1.5} /> }
     const chatItem: NavItem = { label: 'Chat', path: '/chat', icon: <MessageCircle size={17} strokeWidth={1.5} />, desktopOnly: true }
     const learnItem: NavItem = { label: 'Learn', path: '/learn', icon: <BookOpen size={17} strokeWidth={1.5} /> }
 
-    const topItems: NavItem[] = isStaff
+    const topItems: NavItem[] = isAdminTier
       ? [highestHome, chatItem, updatesItem]
       : [highestHome, chatItem, learnItem, updatesItem]
 
     const cats: NavCategory[] = [{ label: '', items: topItems }]
 
-    if (isStaff) {
+    if (isAdminTier) {
       const adminCats = adminNavCategories
         .filter((cat) => !cat.superAdminOnly || isSuperAdmin)
         .map((cat, i) => ({
@@ -484,7 +493,7 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
     cats.push(...memberCats)
 
     return cats
-  }, [isAnyLeader, isStaff, isSuperAdmin, hasCapability, isDevUser, filterMemberItems])
+  }, [isAnyLeader, isAdminTier, isSuperAdmin, hasCapability, isDevUser, filterMemberItems])
 
   const isActive = (path: string) => {
     if (path === '/' || path === '/admin' || path === '/leader') {
