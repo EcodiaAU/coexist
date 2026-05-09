@@ -46,7 +46,8 @@ import { useEventForm } from '@/hooks/use-event-form'
 import type { EventFormFields, ActivityType } from '@/hooks/use-event-form'
 import { parseLocationPoint } from '@/lib/geo'
 import {
-    DateTimeFields
+    DateTimeFields,
+    LocationFields,
 } from './components/event-form-fields'
 import { CoverImageFocalPointPicker } from '@/components/cover-image-focal-point-picker'
 import { coverImagePositionStyle } from '@/lib/cover-image'
@@ -59,14 +60,10 @@ import {
     Dropdown,
     Toggle,
     Card,
-    MapView,
     UploadProgress,
 } from '@/components'
 import { useToast } from '@/components/toast'
-import type { MapCenter } from '@/components'
 import { cn } from '@/lib/cn'
-import { PlaceAutocomplete } from '@/components/place-autocomplete'
-import type { PlaceResult } from '@/components/place-autocomplete'
 
 /* ------------------------------------------------------------------ */
 /*  Create-only form data (extends shared fields)                      */
@@ -585,46 +582,12 @@ function StepLocation({
   return (
     <div className="space-y-4">
       <StepCard>
-        <SectionLabel icon={<MapPin size={14} />}>Address</SectionLabel>
-        <PlaceAutocomplete
-          label="Address"
-          placeholder="Search for an address..."
-          value={fields.address}
-          onChange={(_value: string, place: PlaceResult | null) => {
-            if (place) {
-              onChange({
-                address: place.short_name,
-                location_lat: place.lat,
-                location_lng: place.lng,
-              })
-            } else {
-              onChange({ address: _value })
-            }
-          }}
-        />
+        <SectionLabel icon={<MapPin size={14} />}>Address &amp; Pin</SectionLabel>
+        <p className="text-caption text-neutral-500 -mt-1 mb-3">
+          Type an address or drag the pin - they stay in sync. Pin position is what attendees see on event day.
+        </p>
+        <LocationFields fields={fields} onChange={onChange} />
       </StepCard>
-
-      {/* Map with draggable pin */}
-      <div className="rounded-2xl overflow-hidden shadow-sm border border-neutral-100">
-        <MapView
-          center={
-            fields.location_lat != null && fields.location_lng != null
-              ? { lat: fields.location_lat, lng: fields.location_lng }
-              : { lat: -25.0, lng: 134.0 }
-          }
-          zoom={fields.location_lat != null && fields.location_lng != null ? 17 : 4}
-          draggable
-          onDragEnd={(pos: MapCenter) =>
-            onChange({ location_lat: pos.lat, location_lng: pos.lng })
-          }
-          aria-label="Drag the pin to set event location"
-          className="aspect-[16/10]"
-        />
-        <div className="px-4 py-2.5 bg-surface-0 text-caption text-neutral-500 flex items-center gap-2">
-          <MapPin size={13} className="text-sprout-500" />
-          Drag the pin to set the exact location
-        </div>
-      </div>
 
       <StepCard>
         <SectionLabel icon={<Footprints size={14} />}>Meeting Point</SectionLabel>

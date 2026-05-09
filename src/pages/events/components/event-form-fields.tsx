@@ -2,9 +2,14 @@ import {
   Image,
   Camera,
   X,
+  Loader2,
+  AlertCircle,
+  MapPin,
+  Check,
 } from 'lucide-react'
 import { ACTIVITY_TYPE_OPTIONS } from '@/hooks/use-events'
 import type { EventFormFields, ActivityType } from '@/hooks/use-event-form'
+import { useLocationSync } from '@/hooks/use-location-sync'
 import {
   Input,
   Dropdown,
@@ -109,15 +114,25 @@ export function DateTimeFields({
 /* ------------------------------------------------------------------ */
 
 export function LocationFields({ fields, onChange }: FieldProps) {
+  const sync = useLocationSync({
+    address: fields.address,
+    lat: fields.location_lat,
+    lng: fields.location_lng,
+    onChange: (updates) => {
+      const partial: Partial<EventFormFields> = {}
+      if (updates.address !== undefined) partial.address = updates.address
+      if (updates.lat !== undefined) partial.location_lat = updates.lat
+      if (updates.lng !== undefined) partial.location_lng = updates.lng
+      onChange(partial)
+    },
+  })
+
   const handlePlaceSelect = (_value: string, place: PlaceResult | null) => {
     if (place) {
-      onChange({
-        address: place.short_name,
-        location_lat: place.lat,
-        location_lng: place.lng,
-      })
+      sync.onAddressSelected(place.short_name, { lat: place.lat, lng: place.lng })
     } else {
       onChange({ address: _value })
+      sync.onAddressTyped(_value)
     }
   }
 
@@ -129,6 +144,12 @@ export function LocationFields({ fields, onChange }: FieldProps) {
         value={fields.address}
         onChange={handlePlaceSelect}
       />
+
+      <LocationSyncStatusBar
+        status={sync.status}
+        addressIsBlank={fields.address.trim().length === 0}
+      />
+
       <MapView
         center={
           fields.location_lat != null && fields.location_lng != null
@@ -137,13 +158,101 @@ export function LocationFields({ fields, onChange }: FieldProps) {
         }
         zoom={fields.location_lat != null && fields.location_lng != null ? 17 : 4}
         draggable
-        onDragEnd={(pos: MapCenter) => {
-          onChange({ location_lat: pos.lat, location_lng: pos.lng })
-        }}
+        onDragEnd={(pos: MapCenter) => sync.onPinDragged(pos)}
         aria-label="Drag the pin to set event location"
         className="aspect-[16/10] rounded-xl shadow-sm"
       />
+
+      <PendingReverseAddressPrompt
+        pending={sync.pendingReverseAddress}
+        onAccept={sync.acceptPendingReverse}
+        onDismiss={sync.dismissPendingReverse}
+      />
     </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Live-sync status hint shown beneath the address field             */
+/* ------------------------------------------------------------------ */
+
+function LocationSyncStatusBar({
+  status,
+  addressIsBlank,
+}: {
+  status: 'idle' | 'searching' | 'no-result' | 'synced'
+  addressIsBlank: boolean
+}) {
+  if (addressIsBlank && status === 'idle') return null
+  if (status === 'idle') return null
+
+  if (status === 'searching') {
+    return (
+      <p className="-mt-2 text-xs text-neutral-500 flex items-center gap-1.5">
+        <Loader2 size={12} className="animate-spin shrink-0" />
+        Looking up location...
+      </p>
+    )
+  }
+  if (status === 'no-result') {
+    return (
+      <p className="-mt-2 text-xs text-amber-600 flex items-center gap-1.5">
+        <AlertCircle size={12} className="shrink-0" />
+        Couldn't find this address - drag the pin to set the exact spot.
+      </p>
+    )
+  }
+  // synced
+  return (
+    <p className="-mt-2 text-xs text-moss-600 flex items-center gap-1.5">
+      <MapPin size={12} className="shrink-0" />
+      Pin synced to address.
+    </p>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Pending reverse-geocode prompt (preserves user-typed venue names)  */
+/* ------------------------------------------------------------------ */
+
+function PendingReverseAddressPrompt({
+  pending,
+  onAccept,
+  onDismiss,
+}: {
+  pending: string | null
+  onAccept: () => void
+  onDismiss: () => void
+}) {
+  if (!pending) return null
+  return (
+    <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 flex items-start gap-2.5">
+      <MapPin size={14} className="text-neutral-500 mt-0.5 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-neutral-600">
+          Pin moved to <span className="font-medium text-neutral-800">{pending}</span>
+        </p>
+        <p className="text-[11px] text-neutral-500 mt-0.5">
+          Update the address to match? (Your venue name will be replaced.)
+        </p>
+        <div className="flex gap-2 mt-2">
+          <button
+            type="button"
+            onClick={onAccept}
+            className="text-xs font-medium text-moss-700 hover:text-moss-800 flex items-center gap-1"
+          >
+            <Check size={12} /> Update address
+          </button>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="text-xs font-medium text-neutral-500 hover:text-neutral-700"
+          >
+            Keep my address
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
