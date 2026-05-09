@@ -476,6 +476,15 @@ export default function ChatRoomPage() {
     setSelectedMessage(msg)
   }, [])
 
+  /**
+   * Swipe-right-to-reply (1.8.6 feature 1). Bypasses the actions sheet -
+   * the gesture is unambiguous so we set replyTo directly.
+   */
+  const handleMessageSwipeReply = useCallback((msg: AnyMessage) => {
+    if (msg._optimistic || msg.is_deleted) return
+    setReplyTo(msg)
+  }, [])
+
   const handleReply = useCallback(() => {
     if (selectedMessage) {
       setReplyTo(selectedMessage)
@@ -833,6 +842,7 @@ export default function ChatRoomPage() {
         fetchNextPage={fetchNextPage}
         typingText={isCollective ? typingText ?? undefined : undefined}
         onMessageLongPress={handleMessageLongPress}
+        onMessageSwipeReply={handleMessageSwipeReply}
         onProfileTap={(userId) => setProfileUserId(userId)}
         scrollContainerRef={scrollContainerRef}
         messagesEndRef={messagesEndRef}

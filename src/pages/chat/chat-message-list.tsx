@@ -346,6 +346,13 @@ export interface ChatMessageListProps {
   typingText?: string
   /** Callback when a message is long-pressed */
   onMessageLongPress: (msg: AnyMessage) => void
+  /**
+   * Callback when a message is swipe-right-replied (1.8.6 feature 1).
+   * Fires past the SWIPE_REPLY_FIRE_PX threshold inside ChatBubble; parent
+   * promotes the message into reply state (replyTo) without opening the
+   * full actions sheet.
+   */
+  onMessageSwipeReply: (msg: AnyMessage) => void
   /** Callback when an avatar/sender name is tapped */
   onProfileTap: (userId: string) => void
   /** Refs provided by the parent for scroll management */
@@ -372,6 +379,7 @@ export function ChatMessageList({
   fetchNextPage,
   typingText,
   onMessageLongPress,
+  onMessageSwipeReply,
   onProfileTap,
   scrollContainerRef,
   messagesEndRef,
@@ -537,6 +545,11 @@ export function ChatMessageList({
       !msg._optimistic &&
       !msg.id.startsWith('optimistic-')
 
+    // Swipe-reply (1.8.6 feature 1) is enabled for any non-optimistic,
+    // non-deleted message. System messages take an early return below so
+    // swipe never wires up to them. Defence-in-depth guard.
+    const swipeReplyEnabled = !msg._optimistic && !msg.is_deleted
+
     if (messageType === 'html') {
       return (
         <>
@@ -553,6 +566,7 @@ export function ChatMessageList({
             onAvatarTap={(userId) => onProfileTap(userId)}
             onSenderTap={(userId) => onProfileTap(userId)}
             onLongPress={() => onMessageLongPress(msg)}
+            onSwipeReply={swipeReplyEnabled ? () => onMessageSwipeReply(msg) : undefined}
           />
           {reactionsEnabled && (
             <MessageReactions
@@ -582,6 +596,7 @@ export function ChatMessageList({
         onSenderTap={(userId) => onProfileTap(userId)}
         onLongPress={() => onMessageLongPress(msg)}
         onReplyTap={handleReplyTap}
+        onSwipeReply={swipeReplyEnabled ? () => onMessageSwipeReply(msg) : undefined}
         replyTo={
           msg.reply_message
             ? {

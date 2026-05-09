@@ -1,10 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { Maximize2, Minimize2 } from 'lucide-react'
+import { motion, useReducedMotion, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
+import { Reply, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatTime } from '@/lib/date-format'
 import { ROLE_COLORS } from '@/lib/constants'
 import { useLongPress } from '@/hooks/use-long-press'
+
+/** See chat-bubble.tsx for the swipe-reply doctrine - this mirrors it. */
+const SWIPE_REPLY_FIRE_PX = 60
+const SWIPE_REPLY_MAX_PX = 80
 
 interface HtmlChatBubbleProps {
   /** Full HTML document string to render inside a sandboxed iframe */
@@ -26,6 +30,8 @@ interface HtmlChatBubbleProps {
   onAvatarTap?: (userId: string) => void
   onSenderTap?: (userId: string) => void
   onLongPress?: () => void
+  /** Swipe-right-to-reply (1.8.6 feature 1). See ChatBubble for the contract. */
+  onSwipeReply?: () => void
 }
 
 /**
@@ -57,12 +63,34 @@ export function HtmlChatBubble({
   onAvatarTap,
   onSenderTap,
   onLongPress,
+  onSwipeReply,
 }: HtmlChatBubbleProps) {
   const shouldReduceMotion = useReducedMotion()
   const [isExpanded, setIsExpanded] = useState(false)
   const [iframeHeight, setIframeHeight] = useState(300)
   const inlineIframeRef = useRef<HTMLIFrameElement>(null)
   const { onTouchStart: handleTouchStart, onTouchEnd: handleTouchEnd, onTouchCancel: handleTouchCancel } = useLongPress(onLongPress)
+
+  /* Swipe-right-to-reply (1.8.6 feature 1). Mirrors ChatBubble. */
+  const x = useMotionValue(0)
+  const swipeIconOpacity = useTransform(x, [0, 30, 70], [0, 0.6, 1])
+  const swipeIconScale = useTransform(x, [0, 30, 70], [0.55, 0.8, 1])
+  const swipeFiredRef = useRef(false)
+  const dragEnabled = !!onSwipeReply
+  const handleDragStart = () => {
+    handleTouchEnd()
+    swipeFiredRef.current = false
+  }
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    if (!onSwipeReply || swipeFiredRef.current) return
+    if (info.offset.x >= SWIPE_REPLY_FIRE_PX) {
+      swipeFiredRef.current = true
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(15)
+      }
+      onSwipeReply()
+    }
+  }
 
   const roleStyle = roleBadge
     ? ROLE_COLORS[roleBadge] ?? { bg: 'bg-primary-100', text: 'text-primary-600' }
@@ -144,6 +172,16 @@ export function HtmlChatBubble({
 
   /* ─── Inline bubble ────────────────────────────────────────────── */
   return (
+    <div className="relative">
+      {dragEnabled && (
+        <motion.div
+          aria-hidden="true"
+          style={{ opacity: swipeIconOpacity, scale: swipeIconScale }}
+          className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 z-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-white shadow-md"
+        >
+          <Reply size={16} strokeWidth={2.5} />
+        </motion.div>
+      )}
     <motion.div
       role="listitem"
       aria-label={label}
@@ -153,11 +191,21 @@ export function HtmlChatBubble({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
+      style={dragEnabled ? { x } : undefined}
+      drag={dragEnabled ? 'x' : false}
+      dragDirectionLock
+      dragConstraints={{ left: 0, right: SWIPE_REPLY_MAX_PX }}
+      dragElastic={{ left: 0, right: 0.35 }}
+      dragSnapToOrigin={dragEnabled}
+      dragMomentum={false}
+      onDragStart={dragEnabled ? handleDragStart : undefined}
+      onDragEnd={dragEnabled ? handleDragEnd : undefined}
       className={cn(
         // 1.8.5 item 9: gap-2.5 → gap-2 tightens avatar↔card.
         'flex gap-2 min-w-0',
         sent ? 'flex-row-reverse' : 'flex-row',
         'w-full',
+        dragEnabled && 'relative z-10 touch-pan-y',
         className,
       )}
     >
@@ -281,5 +329,6 @@ export function HtmlChatBubble({
         </div>
       </div>
     </motion.div>
+    </div>
   )
 }

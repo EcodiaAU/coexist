@@ -1,9 +1,20 @@
-import { motion, useReducedMotion } from 'framer-motion'
-import { Megaphone, CalendarPlus, ClipboardCheck, ListChecks, MapPin, Calendar, Clock, Car, Users } from 'lucide-react'
+import { useRef } from 'react'
+import { motion, useReducedMotion, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
+import { Reply, Megaphone, CalendarPlus, ClipboardCheck, ListChecks, MapPin, Calendar, Clock, Car, Users } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatTime, formatCardDate, formatCardTime } from '@/lib/date-format'
 import { ROLE_COLORS } from '@/lib/constants'
 import { useLongPress } from '@/hooks/use-long-press'
+
+/**
+ * Swipe-right-to-reply gesture (1.8.6 feature 1).
+ * Threshold: drag the bubble row >= 60px to fire reply.
+ * Visual: reply icon reveals at the row's left edge as the bubble drags right;
+ *         opacity + scale ramp from 0 -> 1 across [0, 70]px of x-offset.
+ * Snap: row returns to origin on release (dragSnapToOrigin) regardless of fire.
+ */
+const SWIPE_REPLY_FIRE_PX = 60
+const SWIPE_REPLY_MAX_PX = 80
 
 interface ReplyTo {
   message: string
@@ -40,6 +51,13 @@ interface ChatBubbleProps {
   onLongPress?: () => void
   /** Tap handler for the reply-quote chip. Receives the parent message id. */
   onReplyTap?: (parentId: string) => void
+  /**
+   * Swipe-right-to-reply (1.8.6 feature 1). When provided, the bubble row
+   * becomes drag-x with a reveal-on-swipe reply icon at the left edge. Past
+   * the SWIPE_REPLY_FIRE_PX threshold the callback fires once on dragEnd
+   * (haptic pulse + parent sets replyTo state). Row snaps back to origin.
+   */
+  onSwipeReply?: () => void
   'aria-label'?: string
 }
 
@@ -60,10 +78,33 @@ export function ChatBubble({
   onSenderTap,
   onLongPress,
   onReplyTap,
+  onSwipeReply,
   'aria-label': ariaLabel,
 }: ChatBubbleProps) {
   const shouldReduceMotion = useReducedMotion()
   const { onTouchStart: handleTouchStart, onTouchEnd: handleTouchEnd, onTouchCancel: handleTouchCancel } = useLongPress(onLongPress)
+
+  /* ── Swipe-right-to-reply (1.8.6 feature 1) ────────────────────── */
+  const x = useMotionValue(0)
+  const swipeIconOpacity = useTransform(x, [0, 30, 70], [0, 0.6, 1])
+  const swipeIconScale = useTransform(x, [0, 30, 70], [0.55, 0.8, 1])
+  const swipeFiredRef = useRef(false)
+  const dragEnabled = !!onSwipeReply
+
+  const handleDragStart = () => {
+    handleTouchEnd()
+    swipeFiredRef.current = false
+  }
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    if (!onSwipeReply || swipeFiredRef.current) return
+    if (info.offset.x >= SWIPE_REPLY_FIRE_PX) {
+      swipeFiredRef.current = true
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(15)
+      }
+      onSwipeReply()
+    }
+  }
 
   const label =
     ariaLabel ??
@@ -72,6 +113,16 @@ export function ChatBubble({
   const roleStyle = roleBadge ? ROLE_COLORS[roleBadge] ?? { bg: 'bg-primary-100', text: 'text-primary-600' } : null
 
   return (
+    <div className="relative">
+      {dragEnabled && (
+        <motion.div
+          aria-hidden="true"
+          style={{ opacity: swipeIconOpacity, scale: swipeIconScale }}
+          className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 z-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-white shadow-md"
+        >
+          <Reply size={16} strokeWidth={2.5} />
+        </motion.div>
+      )}
     <motion.div
       role="listitem"
       aria-label={label}
@@ -81,11 +132,21 @@ export function ChatBubble({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
+      style={dragEnabled ? { x } : undefined}
+      drag={dragEnabled ? 'x' : false}
+      dragDirectionLock
+      dragConstraints={{ left: 0, right: SWIPE_REPLY_MAX_PX }}
+      dragElastic={{ left: 0, right: 0.35 }}
+      dragSnapToOrigin={dragEnabled}
+      dragMomentum={false}
+      onDragStart={dragEnabled ? handleDragStart : undefined}
+      onDragEnd={dragEnabled ? handleDragEnd : undefined}
       className={cn(
         // 1.8.5 item 9: gap-2.5 → gap-2 (10→8px) tightens avatar↔bubble.
         'flex gap-2 min-w-0',
         sent ? 'flex-row-reverse' : 'flex-row',
         'w-full',
+        dragEnabled && 'relative z-10 touch-pan-y',
         className,
       )}
     >
@@ -247,6 +308,7 @@ export function ChatBubble({
         </div>
       </div>
     </motion.div>
+    </div>
   )
 }
 
