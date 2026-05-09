@@ -79,10 +79,18 @@ describe('offline-sync', () => {
       expect(getPendingActionCount()).toBe(1)
       const actions = getPendingActions()
       expect(actions[0].type).toBe('profile-update')
-      expect(actions[0].payload).toEqual({
-        userId: 'user-1',
-        updates: { display_name: 'New Name' },
-      })
+      // queueOfflineAction auto-stamps a client_action_id (1.8.6 feature 4
+      // for server-side replay idempotency via migration 20260509100000).
+      // Use objectContaining so the assertion stays focused on caller intent.
+      expect(actions[0].payload).toEqual(
+        expect.objectContaining({
+          userId: 'user-1',
+          updates: { display_name: 'New Name' },
+        }),
+      )
+      expect(actions[0].payload.client_action_id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      )
     })
 
     it('queues task-complete actions', () => {

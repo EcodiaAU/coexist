@@ -186,14 +186,43 @@ function saveActionQueue(queue: OfflineAction[]): boolean {
   return safeSet(ACTION_QUEUE_KEY, queue)
 }
 
-/** Queue any offline action */
+/** Generate an idempotency UUID for server-side replay dedup. */
+function newClientActionId(): string {
+  // crypto.randomUUID is universally available in Capacitor 6 + modern browsers.
+  // Fallback to a v4-shape hex if we ever land on a runtime without it (paranoia).
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  const hex = (n: number) => n.toString(16).padStart(2, '0')
+  const b = new Uint8Array(16)
+  for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256)
+  b[6] = (b[6] & 0x0f) | 0x40
+  b[8] = (b[8] & 0x3f) | 0x80
+  const h = Array.from(b, hex).join('')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`
+}
+
+/** Queue any offline action.
+ *
+ * If the payload does not already include a `client_action_id`, one is
+ * generated. This UUID survives every retry attempt (created on enqueue,
+ * not per processAction), so server-side INSERT/UPDATE handlers can use
+ * the partial UNIQUE indexes on `client_action_id IS NOT NULL` (migration
+ * 20260509100000) to make replay a hard no-op on duplicate. Bulletproof
+ * dedup vs the existing per-table content/window heuristics.
+ */
 export function queueOfflineAction(
   type: OfflineActionType,
   payload: Record<string, unknown>,
 ) {
   const queue = getActionQueue()
   const id = `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  queue.push({ id, type, payload, createdAt: new Date().toISOString(), retries: 0 })
+  // Stamp idempotency key onto payload at enqueue time so retries reuse it.
+  const stampedPayload =
+    'client_action_id' in payload && payload.client_action_id
+      ? payload
+      : { ...payload, client_action_id: newClientActionId() }
+  queue.push({ id, type, payload: stampedPayload, createdAt: new Date().toISOString(), retries: 0 })
   const saved = saveActionQueue(queue)
   if (!saved) {
     console.warn('Offline action could not be saved: device storage is full.')
@@ -218,14 +247,31 @@ const MAX_RETRIES = 3
 /* ------------------------------------------------------------------ */
 
 async function processChatMessage(action: OfflineAction): Promise<{ ok: boolean; conflict?: string }> {
-  const { collectiveId, userId, content, replyToId } = action.payload as {
+  const { collectiveId, userId, content, replyToId, client_action_id } = action.payload as {
     collectiveId: string
     userId: string
     content: string
     replyToId?: string
+    client_action_id?: string
   }
 
-  // Dedup: check if an identical message was already sent
+  // Idempotency-first dedup: if we have a client_action_id and the row
+  // already exists for it, skip. Bulletproof vs the older content+5s-window
+  // heuristic, which can falsely allow duplicates when a queue drain happens
+  // outside the dedup window for a successful-but-failed-to-respond INSERT.
+  // The column was added in migration 20260509100000; generated TS types
+  // lag the migration so we cast through `any` until types regen.
+  if (client_action_id) {
+    const { data: existingByKey } = await (supabase as any)
+      .from('chat_messages')
+      .select('id')
+      .eq('client_action_id', client_action_id)
+      .limit(1)
+    if (existingByKey && existingByKey.length > 0) return { ok: true }
+  }
+
+  // Belt + braces: legacy content+window dedup for messages enqueued before
+  // 1.8.6 (no client_action_id).
   const dedupeWindow = new Date(
     new Date(action.createdAt).getTime() - 5000,
   ).toISOString()
@@ -239,15 +285,19 @@ async function processChatMessage(action: OfflineAction): Promise<{ ok: boolean;
     .limit(1)
   if (existing && existing.length > 0) return { ok: true }
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('chat_messages')
     .insert({
       collective_id: collectiveId,
       user_id: userId,
       content,
       reply_to_id: replyToId ?? null,
+      ...(client_action_id ? { client_action_id } : {}),
     })
   if (error) {
+    // 23505 = UNIQUE violation on the partial index over client_action_id.
+    // Means this exact action already landed; treat as success.
+    if (error.code === '23505') return { ok: true }
     if (error.code === '23503' || error.code === '42501') {
       return { ok: false, conflict: 'Message to collective could not be sent. Please try again.' }
     }
@@ -257,27 +307,37 @@ async function processChatMessage(action: OfflineAction): Promise<{ ok: boolean;
 }
 
 async function processCheckIn(action: OfflineAction): Promise<{ ok: boolean; conflict?: string }> {
-  const { eventId, userId, timestamp } = action.payload as {
+  const { eventId, userId, timestamp, client_action_id } = action.payload as {
     eventId: string
     userId: string
     timestamp: string
+    client_action_id?: string
   }
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('event_registrations')
-    .select('status')
+    .select('status, client_action_id')
     .eq('event_id', eventId)
     .eq('user_id', userId)
     .single()
 
+  // Idempotent: already attended OR same client_action_id already stamped.
   if (existing?.status === 'attended') return { ok: true }
+  if (client_action_id && existing?.client_action_id === client_action_id) return { ok: true }
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('event_registrations')
-    .update({ status: 'attended', checked_in_at: timestamp })
+    .update({
+      status: 'attended',
+      checked_in_at: timestamp,
+      ...(client_action_id ? { client_action_id } : {}),
+    })
     .eq('event_id', eventId)
     .eq('user_id', userId)
 
-  if (error) return { ok: false, conflict: 'Check-in sync failed. Please try again.' }
+  if (error) {
+    if (error.code === '23505') return { ok: true }
+    return { ok: false, conflict: 'Check-in sync failed. Please try again.' }
+  }
   return { ok: true }
 }
 
@@ -618,18 +678,26 @@ async function processMarkAllNotificationsRead(action: OfflineAction): Promise<{
 }
 
 async function processLogImpact(action: OfflineAction): Promise<{ ok: boolean; conflict?: string }> {
-  const { impactData, userId } = action.payload as {
+  const { impactData, userId, client_action_id } = action.payload as {
     impactData: Record<string, unknown>
     userId: string
+    client_action_id?: string
   }
 
   const { error } = await supabase
     .from('event_impact')
     .upsert(
-      { ...impactData, logged_by: userId } as any,
+      {
+        ...impactData,
+        logged_by: userId,
+        ...(client_action_id ? { client_action_id } : {}),
+      } as any,
       { onConflict: 'event_id' },
     )
-  if (error) return { ok: false, conflict: 'Impact data failed to sync. Please try again from the event page.' }
+  if (error) {
+    if (error.code === '23505') return { ok: true }
+    return { ok: false, conflict: 'Impact data failed to sync. Please try again from the event page.' }
+  }
 
   // Mark event as completed
   const { error: statusError } = await supabase
@@ -643,14 +711,26 @@ async function processLogImpact(action: OfflineAction): Promise<{ ok: boolean; c
 }
 
 async function processSurveyResponse(action: OfflineAction): Promise<{ ok: boolean; conflict?: string }> {
-  const { surveyId, userId, answers, eventId } = action.payload as {
+  const { surveyId, userId, answers, eventId, client_action_id } = action.payload as {
     surveyId: string
     userId: string
     answers: Record<string, unknown>
     eventId?: string
+    client_action_id?: string
   }
 
-  // Dedup: check if response already exists
+  // Idempotency-first dedup. Cast through `any` because generated types
+  // lag migration 20260509100000 until regenerated.
+  if (client_action_id) {
+    const { data: existingByKey } = await (supabase as any)
+      .from('survey_responses')
+      .select('id')
+      .eq('client_action_id', client_action_id)
+      .limit(1)
+    if (existingByKey && existingByKey.length > 0) return { ok: true }
+  }
+
+  // Legacy dedup
   let check = supabase
     .from('survey_responses')
     .select('id')
@@ -666,11 +746,15 @@ async function processSurveyResponse(action: OfflineAction): Promise<{ ok: boole
     answers,
   }
   if (eventId) row.event_id = eventId
+  if (client_action_id) row.client_action_id = client_action_id
 
   const { error } = await supabase
     .from('survey_responses')
     .insert(row as any)
-  if (error) return { ok: false, conflict: 'Survey response failed to sync.' }
+  if (error) {
+    if (error.code === '23505') return { ok: true }
+    return { ok: false, conflict: 'Survey response failed to sync.' }
+  }
   return { ok: true }
 }
 

@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { useOffline } from '@/hooks/use-offline'
+import { queueOfflineAction } from '@/lib/offline-sync'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -319,6 +321,7 @@ export function useTicketCheckIn() {
 export function useCodeCheckIn() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
+  const { isOffline } = useOffline()
 
   return useMutation({
     mutationFn: async ({ checkInCode }: { checkInCode: string }) => {
@@ -326,7 +329,42 @@ export function useCodeCheckIn() {
 
       const code = checkInCode.trim()
 
-      // Look up the event by its check_in_code
+      // ── OFFLINE PATH ──
+      // If offline, resolve eventId from the persisted query cache (event
+      // detail rows hold the check_in_code). If found, queue a check-in
+      // action - queueOfflineAction auto-stamps client_action_id so server
+      // replay is idempotent. Optimistic UI flip in onSuccess below shows
+      // the participant their CTA card flip to "checked in" without a
+      // network round-trip.
+      // Origin: 1.8.6 feature 4 (Tate verbatim event-day SMS, 10 May 2026).
+      if (isOffline) {
+        const cached = queryClient
+          .getQueriesData<unknown>({ queryKey: ['event'] })
+          .map(([, data]) => data)
+          .filter(
+            (d): d is { id: string; check_in_code?: string | null; status?: string } =>
+              !!d &&
+              typeof d === 'object' &&
+              'id' in (d as Record<string, unknown>) &&
+              'check_in_code' in (d as Record<string, unknown>),
+          )
+          .find((d) => (d.check_in_code ?? '').toString().trim() === code)
+
+        if (!cached) {
+          throw new Error("You're offline and we can't verify the code right now. Reconnect to check in.")
+        }
+        if (cached.status === 'cancelled') throw new Error('This event has been cancelled.')
+        if (cached.status === 'draft') throw new Error('This event is not active yet.')
+
+        queueOfflineAction('check-in', {
+          eventId: cached.id,
+          userId: user.id,
+          timestamp: new Date().toISOString(),
+        })
+        return { eventId: cached.id, userId: user.id }
+      }
+
+      // ── ONLINE PATH ──
       const { data: event, error: lookupErr } = await supabase
         .from('events')
         .select('id, title, status')
@@ -336,11 +374,9 @@ export function useCodeCheckIn() {
       if (lookupErr) throw lookupErr
       if (!event) throw new Error('No event found with that code. Check the code and try again.')
 
-      // Check event status
       if (event.status === 'cancelled') throw new Error('This event has been cancelled.')
       if (event.status === 'draft') throw new Error('This event is not active yet.')
 
-      // Check if user is registered
       const { data: registration, error: regErr } = await supabase
         .from('event_registrations')
         .select('status, checked_in_at')
@@ -361,7 +397,6 @@ export function useCodeCheckIn() {
         throw new Error('You are not registered for this event.')
       }
 
-      // Perform check-in: update registration to attended
       const { error: updateErr } = await supabase
         .from('event_registrations')
         .update({
@@ -378,9 +413,32 @@ export function useCodeCheckIn() {
     },
     onSuccess: (result) => {
       if (result) {
+        // Optimistic flip on the cached event detail row: user_registration
+        // becomes 'attended' so the participant's CTA card on event-detail
+        // immediately shows "You're checked in!" rather than waiting for
+        // refetch (especially important when offline-queued).
+        queryClient.setQueriesData<unknown>(
+          { queryKey: ['event', result.eventId] },
+          (old: unknown) => {
+            if (!old || typeof old !== 'object') return old
+            const row = old as Record<string, unknown> & {
+              user_registration?: { status?: string; checked_in_at?: string | null } | null
+            }
+            if (!row.user_registration) return old
+            return {
+              ...row,
+              user_registration: {
+                ...row.user_registration,
+                status: 'attended',
+                checked_in_at: new Date().toISOString(),
+              },
+            }
+          },
+        )
         queryClient.invalidateQueries({ queryKey: ['event-attendees', result.eventId] })
         queryClient.invalidateQueries({ queryKey: ['event', result.eventId] })
         queryClient.invalidateQueries({ queryKey: ['my-events'] })
+        queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
       }
     },
   })

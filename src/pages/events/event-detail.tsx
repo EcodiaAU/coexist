@@ -35,6 +35,9 @@ import {
     Ticket,
     ExternalLink,
     Car,
+    WifiOff,
+    RefreshCw,
+    UserCheck,
 } from 'lucide-react'
 import { EventHero, EventHeroOverlay } from './event-hero'
 import { EventActions } from './event-actions'
@@ -44,6 +47,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import {
     useEventDetail,
+    useEventAttendees,
     useRegisterForEvent,
     useCancelRegistration,
     useCancelEvent,
@@ -55,6 +59,10 @@ import {
     downloadIcsFile,
     getGoogleCalendarUrl,
 } from '@/hooks/use-events'
+import { useOffline } from '@/hooks/use-offline'
+import { usePendingSync } from '@/hooks/use-pending-sync'
+import { triggerManualSync } from '@/lib/offline-sync'
+import { isEventTodayAEST } from '@/lib/date-format'
 import {
     Page,
     Header,
@@ -309,6 +317,38 @@ export default function EventDetailPage() {
   const cancelMutation = useCancelRegistration()
   const cancelEventMutation = useCancelEvent()
   const inviteCollectiveMutation = useInviteCollective()
+
+  // Mid-event offline + sync visibility for PARTICIPANTS. Mirrors the leader
+  // banner on event-day.tsx so participants get the same "X queued, syncing..."
+  // feedback at the venue. Origin: 1.8.6 feature 4 (Tate verbatim event-day
+  // SMS, 10 May 2026 - "everyone can use the event day stuff... and have an
+  // off-line sync queue").
+  const { isOffline } = useOffline()
+  const { count: pendingCount } = usePendingSync()
+  const [syncingNow, setSyncingNow] = useState(false)
+  const handleManualSync = useCallback(async () => {
+    setSyncingNow(true)
+    try {
+      await triggerManualSync()
+    } finally {
+      setSyncingNow(false)
+    }
+  }, [])
+
+  // Live "X of Y here so far" - visible to everyone (participant + leader)
+  // when the event is today, surfacing the leader-only event-day stats to
+  // participants so they see the room fill up. Same query key as the leader
+  // page so both share the cached + offline-replay result.
+  const isEventTodayForLive = isEventTodayAEST(event?.date_start)
+  const { data: liveAttendees } = useEventAttendees(isEventTodayForLive ? id : undefined)
+  const liveCheckedIn = useMemo(
+    () => liveAttendees?.filter((a) => a.status === 'attended').length ?? 0,
+    [liveAttendees],
+  )
+  const liveRegistered = useMemo(
+    () => liveAttendees?.filter((a) => a.status === 'registered' || a.status === 'attended').length ?? 0,
+    [liveAttendees],
+  )
 
   // Ticketed events
   const isTicketed = event?.is_ticketed ?? false
@@ -900,6 +940,88 @@ export default function EventDetailPage() {
         initial="hidden"
         animate="visible"
       >
+        {/* ── Mid-event offline / pending-sync banner (participants + leaders) ──
+            Visible whenever the device is offline OR there are queued actions.
+            Mirrors the leader banner on event-day.tsx so participants get
+            the same feedback at the venue. */}
+        {(isOffline || pendingCount > 0) && (
+          <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+            <div
+              className={cn(
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm',
+                isOffline
+                  ? 'bg-warning-50 text-warning-800 ring-1 ring-warning-200/60'
+                  : 'bg-primary-50 text-primary-800 ring-1 ring-primary-200/60',
+              )}
+              role="status"
+              aria-live="polite"
+            >
+              {isOffline ? (
+                <WifiOff size={16} className="shrink-0" />
+              ) : (
+                <RefreshCw size={16} className={cn('shrink-0', syncingNow && 'animate-spin')} />
+              )}
+              <div className="flex-1 leading-tight">
+                {isOffline ? (
+                  <p className="font-medium">
+                    Offline - actions saved on device.
+                    {pendingCount > 0 && (
+                      <span className="ml-1 text-warning-700">
+                        {pendingCount} queued
+                      </span>
+                    )}
+                  </p>
+                ) : (
+                  <p className="font-medium">
+                    {pendingCount} action{pendingCount === 1 ? '' : 's'} queued, syncing...
+                  </p>
+                )}
+              </div>
+              {!isOffline && pendingCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleManualSync}
+                  disabled={syncingNow}
+                  className="text-xs font-semibold underline disabled:opacity-50"
+                >
+                  Sync now
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Live "X of Y here so far" - visible on event day for everyone.
+            Reads from cached event-attendees so it survives flaky network. */}
+        {isEventTodayForLive && liveAttendees && liveAttendees.length > 0 && (
+          <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+            <div className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm border border-success-100">
+              <div className="flex items-center justify-center w-9 h-9 rounded-full bg-success-50">
+                <UserCheck size={16} className="text-success-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs uppercase tracking-wider font-semibold text-success-600">Here so far</p>
+                <p className="text-sm font-bold text-neutral-900 mt-0.5">
+                  {liveCheckedIn} of {liveRegistered}
+                  {liveCheckedIn > 0 && liveRegistered > 0 && (
+                    <span className="ml-2 text-caption font-normal text-neutral-500">
+                      ({Math.round((liveCheckedIn / liveRegistered) * 100)}%)
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="h-2 w-20 rounded-full bg-neutral-100 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-success-400 to-success-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: liveRegistered > 0 ? `${(liveCheckedIn / liveRegistered) * 100}%` : '0%' }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, ease: 'easeOut' }}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* ── Leader quick-actions grid (top-of-page for leaders) ── */}
         {isStaff && !collectiveRole.isLoading && (
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
