@@ -217,6 +217,73 @@ export function computeEstimatedHours(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Per-user volunteer hours                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Sum a single user's volunteer hours across the events they attended.
+ *
+ * The DB stores `hours_total` as PERSON-HOURS for an event (duration × attendees,
+ * see log-impact.tsx). Aggregating raw `hours_total` across a user's attended
+ * events therefore over-counts wildly: 5 attendees × 4-hour event becomes 20
+ * hours on every attendee's profile.
+ *
+ * Per-user hours per event = `hours_total / attendees` when both fields are
+ * populated. When attendees is 0/null (legacy import rows), or when no impact
+ * row was logged for an attended event at all, fall back to the event's own
+ * duration via `date_start` / `date_end`. Default 3h when `date_end` is null
+ * (matches `computeEstimatedHours` legacy fallback).
+ *
+ * Returns rounded total volunteer hours for this user.
+ */
+export function sumPerUserHours(
+  impactRows: Record<string, unknown>[],
+  attendedEventIds: string[],
+  eventTimes: Map<string, { date_start: string; date_end: string | null }>,
+): number {
+  // Group impact rows by event_id so multiple impact rows for the same event
+  // (rare but possible - no unique constraint) collapse into a single
+  // per-event contribution.
+  const impactByEventId = new Map<string, { hoursTotal: number; attendees: number }>()
+  for (const r of impactRows) {
+    const eventId = r.event_id as string | undefined
+    if (!eventId) continue
+    const hoursTotal = Number(r.hours_total) || 0
+    const attendees = Number(r.attendees) || 0
+    const existing = impactByEventId.get(eventId)
+    if (existing) {
+      existing.hoursTotal += hoursTotal
+      existing.attendees = Math.max(existing.attendees, attendees)
+    } else {
+      impactByEventId.set(eventId, { hoursTotal, attendees })
+    }
+  }
+
+  const eventDurationHours = (eventId: string): number => {
+    const ev = eventTimes.get(eventId)
+    if (!ev) return 0
+    const start = new Date(ev.date_start).getTime()
+    const end = ev.date_end ? new Date(ev.date_end).getTime() : 0
+    if (!start) return 3
+    return end > start ? (end - start) / 3_600_000 : 3
+  }
+
+  let total = 0
+  // Iterate by attended event ids (canonical truth source for "events the
+  // user was at"), not by impact rows, so we credit attended events that
+  // have no impact row logged.
+  for (const eventId of attendedEventIds) {
+    const impact = impactByEventId.get(eventId)
+    if (impact && impact.attendees > 0 && impact.hoursTotal > 0) {
+      total += impact.hoursTotal / impact.attendees
+    } else {
+      total += eventDurationHours(eventId)
+    }
+  }
+  return Math.round(total)
+}
+
+/* ------------------------------------------------------------------ */
 /*  Legacy re-exports for backward compatibility                       */
 /* ------------------------------------------------------------------ */
 

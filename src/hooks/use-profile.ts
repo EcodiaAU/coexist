@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { useToast } from '@/components/toast'
 import { queueOfflineAction } from '@/lib/offline-sync'
-import { sumMetric } from '@/lib/impact-metrics'
+import { sumMetric, sumPerUserHours } from '@/lib/impact-metrics'
 import { fetchImpactRows } from '@/lib/impact-query'
 import type { Database } from '@/types/database.types'
 
@@ -141,14 +141,35 @@ export function useProfileStats(userId?: string) {
       if (eventIds.length > 0) {
         // User profile: include all rows for attended events regardless of date
         // (skipBaselineDateFilter=true - user impact is their personal record, not a national aggregate)
-        const { rows: impactRows } = await fetchImpactRows({
-          eventIds,
-          includeLegacy: true,
-          skipBaselineDateFilter: true,
-        })
+        const [{ rows: impactRows }, eventsRes] = await Promise.all([
+          fetchImpactRows({
+            eventIds,
+            includeLegacy: true,
+            skipBaselineDateFilter: true,
+          }),
+          // Pull date_start / date_end for each attended event so the per-user
+          // hours fallback (event duration) works when an event_impact row
+          // exists but has no attendees count, or when no impact row was
+          // logged at all.
+          supabase
+            .from('events')
+            .select('id, date_start, date_end')
+            .in('id', eventIds),
+        ])
+
+        const eventDurations = new Map<string, { date_start: string; date_end: string | null }>()
+        for (const e of eventsRes.data ?? []) {
+          if (e?.id) eventDurations.set(e.id, { date_start: e.date_start, date_end: e.date_end })
+        }
 
         totalTreesPlanted       = sumMetric(impactRows, 'trees_planted')
-        totalHours              = sumMetric(impactRows, 'hours_total')
+        // Per-user hours: divide hours_total by attendees on each event_impact
+        // row (hours_total is a person-hours total = duration * attendees, so
+        // hours_total / attendees collapses back to the per-attendee duration
+        // = this user's hours for that event). Falls back to event duration
+        // for legacy rows missing attendees data, and for attended events
+        // with no impact row logged at all.
+        totalHours              = sumPerUserHours(impactRows, eventIds, eventDurations)
         totalRubbishKg          = sumMetric(impactRows, 'rubbish_kg')
         totalAreaSqm            = sumMetric(impactRows, 'area_restored_sqm')
         totalNativePlants       = sumMetric(impactRows, 'native_plants')
