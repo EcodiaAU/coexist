@@ -15,6 +15,9 @@ import {
   Waves,
   Flag,
   ShieldOff,
+  Phone,
+  Heart,
+  Shield,
 } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
@@ -55,7 +58,7 @@ export default function ViewProfilePage() {
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
   const { user } = useAuth()
-  const { data: profile, isLoading } = useProfile(userId)
+  const { data: profile, isLoading, isError, isFetched, refetch } = useProfile(userId)
   const showLoading = useDelayedLoading(isLoading)
   const { data: collectives } = useProfileCollectives(userId)
   const { data: stats } = useProfileStats(userId)
@@ -71,14 +74,45 @@ export default function ViewProfilePage() {
   const [showReportSheet, setShowReportSheet] = useState(false)
   const [showBlockSheet, setShowBlockSheet] = useState(false)
 
-  if (showLoading) {
+  // Loading state. We render the skeleton ALWAYS while the query is
+  // in-flight (not gated by useDelayedLoading - see fork_moy0mxm3 1.8.5
+  // item 8 fix). The previous logic gated the skeleton behind a 1000ms
+  // delay AND fell through to the "User not found" empty state during the
+  // pre-delay window, which surfaced as a permanent-looking false negative
+  // across all roles when react-query was warming the cache or the RPC was
+  // slower than 1s. Use showLoading only to UPGRADE from blank-page to
+  // skeleton on slow networks; render NOTHING (just the page chrome)
+  // during the brief delay window so we never flash "User not found" while
+  // we are actually still loading.
+  if (isLoading) {
     return (
       <Page swipeBack header={<Header title="Profile" back />}>
-        <ViewProfileSkeleton />
+        {showLoading ? <ViewProfileSkeleton /> : null}
       </Page>
     )
   }
-  if (!profile) {
+
+  // Error state. Distinct from "user not found" - the RPC errored (network,
+  // auth, transient DB), so surface a retry rather than telling the user
+  // their friend doesn't exist.
+  if (isError) {
+    return (
+      <Page swipeBack header={<Header title="Profile" back />}>
+        <EmptyState
+          illustration="error"
+          title="Could not load profile"
+          description="Something went wrong fetching this profile. Try again."
+          action={{ label: 'Retry', onClick: () => refetch() }}
+        />
+      </Page>
+    )
+  }
+
+  // Not-found: the query finished, no error, but the RPC returned NULL -
+  // either the target user has no profile row, or the caller is
+  // unauthenticated. Only render this AFTER isFetched=true so we never
+  // collide with the loading window above.
+  if (isFetched && !profile) {
     return (
       <Page swipeBack header={<Header title="Profile" back />}>
         <EmptyState
@@ -89,6 +123,11 @@ export default function ViewProfilePage() {
         />
       </Page>
     )
+  }
+  if (!profile) {
+    // Defensive belt-and-braces: if isFetched is false but profile is also
+    // falsy and we are not loading or erroring, show the page chrome only.
+    return <Page swipeBack header={<Header title="Profile" back />} />
   }
 
   const stagger = {
@@ -254,6 +293,52 @@ export default function ViewProfilePage() {
                 <p className="text-xs text-neutral-600 mt-0.5">
                   {REDACTED_PLACEHOLDER} - leaders can see contact, location and emergency info; participants only see public profile.
                 </p>
+              </div>
+            </div>
+          </motion.section>
+        )}
+
+        {/* Emergency contact (staff-tier only). Always visible to staff
+             (assist_leader / co_leader / leader / national_leader / manager
+             / admin) and self - this section never honours a "private
+             profile" toggle. Origin: Tate verbatim 17:19 AEST 9 May 2026
+             "emergency contact always visible to leaders and admin". The
+             RPC layer (get_user_profile_v1) gates emergency_contact_*
+             fields by v_can_see_sensitive which is is_self OR
+             is_collective_staff_or_above; this UI is a presentation mirror
+             of that invariant. */}
+        {canSeeSensitive && profile.emergency_contact_name && (
+          <motion.section variants={fadeUp} className="mt-6">
+            <h3 className="font-heading text-base font-semibold text-neutral-900 mb-3 flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 rounded-md bg-warning-600 text-white">
+                <Shield size={13} />
+              </div>
+              Emergency Contact
+            </h3>
+            <div className="rounded-2xl overflow-hidden bg-white border border-neutral-100 shadow-sm">
+              <div className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="shrink-0 w-10 h-10 rounded-full bg-warning-50 flex items-center justify-center">
+                    <Heart size={18} className="text-warning-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-neutral-900">
+                      {profile.emergency_contact_name}
+                    </p>
+                    {profile.emergency_contact_relationship && (
+                      <p className="text-xs text-warning-700 font-medium">{profile.emergency_contact_relationship}</p>
+                    )}
+                    {profile.emergency_contact_phone && (
+                      <a
+                        href={`tel:${profile.emergency_contact_phone}`}
+                        className="text-sm text-primary-700 flex items-center gap-1.5 mt-1 font-medium hover:text-primary-800 active:scale-[0.98] transition-transform"
+                      >
+                        <Phone size={13} className="text-warning-600" />
+                        {profile.emergency_contact_phone}
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </motion.section>

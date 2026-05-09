@@ -79,12 +79,19 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
-  const { data: profile, isLoading, isError } = useProfile(userId ?? undefined)
+  const { data: profile, isLoading, isError, isFetched } = useProfile(userId ?? undefined)
   const showLoading = useDelayedLoading(isLoading && !!userId)
   const { data: collectives } = useProfileCollectives(userId ?? undefined)
   const { data: stats } = useProfileStats(userId ?? undefined)
   const { data: mutualData } = useMutualConnections(userId ?? '')
   const shouldReduceMotion = useReducedMotion()
+  // Distinguish in-flight loading from terminal "could not load" - the
+  // previous logic conflated both behind `isError || !profile`, which
+  // caused a flash of "Could not load profile" during the first ~1s of
+  // every open across all roles (useDelayedLoading returns
+  // isLoading && show, where show only flips true after a 1000ms delay).
+  // See fork_moy0mxm3 1.8.5 item 8 fix.
+  const isStillLoading = (isLoading || !isFetched) && !!userId
 
 
   const memberSince = profile
@@ -105,12 +112,22 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
 
   return (
     <BottomSheet open={open} onClose={onClose} snapPoints={[0.92]}>
-      {showLoading ? (
-        <ProfileModalSkeleton />
-      ) : isError || !profile ? (
+      {isStillLoading ? (
+        // Render the skeleton always while loading. We still gate the
+        // VISIBLE skeleton behind useDelayedLoading so fast loads don't
+        // flash a skeleton; the brief delay window renders an empty
+        // placeholder rather than the "Could not load profile" empty state.
+        showLoading ? <ProfileModalSkeleton /> : <div className="py-16" />
+      ) : isError ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3 text-neutral-500">
           <User size={32} className="text-neutral-300" />
           <p className="text-sm">Could not load profile</p>
+          <p className="text-xs text-neutral-400">Try closing and reopening</p>
+        </div>
+      ) : !profile ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-neutral-500">
+          <User size={32} className="text-neutral-300" />
+          <p className="text-sm">User not found</p>
         </div>
       ) : (
         <motion.div
