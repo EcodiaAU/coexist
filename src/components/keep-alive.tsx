@@ -127,70 +127,97 @@ export function KeepAlive() {
   // events on the active page and continuously persist its scrollTop to the
   // cache entry. The value is therefore always current at the moment of
   // navigation, with no need for a "save on leave" capture.
-  // CRITICAL bug fix (1.8.6 feature 3): do NOT do an immediate
-  // entry.savedScroll = scrollEl.scrollTop capture at listener-attach time.
-  // On back-nav, the freshly-revealed page's scrollTop is 0 (browser reset
-  // across display:none toggle) until the restoration effect below explicitly
-  // sets it. An immediate capture races ahead of restoration and overwrites
-  // the saved (e.g.) 600px with 0, causing the restoration effect to bail at
-  // the savedScroll===0 guard. Additionally, gate the listener with a 2-frame
-  // delay so the scroll event fired by our own programmatic restoration does
-  // not overwrite the just-restored value before any subsequent user scroll.
+  // ---- Continuous scroll tracking + restoration on the active page ----
+  // Two bugs the previous implementation had (fixed in 1.8.6 feature 3):
+  //
+  //   1. SUSPENSE TIMING: pages are lazy-loaded via React.Suspense. On first
+  //      mount of any path, the lazy chunk hasn't resolved yet so the inner
+  //      Page() with #main-content has not rendered. The previous effect
+  //      tried `getScrollEl(wrapper)` on mount and bailed if scrollEl was
+  //      null - which it always was on first mount. Result: scroll listener
+  //      never attached. User scrolls -> nothing captured -> savedScroll=0
+  //      forever. On back-nav, restoration bails at the savedScroll===0 guard.
+  //
+  //   2. IMMEDIATE-CAPTURE OVERWRITES SAVED VALUE: even when scrollEl was
+  //      present, the previous code did `entry.savedScroll = scrollEl.scrollTop`
+  //      at listener-attach time. On back-nav, the freshly-revealed page's
+  //      scrollTop is 0 (browser reset across display:none toggle) until the
+  //      restoration effect explicitly sets it. The immediate capture raced
+  //      ahead of restoration and wrote 0 over the saved 600.
+  //
+  // Fix: poll via rAF until #main-content appears, THEN attach listener AND
+  // restore in one place. Gate the listener for two frames so our own
+  // programmatic scrollTop assignment doesn't fire onScroll which would write
+  // back the just-restored value before any subsequent user scroll.
   useEffect(() => {
     const wrapper = wrappersRef.current.get(path)
     if (!wrapper) return
-    const scrollEl = getScrollEl(wrapper)
-    if (!scrollEl) return
-
     const entry = cacheRef.current.find((c) => c.path === path)
     if (!entry) return
 
-    let raf = 0
+    let captureRaf = 0
     let trackingOpen = false
+    let scrollEl: HTMLElement | null = null
+    let listenerAttached = false
+    let pollRaf = 0
+    let gateRaf = 0
+    let polling = true
+
     const onScroll = () => {
-      if (!trackingOpen) return
-      if (raf) return
-      raf = requestAnimationFrame(() => {
-        entry.savedScroll = scrollEl.scrollTop
-        raf = 0
+      if (!trackingOpen || !scrollEl) return
+      if (captureRaf) return
+      captureRaf = requestAnimationFrame(() => {
+        if (scrollEl) entry.savedScroll = scrollEl.scrollTop
+        captureRaf = 0
       })
     }
-    scrollEl.addEventListener('scroll', onScroll, { passive: true })
-    // Open tracking after restoration effect's double-rAF window has elapsed.
-    let gateRaf2 = 0
-    const gateRaf1 = requestAnimationFrame(() => {
-      gateRaf2 = requestAnimationFrame(() => {
-        trackingOpen = true
+
+    const attach = () => {
+      if (!polling || !scrollEl) return
+      scrollEl.addEventListener('scroll', onScroll, { passive: true })
+      listenerAttached = true
+      // Restore saved scroll if we have one. Two-frame wait lets the browser
+      // re-establish layout for the freshly-visible page (display:none toggle).
+      if (entry.savedScroll > 0) {
+        const target = entry.savedScroll
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (scrollEl && scrollEl.scrollTop !== target) {
+              scrollEl.scrollTop = target
+            }
+          })
+        })
+      }
+      // Open tracking after restoration window has elapsed.
+      gateRaf = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          trackingOpen = true
+        })
       })
-    })
+    }
+
+    // Poll for #main-content (handles the Suspense-not-yet-resolved case).
+    const tryAttach = () => {
+      if (!polling) return
+      const found = getScrollEl(wrapper)
+      if (found) {
+        scrollEl = found
+        attach()
+        return
+      }
+      pollRaf = requestAnimationFrame(tryAttach)
+    }
+    pollRaf = requestAnimationFrame(tryAttach)
 
     return () => {
-      scrollEl.removeEventListener('scroll', onScroll)
-      if (raf) cancelAnimationFrame(raf)
-      cancelAnimationFrame(gateRaf1)
-      if (gateRaf2) cancelAnimationFrame(gateRaf2)
+      polling = false
+      if (pollRaf) cancelAnimationFrame(pollRaf)
+      if (gateRaf) cancelAnimationFrame(gateRaf)
+      if (captureRaf) cancelAnimationFrame(captureRaf)
+      if (listenerAttached && scrollEl) {
+        scrollEl.removeEventListener('scroll', onScroll)
+      }
     }
-  }, [path])
-
-  // ---- Restore scroll on the active page after it becomes visible ----
-  // Used on back-navigation when the cached page is shown again. The active
-  // page's wrapper has been display:none for the duration of the forward
-  // visit; some browsers preserve scrollTop across display:none toggles but
-  // not all, so explicitly restore.
-  useEffect(() => {
-    const entry = cacheRef.current.find((c) => c.path === path)
-    if (!entry || entry.savedScroll === 0) return
-    const scrollEl = getScrollEl(wrappersRef.current.get(path) ?? null)
-    if (!scrollEl) return
-    const target = entry.savedScroll
-    // Double-rAF to wait for display:none -> visible repaint
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (scrollEl.scrollTop !== target) {
-          scrollEl.scrollTop = target
-        }
-      })
-    })
   }, [path])
 
   // ---- Restore scroll on the swipe-preview page when it first appears ----
