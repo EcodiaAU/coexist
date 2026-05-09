@@ -50,6 +50,36 @@ export interface MyUpcomingEvent extends Event {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Time helpers                                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * ISO timestamp for the start of today in Australia/Sydney timezone.
+ * Used as the lower bound for "upcoming" event queries so events that
+ * started earlier today stay visible for the rest of the calendar day.
+ *
+ * Origin: 2026-05-09 P0 - BNE leaders could not check attendees in
+ * after the event start_time because the home next-event query filtered
+ * by `date_start.gte.NOW()`. Events with NULL date_end vanished at the
+ * exact start_time. Switching the start-time threshold to start-of-today
+ * (AEST) keeps the event visible until midnight regardless of date_end.
+ */
+function startOfTodayAEST(): string {
+  const now = new Date()
+  const parts = new Intl.DateTimeFormat('en-AU', {
+    timeZone: 'Australia/Sydney',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).formatToParts(now)
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '00'
+  const h = parseInt(get('hour'), 10)
+  const m = parseInt(get('minute'), 10)
+  const s = parseInt(get('second'), 10)
+  const msSinceStartOfDay = (h * 3600 + m * 60 + s) * 1000
+  return new Date(now.getTime() - msSinceStartOfDay).toISOString()
+}
+
+/* ------------------------------------------------------------------ */
 /*  Greeting                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -92,12 +122,13 @@ export function useFeaturedEvents() {
     queryKey: ['home', 'featured-events'],
     queryFn: async () => {
       const now = new Date().toISOString()
+      const todayStart = startOfTodayAEST()
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives(id, name)')
         .eq('status', 'published')
         .eq('is_public', true)
-        .or(`date_start.gte.${now},date_end.gte.${now}`)
+        .or(`date_start.gte.${todayStart},date_end.gte.${now}`)
         .order('date_start', { ascending: true })
         .limit(5)
       if (error) throw error
@@ -113,11 +144,12 @@ export function useUpcomingNearby() {
     queryKey: ['home', 'upcoming-nearby'],
     queryFn: async () => {
       const now = new Date().toISOString()
+      const todayStart = startOfTodayAEST()
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives(id, name)')
         .eq('status', 'published')
-        .or(`date_start.gte.${now},date_end.gte.${now}`)
+        .or(`date_start.gte.${todayStart},date_end.gte.${now}`)
         .order('date_start', { ascending: true })
         .limit(10)
       if (error) throw error
@@ -158,12 +190,13 @@ export function useNationalEvents(userLocation?: { lat: number; lng: number } | 
       }
 
       // No location - show all upcoming national events
+      const todayStart = startOfTodayAEST()
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives!inner(id, name, is_national)')
         .eq('status', 'published')
         .eq('collectives.is_national', true)
-        .or(`date_start.gte.${now},date_end.gte.${now}`)
+        .or(`date_start.gte.${todayStart},date_end.gte.${now}`)
         .order('date_start', { ascending: true })
         .limit(10)
       if (error) throw error
@@ -202,14 +235,18 @@ export function useMyCollective() {
         .single()
       if (error) throw error
 
-      // Next event (include currently-happening events)
+      // Next event (include currently-happening events AND any event
+      // starting today even after start_time, so leaders can find the
+      // event from the home page to check attendees in during the event
+      // window, not just before it begins).
       const nowStr = new Date().toISOString()
+      const todayStart = startOfTodayAEST()
       const { data: nextEvent, error: nextEventError } = await supabase
         .from('events')
         .select('id, title, date_start, date_end, address, cover_image_url, cover_image_position_x, cover_image_position_y, collective_id, status')
         .eq('collective_id', collective.id)
         .eq('status', 'published')
-        .or(`date_start.gte.${nowStr},date_end.gte.${nowStr}`)
+        .or(`date_start.gte.${todayStart},date_end.gte.${nowStr}`)
         .order('date_start', { ascending: true })
         .limit(1)
         .maybeSingle()
@@ -392,13 +429,14 @@ export function useMyUpcomingEvents() {
       if (!user) return []
 
       const now = new Date().toISOString()
+      const todayStart = startOfTodayAEST()
 
       const { data, error } = await supabase
         .from('event_registrations')
         .select('status, events!inner(*, collectives(id, name))')
         .eq('user_id', user.id)
         .in('status', ['registered', 'waitlisted'])
-        .or(`date_start.gte.${now},date_end.gte.${now}`, { referencedTable: 'events' })
+        .or(`date_start.gte.${todayStart},date_end.gte.${now}`, { referencedTable: 'events' })
         .order('date_start', { referencedTable: 'events', ascending: true })
         .limit(5)
 
@@ -448,12 +486,13 @@ export function useCollectiveUpcomingEvents() {
       if (collectiveIds.length === 0) return []
 
       const nowIso = new Date().toISOString()
+      const todayStart = startOfTodayAEST()
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives(id, name)')
         .in('collective_id', collectiveIds)
         .eq('status', 'published')
-        .or(`date_start.gte.${nowIso},date_end.gte.${nowIso}`)
+        .or(`date_start.gte.${todayStart},date_end.gte.${nowIso}`)
         .order('date_start', { ascending: true })
         .limit(10)
 
