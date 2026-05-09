@@ -53,6 +53,32 @@ export function daysUntil(dateStr: string): number {
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
 }
 
+/**
+ * "YYYY-MM-DD" for an absolute timestamp interpreted in Australia/Sydney
+ * timezone. Used to compare an event's local date to "today" in AEST,
+ * matching the BE check-in-window guard
+ * (supabase migrations/20260509000000_event_day_check_in_window.sql)
+ * which uses `(date AT TIME ZONE 'Australia/Sydney')::date` on both
+ * sides.
+ *
+ * en-CA locale is used as the cheapest way to coerce a Date through
+ * Intl.DateTimeFormat into ISO YYYY-MM-DD shape.
+ */
+export function localDateAEST(date: Date | string = new Date()): string {
+  const d = typeof date === 'string' ? new Date(date) : date
+  return d.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' })
+}
+
+/**
+ * True iff `eventDateStartIso` (an events.date_start timestamptz string)
+ * falls on the same calendar day as "now" in Australia/Sydney. Mirrors
+ * the BE day-of check-in window guard exactly.
+ */
+export function isEventTodayAEST(eventDateStartIso: string | null | undefined): boolean {
+  if (!eventDateStartIso) return false
+  return localDateAEST(eventDateStartIso) === localDateAEST()
+}
+
 // ---------------------------------------------------------------------------
 // Aliases kept for call-site compatibility
 // ---------------------------------------------------------------------------

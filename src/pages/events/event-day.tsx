@@ -17,16 +17,24 @@ import {
   ClipboardList,
   Clock,
   Sparkles,
+  RotateCcw,
+  WifiOff,
+  RefreshCw,
 } from 'lucide-react'
 // QRCodeSVG removed - replaced with 3-digit code display
 import {
   useEventDetail,
   useEventAttendees,
   useCheckIn,
+  useUncheckIn,
   useBulkCheckIn,
   usePromoteFromWaitlist,
   formatEventDate,
 } from '@/hooks/use-events'
+import { useOffline } from '@/hooks/use-offline'
+import { usePendingSync } from '@/hooks/use-pending-sync'
+import { triggerManualSync } from '@/lib/offline-sync'
+import { isEventTodayAEST } from '@/lib/date-format'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import { useAuth } from '@/hooks/use-auth'
 import type { AttendeeWithStatus } from '@/hooks/use-events'
@@ -77,17 +85,23 @@ function CheckInCodeDisplay({ checkInCode, title }: { checkInCode: string | null
 function AttendeeRow({
   attendee,
   onCheckIn,
+  onUncheck,
   onPromote,
   onViewDetails,
   isPending,
+  isUnchecking,
   isPromoting,
+  isEventToday,
 }: {
   attendee: AttendeeWithStatus
   onCheckIn: () => void
+  onUncheck: () => void
   onPromote?: () => void
   onViewDetails: () => void
   isPending: boolean
+  isUnchecking: boolean
   isPromoting?: boolean
+  isEventToday: boolean
 }) {
   const isCheckedIn = attendee.status === 'attended'
   const isWaitlisted = attendee.status === 'waitlisted'
@@ -139,9 +153,31 @@ function AttendeeRow({
       </div>
 
       {isCheckedIn ? (
-        <span className="flex items-center justify-center w-9 h-9 rounded-full bg-success-500 text-white shadow-sm shadow-success-300/50">
-          <Check size={18} strokeWidth={2.5} />
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-success-500 text-white shadow-sm shadow-success-300/50"
+            aria-label="Checked in"
+          >
+            <Check size={18} strokeWidth={2.5} />
+          </span>
+          {isEventToday && (
+            <button
+              type="button"
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); onUncheck() }}
+              disabled={isUnchecking}
+              className={cn(
+                'flex items-center justify-center w-8 h-8 rounded-full',
+                'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100',
+                'transition-colors duration-150',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+              )}
+              aria-label={`Uncheck ${attendee.profiles?.display_name ?? 'attendee'}`}
+              title="Uncheck (mark as not attended)"
+            >
+              <RotateCcw size={14} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       ) : isWaitlisted && onPromote ? (
         <Button
           variant="secondary"
@@ -159,6 +195,8 @@ function AttendeeRow({
           icon={<UserCheck size={14} />}
           onClick={(e: React.MouseEvent) => { e.stopPropagation(); onCheckIn() }}
           loading={isPending}
+          disabled={!isEventToday}
+          title={isEventToday ? undefined : 'Check-in opens day of event'}
         >
           Check In
         </Button>
@@ -282,8 +320,25 @@ export default function EventDayPage() {
   const isStaff = profile?.role === 'leader' || profile?.role === 'manager' || profile?.role === 'admin'
 
   const checkIn = useCheckIn()
+  const uncheckIn = useUncheckIn()
   const bulkCheckIn = useBulkCheckIn()
   const promote = usePromoteFromWaitlist()
+
+  // Mid-event offline visibility - leaders need to know whether actions are
+  // queued vs synced. Origin: Tate verbatim 17:11 AEST 9 May 2026.
+  const { isOffline } = useOffline()
+  const { count: pendingCount } = usePendingSync()
+  const [syncing, setSyncing] = useState(false)
+  const handleManualSync = useCallback(async () => {
+    setSyncing(true)
+    try {
+      await triggerManualSync()
+    } finally {
+      setSyncing(false)
+    }
+  }, [])
+
+  const isEventToday = isEventTodayAEST(event?.date_start)
 
 
   const stagger = {
@@ -300,6 +355,8 @@ export default function EventDayPage() {
   const [showQr, setShowQr] = useState(false)
   const [showBulkConfirm, setShowBulkConfirm] = useState(false)
   const [checkingInUserId, setCheckingInUserId] = useState<string | null>(null)
+  const [uncheckingUserId, setUncheckingUserId] = useState<string | null>(null)
+  const [uncheckTarget, setUncheckTarget] = useState<AttendeeWithStatus | null>(null)
   const [promotingUserId, setPromotingUserId] = useState<string | null>(null)
   const [selectedAttendee, setSelectedAttendee] = useState<AttendeeWithStatus | null>(null)
   const [activeTab, setActiveTab] = useState<'attendees' | 'contacts'>('attendees')
@@ -326,23 +383,70 @@ export default function EventDayPage() {
   const handleCheckIn = useCallback(
     (userId: string) => {
       if (!eventId) return
+      if (!isEventToday) {
+        toast.error('Check-in opens on the day of the event')
+        return
+      }
       setCheckingInUserId(userId)
       checkIn.mutate(
         { eventId, userId },
-        { onSettled: () => setCheckingInUserId(null) },
+        {
+          onError: (err) => {
+            const msg = err instanceof Error ? err.message : 'Check-in failed'
+            toast.error(msg)
+          },
+          onSettled: () => setCheckingInUserId(null),
+        },
       )
     },
-    [eventId, checkIn],
+    [eventId, checkIn, isEventToday, toast],
   )
+
+  const handleUncheckRequest = useCallback((attendee: AttendeeWithStatus) => {
+    if (!isEventToday) {
+      toast.error('Un-check-in is only available on the day of the event')
+      return
+    }
+    setUncheckTarget(attendee)
+  }, [isEventToday, toast])
+
+  const handleUncheckConfirm = useCallback(() => {
+    if (!eventId || !uncheckTarget) return
+    const userId = uncheckTarget.user_id
+    const displayName = uncheckTarget.profiles?.display_name ?? 'Attendee'
+    setUncheckingUserId(userId)
+    uncheckIn.mutate(
+      { eventId, userId },
+      {
+        onSuccess: () => toast.success(`${displayName} marked as not attended`),
+        onError: (err) => {
+          const msg = err instanceof Error ? err.message : 'Un-check-in failed'
+          toast.error(msg)
+        },
+        onSettled: () => {
+          setUncheckingUserId(null)
+          setUncheckTarget(null)
+        },
+      },
+    )
+  }, [eventId, uncheckTarget, uncheckIn, toast])
 
   const handleBulkCheckIn = useCallback(() => {
     if (!eventId) return
+    if (!isEventToday) {
+      toast.error('Check-in opens on the day of the event')
+      setShowBulkConfirm(false)
+      return
+    }
     bulkCheckIn.mutate(eventId, {
       onSuccess: () => toast.success('All attendees checked in'),
-      onError: () => toast.error('Failed to check in attendees'),
+      onError: (err) => {
+        const msg = err instanceof Error ? err.message : 'Failed to check in attendees'
+        toast.error(msg)
+      },
     })
     setShowBulkConfirm(false)
-  }, [eventId, bulkCheckIn, toast])
+  }, [eventId, bulkCheckIn, toast, isEventToday])
 
   const handlePromote = useCallback(
     (userId: string) => {
@@ -419,7 +523,8 @@ export default function EventDayPage() {
             icon={<CheckCheck size={16} />}
             onClick={() => setShowBulkConfirm(true)}
             className="flex-1 shadow-md shadow-success-300/30 text-xs whitespace-nowrap px-2"
-            disabled={stats.checkedIn === stats.registered}
+            disabled={stats.checkedIn === stats.registered || !isEventToday}
+            title={isEventToday ? undefined : 'Check-in opens day of event'}
           >
             Mark All Present
           </Button>
@@ -436,6 +541,73 @@ export default function EventDayPage() {
             {formatEventDate(event.date_start)}
           </p>
         </motion.div>
+
+        {/* Mid-event offline / pending-sync status banner. Visible whenever the
+            device is offline OR there are queued actions (e.g. signal flicker).
+            Tap "Sync now" forces a drain rather than waiting for the periodic
+            poll or the next online event. */}
+        {(isOffline || pendingCount > 0) && (
+          <motion.div variants={fadeUp} className="mb-4">
+            <div
+              className={cn(
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm',
+                isOffline
+                  ? 'bg-warning-50 text-warning-800 ring-1 ring-warning-200/60'
+                  : 'bg-primary-50 text-primary-800 ring-1 ring-primary-200/60',
+              )}
+              role="status"
+              aria-live="polite"
+            >
+              {isOffline ? (
+                <WifiOff size={16} className="shrink-0" />
+              ) : (
+                <RefreshCw size={16} className={cn('shrink-0', syncing && 'animate-spin')} />
+              )}
+              <div className="flex-1 leading-tight">
+                {isOffline ? (
+                  <p className="font-medium">
+                    Offline - actions saved on device.
+                    {pendingCount > 0 && (
+                      <span className="ml-1 text-warning-700">
+                        {pendingCount} queued
+                      </span>
+                    )}
+                  </p>
+                ) : (
+                  <p className="font-medium">
+                    {pendingCount} action{pendingCount === 1 ? '' : 's'} queued, syncing...
+                  </p>
+                )}
+              </div>
+              {!isOffline && pendingCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleManualSync}
+                  disabled={syncing}
+                  className="text-xs font-semibold underline disabled:opacity-50"
+                >
+                  Sync now
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Day-of-event banner: warns leaders before-the-day that check-in is locked */}
+        {!isEventToday && (
+          <motion.div
+            variants={fadeUp}
+            className="mb-5 rounded-xl bg-warning-50 border border-warning-200 p-3 flex items-start gap-2"
+          >
+            <Clock size={16} className="text-warning-600 mt-0.5 shrink-0" />
+            <div className="text-sm text-warning-700">
+              <p className="font-semibold">Check-in opens day of event</p>
+              <p className="text-warning-600 mt-0.5">
+                You'll be able to check attendees in (and undo) once the event date arrives.
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Check-in code banner */}
         {event.check_in_code && (
@@ -533,10 +705,13 @@ export default function EventDayPage() {
                     key={attendee.user_id}
                     attendee={attendee}
                     onCheckIn={() => handleCheckIn(attendee.user_id)}
+                    onUncheck={() => handleUncheckRequest(attendee)}
                     onPromote={attendee.status === 'waitlisted' ? () => handlePromote(attendee.user_id) : undefined}
                     onViewDetails={() => setSelectedAttendee(attendee)}
                     isPending={checkingInUserId === attendee.user_id}
+                    isUnchecking={uncheckingUserId === attendee.user_id}
                     isPromoting={promotingUserId === attendee.user_id}
+                    isEventToday={isEventToday}
                   />
                 ))}
               </div>
@@ -583,6 +758,17 @@ export default function EventDayPage() {
         title="Mark All Present?"
         description={`This will check in ${stats.registered - stats.checkedIn} remaining registered attendees.`}
         confirmLabel="Mark All Present"
+        variant="warning"
+      />
+
+      {/* Un-check-in confirmation */}
+      <ConfirmationSheet
+        open={!!uncheckTarget}
+        onClose={() => setUncheckTarget(null)}
+        onConfirm={handleUncheckConfirm}
+        title="Uncheck this attendee?"
+        description={`Are you sure? This will mark ${uncheckTarget?.profiles?.display_name ?? 'this attendee'} as not attended.`}
+        confirmLabel="Uncheck"
         variant="warning"
       />
 

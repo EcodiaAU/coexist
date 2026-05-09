@@ -11,10 +11,16 @@
  * Hashed assets are safe to cache indefinitely (new hash = new URL).
  */
 
-// Bump on any sw.js change. v4: route navigation HTML cache through a single
-// stable key (/index.html) instead of the visited URL, so deep-link refreshes
-// can't surface a stale shell with dead chunk hashes.
-const CACHE_VERSION = 4
+// Bump on any sw.js change.
+// v4: route navigation HTML cache through a single stable key (/index.html)
+//     instead of the visited URL, so deep-link refreshes can't surface a stale
+//     shell with dead chunk hashes.
+// v5: 9 May 2026 - mid-event resilience pass for 1.8.5. Event-day routes
+//     (/events/*/day, /events/*/impact, /events/*) now warm into the asset
+//     cache on first visit so a second-visit-while-offline serves the shell
+//     even before the offline.html fallback fires. Tate verbatim 17:11 AEST
+//     9 May 2026.
+const CACHE_VERSION = 5
 const SHELL_CACHE = `coexist-shell-v${CACHE_VERSION}`
 const ASSET_CACHE = `coexist-assets-v${CACHE_VERSION}`
 

@@ -733,9 +733,25 @@ export function useCancelRegistration() {
 
 export function useCheckIn() {
   const queryClient = useQueryClient()
+  const { isOffline } = useOffline()
 
   return useMutation({
     mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
+      // Offline path: queue the check-in and return optimistically. The
+      // optimistic onMutate below already flips the row to 'attended' in the
+      // local query cache, so the leader sees the green tick immediately. The
+      // queued action drains via the offline-sync periodic / online listener.
+      // Origin: Tate verbatim 17:11 AEST 9 May 2026 - mid-event Sunshine Coast
+      // patchy-network resilience for 1.8.5.
+      if (isOffline) {
+        queueOfflineAction('check-in', {
+          eventId,
+          userId,
+          timestamp: new Date().toISOString(),
+        })
+        return
+      }
+
       // Must chain .select() to get the updated rows back - otherwise
       // supabase-js returns count=null and the "not checkable" guard below
       // never fires, silently succeeding even when the user is already
@@ -778,11 +794,74 @@ export function useCheckIn() {
   })
 }
 
-export function useBulkCheckIn() {
+/**
+ * Reverse of useCheckIn: leader corrects a mistaken check-in by
+ * transitioning event_registrations.status from 'attended' back to
+ * 'registered'. Same BE day-of guard applies (trigger
+ * `enforce_event_day_check_in_window` rejects out-of-window
+ * un-check-ins on auth.role()='authenticated').
+ *
+ * Origin: BNE wrong-day check-in incident, 2026-05-09. See
+ * supabase/migrations/20260509000000_event_day_check_in_window.sql.
+ */
+export function useUncheckIn() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
+      const { data, error } = await supabase
+        .from('event_registrations')
+        .update({
+          status: 'registered',
+          checked_in_at: null,
+        })
+        .eq('event_id', eventId)
+        .eq('user_id', userId)
+        .eq('status', 'attended')
+        .select('id')
+      if (error) throw error
+      if (!data || data.length === 0) throw new Error('Attendee was not checked in.')
+    },
+    onMutate: async ({ eventId, userId }) => {
+      await queryClient.cancelQueries({ queryKey: ['event-attendees', eventId] })
+      const previous = queryClient.getQueryData<AttendeeWithStatus[]>(['event-attendees', eventId])
+      queryClient.setQueryData<AttendeeWithStatus[]>(['event-attendees', eventId], (old) => {
+        if (!old) return old
+        return old.map(a => a.user_id === userId ? { ...a, status: 'registered' as const, checked_in_at: null } : a)
+      })
+      return { previous }
+    },
+    onError: (_err, { eventId }, context) => {
+      if (context?.previous) queryClient.setQueryData(['event-attendees', eventId], context.previous)
+    },
+    onSettled: (_, __, { eventId }) => {
+      queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['my-events'] })
+      queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
+      queryClient.invalidateQueries({ queryKey: ['impact-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['profile-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['home', 'impact-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['pending-surveys'] })
+    },
+  })
+}
+
+export function useBulkCheckIn() {
+  const queryClient = useQueryClient()
+  const { isOffline } = useOffline()
+
+  return useMutation({
     mutationFn: async (eventId: string) => {
+      // Offline path: queue the bulk-check-in. Optimistic UI in onMutate flips
+      // every 'registered' row to 'attended' locally, mirroring server replay.
+      if (isOffline) {
+        queueOfflineAction('bulk-check-in', {
+          eventId,
+          timestamp: new Date().toISOString(),
+        })
+        return
+      }
       const { error } = await supabase
         .from('event_registrations')
         .update({
@@ -1511,9 +1590,16 @@ export function useInviteCollective() {
 
 export function usePromoteFromWaitlist() {
   const queryClient = useQueryClient()
+  const { isOffline } = useOffline()
 
   return useMutation({
     mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
+      // Offline path: queue. Server replay re-runs the same waitlisted->
+      // registered transition + waitlist-promotion email, idempotently.
+      if (isOffline) {
+        queueOfflineAction('promote-waitlist', { eventId, userId })
+        return
+      }
       const { error } = await supabase
         .from('event_registrations')
         .update({ status: 'registered' })

@@ -76,13 +76,23 @@ if (savedCache) {
   }
 }
 
-// Persist critical query cache to localStorage periodically + on visibility change
+// Persist critical query cache to localStorage periodically + on visibility change.
+// Event-day prefixes (event, event-attendees, event-impact, event-waitlist) added
+// 9 May 2026 for 1.8.5 mid-event resilience: leaders refresh the day-of dashboard
+// over patchy mobile networks; without persisted cache, a refresh wipes the
+// attendee list and requires the network to come back before the leader can
+// keep checking people in. Origin: Tate verbatim 17:11 AEST 9 May 2026.
 const CRITICAL_QUERY_PREFIXES = [
   'profile',
   'profile-collectives',
   'profile-stats',
   'my-events',
   'chat-messages',
+  'event',
+  'event-attendees',
+  'event-impact',
+  'event-waitlist',
+  'home',
 ]
 
 function persistCriticalCache() {

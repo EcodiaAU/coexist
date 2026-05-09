@@ -22,6 +22,8 @@ interface PendingCheckIn {
  */
 export type OfflineActionType =
   | 'check-in'
+  | 'bulk-check-in'
+  | 'promote-waitlist'
   | 'chat-message'
   | 'profile-update'
   | 'task-complete'
@@ -276,6 +278,64 @@ async function processCheckIn(action: OfflineAction): Promise<{ ok: boolean; con
     .eq('user_id', userId)
 
   if (error) return { ok: false, conflict: 'Check-in sync failed. Please try again.' }
+  return { ok: true }
+}
+
+async function processBulkCheckIn(action: OfflineAction): Promise<{ ok: boolean; conflict?: string }> {
+  const { eventId, timestamp } = action.payload as {
+    eventId: string
+    timestamp: string
+  }
+  // Idempotent: only flip rows still in 'registered' status. If already attended,
+  // the WHERE clause matches nothing and we silently succeed.
+  const { error } = await supabase
+    .from('event_registrations')
+    .update({ status: 'attended', checked_in_at: timestamp })
+    .eq('event_id', eventId)
+    .eq('status', 'registered')
+  if (error) return { ok: false, conflict: 'Bulk check-in sync failed. Please try again.' }
+  return { ok: true }
+}
+
+async function processPromoteWaitlist(action: OfflineAction): Promise<{ ok: boolean; conflict?: string }> {
+  const { eventId, userId } = action.payload as {
+    eventId: string
+    userId: string
+  }
+  // Idempotent: only flip 'waitlisted' rows; if already 'registered'/'attended'
+  // the WHERE clause matches nothing and we silently succeed.
+  const { error } = await supabase
+    .from('event_registrations')
+    .update({ status: 'registered' })
+    .eq('event_id', eventId)
+    .eq('user_id', userId)
+    .eq('status', 'waitlisted')
+  if (error) return { ok: false, conflict: 'Waitlist promotion sync failed.' }
+  // Best-effort post-promotion email (skip if function unavailable; sync should
+  // not fail just because the notification did).
+  try {
+    const [{ data: event }, { data: promotedProfile }] = await Promise.all([
+      supabase.from('events').select('title, date_start').eq('id', eventId).single(),
+      supabase.from('profiles').select('display_name').eq('id', userId).single(),
+    ])
+    if (event) {
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'waitlist_promoted',
+          userId,
+          data: {
+            name: promotedProfile?.display_name ?? 'there',
+            event_title: event.title,
+            event_date: new Date(event.date_start).toLocaleString('en-AU', {
+              weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+              hour: 'numeric', minute: '2-digit',
+            }),
+            event_url: `https://app.coexistaus.org/events/${eventId}`,
+          },
+        },
+      })
+    }
+  } catch { /* best-effort */ }
   return { ok: true }
 }
 
@@ -807,6 +867,10 @@ async function processAction(action: OfflineAction): Promise<{ ok: boolean; conf
       return processChatMessage(action)
     case 'check-in':
       return processCheckIn(action)
+    case 'bulk-check-in':
+      return processBulkCheckIn(action)
+    case 'promote-waitlist':
+      return processPromoteWaitlist(action)
     case 'profile-update':
       return processProfileUpdate(action)
     case 'task-complete':
@@ -1019,16 +1083,67 @@ export function onSyncIssueChange(callback: (issue: 'auth-expired' | 'storage-fu
 /**
  * Attaches a one-time listener that syncs all offline actions
  * when the browser comes back online. Safe to call multiple times.
+ *
+ * Belt-and-braces: also runs a periodic drain (every 30s) when online + queue
+ * non-empty, plus a drain on `visibilitychange` when the tab becomes visible.
+ * The bare `online` event isn't always reliable on Capacitor / patchy mobile
+ * networks - polling closes the gap during multi-hour event-day sessions
+ * where leaders flick in and out of cell coverage.
  */
 export function attachOfflineSyncListener() {
   if (syncListenerAttached) return
   syncListenerAttached = true
 
-  window.addEventListener('online', async () => {
-    const result = await syncAllOfflineActions()
-    setLastSyncTime()
-    onSyncComplete?.(result)
+  let draining = false
+  async function drainIfPending(reason: 'online' | 'periodic' | 'visibility' | 'manual') {
+    if (draining) return
+    if (!navigator.onLine) return
+    if (getPendingActionCount() === 0) return
+    draining = true
+    try {
+      const result = await syncAllOfflineActions()
+      setLastSyncTime()
+      onSyncComplete?.(result)
+    } catch {
+      // swallow - next tick will retry
+    } finally {
+      draining = false
+    }
+    // Telemetry-only - silent on success in production builds
+    if (typeof console !== 'undefined' && reason === 'manual') {
+      console.info('[offline-sync] manual drain complete')
+    }
+  }
+
+  window.addEventListener('online', () => { drainIfPending('online') })
+
+  // Periodic poll: every 30s try to drain. Cheap when there's nothing pending
+  // (early-return on count===0), useful when network flickers without firing
+  // the `online` event.
+  setInterval(() => { drainIfPending('periodic') }, 30_000)
+
+  // When the user brings the tab/app foreground after backgrounding, attempt
+  // a drain. Mobile browsers commonly suspend timers in background tabs.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') drainIfPending('visibility')
   })
+
+  // Expose a manual trigger that the UI can call (e.g. a "Sync now" button on
+  // the event-day page). Stored on the module-level `manualSyncTrigger` so
+  // `triggerManualSync` below can dispatch without re-attaching the listener.
+  manualSyncTrigger = () => drainIfPending('manual')
+}
+
+let manualSyncTrigger: (() => Promise<void>) | null = null
+
+/**
+ * Trigger a sync drain manually (e.g. user-initiated from a "sync now" button).
+ * Safe to call before attachOfflineSyncListener - returns immediately in that
+ * case rather than attempting to sync without the lock.
+ */
+export async function triggerManualSync(): Promise<void> {
+  if (!manualSyncTrigger) return
+  await manualSyncTrigger()
 }
 
 /* ------------------------------------------------------------------ */

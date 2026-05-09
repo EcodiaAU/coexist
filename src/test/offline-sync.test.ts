@@ -151,6 +151,26 @@ describe('offline-sync', () => {
       })
     })
 
+    it('queues bulk-check-in actions for the leader event-day "Mark All Present" path', () => {
+      queueOfflineAction('bulk-check-in', {
+        eventId: 'evt-1',
+        timestamp: '2026-05-09T07:00:00.000Z',
+      })
+      const actions = getPendingActions()
+      expect(actions[0].type).toBe('bulk-check-in')
+      expect(actions[0].payload.eventId).toBe('evt-1')
+    })
+
+    it('queues promote-waitlist actions for the leader event-day path', () => {
+      queueOfflineAction('promote-waitlist', {
+        eventId: 'evt-1',
+        userId: 'user-1',
+      })
+      const actions = getPendingActions()
+      expect(actions[0].type).toBe('promote-waitlist')
+      expect(actions[0].payload.userId).toBe('user-1')
+    })
+
     it('queues survey-response actions', () => {
       queueOfflineAction('survey-response', {
         surveyId: 's1',
