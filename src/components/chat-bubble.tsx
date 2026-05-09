@@ -26,6 +26,15 @@ interface ChatBubbleProps {
   className?: string
   /** Skip entrance animation (already in view, e.g. confirmed optimistic) */
   skipAnimation?: boolean
+  /**
+   * Same-sender grouping (1.8.5 item 9). When true, this message is a
+   * continuation of the immediately-preceding message from the same sender
+   * inside a tight time window. Hides avatar + sender-name row so the bubble
+   * sits flush under the prior bubble (iMessage / Slack pattern). The
+   * receiver-side avatar column is replaced with a 44px spacer to keep the
+   * bubble horizontally aligned with the head-of-run bubble.
+   */
+  isContinuation?: boolean
   onAvatarTap?: (userId: string) => void
   onSenderTap?: (userId: string) => void
   onLongPress?: () => void
@@ -46,6 +55,7 @@ export function ChatBubble({
   roleBadge,
   className,
   skipAnimation = false,
+  isContinuation = false,
   onAvatarTap,
   onSenderTap,
   onLongPress,
@@ -72,51 +82,64 @@ export function ChatBubble({
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
       className={cn(
-        'flex gap-2.5 min-w-0',
+        // 1.8.5 item 9: gap-2.5 → gap-2 (10→8px) tightens avatar↔bubble.
+        'flex gap-2 min-w-0',
         sent ? 'flex-row-reverse' : 'flex-row',
         'w-full',
         className,
       )}
     >
-      {/* Avatar (received only) */}
+      {/* Avatar (received only). Same-sender grouping (1.8.5 item 9):
+          on continuation messages the avatar is replaced by a 44px spacer
+          so the bubble stays horizontally aligned with the head-of-run
+          bubble; the avatar+touch-target only appears once per run. */}
       {!sent && (
-        <button
-          type="button"
-          className="flex-shrink-0 self-end flex items-center justify-center min-h-11 min-w-11 rounded-full cursor-pointer select-none active:scale-[0.93] transition-transform duration-150"
-          onClick={() => senderId && onAvatarTap?.(senderId)}
-          aria-label={senderName ? `View ${senderName}'s profile` : 'View profile'}
-        >
-          {senderAvatar ? (
-            <img
-              src={senderAvatar}
-              alt=""
-              loading="lazy"
-              className="h-10 w-10 rounded-full object-cover ring-[2.5px] ring-white shadow-sm"
-            />
-          ) : (
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-xs font-extrabold text-white ring-[2.5px] ring-white shadow-sm"
-              aria-hidden="true"
-            >
-              {senderName?.charAt(0)?.toUpperCase() ?? '?'}
-            </div>
-          )}
-        </button>
+        isContinuation ? (
+          <div className="flex-shrink-0 w-11" aria-hidden="true" />
+        ) : (
+          <button
+            type="button"
+            className="flex-shrink-0 self-end flex items-center justify-center min-h-11 min-w-11 rounded-full cursor-pointer select-none active:scale-[0.93] transition-transform duration-150"
+            onClick={() => senderId && onAvatarTap?.(senderId)}
+            aria-label={senderName ? `View ${senderName}'s profile` : 'View profile'}
+          >
+            {senderAvatar ? (
+              <img
+                src={senderAvatar}
+                alt=""
+                loading="lazy"
+                className="h-10 w-10 rounded-full object-cover ring-[2.5px] ring-white shadow-sm"
+              />
+            ) : (
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-xs font-extrabold text-white ring-[2.5px] ring-white shadow-sm"
+                aria-hidden="true"
+              >
+                {senderName?.charAt(0)?.toUpperCase() ?? '?'}
+              </div>
+            )}
+          </button>
+        )
       )}
 
       {/* Bubble content */}
       <div
         className={cn(
-          'flex min-w-0 max-w-[82%] flex-col gap-0.5',
+          'flex min-w-0 max-w-[82%] flex-col gap-0',
           sent ? 'items-end' : 'items-start',
         )}
       >
-        {/* Sender name + role badge (received only) */}
-        {!sent && senderName && (
+        {/* Sender name + role badge (received only, head-of-run only).
+            1.8.5 item 9: dropped min-h-11 (44px touch-target) on the name
+            button - the avatar above is the primary tap-affordance and
+            already meets the 44px target. The 44px-tall name row was the
+            single biggest contributor to the "messages are far apart"
+            complaint. Tap stays functional via py-0.5 + active:scale. */}
+        {!sent && senderName && !isContinuation && (
           <div className="flex items-center gap-2 px-1 mb-0.5">
             <button
               type="button"
-              className="text-[12px] font-semibold text-neutral-500 hover:text-neutral-700 min-h-11 flex items-center justify-center cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
+              className="text-[12px] font-semibold text-neutral-500 hover:text-neutral-700 py-0.5 cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
               onClick={() => senderId && onSenderTap?.(senderId)}
             >
               {senderName}
@@ -133,13 +156,16 @@ export function ChatBubble({
           </div>
         )}
 
-        {/* Bubble */}
+        {/* Bubble. 1.8.5 item 9: continuation messages flatten the corner
+            facing the prior bubble in the run (top-left for received,
+            top-right for sent), giving a clean stacked-tile feel without
+            redrawing the chat tail. */}
         <div
           className={cn(
             'min-w-0 max-w-full rounded-2xl px-4 py-2.5',
             sent
-              ? 'rounded-br-md bg-primary-200 text-neutral-900'
-              : 'rounded-bl-md bg-neutral-200 text-neutral-900',
+              ? cn('bg-primary-200 text-neutral-900', isContinuation ? 'rounded-br-md rounded-tr-md' : 'rounded-br-md')
+              : cn('bg-neutral-200 text-neutral-900', isContinuation ? 'rounded-bl-md rounded-tl-md' : 'rounded-bl-md'),
           )}
         >
           {/* Reply quote - tappable when parentId + onReplyTap provided */}

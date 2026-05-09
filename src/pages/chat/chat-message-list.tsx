@@ -478,8 +478,19 @@ export function ChatMessageList({
     }
   }, [allMessages.length])
 
-  /* ---- Render message item ---- */
-  const renderMessage = (msg: AnyMessage, isSent: boolean) => {
+  /* ---- Render message item ----
+   *
+   * 1.8.5 item 9 (chat polish): `isContinuation` flags messages that
+   * follow another message from the same sender within the grouping
+   * window. Continuation messages hide the avatar + sender-name row, and
+   * the parent wrapper tightens vertical padding. Caller is responsible
+   * for computing `isContinuation` against the previous *visible* message
+   * in the same date-group (deleted messages are filtered before this
+   * call so the lookup matches what's rendered).
+   */
+  const CONTINUATION_WINDOW_MS = 5 * 60 * 1000
+
+  const renderMessage = (msg: AnyMessage, isSent: boolean, isContinuation: boolean) => {
     const isDeleted = msg.is_deleted
     const messageType = msg.message_type ?? 'text'
     const msgCollectiveId = msg.collective_id ?? effectiveCollectiveId
@@ -538,6 +549,7 @@ export function ChatMessageList({
             senderId={msg.user_id ?? undefined}
             roleBadge={roleBadge}
             skipAnimation={msg._confirmed}
+            isContinuation={isContinuation}
             onAvatarTap={(userId) => onProfileTap(userId)}
             onSenderTap={(userId) => onProfileTap(userId)}
             onLongPress={() => onMessageLongPress(msg)}
@@ -565,6 +577,7 @@ export function ChatMessageList({
         photo={msg.image_url ?? undefined}
         roleBadge={roleBadge}
         skipAnimation={msg._confirmed}
+        isContinuation={isContinuation}
         onAvatarTap={(userId) => onProfileTap(userId)}
         onSenderTap={(userId) => onProfileTap(userId)}
         onLongPress={() => onMessageLongPress(msg)}
@@ -619,7 +632,10 @@ export function ChatMessageList({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth px-3 py-2"
+        // 1.8.5 item 9: py-2 → py-1 trims top/bottom slack inside the
+        // scroll region; the date-separator + first/last message handle
+        // their own breathing room.
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth px-3 py-1"
         role="log"
         aria-label={isChannel ? 'Staff chat messages' : 'Chat messages'}
         aria-live="polite"
@@ -657,45 +673,73 @@ export function ChatMessageList({
               </div>
             )}
 
-            {messageGroups.map((group) => (
-              <Fragment key={group.date}>
-                {/* Date separator */}
-                <div className="flex items-center justify-center py-5">
-                  <motion.span
-                    initial={isCollective && !shouldReduceMotion ? { opacity: 0, scale: 0.9 } : false}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="rounded-full bg-white px-4 py-1.5 text-[11px] font-bold text-neutral-500 shadow-sm ring-1 ring-neutral-100"
-                  >
-                    {dateHeader(group.date)}
-                  </motion.span>
-                </div>
+            {messageGroups.map((group) => {
+              // 1.8.5 item 9: filter once, then walk pairwise so we can
+              // compute `isContinuation` against the previous *visible*
+              // message in this date-group. System messages reset the run
+              // (an interjected join/leave breaks the visual grouping).
+              const visibleMessages = group.messages.filter((msg) => !msg.is_deleted)
 
-                {/* Messages */}
-                {group.messages
-                  .filter((msg) => !msg.is_deleted)
-                  .map((msg) => {
-                  const isSent = msg.user_id === user?.id
-                  const isHighlighted = highlightedId === msg.id
-
-                  return (
-                    <div
-                      key={msg.id}
-                      data-message-id={msg.id}
-                      className={cn(
-                        'py-1 rounded-2xl transition-shadow duration-300',
-                        isHighlighted && 'ring-2 ring-primary-400 ring-offset-2 ring-offset-white shadow-md',
-                      )}
-                      onContextMenu={(e) => {
-                        e.preventDefault()
-                        onMessageLongPress(msg)
-                      }}
+              return (
+                <Fragment key={group.date}>
+                  {/* Date separator. 1.8.5 item 9: py-5 -> py-3 (40 -> 24px
+                      total). Still clearly demarcates the day without
+                      eating a third of a phone screen. */}
+                  <div className="flex items-center justify-center py-3">
+                    <motion.span
+                      initial={isCollective && !shouldReduceMotion ? { opacity: 0, scale: 0.9 } : false}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="rounded-full bg-white px-4 py-1.5 text-[11px] font-bold text-neutral-500 shadow-sm ring-1 ring-neutral-100"
                     >
-                      {renderMessage(msg, isSent)}
-                    </div>
-                  )
-                })}
-              </Fragment>
-            ))}
+                      {dateHeader(group.date)}
+                    </motion.span>
+                  </div>
+
+                  {/* Messages */}
+                  {visibleMessages.map((msg, idx) => {
+                    const isSent = msg.user_id === user?.id
+                    const isHighlighted = highlightedId === msg.id
+                    const prev = idx > 0 ? visibleMessages[idx - 1] : null
+                    const prevType = prev?.message_type ?? 'text'
+                    // Continuation iff: same sender as previous visible
+                    // message in this date-group, neither sender nor
+                    // previous is a system message, and within
+                    // CONTINUATION_WINDOW_MS of the previous message.
+                    const isContinuation =
+                      !!prev &&
+                      prev.user_id === msg.user_id &&
+                      prevType !== 'system' &&
+                      (msg.message_type ?? 'text') !== 'system' &&
+                      !!msg.created_at &&
+                      !!prev.created_at &&
+                      new Date(msg.created_at).getTime() - new Date(prev.created_at).getTime() <
+                        CONTINUATION_WINDOW_MS
+
+                    return (
+                      <div
+                        key={msg.id}
+                        data-message-id={msg.id}
+                        className={cn(
+                          // 1.8.5 item 9: continuation messages get py-0
+                          // (touching the prior bubble’s 4px bottom pad
+                          // is the only gap), sender-change keeps py-1.5
+                          // for clear breathing room (was uniform py-1).
+                          'rounded-2xl transition-shadow duration-300',
+                          isContinuation ? 'py-0.5' : 'py-1.5',
+                          isHighlighted && 'ring-2 ring-primary-400 ring-offset-2 ring-offset-white shadow-md',
+                        )}
+                        onContextMenu={(e) => {
+                          e.preventDefault()
+                          onMessageLongPress(msg)
+                        }}
+                      >
+                        {renderMessage(msg, isSent, isContinuation)}
+                      </div>
+                    )
+                  })}
+                </Fragment>
+              )
+            })}
 
             <div ref={messagesEndRef} />
           </>

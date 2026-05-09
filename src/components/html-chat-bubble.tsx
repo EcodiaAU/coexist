@@ -17,6 +17,12 @@ interface HtmlChatBubbleProps {
   roleBadge?: string
   className?: string
   skipAnimation?: boolean
+  /**
+   * Same-sender grouping (1.8.5 item 9). Mirrors `isContinuation` on the
+   * standard ChatBubble. Hides avatar + sender-name row so the iframe
+   * card stacks flush under the prior bubble in the same run.
+   */
+  isContinuation?: boolean
   onAvatarTap?: (userId: string) => void
   onSenderTap?: (userId: string) => void
   onLongPress?: () => void
@@ -47,6 +53,7 @@ export function HtmlChatBubble({
   roleBadge,
   className,
   skipAnimation = false,
+  isContinuation = false,
   onAvatarTap,
   onSenderTap,
   onLongPress,
@@ -147,52 +154,61 @@ export function HtmlChatBubble({
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
       className={cn(
-        'flex gap-2.5 min-w-0',
+        // 1.8.5 item 9: gap-2.5 → gap-2 tightens avatar↔card.
+        'flex gap-2 min-w-0',
         sent ? 'flex-row-reverse' : 'flex-row',
         'w-full',
         className,
       )}
     >
-      {/* Avatar (received only) */}
+      {/* Avatar (received only). 1.8.5 item 9: continuation messages render
+          a 44px spacer in place of the avatar so the card stays aligned. */}
       {!sent && (
-        <button
-          type="button"
-          className="flex-shrink-0 self-end flex items-center justify-center min-h-11 min-w-11 rounded-full cursor-pointer select-none active:scale-[0.93] transition-transform duration-150"
-          onClick={() => senderId && onAvatarTap?.(senderId)}
-          aria-label={senderName ? `View ${senderName}'s profile` : 'View profile'}
-        >
-          {senderAvatar ? (
-            <img
-              src={senderAvatar}
-              alt=""
-              loading="lazy"
-              className="h-10 w-10 rounded-full object-cover ring-[2.5px] ring-white shadow-sm"
-            />
-          ) : (
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-xs font-extrabold text-white ring-[2.5px] ring-white shadow-sm"
-              aria-hidden="true"
-            >
-              {senderName?.charAt(0)?.toUpperCase() ?? '?'}
-            </div>
-          )}
-        </button>
+        isContinuation ? (
+          <div className="flex-shrink-0 w-11" aria-hidden="true" />
+        ) : (
+          <button
+            type="button"
+            className="flex-shrink-0 self-end flex items-center justify-center min-h-11 min-w-11 rounded-full cursor-pointer select-none active:scale-[0.93] transition-transform duration-150"
+            onClick={() => senderId && onAvatarTap?.(senderId)}
+            aria-label={senderName ? `View ${senderName}'s profile` : 'View profile'}
+          >
+            {senderAvatar ? (
+              <img
+                src={senderAvatar}
+                alt=""
+                loading="lazy"
+                className="h-10 w-10 rounded-full object-cover ring-[2.5px] ring-white shadow-sm"
+              />
+            ) : (
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-xs font-extrabold text-white ring-[2.5px] ring-white shadow-sm"
+                aria-hidden="true"
+              >
+                {senderName?.charAt(0)?.toUpperCase() ?? '?'}
+              </div>
+            )}
+          </button>
+        )
       )}
 
       {/* Bubble content */}
       <div
         className={cn(
-          'flex min-w-0 flex-col gap-0.5',
+          'flex min-w-0 flex-col gap-0',
           'w-full max-w-[92%] sm:max-w-[85%]',
           sent ? 'items-end' : 'items-start',
         )}
       >
-        {/* Sender name + role badge (received only) */}
-        {!sent && senderName && (
+        {/* Sender name + role badge (received only, head-of-run only).
+            1.8.5 item 9: dropped 44px touch-target on the name button (the
+            avatar above already meets the touch target) and hide entire row
+            on continuation messages. */}
+        {!sent && senderName && !isContinuation && (
           <div className="flex items-center gap-2 px-1 mb-1">
             <button
               type="button"
-              className="text-[13px] font-bold text-neutral-700 hover:text-neutral-900 min-h-11 flex items-center justify-center cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
+              className="text-[13px] font-bold text-neutral-700 hover:text-neutral-900 py-0.5 cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
               onClick={() => senderId && onSenderTap?.(senderId)}
             >
               {senderName}
