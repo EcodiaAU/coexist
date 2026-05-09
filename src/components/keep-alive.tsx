@@ -127,6 +127,15 @@ export function KeepAlive() {
   // events on the active page and continuously persist its scrollTop to the
   // cache entry. The value is therefore always current at the moment of
   // navigation, with no need for a "save on leave" capture.
+  // CRITICAL bug fix (1.8.6 feature 3): do NOT do an immediate
+  // entry.savedScroll = scrollEl.scrollTop capture at listener-attach time.
+  // On back-nav, the freshly-revealed page's scrollTop is 0 (browser reset
+  // across display:none toggle) until the restoration effect below explicitly
+  // sets it. An immediate capture races ahead of restoration and overwrites
+  // the saved (e.g.) 600px with 0, causing the restoration effect to bail at
+  // the savedScroll===0 guard. Additionally, gate the listener with a 2-frame
+  // delay so the scroll event fired by our own programmatic restoration does
+  // not overwrite the just-restored value before any subsequent user scroll.
   useEffect(() => {
     const wrapper = wrappersRef.current.get(path)
     if (!wrapper) return
@@ -137,7 +146,9 @@ export function KeepAlive() {
     if (!entry) return
 
     let raf = 0
+    let trackingOpen = false
     const onScroll = () => {
+      if (!trackingOpen) return
       if (raf) return
       raf = requestAnimationFrame(() => {
         entry.savedScroll = scrollEl.scrollTop
@@ -145,12 +156,19 @@ export function KeepAlive() {
       })
     }
     scrollEl.addEventListener('scroll', onScroll, { passive: true })
-    // Capture once immediately in case scroll already happened before listener attached
-    entry.savedScroll = scrollEl.scrollTop
+    // Open tracking after restoration effect's double-rAF window has elapsed.
+    let gateRaf2 = 0
+    const gateRaf1 = requestAnimationFrame(() => {
+      gateRaf2 = requestAnimationFrame(() => {
+        trackingOpen = true
+      })
+    })
 
     return () => {
       scrollEl.removeEventListener('scroll', onScroll)
       if (raf) cancelAnimationFrame(raf)
+      cancelAnimationFrame(gateRaf1)
+      if (gateRaf2) cancelAnimationFrame(gateRaf2)
     }
   }, [path])
 
@@ -164,11 +182,12 @@ export function KeepAlive() {
     if (!entry || entry.savedScroll === 0) return
     const scrollEl = getScrollEl(wrappersRef.current.get(path) ?? null)
     if (!scrollEl) return
+    const target = entry.savedScroll
     // Double-rAF to wait for display:none -> visible repaint
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (scrollEl.scrollTop !== entry.savedScroll) {
-          scrollEl.scrollTop = entry.savedScroll
+        if (scrollEl.scrollTop !== target) {
+          scrollEl.scrollTop = target
         }
       })
     })
