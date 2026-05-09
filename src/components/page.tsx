@@ -1,6 +1,7 @@
 import { type ReactNode, useRef } from 'react'
 import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
+import { useKeyboardOpen } from '@/components/app-shell-context'
 
 interface PageProps {
   /** Optional header component (e.g. <Header />) */
@@ -36,6 +37,7 @@ export function Page({
 }: PageProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const { navMode } = useLayout()
+  const keyboardOpen = useKeyboardOpen()
 
   const isDesktopNav = navMode === 'sidebar'
 
@@ -44,6 +46,13 @@ export function Page({
   // after showing. Page just provides the scroll container.
 
   const hasBottomTabs = navMode === 'bottom-tabs'
+
+  // Bottom tabs are visually hidden when the keyboard is open
+  // (LocationAwareChrome in app-shell.tsx), so the footer should NOT keep
+  // its 3.5rem tab-bar buffer in that state - that buffer is what was
+  // pushing the Save button ~3.5rem above the keyboard top. With keyboard
+  // up, paint the footer flush against the keyboard line.
+  const tabsVisuallyHidden = hasBottomTabs && keyboardOpen
 
   // Standard header rendered directly in scroll container (takes layout space).
   // stickyOverlay pages supply their own header (usually transparent + collapse-header).
@@ -68,9 +77,11 @@ export function Page({
           className,
         )}
         style={{
-          paddingBottom: hasBottomTabs
-            ? 'calc(3.5rem + var(--safe-bottom))'
-            : 'var(--safe-bottom)',
+          paddingBottom: tabsVisuallyHidden
+            ? 'var(--safe-bottom)'
+            : hasBottomTabs
+              ? 'calc(3.5rem + var(--safe-bottom))'
+              : 'var(--safe-bottom)',
         }}
       >
         {/* Atmospheric background - sticky so it stays viewport-pinned while
@@ -99,12 +110,26 @@ export function Page({
             fullBleed
               ? ''
               : 'bg-surface-0 border-t border-neutral-100 shadow-sm',
-            (fullWidthFooter || fullBleed) ? 'px-0 py-0' : 'px-4 py-3',
+            (fullWidthFooter || fullBleed)
+              ? 'px-0 py-0'
+              : keyboardOpen
+                ? 'px-4 py-2'
+                : 'px-4 py-3',
           )}
           style={{
-            paddingBottom: hasBottomTabs
-              ? `calc(3.5rem + var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`
-              : `calc(var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`,
+            // When the soft keyboard is up the bottom tabs are hidden by
+            // LocationAwareChrome (app-shell.tsx) so we drop the 3.5rem buffer
+            // that was sitting under the Save button. The shell shrinks via
+            // height: calc(100dvh - var(--kb-height)) so sticky bottom-0 sits
+            // flush against the keyboard top - safe-bottom is irrelevant
+            // (home indicator is hidden when keyboard up) and the 1rem gap
+            // collapses to a tighter 0.25rem so the button sits right above
+            // the keyboard line.
+            paddingBottom: tabsVisuallyHidden
+              ? `calc(env(safe-area-inset-bottom, 0px)${fullBleed ? '' : ' + 0.25rem'})`
+              : hasBottomTabs
+                ? `calc(3.5rem + var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`
+                : `calc(var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`,
           }}
         >
           {footer}
