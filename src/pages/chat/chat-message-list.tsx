@@ -735,12 +735,17 @@ export function ChatMessageList({
                         key={msg.id}
                         data-message-id={msg.id}
                         className={cn(
-                          // 1.8.5 item 9: continuation messages get py-0
-                          // (touching the prior bubble’s 4px bottom pad
-                          // is the only gap), sender-change keeps py-1.5
-                          // for clear breathing room (was uniform py-1).
+                          // 1.8.5 polish (10 May 2026, Group B B1): further
+                          // tightening of inter-bubble vertical spacing.
+                          // Continuation kept at py-0.5 (4px) - already at
+                          // minimum breathing. Sender-change py-1.5 -> py-1
+                          // (12 -> 8px, 33% reduction). Bigger compounding
+                          // win is Group B B2 (commit 17d2f88) which dropped
+                          // the always-visible MessageReactions add-button
+                          // row that was pushing layout down ~32px under
+                          // every message.
                           'rounded-2xl transition-shadow duration-300',
-                          isContinuation ? 'py-0.5' : 'py-1.5',
+                          isContinuation ? 'py-0.5' : 'py-1',
                           isHighlighted && 'ring-2 ring-primary-400 ring-offset-2 ring-offset-white shadow-md',
                         )}
                         onContextMenu={(e) => {
