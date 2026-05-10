@@ -376,6 +376,22 @@ h6, .h6 { font-family: var(--font-heading); font-size: var(--text-h6); font-weig
   to   { transform: rotate(360deg); }
 }
 
+/* Soft pulsing halo behind the high-vis event share button. Used by
+   EventHeroOverlay - draws the eye without being noisy. */
+@keyframes eventShareHalo {
+  0%, 100% { transform: scale(1);    opacity: 0;   }
+  20%      { opacity: 0.55; }
+  60%      { transform: scale(1.55); opacity: 0;   }
+}
+
+/* Burst pulse fired from the Register button on success - one-shot,
+   600ms. Pairs with framer-motion variants in event-detail.tsx. */
+@keyframes registerBurst {
+  0%   { transform: scale(0.6); opacity: 0.85; }
+  60%  { opacity: 0.35; }
+  100% { transform: scale(2.6); opacity: 0;    }
+}
+
 /* Particle container - prevents layout thrash */
 .particle-layer {
   position: fixed;

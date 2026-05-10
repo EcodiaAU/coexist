@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
     Calendar,
     Clock,
@@ -38,7 +38,9 @@ import {
     WifiOff,
     RefreshCw,
     UserCheck,
+    Share2,
 } from 'lucide-react'
+import { EventShareSheet } from '@/components/event-share-sheet'
 import { EventHero, EventHeroOverlay } from './event-hero'
 import { EventActions } from './event-actions'
 import { EventAttendees } from './event-attendees'
@@ -367,6 +369,11 @@ export default function EventDetailPage() {
   const [showCancelEventSheet, setShowCancelEventSheet] = useState(false)
   const [showCheckInSheet, setShowCheckInSheet] = useState(false)
   const [showInviteSheet, setShowInviteSheet] = useState(false)
+  const [showShareSheet, setShowShareSheet] = useState(false)
+  // Transient flag flipped on after registration succeeds. Drives a one-shot
+  // burst halo on the CTA + a quick "You're going!" pulse-in. Cleared 700ms
+  // later so the registered-state UI settles into its steady look.
+  const [registeredJustNow, setRegisteredJustNow] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [inviteMessage, setInviteMessage] = useState('')
   const [descriptionExpanded, setDescriptionExpanded] = useState(false)
@@ -432,13 +439,20 @@ export default function EventDetailPage() {
       {
         onSuccess: () => {
           toast.success(isAtCapacity ? 'Added to waitlist' : "You're registered!")
+          // Flag the transient burst animation. Don't fire on waitlist (that
+          // path doesn't morph to the "You're going" CTA so the burst would
+          // play over the wrong UI).
+          if (!isAtCapacity && !shouldReduceMotion) {
+            setRegisteredJustNow(true)
+            window.setTimeout(() => setRegisteredJustNow(false), 700)
+          }
         },
         onError: () => {
           toast.error('Registration failed. Please try again.')
         },
       },
     )
-  }, [event, isAtCapacity, registerMutation, toast])
+  }, [event, isAtCapacity, registerMutation, toast, shouldReduceMotion])
 
   const handleCancelConfirm = useCallback(() => {
     if (!event) return
@@ -549,16 +563,13 @@ export default function EventDetailPage() {
     )
   }, [event, inviteCollectiveMutation, toast, inviteMessage])
 
-  const handleShare = useCallback(async () => {
+  // Share = open the EventShareSheet (3 Instagram-ready PNGs with app store
+  // badges). Replaces the previous bare-URL navigator.share path - per Tate
+  // 13:30 AEST 10 May 2026 the URL share is gone, share button now produces
+  // a graphic users can post to feed/story.
+  const handleShare = useCallback(() => {
     if (!event) return
-    const url = `https://app.coexistaus.org/events/${event.id}`
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: event.title, text: `Check out ${event.title} on Co-Exist!`, url })
-      } catch { /* cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(url)
-    }
+    setShowShareSheet(true)
   }, [event])
 
   // CRITICAL: Don't show "not found" while still loading
@@ -646,31 +657,69 @@ export default function EventDetailPage() {
           : "You're registered"
 
       return (
-        <div className="space-y-2">
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            icon={<CheckCircle2 size={18} />}
-            disabled={!isEventActive}
-            onClick={isEventActive ? () => setShowCheckInSheet(true) : undefined}
-            className={cn(
-              'bg-gradient-to-r shadow-sm',
-              accent.gradient,
-              isEventActive && accent.glow,
-              !isEventActive && '!opacity-100',
-            )}
-          >
-            {buttonLabel}
-          </Button>
-          <Button
-            variant="ghost"
-            fullWidth
-            onClick={() => setShowCancelSheet(true)}
-          >
-            Cancel Registration
-          </Button>
-        </div>
+        <motion.div
+          className="space-y-2"
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+        >
+          <div className="relative">
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              icon={<CheckCircle2 size={18} />}
+              disabled={!isEventActive}
+              onClick={isEventActive ? () => setShowCheckInSheet(true) : undefined}
+              className={cn(
+                'bg-gradient-to-r shadow-sm',
+                accent.gradient,
+                isEventActive && accent.glow,
+                !isEventActive && '!opacity-100',
+              )}
+            >
+              {buttonLabel}
+            </Button>
+            {/* One-shot burst halo fired when transitioning from "Register" to
+                this registered CTA. Pure CSS - no framer keyframes - so we
+                don't pay reflow cost during the animation. */}
+            <AnimatePresence>
+              {registeredJustNow && (
+                <motion.span
+                  key="register-burst"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-primary-400"
+                  style={{ animation: 'registerBurst 600ms ease-out forwards' }}
+                  aria-hidden="true"
+                />
+              )}
+            </AnimatePresence>
+          </div>
+          {/* Share + Cancel row - share is now high-vis next to the
+              destructive cancel-registration action so people can post
+              about the event from the same place they manage attendance. */}
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="md"
+              icon={<Share2 size={14} />}
+              onClick={handleShare}
+              className="flex-1 text-xs whitespace-nowrap px-2"
+            >
+              Share Event
+            </Button>
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={() => setShowCancelSheet(true)}
+              className="flex-1 text-xs whitespace-nowrap px-2"
+            >
+              Cancel Registration
+            </Button>
+          </div>
+        </motion.div>
       )
     }
 
@@ -1384,12 +1433,14 @@ export default function EventDetailPage() {
           </motion.div>
         )}
 
-        {/* ── Action buttons row ── */}
+        {/* ── Action buttons row ──
+            Share moved out of here. Two share entry points now:
+            (1) high-vis pulse Share button in EventHeroOverlay (page header)
+            (2) Share Event paired with Cancel Registration in CTA footer */}
         <EventActions
           past={past}
           fadeUpVariants={shouldReduceMotion ? undefined : fadeUp}
           onCalendarOpen={() => setShowCalendarSheet(true)}
-          onShare={handleShare}
         />
 
         {/* ── Coordination (carpool breakouts for this event) ── */}
@@ -1696,6 +1747,22 @@ export default function EventDetailPage() {
           eventId={event.id}
           eventTitle={event.title}
           collectiveName={event.collectives?.name}
+        />
+      )}
+
+      {/* Share sheet - 1:1, 4:5, 16:9 Instagram-ready PNGs with app store
+          badges. Opened from EventHeroOverlay (high-vis pulse button) and
+          from the "Share Event" button paired with Cancel Registration. */}
+      {event && (
+        <EventShareSheet
+          open={showShareSheet}
+          onClose={() => setShowShareSheet(false)}
+          eventId={event.id}
+          title={event.title}
+          dateLabel={`${formatEventDate(event.date_start)}${event.date_end ? ` - ${formatEventTime(event.date_end)}` : ''}`}
+          locationLabel={event.address ?? event.collectives?.name ?? 'Location TBA'}
+          collectiveName={event.collectives?.name ?? null}
+          coverImageUrl={event.cover_image_url ?? null}
         />
       )}
     </Page>

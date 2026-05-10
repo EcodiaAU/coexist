@@ -102,3 +102,8 @@ export { OfflineBanner } from './offline-banner'
 
 // SEO
 export { OGMeta } from './og-meta'
+
+// Event sharing
+export { EventShareSheet } from './event-share-sheet'
+export { EventShareGraphic, SHARE_SIZES } from './event-share-graphic'
+export type { ShareSize } from './event-share-graphic'

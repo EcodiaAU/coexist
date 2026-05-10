@@ -153,6 +153,44 @@ export interface EventHeroOverlayProps {
 }
 
 export function EventHeroOverlay({ hasCoverImage, onShare }: EventHeroOverlayProps) {
+  // High-visibility share button.
+  // - Always rendered (with-cover OR no-cover variants).
+  // - Brand-green gradient pill with a soft pulse halo so users see it
+  //   without having to scroll to the bottom of the CTA stack.
+  // - Tap morphs the button (scale + halo flash) before opening the
+  //   share sheet, signalling that something is about to happen.
+  const pulse = (
+    <span
+      className="pointer-events-none absolute inset-0 rounded-full bg-primary-400/50"
+      style={{ animation: 'eventShareHalo 2.6s ease-in-out infinite' }}
+      aria-hidden="true"
+    />
+  )
+
+  const shareButton = (
+    <motion.button
+      type="button"
+      onClick={onShare}
+      whileTap={{ scale: 0.92 }}
+      whileHover={{ scale: 1.03 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+      className={cn(
+        'relative inline-flex items-center gap-1.5 pl-3 pr-3.5 h-10 rounded-full',
+        'bg-gradient-to-br from-primary-400 to-primary-600 text-white',
+        'shadow-lg shadow-primary-900/25 ring-1 ring-white/30',
+        'cursor-pointer select-none font-bold text-[12px]',
+        'transition-shadow duration-150',
+      )}
+      aria-label="Share event"
+    >
+      {pulse}
+      <span className="relative z-10 flex items-center gap-1.5">
+        <Share2 size={15} />
+        Share
+      </span>
+    </motion.button>
+  )
+
   if (hasCoverImage) {
     return (
       <Header
@@ -160,20 +198,17 @@ export function EventHeroOverlay({ hasCoverImage, onShare }: EventHeroOverlayPro
         back
         transparent
         className="collapse-header"
-        rightActions={
-          <motion.button
-            type="button"
-            onClick={onShare}
-            whileTap={{ scale: 0.9 }}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-black/40 text-white cursor-pointer select-none active:scale-95 transition-transform duration-150"
-            aria-label="Share event"
-          >
-            <Share2 size={18} />
-          </motion.button>
-        }
+        rightActions={shareButton}
       />
     )
   }
 
-  return <Header title="" back className="collapse-header" />
+  return (
+    <Header
+      title=""
+      back
+      className="collapse-header"
+      rightActions={shareButton}
+    />
+  )
 }
