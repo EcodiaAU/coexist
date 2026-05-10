@@ -79,7 +79,6 @@ import {
 import {
     useLeaderDashboard,
     useCollectiveFullStats,
-    useEngagementScores,
     usePendingItems,
     useEventCalendar,
 } from '@/hooks/use-leader-dashboard'
@@ -932,7 +931,6 @@ export default function LeaderDashboardPage() {
   const showLoading = useDelayedLoading(isLoading)
   const { data: collectiveDetail } = useCollective(collectiveId)
   const collectiveSlug = leaderCtx.collectiveSlug ?? collectiveDetail?.slug ?? collectiveId
-  const { data: engagement } = useEngagementScores(collectiveId)
   const { data: pendingItems = [] } = usePendingItems(collectiveId)
   const { data: unreadUpdateCount = 0 } = useUnreadUpdateCount()
 
@@ -1394,36 +1392,6 @@ export default function LeaderDashboardPage() {
               Members
             </SectionHeader>
             <div className="space-y-4">
-              {/* Engagement summary */}
-              {engagement && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-7 h-7 rounded-lg bg-success-100 flex items-center justify-center">
-                        <CheckCircle2 size={12} className="text-success-600" />
-                      </div>
-                    </div>
-                    <p className="text-2xl font-bold text-neutral-900 leading-none tabular-nums">
-                      {engagement.active.length}
-                    </p>
-                    <p className="text-xs font-semibold text-success-600 mt-1">Active</p>
-                    <p className="text-[11px] text-neutral-500 mt-0.5">Last 30 days</p>
-                  </div>
-                  <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-7 h-7 rounded-lg bg-warning-100 flex items-center justify-center">
-                        <AlertTriangle size={12} className="text-warning-600" />
-                      </div>
-                    </div>
-                    <p className="text-2xl font-bold text-neutral-900 leading-none tabular-nums">
-                      {engagement.atRisk.length}
-                    </p>
-                    <p className="text-xs font-semibold text-warning-600 mt-1">At Risk</p>
-                    <p className="text-[11px] text-neutral-500 mt-0.5">Inactive 30+ days</p>
-                  </div>
-                </div>
-              )}
-
               {/* Recent members */}
               {data?.recentMembers && data.recentMembers.length > 0 ? (
                 <div>
