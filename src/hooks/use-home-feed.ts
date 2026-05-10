@@ -54,29 +54,32 @@ export interface MyUpcomingEvent extends Event {
 /* ------------------------------------------------------------------ */
 
 /**
- * ISO timestamp for the start of today in Australia/Sydney timezone.
- * Used as the lower bound for "upcoming" event queries so events that
- * started earlier today stay visible for the rest of the calendar day.
+ * Cutoffs for "up next" event filtering on the home feed.
  *
- * Origin: 2026-05-09 P0 - BNE leaders could not check attendees in
- * after the event start_time because the home next-event query filtered
- * by `date_start.gte.NOW()`. Events with NULL date_end vanished at the
- * exact start_time. Switching the start-time threshold to start-of-today
- * (AEST) keeps the event visible until midnight regardless of date_end.
+ * An event stays in the home "up next" sections until 2 hours after its
+ * end_time. For events with NULL date_end we assume a 2-hour event plus
+ * the same 2-hour grace = 4 hours after start_time.
+ *
+ * Origin: 2026-05-10 - the 2026-05-09 P0 fix (commit 804d801) bumped the
+ * cutoff to start-of-today AEST, which kept events visible until midnight
+ * of the event day. Tate's actual intent: an event finishing at 11pm
+ * should leave the "up next" section at 1am, not at midnight of the event
+ * day. The semantically correct boundary is "2h after the event finishes".
+ *
+ * Used as a nested OR filter:
+ *   .or(`date_end.gte.${endCutoff},
+ *       and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
+ * - first arm: events with date_end that finished <2h ago OR are still
+ *   running OR are entirely in the future (date_end > now > endCutoff)
+ * - second arm: events with NULL date_end whose date_start was within
+ *   the last 4 hours (or any time in the future)
  */
-function startOfTodayAEST(): string {
-  const now = new Date()
-  const parts = new Intl.DateTimeFormat('en-AU', {
-    timeZone: 'Australia/Sydney',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-  }).formatToParts(now)
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '00'
-  const h = parseInt(get('hour'), 10)
-  const m = parseInt(get('minute'), 10)
-  const s = parseInt(get('second'), 10)
-  const msSinceStartOfDay = (h * 3600 + m * 60 + s) * 1000
-  return new Date(now.getTime() - msSinceStartOfDay).toISOString()
+function eventStillUpNextCutoffs(): { endCutoff: string; startCutoffNoEnd: string } {
+  const nowMs = Date.now()
+  return {
+    endCutoff: new Date(nowMs - 2 * 60 * 60 * 1000).toISOString(),
+    startCutoffNoEnd: new Date(nowMs - 4 * 60 * 60 * 1000).toISOString(),
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -121,14 +124,13 @@ export function useFeaturedEvents() {
   return useQuery({
     queryKey: ['home', 'featured-events'],
     queryFn: async () => {
-      const now = new Date().toISOString()
-      const todayStart = startOfTodayAEST()
+      const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives(id, name)')
         .eq('status', 'published')
         .eq('is_public', true)
-        .or(`date_start.gte.${todayStart},date_end.gte.${now}`)
+        .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
         .order('date_start', { ascending: true })
         .limit(5)
       if (error) throw error
@@ -143,13 +145,12 @@ export function useUpcomingNearby() {
   return useQuery({
     queryKey: ['home', 'upcoming-nearby'],
     queryFn: async () => {
-      const now = new Date().toISOString()
-      const todayStart = startOfTodayAEST()
+      const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives(id, name)')
         .eq('status', 'published')
-        .or(`date_start.gte.${todayStart},date_end.gte.${now}`)
+        .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
         .order('date_start', { ascending: true })
         .limit(10)
       if (error) throw error
@@ -167,8 +168,6 @@ export function useNationalEvents(userLocation?: { lat: number; lng: number } | 
   return useQuery({
     queryKey: ['home', 'national-events', userLocation?.lat, userLocation?.lng],
     queryFn: async () => {
-      const now = new Date().toISOString()
-
       // If user has a location, use PostGIS distance filter (500km)
       if (userLocation?.lat && userLocation?.lng) {
         const { data, error } = await supabase.rpc('get_events_within_radius', {
@@ -190,13 +189,13 @@ export function useNationalEvents(userLocation?: { lat: number; lng: number } | 
       }
 
       // No location - show all upcoming national events
-      const todayStart = startOfTodayAEST()
+      const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives!inner(id, name, is_national)')
         .eq('status', 'published')
         .eq('collectives.is_national', true)
-        .or(`date_start.gte.${todayStart},date_end.gte.${now}`)
+        .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
         .order('date_start', { ascending: true })
         .limit(10)
       if (error) throw error
@@ -236,17 +235,17 @@ export function useMyCollective() {
       if (error) throw error
 
       // Next event (include currently-happening events AND any event
-      // starting today even after start_time, so leaders can find the
-      // event from the home page to check attendees in during the event
-      // window, not just before it begins).
-      const nowStr = new Date().toISOString()
-      const todayStart = startOfTodayAEST()
+      // that finished within the last 2 hours, so leaders can still find
+      // the event from the home page to do post-event admin and so the
+      // home feed doesn't drop a still-active event the moment its
+      // scheduled end_time passes).
+      const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
       const { data: nextEvent, error: nextEventError } = await supabase
         .from('events')
         .select('id, title, date_start, date_end, address, cover_image_url, cover_image_position_x, cover_image_position_y, collective_id, status')
         .eq('collective_id', collective.id)
         .eq('status', 'published')
-        .or(`date_start.gte.${todayStart},date_end.gte.${nowStr}`)
+        .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
         .order('date_start', { ascending: true })
         .limit(1)
         .maybeSingle()
@@ -428,15 +427,14 @@ export function useMyUpcomingEvents() {
     queryFn: async () => {
       if (!user) return []
 
-      const now = new Date().toISOString()
-      const todayStart = startOfTodayAEST()
+      const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
 
       const { data, error } = await supabase
         .from('event_registrations')
         .select('status, events!inner(*, collectives(id, name))')
         .eq('user_id', user.id)
         .in('status', ['registered', 'waitlisted'])
-        .or(`date_start.gte.${todayStart},date_end.gte.${now}`, { referencedTable: 'events' })
+        .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`, { referencedTable: 'events' })
         .order('date_start', { referencedTable: 'events', ascending: true })
         .limit(5)
 
@@ -485,14 +483,13 @@ export function useCollectiveUpcomingEvents() {
       const collectiveIds = (memberships ?? []).map((m) => m.collective_id)
       if (collectiveIds.length === 0) return []
 
-      const nowIso = new Date().toISOString()
-      const todayStart = startOfTodayAEST()
+      const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives(id, name)')
         .in('collective_id', collectiveIds)
         .eq('status', 'published')
-        .or(`date_start.gte.${todayStart},date_end.gte.${nowIso}`)
+        .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
         .order('date_start', { ascending: true })
         .limit(10)
 
