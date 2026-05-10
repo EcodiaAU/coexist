@@ -70,6 +70,8 @@ import { CreateCarpoolSheet, type CreateCarpoolSubmitData } from '@/components/c
 import { useTyping } from '@/hooks/use-typing'
 import { useOffline } from '@/hooks/use-offline'
 import { useCollectiveMembers } from '@/hooks/use-collective'
+import { useToggleReaction } from '@/hooks/use-message-reactions'
+import type { ReactionEmoji } from '@/lib/reactions'
 import { resolveMentionedUserIds, type MentionCandidate } from '@/components/mention-picker-utils'
 import {
     queueOfflineAction,
@@ -491,6 +493,27 @@ export default function ChatRoomPage() {
       setSelectedMessage(null)
     }
   }, [selectedMessage])
+
+  /* React from the actions sheet (1.8.5 polish 10 May 2026).
+     Replaces the always-visible reaction picker that used to render under
+     every message. Only wired in collective mode for non-optimistic msgs.
+     Toggle semantics: tap to add, tap same emoji again to remove. */
+  const toggleReactionFromSheet = useToggleReaction()
+  const handleReactFromSheet = useCallback(
+    (emoji: ReactionEmoji) => {
+      if (!selectedMessage) return
+      if (!isCollective) return
+      if (!effectiveCollectiveId) return
+      if (selectedMessage._optimistic) return
+      if (selectedMessage.id.startsWith('optimistic-')) return
+      toggleReactionFromSheet.mutate({
+        messageId: selectedMessage.id,
+        collectiveId: effectiveCollectiveId,
+        emoji,
+      })
+    },
+    [selectedMessage, isCollective, effectiveCollectiveId, toggleReactionFromSheet],
+  )
 
   const handleEdit = useCallback(() => {
     if (selectedMessage && isCollective) {
@@ -1012,6 +1035,15 @@ export default function ChatRoomPage() {
         onEdit={isCollective ? handleEdit : undefined}
         onDelete={handleDelete}
         onPin={handlePin}
+        onReact={
+          isCollective &&
+          !!effectiveCollectiveId &&
+          !!selectedMessage &&
+          !selectedMessage._optimistic &&
+          !selectedMessage.id.startsWith('optimistic-')
+            ? handleReactFromSheet
+            : undefined
+        }
         onReport={() => {
           setReportTarget(selectedMessage)
           setShowReportSheet(true)

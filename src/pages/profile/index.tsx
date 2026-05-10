@@ -191,13 +191,7 @@ export default function ProfilePage() {
     <Page noBackground className="bg-surface-2">
       {/* Hero banner */}
       <div className="-mx-4 lg:-mx-6">
-        <div className="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-moss-600 pb-20 pt-8">
-          {/* Decorative shapes - kept minimal */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-moss-400/15" />
-            <div className="absolute -bottom-16 right-8 w-48 h-48 rounded-full bg-sky-400/10" />
-          </div>
-
+        <div className="relative overflow-hidden bg-moss-500 pb-20 pt-8">
           {/* Settings button */}
           <div className="relative z-10 flex justify-end px-4 mt-2">
             <button
@@ -266,7 +260,7 @@ export default function ProfilePage() {
         {/* Overlapping action buttons */}
         <div className="relative z-20 -mt-5 flex justify-center gap-3 px-4">
           <Button
-            variant="primary"
+            variant="secondary"
             size="sm"
             icon={<Pencil size={14} />}
             onClick={() => navigate('/profile/edit')}
@@ -286,9 +280,9 @@ export default function ProfilePage() {
           <Button
             variant="secondary"
             size="sm"
-            icon={<Settings size={15} />}
+            icon={<Settings size={14} />}
             onClick={() => navigate('/settings')}
-            className="shadow-sm bg-primary-700 !text-white hover:!bg-primary-800 border-0"
+            className="shadow-sm bg-white !text-neutral-700 hover:!bg-neutral-50 border border-neutral-200 whitespace-nowrap text-xs"
           >
             Settings
           </Button>

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Reply, Pencil, Pin, Trash2, Flag, ShieldOff } from 'lucide-react'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { Button } from '@/components/button'
+import { cn } from '@/lib/cn'
+import { REACTION_EMOJIS, type ReactionEmoji } from '@/lib/reactions'
 
 /* ------------------------------------------------------------------ */
 /*  Shared message shape  works for both collective & channel msgs    */
@@ -37,6 +39,14 @@ interface MessageActionsProps {
   onPin?: () => void
   onReport?: () => void
   onBlockUser?: () => void
+  /**
+   * 1.8.5 polish (10 May 2026): the "add a reaction" affordance moved from
+   * an always-visible row under every message into this sheet. When provided,
+   * a 6-emoji react row renders at the top of the actions list. Tapping an
+   * emoji toggles the reaction (add yours / remove yours) and closes the
+   * sheet. Wired only in collective mode for non-optimistic messages.
+   */
+  onReact?: (emoji: ReactionEmoji) => void
 }
 
 export function MessageActionsSheet({
@@ -50,6 +60,7 @@ export function MessageActionsSheet({
   onPin,
   onReport,
   onBlockUser,
+  onReact,
 }: MessageActionsProps) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
@@ -109,6 +120,37 @@ export function MessageActionsSheet({
         ) : (
           /* ── Actions list view ── */
           <div className="space-y-1 pb-2">
+            {/* React row (collective only). 1.8.5 polish (10 May 2026):
+                replaces the always-visible reaction picker that used to sit
+                under every message bubble. Tapping toggles + closes. */}
+            {onReact && (
+              <div
+                className="mx-1 mb-2 flex items-center justify-around rounded-2xl bg-neutral-50 px-2 py-2 ring-1 ring-neutral-100"
+                role="group"
+                aria-label="React with emoji"
+              >
+                {REACTION_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => {
+                      onReact(emoji)
+                      onClose()
+                    }}
+                    aria-label={`React with ${emoji}`}
+                    className={cn(
+                      'flex items-center justify-center min-h-11 min-w-11 rounded-full',
+                      'text-2xl leading-none',
+                      'hover:bg-white active:scale-[0.88]',
+                      'transition-transform duration-100 cursor-pointer select-none',
+                    )}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <button
               type="button"
               onClick={onReply}
