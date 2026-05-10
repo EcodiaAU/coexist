@@ -2,7 +2,7 @@ import {
     type ReactElement,
     type ReactNode,
     useRef,
-    useEffect,
+    useLayoutEffect,
     useMemo,
 } from 'react'
 import {
@@ -119,37 +119,36 @@ export function KeepAlive() {
     }
   }
 
-  // ---- Continuous scroll tracking on the active page ----
-  // Reading scrollTop in a post-render effect (as the previous implementation
-  // did) is unreliable because by the time the effect runs, React has already
-  // committed display:none on the leaving page's wrapper, which makes the
-  // descendant #main-content's scrollTop read as 0. Instead, listen to scroll
-  // events on the active page and continuously persist its scrollTop to the
-  // cache entry. The value is therefore always current at the moment of
-  // navigation, with no need for a "save on leave" capture.
-  // ---- Continuous scroll tracking + restoration on the active page ----
-  // Two bugs the previous implementation had (fixed in 1.8.6 feature 3):
+  // ---- Pre-paint scroll restoration + continuous scroll tracking ----
+  // Three bugs the iterations of this code have had to address (1.8.6 feat 3 / 1.8.5 feat C):
   //
-  //   1. SUSPENSE TIMING: pages are lazy-loaded via React.Suspense. On first
-  //      mount of any path, the lazy chunk hasn't resolved yet so the inner
-  //      Page() with #main-content has not rendered. The previous effect
-  //      tried `getScrollEl(wrapper)` on mount and bailed if scrollEl was
-  //      null - which it always was on first mount. Result: scroll listener
-  //      never attached. User scrolls -> nothing captured -> savedScroll=0
-  //      forever. On back-nav, restoration bails at the savedScroll===0 guard.
+  //   1. SUSPENSE TIMING (b131f0f): pages are lazy-loaded via React.Suspense.
+  //      On FIRST mount of any path, the lazy chunk hasn't resolved yet so
+  //      #main-content has not rendered. Direct getScrollEl() returns null,
+  //      so the listener never attaches. Fix: rAF-poll for the element.
   //
-  //   2. IMMEDIATE-CAPTURE OVERWRITES SAVED VALUE: even when scrollEl was
-  //      present, the previous code did `entry.savedScroll = scrollEl.scrollTop`
-  //      at listener-attach time. On back-nav, the freshly-revealed page's
-  //      scrollTop is 0 (browser reset across display:none toggle) until the
-  //      restoration effect explicitly sets it. The immediate capture raced
-  //      ahead of restoration and wrote 0 over the saved 600.
+  //   2. IMMEDIATE-CAPTURE OVERWRITES SAVED VALUE (8a1bd35): the very-old code
+  //      did `entry.savedScroll = scrollEl.scrollTop` at listener-attach time.
+  //      On back-nav, freshly-revealed page's scrollTop is 0 (browser reset
+  //      across display:none toggle). The capture raced ahead of restoration
+  //      and wrote 0 over the saved 600.
   //
-  // Fix: poll via rAF until #main-content appears, THEN attach listener AND
-  // restore in one place. Gate the listener for two frames so our own
-  // programmatic scrollTop assignment doesn't fire onScroll which would write
-  // back the just-restored value before any subsequent user scroll.
-  useEffect(() => {
+  //   3. POST-PAINT RESTORE FLASH (this commit, 1.8.5 polish C): even with the
+  //      Suspense + capture-race fixes in b131f0f, restoration ran in `useEffect`
+  //      via 2x rAF. That puts the actual scrollTop write at LEAST 1 paint after
+  //      the wrapper transitions from display:none to active. User sees: paint
+  //      at top -> jump to saved position. This is exactly what Tate flagged
+  //      ("not a tab mount-like setup"). Fix: do the restore in `useLayoutEffect`
+  //      AND read scrollEl synchronously. useLayoutEffect runs AFTER DOM mutation
+  //      (the display:none -> active toggle has been committed) but BEFORE the
+  //      browser paints. For back-nav (the case Tate cares about) the page is
+  //      already cached, #main-content is in the DOM, so getScrollEl() resolves
+  //      synchronously and we can set scrollTop before the first paint of the
+  //      now-active state. No visible flash. The Suspense rAF-poll is kept as
+  //      a fallback for the truly-first-mount case (no saved scroll to restore
+  //      anyway, so no jump risk; just need to attach the listener for future
+  //      scroll captures).
+  useLayoutEffect(() => {
     const wrapper = wrappersRef.current.get(path)
     if (!wrapper) return
     const entry = cacheRef.current.find((c) => c.path === path)
@@ -160,7 +159,6 @@ export function KeepAlive() {
     let scrollEl: HTMLElement | null = null
     let listenerAttached = false
     let pollRaf = 0
-    let gateRaf = 0
     let polling = true
 
     const onScroll = () => {
@@ -172,47 +170,51 @@ export function KeepAlive() {
       })
     }
 
-    const attach = () => {
+    const setupTracking = () => {
       if (!polling || !scrollEl) return
+      // CRITICAL: restore BEFORE attaching the listener AND BEFORE the browser
+      // paints. We are in useLayoutEffect's synchronous window: the wrapper has
+      // just transitioned from display:none to active, layout has been computed,
+      // scrollTop assignment is honored. The next paint shows the page at the
+      // saved scroll position - no flash at top.
+      if (entry.savedScroll > 0 && scrollEl.scrollTop !== entry.savedScroll) {
+        scrollEl.scrollTop = entry.savedScroll
+      }
+      // Attach AFTER the programmatic write so the scroll event our own
+      // assignment dispatches doesn't trigger an extra capture (it would write
+      // the same target value back, but we keep the path clean anyway).
       scrollEl.addEventListener('scroll', onScroll, { passive: true })
       listenerAttached = true
-      // Restore saved scroll if we have one. Two-frame wait lets the browser
-      // re-establish layout for the freshly-visible page (display:none toggle).
-      if (entry.savedScroll > 0) {
-        const target = entry.savedScroll
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            if (scrollEl && scrollEl.scrollTop !== target) {
-              scrollEl.scrollTop = target
-            }
-          })
-        })
-      }
-      // Open tracking after restoration window has elapsed.
-      gateRaf = requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          trackingOpen = true
-        })
-      })
+      trackingOpen = true
     }
 
-    // Poll for #main-content (handles the Suspense-not-yet-resolved case).
-    const tryAttach = () => {
-      if (!polling) return
-      const found = getScrollEl(wrapper)
-      if (found) {
-        scrollEl = found
-        attach()
-        return
+    // Common case: cached page, #main-content already in DOM. Synchronous,
+    // pre-paint restore.
+    scrollEl = getScrollEl(wrapper)
+    if (scrollEl) {
+      setupTracking()
+    } else {
+      // First-mount Suspense case: lazy chunk not yet resolved. No saved scroll
+      // exists for this path (otherwise scrollEl would have been preserved
+      // across visits), so no flash risk - just rAF-poll until the element
+      // appears, then attach the listener for future captures.
+      const tryAttach = () => {
+        if (!polling) return
+        const found = getScrollEl(wrapper)
+        if (found) {
+          scrollEl = found
+          setupTracking()
+          return
+        }
+        pollRaf = requestAnimationFrame(tryAttach)
       }
       pollRaf = requestAnimationFrame(tryAttach)
     }
-    pollRaf = requestAnimationFrame(tryAttach)
 
     return () => {
       polling = false
+      trackingOpen = false
       if (pollRaf) cancelAnimationFrame(pollRaf)
-      if (gateRaf) cancelAnimationFrame(gateRaf)
       if (captureRaf) cancelAnimationFrame(captureRaf)
       if (listenerAttached && scrollEl) {
         scrollEl.removeEventListener('scroll', onScroll)
@@ -221,7 +223,12 @@ export function KeepAlive() {
   }, [path])
 
   // ---- Restore scroll on the swipe-preview page when it first appears ----
-  useEffect(() => {
+  // useLayoutEffect (not useEffect) so the restore is committed before paint.
+  // When `swiping` flips false->true the prev page wrapper transitions from
+  // display:none to a parallax-translated visible layer; we need scrollTop set
+  // BEFORE the user sees the first frame of that translation - otherwise they
+  // see scroll 0 first then the jump to saved.
+  useLayoutEffect(() => {
     const cache = cacheRef.current
     const prevPage = cache.length >= 2 ? cache[cache.length - 2] : null
     if (!swiping || !prevPage) {
@@ -234,12 +241,11 @@ export function KeepAlive() {
     if (prevPage.savedScroll === 0) return
     const scrollEl = getScrollEl(wrappersRef.current.get(prevPage.path) ?? null)
     if (!scrollEl) return
-    // Restore on the next frame, before the user sees a flash at scroll 0.
-    requestAnimationFrame(() => {
-      if (scrollEl.scrollTop !== prevPage.savedScroll) {
-        scrollEl.scrollTop = prevPage.savedScroll
-      }
-    })
+    // Synchronous restore in the layout phase, before the browser paints the
+    // newly-visible swipe-preview layer.
+    if (scrollEl.scrollTop !== prevPage.savedScroll) {
+      scrollEl.scrollTop = prevPage.savedScroll
+    }
   }, [swiping])
 
   // Read cache for rendering - refs are intentionally read during render here
