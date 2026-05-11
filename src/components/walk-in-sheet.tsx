@@ -1,5 +1,5 @@
 /**
- * WalkInSheet — Ad-hoc walk-in form for leaders on event day.
+ * WalkInSheet  -  Ad-hoc walk-in form for leaders on event day.
  *
  * Mirrors the field shape of profile-survey.tsx (12 fields). Opened from the
  * event-day footer. Inserts a row into event_walk_ins with created_via='leader_adhoc'.

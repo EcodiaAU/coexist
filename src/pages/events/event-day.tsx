@@ -407,7 +407,7 @@ export default function EventDayPage() {
   // --- Walk-in sheet (Item 11) ---
   const [showWalkIn, setShowWalkIn] = useState(false)
 
-  // --- Public check-in toggle (Item 12 — synced from event data) ---
+  // --- Public check-in toggle (Item 12  -  synced from event data) ---
   const [publicCheckInEnabled, setPublicCheckInEnabled] = useState(false)
   const [togglingPublicCheckIn, setTogglingPublicCheckIn] = useState(false)
   useEffect(() => {
@@ -1064,7 +1064,7 @@ export default function EventDayPage() {
       {/* Profile modal */}
       <ProfileModal userId={profileUserId} open={!!profileUserId} onClose={() => setProfileUserId(null)} />
 
-      {/* Walk-in sheet (Item 11) — ad-hoc attendee form for leaders */}
+      {/* Walk-in sheet (Item 11)  -  ad-hoc attendee form for leaders */}
       {eventId && (
         <WalkInSheet
           eventId={eventId}

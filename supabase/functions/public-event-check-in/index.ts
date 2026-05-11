@@ -2,23 +2,23 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 /**
- * public-event-check-in — Public QR check-in endpoint for Co-Exist events.
+ * public-event-check-in  -  Public QR check-in endpoint for Co-Exist events.
  *
  * Entry point for the /check-in/:token public form. Anyone with the QR link
  * can submit their name + email and be recorded as a walk-in attendee.
  *
  * Routes:
- *   POST /   — Submit check-in { token, first_name, email, phone?, website_url? }
- *   GET  /info?token=... — Fetch event title + collective name for the form header
+ *   POST /    -  Submit check-in { token, first_name, email, phone?, website_url? }
+ *   GET  /info?token=...  -  Fetch event title + collective name for the form header
  *
  * Security posture:
- *   - CORS open (*) — public endpoint, phones scanning QR won't send Origin
+ *   - CORS open (*)  -  public endpoint, phones scanning QR won't send Origin
  *   - Honeypot field `website_url`: silent drop, bots don't learn they failed
  *   - Rate limit: 5 attempts / IP / event / 15 min via public_check_in_rate_limits
  *   - Date guard: AEST calendar-day must match event.date_start
  *   - Optional JWT: if the scanner is a logged-in app user, also creates an
  *     event_registrations row (status=attended) so they appear on the leader view
- *   - NEVER hardcodes SUPABASE_SERVICE_ROLE_KEY — always Deno.env.get()
+ *   - NEVER hardcodes SUPABASE_SERVICE_ROLE_KEY  -  always Deno.env.get()
  *
  * Default: the GET /info route is always safe (read-only). POST only writes on
  * valid token + correct day + within rate limit. Absent params → 400 errors, not
@@ -112,7 +112,7 @@ Deno.serve(async (req: Request) => {
     })
   }
 
-  /* ---- POST / — submit check-in ---- */
+  /* ---- POST /  -  submit check-in ---- */
   if (req.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405)
   }
@@ -188,7 +188,7 @@ Deno.serve(async (req: Request) => {
     try {
       const { data: { user } } = await db.auth.getUser(userToken)
       if (user?.id) {
-        // Insert event_registrations (ON CONFLICT DO NOTHING — idempotent)
+        // Insert event_registrations (ON CONFLICT DO NOTHING  -  idempotent)
         await db.from('event_registrations').insert({
           event_id: event.id,
           user_id: user.id,
@@ -197,7 +197,7 @@ Deno.serve(async (req: Request) => {
         }).onConflict('user_id, event_id').ignore()
       }
     } catch {
-      // JWT validation failure is non-fatal — fall through to walk-in path
+      // JWT validation failure is non-fatal  -  fall through to walk-in path
     }
   }
 

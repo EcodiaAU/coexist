@@ -1,5 +1,5 @@
 /**
- * Public Check-In Page — /check-in/:token
+ * Public Check-In Page  -  /check-in/:token
  *
  * Anyone who scans a Co-Exist event QR code lands here. No auth required.
  * Submits to the public-event-check-in Edge Function.
@@ -114,7 +114,7 @@ export default function PublicCheckInPage() {
           first_name: name.trim(),
           email: email.trim() || undefined,
           phone: phone.trim() || undefined,
-          website_url: honeypot, // honeypot — always empty for real humans
+          website_url: honeypot, // honeypot  -  always empty for real humans
         }),
       })
 
@@ -280,7 +280,7 @@ export default function PublicCheckInPage() {
               />
             </div>
 
-            {/* Honeypot — hidden from real users, filled by bots */}
+            {/* Honeypot  -  hidden from real users, filled by bots */}
             <div
               style={{ display: 'none' }}
               aria-hidden="true"
@@ -331,7 +331,7 @@ export default function PublicCheckInPage() {
       {/* Footer */}
       <footer className="px-5 pb-6 text-center">
         <p className="text-xs text-neutral-400">
-          Co-Exist — connecting conservation communities
+          Co-Exist  -  connecting conservation communities
         </p>
       </footer>
     </div>
