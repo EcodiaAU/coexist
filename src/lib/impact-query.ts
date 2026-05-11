@@ -25,10 +25,15 @@ import { IMPACT_SELECT_COLUMNS, type EventHostShare } from '@/lib/impact-metrics
 
 export const IMPACT_BASELINE_DATE      = '2026-01-01'
 export const BASELINE_TREES            = 35_000
-export const BASELINE_RUBBISH_KG       = 4_794
-export const BASELINE_EVENTS           = 340
+export const BASELINE_RUBBISH_KG       = 4_900   // Tate verbatim "4.9t" -- corrects previous 4_794
+export const BASELINE_EVENTS           = 340      // FLAG: sheet estimate 220; Tate to confirm
 export const BASELINE_ATTENDEES        = 5_500
 export const BASELINE_HOURS            = 11_000
+// Estimated baselines (derived from 2022-2025 sheet sums; Tate to confirm/correct)
+export const BASELINE_COLLECTIVES      = 11
+export const BASELINE_BEACH_CLEANUPS   = 141      // 61 (2024) + 80 (2025)
+export const BASELINE_TREE_PLANTINGS   = 32       // 10 (2024) + 22 (2025)
+export const BASELINE_NATURE_HIKES     = 85       // 31 (2024) + 54 (2025)
 
 /* ------------------------------------------------------------------ */
 /*  Scope types                                                        */
@@ -291,6 +296,10 @@ export async function fetchBaselineSettings(): Promise<{
   trees: number
   rubbishKg: number
   hours: number
+  collectives: number
+  beachCleanups: number
+  treePlantings: number
+  natureHikes: number
 }> {
   const { data } = await supabase
     .from('app_settings')
@@ -301,6 +310,10 @@ export async function fetchBaselineSettings(): Promise<{
       'impact_baseline_trees',
       'impact_baseline_rubbish_kg',
       'impact_baseline_hours',
+      'impact_baseline_collectives',
+      'impact_baseline_beach_cleanups',
+      'impact_baseline_tree_plantings',
+      'impact_baseline_nature_hikes',
     ])
 
   const m: Record<string, number> = {}
@@ -309,10 +322,14 @@ export async function fetchBaselineSettings(): Promise<{
   }
 
   return {
-    attendees: m['impact_baseline_attendees'] ?? BASELINE_ATTENDEES,
-    events:    m['impact_baseline_events']    ?? BASELINE_EVENTS,
-    trees:     m['impact_baseline_trees']     ?? BASELINE_TREES,
-    rubbishKg: m['impact_baseline_rubbish_kg'] ?? BASELINE_RUBBISH_KG,
-    hours:     m['impact_baseline_hours']     ?? BASELINE_HOURS,
+    attendees:     m['impact_baseline_attendees']     ?? BASELINE_ATTENDEES,
+    events:        m['impact_baseline_events']        ?? BASELINE_EVENTS,
+    trees:         m['impact_baseline_trees']         ?? BASELINE_TREES,
+    rubbishKg:     m['impact_baseline_rubbish_kg']    ?? BASELINE_RUBBISH_KG,
+    hours:         m['impact_baseline_hours']         ?? BASELINE_HOURS,
+    collectives:   m['impact_baseline_collectives']   ?? BASELINE_COLLECTIVES,
+    beachCleanups: m['impact_baseline_beach_cleanups'] ?? BASELINE_BEACH_CLEANUPS,
+    treePlantings: m['impact_baseline_tree_plantings'] ?? BASELINE_TREE_PLANTINGS,
+    natureHikes:   m['impact_baseline_nature_hikes']  ?? BASELINE_NATURE_HIKES,
   }
 }

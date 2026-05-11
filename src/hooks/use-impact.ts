@@ -67,7 +67,17 @@ export function useNationalImpact(timeRange: TimeRange = 'all-time') {
         }
       }
 
-      const b = baseline ?? { attendees: 0, events: 0, trees: 0, rubbishKg: 0, hours: 0 }
+      const b = baseline ?? {
+        attendees: 0, events: 0, trees: 0, rubbishKg: 0, hours: 0,
+        collectives: 0, beachCleanups: 0, treePlantings: 0, natureHikes: 0,
+      }
+
+      const liveCollectives = collectivesRes.count ?? 0
+      // Collectives: ever-active count - take GREATEST(live, baseline)
+      // so historical collectives are never lost even if they go inactive
+      const collectivesCount = isAllTime
+        ? Math.max(liveCollectives, b.collectives)
+        : liveCollectives
 
       return {
         eventsAttended:      sumMetric(rows, 'attendees')           + (isAllTime ? b.attendees : 0),
@@ -78,7 +88,7 @@ export function useNationalImpact(timeRange: TimeRange = 'all-time') {
         rubbishCollectedKg:  Math.round(sumMetric(rows, 'rubbish_kg') + (isAllTime ? b.rubbishKg : 0)),
         cleanupSites:        cleanupAddresses.size,
         coastlineCleanedM:   Math.round(sumMetric(rows, 'coastline_cleaned_m')),
-        collectivesCount:    collectivesRes.count ?? 0,
+        collectivesCount,
         leadersEmpowered:    (leadersCountRes.data?.value as { count?: number })?.count ?? 0,
         totalMembers:        membersRes.count ?? 0,
       }
