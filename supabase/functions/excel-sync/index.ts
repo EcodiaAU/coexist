@@ -1293,7 +1293,7 @@ async function syncFromExcel(
             e => e.title.trim().toLowerCase() === titleLc,
           )
           if (existingMatch) {
-            // Found an existing event (possibly synthetic with different UUID) —
+            // Found an existing event (possibly synthetic with different UUID) -
             // upsert impact onto it instead of creating a new synthetic.
             const { error: guardImpactErr } = await supabase
               .from('event_impact')
@@ -1320,7 +1320,7 @@ async function syncFromExcel(
           }
         }
 
-        // No existing event found — safe to create a new synthetic.
+        // No existing event found - safe to create a new synthetic.
         // Deterministic UUID v5 keeps re-runs idempotent.
         const syntheticId = await formsIdToUuid(excelId)
 
