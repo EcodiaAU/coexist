@@ -1364,6 +1364,7 @@ async function syncFromExcel(
       .select('id, collective_id, date_start, status, created_at, collectives(forms_migrated_at)')
       .in('status', ['published', 'completed'])
       .gte('date_start', SYNC_CUTOFF_DATE)
+      .lt('date_start', runStartedAt.toISOString()) // never reconcile future events - absent from sheet by design (fork_mp0so5k9_0d2e77)
       .lt('created_at', cutoffIso)
 
     if (candidatesErr) {
