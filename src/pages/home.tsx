@@ -48,6 +48,7 @@ import { Card } from '@/components/card'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { prefetchEventDetail } from '@/hooks/use-events'
 import { cn } from '@/lib/cn'
+import { isSignInButtonVisible } from '@/lib/date-format'
 import { ProximityCheckInBanner } from '@/components/proximity-check-in-banner'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
@@ -319,6 +320,10 @@ function NextEventCard({
   }
 
   const happeningNow = isEventHappeningNow(nextEvent.date_start, nextEvent.date_end)
+  // Sign-in button uses a wider visibility window: AEST calendar-day start →
+  // date_start + 2h. Separate from happeningNow (start→end) so the pulsing
+  // ring / live-indicator logic is unaffected.
+  const showSignInCTA = isSignInButtonVisible(nextEvent.date_start)
   const days = daysUntil(nextEvent.date_start)
   const isToday = days === 0
   const isTomorrow = days === 1
@@ -383,10 +388,13 @@ function NextEventCard({
             Share Photos with Collective
           </Button>
         </div>
-      ) : happeningNow ? (
+      ) : showSignInCTA ? (
+        /* Sign-in window open (today AEST, up to 2h after start) */
         <div className="mt-5 relative">
-          {/* Pulsing ring behind the button */}
-          <div className="absolute inset-0 rounded-xl bg-white/20 animate-pulse" />
+          {/* Pulsing ring behind the button - only animate once event is live */}
+          {happeningNow && (
+            <div className="absolute inset-0 rounded-xl bg-white/20 animate-pulse" />
+          )}
           <Button
             variant="primary"
             size="lg"

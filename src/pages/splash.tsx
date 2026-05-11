@@ -40,9 +40,9 @@ export default function SplashPage({ onReady }: SplashProps) {
           transition={{ duration: 0.25, ease: 'easeOut' }}
         >
           <img
-            src="/logos/black-logo-transparent.png"
+            src="/logos/black-wordmark.png"
             alt={APP_NAME}
-            className="w-[160px] h-[160px] object-contain"
+            className="w-[60vw] max-w-[280px] h-auto"
             style={shouldReduceMotion ? undefined : { opacity: 1 }}
           />
         </motion.div>
