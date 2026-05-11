@@ -21,7 +21,6 @@ import {
   WifiOff,
   RefreshCw,
   QrCode,
-  UserPlus,
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react'
