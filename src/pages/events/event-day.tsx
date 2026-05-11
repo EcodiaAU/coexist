@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/toast'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -20,8 +20,11 @@ import {
   RotateCcw,
   WifiOff,
   RefreshCw,
+  QrCode,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react'
-// QRCodeSVG removed - replaced with 3-digit code display
+import { QRCodeSVG } from 'qrcode.react'
 import {
   useEventDetail,
   useEventAttendees,
@@ -54,6 +57,9 @@ import { ProfileModal } from '@/components/profile-modal'
 import { EmergencyContacts } from '@/components/emergency-contacts'
 import { SearchBar } from '@/components/search-bar'
 import { cn } from '@/lib/cn'
+import { supabase } from '@/lib/supabase'
+import { WalkInSheet } from '@/components/walk-in-sheet'
+import { useQueryClient } from '@tanstack/react-query'
 
 /* ------------------------------------------------------------------ */
 /*  Check-in Code Display Component                                    */
@@ -319,6 +325,7 @@ export default function EventDayPage() {
   const { isAssistLeader, isLoading: roleLoading } = useCollectiveRole(event?.collective_id)
   const isStaff = profile?.role === 'leader' || profile?.role === 'manager' || profile?.role === 'admin'
 
+  const queryClient = useQueryClient()
   const checkIn = useCheckIn()
   const uncheckIn = useUncheckIn()
   const bulkCheckIn = useBulkCheckIn()
@@ -361,6 +368,53 @@ export default function EventDayPage() {
   const [selectedAttendee, setSelectedAttendee] = useState<AttendeeWithStatus | null>(null)
   const [activeTab, setActiveTab] = useState<'attendees' | 'contacts'>('attendees')
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
+
+  // --- All-members search (Item 10) ---
+  const [searchTab, setSearchTab] = useState<'registered' | 'all'>('registered')
+  const [allMembersQuery, setAllMembersQuery] = useState('')
+  const [allMembersResults, setAllMembersResults] = useState<
+    Array<{ id: string; display_name: string | null; avatar_url: string | null; email: string | null }>
+  >([])
+  const [allMembersLoading, setAllMembersLoading] = useState(false)
+  const [addingMemberId, setAddingMemberId] = useState<string | null>(null)
+  const allMembersDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Debounced RPC call for all-members search
+  useEffect(() => {
+    if (allMembersDebounceRef.current) clearTimeout(allMembersDebounceRef.current)
+    if (allMembersQuery.length < 2 || !eventId) {
+      setAllMembersResults([])
+      return
+    }
+    allMembersDebounceRef.current = setTimeout(async () => {
+      setAllMembersLoading(true)
+      try {
+        const { data, error } = await supabase.rpc('search_app_users_for_event', {
+          p_event_id: eventId,
+          p_query: allMembersQuery,
+          p_max_results: 10,
+        })
+        if (!error && data) setAllMembersResults(data)
+      } finally {
+        setAllMembersLoading(false)
+      }
+    }, 300)
+    return () => {
+      if (allMembersDebounceRef.current) clearTimeout(allMembersDebounceRef.current)
+    }
+  }, [allMembersQuery, eventId])
+
+  // --- Walk-in sheet (Item 11) ---
+  const [showWalkIn, setShowWalkIn] = useState(false)
+
+  // --- Public check-in toggle (Item 12 — synced from event data) ---
+  const [publicCheckInEnabled, setPublicCheckInEnabled] = useState(false)
+  const [togglingPublicCheckIn, setTogglingPublicCheckIn] = useState(false)
+  useEffect(() => {
+    if (event) {
+      setPublicCheckInEnabled((event as Record<string, unknown>).public_check_in_enabled as boolean ?? false)
+    }
+  }, [event])
 
   const filteredAttendees = useMemo(() => {
     if (!attendees) return []
@@ -460,6 +514,64 @@ export default function EventDayPage() {
     [eventId, promote],
   )
 
+  // Add an all-app-member to the event and mark them attended immediately
+  const handleAddAndCheckIn = useCallback(
+    async (userId: string, displayName: string | null) => {
+      if (!eventId) return
+      if (!isEventToday) {
+        toast.error('Check-in opens on the day of the event')
+        return
+      }
+      setAddingMemberId(userId)
+      try {
+        const { error } = await supabase.from('event_registrations').insert({
+          event_id: eventId,
+          user_id: userId,
+          status: 'attended',
+          checked_in_at: new Date().toISOString(),
+        })
+        if (error) {
+          if (error.code === '23505') {
+            toast.info(`${displayName ?? 'User'} is already registered.`)
+          } else {
+            toast.error(error.message || 'Failed to add attendee')
+          }
+        } else {
+          toast.success(`Checked in ${displayName ?? 'user'}`)
+          // Invalidate attendees query so the new row appears in the Registered tab
+          queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+          setAllMembersQuery('')
+          setAllMembersResults([])
+          setSearchTab('registered')
+        }
+      } finally {
+        setAddingMemberId(null)
+      }
+    },
+    [eventId, isEventToday, toast, queryClient],
+  )
+
+  // Toggle the public QR check-in on/off for this event
+  const handleTogglePublicCheckIn = useCallback(async () => {
+    if (!eventId) return
+    setTogglingPublicCheckIn(true)
+    const next = !publicCheckInEnabled
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({ public_check_in_enabled: next })
+        .eq('id', eventId)
+      if (error) {
+        toast.error(error.message || 'Failed to update QR check-in')
+      } else {
+        setPublicCheckInEnabled(next)
+        toast.success(next ? 'Public QR check-in enabled' : 'Public QR check-in disabled')
+      }
+    } finally {
+      setTogglingPublicCheckIn(false)
+    }
+  }, [eventId, publicCheckInEnabled, toast])
+
   const isLoading = eventLoading || attendeesLoading || roleLoading
   const showLoading = useDelayedLoading(isLoading)
 
@@ -509,7 +621,7 @@ export default function EventDayPage() {
       swipeBack
       header={<Header title="Event Day" back backDark />}
       footer={
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <Button
             variant="secondary"
             icon={<Hash size={16} />}
@@ -518,6 +630,16 @@ export default function EventDayPage() {
           >
             Show Code
           </Button>
+          {(isAssistLeader || isStaff) && (
+            <Button
+              variant="secondary"
+              icon={<UserPlus size={16} />}
+              onClick={() => setShowWalkIn(true)}
+              className="flex-1 ring-1 ring-neutral-200/60 text-xs whitespace-nowrap px-2"
+            >
+              Add Walk-In
+            </Button>
+          )}
           <Button
             variant="primary"
             icon={<CheckCheck size={16} />}
@@ -685,38 +807,139 @@ export default function EventDayPage() {
 
         {activeTab === 'attendees' ? (
           <>
-            {/* Search */}
-            <motion.div variants={fadeUp} className="mb-3">
-              <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search attendees..." compact />
+            {/* Search-tab toggle: Registered | All Members */}
+            <motion.div variants={fadeUp} className="mb-3 flex rounded-xl overflow-hidden ring-1 ring-neutral-200/60 bg-white">
+              <button
+                type="button"
+                onClick={() => setSearchTab('registered')}
+                className={cn(
+                  'flex-1 py-2 text-xs font-semibold transition-colors duration-150',
+                  searchTab === 'registered'
+                    ? 'bg-primary-500 text-white'
+                    : 'text-neutral-600 hover:bg-neutral-50',
+                )}
+              >
+                Registered
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchTab('all')}
+                className={cn(
+                  'flex-1 py-2 text-xs font-semibold transition-colors duration-150',
+                  searchTab === 'all'
+                    ? 'bg-primary-500 text-white'
+                    : 'text-neutral-600 hover:bg-neutral-50',
+                )}
+              >
+                All Members
+              </button>
             </motion.div>
 
-            {/* Attendee list */}
-            <motion.div variants={fadeUp}>
-            {filteredAttendees.length === 0 ? (
-              <EmptyState
-                illustration="search"
-                title="No attendees found"
-                description={searchQuery ? 'Try a different search' : 'No one has registered yet'}
-              />
+            {searchTab === 'registered' ? (
+              <>
+                {/* Search registered attendees */}
+                <motion.div variants={fadeUp} className="mb-3">
+                  <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search attendees..." compact />
+                </motion.div>
+
+                {/* Registered attendee list */}
+                <motion.div variants={fadeUp}>
+                  {filteredAttendees.length === 0 ? (
+                    <EmptyState
+                      illustration="search"
+                      title="No attendees found"
+                      description={searchQuery ? 'Try a different search' : 'No one has registered yet'}
+                    />
+                  ) : (
+                    <div className="space-y-0">
+                      {filteredAttendees.map((attendee) => (
+                        <AttendeeRow
+                          key={attendee.user_id}
+                          attendee={attendee}
+                          onCheckIn={() => handleCheckIn(attendee.user_id)}
+                          onUncheck={() => handleUncheckRequest(attendee)}
+                          onPromote={attendee.status === 'waitlisted' ? () => handlePromote(attendee.user_id) : undefined}
+                          onViewDetails={() => setSelectedAttendee(attendee)}
+                          isPending={checkingInUserId === attendee.user_id}
+                          isUnchecking={uncheckingUserId === attendee.user_id}
+                          isPromoting={promotingUserId === attendee.user_id}
+                          isEventToday={isEventToday}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              </>
             ) : (
-              <div className="space-y-0">
-                {filteredAttendees.map((attendee) => (
-                  <AttendeeRow
-                    key={attendee.user_id}
-                    attendee={attendee}
-                    onCheckIn={() => handleCheckIn(attendee.user_id)}
-                    onUncheck={() => handleUncheckRequest(attendee)}
-                    onPromote={attendee.status === 'waitlisted' ? () => handlePromote(attendee.user_id) : undefined}
-                    onViewDetails={() => setSelectedAttendee(attendee)}
-                    isPending={checkingInUserId === attendee.user_id}
-                    isUnchecking={uncheckingUserId === attendee.user_id}
-                    isPromoting={promotingUserId === attendee.user_id}
-                    isEventToday={isEventToday}
+              <>
+                {/* Search all app members */}
+                <motion.div variants={fadeUp} className="mb-3">
+                  <SearchBar
+                    value={allMembersQuery}
+                    onChange={setAllMembersQuery}
+                    placeholder="Search all app users (min 2 chars)..."
+                    compact
                   />
-                ))}
-              </div>
+                </motion.div>
+
+                {/* All-members results */}
+                <motion.div variants={fadeUp}>
+                  {allMembersQuery.length < 2 ? (
+                    <EmptyState
+                      illustration="search"
+                      title="Search app members"
+                      description="Type at least 2 characters to find any app user by name or email"
+                    />
+                  ) : allMembersLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} variant="list-item" />
+                      ))}
+                    </div>
+                  ) : allMembersResults.length === 0 ? (
+                    <EmptyState
+                      illustration="search"
+                      title="No members found"
+                      description="Try a different name or email"
+                    />
+                  ) : (
+                    <div className="space-y-2">
+                      {allMembersResults.map((member) => (
+                        <div
+                          key={member.id}
+                          className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl ring-1 ring-neutral-200/60 shadow-sm"
+                        >
+                          <Avatar
+                            src={member.avatar_url ?? undefined}
+                            name={member.display_name ?? 'User'}
+                            size="md"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-neutral-900 truncate">
+                              {member.display_name ?? 'Unknown'}
+                            </p>
+                            {member.email && (
+                              <p className="text-caption text-neutral-500 truncate">{member.email}</p>
+                            )}
+                          </div>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            icon={<UserCheck size={14} />}
+                            onClick={() => handleAddAndCheckIn(member.id, member.display_name)}
+                            loading={addingMemberId === member.id}
+                            disabled={!isEventToday}
+                            title={isEventToday ? undefined : 'Check-in opens day of event'}
+                          >
+                            Add + Check In
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              </>
             )}
-            </motion.div>
 
             {/* Post-event action */}
             <motion.div variants={fadeUp} className="mt-6">
@@ -741,13 +964,72 @@ export default function EventDayPage() {
         )}
       </motion.div>
 
-      {/* QR Code bottom sheet */}
+      {/* QR Code + public check-in bottom sheet */}
       <BottomSheet
         open={showQr}
         onClose={() => setShowQr(false)}
-        snapPoints={[0.6]}
+        snapPoints={[0.75]}
       >
-        <CheckInCodeDisplay checkInCode={event.check_in_code} title={event.title} />
+        <div className="px-5 pb-6 space-y-5">
+          {/* Existing 3-digit code display */}
+          <CheckInCodeDisplay checkInCode={event.check_in_code} title={event.title} />
+
+          {/* Divider */}
+          <div className="border-t border-neutral-100" />
+
+          {/* Public QR check-in toggle */}
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleTogglePublicCheckIn}
+              disabled={togglingPublicCheckIn}
+              className={cn(
+                'w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors duration-150',
+                publicCheckInEnabled
+                  ? 'bg-success-50 ring-1 ring-success-200'
+                  : 'bg-neutral-50 ring-1 ring-neutral-200',
+                'disabled:opacity-60',
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <QrCode size={18} className={publicCheckInEnabled ? 'text-success-600' : 'text-neutral-500'} />
+                <div className="text-left">
+                  <p className={cn('text-sm font-semibold', publicCheckInEnabled ? 'text-success-700' : 'text-neutral-700')}>
+                    Public QR check-in
+                  </p>
+                  <p className="text-xs text-neutral-500">
+                    {publicCheckInEnabled ? 'Scan to check in without the app' : 'Enable so anyone can scan and check in'}
+                  </p>
+                </div>
+              </div>
+              {publicCheckInEnabled ? (
+                <ToggleRight size={24} className="text-success-500 shrink-0" />
+              ) : (
+                <ToggleLeft size={24} className="text-neutral-400 shrink-0" />
+              )}
+            </button>
+
+            {/* QR code (shown only when enabled and token is minted) */}
+            {publicCheckInEnabled && (event as Record<string, unknown>).public_check_in_token ? (
+              <div className="flex flex-col items-center gap-3 py-2">
+                <div className="p-3 rounded-2xl bg-white shadow-md ring-1 ring-neutral-100">
+                  <QRCodeSVG
+                    value={`https://app.coexist.au/check-in/${(event as Record<string, unknown>).public_check_in_token}`}
+                    size={200}
+                    level="M"
+                  />
+                </div>
+                <p className="text-xs text-neutral-500 text-center">
+                  Scan this QR code to check in without the app
+                </p>
+              </div>
+            ) : publicCheckInEnabled ? (
+              <p className="text-xs text-neutral-400 text-center italic">
+                Generating QR code...
+              </p>
+            ) : null}
+          </div>
+        </div>
       </BottomSheet>
 
       {/* Bulk check-in confirmation */}
@@ -781,6 +1063,19 @@ export default function EventDayPage() {
 
       {/* Profile modal */}
       <ProfileModal userId={profileUserId} open={!!profileUserId} onClose={() => setProfileUserId(null)} />
+
+      {/* Walk-in sheet (Item 11) — ad-hoc attendee form for leaders */}
+      {eventId && (
+        <WalkInSheet
+          eventId={eventId}
+          open={showWalkIn}
+          onClose={() => setShowWalkIn(false)}
+          onSuccess={() => {
+            // Attendee list will re-query on next render via useEventAttendees invalidation
+            setSearchTab('registered')
+          }}
+        />
+      )}
     </Page>
   )
 }
