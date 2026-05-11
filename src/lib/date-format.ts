@@ -79,6 +79,30 @@ export function isEventTodayAEST(eventDateStartIso: string | null | undefined): 
   return localDateAEST(eventDateStartIso) === localDateAEST()
 }
 
+/**
+ * True iff the "Tap to Sign In" button should be visible on the Next-Event
+ * card.
+ *
+ * Visibility window:
+ *   - Opens:  AEST calendar-day start of the event's date (midnight AEST on
+ *             event day — this is when the sign-in window opens, matching the
+ *             BE enforce_event_day_check_in_window trigger).
+ *   - Closes: 2 hours after `eventDateStartIso` (giving late arrivals a
+ *             reasonable window to sign in after the activity begins).
+ *
+ * Outside this window (far-future events, or >2h after start) the button
+ * is hidden. Mirrors Tate's spec: "sign-in window opens AND for 2 hours
+ * after event start" (conductor directive, 11 May 2026).
+ *
+ * @param eventDateStartIso - events.date_start ISO timestamptz string
+ */
+export function isSignInButtonVisible(eventDateStartIso: string | null | undefined): boolean {
+  if (!eventDateStartIso) return false
+  if (!isEventTodayAEST(eventDateStartIso)) return false
+  const startMs = new Date(eventDateStartIso).getTime()
+  return Date.now() <= startMs + 2 * 60 * 60 * 1000
+}
+
 // ---------------------------------------------------------------------------
 // Aliases kept for call-site compatibility
 // ---------------------------------------------------------------------------
