@@ -1854,8 +1854,7 @@ export default function CreateEventPage() {
                 collective_id: cId,
                 user_id: user.id,
                 content: chatContent,
-                message_type: 'event_card',
-                metadata: { event_id: event.id, event_title: form.fields.title },
+                message_type: 'announcement', // 'event_card' not in constraint; 'announcement' is (fork_mp0so5k9_0d2e77)
               })
             } catch {
               // Non-critical

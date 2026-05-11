@@ -8,6 +8,7 @@ import {
     Ticket,
     Plus,
     Trash2,
+    Send,
 } from 'lucide-react'
 import {
     useEventDetail,
@@ -159,6 +160,42 @@ export default function EditEventPage() {
     navigate(`/events/${eventId}`, { replace: true })
   }, [eventId, isDayOfMode, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, navigate])
 
+  // Publish a draft event — saves all fields + flips status to published (fork_mp0so5k9_0d2e77)
+  const handlePublish = useCallback(async () => {
+    if (!eventId || !form.isBasicsValid || !form.isDateValid) return
+
+    const locationPoint = form.buildLocationPoint()
+
+    await updateEvent.mutateAsync({
+      eventId,
+      title: form.fields.title,
+      description: form.fields.description || null,
+      activity_type: form.fields.activity_type as Exclude<typeof form.fields.activity_type, ''>,
+      date_start: form.fields.date_start!.toISOString(),
+      date_end: form.fields.date_end?.toISOString() ?? null,
+      address: form.fields.address || null,
+      location_point: locationPoint,
+      capacity: form.parsedCapacity(),
+      cover_image_url: form.fields.cover_image_url || null,
+      cover_image_position_x: form.fields.cover_image_position_x,
+      cover_image_position_y: form.fields.cover_image_position_y,
+      is_public: form.fields.is_public,
+      is_external_collaboration: form.fields.is_external_collaboration,
+      external_registration_url: form.fields.external_registration_url || null,
+      checkin_window_minutes: checkinWindowMinutes,
+      status: 'published',
+    })
+
+    await saveTickets.mutateAsync({
+      eventId,
+      tiers: isTicketed ? ticketTiers : [],
+      removedIds: removedTierIds,
+      isTicketed,
+    })
+
+    navigate(`/events/${eventId}`, { replace: true })
+  }, [eventId, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, navigate])
+
   const stagger = {
     hidden: {},
     visible: { transition: { staggerChildren: 0.04 } },
@@ -204,17 +241,44 @@ export default function EditEventPage() {
       swipeBack
       header={<Header title={pageTitle} back />}
       footer={
-        <Button
-          variant="primary"
-          size="lg"
-          fullWidth
-          icon={<Save size={18} />}
-          loading={updateEvent.isPending || saveTickets.isPending}
-          disabled={!canSave}
-          onClick={handleSave}
-        >
-          Save Changes
-        </Button>
+        !isDayOfMode && event?.status === 'draft' ? (
+          <div className="flex gap-3 w-full">
+            <Button
+              variant="secondary"
+              size="lg"
+              className="flex-1"
+              icon={<Save size={18} />}
+              loading={updateEvent.isPending || saveTickets.isPending}
+              disabled={!canSave}
+              onClick={handleSave}
+            >
+              Save Draft
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              className="flex-1"
+              icon={<Send size={18} />}
+              loading={updateEvent.isPending || saveTickets.isPending}
+              disabled={!canSave}
+              onClick={handlePublish}
+            >
+              Publish
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            icon={<Save size={18} />}
+            loading={updateEvent.isPending || saveTickets.isPending}
+            disabled={!canSave}
+            onClick={handleSave}
+          >
+            Save Changes
+          </Button>
+        )
       }
     >
       <motion.div
