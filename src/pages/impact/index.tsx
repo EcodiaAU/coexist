@@ -22,7 +22,8 @@ import { Button } from '@/components/button'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { MiniBar } from '@/components/micro-viz'
-import { useImpactStats, useMonthlyActivity, useImpactByCategory, useStreak } from '@/hooks/use-impact'
+import { useMonthlyActivity, useImpactByCategory, useStreak } from '@/hooks/use-impact'
+import { useProfileStats } from '@/hooks/use-profile'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 
 /* ─── category meta ─── */
@@ -288,7 +289,20 @@ export default function ImpactDashboardPage() {
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
   const { toast } = useToast()
-  const { data: stats, isLoading: statsLoading, isError: statsError } = useImpactStats()
+  const { data: profileStats, isLoading: statsLoading, isError: statsError } = useProfileStats()
+  // Adapter: map useProfileStats fields to the shape expected by this page.
+  // cleanupSites / collectivesCount / leadersEmpowered are not personal impact
+  // metrics in useProfileStats (correct hook post-unification); they fall to 0
+  // and are hidden by the > 0 guards in the share text and BigStat components.
+  const stats = profileStats ? {
+    eventsAttended:     profileStats.eventsAttended,
+    volunteerHours:     profileStats.hoursVolunteered,
+    treesPlanted:       profileStats.treesPlanted,
+    rubbishCollectedKg: profileStats.rubbishCollectedKg,
+    cleanupSites:       0,
+    collectivesCount:   0,
+    leadersEmpowered:   0,
+  } : null
   const showLoading = useDelayedLoading(statsLoading)
   const { data: monthly } = useMonthlyActivity()
   const { data: byCategory } = useImpactByCategory()

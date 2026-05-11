@@ -18,18 +18,6 @@ type Profile = Tables<'profiles'>
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-export interface ImpactStats {
-  events_attended: number
-  trees_planted: number
-  hours_volunteered: number
-  rubbish_kg: number
-  area_restored_sqm: number
-  native_plants: number
-  wildlife_sightings: number
-  invasive_weeds_pulled: number
-  coastline_cleaned_m: number
-}
-
 export interface CollectiveWithNextEvent extends Collective {
   next_event: Event | null
   events_this_month: number
@@ -313,37 +301,6 @@ export function useMyCollectives() {
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
-  })
-}
-
-/** Impact stats from RPC */
-export function useImpactStats() {
-  const { user } = useAuth()
-
-  return useQuery({
-    queryKey: ['home', 'impact-stats', user?.id],
-    queryFn: async () => {
-      if (!user) return null
-      // RPC uses COALESCE(SUM(...), 0) so unmeasured metrics aggregate to 0,
-      // which is the correct semantic for dashboard totals (vs null in raw rows).
-      const { data, error } = await supabase.rpc('get_user_impact_stats', {
-        p_user_id: user.id,
-      })
-      if (error) throw error
-      return (data ?? {
-        events_attended: 0,
-        trees_planted: 0,
-        hours_volunteered: 0,
-        rubbish_kg: 0,
-        area_restored_sqm: 0,
-        native_plants: 0,
-        wildlife_sightings: 0,
-        invasive_weeds_pulled: 0,
-        coastline_cleaned_m: 0,
-      }) as unknown as ImpactStats
-    },
-    enabled: !!user,
-    staleTime: 10 * 60 * 1000,
   })
 }
 
