@@ -360,6 +360,15 @@ export interface ChatMessageListProps {
   messagesEndRef: RefObject<HTMLDivElement | null>
   /** Whether to show the scroll-down button (parent manages this state) */
   onScrollChange: (showScrollDown: boolean) => void
+  /**
+   * Room identity key (channelId or collectiveId). When this changes, the
+   * component is rendering a different conversation and must reset its
+   * initial-scroll guard so the new room opens at the latest message.
+   * Without this, navigating between chats while the component stays
+   * mounted leaves `initialScrollDone.current = true` from the previous
+   * room and the new room renders scrolled to the top.
+   */
+  roomKey: string | undefined
 }
 
 /* ------------------------------------------------------------------ */
@@ -384,10 +393,21 @@ export function ChatMessageList({
   scrollContainerRef,
   messagesEndRef,
   onScrollChange,
+  roomKey,
 }: ChatMessageListProps) {
   const { user } = useAuth()
   const shouldReduceMotion = useReducedMotion()
   const initialScrollDone = useRef(false)
+  const lastRoomKeyRef = useRef(roomKey)
+
+  // Reset initial-scroll guard when the room changes. Without this, the
+  // useRef value persists across navigations (component stays mounted with
+  // different props) and the new room opens scrolled to the top because
+  // initialScrollDone.current = true from the previous conversation.
+  if (lastRoomKeyRef.current !== roomKey) {
+    initialScrollDone.current = false
+    lastRoomKeyRef.current = roomKey
+  }
 
   /**
    * Reply quote tap → scroll to parent message + briefly highlight it.

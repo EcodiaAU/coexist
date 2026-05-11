@@ -870,6 +870,7 @@ export default function ChatRoomPage() {
         scrollContainerRef={scrollContainerRef}
         messagesEndRef={messagesEndRef}
         onScrollChange={setShowScrollDown}
+        roomKey={roomKey}
       />
 
       {/* Reply bar */}
