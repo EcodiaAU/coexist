@@ -1,10 +1,9 @@
 import { useCallback, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Download, X, Loader2 } from 'lucide-react'
+import { Share2, X, Loader2 } from 'lucide-react'
 import html2canvas from 'html2canvas'
 import { BottomSheet } from './bottom-sheet'
 import { Button } from './button'
-import { useToast } from './toast'
 import {
   EventShareGraphic,
   SHARE_SIZES,
@@ -36,7 +35,7 @@ export interface EventShareSheetProps {
   coverImageUrl?: string | null
 }
 
-const SIZE_ORDER: ShareSize[] = ['portrait', 'square', 'story']
+const SIZE_ORDER: ShareSize[] = ['story', 'portrait', 'square']
 
 /* Preview tile widths per size. We render the full-resolution graphic
    inside a fixed-width preview container, then scale it down with CSS
@@ -59,8 +58,6 @@ export function EventShareSheet({
   collectiveName,
   coverImageUrl,
 }: EventShareSheetProps) {
-  const { toast } = useToast()
-
   // Preview refs (inside CSS scale() transform - for visual display only)
   const previewRefs = useRef<Record<ShareSize, HTMLDivElement | null>>({
     portrait: null,
@@ -105,34 +102,6 @@ export function EventShareSheet({
       canvas.toBlob((b) => resolve(b), 'image/png', 0.95)
     })
   }, [])
-
-  const handleDownload = useCallback(
-    async (size: ShareSize) => {
-      try {
-        setBusy(size)
-        const blob = await captureBlob(size)
-        if (!blob) {
-          toast.error('Could not generate image')
-          return
-        }
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = buildFilename(size)
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        // Defer revoke so iOS Safari has time to consume the blob
-        setTimeout(() => URL.revokeObjectURL(url), 4000)
-      } catch (e) {
-        console.error('[event-share] download failed', e)
-        toast.error('Download failed')
-      } finally {
-        setBusy(null)
-      }
-    },
-    [captureBlob, buildFilename, toast],
-  )
 
   const handleSystemShare = useCallback(
     async (size: ShareSize) => {
@@ -274,23 +243,13 @@ export function EventShareSheet({
                     <Button
                       variant="primary"
                       size="sm"
-                      icon={<Download size={14} />}
-                      onClick={() => handleDownload(sz)}
+                      icon={<Share2 size={14} />}
+                      onClick={() => handleSystemShare(sz)}
                       disabled={busy !== null}
                       fullWidth
                     >
                       Save
                     </Button>
-                    {typeof navigator !== 'undefined' && 'share' in navigator && (
-                      <button
-                        type="button"
-                        onClick={() => handleSystemShare(sz)}
-                        disabled={busy !== null}
-                        className="text-[12px] text-primary-600 font-semibold py-1.5 hover:underline disabled:opacity-50"
-                      >
-                        Share via…
-                      </button>
-                    )}
                   </div>
                 </div>
               )
