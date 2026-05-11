@@ -13,6 +13,9 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Prevent the parent AppCompat theme's default window background (white/grey)
+             from bleeding through the transparent status bar before WebView renders -->
+        <item name="android:windowBackground">@color/splashBackground</item>
         <!-- Edge-to-edge: let the system draw transparent bars; content draws behind them -->
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
