@@ -1262,11 +1262,66 @@ async function syncFromExcel(
           continue
         }
 
-        // Fallback: no app match. Create synthetic event + impact as before.
-        // This preserves the canonical record for Forms submissions made
-        // without a matching app-created event (legacy data, leaders who
-        // skip the app entirely, etc.). Deterministic UUID v5 keeps re-runs
-        // idempotent.
+        // Fallback: no app match via findMatchingAppEvent (which excludes synthetic
+        // UUIDs to prevent a Forms row matching itself). Before creating a new
+        // synthetic event, do one more check: look for ANY existing event (including
+        // older synthetic events created with a different namespace or UUID scheme)
+        // that matches this collective + date + title. This prevents the duplicate-
+        // creation bug where a re-run with a namespace change creates a second
+        // synthetic UUID for the same physical event.
+        //
+        // Prevention guard added 2026-05-11 (fork_mp138va4_fe0506):
+        // Root cause of 179 duplicate events created 2026-05-04: the March 2026
+        // import created synthetic events with UUID v5; findMatchingAppEvent
+        // excluded all synthetic UUIDs, so the May 4 sync couldn't match them and
+        // created a second batch of synthetic events with different UUIDs for the
+        // same Forms rows.
+        const existenceGuardDayStart = dateIso.slice(0, 10) + 'T00:00:00.000Z'
+        const existenceGuardNextDay = new Date(
+          new Date(dateIso.slice(0, 10)).getTime() + 2 * 24 * 60 * 60 * 1000, // +2d window for TZ drift
+        ).toISOString().slice(0, 10) + 'T00:00:00.000Z'
+        const { data: existingBySignature } = await supabase
+          .from('events')
+          .select('id, title')
+          .eq('collective_id', collectiveId)
+          .gte('date_start', existenceGuardDayStart)
+          .lt('date_start', existenceGuardNextDay)
+
+        if (existingBySignature && existingBySignature.length > 0) {
+          const titleLc = title.trim().toLowerCase()
+          const existingMatch = (existingBySignature as { id: string; title: string }[]).find(
+            e => e.title.trim().toLowerCase() === titleLc,
+          )
+          if (existingMatch) {
+            // Found an existing event (possibly synthetic with different UUID) —
+            // upsert impact onto it instead of creating a new synthetic.
+            const { error: guardImpactErr } = await supabase
+              .from('event_impact')
+              .upsert(
+                {
+                  event_id: existingMatch.id,
+                  attendees: attendees ?? 0,
+                  rubbish_kg: rubbishKg ?? 0,
+                  trees_planted: treesPlanted ?? 0,
+                  logged_at: dateIso,
+                  logged_by: systemUserId,
+                },
+                { onConflict: 'event_id' },
+              )
+
+            if (guardImpactErr) {
+              errors.push(`${rowLabel}: existence-guard impact upsert failed for ${existingMatch.id}: ${guardImpactErr.message}`)
+            } else {
+              errors.push(`INFO ${rowLabel}: existence guard matched existing event ${existingMatch.id} (title="${existingMatch.title}"); impact updated, no new synthetic created`)
+            }
+            seenEventIds.add(existingMatch.id)
+            syncedFormsRows++
+            continue
+          }
+        }
+
+        // No existing event found — safe to create a new synthetic.
+        // Deterministic UUID v5 keeps re-runs idempotent.
         const syntheticId = await formsIdToUuid(excelId)
 
         const { error: eventError } = await supabase
