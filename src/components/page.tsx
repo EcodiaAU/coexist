@@ -125,8 +125,11 @@ export function Page({
             // (home indicator is hidden when keyboard up) and the 1rem gap
             // collapses to a tighter 0.25rem so the button sits right above
             // the keyboard line.
+            // When keyboard is up: env(safe-area-inset-bottom) is unreliable on Android
+            // gesture nav (returns 20-30px even when keyboard shown). Use a fixed small
+            // value instead so the button sits flush against the keyboard line.
             paddingBottom: tabsVisuallyHidden
-              ? `calc(env(safe-area-inset-bottom, 0px)${fullBleed ? '' : ' + 0.25rem'})`
+              ? (fullBleed ? '0px' : '6px')
               : hasBottomTabs
                 ? `calc(3.5rem + var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`
                 : `calc(var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`,
