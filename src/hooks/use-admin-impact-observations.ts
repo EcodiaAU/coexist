@@ -167,6 +167,7 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       let eventsQuery = supabase
         .from('events')
         .select('id, title, date_start, date_end, collective_id, activity_type, created_by, collectives(name)')
+        .in('status', ['published', 'completed'])
         .lt('date_start', nowIso)
       if (effectiveStart) eventsQuery = eventsQuery.gte('date_start', effectiveStart)
       if (filters.collectiveId) eventsQuery = eventsQuery.eq('collective_id', filters.collectiveId)

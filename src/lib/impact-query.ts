@@ -24,8 +24,8 @@ import { IMPACT_SELECT_COLUMNS, type EventHostShare } from '@/lib/impact-metrics
 /* ------------------------------------------------------------------ */
 
 export const IMPACT_BASELINE_DATE      = '2026-01-01'
-export const BASELINE_TREES            = 35_000
-export const BASELINE_RUBBISH_KG       = 4_794
+export const BASELINE_TREES            = 36_637  // pre-2026 sheet total: 17,300 (2022) + 3,702 (2024) + 15,635 (2025)
+export const BASELINE_RUBBISH_KG       = 4_900   // matches app_settings impact_baseline_rubbish_kg (was incorrectly 4_794)
 export const BASELINE_EVENTS           = 340
 export const BASELINE_ATTENDEES        = 5_500
 export const BASELINE_HOURS            = 11_000
