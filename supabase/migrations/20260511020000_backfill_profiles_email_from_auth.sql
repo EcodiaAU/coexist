@@ -70,6 +70,7 @@ CREATE TRIGGER sync_auth_email_on_user_change
   FOR EACH ROW
   EXECUTE FUNCTION public.sync_auth_email_to_profile();
 
-COMMENT ON TRIGGER sync_auth_email_on_user_change ON auth.users IS
-  'Mirror auth.users.email -> public.profiles.email on every signup '
-  'and email change so leader exports and sheet sync see current emails.';
+-- Note: COMMENT ON TRIGGER auth.users is intentionally omitted.
+-- Commenting on triggers attached to auth.* tables requires ownership
+-- of that relation (supabase_admin), which the migration role does not hold.
+-- The trigger name and the function comment above serve as documentation.
