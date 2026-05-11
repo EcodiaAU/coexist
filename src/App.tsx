@@ -27,6 +27,7 @@ const PublicCollectivePage = lazy(() => import('@/pages/public/collective'))
 const DownloadPage = lazy(() => import('@/pages/public/download'))
 const AccountDeletionPage = lazy(() => import('@/pages/public/account-deletion'))
 const DataDeletionPage = lazy(() => import('@/pages/public/data-deletion'))
+const PublicCheckInPage = lazy(() => import('@/pages/public/check-in'))
 
 // Design showcase (dev only)
 const EventEditorialShowcase = lazy(() => import('@/pages/design/event-editorial'))
@@ -530,6 +531,14 @@ function App() {
           element={
             <AppShell bare>
               <PublicEventPage />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/check-in/:token"
+          element={
+            <AppShell bare>
+              <PublicCheckInPage />
             </AppShell>
           }
         />
