@@ -160,7 +160,7 @@ export default function EditEventPage() {
     navigate(`/events/${eventId}`, { replace: true })
   }, [eventId, isDayOfMode, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, navigate])
 
-  // Publish a draft event — saves all fields + flips status to published (fork_mp0so5k9_0d2e77)
+  // Publish a draft event - saves all fields + flips status to published (fork_mp0so5k9_0d2e77)
   const handlePublish = useCallback(async () => {
     if (!eventId || !form.isBasicsValid || !form.isDateValid) return
 
