@@ -252,6 +252,12 @@ interface EventData {
   rubbish_kg: number | null
   trees_planted: number | null
   answers: Record<string, unknown>
+  /** True when an event_impact row exists for this event, meaning the leader
+   *  has submitted the impact form (via survey link or Log Impact UI).
+   *  Used by syncToExcel to gate APPEND operations: only events with impact
+   *  data are written to the master sheet. UPDATE operations (existing sheet
+   *  rows) are not gated — they receive whatever data is available. */
+  hasImpactData: boolean
 }
 
 function buildExcelRow(e: EventData): (string | number | null)[] {
@@ -383,6 +389,12 @@ async function fetchEventData(
     rubbish_kg: impact?.rubbish_kg ?? null,
     trees_planted: impact?.trees_planted ?? null,
     answers,
+    // True when an event_impact row exists. Covers both submission paths:
+    // (1) survey link → survey_responses INSERT → sync_survey_response_to_event_impact
+    //     trigger → event_impact INSERT
+    // (2) leader uses Log Impact UI → direct event_impact INSERT
+    // Either path results in an event_impact row. No row = no impact data yet.
+    hasImpactData: impact !== null,
   }
 }
 
@@ -682,6 +694,10 @@ async function syncToExcel(
   updated: number
   skipped: number
   skippedDuplicates: number
+  /** Events skipped at the APPEND stage because no impact survey has been submitted yet.
+   *  These events are eligible (migration-gated, app-created) but will not land on the
+   *  master sheet until the leader submits their impact form. Also counted in `skipped`. */
+  skippedNoImpact: number
   weakDedupWarnings: { eventId: string; collective: string; date: string; title: string; existingFormsTitle: string }[]
   errors: string[]
 }> {
@@ -691,6 +707,7 @@ async function syncToExcel(
   let updated = 0
   let skipped = 0
   let skippedDuplicates = 0
+  let skippedNoImpact = 0
 
   // Read existing Excel data
   let excelState: ExcelState
@@ -698,7 +715,7 @@ async function syncToExcel(
     excelState = await readExcelState(graphToken)
   } catch (err) {
     errors.push(`Failed to read Excel: ${(err as Error).message}`)
-    return { appended, updated, skipped, skippedDuplicates, errors }
+    return { appended, updated, skipped, skippedDuplicates, skippedNoImpact, weakDedupWarnings, errors }
   }
 
   // Build a map of existing event IDs to their row index (1-based)
@@ -775,13 +792,23 @@ async function syncToExcel(
     //   date_start >= forms_migrated_at (the collective has cut over from Forms).
     //   No test-title bypass - gate-only doctrine post 2026-05-04 cutover.
     //
-    // STATUS GATE: 'published' AND 'completed'. App-created events for migrated
-    // collectives appear on the sheet IMMEDIATELY when published (within the
-    // hourly to-excel cron) so leaders see their event reflected in the canonical
-    // sheet. Impact data fills in later when the impact survey is logged
-    // (handled by the per-event syncToExcel trigger which UPDATES the existing
-    // sheet row by ID match). 'draft' events stay off the sheet (work in
-    // progress); 'cancelled' events stay off (deletion intent).
+    // STATUS GATE: 'published' AND 'completed'. 'draft' events stay off the
+    // sheet (work in progress); 'cancelled' events stay off (deletion intent).
+    //
+    // IMPACT-SURVEY GATE (added 2026-05-11, Co-Exist 1.8.5):
+    // Events are only APPENDED to the sheet when an event_impact row exists,
+    // meaning the leader has submitted their impact data (via the impact survey
+    // link or the Log Impact UI). This prevents empty-survey-column rows from
+    // polluting Charlie's canonical sheet view (Charlie's complaint, May 2026).
+    // The gate applies to APPEND only — UPDATE operations on rows already in
+    // the sheet are not gated (impact-less rows placed pre-gate still receive
+    // updates once impact data arrives).
+    // See fetchEventData.hasImpactData and the append branch below.
+    // Doctrine: ~/ecodiaos/patterns/sync-back-must-filter-synthetic-from-source.md
+    //
+    // NOTE: The pre-gate deploy may have already placed impact-less rows on
+    // the sheet. Run the cleanup SQL in ~/ecodiaos/drafts/coexist-impact-sheet-cleanup-2026-05-11.sql
+    // to identify and remove those rows BEFORE rebaselining with this version.
     //
     // This MUST stay symmetric with the syncFromExcel reconciliation candidate
     // selector - reconciliation cancels migrated-collective events that are in
@@ -860,12 +887,34 @@ async function syncToExcel(
       const existingRowIndex = idToRowIndex.get(eid)
 
       if (existingRowIndex) {
-        // App event already in sheet - UPDATE the row
+        // App event already in sheet - UPDATE the row (no impact gate on updates;
+        // rows placed before this gate was deployed still receive data as it arrives).
         updateRows.push({ rowIndex: existingRowIndex, row })
         updated++
       } else {
-        // New app event - check dedup before appending.
-        // If this event matches a Forms row on (collective, date, title), skip it.
+        // New app event - APPEND path.
+        //
+        // IMPACT-SURVEY GATE: only append when the leader has submitted impact data.
+        // An event_impact row existing (data.hasImpactData) means the leader went
+        // through either the impact survey link or the Log Impact UI. Without this
+        // gate, every published/completed migrated-collective event would land on
+        // Charlie's sheet with cols 11-27 blank — polluting the canonical view.
+        //
+        // The gate is ONLY here (append branch). UPDATE above is intentionally
+        // ungated so pre-gate rows on the sheet still get populated when impact
+        // data eventually arrives.
+        //
+        // Collectives with forms_migrated_at IS NULL are already excluded by the
+        // outer migration gate; this gate only fires for migrated-collective events.
+        // See ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
+        if (!data.hasImpactData) {
+          skippedNoImpact++
+          skipped++
+          errors.push(`INFO Event ${eid}: skipped append (no impact survey submitted yet)`)
+          continue
+        }
+
+        // Dedup check: if this event matches a Forms row on (collective, date, title), skip it.
         // The Forms row is the authoritative record for that event; appending an app row
         // would create a duplicate. Admin must reconcile the Forms row manually.
         const eventSig = sigOf(data.collective_name, data.date_start, data.title)
@@ -934,7 +983,7 @@ async function syncToExcel(
     }
   }
 
-  return { appended, updated, skipped, skippedDuplicates, weakDedupWarnings, errors }
+  return { appended, updated, skipped, skippedDuplicates, skippedNoImpact, weakDedupWarnings, errors }
 }
 
 // ---- Sync: Excel -> Supabase (Excel is source of truth) ----
@@ -1442,7 +1491,7 @@ Deno.serve(async (req: Request) => {
       }
       const toEx = (results.toExcel ?? null) as null | {
         appended?: number; updated?: number; skipped?: number; skippedDuplicates?: number;
-        weakDedupWarnings?: unknown[]; errors?: string[]
+        skippedNoImpact?: number; weakDedupWarnings?: unknown[]; errors?: string[]
       }
       const sheetRows = (fromEx as any)?._sheetRows ?? null // hook for future surfacing
       await supabase.from('excel_sync_runs').insert({
