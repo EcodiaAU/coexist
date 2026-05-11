@@ -191,7 +191,7 @@ export default function ProfilePage() {
     <Page noBackground className="bg-surface-2">
       {/* Hero banner */}
       <div className="-mx-4 lg:-mx-6">
-        <div className="relative overflow-hidden bg-moss-500 pb-20 pt-8">
+        <div className="relative overflow-hidden bg-[#879e62] pb-20 pt-8">
           {/* Settings button */}
           <div className="relative z-10 flex justify-end px-4 mt-2">
             <button
