@@ -1,4 +1,6 @@
 import { useState, useMemo, useRef, useCallback, type ReactNode } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
 import { motion, useReducedMotion, useInView, AnimatePresence } from 'framer-motion'
 import {
   TreePine,
@@ -427,6 +429,21 @@ function DashboardTab() {
   const [nudgingEvent, setNudgingEvent] = useState<string | null>(null)
   const showLoading = useDelayedLoading(isLoading)
 
+  // Drift status badge - reads last run result from app_settings (written by nightly cron)
+  const { data: driftRow } = useQuery({
+    queryKey: ['stats-drift-status'],
+    queryFn: async () => {
+      const { data: row } = await supabase
+        .from('app_settings')
+        .select('value, updated_at')
+        .eq('key', 'stats_drift_last_run')
+        .maybeSingle()
+      return row
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+  const driftStatus = driftRow?.value as { run_at?: string; status?: string; delta?: Record<string, unknown> } | null | undefined
+
   const visibleDefs = useMemo(() => {
     if (!data) return activeDefs.filter((d) => d.key !== 'hours_total')
     return activeDefs.filter((d) =>
@@ -514,6 +531,28 @@ function DashboardTab() {
         <Dropdown options={activityOptions} value={activityType} onChange={setActivityType} className="w-40" />
         <SearchBar value={search} onChange={setSearch} placeholder="Search events..." compact className="flex-1 min-w-[160px]" />
       </motion.div>
+
+      {/* ── Master sheet drift status badge ── */}
+      {driftStatus && (
+        <motion.div variants={v.fadeUp}>
+          {driftStatus.status === 'drift' ? (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-warning-50 border border-warning-200 text-warning-700 text-xs font-medium w-fit">
+              <AlertTriangle size={13} />
+              Stats drift detected vs master sheet - check status board
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success-50 border border-success-200 text-success-700 text-xs font-medium w-fit">
+              <Database size={13} />
+              Stats synced with master sheet
+              {driftStatus.run_at && (
+                <span className="text-success-500 font-normal ml-1">
+                  ({Math.round((Date.now() - new Date(driftStatus.run_at).getTime()) / 3600000)}h ago)
+                </span>
+              )}
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* ── Summary cards ── */}
       <motion.div variants={v.fadeUp}>
