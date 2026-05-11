@@ -258,6 +258,12 @@ interface EventData {
    *  data are written to the master sheet. UPDATE operations (existing sheet
    *  rows) are not gated - they receive whatever data is available. */
   hasImpactData: boolean
+  /** True when the event's start date has already passed (i.e. the event has
+   *  occurred). Used by syncToExcel to gate APPEND operations alongside
+   *  hasImpactData: future-dated events should never appear in the post-event
+   *  master impact sheet, even if an event_impact row somehow exists.
+   *  Predicate: new Date(date_start) <= new Date() (UTC server time). */
+  hasHappened: boolean
 }
 
 function buildExcelRow(e: EventData): (string | number | null)[] {
@@ -395,6 +401,11 @@ async function fetchEventData(
     // (2) leader uses Log Impact UI → direct event_impact INSERT
     // Either path results in an event_impact row. No row = no impact data yet.
     hasImpactData: impact !== null,
+    // True when the event's start date is in the past (event has occurred).
+    // Guards the APPEND branch: post-event master sheet rows must only cover
+    // events that have actually happened. Future-dated events (e.g. 22 May 2026
+    // appearing during a 11 May sync run) are skipped until the date passes.
+    hasHappened: new Date(event.date_start) <= new Date(),
   }
 }
 
@@ -894,23 +905,31 @@ async function syncToExcel(
       } else {
         // New app event - APPEND path.
         //
-        // IMPACT-SURVEY GATE: only append when the leader has submitted impact data.
-        // An event_impact row existing (data.hasImpactData) means the leader went
-        // through either the impact survey link or the Log Impact UI. Without this
-        // gate, every published/completed migrated-collective event would land on
-        // Charlie's sheet with cols 11-27 blank - polluting the canonical view.
+        // APPEND GATE (two predicates, both must be true):
         //
-        // The gate is ONLY here (append branch). UPDATE above is intentionally
-        // ungated so pre-gate rows on the sheet still get populated when impact
-        // data eventually arrives.
+        // 1. IMPACT-SURVEY GATE (added 2026-05-11, Co-Exist 1.8.5, commit a9e5937):
+        //    An event_impact row must exist (data.hasImpactData), meaning the leader
+        //    submitted impact data via the survey link or Log Impact UI. Without this,
+        //    every published/completed migrated-collective event lands on Charlie's
+        //    sheet with cols 11-27 blank - polluting the canonical view.
+        //
+        // 2. FUTURE-EVENT GATE (added 2026-05-11, Co-Exist 1.8.5):
+        //    The event's start date must be in the past (data.hasHappened). The master
+        //    sheet captures POST-event impact data; future-dated events (e.g. an event
+        //    scheduled for 22 May syncing during an 11 May run) must not appear until
+        //    after the event has occurred, even if an event_impact row exists.
+        //
+        // Both gates are ONLY on the append branch. UPDATE above is intentionally
+        // ungated so pre-gate rows on the sheet still receive data as it arrives.
         //
         // Collectives with forms_migrated_at IS NULL are already excluded by the
-        // outer migration gate; this gate only fires for migrated-collective events.
+        // outer migration gate; these gates only fire for migrated-collective events.
         // See ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
-        if (!data.hasImpactData) {
-          skippedNoImpact++
+        if (!data.hasImpactData || !data.hasHappened) {
+          if (!data.hasImpactData) skippedNoImpact++
           skipped++
-          errors.push(`INFO Event ${eid}: skipped append (no impact survey submitted yet)`)
+          console.log(`[excel-sync] skip append: event=${eid} hasImpactData=${data.hasImpactData} hasHappened=${data.hasHappened}`)
+          errors.push(`INFO Event ${eid}: skipped append (hasImpactData=${data.hasImpactData} hasHappened=${data.hasHappened})`)
           continue
         }
 
