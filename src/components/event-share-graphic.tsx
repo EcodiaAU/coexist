@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { APP_NAME, TAGLINE } from '@/lib/constants'
+import { APP_NAME } from '@/lib/constants'
 
 /* ====================================================================== */
 /*  EventShareGraphic                                                      */
@@ -8,12 +8,12 @@ import { APP_NAME, TAGLINE } from '@/lib/constants'
 /*  Instagram-friendly aspect ratios. Designed to be rendered off-screen   */
 /*  and captured to PNG by html2canvas.                                    */
 /*                                                                         */
-/*  - 1:1   square    1080x1080  (IG square)                               */
-/*  - 4:5   portrait  1080x1350  (IG feed-optimal)                         */
-/*  - 16:9  landscape 1920x1080  (IG story / FB / general)                 */
+/*  - 1:1   square   1080x1080  (IG square)                                */
+/*  - 4:5   portrait 1080x1350  (IG feed-optimal)                          */
+/*  - 9:16  story    1080x1920  (IG story / TikTok / Reels)                */
 /* ====================================================================== */
 
-export type ShareSize = 'square' | 'portrait' | 'landscape'
+export type ShareSize = 'square' | 'portrait' | 'story'
 
 export interface ShareSizeSpec {
   width: number
@@ -24,29 +24,28 @@ export interface ShareSizeSpec {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const SHARE_SIZES: Record<ShareSize, ShareSizeSpec> = {
-  square:    { width: 1080, height: 1080, label: 'Square',    aspect: '1:1'  },
-  portrait:  { width: 1080, height: 1350, label: 'Portrait',  aspect: '4:5'  },
-  landscape: { width: 1920, height: 1080, label: 'Landscape', aspect: '16:9' },
+  square:   { width: 1080, height: 1080, label: 'Square',   aspect: '1:1'  },
+  portrait: { width: 1080, height: 1350, label: 'Portrait', aspect: '4:5'  },
+  story:    { width: 1080, height: 1920, label: 'Story',    aspect: '9:16' },
 }
 
 export interface EventShareGraphicProps {
   size: ShareSize
   title: string
-  dateLabel: string         // e.g. "Sat, 10 May - 9:00 AM"
-  locationLabel: string     // venue name OR address text
+  dateLabel: string
+  locationLabel: string
   collectiveName?: string | null
   coverImageUrl?: string | null
   /** Brand-like fallback when no cover image is available. */
   fallbackGradient?: boolean
-  /** When true, set position absolute to keep this off-screen (for capture). */
+  /** When true, set position fixed to keep this off-screen (for capture). */
   offscreen?: boolean
 }
 
-/* Co-Exist primary palette - sourced from src/styles/globals.css @theme block */
-const BRAND_GREEN_400 = '#869e62'
-const BRAND_GREEN_600 = '#5d7340'
-const BRAND_GREEN_700 = '#4a5c34'
-const BRAND_CREAM     = '#fafaf5'
+/* Co-Exist brand palette */
+const BRAND_GREEN     = '#879e62'   // impact-section / profile hero green
+const BRAND_GREEN_MID = '#5d7340'   // primary-600
+const BRAND_GREEN_DK  = '#4a5c34'   // primary-700
 
 /* ------------------------------------------------------------------ */
 /*  Inline store badges (SVG)                                          */
@@ -90,7 +89,6 @@ function GooglePlayBadge({ height = 56 }: { height?: number }) {
       aria-label="Get it on Google Play"
     >
       <rect width="155" height="42" rx="8" fill="#000" />
-      {/* Stylised Play triangle (multi-colour gradient approximation) */}
       <g transform="translate(11 8)">
         <path d="M0 0v26l11.2-13L0 0z" fill="#00d4ff" />
         <path d="M0 0l11.2 13L17 7.6 4.5 0H0z" fill="#00f076" />
@@ -108,7 +106,7 @@ function GooglePlayBadge({ height = 56 }: { height?: number }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Wordmark (matches white-wordmark.webp aesthetic)                   */
+/*  Wordmark                                                            */
 /* ------------------------------------------------------------------ */
 
 function CoExistWordmark({ size = 36, color = '#fff' }: { size?: number; color?: string }) {
@@ -139,7 +137,7 @@ function clamp(text: string, max: number): string {
 }
 
 /* ====================================================================== */
-/*  Component                                                              */
+/*  Component - unified full-bleed layout for all three sizes             */
 /* ====================================================================== */
 
 export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicProps>(
@@ -161,250 +159,169 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
     const h = spec.height
 
     const offscreenStyle: React.CSSProperties = offscreen
-      ? {
-          position: 'fixed',
-          top: '0',
-          left: '-99999px',
-          pointerEvents: 'none',
-        }
+      ? { position: 'fixed', top: 0, left: '-99999px', pointerEvents: 'none' }
       : {}
 
     const wrapperStyle: React.CSSProperties = {
       width: `${w}px`,
       height: `${h}px`,
-      background: BRAND_CREAM,
-      color: BRAND_GREEN_700,
+      background: BRAND_GREEN,
+      color: '#fff',
       fontFamily: 'system-ui, -apple-system, "Helvetica Neue", sans-serif',
       overflow: 'hidden',
       position: offscreen ? 'fixed' : 'relative',
       ...offscreenStyle,
     }
 
-    /* Layout differs per size. Square + portrait stack vertically, landscape is two-column. */
+    /* Size-responsive layout values */
+    const isStory    = size === 'story'
+    const isPortrait = size === 'portrait'
 
-    if (size === 'landscape') {
-      return (
-        <div ref={ref} style={wrapperStyle} data-share-size={size}>
-          <div style={{ display: 'flex', width: '100%', height: '100%' }}>
-            {/* Left column - cover image */}
-            <div
-              style={{
-                width: '54%',
-                height: '100%',
-                position: 'relative',
-                background: coverImageUrl
-                  ? `url(${coverImageUrl}) center / cover no-repeat`
-                  : fallbackGradient
-                    ? `linear-gradient(135deg, ${BRAND_GREEN_400} 0%, ${BRAND_GREEN_700} 100%)`
-                    : BRAND_GREEN_600,
-              }}
-            >
-              {/* Corner wordmark over image */}
-              <div style={{ position: 'absolute', top: 36, left: 40 }}>
-                <CoExistWordmark size={42} color="#fff" />
-              </div>
-              {/* Bottom-fade gradient for text legibility on right edge */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: `linear-gradient(90deg, rgba(0,0,0,0) 60%, rgba(0,0,0,0.18) 100%)`,
-                }}
-              />
-            </div>
-
-            {/* Right column - text + branding */}
-            <div
-              style={{
-                flex: 1,
-                padding: '64px 72px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 700,
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: BRAND_GREEN_400,
-                    marginBottom: 28,
-                  }}
-                >
-                  Join us
-                </div>
-                <h1
-                  style={{
-                    fontSize: 88,
-                    lineHeight: 1.02,
-                    fontWeight: 800,
-                    letterSpacing: '-0.025em',
-                    color: BRAND_GREEN_700,
-                    margin: 0,
-                    marginBottom: 36,
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {clamp(title, 90)}
-                </h1>
-                <div style={{ fontSize: 30, fontWeight: 600, color: BRAND_GREEN_600, lineHeight: 1.4 }}>
-                  {dateLabel}
-                </div>
-                <div
-                  style={{
-                    fontSize: 26,
-                    color: BRAND_GREEN_600,
-                    opacity: 0.85,
-                    marginTop: 10,
-                    lineHeight: 1.4,
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {clamp(locationLabel, 80)}
-                </div>
-                {collectiveName && (
-                  <div
-                    style={{
-                      fontSize: 22,
-                      color: BRAND_GREEN_400,
-                      marginTop: 18,
-                      fontWeight: 600,
-                    }}
-                  >
-                    by {clamp(collectiveName, 50)}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <div style={{ fontSize: 20, color: BRAND_GREEN_600, marginBottom: 20, fontWeight: 600 }}>
-                  Find this event on {APP_NAME}
-                </div>
-                <div style={{ display: 'flex', gap: 16 }}>
-                  <AppStoreBadge height={64} />
-                  <GooglePlayBadge height={64} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    /* Square + Portrait - vertical layout, cover image on top */
-    const imgHeight = size === 'portrait' ? 720 : 540
-    const titleSize = size === 'portrait' ? 88 : 76
-    const dateSize  = size === 'portrait' ? 34 : 30
+    const sidePad   = isStory ? 72  : 64
+    const topPad    = isStory ? 64  : 52
+    const btmPad    = isStory ? 84  : 60
+    const logoSize  = isStory ? 50  : isPortrait ? 44 : 40
+    const titleSize = isStory ? 100 : isPortrait ? 86 : 74
+    const dateSize  = isStory ? 40  : isPortrait ? 35 : 31
+    const badgeH    = isStory ? 68  : isPortrait ? 62 : 58
+    const badgeMt   = isStory ? 40  : isPortrait ? 30 : 24
+    const joinFz    = isStory ? 22  : 19
+    const titleMax  = isStory ? 120 : isPortrait ? 110 : 90
 
     return (
       <div ref={ref} style={wrapperStyle} data-share-size={size}>
-        {/* Top: cover image OR brand-gradient block */}
+
+        {/* 1. Full-bleed cover - photo fills the entire canvas */}
         <div
           style={{
-            width: '100%',
-            height: imgHeight,
-            position: 'relative',
+            position: 'absolute',
+            inset: 0,
             background: coverImageUrl
               ? `url(${coverImageUrl}) center / cover no-repeat`
               : fallbackGradient
-                ? `linear-gradient(135deg, ${BRAND_GREEN_400} 0%, ${BRAND_GREEN_700} 100%)`
-                : BRAND_GREEN_600,
+                ? `linear-gradient(145deg, ${BRAND_GREEN} 0%, ${BRAND_GREEN_DK} 100%)`
+                : BRAND_GREEN_MID,
           }}
-        >
-          {/* Wordmark in top-left over the image */}
-          <div style={{ position: 'absolute', top: 32, left: 40 }}>
-            <CoExistWordmark size={size === 'portrait' ? 42 : 38} color="#fff" />
-          </div>
-          {/* Soft bottom-fade so any text peeking over remains legible if cover */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: `linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.10) 100%)`,
-            }}
-          />
-        </div>
+        />
 
-        {/* Bottom: title, date, location, branding */}
+        {/* 2. Top scrim - wordmark legibility */}
         <div
           style={{
-            flex: 1,
-            padding: size === 'portrait' ? '48px 56px' : '40px 56px',
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.44) 0%, rgba(0,0,0,0) 26%)',
+          }}
+        />
+
+        {/* 3. Bottom scrim - text legibility over photo */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(0,0,0,0) 34%, rgba(0,0,0,0.80) 100%)',
+          }}
+        />
+
+        {/* 4. Content layer */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            height: h - imgHeight,
+            padding: `${topPad}px ${sidePad}px ${btmPad}px`,
           }}
         >
+          {/* Top: wordmark */}
+          <CoExistWordmark size={logoSize} color="#fff" />
+
+          {/* Bottom: event info + store badges */}
           <div>
             <div
               style={{
-                fontSize: 18,
+                fontSize: joinFz,
                 fontWeight: 700,
-                letterSpacing: '0.18em',
+                letterSpacing: '0.16em',
                 textTransform: 'uppercase',
-                color: BRAND_GREEN_400,
-                marginBottom: 20,
+                color: 'rgba(255,255,255,0.68)',
+                marginBottom: isStory ? 22 : 16,
               }}
             >
               Join us
             </div>
+
             <h1
               style={{
                 fontSize: titleSize,
-                lineHeight: 1.02,
+                lineHeight: 1.0,
                 fontWeight: 800,
                 letterSpacing: '-0.025em',
-                color: BRAND_GREEN_700,
+                color: '#fff',
                 margin: 0,
-                marginBottom: 24,
+                marginBottom: isStory ? 28 : 18,
                 wordBreak: 'break-word',
               }}
             >
-              {clamp(title, size === 'portrait' ? 110 : 90)}
+              {clamp(title, titleMax)}
             </h1>
-            <div style={{ fontSize: dateSize, fontWeight: 600, color: BRAND_GREEN_600, lineHeight: 1.4 }}>
+
+            <div
+              style={{
+                fontSize: dateSize,
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.92)',
+                lineHeight: 1.3,
+              }}
+            >
               {dateLabel}
             </div>
+
             <div
               style={{
                 fontSize: dateSize - 4,
-                color: BRAND_GREEN_600,
-                opacity: 0.85,
+                color: 'rgba(255,255,255,0.72)',
                 marginTop: 8,
-                lineHeight: 1.4,
+                lineHeight: 1.3,
                 wordBreak: 'break-word',
               }}
             >
               {clamp(locationLabel, 80)}
             </div>
+
             {collectiveName && (
               <div
                 style={{
-                  fontSize: 22,
-                  color: BRAND_GREEN_400,
-                  marginTop: 14,
+                  fontSize: dateSize - 7,
+                  color: 'rgba(255,255,255,0.62)',
+                  marginTop: 10,
                   fontWeight: 600,
                 }}
               >
                 by {clamp(collectiveName, 50)}
               </div>
             )}
-          </div>
 
-          <div>
-            <div style={{ fontSize: 18, color: BRAND_GREEN_600, marginBottom: 14, fontWeight: 600 }}>
-              Find this event on {APP_NAME}  ·  {TAGLINE}
+            <div style={{ display: 'flex', gap: 14, marginTop: badgeMt }}>
+              <AppStoreBadge height={badgeH} />
+              <GooglePlayBadge height={badgeH} />
             </div>
-            <div style={{ display: 'flex', gap: 14 }}>
-              <AppStoreBadge height={56} />
-              <GooglePlayBadge height={56} />
+
+            <div
+              style={{
+                marginTop: 16,
+                fontSize: isStory ? 20 : 17,
+                color: 'rgba(255,255,255,0.45)',
+                fontWeight: 500,
+                letterSpacing: '0.01em',
+              }}
+            >
+              Find this event on {APP_NAME}
             </div>
           </div>
         </div>
+
       </div>
     )
   },

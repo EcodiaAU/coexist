@@ -16,8 +16,13 @@ import { cn } from '@/lib/cn'
 /*  EventShareSheet                                                        */
 /*                                                                         */
 /*  BottomSheet that previews three Co-Exist-branded share graphics for an */
-/*  event (1:1, 4:5, 16:9) and lets the user download or system-share each */
+/*  event (1:1, 4:5, 9:16) and lets the user download or system-share each */
 /*  as a PNG.                                                              */
+/*                                                                         */
+/*  Download mechanic: captures a SEPARATE offscreen full-resolution       */
+/*  EventShareGraphic (no CSS transform parent) so the downloaded image    */
+/*  exactly matches the preview tile. Using the preview's CSS-scaled DOM   */
+/*  node as the html2canvas target is a known source of mismatch.         */
 /* ====================================================================== */
 
 export interface EventShareSheetProps {
@@ -31,11 +36,11 @@ export interface EventShareSheetProps {
   coverImageUrl?: string | null
 }
 
-const SIZE_ORDER: ShareSize[] = ['portrait', 'square', 'landscape']
+const SIZE_ORDER: ShareSize[] = ['portrait', 'square', 'story']
 
 /* Preview tile widths per size. We render the full-resolution graphic
    inside a fixed-width preview container, then scale it down with CSS
-   transform. Same hidden DOM is used for capture. */
+   transform. Capture uses a SEPARATE offscreen instance (no transform). */
 const PREVIEW_WIDTH = 220 // px - the on-screen preview width
 function previewScale(size: ShareSize): number {
   return PREVIEW_WIDTH / SHARE_SIZES[size].width
@@ -56,11 +61,20 @@ export function EventShareSheet({
 }: EventShareSheetProps) {
   const { toast } = useToast()
 
-  // Refs for the FULL-resolution graphics (used for capture). One per size.
-  const refs = useRef<Record<ShareSize, HTMLDivElement | null>>({
+  // Preview refs (inside CSS scale() transform - for visual display only)
+  const previewRefs = useRef<Record<ShareSize, HTMLDivElement | null>>({
     portrait: null,
     square: null,
-    landscape: null,
+    story: null,
+  })
+
+  // Capture refs (offscreen, NO CSS transform parent - used for html2canvas)
+  // Separating these from the preview refs ensures download exactly matches preview:
+  // html2canvas does not correctly handle elements inside CSS scale() transforms.
+  const captureRefs = useRef<Record<ShareSize, HTMLDivElement | null>>({
+    portrait: null,
+    square: null,
+    story: null,
   })
 
   const [busy, setBusy] = useState<ShareSize | null>(null)
@@ -72,7 +86,8 @@ export function EventShareSheet({
   )
 
   const captureBlob = useCallback(async (size: ShareSize): Promise<Blob | null> => {
-    const node = refs.current[size]
+    // Use the offscreen capture ref - clean full-res, no transform parent
+    const node = captureRefs.current[size]
     if (!node) return null
     const canvas = await html2canvas(node, {
       scale: 1, // already at full resolution
@@ -82,8 +97,9 @@ export function EventShareSheet({
       logging: false,
       width: SHARE_SIZES[size].width,
       height: SHARE_SIZES[size].height,
-      windowWidth: SHARE_SIZES[size].width,
-      windowHeight: SHARE_SIZES[size].height,
+      // windowWidth/windowHeight intentionally omitted: overriding them
+      // causes html2canvas to reflow layout at a different viewport width,
+      // producing output that differs from the on-screen preview.
     })
     return await new Promise<Blob | null>((resolve) => {
       canvas.toBlob((b) => resolve(b), 'image/png', 0.95)
@@ -156,8 +172,30 @@ export function EventShareSheet({
     [captureBlob, buildFilename, title, dateLabel],
   )
 
+  const sharedGraphicProps = {
+    title,
+    dateLabel,
+    locationLabel,
+    collectiveName: collectiveName ?? null,
+    coverImageUrl: coverImageUrl ?? null,
+  }
+
   return (
     <BottomSheet open={open} onClose={onClose} className="max-h-[92vh]">
+
+      {/* Offscreen capture instances - one per size, no CSS transform parent.
+          These are the html2canvas capture targets. Rendered at native resolution,
+          positioned far off-screen so they never appear to the user. */}
+      {SIZE_ORDER.map((sz) => (
+        <EventShareGraphic
+          key={`capture-${sz}`}
+          ref={(el) => { captureRefs.current[sz] = el }}
+          size={sz}
+          {...sharedGraphicProps}
+          offscreen
+        />
+      ))}
+
       <div className="px-5 pt-3 pb-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-1">
@@ -194,7 +232,7 @@ export function EventShareSheet({
                     )}
                     style={{ width: PREVIEW_WIDTH, height: ph }}
                   >
-                    {/* Scaled-down clone of the graphic. Same DOM is captured below. */}
+                    {/* Scaled-down visual preview. Ref stored in previewRefs (not used for capture). */}
                     <div
                       style={{
                         position: 'absolute',
@@ -207,13 +245,9 @@ export function EventShareSheet({
                       }}
                     >
                       <EventShareGraphic
-                        ref={(el) => { refs.current[sz] = el }}
+                        ref={(el) => { previewRefs.current[sz] = el }}
                         size={sz}
-                        title={title}
-                        dateLabel={dateLabel}
-                        locationLabel={locationLabel}
-                        collectiveName={collectiveName ?? null}
-                        coverImageUrl={coverImageUrl ?? null}
+                        {...sharedGraphicProps}
                       />
                     </div>
 
