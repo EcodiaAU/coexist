@@ -283,7 +283,6 @@ AS $$
       p.display_name ILIKE '%' || p_query || '%'
       OR p.email ILIKE '%' || p_query || '%'
     )
-    AND p.public_tier IS NOT NULL
     AND is_collective_leader_or_above(
           auth.uid(),
           (SELECT e.collective_id FROM events e WHERE e.id = p_event_id)
@@ -295,4 +294,4 @@ $$;
 COMMENT ON FUNCTION search_app_users_for_event(uuid, text, int) IS
   'Leader-gated search across all app users for the "All Members" tab on event-day.tsx. '
   'Requires caller to be collective leader or above. Min query length 2 chars. '
-  'Returns only users who have opted into discoverability (public_tier IS NOT NULL).';
+  'Returns all app users (any profile row); leader auth gate provides the access boundary.';
