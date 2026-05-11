@@ -100,18 +100,16 @@ export function useCollectiveImpact(collectiveId: string | undefined, timeRange:
 
       const isAllTime = timeRange === 'all-time'
 
-      const [{ rows, legacyRows, eventIds, eventCount }, leadersCountRes] = await Promise.all([
+      const [{ rows, legacyRows, eventIds, eventCount }, rpcRes] = await Promise.all([
         fetchImpactRows({
           collectiveId,
           timeRange: timeRange as ImpactTimeRange,
           // Include pre-baseline legacy rows for all-time collective view
           includeLegacy: isAllTime,
         }),
-        supabase
-          .from('app_settings')
-          .select('value')
-          .eq('key', 'leaders_empowered:' + collectiveId)
-          .single(),
+        // leaders_lifetime from canonical RPC replaces stale app_settings counter
+        // (migration 20260511000000 adds leaders_current + leaders_lifetime).
+        supabase.rpc('get_collective_stats', { p_collective_id: collectiveId }),
       ])
 
       if (eventCount === 0) {
@@ -119,7 +117,7 @@ export function useCollectiveImpact(collectiveId: string | undefined, timeRange:
           eventsAttended: 0, volunteerHours: 0, eventsHeld: 0,
           treesPlanted: 0, invasiveWeedsPulled: 0, rubbishCollectedKg: 0,
           cleanupSites: 0, coastlineCleanedM: 0, collectivesCount: 1,
-          leadersEmpowered: (leadersCountRes.data?.value as { count?: number })?.count ?? 0,
+          leadersEmpowered: (rpcRes.data as Record<string, number> | null)?.leaders_lifetime ?? 0,
         }
       }
 
