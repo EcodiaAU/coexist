@@ -88,7 +88,19 @@ async function fetchAdminOverview(dateRange: DateRange, collectiveId?: string): 
       isAllTime && !scopedToCollective ? fetchBaselineSettings() : Promise.resolve(null),
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('collectives').select('id', { count: 'exact', head: true }).eq('is_active', true).neq('is_national', true),
-      supabase.from('app_settings').select('value').eq('key', 'leaders_empowered_total').single(),
+      // BUG FIX: when scoped to a collective, read leaders_lifetime from the canonical
+      // RPC instead of the national leaders_empowered_total setting. Previously,
+      // filtering admin dashboard by Brisbane still returned the national total (~87)
+      // rather than Brisbane's live leaders_lifetime (e.g. 9).
+      // National view (no collectiveId) keeps the app_settings read for now -- a
+      // national overview RPC is out of scope for this batch.
+      collectiveId
+        ? supabase.rpc('get_collective_stats', { p_collective_id: collectiveId })
+            .then((r) => ({
+              data: { value: { count: (r.data as Record<string, number> | null)?.leaders_lifetime ?? 0 } },
+              error: r.error,
+            }))
+        : supabase.from('app_settings').select('value').eq('key', 'leaders_empowered_total').single(),
       rangeStart
         ? supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', rangeStart)
         : Promise.resolve({ count: 0, error: null }),

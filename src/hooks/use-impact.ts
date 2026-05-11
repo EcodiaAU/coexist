@@ -100,18 +100,16 @@ export function useCollectiveImpact(collectiveId: string | undefined, timeRange:
 
       const isAllTime = timeRange === 'all-time'
 
-      const [{ rows, legacyRows, eventIds, eventCount }, leadersCountRes] = await Promise.all([
+      const [{ rows, legacyRows, eventIds, eventCount }, rpcRes] = await Promise.all([
         fetchImpactRows({
           collectiveId,
           timeRange: timeRange as ImpactTimeRange,
           // Include pre-baseline legacy rows for all-time collective view
           includeLegacy: isAllTime,
         }),
-        supabase
-          .from('app_settings')
-          .select('value')
-          .eq('key', 'leaders_empowered:' + collectiveId)
-          .single(),
+        // leaders_lifetime from canonical RPC replaces stale app_settings counter
+        // (migration 20260511000000 adds leaders_current + leaders_lifetime).
+        supabase.rpc('get_collective_stats', { p_collective_id: collectiveId }),
       ])
 
       if (eventCount === 0) {
@@ -119,7 +117,7 @@ export function useCollectiveImpact(collectiveId: string | undefined, timeRange:
           eventsAttended: 0, volunteerHours: 0, eventsHeld: 0,
           treesPlanted: 0, invasiveWeedsPulled: 0, rubbishCollectedKg: 0,
           cleanupSites: 0, coastlineCleanedM: 0, collectivesCount: 1,
-          leadersEmpowered: (leadersCountRes.data?.value as { count?: number })?.count ?? 0,
+          leadersEmpowered: (rpcRes.data as Record<string, number> | null)?.leaders_lifetime ?? 0,
         }
       }
 
@@ -206,92 +204,6 @@ export function useNationalCustomMetrics(limit = 5) {
       const { rows } = await fetchImpactRows({ timeRange: 'all-time' })
       return aggregateCustomMetrics(rows, limit)
     },
-    staleTime: 5 * 60 * 1000,
-  })
-}
-
-/* ------------------------------------------------------------------ */
-/*  Per-user impact                                                    */
-/* ------------------------------------------------------------------ */
-
-export type PersonalImpact = CanonicalImpact
-
-/** Split an array into chunks to avoid Supabase URL length limits */
-function chunks<T>(arr: T[], size = 50): T[][] {
-  const out: T[][] = []
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
-  return out
-}
-
-export function useImpactStats(userId?: string) {
-  const { user } = useAuth()
-  const id = userId ?? user?.id
-
-  return useQuery({
-    queryKey: ['impact-stats', id],
-    queryFn: async (): Promise<PersonalImpact> => {
-      if (!id) throw new Error('No user ID')
-
-      const { data: registrations } = await supabase
-        .from('event_registrations')
-        .select('event_id')
-        .eq('user_id', id)
-        .eq('status', 'attended')
-
-      const attendedEventIds = registrations?.map((r) => r.event_id) ?? []
-      const eventsAttended = attendedEventIds.length
-
-      if (attendedEventIds.length === 0) {
-        return {
-          eventsAttended: 0, volunteerHours: 0, eventsHeld: 0,
-          treesPlanted: 0, invasiveWeedsPulled: 0, rubbishCollectedKg: 0,
-          cleanupSites: 0, coastlineCleanedM: 0, collectivesCount: 0,
-          leadersEmpowered: 0,
-        }
-      }
-
-      // User scope: pass their attended event IDs directly.
-      // fetchImpactRows handles chunking internally.
-      const [{ rows }, cleanupData, collectivesRes, leadersRes, eventsOrganisedRes] = await Promise.all([
-        fetchImpactRows({ eventIds: attendedEventIds, skipBaselineDateFilter: true }),
-        // Cleanup sites: find cleanup events among attended
-        (async () => {
-          const addrs = new Set<string>()
-          for (const chunk of chunks(attendedEventIds)) {
-            const { data } = await supabase
-              .from('events')
-              .select('address')
-              .in('id', chunk)
-              .in('activity_type', ['clean_up'])
-            for (const e of data ?? []) {
-              const addr = (e.address ?? '').trim().toLowerCase()
-              if (addr) addrs.add(addr)
-            }
-          }
-          return addrs
-        })(),
-        supabase.from('collective_members').select('collective_id').eq('user_id', id),
-        supabase.from('collective_members').select('user_id').eq('user_id', id)
-          .in('role', ['assist_leader', 'co_leader', 'leader']),
-        supabase.from('event_impact').select('event_id', { count: 'exact', head: true }).eq('logged_by', id),
-      ])
-
-      const uniqueCollectives = new Set((collectivesRes.data ?? []).map((c) => c.collective_id))
-
-      return {
-        eventsAttended,
-        volunteerHours:      Math.round(sumMetric(rows, 'hours_total')),
-        eventsHeld:          eventsOrganisedRes.count ?? 0,
-        treesPlanted:        sumMetric(rows, 'trees_planted'),
-        invasiveWeedsPulled: sumMetric(rows, 'invasive_weeds_pulled'),
-        rubbishCollectedKg:  Math.round(sumMetric(rows, 'rubbish_kg')),
-        cleanupSites:        cleanupData.size,
-        coastlineCleanedM:   Math.round(sumMetric(rows, 'coastline_cleaned_m')),
-        collectivesCount:    uniqueCollectives.size,
-        leadersEmpowered:    (leadersRes.data ?? []).length > 0 ? 1 : 0,
-      }
-    },
-    enabled: !!id,
     staleTime: 5 * 60 * 1000,
   })
 }

@@ -173,15 +173,16 @@ export interface CollectiveFullStats {
 async function fetchCollectiveFullStats(collectiveId: string): Promise<CollectiveFullStats | null> {
   const now = new Date().toISOString()
 
-  const [{ rows, legacyRows, eventIds, eventCount, shareByEventId }, membersRes, leadersCountRes] =
+  const [{ rows, legacyRows, eventIds, eventCount, shareByEventId }, membersRes, rpcRes] =
     await Promise.all([
       // All-time: include legacy rows for full historical picture. fetchImpactRows
       // already resolves via event_hosts internally.
       fetchImpactRows({ collectiveId, timeRange: 'all-time', includeLegacy: true }),
       supabase.from('collective_members').select('id', { count: 'exact', head: true })
         .eq('collective_id', collectiveId).eq('status', 'active'),
-      supabase.from('app_settings').select('value')
-        .eq('key', 'leaders_empowered:' + collectiveId).single(),
+      // leaders_lifetime from canonical RPC replaces the stale app_settings counter
+      // (migration 20260511000000 adds leaders_current + leaders_lifetime to the RPC).
+      supabase.rpc('get_collective_stats', { p_collective_id: collectiveId }),
     ])
 
   // Cleanup-site count uses the same event id set as the impact rollup so it
@@ -226,7 +227,7 @@ async function fetchCollectiveFullStats(collectiveId: string): Promise<Collectiv
     rubbishKg:           Math.round(sumW('rubbish_kg') * 10) / 10,
     cleanupSites:        cleanupCount,
     coastlineCleanedM:   Math.round(sumW('coastline_cleaned_m')),
-    leadersEmpowered:    (leadersCountRes.data?.value as { count?: number })?.count ?? 0,
+    leadersEmpowered:    (rpcRes.data as Record<string, number> | null)?.leaders_lifetime ?? 0,
     eventsLogged:        eventCount,
     totalMembers:        membersRes.count ?? 0,
     totalEvents:         eventCount,

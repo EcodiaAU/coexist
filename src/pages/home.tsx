@@ -28,12 +28,12 @@ import {
     getGreeting,
     useMyCollective,
     useMyCollectives,
-    useImpactStats,
     useMyUpcomingEvents,
     useCollectiveUpcomingEvents,
     useNationalEvents,
     useRecentUpdates,
 } from '@/hooks/use-home-feed'
+import { useProfileStats } from '@/hooks/use-profile'
 import type { MyCollectiveSummary } from '@/hooks/use-home-feed'
 import { useNationalImpact, useCollectiveImpact } from '@/hooks/use-impact'
 import type { CanonicalImpact } from '@/hooks/use-impact'
@@ -1066,7 +1066,7 @@ export default function HomePage() {
   const myCollective = useMyCollective()
   const myCollectives = useMyCollectives()
   const myEvents = useMyUpcomingEvents()
-  const impact = useImpactStats()
+  const impact = useProfileStats()
   const pendingSurveys = usePendingSurveys()
   const initialLoading = myCollective.isLoading || myEvents.isLoading || impact.isLoading
   const initialError = myCollective.isError && myEvents.isError && impact.isError

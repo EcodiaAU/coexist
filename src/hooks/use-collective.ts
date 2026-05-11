@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase, escapeIlike } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
-import { sumMetricWeighted } from '@/lib/impact-metrics'
-import { fetchImpactRows } from '@/lib/impact-query'
 import { COLLECTIVE_ROLE_RANK } from '@/lib/constants'
 import type {
   Database,
@@ -218,64 +216,25 @@ export function useCollectiveStats(collectiveId: string | undefined) {
     queryFn: async () => {
       if (!collectiveId) throw new Error('No collective ID')
 
-      // Parallelize initial queries.
-      //
-      // Multi-host: events_count + impact rollup go through fetchImpactRows
-      // (which resolves via event_hosts) so events where this collective is a
-      // co-host count too. Per-host shares are applied so co-hosted events
-      // don't inflate the national total.
-      const [{ rows: impactRows, eventIds, eventCount, shareByEventId }, membersRes] = await Promise.all([
-        fetchImpactRows({ collectiveId, timeRange: 'all-time', includeLegacy: true }),
-        supabase
-          .from('collective_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('collective_id', collectiveId)
-          .eq('status', 'active'),
-      ])
+      // Delegate entirely to the canonical multi-host-aware RPC. It applies per-host
+      // share weighting so co-hosted events don't inflate national totals, and it
+      // now also returns leaders_current + leaders_lifetime (migration 20260511000000).
+      const { data, error } = await supabase.rpc('get_collective_stats', {
+        p_collective_id: collectiveId,
+      })
+      if (error) throw error
 
-      if (membersRes.error) throw membersRes.error
-
-      let totalTreesPlanted = 0
-      let totalRubbishKg = 0
-      let totalHours = 0
-      let totalAreaRestored = 0
-      let totalNativePlants = 0
-      let totalWildlifeSightings = 0
-      let attendanceRate = 0
-
-      if (eventIds.length > 0) {
-        const [registeredRes, attendedRes] = await Promise.all([
-          supabase.from('event_registrations').select('id', { count: 'exact', head: true })
-            .in('event_id', eventIds).in('status', ['registered', 'attended']),
-          supabase.from('event_registrations').select('id', { count: 'exact', head: true })
-            .in('event_id', eventIds).eq('status', 'attended'),
-        ])
-
-        const sumW = (key: string) => sumMetricWeighted(impactRows, key, shareByEventId)
-        totalTreesPlanted   = sumW('trees_planted')
-        totalRubbishKg      = sumW('rubbish_kg')
-        totalHours          = sumW('hours_total')
-        totalAreaRestored   = sumW('area_restored_sqm')
-        totalNativePlants   = sumW('native_plants')
-        totalWildlifeSightings = sumW('wildlife_sightings')
-
-        const totalRegistered = registeredRes.count ?? 0
-        const totalAttended   = attendedRes.count ?? 0
-        if (totalRegistered > 0) {
-          attendanceRate = Math.round((totalAttended / totalRegistered) * 100) / 100
-        }
-      }
-
+      const d = (data ?? {}) as Record<string, number>
       return {
-        totalEvents: eventCount,
-        totalTreesPlanted,
-        totalRubbishKg,
-        totalHours,
-        totalAreaRestored,
-        totalNativePlants,
-        totalWildlifeSightings,
-        activeMembers: membersRes.count ?? 0,
-        attendanceRate,
+        totalEvents:            d.event_count        ?? 0,
+        totalTreesPlanted:      d.trees_planted       ?? 0,
+        totalRubbishKg:         d.rubbish_kg          ?? 0,
+        totalHours:             d.hours_total         ?? 0,
+        totalAreaRestored:      d.area_restored_sqm   ?? 0,
+        totalNativePlants:      d.native_plants       ?? 0,
+        totalWildlifeSightings: d.wildlife_sightings  ?? 0,
+        activeMembers:          d.member_count        ?? 0,
+        attendanceRate:         d.attendance_rate     ?? 0,
       } satisfies CollectiveStats
     },
     enabled: !!collectiveId,

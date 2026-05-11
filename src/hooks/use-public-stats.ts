@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { fetchImpactRows, BASELINE_TREES, BASELINE_EVENTS, BASELINE_ATTENDEES } from '@/lib/impact-query'
+import { fetchImpactRows, BASELINE_EVENTS, BASELINE_ATTENDEES } from '@/lib/impact-query'
 import { sumMetric } from '@/lib/impact-metrics'
 
 export interface PublicStats {
@@ -13,7 +13,8 @@ export interface PublicStats {
 const FALLBACK_STATS: PublicStats = {
   volunteers: BASELINE_ATTENDEES,
   collectives: 14,
-  nativePlants: BASELINE_TREES,
+  // No baseline constant for native_plants (BASELINE_TREES is a different metric class).
+  nativePlants: 0,
   events: 0,
 }
 
@@ -39,7 +40,11 @@ export function usePublicStats() {
       return {
         volunteers:   profilesRes.count ?? FALLBACK_STATS.volunteers,
         collectives:  collectivesRes.count ?? FALLBACK_STATS.collectives,
-        nativePlants: BASELINE_TREES + postBaselineTrees + totalNativePlants || FALLBACK_STATS.nativePlants,
+        // BUG FIX: BASELINE_TREES (trees_planted) was being added to nativePlants,
+        // conflating two different metric classes on the public download page.
+        // native_plants and trees_planted are separate ecological output categories.
+        // Rendered value on /public/download will decrease by BASELINE_TREES (~3500).
+        nativePlants: postBaselineTrees + totalNativePlants || FALLBACK_STATS.nativePlants,
         events:       BASELINE_EVENTS + (eventsRes.count ?? 0),
       }
     },
