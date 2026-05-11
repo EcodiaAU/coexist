@@ -1,5 +1,5 @@
 /**
- * Tests for isSignInButtonVisible — the "Tap to Sign In" button visibility
+ * Tests for isSignInButtonVisible - the "Tap to Sign In" button visibility
  * predicate on the Next-Event card.
  *
  * Spec (Tate directive 11 May 2026):
@@ -45,12 +45,12 @@ const EVENT_START = aestIso(2026, 5, 15, 10, 0) // 2026-05-15T10:00:00+10:00
 // Various "now" moments expressed as Date objects
 const T_DAY_BEFORE = new Date(aestIso(2026, 5, 14, 23, 59)) // 23:59 AEST day before
 const T_MIDNIGHT_EVENT_DAY = new Date(aestIso(2026, 5, 15, 0, 0)) // 00:00 AEST event day (window opens)
-const T_30MIN_BEFORE = new Date(aestIso(2026, 5, 15, 9, 30)) // 09:30 AEST — pre-start, window open
+const T_30MIN_BEFORE = new Date(aestIso(2026, 5, 15, 9, 30)) // 09:30 AEST - pre-start, window open
 const T_AT_START = new Date(aestIso(2026, 5, 15, 10, 0)) // exactly at start
 const T_1H_AFTER_START = new Date(aestIso(2026, 5, 15, 11, 0)) // 1h after start
 const T_2H_EXACTLY = new Date(aestIso(2026, 5, 15, 12, 0)) // exactly 2h after start (boundary, still visible)
-const T_2H_PLUS_1S = new Date(aestIso(2026, 5, 15, 12, 0).replace(':00+10', ':01+10')) // 2h 1min after — actually let's do it differently
-const T_3H_AFTER_START = new Date(aestIso(2026, 5, 15, 13, 0)) // 3h after start — HIDDEN
+const T_2H_PLUS_1S = new Date(aestIso(2026, 5, 15, 12, 0).replace(':00+10', ':01+10')) // 2h 1min after - actually let's do it differently
+const T_3H_AFTER_START = new Date(aestIso(2026, 5, 15, 13, 0)) // 3h after start - HIDDEN
 const T_NEXT_DAY = new Date(aestIso(2026, 5, 16, 9, 0)) // next day
 
 // ---------------------------------------------------------------------------

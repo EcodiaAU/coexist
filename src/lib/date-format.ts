@@ -85,7 +85,7 @@ export function isEventTodayAEST(eventDateStartIso: string | null | undefined): 
  *
  * Visibility window:
  *   - Opens:  AEST calendar-day start of the event's date (midnight AEST on
- *             event day — this is when the sign-in window opens, matching the
+ *             event day - this is when the sign-in window opens, matching the
  *             BE enforce_event_day_check_in_window trigger).
  *   - Closes: 2 hours after `eventDateStartIso` (giving late arrivals a
  *             reasonable window to sign in after the activity begins).

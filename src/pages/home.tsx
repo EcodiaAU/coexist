@@ -391,7 +391,7 @@ function NextEventCard({
       ) : showSignInCTA ? (
         /* Sign-in window open (today AEST, up to 2h after start) */
         <div className="mt-5 relative">
-          {/* Pulsing ring behind the button — only animate once event is live */}
+          {/* Pulsing ring behind the button - only animate once event is live */}
           {happeningNow && (
             <div className="absolute inset-0 rounded-xl bg-white/20 animate-pulse" />
           )}

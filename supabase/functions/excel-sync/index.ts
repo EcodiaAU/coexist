@@ -256,7 +256,7 @@ interface EventData {
    *  has submitted the impact form (via survey link or Log Impact UI).
    *  Used by syncToExcel to gate APPEND operations: only events with impact
    *  data are written to the master sheet. UPDATE operations (existing sheet
-   *  rows) are not gated — they receive whatever data is available. */
+   *  rows) are not gated - they receive whatever data is available. */
   hasImpactData: boolean
 }
 
@@ -800,7 +800,7 @@ async function syncToExcel(
     // meaning the leader has submitted their impact data (via the impact survey
     // link or the Log Impact UI). This prevents empty-survey-column rows from
     // polluting Charlie's canonical sheet view (Charlie's complaint, May 2026).
-    // The gate applies to APPEND only — UPDATE operations on rows already in
+    // The gate applies to APPEND only - UPDATE operations on rows already in
     // the sheet are not gated (impact-less rows placed pre-gate still receive
     // updates once impact data arrives).
     // See fetchEventData.hasImpactData and the append branch below.
@@ -898,7 +898,7 @@ async function syncToExcel(
         // An event_impact row existing (data.hasImpactData) means the leader went
         // through either the impact survey link or the Log Impact UI. Without this
         // gate, every published/completed migrated-collective event would land on
-        // Charlie's sheet with cols 11-27 blank — polluting the canonical view.
+        // Charlie's sheet with cols 11-27 blank - polluting the canonical view.
         //
         // The gate is ONLY here (append branch). UPDATE above is intentionally
         // ungated so pre-gate rows on the sheet still get populated when impact
