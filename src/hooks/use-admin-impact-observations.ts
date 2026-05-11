@@ -10,6 +10,7 @@ import {
   BASELINE_EVENTS,
   BASELINE_ATTENDEES,
   BASELINE_HOURS,
+  fetchBaselineSettings,
 } from '@/lib/impact-query'
 import type { Database } from '@/types/database.types'
 
@@ -173,7 +174,15 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       if (filters.collectiveId) eventsQuery = eventsQuery.eq('collective_id', filters.collectiveId)
       if (filters.activityType) eventsQuery = eventsQuery.eq('activity_type', filters.activityType)
 
-      const { data: eventsData, error: eventsErr } = await eventsQuery
+      // Fetch events and (when national all-time) baseline settings in parallel.
+      // This avoids a sequential round-trip and ensures baseline values come
+      // from app_settings rather than the hardcoded constants, so admin updates
+      // to app_settings are reflected without a code deploy.
+      const [eventsResult, baselineSettings] = await Promise.all([
+        eventsQuery,
+        isNationalAllTime ? fetchBaselineSettings() : Promise.resolve(null),
+      ])
+      const { data: eventsData, error: eventsErr } = eventsResult
       if (eventsErr) throw eventsErr
 
       const eventById = new Map<string, RawRow['events']>()
@@ -305,10 +314,14 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
         summaryMetrics[key] = sumMetric(summableRows, key)
       }
       if (showNationalBaseline) {
+        // Prefer app_settings values fetched above; fall back to constants when
+        // baselineSettings is null (non-national scope) or a key is absent.
+        const bTrees    = baselineSettings?.trees     ?? BASELINE_TREES
+        const bRubbish  = baselineSettings?.rubbishKg ?? BASELINE_RUBBISH_KG
         if (metricKeys.includes('trees_planted'))
-          summaryMetrics['trees_planted'] = (summaryMetrics['trees_planted'] ?? 0) + BASELINE_TREES
+          summaryMetrics['trees_planted'] = (summaryMetrics['trees_planted'] ?? 0) + bTrees
         if (metricKeys.includes('rubbish_kg'))
-          summaryMetrics['rubbish_kg'] = (summaryMetrics['rubbish_kg'] ?? 0) + BASELINE_RUBBISH_KG
+          summaryMetrics['rubbish_kg'] = (summaryMetrics['rubbish_kg'] ?? 0) + bRubbish
       }
 
       // Attendees: prefer the numeric `attendees` column; legacy rows often
@@ -330,10 +343,13 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
         ...filteredLegacy.map((r) => r.event_id),
       ])
 
+      const bEvents    = baselineSettings?.events    ?? BASELINE_EVENTS
+      const bAttendees = baselineSettings?.attendees ?? BASELINE_ATTENDEES
+      const bHours     = baselineSettings?.hours     ?? BASELINE_HOURS
       const summary: ImpactSummary = {
-        totalEvents: uniqueEventIds.size + (showNationalBaseline ? BASELINE_EVENTS : 0),
-        totalAttendees: totalAttendees + (showNationalBaseline ? BASELINE_ATTENDEES : 0),
-        totalEstimatedHours: totalEstimatedHours + (showNationalBaseline ? BASELINE_HOURS : 0),
+        totalEvents:         uniqueEventIds.size + (showNationalBaseline ? bEvents    : 0),
+        totalAttendees:      totalAttendees      + (showNationalBaseline ? bAttendees : 0),
+        totalEstimatedHours: totalEstimatedHours + (showNationalBaseline ? bHours     : 0),
         metrics: summaryMetrics,
       }
 

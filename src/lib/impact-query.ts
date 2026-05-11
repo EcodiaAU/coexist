@@ -291,6 +291,8 @@ export async function fetchBaselineSettings(): Promise<{
   trees: number
   rubbishKg: number
   hours: number
+  /** Per-year tree breakdown sourced from app_settings per-year keys. */
+  treesByYear: { year: number; trees: number }[]
 }> {
   const { data } = await supabase
     .from('app_settings')
@@ -301,6 +303,9 @@ export async function fetchBaselineSettings(): Promise<{
       'impact_baseline_trees',
       'impact_baseline_rubbish_kg',
       'impact_baseline_hours',
+      'impact_baseline_trees_2022',
+      'impact_baseline_trees_2024',
+      'impact_baseline_trees_2025',
     ])
 
   const m: Record<string, number> = {}
@@ -308,11 +313,60 @@ export async function fetchBaselineSettings(): Promise<{
     m[row.key] = (row.value as { count?: number })?.count ?? 0
   }
 
+  const treesByYear: { year: number; trees: number }[] = [
+    { year: 2022, trees: m['impact_baseline_trees_2022'] ?? 17300 },
+    { year: 2024, trees: m['impact_baseline_trees_2024'] ?? 3702 },
+    { year: 2025, trees: m['impact_baseline_trees_2025'] ?? 15635 },
+  ].filter((y) => y.trees > 0)
+
   return {
     attendees: m['impact_baseline_attendees'] ?? BASELINE_ATTENDEES,
     events:    m['impact_baseline_events']    ?? BASELINE_EVENTS,
     trees:     m['impact_baseline_trees']     ?? BASELINE_TREES,
     rubbishKg: m['impact_baseline_rubbish_kg'] ?? BASELINE_RUBBISH_KG,
     hours:     m['impact_baseline_hours']     ?? BASELINE_HOURS,
+    treesByYear,
+  }
+}
+
+/**
+ * Load per-year baseline numbers for a specific year.
+ * Returns tree, event, attendee, and hour counts sourced from app_settings
+ * per-year keys (e.g. impact_baseline_trees_2025). Hardcoded defaults act
+ * as fallback when a key is absent from app_settings.
+ * Used by the drift cron to compare actual year-by-year data against the
+ * master sheet without relying on hardcoded constants.
+ */
+export async function fetchBaselineByYear(
+  year: 2022 | 2024 | 2025,
+): Promise<{ trees: number; events: number; attendees: number; hours: number }> {
+  const { data } = await supabase
+    .from('app_settings')
+    .select('key, value')
+    .in('key', [
+      `impact_baseline_trees_${year}`,
+      `impact_baseline_events_${year}`,
+      `impact_baseline_attendees_${year}`,
+      `impact_baseline_hours_${year}`,
+    ])
+
+  const m: Record<string, number> = {}
+  for (const row of data ?? []) {
+    m[row.key] = (row.value as { count?: number })?.count ?? 0
+  }
+
+  // Per-year fallbacks from the known master-sheet breakdown
+  const defaults: Record<number, { trees: number; events: number; attendees: number; hours: number }> = {
+    2022: { trees: 17300, events: 0, attendees: 0, hours: 0 },
+    2024: { trees: 3702,  events: 0, attendees: 0, hours: 0 },
+    2025: { trees: 15635, events: 340, attendees: 5500, hours: 11000 },
+  }
+  const d = defaults[year] ?? { trees: 0, events: 0, attendees: 0, hours: 0 }
+
+  return {
+    trees:     m[`impact_baseline_trees_${year}`]     ?? d.trees,
+    events:    m[`impact_baseline_events_${year}`]    ?? d.events,
+    attendees: m[`impact_baseline_attendees_${year}`] ?? d.attendees,
+    hours:     m[`impact_baseline_hours_${year}`]     ?? d.hours,
   }
 }
