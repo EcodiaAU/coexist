@@ -563,33 +563,42 @@ function titleTokenOverlap(a: string, b: string): number {
 /** Detect Forms-synthetic event UUIDs by inspecting the version digit.
  *  formsIdToUuid uses UUID v5 (deterministic), so position 14 in the
  *  canonical string form is the literal '5'. App events are inserted with
- *  Postgres uuid_generate_v4(), where position 14 is '4'. Filtering on this
- *  digit cleanly excludes ALL synthetic events from the matcher candidate
- *  pool, so a Forms row never matches itself or another synthetic. */
+ *  Postgres uuid_generate_v4(), where position 14 is '4'.
+ *
+ *  Used by syncToExcel to skip synthetic events (those that originated from
+ *  the sheet) so they are never pushed back, regardless of whether their
+ *  created_by field is null or set to the system admin user (both patterns
+ *  exist in the DB depending on when the event was imported). */
 function isSyntheticFormsUuid(id: string): boolean {
   return id.length >= 15 && id.charAt(14) === '5'
 }
 
-/** Find the best-matching app-created event for a Forms row. Returns the
- *  app event_id if a match is found, otherwise null.
+/** Find the best-matching event for a Forms row. Returns the event_id if a
+ *  match is found, otherwise null.
+ *
+ *  Candidate pool: all events for the same collective within the date window,
+ *  including synthetic events created by previous sync runs. Including
+ *  synthetics enables idempotent re-sync: a Forms row that was processed in a
+ *  previous sync will match its own synthetic event (same collective + similar
+ *  date + similar title) and update event_impact in place rather than creating
+ *  a duplicate. The DB-level partial unique index (events_synthetic_dedup) and
+ *  the existence guard (fork_mp138va4) provide additional protection layers.
  *
  *  Three-tier match criteria:
- *  Tier 1 (close-date, low-Jaccard-bar): same collective, app-created (UUID v4),
- *    |date - formsDate| <= 1 day, Jaccard similarity >= 0.34. Catches the
- *    common timezone-drift case (Forms midnight UTC+10 vs app local time).
- *  Tier 2 (wide-date, high-Jaccard-bar): same collective, app-created,
+ *  Tier 1 (close-date, low-Jaccard-bar): same collective, |date - formsDate|
+ *    <= 1 day, Jaccard similarity >= 0.34. Catches the common timezone-drift
+ *    case (Forms midnight UTC+10 vs app local time).
+ *  Tier 2 (wide-date, high-Jaccard-bar): same collective,
  *    |date - formsDate| <= 31 days, Jaccard similarity >= 0.55. Catches the
  *    real-world case where the leader submitted the Form with a wrong date.
- *  Tier 3 (anti-resynthesis token-overlap): same collective, app-created,
+ *  Tier 3 (anti-resynthesis token-overlap): same collective,
  *    |date - formsDate| <= 1 day, content-token overlap >= 2 after stopword
  *    strip + TITLE_ALIASES expansion. Catches the OCCA/Oxley case where
  *    Jaccard misses (one token vs four) but token overlap clearly identifies
  *    the same event. Origin: 165-synth-dupe sweep 2026-05-04.
  *
- *  Tier 1 is preferred when both apply (closer dates win). When multiple
- *  candidates within a tier match, picks the highest similarity then the
- *  closest date. Synthetic events (UUID v5 from formsIdToUuid) are excluded
- *  so the matcher never matches a Forms row to itself or another synthetic. */
+ *  Tier 1 is preferred when both apply (closer dates win). Within a tier:
+ *  higher sim, then closer date. */
 async function findMatchingAppEvent(
   supabase: ReturnType<typeof createClient>,
   collectiveId: string,
@@ -613,7 +622,11 @@ async function findMatchingAppEvent(
 
   let best: { id: string; sim: number; deltaMs: number; tier: number } | null = null
   for (const c of candidates as { id: string; title: string; date_start: string }[]) {
-    if (isSyntheticFormsUuid(c.id)) continue
+    // NOTE: synthetic events (UUID v5) are intentionally included as candidates.
+    // If a synthetic event from a previous sync run matches this Forms row by
+    // title+date, we match it and update event_impact in place - that is the
+    // correct idempotent-resync behaviour. The DB-level events_synthetic_dedup
+    // index and the existence guard provide structural dedup on top of this.
     const sim = titleSimilarity(c.title, formsTitle)
     const overlap = titleTokenOverlap(c.title, formsTitle)
     const deltaMs = Math.abs(new Date(c.date_start).getTime() - formsDate.getTime())
@@ -848,19 +861,26 @@ async function syncToExcel(
   const newRows: (string | number | null)[][] = []
   const updateRows: { rowIndex: number; row: (string | number | null)[] }[] = []
 
-  // Pre-fetch the created_by status for the candidate events so we can skip
+  // Pre-fetch the created_by / UUID status for candidate events so we can skip
   // synthetic events (those created by the from-excel reverse-sync). Synthetic
-  // events have created_by IS NULL because their data ORIGINATED from the
-  // sheet - pushing them back creates duplicate rows. The trigger
-  // excel_sync_on_event_impact fires for every event_impact INSERT/UPDATE
-  // (including the ones from-excel just inserted), so without this guard each
-  // sheet→DB sync produces N spurious to-excel calls that try to write the
-  // synthetic data back to the sheet under a (potentially differently-aliased)
+  // events ORIGINATED from the sheet and must not be pushed back, otherwise
+  // each sheet->DB sync triggers N spurious to-excel calls that attempt to
+  // write the same data back under a (potentially differently-aliased)
   // collective name, missing the dedup signature and appending duplicates.
-  // App-created events (created_by IS NOT NULL) flow as before. The legacy
-  // test-prefix bypass was removed at the 2026-05-04 cutover - every synthetic
-  // event is now skipped regardless of title.
-  // See ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
+  //
+  // Identification: two overlapping signals, both detected:
+  //   1. created_by IS NULL - legacy synthetic events imported before the
+  //      system-user resolution was added.
+  //   2. isSyntheticFormsUuid(id) - UUID v5 (version digit at position 14 =
+  //      '5'). Newer synthetic events have created_by set to the admin user
+  //      ID, so the created_by IS NULL check alone is insufficient.
+  // Using both signals ensures all synthetic events are skipped regardless
+  // of which import path created them.
+  //
+  // Audit 2026-05-11 (fork_mp14bxww_0103ed): confirmed both signals required.
+  // DB has synthetic events with created_by IS NULL (pre-systemUserId path)
+  // and with created_by = admin UUID (post-systemUserId path). UUID v5 check
+  // covers both. See ~/ecodiaos/patterns/sync-back-must-filter-synthetic-from-source.md.
   const syntheticEventIds = new Set<string>()
   if (eventIds.length > 0) {
     try {
@@ -869,7 +889,7 @@ async function syncToExcel(
         .select('id, title, created_by')
         .in('id', eventIds)
       for (const e of (syntheticEvents ?? []) as { id: string; title: string; created_by: string | null }[]) {
-        if (e.created_by === null) {
+        if (e.created_by === null || isSyntheticFormsUuid(e.id)) {
           syntheticEventIds.add(e.id)
         }
       }
@@ -1104,6 +1124,26 @@ async function syncFromExcel(
     if (!excelId) continue
 
     try {
+      // Sync-direction audit (fork_mp14bxww_0103ed, 2026-05-11):
+      // Sheet->App direction correctly scoped per:
+      //   ~/ecodiaos/patterns/sheet-as-projection-sync-direction-discipline.md
+      //   ~/ecodiaos/patterns/sync-back-must-filter-synthetic-from-source.md
+      //
+      // Row ID types on the sheet:
+      //   UUID (v4 or v5) - event already exists in DB. isUuid path only updates
+      //     event_impact; it never creates a new event or synthetic. Synthetic
+      //     events (UUID v5) that appear on the sheet are handled safely here -
+      //     they receive an impact update and are marked seenEventIds so
+      //     reconciliation does not cancel them.
+      //   Integer - Forms submission ID. isFormsId path runs findMatchingAppEvent
+      //     (now includes synthetics as candidates) then existence guard then
+      //     synthetic creation. Only this path ever creates synthetic events.
+      //   Other - legacy/unrecognised; skipped.
+      //
+      // App->Sheet direction: syntheticEventIds set (above this loop) uses the
+      // dual-signal check (created_by IS NULL OR isSyntheticFormsUuid) to skip
+      // all synthetic events from the push-back path. Both directions confirmed
+      // correctly scoped as of this audit.
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(excelId)
       const isFormsId = /^\d+$/.test(excelId)
 
@@ -1114,7 +1154,7 @@ async function syncFromExcel(
       }
 
       if (isUuid) {
-        // App-created event: Excel wins on impact fields
+        // App-created event or synthetic UUID v5: Excel wins on impact fields
         const attendees = row[11] ? Number(row[11]) : null
         const rubbishKg = row[15] ? Number(row[15]) : null
         const treesPlanted = row[16] ? Number(row[16]) : null
@@ -1262,20 +1302,21 @@ async function syncFromExcel(
           continue
         }
 
-        // Fallback: no app match via findMatchingAppEvent (which excludes synthetic
-        // UUIDs to prevent a Forms row matching itself). Before creating a new
-        // synthetic event, do one more check: look for ANY existing event (including
-        // older synthetic events created with a different namespace or UUID scheme)
-        // that matches this collective + date + title. This prevents the duplicate-
-        // creation bug where a re-run with a namespace change creates a second
-        // synthetic UUID for the same physical event.
+        // Fallback: findMatchingAppEvent returned null. This can happen when no
+        // event (app-created or synthetic) has a title+date similar enough to
+        // this Forms row. Before creating a new synthetic event, do one more
+        // check by exact collective+date+lower(title) match. This catches the
+        // edge case where the title similarity thresholds reject a match that
+        // is nonetheless the same physical event (e.g. truncated or reformatted
+        // titles). Guards against duplicate synthetic event creation.
         //
-        // Prevention guard added 2026-05-11 (fork_mp138va4_fe0506):
-        // Root cause of 179 duplicate events created 2026-05-04: the March 2026
-        // import created synthetic events with UUID v5; findMatchingAppEvent
-        // excluded all synthetic UUIDs, so the May 4 sync couldn't match them and
-        // created a second batch of synthetic events with different UUIDs for the
-        // same Forms rows.
+        // Note: findMatchingAppEvent now includes synthetic events from previous
+        // syncs as candidates (fork_mp14bxww_0103ed). The root cause of the 179
+        // duplicates on 2026-05-04 (synthetic exclusion in findMatchingAppEvent
+        // preventing re-sync idempotency) is fixed. This existence guard remains
+        // as a belt-and-braces layer for title-similarity edge cases.
+        //
+        // Prevention guard added 2026-05-11 (fork_mp138va4_fe0506).
         const existenceGuardDayStart = dateIso.slice(0, 10) + 'T00:00:00.000Z'
         const existenceGuardNextDay = new Date(
           new Date(dateIso.slice(0, 10)).getTime() + 2 * 24 * 60 * 60 * 1000, // +2d window for TZ drift
