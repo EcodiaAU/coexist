@@ -53,7 +53,14 @@ COMMENT ON FUNCTION is_admin_tier(uuid) IS
 --    Was: national_leader, manager, admin (per migration 078).
 --    Now: manager, admin only - consistent with FE /admin/users page being
 --    manager+admin-only post-1.8.5 item 7.
+--
+-- DROP required because the return type changed from the 20260413080001 version
+-- (8 cols including last_sign_in_at + collective_count) to this 7-col version
+-- (adds is_suspended, removes last_sign_in_at + collective_count).
+-- PostgreSQL does not allow CREATE OR REPLACE when the RETURNS TABLE signature
+-- changes; DROP + CREATE is the correct pattern (same as migration 20260413080001).
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS admin_list_users(text, text, integer, integer);
 CREATE OR REPLACE FUNCTION admin_list_users(
   search_term  text DEFAULT '',
   role_filter  text DEFAULT 'all',
