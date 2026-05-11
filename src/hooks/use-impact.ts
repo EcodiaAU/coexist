@@ -157,7 +157,7 @@ export function useCollectiveImpact(collectiveId: string | undefined, timeRange:
         cleanupSites:        cleanupAddresses.size,
         coastlineCleanedM:   Math.round(sumMetric(allRows, 'coastline_cleaned_m')),
         collectivesCount:    1,
-        leadersEmpowered:    (leadersCountRes.data?.value as { count?: number })?.count ?? 0,
+        leadersEmpowered:    (rpcRes.data as Record<string, number> | null)?.leaders_lifetime ?? 0,
       }
     },
     enabled: !!collectiveId,
