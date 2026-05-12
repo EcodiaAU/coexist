@@ -109,20 +109,19 @@ function GooglePlayBadge({ height = 56 }: { height?: number }) {
 /*  Wordmark                                                            */
 /* ------------------------------------------------------------------ */
 
-function CoExistWordmark({ size = 36, color = '#fff' }: { size?: number; color?: string }) {
+function CoExistWordmark({ height = 36 }: { height?: number }) {
   return (
-    <span
+    <img
+      src="/logos/white-wordmark.webp"
+      alt="Co-Exist"
+      crossOrigin="anonymous"
       style={{
-        fontFamily: 'system-ui, -apple-system, "Helvetica Neue", sans-serif',
-        fontSize: size,
-        fontWeight: 800,
-        letterSpacing: '-0.02em',
-        color,
-        lineHeight: 1,
+        height,
+        width: 'auto',
+        display: 'block',
+        userSelect: 'none',
       }}
-    >
-      Co<span style={{ opacity: 0.85 }}>-</span>Exist
-    </span>
+    />
   )
 }
 
@@ -235,7 +234,7 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
           }}
         >
           {/* Top: wordmark */}
-          <CoExistWordmark size={logoSize} color="#fff" />
+          <CoExistWordmark height={logoSize} />
 
           {/* Bottom: event info + store badges */}
           <div>
@@ -299,7 +298,7 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
                   fontWeight: 600,
                 }}
               >
-                by {clamp(collectiveName, 50)}
+                by Co-Exist {clamp(collectiveName, 50)}
               </div>
             )}
 
