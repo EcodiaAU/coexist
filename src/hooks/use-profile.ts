@@ -58,14 +58,15 @@ export function useProfile(userId?: string) {
       // Viewing another user: route through the role-tiered RPC. Non-staff
       // viewers receive null for sensitive fields; staff see everything.
       // Security boundary lives in get_user_profile_v1 (migration 079).
-      // Cast: this RPC is added in migration 079 and not yet present in
-      // generated database.types.ts; safe to cast since the SQL function
-      // is the canonical signature.
-      const rpc = supabase.rpc as unknown as (
-        fn: 'get_user_profile_v1',
-        args: { target_user_id: string },
-      ) => Promise<{ data: ProfileRow | null; error: unknown }>
-      const { data, error } = await rpc('get_user_profile_v1', { target_user_id: id })
+      // The RPC is not in generated database.types.ts; cast the client
+      // rather than detaching supabase.rpc (detaching strips `this` and
+      // breaks the SDK at runtime).
+      const { data, error } = await (supabase as unknown as {
+        rpc: (
+          fn: 'get_user_profile_v1',
+          args: { target_user_id: string },
+        ) => Promise<{ data: ProfileRow | null; error: unknown }>
+      }).rpc('get_user_profile_v1', { target_user_id: id })
       if (error) throw error as Error
       return data
     },
