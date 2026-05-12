@@ -48,7 +48,7 @@ import { Card } from '@/components/card'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { prefetchEventDetail } from '@/hooks/use-events'
 import { cn } from '@/lib/cn'
-import { isSignInButtonVisible, timezoneLabel } from '@/lib/date-format'
+import { isSignInButtonVisible } from '@/lib/date-format'
 import { ProximityCheckInBanner } from '@/components/proximity-check-in-banner'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
@@ -363,11 +363,6 @@ function NextEventCard({
         <span className="flex items-center gap-1.5">
           <Clock size={14} aria-hidden="true" />
           {formatEventTime(nextEvent.date_start, nextEventTz)}
-          {timezoneLabel(nextEventTz, nextEvent.date_start) && (
-            <span className="text-white/70 text-[11px] ml-0.5">
-              {timezoneLabel(nextEventTz, nextEvent.date_start)}
-            </span>
-          )}
         </span>
       </div>
 
@@ -575,9 +570,6 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
                       <span className="flex items-center gap-1">
                         <Clock size={11} aria-hidden="true" />
                         {formatEventTime(event.date_start, tz)}
-                        {timezoneLabel(tz, event.date_start) && (
-                          <span className="ml-0.5 opacity-80">{timezoneLabel(tz, event.date_start)}</span>
-                        )}
                       </span>
                     </div>
 

@@ -64,7 +64,7 @@ import {
 import { useOffline } from '@/hooks/use-offline'
 import { usePendingSync } from '@/hooks/use-pending-sync'
 import { triggerManualSync } from '@/lib/offline-sync'
-import { isEventToday, timezoneLabel } from '@/lib/date-format'
+import { isEventToday } from '@/lib/date-format'
 import {
     Page,
     Header,
@@ -1204,7 +1204,7 @@ export default function EventDetailPage() {
           <InfoChip
             icon={<Calendar size={17} />}
             label="Date & Time"
-            value={`${formatEventDate(event.date_start, eventTz)}${event.date_end ? ` - ${formatEventTime(event.date_end, eventTz)}` : ''}${timezoneLabel(eventTz, event.date_start) ? ' ' + timezoneLabel(eventTz, event.date_start) : ''}`}
+            value={`${formatEventDate(event.date_start, eventTz)}${event.date_end ? ` - ${formatEventTime(event.date_end, eventTz)}` : ''}`}
             accent={accent}
           />
           {event.date_end && (
@@ -1765,7 +1765,7 @@ export default function EventDetailPage() {
           onClose={() => setShowShareSheet(false)}
           eventId={event.id}
           title={event.title}
-          dateLabel={`${formatEventDate(event.date_start, eventTz)}${event.date_end ? ` - ${formatEventTime(event.date_end, eventTz)}` : ''}${timezoneLabel(eventTz, event.date_start) ? ' ' + timezoneLabel(eventTz, event.date_start) : ''}`}
+          dateLabel={`${formatEventDate(event.date_start, eventTz)}${event.date_end ? ` - ${formatEventTime(event.date_end, eventTz)}` : ''}`}
           locationLabel={event.address ?? event.collectives?.name ?? 'Location TBA'}
           collectiveName={event.collectives?.name ?? null}
           coverImageUrl={event.cover_image_url ?? null}

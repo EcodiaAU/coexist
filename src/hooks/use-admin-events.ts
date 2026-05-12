@@ -19,7 +19,9 @@ export interface AdminEvent {
   capacity: number | null
   activity_type: string | null
   status: 'draft' | 'published' | 'cancelled' | 'completed'
-  collectives: { name: string; region: string | null; state: string | null } | null
+  /** Per-event timezone override; NULL = inherit from collective. */
+  timezone: string | null
+  collectives: { name: string; region: string | null; state: string | null; timezone: string | null } | null
   registrationCount: number
 }
 
@@ -48,7 +50,7 @@ async function fetchAdminEventsData(): Promise<AdminEventsData> {
     supabase
       .from('events')
       .select(
-        'id, title, date_start, date_end, address, cover_image_url, collective_id, capacity, activity_type, status, collectives(name, region, state)',
+        'id, title, date_start, date_end, address, cover_image_url, collective_id, capacity, activity_type, status, timezone, collectives(name, region, state, timezone)',
       )
       .gte('date_start', now)
       .order('date_start', { ascending: true })
@@ -56,7 +58,7 @@ async function fetchAdminEventsData(): Promise<AdminEventsData> {
     supabase
       .from('events')
       .select(
-        'id, title, date_start, date_end, address, cover_image_url, collective_id, capacity, activity_type, status, collectives(name, region, state)',
+        'id, title, date_start, date_end, address, cover_image_url, collective_id, capacity, activity_type, status, timezone, collectives(name, region, state, timezone)',
       )
       .lt('date_start', now)
       .order('date_start', { ascending: false })

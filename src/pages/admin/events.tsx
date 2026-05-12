@@ -113,6 +113,9 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
   const shouldReduceMotion = useReducedMotion()
   const isPast = new Date(event.date_start) < new Date()
   const actColor = ACTIVITY_COLORS[event.activity_type ?? ''] ?? 'bg-neutral-50 text-neutral-600'
+  // Pin display to the event's own timezone so a Perth event reads 9am
+  // for everyone, not 11am for someone on the Sunshine Coast.
+  const tz = event.timezone ?? event.collectives?.timezone ?? undefined
 
   return (
     <motion.div
@@ -174,11 +177,11 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
           <div className="flex items-center gap-3 mt-1.5 text-xs text-neutral-400">
             <span className="flex items-center gap-1">
               <CalendarDays size={11} />
-              {formatDate(event.date_start)}
+              {formatDate(event.date_start, tz)}
             </span>
             <span className="flex items-center gap-1">
               <Clock size={11} />
-              {formatTime(event.date_start)}
+              {formatTime(event.date_start, tz)}
             </span>
           </div>
 
@@ -294,7 +297,7 @@ function HottestEventSpotlight({ event }: { event: AdminEvent }) {
             {event.title}
           </h3>
           <p className="text-sm text-neutral-600 mt-0.5">
-            {event.collectives?.name} &middot; {formatDate(event.date_start)}
+            {event.collectives?.name} &middot; {formatDate(event.date_start, event.timezone ?? event.collectives?.timezone ?? undefined)}
           </p>
           <div className="flex items-center gap-2 mt-2">
             <span className="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 bg-neutral-50 rounded-full px-3 py-1">
@@ -351,7 +354,7 @@ function PastEventRow({ event, index }: { event: AdminEvent; index: number }) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-neutral-700 truncate">{event.title}</p>
           <p className="text-xs text-neutral-400">
-            {event.collectives?.name} &middot; {formatDate(event.date_start)}
+            {event.collectives?.name} &middot; {formatDate(event.date_start, event.timezone ?? event.collectives?.timezone ?? undefined)}
           </p>
         </div>
 
