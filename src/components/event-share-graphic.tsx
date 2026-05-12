@@ -263,9 +263,9 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
             <h1
               style={{
                 fontSize: titleSize,
-                lineHeight: 1.0,
-                fontWeight: 800,
-                letterSpacing: '-0.025em',
+                lineHeight: 1.05,
+                fontWeight: 500,
+                letterSpacing: '-0.02em',
                 color: '#fff',
                 margin: 0,
                 marginBottom: isStory ? 28 : 18,

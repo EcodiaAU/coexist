@@ -132,7 +132,7 @@ const AdminApplicationsPage = lazy(() => import('@/pages/admin/applications'))
 const AdminCreateSurveyPage = lazy(() => import('@/pages/admin/create-survey'))
 const AdminAuditLogPage = lazy(() => import('@/pages/admin/audit-log'))
 const AdminEmailPage = lazy(() => import('@/pages/admin/email'))
-const AdminExportsPage = lazy(() => import('@/pages/admin/exports'))
+const AdminReportsPage = lazy(() => import('@/pages/admin/reports'))
 const AdminWorkflowsPage = lazy(() => import('@/pages/admin/workflows'))
 const AdminCreatePage = lazy(() => import('@/pages/admin/create'))
 const DevToolsPage = lazy(() => import('@/pages/admin/dev-tools'))
@@ -441,10 +441,11 @@ function App() {
             <Route path="applications" element={<RequireCapability cap="manage_users"><AdminApplicationsPage /></RequireCapability>} />
             <Route path="surveys/create" element={<RequireCapability cap="manage_surveys"><AdminCreateSurveyPage /></RequireCapability>} />
             <Route path="surveys/:id/edit" element={<RequireCapability cap="manage_surveys"><AdminCreateSurveyPage /></RequireCapability>} />
-            <Route path="reports" element={<RequireCapability cap="view_reports"><ReportsPage /></RequireCapability>} />
+            <Route path="reports" element={<RequireCapability cap="view_reports"><AdminReportsPage /></RequireCapability>} />
             <Route path="national-impact" element={<RequireCapability cap="view_reports"><NationalImpactPage /></RequireCapability>} />
             <Route path="email" element={<RequireCapability cap="manage_email"><AdminEmailPage /></RequireCapability>} />
-            <Route path="exports" element={<RequireCapability cap="manage_exports"><AdminExportsPage /></RequireCapability>} />
+            {/* /admin/exports merged into /admin/reports (May 2026). */}
+            <Route path="exports" element={<Navigate to="/admin/reports" replace />} />
             <Route path="audit-log" element={<RequireCapability cap="view_audit_log"><AdminAuditLogPage /></RequireCapability>} />
             <Route path="impact" element={<RequireCapability cap="view_reports"><AdminImpactPage /></RequireCapability>} />
             <Route path="shop" element={<RequireCapability cap="manage_merch"><AdminMerchPage /></RequireCapability>} />
