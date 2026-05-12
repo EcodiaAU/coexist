@@ -267,7 +267,7 @@ export default function LeaderEventsPage() {
                       </div>
                       <p className="text-xs text-moss-600 font-medium flex items-center gap-1">
                         <Clock size={11} className="shrink-0" />
-                        {formatEventDate(event.date_start)}
+                        {formatEventDate(event.date_start, event.timezone ?? undefined)}
                       </p>
                       {event.address && (
                         <p className="text-[11px] text-neutral-400 truncate flex items-center gap-1 mt-0.5">

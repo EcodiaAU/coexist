@@ -13,6 +13,8 @@ export interface LeaderEvent {
   cover_image_url: Event['cover_image_url']
   activity_type: Event['activity_type']
   status: Event['status']
+  /** Effective IANA timezone for displaying this event's wall-clock times. */
+  timezone: string | null
   event_registrations: { count: number }[]
   checked_in_count: number
   /** Names of *other* host collectives (excluding the current scope). Empty when not co-hosted. */
@@ -45,7 +47,7 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
 
   let eventsQ = supabase
     .from('events')
-    .select('id, title, date_start, date_end, address, cover_image_url, activity_type, status, event_registrations(count)')
+    .select('id, title, date_start, date_end, address, cover_image_url, activity_type, status, timezone, collective:collective_id(timezone), event_registrations(count)')
     .in('id', candidateIds)
     .order('date_start', { ascending: filter === 'upcoming' })
 
@@ -93,11 +95,18 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
     cohostsByEvent.set(row.event_id, list)
   }
 
-  return events.map((e) => ({
-    ...e,
-    checked_in_count: checkedInMap.get(e.id) ?? 0,
-    cohost_names: cohostsByEvent.get(e.id) ?? [],
-  })) as LeaderEvent[]
+  return events.map((e) => {
+    const row = e as typeof e & {
+      timezone?: string | null
+      collective?: { timezone?: string | null } | null
+    }
+    return {
+      ...e,
+      timezone: row.timezone ?? row.collective?.timezone ?? null,
+      checked_in_count: checkedInMap.get(e.id) ?? 0,
+      cohost_names: cohostsByEvent.get(e.id) ?? [],
+    }
+  }) as LeaderEvent[]
 }
 
 export function useLeaderCollectiveEvents(collectiveId: string | undefined, filter: string) {

@@ -1134,6 +1134,7 @@ export type Database = {
           region: string | null
           slug: string
           state: string | null
+          timezone: string
         }
         Insert: {
           cover_image_position_x?: number
@@ -1152,6 +1153,7 @@ export type Database = {
           region?: string | null
           slug: string
           state?: string | null
+          timezone?: string
         }
         Update: {
           cover_image_position_x?: number
@@ -1170,6 +1172,7 @@ export type Database = {
           region?: string | null
           slug?: string
           state?: string | null
+          timezone?: string
         }
         Relationships: [
           {
@@ -2977,6 +2980,7 @@ export type Database = {
           location_point: unknown
           series_id: string | null
           status: Database["public"]["Enums"]["event_status"] | null
+          timezone: string | null
           title: string
           updated_at: string | null
         }
@@ -3003,6 +3007,7 @@ export type Database = {
           location_point?: unknown
           series_id?: string | null
           status?: Database["public"]["Enums"]["event_status"] | null
+          timezone?: string | null
           title: string
           updated_at?: string | null
         }
@@ -3029,6 +3034,7 @@ export type Database = {
           location_point?: unknown
           series_id?: string | null
           status?: Database["public"]["Enums"]["event_status"] | null
+          timezone?: string | null
           title?: string
           updated_at?: string | null
         }

@@ -33,6 +33,16 @@ export interface EventFormFields {
   is_public: boolean
   is_external_collaboration: boolean
   external_registration_url: string
+  /**
+   * IANA timezone the start/end wall-clock values are entered in.
+   * Defaults to the collective's timezone at form open; the admin can
+   * override per event (e.g. travel events). Persisted to
+   * events.timezone only when it differs from the collective.
+   */
+  timezone: string
+  /** Tracks whether the user has explicitly overridden timezone, so we
+   *  know whether to persist it as a per-event override vs. inherit. */
+  timezone_overrides_collective: boolean
 }
 
 export const INITIAL_FORM_FIELDS: EventFormFields = {
@@ -51,6 +61,8 @@ export const INITIAL_FORM_FIELDS: EventFormFields = {
   is_public: true,
   is_external_collaboration: false,
   external_registration_url: '',
+  timezone: 'Australia/Sydney',
+  timezone_overrides_collective: false,
 }
 
 /* ------------------------------------------------------------------ */

@@ -2,6 +2,7 @@ import { useId, useRef } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Calendar, Clock } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { utcIsoToWallClock, wallClockToUtcIso } from '@/lib/date-format'
 
 type DatePickerMode = 'date' | 'time' | 'datetime'
 
@@ -15,10 +16,19 @@ interface DatePickerProps {
   max?: Date
   mode?: DatePickerMode
   className?: string
+  /**
+   * IANA timezone the wall-clock value should be interpreted in. When
+   * supplied (datetime mode only), the picker shows the wall-clock as
+   * seen in `timeZone` regardless of the browser's zone, and emits a
+   * Date whose UTC instant lands on that wall-clock in `timeZone`.
+   * Without this prop the picker behaves as a plain browser-local
+   * datetime-local input (legacy behaviour).
+   */
+  timeZone?: string
 }
 
-function formatDate(date: Date, mode: DatePickerMode): string {
-  const options: Intl.DateTimeFormatOptions = {}
+function formatDate(date: Date, mode: DatePickerMode, timeZone?: string): string {
+  const options: Intl.DateTimeFormatOptions = { timeZone }
 
   if (mode === 'date' || mode === 'datetime') {
     options.year = 'numeric'
@@ -44,7 +54,10 @@ function toInputType(mode: DatePickerMode): string {
   }
 }
 
-function dateToInputValue(date: Date, mode: DatePickerMode): string {
+function dateToInputValue(date: Date, mode: DatePickerMode, timeZone?: string): string {
+  if (mode === 'datetime' && timeZone) {
+    return utcIsoToWallClock(date.toISOString(), timeZone)
+  }
   if (mode === 'date') {
     const y = date.getFullYear()
     const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -56,7 +69,7 @@ function dateToInputValue(date: Date, mode: DatePickerMode): string {
     const min = String(date.getMinutes()).padStart(2, '0')
     return `${h}:${min}`
   }
-  // datetime-local
+  // datetime-local (no timezone given - legacy browser-local behaviour)
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
@@ -65,7 +78,7 @@ function dateToInputValue(date: Date, mode: DatePickerMode): string {
   return `${y}-${m}-${d}T${h}:${min}`
 }
 
-function inputValueToDate(value: string, mode: DatePickerMode): Date | null {
+function inputValueToDate(value: string, mode: DatePickerMode, timeZone?: string): Date | null {
   if (!value) return null
 
   if (mode === 'time') {
@@ -73,6 +86,14 @@ function inputValueToDate(value: string, mode: DatePickerMode): Date | null {
     const d = new Date()
     d.setHours(h, m, 0, 0)
     return d
+  }
+
+  if (mode === 'datetime' && timeZone) {
+    try {
+      return new Date(wallClockToUtcIso(value, timeZone))
+    } catch {
+      return null
+    }
   }
 
   const parsed = new Date(value)
@@ -89,6 +110,7 @@ export function DatePicker({
   max,
   mode = 'date',
   className,
+  timeZone,
 }: DatePickerProps) {
   const id = useId()
   const errorId = `${id}-error`
@@ -112,7 +134,7 @@ export function DatePicker({
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const date = inputValueToDate(e.target.value, mode)
+    const date = inputValueToDate(e.target.value, mode, timeZone)
     onChange(date)
   }
 
@@ -158,7 +180,7 @@ export function DatePicker({
               value ? 'text-neutral-900' : 'text-neutral-400',
             )}
           >
-            {value ? formatDate(value, mode) : defaultPlaceholder}
+            {value ? formatDate(value, mode, timeZone) : defaultPlaceholder}
           </span>
         </button>
 
@@ -167,10 +189,10 @@ export function DatePicker({
           ref={inputRef}
           id={id}
           type={inputType}
-          value={value ? dateToInputValue(value, mode) : ''}
+          value={value ? dateToInputValue(value, mode, timeZone) : ''}
           onChange={handleChange}
-          min={min ? dateToInputValue(min, mode) : undefined}
-          max={max ? dateToInputValue(max, mode) : undefined}
+          min={min ? dateToInputValue(min, mode, timeZone) : undefined}
+          max={max ? dateToInputValue(max, mode, timeZone) : undefined}
           aria-label={label ?? defaultPlaceholder}
           aria-invalid={!!error}
           tabIndex={-1}

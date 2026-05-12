@@ -37,7 +37,7 @@ import {
 import { useOffline } from '@/hooks/use-offline'
 import { usePendingSync } from '@/hooks/use-pending-sync'
 import { triggerManualSync } from '@/lib/offline-sync'
-import { isEventTodayAEST } from '@/lib/date-format'
+import { isEventToday as isEventTodayCheck } from '@/lib/date-format'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import { useAuth } from '@/hooks/use-auth'
 import type { AttendeeWithStatus } from '@/hooks/use-events'
@@ -345,7 +345,11 @@ export default function EventDayPage() {
     }
   }, [])
 
-  const isEventToday = isEventTodayAEST(event?.date_start)
+  const eventTz =
+    (event as { timezone?: string | null } | undefined)?.timezone ??
+    (event as { collectives?: { timezone?: string | null } | null } | undefined)?.collectives?.timezone ??
+    'Australia/Sydney'
+  const isEventToday = isEventTodayCheck(event?.date_start, eventTz)
 
 
   const stagger = {
@@ -660,7 +664,7 @@ export default function EventDayPage() {
             {event.title}
           </h2>
           <p className="text-caption text-neutral-500 mt-0.5">
-            {formatEventDate(event.date_start)}
+            {formatEventDate(event.date_start, eventTz)}
           </p>
         </motion.div>
 

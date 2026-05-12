@@ -345,7 +345,7 @@ export default function ExplorePage() {
                                   <Card.Meta className="text-neutral-500">
                                     <span className="flex items-center gap-1.5">
                                       <Calendar size={13} className="shrink-0 text-neutral-400" />
-                                      <span className="font-semibold text-neutral-600">{formatEventDate(event.date_start)}</span>
+                                      <span className="font-semibold text-neutral-600">{formatEventDate(event.date_start, (event as { timezone?: string | null }).timezone ?? (event as { collectives?: { timezone?: string | null } | null }).collectives?.timezone ?? undefined)}</span>
                                     </span>
                                   </Card.Meta>
                                   {event.collectives && (

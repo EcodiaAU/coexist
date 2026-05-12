@@ -9,16 +9,17 @@ import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
 import { OGMeta, SITE_URL } from '@/components/og-meta'
 import { APP_NAME } from '@/lib/constants'
-import { formatTime } from '@/lib/date-format'
+import { formatTime, timezoneLabel } from '@/lib/date-format'
 import { WebFooter } from '@/components/web-footer'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
-function formatDate(date: string) {
+function formatDate(date: string, timeZone?: string) {
   return new Date(date).toLocaleDateString('en-AU', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone,
   })
 }
 
@@ -42,7 +43,7 @@ export default function PublicEventPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('*, collectives(name, slug)')
+        .select('*, collectives(name, slug, timezone)')
         .eq('id', id!)
         .eq('is_public', true)
         .single()
@@ -179,11 +180,23 @@ export default function PublicEventPage() {
           <div className="flex items-start gap-3">
             <Calendar size={20} className="mt-0.5 shrink-0 text-primary-500" />
             <div>
-              <p className="font-medium text-neutral-900">{formatDate(event.date_start)}</p>
-              <p className="text-sm text-neutral-500">
-                {formatTime(event.date_start)}
-                {event.date_end && ` - ${formatTime(event.date_end)}`}
-              </p>
+              {(() => {
+                const tz =
+                  (event as { timezone?: string | null }).timezone ??
+                  (event as { collectives?: { timezone?: string | null } | null }).collectives?.timezone ??
+                  undefined
+                const tzLabel = tz ? timezoneLabel(tz, event.date_start) : ''
+                return (
+                  <>
+                    <p className="font-medium text-neutral-900">{formatDate(event.date_start, tz)}</p>
+                    <p className="text-sm text-neutral-500">
+                      {formatTime(event.date_start, tz)}
+                      {event.date_end && ` - ${formatTime(event.date_end, tz)}`}
+                      {tzLabel && <span className="ml-1 text-neutral-400">{tzLabel}</span>}
+                    </p>
+                  </>
+                )
+              })()}
             </div>
           </div>
 

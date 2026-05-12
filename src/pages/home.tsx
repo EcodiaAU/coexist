@@ -48,7 +48,7 @@ import { Card } from '@/components/card'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { prefetchEventDetail } from '@/hooks/use-events'
 import { cn } from '@/lib/cn'
-import { isSignInButtonVisible } from '@/lib/date-format'
+import { isSignInButtonVisible, timezoneLabel } from '@/lib/date-format'
 import { ProximityCheckInBanner } from '@/components/proximity-check-in-banner'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
@@ -121,17 +121,17 @@ function HScroll({
 /*  Format helpers                                                     */
 /* ------------------------------------------------------------------ */
 
-function formatEventDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('en-AU', {
+function formatEventDate(iso: string, timeZone?: string): string {
+  return new Date(iso).toLocaleDateString('en-AU', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
+    timeZone,
   })
 }
 
-function formatEventTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })
+function formatEventTime(iso: string, timeZone?: string): string {
+  return new Date(iso).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', timeZone })
 }
 
 function daysUntil(iso: string): number {
@@ -320,10 +320,17 @@ function NextEventCard({
   }
 
   const happeningNow = isEventHappeningNow(nextEvent.date_start, nextEvent.date_end)
-  // Sign-in button uses a wider visibility window: AEST calendar-day start →
-  // date_start + 2h. Separate from happeningNow (start→end) so the pulsing
-  // ring / live-indicator logic is unaffected.
-  const showSignInCTA = isSignInButtonVisible(nextEvent.date_start)
+  // The event's effective timezone: per-event override > collective tz >
+  // fallback. Used for the day-of check-in window (must match the BE
+  // trigger) and for rendering the start time in the event's local zone.
+  const nextEventTz =
+    (nextEvent as { timezone?: string | null }).timezone ??
+    (nextEvent as { collectives?: { timezone?: string | null } | null }).collectives?.timezone ??
+    'Australia/Sydney'
+  // Sign-in button uses a wider visibility window: event-tz calendar-day
+  // start -> date_start + 2h. Separate from happeningNow (start->end) so
+  // the pulsing ring / live-indicator logic is unaffected.
+  const showSignInCTA = isSignInButtonVisible(nextEvent.date_start, nextEventTz)
   const days = daysUntil(nextEvent.date_start)
   const isToday = days === 0
   const isTomorrow = days === 1
@@ -351,11 +358,16 @@ function NextEventCard({
       <div className="flex items-center gap-4 mt-3 text-sm text-white">
         <span className="flex items-center gap-1.5">
           <Calendar size={14} aria-hidden="true" />
-          {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : formatEventDate(nextEvent.date_start)}
+          {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : formatEventDate(nextEvent.date_start, nextEventTz)}
         </span>
         <span className="flex items-center gap-1.5">
           <Clock size={14} aria-hidden="true" />
-          {formatEventTime(nextEvent.date_start)}
+          {formatEventTime(nextEvent.date_start, nextEventTz)}
+          {timezoneLabel(nextEventTz, nextEvent.date_start) && (
+            <span className="text-white/70 text-[11px] ml-0.5">
+              {timezoneLabel(nextEventTz, nextEvent.date_start)}
+            </span>
+          )}
         </span>
       </div>
 
@@ -520,6 +532,10 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
             const isToday = days === 0
             const isTomorrow = days === 1
             const isSoon = days <= 3
+            const tz =
+              (event as { timezone?: string | null }).timezone ??
+              (event as { collectives?: { timezone?: string | null } | null }).collectives?.timezone ??
+              undefined
 
             return (
               <Card
@@ -547,7 +563,7 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
                           : isSoon ? 'bg-white/25 text-white/90'
                           : 'bg-white/20 text-white/80',
                       )}>
-                        {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : formatEventDate(event.date_start)}
+                        {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : formatEventDate(event.date_start, tz)}
                       </span>
                     </div>
 
@@ -558,7 +574,10 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
                     <div className="flex items-center gap-2 mt-1.5 text-xs text-white/70">
                       <span className="flex items-center gap-1">
                         <Clock size={11} aria-hidden="true" />
-                        {formatEventTime(event.date_start)}
+                        {formatEventTime(event.date_start, tz)}
+                        {timezoneLabel(tz, event.date_start) && (
+                          <span className="ml-0.5 opacity-80">{timezoneLabel(tz, event.date_start)}</span>
+                        )}
                       </span>
                     </div>
 

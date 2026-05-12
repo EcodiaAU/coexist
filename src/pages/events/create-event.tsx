@@ -315,7 +315,7 @@ function useAllActiveCollectives() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('collectives')
-        .select('id, name, region, state, cover_image_url')
+        .select('id, name, region, state, cover_image_url, timezone')
         .eq('is_active', true)
         .order('name')
       if (error) throw error
@@ -324,6 +324,22 @@ function useAllActiveCollectives() {
     staleTime: 5 * 60 * 1000,
   })
 }
+
+/**
+ * Common Australian IANA timezones for the per-event override dropdown.
+ * Kept short - WA/SA/NT/east-coast cover essentially all Co-Exist
+ * collectives. Anyone running an event abroad can still pick from the
+ * full IANA list via the admin panel.
+ */
+const AU_TIMEZONES: { value: string; label: string }[] = [
+  { value: 'Australia/Sydney', label: 'Sydney (AEST/AEDT)' },
+  { value: 'Australia/Melbourne', label: 'Melbourne (AEST/AEDT)' },
+  { value: 'Australia/Hobart', label: 'Hobart (AEST/AEDT)' },
+  { value: 'Australia/Brisbane', label: 'Brisbane (AEST, no DST)' },
+  { value: 'Australia/Adelaide', label: 'Adelaide (ACST/ACDT)' },
+  { value: 'Australia/Darwin', label: 'Darwin (ACST, no DST)' },
+  { value: 'Australia/Perth', label: 'Perth (AWST)' },
+]
 
 function StepCollective({
   selectedIds,
@@ -491,6 +507,29 @@ function StepDateTime({
       <StepCard>
         <SectionLabel icon={<Clock size={14} />}>Schedule</SectionLabel>
         <div className="space-y-5">
+          <div className="flex items-center justify-between gap-2 text-xs text-neutral-600 -mb-1">
+            <span>
+              Times entered in{' '}
+              <span className="font-semibold text-neutral-800">
+                {AU_TIMEZONES.find((tz) => tz.value === fields.timezone)?.label ?? fields.timezone}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => onChange({ timezone_overrides_collective: !fields.timezone_overrides_collective })}
+              className="text-moss-700 hover:text-moss-800 font-medium underline-offset-2 hover:underline"
+            >
+              {fields.timezone_overrides_collective ? 'Reset to collective default' : 'Use different timezone'}
+            </button>
+          </div>
+          {fields.timezone_overrides_collective && (
+            <Dropdown
+              label="Event Timezone"
+              value={fields.timezone}
+              onChange={(v) => onChange({ timezone: v })}
+              options={AU_TIMEZONES.map((tz) => ({ value: tz.value, label: tz.label }))}
+            />
+          )}
           <DateTimeFields fields={fields} onChange={onChange} minStart={new Date()} />
           {fields.date_start && fields.date_start < new Date() && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning-50 text-warning-700 text-caption">
@@ -1606,6 +1645,10 @@ export default function CreateEventPage() {
         is_public: source.is_public ?? true,
         is_external_collaboration: source.is_external_collaboration ?? false,
         external_registration_url: source.external_registration_url ?? '',
+        // Carry through any per-event tz override; the collective-default
+        // sync effect will fill in the rest when collectives are picked.
+        timezone: (source as { timezone?: string | null }).timezone ?? 'Australia/Sydney',
+        timezone_overrides_collective: !!(source as { timezone?: string | null }).timezone,
       })
       setExtra((prev) => ({
         ...prev,
@@ -1632,6 +1675,25 @@ export default function CreateEventPage() {
   const updateExtra = useCallback((updates: Partial<CreateExtraFields>) => {
     setExtra((prev) => ({ ...prev, ...updates }))
   }, [])
+
+  // Keep the form's timezone in sync with the primary collective's tz
+  // UNTIL the user explicitly overrides it. This is what makes a Sydney
+  // admin's "10am" entry land at 10am AWST when they pick a Perth
+  // collective: the picker re-renders against the new tz the moment the
+  // collective is chosen.
+  const { data: allCollectives } = useAllActiveCollectives()
+  const primaryCollectiveId = extra.selected_collective_ids[0]
+  const primaryCollective = useMemo(
+    () => allCollectives?.find((c) => c.id === primaryCollectiveId) ?? null,
+    [allCollectives, primaryCollectiveId],
+  )
+  useEffect(() => {
+    if (form.fields.timezone_overrides_collective) return
+    const collectiveTz = primaryCollective?.timezone ?? 'Australia/Sydney'
+    if (form.fields.timezone !== collectiveTz) {
+      form.updateFields({ timezone: collectiveTz })
+    }
+  }, [primaryCollective, form.fields.timezone, form.fields.timezone_overrides_collective, form])
 
   const canProceed = useMemo(() => {
     switch (step) {
@@ -1726,6 +1788,11 @@ export default function CreateEventPage() {
           // narrowing and 'status' widens to plain `string`.
           status: (isDraft ? 'draft' : 'published') as Database['public']['Enums']['event_status'],
           series_id: seriesId,
+          // Persist a per-event timezone override only when the user has
+          // explicitly chosen a different zone from the collective's.
+          // Otherwise leave NULL so the event inherits if the collective
+          // ever changes its tz.
+          timezone: form.fields.timezone_overrides_collective ? form.fields.timezone : null,
         }
 
         const event = await createEvent.mutateAsync(baseInsert)

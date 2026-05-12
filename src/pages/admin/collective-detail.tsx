@@ -971,6 +971,7 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
   const [region, setRegion] = useState('')
   const [state, setState] = useState('')
   const [slug, setSlug] = useState('')
+  const [timezone, setTimezone] = useState('Australia/Sydney')
   const [initializedFor, setInitializedFor] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
@@ -983,6 +984,7 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
     setRegion(detail.region ?? '')
     setState(detail.state ?? '')
     setSlug(detail.slug)
+    setTimezone((detail as { timezone?: string | null }).timezone ?? 'Australia/Sydney')
     setCoverPreview(detail.cover_image_url)
     setInitializedFor(collectiveId)
   }
@@ -1028,6 +1030,7 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
           region: region || null,
           state: state || null,
           slug: slug || undefined,
+          timezone,
         },
       })
       toast.success('Collective updated')
@@ -1183,6 +1186,27 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
             value={state}
             onChange={setState}
           />
+
+          <Dropdown
+            label="Timezone"
+            placeholder="Select timezone..."
+            options={[
+              { value: 'Australia/Sydney', label: 'Sydney (AEST/AEDT)' },
+              { value: 'Australia/Melbourne', label: 'Melbourne (AEST/AEDT)' },
+              { value: 'Australia/Hobart', label: 'Hobart (AEST/AEDT)' },
+              { value: 'Australia/Brisbane', label: 'Brisbane (AEST, no DST)' },
+              { value: 'Australia/Adelaide', label: 'Adelaide (ACST/ACDT)' },
+              { value: 'Australia/Darwin', label: 'Darwin (ACST, no DST)' },
+              { value: 'Australia/Perth', label: 'Perth (AWST)' },
+            ]}
+            value={timezone}
+            onChange={setTimezone}
+          />
+          <p className="-mt-3 text-xs text-neutral-500">
+            Event start/end times for this collective are entered and shown in
+            this timezone. Change with care - existing event times will be
+            re-rendered against the new zone.
+          </p>
 
           <div className="pt-1">
             <Button

@@ -68,54 +68,54 @@ describe('isSignInButtonVisible', () => {
 
   it('returns false for null/undefined input', () => {
     vi.setSystemTime(T_AT_START)
-    expect(isSignInButtonVisible(null)).toBe(false)
-    expect(isSignInButtonVisible(undefined)).toBe(false)
-    expect(isSignInButtonVisible('')).toBe(false)
+    expect(isSignInButtonVisible(null, 'Australia/Sydney')).toBe(false)
+    expect(isSignInButtonVisible(undefined, 'Australia/Sydney')).toBe(false)
+    expect(isSignInButtonVisible('', 'Australia/Sydney')).toBe(false)
   })
 
   it('returns false when event is the day before (not today AEST)', () => {
     vi.setSystemTime(T_DAY_BEFORE)
-    expect(isSignInButtonVisible(EVENT_START)).toBe(false)
+    expect(isSignInButtonVisible(EVENT_START, 'Australia/Sydney')).toBe(false)
   })
 
   it('returns true at AEST midnight on event day (sign-in window opens)', () => {
     vi.setSystemTime(T_MIDNIGHT_EVENT_DAY)
-    expect(isSignInButtonVisible(EVENT_START)).toBe(true)
+    expect(isSignInButtonVisible(EVENT_START, 'Australia/Sydney')).toBe(true)
   })
 
   it('returns true 30 minutes before event start (window open, pre-start)', () => {
     vi.setSystemTime(T_30MIN_BEFORE)
-    expect(isSignInButtonVisible(EVENT_START)).toBe(true)
+    expect(isSignInButtonVisible(EVENT_START, 'Australia/Sydney')).toBe(true)
   })
 
   it('returns true exactly at event start', () => {
     vi.setSystemTime(T_AT_START)
-    expect(isSignInButtonVisible(EVENT_START)).toBe(true)
+    expect(isSignInButtonVisible(EVENT_START, 'Australia/Sydney')).toBe(true)
   })
 
   it('returns true 1 hour after event start (in progress, within 2h)', () => {
     vi.setSystemTime(T_1H_AFTER_START)
-    expect(isSignInButtonVisible(EVENT_START)).toBe(true)
+    expect(isSignInButtonVisible(EVENT_START, 'Australia/Sydney')).toBe(true)
   })
 
   it('returns true at exactly 2 hours after event start (boundary inclusive)', () => {
     vi.setSystemTime(T_2H_EXACTLY)
-    expect(isSignInButtonVisible(EVENT_START)).toBe(true)
+    expect(isSignInButtonVisible(EVENT_START, 'Australia/Sydney')).toBe(true)
   })
 
   it('returns false 3 hours after event start (beyond the 2h window)', () => {
     vi.setSystemTime(T_3H_AFTER_START)
-    expect(isSignInButtonVisible(EVENT_START)).toBe(false)
+    expect(isSignInButtonVisible(EVENT_START, 'Australia/Sydney')).toBe(false)
   })
 
   it('returns false the next AEST calendar day', () => {
     vi.setSystemTime(T_NEXT_DAY)
-    expect(isSignInButtonVisible(EVENT_START)).toBe(false)
+    expect(isSignInButtonVisible(EVENT_START, 'Australia/Sydney')).toBe(false)
   })
 
   it('returns false for a far-future event', () => {
     vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
     const futureEvent = aestIso(2026, 12, 25, 10, 0)
-    expect(isSignInButtonVisible(futureEvent)).toBe(false)
+    expect(isSignInButtonVisible(futureEvent, 'Australia/Sydney')).toBe(false)
   })
 })

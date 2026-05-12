@@ -64,7 +64,7 @@ import {
 import { useOffline } from '@/hooks/use-offline'
 import { usePendingSync } from '@/hooks/use-pending-sync'
 import { triggerManualSync } from '@/lib/offline-sync'
-import { isEventTodayAEST } from '@/lib/date-format'
+import { isEventToday, timezoneLabel } from '@/lib/date-format'
 import {
     Page,
     Header,
@@ -341,7 +341,13 @@ export default function EventDetailPage() {
   // when the event is today, surfacing the leader-only event-day stats to
   // participants so they see the room fill up. Same query key as the leader
   // page so both share the cached + offline-replay result.
-  const isEventTodayForLive = isEventTodayAEST(event?.date_start)
+  // Event's effective timezone for tz-aware day-of checks and time
+  // rendering. Override > collective default > Australia/Sydney fallback.
+  const eventTz =
+    (event as { timezone?: string | null } | undefined)?.timezone ??
+    (event as { collectives?: { timezone?: string | null } | null } | undefined)?.collectives?.timezone ??
+    'Australia/Sydney'
+  const isEventTodayForLive = isEventToday(event?.date_start, eventTz)
   const { data: liveAttendees } = useEventAttendees(isEventTodayForLive ? id : undefined)
   const liveCheckedIn = useMemo(
     () => liveAttendees?.filter((a) => a.status === 'attended').length ?? 0,
@@ -1198,7 +1204,7 @@ export default function EventDetailPage() {
           <InfoChip
             icon={<Calendar size={17} />}
             label="Date & Time"
-            value={`${formatEventDate(event.date_start)}${event.date_end ? ` - ${formatEventTime(event.date_end)}` : ''}`}
+            value={`${formatEventDate(event.date_start, eventTz)}${event.date_end ? ` - ${formatEventTime(event.date_end, eventTz)}` : ''}${timezoneLabel(eventTz, event.date_start) ? ' ' + timezoneLabel(eventTz, event.date_start) : ''}`}
             accent={accent}
           />
           {event.date_end && (
@@ -1702,7 +1708,7 @@ export default function EventDetailPage() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-neutral-900 line-clamp-2">{event?.title}</p>
                 <p className="text-xs text-neutral-500 mt-0.5">
-                  {event ? formatEventDate(event.date_start) : ''}
+                  {event ? formatEventDate(event.date_start, eventTz) : ''}
                 </p>
               </div>
             </div>
@@ -1759,7 +1765,7 @@ export default function EventDetailPage() {
           onClose={() => setShowShareSheet(false)}
           eventId={event.id}
           title={event.title}
-          dateLabel={`${formatEventDate(event.date_start)}${event.date_end ? ` - ${formatEventTime(event.date_end)}` : ''}`}
+          dateLabel={`${formatEventDate(event.date_start, eventTz)}${event.date_end ? ` - ${formatEventTime(event.date_end, eventTz)}` : ''}${timezoneLabel(eventTz, event.date_start) ? ' ' + timezoneLabel(eventTz, event.date_start) : ''}`}
           locationLabel={event.address ?? event.collectives?.name ?? 'Location TBA'}
           collectiveName={event.collectives?.name ?? null}
           coverImageUrl={event.cover_image_url ?? null}

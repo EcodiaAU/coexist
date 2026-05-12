@@ -25,11 +25,11 @@ type ActivityType = Database['public']['Enums']['activity_type']
 type RegistrationStatus = Database['public']['Enums']['registration_status']
 
 export interface EventWithCollective extends Event {
-  collectives: Pick<Collective, 'id' | 'name' | 'cover_image_url'> | null
+  collectives: Pick<Collective, 'id' | 'name' | 'cover_image_url' | 'timezone'> | null
 }
 
 export interface EventDetailData extends Event {
-  collectives: Pick<Collective, 'id' | 'name' | 'cover_image_url' | 'slug' | 'region' | 'state'> | null
+  collectives: Pick<Collective, 'id' | 'name' | 'cover_image_url' | 'slug' | 'region' | 'state' | 'timezone'> | null
   profiles: Pick<Profile, 'id' | 'display_name' | 'avatar_url'> | null
   registration_count: number
   user_registration: EventRegistration | null
@@ -91,7 +91,7 @@ export {
 /*  Date helpers                                                       */
 /* ------------------------------------------------------------------ */
 
-export function formatEventDate(dateStr: string): string {
+export function formatEventDate(dateStr: string, timeZone?: string): string {
   const date = new Date(dateStr)
   return new Intl.DateTimeFormat('en-AU', {
     weekday: 'short',
@@ -99,22 +99,25 @@ export function formatEventDate(dateStr: string): string {
     month: 'short',
     hour: 'numeric',
     minute: '2-digit',
+    timeZone,
   }).format(date)
 }
 
-export function formatEventDateShort(dateStr: string): string {
+export function formatEventDateShort(dateStr: string, timeZone?: string): string {
   const date = new Date(dateStr)
   return new Intl.DateTimeFormat('en-AU', {
     day: 'numeric',
     month: 'short',
+    timeZone,
   }).format(date)
 }
 
-export function formatEventTime(dateStr: string): string {
+export function formatEventTime(dateStr: string, timeZone?: string): string {
   const date = new Date(dateStr)
   return new Intl.DateTimeFormat('en-AU', {
     hour: 'numeric',
     minute: '2-digit',
+    timeZone,
   }).format(date)
 }
 
@@ -164,7 +167,7 @@ export function useMyEvents(tab: 'upcoming' | 'invited' | 'past') {
       const now = Date.now()
       let query = supabase
         .from('event_registrations')
-        .select('*, events(*, collectives(id, name))')
+        .select('*, events(*, collectives(id, name, timezone))')
         .eq('user_id', user.id)
 
       if (tab === 'upcoming') {
@@ -217,7 +220,7 @@ export function useEventDetail(eventId: string | undefined) {
       // Fetch event first (needed for collective_id in invite check)
       const { data: event, error } = await supabase
         .from('events')
-        .select('*, collectives(id, name, slug, cover_image_url, region, state), profiles!events_created_by_fkey(id, display_name, avatar_url)')
+        .select('*, collectives(id, name, slug, cover_image_url, region, state, timezone), profiles!events_created_by_fkey(id, display_name, avatar_url)')
         .eq('id', eventId)
         .single()
       if (error) throw error
@@ -301,7 +304,7 @@ export function prefetchEventDetail(
     queryFn: async () => {
       const { data: event, error } = await supabase
         .from('events')
-        .select('*, collectives(id, name, slug, cover_image_url, region, state), profiles!events_created_by_fkey(id, display_name, avatar_url)')
+        .select('*, collectives(id, name, slug, cover_image_url, region, state, timezone), profiles!events_created_by_fkey(id, display_name, avatar_url)')
         .eq('id', eventId)
         .single()
       if (error) throw error
@@ -428,7 +431,7 @@ export function useNearbyEvents(limit = 20) {
       const now = new Date().toISOString()
       const { data, error } = await supabase
         .from('events')
-        .select('*, collectives(id, name)')
+        .select('*, collectives(id, name, timezone)')
         .eq('status', 'published')
         .or(`date_start.gte.${now},date_end.gte.${now}`)
         .order('date_start', { ascending: true })
@@ -452,7 +455,7 @@ export function useDiscoverEvents(filters?: {
       const now = new Date().toISOString()
       let query = supabase
         .from('events')
-        .select('*, collectives(id, name)')
+        .select('*, collectives(id, name, timezone)')
         .eq('status', 'published')
         .or(`date_start.gte.${now},date_end.gte.${now}`)
         .order('date_start', { ascending: true })
@@ -490,7 +493,7 @@ export function useCollectiveEvents(collectiveId: string | undefined) {
       const now = new Date().toISOString()
       const { data, error } = await supabase
         .from('events')
-        .select('*, collectives(id, name)')
+        .select('*, collectives(id, name, timezone)')
         .eq('collective_id', collectiveId)
         .eq('status', 'published')
         .or(`date_start.gte.${now},date_end.gte.${now}`)

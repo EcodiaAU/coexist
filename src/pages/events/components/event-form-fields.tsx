@@ -89,6 +89,13 @@ export function DateTimeFields({
   onChange,
   minStart,
 }: DateTimeFieldsProps) {
+  // The form's timezone is the event's effective tz (collective default
+  // unless overridden). Passing it to DatePicker pins the entered wall-
+  // clock to that zone instead of the admin's browser zone, which is
+  // the whole point: a Sydney admin typing "10am" for a Perth event
+  // stores 10am AWST, not 10am AEST.
+  const tz = fields.timezone || undefined
+
   return (
     <>
       <DatePicker
@@ -97,6 +104,7 @@ export function DateTimeFields({
         onChange={(d) => onChange({ date_start: d })}
         mode="datetime"
         min={minStart}
+        timeZone={tz}
       />
       <DatePicker
         label="End Date & Time"
@@ -104,6 +112,7 @@ export function DateTimeFields({
         onChange={(d) => onChange({ date_end: d })}
         mode="datetime"
         min={fields.date_start ?? minStart}
+        timeZone={tz}
       />
     </>
   )

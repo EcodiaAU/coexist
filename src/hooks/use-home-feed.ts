@@ -115,7 +115,7 @@ export function useFeaturedEvents() {
       const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
       const { data, error } = await supabase
         .from('events')
-        .select('*, collectives(id, name)')
+        .select('*, collectives(id, name, timezone)')
         .eq('status', 'published')
         .eq('is_public', true)
         .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
@@ -136,7 +136,7 @@ export function useUpcomingNearby() {
       const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
       const { data, error } = await supabase
         .from('events')
-        .select('*, collectives(id, name)')
+        .select('*, collectives(id, name, timezone)')
         .eq('status', 'published')
         .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
         .order('date_start', { ascending: true })
@@ -170,7 +170,7 @@ export function useNationalEvents(userLocation?: { lat: number; lng: number } | 
         const eventIds = (data as Event[]).map((e) => e.id)
         const { data: withCollectives } = await supabase
           .from('events')
-          .select('*, collectives!inner(id, name, is_national)')
+          .select('*, collectives!inner(id, name, is_national, timezone)')
           .in('id', eventIds)
           .eq('collectives.is_national', true)
         return (withCollectives ?? []) as EventWithCollective[]
@@ -180,7 +180,7 @@ export function useNationalEvents(userLocation?: { lat: number; lng: number } | 
       const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
       const { data, error } = await supabase
         .from('events')
-        .select('*, collectives!inner(id, name, is_national)')
+        .select('*, collectives!inner(id, name, is_national, timezone)')
         .eq('status', 'published')
         .eq('collectives.is_national', true)
         .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
@@ -388,7 +388,7 @@ export function useMyUpcomingEvents() {
 
       const { data, error } = await supabase
         .from('event_registrations')
-        .select('status, events!inner(*, collectives(id, name))')
+        .select('status, events!inner(*, collectives(id, name, timezone))')
         .eq('user_id', user.id)
         .in('status', ['registered', 'waitlisted'])
         .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`, { referencedTable: 'events' })
@@ -443,7 +443,7 @@ export function useCollectiveUpcomingEvents() {
       const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
       const { data, error } = await supabase
         .from('events')
-        .select('*, collectives(id, name)')
+        .select('*, collectives(id, name, timezone)')
         .in('collective_id', collectiveIds)
         .eq('status', 'published')
         .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
