@@ -85,7 +85,7 @@ function useAdminUsers(search: string, roleFilter: string) {
     queryFn: async ({ pageParam = 0 }) => {
       const { data, error } = await supabase.rpc('admin_list_users', {
         search_term: search,
-        role_filter: roleFilter === 'all' ? '' : roleFilter,
+        role_filter: roleFilter,
         result_limit: PAGE_SIZE,
         offset_val: pageParam,
       })

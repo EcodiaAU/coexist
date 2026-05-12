@@ -1,0 +1,31 @@
+-- ============================================================
+-- Migration: 20260512000000_drop_stale_admin_list_users_overload.sql
+-- Co-Exist 1.8.5, fork_mp17xq (12 May 2026).
+--
+-- Bug: /admin/users page returned no rows, and ProfileModal opened from
+-- that page showed "User not found" for every user.
+--
+-- Root cause: two overloads of admin_list_users existed on the live DB:
+--   1. (search_term text, role_filter text, result_limit integer)
+--      - leftover from an earlier migration pass, still using the old
+--        is_admin_or_staff (national_leader+) gate.
+--   2. (search_term text, role_filter text, result_limit integer, offset_val integer)
+--      - the canonical version from 20260509300000_admin_rls_audit.sql
+--        using is_admin_tier (manager+admin only).
+--
+-- The FE calls admin_list_users with four named args. PostgREST cannot
+-- disambiguate two overloads when default-arg coverage overlaps and the
+-- call uses named parameters, so it raised PGRST203 ("could not choose
+-- the best candidate function"). The infinite query returned an error,
+-- the list rendered empty, and any downstream interaction (opening the
+-- ProfileModal) was also broken because the cached `users` array was
+-- never populated.
+--
+-- Fix: drop the stale 3-arg overload so only the canonical 4-arg
+-- version (with admin_tier gate + offset pagination) remains. The
+-- 20260509300000 migration already DROP IF EXISTS'd the 4-arg variant
+-- before recreating it; it just never accounted for the older 3-arg
+-- shadow that 078 / earlier passes had left in place.
+-- ============================================================
+
+DROP FUNCTION IF EXISTS public.admin_list_users(text, text, integer);
