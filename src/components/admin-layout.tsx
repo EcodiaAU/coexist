@@ -307,7 +307,6 @@ const TOP_LEVEL_ADMIN_PATHS = new Set([
   '/admin/development',
   '/admin/legal-pages',
   '/admin/reports',
-  '/admin/exports',
   '/admin/audit-log',
   '/admin/dev-tools',
 ])

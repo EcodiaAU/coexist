@@ -49,6 +49,7 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { useCollectives } from '@/hooks/use-collective'
+import { useAuth } from '@/hooks/use-auth'
 import {
   IMPACT_SELECT_COLUMNS,
   sumMetric,
@@ -475,7 +476,7 @@ async function fetchPerEventReport(
   const eventIds = eventList.map((e) => e.id)
 
   // Impact rows keyed by event_id.
-  let impactByEvent: Map<string, Record<string, unknown>> = new Map()
+  const impactByEvent: Map<string, Record<string, unknown>> = new Map()
   if (eventIds.length > 0) {
     const { data: impactRows } = await supabase
       .from('event_impact')
@@ -487,7 +488,7 @@ async function fetchPerEventReport(
   }
 
   // Attendance counts (one query if needed).
-  let attendanceByEvent: Map<string, number> = new Map()
+  const attendanceByEvent: Map<string, number> = new Map()
   const needsAttendance = Array.from(selectedMetrics).some((m) => METRIC_MAP[m]?.key === '__attendance')
   if (needsAttendance && eventIds.length > 0) {
     const { data: regs } = await supabase
@@ -585,7 +586,11 @@ export default function AdminReportsPage() {
   const [dateStart, setDateStart] = useState('')
   const [dateEnd, setDateEnd] = useState('')
   const [scope, setScope] = useState('national')
-  const [tab, setTab] = useState<TabKey>('quick')
+  const { hasCapability } = useAuth()
+  const canExport = hasCapability('manage_exports')
+  // Default to Quick Exports if the admin has export rights, otherwise drop
+  // them straight into Custom Report - the only thing they can use.
+  const [tab, setTab] = useState<TabKey>(canExport ? 'quick' : 'custom')
   const { toast } = useToast()
   const shouldReduceMotion = useReducedMotion()
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
@@ -1092,7 +1097,9 @@ export default function AdminReportsPage() {
       <motion.div className="space-y-6" variants={stagger} initial="hidden" animate="visible">
         {/* Tabs */}
         <motion.div variants={fadeUp} className="flex gap-2 border-b border-neutral-200">
-          <TabButton active={tab === 'quick'} onClick={() => setTab('quick')} icon={<Download size={15} />} label="Quick Exports" />
+          {canExport && (
+            <TabButton active={tab === 'quick'} onClick={() => setTab('quick')} icon={<Download size={15} />} label="Quick Exports" />
+          )}
           <TabButton active={tab === 'custom'} onClick={() => setTab('custom')} icon={<SlidersHorizontal size={15} />} label="Custom Report" />
         </motion.div>
 
@@ -1146,7 +1153,7 @@ export default function AdminReportsPage() {
         )}
 
         <AnimatePresence mode="wait">
-          {tab === 'quick' ? (
+          {tab === 'quick' && canExport ? (
             <motion.div key="quick" {...tabFade}>
               <StaggeredList className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {exportTypes.map((exp) => (

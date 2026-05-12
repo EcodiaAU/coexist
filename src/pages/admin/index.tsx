@@ -511,9 +511,9 @@ export default function AdminDashboardPage() {
                 accent="bg-gradient-to-br from-sprout-500 to-sprout-600"
               />
               <QuickLink
-                to="/admin/exports"
-                label="Export Centre"
-                sub="Generate reports and data"
+                to="/admin/reports"
+                label="Reports"
+                sub="Generate reports and exports"
                 icon={<TrendingUp size={18} />}
                 accent="bg-gradient-to-br from-bark-500 to-bark-600"
               />
