@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Share2, X, Loader2 } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
+import { Share2, Download, X, Loader2 } from 'lucide-react'
 import html2canvas from 'html2canvas'
 import { BottomSheet } from './bottom-sheet'
 import { Button } from './button'
@@ -103,23 +104,24 @@ export function EventShareSheet({
     })
   }, [])
 
+  // On laptop/desktop the OS share sheet is awkward (or absent), so we
+  // skip Web Share entirely and just download the PNG. On native (Capacitor)
+  // and on mobile browsers with file-share support we still hand off to the
+  // system share sheet so users can post to IG/etc directly.
+  const isNative = Capacitor.isNativePlatform()
+  const isTouch =
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(pointer: coarse)').matches
+  const preferDownload = !isNative && !isTouch
+
   const handleSystemShare = useCallback(
     async (size: ShareSize) => {
-      // Try Web Share API with file - falls back to download.
       try {
         setBusy(size)
         const blob = await captureBlob(size)
         if (!blob) return
-        const file = new File([blob], buildFilename(size), { type: 'image/png' })
 
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title,
-            text: `${title} - ${dateLabel}`,
-          })
-        } else {
-          // Fallback to download.
+        const downloadBlob = () => {
           const url = URL.createObjectURL(blob)
           const a = document.createElement('a')
           a.href = url
@@ -128,6 +130,22 @@ export function EventShareSheet({
           a.click()
           document.body.removeChild(a)
           setTimeout(() => URL.revokeObjectURL(url), 4000)
+        }
+
+        if (preferDownload) {
+          downloadBlob()
+          return
+        }
+
+        const file = new File([blob], buildFilename(size), { type: 'image/png' })
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title,
+            text: `${title} - ${dateLabel}`,
+          })
+        } else {
+          downloadBlob()
         }
       } catch (e) {
         // User cancellation throws AbortError - ignore silently
@@ -138,7 +156,7 @@ export function EventShareSheet({
         setBusy(null)
       }
     },
-    [captureBlob, buildFilename, title, dateLabel],
+    [captureBlob, buildFilename, title, dateLabel, preferDownload],
   )
 
   const sharedGraphicProps = {
@@ -243,12 +261,12 @@ export function EventShareSheet({
                     <Button
                       variant="primary"
                       size="sm"
-                      icon={<Share2 size={14} />}
+                      icon={preferDownload ? <Download size={14} /> : <Share2 size={14} />}
                       onClick={() => handleSystemShare(sz)}
                       disabled={busy !== null}
                       fullWidth
                     >
-                      Save
+                      {preferDownload ? 'Download' : 'Save'}
                     </Button>
                   </div>
                 </div>

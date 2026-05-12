@@ -109,16 +109,25 @@ function GooglePlayBadge({ height = 56 }: { height?: number }) {
 /*  Wordmark                                                            */
 /* ------------------------------------------------------------------ */
 
+// Native aspect ratio of /logos/white-wordmark.webp (1500x569).
+// Pin both width and height explicitly: html2canvas can otherwise resolve
+// `width: auto` against the flex parent's full width and stretch the logo.
+const WORDMARK_RATIO = 1500 / 569
+
 function CoExistWordmark({ height = 36 }: { height?: number }) {
+  const width = Math.round(height * WORDMARK_RATIO)
   return (
     <img
       src="/logos/white-wordmark.webp"
       alt="Co-Exist"
       crossOrigin="anonymous"
+      width={width}
+      height={height}
       style={{
-        height,
-        width: 'auto',
+        width: `${width}px`,
+        height: `${height}px`,
         display: 'block',
+        flexShrink: 0,
         userSelect: 'none',
       }}
     />
