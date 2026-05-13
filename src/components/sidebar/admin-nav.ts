@@ -9,6 +9,7 @@ import {
   FileText,
   Mail,
   Bug,
+  Bell,
   GraduationCap,
   Home,
   Shield,
@@ -68,6 +69,7 @@ export const adminNavCategories: NavCategory[] = [
       // Partners admin config hidden until the public partners page is back.
       { label: 'Contacts', path: '/admin/contacts', icon: icon(Phone), capability: 'manage_users' },
       { label: 'Dev Tools', path: '/admin/dev-tools', icon: icon(Bug), devOnly: true },
+      { label: 'Push Debug', path: '/admin/push-debug', icon: icon(Bell), capability: 'manage_system' },
     ],
   },
 ]

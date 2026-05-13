@@ -263,11 +263,11 @@ function EditorialEventDetail({
         />
 
         {/* Back + activity tag */}
-        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pointer-events-none">
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm text-white cursor-pointer select-none active:scale-95 transition-transform duration-150"
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm text-white cursor-pointer select-none active:scale-95 transition-transform duration-150 pointer-events-auto"
             aria-label="Go back"
           >
             <ArrowLeft size={18} />
