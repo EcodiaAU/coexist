@@ -137,10 +137,18 @@ export default function LeaderEventsPage() {
           className="flex flex-col items-center justify-center text-center pb-2"
         >
           <p className="text-[11px] font-semibold text-moss-500 uppercase tracking-[0.2em]">
-            Manage
+            {FILTERS.find((f) => f.id === filter)?.label ?? 'Events'}
           </p>
           <h1 className="font-heading text-3xl sm:text-4xl font-bold text-neutral-900 mt-1.5">
-            Events
+            {(() => {
+              const selectedCollective = scopeCtx.availableCollectives.find(
+                (c) => c.id === scopeCtx.selectedCollectiveId,
+              )
+              const collectiveName = selectedCollective
+                ? selectedCollective.name.replace(/\s+Collective$/i, '')
+                : null
+              return collectiveName ? `${collectiveName} Events` : 'Events'
+            })()}
           </h1>
           {scopeCtx.showCollectiveSelector && collectiveScopeOptions.length > 1 && (
             <div className="mt-3">

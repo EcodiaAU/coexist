@@ -1930,29 +1930,6 @@ export default function CreateEventPage() {
           }
         }
 
-        // Auto-post event as rich card to each selected collective's chat
-        if (!isDraft) {
-          const dateStr = form.fields.date_start
-            ? new Intl.DateTimeFormat('en-AU', {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              }).format(form.fields.date_start)
-            : ''
-          const chatContent = `New event created!\n\n**${form.fields.title}**\n${dateStr}${form.fields.address ? `\n${form.fields.address}` : ''}\n\nTap to view and register → /events/${event.id}`
-          for (const cId of selectedIds) {
-            try {
-              await supabase.from('chat_messages').insert({
-                collective_id: cId,
-                user_id: user.id,
-                content: chatContent,
-                message_type: 'announcement', // 'event_card' not in constraint; 'announcement' is (fork_mp0so5k9_0d2e77)
-              })
-            } catch {
-              // Non-critical
-            }
-          }
-        }
-
         // Reset wizard state BEFORE navigating away. KeepAlive caches this
         // page, so without an explicit reset the next visit (e.g. creating a
         // second event) would reopen the wizard on the last step with the
