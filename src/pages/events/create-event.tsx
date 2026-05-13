@@ -2,8 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef, createContext, useCo
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
-    ChevronLeft,
-    ChevronRight,
+    ChevronDown,
     Type,
     Calendar,
     MapPin,
@@ -64,6 +63,33 @@ import {
 } from '@/components'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
+
+/* ------------------------------------------------------------------ */
+/*  Error formatting                                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Turn whatever the Supabase / fetch / mutation chain throws into a short,
+ * human-readable string. Postgres / PostgREST errors come back as plain
+ * objects (not Error instances), so the old `String(err)` rendered them as
+ * "[object Object]". This walks the common shapes and special-cases the
+ * 23505 unique-violation so a duplicate event surfaces a clean message
+ * instead of leaking the constraint name.
+ */
+function formatCreateEventError(err: unknown): string {
+  if (err && typeof err === 'object') {
+    const e = err as { code?: string; message?: string; details?: string; hint?: string }
+    if (e.code === '23505') {
+      return 'This event already exists. Adjust the title or date and try again.'
+    }
+    if (typeof e.message === 'string' && e.message.trim()) return e.message
+    if (typeof e.details === 'string' && e.details.trim()) return e.details
+    if (typeof e.hint === 'string' && e.hint.trim()) return e.hint
+  }
+  if (err instanceof Error) return err.message
+  if (typeof err === 'string') return err
+  return 'Something went wrong. Please try again.'
+}
 
 /* ------------------------------------------------------------------ */
 /*  Create-only form data (extends shared fields)                      */
@@ -1528,42 +1554,6 @@ function SummaryRow({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Progress Stepper                                                   */
-/* ------------------------------------------------------------------ */
-
-function ProgressStepper({
-  currentStep,
-  totalSteps,
-}: {
-  currentStep: number
-  totalSteps: number
-}) {
-  return (
-    <div className="flex items-center gap-1.5">
-      {Array.from({ length: totalSteps }).map((_, i) => (
-        <div key={i} className="flex-1 h-2 rounded-full overflow-hidden bg-neutral-100">
-          <motion.div
-            className={cn(
-              'h-full rounded-full',
-              i < currentStep
-                ? STEPS[i].accentBg
-                : i === currentStep
-                  ? cn(STEPS[i].accentBg, 'opacity-80')
-                  : '',
-            )}
-            initial={false}
-            animate={{
-              width: i <= currentStep ? '100%' : '0%',
-            }}
-            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-          />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Main Wizard                                                        */
 /* ------------------------------------------------------------------ */
 
@@ -1573,10 +1563,27 @@ export default function CreateEventPage() {
   const { user } = useAuth()
   const shouldReduceMotion = useReducedMotion()
 
-  const [step, setStep] = useState(0)
-  const [direction, setDirection] = useState(1) // 1 = forward, -1 = back
   const [extra, setExtra] = useState<CreateExtraFields>(INITIAL_EXTRA)
   const [saveAsDraft] = useState(false)
+
+  // Which sections are expanded. Required sections start open; optional
+  // ones start collapsed so the form is short on first paint and the user
+  // can scan + expand what they care about.
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    collective: true,
+    basics: true,
+    datetime: true,
+    location: true,
+    details: false,
+    cover: false,
+    visibility: false,
+    ticketing: false,
+    invite: false,
+    partner: false,
+  })
+  const toggleSection = useCallback((key: string) => {
+    setOpenSections((s) => ({ ...s, [key]: !s[key] }))
+  }, [])
 
   const form = useEventForm({ mode: 'create' })
 
@@ -1587,10 +1594,20 @@ export default function CreateEventPage() {
   // Reset everything (used after a successful publish, so that re-entering this
   // page from KeepAlive cache does not show the previous event's draft).
   const resetWizard = useCallback(() => {
-    setStep(0)
-    setDirection(1)
     setExtra(INITIAL_EXTRA)
     form.resetFields({})
+    setOpenSections({
+      collective: true,
+      basics: true,
+      datetime: true,
+      location: true,
+      details: false,
+      cover: false,
+      visibility: false,
+      ticketing: false,
+      invite: false,
+      partner: false,
+    })
   }, [form])
 
   // Duplicate / "create from existing" support: when the URL includes
@@ -1659,18 +1676,12 @@ export default function CreateEventPage() {
         is_ticketed: source.is_ticketed ?? false,
         checkin_window_minutes: (source as unknown as { checkin_window_minutes?: number }).checkin_window_minutes ?? 30,
       }))
-      // Jump past the collective step since it's already chosen
-      setStep(1)
-
       // Clear the query string so re-entering the page later doesn't re-prefill
       setSearchParams({}, { replace: true })
     })()
 
     return () => { cancelled = true }
   }, [fromEventId, form, setSearchParams])
-
-  const isLastStep = step === STEPS.length - 1
-  const isFirstStep = step === 0
 
   const updateExtra = useCallback((updates: Partial<CreateExtraFields>) => {
     setExtra((prev) => ({ ...prev, ...updates }))
@@ -1695,20 +1706,33 @@ export default function CreateEventPage() {
     }
   }, [primaryCollective, form.fields.timezone, form.fields.timezone_overrides_collective, form])
 
-  const canProceed = useMemo(() => {
-    switch (step) {
-      case 0:
-        return extra.selected_collective_ids.length > 0
-      case 1:
-        return form.isBasicsValid
-      case 2:
-        return form.isDateValid && !form.isDateInPast
-      case 3:
-        return form.hasLocation
-      default:
-        return true
-    }
-  }, [step, extra.selected_collective_ids.length, form.isBasicsValid, form.isDateValid, form.isDateInPast, form.hasLocation])
+  // Per-section validity. Drives the section status pills + the publish-time
+  // gate. Optional sections are always valid.
+  const sectionStatus = useMemo(() => ({
+    collective: extra.selected_collective_ids.length > 0,
+    basics: form.isBasicsValid,
+    datetime: form.isDateValid && !form.isDateInPast,
+    location: form.hasLocation,
+  }), [extra.selected_collective_ids.length, form.isBasicsValid, form.isDateValid, form.isDateInPast, form.hasLocation])
+
+  const canPublish = useMemo(
+    () => sectionStatus.collective && sectionStatus.basics && sectionStatus.datetime && sectionStatus.location,
+    [sectionStatus],
+  )
+
+  // When the user hits publish without filling something required, auto-open
+  // the offending sections + scroll to the first one so they aren't hunting
+  // for what's missing.
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const revealMissing = useCallback(() => {
+    const order: Array<keyof typeof sectionStatus> = ['collective', 'basics', 'datetime', 'location']
+    const first = order.find((k) => !sectionStatus[k])
+    if (!first) return
+    setOpenSections((s) => ({ ...s, [first]: true }))
+    requestAnimationFrame(() => {
+      sectionRefs.current[first]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [sectionStatus])
 
   // We need the user's collective - use the first one they're a leader of
   const handlePublish = useCallback(
@@ -1942,7 +1966,7 @@ export default function CreateEventPage() {
         navigate('/admin/events', { replace: true })
       } catch (err) {
         console.error('[create-event] publish failed:', err)
-        const msg = err instanceof Error ? err.message : String(err)
+        const msg = formatCreateEventError(err)
         toastApi.error(
           isDraft ? `Failed to save draft: ${msg}` : `Failed to publish: ${msg}`,
         )
@@ -1951,35 +1975,7 @@ export default function CreateEventPage() {
     [user, form, extra, saveAsDraft, createEvent, inviteCollective, navigate, toastApi, resetWizard],
   )
 
-  const goNext = useCallback(() => {
-    if (isLastStep) {
-      handlePublish()
-    } else {
-      setDirection(1)
-      setStep((s) => s + 1)
-    }
-  }, [isLastStep, handlePublish])
-
-  const goBack = useCallback(() => {
-    if (isFirstStep) {
-      navigate(-1)
-    } else {
-      setDirection(-1)
-      setStep((s) => s - 1)
-    }
-  }, [isFirstStep, navigate])
-
-  const slideVariants = {
-    enter: (dir: number) => ({
-      x: dir > 0 ? 50 : -50,
-      opacity: 0,
-    }),
-    center: { x: 0, opacity: 1 },
-    exit: (dir: number) => ({
-      x: dir > 0 ? -50 : 50,
-      opacity: 0,
-    }),
-  }
+  const handleBack = useCallback(() => navigate(-1), [navigate])
 
   const toggleCollective = useCallback((id: string) => {
     setExtra((prev) => {
@@ -1993,153 +1989,291 @@ export default function CreateEventPage() {
     })
   }, [])
 
-  const stepComponents = [
-    <StepCollective selectedIds={extra.selected_collective_ids} onToggle={toggleCollective} />,
-    <StepBasics fields={form.fields} onChange={form.updateFields} />,
-    <StepDateTime fields={form.fields} onChange={form.updateFields} extra={extra} onExtraChange={updateExtra} />,
-    <StepLocation fields={form.fields} onChange={form.updateFields} extra={extra} onExtraChange={updateExtra} />,
-    <StepDetails fields={form.fields} onChange={form.updateFields} extra={extra} onExtraChange={updateExtra} />,
-    <StepCoverImage
-      coverImageUrl={form.fields.cover_image_url}
-      onUploadGallery={form.handleUploadFromGallery}
-      onUploadCamera={form.handleUploadFromCamera}
-      onRemove={form.removeCoverImage}
-      uploading={form.uploading}
-      cameraLoading={form.cameraLoading}
-      uploadProgress={form.uploadProgress}
-      uploadError={form.uploadError}
-      positionX={form.fields.cover_image_position_x}
-      positionY={form.fields.cover_image_position_y}
-      onPositionChange={form.setCoverImagePosition}
-    />,
-    <StepVisibility fields={form.fields} onChange={form.updateFields} />,
-    <StepTicketing extra={extra} onExtraChange={updateExtra} />,
-    <StepInvite extra={extra} onExtraChange={updateExtra} />,
-    <StepPartner extra={extra} onExtraChange={updateExtra} fields={form.fields} onFieldsChange={form.updateFields} />,
-    <StepReview fields={form.fields} extra={extra} />,
-  ]
+  const handlePublishClick = useCallback(() => {
+    if (!canPublish) {
+      revealMissing()
+      toastApi.error('A few required fields still need attention')
+      return
+    }
+    handlePublish()
+  }, [canPublish, revealMissing, toastApi, handlePublish])
 
-  const currentStep = STEPS[step]
+  // Section config — drives both the accordion render and the meta lookup.
+  // Each entry maps a section key to one of the original STEPS configs and
+  // a short summary string so the user can see at-a-glance what's set.
+  const sectionDefs = useMemo(() => {
+    const tzLabel = AU_TIMEZONES.find((tz) => tz.value === form.fields.timezone)?.label ?? form.fields.timezone
+    const dateSummary = form.fields.date_start
+      ? new Intl.DateTimeFormat('en-AU', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+          hour: 'numeric',
+          minute: '2-digit',
+        }).format(form.fields.date_start)
+      : ''
+    return [
+      {
+        key: 'collective',
+        step: STEPS[0],
+        required: true,
+        valid: sectionStatus.collective,
+        summary:
+          extra.selected_collective_ids.length === 0
+            ? ''
+            : `${extra.selected_collective_ids.length} selected`,
+        content: <StepCollective selectedIds={extra.selected_collective_ids} onToggle={toggleCollective} />,
+      },
+      {
+        key: 'basics',
+        step: STEPS[1],
+        required: true,
+        valid: sectionStatus.basics,
+        summary: form.fields.title || '',
+        content: <StepBasics fields={form.fields} onChange={form.updateFields} />,
+      },
+      {
+        key: 'datetime',
+        step: STEPS[2],
+        required: true,
+        valid: sectionStatus.datetime,
+        summary: dateSummary ? `${dateSummary} · ${tzLabel}` : '',
+        content: <StepDateTime fields={form.fields} onChange={form.updateFields} extra={extra} onExtraChange={updateExtra} />,
+      },
+      {
+        key: 'location',
+        step: STEPS[3],
+        required: true,
+        valid: sectionStatus.location,
+        summary: form.fields.address || '',
+        content: <StepLocation fields={form.fields} onChange={form.updateFields} extra={extra} onExtraChange={updateExtra} />,
+      },
+      {
+        key: 'details',
+        step: STEPS[4],
+        required: false,
+        valid: true,
+        summary: form.fields.capacity ? `Capacity ${form.fields.capacity}` : '',
+        content: <StepDetails fields={form.fields} onChange={form.updateFields} extra={extra} onExtraChange={updateExtra} />,
+      },
+      {
+        key: 'cover',
+        step: STEPS[5],
+        required: false,
+        valid: true,
+        summary: form.fields.cover_image_url ? 'Image added' : '',
+        content: (
+          <StepCoverImage
+            coverImageUrl={form.fields.cover_image_url}
+            onUploadGallery={form.handleUploadFromGallery}
+            onUploadCamera={form.handleUploadFromCamera}
+            onRemove={form.removeCoverImage}
+            uploading={form.uploading}
+            cameraLoading={form.cameraLoading}
+            uploadProgress={form.uploadProgress}
+            uploadError={form.uploadError}
+            positionX={form.fields.cover_image_position_x}
+            positionY={form.fields.cover_image_position_y}
+            onPositionChange={form.setCoverImagePosition}
+          />
+        ),
+      },
+      {
+        key: 'visibility',
+        step: STEPS[6],
+        required: false,
+        valid: true,
+        summary: form.fields.is_public ? 'Public' : 'Collective only',
+        content: <StepVisibility fields={form.fields} onChange={form.updateFields} />,
+      },
+      {
+        key: 'ticketing',
+        step: STEPS[7],
+        required: false,
+        valid: true,
+        summary: extra.is_ticketed
+          ? `${extra.ticket_tiers.length} tier${extra.ticket_tiers.length !== 1 ? 's' : ''}`
+          : 'Free',
+        content: <StepTicketing extra={extra} onExtraChange={updateExtra} />,
+      },
+      {
+        key: 'invite',
+        step: STEPS[8],
+        required: false,
+        valid: true,
+        summary: extra.invite_collective ? 'Invite all members' : '',
+        content: <StepInvite extra={extra} onExtraChange={updateExtra} />,
+      },
+      {
+        key: 'partner',
+        step: STEPS[9],
+        required: false,
+        valid: true,
+        summary:
+          extra.partner_name ||
+          (form.fields.is_external_collaboration ? 'External collab' : ''),
+        content: <StepPartner extra={extra} onExtraChange={updateExtra} fields={form.fields} onFieldsChange={form.updateFields} />,
+      },
+    ] as const
+  }, [extra, form, sectionStatus, toggleCollective, updateExtra])
 
   return (
     <Page
       swipeBack
       fullBleed
-      header={
-        <Header title="Create Event" back transparent onBack={goBack} />
-      }
+      header={<Header title="Create Event" back transparent onBack={handleBack} />}
       footer={
-        <div className={cn(
-          'py-3 space-y-2',
-          isLastStep
-            ? 'bg-gradient-to-r from-success-50 via-sprout-50/50 to-moss-50'
-            : 'bg-gradient-to-r from-primary-50/60 via-surface-0 to-moss-50/40',
-        )}>
-          <div className="flex gap-2 px-4">
-            {!isFirstStep && (
-              <Button
-                variant="ghost"
-                onClick={goBack}
-                className="shrink-0"
-              >
-                <ChevronLeft size={18} />
-                Back
-              </Button>
-            )}
+        <div className="py-3 space-y-2 bg-gradient-to-r from-primary-50/60 via-surface-0 to-moss-50/40">
+          <div className="px-4">
             <Button
               variant="primary"
               fullWidth
-              disabled={!canProceed}
-              loading={createEvent.isPending}
-              onClick={goNext}
+              disabled={!canPublish || createEvent.isPending}
+              loading={createEvent.isPending && !saveAsDraft}
+              onClick={handlePublishClick}
             >
-              {isLastStep ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <Sparkles size={18} />
-                  Publish Event
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1">
-                  Next
-                  <ChevronRight size={18} className="shrink-0" />
-                </span>
-              )}
+              <span className="inline-flex items-center gap-1.5">
+                <Sparkles size={18} />
+                Publish Event
+              </span>
             </Button>
           </div>
-          {isLastStep && (
-            <div className="px-4">
-              <Button
-                variant="ghost"
-                fullWidth
-                onClick={() => handlePublish(true)}
-                loading={createEvent.isPending && saveAsDraft}
-              >
-                Save as Draft
-              </Button>
-            </div>
-          )}
+          <div className="px-4">
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={() => handlePublish(true)}
+              loading={createEvent.isPending && saveAsDraft}
+              disabled={!sectionStatus.collective || !sectionStatus.basics}
+            >
+              Save as Draft
+            </Button>
+          </div>
         </div>
       }
     >
-      {/* ---- Gradient hero header area ---- */}
-      <div className="pt-3 pb-1 px-3 sm:px-4">
-        {/* Progress bar */}
-        <ProgressStepper currentStep={step} totalSteps={STEPS.length} />
-
-        {/* Step hero */}
+      {/* ---- Sub-header strip: title + missing-required hint ---- */}
+      <div className="pt-3 px-3 sm:px-4">
         <motion.div
-          key={step}
           initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className={cn(
-            'mt-4 rounded-2xl p-4 bg-gradient-to-br',
-            currentStep.gradient,
-          )}
+          className="rounded-2xl p-4 bg-gradient-to-br from-primary-500/15 via-sprout-400/10 to-transparent"
         >
           <div className="flex items-center gap-3.5">
-            <div
-              className={cn(
-                'w-11 h-11 rounded-xl flex items-center justify-center text-white',
-                currentStep.accentBg,
-              )}
-            >
-              {currentStep.icon}
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white bg-primary-500">
+              <Sparkles size={20} />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2">
-                <h2 className="text-lg font-bold text-primary-900">
-                  {currentStep.title}
-                </h2>
-                <span className="text-caption text-neutral-500 font-medium">
-                  {step + 1}/{STEPS.length}
-                </span>
-              </div>
+              <h2 className="text-lg font-bold text-primary-900">New Event</h2>
               <p className="text-caption text-primary-500 mt-0.5">
-                {currentStep.subtitle}
+                {canPublish
+                  ? 'Looks good — publish whenever you are ready'
+                  : 'Fill out the highlighted sections to publish'}
               </p>
             </div>
           </div>
         </motion.div>
       </div>
 
-      {/* ---- Step content with slide animation ---- */}
-      <div className="pt-4 pb-4 min-h-[400px] px-3 sm:px-4">
-        <StepColorCtx.Provider value={{ cardBorder: currentStep.cardBorder, cardGlow: currentStep.cardGlow }}>
-          <AnimatePresence mode="wait" custom={direction}>
-            <motion.div
-              key={step}
-              custom={direction}
-              variants={shouldReduceMotion ? undefined : slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+      {/* ---- All sections, stacked as collapsible accordions ---- */}
+      <div className="pt-3 pb-6 px-3 sm:px-4 space-y-3">
+        {sectionDefs.map((def) => {
+          const isOpen = !!openSections[def.key]
+          const missing = def.required && !def.valid
+          return (
+            <div
+              key={def.key}
+              ref={(el) => {
+                sectionRefs.current[def.key] = el
+              }}
+              className={cn(
+                'rounded-2xl border shadow-sm overflow-hidden bg-white',
+                missing ? 'border-warning-300/70' : 'border-neutral-100',
+              )}
             >
-              {stepComponents[step]}
-            </motion.div>
-          </AnimatePresence>
-        </StepColorCtx.Provider>
+              <button
+                type="button"
+                onClick={() => toggleSection(def.key)}
+                aria-expanded={isOpen}
+                className={cn(
+                  'w-full min-h-14 flex items-center gap-3 px-4 py-3 text-left',
+                  'cursor-pointer select-none transition-colors',
+                  'hover:bg-neutral-50 active:bg-neutral-100',
+                )}
+              >
+                <div
+                  className={cn(
+                    'w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0',
+                    def.step.accentBg,
+                  )}
+                >
+                  {def.step.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-neutral-900 truncate">
+                      {def.step.title}
+                    </h3>
+                    {def.required && (
+                      <span
+                        className={cn(
+                          'text-[10px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5',
+                          def.valid
+                            ? 'text-success-600 bg-success-50'
+                            : 'text-warning-600 bg-warning-50',
+                        )}
+                      >
+                        {def.valid ? 'Done' : 'Required'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-caption text-neutral-500 mt-0.5 truncate">
+                    {def.summary || def.step.subtitle}
+                  </p>
+                </div>
+                <ChevronDown
+                  size={18}
+                  className={cn(
+                    'shrink-0 text-neutral-400 transition-transform duration-200',
+                    isOpen && 'rotate-180',
+                  )}
+                />
+              </button>
+
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    key="content"
+                    initial={shouldReduceMotion ? false : { height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                    transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-3 sm:px-4 pb-4 pt-1">
+                      <StepColorCtx.Provider
+                        value={{ cardBorder: def.step.cardBorder, cardGlow: def.step.cardGlow }}
+                      >
+                        {def.content}
+                      </StepColorCtx.Provider>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )
+        })}
+
+        {/* Review summary always rendered at the bottom so the user can scan
+            the final event before publishing — no separate step needed. */}
+        <div className="pt-2">
+          <StepColorCtx.Provider
+            value={{ cardBorder: STEPS[10].cardBorder, cardGlow: STEPS[10].cardGlow }}
+          >
+            <StepReview fields={form.fields} extra={extra} />
+          </StepColorCtx.Provider>
+        </div>
       </div>
     </Page>
   )
