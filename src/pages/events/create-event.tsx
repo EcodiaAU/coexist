@@ -2177,29 +2177,23 @@ export default function CreateEventPage() {
       </div>
 
       {/* ---- All sections, stacked as collapsible accordions ---- */}
-      <div className="pt-3 pb-6 px-3 sm:px-4 space-y-3">
+      <div className="pt-3 pb-6 px-3 sm:px-4">
         {sectionDefs.map((def) => {
           const isOpen = !!openSections[def.key]
-          const missing = def.required && !def.valid
           return (
             <div
               key={def.key}
               ref={(el) => {
                 sectionRefs.current[def.key] = el
               }}
-              className={cn(
-                'rounded-2xl border shadow-sm overflow-hidden bg-white',
-                missing ? 'border-warning-300/70' : 'border-neutral-100',
-              )}
             >
               <button
                 type="button"
                 onClick={() => toggleSection(def.key)}
                 aria-expanded={isOpen}
                 className={cn(
-                  'w-full min-h-14 flex items-center gap-3 px-4 py-3 text-left',
-                  'cursor-pointer select-none transition-colors',
-                  'hover:bg-neutral-50 active:bg-neutral-100',
+                  'w-full min-h-14 flex items-center gap-3 py-3 text-left',
+                  'cursor-pointer select-none',
                 )}
               >
                 <div
@@ -2251,7 +2245,7 @@ export default function CreateEventPage() {
                     transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
                     className="overflow-hidden"
                   >
-                    <div className="px-3 sm:px-4 pb-4 pt-1">
+                    <div className="pb-4 pt-1">
                       <StepColorCtx.Provider
                         value={{ cardBorder: def.step.cardBorder, cardGlow: def.step.cardGlow }}
                       >
