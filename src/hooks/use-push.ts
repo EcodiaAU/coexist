@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Capacitor } from '@capacitor/core'
+import { Preferences } from '@capacitor/preferences'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { resolveNotificationRoute } from '@/hooks/use-notifications'
@@ -250,7 +251,6 @@ export function usePushRegistration() {
           // the FCM token, so it usually arrives 1-5s after this 'registration' event.
           if (platform === 'ios') {
             try {
-              const { Preferences } = await import('@capacitor/preferences')
               const apnsToken = t.value
               const startedAt = Date.now()
               const pollIntervalMs = 1000

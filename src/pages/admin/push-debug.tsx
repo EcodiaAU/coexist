@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
+import { Preferences } from '@capacitor/preferences'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/button'
@@ -107,7 +108,6 @@ export default function PushDebugPage() {
   const readFcmTokenFromPrefs = useCallback(async () => {
     if (!isNative) return
     try {
-      const { Preferences } = await import('@capacitor/preferences')
       const got = await Preferences.get({ key: 'fcmToken' })
       if (got.value) {
         log('info', `Preferences['fcmToken'] → len=${got.value.length} prefix=${got.value.slice(0, 24)}…`)
