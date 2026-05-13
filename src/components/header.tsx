@@ -47,6 +47,11 @@ export function Header({
       className={cn(
         'sticky z-40',
         'px-4',
+        // Empty zones in the header bar should not intercept clicks/taps;
+        // only the back button and right actions do. Without this, the
+        // 56px-tall sticky bar absorbs taps on content underneath even
+        // though most of it is visually empty.
+        'pointer-events-none',
         className,
       )}
       style={{
@@ -66,7 +71,7 @@ export function Header({
               className={cn(
                 'flex items-center justify-center',
                 'w-11 h-11 -ml-1 rounded-full',
-                'cursor-pointer select-none',
+                'cursor-pointer select-none pointer-events-auto',
                 'transition-colors duration-150',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                 transparent
@@ -86,7 +91,7 @@ export function Header({
         <div className="flex-1 min-w-0">
           {showTitle && (
             <p className={cn(
-              'text-sm font-bold truncate pl-2',
+              'text-sm font-bold truncate pl-2 pointer-events-auto',
               transparent ? 'text-white' : 'text-primary-900',
             )}>
               {title}
@@ -94,8 +99,14 @@ export function Header({
           )}
         </div>
 
-        {/* Right zone: actions */}
-        <div className="flex items-center shrink-0 gap-1 justify-end">
+        {/* Right zone: actions. Only re-enable pointer events when there
+            are actually actions  an empty zone would silently eat taps. */}
+        <div
+          className={cn(
+            'flex items-center shrink-0 gap-1 justify-end',
+            rightActions && 'pointer-events-auto',
+          )}
+        >
           {rightActions}
         </div>
       </div>
