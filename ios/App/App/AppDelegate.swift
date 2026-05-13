@@ -12,14 +12,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     private let surface = UIColor(red: 248.0/255.0, green: 249.0/255.0, blue: 245.0/255.0, alpha: 1.0)
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Initialise Firebase iOS SDK so FCM can mint registration tokens for this device.
-        // Pipeline: APNs hands iOS a device token (didRegisterForRemoteNotifications below)
-        // -> we forward via Messaging.messaging().apnsToken
-        // -> FCM mints an FCM registration token
-        // -> MessagingDelegate.didReceiveRegistrationToken (below) persists it to UserDefaults
-        // -> the FE reads it via @capacitor/preferences and stores to push_tokens table
-        // -> the send-push edge function (FCM HTTP v1) uses that FCM token in messages:send.
-        FirebaseApp.configure()
+        // Clear stale debug fields from previous launch so the debug page reflects this run only.
+        UserDefaults.standard.removeObject(forKey: "apnsTokenHex")
+        UserDefaults.standard.removeObject(forKey: "apnsError")
+        UserDefaults.standard.set(false, forKey: "didRegisterCalled")
+        UserDefaults.standard.set(false, forKey: "didFailCalled")
+
+        // Firebase init. We explicitly DISABLE Firebase method swizzling on the APNs
+        // delegate callbacks because @capacitor/push-notifications also swizzles them,
+        // and when both run, one silently wins and the other never sees the token -
+        // producing the exact "register() returns, no registration event fires"
+        // symptom. By disabling swizzling here, we take manual control: the OS calls
+        // our didRegisterForRemoteNotificationsWithDeviceToken below, we hand the
+        // token to Firebase ourselves, and the Capacitor plugin's native delegate also
+        // sees the call (because Capacitor's plugin chain is set up via the
+        // ApplicationDelegateProxy, not method swizzling).
+        if let plist = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+           let options = FirebaseOptions(contentsOfFile: plist) {
+            FirebaseApp.configure(options: options)
+            UserDefaults.standard.set(true, forKey: "firebaseConfigured")
+            UserDefaults.standard.set(options.gcmSenderID, forKey: "firebaseSenderId")
+        } else {
+            FirebaseApp.configure()
+            UserDefaults.standard.set(false, forKey: "firebaseConfigured")
+        }
         Messaging.messaging().delegate = self
         return true
     }
@@ -68,6 +84,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     // immediately stores that APNs token, then polls Preferences['fcmToken'] (set below)
     // to upsert the FCM token a few seconds later when Firebase mints it.
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        // Persist the raw APNs token hex to UserDefaults so the debug page can read
+        // it via Preferences regardless of whether the Capacitor plugin fires its
+        // JS event. This is the source of truth that iOS gave us a token.
+        let hex = deviceToken.map { String(format: "%02x", $0) }.joined()
+        UserDefaults.standard.set(hex, forKey: "apnsTokenHex")
+        UserDefaults.standard.set(true, forKey: "didRegisterCalled")
+        UserDefaults.standard.set(ISO8601DateFormatter().string(from: Date()), forKey: "apnsTokenAt")
+
         Messaging.messaging().apnsToken = deviceToken
         NotificationCenter.default.post(
             name: Notification.Name(rawValue: "didRegisterForRemoteNotificationsWithDeviceToken"),
@@ -76,6 +100,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        // Persist the full error so the debug page can show iOS's reason for failing
+        // (e.g. "no valid 'aps-environment' entitlement string", network error, etc).
+        let ns = error as NSError
+        let msg = "\(ns.domain) code=\(ns.code) — \(ns.localizedDescription)"
+        UserDefaults.standard.set(msg, forKey: "apnsError")
+        UserDefaults.standard.set(true, forKey: "didFailCalled")
+        UserDefaults.standard.set(ISO8601DateFormatter().string(from: Date()), forKey: "apnsErrorAt")
+
         NotificationCenter.default.post(
             name: Notification.Name(rawValue: "didFailToRegisterForRemoteNotificationsWithError"),
             object: error

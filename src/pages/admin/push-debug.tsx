@@ -26,6 +26,7 @@ export default function PushDebugPage() {
   const [dbTokens, setDbTokens] = useState<Array<{ token: string; platform: string; updated_at: string }>>([])
   const [sending, setSending] = useState(false)
   const [lastResponse, setLastResponse] = useState<unknown>(null)
+  const [nativeDiag, setNativeDiag] = useState<Record<string, string | null>>({})
 
   const log = useCallback((level: LogLine['level'], msg: string) => {
     const line = { ts: new Date().toISOString().slice(11, 23), level, msg }
@@ -121,6 +122,25 @@ export default function PushDebugPage() {
     }
   }, [isNative, log])
 
+  /* ---------- Read native diagnostic flags written by AppDelegate ---------- */
+  const readNativeDiag = useCallback(async () => {
+    if (!isNative) return
+    const keys = [
+      'firebaseConfigured', 'firebaseSenderId',
+      'didRegisterCalled', 'apnsTokenHex', 'apnsTokenAt',
+      'didFailCalled', 'apnsError', 'apnsErrorAt',
+    ]
+    const out: Record<string, string | null> = {}
+    for (const k of keys) {
+      const { value } = await Preferences.get({ key: k })
+      out[k] = value
+    }
+    setNativeDiag(out)
+    log('info', `Native diag: didRegisterCalled=${out.didRegisterCalled} didFailCalled=${out.didFailCalled} firebaseConfigured=${out.firebaseConfigured}`)
+    if (out.apnsTokenHex) log('info', `  APNs hex (from AppDelegate): ${out.apnsTokenHex.slice(0, 24)}… len=${out.apnsTokenHex.length}`)
+    if (out.apnsError) log('error', `  APNs error: ${out.apnsError}`)
+  }, [isNative, log])
+
   /* ---------- Read push_tokens rows for this user ---------- */
   const readDbTokens = useCallback(async () => {
     if (!user) return
@@ -200,7 +220,8 @@ export default function PushDebugPage() {
     checkPermissions()
     readDbTokens()
     readFcmTokenFromPrefs()
-  }, [checkPermissions, readDbTokens, readFcmTokenFromPrefs])
+    readNativeDiag()
+  }, [checkPermissions, readDbTokens, readFcmTokenFromPrefs, readNativeDiag])
 
   return (
     <div className="mx-auto max-w-3xl p-4 font-mono text-xs">
@@ -219,6 +240,34 @@ export default function PushDebugPage() {
         <h2 className="mb-2 font-sans text-base font-semibold">Step 1 — Register</h2>
         <p className="mb-2 font-sans">Triggers iOS APNs registration + FCM token mint. The token will appear below within ~5s.</p>
         <Button onClick={forceRegister}>Force register</Button>
+      </section>
+
+      <section className="mb-6 rounded border bg-amber-50 p-3">
+        <h2 className="mb-2 font-sans text-base font-semibold">Native diagnostics (from AppDelegate)</h2>
+        <p className="mb-2 font-sans text-[11px]">
+          These flags are written by AppDelegate.swift directly into UserDefaults. They reveal what actually
+          happened at the iOS native level, independent of the Capacitor plugin and Firebase. If
+          <code> didRegisterCalled=true </code> but no JS token event fired, iOS gave us a token but the plugin
+          dropped it. If <code> didFailCalled=true </code>, iOS itself refused to register — see the error.
+        </p>
+        <div>firebaseConfigured: <b>{nativeDiag.firebaseConfigured ?? '(unknown)'}</b></div>
+        <div>firebaseSenderId: <b>{nativeDiag.firebaseSenderId ?? '(none)'}</b></div>
+        <div>didRegisterCalled: <b className={nativeDiag.didRegisterCalled === 'true' ? 'text-green-700' : 'text-red-700'}>{nativeDiag.didRegisterCalled ?? '(none)'}</b></div>
+        <div>didFailCalled: <b className={nativeDiag.didFailCalled === 'true' ? 'text-red-700' : 'text-zinc-600'}>{nativeDiag.didFailCalled ?? '(none)'}</b></div>
+        {nativeDiag.apnsTokenHex && (
+          <div className="mt-1">
+            <div>apnsTokenHex (at {nativeDiag.apnsTokenAt}):</div>
+            <div className="break-all rounded bg-white p-1">{nativeDiag.apnsTokenHex}</div>
+            <Button onClick={() => copy('APNs hex', nativeDiag.apnsTokenHex ?? null)} className="mt-1">Copy APNs hex</Button>
+          </div>
+        )}
+        {nativeDiag.apnsError && (
+          <div className="mt-1 text-red-700">
+            <div>apnsError (at {nativeDiag.apnsErrorAt}):</div>
+            <div className="break-all rounded bg-white p-1">{nativeDiag.apnsError}</div>
+          </div>
+        )}
+        <Button onClick={readNativeDiag} className="mt-2">Re-read native diag</Button>
       </section>
 
       <section className="mb-6 rounded border bg-white p-3">

@@ -99,5 +99,11 @@
 	<!-- App Store Export Compliance -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+
+	<!-- Disable Firebase Messaging method swizzling so it doesn't fight with the
+	     @capacitor/push-notifications plugin over didRegisterForRemoteNotifications.
+	     We forward the APNs token to Firebase manually in AppDelegate. -->
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 </dict>
 </plist>
