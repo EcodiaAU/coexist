@@ -36,11 +36,13 @@ export function AppShell({ children, bare = false }: AppShellProps) {
 
   if (bare) {
     return (
-      <div className="flex flex-col min-h-dvh">
-        <Suspense fallback={<div className="flex-1 bg-surface-1" />}>
-          {children}
-        </Suspense>
-      </div>
+      <KeyboardOpenContext.Provider value={keyboardOpen}>
+        <div className="flex flex-col min-h-dvh">
+          <Suspense fallback={<div className="flex-1 bg-surface-1" />}>
+            {children}
+          </Suspense>
+        </div>
+      </KeyboardOpenContext.Provider>
     )
   }
 

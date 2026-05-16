@@ -43,6 +43,7 @@ export interface AdminCollectiveEvent {
   status: string
   address: string | null
   capacity: number | null
+  cover_image_url: string | null
   registrationCount: number
 }
 
@@ -195,7 +196,7 @@ export function useAdminCollectiveEvents(collectiveId: string | undefined) {
 
       const { data: events, error } = await supabase
         .from('events')
-        .select('id, title, activity_type, date_start, date_end, status, address, capacity')
+        .select('id, title, activity_type, date_start, date_end, status, address, capacity, cover_image_url')
         .eq('collective_id', collectiveId)
         .order('date_start', { ascending: false })
         .limit(100)

@@ -552,37 +552,46 @@ export default function CollectiveDetailPage() {
         </motion.section>
 
         {/* ── Past Events - compact, muted ── */}
-        {pastEvents.length > 0 && (
-          <motion.section variants={fadeUp} aria-label="Past events">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2.5">
-              Past Events
-            </h3>
-            <div className="space-y-1.5">
-              {pastEvents.slice(0, 5).map((event) => (
-                <Link
-                  key={event.id}
-                  to={`/events/${event.id}`}
-                  className="group flex items-center gap-3 rounded-xl bg-white/60 p-3 transition-all duration-150 hover:bg-white active:scale-[0.99]"
-                >
-                  <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 text-primary-300">
-                    <span className="text-[9px] font-bold uppercase leading-tight">
-                      {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short' })}
-                    </span>
-                    <span className="font-heading text-base font-bold leading-none">
-                      {new Date(event.date_start).getDate()}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-neutral-500 truncate">
-                      {event.title}
-                    </p>
-                  </div>
-                  <ChevronRight size={14} className="text-neutral-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              ))}
-            </div>
-          </motion.section>
-        )}
+        {/* Filter to events with a valid title - draft/incomplete events were
+            rendering as blank rows that took space with no content
+            (2026-05-16 Tate feedback). */}
+        {(() => {
+          const renderablePastEvents = pastEvents.filter(
+            (e) => typeof e.title === 'string' && e.title.trim().length > 0,
+          )
+          if (renderablePastEvents.length === 0) return null
+          return (
+            <motion.section variants={fadeUp} aria-label="Past events">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2.5">
+                Past Events
+              </h3>
+              <div className="space-y-1.5">
+                {renderablePastEvents.slice(0, 5).map((event) => (
+                  <Link
+                    key={event.id}
+                    to={`/events/${event.id}`}
+                    className="group flex items-center gap-3 rounded-xl bg-white/60 p-3 transition-all duration-150 hover:bg-white active:scale-[0.99]"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 text-primary-300">
+                      <span className="text-[9px] font-bold uppercase leading-tight">
+                        {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short' })}
+                      </span>
+                      <span className="font-heading text-base font-bold leading-none">
+                        {new Date(event.date_start).getDate()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-neutral-500 truncate">
+                        {event.title}
+                      </p>
+                    </div>
+                    <ChevronRight size={14} className="text-neutral-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                ))}
+              </div>
+            </motion.section>
+          )
+        })()}
 
         {/* ── Location - full-bleed map card ── */}
         <motion.section variants={fadeUp} aria-label="Location" className="w-[calc(100%+2rem)] -mx-4 lg:w-[calc(100%+3rem)] lg:-mx-6">

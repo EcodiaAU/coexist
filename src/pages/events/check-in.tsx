@@ -144,13 +144,13 @@ export default function CheckInPage() {
   }, [state])
 
   const handleDigitChange = useCallback((index: number, value: string) => {
-    const digit = value.replace(/\D/g, '').slice(-1)
+    const char = value.replace(/[^a-zA-Z0-9]/g, '').slice(-1).toUpperCase()
     setDigits(prev => {
       const next = [...prev]
-      next[index] = digit
+      next[index] = char
       return next
     })
-    if (digit && index < 2) {
+    if (char && index < 2) {
       inputRefs[index + 1].current?.focus()
     }
   }, [])
@@ -163,7 +163,7 @@ export default function CheckInPage() {
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 3)
+    const pasted = e.clipboardData.getData('text').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 3)
     if (pasted.length === 3) {
       setDigits([pasted[0], pasted[1], pasted[2]])
       inputRefs[2].current?.focus()
@@ -521,8 +521,9 @@ export default function CheckInPage() {
                   key={i}
                   ref={inputRefs[i]}
                   type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
                   maxLength={1}
                   value={digits[i]}
                   onChange={(e) => handleDigitChange(i, e.target.value)}

@@ -16,6 +16,7 @@ import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
+import { DateInput } from '@/components/date-input'
 import { Dropdown } from '@/components/dropdown'
 import { Checkbox } from '@/components/checkbox'
 import { WaveTransition } from '@/components/wave-transition'
@@ -389,14 +390,12 @@ export default function LeadACollectivePage() {
             />
           </div>
 
-          <Input
+          <DateInput
             label="Date of Birth"
-            type="date"
             value={dob}
-            onChange={(e) => setDob(e.target.value)}
+            onChange={setDob}
             autoComplete="bday"
             helperText="dd/mm/yyyy"
-            inputClassName="bg-neutral-50 border border-neutral-200"
           />
 
           <Input

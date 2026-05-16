@@ -40,6 +40,10 @@ export interface InputProps {
   max?: string
   min?: string
   step?: string
+  inputMode?: 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search'
+  enterKeyHint?: 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send'
+  autoCapitalize?: 'off' | 'none' | 'on' | 'sentences' | 'words' | 'characters'
+  pattern?: string
 }
 
 export const Input = forwardRef<
@@ -72,6 +76,10 @@ export const Input = forwardRef<
     max,
     min,
     step,
+    inputMode,
+    enterKeyHint,
+    autoCapitalize,
+    pattern,
   },
   ref,
 ) {
@@ -116,9 +124,38 @@ export const Input = forwardRef<
     [onBlur],
   )
 
+  // Track IME composition state to avoid clobbering the Android GBoard /
+  // Samsung Keyboard composing buffer with React re-renders. Without this,
+  // controlled inputs on Android can drop characters or appear to type
+  // backwards because every keystroke triggers setState -> re-render before
+  // the IME has finalised the character (2026-05-16 feedback: name field
+  // typing backwards on Android during signup).
+  const composingRef = useRef(false)
+
+  const handleCompositionStart = useCallback(() => {
+    composingRef.current = true
+  }, [])
+
+  const handleCompositionEnd = useCallback(
+    (e: React.CompositionEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      composingRef.current = false
+      // Fire a synthetic change so the parent receives the finalised value
+      // (some browsers don't emit input/change after compositionend).
+      const target = e.currentTarget
+      setUncontrolledFilled(target.value.length > 0)
+      onChange?.({
+        ...e,
+        target,
+        currentTarget: target,
+      } as unknown as React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>)
+    },
+    [onChange],
+  )
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setUncontrolledFilled(e.currentTarget.value.length > 0)
+      if (composingRef.current) return
       onChange?.(e)
     },
     [onChange],
@@ -204,6 +241,8 @@ export const Input = forwardRef<
             value={value}
             defaultValue={defaultValue}
             onChange={handleChange}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
             onFocus={handleFocus}
             onBlur={handleBlur}
             disabled={disabled}
@@ -214,6 +253,9 @@ export const Input = forwardRef<
             aria-invalid={!!error}
             aria-describedby={describedBy}
             maxLength={maxLength}
+            inputMode={inputMode}
+            enterKeyHint={enterKeyHint}
+            autoCapitalize={autoCapitalize}
             className={cn(sharedClasses, 'resize-y', isCompact ? 'min-h-[80px]' : 'min-h-[100px]')}
           />
         ) : (
@@ -225,6 +267,8 @@ export const Input = forwardRef<
             value={value}
             defaultValue={defaultValue}
             onChange={handleChange}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
             onFocus={handleFocus}
             onBlur={handleBlur}
             disabled={disabled}
@@ -238,6 +282,10 @@ export const Input = forwardRef<
             max={max}
             min={min}
             step={step}
+            inputMode={inputMode}
+            enterKeyHint={enterKeyHint}
+            autoCapitalize={autoCapitalize}
+            pattern={pattern}
             className={sharedClasses}
           />
         )}

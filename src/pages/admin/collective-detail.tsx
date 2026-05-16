@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import {
     Users,
@@ -44,6 +44,7 @@ import { ConfirmationSheet } from '@/components/confirmation-sheet'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { PlaceAutocomplete } from '@/components/place-autocomplete'
+import { OptimizedImage } from '@/components/optimized-image'
 import { useAuth } from '@/hooks/use-auth'
 import { useCountUp } from '@/components/stat-card'
 import { WaveTransition } from '@/components/wave-transition'
@@ -239,7 +240,20 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
     ['leader', 'co_leader', 'assist_leader'].includes(m.role!),
   )
 
-  const recentEvents = events.slice(0, 5)
+  // Overview surfaces UPCOMING events (the actionable view for staff), not
+  // the most-recent-by-date-desc list - past events are visible in full on
+  // the Events tab (2026-05-16 Tate feedback).
+  const upcomingEvents = useMemo(() => {
+    const now = Date.now()
+    return events
+      .filter((e) => {
+        const end = e.date_end ? new Date(e.date_end).getTime() : new Date(e.date_start).getTime()
+        return end >= now && e.status !== 'cancelled'
+      })
+      .slice()
+      .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())
+      .slice(0, 5)
+  }, [events])
 
   // Build impact items (only show non-zero)
   const impactItems: { value: number; label: string; icon: React.ReactNode; color: string }[] = stats
@@ -389,7 +403,7 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
         )}
       </motion.div>
 
-      {/* ── Recent events ── */}
+      {/* ── Upcoming events ── */}
       <motion.div
         initial={rm ? { opacity: 1 } : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -398,17 +412,17 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <CalendarDays size={16} className="text-accent-500" />
-            <h3 className="font-heading text-sm font-semibold text-neutral-900">Recent Events</h3>
-            <span className="text-xs text-neutral-400 font-medium">({events.length} total)</span>
+            <h3 className="font-heading text-sm font-semibold text-neutral-900">Upcoming Events</h3>
+            <span className="text-xs text-neutral-400 font-medium">({upcomingEvents.length})</span>
           </div>
         </div>
-        {recentEvents.length === 0 ? (
+        {upcomingEvents.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-neutral-100 p-6 text-center">
-            <p className="text-sm text-neutral-400">No events yet</p>
+            <p className="text-sm text-neutral-400">No upcoming events</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {recentEvents.map((ev, i) => (
+            {upcomingEvents.map((ev, i) => (
               <EventRow key={ev.id} event={ev} reducedMotion={rm} delay={0.5 + i * 0.04} />
             ))}
           </div>
@@ -432,51 +446,92 @@ const EVENT_STATUS_STYLES: Record<string, { bg: string; text: string; dot: strin
 function EventRow({ event, reducedMotion, delay = 0 }: { event: AdminCollectiveEvent; reducedMotion: boolean; delay?: number }) {
   const date = new Date(event.date_start)
   const status = EVENT_STATUS_STYLES[event.status] ?? EVENT_STATUS_STYLES.draft
+  const dateLabel = date.toLocaleDateString('en-AU', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })
+  const timeLabel = date.toLocaleTimeString('en-AU', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
 
   return (
     <motion.div
       initial={reducedMotion ? { opacity: 1 } : { opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25, delay: reducedMotion ? 0 : Math.min(delay, 0.3) }}
-      className="flex items-center gap-3.5 rounded-2xl bg-white shadow-sm px-4 py-3 hover:shadow transition-shadow duration-200"
     >
-      {/* Date block */}
-      <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-neutral-50 border border-neutral-100 shrink-0">
-        <span className="text-[11px] font-bold text-neutral-500 uppercase leading-none">
-          {date.toLocaleDateString('en-AU', { month: 'short' })}
-        </span>
-        <span className="text-base font-bold text-neutral-900 leading-tight">
-          {date.getDate()}
-        </span>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-neutral-900 truncate">{event.title}</p>
-        <div className="flex items-center gap-2 mt-0.5 text-xs text-neutral-400">
-          <span className="capitalize">{event.activity_type.replace(/_/g, ' ')}</span>
-          <span className="w-1 h-1 rounded-full bg-neutral-300" />
-          <span>{event.registrationCount} registered</span>
-          {event.capacity && (
-            <>
-              <span>/</span>
-              <span>{event.capacity} cap</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Status badge */}
-      <span
-        className={cn(
-          'inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-1 rounded-full capitalize shrink-0',
-          status.bg,
-          status.text,
-        )}
+      <Link
+        to={`/events/${event.id}`}
+        className="group flex items-stretch gap-3 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
       >
-        <span className={cn('w-1.5 h-1.5 rounded-full', status.dot)} />
-        {event.status}
-      </span>
+        {/* Cover image (or date block if no image) */}
+        {event.cover_image_url ? (
+          <div className="relative w-20 sm:w-28 shrink-0 bg-neutral-100">
+            <OptimizedImage
+              src={event.cover_image_url}
+              alt={event.title}
+              sizes="112px"
+              wrapperClassName="absolute inset-0"
+            />
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 pt-3 pb-1 text-center">
+              <span className="block text-[9px] font-bold text-white/85 uppercase leading-none">
+                {date.toLocaleDateString('en-AU', { month: 'short' })}
+              </span>
+              <span className="block text-sm font-bold text-white leading-tight">
+                {date.getDate()}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center w-20 sm:w-28 shrink-0 bg-neutral-50 border-r border-neutral-100">
+            <span className="text-[11px] font-bold text-neutral-500 uppercase leading-none">
+              {date.toLocaleDateString('en-AU', { month: 'short' })}
+            </span>
+            <span className="text-xl font-bold text-neutral-900 leading-tight">
+              {date.getDate()}
+            </span>
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 py-3 pr-3">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm font-semibold text-neutral-900 truncate group-hover:text-primary-700 transition-colors">
+              {event.title || 'Untitled event'}
+            </p>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize shrink-0',
+                status.bg,
+                status.text,
+              )}
+            >
+              <span className={cn('w-1.5 h-1.5 rounded-full', status.dot)} />
+              {event.status}
+            </span>
+          </div>
+          <p className="text-xs text-neutral-500 mt-0.5 truncate">
+            {dateLabel} · {timeLabel}
+          </p>
+          {event.address && (
+            <p className="text-xs text-neutral-400 mt-0.5 truncate flex items-center gap-1">
+              <MapPin size={11} className="shrink-0" />
+              {event.address}
+            </p>
+          )}
+          <div className="flex items-center gap-2 mt-1 text-[11px] text-neutral-500">
+            <span className="capitalize">{event.activity_type.replace(/_/g, ' ')}</span>
+            <span className="w-1 h-1 rounded-full bg-neutral-300" />
+            <span>
+              {event.registrationCount} registered
+              {event.capacity ? ` / ${event.capacity} cap` : ''}
+            </span>
+          </div>
+        </div>
+      </Link>
     </motion.div>
   )
 }

@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { OGMeta } from '@/components/og-meta'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
+import { DateInput } from '@/components/date-input'
 import { Checkbox } from '@/components/checkbox'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
@@ -118,8 +119,16 @@ export default function SignUpPage() {
 
   return (
     <div
-      className="min-h-dvh flex flex-col bg-white"
-      style={{ paddingTop: 'var(--safe-top)' }}
+      className="flex flex-col bg-white overflow-hidden"
+      style={{
+        paddingTop: 'var(--safe-top)',
+        // Lock the page to the visualViewport so the inner form area can
+        // scroll inside the keyboard-reduced viewport. Without this the page
+        // is min-h-dvh tall and the form area below the keyboard is
+        // unreachable without dismissing the keyboard first (2026-05-16 Jade
+        // feedback on Android signup).
+        height: 'calc(100dvh - var(--kb-height, 0px))',
+      }}
     >
       <OGMeta
         title="Sign Up"
@@ -221,6 +230,8 @@ export default function SignUpPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 autoComplete="name"
+                autoCapitalize="words"
+                enterKeyHint="next"
                 required
                 maxLength={50}
               />
@@ -231,6 +242,7 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                enterKeyHint="next"
                 required
               />
 
@@ -269,11 +281,10 @@ export default function SignUpPage() {
                 )}
               </div>
 
-              <Input
-                type="date"
+              <DateInput
                 label="Date of Birth"
                 value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
+                onChange={setDateOfBirth}
                 autoComplete="bday"
                 max={maxDob}
                 required

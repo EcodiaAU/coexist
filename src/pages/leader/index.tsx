@@ -7,7 +7,6 @@ import {
     Clock,
     CalendarCheck,
     Plus,
-    Pencil,
     Megaphone,
     TreePine,
     ChevronRight,
@@ -982,11 +981,6 @@ export default function LeaderDashboardPage() {
     }) ?? null
   }, [data])
 
-  // Next upcoming event for "Edit Event" quick action (must be before early returns)
-  const nextUpcomingEvent = useMemo(() => {
-    if (!data?.upcomingEvents?.length) return null
-    return (data.upcomingEvents as { date_start: string; id: string; check_in_code: string | null }[])[0] ?? null
-  }, [data])
 
   if (showLoading) {
     return (
@@ -1048,22 +1042,18 @@ export default function LeaderDashboardPage() {
       badge: 0,
       pulse: true,
     }] : []),
-    ...((currentEvent?.check_in_code ?? nextUpcomingEvent?.check_in_code) ? [{
-      label: (currentEvent?.check_in_code ?? nextUpcomingEvent?.check_in_code) as string,
+    // Check-in code + Edit Event are event-scoped actions - they live on the
+    // event-day / event-detail pages, not the generic leader dashboard
+    // (2026-05-16 Tate feedback: don't put per-event quick actions on the
+    // collective-wide landing).
+    ...(currentEvent?.check_in_code ? [{
+      label: currentEvent.check_in_code,
       icon: <Hash size={18} />,
-      to: `/events/${(currentEvent ?? nextUpcomingEvent)!.id}/day`,
+      to: `/events/${currentEvent.id}/day`,
       iconBg: 'bg-primary-100',
       iconText: 'text-primary-700',
       badge: 0,
       isCode: true,
-    }] : []),
-    ...(nextUpcomingEvent ? [{
-      label: 'Edit Event',
-      icon: <Pencil size={18} />,
-      to: `/events/${nextUpcomingEvent.id}/edit?mode=day-of`,
-      iconBg: 'bg-moss-100',
-      iconText: 'text-moss-600',
-      badge: 0,
     }] : []),
     ...(pendingItems.length > 0 ? [{
       label: 'Log Impact',
@@ -1205,7 +1195,7 @@ export default function LeaderDashboardPage() {
               <SectionHeader icon={<TreePine size={14} />}>
                 Collective Impact
               </SectionHeader>
-              <BentoStatGrid className="lg:[&>div]:max-h-28">
+              <BentoStatGrid compact className="lg:[&>div]:max-h-24">
                 {impactCards.map((card) => (
                   <BentoStatCard
                     key={card.label}
@@ -1214,7 +1204,7 @@ export default function LeaderDashboardPage() {
                     unit={card.unit}
                     icon={card.icon}
                     theme={card.theme}
-                    className="lg:p-3 lg:rounded-2xl"
+                    className="lg:p-2.5 lg:rounded-2xl"
                   />
                 ))}
               </BentoStatGrid>
@@ -1223,11 +1213,11 @@ export default function LeaderDashboardPage() {
 
           {/* ── At-a-glance stats ── */}
           <motion.div variants={rm ? undefined : fadeUp}>
-            <BentoStatGrid className="lg:[&>div]:max-h-28">
-              <BentoStatCard value={data?.activeMembers ?? 0} label="Members" icon={<Users size={16} />} theme="primary-soft" className="lg:p-3 lg:rounded-2xl" />
-              <BentoStatCard value={data?.upcomingEvents?.length ?? 0} label="Upcoming" icon={<CalendarDays size={16} />} theme="moss-soft" className="lg:p-3 lg:rounded-2xl" />
-              <BentoStatCard value={data?.hoursThisMonth ?? 0} label="Hrs / Month" icon={<Clock size={16} />} theme="bark-soft" className="lg:p-3 lg:rounded-2xl" />
-              <BentoStatCard value={data?.eventsThisMonth ?? 0} label="Events / Month" icon={<CalendarCheck size={16} />} theme="sprout-soft" className="lg:p-3 lg:rounded-2xl" />
+            <BentoStatGrid compact className="lg:[&>div]:max-h-24">
+              <BentoStatCard value={data?.activeMembers ?? 0} label="Members" icon={<Users size={14} />} theme="primary-soft" className="lg:p-2.5 lg:rounded-2xl" />
+              <BentoStatCard value={data?.upcomingEvents?.length ?? 0} label="Upcoming Events" icon={<CalendarDays size={14} />} theme="moss-soft" className="lg:p-2.5 lg:rounded-2xl" />
+              <BentoStatCard value={data?.hoursThisMonth ?? 0} label="Hrs / Month" icon={<Clock size={14} />} theme="bark-soft" className="lg:p-2.5 lg:rounded-2xl" />
+              <BentoStatCard value={data?.eventsThisMonth ?? 0} label="Events / Month" icon={<CalendarCheck size={14} />} theme="sprout-soft" className="lg:p-2.5 lg:rounded-2xl" />
             </BentoStatGrid>
           </motion.div>
 

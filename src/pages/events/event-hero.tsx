@@ -58,8 +58,11 @@ export function EventHero({ event, past, userStatus, accent, onShare }: EventHer
             />
 
             {/* Title + activity pill grouped at the bottom of the hero,
-                clear of the camera notch and any system overlays. */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 z-[5]">
+                clear of the camera notch and any system overlays. pb-14
+                lifts the overlay above the wave transition so the byline
+                isn't crowded against the bottom edge of the image
+                (2026-05-16 Tate feedback). */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 pb-14 z-[5]">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <Badge
                   variant="activity"
@@ -87,7 +90,7 @@ export function EventHero({ event, past, userStatus, accent, onShare }: EventHer
               </h1>
               {event.collectives && (
                 <p className="text-[13px] text-white/75 font-medium mt-1 drop-shadow">
-                  by {event.collectives.name}
+                  by Co-Exist {event.collectives.region ?? event.collectives.name}
                 </p>
               )}
             </div>
@@ -133,7 +136,7 @@ export function EventHero({ event, past, userStatus, accent, onShare }: EventHer
             </h1>
             {event.collectives && (
               <p className="text-sm text-primary-500 font-medium mt-1">
-                by {event.collectives.name}
+                by Co-Exist {event.collectives.region ?? event.collectives.name}
               </p>
             )}
           </motion.div>

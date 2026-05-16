@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle, Star, UserCircle } from 'lucide-react'
 import { Input } from '@/components/input'
+import { DateInput } from '@/components/date-input'
 import { Dropdown } from '@/components/dropdown'
 import { cn } from '@/lib/cn'
 import type { SurveyQuestion } from './survey-questions-utils'
@@ -313,10 +314,9 @@ export function SurveyQuestionRenderer({
 
           {/* Date */}
           {q.type === 'date' && (
-            <Input
-              type="date"
+            <DateInput
               value={(answers[q.id] as string) ?? ''}
-              onChange={(e) => setAnswer(q.id, e.target.value)}
+              onChange={(v) => setAnswer(q.id, v)}
               min={q.date_min}
               max={q.date_max}
             />

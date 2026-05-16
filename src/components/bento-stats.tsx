@@ -21,6 +21,10 @@ export interface BentoStatCardProps {
   theme?: string
   /** Whether this is a "hero" (large) card in the bento grid */
   hero?: boolean
+  /** Compact layout: tighter padding, smaller value/label - used on the
+   *  leader dashboard where the bento sits alongside quick-actions and
+   *  needs to take less vertical space (2026-05-16 Tate feedback). */
+  compact?: boolean
   /** Optional unit suffix (kg, m, hrs, etc.) */
   unit?: string
   /** Optional description text - only shown on hero cards */
@@ -37,6 +41,7 @@ export function BentoStatCard({
   label,
   icon,
   hero = false,
+  compact = false,
   unit,
   description,
   badge,
@@ -62,22 +67,36 @@ export function BentoStatCard({
       }
       className={cn(
         'relative overflow-hidden rounded-3xl bg-neutral-50 shadow-sm',
-        hero ? 'p-5 sm:p-6' : 'p-4 sm:p-5',
+        hero
+          ? compact
+            ? 'p-3.5 sm:p-4'
+            : 'p-5 sm:p-6'
+          : compact
+            ? 'p-2.5 sm:p-3'
+            : 'p-4 sm:p-5',
         className,
       )}
       aria-label={`${label}: ${value}${unit ? ` ${unit}` : ''}`}
     >
       {/* Top row: icon badge + optional comparison badge */}
-      <div className="flex items-start justify-between mb-3">
+      <div className={cn('flex items-start justify-between', compact ? 'mb-1.5' : 'mb-3')}>
         <span
           className={cn(
             'inline-flex items-center justify-center rounded-xl',
             'bg-neutral-100 text-neutral-700',
-            hero ? 'w-12 h-12' : 'w-10 h-10',
+            hero
+              ? compact ? 'w-9 h-9' : 'w-12 h-12'
+              : compact ? 'w-7 h-7' : 'w-10 h-10',
           )}
           aria-hidden="true"
         >
-          <span className={hero ? '[&>svg]:w-6 [&>svg]:h-6' : '[&>svg]:w-5 [&>svg]:h-5'}>
+          <span
+            className={
+              hero
+                ? compact ? '[&>svg]:w-4 [&>svg]:h-4' : '[&>svg]:w-6 [&>svg]:h-6'
+                : compact ? '[&>svg]:w-3.5 [&>svg]:h-3.5' : '[&>svg]:w-5 [&>svg]:h-5'
+            }
+          >
             {icon}
           </span>
         </span>
@@ -93,12 +112,14 @@ export function BentoStatCard({
       <p
         className={cn(
           'font-heading font-extrabold tabular-nums leading-none tracking-tight text-neutral-900',
-          hero ? 'text-4xl sm:text-5xl' : 'text-2xl sm:text-3xl',
+          hero
+            ? compact ? 'text-2xl sm:text-3xl' : 'text-4xl sm:text-5xl'
+            : compact ? 'text-lg sm:text-xl' : 'text-2xl sm:text-3xl',
         )}
       >
         {formatted}
         {unit && (
-          <span className="text-base font-bold ml-1 text-neutral-500">
+          <span className={cn('font-bold ml-1 text-neutral-500', compact ? 'text-xs' : 'text-base')}>
             {unit}
           </span>
         )}
@@ -107,8 +128,11 @@ export function BentoStatCard({
       {/* Label */}
       <p
         className={cn(
-          'font-semibold uppercase tracking-wider mt-1.5 text-neutral-600',
-          hero ? 'text-xs' : 'text-[10px]',
+          'font-semibold uppercase tracking-wider text-neutral-600',
+          compact ? 'mt-0.5' : 'mt-1.5',
+          hero
+            ? compact ? 'text-[10px]' : 'text-xs'
+            : 'text-[10px]',
         )}
       >
         {label}
@@ -206,12 +230,15 @@ export interface BentoStatGridProps {
   className?: string
   /** Animate into view when scrolled into viewport */
   animateInView?: boolean
+  /** Tighter spacing + smaller cards for use alongside other dashboard widgets */
+  compact?: boolean
 }
 
 export function BentoStatGrid({
   children,
   className,
   animateInView = false,
+  compact = false,
 }: BentoStatGridProps) {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '-40px' })
@@ -225,7 +252,8 @@ export function BentoStatGrid({
       ref={ref}
       layout
       className={cn(
-        'grid grid-cols-2 sm:grid-cols-4 gap-3',
+        'grid grid-cols-2 sm:grid-cols-4',
+        compact ? 'gap-2' : 'gap-3',
         className,
       )}
     >
@@ -244,6 +272,7 @@ export function BentoStatGrid({
             {isValidElement<BentoStatCardProps>(child)
               ? cloneElement(child, {
                   hero: child.props.hero ?? isHero,
+                  compact: child.props.compact ?? compact,
                   delay: child.props.delay ?? i,
                 } as Partial<BentoStatCardProps>)
               : child}
