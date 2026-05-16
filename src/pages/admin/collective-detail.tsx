@@ -184,7 +184,7 @@ function HeroStat({
   const variantStyles = {
     primary: 'bg-gradient-to-br from-primary-700 via-primary-800 to-primary-950 text-white',
     dark: 'bg-gradient-to-br from-primary-900 via-primary-950 to-neutral-900 text-white',
-    accent: 'bg-gradient-to-br from-accent-500 via-accent-600 to-primary-700 text-white',
+    accent: 'bg-gradient-to-br from-moss-600 via-moss-700 to-primary-800 text-white',
     default: 'bg-white text-neutral-900 shadow-sm',
   }
   const iconBg = { primary: 'bg-white/15', dark: 'bg-white/10', accent: 'bg-white/15', default: 'bg-primary-50' }
@@ -200,15 +200,8 @@ function HeroStat({
       style={{ willChange: 'transform' }}
       className={cn('relative overflow-hidden rounded-2xl p-4 sm:p-5', variantStyles[variant])}
     >
-      {variant !== 'default' && (
-        <>
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/[0.05]" />
-          <div className="absolute -left-3 -bottom-6 w-16 h-16 rounded-full bg-white/[0.03]" />
-        </>
-      )}
-      {variant === 'default' && (
-        <>{/* decorative circle removed - design system */}</>
-      )}
+      {/* Decorative circles removed per design system - heroes are
+          plain gradients only (2026-05-16 Tate). */}
       <div className="relative z-10">
         <span className={cn('flex items-center justify-center w-9 h-9 rounded-xl mb-3', iconBg[variant], iconColor[variant])} aria-hidden="true">
           {icon}
@@ -369,7 +362,6 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
                     accent.border,
                   )}
                 >
-                  <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-white/30" />
                   <div className="relative z-10 flex items-center gap-3">
                     <Avatar
                       src={m.profiles?.avatar_url}

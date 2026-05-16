@@ -181,12 +181,6 @@ function TrendChart({
       transition={{ duration: 0.45 }}
       className="group relative overflow-hidden rounded-2xl bg-white border border-neutral-100 shadow-sm transition-colors duration-200 p-5 sm:p-6"
     >
-      {/* Subtle gradient wash top-right */}
-      <div
-        className="absolute -top-12 -right-12 w-40 h-40 rounded-full opacity-[0.06] blur-2xl pointer-events-none"
-        style={{ background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})` }}
-      />
-
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

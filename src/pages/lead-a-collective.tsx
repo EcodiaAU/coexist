@@ -245,8 +245,7 @@ export default function LeadACollectivePage() {
   if (submitted) {
     return (
       <Page noBackground className="!px-0 bg-primary-50" stickyOverlay={<Header title="" back transparent className="collapse-header" />}>
-        <div className="relative overflow-hidden bg-gradient-to-br from-sprout-600 via-primary-700 to-secondary-800">
-          <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/5" />
+        <div className="relative overflow-hidden bg-gradient-to-br from-moss-700 via-primary-800 to-primary-900">
           <div
             className="relative z-10 px-4 sm:px-6 lg:px-8 pb-16 text-center"
             style={{ paddingTop: '4.5rem' }}
@@ -278,12 +277,9 @@ export default function LeadACollectivePage() {
 
   return (
     <Page noBackground className="!px-0 bg-primary-50" stickyOverlay={<Header title="" back transparent className="collapse-header" />}>
-      {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-sprout-600 via-primary-700 to-secondary-800">
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/5" />
-        <div className="absolute -left-10 bottom-0 w-40 h-40 rounded-full bg-white/5" />
-        <div className="absolute right-12 bottom-16 w-24 h-24 rounded-full border border-white/8" />
-
+      {/* Hero - sage gradient only, no decorative circles
+          (2026-05-16 Tate). */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-moss-700 via-primary-800 to-primary-900">
         <div
           className="relative z-10 px-4 sm:px-6 lg:px-8 pb-16"
           style={{ paddingTop: '4.5rem' }}

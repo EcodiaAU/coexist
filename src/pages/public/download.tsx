@@ -203,16 +203,6 @@ export default function DownloadPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70" />
         </div>
 
-        {/* Ambient decorations */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-          <div
-            className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-moss-400/8 to-transparent"
-          />
-          <div
-            className="absolute bottom-0 -left-12 w-48 h-48 rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/4 to-transparent"
-          />
-        </div>
-
         {/* Hero content */}
         <motion.div
           className="relative z-10 mx-auto max-w-lg text-center px-5 pt-16 pb-10 sm:pt-24 sm:pb-14"
@@ -382,7 +372,7 @@ export default function DownloadPage() {
               icon={Heart}
               title="Earn Badges"
               desc="Level up from New to Lifetime as you grow your impact"
-              accent="bg-gradient-to-br from-secondary-500 to-secondary-600"
+              accent="bg-gradient-to-br from-primary-700 to-moss-700"
             />
           </motion.div>
         </div>
@@ -399,12 +389,6 @@ export default function DownloadPage() {
         transition={{ duration: 0.4 }}
       >
         <div className="rounded-2xl bg-gradient-to-br from-primary-800 via-primary-900 to-moss-900 p-6 text-center relative overflow-hidden">
-          {/* Decorative */}
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-moss-400/[0.05] to-transparent" />
-            <div className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/[0.025] to-transparent" />
-          </div>
-
           <div className="relative z-10">
             <h2 className="font-heading text-xl font-bold text-white mb-1.5">Ready to make a difference?</h2>
             <p className="text-sm text-white/50 mb-5">Download the app and join your nearest collective</p>

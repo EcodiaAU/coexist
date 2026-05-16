@@ -220,9 +220,6 @@ export default function PromosTab() {
                   !promo.is_active && 'opacity-60 grayscale-[30%]',
                 )}
               >
-                {/* Decorative circle */}
-                <div className="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/8" />
-
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">

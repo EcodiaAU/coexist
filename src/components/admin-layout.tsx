@@ -86,144 +86,55 @@ export function useAdminHeader(
 /*  Per-page hero hue config - maps title → gradient hue               */
 /* ------------------------------------------------------------------ */
 
-interface HeroCfg { hue: string; tall?: boolean; f: number; w: number }
+interface HeroCfg { hue: string; tall?: boolean; w: number }
+
+// All hero gradients standardised to Co-Exist sage/olive/green tones to
+// match the profile-page hero (solid #879e62). 2026-05-16 Tate: every
+// hero in the app must read as the same brand-green family - no purples,
+// oranges, ambers, accents, secondaries.
+const BRAND_HERO = 'from-primary-700 via-primary-800 to-primary-900'
+const BRAND_HERO_DEEP = 'from-primary-800 via-primary-900 to-primary-950'
+const BRAND_HERO_MOSS = 'from-moss-700 via-primary-800 to-primary-900'
 
 const PAGE_HERO_CONFIG: Record<string, HeroCfg> = {
-  'Dashboard':           { hue: 'from-primary-800 via-primary-900 to-primary-950',  f: 0, w: 0 },
-  'Collectives':         { hue: 'from-primary-600 via-primary-700 to-primary-900',  f: 1, w: 1, tall: true },
-  'User Management':     { hue: 'from-primary-800 via-primary-850 to-neutral-900',  f: 2, w: 2, tall: true },
-  'Workflows':           { hue: 'from-primary-700 via-primary-800 to-primary-950',  f: 3, w: 3, tall: true },
-  'Events':              { hue: 'from-accent-700 via-accent-800 to-primary-950',    f: 4, w: 4, tall: true },
-  'Create':              { hue: 'from-primary-700 via-primary-800 to-primary-950',  f: 5, w: 0, tall: true },
-  'Surveys':             { hue: 'from-primary-800 via-primary-850 to-neutral-900',  f: 6, w: 1, tall: true },
-  'Reports':             { hue: 'from-primary-700 via-primary-900 to-primary-950',  f: 7, w: 2, tall: true },
-  'Email Marketing':     { hue: 'from-primary-900 via-primary-950 to-neutral-900',  f: 8, w: 3, tall: true },
-  'Charity Settings':    { hue: 'from-primary-800 via-primary-900 to-neutral-900',  f: 9, w: 4, tall: true },
-  'Export Centre':       { hue: 'from-primary-700 via-primary-900 to-primary-950',  f: 10, w: 0, tall: true },
-  'Audit Log':           { hue: 'from-primary-900 via-primary-950 to-neutral-900',  f: 11, w: 1, tall: true },
-  'Branding & Images':   { hue: 'from-primary-800 via-primary-850 to-neutral-900',  f: 0, w: 2, tall: true },
-  'System':              { hue: 'from-primary-900 via-neutral-900 to-neutral-950',  f: 1, w: 3, tall: true },
-  'Merch Management':    { hue: 'from-primary-800 via-primary-900 to-primary-950',  f: 3, w: 0, tall: true },
-  'Applications':        { hue: 'from-sprout-700 via-primary-800 to-primary-950',   f: 4, w: 1, tall: true },
-  'Create Survey':       { hue: 'from-primary-800 via-primary-850 to-neutral-900',  f: 5, w: 2, tall: true },
-  'Dev Tools':           { hue: 'from-primary-900 via-neutral-900 to-neutral-950',  f: 6, w: 3, tall: true },
-  'Partners & Sponsors': { hue: 'from-primary-700 via-primary-800 to-neutral-900',  f: 7, w: 4, tall: true },
-  'Challenges':          { hue: 'from-accent-700 via-primary-800 to-primary-950',   f: 8, w: 0, tall: true },
-  'Content Moderation':  { hue: 'from-primary-900 via-primary-950 to-neutral-900',  f: 9, w: 1, tall: true },
-  'Organisational Policies': { hue: 'from-primary-800 via-primary-900 to-neutral-900',  f: 10, w: 2, tall: true },
-  'Edit Policy':         { hue: 'from-primary-800 via-primary-900 to-neutral-900',  f: 10, w: 2, tall: true },
-  'Updates':             { hue: 'from-secondary-700 via-primary-800 to-primary-950', f: 2, w: 3, tall: true },
-  'New Update':          { hue: 'from-secondary-700 via-primary-800 to-primary-950', f: 2, w: 3, tall: true },
-  'Development':         { hue: 'from-amber-700 via-amber-800 to-primary-950',     f: 3, w: 4, tall: true },
-  'Create Module':       { hue: 'from-amber-600 via-amber-700 to-primary-900',     f: 4, w: 0, tall: true },
-  'Edit Module':         { hue: 'from-amber-600 via-amber-700 to-primary-900',     f: 4, w: 0, tall: true },
-  'Module Detail':       { hue: 'from-amber-600 via-amber-700 to-primary-900',     f: 5, w: 1, tall: true },
-  'Create Section':      { hue: 'from-amber-700 via-amber-800 to-primary-950',     f: 6, w: 2, tall: true },
-  'Edit Section':        { hue: 'from-amber-700 via-amber-800 to-primary-950',     f: 6, w: 2, tall: true },
-  'Create Quiz':         { hue: 'from-amber-800 via-primary-800 to-primary-950',   f: 7, w: 3, tall: true },
-  'Edit Quiz':           { hue: 'from-amber-800 via-primary-800 to-primary-950',   f: 7, w: 3, tall: true },
-  'Development Results': { hue: 'from-amber-700 via-primary-900 to-primary-950',   f: 8, w: 4, tall: true },
-  'Emergency Contacts':  { hue: 'from-red-700 via-primary-800 to-primary-950',    f: 9, w: 0, tall: true },
+  'Dashboard':           { hue: BRAND_HERO_DEEP, w: 0 },
+  'Collectives':         { hue: BRAND_HERO,      w: 1, tall: true },
+  'User Management':     { hue: BRAND_HERO_DEEP, w: 2, tall: true },
+  'Workflows':           { hue: BRAND_HERO,      w: 3, tall: true },
+  'Events':              { hue: BRAND_HERO_MOSS, w: 4, tall: true },
+  'Create':              { hue: BRAND_HERO,      w: 0, tall: true },
+  'Surveys':             { hue: BRAND_HERO_DEEP, w: 1, tall: true },
+  'Reports':             { hue: BRAND_HERO,      w: 2, tall: true },
+  'Email Marketing':     { hue: BRAND_HERO_DEEP, w: 3, tall: true },
+  'Charity Settings':    { hue: BRAND_HERO_DEEP, w: 4, tall: true },
+  'Export Centre':       { hue: BRAND_HERO,      w: 0, tall: true },
+  'Audit Log':           { hue: BRAND_HERO_DEEP, w: 1, tall: true },
+  'Branding & Images':   { hue: BRAND_HERO_DEEP, w: 2, tall: true },
+  'System':              { hue: BRAND_HERO_DEEP, w: 3, tall: true },
+  'Merch Management':    { hue: BRAND_HERO_DEEP, w: 0, tall: true },
+  'Applications':        { hue: BRAND_HERO_MOSS, w: 1, tall: true },
+  'Create Survey':       { hue: BRAND_HERO_DEEP, w: 2, tall: true },
+  'Dev Tools':           { hue: BRAND_HERO_DEEP, w: 3, tall: true },
+  'Partners & Sponsors': { hue: BRAND_HERO,      w: 4, tall: true },
+  'Challenges':          { hue: BRAND_HERO_MOSS, w: 0, tall: true },
+  'Content Moderation':  { hue: BRAND_HERO_DEEP, w: 1, tall: true },
+  'Organisational Policies': { hue: BRAND_HERO_DEEP, w: 2, tall: true },
+  'Edit Policy':         { hue: BRAND_HERO_DEEP, w: 2, tall: true },
+  'Updates':             { hue: BRAND_HERO,      w: 3, tall: true },
+  'New Update':          { hue: BRAND_HERO,      w: 3, tall: true },
+  'Development':         { hue: BRAND_HERO_MOSS, w: 4, tall: true },
+  'Create Module':       { hue: BRAND_HERO_MOSS, w: 0, tall: true },
+  'Edit Module':         { hue: BRAND_HERO_MOSS, w: 0, tall: true },
+  'Module Detail':       { hue: BRAND_HERO_MOSS, w: 1, tall: true },
+  'Create Section':      { hue: BRAND_HERO_MOSS, w: 2, tall: true },
+  'Edit Section':        { hue: BRAND_HERO_MOSS, w: 2, tall: true },
+  'Create Quiz':         { hue: BRAND_HERO_MOSS, w: 3, tall: true },
+  'Edit Quiz':           { hue: BRAND_HERO_MOSS, w: 3, tall: true },
+  'Development Results': { hue: BRAND_HERO_MOSS, w: 4, tall: true },
+  'Emergency Contacts':  { hue: BRAND_HERO_MOSS, w: 0, tall: true },
 }
 
-const DEFAULT_HERO: HeroCfg = { hue: 'from-primary-800 via-primary-900 to-primary-950', tall: true, f: 11, w: 3 }
-
-
-/* ------------------------------------------------------------------ */
-/*  Shape formations - unique decorative geometry per page             */
-/* ------------------------------------------------------------------ */
-
-type ShapeFormation = Array<{ className: string }>
-
-const SHAPE_FORMATIONS: ShapeFormation[] = [
-  // 0 - Top-right cluster + bottom-left accent
-  [
-    { className: 'absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/[0.05]' },
-    { className: 'absolute -right-4 top-2 w-36 h-36 rounded-full border border-white/[0.08]' },
-    { className: 'absolute -left-10 bottom-0 w-40 h-40 rounded-full bg-white/[0.04]' },
-    { className: 'absolute right-12 bottom-6 w-16 h-16 rounded-full border border-white/[0.10]' },
-  ],
-  // 1 - Diagonal drift (top-left → bottom-right)
-  [
-    { className: 'absolute -left-12 -top-12 w-56 h-56 rounded-full bg-white/[0.06]' },
-    { className: 'absolute left-[30%] top-[20%] w-20 h-20 rounded-full border border-white/[0.08]' },
-    { className: 'absolute right-[15%] bottom-[10%] w-32 h-32 rounded-full bg-white/[0.04]' },
-    { className: 'absolute -right-8 -bottom-8 w-48 h-48 rounded-full border border-white/[0.06]' },
-  ],
-  // 2 - Centre constellation
-  [
-    { className: 'absolute left-[40%] -top-10 w-52 h-52 rounded-full bg-white/[0.05]' },
-    { className: 'absolute left-[25%] top-[35%] w-16 h-16 rounded-full border border-white/[0.10]' },
-    { className: 'absolute right-[20%] bottom-4 w-24 h-24 rounded-full bg-white/[0.04]' },
-    { className: 'absolute -left-6 bottom-[20%] w-28 h-28 rounded-full border border-white/[0.07]' },
-  ],
-  // 3 - Bottom-heavy ring pair
-  [
-    { className: 'absolute -right-20 -bottom-20 w-72 h-72 rounded-full border border-white/[0.06]' },
-    { className: 'absolute -right-8 -bottom-8 w-44 h-44 rounded-full border border-white/[0.04]' },
-    { className: 'absolute -left-14 -top-14 w-44 h-44 rounded-full bg-white/[0.05]' },
-    { className: 'absolute right-[30%] top-4 w-14 h-14 rounded-full bg-white/[0.06]' },
-  ],
-  // 4 - Scattered pebbles
-  [
-    { className: 'absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/[0.04]' },
-    { className: 'absolute left-[10%] top-[15%] w-12 h-12 rounded-full bg-white/[0.08]' },
-    { className: 'absolute right-[25%] top-[40%] w-10 h-10 rounded-full border border-white/[0.12]' },
-    { className: 'absolute -left-8 -bottom-8 w-36 h-36 rounded-full border border-white/[0.06]' },
-    { className: 'absolute left-[50%] bottom-3 w-8 h-8 rounded-full bg-white/[0.06]' },
-  ],
-  // 5 - Left pillar + right accent
-  [
-    { className: 'absolute -left-20 -top-20 w-72 h-72 rounded-full border border-white/[0.07]' },
-    { className: 'absolute -left-8 -top-8 w-44 h-44 rounded-full bg-white/[0.05]' },
-    { className: 'absolute right-6 top-6 w-20 h-20 rounded-full border border-white/[0.10]' },
-    { className: 'absolute right-[10%] -bottom-6 w-32 h-32 rounded-full bg-white/[0.03]' },
-  ],
-  // 6 - Floating archipelago
-  [
-    { className: 'absolute right-[5%] -top-6 w-36 h-36 rounded-full bg-white/[0.05]' },
-    { className: 'absolute -left-14 top-[30%] w-40 h-40 rounded-full border border-white/[0.06]' },
-    { className: 'absolute left-[55%] bottom-[15%] w-20 h-20 rounded-full bg-white/[0.06]' },
-    { className: 'absolute right-4 bottom-10 w-12 h-12 rounded-full border border-white/[0.10]' },
-    { className: 'absolute left-[20%] -bottom-4 w-24 h-24 rounded-full bg-white/[0.04]' },
-  ],
-  // 7 - Twin moons
-  [
-    { className: 'absolute -right-16 top-[10%] w-56 h-56 rounded-full bg-white/[0.05]' },
-    { className: 'absolute -left-16 bottom-[5%] w-56 h-56 rounded-full bg-white/[0.05]' },
-    { className: 'absolute left-[45%] top-2 w-14 h-14 rounded-full border border-white/[0.10]' },
-    { className: 'absolute right-[30%] bottom-8 w-10 h-10 rounded-full border border-white/[0.08]' },
-  ],
-  // 8 - Crescent sweep (right arc)
-  [
-    { className: 'absolute -right-24 top-[5%] w-72 h-72 rounded-full border border-white/[0.06]' },
-    { className: 'absolute -right-12 top-[15%] w-48 h-48 rounded-full bg-white/[0.04]' },
-    { className: 'absolute left-[8%] top-[10%] w-16 h-16 rounded-full bg-white/[0.07]' },
-    { className: 'absolute left-[25%] bottom-6 w-20 h-20 rounded-full border border-white/[0.09]' },
-  ],
-  // 9 - Horizon line (mid-band emphasis)
-  [
-    { className: 'absolute -left-16 top-[30%] w-60 h-60 rounded-full bg-white/[0.05]' },
-    { className: 'absolute right-[10%] top-[25%] w-36 h-36 rounded-full border border-white/[0.07]' },
-    { className: 'absolute left-[45%] top-[40%] w-12 h-12 rounded-full bg-white/[0.08]' },
-    { className: 'absolute -right-6 -bottom-10 w-40 h-40 rounded-full border border-white/[0.05]' },
-  ],
-  // 10 - Ascending bubbles (bottom-left → top-right)
-  [
-    { className: 'absolute -left-10 -bottom-14 w-52 h-52 rounded-full bg-white/[0.05]' },
-    { className: 'absolute left-[20%] bottom-[30%] w-18 h-18 rounded-full border border-white/[0.09]' },
-    { className: 'absolute left-[45%] top-[25%] w-14 h-14 rounded-full bg-white/[0.06]' },
-    { className: 'absolute right-[10%] -top-8 w-44 h-44 rounded-full border border-white/[0.06]' },
-    { className: 'absolute right-[30%] top-[15%] w-10 h-10 rounded-full bg-white/[0.07]' },
-  ],
-  // 11 - Solitary giant + orbiting specs
-  [
-    { className: 'absolute left-[15%] -top-20 w-80 h-80 rounded-full bg-white/[0.04]' },
-    { className: 'absolute right-[5%] top-[20%] w-12 h-12 rounded-full border border-white/[0.12]' },
-    { className: 'absolute right-[20%] bottom-[15%] w-8 h-8 rounded-full bg-white/[0.08]' },
-    { className: 'absolute -left-4 bottom-4 w-24 h-24 rounded-full border border-white/[0.06]' },
-  ],
-]
+const DEFAULT_HERO: HeroCfg = { hue: BRAND_HERO_DEEP, tall: true, w: 3 }
 
 /** Returns true when the component is rendered inside the admin layout. */
 // eslint-disable-next-line react-refresh/only-export-components
@@ -354,7 +265,6 @@ export function AdminLayout() {
           {/* ── Shared hero bar - only for non-fullBleed pages ── */}
           {!header.fullBleed && header.title && header.title !== 'Dashboard' ? (() => {
             const cfg = PAGE_HERO_CONFIG[header.title] ?? DEFAULT_HERO
-            const shapes = SHAPE_FORMATIONS[cfg.f % SHAPE_FORMATIONS.length]
             return (
               <div
                 className={cn(
@@ -371,11 +281,6 @@ export function AdminLayout() {
                   paddingTop: cfg.tall ? '3.5rem' : '2rem',
                 }}
               >
-                {/* Decorative shapes - unique formation per page */}
-                {shapes.map((s, i) => (
-                  <div key={i} className={cn('pointer-events-none', s.className)} />
-                ))}
-
                 <div className="relative z-10">
                   {/* Back button - dark circle, consistent across all sub-pages */}
                   {showBackButton && (

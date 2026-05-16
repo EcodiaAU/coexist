@@ -263,12 +263,6 @@ export default function PublicCollectivePage() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
         </div>
 
-        {/* Decorative blobs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-          <div className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-moss-400/8 to-transparent" />
-          <div className="absolute top-8 -left-8 w-32 h-32 rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/4 to-transparent" />
-        </div>
-
         {/* Hero content */}
         <motion.div
           className="relative z-10 px-5 pt-12 pb-8 sm:px-8 sm:pt-16 sm:pb-12 max-w-2xl mx-auto"
@@ -389,12 +383,6 @@ export default function PublicCollectivePage() {
           variants={fadeUp}
           className="rounded-2xl bg-gradient-to-br from-moss-600 via-moss-700 to-primary-800 p-6 text-center relative overflow-hidden"
         >
-          {/* Decorative */}
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/[0.03] to-transparent" />
-            <div className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/[0.025] to-transparent" />
-          </div>
-
           <div className="relative z-10">
             <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-3">
               <TreePine size={26} className="text-white" />

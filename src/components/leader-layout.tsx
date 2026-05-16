@@ -90,58 +90,26 @@ export function useIsLeaderLayout() {
 /*  Per-page hero config - earthy/nature-inspired gradients            */
 /* ------------------------------------------------------------------ */
 
-interface LeaderHeroCfg { hue: string; defaultSubtitle: string; f: number; w: number }
+interface LeaderHeroCfg { hue: string; defaultSubtitle: string; w: number }
+
+// All leader heroes standardised to Co-Exist sage/olive/green tones to
+// match the profile-page hero. 2026-05-16 Tate: every hero in the app
+// must read as the same brand-green family - no bark, no warm tones.
+const LEADER_HERO_MOSS    = 'from-moss-600 via-moss-700 to-primary-900'
+const LEADER_HERO_PRIMARY = 'from-primary-700 via-primary-800 to-moss-900'
 
 const PAGE_HERO_CONFIG: Record<string, LeaderHeroCfg> = {
-  'Dashboard':      { hue: 'from-moss-600 via-moss-700 to-primary-900',    defaultSubtitle: 'Your collective at a glance',              f: 0, w: 1 },
-  'Events':         { hue: 'from-moss-600 via-primary-700 to-primary-900', defaultSubtitle: 'Manage and create conservation events',     f: 1, w: 2 },
-  'Tasks':          { hue: 'from-bark-600 via-bark-700 to-primary-900',    defaultSubtitle: 'Tasks and personal to-dos',                  f: 2, w: 3 },
-  'Reports':        { hue: 'from-primary-700 via-primary-800 to-moss-900', defaultSubtitle: 'Generate impact and activity reports',       f: 4, w: 1 },
-  'Create Event':   { hue: 'from-moss-500 via-moss-600 to-primary-800',   defaultSubtitle: 'Plan a new conservation activity',           f: 0, w: 2 },
+  'Dashboard':      { hue: LEADER_HERO_MOSS,    defaultSubtitle: 'Your collective at a glance',          w: 1 },
+  'Events':         { hue: LEADER_HERO_MOSS,    defaultSubtitle: 'Manage and create conservation events', w: 2 },
+  'Tasks':          { hue: LEADER_HERO_PRIMARY, defaultSubtitle: 'Tasks and personal to-dos',             w: 3 },
+  'Reports':        { hue: LEADER_HERO_PRIMARY, defaultSubtitle: 'Generate impact and activity reports',  w: 1 },
+  'Create Event':   { hue: LEADER_HERO_MOSS,    defaultSubtitle: 'Plan a new conservation activity',      w: 2 },
 }
 
-const DEFAULT_HERO: LeaderHeroCfg = { hue: 'from-moss-600 via-moss-700 to-primary-900', defaultSubtitle: '', f: 2, w: 1 }
+const DEFAULT_HERO: LeaderHeroCfg = { hue: LEADER_HERO_MOSS, defaultSubtitle: '', w: 1 }
 
 /* Wave indices map to shared WAVE_PATHS from wave-transition.tsx:
    0 = gentle hills, 1 = soft dunes, 2 = double crest, 3 = asymmetric shelf, 4 = choppy reef */
-
-/* ------------------------------------------------------------------ */
-/*  Shape formations - unique decorative geometry per page             */
-/* ------------------------------------------------------------------ */
-
-type LeaderShapeFormation = Array<{ className: string }>
-
-const LEADER_FORMATIONS: LeaderShapeFormation[] = [
-  // 0 - Canopy cluster (top-heavy)
-  [
-    { className: 'absolute -right-14 -top-14 w-60 h-60 rounded-full bg-white/[0.06]' },
-    { className: 'absolute -right-2 top-4 w-32 h-32 rounded-full border border-white/[0.09]' },
-    { className: 'absolute -left-8 bottom-2 w-36 h-36 rounded-full bg-white/[0.04]' },
-    { className: 'absolute right-10 bottom-8 w-14 h-14 rounded-full border border-white/[0.10]' },
-  ],
-  // 1 - Understory scatter
-  [
-    { className: 'absolute -left-16 -top-16 w-52 h-52 rounded-full bg-white/[0.05]' },
-    { className: 'absolute left-[35%] top-[25%] w-20 h-20 rounded-full border border-white/[0.10]' },
-    { className: 'absolute -right-10 -bottom-10 w-44 h-44 rounded-full border border-white/[0.06]' },
-    { className: 'absolute right-[15%] top-2 w-12 h-12 rounded-full bg-white/[0.07]' },
-  ],
-  // 2 - Root system (bottom-heavy rings)
-  [
-    { className: 'absolute -right-20 -bottom-16 w-64 h-64 rounded-full border border-white/[0.07]' },
-    { className: 'absolute -right-6 -bottom-4 w-40 h-40 rounded-full border border-white/[0.04]' },
-    { className: 'absolute -left-12 -top-12 w-40 h-40 rounded-full bg-white/[0.05]' },
-    { className: 'absolute left-[50%] top-6 w-10 h-10 rounded-full bg-white/[0.06]' },
-  ],
-  // 3 - Creek stones (scattered small)
-  [
-    { className: 'absolute -right-8 -top-8 w-44 h-44 rounded-full bg-white/[0.04]' },
-    { className: 'absolute left-[12%] top-[18%] w-10 h-10 rounded-full bg-white/[0.08]' },
-    { className: 'absolute right-[28%] top-[42%] w-8 h-8 rounded-full border border-white/[0.12]' },
-    { className: 'absolute -left-6 -bottom-6 w-32 h-32 rounded-full border border-white/[0.06]' },
-    { className: 'absolute left-[48%] bottom-4 w-6 h-6 rounded-full bg-white/[0.07]' },
-  ],
-]
 
 /* ------------------------------------------------------------------ */
 /*  Nav items                                                          */
@@ -266,7 +234,6 @@ export function LeaderLayout() {
           {!header.fullBleed && header.title ? (() => {
             const cfg = PAGE_HERO_CONFIG[header.title] ?? DEFAULT_HERO
             const subtitle = header.subtitle ?? cfg.defaultSubtitle
-            const shapes = LEADER_FORMATIONS[cfg.f % LEADER_FORMATIONS.length]
             return (
               <div
                 className={cn(
@@ -277,11 +244,6 @@ export function LeaderLayout() {
                   'before:absolute before:inset-x-0 before:bottom-full before:h-[200px] before:bg-inherit',
                 )}
               >
-                {/* Decorative shapes - unique formation per page */}
-                {shapes.map((s, i) => (
-                  <div key={i} className={cn('pointer-events-none', s.className)} />
-                ))}
-
                 <div className="relative z-10">
                   <div className="flex items-end justify-between gap-4 flex-wrap">
                     <div>

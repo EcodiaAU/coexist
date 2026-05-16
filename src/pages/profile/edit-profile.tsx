@@ -282,12 +282,6 @@ export default function EditProfilePage() {
           className="relative -mx-4 lg:-mx-6 overflow-hidden"
         >
           <div className="bg-gradient-to-br from-primary-500 via-primary-400 to-moss-400 py-8">
-            {/* Decorative shapes */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/[0.06]" />
-              <div className="absolute bottom-0 -left-8 w-28 h-28 rounded-full bg-white/[0.04]" />
-            </div>
-
             <div className="relative z-10 flex flex-col items-center">
               <div className="relative">
                 <div className="ring-4 ring-white/30 rounded-full overflow-hidden flex items-center justify-center aspect-square w-24">

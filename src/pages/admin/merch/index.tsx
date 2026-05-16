@@ -65,12 +65,9 @@ export default function AdminMerchPage() {
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="visible" className="min-h-full">
-      {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-moss-700 via-primary-800 to-secondary-800">
-        {/* Decorative elements */}
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/5" />
-        <div className="absolute -left-10 bottom-0 w-40 h-40 rounded-full bg-white/5" />
-        <div className="absolute right-8 bottom-8 w-20 h-20 rounded-full border border-white/10" />
+      {/* Hero - brand sage gradient, no decorative circles
+          (2026-05-16 Tate: standardise heroes to plain sage gradients). */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-moss-700 via-primary-800 to-primary-900">
 
         <div
           className="relative z-10 px-4 sm:px-6 lg:px-8 pt-10 pb-14 text-center"
