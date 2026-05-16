@@ -613,7 +613,7 @@ export default function AdminReportsPage() {
         value={exportTypes.length}
         label="Quick Exports"
         icon={<Download size={18} />}
-        color="info"
+        color="moss"
         delay={0}
         reducedMotion={!!shouldReduceMotion}
       />

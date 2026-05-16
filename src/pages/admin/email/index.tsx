@@ -50,7 +50,7 @@ export default function AdminEmailPage() {
       ) : stats ? (
         <AdminHeroStatRow>
           <AdminHeroStat value={stats.subscribers} label="Subscribers" icon={<Users size={18} />} color="primary" delay={0} reducedMotion={!!shouldReduceMotion} />
-          <AdminHeroStat value={stats.campaignsSent} label="Campaigns Sent" icon={<Send size={18} />} color="info" delay={1} reducedMotion={!!shouldReduceMotion} />
+          <AdminHeroStat value={stats.campaignsSent} label="Campaigns Sent" icon={<Send size={18} />} color="moss" delay={1} reducedMotion={!!shouldReduceMotion} />
           <AdminHeroStat value={stats.bounces} label="Bounces" icon={<XCircle size={18} />} color="warning" delay={2} reducedMotion={!!shouldReduceMotion} />
           <AdminHeroStat value={stats.suppressed} label="Suppressed" icon={<AlertTriangle size={18} />} color="error" delay={3} reducedMotion={!!shouldReduceMotion} />
         </AdminHeroStatRow>

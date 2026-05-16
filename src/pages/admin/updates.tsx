@@ -1060,7 +1060,7 @@ export default function AdminUpdatesPage() {
   const heroStats = useMemo(() => (
     <AdminHeroStatRow>
       <AdminHeroStat value={stats.total} label="Total" icon={<Megaphone size={18} />} color="primary" delay={0} reducedMotion={rm} />
-      <AdminHeroStat value={stats.pinned} label="Pinned" icon={<Pin size={18} />} color="info" delay={1} reducedMotion={rm} />
+      <AdminHeroStat value={stats.pinned} label="Pinned" icon={<Pin size={18} />} color="moss" delay={1} reducedMotion={rm} />
       <AdminHeroStat value={stats.urgent} label="Urgent" icon={<AlertTriangle size={18} />} color="warning" delay={2} reducedMotion={rm} />
       <AdminHeroStat value={stats.collective} label="Targeted" icon={<Users size={18} />} color="sprout" delay={3} reducedMotion={rm} />
     </AdminHeroStatRow>

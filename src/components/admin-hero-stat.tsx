@@ -24,9 +24,11 @@ export const HERO_STAT_COLORS = {
   bark:     { icon: 'bg-bark-50 text-bark-600',         value: 'text-neutral-900', delta: 'text-bark-600 bg-bark-50' },
   secondary:{ icon: 'bg-secondary-50 text-secondary-600', value: 'text-neutral-900', delta: 'text-secondary-600 bg-secondary-50' },
 
-  // Blues / cool
-  info:     { icon: 'bg-info-50 text-info-600',         value: 'text-neutral-900', delta: 'text-info-600 bg-info-50' },
-  sky:      { icon: 'bg-sky-50 text-sky-600',           value: 'text-neutral-900', delta: 'text-sky-600 bg-sky-50' },
+  // (was Blues / cool) - remapped to sage/moss greens to enforce the
+  // brand-green hero rule (2026-05-16 Tate). Keys kept for backwards
+  // compatibility with callers that haven't migrated yet.
+  info:     { icon: 'bg-moss-50 text-moss-600',         value: 'text-neutral-900', delta: 'text-moss-600 bg-moss-50' },
+  sky:      { icon: 'bg-primary-50 text-primary-600',   value: 'text-neutral-900', delta: 'text-primary-600 bg-primary-50' },
 
   // Warm / accent
   warning:  { icon: 'bg-warning-50 text-warning-600',   value: 'text-neutral-900', delta: 'text-warning-600 bg-warning-50' },

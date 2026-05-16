@@ -242,7 +242,7 @@ const ACTIVITY_BAR_COLORS: Record<string, string> = {
   ecosystem_restoration: 'bg-sprout-500',
   nature_hike: 'bg-primary-500',
   camp_out: 'bg-moss-600',
-  spotlighting: 'bg-indigo-500',
+  spotlighting: 'bg-primary-700',
   other: 'bg-neutral-500',
 }
 

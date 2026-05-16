@@ -112,10 +112,10 @@ const STATUS_CONFIG: Record<string, {
     glow: 'ring-1 ring-warning-100',
   },
   reviewed: {
-    label: 'Under Review', color: 'text-info-800', bg: 'bg-info-100',
-    border: 'border-info-200', icon: <Eye size={12} />,
-    strip: 'bg-gradient-to-r from-info-400 to-info-500',
-    glow: 'ring-1 ring-info-100',
+    label: 'Under Review', color: 'text-moss-800', bg: 'bg-moss-100',
+    border: 'border-moss-200', icon: <Eye size={12} />,
+    strip: 'bg-gradient-to-r from-moss-400 to-moss-500',
+    glow: 'ring-1 ring-moss-100',
   },
   accepted: {
     label: 'Accepted', color: 'text-success-800', bg: 'bg-success-100',

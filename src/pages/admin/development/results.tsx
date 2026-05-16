@@ -37,7 +37,7 @@ export default function AdminDevelopmentResultsPage() {
         <AdminHeroStat value={analytics?.totalLearners ?? 0} label="Learners" icon={<Users size={17} />} color="primary" delay={0} reducedMotion={rm} />
         <AdminHeroStat value={analytics?.avgCompletion ?? 0} label="Avg Completion" icon={<TrendingUp size={17} />} color="moss" sub="%" delay={1} reducedMotion={rm} />
         <AdminHeroStat value={analytics?.completedModules ?? 0} label="Modules Done" icon={<CheckCircle2 size={17} />} color="bark" delay={2} reducedMotion={rm} />
-        <AdminHeroStat value={analytics?.avgQuizScore ?? 0} label="Avg Quiz" icon={<Target size={17} />} color="sky" sub="%" delay={3} reducedMotion={rm} />
+        <AdminHeroStat value={analytics?.avgQuizScore ?? 0} label="Avg Quiz" icon={<Target size={17} />} color="sprout" sub="%" delay={3} reducedMotion={rm} />
       </AdminHeroStatRow>
     ),
   })

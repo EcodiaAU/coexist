@@ -361,7 +361,7 @@ export default function AdminDevelopmentPage() {
         <AdminHeroStat value={stats?.totalModules ?? 0} label="Modules" icon={<BookOpen size={17} />} color="bark" delay={0} reducedMotion={rm} />
         <AdminHeroStat value={stats?.publishedModules ?? 0} label="Published" icon={<CheckCircle2 size={17} />} color="moss" delay={1} reducedMotion={rm} />
         <AdminHeroStat value={stats?.totalSections ?? 0} label="Sections" icon={<Layers size={17} />} color="primary" delay={2} reducedMotion={rm} />
-        <AdminHeroStat value={stats?.totalQuizzes ?? 0} label="Quizzes" icon={<CircleDot size={17} />} color="sky" delay={3} reducedMotion={rm} />
+        <AdminHeroStat value={stats?.totalQuizzes ?? 0} label="Quizzes" icon={<CircleDot size={17} />} color="sprout" delay={3} reducedMotion={rm} />
       </AdminHeroStatRow>
     ),
     actions: (

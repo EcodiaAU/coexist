@@ -125,18 +125,21 @@ html {
   --color-error-900: #652424;
   --color-error:     #f87171;
 
-  /* Semantic - Info (Sage teal) */
-  --color-info-50:  #f0f5fa;
-  --color-info-100: #dce8f4;
-  --color-info-200: #b8d0e9;
-  --color-info-300: #89b2d8;
-  --color-info-400: #60a5fa;
-  --color-info-500: #4882c8;
-  --color-info-600: #3868a6;
-  --color-info-700: #2d5285;
-  --color-info-800: #254368;
-  --color-info-900: #1e3650;
-  --color-info:     #60a5fa;
+  /* Semantic - Info (was blue; remapped to moss green per Tate
+     2026-05-16: no blue/bluish gradients anywhere in the app). The
+     scale shape (50→900) matches the original info ramp so existing
+     bg-info-100 / text-info-700 etc. retain contrast relationships. */
+  --color-info-50:  #f0f6f5;
+  --color-info-100: #dcece9;
+  --color-info-200: #b8d9d3;
+  --color-info-300: #88bfb5;
+  --color-info-400: #5ea198;
+  --color-info-500: #47867d;
+  --color-info-600: #396c65;
+  --color-info-700: #305752;
+  --color-info-800: #294744;
+  --color-info-900: #253c39;
+  --color-info:     #5ea198;
 
   /* Semantic - Plum (special statuses, orders, violet replacement) */
   --color-plum-50:  #f6f3f8;
@@ -174,17 +177,20 @@ html {
   --color-coral-800: #762e29;
   --color-coral-900: #632a26;
 
-  /* Semantic - Sky (beach/water activities) */
-  --color-sky-50:  #f0f7fb;
-  --color-sky-100: #dcedf6;
-  --color-sky-200: #b6d9ed;
-  --color-sky-300: #85bfdf;
-  --color-sky-400: #5ba3cc;
-  --color-sky-500: #4388b3;
-  --color-sky-600: #366e95;
-  --color-sky-700: #2d587a;
-  --color-sky-800: #274a65;
-  --color-sky-900: #243e55;
+  /* Semantic - Sky (was blue; remapped to a lighter sage/sprout green
+     per Tate 2026-05-16: no blue/bluish gradients anywhere in the
+     app). Lighter than info-* so the two still read as distinct hues
+     when used side-by-side. */
+  --color-sky-50:  #f3f6ec;
+  --color-sky-100: #e4ecd2;
+  --color-sky-200: #cad9ab;
+  --color-sky-300: #adc382;
+  --color-sky-400: #94ad62;
+  --color-sky-500: #7d964c;
+  --color-sky-600: #62783b;
+  --color-sky-700: #4f6230;
+  --color-sky-800: #404f28;
+  --color-sky-900: #354121;
 
   /* Semantic - Moss (teal/cyan replacement, monitoring) */
   --color-moss-50:  #f0f6f5;

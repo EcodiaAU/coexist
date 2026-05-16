@@ -337,7 +337,7 @@ export default function AdminContactsPage() {
     () => (
       <AdminHeroStatRow>
         <AdminHeroStat value={stats?.total ?? 0} label="Total" icon={<Phone size={18} />} color="primary" delay={0} reducedMotion={rm} />
-        <AdminHeroStat value={stats?.categories ?? 0} label="Categories" icon={<MapPin size={18} />} color="info" delay={1} reducedMotion={rm} />
+        <AdminHeroStat value={stats?.categories ?? 0} label="Categories" icon={<MapPin size={18} />} color="moss" delay={1} reducedMotion={rm} />
         <AdminHeroStat value={stats?.stateSpecific ?? 0} label="State-Specific" icon={<MapPin size={18} />} color="sprout" delay={2} reducedMotion={rm} />
       </AdminHeroStatRow>
     ),

@@ -83,7 +83,7 @@ const activityTagStyle: Record<string, { bg: string; text: string; iconBg: strin
   ecosystem_restoration:   { bg: 'bg-sprout-600/90',  text: 'text-white', iconBg: 'bg-sprout-100',  iconText: 'text-sprout-700' },
   nature_hike:             { bg: 'bg-bark-500/90',    text: 'text-white', iconBg: 'bg-bark-100',    iconText: 'text-bark-700' },
   camp_out:                { bg: 'bg-amber-600/90',   text: 'text-white', iconBg: 'bg-amber-100',   iconText: 'text-amber-700' },
-  spotlighting:            { bg: 'bg-indigo-500/90',  text: 'text-white', iconBg: 'bg-indigo-100',  iconText: 'text-indigo-700' },
+  spotlighting:            { bg: 'bg-primary-700/90', text: 'text-white', iconBg: 'bg-primary-100', iconText: 'text-primary-700' },
   other:                   { bg: 'bg-neutral-600/90', text: 'text-white', iconBg: 'bg-neutral-100', iconText: 'text-neutral-700' },
 }
 
