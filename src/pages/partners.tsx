@@ -102,10 +102,10 @@ function PartnersSkeleton() {
 /* ------------------------------------------------------------------ */
 
 const TYPE_GRADIENTS: Record<string, string> = {
-  corporate: 'from-sky-600 to-sky-800',
+  corporate: 'from-primary-700 to-primary-900',
   ngo: 'from-sprout-600 to-primary-700',
-  government: 'from-plum-600 to-plum-800',
-  community: 'from-warning-500 to-bark-600',
+  government: 'from-moss-700 to-primary-800',
+  community: 'from-moss-500 to-bark-600',
 }
 
 /* ------------------------------------------------------------------ */

@@ -1685,7 +1685,7 @@ export default function EventDetailPage() {
             <div className="flex items-center gap-2.5 mb-1">
               <div className={cn(
                 'w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br',
-                alreadyInvited ? 'from-sky-500 to-sky-600' : 'from-amber-500 to-amber-600',
+                alreadyInvited ? 'from-moss-500 to-moss-600' : 'from-sprout-500 to-sprout-600',
               )}>
                 {alreadyInvited ? <Bell size={15} className="text-white" /> : <Send size={15} className="text-white" />}
               </div>

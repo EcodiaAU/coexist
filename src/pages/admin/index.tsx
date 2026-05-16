@@ -495,7 +495,7 @@ export default function AdminDashboardPage() {
                 label="Email"
                 sub="Campaigns and subscribers"
                 icon={<BarChart3 size={18} />}
-                accent="bg-gradient-to-br from-sky-500 to-sky-600"
+                accent="bg-gradient-to-br from-moss-500 to-moss-600"
               />
               <QuickLink
                 to="/admin/impact"

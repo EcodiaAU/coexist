@@ -119,7 +119,7 @@ const ICON_TO_COLOR: Record<string, HeroStatColor> = {
 /** Map metric icon keys to bar chart gradient classes */
 const ICON_TO_BAR: Record<string, string> = {
   tree: 'from-moss-400 to-moss-500', leaf: 'from-sprout-400 to-sprout-500',
-  weed: 'from-sprout-400 to-sprout-500', trash: 'from-sky-400 to-sky-500',
+  weed: 'from-sprout-400 to-sprout-500', trash: 'from-bark-400 to-bark-500',
   wave: 'from-info-400 to-info-500', eye: 'from-warning-400 to-warning-500',
   area: 'from-plum-400 to-plum-500', clock: 'from-bark-400 to-bark-500',
   sparkle: 'from-warning-400 to-warning-500', droplet: 'from-info-400 to-info-500',

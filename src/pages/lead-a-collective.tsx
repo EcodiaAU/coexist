@@ -411,7 +411,7 @@ export default function LeadACollectivePage() {
           className="rounded-2xl overflow-hidden bg-white shadow-sm border border-neutral-100"
         >
           {/* Colored section header */}
-          <div className="bg-gradient-to-r from-sky-600 to-sky-700 px-5 py-3">
+          <div className="bg-gradient-to-r from-moss-600 to-moss-700 px-5 py-3">
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-white/80 flex items-center gap-1.5">
               <MapPin size={12} />
               Location

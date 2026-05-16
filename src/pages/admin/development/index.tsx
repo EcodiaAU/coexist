@@ -166,7 +166,7 @@ function QuizRow({ quiz, onDelete }: { quiz: DevQuiz; onDelete: () => void }) {
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       className="group flex items-center gap-3 p-3.5 rounded-2xl bg-white shadow-sm transition-shadow"
     >
-      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 shadow-sm shrink-0">
+      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-moss-400 to-moss-600 shadow-sm shrink-0">
         <CircleDot size={17} className="text-white" />
       </div>
       <div className="flex-1 min-w-0">
@@ -496,7 +496,7 @@ export default function AdminDevelopmentPage() {
       <motion.section variants={fadeUp} className="space-y-3">
         <SectionHeader
           icon={<CircleDot size={17} className="text-white" />}
-          iconBg="bg-gradient-to-br from-sky-400 to-sky-600 shadow-sm"
+          iconBg="bg-gradient-to-br from-moss-400 to-moss-600 shadow-sm"
           label="Quizzes"
           count={filteredQuizzes.length}
           newTo="/admin/development/quizzes/new"

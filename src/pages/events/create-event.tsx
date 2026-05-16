@@ -228,7 +228,7 @@ const STEPS = [
     title: 'Invite',
     subtitle: 'Spread the word',
     icon: <Users size={20} />,
-    gradient: 'from-moss-400/15 via-sky-400/10 to-transparent',
+    gradient: 'from-moss-400/15 via-sprout-400/10 to-transparent',
     accentColor: 'text-moss-600',
     accentBg: 'bg-moss-500',
     cardBorder: 'border-l-moss-400',
@@ -1206,7 +1206,7 @@ function StepInvite({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
           >
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-moss-50 to-sky-50 border border-moss-200/60">
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-moss-50 to-sprout-50 border border-moss-200/60">
               <div className="w-9 h-9 rounded-xl bg-moss-500 flex items-center justify-center shrink-0">
                 <Users size={16} className="text-white" />
               </div>
