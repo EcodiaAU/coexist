@@ -129,7 +129,7 @@ function EventListSkeleton() {
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
       {Array.from({ length: 4 }, (_, i) => (
-        <div key={i} className="rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden animate-pulse">
+        <div key={i} className="rounded-2xl bg-white ring-1 ring-primary-100 shadow-md shadow-primary-900/5 overflow-hidden animate-pulse">
           <div className="bg-neutral-100" style={{ aspectRatio: '2/1' }} />
           <div className="p-4 space-y-3">
             <div className="h-4 bg-neutral-100 rounded-lg w-3/4" />
@@ -198,7 +198,7 @@ export default function ExplorePage() {
   }, [queryClient])
 
   return (
-    <Page noBackground className="!px-0 bg-neutral-50">
+    <Page noBackground className="!px-0 bg-primary-50/50">
       <div className="relative min-h-full">
 
         {/* ============================================================ */}
@@ -305,7 +305,7 @@ export default function ExplorePage() {
                                 watermark={event.activity_type}
                                 onClick={() => navigate(`/events/${event.id}`)}
                                 aria-label={event.title}
-                                className="bg-white shadow-sm border border-neutral-100 rounded-2xl"
+                                className="bg-white shadow-md shadow-primary-900/5 ring-1 ring-primary-100 rounded-2xl"
                               >
                                 <div className="relative">
                                   {event.cover_image_url ? (

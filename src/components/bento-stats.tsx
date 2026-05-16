@@ -66,35 +66,44 @@ export function BentoStatCard({
           : { duration: 0.45, delay: 0.08 + delay * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }
       }
       className={cn(
-        'relative overflow-hidden rounded-3xl bg-neutral-50 shadow-sm',
+        'relative overflow-hidden shadow-sm',
+        // Compact uses a smaller corner radius + a tinted surface so the
+        // cards have visible contrast against a white page background
+        // (2026-05-16 Tate feedback: the previous bg-neutral-50 cards
+        // blended into the white leader-page background).
+        compact
+          ? 'rounded-2xl bg-primary-50/70 ring-1 ring-primary-100'
+          : 'rounded-3xl bg-neutral-50',
         hero
           ? compact
-            ? 'p-3.5 sm:p-4'
+            ? 'p-2.5 sm:p-3'
             : 'p-5 sm:p-6'
           : compact
-            ? 'p-2.5 sm:p-3'
+            ? 'p-2 sm:p-2.5'
             : 'p-4 sm:p-5',
         className,
       )}
       aria-label={`${label}: ${value}${unit ? ` ${unit}` : ''}`}
     >
       {/* Top row: icon badge + optional comparison badge */}
-      <div className={cn('flex items-start justify-between', compact ? 'mb-1.5' : 'mb-3')}>
+      <div className={cn('flex items-start justify-between', compact ? 'mb-1' : 'mb-3')}>
         <span
           className={cn(
-            'inline-flex items-center justify-center rounded-xl',
-            'bg-neutral-100 text-neutral-700',
+            'inline-flex items-center justify-center rounded-lg',
+            compact
+              ? 'bg-white/70 text-primary-700'
+              : 'bg-neutral-100 text-neutral-700',
             hero
-              ? compact ? 'w-9 h-9' : 'w-12 h-12'
-              : compact ? 'w-7 h-7' : 'w-10 h-10',
+              ? compact ? 'w-7 h-7' : 'w-12 h-12'
+              : compact ? 'w-6 h-6' : 'w-10 h-10',
           )}
           aria-hidden="true"
         >
           <span
             className={
               hero
-                ? compact ? '[&>svg]:w-4 [&>svg]:h-4' : '[&>svg]:w-6 [&>svg]:h-6'
-                : compact ? '[&>svg]:w-3.5 [&>svg]:h-3.5' : '[&>svg]:w-5 [&>svg]:h-5'
+                ? compact ? '[&>svg]:w-3.5 [&>svg]:h-3.5' : '[&>svg]:w-6 [&>svg]:h-6'
+                : compact ? '[&>svg]:w-3 [&>svg]:h-3' : '[&>svg]:w-5 [&>svg]:h-5'
             }
           >
             {icon}
@@ -113,13 +122,13 @@ export function BentoStatCard({
         className={cn(
           'font-heading font-extrabold tabular-nums leading-none tracking-tight text-neutral-900',
           hero
-            ? compact ? 'text-2xl sm:text-3xl' : 'text-4xl sm:text-5xl'
-            : compact ? 'text-lg sm:text-xl' : 'text-2xl sm:text-3xl',
+            ? compact ? 'text-lg sm:text-xl' : 'text-4xl sm:text-5xl'
+            : compact ? 'text-base sm:text-lg' : 'text-2xl sm:text-3xl',
         )}
       >
         {formatted}
         {unit && (
-          <span className={cn('font-bold ml-1 text-neutral-500', compact ? 'text-xs' : 'text-base')}>
+          <span className={cn('font-bold ml-1 text-neutral-500', compact ? 'text-[10px]' : 'text-base')}>
             {unit}
           </span>
         )}
@@ -128,11 +137,9 @@ export function BentoStatCard({
       {/* Label */}
       <p
         className={cn(
-          'font-semibold uppercase tracking-wider text-neutral-600',
-          compact ? 'mt-0.5' : 'mt-1.5',
-          hero
-            ? compact ? 'text-[10px]' : 'text-xs'
-            : 'text-[10px]',
+          'font-semibold uppercase tracking-wider',
+          compact ? 'text-primary-700/80 mt-0.5 text-[9px]' : 'text-neutral-600 mt-1.5',
+          !compact && (hero ? 'text-xs' : 'text-[10px]'),
         )}
       >
         {label}
@@ -245,7 +252,13 @@ export function BentoStatGrid({
   const shouldAnimate = !animateInView || inView
 
   const items = Children.toArray(children).filter(isValidElement)
-  const layout = getLayout(items.length)
+  // Compact: uniform 2-col mobile / 4-col desktop grid - no hero promotion,
+  // no spanning cards - so the row stays a single short band instead of a
+  // multi-row bento (2026-05-16 Tate feedback: leader-page stats were
+  // eating too much vertical real estate).
+  const layout = compact
+    ? items.map(() => [1, 1, false] as [number, number, boolean])
+    : getLayout(items.length)
 
   return (
     <motion.div

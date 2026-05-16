@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, Suspense, startTransition } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef, Suspense, startTransition } from 'react'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
@@ -745,9 +745,19 @@ export default function LogImpactPage() {
     return () => window.removeEventListener('beforeunload', handler)
   }, [isDirty])
 
+  // Set when the user confirms Discard - the next popstate is the
+  // intentional navigation and must NOT be intercepted (otherwise the
+  // sheet re-opens immediately and traps the user on the page).
+  // 2026-05-16 Tate feedback: Discard changes was a dead button.
+  const isLeavingRef = useRef(false)
+
   useEffect(() => {
     if (!isDirty) return
     const handlePopState = () => {
+      if (isLeavingRef.current) {
+        isLeavingRef.current = false
+        return
+      }
       window.history.pushState(null, '', window.location.href)
       setShowLeaveSheet(true)
     }
@@ -757,6 +767,7 @@ export default function LogImpactPage() {
   }, [isDirty])
 
   const handleConfirmLeave = useCallback(() => {
+    isLeavingRef.current = true
     setShowLeaveSheet(false)
     navigate(-1)
   }, [navigate])

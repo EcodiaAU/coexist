@@ -1130,7 +1130,11 @@ export default function EventDetailPage() {
                 </div>
                 <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Check-in Code</span>
               </button>
-              {isLeaderOrAbove && (
+              {/* Only show Log Impact when impact hasn't been logged yet -
+                  otherwise the action is redundant (the logged impact is
+                  visible in the Impact Summary section below).
+                  2026-05-16 Tate feedback. */}
+              {isLeaderOrAbove && !event.impact && (
                 <button
                   type="button"
                   onClick={() => navigate(`/events/${event.id}/impact`)}
