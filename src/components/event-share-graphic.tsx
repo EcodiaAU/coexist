@@ -181,13 +181,21 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
       ...offscreenStyle,
     }
 
-    /* Size-responsive layout values */
+    /* Size-responsive layout values.
+     *
+     * Bottom padding is large enough to keep the entire info stack
+     * (title / date / location / store badges / footer line) out of the
+     * platform safe-area cuts. IG Story bottom safe-zone is ~250px (caption
+     * input + bottom nav); IG feed posts get clipped by the engagement bar
+     * on save-to-camera-roll on some Android OEMs. 2026-05-16 Tate feedback:
+     * the previous 60-84px values were too tight and the bottom UI was
+     * getting cut off when the share image was saved. */
     const isStory    = size === 'story'
     const isPortrait = size === 'portrait'
 
     const sidePad   = isStory ? 72  : 64
     const topPad    = isStory ? 64  : 52
-    const btmPad    = isStory ? 84  : 60
+    const btmPad    = isStory ? 260 : isPortrait ? 150 : 120
     const logoSize  = isStory ? 120 : isPortrait ? 104 : 96
     const titleSize = isStory ? 100 : isPortrait ? 86 : 74
     const dateSize  = isStory ? 40  : isPortrait ? 35 : 31
