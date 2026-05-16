@@ -48,9 +48,9 @@ const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
   marine: {
     title: 'Marine Wildlife',
     icon: <Waves size={18} />,
-    gradient: 'from-sky-500 to-sky-600',
-    ringColor: 'ring-sky-200',
-    phoneColor: 'text-sky-500',
+    gradient: 'from-primary-600 to-moss-700',
+    ringColor: 'ring-primary-200',
+    phoneColor: 'text-primary-600',
   },
   poison: {
     title: 'Poisoning & Snakebite',
