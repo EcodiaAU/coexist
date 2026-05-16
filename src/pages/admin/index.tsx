@@ -409,12 +409,12 @@ export default function AdminDashboardPage() {
 
           {/* ── Primary stats ── */}
           <motion.div variants={rm ? undefined : scaleIn}>
-            <BentoStatGrid>
-              <BentoStatCard value={dateRange === 'all' ? (data?.totalMembers ?? 0) : (data?.periodMembers ?? 0)}  label={dateRange === 'all' ? 'Members' : 'New Members'}  icon={<Users size={18} />}       theme="primary" />
-              <BentoStatCard value={data?.totalCollectives ?? 0} label="Collectives"   icon={<MapPin size={16} />}      theme="moss" />
-              <BentoStatCard value={dateRange === 'all' ? (data?.totalEvents ?? 0) : (data?.periodEvents ?? 0)}    label="Events Run"    icon={<CalendarDays size={16} />} theme="warning" />
-              <BentoStatCard value={data?.totalAttendees ?? 0}   label="Attendees"     icon={<Users size={16} />}       theme="sky" />
-              <BentoStatCard value={data?.totalHours ?? 0}       label="Vol. Hours"    icon={<Clock size={16} />}       theme="bark" unit="hrs" />
+            <BentoStatGrid compact>
+              <BentoStatCard value={dateRange === 'all' ? (data?.totalMembers ?? 0) : (data?.periodMembers ?? 0)}  label={dateRange === 'all' ? 'Members' : 'New Members'}  icon={<Users size={16} />}       theme="primary" />
+              <BentoStatCard value={data?.totalCollectives ?? 0} label="Collectives"   icon={<MapPin size={14} />}      theme="moss" />
+              <BentoStatCard value={dateRange === 'all' ? (data?.totalEvents ?? 0) : (data?.periodEvents ?? 0)}    label="Events Run"    icon={<CalendarDays size={14} />} theme="warning" />
+              <BentoStatCard value={data?.totalAttendees ?? 0}   label="Attendees"     icon={<Users size={14} />}       theme="sky" />
+              <BentoStatCard value={data?.totalHours ?? 0}       label="Vol. Hours"    icon={<Clock size={14} />}       theme="bark" unit="hrs" />
             </BentoStatGrid>
           </motion.div>
 
@@ -427,7 +427,7 @@ export default function AdminDashboardPage() {
               >
                 Environmental Impact
               </SectionHeader>
-              <BentoStatGrid>
+              <BentoStatGrid compact>
                 {impactItems.map((item) => (
                   <BentoStatCard
                     key={item.label}

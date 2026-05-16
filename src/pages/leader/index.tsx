@@ -1213,10 +1213,10 @@ export default function LeaderDashboardPage() {
           {/* ── At-a-glance stats ── */}
           <motion.div variants={rm ? undefined : fadeUp}>
             <BentoStatGrid compact>
-              <BentoStatCard value={data?.activeMembers ?? 0} label="Members" icon={<Users size={12} />} theme="primary-soft" />
-              <BentoStatCard value={data?.upcomingEvents?.length ?? 0} label="Upcoming Events" icon={<CalendarDays size={12} />} theme="moss-soft" />
-              <BentoStatCard value={data?.hoursThisMonth ?? 0} label="Hrs / Month" icon={<Clock size={12} />} theme="bark-soft" />
-              <BentoStatCard value={data?.eventsThisMonth ?? 0} label="Events / Month" icon={<CalendarCheck size={12} />} theme="sprout-soft" />
+              <BentoStatCard value={data?.activeMembers ?? 0} label="Members" icon={<Users size={14} />} theme="primary-soft" />
+              <BentoStatCard value={data?.upcomingEvents?.length ?? 0} label="Upcoming Events" icon={<CalendarDays size={14} />} theme="moss-soft" />
+              <BentoStatCard value={data?.hoursThisMonth ?? 0} label="Hrs / Month" icon={<Clock size={14} />} theme="bark-soft" />
+              <BentoStatCard value={data?.eventsThisMonth ?? 0} label="Events / Month" icon={<CalendarCheck size={14} />} theme="sprout-soft" />
             </BentoStatGrid>
           </motion.div>
 
