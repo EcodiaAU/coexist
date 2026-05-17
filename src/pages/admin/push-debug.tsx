@@ -204,6 +204,58 @@ export default function PushDebugPage() {
     }
   }, [fcmTokenFromPrefs, registrationToken, dbTokens, log, toast])
 
+  /* ---------- Force store FCM token in DB (bypasses usePushRegistration listener) ---------- */
+  const forceStoreInDb = useCallback(async () => {
+    if (!user) {
+      log('error', 'No authenticated user; cannot store token.')
+      return
+    }
+    const token = fcmTokenFromPrefs ?? registrationToken
+    if (!token) {
+      log('error', 'No FCM or registration token available to store.')
+      return
+    }
+    log('info', `Calling supabase.upsert(push_tokens) directly with token prefix=${token.slice(0, 24)}…`)
+    const { error, data, status, statusText } = await supabase
+      .from('push_tokens')
+      .upsert(
+        {
+          user_id: user.id,
+          token,
+          platform,
+          device_info: { platform, ua: navigator.userAgent ?? 'unknown' },
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,token' },
+      )
+      .select()
+    if (error) {
+      log('error', `upsert FAILED status=${status} ${statusText}: code=${error.code} msg=${error.message} hint=${error.hint ?? ''} details=${error.details ?? ''}`)
+    } else {
+      log('info', `upsert OK status=${status}: rows=${(data as unknown[] | null)?.length ?? 0}`)
+      await readDbTokens()
+    }
+  }, [user, fcmTokenFromPrefs, registrationToken, platform, log, readDbTokens])
+
+  /* ---------- Check auth session vs useAuth user.id ---------- */
+  const checkAuthSession = useCallback(async () => {
+    const { data, error } = await supabase.auth.getSession()
+    if (error) {
+      log('error', `getSession failed: ${error.message}`)
+      return
+    }
+    const sess = data.session
+    if (!sess) {
+      log('error', 'No active supabase session (JWT missing). Edits to RLS-protected tables will be denied.')
+      return
+    }
+    const jwtSub = sess.user.id
+    const hookId = user?.id ?? '(no useAuth user)'
+    const matchTxt = jwtSub === user?.id ? 'MATCH' : 'MISMATCH'
+    log('info', `auth session: jwt.sub=${jwtSub} useAuth.user.id=${hookId} → ${matchTxt}`)
+    log('info', `  access_token len=${sess.access_token.length}, expires_at=${sess.expires_at}`)
+  }, [user, log])
+
   /* ---------- Copy helpers ---------- */
   const copy = useCallback(async (label: string, value: string | null) => {
     if (!value) return
@@ -298,7 +350,11 @@ export default function PushDebugPage() {
               <Button onClick={() => copy('db token', t.token)} className="mt-1">Copy</Button>
             </div>
           ))}
-          <Button onClick={readDbTokens} className="mt-2">Refresh DB</Button>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button onClick={readDbTokens}>Refresh DB</Button>
+            <Button onClick={forceStoreInDb} disabled={!user || (!fcmTokenFromPrefs && !registrationToken)}>Force store FCM token in DB</Button>
+            <Button onClick={checkAuthSession}>Check auth session</Button>
+          </div>
         </div>
       </section>
 
