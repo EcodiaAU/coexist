@@ -1474,12 +1474,43 @@ async function syncFromExcel(
   //      date_start because the leader hadn't logged impact yet. The 2h
   //      grace on event.created_at was the wrong anchor - impact survey
   //      submission lag can be days. Fixed by switching the grace anchor
-  //      from event.created_at to event_impact.logged_at, and gating
-  //      reconciliation on impact-data existence.
+  //      from event.created_at to event_impact.logged_at, gating reconciliation
+  //      on impact-data existence, AND skipping reconciliation entirely when
+  //      no to-excel run has succeeded recently (sheet might be stale, see
+  //      HEALTH GUARD below).
+  //
+  // 6. HEALTH GUARD (added 2026-05-17): if no to-excel run has succeeded in
+  //    the last 2 hours, the sheet may be stale and absence from sheet does
+  //    not imply deletion. Skip reconciliation entirely until to-excel
+  //    recovers. The to-excel cron runs hourly, so 2h = at least one missed
+  //    cycle of headroom before we pause. Without this guard, a multi-hour
+  //    Graph API outage combined with a recently-submitted impact survey
+  //    could cancel real events.
   //
   // See ~/ecodiaos/patterns/sheet-as-projection-sync-direction-discipline.md
   // and ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
   try {
+    // HEALTH GUARD: bail if to-excel has been silent. The hourly to-excel
+    // cron writes a row to excel_sync_runs on every invocation regardless
+    // of whether it pushed anything, so an absent row in the last 2h means
+    // the cron itself isn't firing - sheet is stale.
+    const healthWindowMs = 2 * 60 * 60 * 1000 // 2h
+    const healthCutoffIso = new Date(runStartedAt.getTime() - healthWindowMs).toISOString()
+    const { data: recentToExcel, error: healthErr } = await supabase
+      .from('excel_sync_runs')
+      .select('run_at')
+      .in('direction', ['to-excel', 'full'])
+      .gte('run_at', healthCutoffIso)
+      .limit(1)
+    if (healthErr) {
+      errors.push(`reconciliation health-check failed (skipping reconciliation): ${healthErr.message}`)
+      return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, cancelledViaSheetAbsence, skippedPostCutoverMigrated, errors }
+    }
+    if (!recentToExcel || recentToExcel.length === 0) {
+      errors.push(`INFO reconciliation: skipped phase - no to-excel run in last 2h, sheet may be stale`)
+      return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, cancelledViaSheetAbsence, skippedPostCutoverMigrated, errors }
+    }
+
     const impactCutoffMs = runStartedAt.getTime() - 6 * 60 * 60 * 1000 // 6h
     const impactCutoffIso = new Date(impactCutoffMs).toISOString()
     const { data: candidates, error: candidatesErr } = await supabase
