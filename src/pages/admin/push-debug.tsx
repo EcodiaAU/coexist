@@ -131,6 +131,7 @@ export default function PushDebugPage() {
       'didRegisterCalled', 'apnsTokenHex', 'apnsTokenAt',
       'didFailCalled', 'apnsError', 'apnsErrorAt',
       'didSetUNCenterDelegate', 'lastTapResponseAt', 'lastTapUserInfo', 'lastTapBridgeStatus',
+      'unCenterDelegateClass', 'pendingPushRoute', 'pendingPushRouteAt',
     ]
     const out: Record<string, string | null> = {}
     for (const k of keys) {
@@ -336,6 +337,9 @@ export default function PushDebugPage() {
         <div>didSetUNCenterDelegate (1.8.7(12)): <b className={nativeDiag.didSetUNCenterDelegate === 'true' ? 'text-green-700' : 'text-red-700'}>{nativeDiag.didSetUNCenterDelegate ?? '(none)'}</b></div>
         <div>lastTapResponseAt (1.8.7(12)): <b className={nativeDiag.lastTapResponseAt ? 'text-green-700' : 'text-zinc-600'}>{nativeDiag.lastTapResponseAt ?? '(none)'}</b></div>
         <div>lastTapBridgeStatus: <b className={nativeDiag.lastTapBridgeStatus === 'bridge-not-ready' ? 'text-amber-700' : 'text-zinc-600'}>{nativeDiag.lastTapBridgeStatus ?? '(bridge-ready or no tap yet)'}</b></div>
+        <div>unCenterDelegateClass (1.8.7(13)): <b className="text-blue-700">{nativeDiag.unCenterDelegateClass ?? '(none)'}</b></div>
+        <div>pendingPushRoute (1.8.7(13)): <b className={nativeDiag.pendingPushRoute ? 'text-green-700' : 'text-zinc-600'}>{nativeDiag.pendingPushRoute ?? '(none - drained or no tap yet)'}</b></div>
+        <div>pendingPushRouteAt: <b className="text-zinc-600">{nativeDiag.pendingPushRouteAt ?? '(none)'}</b></div>
         {nativeDiag.lastTapUserInfo && (
           <div className="mt-1">
             <div>lastTapUserInfo:</div>

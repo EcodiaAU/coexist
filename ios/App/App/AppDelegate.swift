@@ -34,6 +34,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
         capSet(nil, forKey: "lastTapResponseAt")
         capSet(nil, forKey: "lastTapUserInfo")
         capSet(nil, forKey: "lastTapBridgeStatus")
+        capSet(nil, forKey: "unCenterDelegateClass")
+        // Note: don't clear pendingPushRoute here - if app was killed and relaunched
+        // via tap, the route MAY have been written before this clear (but actually
+        // didFinishLaunching runs BEFORE didReceive, so we clear and the tap then
+        // writes fresh). Safe either way.
 
         // Firebase init. Method swizzling is disabled via Info.plist
         // (FirebaseAppDelegateProxyEnabled=false) so we take manual control:
@@ -72,6 +77,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
+        // Re-claim UNUserNotificationCenter delegate every foreground transition.
+        // Capacitor's NotificationRouter sets itself as delegate during bridge
+        // viewDidLoad, overriding our didFinishLaunching set. Foreground transitions
+        // are the right moment to re-claim - by the time iOS delivers a tap response
+        // (which happens after foreground), we're guaranteed to be the delegate.
+        UNUserNotificationCenter.current().delegate = self
+        // Diagnostic: capture what we just overrode (logged BEFORE the re-claim by
+        // peeking at the existing delegate's class name in the next line is moot
+        // because we just overwrote it; instead, log AFTER for confirmation).
+        if let d = UNUserNotificationCenter.current().delegate {
+            capSet(String(describing: type(of: d)), forKey: "unCenterDelegateClass")
+        } else {
+            capSet("nil", forKey: "unCenterDelegateClass")
+        }
+
         // Tint every layer behind the WebView so the home-indicator zone matches the app
         guard let w = window else { return }
         w.backgroundColor = surface
@@ -163,17 +183,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
                                 didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         // Diagnostic: record that iOS delivered a tap response to AppDelegate.
-        // If this gets set true but the JS tap-log on /admin/push-debug stays
-        // empty, the bridge wasn't ready / forwarding broke.
         capSet(ISO8601DateFormatter().string(from: Date()), forKey: "lastTapResponseAt")
         capSet(response.notification.request.content.userInfo.description, forKey: "lastTapUserInfo")
 
+        // Native-direct routing: parse the deep-link route from userInfo and write
+        // to Preferences as 'pendingPushRoute'. JS reads this on mount/resume and
+        // navigates - bypasses the Capacitor pushNotificationActionPerformed path
+        // which has proven unreliable on this iOS/plugin version (1.8.7(7-12)
+        // diagnostic: pushTapLog stays empty across foreground + background +
+        // killed taps despite presentationOptions working and pushNotificationReceived
+        // firing). The bypass owns the entire tap-to-navigate path.
+        let userInfo = response.notification.request.content.userInfo
+        if let route = userInfo["route"] as? String, route.hasPrefix("/"), !route.contains("://"), route.count < 512 {
+            capSet(route, forKey: "pendingPushRoute")
+            capSet(ISO8601DateFormatter().string(from: Date()), forKey: "pendingPushRouteAt")
+        }
+
+        // Also forward to Capacitor router for any other listeners (idempotent).
         if let router = capacitorNotificationRouter() {
             router.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
         } else {
-            // Bridge isn't initialised yet (cold-launch via tap). The tap event
-            // would otherwise be dropped. Buffer the userInfo to Preferences
-            // and re-fire via the bridge once it loads. For now just complete.
             capSet("bridge-not-ready", forKey: "lastTapBridgeStatus")
             completionHandler()
         }

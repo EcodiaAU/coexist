@@ -437,6 +437,28 @@ export function usePushRegistration() {
       // tap-route buffered during the auth-load window.
       const unregisterConsumer = registerTapConsumer((route) => navigate(route))
 
+      // Native-direct fallback: AppDelegate.didReceive writes `pendingPushRoute`
+      // to Preferences on tap (1.8.7(13)+). We drain it here on mount and on
+      // every appStateChange resume. This bypasses the Capacitor plugin's
+      // pushNotificationActionPerformed path which was unreliable across
+      // 1.8.7(7-12) - native diagnostic confirmed pushTapLog stayed empty even
+      // though presentationOptions and pushNotificationReceived worked.
+      const drainPendingPushRoute = async () => {
+        try {
+          const got = await Preferences.get({ key: 'pendingPushRoute' })
+          const route = got?.value
+          if (route && route.startsWith('/') && !route.includes('://')) {
+            console.info('[push] draining pendingPushRoute from native:', route)
+            await Preferences.remove({ key: 'pendingPushRoute' })
+            await Preferences.remove({ key: 'pendingPushRouteAt' })
+            navigate(route)
+          }
+        } catch (err) {
+          console.warn('[push] drainPendingPushRoute failed:', err)
+        }
+      }
+      void drainPendingPushRoute()
+
       listenersRef.current = [regListener, errListener, receivedListener, actionListener, { remove: unregisterConsumer }]
 
       // Register - listeners are already attached so the token callback will fire
@@ -456,6 +478,17 @@ export function usePushRegistration() {
         App.addListener('appStateChange', async ({ isActive }) => {
           if (isActive && mounted) {
             clearBadgeCount()
+            // Drain native-direct pending push route on every resume.
+            try {
+              const got = await Preferences.get({ key: 'pendingPushRoute' })
+              const route = got?.value
+              if (route && route.startsWith('/') && !route.includes('://') && mounted) {
+                console.info('[push] resume: draining pendingPushRoute from native:', route)
+                await Preferences.remove({ key: 'pendingPushRoute' })
+                await Preferences.remove({ key: 'pendingPushRouteAt' })
+                navigate(route)
+              }
+            } catch { /* best-effort */ }
             const plugin = await loadPushPlugin()
             if (plugin && mounted) {
               await requestAndRegister(plugin)
