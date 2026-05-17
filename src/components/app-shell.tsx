@@ -101,8 +101,9 @@ function LocationAwareChrome({ showBottomTabs, syncWarning }: { showBottomTabs: 
       {/* Web footer - full width, below the sidebar row so sidebar unsticks at footer */}
       {isWeb && !isMobile && !isChatRoute && <WebFooter />}
 
-      {/* Bottom tab bar (mobile + native) - hidden on admin/leader/chat-detail pages, and when keyboard is open */}
-      {showBottomTabs && !isAdminRoute && !isLeaderRoute && !isChatRoute && !keyboardOpen && (
+      {/* Bottom tab bar (mobile + native) - hidden on admin/leader pages and when keyboard is open.
+          Chat detail (/chat/<id>) keeps the tab bar visible so users can navigate out without back-button hunt. */}
+      {showBottomTabs && !isAdminRoute && !isLeaderRoute && !keyboardOpen && (
         <BottomTabBar onMorePress={openMenu} chatBadge={totalUnread} syncWarning={syncWarning} />
       )}
     </>
