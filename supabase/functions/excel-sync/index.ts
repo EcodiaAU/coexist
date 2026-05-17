@@ -1436,48 +1436,100 @@ async function syncFromExcel(
   // events should be left alone. The grace-period guard excludes events
   // recently created so reconciliation never races the to-excel push cron.
   //
-  // GRACE PERIOD: 2 hours. The to-excel batch cron runs every hour on the
-  // hour (jobid 10). The from-excel cron runs every 30 minutes (jobid 9).
-  // A new app-created event needs at least one to-excel cycle to land on
-  // the sheet before reconciliation may treat its absence as deletion.
-  // 2 hours = (max to-excel period) + (one safety buffer cycle) so even if
-  // a to-excel run fails or is mid-flight, reconciliation still won't
-  // false-cancel a freshly-created event. Per the bug fixed 2026-05-06
-  // (fork_motntxi7_add578): the prior 60-second guard cancelled an event
-  // created at 01:57:56 by 02:00:29 - 2.5 minutes - because reconciliation
-  // ran on the half-hour and the event hadn't reached the sheet yet.
-  // See ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
+  // RECONCILIATION GATES - five filters, all must pass before cancel:
   //
-  // STATUS GATE: 'published' AND 'completed' - matches the to-excel batch
-  // selector exactly. If the to-excel push selector ever changes, this
-  // selector must change in lockstep, otherwise reconciliation will cancel
-  // events the push path never made eligible.
+  // 1. STATUS GATE: 'published' AND 'completed' (mirrors to-excel batch
+  //    selector). If the push selector changes, this must change in lockstep.
+  //
+  // 2. FUTURE-EVENT GATE: date_start < runStartedAt. The sheet only contains
+  //    past events; absent + future = absent by design (PR #19, 11 May 2026).
+  //
+  // 3. MIGRATED-COLLECTIVE GATE: collective.forms_migrated_at IS NOT NULL
+  //    AND event.date_start >= forms_migrated_at. Non-migrated collectives
+  //    are Forms-canonical for their own rows; their app events never flow
+  //    to the sheet, so absence is not deletion.
+  //
+  // 4. SYNTHETIC-EVENT GATE: skip events that originated from the sheet
+  //    (created_by IS NULL OR UUID v5). To-excel skips these; reconciliation
+  //    must skip them too, otherwise a sheet row that was authored from
+  //    Forms would cycle back as a cancellation of its DB twin.
+  //
+  // 5. IMPACT-DATA GATE (the load-bearing fix for the 17 May 2026 Lilydale
+  //    incident): an event_impact row must exist AND its logged_at must be
+  //    old enough that the next to-excel cron has plausibly pushed it. The
+  //    to-excel APPEND path requires hasImpactData=true, so an event without
+  //    impact data was never on the sheet by design. AND a freshly-logged
+  //    impact row hasn't been pushed yet - the to-excel cron runs hourly,
+  //    from-excel every 30 min, so we need to wait long enough that at
+  //    least one to-excel cycle has fired AFTER the impact was logged.
+  //    6 hours = 6 to-excel cycles minimum, leaving generous headroom for
+  //    transient to-excel failures or retries.
+  //
+  //    History:
+  //    - 2026-05-06 (fork_motntxi7_add578): 60-second grace cancelled an
+  //      event 2.5 minutes after creation. Fixed by bumping to 2h.
+  //    - 2026-05-11 (PR #19): future events being cancelled because
+  //      reconciliation didn't filter `date_start < runStartedAt`. Fixed.
+  //    - 2026-05-17 (Lilydale Tree Planting): event cancelled 15 min after
+  //      date_start because the leader hadn't logged impact yet. The 2h
+  //      grace on event.created_at was the wrong anchor - impact survey
+  //      submission lag can be days. Fixed by switching the grace anchor
+  //      from event.created_at to event_impact.logged_at, and gating
+  //      reconciliation on impact-data existence.
+  //
+  // See ~/ecodiaos/patterns/sheet-as-projection-sync-direction-discipline.md
+  // and ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
   try {
-    const cutoffMs = runStartedAt.getTime() - 2 * 60 * 60 * 1000 // 2 hours
-    const cutoffIso = new Date(cutoffMs).toISOString()
+    const impactCutoffMs = runStartedAt.getTime() - 6 * 60 * 60 * 1000 // 6h
+    const impactCutoffIso = new Date(impactCutoffMs).toISOString()
     const { data: candidates, error: candidatesErr } = await supabase
       .from('events')
-      .select('id, collective_id, date_start, status, created_at, collectives(forms_migrated_at)')
+      .select('id, collective_id, date_start, status, created_by, collectives(forms_migrated_at)')
       .in('status', ['published', 'completed'])
       .gte('date_start', SYNC_CUTOFF_DATE)
       .lt('date_start', runStartedAt.toISOString()) // never reconcile future events - absent from sheet by design (fork_mp0so5k9_0d2e77)
-      .lt('created_at', cutoffIso)
 
     if (candidatesErr) {
       errors.push(`reconciliation candidate query failed: ${candidatesErr.message}`)
     } else {
+      // Pre-load mature event_impact rows for all candidates. "Mature" =
+      // logged_at < runStartedAt - 6h, so to-excel has had at least one
+      // cycle to push the row to the sheet. This is the IMPACT-DATA GATE
+      // and replaces the old event.created_at grace.
+      const candidateIds = ((candidates ?? []) as Array<{ id: string }>).map(c => c.id)
+      const matureImpactEventIds = new Set<string>()
+      if (candidateIds.length > 0) {
+        const { data: impactRows, error: impactErr } = await supabase
+          .from('event_impact')
+          .select('event_id, logged_at')
+          .in('event_id', candidateIds)
+          .lt('logged_at', impactCutoffIso)
+        if (impactErr) {
+          errors.push(`reconciliation event_impact preload failed: ${impactErr.message}`)
+        } else {
+          for (const r of (impactRows ?? []) as { event_id: string; logged_at: string }[]) {
+            matureImpactEventIds.add(r.event_id)
+          }
+        }
+      }
+
       for (const c of (candidates ?? []) as Array<{
         id: string
         collective_id: string
         date_start: string
         status: string
-        created_at: string
+        created_by: string | null
         collectives: { forms_migrated_at: string | null } | null
       }>) {
         const migratedAt = c.collectives?.forms_migrated_at ?? null
         if (!migratedAt) continue
         if (new Date(c.date_start).getTime() < new Date(migratedAt).getTime()) continue
         if (seenEventIds.has(c.id)) continue
+        // Synthetic-event gate (mirrors to-excel)
+        if (c.created_by === null || isSyntheticFormsUuid(c.id)) continue
+        // Impact-data gate with logged_at grace (mirrors to-excel APPEND
+        // hasImpactData + waits for to-excel to plausibly have pushed it)
+        if (!matureImpactEventIds.has(c.id)) continue
         const { error: cancelErr } = await supabase
           .from('events')
           .update({ status: 'cancelled', cancelled_via_sheet_sync_at: new Date().toISOString() })
