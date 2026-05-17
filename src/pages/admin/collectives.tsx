@@ -316,10 +316,10 @@ export default function AdminCollectivesPage() {
                         )}
                         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1 text-[11px] sm:text-xs text-neutral-400">
                           <span className="flex items-center gap-1 shrink-0">
-                            <Users size={12} className="shrink-0" /> {c.memberCount} <span className="hidden sm:inline">members</span><span className="sm:hidden">m</span>
+                            <Users size={12} className="shrink-0" /> {c.memberCount} members
                           </span>
                           <span className="flex items-center gap-1 shrink-0">
-                            <CalendarDays size={12} className="shrink-0" /> {c.eventCount} <span className="hidden sm:inline">events</span><span className="sm:hidden">ev</span>
+                            <CalendarDays size={12} className="shrink-0" /> {c.eventCount} events
                           </span>
                           {c.leaderName && (
                             <span className="flex items-center gap-1 min-w-0 max-w-full">

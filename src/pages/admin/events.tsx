@@ -302,13 +302,10 @@ function HottestEventSpotlight({ event }: { event: AdminEvent }) {
           <div className="flex items-center gap-2 mt-2">
             <span className="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 bg-neutral-50 rounded-full px-3 py-1">
               <Users size={14} />
-              {event.registrationCount} registered
+              {event.capacity
+                ? `${event.registrationCount} / ${event.capacity}`
+                : `${event.registrationCount} registered`}
             </span>
-            {event.capacity && (
-              <span className="text-xs font-medium text-neutral-500">
-                of {event.capacity}
-              </span>
-            )}
           </div>
         </div>
 
@@ -410,7 +407,9 @@ export default function AdminEventsPage() {
         events = data.upcoming
         break
       case 'past':
-        events = [...data.past].reverse() // most recent first
+        // data.past is already DESC from the underlying query (order by date_start DESC).
+        // No reverse needed - most recent first by default.
+        events = data.past
         break
       case 'draft':
         events = data.all.filter((e) => e.status === 'draft')

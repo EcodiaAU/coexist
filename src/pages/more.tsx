@@ -4,7 +4,6 @@ import {
   Settings,
   ShoppingBag,
   Heart,
-  Bell,
   Megaphone,
   Users,
   BarChart3,
@@ -23,6 +22,7 @@ import { EcodiaAttribution } from '@/components/ecodia-attribution'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/use-auth'
 import { useHasPartners } from '@/hooks/use-has-partners'
+import { useUnreadCount } from '@/hooks/use-notifications'
 interface MenuLink {
   label: string
   to: string
@@ -30,6 +30,7 @@ interface MenuLink {
   iconBg: string
   iconColor: string
   description?: string
+  badge?: number
 }
 
 const stagger: Variants = {
@@ -62,7 +63,7 @@ function MenuSection({
       </h3>
       <div className="rounded-2xl bg-surface-0 shadow-sm overflow-hidden">
         { }
-        {items.map(({ label, to, icon, iconBg, iconColor, description: _description }, idx) => (
+        {items.map(({ label, to, icon, iconBg, iconColor, description: _description, badge }, idx) => (
           <button
             key={to}
             type="button"
@@ -88,6 +89,11 @@ function MenuSection({
             <div className="flex-1 min-w-0">
               <p className="text-[15px] font-medium text-neutral-900 leading-tight">{label}</p>
             </div>
+            {badge !== undefined && badge > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary-500 text-white text-[10px] font-bold mr-1">
+                {badge > 99 ? '99+' : badge}
+              </span>
+            )}
             <ChevronRight size={16} className="text-neutral-300 shrink-0" />
           </button>
         ))}
@@ -104,11 +110,13 @@ export default function MorePage() {
   const isAnyLeader = collectiveRoles.some(
     (m) => ['leader', 'co_leader', 'assist_leader'].includes(m.role),
   )
+  const { data: unreadCount = 0 } = useUnreadCount()
 
+  // Updates page now folds in the notifications inbox - a single "Updates"
+  // entry shows the unread count for both notifications + announcements.
   const updatesLinks: MenuLink[] = [
-    { label: 'Updates', to: '/updates', icon: <Megaphone size={17} />, iconBg: 'bg-plum-50', iconColor: 'text-plum-600' },
+    { label: 'Updates', to: '/updates', icon: <Megaphone size={17} />, iconBg: 'bg-plum-50', iconColor: 'text-plum-600', badge: unreadCount },
     { label: 'Explore', to: '/explore', icon: <Compass size={17} />, iconBg: 'bg-neutral-50', iconColor: 'text-neutral-600' },
-    { label: 'Notifications', to: '/notifications', icon: <Bell size={17} />, iconBg: 'bg-error-50', iconColor: 'text-error-500' },
   ]
 
   const supportLinks: MenuLink[] = [

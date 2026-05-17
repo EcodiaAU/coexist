@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion, AnimatePresence, type Variants } from 'framer-motion'
-import { ArrowLeft, Pin, Megaphone, AlertTriangle, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Pin, Megaphone, AlertTriangle, Image as ImageIcon, ChevronRight, Bell } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { Avatar } from '@/components/avatar'
@@ -13,6 +14,16 @@ import {
     useMarkUpdateRead,
     type UpdateWithAuthor,
 } from '@/hooks/use-updates'
+import {
+    useNotifications,
+    useMarkRead,
+    useUnreadCount,
+    getNotificationDeepLink,
+    getNotificationMeta,
+} from '@/hooks/use-notifications'
+import type { Tables } from '@/types/database.types'
+
+type AppNotification = Tables<'notifications'>
 
 /* ------------------------------------------------------------------ */
 /*  Animations                                                         */
@@ -368,11 +379,27 @@ function UpdateCard({
 
 export default function UpdatesPage() {
   const shouldReduceMotion = useReducedMotion()
+  const navigate = useNavigate()
   const { pinned, regular, all, isLoading, isError, refetch } = useUpdates()
   const showLoading = useDelayedLoading(isLoading)
   const markRead = useMarkUpdateRead()
+  const { data: notifications } = useNotifications()
+  const { data: unreadCount = 0 } = useUnreadCount()
+  const markNotifRead = useMarkRead()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedUpdateId, setSelectedUpdateId] = useState<string | null>(null)
+
+  // Show up to 5 most-recent notifications inline as an inbox preview.
+  // Tapping one marks-read + deep-links via the same route resolver used by
+  // the dedicated /notifications page and push tap handler.
+  const recentNotifications = useMemo(() => (notifications ?? []).slice(0, 5), [notifications])
+  const hasMoreNotifications = (notifications ?? []).length > recentNotifications.length
+
+  const handleNotificationTap = useCallback((n: AppNotification) => {
+    if (!n.read_at) markNotifRead.mutate(n.id)
+    const route = getNotificationDeepLink(n)
+    navigate(route)
+  }, [markNotifRead, navigate])
 
   // Derive selected update from live cache so it stays in sync after mark-as-read
   const selectedUpdate = useMemo(
@@ -387,7 +414,7 @@ export default function UpdatesPage() {
     }
   }, [selectedUpdateId])
 
-  const isEmpty = !isLoading && pinned.length === 0 && regular.length === 0
+  const isEmpty = !isLoading && pinned.length === 0 && regular.length === 0 && recentNotifications.length === 0
 
   const handleRefresh = useCallback(async () => {
     await refetch()
@@ -441,7 +468,83 @@ export default function UpdatesPage() {
             <h1 className="font-heading text-xl font-bold text-neutral-900 tracking-tight">
               Updates
             </h1>
+            {unreadCount > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary-500 text-white text-[10px] font-bold">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </motion.div>
+
+          {/* Notifications inbox preview - recent personal notifications */}
+          {recentNotifications.length > 0 && (
+            <motion.div
+              initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+              className="space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-neutral-500">
+                  <Bell size={11} />
+                  Your notifications
+                </div>
+                {hasMoreNotifications && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/notifications')}
+                    className="text-xs font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-0.5"
+                  >
+                    See all
+                    <ChevronRight size={12} />
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {recentNotifications.map((n) => {
+                  const meta = getNotificationMeta(n.type)
+                  const isUnread = !n.read_at
+                  return (
+                    <button
+                      key={n.id}
+                      type="button"
+                      onClick={() => handleNotificationTap(n)}
+                      className={cn(
+                        'flex items-start gap-3 w-full text-left rounded-2xl px-3.5 py-3',
+                        'bg-white border border-neutral-100 shadow-sm',
+                        'transition-transform active:scale-[0.985]',
+                        !isUnread && 'opacity-70',
+                      )}
+                      aria-label={`${n.title}. ${n.body ?? ''}`}
+                    >
+                      <div
+                        className={cn(
+                          'flex items-center justify-center shrink-0 w-9 h-9 rounded-xl text-base',
+                          'bg-neutral-100',
+                          meta.color,
+                        )}
+                        aria-hidden="true"
+                      >
+                        {meta.emoji}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn('text-sm leading-snug truncate', isUnread ? 'font-bold text-neutral-900' : 'font-medium text-neutral-600')}>
+                          {n.title}
+                        </p>
+                        {n.body && (
+                          <p className={cn('text-[12px] mt-0.5 line-clamp-2', isUnread ? 'text-neutral-600' : 'text-neutral-400')}>
+                            {n.body}
+                          </p>
+                        )}
+                      </div>
+                      {isUnread && (
+                        <span className="shrink-0 w-2 h-2 rounded-full bg-primary-500 mt-1.5" aria-label="Unread" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
 
           {/* Search */}
           <motion.div
