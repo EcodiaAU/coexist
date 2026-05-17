@@ -94,17 +94,25 @@ export default function SignUpPage() {
     setIsSubmitting(true)
     setError(null)
 
-    const { error: authError } = await signUp(email, password, displayName, dateOfBirth)
+    const { error: authError, hasSession } = await signUp(email, password, displayName, dateOfBirth)
 
     setIsSubmitting(false)
     if (authError) {
       setError(authError.message)
     } else {
       // Store referral code so it can be accepted after email verification
+      // (or immediately, when autoconfirm is on).
       if (refCode) {
         try { localStorage.setItem('coexist_referral_code', refCode) } catch { /* storage may be unavailable */ }
       }
-      navigate('/verify-email', { state: { email } })
+      // When the project auto-confirms email, signUp returns a session right
+      // away. Drop straight into the app instead of showing a "check your
+      // inbox" screen for a verification email that will never arrive.
+      if (hasSession) {
+        navigate('/', { replace: true })
+      } else {
+        navigate('/verify-email', { state: { email } })
+      }
     }
   }
 

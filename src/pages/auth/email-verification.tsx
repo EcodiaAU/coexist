@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Mail, RefreshCw } from 'lucide-react'
@@ -15,6 +15,20 @@ export default function EmailVerificationPage() {
   const [resending, setResending] = useState(false)
   const [resent, setResent] = useState(false)
   const [resendError, setResendError] = useState<string | null>(null)
+
+  // If the project auto-confirms email, a session is already present (or
+  // about to arrive). Bounce into the app instead of asking the user to
+  // click a verification link that was never sent.
+  useEffect(() => {
+    let mounted = true
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted && data.session) navigate('/', { replace: true })
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted && session) navigate('/', { replace: true })
+    })
+    return () => { mounted = false; subscription.unsubscribe() }
+  }, [navigate])
 
   async function handleResend() {
     if (!email || resending) return

@@ -166,7 +166,7 @@ interface AuthContextValue {
   isAdmin: boolean
   isSuperAdmin: boolean
   managedCollectiveIds: string[]
-  signUp: (email: string, password: string, displayName: string, dateOfBirth?: string) => Promise<{ error: AuthError | null }>
+  signUp: (email: string, password: string, displayName: string, dateOfBirth?: string) => Promise<{ error: AuthError | null; hasSession?: boolean }>
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signInWithGoogle: () => Promise<{ error: AuthError | null }>
   signInWithApple: () => Promise<{ error: AuthError | null }>
@@ -573,7 +573,10 @@ export function useAuthProvider(): AuthContextValue {
       }).catch(console.error)
     }
 
-    return { error }
+    // When the project has `mailer_autoconfirm` enabled, signUp returns a
+    // full session immediately and no verification email is sent. Surface
+    // that so the caller can skip the "check your email" screen.
+    return { error, hasSession: !!data?.session }
   }, [])
 
   const signIn = useCallback(async (email: string, password: string) => {
