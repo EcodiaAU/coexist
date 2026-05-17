@@ -450,19 +450,32 @@ export function ChatMessageList({
   // Reset scroll on message count change (first load)
   const roomKeyRef = useRef(allMessages.length)
 
-  /* ---- Scroll: instant on first load ---- */
+  /* ---- Scroll: instant on first load. Images/avatars load async after first
+     paint and grow scrollHeight, which pushes the initial scrollTop above the
+     bottom by the time the user sees the chat ("opens halfway up"). We pin to
+     bottom in three passes: layoutEffect, next rAF, then a 250ms timeout
+     after images have settled. ---- */
   useLayoutEffect(() => {
     if (!initialScrollDone.current && allMessages.length > 0) {
-      const container = scrollContainerRef.current
-      if (container) {
-        container.scrollTop = container.scrollHeight
+      const pinToBottom = () => {
+        const c = scrollContainerRef.current
+        if (!c) return
+        c.scrollTop = c.scrollHeight
       }
+      pinToBottom()
       messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
       requestAnimationFrame(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
-        }
-        initialScrollDone.current = true
+        pinToBottom()
+        // Second rAF after browser reflows once
+        requestAnimationFrame(pinToBottom)
+        // And a final pass after images/avatars typically resolve. Mark done
+        // here so the auto-scroll-on-new-message effect can take over.
+        const t = setTimeout(() => {
+          pinToBottom()
+          initialScrollDone.current = true
+        }, 250)
+        // Cleanup if room changes mid-pin
+        return () => clearTimeout(t)
       })
     }
   }, [allMessages.length, scrollContainerRef, messagesEndRef])

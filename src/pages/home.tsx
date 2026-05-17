@@ -999,20 +999,50 @@ function HomeImpactSection({
               </div>
             </div>
           ) : (
-            <BentoStatGrid>
-              <BentoStatCard
-                value={data?.treesPlanted ?? 0}
-                label="Trees Planted"
-                icon={<TreePine size={20} />}
-                description="Every tree planted by Co-Exist volunteers across the country."
-              />
-              <BentoStatCard value={data?.eventsAttended ?? 0} label="Attendees" icon={<Users size={18} />} />
-              <BentoStatCard value={totalEvents} label="Events" icon={<Calendar size={18} />} />
-              <BentoStatCard value={data?.volunteerHours ?? 0} label="Vol. Hours" icon={<Clock size={18} />} unit="hrs" />
-              <BentoStatCard value={data?.rubbishCollectedKg ?? 0} label="Litter Removed" icon={<Trash2 size={18} />} unit="kg" />
-              <BentoStatCard value={data?.leadersEmpowered ?? 0} label="Leaders Empowered" icon={<GraduationCap size={18} />} />
-              <BentoStatCard value={data?.collectivesCount ?? 0} label="Collectives" icon={<MapPin size={18} />} />
-            </BentoStatGrid>
+            (() => {
+              // Hero card chooses Trees Planted, but only when it has a non-zero
+              // value - otherwise fall back to Litter Removed so we never show a
+              // zero as the giant hero stat. Description scopes to the selected
+              // collective name when scope='collective', so 'across the country'
+              // doesn't show on a single-collective view.
+              const treesValue = data?.treesPlanted ?? 0
+              const litterValue = data?.rubbishCollectedKg ?? 0
+              const collectiveLabel = scope === 'collective' && selectedCollective?.name
+                ? `in ${selectedCollective.name}`
+                : 'across the country'
+              const treesCard = (
+                <BentoStatCard
+                  key="trees"
+                  value={treesValue}
+                  label="Trees Planted"
+                  icon={<TreePine size={20} />}
+                  description={`Every tree planted by Co-Exist volunteers ${collectiveLabel}.`}
+                />
+              )
+              const litterCard = (
+                <BentoStatCard
+                  key="litter"
+                  value={litterValue}
+                  label="Litter Removed"
+                  icon={<Trash2 size={18} />}
+                  unit="kg"
+                  description={`Every kilo of litter Co-Exist volunteers have cleared ${collectiveLabel}.`}
+                />
+              )
+              const heroFirst = treesValue > 0 ? treesCard : litterCard
+              const heroSecond = treesValue > 0 ? litterCard : treesCard
+              return (
+                <BentoStatGrid>
+                  {heroFirst}
+                  <BentoStatCard value={data?.eventsAttended ?? 0} label="Attendees" icon={<Users size={18} />} />
+                  <BentoStatCard value={totalEvents} label="Events" icon={<Calendar size={18} />} />
+                  <BentoStatCard value={data?.volunteerHours ?? 0} label="Vol. Hours" icon={<Clock size={18} />} unit="hrs" />
+                  {heroSecond}
+                  <BentoStatCard value={data?.leadersEmpowered ?? 0} label="Leaders Empowered" icon={<GraduationCap size={18} />} />
+                  <BentoStatCard value={data?.collectivesCount ?? 0} label="Collectives" icon={<MapPin size={18} />} />
+                </BentoStatGrid>
+              )
+            })()
           )}
         </div>
 
@@ -1030,34 +1060,54 @@ function CtaCards({ rm }: { rm: boolean }) {
 
   return (
     <motion.div variants={rm ? undefined : fadeUp} className="flex flex-col gap-3">
-      {/* Donate */}
+      {/* Donate - photo background with gradient overlay */}
       <button
         onClick={() => navigate('/donate')}
-        className="w-full flex items-center gap-4 px-5 h-16 rounded-2xl bg-gradient-to-r from-primary-500 to-primary-700 shadow-sm active:scale-[0.98] transition-transform duration-150"
+        className="relative w-full h-32 rounded-3xl overflow-hidden shadow-md active:scale-[0.98] transition-transform duration-150 group"
       >
-        <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/20 text-white shrink-0">
-          <Heart size={18} />
-        </span>
-        <div className="flex-1 text-left">
-          <p className="text-[15px] font-bold text-white leading-tight">Donate</p>
-          <p className="text-[11px] text-white/65 mt-0.5">Support Co-Exist Australia</p>
+        <img
+          src="/img/donate-hero-bg.webp"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover group-active:scale-[1.03] transition-transform duration-300"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-900/85 via-primary-800/55 to-primary-700/35" />
+        <div className="relative h-full flex items-center gap-4 px-5 text-left">
+          <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm text-white shrink-0 shadow-sm">
+            <Heart size={22} strokeWidth={2.2} />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="font-heading text-xl font-bold text-white leading-tight">Donate</p>
+            <p className="text-[12px] text-white/85 mt-1">Support Co-Exist Australia</p>
+          </div>
+          <ChevronRight size={22} className="text-white/70 shrink-0" />
         </div>
-        <ChevronRight size={18} className="text-white/50 shrink-0" />
       </button>
 
-      {/* Shop */}
+      {/* Shop - photo background with gradient overlay */}
       <button
         onClick={() => navigate('/shop')}
-        className="w-full flex items-center gap-4 px-5 h-16 rounded-2xl bg-gradient-to-r from-bark-500 to-bark-700 shadow-sm active:scale-[0.98] transition-transform duration-150"
+        className="relative w-full h-32 rounded-3xl overflow-hidden shadow-md active:scale-[0.98] transition-transform duration-150 group"
       >
-        <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/20 text-white shrink-0">
-          <ShoppingBag size={18} />
-        </span>
-        <div className="flex-1 text-left">
-          <p className="text-[15px] font-bold text-white leading-tight">Shop merch</p>
-          <p className="text-[11px] text-white/65 mt-0.5">Wear the movement</p>
+        <img
+          src="/img/merch-hero-1.webp"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover group-active:scale-[1.03] transition-transform duration-300"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-bark-900/85 via-bark-800/55 to-bark-700/30" />
+        <div className="relative h-full flex items-center gap-4 px-5 text-left">
+          <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm text-white shrink-0 shadow-sm">
+            <ShoppingBag size={22} strokeWidth={2.2} />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="font-heading text-xl font-bold text-white leading-tight">Shop merch</p>
+            <p className="text-[12px] text-white/85 mt-1">Wear the movement</p>
+          </div>
+          <ChevronRight size={22} className="text-white/70 shrink-0" />
         </div>
-        <ChevronRight size={18} className="text-white/50 shrink-0" />
       </button>
     </motion.div>
   )

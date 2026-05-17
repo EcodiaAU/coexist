@@ -554,7 +554,9 @@ export function AnnouncementCard({
         // ensures cover-image badge + RSVP scroll-strip clip at the card
         // boundary on narrow phones rather than bleeding into the chat list.
         'w-full max-w-[88%] min-w-0 rounded-2xl overflow-hidden',
-        'bg-white border border-neutral-100 shadow-sm',
+        // Slightly off-white so the widget visually separates from the chat
+        // bg-white. Same border + shadow keeps it elevated.
+        'bg-neutral-50 border border-neutral-200 shadow-sm',
         sent ? 'ml-auto' : 'mr-auto',
       )}
     >

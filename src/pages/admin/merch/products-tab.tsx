@@ -884,9 +884,11 @@ export default function ProductsTab() {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', STATUS_DOT[product.status])} />
-                      <h3 className="text-sm font-semibold text-neutral-900 truncate leading-tight">
+                    <div className="flex items-start gap-1.5">
+                      <span className={cn('w-1.5 h-1.5 rounded-full shrink-0 mt-1.5', STATUS_DOT[product.status])} />
+                      {/* Allow up to 2 lines + smaller font on tight widths so
+                          the full product name stays visible instead of truncating. */}
+                      <h3 className="text-[13px] sm:text-sm font-semibold text-neutral-900 leading-tight break-words line-clamp-2">
                         {product.name}
                       </h3>
                     </div>

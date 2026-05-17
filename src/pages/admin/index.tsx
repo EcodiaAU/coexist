@@ -385,19 +385,22 @@ export default function AdminDashboardPage() {
           animate="visible"
         >
           {/* ── Filters ── */}
-          <motion.div variants={rm ? undefined : fadeUp} className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Showing</span>
+          <motion.div variants={rm ? undefined : fadeUp} className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden sm:inline text-xs font-semibold text-neutral-400 uppercase tracking-wider shrink-0">Showing</span>
+            {/* Single-line layout: both dropdowns share available width with
+                min-w-0 so long collective names truncate WITHIN the dropdown
+                rather than overflowing to a second row. */}
             <Dropdown
               options={dateRangeOptions}
               value={dateRange}
               onChange={(v) => setDateRange(v as DateRange)}
-              className="w-36 sm:w-44"
+              className="flex-1 min-w-0 sm:w-44 sm:flex-none"
             />
             <Dropdown
               options={collectiveOptions}
               value={collectiveId}
               onChange={setCollectiveId}
-              className="w-40 sm:w-52"
+              className="flex-1 min-w-0 sm:w-52 sm:flex-none"
             />
           </motion.div>
 
