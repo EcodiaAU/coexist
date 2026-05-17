@@ -73,6 +73,18 @@ const config: CapacitorConfig = {
     scheme: 'coexist',
     // Required for ML Kit barcode scanner - do not restrict to app-bound domains
     limitsNavigationsToAppBoundDomains: false,
+    // Prevent Capacitor's NotificationRouter from claiming the
+    // UNUserNotificationCenter delegate. AppDelegate.didFinishLaunching takes
+    // explicit ownership and forwards willPresent / didReceive to the router
+    // manually via the bridge. This prevents a cold-launch race where the
+    // bridge's viewDidLoad runs between our delegate-claim and iOS firing
+    // didReceive for the launch-tap, dropping the deep-link.
+    // 1.8.7(13) confirmed: foreground + background taps route correctly
+    // (applicationDidBecomeActive re-claims), but killed-state taps lose the
+    // race because iOS calls didReceive after viewDidLoad but before
+    // applicationDidBecomeActive. With handleApplicationNotifications:false
+    // the router never touches the delegate at all, so we stay in control.
+    handleApplicationNotifications: false,
     // Info.plist permissions are declared in Xcode:
     // - NSCameraUsageDescription
     // - NSPhotoLibraryUsageDescription
