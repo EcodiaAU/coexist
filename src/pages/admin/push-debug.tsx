@@ -27,6 +27,7 @@ export default function PushDebugPage() {
   const [sending, setSending] = useState(false)
   const [lastResponse, setLastResponse] = useState<unknown>(null)
   const [nativeDiag, setNativeDiag] = useState<Record<string, string | null>>({})
+  const [tapLog, setTapLog] = useState<Array<{ at: string; source: string; route: string; data: Record<string, string> }>>([])
 
   const log = useCallback((level: LogLine['level'], msg: string) => {
     const line = { ts: new Date().toISOString().slice(11, 23), level, msg }
@@ -140,6 +141,30 @@ export default function PushDebugPage() {
     if (out.apnsTokenHex) log('info', `  APNs hex (from AppDelegate): ${out.apnsTokenHex.slice(0, 24)}… len=${out.apnsTokenHex.length}`)
     if (out.apnsError) log('error', `  APNs error: ${out.apnsError}`)
   }, [isNative, log])
+
+  /* ---------- Read persisted tap-event log (1.8.7(11) diagnostic) ---------- */
+  const readTapLog = useCallback(async () => {
+    if (!isNative) return
+    try {
+      const got = await Preferences.get({ key: 'pushTapLog' })
+      if (got?.value) {
+        const parsed = JSON.parse(got.value) as Array<{ at: string; source: string; route: string; data: Record<string, string> }>
+        setTapLog(parsed)
+        log('info', `pushTapLog: ${parsed.length} entries`)
+      } else {
+        setTapLog([])
+        log('info', 'pushTapLog: empty (no taps recorded since install)')
+      }
+    } catch (err) {
+      log('error', `readTapLog failed: ${String(err)}`)
+    }
+  }, [isNative, log])
+
+  const clearTapLog = useCallback(async () => {
+    await Preferences.remove({ key: 'pushTapLog' })
+    setTapLog([])
+    log('info', 'pushTapLog cleared')
+  }, [log])
 
   /* ---------- Read push_tokens rows for this user ---------- */
   const readDbTokens = useCallback(async () => {
@@ -273,7 +298,8 @@ export default function PushDebugPage() {
     readDbTokens()
     readFcmTokenFromPrefs()
     readNativeDiag()
-  }, [checkPermissions, readDbTokens, readFcmTokenFromPrefs, readNativeDiag])
+    readTapLog()
+  }, [checkPermissions, readDbTokens, readFcmTokenFromPrefs, readNativeDiag, readTapLog])
 
   return (
     <div className="mx-auto max-w-3xl p-4 font-mono text-xs">
@@ -370,6 +396,33 @@ export default function PushDebugPage() {
           <pre className="mt-3 max-h-80 overflow-auto rounded bg-zinc-900 p-2 text-[10px] text-zinc-100">
 {JSON.stringify(lastResponse, null, 2)}
           </pre>
+        )}
+      </section>
+
+      <section className="mb-6 rounded border bg-emerald-50 p-3">
+        <h2 className="mb-2 font-sans text-base font-semibold">Tap event log (persisted)</h2>
+        <p className="mb-2 font-sans text-[11px]">
+          Every <code>pushNotificationActionPerformed</code> event is appended here from BOTH listeners
+          (early + auth-gated). Survives app kill. If you tap a push and this list stays empty, the
+          plugin never delivered the tap to JS. If it shows a route, the listener fired and the bug is
+          downstream (navigate / router).
+        </p>
+        <div className="mb-2 flex gap-2">
+          <Button onClick={readTapLog}>Refresh tap log</Button>
+          <Button onClick={clearTapLog}>Clear tap log</Button>
+        </div>
+        {tapLog.length === 0 ? (
+          <div className="rounded bg-white p-2">(no tap events recorded)</div>
+        ) : (
+          <div className="max-h-80 overflow-auto rounded bg-white p-2 text-[10px]">
+            {tapLog.map((e, i) => (
+              <div key={i} className="mb-1 border-b border-zinc-200 pb-1">
+                <div><b>{e.at}</b> — source=<b>{e.source}</b></div>
+                <div>route: <code className="rounded bg-zinc-100 px-1">{e.route}</code></div>
+                <div className="break-all">data: <code>{JSON.stringify(e.data)}</code></div>
+              </div>
+            ))}
+          </div>
         )}
       </section>
 

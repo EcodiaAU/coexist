@@ -196,6 +196,23 @@ let pendingTapRoute: string | null = null
 let tapConsumer: ((route: string) => void) | null = null
 let earlyListenerAttached = false
 
+// Persistent tap log so diagnostic page can show whether the listener fired
+// across app kills/relaunches. Capped at last 10 entries.
+async function persistTapEvent(source: 'early' | 'auth-gated', route: string, data: Record<string, string>): Promise<void> {
+  try {
+    const existing = await Preferences.get({ key: 'pushTapLog' })
+    let arr: unknown[] = []
+    if (existing?.value) {
+      try { arr = JSON.parse(existing.value) as unknown[] } catch { arr = [] }
+    }
+    arr.push({ at: new Date().toISOString(), source, route, data })
+    if (arr.length > 10) arr = arr.slice(-10)
+    await Preferences.set({ key: 'pushTapLog', value: JSON.stringify(arr) })
+  } catch {
+    // best-effort - never throw out of a listener
+  }
+}
+
 export async function attachEarlyTapListener(): Promise<void> {
   if (earlyListenerAttached) return
   if (!Capacitor.isNativePlatform()) return
@@ -207,6 +224,7 @@ export async function attachEarlyTapListener(): Promise<void> {
     const data = a.notification?.data ?? {}
     const route = resolveNotificationRoute(data.type ?? '', data)
     console.info('[push] tap action - route=', route, 'data=', JSON.stringify(data))
+    void persistTapEvent('early', route, data)
     if (tapConsumer) {
       tapConsumer(route)
     } else {
@@ -382,6 +400,11 @@ export function usePushRegistration() {
         async (action: unknown) => {
           const a = action as PushNotificationActionPerformed
           const notifData = a.notification.data ?? {}
+          // Diagnostic: persist tap event from this listener too. If the early
+          // listener missed it but this one fires, we know the early-attach
+          // timing failed. If neither fires, the plugin isn't delivering taps.
+          const diagRoute = resolveNotificationRoute(notifData.type ?? '', notifData)
+          void persistTapEvent('auth-gated', diagRoute, notifData)
           // Mark the matching in-app notification as read so the feed stays in sync.
           // Match on type + recent timestamp since push doesn't carry the notification row ID.
           try {
