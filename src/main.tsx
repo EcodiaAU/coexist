@@ -146,9 +146,14 @@ if (Capacitor.isNativePlatform()) {
         if (route && route.startsWith('/') && !route.includes('://') && route.length < 512) {
           await Preferences.remove({ key: 'pendingPushRoute' })
           await Preferences.remove({ key: 'pendingPushRouteAt' })
-          // Rewrite URL so BrowserRouter picks up the deep route on initial render
+          // Rewrite URL AND notify react-router via popstate so it re-matches.
+          // replaceState alone doesn't trigger router re-render once BrowserRouter
+          // has already mounted (1.8.7(16) regression: replaceState fired but
+          // app stayed on home page because the dynamic import resolved after
+          // React mount, missing the BrowserRouter initial-read window).
           window.history.replaceState(null, '', route)
-          console.info('[push] cold-launch route consumed pre-mount:', route)
+          window.dispatchEvent(new PopStateEvent('popstate'))
+          console.info('[push] cold-launch route consumed:', route)
           return true
         }
       } catch { /* best-effort */ }
