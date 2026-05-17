@@ -30,7 +30,7 @@ PW   = os.environ["SY094_PW"]
 PAT  = os.environ.get("GITHUB_PAT", "")
 
 BUILD_MARKETING = "1.8.7"
-BUILD_NUMBER    = "14"
+BUILD_NUMBER    = "15"
 
 ARCHIVE_PATH = f"/tmp/coexist-{BUILD_MARKETING}.xcarchive"
 EXPORT_DIR   = f"/tmp/coexist-{BUILD_MARKETING}-export"

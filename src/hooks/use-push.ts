@@ -438,12 +438,13 @@ export function usePushRegistration() {
       const unregisterConsumer = registerTapConsumer((route) => navigate(route))
 
       // Native-direct fallback: AppDelegate.didReceive writes `pendingPushRoute`
-      // to Preferences on tap (1.8.7(13)+). We drain it here on mount and on
-      // every appStateChange resume. This bypasses the Capacitor plugin's
-      // pushNotificationActionPerformed path which was unreliable across
-      // 1.8.7(7-12) - native diagnostic confirmed pushTapLog stayed empty even
-      // though presentationOptions and pushNotificationReceived worked.
-      const drainPendingPushRoute = async () => {
+      // to Preferences on tap (1.8.7(13)+). We drain it here on mount AND poll
+      // for the first 3s after mount because on cold-launch iOS may deliver
+      // the tap response to AppDelegate AFTER React has already mounted +
+      // run the initial drain (confirmed 1.8.7(14): lastTapResponseAt fires
+      // after JS drain on cold-launch, so single-shot drain is empty and the
+      // late write strands in Preferences).
+      const drainPendingPushRoute = async (): Promise<boolean> => {
         try {
           const got = await Preferences.get({ key: 'pendingPushRoute' })
           const route = got?.value
@@ -452,12 +453,31 @@ export function usePushRegistration() {
             await Preferences.remove({ key: 'pendingPushRoute' })
             await Preferences.remove({ key: 'pendingPushRouteAt' })
             navigate(route)
+            return true
           }
         } catch (err) {
           console.warn('[push] drainPendingPushRoute failed:', err)
         }
+        return false
       }
-      void drainPendingPushRoute()
+      // Initial drain, then poll for 3s at 200ms intervals to catch the
+      // cold-launch race where AppDelegate writes pendingPushRoute slightly
+      // after React mount.
+      void (async () => {
+        if (await drainPendingPushRoute()) return
+        let pollCount = 0
+        const pollTimer = setInterval(async () => {
+          pollCount++
+          if (!mounted || pollCount > 15) {
+            clearInterval(pollTimer)
+            return
+          }
+          if (await drainPendingPushRoute()) {
+            clearInterval(pollTimer)
+          }
+        }, 200)
+        timersRef.current.push(pollTimer as unknown as ReturnType<typeof setTimeout>)
+      })()
 
       listenersRef.current = [regListener, errListener, receivedListener, actionListener, { remove: unregisterConsumer }]
 
