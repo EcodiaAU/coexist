@@ -1256,16 +1256,29 @@ async function triggerSurveyNotifications(eventId: string, eventTitle: string) {
   const pendingUsers = userIds.filter((id) => !excludedIds.has(id))
   if (!pendingUsers.length) return
 
+  const title = 'How was your event?'
+  const body = `Tell us about "${eventTitle}" - your feedback helps improve future events.`
+
   // Insert notifications for each attendee
   await supabase.from('notifications').insert(
     pendingUsers.map((userId) => ({
       user_id: userId,
       type: 'survey_request',
-      title: 'How was your event?',
-      body: `Tell us about "${eventTitle}" - your feedback helps improve future events.`,
+      title,
+      body,
       data: { event_id: eventId },
     })),
   )
+
+  // Send push notifications
+  supabase.functions.invoke('send-push', {
+    body: {
+      userIds: pendingUsers,
+      title,
+      body,
+      data: { type: 'survey_request', event_id: eventId },
+    },
+  }).catch(console.error)
 }
 
 /* ------------------------------------------------------------------ */

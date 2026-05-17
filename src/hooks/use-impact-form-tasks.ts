@@ -235,11 +235,14 @@ export function useNotifyLeadersForImpactForm() {
       if (leadersError) throw leadersError
       if (!leaders?.length) return { sent: 0 }
 
+      const title = 'Impact form ready'
+      const body = `Log the impact for "${eventTitle}" - any leader in your collective can fill this out.`
+
       const notifications = leaders.map((l) => ({
         user_id: l.user_id,
         type: 'survey_request' as const,
-        title: 'Impact form ready',
-        body: `Log the impact for "${eventTitle}" - any leader in your collective can fill this out.`,
+        title,
+        body,
         data: { event_id: eventId, type: 'impact_form' },
       }))
 
@@ -248,6 +251,18 @@ export function useNotifyLeadersForImpactForm() {
         .insert(notifications)
 
       if (notifError) throw notifError
+
+      // Send push notifications
+      const leaderIds = leaders.map((l) => l.user_id)
+      supabase.functions.invoke('send-push', {
+        body: {
+          userIds: leaderIds,
+          title,
+          body,
+          data: { type: 'survey_request', subtype: 'impact_form', event_id: eventId },
+        },
+      }).catch(console.error)
+
       return { sent: leaders.length }
     },
   })

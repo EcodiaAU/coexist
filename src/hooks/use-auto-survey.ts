@@ -265,12 +265,15 @@ export function useTriggerSurveyNotifications() {
 
       if (!pendingUsers.length) return { sent: 0 }
 
+      const title = 'How was your event?'
+      const body = `Tell us about "${eventTitle}" - your feedback helps improve future events.`
+
       // Insert notifications for each attendee
       const notifications = pendingUsers.map((userId) => ({
         user_id: userId,
         type: 'survey_request',
-        title: 'How was your event?',
-        body: `Tell us about "${eventTitle}" - your feedback helps improve future events.`,
+        title,
+        body,
         data: { event_id: eventId },
       }))
 
@@ -279,6 +282,17 @@ export function useTriggerSurveyNotifications() {
         .insert(notifications)
 
       if (notifError) throw notifError
+
+      // Send push notifications
+      supabase.functions.invoke('send-push', {
+        body: {
+          userIds: pendingUsers,
+          title,
+          body,
+          data: { type: 'survey_request', event_id: eventId },
+        },
+      }).catch(console.error)
+
       return { sent: pendingUsers.length }
     },
   })

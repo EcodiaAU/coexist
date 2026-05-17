@@ -83,11 +83,7 @@
 			<array>
 				<string>coexist</string>
 			</array>
-			<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
-</dict>
+		</dict>
 		<dict>
 			<key>CFBundleURLName</key>
 			<string>com.googleusercontent.apps.528428779228-m36045vgo2dibu9uhkakj4u7o6832srb</string>
