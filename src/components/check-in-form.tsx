@@ -313,7 +313,7 @@ export function CheckInModeView({
               <p className="text-caption text-neutral-400 mt-0.5">{collectiveName}</p>
             )}
             <p className="text-caption text-neutral-400 mt-2">
-              Ask your leader for the 3-digit code
+              Ask your leader for the 3-character code
             </p>
           </div>
 

@@ -494,7 +494,7 @@ export default function CheckInPage() {
                 Enter Check-In Code
               </h2>
               <p className="text-sm text-neutral-500 mt-1 max-w-xs mx-auto">
-                Ask your leader for the 3-digit code
+                Ask your leader for the 3-character code
               </p>
             </div>
 
