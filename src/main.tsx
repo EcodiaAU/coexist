@@ -118,6 +118,19 @@ document.addEventListener('visibilitychange', () => {
 // Auto-sync offline check-ins when connectivity is restored
 attachOfflineSyncListener()
 
+// Attach the push-notification tap listener as early as possible so cold-launch
+// taps route correctly. Capacitor delivers pushNotificationActionPerformed at
+// app boot when the user opened the app by tapping a notification; if no
+// listener is attached at that moment, the action is dropped and the user
+// lands on '/'. usePushRegistration inside AppShell is gated on auth-resolve
+// so it attaches too late. The early listener buffers the resolved route
+// until AppShell wires a consumer (which calls react-router navigate).
+if (Capacitor.isNativePlatform()) {
+  import('@/hooks/use-push').then(({ attachEarlyTapListener }) => {
+    attachEarlyTapListener().catch((err) => console.warn('[push] early tap listener attach failed:', err))
+  })
+}
+
 // Initialize Sentry error reporting (no-op if VITE_SENTRY_DSN is not set)
 initSentry()
 

@@ -182,6 +182,55 @@ async function _doRequestAndRegister(plugin: NonNullable<typeof PushNotification
 }
 
 /* ------------------------------------------------------------------ */
+/*  Early tap-listener - attaches BEFORE auth so cold-launch tap routes */
+/*                                                                     */
+/*  Capacitor delivers pushNotificationActionPerformed at app boot on  */
+/*  cold-launch via push tap. If no listener is attached at that       */
+/*  moment, the action is dropped. usePushRegistration ran inside      */
+/*  AppShell gated on user-auth - listener attached ~1-3s too late.    */
+/*  attachEarlyTapListener resolves a route and buffers it until       */
+/*  AppShell wires the consumer (which calls react-router navigate).   */
+/* ------------------------------------------------------------------ */
+
+let pendingTapRoute: string | null = null
+let tapConsumer: ((route: string) => void) | null = null
+let earlyListenerAttached = false
+
+export async function attachEarlyTapListener(): Promise<void> {
+  if (earlyListenerAttached) return
+  if (!Capacitor.isNativePlatform()) return
+  const plugin = await loadPushPlugin()
+  if (!plugin) return
+  earlyListenerAttached = true
+  await plugin.addListener('pushNotificationActionPerformed', (action: unknown) => {
+    const a = action as PushNotificationActionPerformed
+    const data = a.notification?.data ?? {}
+    const route = resolveNotificationRoute(data.type ?? '', data)
+    console.info('[push] tap action - route=', route, 'data=', JSON.stringify(data))
+    if (tapConsumer) {
+      tapConsumer(route)
+    } else {
+      pendingTapRoute = route
+      console.info('[push] tap action buffered - no consumer yet')
+    }
+  })
+  console.info('[push] early tap listener attached')
+}
+
+export function registerTapConsumer(consumer: (route: string) => void): () => void {
+  tapConsumer = consumer
+  if (pendingTapRoute) {
+    const r = pendingTapRoute
+    pendingTapRoute = null
+    console.info('[push] draining buffered tap route=', r)
+    consumer(r)
+  }
+  return () => {
+    if (tapConsumer === consumer) tapConsumer = null
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /*  usePushRegistration - mount ONCE at app root (AppShell)            */
 /*                                                                     */
 /*  Handles:                                                           */
@@ -324,15 +373,15 @@ export function usePushRegistration() {
         },
       )
 
-      // Notification tapped - deep link routing + mark in-app notification read
+      // Notification tapped - mark in-app notification read.
+      // Navigation is handled by the early tap listener (attachEarlyTapListener
+      // in main.tsx) so cold-launch taps route correctly. This second listener
+      // is auth-gated and only handles the side effects that need the user row.
       const actionListener = await plugin.addListener(
         'pushNotificationActionPerformed',
         async (action: unknown) => {
           const a = action as PushNotificationActionPerformed
           const notifData = a.notification.data ?? {}
-          const route = resolveNotificationRoute(notifData.type ?? '', notifData)
-          navigate(route)
-
           // Mark the matching in-app notification as read so the feed stays in sync.
           // Match on type + recent timestamp since push doesn't carry the notification row ID.
           try {
@@ -361,7 +410,11 @@ export function usePushRegistration() {
         },
       )
 
-      listenersRef.current = [regListener, errListener, receivedListener, actionListener]
+      // Wire the navigate consumer for the early listener. Drains any
+      // tap-route buffered during the auth-load window.
+      const unregisterConsumer = registerTapConsumer((route) => navigate(route))
+
+      listenersRef.current = [regListener, errListener, receivedListener, actionListener, { remove: unregisterConsumer }]
 
       // Register - listeners are already attached so the token callback will fire
       await requestAndRegister(plugin)
