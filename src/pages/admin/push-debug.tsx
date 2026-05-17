@@ -130,6 +130,7 @@ export default function PushDebugPage() {
       'firebaseConfigured', 'firebaseSenderId',
       'didRegisterCalled', 'apnsTokenHex', 'apnsTokenAt',
       'didFailCalled', 'apnsError', 'apnsErrorAt',
+      'didSetUNCenterDelegate', 'lastTapResponseAt', 'lastTapUserInfo', 'lastTapBridgeStatus',
     ]
     const out: Record<string, string | null> = {}
     for (const k of keys) {
@@ -332,6 +333,15 @@ export default function PushDebugPage() {
         <div>firebaseSenderId: <b>{nativeDiag.firebaseSenderId ?? '(none)'}</b></div>
         <div>didRegisterCalled: <b className={nativeDiag.didRegisterCalled === 'true' ? 'text-green-700' : 'text-red-700'}>{nativeDiag.didRegisterCalled ?? '(none)'}</b></div>
         <div>didFailCalled: <b className={nativeDiag.didFailCalled === 'true' ? 'text-red-700' : 'text-zinc-600'}>{nativeDiag.didFailCalled ?? '(none)'}</b></div>
+        <div>didSetUNCenterDelegate (1.8.7(12)): <b className={nativeDiag.didSetUNCenterDelegate === 'true' ? 'text-green-700' : 'text-red-700'}>{nativeDiag.didSetUNCenterDelegate ?? '(none)'}</b></div>
+        <div>lastTapResponseAt (1.8.7(12)): <b className={nativeDiag.lastTapResponseAt ? 'text-green-700' : 'text-zinc-600'}>{nativeDiag.lastTapResponseAt ?? '(none)'}</b></div>
+        <div>lastTapBridgeStatus: <b className={nativeDiag.lastTapBridgeStatus === 'bridge-not-ready' ? 'text-amber-700' : 'text-zinc-600'}>{nativeDiag.lastTapBridgeStatus ?? '(bridge-ready or no tap yet)'}</b></div>
+        {nativeDiag.lastTapUserInfo && (
+          <div className="mt-1">
+            <div>lastTapUserInfo:</div>
+            <div className="break-all rounded bg-white p-1">{nativeDiag.lastTapUserInfo}</div>
+          </div>
+        )}
         {nativeDiag.apnsTokenHex && (
           <div className="mt-1">
             <div>apnsTokenHex (at {nativeDiag.apnsTokenAt}):</div>

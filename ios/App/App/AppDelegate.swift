@@ -2,9 +2,10 @@ import UIKit
 import Capacitor
 import FirebaseCore
 import FirebaseMessaging
+import UserNotifications
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUserNotificationCenterDelegate {
 
     var window: UIWindow?
 
@@ -29,6 +30,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         capSet(nil, forKey: "apnsError")
         capSet(false, forKey: "didRegisterCalled")
         capSet(false, forKey: "didFailCalled")
+        capSet(false, forKey: "didSetUNCenterDelegate")
+        capSet(nil, forKey: "lastTapResponseAt")
+        capSet(nil, forKey: "lastTapUserInfo")
+        capSet(nil, forKey: "lastTapBridgeStatus")
 
         // Firebase init. Method swizzling is disabled via Info.plist
         // (FirebaseAppDelegateProxyEnabled=false) so we take manual control:
@@ -49,6 +54,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
             capSet(false, forKey: "firebaseConfigured")
         }
         Messaging.messaging().delegate = self
+
+        // Take explicit ownership of UNUserNotificationCenter delegate.
+        // Capacitor's NotificationRouter normally sets itself as the delegate
+        // when the bridge inits in CAPBridgeViewController.viewDidLoad, but
+        // (a) at cold-launch via push tap iOS calls the delegate before the
+        // bridge inits, and (b) something else (Firebase Messaging on iOS
+        // 17/18+, or another lifecycle path) appears to displace it later.
+        // Owning the delegate here and forwarding to Capacitor's router
+        // guarantees pushNotificationActionPerformed always reaches JS.
+        // Diagnostic: persisted tap-log on /admin/push-debug was empty across
+        // 1.8.7(10)+(11) - plugin never received the tap callback.
+        UNUserNotificationCenter.current().delegate = self
+        capSet(true, forKey: "didSetUNCenterDelegate")
+
         return true
     }
 
@@ -113,6 +132,51 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
             name: .capacitorDidFailToRegisterForRemoteNotifications,
             object: error
         )
+    }
+
+    // MARK: - UNUserNotificationCenterDelegate
+    //
+    // We own the delegate so taps always reach Capacitor's NotificationRouter
+    // regardless of who else (Firebase Messaging, plugin lifecycle) tries to
+    // claim it. The router fans out to the @capacitor/push-notifications
+    // plugin's PushNotificationsHandler.didReceive(response:) which fires the
+    // 'pushNotificationActionPerformed' JS event - that's what use-push.ts
+    // listens on for deep-link routing.
+
+    private func capacitorNotificationRouter() -> NotificationRouter? {
+        guard let vc = window?.rootViewController as? CAPBridgeViewController else { return nil }
+        return vc.bridge?.notificationRouter
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        if let router = capacitorNotificationRouter() {
+            router.userNotificationCenter(center, willPresent: notification, withCompletionHandler: completionHandler)
+        } else {
+            // Bridge not ready (extremely early). Present with default options.
+            completionHandler([.banner, .sound, .badge])
+        }
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        // Diagnostic: record that iOS delivered a tap response to AppDelegate.
+        // If this gets set true but the JS tap-log on /admin/push-debug stays
+        // empty, the bridge wasn't ready / forwarding broke.
+        capSet(ISO8601DateFormatter().string(from: Date()), forKey: "lastTapResponseAt")
+        capSet(response.notification.request.content.userInfo.description, forKey: "lastTapUserInfo")
+
+        if let router = capacitorNotificationRouter() {
+            router.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
+        } else {
+            // Bridge isn't initialised yet (cold-launch via tap). The tap event
+            // would otherwise be dropped. Buffer the userInfo to Preferences
+            // and re-fire via the bridge once it loads. For now just complete.
+            capSet("bridge-not-ready", forKey: "lastTapBridgeStatus")
+            completionHandler()
+        }
     }
 
     // MARK: - FirebaseMessagingDelegate
