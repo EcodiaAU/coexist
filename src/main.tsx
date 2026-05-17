@@ -129,6 +129,41 @@ if (Capacitor.isNativePlatform()) {
   import('@/hooks/use-push').then(({ attachEarlyTapListener }) => {
     attachEarlyTapListener().catch((err) => console.warn('[push] early tap listener attach failed:', err))
   })
+
+  // Race AppDelegate.didReceive against React mount. AppDelegate writes
+  // 'pendingPushRoute' to Preferences when iOS delivers a tap response
+  // (1.8.7(13)+). On cold-launch this can happen before OR after React mounts.
+  // If before: we read it here, rewrite the URL with history.replaceState
+  // BEFORE BrowserRouter reads the location, so the app renders the deep
+  // route on first paint - no home-page flash, no late navigate. If after:
+  // the in-hook poll inside usePushRegistration catches it (3s window).
+  import('@capacitor/preferences').then(async ({ Preferences }) => {
+    let attempts = 0
+    const tryConsume = async (): Promise<boolean> => {
+      try {
+        const got = await Preferences.get({ key: 'pendingPushRoute' })
+        const route = got?.value
+        if (route && route.startsWith('/') && !route.includes('://') && route.length < 512) {
+          await Preferences.remove({ key: 'pendingPushRoute' })
+          await Preferences.remove({ key: 'pendingPushRouteAt' })
+          // Rewrite URL so BrowserRouter picks up the deep route on initial render
+          window.history.replaceState(null, '', route)
+          console.info('[push] cold-launch route consumed pre-mount:', route)
+          return true
+        }
+      } catch { /* best-effort */ }
+      return false
+    }
+    if (await tryConsume()) return
+    // Poll every 50ms for 2s to catch the case where AppDelegate writes
+    // after main.tsx starts but before / during React mount.
+    const iv = setInterval(async () => {
+      attempts++
+      if (await tryConsume() || attempts > 40) {
+        clearInterval(iv)
+      }
+    }, 50)
+  })
 }
 
 // Initialize Sentry error reporting (no-op if VITE_SENTRY_DSN is not set)
