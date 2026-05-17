@@ -93,11 +93,35 @@ export interface GroupedNotifications {
 /**
  * Resolve deep link route from notification type + data.
  * Single source of truth - also used by use-push.ts for tap routing.
+ *
+ * Precedence:
+ *   1. data.route - explicit caller-supplied route (highest precedence). Lets
+ *      any caller deep-link to an arbitrary path without modifying this resolver.
+ *      Validated as same-origin path-only (must start with '/' and contain no
+ *      '//' or scheme) to prevent navigation hijack via push payload.
+ *   2. type-based - canonical type-to-route map below. Used by core in-app types
+ *      (events, chat, surveys etc) so the in-app notification feed and push tap
+ *      route to the same place even when the sender doesn't supply data.route.
+ *   3. fallback '/' - unknown type and no explicit route.
  */
 export function resolveNotificationRoute(
   type: string,
   data?: Record<string, string> | null,
 ): string {
+  // 1. Explicit route wins. Validate to a safe in-app path before trusting it.
+  const explicit = data?.route
+  if (
+    typeof explicit === 'string' &&
+    explicit.length > 0 &&
+    explicit.length < 512 &&
+    explicit.startsWith('/') &&
+    !explicit.startsWith('//') &&
+    !explicit.includes('://')
+  ) {
+    return explicit
+  }
+
+  // 2. Canonical type-based resolution.
   switch (type as NotificationType) {
     case 'event_reminder':
     case 'event_cancelled':

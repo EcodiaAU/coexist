@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
           userIds: staffIds,
           title: 'Content Report',
           body: `${reporterName} reported ${what}. Review needed.`,
-          data: { url: '/admin/moderation' },
+          data: { type: 'report_alert', route: '/admin/moderation' },
         },
       })
     } catch (pushErr) {

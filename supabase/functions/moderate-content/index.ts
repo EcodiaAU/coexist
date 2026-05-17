@@ -208,6 +208,7 @@ Deno.serve(async (req: Request) => {
             body: `Automated moderation flagged an upload in ${payload.context}`,
             data: {
               type: 'moderation_alert',
+              route: '/admin/moderation',
               content_type: payload.contentType ?? 'image',
               uploader_id: payload.userId,
             },
