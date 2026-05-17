@@ -51,17 +51,27 @@ interface CreateWidgetBody {
   notes?: string | null
 }
 
+// CORS headers - the function previously rejected OPTIONS preflight with
+// 405-no-cors which surfaced in the browser as a CORS error rather than a
+// useful response. Mirror the Supabase Edge Function CORS convention so the
+// FE supabase.functions.invoke() path completes.
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
 function bad(status: number, message: string) {
   return new Response(
     JSON.stringify({ success: false, error: message }),
-    { status, headers: { 'Content-Type': 'application/json' } },
+    { status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
   )
 }
 
 function badJson(status: number, payload: Record<string, unknown>) {
   return new Response(
     JSON.stringify({ success: false, ...payload }),
-    { status, headers: { 'Content-Type': 'application/json' } },
+    { status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
   )
 }
 
@@ -181,6 +191,11 @@ async function resolveCoords(
 }
 
 Deno.serve(async (req: Request) => {
+  // CORS preflight - must respond with CORS headers BEFORE the method-check
+  // 405 path, otherwise browsers see "CORS error" instead of any useful info.
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
   if (req.method !== 'POST') {
     return bad(405, 'method not allowed')
   }
@@ -336,6 +351,6 @@ Deno.serve(async (req: Request) => {
       widget_id: widget.id,
       message_id: msg.id,
     }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } },
+    { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
   )
 })
