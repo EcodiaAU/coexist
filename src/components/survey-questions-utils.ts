@@ -127,5 +127,14 @@ export function parseSurveyQuestions(raw: unknown): SurveyQuestion[] {
       date_min: (q.date_min as string) || undefined,
       date_max: (q.date_max as string) || undefined,
       impact_metric: (q.impact_metric as string) || undefined,
+      default_value: (q as Record<string, unknown>).default_value,
+      show_if: (() => {
+        const raw = (q as Record<string, unknown>).show_if as
+          | { question_id?: unknown; equals?: unknown }
+          | undefined
+        if (!raw || typeof raw !== 'object') return undefined
+        if (typeof raw.question_id !== 'string') return undefined
+        return { question_id: raw.question_id, equals: raw.equals }
+      })(),
     }))
 }
