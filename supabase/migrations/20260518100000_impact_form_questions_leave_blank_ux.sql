@@ -28,8 +28,9 @@ DECLARE
   canonical jsonb := jsonb_build_object(
     'q1',  jsonb_build_object(
       'id','q1','text','Other group attended','type','free_text','required',false,
-      'description','Leave blank if it was just Co-Exist - we default to ''No, just Co-Exist!'' on the sheet.',
-      'placeholder','e.g. Bushcare group, school group','text_multiline',false),
+      'description','Replace this if another group attended. Leave it as ''No, just Co-Exist!'' if it was just Co-Exist.',
+      'placeholder','e.g. Bushcare group, school group',
+      'text_multiline',false,'default_value','No, just Co-Exist!'),
     'q2',  jsonb_build_object(
       'id','q2','text','Which Landcare group','type','free_text','required',false,
       'description','If a Landcare group attended, which one? Leave blank otherwise.',

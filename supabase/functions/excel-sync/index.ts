@@ -367,17 +367,24 @@ function freeText(val: unknown): string {
 }
 
 // Like freeText, but for numeric-intent cells (kg, count). Returns the number
-// when coercible. Returns '' for blank/NA OR for unparseable text (e.g. "12kg"
-// where the leader typed a unit) - never leak a non-numeric string into a
-// number column, which would break sheet sums and sorts.
+// when coercible AND non-zero. Returns '' for blank/NA OR for zero OR for
+// unparseable text (e.g. "12kg"):
+//   - blank/NA: leader didn't fill it
+//   - zero: leader typed 0 meaning "none/not applicable" - Forms convention
+//     has zero 0s in cols 15 (Rubbish) + 16 (Trees) across 43 rows; blanks
+//     are the "no quantity" signal
+//   - unparseable string: never leak a non-numeric value into a number column,
+//     which would break sheet sums and sorts
+// Falls through to fallback only if fallback is itself a non-zero finite
+// number; otherwise blank.
 function numberOrBlank(val: unknown, fallback: number | null): string | number {
   if (!isNoAnswer(val)) {
     const n = typeof val === 'number' ? val : Number(String(val).trim())
-    if (Number.isFinite(n)) return n
-    // Unparseable string ("12kg", "approx 30", etc): fall through to fallback
-    // rather than write a non-numeric value into a numeric column.
+    if (Number.isFinite(n) && n !== 0) return n
+    if (Number.isFinite(n) && n === 0) return ''
   }
-  return fallback === null || fallback === undefined ? '' : fallback
+  if (fallback === null || fallback === undefined || fallback === 0) return ''
+  return fallback
 }
 
 function buildExcelRow(e: EventData): (string | number | null)[] {
