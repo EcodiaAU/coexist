@@ -706,6 +706,28 @@ export default function LogImpactPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingSurveyResponse])
 
+  // Pre-fill default_value for questions that have one. Mirrors the Microsoft
+  // Form behaviour where Issues/Highlights/Grant came pre-filled with "No" so
+  // leaders could submit unchanged. Only seeds keys not already in
+  // surveyAnswers - never clobbers an existing or pre-loaded answer.
+  // See ~/ecodiaos/clients/coexist.md "Sheet sync mapping" doctrine.
+  useEffect(() => {
+    if (!surveyData?.questions?.length) return
+    setSurveyAnswers((prev) => {
+      const seeded: Record<string, unknown> = { ...prev }
+      let changed = false
+      for (const q of surveyData.questions) {
+        const dv = (q as unknown as { default_value?: unknown }).default_value
+        if (dv !== undefined && seeded[q.id] === undefined) {
+          seeded[q.id] = dv
+          changed = true
+        }
+      }
+      return changed ? seeded : prev
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surveyData?.questions])
+
   const [eventDurationHours, setEventDurationHours] = useState('')
   const [notes, setNotes] = useState('')
   const [species, setSpecies] = useState<SpeciesEntry[]>([])

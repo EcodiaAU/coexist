@@ -211,21 +211,38 @@ function extractPostcode(address: string): string {
   return match ? match[match.length - 1] : ''
 }
 
-/** Convert yes_no survey answer to Yes/No string */
-function yesNo(val: unknown): string {
+/** Convert yes_no survey answer to Yes/No string. `fallback` is the value
+ *  to use when the leader didn't answer (blank/NA/null). Set to 'No' for
+ *  columns the Forms-era convention always populated (FirstAid, OneDrive,
+ *  GVids, Insta - 0 blanks across 43 Forms rows in May 2026). Leave blank
+ *  ('') for truly optional yes/no (only q6 Collect). */
+function yesNo(val: unknown, fallback: '' | 'Yes' | 'No' = ''): string {
   if (val === true || val === 'yes' || val === 'Yes') return 'Yes'
   if (val === false || val === 'no' || val === 'No') return 'No'
-  return ''
+  return fallback
 }
 
-// Treat empty/whitespace/"NA"/"N/A"/"-"/"none" as no-answer for the
-// organiser-derivation defaults below. Leaders often type these to mean
-// "not applicable" and the sheet should land the default ("No, just Co-Exist!")
-// rather than the literal "NA".
+// Treat empty/whitespace/"NA"/"N/A"/"-"/"none"/"no"/"nil"/"nope" as
+// no-answer. Leaders often type these in optional fields to mean "not
+// applicable" - the sheet should land the column-specific default (blank
+// for col 8/9 Landcare/OzFish, "No, just Co-Exist!" for col 7, "No" for
+// col 20/22/25 Issues/Highlights/Grant) rather than the literal "NA"/"No"
+// in fields where the Forms convention left them blank.
+//
+// Safe across all call sites:
+//   - yesNo() does NOT call isNoAnswer; an explicit "No" still maps to 'No'.
+//   - freeText() with fallback "No" (Issues/Highlights/Grant): if leader
+//     types "No", freeText returns ''; the || 'No' fallback then writes "No"
+//     to the cell - same end result.
+//   - freeText() without fallback (Landcare/OzFish/Hike/WhatHow): "No" -> ''
+//     matches Forms convention of blank-when-not-applicable.
 function isNoAnswer(val: unknown): boolean {
   if (val === null || val === undefined) return true
   const s = String(val).trim().toLowerCase()
-  return s === '' || s === 'na' || s === 'n/a' || s === '-' || s === 'none'
+  return (
+    s === '' || s === 'na' || s === 'n/a' || s === '-' ||
+    s === 'none' || s === 'no' || s === 'nil' || s === 'nope'
+  )
 }
 
 // Derive sheet col 6 (Primary Organiser) + col 7 (Other Group Attended) from
@@ -340,15 +357,16 @@ function freeText(val: unknown): string {
   return isNoAnswer(val) ? '' : String(val).trim()
 }
 
-// Like freeText, but for numeric-intent cells (kg, count). Returns empty
-// string when no usable answer; otherwise the original value (Excel-side
-// formatting interprets it as a number).
+// Like freeText, but for numeric-intent cells (kg, count). Returns the number
+// when coercible. Returns '' for blank/NA OR for unparseable text (e.g. "12kg"
+// where the leader typed a unit) - never leak a non-numeric string into a
+// number column, which would break sheet sums and sorts.
 function numberOrBlank(val: unknown, fallback: number | null): string | number {
   if (!isNoAnswer(val)) {
-    // Try to coerce to number first so the cell sorts/sums correctly.
     const n = typeof val === 'number' ? val : Number(String(val).trim())
     if (Number.isFinite(n)) return n
-    return String(val).trim()
+    // Unparseable string ("12kg", "approx 30", etc): fall through to fallback
+    // rather than write a non-numeric value into a numeric column.
   }
   return fallback === null || fallback === undefined ? '' : fallback
 }
@@ -374,6 +392,29 @@ function buildExcelRow(e: EventData): (string | number | null)[] {
   // Origin: Tate verbatim 2026-05-18 - "what was it and how much, that should
   // be left blank if unanswered, not them have to put NA".
 
+  // Forms-convention column doctrine, derived from 43 May-2026 Forms-origin
+  // rows on the master sheet (rows 240-286, Forms IDs only):
+  //
+  //   ALWAYS populated (0-1 blank / 43):
+  //     col 7  OtherGroup  -> "No, just Co-Exist!" default
+  //     col 20 Issues      -> "No" default (free text or "No")
+  //     col 21 FirstAid    -> "No" default (yes/no)
+  //     col 22 Highlights  -> "No" default (free text)
+  //     col 23 OneDrive    -> "No" default (yes/no, sheet often "Yes")
+  //     col 24 GoogleVids  -> "No" default (yes/no)
+  //     col 25 Grant       -> "No" default (free text)
+  //     col 27 Insta       -> "No" default (yes/no)
+  //
+  //   OFTEN blank (truly optional in Form):
+  //     col 8 Landcare, col 9 OzFish, col 15 Rubbish, col 16 Trees,
+  //     col 17 Collect, col 18 WhatHow, col 19 Hike
+  //
+  // Origin: Tate verbatim 2026-05-18 - "since all the rows in the any issues
+  // column have either an issue or 'No', those ones ARE NOT left blank...
+  // it needs to be identical to their conventions and way of doing it via
+  // their form". Conventions analysis at backend/drafts/coexist-sheet-column-
+  // conventions-2026-05-18.md.
+
   return [
     e.id,                                                    // 0: ID
     e.title,                                                 // 1: Event Title
@@ -382,27 +423,27 @@ function buildExcelRow(e: EventData): (string | number | null)[] {
     e.address ?? '',                                         // 4: Location
     freeText(e.answers?.postcode) || extractPostcode(e.address ?? ''), // 5: Postcode (survey answer, fallback to address extraction)
     organiser,                                               // 6: Primary Organiser of the Event
-    otherGroup,                                              // 7: Other Group Attended
-    freeText(e.answers?.q2),                                 // 8: Which Landcare Group
-    freeText(e.answers?.q3),                                 // 9: Which OzFish group
+    otherGroup,                                              // 7: Other Group Attended (always populated)
+    freeText(e.answers?.q2),                                 // 8: Which Landcare Group (optional - blank when N/A)
+    freeText(e.answers?.q3),                                 // 9: Which OzFish group (optional - blank when N/A)
     freeText(e.answers?.leader_name) || e.leader_name || '', // 10: Co-Exist Leader (from survey dropdown)
     e.attendees ?? e.checked_in_count ?? '',                  // 11: Number of Attendees (impact override or check-in count)
     isConservation ? 'Conservation' : isRecreation ? 'Recreation' : label, // 12: Type of Event
-    isConservation ? label : '',                             // 13: Conservation type
-    isRecreation ? label : '',                               // 14: Recreational type
-    numberOrBlank(e.answers?.q4, e.rubbish_kg),              // 15: Rubbish Removed
-    numberOrBlank(e.answers?.q5, e.trees_planted),           // 16: Trees Planted
-    yesNo(e.answers?.q6),                                    // 17: Collect/Make Anything
-    freeText(e.answers?.q7),                                 // 18: What & How Much
-    freeText(e.answers?.q8),                                 // 19: Hike/track name
-    freeText(e.answers?.q9),                                 // 20: Any Issues
-    yesNo(e.answers?.q10),                                   // 21: Use First Aid Kit
-    freeText(e.answers?.q11),                                // 22: Outstanding Highlights
-    yesNo(e.answers?.q12),                                   // 23: Images to OneDrive
-    yesNo(e.answers?.q13),                                   // 24: Videos to Google
-    freeText(e.answers?.q14),                                // 25: Grant Project
+    isConservation ? label : '',                             // 13: Conservation type (optional)
+    isRecreation ? label : '',                               // 14: Recreational type (optional)
+    numberOrBlank(e.answers?.q4, e.rubbish_kg),              // 15: Rubbish Removed (optional - blank when N/A)
+    numberOrBlank(e.answers?.q5, e.trees_planted),           // 16: Trees Planted (optional - blank when N/A)
+    yesNo(e.answers?.q6),                                    // 17: Collect/Make Anything (optional yes/no, blank when N/A)
+    freeText(e.answers?.q7),                                 // 18: What & How Much (optional - blank when N/A)
+    freeText(e.answers?.q8),                                 // 19: Hike/track name (optional - blank when N/A)
+    freeText(e.answers?.q9) || 'No',                         // 20: Any Issues (ALWAYS populated, "No" default)
+    yesNo(e.answers?.q10, 'No'),                             // 21: Use First Aid Kit (ALWAYS populated, "No" default)
+    freeText(e.answers?.q11) || 'No',                        // 22: Outstanding Highlights (ALWAYS populated, "No" default)
+    yesNo(e.answers?.q12, 'No'),                             // 23: Images to OneDrive (ALWAYS populated, "No" default)
+    yesNo(e.answers?.q13, 'No'),                             // 24: Videos to Google (ALWAYS populated, "No" default)
+    freeText(e.answers?.q14) || 'No',                        // 25: Grant Project (ALWAYS populated, "No" default)
     toYearMonth(e.date_start),                               // 26: Year-Month
-    yesNo(e.answers?.q15),                                   // 27: Posted Wrap-up Insta
+    yesNo(e.answers?.q15, 'No'),                             // 27: Posted Wrap-up Insta (ALWAYS populated, "No" default)
   ]
 }
 

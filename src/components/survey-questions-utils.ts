@@ -35,6 +35,12 @@ export interface SurveyQuestion {
   date_max?: string
   // Impact metric mapping (number questions only)
   impact_metric?: string
+  // Pre-fill value seeded by the page-level form on first render. Used for
+  // Co-Exist impact-form questions where the Microsoft Form historically
+  // came pre-filled with "No" (Issues, Highlights, Grant Project), so the
+  // leader can hit submit unchanged. Renderer reads answers[id] only;
+  // page-level form is responsible for seeding the initial state from this.
+  default_value?: unknown
 }
 
 /**
