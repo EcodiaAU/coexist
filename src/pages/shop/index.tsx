@@ -178,9 +178,11 @@ function ShopHero({
         </div>
 
         {/* ── Layer 1: Foreground people ── */}
-        {/* 56.25% width = 1080/1920, centered, bottom-aligned */}
+        {/* Mobile: 115% overflow w/ -7.5% margin so the figures read at the
+            same visual scale as the home hero. Desktop: 70% mirrors the home
+            hero proportions. Tate spec 2026-05-18: bigger FG. */}
         <div className="absolute bottom-0 inset-x-0 z-[3] flex justify-center">
-          <div className="w-[80%] sm:w-[56.25%]">
+          <div className="w-[115%] -ml-[7.5%] sm:w-[70%] sm:ml-0">
             <img
               src="/img/merch-hero-2.webp"
               alt="Co-Exist members"
@@ -190,10 +192,11 @@ function ShopHero({
         </div>
 
 
-        {/* Hero text - behind the people so they pass in front */}
+        {/* Hero text - behind the people so they pass in front. Pushed down
+            so "Shop" lands roughly mid-sky rather than crammed at the top. */}
         <div
           ref={rm ? undefined : textRef}
-          className="absolute inset-x-0 top-[12%] z-[2] flex justify-center will-change-transform"
+          className="absolute inset-x-0 top-[28%] sm:top-[20%] z-[2] flex justify-center will-change-transform"
         >
           <h1 style={{ fontSize: 'clamp(3.5rem, 10vw, 10rem)' }} className="font-heading font-bold text-[#fff] tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]">
             Shop

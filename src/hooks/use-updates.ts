@@ -218,6 +218,31 @@ export function useUnreadUpdateCount() {
 /*  Mark update as read                                                */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Bulk-mark every passed update_id as read for the current user.
+ * Used when the user visits the /updates page so the side-sheet badge
+ * clears immediately without needing them to tap each card.
+ */
+export function useMarkAllUpdatesRead() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (updateIds: string[]) => {
+      if (!user || updateIds.length === 0) return
+      const rows = updateIds.map((id) => ({ update_id: id, user_id: user.id }))
+      const { error } = await supabase
+        .from('update_reads')
+        .upsert(rows, { onConflict: 'update_id,user_id' })
+      if (error) throw error
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['updates'] })
+      queryClient.invalidateQueries({ queryKey: ['updates-unread'] })
+    },
+  })
+}
+
 export function useMarkUpdateRead() {
   const { user } = useAuth()
   const queryClient = useQueryClient()

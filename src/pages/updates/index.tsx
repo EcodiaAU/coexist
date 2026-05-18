@@ -12,6 +12,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import {
     useUpdates,
     useMarkUpdateRead,
+    useMarkAllUpdatesRead,
     type UpdateWithAuthor,
 } from '@/hooks/use-updates'
 import {
@@ -383,6 +384,7 @@ export default function UpdatesPage() {
   const { pinned, regular, all, isLoading, isError, refetch } = useUpdates()
   const showLoading = useDelayedLoading(isLoading)
   const markRead = useMarkUpdateRead()
+  const markAllRead = useMarkAllUpdatesRead()
   const { data: notifications } = useNotifications()
   const { data: unreadCount = 0 } = useUnreadCount()
   const markNotifRead = useMarkRead()
@@ -413,6 +415,18 @@ export default function UpdatesPage() {
       document.getElementById('main-content')?.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }, [selectedUpdateId])
+
+  // Bulk-mark every visible update as read once the page loads.
+  // This clears the side-sheet "Updates" badge without requiring the user
+  // to tap each card. Runs once per (all-ids fingerprint) so it doesn't
+  // refire on every re-render. Tate spec 2026-05-18.
+  useEffect(() => {
+    if (isLoading) return
+    const unreadIds = (all ?? []).filter((a) => !a.is_read).map((a) => a.id)
+    if (unreadIds.length === 0) return
+    markAllRead.mutate(unreadIds)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, all])
 
   const isEmpty = !isLoading && pinned.length === 0 && regular.length === 0 && recentNotifications.length === 0
 
