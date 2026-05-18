@@ -12,6 +12,8 @@ export interface NavItem {
   mobileOnly?: boolean
   /** Only show on desktop sidebar (not mobile) */
   desktopOnly?: boolean
+  /** Optional notification count rendered as a green circle badge on the row */
+  badge?: number
 }
 
 export interface NavCategory {

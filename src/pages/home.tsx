@@ -645,7 +645,7 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
                       </span>
                     </div>
 
-                    <p className="font-heading text-sm font-semibold text-white truncate">
+                    <p className="font-heading text-sm font-semibold text-white leading-snug line-clamp-2">
                       {event.title}
                     </p>
 
@@ -678,7 +678,7 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
                         </span>
                       </div>
 
-                      <p className="font-heading text-sm font-semibold text-white truncate">
+                      <p className="font-heading text-sm font-semibold text-white leading-snug line-clamp-2">
                         {event.title}
                       </p>
 
@@ -753,7 +753,7 @@ function NationalEventsSection({ rm }: { rm: boolean }) {
                         National
                       </span>
                     </div>
-                    <p className="font-heading text-sm font-semibold text-white truncate">{event.title}</p>
+                    <p className="font-heading text-sm font-semibold text-white leading-snug line-clamp-2">{event.title}</p>
                     <div className="flex items-center gap-3 mt-1.5 text-xs text-white/70">
                       <span className="flex items-center gap-1"><Clock size={11} />{formatEventTime(event.date_start)}</span>
                       {event.address && <span className="flex items-center gap-1 truncate"><MapPin size={11} />{event.address}</span>}
@@ -770,7 +770,7 @@ function NationalEventsSection({ rm }: { rm: boolean }) {
                           National
                         </span>
                       </div>
-                      <p className="font-heading text-sm font-semibold text-white truncate">{event.title}</p>
+                      <p className="font-heading text-sm font-semibold text-white leading-snug line-clamp-2">{event.title}</p>
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-white/50">
                         <span className="flex items-center gap-1"><Clock size={11} />{formatEventTime(event.date_start)}</span>
                         {event.address && <span className="flex items-center gap-1 truncate"><MapPin size={11} />{event.address}</span>}
@@ -1141,28 +1141,36 @@ function HomeImpactSection({
 function CtaCards({ rm }: { rm: boolean }) {
   const navigate = useNavigate()
 
-  // Side-by-side compact cards. Pure gradient backgrounds keyed to each
-  // action's tone (primary-warm for donate, bark for merch), iconography in
-  // a glass chip, large heading, small subtitle. Avoids the photo-as-bg
-  // approach that didn't suit the imagery library we have.
+  // Side-by-side cards with photo backgrounds. The previous iterations
+  // (donate-hero pair) were too busy. Using the leadership-hero-bg for
+  // donate (community + impact feel) and merch-hero-1 for the shop card
+  // (product on white = clean contrast). Both get a tone-keyed gradient
+  // overlay for legible white type.
   return (
     <motion.div variants={rm ? undefined : fadeUp} className="grid grid-cols-2 gap-3">
       {/* Donate */}
       <button
         onClick={() => navigate('/donate')}
-        className="relative h-36 rounded-3xl overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 group bg-gradient-to-br from-primary-400 via-primary-500 to-primary-700"
+        className="relative h-44 rounded-3xl overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 group"
+        aria-label="Donate"
       >
-        {/* Decorative ring + glow */}
-        <span className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-sm" aria-hidden="true" />
-        <span className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full bg-white/5" aria-hidden="true" />
+        <img
+          src="/img/leadership-hero-bg.webp"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover group-active:scale-[1.03] transition-transform duration-300"
+        />
+        {/* Tone overlay - primary green to dark to keep white type punchy */}
+        <div className="absolute inset-0 bg-gradient-to-t from-primary-900/85 via-primary-800/55 to-primary-600/20" aria-hidden="true" />
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
           <span className="flex items-center justify-center w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-sm">
             <Heart size={20} strokeWidth={2.4} />
           </span>
           <div>
-            <p className="font-heading text-xl font-bold text-white leading-tight">Donate</p>
-            <p className="text-[11px] text-white/85 mt-0.5 leading-snug">Fund grassroots conservation</p>
-            <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-white mt-2">
+            <p className="font-heading text-xl font-bold text-white leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Donate</p>
+            <p className="text-[11px] text-white/90 mt-0.5 leading-snug drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">Fund grassroots conservation</p>
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-white mt-2 drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]">
               Give <ChevronRight size={13} />
             </span>
           </div>
@@ -1172,18 +1180,26 @@ function CtaCards({ rm }: { rm: boolean }) {
       {/* Shop merch */}
       <button
         onClick={() => navigate('/shop')}
-        className="relative h-36 rounded-3xl overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 group bg-gradient-to-br from-bark-500 via-bark-600 to-bark-800"
+        className="relative h-44 rounded-3xl overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 group"
+        aria-label="Shop merch"
       >
-        <span className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-sm" aria-hidden="true" />
-        <span className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full bg-white/5" aria-hidden="true" />
+        <img
+          src="/img/merch-hero-1.webp"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover group-active:scale-[1.03] transition-transform duration-300"
+        />
+        {/* Tone overlay - bark/earthy keyed to merch tone */}
+        <div className="absolute inset-0 bg-gradient-to-t from-bark-900/85 via-bark-800/55 to-bark-600/20" aria-hidden="true" />
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
           <span className="flex items-center justify-center w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-sm">
             <ShoppingBag size={20} strokeWidth={2.4} />
           </span>
           <div>
-            <p className="font-heading text-xl font-bold text-white leading-tight">Merch</p>
-            <p className="text-[11px] text-white/85 mt-0.5 leading-snug">Wear the movement</p>
-            <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-white mt-2">
+            <p className="font-heading text-xl font-bold text-white leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Merch</p>
+            <p className="text-[11px] text-white/90 mt-0.5 leading-snug drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">Wear the movement</p>
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-white mt-2 drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]">
               Shop <ChevronRight size={13} />
             </span>
           </div>

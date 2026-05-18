@@ -466,12 +466,12 @@ export default function AdminContactsPage() {
 
                           {/* Info */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <p className="text-sm font-semibold text-neutral-900 truncate">
+                            <div className="flex items-start gap-2 mb-0.5">
+                              <p className="text-sm font-semibold text-neutral-900 leading-snug break-words flex-1 min-w-0">
                                 {contact.name}
                               </p>
                               {!contact.is_active && (
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500 shrink-0">
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500 shrink-0 mt-0.5">
                                   Inactive
                                 </span>
                               )}

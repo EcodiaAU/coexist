@@ -17,6 +17,7 @@ import { APP_NAME } from '@/lib/constants'
 import { useAuth } from '@/hooks/use-auth'
 import { useCollective } from '@/hooks/use-collective'
 import { useHasPartners } from '@/hooks/use-has-partners'
+import { useUnreadUpdateCount } from '@/hooks/use-updates'
 import { useLayout } from '@/hooks/use-layout'
 import { Avatar } from '@/components/avatar'
 
@@ -369,6 +370,7 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
   // verbatim 16:44 AEST 9 May 2026: "leaders can't see or access admin pages."
   const isAdminTier = isManager
   const { hasPartners } = useHasPartners()
+  const { data: unreadUpdates = 0 } = useUnreadUpdateCount()
 
   const isDevUser = import.meta.env.DEV &&
     !!user?.email &&
@@ -444,7 +446,7 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
     // get the leader suite via isAnyLeader below.
     const highestHome = isAdminTier ? adminHomeItem : isAnyLeader ? leaderHomeItem : memberHomeItem
 
-    const updatesItem: NavItem = { label: 'Updates', path: '/updates', icon: <Megaphone size={17} strokeWidth={1.5} /> }
+    const updatesItem: NavItem = { label: 'Updates', path: '/updates', icon: <Megaphone size={17} strokeWidth={1.5} />, badge: unreadUpdates }
     const chatItem: NavItem = { label: 'Chat', path: '/chat', icon: <MessageCircle size={17} strokeWidth={1.5} />, desktopOnly: true }
     const learnItem: NavItem = { label: 'Learn', path: '/learn', icon: <BookOpen size={17} strokeWidth={1.5} /> }
 
@@ -493,7 +495,7 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
     cats.push(...memberCats)
 
     return cats
-  }, [isAnyLeader, isAdminTier, isSuperAdmin, hasCapability, isDevUser, filterMemberItems])
+  }, [isAnyLeader, isAdminTier, isSuperAdmin, hasCapability, isDevUser, filterMemberItems, unreadUpdates])
 
   const isActive = (path: string) => {
     if (path === '/' || path === '/admin' || path === '/leader') {

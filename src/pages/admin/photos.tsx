@@ -1,14 +1,17 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Filter, X, Calendar, MapPin, Tag, ChevronLeft, User } from 'lucide-react'
+import { Filter, X, Calendar, ChevronLeft, User, ImagePlus, Loader2, Video as VideoIcon } from 'lucide-react'
 import { useAdminHeader } from '@/components/admin-layout'
 import { Dropdown } from '@/components/dropdown'
 import { SearchBar } from '@/components/search-bar'
 import { EmptyState } from '@/components/empty-state'
 import { Avatar } from '@/components/avatar'
 import { useCollectives } from '@/hooks/use-collective'
-import { useAdminEventPhotos, type AdminEventPhoto } from '@/hooks/use-event-photos'
+import { useAdminEventPhotos, useUploadEventPhoto, type AdminEventPhoto } from '@/hooks/use-event-photos'
+import { PhotoCarouselLightbox, isVideoPath } from '@/components/event-photos-section'
+import { useAuth } from '@/hooks/use-auth'
+import { useToast } from '@/components/toast'
 import { formatDate } from '@/lib/date-format'
 import { formatActivityType } from '@/lib/activity-types'
 import { cn } from '@/lib/cn'
@@ -95,6 +98,11 @@ export default function AdminPhotosPage() {
   const [search, setSearch] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [openedEventId, setOpenedEventId] = useState<string | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [uploadProg, setUploadProg] = useState({ done: 0, total: 0 })
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   const { from, to } = getDateRange(dateRange)
   const { data: photos = [], isLoading } = useAdminEventPhotos({
@@ -121,6 +129,33 @@ export default function AdminPhotosPage() {
   const uniqueUploaders = new Set(photos.map((p) => p.uploaded_by)).size
 
   const openedGroup = openedEventId ? groups.find((g) => g.event_id === openedEventId) : null
+  const upload = useUploadEventPhoto(openedEventId ?? undefined)
+
+  async function handleStaffAddMore() {
+    if (!openedEventId) return
+    fileInputRef.current?.click()
+  }
+
+  async function onFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = '' // allow re-picking same files
+    if (files.length === 0 || !openedEventId) return
+    setUploadProg({ done: 0, total: files.length })
+    let ok = 0
+    let fail = 0
+    for (const f of files) {
+      try {
+        await upload.mutateAsync({ blob: f })
+        ok++
+      } catch {
+        fail++
+      }
+      setUploadProg((p) => ({ ...p, done: p.done + 1 }))
+    }
+    setUploadProg({ done: 0, total: 0 })
+    if (ok > 0) toast.success(`Added ${ok} ${ok === 1 ? 'item' : 'items'}`)
+    if (fail > 0) toast.error(`${fail} failed to upload`)
+  }
 
   function clearFilters() {
     setCollectiveId(''); setDateRange('all'); setActivityType(''); setAttendedByUserId(''); setSearch('')
@@ -159,15 +194,53 @@ export default function AdminPhotosPage() {
                 <span className="inline-flex items-center gap-1"><User size={12} />{openedGroup.uploaderCount} {openedGroup.uploaderCount === 1 ? 'contributor' : 'contributors'}</span>
                 <span className="text-neutral-400">{openedGroup.photos.length} {openedGroup.photos.length === 1 ? 'photo' : 'photos'}</span>
               </div>
-              <button
-                type="button"
-                onClick={() => navigate(`/events/${openedGroup.event_id}`)}
-                className="mt-3 text-xs font-semibold text-primary-600 hover:text-primary-700"
-              >
-                Open event →
-              </button>
+              <div className="mt-3 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/events/${openedGroup.event_id}`)}
+                  className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+                >
+                  Open event →
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStaffAddMore}
+                  disabled={upload.isPending}
+                  className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform duration-150 disabled:opacity-60"
+                >
+                  <ImagePlus size={13} /> Add more
+                </button>
+              </div>
+              {uploadProg.total > 0 && (
+                <div className="mt-3 flex items-center gap-2 rounded-xl bg-primary-50 ring-1 ring-primary-100 p-2.5 text-xs font-semibold text-primary-700">
+                  <Loader2 size={13} className="animate-spin" />
+                  Uploading {uploadProg.done} of {uploadProg.total}…
+                </div>
+              )}
             </div>
-            <PhotoLibraryGrid photos={openedGroup.photos} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              onChange={onFilePicked}
+              className="hidden"
+            />
+            <PhotoLibraryGrid
+              photos={openedGroup.photos}
+              onPhotoClick={(i) => setLightboxIndex(i)}
+            />
+            <AnimatePresence>
+              {lightboxIndex !== null && openedGroup.photos[lightboxIndex] && (
+                <PhotoCarouselLightbox
+                  photos={openedGroup.photos}
+                  initialIndex={lightboxIndex}
+                  eventTitle={openedGroup.event_title}
+                  onClose={() => setLightboxIndex(null)}
+                  currentUserId={user?.id ?? null}
+                />
+              )}
+            </AnimatePresence>
           </motion.div>
         ) : (
           /* --- EVENT LIST VIEW --- */
@@ -189,7 +262,7 @@ export default function AdminPhotosPage() {
             <div className="mb-4 space-y-2 px-2">
               <div className="flex items-center gap-2">
                 <div className="flex-1 min-w-0">
-                  <SearchBar value={search} onChange={setSearch} placeholder="Search event / collective…" compact />
+                  <SearchBar value={search} onChange={setSearch} placeholder="Search events…" compact />
                 </div>
                 <button
                   type="button"
@@ -320,28 +393,58 @@ function EventGroupCard({ group, onOpen }: { group: EventGroup; onOpen: () => vo
   )
 }
 
-function PhotoLibraryGrid({ photos }: { photos: AdminEventPhoto[] }) {
+function PhotoLibraryGrid({
+  photos,
+  onPhotoClick,
+}: {
+  photos: AdminEventPhoto[]
+  onPhotoClick: (index: number) => void
+}) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
-      {photos.map((p) => (
-        <div key={p.id} className="group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 ring-1 ring-neutral-200/60">
-          {p.url && (
-            <img
-              src={p.url}
-              alt={p.caption ?? ''}
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-            />
-          )}
-          <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
-            <div className="flex items-center gap-1.5">
-              <Avatar src={p.uploader_avatar_url ?? null} name={p.uploader_display_name ?? 'Member'} size="xs" />
-              <span className="text-[10px] text-white truncate">{p.uploader_display_name ?? 'Member'}</span>
+      {photos.map((p, i) => {
+        const isVid = isVideoPath(p.storage_path)
+        return (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => onPhotoClick(i)}
+            className="group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 ring-1 ring-neutral-200/60 active:scale-[0.97] transition-transform duration-150"
+            aria-label={isVid ? 'View video' : 'View photo'}
+          >
+            {p.url && (
+              isVid ? (
+                <video
+                  src={p.url}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <img
+                  src={p.url}
+                  alt={p.caption ?? ''}
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                />
+              )
+            )}
+            {isVid && (
+              <span className="absolute top-1.5 right-1.5 flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white">
+                <VideoIcon size={11} />
+              </span>
+            )}
+            <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+              <div className="flex items-center gap-1.5">
+                <Avatar src={p.uploader_avatar_url ?? null} name={p.uploader_display_name ?? 'Member'} size="xs" />
+                <span className="text-[10px] text-white truncate">{p.uploader_display_name ?? 'Member'}</span>
+              </div>
             </div>
-          </div>
-        </div>
-      ))}
+          </button>
+        )
+      })}
     </div>
   )
 }

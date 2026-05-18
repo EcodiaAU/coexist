@@ -94,7 +94,7 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
         {/* Name + label */}
         <div className="flex-1 min-w-0">
           <p className={cn(
-            'text-[15px] truncate leading-snug',
+            'text-[15px] line-clamp-2 leading-snug break-words',
             hasUnread ? 'font-bold text-neutral-900' : 'font-semibold text-neutral-800',
           )}>
             {cleanChannelName(channel.name)}
@@ -192,7 +192,7 @@ function CollectiveChatRow({
         <div className="flex-1 min-w-0">
           <p
             className={cn(
-              'text-[15px] truncate leading-snug',
+              'text-[15px] line-clamp-2 leading-snug break-words',
               hasUnread ? 'font-bold text-neutral-900' : 'font-semibold text-neutral-800',
             )}
           >

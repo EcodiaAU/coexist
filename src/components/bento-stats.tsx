@@ -66,7 +66,7 @@ export function BentoStatCard({
           : { duration: 0.45, delay: 0.08 + delay * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }
       }
       className={cn(
-        'relative overflow-hidden shadow-sm',
+        'relative overflow-hidden shadow-sm flex flex-col h-full',
         // Compact uses a smaller corner radius + a tinted surface so the
         // cards have visible contrast against a white page background
         // without needing a border (2026-05-16 Tate feedback: no borders
@@ -275,6 +275,7 @@ export function BentoStatGrid({
             key={i}
             layout
             className={cn(
+              'h-full',
               mobColClasses[mobCol],
               smColClasses[smCol],
             )}

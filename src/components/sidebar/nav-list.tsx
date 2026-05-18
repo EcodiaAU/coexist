@@ -138,7 +138,15 @@ export function SidebarNavList({
                           )}>
                             {item.icon}
                           </span>
-                          <span className="truncate">{item.label}</span>
+                          <span className="truncate flex-1">{item.label}</span>
+                          {item.badge !== undefined && item.badge > 0 && (
+                            <span
+                              className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-success-500 px-1.5 text-[10px] font-bold text-white tabular-nums shrink-0"
+                              aria-label={`${item.badge} unread`}
+                            >
+                              {item.badge > 99 ? '99+' : item.badge}
+                            </span>
+                          )}
                         </button>
                       ) : (
                         <Link
@@ -183,13 +191,25 @@ export function SidebarNavList({
 
                           <span
                             className={cn(
-                              'flex items-center justify-center shrink-0 transition-transform duration-150',
+                              'relative flex items-center justify-center shrink-0 transition-transform duration-150',
                               isItemActive && 'scale-105',
                             )}
                           >
                             {item.icon}
+                            {/* Collapsed: tiny dot indicator if there's a badge */}
+                            {collapsed && item.badge !== undefined && item.badge > 0 && (
+                              <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-success-500 ring-2 ring-white" />
+                            )}
                           </span>
-                          {!collapsed && <span className="truncate">{item.label}</span>}
+                          {!collapsed && <span className="truncate flex-1">{item.label}</span>}
+                          {!collapsed && item.badge !== undefined && item.badge > 0 && (
+                            <span
+                              className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-success-500 px-1.5 text-[10px] font-bold text-white tabular-nums shrink-0"
+                              aria-label={`${item.badge} unread`}
+                            >
+                              {item.badge > 99 ? '99+' : item.badge}
+                            </span>
+                          )}
                         </Link>
                       )}
                     </li>

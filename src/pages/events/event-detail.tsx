@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
     Calendar,
@@ -308,6 +308,7 @@ function TicketSalesSection({
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { isStaff: isGlobalStaff } = useAuth()
   const { toast } = useToast()
   const shouldReduceMotion = useReducedMotion()
@@ -392,6 +393,30 @@ export default function EventDetailPage() {
     const timer = setInterval(() => setNow(Date.now()), 60_000)
     return () => clearInterval(timer)
   }, [])
+
+  // When the page is opened with ?tab=photos (from the Open album chat
+  // widget, the post-event push, etc), scroll the photo section into view
+  // so the user lands on uploads, not the top of the event page. Clears
+  // the param after scroll so back-navigation doesn't keep re-scrolling.
+  useEffect(() => {
+    if (searchParams.get('tab') !== 'photos') return
+    // Wait a tick for the section to render (post-event flag gating).
+    const tries: ReturnType<typeof setTimeout>[] = []
+    const tryScroll = (attempt: number) => {
+      const el = document.getElementById('event-photos-section')
+      if (el) {
+        el.scrollIntoView({ block: 'start', behavior: attempt === 0 ? 'auto' : 'smooth' })
+        // Clear the param so a later back-nav doesn't re-fire this effect.
+        const next = new URLSearchParams(searchParams)
+        next.delete('tab')
+        setSearchParams(next, { replace: true })
+        return
+      }
+      if (attempt < 6) tries.push(setTimeout(() => tryScroll(attempt + 1), 100 * (attempt + 1)))
+    }
+    tries.push(setTimeout(() => tryScroll(0), 60))
+    return () => { for (const t of tries) clearTimeout(t) }
+  }, [searchParams, setSearchParams])
 
   const accent = event ? (activityAccent[event.activity_type] ?? defaultAccent) : defaultAccent
 

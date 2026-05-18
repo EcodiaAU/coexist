@@ -344,10 +344,10 @@ export default function AdminSurveysPage() {
                           <ClipboardList size={18} className="text-primary-500" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-semibold text-neutral-900 truncate max-w-[70%]">
-                              {survey.title}
-                            </p>
+                          <p className="text-sm font-semibold text-neutral-900 leading-snug line-clamp-2 break-words">
+                            {survey.title}
+                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
                             <span
                               className={cn(
                                 'text-[11px] font-medium px-1.5 py-0.5 rounded-full shrink-0',
@@ -359,12 +359,12 @@ export default function AdminSurveysPage() {
                               {status}
                             </span>
                             {survey.is_impact_form && (
-                              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-moss-100 text-moss-700 truncate max-w-[160px]">
+                              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-moss-100 text-moss-700 truncate max-w-[180px]">
                                 Impact · {ACTIVITY_TYPE_LABELS[survey.activity_type ?? ''] ?? survey.activity_type ?? 'Any'}
                               </span>
                             )}
                             {!survey.is_impact_form && survey.activity_type && (
-                              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 truncate max-w-[160px]">
+                              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 truncate max-w-[180px]">
                                 Feedback · {ACTIVITY_TYPE_LABELS[survey.activity_type] ?? survey.activity_type}
                               </span>
                             )}

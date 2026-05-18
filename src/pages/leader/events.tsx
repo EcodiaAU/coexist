@@ -224,59 +224,76 @@ export default function LeaderEventsPage() {
             </p>
           </motion.div>
         ) : (
-          <motion.div key="list" layout className="space-y-3">
+          <motion.div
+            key="list"
+            layout
+            className="space-y-3"
+            initial={rm ? undefined : 'hidden'}
+            animate="visible"
+            variants={rm ? undefined : stagger}
+          >
             {events.map((event, idx) => {
               const regCount = event.event_registrations?.[0]?.count ?? 0
               const checkedIn = event.checked_in_count ?? 0
               const isPast = event.date_start && new Date(event.date_start) < new Date()
               const attendanceRate = isPast && regCount > 0 ? Math.round((checkedIn / regCount) * 100) : null
               const lowAttendance = attendanceRate !== null && attendanceRate < 50
-
+              // Pre-event / no-impact rows used to look invisible because the
+              // fadeUp variants never resolved (parent motion list didn't
+              // animate variants). We now drive `animate="visible"` directly
+              // and fall back to opacity-1 if framer-motion bails on the
+              // variant entirely.
               return (
                 <motion.div
                   key={event.id}
                   variants={rm ? undefined : fadeUp}
                   custom={idx}
+                  initial={rm ? undefined : 'hidden'}
+                  animate="visible"
+                  className="opacity-100"
                 >
                   <Link
                     to={`/events/${event.id}`}
                     className={cn(
-                      'flex items-center gap-4 p-4 rounded-2xl bg-white shadow-sm border hover:shadow-md active:scale-[0.99] transition-[border-color,transform] duration-200',
+                      'flex items-start gap-3 p-3 rounded-2xl bg-white shadow-sm border hover:shadow-md active:scale-[0.99] transition-[border-color,transform] duration-200',
                       lowAttendance ? 'border-warning-200' : 'border-neutral-100 hover:border-neutral-200',
                     )}
                   >
-                    {/* Cover thumbnail */}
+                    {/* Cover hero - larger so it reads on a row that may have
+                        no impact data yet */}
                     {event.cover_image_url ? (
                       <img
                         src={event.cover_image_url}
                         alt=""
-                        className="w-16 h-16 rounded-xl object-cover shrink-0"
+                        loading="lazy"
+                        decoding="async"
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-moss-50 to-moss-100 flex items-center justify-center shrink-0">
-                        <CalendarDays size={24} className="text-moss-400" />
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gradient-to-br from-moss-50 to-moss-100 flex items-center justify-center shrink-0">
+                        <CalendarDays size={28} className="text-moss-400" />
                       </div>
                     )}
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="font-heading text-sm font-bold text-neutral-900 truncate">
-                          {event.title}
+                      <p className="font-heading text-sm font-bold text-neutral-900 leading-snug line-clamp-2 break-words">
+                        {event.title}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                        <p className="text-xs text-moss-600 font-medium flex items-center gap-1">
+                          <Clock size={11} className="shrink-0" />
+                          {formatEventDate(event.date_start, event.timezone ?? undefined)}
                         </p>
                         {event.status && event.status !== 'published' && (
                           <span className={cn(
-                            'text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0',
+                            'text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase',
                             statusStyles[event.status] ?? statusStyles.draft,
                           )}>
                             {event.status}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-moss-600 font-medium flex items-center gap-1">
-                        <Clock size={11} className="shrink-0" />
-                        {formatEventDate(event.date_start, event.timezone ?? undefined)}
-                      </p>
                       {event.address && (
                         <p className="text-[11px] text-neutral-400 truncate flex items-center gap-1 mt-0.5">
                           <MapPin size={10} className="shrink-0" />
@@ -289,14 +306,14 @@ export default function LeaderEventsPage() {
                           Co-hosted with {event.cohost_names.join(', ')}
                         </p>
                       )}
-                      <div className="flex items-center gap-3 mt-1.5">
-                        <span className="text-[11px] font-semibold text-neutral-400 flex items-center gap-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 min-w-0">
+                        <span className="text-[11px] font-semibold text-neutral-400 flex items-center gap-1 shrink-0">
                           <Users size={11} />
                           {regCount} registered
                         </span>
                         {(isPast || checkedIn > 0) && (
                           <span className={cn(
-                            'text-[11px] font-semibold flex items-center gap-1',
+                            'text-[11px] font-semibold flex items-center gap-1 shrink-0',
                             lowAttendance ? 'text-warning-600' : 'text-moss-500',
                           )}>
                             <UserCheck size={11} />
@@ -305,6 +322,12 @@ export default function LeaderEventsPage() {
                               <span className="ml-0.5">({attendanceRate}%)</span>
                             )}
                             {lowAttendance && <AlertTriangle size={10} className="ml-0.5" />}
+                          </span>
+                        )}
+                        {!isPast && checkedIn === 0 && (
+                          <span className="text-[11px] font-semibold text-neutral-300 flex items-center gap-1 shrink-0">
+                            <Clock size={11} />
+                            Not started
                           </span>
                         )}
                         {event.activity_type && (
@@ -319,7 +342,7 @@ export default function LeaderEventsPage() {
                       </div>
                     </div>
 
-                    <ChevronRight size={16} className="text-primary-200 group-hover:text-moss-500 shrink-0 transition-colors" />
+                    <ChevronRight size={16} className="text-primary-200 group-hover:text-moss-500 shrink-0 transition-colors mt-1" />
                   </Link>
                 </motion.div>
               )

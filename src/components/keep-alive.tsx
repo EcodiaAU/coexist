@@ -189,10 +189,34 @@ export function KeepAlive() {
     }
 
     // Common case: cached page, #main-content already in DOM. Synchronous,
-    // pre-paint restore.
+    // pre-paint restore. Then we re-assert across the next several frames
+    // and a 200ms timeout because:
+    //   - Sticky/parallax layouts can briefly recompute layout after the
+    //     wrapper transitions from display:none to active, momentarily
+    //     resetting scrollTop to 0.
+    //   - The swipe-back animation transitions transform back to none which
+    //     in some browsers triggers a layout/scroll reset.
+    //   - Image-load reflow inside the page can push the saved scroll target
+    //     out of reachable range until the page settles.
+    // Each re-assert only writes if scrollTop drifted from savedScroll, so
+    // it's a no-op unless the symptom actually fires.
+    let lateRafs: number[] = []
+    let lateTimers: ReturnType<typeof setTimeout>[] = []
+    const reassert = () => {
+      if (!scrollEl || !entry) return
+      if (entry.savedScroll > 0 && scrollEl.scrollTop !== entry.savedScroll) {
+        scrollEl.scrollTop = entry.savedScroll
+      }
+    }
     scrollEl = getScrollEl(wrapper)
     if (scrollEl) {
       setupTracking()
+      lateRafs.push(requestAnimationFrame(() => {
+        reassert()
+        lateRafs.push(requestAnimationFrame(reassert))
+      }))
+      lateTimers.push(setTimeout(reassert, 60))
+      lateTimers.push(setTimeout(reassert, 200))
     } else {
       // First-mount Suspense case: lazy chunk not yet resolved. No saved scroll
       // exists for this path (otherwise scrollEl would have been preserved
@@ -216,6 +240,8 @@ export function KeepAlive() {
       trackingOpen = false
       if (pollRaf) cancelAnimationFrame(pollRaf)
       if (captureRaf) cancelAnimationFrame(captureRaf)
+      for (const r of lateRafs) cancelAnimationFrame(r)
+      for (const t of lateTimers) clearTimeout(t)
       if (listenerAttached && scrollEl) {
         scrollEl.removeEventListener('scroll', onScroll)
       }

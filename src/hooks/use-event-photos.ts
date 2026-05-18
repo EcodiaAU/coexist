@@ -80,15 +80,36 @@ export function useUploadEventPhoto(eventId: string | undefined) {
   return useMutation({
     mutationFn: async ({ blob, caption }: { blob: Blob; caption?: string }) => {
       if (!user || !eventId) throw new Error('Not authenticated or event missing')
-      const uploaded = await upload(blob)
-      if (!uploaded?.path) throw new Error('Upload failed')
+      const isVideo = blob.type.startsWith('video/')
+      let storedPath: string
+
+      if (isVideo) {
+        // Skip image compression for videos - just stream the raw blob to storage.
+        // Path mirrors useImageUpload's layout: <eventId>/<userId>/<rand>.<ext>
+        const ext = blob.type.includes('quicktime') ? 'mov'
+          : blob.type.includes('webm') ? 'webm'
+          : blob.type.includes('mp4') ? 'mp4'
+          : 'mp4'
+        const rand = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+        const path = `${eventId}/${user.id}/${rand}.${ext}`
+        const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, blob, {
+          contentType: blob.type || 'video/mp4',
+          upsert: false,
+        })
+        if (upErr) throw upErr
+        storedPath = path
+      } else {
+        const uploaded = await upload(blob)
+        if (!uploaded?.path) throw new Error('Upload failed')
+        storedPath = uploaded.path
+      }
 
       const { data, error } = await supabase
         .from('event_photos')
         .insert({
           event_id: eventId,
           uploaded_by: user.id,
-          storage_path: uploaded.path,
+          storage_path: storedPath,
           caption: caption ?? null,
           bytes: blob.size,
         })

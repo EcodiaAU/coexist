@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Camera, ImagePlus, X, Trash2, Share2, Loader2 } from 'lucide-react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { motion, AnimatePresence, useReducedMotion, useMotionValue, animate } from 'framer-motion'
+import { Camera, ImagePlus, Video as VideoIcon, X, Trash2, Share2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/use-auth'
 import { useEventPhotos, useUploadEventPhoto, useDeleteEventPhoto, type EventPhoto } from '@/hooks/use-event-photos'
@@ -8,6 +8,12 @@ import { useCamera } from '@/hooks/use-camera'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/button'
 import { Avatar } from '@/components/avatar'
+
+// Detect a video by storage_path extension. Keeps the schema flat.
+export function isVideoPath(path: string): boolean {
+  const ext = path.split('?')[0].toLowerCase()
+  return ext.endsWith('.mp4') || ext.endsWith('.mov') || ext.endsWith('.webm') || ext.endsWith('.m4v')
+}
 
 interface EventPhotosSectionProps {
   eventId: string
@@ -56,10 +62,10 @@ export function EventPhotosSection({
 
   async function handlePickMultiple() {
     // Multi-pick via plain file input - works on web + native via Capacitor's
-    // bridged input. We cap at MAX_PER_UPLOAD to keep the UX predictable.
+    // bridged input. Accepts both photos and videos. Cap at MAX_PER_UPLOAD.
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = 'image/*'
+    input.accept = 'image/*,video/*'
     input.multiple = true
     input.onchange = async () => {
       const files = Array.from(input.files ?? []).slice(0, MAX_PER_UPLOAD)
@@ -88,7 +94,7 @@ export function EventPhotosSection({
   const totalPhotos = photos.length
 
   return (
-    <section className="w-full">
+    <section id="event-photos-section" className="w-full scroll-mt-20">
       {/* Header */}
       <div className="flex items-end justify-between mb-3">
         <div className="min-w-0">
@@ -157,28 +163,46 @@ export function EventPhotosSection({
         </div>
       )}
 
-      {/* Photo grid */}
+      {/* Photo / video grid */}
       {!isLoading && totalPhotos > 0 && (
         <div className="grid grid-cols-3 gap-1.5">
-          {photos.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setLightboxIndex(i)}
-              className="relative aspect-square rounded-xl overflow-hidden bg-neutral-100 active:scale-[0.97] transition-transform duration-150"
-              aria-label="View photo"
-            >
-              {p.url && (
-                <img
-                  src={p.url}
-                  alt={p.caption ?? ''}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </button>
-          ))}
+          {photos.map((p, i) => {
+            const isVid = isVideoPath(p.storage_path)
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setLightboxIndex(i)}
+                className="relative aspect-square rounded-xl overflow-hidden bg-neutral-100 active:scale-[0.97] transition-transform duration-150"
+                aria-label={isVid ? 'View video' : 'View photo'}
+              >
+                {p.url && (
+                  isVid ? (
+                    <video
+                      src={p.url}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={p.url}
+                      alt={p.caption ?? ''}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
+                  )
+                )}
+                {isVid && (
+                  <span className="absolute bottom-1 right-1 flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white">
+                    <VideoIcon size={11} />
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -190,21 +214,16 @@ export function EventPhotosSection({
         </div>
       )}
 
-      {/* Lightbox */}
+      {/* Carousel lightbox */}
       <AnimatePresence>
         {lightboxIndex !== null && photos[lightboxIndex] && (
-          <Lightbox
-            photo={photos[lightboxIndex]}
-            count={photos.length}
-            index={lightboxIndex}
+          <PhotoCarouselLightbox
+            photos={photos}
+            initialIndex={lightboxIndex}
             eventTitle={eventTitle}
             onClose={() => setLightboxIndex(null)}
-            onPrev={() => setLightboxIndex((i) => (i === null ? null : (i - 1 + photos.length) % photos.length))}
-            onNext={() => setLightboxIndex((i) => (i === null ? null : (i + 1) % photos.length))}
-            onDelete={async () => {
-              const p = photos[lightboxIndex]
-              if (!p) return
-              if (p.uploaded_by !== user?.id) return
+            onDelete={async (p) => {
+              if (!p || p.uploaded_by !== user?.id) return
               try {
                 await delPhoto.mutateAsync({ photoId: p.id, storagePath: p.storage_path })
                 toast.success('Photo removed')
@@ -213,7 +232,7 @@ export function EventPhotosSection({
                 toast.error('Could not delete')
               }
             }}
-            canDelete={photos[lightboxIndex].uploaded_by === user?.id}
+            currentUserId={user?.id ?? null}
           />
         )}
       </AnimatePresence>
@@ -221,42 +240,74 @@ export function EventPhotosSection({
   )
 }
 
-function Lightbox({
-  photo,
-  count,
-  index,
+/**
+ * PhotoCarouselLightbox - fullscreen carousel for an array of photos / videos.
+ * Drag-to-swipe between items, snaps to the nearest on release. Suppresses
+ * the page-level swipe-back gesture while mounted so left-edge swipes within
+ * the carousel don't trigger nav-back.
+ */
+export function PhotoCarouselLightbox({
+  photos,
+  initialIndex,
   eventTitle,
   onClose,
-  onPrev,
-  onNext,
   onDelete,
-  canDelete,
+  currentUserId,
 }: {
-  photo: EventPhoto
-  count: number
-  index: number
+  photos: EventPhoto[]
+  initialIndex: number
   eventTitle: string
   onClose: () => void
-  onPrev: () => void
-  onNext: () => void
-  onDelete: () => void
-  canDelete: boolean
+  /** When provided + delete button is shown, called with the active photo. */
+  onDelete?: (photo: EventPhoto) => void
+  currentUserId: string | null
 }) {
+  const [index, setIndex] = useState(initialIndex)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const x = useMotionValue(0)
+  const [width, setWidth] = useState(0)
+
+  // Mount: suppress page-level swipe-back globally + lock measurements.
+  useEffect(() => {
+    document.body.dataset.suppressSwipeBack = 'true'
+    return () => { delete document.body.dataset.suppressSwipeBack }
+  }, [])
+
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) setWidth(containerRef.current.clientWidth)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  // Snap to the active index whenever it changes (programmatic prev/next or
+  // initial mount). Use framer's animate for spring-like feel.
+  useEffect(() => {
+    if (!width) return
+    const controls = animate(x, -index * width, { type: 'spring', stiffness: 320, damping: 34, mass: 0.7 })
+    return () => controls.stop()
+  }, [index, width, x])
+
+  function snap(direction: number) {
+    setIndex((i) => Math.min(photos.length - 1, Math.max(0, i + direction)))
+  }
+
+  const current = photos[index]
+  if (!current) return null
+  const canDelete = !!onDelete && current.uploaded_by === currentUserId
+
   async function handleShare() {
-    if (!photo.url) return
+    const url = current.url
+    if (!url) return
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: eventTitle,
-          text: `From ${eventTitle} on Co-Exist`,
-          url: photo.url,
-        })
+        await navigator.share({ title: eventTitle, text: `From ${eventTitle} on Co-Exist`, url })
       } else {
-        await navigator.clipboard.writeText(photo.url)
+        await navigator.clipboard.writeText(url)
       }
-    } catch {
-      // user cancelled or unsupported
-    }
+    } catch { /* cancelled / unsupported */ }
   }
 
   return (
@@ -265,20 +316,20 @@ function Lightbox({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
-      className="fixed inset-0 z-[60] bg-black/90 flex flex-col"
+      className="fixed inset-0 z-[60] bg-black flex flex-col"
       role="dialog"
       aria-modal="true"
     >
-      {/* Top bar - padded for safe-area-inset-top so share/close clear the notch */}
+      {/* Top bar */}
       <div
-        className="flex items-center justify-between px-4 py-3 text-white"
+        className="flex items-center justify-between px-4 py-3 text-white relative z-10"
         style={{ paddingTop: 'calc(var(--safe-top, 0px) + 0.75rem)' }}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <Avatar src={photo.uploader?.avatar_url ?? null} name={photo.uploader?.display_name ?? 'Member'} size="xs" />
+          <Avatar src={current.uploader?.avatar_url ?? null} name={current.uploader?.display_name ?? 'Member'} size="xs" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold truncate">{photo.uploader?.display_name ?? 'Member'}</p>
-            <p className="text-[11px] text-white/60">{index + 1} of {count}</p>
+            <p className="text-sm font-semibold truncate">{current.uploader?.display_name ?? 'Member'}</p>
+            <p className="text-[11px] text-white/60">{index + 1} of {photos.length}</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -286,16 +337,16 @@ function Lightbox({
             type="button"
             onClick={handleShare}
             className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.96] transition-transform duration-150"
-            aria-label="Share photo"
+            aria-label="Share"
           >
             <Share2 size={18} />
           </button>
           {canDelete && (
             <button
               type="button"
-              onClick={onDelete}
+              onClick={() => onDelete && onDelete(current)}
               className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.96] transition-transform duration-150"
-              aria-label="Delete photo"
+              aria-label="Delete"
             >
               <Trash2 size={18} />
             </button>
@@ -311,47 +362,101 @@ function Lightbox({
         </div>
       </div>
 
-      {/* Image */}
-      <div className="flex-1 flex items-center justify-center p-4" onClick={onClose}>
-        {photo.url && (
-          <img
-            src={photo.url}
-            alt={photo.caption ?? ''}
-            className="max-w-full max-h-full object-contain rounded-xl"
-            onClick={(e) => e.stopPropagation()}
-          />
+      {/* Slides */}
+      <div ref={containerRef} className="flex-1 relative overflow-hidden">
+        {width > 0 && (
+          <motion.div
+            className="absolute inset-0 flex"
+            style={{ x, width: width * photos.length }}
+            drag="x"
+            dragMomentum={false}
+            dragElastic={0.18}
+            dragConstraints={{ left: -width * (photos.length - 1), right: 0 }}
+            onDragEnd={(_, info) => {
+              const offset = info.offset.x
+              const velocity = info.velocity.x
+              const threshold = width * 0.3
+              if ((offset < -threshold || velocity < -500) && index < photos.length - 1) {
+                setIndex(index + 1)
+              } else if ((offset > threshold || velocity > 500) && index > 0) {
+                setIndex(index - 1)
+              } else {
+                // snap back
+                animate(x, -index * width, { type: 'spring', stiffness: 320, damping: 34, mass: 0.7 })
+              }
+            }}
+          >
+            {photos.map((p) => (
+              <div key={p.id} className="shrink-0 flex items-center justify-center p-3 pointer-events-none" style={{ width }}>
+                {p.url && (isVideoPath(p.storage_path) ? (
+                  <video
+                    src={p.url}
+                    controls
+                    playsInline
+                    className="max-w-full max-h-full rounded-xl pointer-events-auto"
+                  />
+                ) : (
+                  <img
+                    src={p.url}
+                    alt={p.caption ?? ''}
+                    draggable={false}
+                    className="max-w-full max-h-full object-contain rounded-xl select-none"
+                  />
+                ))}
+              </div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Prev/Next overlay buttons (desktop nicety; mobile users swipe) */}
+        {photos.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => snap(-1)}
+              disabled={index === 0}
+              className={cn(
+                'hidden sm:flex absolute top-1/2 -translate-y-1/2 left-2 items-center justify-center w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm text-white',
+                index === 0 ? 'opacity-30' : 'hover:bg-white/25',
+              )}
+              aria-label="Previous"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={() => snap(1)}
+              disabled={index === photos.length - 1}
+              className={cn(
+                'hidden sm:flex absolute top-1/2 -translate-y-1/2 right-2 items-center justify-center w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm text-white',
+                index === photos.length - 1 ? 'opacity-30' : 'hover:bg-white/25',
+              )}
+              aria-label="Next"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </>
         )}
       </div>
 
-      {/* Caption + nav */}
-      <div className="px-4 pb-6 text-white">
-        {photo.caption && (
-          <p className="text-sm text-white/80 mb-3 text-center leading-relaxed">{photo.caption}</p>
+      {/* Footer: caption + dots */}
+      <div className="px-4 pb-6 pt-3 text-white relative z-10" style={{ paddingBottom: 'calc(var(--safe-bottom, 0px) + 1.25rem)' }}>
+        {current.caption && (
+          <p className="text-sm text-white/85 mb-3 text-center leading-relaxed">{current.caption}</p>
         )}
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onPrev}
-            className={cn(
-              'px-4 py-2 rounded-full text-sm font-semibold transition-transform duration-150 active:scale-[0.97]',
-              count > 1 ? 'bg-white/10 text-white' : 'opacity-30 cursor-not-allowed',
-            )}
-            disabled={count <= 1}
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            onClick={onNext}
-            className={cn(
-              'px-4 py-2 rounded-full text-sm font-semibold transition-transform duration-150 active:scale-[0.97]',
-              count > 1 ? 'bg-white/10 text-white' : 'opacity-30 cursor-not-allowed',
-            )}
-            disabled={count <= 1}
-          >
-            Next
-          </button>
-        </div>
+        {photos.length > 1 && (
+          <div className="flex items-center justify-center gap-1.5">
+            {photos.map((_, i) => (
+              <span
+                key={i}
+                className={cn(
+                  'rounded-full transition-all duration-200',
+                  i === index ? 'w-5 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/40',
+                )}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   )

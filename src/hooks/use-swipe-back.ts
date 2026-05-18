@@ -54,6 +54,15 @@ export function useSwipeBack({
 
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
+      // A fullscreen overlay (photo carousel lightbox, video viewer, etc) can
+      // opt out of the page-level swipe-back gesture by setting
+      // <body data-suppress-swipe-back="true">. Without this, horizontal
+      // swipes inside the carousel that start near the left edge would also
+      // trigger a page-back navigation.
+      if (typeof document !== 'undefined' && document.body.dataset.suppressSwipeBack === 'true') {
+        touchStart.current = null
+        return
+      }
       const touch = e.touches[0]
       if (!touch) return
       if (touch.clientX <= edgeWidth) {
