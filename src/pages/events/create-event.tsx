@@ -1590,6 +1590,35 @@ export default function CreateEventPage() {
 
   const createEvent = useCreateEvent()
   const { data: activityDefaults } = useActivityTypeDefaults()
+
+  // Auto-populate the cover image preview the moment an admin picks an
+  // activity type, as long as they haven't already uploaded their own
+  // image. Tate / Jess spec 2026-05-18 - currently the default only
+  // landed on submit, which made the cover-image step look empty.
+  // Tracks the activity type that drove the last auto-fill so swapping
+  // to a new type swaps the preview (and doesn't clobber a user upload).
+  const lastAppliedDefaultRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!activityDefaults) return
+    const at = form.fields.activity_type
+    if (!at) return
+    const def = activityDefaults[at]
+    if (!def) return
+    const currentCover = form.fields.cover_image_url
+    const lastApplied = lastAppliedDefaultRef.current
+    // Skip if the user has uploaded their own image (a URL we didn't set).
+    const userHasUploaded = currentCover && currentCover !== lastApplied && !Object.values(activityDefaults).some((d) => d.cover_image_url === currentCover)
+    if (userHasUploaded) return
+    // Already showing this activity's default - nothing to do.
+    if (currentCover === def.cover_image_url) return
+    lastAppliedDefaultRef.current = def.cover_image_url
+    form.updateFields({
+      cover_image_url: def.cover_image_url,
+      cover_image_position_x: def.cover_image_position_x,
+      cover_image_position_y: def.cover_image_position_y,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.fields.activity_type, activityDefaults])
   const inviteCollective = useInviteCollective()
   const { toast: toastApi } = useToast()
 

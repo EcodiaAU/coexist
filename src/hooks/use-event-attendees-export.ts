@@ -41,7 +41,7 @@ export function useEventAttendeesExport(eventId: string | undefined, enabled = t
         .from('event_registrations')
         .select(`
           status,
-          created_at,
+          registered_at,
           checked_in_at,
           user_id,
           profiles!event_registrations_user_id_fkey(
@@ -56,7 +56,7 @@ export function useEventAttendeesExport(eventId: string | undefined, enabled = t
           )
         `)
         .eq('event_id', eventId)
-        .order('created_at', { ascending: true })
+        .order('registered_at', { ascending: true })
 
       if (error) throw error
 
@@ -73,7 +73,7 @@ export function useEventAttendeesExport(eventId: string | undefined, enabled = t
           emergency_contact_phone: p.emergency_contact_phone ?? null,
           emergency_contact_relationship: p.emergency_contact_relationship ?? null,
           status: (row as { status: string }).status,
-          registered_at: (row as { created_at: string | null }).created_at ?? null,
+          registered_at: (row as { registered_at: string | null }).registered_at ?? null,
           checked_in_at: (row as { checked_in_at: string | null }).checked_in_at ?? null,
         }
       })
