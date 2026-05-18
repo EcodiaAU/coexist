@@ -72,7 +72,13 @@ export function SurveyQuestionRenderer({
             <p className="text-sm font-medium text-neutral-900">
               {numbered && <span className="text-neutral-500 mr-1.5">{i + 1}.</span>}
               {q.text}
-              {q.required && <span className="text-error-500 ml-0.5">*</span>}
+              {q.required ? (
+                <span className="text-error-500 ml-0.5">*</span>
+              ) : (
+                <span className="text-[10px] uppercase tracking-wide text-neutral-400 ml-2 font-normal">
+                  Optional
+                </span>
+              )}
             </p>
             {q.description && (
               <p className="text-xs text-neutral-500 mt-0.5 ml-5">{q.description}</p>
@@ -248,14 +254,19 @@ export function SurveyQuestionRenderer({
             </div>
           )}
 
-          {/* Yes/No */}
+          {/* Yes/No - tap same answer again to clear (so optional questions
+              can stay genuinely unanswered without a "Skip" button). The sheet
+              sync treats unanswered yes/no as blank, not "No" - matches Forms
+              convention per excel-sync buildExcelRow yesNo helper. */}
           {q.type === 'yes_no' && (
             <div className="flex gap-2">
               {['Yes', 'No'].map((opt) => (
                 <button
                   key={opt}
                   type="button"
-                  onClick={() => setAnswer(q.id, opt)}
+                  onClick={() =>
+                    setAnswer(q.id, answers[q.id] === opt ? '' : opt)
+                  }
                   className={cn(
                     'flex-1 px-3 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors',
                     answers[q.id] === opt

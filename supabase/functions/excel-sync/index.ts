@@ -218,6 +218,62 @@ function yesNo(val: unknown): string {
   return ''
 }
 
+// Treat empty/whitespace/"NA"/"N/A"/"-"/"none" as no-answer for the
+// organiser-derivation defaults below. Leaders often type these to mean
+// "not applicable" and the sheet should land the default ("No, just Co-Exist!")
+// rather than the literal "NA".
+function isNoAnswer(val: unknown): boolean {
+  if (val === null || val === undefined) return true
+  const s = String(val).trim().toLowerCase()
+  return s === '' || s === 'na' || s === 'n/a' || s === '-' || s === 'none'
+}
+
+// Derive sheet col 6 (Primary Organiser) + col 7 (Other Group Attended) from
+// event-level external-collaboration data + survey answer q1.
+//
+// Three states encoded by `is_external_collaboration` + `partner_name` + `q1`:
+//
+//   STATE 1 - only Co-Exist at the event
+//     is_external_collaboration=false, partner_name empty, q1 empty/NA
+//     -> col 6 = "Co-Exist", col 7 = "No, just Co-Exist!"
+//
+//   STATE 2 - Co-Exist organised, another group also attended
+//     is_external_collaboration=false, AND (partner_name set OR q1 set)
+//     -> col 6 = "Co-Exist", col 7 = partner_name (preferred) || q1
+//
+//   STATE 3 - another group organised, Co-Exist attended/supported
+//     is_external_collaboration=true
+//     -> col 6 = partner_name (preferred) || q1 || "Co-Exist" (fallback)
+//        col 7 = "No, just Co-Exist!" (no third group implied)
+//
+// This mirrors the Forms convention captured on the Master Impact Data Sheet
+// rows 240-258 (Brisbane / Townsville / Cairns rows with non-Co-Exist organisers).
+// Origin: Tate verbatim 2026-05-18 - "if only coexist at the event it says
+// 'No, just Co-Exist!'; if organised by coexist but another group attended,
+// that's mapped into the sheet; if organised by another group, just put that
+// other group into the event organiser column".
+function deriveOrganiserAndOtherGroup(
+  isExternal: boolean,
+  partnerName: string,
+  q1: unknown,
+): { organiser: string; otherGroup: string } {
+  const partner = (partnerName ?? '').trim()
+  const q1Str = isNoAnswer(q1) ? '' : String(q1).trim()
+
+  if (isExternal) {
+    // STATE 3: external collab. The partner / q1 IS the organiser.
+    const organiser = partner || q1Str || 'Co-Exist'
+    return { organiser, otherGroup: 'No, just Co-Exist!' }
+  }
+
+  // Internal event. STATE 1 vs STATE 2 turns on whether ANY other group is named.
+  const namedOther = partner || q1Str
+  if (namedOther) {
+    return { organiser: 'Co-Exist', otherGroup: namedOther }
+  }
+  return { organiser: 'Co-Exist', otherGroup: 'No, just Co-Exist!' }
+}
+
 // ---- Read existing Excel data ----
 
 interface ExcelState {
@@ -247,6 +303,17 @@ interface EventData {
   collective_name: string
   creator_name: string
   leader_name: string
+  /** events.is_external_collaboration - driven by the "External Collab" toggle
+   *  in create-event step 5. TRUE means the partner organisation organised the
+   *  event; FALSE (default) means Co-Exist organised. Used to derive sheet
+   *  cols 6 + 7 via deriveOrganiserAndOtherGroup. */
+  is_external_collaboration: boolean
+  /** events.event_extras.partner_name - free-text partner-organisation name
+   *  collected on create-event step 5 ("Partner Organisation (optional)").
+   *  When set together with is_external_collaboration=true, the partner is the
+   *  organiser; when set with is_external_collaboration=false, the partner is
+   *  the "other group attended". Empty string when no partner. */
+  partner_name: string
   attendees: number | null
   checked_in_count: number
   rubbish_kg: number | null
@@ -266,10 +333,46 @@ interface EventData {
   hasHappened: boolean
 }
 
+// Coerce a free-text survey answer to either the trimmed value or "" when the
+// leader skipped / typed "NA" / "N/A" / "-" / "none". Mirrors the Forms-era
+// sheet convention where unanswered cells are blank, not literal "NA".
+function freeText(val: unknown): string {
+  return isNoAnswer(val) ? '' : String(val).trim()
+}
+
+// Like freeText, but for numeric-intent cells (kg, count). Returns empty
+// string when no usable answer; otherwise the original value (Excel-side
+// formatting interprets it as a number).
+function numberOrBlank(val: unknown, fallback: number | null): string | number {
+  if (!isNoAnswer(val)) {
+    // Try to coerce to number first so the cell sorts/sums correctly.
+    const n = typeof val === 'number' ? val : Number(String(val).trim())
+    if (Number.isFinite(n)) return n
+    return String(val).trim()
+  }
+  return fallback === null || fallback === undefined ? '' : fallback
+}
+
 function buildExcelRow(e: EventData): (string | number | null)[] {
   const isConservation = CONSERVATION_TYPES.includes(e.activity_type)
   const isRecreation = RECREATION_TYPES.includes(e.activity_type)
   const label = ACTIVITY_LABELS[e.activity_type] ?? e.activity_type
+
+  // Cols 6 + 7 derived from event-level external-collab data + q1 fallback.
+  // See deriveOrganiserAndOtherGroup for the three-state mapping.
+  const { organiser, otherGroup } = deriveOrganiserAndOtherGroup(
+    e.is_external_collaboration,
+    e.partner_name,
+    e.answers?.q1,
+  )
+
+  // Doctrine for every survey-derived column on this row: "if the leader did
+  // not answer it, leave the cell BLANK". Mirrors the Forms-era convention on
+  // the master sheet, where unanswered cells were genuinely empty rather than
+  // a literal "NA". yesNo() already returns "" for unknown values; freeText()
+  // and numberOrBlank() handle the strings + numerics the same way.
+  // Origin: Tate verbatim 2026-05-18 - "what was it and how much, that should
+  // be left blank if unanswered, not them have to put NA".
 
   return [
     e.id,                                                    // 0: ID
@@ -277,30 +380,27 @@ function buildExcelRow(e: EventData): (string | number | null)[] {
     dateToExcelSerial(e.date_start),                         // 2: Date of Event
     e.collective_name,                                       // 3: Collective
     e.address ?? '',                                         // 4: Location
-    (e.answers?.postcode as string) ?? extractPostcode(e.address ?? ''), // 5: Postcode (survey answer, fallback to address extraction)
-    // TODO: When partner-org events land, populate `event_organisations` + `organisations` tables
-    // and pull the first related organisation's name here. For now, all app events are Co-Exist.
-    // Matches the Forms convention of writing "Co-Exist" in this column for every row.
-    'Co-Exist',                                              // 6: Primary Organiser of the Event
-    (e.answers?.q1 as string) ?? '',                         // 7: Other Group Attended
-    (e.answers?.q2 as string) ?? '',                         // 8: Which Landcare Group
-    (e.answers?.q3 as string) ?? '',                         // 9: Which OzFish group
-    (e.answers?.leader_name as string) ?? e.leader_name ?? '', // 10: Co-Exist Leader (from survey dropdown)
+    freeText(e.answers?.postcode) || extractPostcode(e.address ?? ''), // 5: Postcode (survey answer, fallback to address extraction)
+    organiser,                                               // 6: Primary Organiser of the Event
+    otherGroup,                                              // 7: Other Group Attended
+    freeText(e.answers?.q2),                                 // 8: Which Landcare Group
+    freeText(e.answers?.q3),                                 // 9: Which OzFish group
+    freeText(e.answers?.leader_name) || e.leader_name || '', // 10: Co-Exist Leader (from survey dropdown)
     e.attendees ?? e.checked_in_count ?? '',                  // 11: Number of Attendees (impact override or check-in count)
     isConservation ? 'Conservation' : isRecreation ? 'Recreation' : label, // 12: Type of Event
     isConservation ? label : '',                             // 13: Conservation type
     isRecreation ? label : '',                               // 14: Recreational type
-    e.answers?.q4 ?? e.rubbish_kg ?? '',                     // 15: Rubbish Removed
-    e.answers?.q5 ?? e.trees_planted ?? '',                  // 16: Trees Planted
+    numberOrBlank(e.answers?.q4, e.rubbish_kg),              // 15: Rubbish Removed
+    numberOrBlank(e.answers?.q5, e.trees_planted),           // 16: Trees Planted
     yesNo(e.answers?.q6),                                    // 17: Collect/Make Anything
-    (e.answers?.q7 as string) ?? '',                         // 18: What & How Much
-    (e.answers?.q8 as string) ?? '',                         // 19: Hike/track name
-    (e.answers?.q9 as string) ?? '',                         // 20: Any Issues
+    freeText(e.answers?.q7),                                 // 18: What & How Much
+    freeText(e.answers?.q8),                                 // 19: Hike/track name
+    freeText(e.answers?.q9),                                 // 20: Any Issues
     yesNo(e.answers?.q10),                                   // 21: Use First Aid Kit
-    (e.answers?.q11 as string) ?? '',                        // 22: Outstanding Highlights
+    freeText(e.answers?.q11),                                // 22: Outstanding Highlights
     yesNo(e.answers?.q12),                                   // 23: Images to OneDrive
     yesNo(e.answers?.q13),                                   // 24: Videos to Google
-    (e.answers?.q14 as string) ?? '',                        // 25: Grant Project
+    freeText(e.answers?.q14),                                // 25: Grant Project
     toYearMonth(e.date_start),                               // 26: Year-Month
     yesNo(e.answers?.q15),                                   // 27: Posted Wrap-up Insta
   ]
@@ -314,7 +414,7 @@ async function fetchEventData(
 ): Promise<EventData | null> {
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, date_start, activity_type, address, collective_id, created_by')
+    .select('id, title, date_start, activity_type, address, collective_id, created_by, is_external_collaboration, event_extras')
     .eq('id', eventId)
     .single()
 
@@ -322,6 +422,10 @@ async function fetchEventData(
 
   // Enforce 2026+ cutoff
   if (event.date_start < SYNC_CUTOFF_DATE) return null
+
+  const partnerName = String(
+    ((event.event_extras as Record<string, unknown> | null)?.partner_name as string | undefined) ?? '',
+  ).trim()
 
   const { data: collective } = await supabase
     .from('collectives')
@@ -390,6 +494,8 @@ async function fetchEventData(
     collective_name: collective?.name ?? '',
     creator_name: creator?.display_name ?? '',
     leader_name: leaderName,
+    is_external_collaboration: Boolean(event.is_external_collaboration),
+    partner_name: partnerName,
     attendees: impact?.attendees ?? null,
     checked_in_count: checkedInCount ?? 0,
     rubbish_kg: impact?.rubbish_kg ?? null,
