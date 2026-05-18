@@ -178,17 +178,21 @@ function useIsCoarsePointer() {
   return coarse
 }
 
-// Hero image pairs cycled in the homepage carousel. Each pair is an existing
-// fg/bg combo from a section hero across the app. Order tuned for visual flow:
-// open with the canonical home pair, then events, explore, contact, donate,
-// leadership. Skips admin (admin-themed) and merch (single-image, no fg pair).
-const HERO_PAIRS: Array<{ bg: string; fg: string; alt: string }> = [
-  { bg: '/img/home-hero-bg.webp',       fg: '/img/home-hero-fg.webp',       alt: 'Australian conservation landscape' },
-  { bg: '/img/events-hero-bg.webp',     fg: '/img/events-hero-fg.webp',     alt: 'Volunteers at a Co-Exist event' },
-  { bg: '/img/explore-hero-bg.webp',    fg: '/img/explore-hero-fg.webp',    alt: 'Co-Exist collectives across Australia' },
-  { bg: '/img/contact-hero-bg.webp',    fg: '/img/contact-hero-fg.webp',    alt: 'Connect with Co-Exist' },
-  { bg: '/img/donate-hero-bg.webp',     fg: '/img/donate-hero-fg.webp',     alt: 'Support Co-Exist' },
-  { bg: '/img/leadership-hero-bg.webp', fg: '/img/leadership-hero-fg.webp', alt: 'Co-Exist leaders' },
+// Hero image pairs cycled in the homepage carousel. Each pair carries its own
+// fgLayout because pairs were designed for different page heroes with
+// different FG semantics: 'bottom' (home) anchors silhouettes at the bottom
+// edge with the home design's w-[120%] sm:w-[70%] inner container; 'full'
+// (events/explore/contact/donate/leadership) is a full-bleed FG cutout layered
+// over the BG with object-cover. Mixing these into one layout was distorting
+// the non-home pairs.
+type HeroFgLayout = 'bottom' | 'full'
+const HERO_PAIRS: Array<{ bg: string; fg: string; alt: string; fgLayout: HeroFgLayout }> = [
+  { bg: '/img/home-hero-bg.webp',       fg: '/img/home-hero-fg.webp',       alt: 'Australian conservation landscape', fgLayout: 'bottom' },
+  { bg: '/img/events-hero-bg.webp',     fg: '/img/events-hero-fg.webp',     alt: 'Volunteers at a Co-Exist event',    fgLayout: 'full' },
+  { bg: '/img/explore-hero-bg.webp',    fg: '/img/explore-hero-fg.webp',    alt: 'Co-Exist collectives across Australia', fgLayout: 'full' },
+  { bg: '/img/contact-hero-bg.webp',    fg: '/img/contact-hero-fg.webp',    alt: 'Connect with Co-Exist',             fgLayout: 'full' },
+  { bg: '/img/donate-hero-bg.webp',     fg: '/img/donate-hero-fg.webp',     alt: 'Support Co-Exist',                  fgLayout: 'full' },
+  { bg: '/img/leadership-hero-bg.webp', fg: '/img/leadership-hero-fg.webp', alt: 'Co-Exist leaders',                  fgLayout: 'full' },
 ]
 
 const HERO_ROTATE_MS = 6000
@@ -259,31 +263,53 @@ function HomeHero({ rm }: { rm: boolean }) {
           ))}
         </div>
 
-        {/* Layer 1: Foreground elements - medium parallax. Crossfade with
-            all non-leading images anchored bottom (not inset-0) so they keep
-            their natural aspect ratio and don't distort across different FG
-            artwork heights. */}
+        {/* Layer 1: Foreground elements - medium parallax. Two layouts:
+            'bottom' (home) uses the original w-[120%] sm:w-[70%] inner with
+            silhouettes pinned to bottom-0; 'full' (events/explore/contact/
+            donate/leadership) is full-bleed object-cover over the whole hero
+            container. Crossfade applies regardless. */}
         <div
           ref={disableParallax ? undefined : fgRef}
-          className={cn('absolute bottom-0 inset-x-0 z-[3] flex justify-center', wcTransform)}
+          className={cn('absolute inset-0 z-[3]', wcTransform)}
         >
-          <div className="relative w-[120%] -ml-[10%] sm:w-[70%] sm:ml-0">
-            {HERO_PAIRS.map((pair, i) => (
+          {HERO_PAIRS.map((pair, i) => {
+            const isActive = i === activeIndex
+            const fadeCls = cn(
+              'transition-opacity duration-[1200ms] ease-in-out',
+              isActive ? 'opacity-100' : 'opacity-0',
+            )
+            if (pair.fgLayout === 'bottom') {
+              return (
+                <div
+                  key={`fg-${i}`}
+                  className={cn('absolute bottom-0 inset-x-0 flex justify-center pointer-events-none', fadeCls)}
+                >
+                  <div className="w-[120%] -ml-[10%] sm:w-[70%] sm:ml-0">
+                    <img
+                      src={pair.fg}
+                      alt=""
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                      decoding="async"
+                      className="w-full h-auto block"
+                    />
+                  </div>
+                </div>
+              )
+            }
+            return (
               <img
                 key={`fg-${i}`}
                 src={pair.fg}
                 alt=""
-                loading={i === 0 ? 'eager' : 'lazy'}
+                loading="lazy"
                 decoding="async"
                 className={cn(
-                  'w-full h-auto block',
-                  i === 0 ? 'relative' : 'absolute bottom-0 left-0 right-0',
-                  'transition-opacity duration-[1200ms] ease-in-out',
-                  i === activeIndex ? 'opacity-100' : 'opacity-0',
+                  'absolute inset-0 w-full h-full object-cover object-center sm:h-auto sm:object-fill block pointer-events-none',
+                  fadeCls,
                 )}
               />
-            ))}
-          </div>
+            )
+          })}
         </div>
 
         {/* Hero text - fastest parallax, recedes behind fg. Wordmark NEVER
