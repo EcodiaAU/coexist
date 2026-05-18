@@ -288,7 +288,7 @@ export default function CartPage() {
                   <div className="flex-1 min-w-0 flex flex-col">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-heading font-semibold text-sm text-neutral-900 truncate leading-tight">
+                        <p className="font-heading font-semibold text-[13px] sm:text-sm text-neutral-900 line-clamp-2 leading-tight">
                           {item.product.name}
                         </p>
                         <p className="text-xs text-neutral-500 mt-0.5">

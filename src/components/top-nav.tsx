@@ -185,7 +185,7 @@ export function TopNav({ notificationCount = 0, className }: TopNavProps) {
                 >
                   {/* User info */}
                   <div className="px-4 py-3 bg-neutral-50">
-                    <p className="font-heading text-sm font-semibold text-neutral-900 truncate">
+                    <p className="font-heading text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">
                       {profile?.display_name}
                     </p>
                     <p className="text-caption text-neutral-500 truncate">

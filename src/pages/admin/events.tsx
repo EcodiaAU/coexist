@@ -161,7 +161,7 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
         {/* Content */}
         <div className="p-3">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <h4 className="font-heading text-sm font-semibold text-neutral-900 truncate flex-1">
+            <h4 className="font-heading text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 flex-1 leading-snug">
               {event.title}
             </h4>
             {event.status !== 'published' && (() => {
@@ -293,7 +293,7 @@ function HottestEventSpotlight({ event }: { event: AdminEvent }) {
           <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-1 block">
             Biggest Event
           </span>
-          <h3 className="font-heading text-lg font-bold text-neutral-900 truncate">
+          <h3 className="font-heading text-base sm:text-lg font-bold text-neutral-900 line-clamp-2 leading-snug">
             {event.title}
           </h3>
           <p className="text-sm text-neutral-600 mt-0.5">
@@ -349,7 +349,7 @@ function PastEventRow({ event, index }: { event: AdminEvent; index: number }) {
         )}
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-neutral-700 truncate">{event.title}</p>
+          <p className="text-[13px] sm:text-sm font-medium text-neutral-700 line-clamp-2 leading-snug">{event.title}</p>
           <p className="text-xs text-neutral-400">
             {event.collectives?.name} &middot; {formatDate(event.date_start, event.timezone ?? event.collectives?.timezone ?? undefined)}
           </p>

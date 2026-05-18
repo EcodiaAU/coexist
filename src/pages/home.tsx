@@ -1141,55 +1141,52 @@ function HomeImpactSection({
 function CtaCards({ rm }: { rm: boolean }) {
   const navigate = useNavigate()
 
+  // Side-by-side compact cards. Pure gradient backgrounds keyed to each
+  // action's tone (primary-warm for donate, bark for merch), iconography in
+  // a glass chip, large heading, small subtitle. Avoids the photo-as-bg
+  // approach that didn't suit the imagery library we have.
   return (
-    <motion.div variants={rm ? undefined : fadeUp} className="flex flex-col gap-3">
-      {/* Donate - photo background with gradient overlay */}
+    <motion.div variants={rm ? undefined : fadeUp} className="grid grid-cols-2 gap-3">
+      {/* Donate */}
       <button
         onClick={() => navigate('/donate')}
-        className="relative w-full h-32 rounded-3xl overflow-hidden shadow-md active:scale-[0.98] transition-transform duration-150 group"
+        className="relative h-36 rounded-3xl overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 group bg-gradient-to-br from-primary-400 via-primary-500 to-primary-700"
       >
-        <img
-          src="/img/donate-hero-bg.webp"
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 w-full h-full object-cover group-active:scale-[1.03] transition-transform duration-300"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-900/85 via-primary-800/55 to-primary-700/35" />
-        <div className="relative h-full flex items-center gap-4 px-5 text-left">
-          <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm text-white shrink-0 shadow-sm">
-            <Heart size={22} strokeWidth={2.2} />
+        {/* Decorative ring + glow */}
+        <span className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-sm" aria-hidden="true" />
+        <span className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full bg-white/5" aria-hidden="true" />
+        <div className="relative h-full flex flex-col justify-between p-4 text-left">
+          <span className="flex items-center justify-center w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-sm">
+            <Heart size={20} strokeWidth={2.4} />
           </span>
-          <div className="flex-1 min-w-0">
+          <div>
             <p className="font-heading text-xl font-bold text-white leading-tight">Donate</p>
-            <p className="text-[12px] text-white/85 mt-1">Support Co-Exist Australia</p>
+            <p className="text-[11px] text-white/85 mt-0.5 leading-snug">Fund grassroots conservation</p>
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-white mt-2">
+              Give <ChevronRight size={13} />
+            </span>
           </div>
-          <ChevronRight size={22} className="text-white/70 shrink-0" />
         </div>
       </button>
 
-      {/* Shop - photo background with gradient overlay */}
+      {/* Shop merch */}
       <button
         onClick={() => navigate('/shop')}
-        className="relative w-full h-32 rounded-3xl overflow-hidden shadow-md active:scale-[0.98] transition-transform duration-150 group"
+        className="relative h-36 rounded-3xl overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 group bg-gradient-to-br from-bark-500 via-bark-600 to-bark-800"
       >
-        <img
-          src="/img/merch-hero-1.webp"
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 w-full h-full object-cover group-active:scale-[1.03] transition-transform duration-300"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-bark-900/85 via-bark-800/55 to-bark-700/30" />
-        <div className="relative h-full flex items-center gap-4 px-5 text-left">
-          <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm text-white shrink-0 shadow-sm">
-            <ShoppingBag size={22} strokeWidth={2.2} />
+        <span className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-sm" aria-hidden="true" />
+        <span className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full bg-white/5" aria-hidden="true" />
+        <div className="relative h-full flex flex-col justify-between p-4 text-left">
+          <span className="flex items-center justify-center w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-sm">
+            <ShoppingBag size={20} strokeWidth={2.4} />
           </span>
-          <div className="flex-1 min-w-0">
-            <p className="font-heading text-xl font-bold text-white leading-tight">Shop merch</p>
-            <p className="text-[12px] text-white/85 mt-1">Wear the movement</p>
+          <div>
+            <p className="font-heading text-xl font-bold text-white leading-tight">Merch</p>
+            <p className="text-[11px] text-white/85 mt-0.5 leading-snug">Wear the movement</p>
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-white mt-2">
+              Shop <ChevronRight size={13} />
+            </span>
           </div>
-          <ChevronRight size={22} className="text-white/70 shrink-0" />
         </div>
       </button>
     </motion.div>

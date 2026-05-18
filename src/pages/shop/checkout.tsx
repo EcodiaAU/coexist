@@ -354,7 +354,7 @@ export default function CheckoutPage() {
                       <div className="absolute inset-0 ring-1 ring-inset ring-black/[0.04] rounded-lg pointer-events-none" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-900 truncate">
+                      <p className="text-[13px] sm:text-sm font-medium text-neutral-900 line-clamp-2 leading-snug">
                         {item.product.name}
                       </p>
                       <p className="text-xs text-neutral-500">x{item.quantity}</p>

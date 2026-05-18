@@ -16,6 +16,8 @@ interface StatCardProps {
   /** Accent colour for the icon badge - defaults to primary */
   accent?: string
   className?: string
+  /** Tighter padding + smaller value/icon for narrow grids (e.g. 3-col modal). */
+  compact?: boolean
   'aria-label'?: string
 }
 
@@ -64,6 +66,7 @@ export function StatCard({
   icon,
   accent,
   className,
+  compact = false,
   'aria-label': ariaLabel,
 }: StatCardProps) {
   const shouldReduceMotion = useReducedMotion()
@@ -88,21 +91,29 @@ export function StatCard({
       }
       aria-label={ariaLabel ?? `${label}: ${value}`}
       className={cn(
-        'rounded-2xl bg-white shadow-sm p-4 border border-neutral-100',
+        'rounded-2xl bg-white shadow-sm border border-neutral-100',
+        compact ? 'p-3' : 'p-4',
         className,
       )}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="font-heading text-3xl font-bold text-neutral-900 tabular-nums">
+          <p className={cn(
+            'font-heading font-bold text-neutral-900 tabular-nums leading-tight truncate',
+            compact ? 'text-xl' : 'text-3xl',
+          )}>
             {isNumeric ? displayValue.toLocaleString() : value}
           </p>
-          <p className="mt-1.5 text-xs font-medium text-neutral-500 uppercase tracking-wider">{label}</p>
+          <p className={cn(
+            'mt-1 font-medium text-neutral-500 uppercase tracking-wider leading-tight line-clamp-2',
+            compact ? 'text-[10px]' : 'text-xs mt-1.5',
+          )}>{label}</p>
         </div>
         {icon && (
           <span
             className={cn(
-              'flex items-center justify-center shrink-0 ml-3 w-10 h-10 rounded-xl',
+              'flex items-center justify-center shrink-0 rounded-xl',
+              compact ? 'w-7 h-7' : 'w-10 h-10 ml-3',
               accent ?? 'bg-primary-50 text-primary-600',
             )}
             aria-hidden="true"

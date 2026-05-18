@@ -114,7 +114,7 @@ function EventPicker({
               )}
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-neutral-900 truncate">{event.title}</p>
+                <p className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{event.title}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <Calendar size={11} className="text-neutral-400 shrink-0" />
                   <span className="text-[11px] text-neutral-500">

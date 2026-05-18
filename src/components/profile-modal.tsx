@@ -205,22 +205,23 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
             </motion.div>
           )}
 
-          {/* Stats */}
-          <motion.div variants={fadeUp} className="mt-6 grid grid-cols-3 gap-3">
-            <StatCard value={stats?.eventsAttended ?? 0} label="Events" icon={<Calendar size={20} />} />
-            <StatCard value={stats?.hoursVolunteered ?? 0} label="Hours" icon={<Clock size={20} />} />
-            <StatCard value={stats?.treesPlanted ?? 0} label="Trees" icon={<TreePine size={20} />} />
+          {/* Stats - compact 3-col so values don't clip on the right edge
+              of the modal's narrow width. */}
+          <motion.div variants={fadeUp} className="mt-6 grid grid-cols-3 gap-2.5">
+            <StatCard compact value={stats?.eventsAttended ?? 0} label="Events" icon={<Calendar size={16} />} />
+            <StatCard compact value={stats?.hoursVolunteered ?? 0} label="Hours" icon={<Clock size={16} />} />
+            <StatCard compact value={stats?.treesPlanted ?? 0} label="Trees" icon={<TreePine size={16} />} />
             {(stats?.rubbishCollectedKg ?? 0) > 0 && (
-              <StatCard value={stats?.rubbishCollectedKg ?? 0} label="Litter Removed (kg)" icon={<Trash2 size={20} />} />
+              <StatCard compact value={stats?.rubbishCollectedKg ?? 0} label="Litter (kg)" icon={<Trash2 size={16} />} />
             )}
             {(stats?.areaRestoredSqm ?? 0) > 0 && (
-              <StatCard value={stats?.areaRestoredSqm ?? 0} label="Area (sqm)" icon={<Ruler size={20} />} />
+              <StatCard compact value={stats?.areaRestoredSqm ?? 0} label="Area (sqm)" icon={<Ruler size={16} />} />
             )}
             {(stats?.nativePlants ?? 0) > 0 && (
-              <StatCard value={stats?.nativePlants ?? 0} label="Native Plants" icon={<Sprout size={20} />} />
+              <StatCard compact value={stats?.nativePlants ?? 0} label="Native Plants" icon={<Sprout size={16} />} />
             )}
             {(stats?.wildlifeSightings ?? 0) > 0 && (
-              <StatCard value={stats?.wildlifeSightings ?? 0} label="Wildlife" icon={<Bird size={20} />} />
+              <StatCard compact value={stats?.wildlifeSightings ?? 0} label="Wildlife" icon={<Bird size={16} />} />
             )}
           </motion.div>
 

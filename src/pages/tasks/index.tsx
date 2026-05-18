@@ -143,7 +143,7 @@ function TaskCard({ task }: { task: MyTask }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <p className={cn(
-              'text-sm font-medium truncate',
+              'text-[13px] sm:text-sm font-medium line-clamp-2 leading-snug',
               isCompleted || isSkipped ? 'text-neutral-400 line-through' : 'text-neutral-900',
             )}>
               {task.template?.title ?? 'Task'}

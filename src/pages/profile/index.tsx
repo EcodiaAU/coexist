@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
 import {
@@ -134,6 +135,7 @@ function ProfileSkeleton() {
 /* ------------------------------------------------------------------ */
 
 export default function ProfilePage() {
+  const [showMoreStats, setShowMoreStats] = useState(false)
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
   const rm = !!shouldReduceMotion
@@ -179,13 +181,22 @@ export default function ProfilePage() {
   const didCoast = (at.clean_up ?? 0) > 0
   const didWild = didCoast || (at.nature_hike ?? 0) > 0
 
-  const allStats = [
-    // Core metrics - always visible
-    { value: stats?.eventsAttended ?? 0, label: 'Events', icon: <Calendar size={18} />, show: true },
-    { value: stats?.hoursVolunteered ?? 0, label: 'Hours', icon: <Clock size={18} />, show: true },
-    { value: stats?.treesPlanted ?? 0, label: 'Trees', icon: <TreePine size={18} />, show: true },
-    { value: stats?.rubbishCollectedKg ?? 0, label: 'Litter Removed', icon: <Trash2 size={18} />, show: true },
-  ].filter(s => s.show)
+  // Surface every impact metric the user has earned. We show non-zero stats
+  // by default + always include Events / Hours so the bento never looks empty
+  // on a brand-new profile. "See more" expands to show every metric the user
+  // has touched (including zeros for context).
+  const allStatsRaw = [
+    { value: stats?.eventsAttended ?? 0, label: 'Events', icon: <Calendar size={18} />, alwaysShow: true },
+    { value: stats?.hoursVolunteered ?? 0, label: 'Hours', icon: <Clock size={18} />, alwaysShow: true },
+    { value: stats?.treesPlanted ?? 0, label: 'Trees', icon: <TreePine size={18} />, alwaysShow: false },
+    { value: stats?.rubbishCollectedKg ?? 0, label: 'Litter Removed', icon: <Trash2 size={18} />, alwaysShow: false },
+    { value: stats?.areaRestoredSqm ?? 0, label: 'Area Regenerated (sqm)', icon: <Ruler size={18} />, alwaysShow: false },
+    { value: stats?.nativePlants ?? 0, label: 'Native Plants', icon: <Sprout size={18} />, alwaysShow: false },
+    { value: stats?.wildlifeSightings ?? 0, label: 'Wildlife Sightings', icon: <Bird size={18} />, alwaysShow: false },
+  ]
+  const initialStats = allStatsRaw.filter((s) => s.alwaysShow || s.value > 0)
+  const hasMoreStats = allStatsRaw.length > initialStats.length
+  const allStats = showMoreStats ? allStatsRaw : initialStats
 
   return (
     <Page noBackground className="bg-surface-2">
@@ -313,13 +324,23 @@ export default function ProfilePage() {
         animate="visible"
       >
 
-        {/* Bento Impact Stats */}
+        {/* Bento Impact Stats - compact + filter zero stats, expandable */}
         <motion.div variants={fadeUp}>
-          <BentoStatGrid>
+          <BentoStatGrid compact>
             {allStats.map((s, i) => (
-              <BentoStatCard key={s.label} value={s.value} label={s.label} icon={s.icon} theme={bentoMixedTheme(i)} />
+              <BentoStatCard compact key={s.label} value={s.value} label={s.label} icon={s.icon} theme={bentoMixedTheme(i)} />
             ))}
           </BentoStatGrid>
+          {hasMoreStats && (
+            <button
+              type="button"
+              onClick={() => setShowMoreStats((v) => !v)}
+              className="mt-3 w-full flex items-center justify-center gap-1 text-xs font-semibold text-neutral-600 bg-white border border-neutral-200 rounded-full py-2.5 active:scale-[0.98] transition-transform duration-150 hover:bg-neutral-50"
+            >
+              {showMoreStats ? 'Show less' : 'See more stats'}
+              <ChevronRight size={12} className={cn('transition-transform duration-200', showMoreStats ? 'rotate-90' : 'rotate-0')} />
+            </button>
+          )}
         </motion.div>
 
         {/* Personal Details */}

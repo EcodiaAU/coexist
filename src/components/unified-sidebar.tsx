@@ -125,7 +125,7 @@ function MobileProfileCard({ onNavigate }: { onNavigate: (path: string) => void 
         size="lg"
       />
       <div className="flex-1 min-w-0">
-        <p className="font-heading text-[17px] font-bold text-neutral-900 truncate leading-tight">
+        <p className="font-heading text-[15px] sm:text-[17px] font-bold text-neutral-900 line-clamp-2 leading-tight">
           {profile?.display_name}
         </p>
       </div>

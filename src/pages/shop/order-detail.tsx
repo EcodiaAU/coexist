@@ -163,7 +163,7 @@ export default function OrderDetailPage() {
                   className="w-16 h-16 object-cover rounded-xl shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-neutral-900 truncate">
+                  <p className="text-[13px] sm:text-sm font-medium text-neutral-900 line-clamp-2 leading-snug">
                     {item.product_name}
                   </p>
                   <p className="text-xs text-neutral-500">{item.variant_label}</p>

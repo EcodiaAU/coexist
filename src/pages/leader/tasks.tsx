@@ -279,7 +279,7 @@ function TaskCard({ task }: { task: MyTask }) {
 
           <div className="flex-1 min-w-0">
             <p className={cn(
-              'text-sm font-semibold truncate',
+              'text-[13px] sm:text-sm font-semibold line-clamp-2 leading-snug',
               isCompleted || isSkipped ? 'text-neutral-400 line-through' : 'text-neutral-900',
             )}>
               {task.template?.title ?? 'Task'}
@@ -596,7 +596,7 @@ function ImpactFormCard({ task }: { task: ImpactFormTask }) {
             <CheckCircle size={13} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-neutral-400 line-through truncate">{task.event_title}</p>
+            <p className="text-[13px] sm:text-sm font-semibold text-neutral-400 line-through line-clamp-2 leading-snug">{task.event_title}</p>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               <span className="text-[11px] text-success-600 flex items-center gap-1">
                 <CheckCircle size={10} />
@@ -653,7 +653,7 @@ function ImpactFormCard({ task }: { task: ImpactFormTask }) {
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-neutral-900 truncate">{task.event_title}</p>
+            <p className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{task.event_title}</p>
 
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md shrink-0 uppercase tracking-wide bg-moss-100/80 text-moss-700">

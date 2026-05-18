@@ -143,6 +143,7 @@ const ModerationQueuePage = lazy(() => import('@/pages/admin/moderation/index'))
 const AdminContactsPage = lazy(() => import('@/pages/admin/contacts'))
 const AdminLegalPagesPage = lazy(() => import('@/pages/admin/legal-pages'))
 const AdminImpactPage = lazy(() => import('@/pages/admin/impact'))
+const AdminPhotosPage = lazy(() => import('@/pages/admin/photos'))
 
 // Admin Development (L&D)
 const AdminDevelopmentPage = lazy(() => import('@/pages/admin/development/index'))
@@ -449,6 +450,7 @@ function App() {
             <Route path="exports" element={<Navigate to="/admin/reports" replace />} />
             <Route path="audit-log" element={<RequireCapability cap="view_audit_log"><AdminAuditLogPage /></RequireCapability>} />
             <Route path="impact" element={<RequireCapability cap="view_reports"><AdminImpactPage /></RequireCapability>} />
+            <Route path="photos" element={<RequireCapability cap="view_reports"><AdminPhotosPage /></RequireCapability>} />
             <Route path="shop" element={<RequireCapability cap="manage_merch"><AdminMerchPage /></RequireCapability>} />
             <Route path="partners" element={<RequireCapability cap="manage_partners"><AdminPartnersPage /></RequireCapability>} />
             <Route path="challenges" element={<RequireCapability cap="manage_challenges"><AdminChallengesPage /></RequireCapability>} />

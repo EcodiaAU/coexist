@@ -369,7 +369,7 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
                       size="md"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-neutral-900 truncate">
+                      <p className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">
                         {m.profiles?.display_name ?? 'Unknown'}
                       </p>
                       {m.profiles?.instagram_handle && (
@@ -491,7 +491,7 @@ function EventRow({ event, reducedMotion, delay = 0 }: { event: AdminCollectiveE
         {/* Content */}
         <div className="flex-1 min-w-0 py-3 pr-3">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-semibold text-neutral-900 truncate group-hover:text-primary-700 transition-colors">
+            <p className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug group-hover:text-primary-700 transition-colors">
               {event.title || 'Untitled event'}
             </p>
             <span
@@ -677,7 +677,7 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
                 />
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-neutral-900 truncate">
+                  <p className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">
                     {member.profiles?.display_name ?? 'Unknown'}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -905,7 +905,7 @@ function AddMemberModal({
                     size="sm"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-neutral-900 truncate">
+                    <p className="text-[13px] sm:text-sm font-medium text-neutral-900 line-clamp-2 leading-snug">
                       {user.display_name ?? 'Unknown'}
                     </p>
                     {user.instagram_handle && (

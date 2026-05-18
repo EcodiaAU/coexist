@@ -41,6 +41,7 @@ import {
     Share2,
 } from 'lucide-react'
 import { EventShareSheet } from '@/components/event-share-sheet'
+import { EventPhotosSection } from '@/components/event-photos-section'
 import { EventHero, EventHeroOverlay } from './event-hero'
 import { EventActions } from './event-actions'
 import { EventAttendees } from './event-attendees'
@@ -1551,6 +1552,19 @@ export default function EventDetailPage() {
             >
               Give Feedback
             </Button>
+          </motion.div>
+        )}
+
+        {/* ── Post-event: shared photo album ──
+            Visible to collective members; upload available to attendees + leaders. */}
+        {past && (belongsToCollective || isLeaderOrAbove) && (
+          <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+            <EventPhotosSection
+              eventId={event.id}
+              eventTitle={event.title}
+              eventEndIso={event.date_end ?? event.date_start}
+              canUpload={userStatus === 'attended' || isLeaderOrAbove}
+            />
           </motion.div>
         )}
       </motion.div>

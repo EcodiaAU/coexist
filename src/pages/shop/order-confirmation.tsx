@@ -284,7 +284,7 @@ function OrderSummaryCard({
                 className="w-12 h-12 rounded-xl object-cover border border-neutral-100 shadow-sm"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-neutral-900 truncate">
+                <p className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">
                   {item.product_name}
                 </p>
                 <p className="text-xs text-neutral-500 mt-0.5">
