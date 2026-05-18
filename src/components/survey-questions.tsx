@@ -77,13 +77,7 @@ export function SurveyQuestionRenderer({
             <p className="text-sm font-medium text-neutral-900">
               {numbered && <span className="text-neutral-500 mr-1.5">{i + 1}.</span>}
               {q.text}
-              {q.required ? (
-                <span className="text-error-500 ml-0.5">*</span>
-              ) : (
-                <span className="text-[10px] uppercase tracking-wide text-neutral-400 ml-2 font-normal">
-                  Optional
-                </span>
-              )}
+              {q.required && <span className="text-error-500 ml-0.5">*</span>}
             </p>
             {q.description && (
               <p className="text-xs text-neutral-500 mt-0.5 ml-5">{q.description}</p>

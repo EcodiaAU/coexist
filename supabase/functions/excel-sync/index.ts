@@ -1613,184 +1613,40 @@ async function syncFromExcel(
     }
   }
 
-  // ---- Tail reconciliation phase: sheet-canonical delete propagation ----
+  // ---- Tail reconciliation phase: PERMANENTLY REMOVED 2026-05-18 ----
   //
-  // Tate, 4 May 2026 18:22 AEST: "i jsut need the db to update if the sheet
-  // gets a row deleted, so that if they do delete the OCCA event entry that
-  // we left, then it takes it from the db as well yk? Just make their sheet
-  // canonical."
+  // The "sheet-canonical delete propagation" phase that previously lived here
+  // auto-cancelled app events whose sheet row was missing during a from-excel
+  // run. It bit four times in May 2026 - the most recent on 2026-05-18 18:30
+  // AEST when the collective-migration flip expanded the candidate pool and
+  // the next from-excel cron silently cancelled two real events (Brisbane
+  // Enoggera Hill Reservoir Nature Hike + Mornington Peninsula Balnarring
+  // Tree Planting w/ MCC Landcare). Restored manually + permanent removal
+  // commits here.
   //
-  // Find migrated-collective events that exist in the DB at status
-  // published/completed from the cutover onwards but were NOT seen in this
-  // sync run's sheet-row pass. Those have effectively been deleted from the
-  // canonical sheet. Mark them cancelled and stamp cancelled_via_sheet_sync_at
-  // for audit. Do NOT cascade-delete event_impact / event_registrations -
-  // historical accountability is preserved; a leader can manually un-cancel
-  // via the app if the deletion was accidental.
+  // Origin: Tate verbatim 2026-05-18 night - "events have been cancelling
+  // and that cant keep happening... do the proper long term fix to make
+  // sure events on the app dont get deleted".
   //
-  // Scope: only events whose collective.forms_migrated_at IS NOT NULL AND
-  // event.date_start >= forms_migrated_at. Non-migrated collectives are
-  // sheet-canonical for their own rows (sheet -> DB direction); their app
-  // events should be left alone. The grace-period guard excludes events
-  // recently created so reconciliation never races the to-excel push cron.
+  // What that means in practice:
+  //   * from-excel still pulls Forms-row impact data into event_impact
+  //     (lines above this comment) - the useful half of the direction.
+  //   * No code path in this Edge Function ever sets events.status =
+  //     'cancelled' or stamps cancelled_via_sheet_sync_at. Sheet rows can be
+  //     manually deleted by an admin and the corresponding app event stays
+  //     untouched. Admin must cancel via the app or directly via SQL if
+  //     they want the DB event gone.
+  //   * cancelledViaSheetAbsence is retained in the return shape as a
+  //     constant 0 for back-compat with status_board health-check probes
+  //     and the excel_sync_runs schema. New deployments should ignore it.
   //
-  // RECONCILIATION GATES - five filters, all must pass before cancel:
-  //
-  // 1. STATUS GATE: 'published' AND 'completed' (mirrors to-excel batch
-  //    selector). If the push selector changes, this must change in lockstep.
-  //
-  // 2. FUTURE-EVENT GATE: date_start < runStartedAt. The sheet only contains
-  //    past events; absent + future = absent by design (PR #19, 11 May 2026).
-  //
-  // 3. MIGRATED-COLLECTIVE GATE: collective.forms_migrated_at IS NOT NULL
-  //    AND event.date_start >= forms_migrated_at. Non-migrated collectives
-  //    are Forms-canonical for their own rows; their app events never flow
-  //    to the sheet, so absence is not deletion.
-  //
-  // 4. SYNTHETIC-EVENT GATE: skip events that originated from the sheet
-  //    (created_by IS NULL OR UUID v5). To-excel skips these; reconciliation
-  //    must skip them too, otherwise a sheet row that was authored from
-  //    Forms would cycle back as a cancellation of its DB twin.
-  //
-  // 5. IMPACT-DATA GATE (the load-bearing fix for the 17 May 2026 Lilydale
-  //    incident): an event_impact row must exist AND its logged_at must be
-  //    old enough that the next to-excel cron has plausibly pushed it. The
-  //    to-excel APPEND path requires hasImpactData=true, so an event without
-  //    impact data was never on the sheet by design. AND a freshly-logged
-  //    impact row hasn't been pushed yet - the to-excel cron runs hourly,
-  //    from-excel every 30 min, so we need to wait long enough that at
-  //    least one to-excel cycle has fired AFTER the impact was logged.
-  //    6 hours = 6 to-excel cycles minimum, leaving generous headroom for
-  //    transient to-excel failures or retries.
-  //
-  //    History:
-  //    - 2026-05-06 (fork_motntxi7_add578): 60-second grace cancelled an
-  //      event 2.5 minutes after creation. Fixed by bumping to 2h.
-  //    - 2026-05-11 (PR #19): future events being cancelled because
-  //      reconciliation didn't filter `date_start < runStartedAt`. Fixed.
-  //    - 2026-05-17 (Lilydale Tree Planting): event cancelled 15 min after
-  //      date_start because the leader hadn't logged impact yet. The 2h
-  //      grace on event.created_at was the wrong anchor - impact survey
-  //      submission lag can be days. Fixed by switching the grace anchor
-  //      from event.created_at to event_impact.logged_at, gating reconciliation
-  //      on impact-data existence, AND skipping reconciliation entirely when
-  //      no to-excel run has succeeded recently (sheet might be stale, see
-  //      HEALTH GUARD below).
-  //
-  // 6. HEALTH GUARD (added 2026-05-17): if no to-excel run has succeeded in
-  //    the last 2 hours, the sheet may be stale and absence from sheet does
-  //    not imply deletion. Skip reconciliation entirely until to-excel
-  //    recovers. The to-excel cron runs hourly, so 2h = at least one missed
-  //    cycle of headroom before we pause. Without this guard, a multi-hour
-  //    Graph API outage combined with a recently-submitted impact survey
-  //    could cancel real events.
-  //
-  // See ~/ecodiaos/patterns/sheet-as-projection-sync-direction-discipline.md
-  // and ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
-  try {
-    // KILL SWITCH (env-var driven): when EXCEL_SYNC_RECONCILIATION_DISABLED
-    // is truthy, skip the entire cancellation phase. Used during user-side
-    // testing windows where we want to guarantee no app event is auto-
-    // cancelled by sheet absence. Companion guard to pausing pg_cron job 12;
-    // pg_cron handles auto-runs, this handles any manual full/from-excel
-    // invocation. Set/unset via Supabase Management API project secrets.
-    // Origin: Tate verbatim 2026-05-18 - "i need you to make sure that
-    // events are NOT going to be cancelled or removed or anything from the
-    // app... thats happened so many times of late".
-    const killSwitch = (Deno.env.get('EXCEL_SYNC_RECONCILIATION_DISABLED') ?? '').toLowerCase()
-    if (killSwitch === 'true' || killSwitch === '1' || killSwitch === 'yes') {
-      errors.push('INFO reconciliation: KILL SWITCH active (EXCEL_SYNC_RECONCILIATION_DISABLED) - phase skipped')
-      return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, cancelledViaSheetAbsence, skippedPostCutoverMigrated, errors }
-    }
+  // If the sheet-canonical delete propagation is ever needed again, it
+  // MUST land behind an explicit per-collective opt-in flag plus a
+  // recently-pushed-on-sheet guard tighter than 6h. See the audit at
+  // ~/ecodiaos/backend/drafts/coexist-excel-sync-audit-2026-05-18.md for
+  // the full failure history.
 
-    // HEALTH GUARD: bail if to-excel has been silent. The hourly to-excel
-    // cron writes a row to excel_sync_runs on every invocation regardless
-    // of whether it pushed anything, so an absent row in the last 2h means
-    // the cron itself isn't firing - sheet is stale.
-    const healthWindowMs = 2 * 60 * 60 * 1000 // 2h
-    const healthCutoffIso = new Date(runStartedAt.getTime() - healthWindowMs).toISOString()
-    const { data: recentToExcel, error: healthErr } = await supabase
-      .from('excel_sync_runs')
-      .select('run_at')
-      .in('direction', ['to-excel', 'full'])
-      .gte('run_at', healthCutoffIso)
-      .limit(1)
-    if (healthErr) {
-      errors.push(`reconciliation health-check failed (skipping reconciliation): ${healthErr.message}`)
-      return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, cancelledViaSheetAbsence, skippedPostCutoverMigrated, errors }
-    }
-    if (!recentToExcel || recentToExcel.length === 0) {
-      errors.push(`INFO reconciliation: skipped phase - no to-excel run in last 2h, sheet may be stale`)
-      return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, cancelledViaSheetAbsence, skippedPostCutoverMigrated, errors }
-    }
-
-    const impactCutoffMs = runStartedAt.getTime() - 6 * 60 * 60 * 1000 // 6h
-    const impactCutoffIso = new Date(impactCutoffMs).toISOString()
-    const { data: candidates, error: candidatesErr } = await supabase
-      .from('events')
-      .select('id, collective_id, date_start, status, created_by, collectives(forms_migrated_at)')
-      .in('status', ['published', 'completed'])
-      .gte('date_start', SYNC_CUTOFF_DATE)
-      .lt('date_start', runStartedAt.toISOString()) // never reconcile future events - absent from sheet by design (fork_mp0so5k9_0d2e77)
-
-    if (candidatesErr) {
-      errors.push(`reconciliation candidate query failed: ${candidatesErr.message}`)
-    } else {
-      // Pre-load mature event_impact rows for all candidates. "Mature" =
-      // logged_at < runStartedAt - 6h, so to-excel has had at least one
-      // cycle to push the row to the sheet. This is the IMPACT-DATA GATE
-      // and replaces the old event.created_at grace.
-      const candidateIds = ((candidates ?? []) as Array<{ id: string }>).map(c => c.id)
-      const matureImpactEventIds = new Set<string>()
-      if (candidateIds.length > 0) {
-        const { data: impactRows, error: impactErr } = await supabase
-          .from('event_impact')
-          .select('event_id, logged_at')
-          .in('event_id', candidateIds)
-          .lt('logged_at', impactCutoffIso)
-        if (impactErr) {
-          errors.push(`reconciliation event_impact preload failed: ${impactErr.message}`)
-        } else {
-          for (const r of (impactRows ?? []) as { event_id: string; logged_at: string }[]) {
-            matureImpactEventIds.add(r.event_id)
-          }
-        }
-      }
-
-      for (const c of (candidates ?? []) as Array<{
-        id: string
-        collective_id: string
-        date_start: string
-        status: string
-        created_by: string | null
-        collectives: { forms_migrated_at: string | null } | null
-      }>) {
-        const migratedAt = c.collectives?.forms_migrated_at ?? null
-        if (!migratedAt) continue
-        if (new Date(c.date_start).getTime() < new Date(migratedAt).getTime()) continue
-        if (seenEventIds.has(c.id)) continue
-        // Synthetic-event gate (mirrors to-excel)
-        if (c.created_by === null || isSyntheticFormsUuid(c.id)) continue
-        // Impact-data gate with logged_at grace (mirrors to-excel APPEND
-        // hasImpactData + waits for to-excel to plausibly have pushed it)
-        if (!matureImpactEventIds.has(c.id)) continue
-        const { error: cancelErr } = await supabase
-          .from('events')
-          .update({ status: 'cancelled', cancelled_via_sheet_sync_at: new Date().toISOString() })
-          .eq('id', c.id)
-        if (cancelErr) {
-          errors.push(`reconciliation cancel failed for ${c.id}: ${cancelErr.message}`)
-          continue
-        }
-        cancelledViaSheetAbsence++
-        errors.push(`INFO reconciliation: cancelled ${c.id} (absent from sheet during this run)`)
-      }
-    }
-  } catch (err) {
-    errors.push(`reconciliation phase threw: ${(err as Error).message}`)
-  }
-
-  return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, cancelledViaSheetAbsence, skippedPostCutoverMigrated, errors }
+  return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, cancelledViaSheetAbsence: 0, skippedPostCutoverMigrated, errors }
 }
 
 // ---- Delete: Remove event row from Excel (dev/test only, no auto-trigger) ----

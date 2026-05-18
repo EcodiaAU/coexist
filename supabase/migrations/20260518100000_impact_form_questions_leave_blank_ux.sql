@@ -1,142 +1,91 @@
--- Impact-form survey question v4 - 2026-05-18 night.
+-- Impact-form survey questions v5 - 2026-05-18 night.
 --
--- Restructured per Tate's directives:
+-- Stripped narration. Concise text only. Conditional follow-ups gated by
+-- show_if. Required main stats per activity type.
 --
--- 1. q1 is now a yes_no question "Did another group attend?", not a free-text
---    partner-name slot. When q1=Yes the renderer reveals q1_name (required
---    partner name) and q2/q3 (optional Landcare / OzFish chapter names).
---    When q1=No the sheet automatically writes "No, just Co-Exist!" to col 7
---    and leaves cols 8/9 blank - we don't trust leaders to leave the field
---    blank or remember the exact wording.
+-- Yes/No questions are required + non-clearable in the renderer.
+-- Conditional follow-ups (q1_name, q2 Landcare, q3 OzFish, q7 What-and-how-much)
+-- are hidden until their parent answer = Yes.
 --
--- 2. Yes/No questions are required and NON-clearable in the renderer. Once
---    picked the leader can switch between Yes and No but cannot revert to
---    blank. Forms convention has zero blanks in the required yes/no columns.
+-- Activity-specific main stats:
+--   tree_planting / ecosystem_restoration -> q5 (Trees) required
+--   clean_up                              -> q4 (Rubbish kg) required
+--   nature_hike                           -> q8 (Hike/walk name) required
 --
--- 3. Activity-specific required main stats:
---    - tree_planting: q5 (Trees) required
---    - ecosystem_restoration: q5 (Trees) required
---    - clean_up: q4 (Rubbish kg) required
---    - nature_hike: q8 (Hike/walk name) required
---    - camp_out / spotlighting / other / nature_hike: no extra requireds
+-- Companion code:
+--   supabase/functions/excel-sync/index.ts (readOtherGroupName, otherGroupAttended)
+--   src/components/survey-questions.tsx (show_if visibility filter)
+--   src/components/survey-questions-utils.ts (isQuestionVisible)
+--   src/pages/events/log-impact.tsx (default_value pre-fill + canSubmitSurvey)
 --
--- 4. Free-text questions the Form pre-fills with "No" stay required +
---    default_value "No" so the leader can tap submit unchanged when there's
---    nothing to report (q9 Issues, q11 Highlights, q14 Grant).
---
--- 5. q7 "What was collected" only shows when q6 "Collect or make anything?" = Yes.
---
--- Companion to:
---   * supabase/functions/excel-sync/index.ts (readOtherGroupName +
---     otherGroupAttended handle both new yes_no q1 and legacy free-text q1)
---   * src/components/survey-questions.tsx (show_if conditional rendering)
---   * src/components/survey-questions-utils.ts (isQuestionVisible helper)
---   * src/pages/events/log-impact.tsx (canSubmitSurvey gate based on visible
---     required questions only)
---
--- Origin: Tate verbatim 2026-05-18 night - "the other group attended question
--- should be a yes/no question and if they click yes the [name] text field
--- appears... we cant trust them to leave it blank... trees planted should NOT
--- be optional for a tree planting... why tf can you clear your answer for the
--- make or collect anything... use your head".
---
--- Idempotent: re-running re-applies the canonical block for every active
--- impact-form survey. Existing survey_responses are NOT migrated - they
--- retain their legacy q1 free-text shape, which is handled by the Edge
--- Function's readOtherGroupName helper (legacy compat branch).
+-- Idempotent. Existing survey_responses retain their legacy q1 free-text
+-- shape and are read by the Edge Function's legacy-compat branch.
 
 DO $$
 DECLARE
   canonical jsonb := jsonb_build_object(
     'q1',  jsonb_build_object(
       'id','q1','text','Did another group attend?','type','yes_no','required',true,
-      'description','If No, the sheet records ''No, just Co-Exist!'' automatically.',
       'default_value','No'),
     'q1_name', jsonb_build_object(
-      'id','q1_name','text','Which group attended?','type','free_text','required',true,
-      'description','Name the partner group that joined.',
-      'placeholder','e.g. Bushcare group, Yarra Ranges Council',
-      'text_multiline',false,
+      'id','q1_name','text','Which group?','type','free_text','required',true,
+      'placeholder','e.g. Yarra Ranges Council','text_multiline',false,
       'show_if',jsonb_build_object('question_id','q1','equals','Yes')),
     'q2',  jsonb_build_object(
-      'id','q2','text','Which Landcare group, if any','type','free_text','required',false,
-      'description','Only if a Landcare group was one of the attending groups.',
+      'id','q2','text','Landcare group (if any)','type','free_text','required',false,
       'placeholder','e.g. Noosa Landcare','text_multiline',false,
       'show_if',jsonb_build_object('question_id','q1','equals','Yes')),
     'q3',  jsonb_build_object(
-      'id','q3','text','Which OzFish group, if any','type','free_text','required',false,
-      'description','Only if an OzFish group was one of the attending groups.',
+      'id','q3','text','OzFish group (if any)','type','free_text','required',false,
       'placeholder','e.g. OzFish Sunshine Coast','text_multiline',false,
       'show_if',jsonb_build_object('question_id','q1','equals','Yes')),
     'q4',  jsonb_build_object(
       'id','q4','text','Rubbish removed (kg)','type','number','required',false,
-      'description','Leave blank if none.','placeholder','e.g. 12','number_min',0),
+      'placeholder','e.g. 12','number_min',0),
     'q4_required', jsonb_build_object(
       'id','q4','text','Rubbish removed (kg)','type','number','required',true,
-      'description','Required for clean-up events. Type 0 if none was removed.',
       'placeholder','e.g. 12','number_min',0),
     'q5',  jsonb_build_object(
       'id','q5','text','Trees planted','type','number','required',false,
-      'description','Leave blank if none.','placeholder','e.g. 30','number_min',0),
-    'q5_tree_planting', jsonb_build_object(
-      'id','q5','text','Trees planted','type','number','required',true,
-      'description','Required - the main stat for tree planting. Type 0 if none.',
       'placeholder','e.g. 30','number_min',0),
-    'q5_ecosystem_restoration', jsonb_build_object(
+    'q5_required', jsonb_build_object(
       'id','q5','text','Trees planted','type','number','required',true,
-      'description','Required - trees / native plants put in the ground. Type 0 if none.',
       'placeholder','e.g. 30','number_min',0),
     'q6',  jsonb_build_object(
-      'id','q6','text','Collect or make anything?','type','yes_no','required',true,
-      'description','Yes if you collected or built anything during the event.'),
+      'id','q6','text','Collect or make anything?','type','yes_no','required',true),
     'q7',  jsonb_build_object(
-      'id','q7','text','What was it, and how much?','type','free_text','required',true,
-      'description','Describe what was collected or made.',
+      'id','q7','text','What and how much?','type','free_text','required',true,
       'placeholder','e.g. 3 bee hotels','text_multiline',true,
       'show_if',jsonb_build_object('question_id','q6','equals','Yes')),
     'q8',  jsonb_build_object(
-      'id','q8','text','Name of the hike or walking track','type','free_text','required',false,
-      'description','Leave blank if not applicable.',
+      'id','q8','text','Hike or walking track name','type','free_text','required',false,
       'placeholder','e.g. Mount Cooroora summit track','text_multiline',false),
-    'q8_nature_hike', jsonb_build_object(
-      'id','q8','text','Name of the hike or walking track','type','free_text','required',true,
-      'description','Required - the hike or walking track name.',
+    'q8_required', jsonb_build_object(
+      'id','q8','text','Hike or walking track name','type','free_text','required',true,
       'placeholder','e.g. Mount Cooroora summit track','text_multiline',false),
     'q9',  jsonb_build_object(
-      'id','q9','text','Any issues to flag?','type','free_text','required',true,
-      'description','Type ''No'' if everything ran smoothly, or describe any issues.',
-      'placeholder','No / e.g. Track closure, weather, gear',
-      'text_multiline',true,'default_value','No'),
+      'id','q9','text','Any issues?','type','free_text','required',true,
+      'placeholder','No / describe','text_multiline',true,'default_value','No'),
     'q10', jsonb_build_object(
-      'id','q10','text','Use the first aid kit?','type','yes_no','required',true,
-      'description','Required.'),
+      'id','q10','text','Use the first aid kit?','type','yes_no','required',true),
     'q11', jsonb_build_object(
-      'id','q11','text','Outstanding highlights','type','free_text','required',true,
-      'description','Anything wholesome worth surfacing? Type ''No'' if there were none.',
-      'placeholder','No / e.g. amazing relationship with the host group',
-      'text_multiline',true,'default_value','No'),
+      'id','q11','text','Highlights','type','free_text','required',true,
+      'placeholder','No / describe','text_multiline',true,'default_value','No'),
     'q12', jsonb_build_object(
-      'id','q12','text','Event images uploaded to OneDrive?','type','yes_no','required',true,
-      'description','Required.'),
+      'id','q12','text','Images uploaded to OneDrive?','type','yes_no','required',true),
     'q13', jsonb_build_object(
-      'id','q13','text','Event videos uploaded to Google Drive?','type','yes_no','required',true,
-      'description','Required.'),
+      'id','q13','text','Videos uploaded to Google Drive?','type','yes_no','required',true),
     'q14', jsonb_build_object(
       'id','q14','text','Grant project','type','free_text','required',true,
-      'description','Type ''No'' if not part of a grant project, or name it.',
-      'placeholder','No / e.g. Coastal Connections 2026',
-      'text_multiline',false,'default_value','No'),
+      'placeholder','No / project name','text_multiline',false,'default_value','No'),
     'q15', jsonb_build_object(
-      'id','q15','text','Posted event wrap-up on Instagram?','type','yes_no','required',true,
-      'description','Required.')
+      'id','q15','text','Posted wrap-up on Instagram?','type','yes_no','required',true)
   );
-  -- Per-activity question ordering. Driven entirely by data; the renderer
-  -- shows the array in order.
   per_activity jsonb := jsonb_build_object(
-    'tree_planting',           jsonb_build_array('q1','q1_name','q2','q3','q5_tree_planting','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
+    'tree_planting',           jsonb_build_array('q1','q1_name','q2','q3','q5_required','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
     'clean_up',                jsonb_build_array('q1','q1_name','q2','q3','q4_required','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
-    'ecosystem_restoration',   jsonb_build_array('q1','q1_name','q2','q3','q4','q5_ecosystem_restoration','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
-    'nature_hike',             jsonb_build_array('q1','q1_name','q2','q3','q8_nature_hike','q9','q10','q11','q12','q13','q14','q15'),
+    'ecosystem_restoration',   jsonb_build_array('q1','q1_name','q2','q3','q4','q5_required','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
+    'nature_hike',             jsonb_build_array('q1','q1_name','q2','q3','q8_required','q9','q10','q11','q12','q13','q14','q15'),
     'camp_out',                jsonb_build_array('q1','q1_name','q2','q3','q9','q10','q11','q12','q13','q14','q15'),
     'spotlighting',            jsonb_build_array('q1','q1_name','q2','q3','q9','q10','q11','q12','q13','q14','q15'),
     'other',                   jsonb_build_array('q1','q1_name','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12','q13','q14','q15')
