@@ -382,9 +382,15 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
           })
         }
       }
-      // Fold legacy rows into the breakdown - don't bump eventCount (they
-      // represent rolled-up history, not distinct events), but do add their
-      // metrics/attendees/hours to the right collective bucket.
+      // Fold legacy rows into the breakdown. Each distinct legacy event_id is
+      // a distinct historical event that was imported via backfill, so we
+      // bump eventCount once per unique legacy event_id per collective. This
+      // keeps the breakdown row's eventCount consistent with the summary
+      // card's totalEvents (which uses uniqueEventIds including legacy event
+      // ids). Without it, selecting a collective produced one number in the
+      // summary (e.g. Brisbane = 36 events) and a different number in the
+      // breakdown table (Brisbane = 11 events) for the same query.
+      const legacyEventIdsByCollective = new Map<string, Set<string>>()
       for (const r of filteredLegacy) {
         const ev = r.events as unknown as RawRow['events'] | undefined
         if (!ev) continue
@@ -394,8 +400,25 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
           ? Number(r.attendees) || 0
           : (parseAttendance(r.notes as string | null) ?? 0)
         const hours = Number(r.hours_total) || 0
+        // Track distinct legacy event ids per collective so we count
+        // historical events once even if a backfill carried multiple rows.
+        let legacyIds = legacyEventIdsByCollective.get(collectiveId)
+        if (!legacyIds) {
+          legacyIds = new Set<string>()
+          legacyEventIdsByCollective.set(collectiveId, legacyIds)
+        }
+        const isFirstSightingOfEvent = !legacyIds.has(r.event_id)
+        legacyIds.add(r.event_id)
         const existing = byCollective.get(collectiveId)
         if (existing) {
+          if (isFirstSightingOfEvent && !rows.some((row) => row.eventId === r.event_id)) {
+            // Bump eventCount only when this legacy event_id is NEW to this
+            // collective AND wasn't already counted via a live impact row -
+            // an event can have both a live and a legacy row (e.g. legacy
+            // imported, then a leader logged additional impact); we don't
+            // want to count it twice.
+            existing.eventCount += 1
+          }
           existing.attendees += parsedAtt
           existing.estimatedHours += hours
           for (const key of metricKeys) {
@@ -409,7 +432,9 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
           byCollective.set(collectiveId, {
             collectiveId,
             name: collectiveName,
-            eventCount: 0,
+            // Live didn't have this collective at all - so this is the
+            // first event we're counting for it.
+            eventCount: 1,
             attendees: parsedAtt,
             metrics,
             estimatedHours: hours,
