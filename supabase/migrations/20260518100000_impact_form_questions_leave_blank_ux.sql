@@ -82,13 +82,13 @@ DECLARE
       'id','q15','text','Posted wrap-up on Instagram?','type','yes_no','required',true)
   );
   per_activity jsonb := jsonb_build_object(
-    'tree_planting',           jsonb_build_array('q1','q1_name','q2','q3','q5_required','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
-    'clean_up',                jsonb_build_array('q1','q1_name','q2','q3','q4_required','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
-    'ecosystem_restoration',   jsonb_build_array('q1','q1_name','q2','q3','q4','q5_required','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
-    'nature_hike',             jsonb_build_array('q1','q1_name','q2','q3','q8_required','q9','q10','q11','q12','q13','q14','q15'),
-    'camp_out',                jsonb_build_array('q1','q1_name','q2','q3','q9','q10','q11','q12','q13','q14','q15'),
-    'spotlighting',            jsonb_build_array('q1','q1_name','q2','q3','q9','q10','q11','q12','q13','q14','q15'),
-    'other',                   jsonb_build_array('q1','q1_name','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12','q13','q14','q15')
+    'tree_planting',           jsonb_build_array('q1','q1_name','q5_required','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
+    'clean_up',                jsonb_build_array('q1','q1_name','q4_required','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
+    'ecosystem_restoration',   jsonb_build_array('q1','q1_name','q4','q5_required','q6','q7','q9','q10','q11','q12','q13','q14','q15'),
+    'nature_hike',             jsonb_build_array('q1','q1_name','q8_required','q9','q10','q11','q12','q13','q14','q15'),
+    'camp_out',                jsonb_build_array('q1','q1_name','q9','q10','q11','q12','q13','q14','q15'),
+    'spotlighting',            jsonb_build_array('q1','q1_name','q9','q10','q11','q12','q13','q14','q15'),
+    'other',                   jsonb_build_array('q1','q1_name','q4','q5','q6','q7','q8','q9','q10','q11','q12','q13','q14','q15')
   );
   s record;
   order_keys jsonb;

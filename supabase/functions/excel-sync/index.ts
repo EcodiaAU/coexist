@@ -475,8 +475,27 @@ function buildExcelRow(e: EventData): (string | number | null)[] {
     freeText(e.answers?.postcode) || extractPostcode(e.address ?? ''), // 5: Postcode (survey answer, fallback to address extraction)
     organiser,                                               // 6: Primary Organiser of the Event
     otherGroup,                                              // 7: Other Group Attended (always populated)
-    groupAttended ? freeText(e.answers?.q2) : '',            // 8: Which Landcare Group (only when q1=Yes)
-    groupAttended ? freeText(e.answers?.q3) : '',            // 9: Which OzFish group (only when q1=Yes)
+    // col 8 (Landcare) + col 9 (OzFish): derived from q1_name substring when
+    // a partner group attended. Legacy responses had explicit q2/q3 fields but
+    // those were removed from the survey UI (2026-05-18 night) - leaders kept
+    // typing "No" in them, polluting the sheet. We now extract Landcare/OzFish
+    // chapter names automatically from q1_name (or legacy q1 free-text) when
+    // they contain the keyword. Old responses with explicit q2/q3 still
+    // populate the cells via the fallback (q2/q3 -> direct freeText).
+    (() => {
+      if (!groupAttended) return ''
+      const legacy = freeText(e.answers?.q2)
+      if (legacy) return legacy
+      const partnerName = readOtherGroupName(e.answers?.q1, e.answers?.q1_name)
+      return /landcare/i.test(partnerName) ? partnerName : ''
+    })(),                                                    // 8: Landcare
+    (() => {
+      if (!groupAttended) return ''
+      const legacy = freeText(e.answers?.q3)
+      if (legacy) return legacy
+      const partnerName = readOtherGroupName(e.answers?.q1, e.answers?.q1_name)
+      return /ozfish/i.test(partnerName) ? partnerName : ''
+    })(),                                                    // 9: OzFish
     freeText(e.answers?.leader_name) || e.leader_name || '', // 10: Co-Exist Leader (from survey dropdown)
     e.attendees ?? e.checked_in_count ?? '',                  // 11: Number of Attendees (impact override or check-in count)
     isConservation ? 'Conservation' : isRecreation ? 'Recreation' : label, // 12: Type of Event
