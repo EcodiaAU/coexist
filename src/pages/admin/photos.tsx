@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Filter, X, Calendar, ChevronLeft, User, ImagePlus, Loader2, Video as VideoIcon } from 'lucide-react'
+import { Filter, X, Calendar, ChevronLeft, User, ImagePlus, Loader2, Video as VideoIcon, Check, Download } from 'lucide-react'
 import { useAdminHeader } from '@/components/admin-layout'
 import { Dropdown } from '@/components/dropdown'
 import { SearchBar } from '@/components/search-bar'
@@ -15,6 +15,7 @@ import { useToast } from '@/components/toast'
 import { formatDate } from '@/lib/date-format'
 import { formatActivityType } from '@/lib/activity-types'
 import { cn } from '@/lib/cn'
+import { downloadAsZip, saveToCameraRoll } from '@/lib/photo-download'
 
 const ACTIVITY_OPTIONS = [
   { value: '', label: 'All activity types' },
@@ -101,6 +102,9 @@ export default function AdminPhotosPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [uploadProg, setUploadProg] = useState({ done: 0, total: 0 })
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [zipProg, setZipProg] = useState({ done: 0, total: 0 })
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -134,6 +138,52 @@ export default function AdminPhotosPage() {
   async function handleStaffAddMore() {
     if (!openedEventId) return
     fileInputRef.current?.click()
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function selectAllInGroup() {
+    if (!openedGroup) return
+    setSelectedIds(new Set(openedGroup.photos.map((p) => p.id)))
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  async function handleDownloadSelected() {
+    if (!openedGroup) return
+    const items = openedGroup.photos.filter((p) => selectedIds.has(p.id))
+    if (items.length === 0) return
+    if (items.length === 1) {
+      await saveToCameraRoll(items[0].url ?? '', items[0].storage_path, items[0].caption ?? undefined)
+      toast.success('Downloaded')
+      exitSelectMode()
+      return
+    }
+    setZipProg({ done: 0, total: items.length })
+    try {
+      const slug = openedGroup.event_title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'event'
+      await downloadAsZip(
+        items.map((p) => ({ url: p.url ?? '', storage_path: p.storage_path })),
+        `coexist-${slug}-photos.zip`,
+        (done, total) => setZipProg({ done, total }),
+      )
+      toast.success(`Downloaded ${items.length} items as zip`)
+      exitSelectMode()
+    } catch {
+      toast.error('Could not build zip')
+    } finally {
+      setZipProg({ done: 0, total: 0 })
+    }
   }
 
   async function onFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
@@ -194,7 +244,7 @@ export default function AdminPhotosPage() {
                 <span className="inline-flex items-center gap-1"><User size={12} />{openedGroup.uploaderCount} {openedGroup.uploaderCount === 1 ? 'contributor' : 'contributors'}</span>
                 <span className="text-neutral-400">{openedGroup.photos.length} {openedGroup.photos.length === 1 ? 'photo' : 'photos'}</span>
               </div>
-              <div className="mt-3 flex items-center gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => navigate(`/events/${openedGroup.event_id}`)}
@@ -202,19 +252,66 @@ export default function AdminPhotosPage() {
                 >
                   Open event →
                 </button>
-                <button
-                  type="button"
-                  onClick={handleStaffAddMore}
-                  disabled={upload.isPending}
-                  className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform duration-150 disabled:opacity-60"
-                >
-                  <ImagePlus size={13} /> Add more
-                </button>
+                {!selectMode ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setSelectMode(true)}
+                      className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform duration-150"
+                    >
+                      <Check size={13} /> Select
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleStaffAddMore}
+                      disabled={upload.isPending}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform duration-150 disabled:opacity-60"
+                    >
+                      <ImagePlus size={13} /> Add more
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="ml-auto text-xs font-semibold text-neutral-600 tabular-nums">
+                      {selectedIds.size} selected
+                    </span>
+                    <button
+                      type="button"
+                      onClick={selectAllInGroup}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform duration-150"
+                    >
+                      Select all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadSelected}
+                      disabled={selectedIds.size === 0 || zipProg.total > 0}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform duration-150 disabled:opacity-40"
+                    >
+                      <Download size={13} />
+                      {selectedIds.size > 1 ? 'Download zip' : 'Download'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={exitSelectMode}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full text-neutral-500 hover:bg-neutral-100"
+                      aria-label="Exit select mode"
+                    >
+                      <X size={14} />
+                    </button>
+                  </>
+                )}
               </div>
               {uploadProg.total > 0 && (
                 <div className="mt-3 flex items-center gap-2 rounded-xl bg-primary-50 ring-1 ring-primary-100 p-2.5 text-xs font-semibold text-primary-700">
                   <Loader2 size={13} className="animate-spin" />
                   Uploading {uploadProg.done} of {uploadProg.total}…
+                </div>
+              )}
+              {zipProg.total > 0 && (
+                <div className="mt-3 flex items-center gap-2 rounded-xl bg-primary-50 ring-1 ring-primary-100 p-2.5 text-xs font-semibold text-primary-700">
+                  <Loader2 size={13} className="animate-spin" />
+                  Bundling {zipProg.done} of {zipProg.total}…
                 </div>
               )}
             </div>
@@ -228,7 +325,15 @@ export default function AdminPhotosPage() {
             />
             <PhotoLibraryGrid
               photos={openedGroup.photos}
-              onPhotoClick={(i) => setLightboxIndex(i)}
+              onPhotoClick={(i) => {
+                if (selectMode) {
+                  toggleSelected(openedGroup.photos[i].id)
+                } else {
+                  setLightboxIndex(i)
+                }
+              }}
+              selectMode={selectMode}
+              selectedIds={selectedIds}
             />
             <AnimatePresence>
               {lightboxIndex !== null && openedGroup.photos[lightboxIndex] && (
@@ -396,20 +501,28 @@ function EventGroupCard({ group, onOpen }: { group: EventGroup; onOpen: () => vo
 function PhotoLibraryGrid({
   photos,
   onPhotoClick,
+  selectMode = false,
+  selectedIds,
 }: {
   photos: AdminEventPhoto[]
   onPhotoClick: (index: number) => void
+  selectMode?: boolean
+  selectedIds?: Set<string>
 }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
       {photos.map((p, i) => {
         const isVid = isVideoPath(p.storage_path)
+        const isSelected = selectedIds?.has(p.id) ?? false
         return (
           <button
             key={p.id}
             type="button"
             onClick={() => onPhotoClick(i)}
-            className="group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 ring-1 ring-neutral-200/60 active:scale-[0.97] transition-transform duration-150"
+            className={cn(
+              'group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 ring-1 active:scale-[0.97] transition-transform duration-150',
+              isSelected ? 'ring-2 ring-primary-500' : 'ring-neutral-200/60',
+            )}
             aria-label={isVid ? 'View video' : 'View photo'}
           >
             {p.url && (
@@ -427,13 +540,27 @@ function PhotoLibraryGrid({
                   alt={p.caption ?? ''}
                   loading="lazy"
                   decoding="async"
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                  className={cn(
+                    'absolute inset-0 w-full h-full object-cover transition-transform duration-300',
+                    !selectMode && 'group-hover:scale-[1.03]',
+                    isSelected && 'opacity-80',
+                  )}
                 />
               )
             )}
             {isVid && (
               <span className="absolute top-1.5 right-1.5 flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white">
                 <VideoIcon size={11} />
+              </span>
+            )}
+            {selectMode && (
+              <span
+                className={cn(
+                  'absolute top-1.5 left-1.5 flex items-center justify-center w-6 h-6 rounded-full border-2 transition-colors',
+                  isSelected ? 'bg-primary-500 border-primary-500 text-white' : 'bg-white/80 border-white/80 text-transparent',
+                )}
+              >
+                <Check size={13} />
               </span>
             )}
             <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">

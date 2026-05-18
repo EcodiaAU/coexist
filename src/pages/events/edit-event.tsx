@@ -26,7 +26,10 @@ import {
     LocationFields,
     DetailsFields,
     CoverImageFields,
+    ExtrasFields,
 } from './components/event-form-fields'
+import { useActivityTypeDefaults } from '@/hooks/use-activity-defaults'
+import { INITIAL_EXTRAS, type EventExtras } from '@/hooks/use-event-form'
 import {
     Page,
     Header,
@@ -55,6 +58,7 @@ export default function EditEventPage() {
   const { data: event, isLoading } = useEventDetail(eventId)
   const showLoading = useDelayedLoading(isLoading)
   const updateEvent = useUpdateEvent()
+  const { data: activityDefaults } = useActivityTypeDefaults()
 
   const form = useEventForm({ mode: 'edit' })
 
@@ -96,6 +100,10 @@ export default function EditEventPage() {
           (event as { collectives?: { timezone?: string | null } | null }).collectives?.timezone ??
           'Australia/Sydney',
         timezone_overrides_collective: !!(event as { timezone?: string | null }).timezone,
+        extras: {
+          ...INITIAL_EXTRAS,
+          ...((event as unknown as { event_extras?: Partial<EventExtras> | null }).event_extras ?? {}),
+        },
       })
       setIsTicketed(event.is_ticketed ?? false)
       setCheckinWindowMinutes((event as unknown as Record<string, unknown>).checkin_window_minutes as number ?? 30)
@@ -137,6 +145,18 @@ export default function EditEventPage() {
       })
     } else {
       if (!form.isBasicsValid || !form.isDateValid) return
+      // If the admin cleared the cover image (or never set one), fall back
+      // to the per-activity default so the event isn't naked.
+      const fallback = !form.fields.cover_image_url && form.fields.activity_type
+        ? activityDefaults?.[form.fields.activity_type]
+        : null
+      const resolvedCover = form.fields.cover_image_url || fallback?.cover_image_url || null
+      const resolvedPosX = form.fields.cover_image_url
+        ? form.fields.cover_image_position_x
+        : fallback?.cover_image_position_x ?? form.fields.cover_image_position_x
+      const resolvedPosY = form.fields.cover_image_url
+        ? form.fields.cover_image_position_y
+        : fallback?.cover_image_position_y ?? form.fields.cover_image_position_y
       await updateEvent.mutateAsync({
         eventId,
         title: form.fields.title,
@@ -147,15 +167,16 @@ export default function EditEventPage() {
         address: form.fields.address || null,
         location_point: locationPoint,
         capacity: form.parsedCapacity(),
-        cover_image_url: form.fields.cover_image_url || null,
-        cover_image_position_x: form.fields.cover_image_position_x,
-        cover_image_position_y: form.fields.cover_image_position_y,
+        cover_image_url: resolvedCover,
+        cover_image_position_x: resolvedPosX,
+        cover_image_position_y: resolvedPosY,
         is_public: form.fields.is_public,
         is_external_collaboration: form.fields.is_external_collaboration,
         external_registration_url: form.fields.external_registration_url || null,
         checkin_window_minutes: checkinWindowMinutes,
         timezone: form.fields.timezone_overrides_collective ? form.fields.timezone : null,
-      })
+        event_extras: form.fields.extras,
+      } as Parameters<typeof updateEvent.mutateAsync>[0])
 
       // Save ticket types
       await saveTickets.mutateAsync({
@@ -167,7 +188,7 @@ export default function EditEventPage() {
     }
 
     navigate(`/events/${eventId}`, { replace: true })
-  }, [eventId, isDayOfMode, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, navigate])
+  }, [eventId, isDayOfMode, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, activityDefaults, navigate])
 
   // Publish a draft event - saves all fields + flips status to published (fork_mp0so5k9_0d2e77)
   const handlePublish = useCallback(async () => {
@@ -204,7 +225,7 @@ export default function EditEventPage() {
     })
 
     navigate(`/events/${eventId}`, { replace: true })
-  }, [eventId, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, navigate])
+  }, [eventId, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, activityDefaults, navigate])
 
   const stagger = {
     hidden: {},
@@ -400,6 +421,30 @@ export default function EditEventPage() {
               ]}
             />
           )}
+        </motion.div>
+
+        {/* Extras - meeting point / what to bring / accessibility / partner */}
+        <motion.div variants={fadeUp} className={cn(
+          'space-y-4 rounded-2xl p-4 border',
+          isDayOfMode
+            ? 'bg-neutral-50 border-neutral-200 opacity-60 pointer-events-none'
+            : 'bg-white border-neutral-100',
+        )}>
+          <h3 className="text-sm font-semibold flex items-center gap-1.5">
+            {isDayOfMode ? (
+              <>
+                <Lock size={13} className="text-neutral-400" />
+                <span className="text-neutral-500">Preparation & Access</span>
+              </>
+            ) : (
+              <span className="text-neutral-900">Preparation & Access</span>
+            )}
+          </h3>
+          <ExtrasFields
+            extras={form.fields.extras}
+            onChange={form.updateExtras}
+            disabled={isDayOfMode}
+          />
         </motion.div>
 
         {/* Cover Image */}

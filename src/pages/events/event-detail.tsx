@@ -45,6 +45,7 @@ import { EventPhotosSection } from '@/components/event-photos-section'
 import { EventHero, EventHeroOverlay } from './event-hero'
 import { EventActions } from './event-actions'
 import { EventAttendees } from './event-attendees'
+import { AdminAttendeesExport } from './admin-attendees-export'
 import { Capacitor } from '@capacitor/core'
 import { useAuth } from '@/hooks/use-auth'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
@@ -1410,6 +1411,23 @@ export default function EventDetailPage() {
           capacityPercent={capacityPercent}
           fadeUpVariants={shouldReduceMotion ? undefined : fadeUp}
         />
+
+        {/* Admin-only attendees export (Jess: copy/download names + emergency
+            contacts to forward externally). Gated to staff+ since it exposes
+            PII from every registration. */}
+        {isStaff && (
+          <AdminAttendeesExport
+            eventId={event.id}
+            details={{
+              title: event.title,
+              date_start: event.date_start,
+              date_end: event.date_end ?? null,
+              address: event.address ?? null,
+              activity_type: event.activity_type ?? null,
+              collective_name: event.collectives?.name ?? null,
+            }}
+          />
+        )}
 
         {/* Leader quick-actions are now rendered above the key-info card. */}
 

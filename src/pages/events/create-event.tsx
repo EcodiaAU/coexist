@@ -43,6 +43,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useEventForm } from '@/hooks/use-event-form'
 import type { EventFormFields, ActivityType } from '@/hooks/use-event-form'
+import { useActivityTypeDefaults } from '@/hooks/use-activity-defaults'
 import { parseLocationPoint } from '@/lib/geo'
 import {
     DateTimeFields,
@@ -1588,6 +1589,7 @@ export default function CreateEventPage() {
   const form = useEventForm({ mode: 'create' })
 
   const createEvent = useCreateEvent()
+  const { data: activityDefaults } = useActivityTypeDefaults()
   const inviteCollective = useInviteCollective()
   const { toast: toastApi } = useToast()
 
@@ -1788,6 +1790,19 @@ export default function CreateEventPage() {
           }
         }
 
+        // If the admin didn't upload a cover, fall back to the activity
+        // default so the event always has an image. activityDefaults is the
+        // map keyed by activity_type from useActivityTypeDefaults.
+        const activityDefault = !form.fields.cover_image_url && form.fields.activity_type
+          ? activityDefaults?.[form.fields.activity_type]
+          : null
+        const resolvedCover = form.fields.cover_image_url || activityDefault?.cover_image_url || null
+        const resolvedCoverX = form.fields.cover_image_url
+          ? form.fields.cover_image_position_x
+          : activityDefault?.cover_image_position_x ?? form.fields.cover_image_position_x
+        const resolvedCoverY = form.fields.cover_image_url
+          ? form.fields.cover_image_position_y
+          : activityDefault?.cover_image_position_y ?? form.fields.cover_image_position_y
         const baseInsert = {
           collective_id: primaryCollectiveId,
           title: form.fields.title,
@@ -1799,9 +1814,9 @@ export default function CreateEventPage() {
           address: form.fields.address || null,
           location_point: form.buildLocationPoint(),
           capacity: form.parsedCapacity(),
-          cover_image_url: form.fields.cover_image_url || null,
-          cover_image_position_x: form.fields.cover_image_position_x,
-          cover_image_position_y: form.fields.cover_image_position_y,
+          cover_image_url: resolvedCover,
+          cover_image_position_x: resolvedCoverX,
+          cover_image_position_y: resolvedCoverY,
           is_public: form.fields.is_public,
           is_ticketed: extra.is_ticketed,
           is_external_collaboration: form.fields.is_external_collaboration,
@@ -1817,6 +1832,18 @@ export default function CreateEventPage() {
           // Otherwise leave NULL so the event inherits if the collective
           // ever changes its tz.
           timezone: form.fields.timezone_overrides_collective ? form.fields.timezone : null,
+          // Capture the wizard's "preparation & access" fields so edit-event
+          // can round-trip them. Stored as jsonb so we can extend without a
+          // schema change later.
+          event_extras: {
+            meeting_point: extra.meeting_point || '',
+            what_to_bring: extra.what_to_bring || '',
+            what_to_wear: extra.what_to_wear || '',
+            terrain: extra.terrain || '',
+            difficulty: extra.difficulty || 'easy',
+            wheelchair_access: !!extra.wheelchair_access,
+            partner_name: extra.partner_name || '',
+          },
         }
 
         const event = await createEvent.mutateAsync(baseInsert)
@@ -1949,7 +1976,7 @@ export default function CreateEventPage() {
         )
       }
     },
-    [user, form, extra, saveAsDraft, createEvent, inviteCollective, navigate, toastApi, resetWizard],
+    [user, form, extra, saveAsDraft, createEvent, inviteCollective, navigate, toastApi, resetWizard, activityDefaults],
   )
 
   const handleBack = useCallback(() => navigate(-1), [navigate])

@@ -8,7 +8,7 @@ import {
   Check,
 } from 'lucide-react'
 import { ACTIVITY_TYPE_OPTIONS } from '@/hooks/use-events'
-import type { EventFormFields, ActivityType } from '@/hooks/use-event-form'
+import type { EventFormFields, ActivityType, EventExtras } from '@/hooks/use-event-form'
 import { useLocationSync } from '@/hooks/use-location-sync'
 import {
   Input,
@@ -287,6 +287,82 @@ export function DetailsFields({ fields, onChange, disabled }: FieldProps) {
         disabled={disabled}
       />
     </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Extras: meeting point / preparation / accessibility / partner      */
+/* ------------------------------------------------------------------ */
+
+export function ExtrasFields({
+  extras,
+  onChange,
+  disabled,
+}: {
+  extras: EventExtras
+  onChange: (updates: Partial<EventExtras>) => void
+  disabled?: boolean
+}) {
+  return (
+    <div className="space-y-4">
+      <Input
+        label="Meeting Point"
+        placeholder="e.g. North end of the carpark, near the rotunda"
+        value={extras.meeting_point}
+        onChange={(e) => onChange({ meeting_point: e.target.value })}
+        disabled={disabled}
+      />
+      <Input
+        type="textarea"
+        label="What to bring"
+        placeholder="Water, gloves, sturdy shoes..."
+        rows={2}
+        value={extras.what_to_bring}
+        onChange={(e) => onChange({ what_to_bring: e.target.value })}
+        disabled={disabled}
+      />
+      <Input
+        type="textarea"
+        label="What to wear"
+        placeholder="Long sleeves, sun hat, closed-toe shoes..."
+        rows={2}
+        value={extras.what_to_wear}
+        onChange={(e) => onChange({ what_to_wear: e.target.value })}
+        disabled={disabled}
+      />
+      <Input
+        label="Terrain"
+        placeholder="e.g. uneven coastal track with steep sections"
+        value={extras.terrain}
+        onChange={(e) => onChange({ terrain: e.target.value })}
+        disabled={disabled}
+      />
+      <Dropdown
+        label="Difficulty"
+        value={extras.difficulty}
+        onChange={(v) => onChange({ difficulty: v as EventExtras['difficulty'] })}
+        options={[
+          { value: 'easy', label: 'Easy' },
+          { value: 'moderate', label: 'Moderate' },
+          { value: 'challenging', label: 'Challenging' },
+        ]}
+        disabled={disabled}
+      />
+      <Toggle
+        label="Wheelchair accessible"
+        description="The venue and route are wheelchair accessible"
+        checked={extras.wheelchair_access}
+        onChange={(v) => onChange({ wheelchair_access: v })}
+        disabled={disabled}
+      />
+      <Input
+        label="Partner organisation"
+        placeholder="e.g. Landcare NSW (leave blank if none)"
+        value={extras.partner_name}
+        onChange={(e) => onChange({ partner_name: e.target.value })}
+        disabled={disabled}
+      />
+    </div>
   )
 }
 

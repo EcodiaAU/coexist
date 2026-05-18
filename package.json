@@ -49,6 +49,7 @@
     "html2canvas": "^1.4.1",
     "i18next": "^25.8.20",
     "jsqr": "^1.4.0",
+    "jszip": "^3.10.1",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
     "leaflet.markercluster": "^1.5.3",

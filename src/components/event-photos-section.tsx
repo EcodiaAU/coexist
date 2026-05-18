@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion, useMotionValue, animate } from 'framer-motion'
-import { Camera, ImagePlus, Video as VideoIcon, X, Trash2, Share2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Camera, ImagePlus, Video as VideoIcon, X, Trash2, Share2, Loader2, ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/use-auth'
 import { useEventPhotos, useUploadEventPhoto, useDeleteEventPhoto, type EventPhoto } from '@/hooks/use-event-photos'
@@ -8,6 +8,7 @@ import { useCamera } from '@/hooks/use-camera'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/button'
 import { Avatar } from '@/components/avatar'
+import { saveToCameraRoll } from '@/lib/photo-download'
 
 // Detect a video by storage_path extension. Keeps the schema flat.
 export function isVideoPath(path: string): boolean {
@@ -310,6 +311,36 @@ export function PhotoCarouselLightbox({
     } catch { /* cancelled / unsupported */ }
   }
 
+  async function handleSave() {
+    if (!current.url) return
+    try {
+      await saveToCameraRoll(current.url, current.storage_path, current.caption ?? undefined)
+    } catch { /* user cancelled or save failed quietly */ }
+  }
+
+  // Long-press to trigger save (mobile gesture parity with native gallery
+  // apps). 550ms hold = save. Drag inside the carousel cancels.
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressFired = useRef(false)
+  const onTouchStart = useCallback(() => {
+    longPressFired.current = false
+    if (longPressTimer.current) clearTimeout(longPressTimer.current)
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true
+      handleSave()
+    }, 550)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const onTouchCancel = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }, [])
+  useEffect(() => () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current)
+  }, [])
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -333,6 +364,14 @@ export function PhotoCarouselLightbox({
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleSave}
+            className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.96] transition-transform duration-150"
+            aria-label="Save to photos"
+          >
+            <Download size={18} />
+          </button>
           <button
             type="button"
             onClick={handleShare}
@@ -372,7 +411,9 @@ export function PhotoCarouselLightbox({
             dragMomentum={false}
             dragElastic={0.18}
             dragConstraints={{ left: -width * (photos.length - 1), right: 0 }}
+            onDragStart={onTouchCancel}
             onDragEnd={(_, info) => {
+              onTouchCancel()
               const offset = info.offset.x
               const velocity = info.velocity.x
               const threshold = width * 0.3
@@ -387,7 +428,15 @@ export function PhotoCarouselLightbox({
             }}
           >
             {photos.map((p) => (
-              <div key={p.id} className="shrink-0 flex items-center justify-center p-3 pointer-events-none" style={{ width }}>
+              <div
+                key={p.id}
+                className="shrink-0 flex items-center justify-center p-3"
+                style={{ width }}
+                onTouchStart={onTouchStart}
+                onTouchEnd={onTouchCancel}
+                onTouchCancel={onTouchCancel}
+                onTouchMove={onTouchCancel}
+              >
                 {p.url && (isVideoPath(p.storage_path) ? (
                   <video
                     src={p.url}
@@ -400,7 +449,7 @@ export function PhotoCarouselLightbox({
                     src={p.url}
                     alt={p.caption ?? ''}
                     draggable={false}
-                    className="max-w-full max-h-full object-contain rounded-xl select-none"
+                    className="max-w-full max-h-full object-contain rounded-xl select-none pointer-events-none"
                   />
                 ))}
               </div>

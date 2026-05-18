@@ -18,6 +18,7 @@ import {
 import {
     useNotifications,
     useMarkRead,
+    useMarkAllRead,
     useUnreadCount,
     getNotificationDeepLink,
     getNotificationMeta,
@@ -388,6 +389,7 @@ export default function UpdatesPage() {
   const { data: notifications } = useNotifications()
   const { data: unreadCount = 0 } = useUnreadCount()
   const markNotifRead = useMarkRead()
+  const markAllNotifRead = useMarkAllRead()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedUpdateId, setSelectedUpdateId] = useState<string | null>(null)
 
@@ -427,6 +429,16 @@ export default function UpdatesPage() {
     markAllRead.mutate(unreadIds)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, all])
+
+  // Also flush unread *notifications* (bell-icon items) so the combined
+  // side-sheet badge clears. Same trigger window as updates.
+  useEffect(() => {
+    if (!notifications) return
+    const hasUnread = notifications.some((n) => !n.read_at)
+    if (!hasUnread) return
+    markAllNotifRead.mutate(undefined)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifications])
 
   const isEmpty = !isLoading && pinned.length === 0 && regular.length === 0 && recentNotifications.length === 0
 

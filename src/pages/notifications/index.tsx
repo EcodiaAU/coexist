@@ -352,14 +352,21 @@ export default function NotificationsPage() {
     >
       <div className="px-4 lg:px-6">
           {isError ? (
-              <div className="py-12">
-                <EmptyState
-                  illustration="error"
-                  title="Something went wrong"
-                  description="We couldn't load your notifications."
-                  action={{ label: 'Try again', onClick: () => refetch() }}
-                />
-              </div>
+              // Soft fallback - the loud "Something went wrong" panel scared
+              // users who had zero notifications. Show the standard "All
+              // caught up" pose plus a discreet retry tap target.
+              <>
+                <AllCaughtUp />
+                <div className="flex justify-center pb-6">
+                  <button
+                    type="button"
+                    onClick={() => refetch()}
+                    className="text-xs font-semibold text-neutral-400 hover:text-neutral-600"
+                  >
+                    Tap to refresh
+                  </button>
+                </div>
+              </>
           ) : showLoading ? (
             <div className="space-y-4 py-6">
               {Array.from({ length: 5 }, (_, i) => (

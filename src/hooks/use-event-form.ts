@@ -17,6 +17,26 @@ export type ActivityType = Database['public']['Enums']['activity_type']
 /*  Shared form data shape (fields common to create + edit)            */
 /* ------------------------------------------------------------------ */
 
+export interface EventExtras {
+  meeting_point: string
+  what_to_bring: string
+  what_to_wear: string
+  terrain: string
+  difficulty: 'easy' | 'moderate' | 'challenging'
+  wheelchair_access: boolean
+  partner_name: string
+}
+
+export const INITIAL_EXTRAS: EventExtras = {
+  meeting_point: '',
+  what_to_bring: '',
+  what_to_wear: '',
+  terrain: '',
+  difficulty: 'easy',
+  wheelchair_access: false,
+  partner_name: '',
+}
+
 export interface EventFormFields {
   title: string
   activity_type: ActivityType | ''
@@ -43,6 +63,9 @@ export interface EventFormFields {
   /** Tracks whether the user has explicitly overridden timezone, so we
    *  know whether to persist it as a per-event override vs. inherit. */
   timezone_overrides_collective: boolean
+  /** Free-form metadata captured in the wizard - persisted to
+   *  events.event_extras jsonb so edit-event can round-trip them. */
+  extras: EventExtras
 }
 
 export const INITIAL_FORM_FIELDS: EventFormFields = {
@@ -63,6 +86,7 @@ export const INITIAL_FORM_FIELDS: EventFormFields = {
   external_registration_url: '',
   timezone: 'Australia/Sydney',
   timezone_overrides_collective: false,
+  extras: INITIAL_EXTRAS,
 }
 
 /* ------------------------------------------------------------------ */
@@ -83,6 +107,10 @@ export function useEventForm({ initial }: UseEventFormOptions) {
 
   const updateFields = useCallback((updates: Partial<EventFormFields>) => {
     setFields((prev) => ({ ...prev, ...updates }))
+  }, [])
+
+  const updateExtras = useCallback((updates: Partial<EventExtras>) => {
+    setFields((prev) => ({ ...prev, extras: { ...prev.extras, ...updates } }))
   }, [])
 
   const resetFields = useCallback((values: Partial<EventFormFields>) => {
@@ -183,6 +211,7 @@ export function useEventForm({ initial }: UseEventFormOptions) {
   return {
     fields,
     updateFields,
+    updateExtras,
     resetFields,
 
     // Image upload
