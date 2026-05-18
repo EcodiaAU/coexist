@@ -647,42 +647,53 @@ export function AnnouncementCard({
           scroll-smooth handles the smoothness; -mx-1 px-1 + hide-scrollbar
           gives clean boundary clipping at the card edge.
         */}
-        {rsvpOptions.length > 0 && isActive && onRespond && (
-          <div className="-mx-1 px-1 mb-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-smooth hide-scrollbar">
-            <div className="flex gap-2 min-w-min">
-              {rsvpOptions.map((opt) => {
-                const isSelected = userResponse === opt
-                const label = opt === 'going' ? 'Going' : opt === 'maybe' ? 'Maybe' : "Can't Make It"
-                const count = responseCounts[opt] ?? 0
-
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => onRespond(opt)}
-                    className={cn(
-                      'snap-start shrink-0 min-w-[8.5rem] rounded-xl py-2 px-3 text-center text-xs font-semibold transition-transform duration-150 min-h-11',
-                      'active:scale-[0.95] cursor-pointer select-none',
-                      isSelected
-                        ? 'bg-primary-500 text-white shadow-sm'
-                        : 'bg-neutral-50 text-neutral-700 hover:bg-neutral-100',
-                    )}
-                  >
-                    <span className="whitespace-nowrap">{label}</span>
-                    {count > 0 && (
-                      <span className={cn(
-                        'ml-1 text-[11px]',
-                        isSelected ? 'text-white/70' : 'text-neutral-400',
-                      )}>
-                        ({count})
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
+        {rsvpOptions.length > 0 && isActive && onRespond && (() => {
+          // Layout: 'Going' full-width on top, 'Maybe' + 'Can't make it' as
+          // two half-buttons below. Replaces the horizontal-scroll strip
+          // where the third option was hidden offscreen.
+          const renderBtn = (opt: string, fullWidth: boolean) => {
+            const isSelected = userResponse === opt
+            const label = opt === 'going' ? 'Going' : opt === 'maybe' ? 'Maybe' : "Can't make it"
+            const count = responseCounts[opt] ?? 0
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => onRespond(opt)}
+                className={cn(
+                  'rounded-xl py-2.5 px-3 text-center text-xs font-semibold transition-transform duration-150 min-h-11',
+                  'active:scale-[0.97] cursor-pointer select-none',
+                  fullWidth ? 'w-full' : 'flex-1 min-w-0',
+                  isSelected
+                    ? opt === 'going'
+                      ? 'bg-success-600 text-white shadow-sm'
+                      : 'bg-primary-500 text-white shadow-sm'
+                    : 'bg-neutral-50 text-neutral-700 hover:bg-neutral-100',
+                )}
+              >
+                <span className="whitespace-nowrap">{label}</span>
+                {count > 0 && (
+                  <span className={cn(
+                    'ml-1 text-[11px]',
+                    isSelected ? 'text-white/80' : 'text-neutral-400',
+                  )}>
+                    ({count})
+                  </span>
+                )}
+              </button>
+            )
+          }
+          const opts = new Set(rsvpOptions)
+          return (
+            <div className="mb-2 space-y-2">
+              {opts.has('going') && renderBtn('going', true)}
+              <div className="flex gap-2">
+                {opts.has('maybe') && renderBtn('maybe', false)}
+                {opts.has('not_going') && renderBtn('not_going', false)}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/*
           Response summary - 1.8.4 item 10 (fork_motzkqf5_016150).
