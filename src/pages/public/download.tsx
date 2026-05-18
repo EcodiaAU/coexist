@@ -179,7 +179,7 @@ export default function DownloadPage() {
             name: 'Co-Exist',
             operatingSystem: 'iOS, Android',
             applicationCategory: 'LifestyleApplication',
-            description: "Australia's youth conservation app. Join events, connect with collectives, and track your environmental impact.",
+            description: "Australia's young adult conservation app. Join events, connect with collectives, and track your environmental impact.",
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'AUD' },
           },
           {
@@ -188,7 +188,7 @@ export default function DownloadPage() {
             name: 'Co-Exist Australia',
             url: 'https://www.coexistaus.org',
             sameAs: ['https://www.instagram.com/coexistaus'],
-            description: "Australia's youth conservation movement connecting volunteers with local environmental events.",
+            description: "Australia's young adult conservation movement connecting volunteers with local environmental events.",
           },
         ]}
       />

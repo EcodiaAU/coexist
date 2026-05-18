@@ -172,9 +172,9 @@ function AboutSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
         ) : (
           <>
             <p className="mt-4 text-sm text-neutral-500 leading-relaxed px-2">
-              Co-Exist is a national youth-led environmental nonprofit that runs conservation
-              events through local groups called Collectives. We believe in the power of young
-              people to protect and restore Australia&apos;s natural environment.
+              Co-Exist is a national environmental nonprofit run by young adults that organises
+              conservation events through local groups called Collectives. We believe in the
+              power of young adults to protect and restore Australia&apos;s natural environment.
             </p>
             <p className="mt-3 text-sm text-neutral-500 leading-relaxed px-2">
               5,500+ volunteers &middot; 13 collectives &middot; 35,500+ native plants &middot;
@@ -264,7 +264,7 @@ function TermsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
         <div className="prose prose-sm text-neutral-900 space-y-3 text-sm leading-relaxed">
           <p>
             Welcome to Co-Exist. By using our app, you agree to these terms. Co-Exist is a
-            registered Australian charity (ACNC) providing a platform for youth conservation activities.
+            registered Australian charity (ACNC) providing a platform for young adult conservation activities.
           </p>
           <h4 className="font-semibold text-neutral-900 text-sm">1. Eligibility</h4>
           <p>You must be at least 18 years old to create an account. Users under 18 may attend events

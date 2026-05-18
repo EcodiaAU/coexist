@@ -4,7 +4,7 @@ const SITE_URL = 'https://app.coexistaus.org'
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.png`
 const SITE_NAME = 'Co-Exist'
 const SITE_DESCRIPTION =
-  "Australia's youth conservation platform. Join events, connect with collectives, and protect the environment."
+  "Australia's young adult conservation platform. Join events, connect with collectives, and protect the environment."
 
 interface OGMetaProps {
   title: string

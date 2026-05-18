@@ -270,11 +270,14 @@ export default function PublicCollectivePage() {
           initial="hidden"
           animate="visible"
         >
-          {/* App badge */}
+          {/* App badge - wide wordmark */}
           <motion.div variants={fadeUp}>
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1.5 mb-4">
-              <img src="/logos/icon-white.webp" alt="" className="w-4 h-4 rounded" aria-hidden="true" />
-              <span className="text-[11px] font-semibold text-white/80">{APP_NAME}</span>
+            <div className="inline-flex items-center gap-2.5 rounded-full bg-white/20 px-3 py-1.5 mb-4">
+              <img
+                src="/logos/white-wordmark.webp"
+                alt={APP_NAME}
+                className="h-3.5 w-auto"
+              />
               <span className="text-[11px] text-white/40">|</span>
               <span className="text-[11px] text-white/60">{TAGLINE}</span>
             </div>
@@ -401,7 +404,7 @@ export default function PublicCollectivePage() {
                 type="button"
                 onClick={handleOpenInApp}
                 className={cn(
-                  'w-full flex items-center justify-center gap-2 px-6 py-3.5',
+                  'w-full flex items-center justify-center gap-2.5 px-6 py-3.5',
                   'rounded-xl bg-white text-primary-800',
                   'font-heading font-semibold',
                   'hover:bg-white/90 active:scale-[0.97]',
@@ -410,8 +413,12 @@ export default function PublicCollectivePage() {
                   'shadow-sm',
                 )}
               >
-                <img src="/logos/icon.webp" alt="" className="w-5 h-5 rounded" aria-hidden="true" />
-                Open in {APP_NAME}
+                <span>Open in</span>
+                <img
+                  src="/logos/black-wordmark.png"
+                  alt={APP_NAME}
+                  className="h-4 w-auto"
+                />
               </button>
 
               {/* Platform-specific store badge */}
@@ -450,7 +457,7 @@ export default function PublicCollectivePage() {
         {/* What is Co-Exist */}
         <motion.div variants={fadeUp} className="mt-8 mb-4 text-center">
           <p className="text-xs text-neutral-500">
-            <span className="font-semibold">{APP_NAME}</span> is Australia's youth conservation movement.
+            <span className="font-semibold">{APP_NAME}</span> is Australia's young adult conservation movement.
             {' '}Join 5,500+ volunteers planting native trees, cleaning beaches, and restoring habitats.
           </p>
         </motion.div>

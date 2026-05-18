@@ -8,10 +8,6 @@ import {
     TreePine,
     Clock,
     Trash2,
-    Ruler,
-    Leaf,
-    Eye,
-    UserCheck,
     MapPin as MapPinIcon,
     ChevronRight,
     Settings,
@@ -384,9 +380,6 @@ export default function CollectiveDetailPage() {
               )}
               {stats.totalRubbishKg > 0 && (
                 <BentoStatCard label="Litter Removed" value={stats.totalRubbishKg} icon={<Trash2 size={16} />} unit="kg" theme="sky" />
-              )}
-              {stats.attendanceRate > 0 && (
-                <BentoStatCard label="Attendance" value={`${Math.round(stats.attendanceRate * 100)}%`} icon={<UserCheck size={16} />} theme="coral" />
               )}
             </BentoStatGrid>
           </motion.section>
