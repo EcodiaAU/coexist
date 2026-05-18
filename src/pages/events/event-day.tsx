@@ -5,7 +5,6 @@ import { motion, useReducedMotion } from 'framer-motion'
 import {
   Hash,
   Check,
-  CheckCheck,
   Users,
   UserCheck,
   UserPlus,
@@ -30,7 +29,6 @@ import {
   useEventAttendees,
   useCheckIn,
   useUncheckIn,
-  useBulkCheckIn,
   usePromoteFromWaitlist,
   formatEventDate,
 } from '@/hooks/use-events'
@@ -328,7 +326,7 @@ export default function EventDayPage() {
   const queryClient = useQueryClient()
   const checkIn = useCheckIn()
   const uncheckIn = useUncheckIn()
-  const bulkCheckIn = useBulkCheckIn()
+  // bulkCheckIn removed with the "Mark all present" footer button
   const promote = usePromoteFromWaitlist()
 
   // Mid-event offline visibility - leaders need to know whether actions are
@@ -364,7 +362,7 @@ export default function EventDayPage() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [showQr, setShowQr] = useState(false)
-  const [showBulkConfirm, setShowBulkConfirm] = useState(false)
+  // showBulkConfirm removed
   const [checkingInUserId, setCheckingInUserId] = useState<string | null>(null)
   const [uncheckingUserId, setUncheckingUserId] = useState<string | null>(null)
   const [uncheckTarget, setUncheckTarget] = useState<AttendeeWithStatus | null>(null)
@@ -458,22 +456,8 @@ export default function EventDayPage() {
     )
   }, [eventId, uncheckTarget, uncheckIn, toast])
 
-  const handleBulkCheckIn = useCallback(() => {
-    if (!eventId) return
-    if (!isEventToday) {
-      toast.error('Check-in opens on the day of the event')
-      setShowBulkConfirm(false)
-      return
-    }
-    bulkCheckIn.mutate(eventId, {
-      onSuccess: () => toast.success('All attendees checked in'),
-      onError: (err) => {
-        const msg = err instanceof Error ? err.message : 'Failed to check in attendees'
-        toast.error(msg)
-      },
-    })
-    setShowBulkConfirm(false)
-  }, [eventId, bulkCheckIn, toast, isEventToday])
+  // handleBulkCheckIn / showBulkConfirm removed - the "Mark all present"
+  // button isn't used in practice and was crowding the footer row.
 
   const handlePromote = useCallback(
     (userId: string) => {
@@ -591,35 +575,29 @@ export default function EventDayPage() {
       swipeBack
       header={<Header title="Event Day" back backDark />}
       footer={
+        // Two-button footer (Tate spec 2026-05-18): the "Mark all present"
+        // bulk-check-in was removed because it isn't used in practice and
+        // its presence pushed the three-button row into overflow on
+        // narrower screens. Show Code + Add Walk-In split 50/50.
         <div className="flex gap-2">
           <Button
             variant="secondary"
             icon={<Hash size={16} />}
             onClick={() => setShowQr(true)}
-            className="flex-1 ring-1 ring-primary-200/60 text-xs whitespace-nowrap px-2"
+            className="flex-1 ring-1 ring-primary-200/60 whitespace-nowrap"
           >
             Show Code
           </Button>
           {(isAssistLeader || isStaff) && (
             <Button
-              variant="secondary"
+              variant="primary"
               icon={<UserPlus size={16} />}
               onClick={() => setShowWalkIn(true)}
-              className="flex-1 ring-1 ring-neutral-200/60 text-xs whitespace-nowrap px-2"
+              className="flex-1 shadow-md shadow-primary-300/30 whitespace-nowrap"
             >
               Add Walk-In
             </Button>
           )}
-          <Button
-            variant="primary"
-            icon={<CheckCheck size={16} />}
-            onClick={() => setShowBulkConfirm(true)}
-            className="flex-1 shadow-md shadow-success-300/30 text-xs whitespace-nowrap px-2"
-            disabled={stats.checkedIn === stats.registered || !isEventToday}
-            title={isEventToday ? undefined : 'Check-in opens day of event'}
-          >
-            Mark All Present
-          </Button>
         </div>
       }
     >
@@ -901,16 +879,7 @@ export default function EventDayPage() {
         </div>
       </BottomSheet>
 
-      {/* Bulk check-in confirmation */}
-      <ConfirmationSheet
-        open={showBulkConfirm}
-        onClose={() => setShowBulkConfirm(false)}
-        onConfirm={handleBulkCheckIn}
-        title="Mark All Present?"
-        description={`This will check in ${stats.registered - stats.checkedIn} remaining registered attendees.`}
-        confirmLabel="Mark All Present"
-        variant="warning"
-      />
+      {/* Bulk "Mark all present" sheet removed - the trigger is gone. */}
 
       {/* Un-check-in confirmation */}
       <ConfirmationSheet
