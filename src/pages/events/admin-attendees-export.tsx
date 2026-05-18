@@ -36,8 +36,8 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
   function handleDownload() {
     if (!data) return
     const csv = buildAttendeesCsv(data, details)
-    downloadCsv(csv, `coexist-${filenameBase}-attendees.csv`)
-    toast.success(`Downloaded ${data.length} attendees`)
+    downloadCsv(csv, `coexist-${filenameBase}-checked-in.csv`)
+    toast.success(`Downloaded ${data.length} checked-in attendees`)
   }
 
   async function handleCopy() {
@@ -63,8 +63,8 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
           <Users size={16} />
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-neutral-900">Attendee export (admin)</p>
-          <p className="text-xs text-neutral-500">Names, emails, emergency contacts</p>
+          <p className="text-sm font-semibold text-neutral-900">Checked-in attendees export</p>
+          <p className="text-xs text-neutral-500">Name, email, postcode - for partner post-event surveys</p>
         </div>
         <ChevronDown
           size={16}
@@ -88,11 +88,11 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
                   Loading attendees…
                 </div>
               ) : !data || data.length === 0 ? (
-                <p className="text-xs text-neutral-500">No registrations yet for this event.</p>
+                <p className="text-xs text-neutral-500">No-one has checked in to this event yet.</p>
               ) : (
                 <>
                   <p className="text-xs text-neutral-500">
-                    {data.length} attendee{data.length !== 1 ? 's' : ''} registered.
+                    {data.length} attendee{data.length !== 1 ? 's' : ''} checked in.
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
                     <button

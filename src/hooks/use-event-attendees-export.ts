@@ -7,12 +7,7 @@ export interface AttendeeExportRow {
   first_name: string | null
   last_name: string | null
   email: string | null
-  phone: string | null
-  emergency_contact_name: string | null
-  emergency_contact_phone: string | null
-  emergency_contact_relationship: string | null
-  status: string
-  registered_at: string | null
+  postcode: string | null
   checked_in_at: string | null
 }
 
@@ -26,11 +21,11 @@ export interface EventDetailsForExport {
 }
 
 /**
- * Admin-only attendee export. Pulls every registration for an event with
- * the full profile (incl. emergency contacts) so Jess can copy-paste or
- * download as a file to forward externally. The select goes through the
- * regular PostgREST surface so RLS on `profiles` decides what's visible;
- * an admin role sees everything.
+ * Admin-only attendee export, scoped to **checked-in attendees only** -
+ * the use case (per Jess 2026-05-18) is forwarding post-event survey
+ * lists to partner orgs, so registrations that never showed up are
+ * irrelevant. The select pulls only the fields that need to leave the
+ * platform (name, email, postcode), nothing more.
  */
 export function useEventAttendeesExport(eventId: string | undefined, enabled = true) {
   return useQuery({
@@ -40,8 +35,6 @@ export function useEventAttendeesExport(eventId: string | undefined, enabled = t
       const { data, error } = await supabase
         .from('event_registrations')
         .select(`
-          status,
-          registered_at,
           checked_in_at,
           user_id,
           profiles!event_registrations_user_id_fkey(
@@ -49,14 +42,12 @@ export function useEventAttendeesExport(eventId: string | undefined, enabled = t
             first_name,
             last_name,
             email,
-            phone,
-            emergency_contact_name,
-            emergency_contact_phone,
-            emergency_contact_relationship
+            postcode
           )
         `)
         .eq('event_id', eventId)
-        .order('registered_at', { ascending: true })
+        .not('checked_in_at', 'is', null)
+        .order('checked_in_at', { ascending: true })
 
       if (error) throw error
 
@@ -68,12 +59,7 @@ export function useEventAttendeesExport(eventId: string | undefined, enabled = t
           first_name: p.first_name ?? null,
           last_name: p.last_name ?? null,
           email: p.email ?? null,
-          phone: p.phone ?? null,
-          emergency_contact_name: p.emergency_contact_name ?? null,
-          emergency_contact_phone: p.emergency_contact_phone ?? null,
-          emergency_contact_relationship: p.emergency_contact_relationship ?? null,
-          status: (row as { status: string }).status,
-          registered_at: (row as { registered_at: string | null }).registered_at ?? null,
+          postcode: p.postcode ?? null,
           checked_in_at: (row as { checked_in_at: string | null }).checked_in_at ?? null,
         }
       })
@@ -90,48 +76,30 @@ function escapeCsv(value: string): string {
   return value
 }
 
+function nameOf(r: AttendeeExportRow): string {
+  return r.display_name ?? [r.first_name, r.last_name].filter(Boolean).join(' ') ?? ''
+}
+
 export function buildAttendeesCsv(rows: AttendeeExportRow[], details: EventDetailsForExport): string {
-  const header = [
-    'Name',
-    'Email',
-    'Phone',
-    'Status',
-    'Registered',
-    'Checked in',
-    'Emergency contact',
-    'Emergency phone',
-    'Relationship',
-  ]
+  const header = ['Name', 'Email', 'Postcode']
   const meta = [
     `Event: ${details.title}`,
     details.collective_name ? `Collective: ${details.collective_name}` : '',
     `Date: ${new Date(details.date_start).toLocaleString('en-AU')}`,
     details.activity_type ? `Activity: ${details.activity_type}` : '',
     details.address ? `Address: ${details.address}` : '',
-    `Total: ${rows.length}`,
+    `Checked in: ${rows.length}`,
   ].filter(Boolean)
 
   const csvRows: string[][] = [
     header,
-    ...rows.map((r) => [
-      r.display_name ?? [r.first_name, r.last_name].filter(Boolean).join(' ') ?? '',
-      r.email ?? '',
-      r.phone ?? '',
-      r.status,
-      r.registered_at ? new Date(r.registered_at).toLocaleString('en-AU') : '',
-      r.checked_in_at ? new Date(r.checked_in_at).toLocaleString('en-AU') : '',
-      r.emergency_contact_name ?? '',
-      r.emergency_contact_phone ?? '',
-      r.emergency_contact_relationship ?? '',
-    ]),
+    ...rows.map((r) => [nameOf(r), r.email ?? '', r.postcode ?? '']),
   ]
 
-  const csvBody = csvRows.map((row) => row.map((v) => escapeCsv(String(v ?? ''))).join(',')).join('\n')
-  return [
-    `# ${meta.join(' | ')}`,
-    '',
-    csvBody,
-  ].join('\n')
+  const csvBody = csvRows
+    .map((row) => row.map((v) => escapeCsv(String(v ?? ''))).join(','))
+    .join('\n')
+  return [`# ${meta.join(' | ')}`, '', csvBody].join('\n')
 }
 
 export function buildAttendeesPlainText(rows: AttendeeExportRow[], details: EventDetailsForExport): string {
@@ -140,15 +108,14 @@ export function buildAttendeesPlainText(rows: AttendeeExportRow[], details: Even
   lines.push(new Date(details.date_start).toLocaleString('en-AU'))
   if (details.address) lines.push(details.address)
   if (details.collective_name) lines.push(details.collective_name)
-  lines.push(`Total registered: ${rows.length}`)
+  lines.push(`Checked in: ${rows.length}`)
   lines.push('')
   for (const r of rows) {
-    const name = r.display_name ?? [r.first_name, r.last_name].filter(Boolean).join(' ') ?? 'Unknown'
-    lines.push(`- ${name}${r.email ? ` <${r.email}>` : ''}${r.phone ? ` · ${r.phone}` : ''}`)
-    if (r.emergency_contact_name || r.emergency_contact_phone) {
-      const rel = r.emergency_contact_relationship ? ` (${r.emergency_contact_relationship})` : ''
-      lines.push(`    emergency: ${r.emergency_contact_name ?? ''}${rel}${r.emergency_contact_phone ? ` · ${r.emergency_contact_phone}` : ''}`)
-    }
+    const name = nameOf(r) || 'Unknown'
+    const parts = [name]
+    if (r.email) parts.push(`<${r.email}>`)
+    if (r.postcode) parts.push(`postcode ${r.postcode}`)
+    lines.push(`- ${parts.join(' · ')}`)
   }
   return lines.join('\n')
 }
