@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Lock } from 'lucide-react'
+import { Lock, Camera } from 'lucide-react'
 import { ChatBubble, PollCard, AnnouncementCard, CarpoolCard } from '@/components/chat-bubble'
 import { HtmlChatBubble } from '@/components/html-chat-bubble'
 import { MessageReactions } from '@/components/message-reactions'
@@ -31,6 +31,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useEventDetail, type EventDetailData } from '@/hooks/use-events'
 import { useCarpool, useCarpoolSeats, useCarpoolBreakout, useSaveSeat, useCancelSeat } from '@/hooks/use-carpool'
+import { useEventPhotos } from '@/hooks/use-event-photos'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import type { Tables, Json } from '@/types/database.types'
 
@@ -224,6 +225,87 @@ function InlineAnnouncement({
       onViewEvent={(evId) => navigate(`/events/${evId}`)}
       eventDetails={eventDetails}
     />
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Inline Event Photos widget                                          */
+/* ------------------------------------------------------------------ */
+
+function InlineEventPhotos({
+  eventId,
+  sent,
+}: {
+  eventId: string
+  sent: boolean
+}) {
+  const navigate = useNavigate()
+  const { data: photos = [] } = useEventPhotos(eventId)
+  const { data: event } = useEventDetail(eventId)
+  const previewCount = 4
+  const preview = photos.slice(0, previewCount)
+  const more = Math.max(0, photos.length - previewCount)
+  const uploaderCount = new Set(photos.map((p) => p.uploaded_by)).size
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className={cn(
+        'w-full max-w-[88%] min-w-0 rounded-2xl overflow-hidden bg-neutral-50 border border-neutral-200 shadow-sm',
+        sent ? 'ml-auto' : 'mr-auto',
+      )}
+    >
+      <div className="p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+            <Camera size={16} strokeWidth={2.4} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-primary-600">Photo album</p>
+            <p className="text-[13px] font-bold text-neutral-900 leading-tight line-clamp-1">
+              {event?.title ?? 'Event'}
+            </p>
+          </div>
+        </div>
+        {photos.length === 0 ? (
+          <p className="text-xs text-neutral-500 mb-3">No photos yet - be the first to share.</p>
+        ) : (
+          <p className="text-xs text-neutral-500 mb-3">
+            {photos.length} {photos.length === 1 ? 'photo' : 'photos'} from {uploaderCount} {uploaderCount === 1 ? 'person' : 'people'}
+          </p>
+        )}
+        {preview.length > 0 && (
+          <div className="grid grid-cols-4 gap-0.5 rounded-xl overflow-hidden mb-3">
+            {preview.map((p, i) => (
+              <div key={p.id} className="relative aspect-square bg-neutral-100">
+                {p.url && (
+                  <img
+                    src={p.url}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
+                {i === preview.length - 1 && more > 0 && (
+                  <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                    <span className="text-white font-heading font-bold text-base">+{more}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => navigate(`/events/${eventId}?tab=photos`)}
+          className="w-full rounded-xl bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
+        >
+          {photos.length === 0 ? 'Add the first photo' : 'Open album & add yours'}
+        </button>
+      </div>
+    </motion.div>
   )
 }
 
@@ -561,6 +643,12 @@ export function ChatMessageList({
     const carpoolId = (msg as unknown as { carpool_id?: string | null }).carpool_id
     if (carpoolMessageType === 'carpool' && carpoolId) {
       return <InlineCarpool carpoolId={carpoolId} sent={isSent} />
+    }
+
+    // event_photos widget: renders the album preview + Open album CTA.
+    const eventPhotosEventId = (msg as unknown as { event_photos_event_id?: string | null }).event_photos_event_id
+    if (messageType === 'event_photos' && eventPhotosEventId) {
+      return <InlineEventPhotos eventId={eventPhotosEventId} sent={isSent} />
     }
 
     if (messageType === 'system') {

@@ -269,8 +269,11 @@ function Lightbox({
       role="dialog"
       aria-modal="true"
     >
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 text-white">
+      {/* Top bar - padded for safe-area-inset-top so share/close clear the notch */}
+      <div
+        className="flex items-center justify-between px-4 py-3 text-white"
+        style={{ paddingTop: 'calc(var(--safe-top, 0px) + 0.75rem)' }}
+      >
         <div className="flex items-center gap-2 min-w-0">
           <Avatar src={photo.uploader?.avatar_url ?? null} name={photo.uploader?.display_name ?? 'Member'} size="xs" />
           <div className="min-w-0">

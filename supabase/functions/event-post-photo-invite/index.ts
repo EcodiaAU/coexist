@@ -104,6 +104,45 @@ Deno.serve(async (req: Request) => {
         console.error(`[event-post-photo-invite] push failed for ${e.id}:`, (err as Error).message)
         results.errors++
       }
+
+      // Drop a Photos widget into the collective chat so the album surfaces
+      // alongside the push. Idempotent: check we haven't posted one yet.
+      try {
+        const { data: existing } = await supabase
+          .from('chat_messages')
+          .select('id')
+          .eq('collective_id', e.collective_id)
+          .eq('event_photos_event_id', e.id)
+          .limit(1)
+          .maybeSingle()
+        if (!existing) {
+          // Need a user_id (NOT NULL FK). Pick a leader of the collective as
+          // sender so the widget reads naturally. Fall back to event creator.
+          const { data: leader } = await supabase
+            .from('collective_members')
+            .select('user_id')
+            .eq('collective_id', e.collective_id)
+            .eq('status', 'active')
+            .in('role', ['leader', 'co_leader'])
+            .limit(1)
+            .maybeSingle()
+          const senderId = (leader?.user_id as string | undefined) ?? userIds[0]
+          if (senderId) {
+            await supabase
+              .from('chat_messages')
+              .insert({
+                collective_id: e.collective_id,
+                user_id: senderId,
+                message_type: 'event_photos',
+                content: `Photos from ${e.title}`,
+                event_photos_event_id: e.id,
+              })
+          }
+        }
+      } catch (err) {
+        console.error(`[event-post-photo-invite] chat widget insert failed for ${e.id}:`, (err as Error).message)
+        results.errors++
+      }
     }
 
     return new Response(JSON.stringify({ success: true, ...results }), {
