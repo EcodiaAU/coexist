@@ -312,7 +312,7 @@ function InlineCarpool({
         onCancelSeat={handleCancelSeat}
         onViewEvent={(evId) => navigate(`/events/${evId}`)}
         breakoutChannelId={breakout?.channel_id ?? null}
-        onOpenChat={breakout?.channel_id ? () => navigate(`/chat/${breakout.channel_id}`) : undefined}
+        onOpenChat={breakout?.channel_id ? () => navigate(`/chat/channel/${breakout.channel_id}`) : undefined}
       />
       <SaveSeatSheet
         open={saveSheetOpen}

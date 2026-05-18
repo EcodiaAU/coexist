@@ -65,14 +65,13 @@ export function useMyStaffChannels() {
       return (data ?? [])
         .map((row: Record<string, unknown>) => row.chat_channels as StaffChannel)
         .filter(Boolean)
-        // Hide carpool_breakout channels from the main collective/staff chat list.
-        // Carpool breakouts are surfaced under the event detail page's
-        // "Coordination" subsection instead. Worker 3 (fork_motgygqh_0531ff).
-        .filter((c: StaffChannel) => (c.type as string) !== 'carpool_breakout')
         .sort((a: StaffChannel, b: StaffChannel) => {
-          // National first, then state, then collective
-          const typeOrder = { staff_national: 0, staff_state: 1, staff_collective: 2 }
-          return (typeOrder[a.type] ?? 3) - (typeOrder[b.type] ?? 3)
+          // National first, then state, then collective staff, then carpool
+          // breakouts at the bottom. Breakouts are short-lived per-event chats
+          // and surfacing them in the main list means users can reach them
+          // without scrolling back up to the original widget.
+          const typeOrder = { staff_national: 0, staff_state: 1, staff_collective: 2, carpool_breakout: 3 }
+          return (typeOrder[a.type as keyof typeof typeOrder] ?? 4) - (typeOrder[b.type as keyof typeof typeOrder] ?? 4)
         })
     },
     enabled: !!user,
@@ -493,40 +492,59 @@ export function useChannelUnreadCounts() {
 
       if (!memberships?.length) return {}
 
-      // Build channel → readKey map (use collective_id if available, channel_id as fallback)
-      const channelToCollective = new Map<string, string>()
+      // Per channel: if it has a collective_id, read state is keyed by
+      // (collective_id, user_id); otherwise it's keyed by (channel_id, user_id)
+      // since the channel has no parent collective. Mirrors the write path
+      // after migration 20260518030000.
+      const channelInfo = new Map<string, { collectiveId: string | null }>()
       for (const m of memberships as unknown as { channel_id: string; chat_channels: { collective_id: string | null } | null }[]) {
-        channelToCollective.set(m.channel_id, m.chat_channels?.collective_id || m.channel_id)
+        channelInfo.set(m.channel_id, { collectiveId: m.chat_channels?.collective_id ?? null })
       }
 
-      // Get read receipts by collective_id (that's the unique key on chat_read_receipts)
-      const collectiveIds = [...new Set(channelToCollective.values())]
-      const { data: receipts } = await supabase
-        .from('chat_read_receipts')
-        .select('collective_id, last_read_at')
-        .eq('user_id', user.id)
-        .in('collective_id', collectiveIds)
+      const collectiveIds = [...new Set([...channelInfo.values()].map(v => v.collectiveId).filter((v): v is string => !!v))]
+      const channelIdsNoCollective = [...channelInfo.entries()]
+        .filter(([, info]) => !info.collectiveId)
+        .map(([chId]) => chId)
 
-      const receiptMap = new Map<string, string>()
-      for (const r of (receipts ?? []) as unknown as { collective_id: string; last_read_at: string }[]) {
-        receiptMap.set(r.collective_id, r.last_read_at)
+      const [collReceipts, chanReceipts] = await Promise.all([
+        collectiveIds.length > 0
+          ? supabase
+              .from('chat_read_receipts')
+              .select('collective_id, last_read_at')
+              .eq('user_id', user.id)
+              .in('collective_id', collectiveIds)
+          : Promise.resolve({ data: [] }),
+        channelIdsNoCollective.length > 0
+          ? supabase
+              .from('chat_read_receipts')
+              .select('channel_id, last_read_at')
+              .eq('user_id', user.id)
+              .in('channel_id', channelIdsNoCollective)
+              .is('collective_id', null)
+          : Promise.resolve({ data: [] }),
+      ])
+
+      const lastReadByCollective = new Map<string, string>()
+      for (const r of (collReceipts.data ?? []) as unknown as { collective_id: string; last_read_at: string }[]) {
+        lastReadByCollective.set(r.collective_id, r.last_read_at)
+      }
+      const lastReadByChannel = new Map<string, string>()
+      for (const r of (chanReceipts.data ?? []) as unknown as { channel_id: string; last_read_at: string }[]) {
+        lastReadByChannel.set(r.channel_id, r.last_read_at)
       }
 
-      // Count unread messages per channel (parallel)
       const results = await Promise.all(
-        [...channelToCollective.entries()].map(async ([chId, collectiveId]) => {
-          const lastRead = receiptMap.get(collectiveId)
+        [...channelInfo.entries()].map(async ([chId, info]) => {
+          const lastRead = info.collectiveId
+            ? lastReadByCollective.get(info.collectiveId)
+            : lastReadByChannel.get(chId)
           let q = supabase
             .from('chat_messages')
             .select('id', { count: 'exact', head: true })
             .eq('channel_id', chId)
             .eq('is_deleted', false)
             .neq('user_id', user.id)
-
-          if (lastRead) {
-            q = q.gt('created_at', lastRead)
-          }
-
+          if (lastRead) q = q.gt('created_at', lastRead)
           const { count } = await q
           return [chId, count ?? 0] as const
         }),
@@ -555,17 +573,30 @@ export function useMarkChannelRead() {
     mutationFn: async ({ channelId, collectiveId }: { channelId: string; collectiveId?: string | null }) => {
       if (!user) return
 
-      // Use collectiveId if available, otherwise use channelId as the identifier
-      // so that channels without a collective_id still track read state
-      const readKey = collectiveId || channelId
-
-      await supabase
-        .from('chat_read_receipts')
-        .upsert({
-          collective_id: readKey,
-          user_id: user.id,
-          last_read_at: new Date().toISOString(),
-        }, { onConflict: 'collective_id,user_id' })
+      // Channels without a collective (state staff, national, carpool breakout)
+      // write a channel-scoped read receipt. Migration 20260518030000 made
+      // collective_id nullable + added a partial unique index on
+      // (channel_id, user_id) WHERE collective_id IS NULL. Earlier code shoved
+      // channel_id into collective_id which violated the FK to collectives.
+      if (collectiveId) {
+        await supabase
+          .from('chat_read_receipts')
+          .upsert({
+            collective_id: collectiveId,
+            channel_id: channelId,
+            user_id: user.id,
+            last_read_at: new Date().toISOString(),
+          }, { onConflict: 'collective_id,user_id' })
+      } else {
+        await supabase
+          .from('chat_read_receipts')
+          .upsert({
+            collective_id: null,
+            channel_id: channelId,
+            user_id: user.id,
+            last_read_at: new Date().toISOString(),
+          }, { onConflict: 'channel_id,user_id' })
+      }
     },
     onMutate: async ({ channelId }) => {
       await queryClient.cancelQueries({ queryKey: ['channel-unread'] })
