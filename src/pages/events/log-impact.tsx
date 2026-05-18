@@ -35,6 +35,7 @@ import { useCollectiveRole } from '@/hooks/use-collective-role'
 import { useAuth } from '@/hooks/use-auth'
 import { useEventSurvey } from '@/hooks/use-event-survey'
 import { SurveyQuestionRenderer } from '@/components/survey-questions'
+import { isQuestionVisible } from '@/components/survey-questions-utils'
 import { syncSurveyImpact } from '@/lib/survey-impact'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { useCamera } from '@/hooks/use-camera'
@@ -737,6 +738,26 @@ export default function LogImpactPage() {
   const [afterPhotos, setAfterPhotos] = useState<string[]>([])
   const [drawnArea, setDrawnArea] = useState<Record<string, unknown> | null>(null)
 
+  // Visible-required gate: a question blocks submit only when it IS rendered
+  // (show_if matches) AND required AND unanswered. Conditional follow-ups
+  // (q1_name, q2 Landcare, q3 OzFish, q7 What-was-collected) that depend on
+  // a Yes answer in their parent question stay out of the required check
+  // when their parent is No or unanswered.
+  const surveyMissingRequired = useMemo(() => {
+    return surveyQuestions
+      .filter((q) => q.required)
+      .filter((q) => isQuestionVisible(q, surveyAnswers))
+      .filter((q) => {
+        const v = surveyAnswers[q.id]
+        if (v === null || v === undefined) return true
+        if (typeof v === 'string' && v.trim() === '') return true
+        if (Array.isArray(v) && v.length === 0) return true
+        return false
+      })
+      .map((q) => q.id)
+  }, [surveyQuestions, surveyAnswers])
+  const canSubmitSurvey = surveyMissingRequired.length === 0
+
   const camera = useCamera()
   const eventPhotosUpload = useImageUpload({ bucket: 'event-images', pathPrefix: 'impact' })
   const beforeUpload = useImageUpload({ bucket: 'event-images', pathPrefix: 'before' })
@@ -1130,13 +1151,18 @@ export default function LogImpactPage() {
               Photo upload in progress…
             </div>
           )}
+          {!canSubmitSurvey && (
+            <div className="px-3 py-2.5 rounded-xl bg-amber-50 text-amber-700 text-sm font-medium">
+              Answer the required questions above before submitting.
+            </div>
+          )}
           <Button
             variant="primary"
             size="lg"
             fullWidth
             icon={<Save size={18} />}
             loading={isSubmitting || logImpact.isPending}
-            disabled={!canEdit || isSubmitting || anyPhotoFailed || anyPhotoUploading}
+            disabled={!canEdit || isSubmitting || anyPhotoFailed || anyPhotoUploading || !canSubmitSurvey}
             onClick={handleSubmit}
           >
             {existingImpact ? 'Update Impact' : 'Submit Impact'}

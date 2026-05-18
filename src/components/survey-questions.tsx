@@ -5,6 +5,7 @@ import { DateInput } from '@/components/date-input'
 import { Dropdown } from '@/components/dropdown'
 import { cn } from '@/lib/cn'
 import type { SurveyQuestion } from './survey-questions-utils'
+import { isQuestionVisible } from './survey-questions-utils'
 
 // SurveyQuestion type and the pure helpers (parseSurveyQuestions,
 // resolveOtherValues) live in ./survey-questions-utils so this file
@@ -64,9 +65,13 @@ export function SurveyQuestionRenderer({
     setAnswer(questionId, next)
   }
 
+  // Filter out hidden questions BEFORE numbering so leader sees 1,2,3...
+  // without gaps when conditional follow-ups are hidden.
+  const visibleQuestions = questions.filter((q) => isQuestionVisible(q, answers))
+
   return (
     <div className={cn('space-y-5', className)}>
-      {questions.map((q, i) => (
+      {visibleQuestions.map((q, i) => (
         <div key={q.id} className="space-y-2">
           <div>
             <p className="text-sm font-medium text-neutral-900">
@@ -254,19 +259,18 @@ export function SurveyQuestionRenderer({
             </div>
           )}
 
-          {/* Yes/No - tap same answer again to clear (so optional questions
-              can stay genuinely unanswered without a "Skip" button). The sheet
-              sync treats unanswered yes/no as blank, not "No" - matches Forms
-              convention per excel-sync buildExcelRow yesNo helper. */}
+          {/* Yes/No - once picked, the leader can switch but cannot clear back
+              to blank. Forms convention: every yes/no slot is always answered,
+              never left blank. Conditional follow-ups (q1_name, q2 Landcare,
+              q3 OzFish, q7 What-was-collected) appear only when Yes is chosen
+              and disappear when switching to No. */}
           {q.type === 'yes_no' && (
             <div className="flex gap-2">
               {['Yes', 'No'].map((opt) => (
                 <button
                   key={opt}
                   type="button"
-                  onClick={() =>
-                    setAnswer(q.id, answers[q.id] === opt ? '' : opt)
-                  }
+                  onClick={() => setAnswer(q.id, opt)}
                   className={cn(
                     'flex-1 px-3 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors',
                     answers[q.id] === opt

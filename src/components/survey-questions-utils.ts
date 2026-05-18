@@ -41,6 +41,24 @@ export interface SurveyQuestion {
   // leader can hit submit unchanged. Renderer reads answers[id] only;
   // page-level form is responsible for seeding the initial state from this.
   default_value?: unknown
+  // Conditional visibility: only render this question when another question's
+  // answer matches. Used in Co-Exist impact form:
+  //   - q1_name / q2 (Landcare) / q3 (OzFish) only when q1 (other_group) = Yes
+  //   - q7 (what was collected) only when q6 (collect_anything) = Yes
+  // Hidden questions are NOT included in canSubmit's required check.
+  show_if?: { question_id: string; equals: unknown }
+}
+
+// Returns true when the question should be rendered given the current answers.
+// A question with no show_if is always visible. With show_if, visible iff
+// answers[show_if.question_id] === show_if.equals (string-equality, the
+// only kind we use for yes/no gating).
+export function isQuestionVisible(
+  q: SurveyQuestion,
+  answers: Record<string, unknown>,
+): boolean {
+  if (!q.show_if) return true
+  return answers[q.show_if.question_id] === q.show_if.equals
 }
 
 /**

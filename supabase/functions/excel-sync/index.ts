@@ -254,26 +254,54 @@ function isNoAnswer(val: unknown): boolean {
   )
 }
 
+// Interpret q1 across the two response shapes:
+//   NEW (post-2026-05-18 night): q1 = "Yes"/"No" yes_no, q1_name = free text
+//   LEGACY (pre-2026-05-18): q1 = free-text group name, no q1_name
+// Returns the partner-group name when a group attended, '' when only Co-Exist
+// was there. Either shape converges on the same answer so the sheet col 7
+// stays stable across the schema shift.
+function readOtherGroupName(q1: unknown, q1Name: unknown): string {
+  const q1Raw = typeof q1 === 'string' ? q1.trim() : q1
+  // NEW shape: explicit Yes/No
+  if (q1Raw === 'Yes' || q1Raw === 'yes' || q1Raw === true) {
+    return isNoAnswer(q1Name) ? '' : String(q1Name).trim()
+  }
+  if (q1Raw === 'No' || q1Raw === 'no' || q1Raw === false) {
+    return '' // leader explicitly said no other group attended
+  }
+  // Blank / unanswered
+  if (isNoAnswer(q1Raw)) return ''
+  // LEGACY shape: q1 itself is the partner name (Hannah's "Norman Creek...",
+  // Caitlyn's "Tree Project" etc submitted before the schema change).
+  return String(q1Raw).trim()
+}
+
+// True iff the leader confirmed another group attended (either via the new
+// q1=Yes flag or a legacy free-text response in q1). Gates whether the
+// Landcare/OzFish text answers land on the sheet - matches the survey UI
+// where q2/q3 are hidden when q1=No.
+function otherGroupAttended(q1: unknown, q1Name: unknown): boolean {
+  return readOtherGroupName(q1, q1Name).length > 0
+}
+
 // Derive sheet col 6 (Primary Organiser) + col 7 (Other Group Attended) from
-// event-level external-collaboration data + survey answer q1.
+// event-level external-collaboration data + survey answers.
 //
-// Three states encoded by `is_external_collaboration` + `partner_name` + `q1`:
+// Three states:
 //
 //   STATE 1 - only Co-Exist at the event
-//     is_external_collaboration=false, partner_name empty, q1 empty/NA
+//     is_external_collaboration=false, no partner_name, no other-group named
 //     -> col 6 = "Co-Exist", col 7 = "No, just Co-Exist!"
 //
 //   STATE 2 - Co-Exist organised, another group also attended
-//     is_external_collaboration=false, AND (partner_name set OR q1 set)
-//     -> col 6 = "Co-Exist", col 7 = partner_name (preferred) || q1
+//     is_external_collaboration=false AND (partner_name set OR q1 named)
+//     -> col 6 = "Co-Exist", col 7 = partner_name OR named other-group
 //
 //   STATE 3 - another group organised, Co-Exist attended/supported
 //     is_external_collaboration=true
-//     -> col 6 = partner_name (preferred) || q1 || "Co-Exist" (fallback)
+//     -> col 6 = partner_name (preferred) || named other-group || "Co-Exist"
 //        col 7 = "No, just Co-Exist!" (no third group implied)
 //
-// This mirrors the Forms convention captured on the Master Impact Data Sheet
-// rows 240-258 (Brisbane / Townsville / Cairns rows with non-Co-Exist organisers).
 // Origin: Tate verbatim 2026-05-18 - "if only coexist at the event it says
 // 'No, just Co-Exist!'; if organised by coexist but another group attended,
 // that's mapped into the sheet; if organised by another group, just put that
@@ -282,18 +310,17 @@ function deriveOrganiserAndOtherGroup(
   isExternal: boolean,
   partnerName: string,
   q1: unknown,
+  q1Name: unknown,
 ): { organiser: string; otherGroup: string } {
   const partner = (partnerName ?? '').trim()
-  const q1Str = isNoAnswer(q1) ? '' : String(q1).trim()
+  const otherName = readOtherGroupName(q1, q1Name)
 
   if (isExternal) {
-    // STATE 3: external collab. The partner / q1 IS the organiser.
-    const organiser = partner || q1Str || 'Co-Exist'
+    const organiser = partner || otherName || 'Co-Exist'
     return { organiser, otherGroup: 'No, just Co-Exist!' }
   }
 
-  // Internal event. STATE 1 vs STATE 2 turns on whether ANY other group is named.
-  const namedOther = partner || q1Str
+  const namedOther = partner || otherName
   if (namedOther) {
     return { organiser: 'Co-Exist', otherGroup: namedOther }
   }
@@ -392,13 +419,21 @@ function buildExcelRow(e: EventData): (string | number | null)[] {
   const isRecreation = RECREATION_TYPES.includes(e.activity_type)
   const label = ACTIVITY_LABELS[e.activity_type] ?? e.activity_type
 
-  // Cols 6 + 7 derived from event-level external-collab data + q1 fallback.
+  // Cols 6 + 7 derived from event-level external-collab data + survey q1/q1_name.
   // See deriveOrganiserAndOtherGroup for the three-state mapping.
   const { organiser, otherGroup } = deriveOrganiserAndOtherGroup(
     e.is_external_collaboration,
     e.partner_name,
     e.answers?.q1,
+    e.answers?.q1_name,
   )
+
+  // Landcare/OzFish text answers only land on the sheet when the leader
+  // confirmed another group attended (q1=Yes in new schema, or non-empty
+  // legacy free-text q1). Mirrors the survey UI where q2/q3 are hidden
+  // when q1=No - sheet never carries a Landcare name for a "just Co-Exist"
+  // event even if a leader typed something stale into q2 then changed q1.
+  const groupAttended = otherGroupAttended(e.answers?.q1, e.answers?.q1_name)
 
   // Doctrine for every survey-derived column on this row: "if the leader did
   // not answer it, leave the cell BLANK". Mirrors the Forms-era convention on
@@ -440,8 +475,8 @@ function buildExcelRow(e: EventData): (string | number | null)[] {
     freeText(e.answers?.postcode) || extractPostcode(e.address ?? ''), // 5: Postcode (survey answer, fallback to address extraction)
     organiser,                                               // 6: Primary Organiser of the Event
     otherGroup,                                              // 7: Other Group Attended (always populated)
-    freeText(e.answers?.q2),                                 // 8: Which Landcare Group (optional - blank when N/A)
-    freeText(e.answers?.q3),                                 // 9: Which OzFish group (optional - blank when N/A)
+    groupAttended ? freeText(e.answers?.q2) : '',            // 8: Which Landcare Group (only when q1=Yes)
+    groupAttended ? freeText(e.answers?.q3) : '',            // 9: Which OzFish group (only when q1=Yes)
     freeText(e.answers?.leader_name) || e.leader_name || '', // 10: Co-Exist Leader (from survey dropdown)
     e.attendees ?? e.checked_in_count ?? '',                  // 11: Number of Attendees (impact override or check-in count)
     isConservation ? 'Conservation' : isRecreation ? 'Recreation' : label, // 12: Type of Event
@@ -1653,6 +1688,21 @@ async function syncFromExcel(
   // See ~/ecodiaos/patterns/sheet-as-projection-sync-direction-discipline.md
   // and ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
   try {
+    // KILL SWITCH (env-var driven): when EXCEL_SYNC_RECONCILIATION_DISABLED
+    // is truthy, skip the entire cancellation phase. Used during user-side
+    // testing windows where we want to guarantee no app event is auto-
+    // cancelled by sheet absence. Companion guard to pausing pg_cron job 12;
+    // pg_cron handles auto-runs, this handles any manual full/from-excel
+    // invocation. Set/unset via Supabase Management API project secrets.
+    // Origin: Tate verbatim 2026-05-18 - "i need you to make sure that
+    // events are NOT going to be cancelled or removed or anything from the
+    // app... thats happened so many times of late".
+    const killSwitch = (Deno.env.get('EXCEL_SYNC_RECONCILIATION_DISABLED') ?? '').toLowerCase()
+    if (killSwitch === 'true' || killSwitch === '1' || killSwitch === 'yes') {
+      errors.push('INFO reconciliation: KILL SWITCH active (EXCEL_SYNC_RECONCILIATION_DISABLED) - phase skipped')
+      return { synced, skippedLegacy, syncedFormsRows, skippedNoCollective, cancelledViaSheetAbsence, skippedPostCutoverMigrated, errors }
+    }
+
     // HEALTH GUARD: bail if to-excel has been silent. The hourly to-excel
     // cron writes a row to excel_sync_runs on every invocation regardless
     // of whether it pushed anything, so an absent row in the last 2h means
