@@ -707,27 +707,16 @@ export default function LogImpactPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingSurveyResponse])
 
-  // Pre-fill default_value for questions that have one. Mirrors the Microsoft
-  // Form behaviour where Issues/Highlights/Grant came pre-filled with "No" so
-  // leaders could submit unchanged. Only seeds keys not already in
-  // surveyAnswers - never clobbers an existing or pre-loaded answer.
-  // See ~/ecodiaos/clients/coexist.md "Sheet sync mapping" doctrine.
-  useEffect(() => {
-    if (!surveyData?.questions?.length) return
-    setSurveyAnswers((prev) => {
-      const seeded: Record<string, unknown> = { ...prev }
-      let changed = false
-      for (const q of surveyData.questions) {
-        const dv = (q as unknown as { default_value?: unknown }).default_value
-        if (dv !== undefined && seeded[q.id] === undefined) {
-          seeded[q.id] = dv
-          changed = true
-        }
-      }
-      return changed ? seeded : prev
-    })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [surveyData?.questions])
+  // default_value seeding was removed 2026-05-18 night. It used to seed
+  // 'No' into Issues / Highlights / Grant on first render so leaders could
+  // submit unchanged - but leaders saw the literal "No" sitting in the
+  // answer box as if a prior submission had pre-typed it. Cleaner: leave
+  // the field blank with a placeholder hint ("Leave blank for No, or
+  // describe..."), drop the required flag on those three, and let the
+  // sheet-side fallback (excel-sync `freeText(q) || 'No'`) write "No" to
+  // the cell whenever the leader leaves it empty. The Forms-convention
+  // "always populated" guarantee survives without ever showing pre-baked
+  // text in the UI.
 
   const [eventDurationHours, setEventDurationHours] = useState('')
   const [notes, setNotes] = useState('')
