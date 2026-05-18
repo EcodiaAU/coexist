@@ -188,7 +188,7 @@ function useIsCoarsePointer() {
 type HeroFgLayout = 'bottom' | 'full'
 const HERO_PAIRS: Array<{ bg: string; fg: string; alt: string; fgLayout: HeroFgLayout }> = [
   { bg: '/img/home-hero-bg.webp',       fg: '/img/home-hero-fg.webp',       alt: 'Australian conservation landscape', fgLayout: 'bottom' },
-  { bg: '/img/events-hero-bg.webp',     fg: '/img/events-hero-fg.webp',     alt: 'Volunteers at a Co-Exist event',    fgLayout: 'full' },
+  // events pair removed - FG composition didn't read well against the rest.
   { bg: '/img/explore-hero-bg.webp',    fg: '/img/explore-hero-fg.webp',    alt: 'Co-Exist collectives across Australia', fgLayout: 'full' },
   { bg: '/img/contact-hero-bg.webp',    fg: '/img/contact-hero-fg.webp',    alt: 'Connect with Co-Exist',             fgLayout: 'full' },
   { bg: '/img/donate-hero-bg.webp',     fg: '/img/donate-hero-fg.webp',     alt: 'Support Co-Exist',                  fgLayout: 'full' },
@@ -322,6 +322,11 @@ function HomeHero({ rm }: { rm: boolean }) {
             src="/logos/white-wordmark.webp"
             alt="Co-Exist"
             className="h-24 sm:h-32 w-auto object-contain"
+            style={{
+              // Layered drop shadow so the white wordmark stays legible across
+              // every carousel pair (some have light skies / sand).
+              filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.35)) drop-shadow(0 8px 24px rgba(0,0,0,0.25))',
+            }}
           />
         </div>
 
