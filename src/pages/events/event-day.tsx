@@ -373,43 +373,12 @@ export default function EventDayPage() {
   const [activeTab, setActiveTab] = useState<'attendees' | 'contacts'>('attendees')
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
 
-  // --- All-members search (Item 10) ---
-  const [searchTab, setSearchTab] = useState<'registered' | 'all'>('registered')
-  const [allMembersQuery, setAllMembersQuery] = useState('')
-  const [allMembersResults, setAllMembersResults] = useState<
-    Array<{ id: string; display_name: string | null; avatar_url: string | null; email: string | null }>
-  >([])
-  const [allMembersLoading, setAllMembersLoading] = useState(false)
-  const [addingMemberId, setAddingMemberId] = useState<string | null>(null)
-  const allMembersDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Debounced RPC call for all-members search
-  useEffect(() => {
-    if (allMembersDebounceRef.current) clearTimeout(allMembersDebounceRef.current)
-    if (allMembersQuery.length < 2 || !eventId) {
-      setAllMembersResults([])
-      return
-    }
-    allMembersDebounceRef.current = setTimeout(async () => {
-      setAllMembersLoading(true)
-      try {
-        const { data, error } = await supabase.rpc('search_app_users_for_event', {
-          p_event_id: eventId,
-          p_query: allMembersQuery,
-          p_max_results: 10,
-        })
-        if (!error && data) setAllMembersResults(data)
-      } finally {
-        setAllMembersLoading(false)
-      }
-    }, 300)
-    return () => {
-      if (allMembersDebounceRef.current) clearTimeout(allMembersDebounceRef.current)
-    }
-  }, [allMembersQuery, eventId])
-
   // --- Walk-in sheet (Item 11) ---
+  // The "all-members search" UX moved INTO WalkInSheet (Tate spec 2026-05-18):
+  // if a user isn't registered, they're a walk-in - the previous "All Members"
+  // sibling tab on this page was redundant.
   const [showWalkIn, setShowWalkIn] = useState(false)
+  const [addingMemberId, setAddingMemberId] = useState<string | null>(null)
 
   // --- Public check-in toggle (Item 12  -  synced from event data) ---
   const [publicCheckInEnabled, setPublicCheckInEnabled] = useState(false)
@@ -542,11 +511,8 @@ export default function EventDayPage() {
           }
         } else {
           toast.success(`Checked in ${displayName ?? 'user'}`)
-          // Invalidate attendees query so the new row appears in the Registered tab
+          // Invalidate attendees query so the new row appears
           queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
-          setAllMembersQuery('')
-          setAllMembersResults([])
-          setSearchTab('registered')
         }
       } finally {
         setAddingMemberId(null)
@@ -811,139 +777,38 @@ export default function EventDayPage() {
 
         {activeTab === 'attendees' ? (
           <>
-            {/* Search-tab toggle: Registered | All Members */}
-            <motion.div variants={fadeUp} className="mb-3 flex rounded-xl overflow-hidden ring-1 ring-neutral-200/60 bg-white">
-              <button
-                type="button"
-                onClick={() => setSearchTab('registered')}
-                className={cn(
-                  'flex-1 py-2 text-xs font-semibold transition-colors duration-150',
-                  searchTab === 'registered'
-                    ? 'bg-primary-500 text-white'
-                    : 'text-neutral-600 hover:bg-neutral-50',
-                )}
-              >
-                Registered
-              </button>
-              <button
-                type="button"
-                onClick={() => setSearchTab('all')}
-                className={cn(
-                  'flex-1 py-2 text-xs font-semibold transition-colors duration-150',
-                  searchTab === 'all'
-                    ? 'bg-primary-500 text-white'
-                    : 'text-neutral-600 hover:bg-neutral-50',
-                )}
-              >
-                All Members
-              </button>
+            {/* Search registered attendees */}
+            <motion.div variants={fadeUp} className="mb-3">
+              <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search attendees..." compact />
             </motion.div>
 
-            {searchTab === 'registered' ? (
-              <>
-                {/* Search registered attendees */}
-                <motion.div variants={fadeUp} className="mb-3">
-                  <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search attendees..." compact />
-                </motion.div>
-
-                {/* Registered attendee list */}
-                <motion.div variants={fadeUp}>
-                  {filteredAttendees.length === 0 ? (
-                    <EmptyState
-                      illustration="search"
-                      title="No attendees found"
-                      description={searchQuery ? 'Try a different search' : 'No one has registered yet'}
+            {/* Registered attendee list */}
+            <motion.div variants={fadeUp}>
+              {filteredAttendees.length === 0 ? (
+                <EmptyState
+                  illustration="search"
+                  title="No attendees found"
+                  description={searchQuery ? 'Try a different search' : 'No one has registered yet'}
+                />
+              ) : (
+                <div className="space-y-0">
+                  {filteredAttendees.map((attendee) => (
+                    <AttendeeRow
+                      key={attendee.user_id}
+                      attendee={attendee}
+                      onCheckIn={() => handleCheckIn(attendee.user_id)}
+                      onUncheck={() => handleUncheckRequest(attendee)}
+                      onPromote={attendee.status === 'waitlisted' ? () => handlePromote(attendee.user_id) : undefined}
+                      onViewDetails={() => setSelectedAttendee(attendee)}
+                      isPending={checkingInUserId === attendee.user_id}
+                      isUnchecking={uncheckingUserId === attendee.user_id}
+                      isPromoting={promotingUserId === attendee.user_id}
+                      isEventToday={isEventToday}
                     />
-                  ) : (
-                    <div className="space-y-0">
-                      {filteredAttendees.map((attendee) => (
-                        <AttendeeRow
-                          key={attendee.user_id}
-                          attendee={attendee}
-                          onCheckIn={() => handleCheckIn(attendee.user_id)}
-                          onUncheck={() => handleUncheckRequest(attendee)}
-                          onPromote={attendee.status === 'waitlisted' ? () => handlePromote(attendee.user_id) : undefined}
-                          onViewDetails={() => setSelectedAttendee(attendee)}
-                          isPending={checkingInUserId === attendee.user_id}
-                          isUnchecking={uncheckingUserId === attendee.user_id}
-                          isPromoting={promotingUserId === attendee.user_id}
-                          isEventToday={isEventToday}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
-              </>
-            ) : (
-              <>
-                {/* Search all app members */}
-                <motion.div variants={fadeUp} className="mb-3">
-                  <SearchBar
-                    value={allMembersQuery}
-                    onChange={setAllMembersQuery}
-                    placeholder="Search all app users (min 2 chars)..."
-                    compact
-                  />
-                </motion.div>
-
-                {/* All-members results */}
-                <motion.div variants={fadeUp}>
-                  {allMembersQuery.length < 2 ? (
-                    <EmptyState
-                      illustration="search"
-                      title="Search app members"
-                      description="Type at least 2 characters to find any app user by name or email"
-                    />
-                  ) : allMembersLoading ? (
-                    <div className="space-y-2">
-                      {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} variant="list-item" />
-                      ))}
-                    </div>
-                  ) : allMembersResults.length === 0 ? (
-                    <EmptyState
-                      illustration="search"
-                      title="No members found"
-                      description="Try a different name or email"
-                    />
-                  ) : (
-                    <div className="space-y-2">
-                      {allMembersResults.map((member) => (
-                        <div
-                          key={member.id}
-                          className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl ring-1 ring-neutral-200/60 shadow-sm"
-                        >
-                          <Avatar
-                            src={member.avatar_url ?? undefined}
-                            name={member.display_name ?? 'User'}
-                            size="md"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-neutral-900 truncate">
-                              {member.display_name ?? 'Unknown'}
-                            </p>
-                            {member.email && (
-                              <p className="text-caption text-neutral-500 truncate">{member.email}</p>
-                            )}
-                          </div>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            icon={<UserCheck size={14} />}
-                            onClick={() => handleAddAndCheckIn(member.id, member.display_name)}
-                            loading={addingMemberId === member.id}
-                            disabled={!isEventToday}
-                            title={isEventToday ? undefined : 'Check-in opens day of event'}
-                          >
-                            Add + Check In
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
-              </>
-            )}
+                  ))}
+                </div>
+              )}
+            </motion.div>
 
             {/* Post-event action */}
             <motion.div variants={fadeUp} className="mt-6">
@@ -1068,16 +933,17 @@ export default function EventDayPage() {
       {/* Profile modal */}
       <ProfileModal userId={profileUserId} open={!!profileUserId} onClose={() => setProfileUserId(null)} />
 
-      {/* Walk-in sheet (Item 11)  -  ad-hoc attendee form for leaders */}
+      {/* Walk-in sheet (Item 11)  -  ad-hoc attendee form for leaders.
+          Now also hosts the "search existing users" path (Tate spec 2026-05-18). */}
       {eventId && (
         <WalkInSheet
           eventId={eventId}
           open={showWalkIn}
           onClose={() => setShowWalkIn(false)}
           onSuccess={() => {
-            // Attendee list will re-query on next render via useEventAttendees invalidation
-            setSearchTab('registered')
+            // Attendee list re-queries via useEventAttendees invalidation
           }}
+          onAddExistingUser={handleAddAndCheckIn}
         />
       )}
     </Page>
