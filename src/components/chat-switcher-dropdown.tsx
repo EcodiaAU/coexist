@@ -97,7 +97,7 @@ export function ChatSwitcherDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute right-0 top-full mt-2 z-50 w-60 max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-8rem)] rounded-xl bg-white shadow-lg ring-1 ring-neutral-200/70 overflow-hidden"
+            className="absolute right-0 top-full mt-2 z-50 w-60 max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-13rem-var(--safe-bottom,0px))] rounded-xl bg-white shadow-lg ring-1 ring-neutral-200/70 overflow-hidden"
           >
             <div className="max-h-[inherit] overflow-y-auto py-1">
               {/* Collectives */}

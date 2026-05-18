@@ -30,7 +30,7 @@ import type { ChannelMessageWithSender } from '@/hooks/use-staff-channels'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useEventDetail, type EventDetailData } from '@/hooks/use-events'
-import { useCarpool, useCarpoolSeats, useSaveSeat, useCancelSeat } from '@/hooks/use-carpool'
+import { useCarpool, useCarpoolSeats, useCarpoolBreakout, useSaveSeat, useCancelSeat } from '@/hooks/use-carpool'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import type { Tables, Json } from '@/types/database.types'
 
@@ -242,6 +242,7 @@ function InlineCarpool({
   const navigate = useNavigate()
   const { data: carpool } = useCarpool(carpoolId)
   const { data: seats = [] } = useCarpoolSeats(carpoolId)
+  const { data: breakout } = useCarpoolBreakout(carpoolId)
   const saveSeat = useSaveSeat()
   const cancelSeat = useCancelSeat()
   const [saveSheetOpen, setSaveSheetOpen] = useState(false)
@@ -310,6 +311,8 @@ function InlineCarpool({
         onSaveSeat={() => setSaveSheetOpen(true)}
         onCancelSeat={handleCancelSeat}
         onViewEvent={(evId) => navigate(`/events/${evId}`)}
+        breakoutChannelId={breakout?.channel_id ?? null}
+        onOpenChat={breakout?.channel_id ? () => navigate(`/chat/${breakout.channel_id}`) : undefined}
       />
       <SaveSeatSheet
         open={saveSheetOpen}

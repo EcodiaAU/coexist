@@ -128,6 +128,37 @@ export function useCarpoolSeats(carpoolId: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Breakout channel for a single carpool                              */
+/*                                                                     */
+/*  Returns the channel_id for the carpool's breakout group chat       */
+/*  (auto-spawned by carpool-save-seat when the first passenger joins).*/
+/*  Returns null while no seats taken / channel not yet created.       */
+/* ------------------------------------------------------------------ */
+export function useCarpoolBreakout(carpoolId: string | undefined) {
+  return useQuery({
+    queryKey: ['carpool-breakout', carpoolId],
+    queryFn: async () => {
+      if (!carpoolId) return null
+      const { data, error } = await supabase
+        .from('carpool_breakout_chats')
+        .select('channel_id, archived_at, deleted_at')
+        .eq('carpool_id', carpoolId)
+        .is('deleted_at', null)
+        .maybeSingle()
+      if (error) {
+        if ((error as { code?: string }).code === '42P01') return null
+        if ((error as { code?: string }).code === 'PGRST116') return null
+        throw error
+      }
+      if (!data) return null
+      return { channel_id: data.channel_id as string, archived: !!data.archived_at }
+    },
+    enabled: !!carpoolId,
+    staleTime: 15 * 1000,
+  })
+}
+
+/* ------------------------------------------------------------------ */
 /*  Mutations                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -215,6 +246,7 @@ export function useSaveSeat() {
     onSuccess: (_, input) => {
       queryClient.invalidateQueries({ queryKey: ['carpool', input.carpool_id] })
       queryClient.invalidateQueries({ queryKey: ['carpool-seats', input.carpool_id] })
+      queryClient.invalidateQueries({ queryKey: ['carpool-breakout', input.carpool_id] })
     },
     onError: (err) => {
       const msg = err instanceof Error ? err.message : 'Failed to save seat'
@@ -251,6 +283,7 @@ export function useCancelSeat() {
     onSuccess: (_, input) => {
       queryClient.invalidateQueries({ queryKey: ['carpool', input.carpool_id] })
       queryClient.invalidateQueries({ queryKey: ['carpool-seats', input.carpool_id] })
+      queryClient.invalidateQueries({ queryKey: ['carpool-breakout', input.carpool_id] })
     },
     onError: (err) => {
       const msg = err instanceof Error ? err.message : 'Failed to cancel seat'

@@ -788,6 +788,9 @@ interface CarpoolCardProps {
   onCancelSeat?: () => void
   onViewEvent?: (eventId: string) => void
   eventId?: string | null
+  /** Channel id of the breakout group chat for this carpool (or null if not yet spawned). */
+  breakoutChannelId?: string | null
+  onOpenChat?: () => void
 }
 
 export function CarpoolCard({
@@ -807,6 +810,8 @@ export function CarpoolCard({
   onCancelSeat,
   onViewEvent,
   eventId,
+  breakoutChannelId,
+  onOpenChat,
 }: CarpoolCardProps) {
   const shouldReduceMotion = useReducedMotion()
   const confirmedCount = confirmedPassengers.length
@@ -909,32 +914,41 @@ export function CarpoolCard({
           </div>
         )}
 
-        {/* Driver section */}
-        <div className="mb-3 space-y-1">
-          <div className="flex items-center gap-2 min-w-0">
-            <MapPin size={14} className="text-success-600 shrink-0" />
-            <span className="text-sm font-semibold text-neutral-900 truncate">
-              Leaving from {departurePointText}
-            </span>
+        {/* Trip details - structured rows in a tinted panel so the widget
+            reads as a single unit rather than loose text lines. */}
+        <div className="mb-3 rounded-xl bg-success-50/60 ring-1 ring-success-100 divide-y divide-success-100/70 overflow-hidden">
+          <div className="flex items-center gap-2.5 px-3 py-2 min-w-0">
+            <MapPin size={14} className="text-success-700 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-success-700/80">Departing from</p>
+              <p className="text-[13px] font-semibold text-neutral-900 truncate">{departurePointText}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 min-w-0">
-            <Clock size={14} className="text-neutral-400 shrink-0" />
-            <span className="text-xs text-neutral-600 truncate">
-              {formatCardDate(departureTime)} · {formatCardTime(departureTime)}
-            </span>
+          <div className="flex items-center gap-2.5 px-3 py-2 min-w-0">
+            <Clock size={14} className="text-success-700 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-success-700/80">Departure</p>
+              <p className="text-[13px] font-semibold text-neutral-900 truncate">
+                {formatCardDate(departureTime)} · {formatCardTime(departureTime)}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 min-w-0">
-            <Users size={14} className="text-neutral-400 shrink-0" />
-            <span className="text-xs font-semibold text-neutral-700">
-              {seatsRemaining} of {seatsTotal} seat{seatsTotal !== 1 ? 's' : ''} remaining
-            </span>
+          <div className="flex items-center gap-2.5 px-3 py-2 min-w-0">
+            <Users size={14} className="text-success-700 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-success-700/80">Seats</p>
+              <p className="text-[13px] font-semibold text-neutral-900">
+                {seatsRemaining} of {seatsTotal} remaining
+              </p>
+            </div>
           </div>
-          {notes && (
-            <p className="text-xs text-neutral-600 leading-relaxed pt-1 break-words">
-              {notes}
-            </p>
-          )}
         </div>
+
+        {notes && (
+          <p className="text-xs text-neutral-600 leading-relaxed mb-3 break-words bg-neutral-50 rounded-lg px-3 py-2 ring-1 ring-neutral-100">
+            "{notes}"
+          </p>
+        )}
 
         {/* Live passenger list (display_name only - pickup addresses NEVER shown here) */}
         {confirmedPassengers.length > 0 && (
@@ -966,14 +980,34 @@ export function CarpoolCard({
             Carpool archived
           </p>
         ) : viewerIsDriver ? (
-          <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-lg px-3 py-2 text-center">
-            You are the driver
-          </p>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-lg px-3 py-2 text-center">
+              You're driving
+            </p>
+            {breakoutChannelId && onOpenChat && (
+              <button
+                type="button"
+                onClick={onOpenChat}
+                className="w-full rounded-xl bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
+              >
+                Open carpool chat
+              </button>
+            )}
+          </div>
         ) : viewerHasSeat ? (
           <div className="space-y-2">
             <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-lg px-3 py-2 text-center">
-              You took a seat
+              You're on this carpool
             </p>
+            {breakoutChannelId && onOpenChat && (
+              <button
+                type="button"
+                onClick={onOpenChat}
+                className="w-full rounded-xl bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
+              >
+                Open carpool chat
+              </button>
+            )}
             {onCancelSeat && (
               <button
                 type="button"
