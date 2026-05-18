@@ -35,7 +35,7 @@ import { useCollectiveRole } from '@/hooks/use-collective-role'
 import { useAuth } from '@/hooks/use-auth'
 import { useEventSurvey } from '@/hooks/use-event-survey'
 import { SurveyQuestionRenderer } from '@/components/survey-questions'
-import { isQuestionVisible } from '@/components/survey-questions-utils'
+import { isQuestionVisible, stripHiddenAnswers } from '@/components/survey-questions-utils'
 import { syncSurveyImpact } from '@/lib/survey-impact'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { useCamera } from '@/hooks/use-camera'
@@ -947,6 +947,13 @@ export default function LogImpactPage() {
       }
 
       if (surveyData?.surveyId && surveyQuestions.length > 0) {
+        // Drop answers whose owning question is currently hidden (e.g. q7
+        // typed while q6=Yes, then q6 flipped to No). Mirrors what the
+        // leader sees on screen and keeps stale conditional answers off the
+        // sheet via the bi-directional sync. canSubmitSurvey only required
+        // visible-required, so this is consistent with the submit gate.
+        const cleanAnswers = stripHiddenAnswers(surveyQuestions, surveyAnswers)
+
         // Check for existing response first (unique index uses COALESCE so standard upsert onConflict won't work)
         const { data: existingResp, error: existingRespErr } = await supabase
           .from('survey_responses')
@@ -960,7 +967,7 @@ export default function LogImpactPage() {
         if (existingResp) {
           const { error: updErr } = await supabase
             .from('survey_responses')
-            .update({ answers: surveyAnswers as unknown as Json, updated_at: new Date().toISOString() })
+            .update({ answers: cleanAnswers as unknown as Json, updated_at: new Date().toISOString() })
             .eq('id', existingResp.id)
           if (updErr) throw updErr
         } else {
@@ -970,12 +977,12 @@ export default function LogImpactPage() {
               survey_id: surveyData.surveyId,
               event_id: eventId,
               user_id: user.id,
-              answers: surveyAnswers as unknown as Json,
+              answers: cleanAnswers as unknown as Json,
             })
           if (insErr) throw insErr
         }
 
-        await syncSurveyImpact(eventId, surveyQuestions, surveyAnswers as Record<string, Json>, user.id, metricDefsPlaceholder ? undefined : validKeys)
+        await syncSurveyImpact(eventId, surveyQuestions, cleanAnswers as Record<string, Json>, user.id, metricDefsPlaceholder ? undefined : validKeys)
       }
 
       const { data: postSyncImpact, error: postSyncErr } = await supabase

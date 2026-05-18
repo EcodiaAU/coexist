@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useEventDetail, ACTIVITY_TYPE_LABELS, isPastEvent } from '@/hooks/use-events'
 import { useEventSurvey } from '@/hooks/use-event-survey'
 import { SurveyQuestionRenderer } from '@/components/survey-questions'
+import { isQuestionVisible, stripHiddenAnswers } from '@/components/survey-questions-utils'
 import {
     Page,
     Header,
@@ -137,9 +138,16 @@ export default function PostEventSurveyPage() {
     setUserAnswers((prev) => ({ ...prev, [key]: value }))
   }, [])
 
+  // Visible-required gate: a hidden conditional question doesn't block
+  // submission. Mirrors log-impact's surveyMissingRequired logic so the
+  // two surfaces behave consistently.
   const requiredKeys = useMemo(
-    () => questions.filter((q) => q.required).map((q) => q.id),
-    [questions],
+    () =>
+      questions
+        .filter((q) => q.required)
+        .filter((q) => isQuestionVisible(q, answers))
+        .map((q) => q.id),
+    [questions, answers],
   )
 
   const canSubmit = requiredKeys.every((key) => {
@@ -152,7 +160,8 @@ export default function PostEventSurveyPage() {
   const handleSubmit = useCallback(async () => {
     if (!eventId || !surveyId || !canSubmit || !questions.length) return
     try {
-      await submitMutation.mutateAsync({ surveyId, eventId, answers: answers as Json })
+      const cleanAnswers = stripHiddenAnswers(questions, answers)
+      await submitMutation.mutateAsync({ surveyId, eventId, answers: cleanAnswers as Json })
       setSubmitted(true)
     } catch {
       toast.error('Failed to submit survey. Please try again.')

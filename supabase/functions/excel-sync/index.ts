@@ -504,7 +504,14 @@ function buildExcelRow(e: EventData): (string | number | null)[] {
     numberOrBlank(e.answers?.q4, e.rubbish_kg),              // 15: Rubbish Removed (optional - blank when N/A)
     numberOrBlank(e.answers?.q5, e.trees_planted),           // 16: Trees Planted (optional - blank when N/A)
     yesOrBlank(e.answers?.q6),                               // 17: Collect/Make Anything (Yes-only; No -> blank, matches Forms 37 blank / 5 Yes / 1 No)
-    freeText(e.answers?.q7),                                 // 18: What & How Much (optional - blank when N/A)
+    // 18: What & How Much - defensive gate on q6=Yes. Mirrors col 8/9
+    // gating on q1=Yes. Catches stale q7 from a Yes->No->save flip on legacy
+    // responses; new responses are already stripped by stripHiddenAnswers
+    // at submit time.
+    (() => {
+      const q6yes = yesNo(e.answers?.q6) === 'Yes'
+      return q6yes ? freeText(e.answers?.q7) : ''
+    })(),                                                    // 18: What & How Much (Yes-gated)
     freeText(e.answers?.q8),                                 // 19: Hike/track name (optional - blank when N/A)
     freeText(e.answers?.q9) || 'No',                         // 20: Any Issues (ALWAYS populated, "No" default)
     yesNo(e.answers?.q10, 'No'),                             // 21: Use First Aid Kit (ALWAYS populated, "No" default)

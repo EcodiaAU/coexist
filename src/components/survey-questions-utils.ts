@@ -61,6 +61,31 @@ export function isQuestionVisible(
   return answers[q.show_if.question_id] === q.show_if.equals
 }
 
+// Strip hidden-conditional answers before persisting. When a leader fills q7
+// "What and how much?" after picking q6=Yes, then flips q6 back to No, the
+// renderer correctly hides q7, but the surveyAnswers state still carries
+// the typed value. Submitting that raw state would leak the stale answer to
+// survey_responses.answers and onto the sheet via the bi-directional sync.
+// This helper drops any answer whose owning question is currently hidden,
+// so the persisted JSONB matches what the leader sees on screen.
+//
+// Safe for required-when-visible questions: canSubmitSurvey already gates
+// submission on visible-required, so a hidden required question is by
+// definition not required at that moment and dropping its answer is correct.
+export function stripHiddenAnswers(
+  questions: SurveyQuestion[],
+  answers: Record<string, unknown>,
+): Record<string, unknown> {
+  const visibleIds = new Set(
+    questions.filter((q) => isQuestionVisible(q, answers)).map((q) => q.id),
+  )
+  const cleaned: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(answers)) {
+    if (visibleIds.has(k)) cleaned[k] = v
+  }
+  return cleaned
+}
+
 /**
  * Resolve "other" write-in values into final answers.
  * Call before submitting to replace __other__ placeholders.
