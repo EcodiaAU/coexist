@@ -535,33 +535,40 @@ export function ChatMessageList({
   // Reset scroll on message count change (first load)
   const roomKeyRef = useRef(allMessages.length)
 
-  /* ---- Scroll: instant on first load.
+  /* ---- Scroll: instant on first load + persistent keep-at-bottom while user
+   *      is anchored to the bottom.
    *
-   * Images, avatars, polls, announcement cards, reaction rows all load async
-   * after first paint and grow scrollHeight. A naive "scroll to scrollHeight
-   * once" lands BELOW the eventual content height, so the user sees the chat
-   * frozen above the bottom ("opens halfway up").
+   * Three classes of late-arriving content grow the chat AFTER first paint:
+   *  - Avatar / bubble image decodes  (~200-800ms on cellular)
+   *  - Inline widget data fetches     (poll detail, announcement, carpool,
+   *                                    event-photos - each its own useQuery)
+   *  - Cascading widget renders       (event-photos -> useEventDetail ->
+   *                                    useEventPhotos -> 4 thumbnail decodes)
    *
-   * Pin strategy:
-   *  1. Disable scroll-smooth on the container so pins are instant. The
-   *     parent className has `scroll-smooth` for nice in-chat scroll-to-reply
-   *     animations - if it stays active during the pin, the browser animates
-   *     each pin and the next reflow lands mid-animation.
-   *  2. Pin immediately, then run a ResizeObserver against the container and
-   *     every rendered message child. Any growth in scrollHeight (image load,
-   *     font swap, late-arriving message) triggers a re-pin on the next rAF.
-   *  3. After 1500ms of being pinned, accept the position, restore scroll
-   *     behavior, mark initial-scroll done, and let the auto-scroll-on-new-
-   *     message effect take over.
+   * A fixed-duration "settle window" (the v50 1500ms timeout) can't cover
+   * the slow tail of cascading widget loads on poor cellular - the user opens
+   * the chat, lands at "the bottom" of the rendered-so-far content, then a
+   * widget below pops in 2-3 seconds later and they're no longer at the
+   * actual bottom.
    *
-   * 1500ms is generous on purpose: phones on poor cellular take 800-1200ms to
-   * decode a JPEG avatar; the observer just keeps pinning until the chat is
-   * visually stable.
+   * Fix: keep the ResizeObserver alive for the lifetime of the room, but gate
+   * re-pin on "is the user still near the bottom?" instead of a time bound.
+   *   - During the initial-load window: always re-pin on resize (force the
+   *     first paint to land at bottom regardless of growth phase).
+   *   - After the initial window: re-pin only when the user is still anchored
+   *     near the bottom. The moment they scroll up to read history, auto-pin
+   *     disables. The moment they scroll back to the bottom, the next resize
+   *     re-enables it.
+   *
+   * Also disable scroll-smooth on the container during the pin so the browser
+   * doesn't animate each pin and land mid-animation when the next reflow
+   * fires.
    */
   useLayoutEffect(() => {
-    if (initialScrollDone.current || allMessages.length === 0) return
     const c = scrollContainerRef.current
     if (!c) return
+
+    const NEAR_BOTTOM_PX = isCollective ? 200 : 300
 
     const originalScrollBehavior = c.style.scrollBehavior
     c.style.scrollBehavior = 'auto'
@@ -569,36 +576,64 @@ export function ChatMessageList({
     const pin = () => {
       c.scrollTop = c.scrollHeight
     }
+
+    const isUserNearBottom = () =>
+      c.scrollHeight - c.scrollTop - c.clientHeight < NEAR_BOTTOM_PX
+
+    // Initial paint - may be a no-op on first mount when allMessages is still
+    // empty (container has no content yet), but the MutationObserver below
+    // catches the first message inserts and re-pins.
     pin()
-    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
 
     let pendingRaf = 0
     const schedulePin = () => {
       cancelAnimationFrame(pendingRaf)
-      pendingRaf = requestAnimationFrame(pin)
+      pendingRaf = requestAnimationFrame(() => {
+        if (!initialScrollDone.current || isUserNearBottom()) {
+          pin()
+        }
+      })
     }
 
-    const observer = new ResizeObserver(schedulePin)
-    observer.observe(c)
-    // Observing each message child catches image/avatar loads that grow a
-    // bubble after first paint without changing the container itself first.
-    c.querySelectorAll('[data-message-id]').forEach((el) => observer.observe(el))
+    const resizeObserver = new ResizeObserver(schedulePin)
+    resizeObserver.observe(c)
+    const observeAllChildren = () => {
+      c.querySelectorAll('[data-message-id]').forEach((el) =>
+        resizeObserver.observe(el),
+      )
+    }
+    observeAllChildren()
 
-    const settleTimer = setTimeout(() => {
-      pin()
-      observer.disconnect()
-      cancelAnimationFrame(pendingRaf)
-      c.style.scrollBehavior = originalScrollBehavior
+    // New message divs (realtime arrival, pagination, optimistic send) need
+    // to be added to the resize-observer set AND trigger a re-pin pass - the
+    // insertion itself is exactly the kind of growth we want to anchor
+    // through. subtree:true also catches widget rerenders inside an existing
+    // bubble whose container child gets replaced.
+    const mutationObserver = new MutationObserver(() => {
+      observeAllChildren()
+      schedulePin()
+    })
+    mutationObserver.observe(c, { childList: true, subtree: true })
+
+    // Close the initial-load window after 1500ms. Past this point schedulePin
+    // gates on isUserNearBottom() so a widget popping in 3-5s later (slow
+    // cellular) keeps the user anchored only if they were already at the
+    // bottom; if they've scrolled up to read history, the pin is skipped and
+    // we don't yank them.
+    const initialWindowTimer = setTimeout(() => {
+      if (isUserNearBottom()) pin()
       initialScrollDone.current = true
+      c.style.scrollBehavior = originalScrollBehavior
     }, 1500)
 
     return () => {
-      clearTimeout(settleTimer)
-      observer.disconnect()
+      clearTimeout(initialWindowTimer)
+      resizeObserver.disconnect()
+      mutationObserver.disconnect()
       cancelAnimationFrame(pendingRaf)
       c.style.scrollBehavior = originalScrollBehavior
     }
-  }, [allMessages.length, scrollContainerRef, messagesEndRef, roomKey])
+  }, [scrollContainerRef, roomKey, isCollective])
 
   /* ---- Scroll: smooth on new messages ---- */
   useEffect(() => {
