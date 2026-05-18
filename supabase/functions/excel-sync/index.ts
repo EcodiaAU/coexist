@@ -222,6 +222,15 @@ function yesNo(val: unknown, fallback: '' | 'Yes' | 'No' = ''): string {
   return fallback
 }
 
+/** Yes-only yes_no for sheet cells the Forms convention leaves blank on No.
+ *  q6 "Collect or make anything?" Forms data: 37 blank, 5 Yes, only 1 No
+ *  across 43 rows - leaders almost never explicitly write "No"; blank IS the
+ *  "no" signal. Coerce No-pick to blank so the sheet matches Form convention.
+ *  Origin: Tate verbatim 2026-05-18 - "make no not put anything in". */
+function yesOrBlank(val: unknown): string {
+  return yesNo(val) === 'Yes' ? 'Yes' : ''
+}
+
 // Treat empty/whitespace/"NA"/"N/A"/"-"/"none"/"no"/"nil"/"nope" as
 // no-answer. Leaders often type these in optional fields to mean "not
 // applicable" - the sheet should land the column-specific default (blank
@@ -433,7 +442,7 @@ function buildExcelRow(e: EventData): (string | number | null)[] {
     isRecreation ? label : '',                               // 14: Recreational type (optional)
     numberOrBlank(e.answers?.q4, e.rubbish_kg),              // 15: Rubbish Removed (optional - blank when N/A)
     numberOrBlank(e.answers?.q5, e.trees_planted),           // 16: Trees Planted (optional - blank when N/A)
-    yesNo(e.answers?.q6),                                    // 17: Collect/Make Anything (optional yes/no, blank when N/A)
+    yesOrBlank(e.answers?.q6),                               // 17: Collect/Make Anything (Yes-only; No -> blank, matches Forms 37 blank / 5 Yes / 1 No)
     freeText(e.answers?.q7),                                 // 18: What & How Much (optional - blank when N/A)
     freeText(e.answers?.q8),                                 // 19: Hike/track name (optional - blank when N/A)
     freeText(e.answers?.q9) || 'No',                         // 20: Any Issues (ALWAYS populated, "No" default)
