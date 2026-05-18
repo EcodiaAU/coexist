@@ -40,14 +40,23 @@ interface SaveSeatBody {
   pickup_lng?: number | null
 }
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
 function bad(status: number, message: string) {
   return new Response(
     JSON.stringify({ success: false, error: message }),
-    { status, headers: { 'Content-Type': 'application/json' } },
+    { status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
   )
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
   if (req.method !== 'POST') return bad(405, 'method not allowed')
 
   const authHeader = req.headers.get('Authorization')
@@ -127,7 +136,7 @@ Deno.serve(async (req: Request) => {
         breakout_channel_id: null,
         warning: 'seat saved but breakout channel could not be resolved',
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
+      { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
     )
   }
 
@@ -170,7 +179,7 @@ Deno.serve(async (req: Request) => {
           breakout_channel_id: null,
           warning: `seat saved but channel creation failed: ${chanErr?.message ?? 'unknown'}`,
         }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
+        { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
       )
     }
     breakoutChannelId = channel.id
@@ -208,6 +217,6 @@ Deno.serve(async (req: Request) => {
       seat,
       breakout_channel_id: breakoutChannelId,
     }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } },
+    { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
   )
 })
