@@ -356,7 +356,31 @@ export default function ChatRoomPage() {
   // Reset scroll on room switch
   const roomKey = channelId ?? collectiveId
 
-  /* ---- Mark read ---- */
+  /* ---- Reset scroll-position UI state on room change.
+   *
+   * showScrollDown is parent state managed by ChatMessageList's onScrollChange
+   * callback. That callback fires from the scroll handler, which is gated on
+   * initialScrollDone.current. During the initial-pin window of a NEW room
+   * the scroll handler never fires, so showScrollDown stays at whatever
+   * value the previous room left it - and if the previous room was scrolled
+   * up (showScrollDown=true), the mark-read effect below bails on the new
+   * room too. Reset explicitly here so each room opens with a clean slate.
+   */
+  useEffect(() => {
+    setShowScrollDown(false)
+  }, [roomKey])
+
+  /* ---- Mark read ----
+   *
+   * Fires on (1) opening a room (roomKey change after messages load) and
+   * (2) every new message arrival, gated on showScrollDown=false (user is
+   * near the bottom and has actually seen the new message). On open the
+   * showScrollDown reset above + the scroll pin in ChatMessageList land
+   * together at the bottom, so this effect fires with showScrollDown=false
+   * and records the open as "seen". Without that pair, the user opens an
+   * unread chat, scrolls to bottom, and the badge stays - which is the
+   * "seen messages aren't being classified as seen" bug.
+   */
   useEffect(() => {
     if (allMessages.length > 0 && !showScrollDown) {
       if (isCollective) {

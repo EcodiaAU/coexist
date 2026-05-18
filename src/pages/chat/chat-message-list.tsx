@@ -535,35 +535,70 @@ export function ChatMessageList({
   // Reset scroll on message count change (first load)
   const roomKeyRef = useRef(allMessages.length)
 
-  /* ---- Scroll: instant on first load. Images/avatars load async after first
-     paint and grow scrollHeight, which pushes the initial scrollTop above the
-     bottom by the time the user sees the chat ("opens halfway up"). We pin to
-     bottom in three passes: layoutEffect, next rAF, then a 250ms timeout
-     after images have settled. ---- */
+  /* ---- Scroll: instant on first load.
+   *
+   * Images, avatars, polls, announcement cards, reaction rows all load async
+   * after first paint and grow scrollHeight. A naive "scroll to scrollHeight
+   * once" lands BELOW the eventual content height, so the user sees the chat
+   * frozen above the bottom ("opens halfway up").
+   *
+   * Pin strategy:
+   *  1. Disable scroll-smooth on the container so pins are instant. The
+   *     parent className has `scroll-smooth` for nice in-chat scroll-to-reply
+   *     animations - if it stays active during the pin, the browser animates
+   *     each pin and the next reflow lands mid-animation.
+   *  2. Pin immediately, then run a ResizeObserver against the container and
+   *     every rendered message child. Any growth in scrollHeight (image load,
+   *     font swap, late-arriving message) triggers a re-pin on the next rAF.
+   *  3. After 1500ms of being pinned, accept the position, restore scroll
+   *     behavior, mark initial-scroll done, and let the auto-scroll-on-new-
+   *     message effect take over.
+   *
+   * 1500ms is generous on purpose: phones on poor cellular take 800-1200ms to
+   * decode a JPEG avatar; the observer just keeps pinning until the chat is
+   * visually stable.
+   */
   useLayoutEffect(() => {
-    if (!initialScrollDone.current && allMessages.length > 0) {
-      const pinToBottom = () => {
-        const c = scrollContainerRef.current
-        if (!c) return
-        c.scrollTop = c.scrollHeight
-      }
-      pinToBottom()
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
-      requestAnimationFrame(() => {
-        pinToBottom()
-        // Second rAF after browser reflows once
-        requestAnimationFrame(pinToBottom)
-        // And a final pass after images/avatars typically resolve. Mark done
-        // here so the auto-scroll-on-new-message effect can take over.
-        const t = setTimeout(() => {
-          pinToBottom()
-          initialScrollDone.current = true
-        }, 250)
-        // Cleanup if room changes mid-pin
-        return () => clearTimeout(t)
-      })
+    if (initialScrollDone.current || allMessages.length === 0) return
+    const c = scrollContainerRef.current
+    if (!c) return
+
+    const originalScrollBehavior = c.style.scrollBehavior
+    c.style.scrollBehavior = 'auto'
+
+    const pin = () => {
+      c.scrollTop = c.scrollHeight
     }
-  }, [allMessages.length, scrollContainerRef, messagesEndRef])
+    pin()
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
+
+    let pendingRaf = 0
+    const schedulePin = () => {
+      cancelAnimationFrame(pendingRaf)
+      pendingRaf = requestAnimationFrame(pin)
+    }
+
+    const observer = new ResizeObserver(schedulePin)
+    observer.observe(c)
+    // Observing each message child catches image/avatar loads that grow a
+    // bubble after first paint without changing the container itself first.
+    c.querySelectorAll('[data-message-id]').forEach((el) => observer.observe(el))
+
+    const settleTimer = setTimeout(() => {
+      pin()
+      observer.disconnect()
+      cancelAnimationFrame(pendingRaf)
+      c.style.scrollBehavior = originalScrollBehavior
+      initialScrollDone.current = true
+    }, 1500)
+
+    return () => {
+      clearTimeout(settleTimer)
+      observer.disconnect()
+      cancelAnimationFrame(pendingRaf)
+      c.style.scrollBehavior = originalScrollBehavior
+    }
+  }, [allMessages.length, scrollContainerRef, messagesEndRef, roomKey])
 
   /* ---- Scroll: smooth on new messages ---- */
   useEffect(() => {
