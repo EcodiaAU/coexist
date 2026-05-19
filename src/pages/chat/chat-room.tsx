@@ -397,6 +397,38 @@ export default function ChatRoomPage() {
     setShowScrollDown(false)
   }
 
+  /**
+   * When the keyboard opens (user taps the input), the input bar rises above
+   * the soft keyboard via the --kb-height CSS var, but the message list
+   * doesn't re-scroll — so the newest messages that were visible just above
+   * the input bar are now hidden behind the lifted input. Fix: when the
+   * keyboard transitions to open, scroll to the bottom — but only if the
+   * user was already at the bottom (showScrollDown=false). If they were
+   * scrolled up reading old messages, leave their position alone; the
+   * existing "↓ new messages" pill handles that case.
+   * The double-rAF gives the browser one frame to apply the new viewport /
+   * --kb-height before we measure scrollHeight in scrollIntoView, otherwise
+   * the scroll lands short on iOS Safari (the viewport hasn't shrunk yet).
+   */
+  useEffect(() => {
+    if (!keyboardOpen) return
+    if (showScrollDown) return
+    if (!messagesEndRef.current) return
+    let raf2 = 0
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({
+          behavior: shouldReduceMotion ? 'auto' : 'smooth',
+          block: 'end',
+        })
+      })
+    })
+    return () => {
+      cancelAnimationFrame(raf1)
+      if (raf2) cancelAnimationFrame(raf2)
+    }
+  }, [keyboardOpen, showScrollDown, shouldReduceMotion])
+
   /* ---- Send message ---- */
   const handleSend = useCallback(async (text: string) => {
     if (!user) return
