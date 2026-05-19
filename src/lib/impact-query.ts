@@ -281,6 +281,39 @@ export async function fetchImpactRows(scope: ImpactScope = {}): Promise<FetchImp
 }
 
 /* ------------------------------------------------------------------ */
+/*  Cross-surface national aggregate                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The canonical national rollup for any all-time metric. Used by every
+ * surface that displays a national stat (homepage, /admin, /admin/impact,
+ * /impact, /profile, /admin/collectives summary) so the same scope always
+ * reports the same number.
+ *
+ * Math: live + legacy + max(0, baseline - sum_legacy)
+ *
+ *   When sum_legacy <= baseline: total = sum(live) + baseline  (same as old)
+ *   When sum_legacy >  baseline: total = sum(live) + sum_legacy (legacy is
+ *                                the truthful pre-2026 contribution; the
+ *                                baseline constant has been surpassed)
+ *
+ * Without this helper, the homepage was using sum(live) + baseline while
+ * /admin/impact (post-v54) was using sum(live + legacy) + remainder. They
+ * diverged whenever sum(legacy) > baseline (e.g. trees: 43,769 legacy vs
+ * 36,637 baseline gave a 7,000-tree gap between surfaces).
+ */
+export function applyBaselineRemainder(
+  liveSum: number,
+  legacySum: number,
+  baseline: number,
+  addBaseline: boolean,
+): number {
+  if (!addBaseline) return liveSum + legacySum
+  const remainder = Math.max(0, baseline - legacySum)
+  return liveSum + legacySum + remainder
+}
+
+/* ------------------------------------------------------------------ */
 /*  Baseline helpers                                                   */
 /* ------------------------------------------------------------------ */
 

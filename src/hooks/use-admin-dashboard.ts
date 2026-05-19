@@ -1,7 +1,7 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { sumMetric } from '@/lib/impact-metrics'
-import { fetchImpactRows, fetchBaselineSettings } from '@/lib/impact-query'
+import { fetchImpactRows, fetchBaselineSettings, applyBaselineRemainder } from '@/lib/impact-query'
 
 /* ------------------------------------------------------------------ */
 /*  Admin dashboard data hooks                                         */
@@ -74,12 +74,16 @@ async function fetchAdminOverview(dateRange: DateRange, collectiveId?: string): 
     ? eventsCountQueryBase.eq('collective_id', collectiveId)
     : eventsCountQueryBase
 
-  const [{ rows, eventCount }, baseline, membersRes, collectivesRes, leadersRes, periodMembersRes, periodEventsRes] =
+  const [{ rows, legacyRows, eventCount }, baseline, membersRes, collectivesRes, leadersRes, periodMembersRes, periodEventsRes] =
     await Promise.all([
       fetchImpactRows({
         collectiveId,
         timeRange: isAllTime ? 'all-time' : 'custom',
         rangeStart: rangeStart ?? undefined,
+        // Pull legacy rows on any all-time view (national or collective-scoped)
+        // so /admin's per-scope numbers match /admin/impact and the homepage.
+        // Cross-surface aggregate invariant: same scope -> same row set.
+        includeLegacy: isAllTime,
       }),
       // Baselines are national all-time constants - only apply when we're ACTUALLY
       // asking for the national all-time view. Never add them to a single-collective
@@ -120,14 +124,53 @@ async function fetchAdminOverview(dateRange: DateRange, collectiveId?: string): 
   const b = baseline ?? { attendees: 0, events: 0, trees: 0, rubbishKg: 0, hours: 0 }
   const addBaseline = isAllTime && !scopedToCollective
 
+  // Event count by distinct event_id that has any impact row (live or legacy),
+  // matching /admin/impact and useNationalImpact. Adding `eventCount + baseline`
+  // would double-count pre-2026 backfill events that are already in `eventCount`
+  // when includeLegacy=true.
+  const liveEventIdsWithImpact = new Set(
+    rows.map((r) => (r as { event_id?: string }).event_id).filter((id): id is string => typeof id === 'string'),
+  )
+  const legacyEventIdSet = new Set(
+    legacyRows.map((r) => (r as { event_id?: string }).event_id).filter((id): id is string => typeof id === 'string'),
+  )
+  const uniqueEventCount = new Set([...liveEventIdsWithImpact, ...legacyEventIdSet]).size
+  const eventsRemainder = addBaseline ? Math.max(0, b.events - legacyEventIdSet.size) : 0
+
   return {
     totalMembers:      membersRes.count ?? 0,
     totalCollectives:  collectivesRes.count ?? 0,
-    totalEvents:       eventCount                                        + (addBaseline ? b.events    : 0),
-    totalAttendees:    Math.round(sumMetric(rows, 'attendees'))          + (addBaseline ? b.attendees : 0),
-    totalTrees:        sumMetric(rows, 'trees_planted')                  + (addBaseline ? b.trees     : 0),
-    totalHours:        Math.round(sumMetric(rows, 'hours_total'))        + (addBaseline ? b.hours     : 0),
-    totalRubbish:      Math.round(sumMetric(rows, 'rubbish_kg')          + (addBaseline ? b.rubbishKg : 0)),
+    totalEvents:       uniqueEventCount + eventsRemainder,
+    totalAttendees:    Math.round(
+      applyBaselineRemainder(
+        sumMetric(rows, 'attendees'),
+        sumMetric(legacyRows, 'attendees'),
+        b.attendees,
+        addBaseline,
+      ),
+    ),
+    totalTrees:        applyBaselineRemainder(
+      sumMetric(rows, 'trees_planted'),
+      sumMetric(legacyRows, 'trees_planted'),
+      b.trees,
+      addBaseline,
+    ),
+    totalHours:        Math.round(
+      applyBaselineRemainder(
+        sumMetric(rows, 'hours_total'),
+        sumMetric(legacyRows, 'hours_total'),
+        b.hours,
+        addBaseline,
+      ),
+    ),
+    totalRubbish:      Math.round(
+      applyBaselineRemainder(
+        sumMetric(rows, 'rubbish_kg'),
+        sumMetric(legacyRows, 'rubbish_kg'),
+        b.rubbishKg,
+        addBaseline,
+      ),
+    ),
     totalLeadersEmpowered: (leadersRes.data?.value as { count?: number })?.count ?? 0,
     periodMembers:     periodMembersRes.count ?? 0,
     periodEvents:      periodEventsRes.count ?? 0,

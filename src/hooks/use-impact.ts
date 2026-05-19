@@ -4,6 +4,7 @@ import { sumMetric } from '@/lib/impact-metrics'
 import {
   fetchImpactRows,
   fetchBaselineSettings,
+  applyBaselineRemainder,
   type ImpactTimeRange,
 } from '@/lib/impact-query'
 import { useAuth } from '@/hooks/use-auth'
@@ -41,9 +42,16 @@ export function useNationalImpact(timeRange: TimeRange = 'all-time') {
     queryFn: async (): Promise<NationalImpact> => {
       const isAllTime = timeRange === 'all-time'
 
-      const [{ rows, eventIds, eventCount }, baseline, membersRes, collectivesRes, leadersCountRes] =
+      // Pull legacy import rows on all-time so the national rollup matches
+      // /admin/impact and /collectives/[slug] (all surfaces aggregate the
+      // same row set + baseline-remainder math). Without includeLegacy, the
+      // homepage sums sum(live) + BASELINE while admin/impact post-v54 sums
+      // sum(live + legacy) + max(0, BASELINE - sum_legacy) - they diverge
+      // whenever sum_legacy > BASELINE (trees: 43,769 legacy vs 36,637
+      // baseline = 7,000 tree gap between homepage and admin).
+      const [{ rows, legacyRows, eventIds, eventCount }, baseline, membersRes, collectivesRes, leadersCountRes] =
         await Promise.all([
-          fetchImpactRows({ timeRange: timeRange as ImpactTimeRange }),
+          fetchImpactRows({ timeRange: timeRange as ImpactTimeRange, includeLegacy: isAllTime }),
           isAllTime ? fetchBaselineSettings() : Promise.resolve(null),
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
           supabase.from('collectives').select('id', { count: 'exact', head: true }).eq('is_active', true).neq('is_national', true),
@@ -69,15 +77,68 @@ export function useNationalImpact(timeRange: TimeRange = 'all-time') {
 
       const b = baseline ?? { attendees: 0, events: 0, trees: 0, rubbishKg: 0, hours: 0 }
 
+      // Event count mirrors /admin/impact (post-v54) exactly: distinct event
+      // IDs that have at least one impact row (live OR legacy) + remainder.
+      // An event with both a live row and a legacy row counts ONCE. The
+      // remainder covers pre-2026 events that weren't imported as rows.
+      //
+      //   total = |{event ids with any impact}| + max(0, baseline - |legacy event ids|)
+      //
+      // This is the canonical national rollup. /admin/impact uses the same
+      // shape; /admin and homepage now do too. eventCount from fetchImpactRows
+      // (events in scope regardless of impact) is intentionally NOT used here
+      // because when includeLegacy=true it already covers pre-2026 backfill
+      // events - adding baseline on top of it would double-count them.
+      const liveEventIdsWithImpact = new Set(
+        rows
+          .map((r) => (r as { event_id?: string }).event_id)
+          .filter((id): id is string => typeof id === 'string'),
+      )
+      const legacyEventIdSet = new Set(
+        legacyRows
+          .map((r) => (r as { event_id?: string }).event_id)
+          .filter((id): id is string => typeof id === 'string'),
+      )
+      const uniqueEventCount = new Set([
+        ...liveEventIdsWithImpact,
+        ...legacyEventIdSet,
+      ]).size
+
       return {
-        eventsAttended:      sumMetric(rows, 'attendees')           + (isAllTime ? b.attendees : 0),
-        volunteerHours: Math.round(sumMetric(rows, 'hours_total'))  + (isAllTime ? b.hours    : 0),
-        eventsHeld:          eventCount                             + (isAllTime ? b.events   : 0),
-        treesPlanted:        sumMetric(rows, 'trees_planted')       + (isAllTime ? b.trees    : 0),
-        invasiveWeedsPulled: sumMetric(rows, 'invasive_weeds_pulled'),
-        rubbishCollectedKg:  Math.round(sumMetric(rows, 'rubbish_kg') + (isAllTime ? b.rubbishKg : 0)),
+        eventsAttended: Math.round(
+          applyBaselineRemainder(
+            sumMetric(rows, 'attendees'),
+            sumMetric(legacyRows, 'attendees'),
+            b.attendees,
+            isAllTime,
+          ),
+        ),
+        volunteerHours: Math.round(
+          applyBaselineRemainder(
+            sumMetric(rows, 'hours_total'),
+            sumMetric(legacyRows, 'hours_total'),
+            b.hours,
+            isAllTime,
+          ),
+        ),
+        eventsHeld: uniqueEventCount + (isAllTime ? Math.max(0, b.events - legacyEventIdSet.size) : 0),
+        treesPlanted: applyBaselineRemainder(
+          sumMetric(rows, 'trees_planted'),
+          sumMetric(legacyRows, 'trees_planted'),
+          b.trees,
+          isAllTime,
+        ),
+        invasiveWeedsPulled: sumMetric(rows, 'invasive_weeds_pulled') + sumMetric(legacyRows, 'invasive_weeds_pulled'),
+        rubbishCollectedKg: Math.round(
+          applyBaselineRemainder(
+            sumMetric(rows, 'rubbish_kg'),
+            sumMetric(legacyRows, 'rubbish_kg'),
+            b.rubbishKg,
+            isAllTime,
+          ),
+        ),
         cleanupSites:        cleanupAddresses.size,
-        coastlineCleanedM:   Math.round(sumMetric(rows, 'coastline_cleaned_m')),
+        coastlineCleanedM:   Math.round(sumMetric(rows, 'coastline_cleaned_m') + sumMetric(legacyRows, 'coastline_cleaned_m')),
         collectivesCount:    collectivesRes.count ?? 0,
         leadersEmpowered:    (leadersCountRes.data?.value as { count?: number })?.count ?? 0,
         totalMembers:        membersRes.count ?? 0,
