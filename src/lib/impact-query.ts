@@ -216,18 +216,39 @@ export async function fetchImpactRows(scope: ImpactScope = {}): Promise<FetchImp
       eventCount = eventsRes.count ?? 0
     }
   } else {
-    // National / global - no event ID pre-filter needed; date filter applied via
-    // a separate events query in step 2 approach. We still need IDs to avoid
-    // pulling 999_backfill rows. Fetch all post-baseline event IDs.
-    const eventsRes = await supabase
-      .from('events')
-      .select('id', { count: 'exact' })
-      .lt('date_start', now)
-      .gte('date_start', baselineDate)
-    if (eventsRes.error) throw eventsRes.error
+    // National / global with no lower date bound. Two sub-cases land here:
+    //   (a) includeLegacy=true → all-time national needing pre-2026 backfill
+    //       events so their legacy impact rows can be summed. We must NOT
+    //       apply the baselineDate floor or the third surface (/admin) ends
+    //       up smaller than /admin/impact (which fetches legacy itself).
+    //   (b) skipBaselineDateFilter=true → public-stats path that intentionally
+    //       sums all non-legacy rows; same: no baseline floor.
+    // In both cases resolvedEventIds must include pre-2026 events so step 2
+    // picks their impact rows up. eventCount stays scoped to live published/
+    // completed events (matching the displayed "events held" semantics).
+    const buildQuery = (statusFilter: boolean) => {
+      let q = supabase
+        .from('events')
+        .select('id', { count: 'exact' })
+        .lt('date_start', now)
+      if (statusFilter) q = q.in('status', ['published', 'completed'])
+      return q
+    }
 
-    resolvedEventIds = (eventsRes.data ?? []).map((e) => e.id)
-    eventCount = eventsRes.count ?? 0
+    if (includeLegacy) {
+      const [allEventsRes, realEventsRes] = await Promise.all([
+        buildQuery(false),
+        buildQuery(true),
+      ])
+      if (allEventsRes.error) throw allEventsRes.error
+      resolvedEventIds = (allEventsRes.data ?? []).map((e) => e.id)
+      eventCount = realEventsRes.count ?? 0
+    } else {
+      const eventsRes = await buildQuery(true)
+      if (eventsRes.error) throw eventsRes.error
+      resolvedEventIds = (eventsRes.data ?? []).map((e) => e.id)
+      eventCount = eventsRes.count ?? 0
+    }
   }
 
   // ── Step 2: fetch impact rows ────────────────────────────────────────
