@@ -607,7 +607,15 @@ export default function EventDetailPage() {
 
   // CRITICAL: Don't show "not found" while still loading
   if (showLoading || isLoading) return <EventDetailSkeleton />
-  if (isError) {
+  // Show "Something went wrong" ONLY when we have no event data at all.
+  // If the cached/stale event is present, render it - a background refetch
+  // failure shouldn't replace a working page with an error EmptyState.
+  // This was the root cause of Winnie's "first visit works, second visit
+  // errors" pattern: useEventDetail returned cached data on re-mount and
+  // fired a background refetch; if the refetch failed for any reason
+  // (iOS WebView network race / JWT expiry / RLS edge), isError flipped
+  // true and erased the working page even though stale data was fine.
+  if (isError && !event) {
     return (
       <Page swipeBack header={<Header title="Event" back />}>
         <EmptyState
