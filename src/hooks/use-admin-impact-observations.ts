@@ -133,23 +133,28 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       const rangeStart = getDateRangeStart(filters.dateRange)
       const isAllTime = filters.dateRange === 'all'
 
-      // When we're looking at all-time (any scope), fetch legacy import rows
-      // too so pre-2026 history is represented in the totals. Legacy rows
-      // are attached to backfill events with pre-2026 date_start, so we also
-      // drop the baseline date floor in that case (for the events query).
+      // Always include legacy rows on any all-time view, regardless of
+      // whether a collective filter is applied. This is the only way to
+      // keep stats consistent across surfaces (per Tate 2026-05-19):
+      // Brisbane in the national breakdown row MUST show the same numbers
+      // as Brisbane shown in the filtered summary card. Previously legacy
+      // was gated to collective-scoped views, which made the per-collective
+      // numbers in the national breakdown table differ from the same
+      // collective's numbers in the filtered view.
       //
-      // BUT: for the national all-time view, the BASELINE_* constants already
-      // represent pre-2026 history. If we also pulled in legacy rows there,
-      // pre-2026 contributions would be counted twice (once from the constants,
-      // once from the legacy row sum) - this was the /admin/impact doubling bug.
-      // Only include legacy rows when the view is scoped to a specific collective
-      // or activity type (where baselines aren't added).
+      // To avoid double-counting pre-2026 history (the doubling bug the
+      // gate was originally added to fix), the national summary now adds
+      // a BASELINE REMAINDER rather than the full BASELINE constants.
+      // Remainder = max(0, BASELINE - sum_of_legacy_rows). When the legacy
+      // imports cover most of pre-2026 history, the remainder shrinks
+      // toward zero and the national total = sum(live + legacy) +
+      // remainder = sum(live + legacy) + leftover_unimported_history.
       //
-      // For scoped date ranges (week/month/quarter/year), we never want
-      // legacy pre-2026 data - those represent rolled-up past contributions
-      // and don't make sense in a "this week" view.
+      // For scoped date ranges (week / month / quarter / year), we still
+      // skip legacy - those rows are pre-2026 and don't belong in a "this
+      // week" view.
       const isNationalAllTime = isAllTime && !filters.collectiveId && !filters.activityType
-      const includeLegacy = isAllTime && !isNationalAllTime
+      const includeLegacy = isAllTime
       const effectiveStart = rangeStart
         ?? (includeLegacy ? null : new Date(IMPACT_BASELINE_DATE).toISOString())
       const nowIso = new Date().toISOString()
@@ -290,20 +295,23 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
         }
       })
 
-      // Summary - sum from the returned rows (live + legacy where applicable).
+      // Summary - sum from the returned rows (live + legacy when included).
       //
-      // Baseline handling:
-      // - Global all-time view (no collective/activity filter): add national
-      //   baseline constants (pre-2026 totals that weren't imported as rows).
-      // - Collective all-time view: do NOT add baseline constants (those are
-      //   national-scope historical totals, not any single collective's) - 
-      //   instead the legacy import rows we fetched above cover the
-      //   pre-2026 history for that collective specifically.
+      // Baseline handling (new model, 2026-05-19):
+      //   - The legacy import rows in the DB represent pre-2026 history that
+      //     HAS been imported (per-collective). Their sum is the imported
+      //     portion of pre-2026 totals.
+      //   - The BASELINE_* constants represent the FULL pre-2026 national
+      //     total. The DIFFERENCE (baseline - sum_legacy) is the leftover
+      //     pre-2026 history that hasn't been imported as rows.
+      //   - National summary = sum(live + legacy) + max(0, baseline - sum_legacy)
+      //     so totals stay consistent: sum_per_collective(live + legacy)
+      //     + leftover-unimported = national total.
+      //   - Per-collective summary = sum(live + legacy) for that collective.
+      //     No baseline addition - baselines are a national rollup, not a
+      //     per-collective number.
       const showNationalBaseline = isAllTime && !filters.collectiveId && !filters.activityType
 
-      // Combined source for metric summation (live + legacy when included).
-      // Uses filteredLegacy so a title search narrows BOTH lists in lockstep - 
-      // otherwise summary totals diverge from the displayed rows.
       const summableRows: Record<string, unknown>[] = [
         ...(filtered as unknown as Record<string, unknown>[]),
         ...(filteredLegacy as unknown as Record<string, unknown>[]),
@@ -314,14 +322,21 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
         summaryMetrics[key] = sumMetric(summableRows, key)
       }
       if (showNationalBaseline) {
-        // Prefer app_settings values fetched above; fall back to constants when
-        // baselineSettings is null (non-national scope) or a key is absent.
         const bTrees    = baselineSettings?.trees     ?? BASELINE_TREES
         const bRubbish  = baselineSettings?.rubbishKg ?? BASELINE_RUBBISH_KG
-        if (metricKeys.includes('trees_planted'))
-          summaryMetrics['trees_planted'] = (summaryMetrics['trees_planted'] ?? 0) + bTrees
-        if (metricKeys.includes('rubbish_kg'))
-          summaryMetrics['rubbish_kg'] = (summaryMetrics['rubbish_kg'] ?? 0) + bRubbish
+        if (metricKeys.includes('trees_planted')) {
+          // Already in summaryMetrics: live + legacy. Leftover = baseline -
+          // legacy_contribution. Cap at zero so legacy over-covering baseline
+          // doesn't subtract from live totals.
+          const legacyTrees = sumMetric(filteredLegacy as unknown as Record<string, unknown>[], 'trees_planted')
+          const remainder = Math.max(0, bTrees - legacyTrees)
+          summaryMetrics['trees_planted'] = (summaryMetrics['trees_planted'] ?? 0) + remainder
+        }
+        if (metricKeys.includes('rubbish_kg')) {
+          const legacyRubbish = sumMetric(filteredLegacy as unknown as Record<string, unknown>[], 'rubbish_kg')
+          const remainder = Math.max(0, bRubbish - legacyRubbish)
+          summaryMetrics['rubbish_kg'] = (summaryMetrics['rubbish_kg'] ?? 0) + remainder
+        }
       }
 
       // Attendees: prefer the numeric `attendees` column; legacy rows often
@@ -329,8 +344,6 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       const liveAttendeeSum = Math.round(sumMetric(filtered as unknown as Record<string, unknown>[], 'attendees'))
       let legacyAttendeeSum = 0
       for (const r of filteredLegacy) {
-        // Don't use `||` - a legitimate 0 attendees would fall through to the
-        // notes parse. Prefer explicit column, fall back to notes only if null.
         const att = r.attendees != null
           ? Number(r.attendees) || 0
           : (parseAttendance(r.notes as string | null) ?? 0)
@@ -346,10 +359,20 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       const bEvents    = baselineSettings?.events    ?? BASELINE_EVENTS
       const bAttendees = baselineSettings?.attendees ?? BASELINE_ATTENDEES
       const bHours     = baselineSettings?.hours     ?? BASELINE_HOURS
+
+      // Baseline remainder for the count-shaped metrics. For each: subtract
+      // the legacy-contribution from the national baseline and add the
+      // leftover. Cap at zero so over-coverage doesn't make the total drop.
+      const legacyEventCount = new Set(filteredLegacy.map((r) => r.event_id)).size
+      const eventsRemainder    = showNationalBaseline ? Math.max(0, bEvents    - legacyEventCount)  : 0
+      const attendeesRemainder = showNationalBaseline ? Math.max(0, bAttendees - legacyAttendeeSum) : 0
+      const hoursLegacySum     = Math.round(sumMetric(filteredLegacy as unknown as Record<string, unknown>[], 'hours_total'))
+      const hoursRemainder     = showNationalBaseline ? Math.max(0, bHours     - hoursLegacySum)    : 0
+
       const summary: ImpactSummary = {
-        totalEvents:         uniqueEventIds.size + (showNationalBaseline ? bEvents    : 0),
-        totalAttendees:      totalAttendees      + (showNationalBaseline ? bAttendees : 0),
-        totalEstimatedHours: totalEstimatedHours + (showNationalBaseline ? bHours     : 0),
+        totalEvents:         uniqueEventIds.size + eventsRemainder,
+        totalAttendees:      totalAttendees      + attendeesRemainder,
+        totalEstimatedHours: totalEstimatedHours + hoursRemainder,
         metrics: summaryMetrics,
       }
 
