@@ -297,23 +297,40 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
 
       // Summary - sum from the returned rows (live + legacy when included).
       //
-      // Baseline handling (new model, 2026-05-19):
-      //   - The legacy import rows in the DB represent pre-2026 history that
-      //     HAS been imported (per-collective). Their sum is the imported
-      //     portion of pre-2026 totals.
-      //   - The BASELINE_* constants represent the FULL pre-2026 national
-      //     total. The DIFFERENCE (baseline - sum_legacy) is the leftover
-      //     pre-2026 history that hasn't been imported as rows.
-      //   - National summary = sum(live + legacy) + max(0, baseline - sum_legacy)
-      //     so totals stay consistent: sum_per_collective(live + legacy)
-      //     + leftover-unimported = national total.
-      //   - Per-collective summary = sum(live + legacy) for that collective.
-      //     No baseline addition - baselines are a national rollup, not a
-      //     per-collective number.
+      // Baseline handling (revised 2026-05-19 after CDP-verified double-count):
+      //   - BASELINE_* constants are Tate's pre-2026 sheet total (the canonical
+      //     pre-2026 truth: 2022 + 2024 + 2025 figures). Hardcoded fact.
+      //   - Legacy import rows in the DB are a SUBSET of pre-2026 history that
+      //     was imported per-collective. Some collectives have it, some don't.
+      //   - LIVE rows on pre-2026 events (5,627 trees on 2024 events, 1,505 on
+      //     2025 events as of the verify probe) double-count: they're already
+      //     inside the BASELINE constant. Excluding them from the SUMMARY (not
+      //     the row list - users still want to see 2024/2025 events listed)
+      //     is the fix.
+      //
+      //   Formula for national all-time:
+      //     summary = sum(live rows on POST-2026 events)
+      //             + sum(legacy rows)
+      //             + max(0, BASELINE - sum(legacy))
+      //
+      //     When sum(legacy) <= BASELINE: collapses to sum(2026_live) + BASELINE
+      //     which is the canonical pre-2026-as-constant model.
+      //
+      //   For per-collective: just sum(live + legacy) for that collective. No
+      //   baseline addition - baselines are national, not per-collective.
+      //   For time-scoped: just sum(live), no legacy, no baseline.
       const showNationalBaseline = isAllTime && !filters.collectiveId && !filters.activityType
+      const baselineDateIso = new Date(IMPACT_BASELINE_DATE).toISOString()
+
+      // For the national-all-time SUMMARY we exclude live rows on pre-2026
+      // events (double-counting against BASELINE). The row list below still
+      // shows the full `rows` array so users see 2024/2025 events.
+      const summableLive: typeof filtered = showNationalBaseline
+        ? filtered.filter((r) => (r.events.date_start ?? '') >= baselineDateIso)
+        : filtered
 
       const summableRows: Record<string, unknown>[] = [
-        ...(filtered as unknown as Record<string, unknown>[]),
+        ...(summableLive as unknown as Record<string, unknown>[]),
         ...(filteredLegacy as unknown as Record<string, unknown>[]),
       ]
 
@@ -341,7 +358,9 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
 
       // Attendees: prefer the numeric `attendees` column; legacy rows often
       // carry their count in the notes field ("Legacy import: 123 attendees").
-      const liveAttendeeSum = Math.round(sumMetric(filtered as unknown as Record<string, unknown>[], 'attendees'))
+      // summableLive is the live-row subset that goes into the summary (excludes
+      // pre-2026 live rows for national-all-time to avoid double-counting baseline).
+      const liveAttendeeSum = Math.round(sumMetric(summableLive as unknown as Record<string, unknown>[], 'attendees'))
       let legacyAttendeeSum = 0
       for (const r of filteredLegacy) {
         const att = r.attendees != null
@@ -352,7 +371,7 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       const totalAttendees = liveAttendeeSum + legacyAttendeeSum
       const totalEstimatedHours = Math.round(sumMetric(summableRows, 'hours_total'))
       const uniqueEventIds = new Set([
-        ...rows.map((r) => r.eventId),
+        ...summableLive.map((r) => r.events.id),
         ...filteredLegacy.map((r) => r.event_id),
       ])
 
