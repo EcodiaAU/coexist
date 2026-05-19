@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
@@ -43,8 +43,26 @@ const scaleIn = {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Parallax Hero                                                      */
+/*  Parallax Hero - carousel mirroring HomeHero, admin-hero pair first  */
 /* ------------------------------------------------------------------ */
+
+// Mirrors HERO_PAIRS in pages/home.tsx but leads with the admin-hero pair
+// so the admin landing has its own identity on first paint, then cycles
+// through the same conservation imagery the public home shows. fgLayout
+// matches each pair's natural composition: 'bottom' for home (silhouettes
+// pinned to the bottom edge with the original w-[120%] sm:w-[70%] inner
+// container), 'full' for everything else (full-bleed FG over BG).
+type HeroFgLayout = 'bottom' | 'full'
+const ADMIN_HERO_PAIRS: Array<{ bg: string; fg: string; alt: string; fgLayout: HeroFgLayout }> = [
+  { bg: '/img/admin-hero-bg.webp',      fg: '/img/admin-hero-fg.webp',      alt: 'Australian conservation landscape', fgLayout: 'full' },
+  { bg: '/img/home-hero-bg.webp',       fg: '/img/home-hero-fg.webp',       alt: 'Australian conservation landscape', fgLayout: 'bottom' },
+  { bg: '/img/explore-hero-bg.webp',    fg: '/img/explore-hero-fg.webp',    alt: 'Co-Exist collectives across Australia', fgLayout: 'full' },
+  { bg: '/img/contact-hero-bg.webp',    fg: '/img/contact-hero-fg.webp',    alt: 'Connect with Co-Exist',             fgLayout: 'full' },
+  { bg: '/img/donate-hero-bg.webp',     fg: '/img/donate-hero-fg.webp',     alt: 'Support Co-Exist',                  fgLayout: 'full' },
+  { bg: '/img/leadership-hero-bg.webp', fg: '/img/leadership-hero-fg.webp', alt: 'Co-Exist leaders',                  fgLayout: 'full' },
+]
+
+const ADMIN_HERO_ROTATE_MS = 6000
 
 function AdminHero({
   rm,
@@ -53,34 +71,92 @@ function AdminHero({
 }) {
   const { bgRef, fgRef, textRef } = useParallaxLayers({ withScale: false })
 
+  // Auto-advance through ADMIN_HERO_PAIRS, crossfading. Wordmark stays
+  // fixed on top. Reduced-motion preference holds on pair 0.
+  const [activeIndex, setActiveIndex] = useState(0)
+  useEffect(() => {
+    if (rm || ADMIN_HERO_PAIRS.length <= 1) return
+    const id = setInterval(() => {
+      setActiveIndex((i) => (i + 1) % ADMIN_HERO_PAIRS.length)
+    }, ADMIN_HERO_ROTATE_MS)
+    return () => clearInterval(id)
+  }, [rm])
+
   return (
     <div className="relative">
       <div className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
-        {/* Layer 0: Background landscape - slowest parallax */}
+        {/* Layer 0: Background landscape - slowest parallax. Stacked imgs,
+            opacity crossfades the active pair in. */}
         <div
           ref={rm ? undefined : bgRef}
-          className="h-full will-change-transform"
+          className="h-full relative will-change-transform"
         >
-          <img
-            src="/img/admin-hero-bg.webp"
-            alt="Australian conservation landscape"
-            className="w-full h-full object-cover object-center sm:h-auto sm:object-fill block"
-          />
+          {ADMIN_HERO_PAIRS.map((pair, i) => (
+            <img
+              key={`bg-${i}`}
+              src={pair.bg}
+              alt={i === activeIndex ? pair.alt : ''}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              className={cn(
+                'w-full h-full object-cover object-center sm:h-auto sm:object-fill block',
+                i === 0 ? 'relative' : 'absolute inset-0',
+                'transition-opacity duration-[1200ms] ease-in-out',
+                i === activeIndex ? 'opacity-100' : 'opacity-0',
+              )}
+            />
+          ))}
         </div>
 
-        {/* Layer 1: Foreground elements - medium parallax */}
+        {/* Layer 1: Foreground elements - medium parallax. 'bottom' silhouette
+            pairs use the home-style inner container; 'full' pairs cover the
+            whole hero. Both fade between active states. */}
         <div
           ref={rm ? undefined : fgRef}
           className="absolute inset-0 z-[3] will-change-transform"
         >
-          <img
-            src="/img/admin-hero-fg.webp"
-            alt="Conservation volunteers"
-            className="w-full h-full object-cover object-center sm:h-auto sm:object-fill block"
-          />
+          {ADMIN_HERO_PAIRS.map((pair, i) => {
+            const isActive = i === activeIndex
+            const fadeCls = cn(
+              'transition-opacity duration-[1200ms] ease-in-out',
+              isActive ? 'opacity-100' : 'opacity-0',
+            )
+            if (pair.fgLayout === 'bottom') {
+              return (
+                <div
+                  key={`fg-${i}`}
+                  className={cn('absolute bottom-0 inset-x-0 flex justify-center pointer-events-none', fadeCls)}
+                >
+                  <div className="w-[120%] -ml-[10%] sm:w-[70%] sm:ml-0">
+                    <img
+                      src={pair.fg}
+                      alt=""
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                      decoding="async"
+                      className="w-full h-auto block"
+                    />
+                  </div>
+                </div>
+              )
+            }
+            return (
+              <img
+                key={`fg-${i}`}
+                src={pair.fg}
+                alt=""
+                loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                className={cn(
+                  'absolute inset-0 w-full h-full object-cover object-center sm:h-auto sm:object-fill block pointer-events-none',
+                  fadeCls,
+                )}
+              />
+            )
+          })}
         </div>
 
-        {/* Layer 2: Text overlay - above fg so dropdown is clickable */}
+        {/* Layer 2: Text overlay - above fg. Wordmark is the persistent
+            identity layer; never animates with the carousel. */}
         <div
           ref={rm ? undefined : textRef}
           className="absolute inset-x-0 top-[15%] sm:top-[8%] z-[4] flex flex-col items-center px-6 will-change-transform"
@@ -95,7 +171,11 @@ function AdminHero({
               src="/logos/white-wordmark.webp"
               alt="Co-Exist"
               className="h-24 sm:h-36"
-              style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }}
+              style={{
+                // Layered drop shadow so the white wordmark stays legible
+                // across every carousel pair (some have lighter skies / sand).
+                filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.35)) drop-shadow(0 8px 24px rgba(0,0,0,0.25))',
+              }}
             />
           </motion.div>
         </div>
