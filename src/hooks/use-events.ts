@@ -30,7 +30,6 @@ export interface EventWithCollective extends Event {
 
 export interface EventDetailData extends Event {
   collectives: Pick<Collective, 'id' | 'name' | 'cover_image_url' | 'slug' | 'region' | 'state' | 'timezone'> | null
-  profiles: Pick<Profile, 'id' | 'display_name' | 'avatar_url'> | null
   registration_count: number
   user_registration: EventRegistration | null
   attendees: Pick<Profile, 'id' | 'display_name' | 'avatar_url'>[]
@@ -217,10 +216,18 @@ export function useEventDetail(eventId: string | undefined) {
     queryFn: async () => {
       if (!eventId) return null
 
-      // Fetch event first (needed for collective_id in invite check)
+      // Fetch event first (needed for collective_id in invite check).
+      // No embedded profile join on events_created_by_fkey: it was unused by
+      // any UI surface and pulled an RLS-gated row that's invisible to
+      // members who don't share an active collective with the event creator
+      // (e.g. a Sydney leader viewing an event Jess created as a global
+      // manager - Jess isn't in Sydney's collective_members, so the embed
+      // row was RLS-denied and could fail the whole `.single()` call,
+      // blocking the entire event detail page). Managers can create events
+      // for any collective without needing membership.
       const { data: event, error } = await supabase
         .from('events')
-        .select('*, collectives(id, name, slug, cover_image_url, region, state, timezone), profiles!events_created_by_fkey(id, display_name, avatar_url)')
+        .select('*, collectives(id, name, slug, cover_image_url, region, state, timezone)')
         .eq('id', eventId)
         .single()
       if (error) throw error
@@ -304,7 +311,7 @@ export function prefetchEventDetail(
     queryFn: async () => {
       const { data: event, error } = await supabase
         .from('events')
-        .select('*, collectives(id, name, slug, cover_image_url, region, state, timezone), profiles!events_created_by_fkey(id, display_name, avatar_url)')
+        .select('*, collectives(id, name, slug, cover_image_url, region, state, timezone)')
         .eq('id', eventId)
         .single()
       if (error) throw error
