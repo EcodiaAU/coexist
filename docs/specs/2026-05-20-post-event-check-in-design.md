@@ -79,8 +79,12 @@ Rewrite `enforce_event_day_check_in_window()` (event_registrations):
 - past:
   - if `EXISTS (SELECT 1 FROM event_impact WHERE event_id = NEW.event_id)`
     -> RAISE 'Check-in is closed - impact has been logged for this event.'
-  - else require `is_collective_leader_or_above(auth.uid(), <event collective>)`;
-    if not -> RAISE 'Post-event check-in is available to leaders only.'
+  - else require `is_collective_leader_or_above(auth.uid(), <event collective>)
+    OR is_admin_or_staff(auth.uid())` (this mirrors the non-self branches of the
+    event_registrations RLS update policy `registrations_update_own_or_leader`,
+    i.e. exactly who can check OTHERS in on the day; the self-row path is
+    deliberately excluded so participant self check-in stays day-of only);
+    if not -> RAISE 'Post-event check-in is available to event leaders and admins only.'
   - else allow.
 
 Rewrite `enforce_walk_in_day_window()` (event_walk_ins, BEFORE INSERT):

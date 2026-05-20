@@ -104,9 +104,15 @@ BEGIN
             HINT = 'Reopen by contacting a national admin if attendance needs to change.';
   END IF;
 
-  IF NOT public.is_collective_leader_or_above(auth.uid(), event_collective) THEN
+  -- Authority mirrors the day-of check-in authority exactly: the non-self
+  -- branches of the event_registrations RLS update policy
+  -- (registrations_update_own_or_leader = collective leader/co_leader OR global
+  -- staff OR own row). We deliberately EXCLUDE the own-row path so participant
+  -- self check-in (3-digit code) stays day-of only; backfill is leaders/admins.
+  IF NOT (public.is_collective_leader_or_above(auth.uid(), event_collective)
+          OR public.is_admin_or_staff(auth.uid())) THEN
     RAISE EXCEPTION
-      'Post-event check-in is available to event leaders only.'
+      'Post-event check-in is available to event leaders and admins only.'
       USING ERRCODE = '23514',
             HINT = 'Ask your event leader to record this attendance.';
   END IF;
