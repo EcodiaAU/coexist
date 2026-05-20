@@ -27,6 +27,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import {
   useEventDetail,
   useEventAttendees,
+  useEventImpact,
   useCheckIn,
   useUncheckIn,
   usePromoteFromWaitlist,
@@ -35,7 +36,7 @@ import {
 import { useOffline } from '@/hooks/use-offline'
 import { usePendingSync } from '@/hooks/use-pending-sync'
 import { triggerManualSync } from '@/lib/offline-sync'
-import { isEventToday as isEventTodayCheck } from '@/lib/date-format'
+import { isCheckInOpenForLeader, localDateIn } from '@/lib/date-format'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import { useAuth } from '@/hooks/use-auth'
 import type { AttendeeWithStatus } from '@/hooks/use-events'
@@ -95,7 +96,7 @@ function AttendeeRow({
   isPending,
   isUnchecking,
   isPromoting,
-  isEventToday,
+  checkInOpen,
 }: {
   attendee: AttendeeWithStatus
   onCheckIn: () => void
@@ -105,7 +106,7 @@ function AttendeeRow({
   isPending: boolean
   isUnchecking: boolean
   isPromoting?: boolean
-  isEventToday: boolean
+  checkInOpen: boolean
 }) {
   const isCheckedIn = attendee.status === 'attended'
   const isWaitlisted = attendee.status === 'waitlisted'
@@ -164,7 +165,7 @@ function AttendeeRow({
           >
             <Check size={18} strokeWidth={2.5} />
           </span>
-          {isEventToday && (
+          {checkInOpen && (
             <button
               type="button"
               onClick={(e: React.MouseEvent) => { e.stopPropagation(); onUncheck() }}
@@ -199,8 +200,8 @@ function AttendeeRow({
           icon={<UserCheck size={14} />}
           onClick={(e: React.MouseEvent) => { e.stopPropagation(); onCheckIn() }}
           loading={isPending}
-          disabled={!isEventToday}
-          title={isEventToday ? undefined : 'Check-in opens day of event'}
+          disabled={!checkInOpen}
+          title={checkInOpen ? undefined : 'Check-in is closed for this event'}
         >
           Check In
         </Button>
@@ -320,6 +321,11 @@ export default function EventDayPage() {
 
   const { data: event, isLoading: eventLoading } = useEventDetail(eventId)
   const { data: attendees, isLoading: attendeesLoading } = useEventAttendees(eventId)
+  // Existence of an event_impact row is the canonical "impact logged" signal -
+  // it closes the post-event check-in backfill window (matches the BE triggers
+  // in 20260520000000_post_event_checkin_backfill.sql).
+  const { data: existingImpact } = useEventImpact(eventId)
+  const impactLogged = !!existingImpact
   const { isAssistLeader, isLoading: roleLoading } = useCollectiveRole(event?.collective_id)
   const isStaff = profile?.role === 'leader' || profile?.role === 'manager' || profile?.role === 'admin'
 
@@ -347,7 +353,19 @@ export default function EventDayPage() {
     (event as { timezone?: string | null } | undefined)?.timezone ??
     (event as { collectives?: { timezone?: string | null } | null } | undefined)?.collectives?.timezone ??
     'Australia/Sydney'
-  const isEventToday = isEventTodayCheck(event?.date_start, eventTz)
+
+  // Check-in window (post-event backfill, 2026-05-20). Leaders/admins can check
+  // attendees in on the event day AND afterwards until impact is logged - this
+  // covers lost-wifi and partner-org sign-in sheets transcribed later. Future
+  // check-in stays blocked (the 2026-05-09 wrong-day fix).
+  const checkInOpen = isCheckInOpenForLeader(event?.date_start, eventTz, impactLogged)
+  const eventDay = event?.date_start ? localDateIn(eventTz, event.date_start) : null
+  const today = localDateIn(eventTz)
+  const isFutureEvent = !!eventDay && eventDay > today
+  const isPastEvent = !!eventDay && eventDay < today
+  const checkInClosedMessage = isFutureEvent
+    ? 'Check-in opens on the day of the event'
+    : 'Check-in is closed - impact has been logged for this event'
 
 
   const stagger = {
@@ -408,8 +426,8 @@ export default function EventDayPage() {
   const handleCheckIn = useCallback(
     (userId: string) => {
       if (!eventId) return
-      if (!isEventToday) {
-        toast.error('Check-in opens on the day of the event')
+      if (!checkInOpen) {
+        toast.error(checkInClosedMessage)
         return
       }
       setCheckingInUserId(userId)
@@ -424,16 +442,16 @@ export default function EventDayPage() {
         },
       )
     },
-    [eventId, checkIn, isEventToday, toast],
+    [eventId, checkIn, checkInOpen, checkInClosedMessage, toast],
   )
 
   const handleUncheckRequest = useCallback((attendee: AttendeeWithStatus) => {
-    if (!isEventToday) {
-      toast.error('Un-check-in is only available on the day of the event')
+    if (!checkInOpen) {
+      toast.error(checkInClosedMessage)
       return
     }
     setUncheckTarget(attendee)
-  }, [isEventToday, toast])
+  }, [checkInOpen, checkInClosedMessage, toast])
 
   const handleUncheckConfirm = useCallback(() => {
     if (!eventId || !uncheckTarget) return
@@ -475,8 +493,8 @@ export default function EventDayPage() {
   const handleAddAndCheckIn = useCallback(
     async (userId: string, displayName: string | null) => {
       if (!eventId) return
-      if (!isEventToday) {
-        toast.error('Check-in opens on the day of the event')
+      if (!checkInOpen) {
+        toast.error(checkInClosedMessage)
         return
       }
       setAddingMemberId(userId)
@@ -502,7 +520,7 @@ export default function EventDayPage() {
         setAddingMemberId(null)
       }
     },
-    [eventId, isEventToday, toast, queryClient],
+    [eventId, checkInOpen, checkInClosedMessage, toast, queryClient],
   )
 
   // Toggle the public QR check-in on/off for this event
@@ -588,7 +606,7 @@ export default function EventDayPage() {
           >
             Show Code
           </Button>
-          {(isAssistLeader || isStaff) && (
+          {(isAssistLeader || isStaff) && checkInOpen && (
             <Button
               variant="primary"
               icon={<UserPlus size={16} />}
@@ -663,8 +681,10 @@ export default function EventDayPage() {
           </motion.div>
         )}
 
-        {/* Day-of-event banner: warns leaders before-the-day that check-in is locked */}
-        {!isEventToday && (
+        {/* Check-in window banner (post-event backfill, 2026-05-20). Three states:
+            future = locked until the day; past + open = backfill window; past +
+            impact logged = closed/final. */}
+        {isFutureEvent && (
           <motion.div
             variants={fadeUp}
             className="mb-5 rounded-xl bg-warning-50 border border-warning-200 p-3 flex items-start gap-2"
@@ -674,6 +694,36 @@ export default function EventDayPage() {
               <p className="font-semibold">Check-in opens day of event</p>
               <p className="text-warning-600 mt-0.5">
                 You'll be able to check attendees in (and undo) once the event date arrives.
+              </p>
+            </div>
+          </motion.div>
+        )}
+        {isPastEvent && checkInOpen && (
+          <motion.div
+            variants={fadeUp}
+            className="mb-5 rounded-xl bg-primary-50 border border-primary-200 p-3 flex items-start gap-2"
+          >
+            <UserCheck size={16} className="text-primary-600 mt-0.5 shrink-0" />
+            <div className="text-sm text-primary-700">
+              <p className="font-semibold">Post-event check-in is open</p>
+              <p className="text-primary-600 mt-0.5">
+                Missed someone on the day? You can still check attendees in and add
+                walk-ins here until you log impact data for this event.
+              </p>
+            </div>
+          </motion.div>
+        )}
+        {isPastEvent && !checkInOpen && (
+          <motion.div
+            variants={fadeUp}
+            className="mb-5 rounded-xl bg-neutral-100 border border-neutral-200 p-3 flex items-start gap-2"
+          >
+            <Check size={16} className="text-neutral-500 mt-0.5 shrink-0" />
+            <div className="text-sm text-neutral-600">
+              <p className="font-semibold">Check-in closed</p>
+              <p className="text-neutral-500 mt-0.5">
+                Impact has been logged, so attendance for this event is final.
+                Contact a national admin if it needs to change.
               </p>
             </div>
           </motion.div>
@@ -781,7 +831,7 @@ export default function EventDayPage() {
                       isPending={checkingInUserId === attendee.user_id}
                       isUnchecking={uncheckingUserId === attendee.user_id}
                       isPromoting={promotingUserId === attendee.user_id}
-                      isEventToday={isEventToday}
+                      checkInOpen={checkInOpen}
                     />
                   ))}
                 </div>

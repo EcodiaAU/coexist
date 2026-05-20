@@ -151,6 +151,43 @@ export function isSignInButtonVisible(
   return Date.now() <= startMs + 2 * 60 * 60 * 1000
 }
 
+/**
+ * True iff a LEADER/ADMIN may check attendees in (or out) for this event.
+ *
+ * This is the asymmetric backfill window (post-event check-in, 2026-05-20):
+ *   - Future (event's AEST day after today): CLOSED. Preserves the 9-May
+ *     wrong-day fix - never mark attendance before the event has happened.
+ *   - Event day: OPEN, regardless of impact - a leader might log impact early
+ *     then keep checking in stragglers.
+ *   - After the event day: OPEN only while impact has NOT been logged. This is
+ *     the backfill window for lost-wifi / partner-org sign-in sheets. Once
+ *     impact is logged the attendance is final and check-in CLOSES.
+ *
+ * Mirrors the server-side guards in
+ * supabase/migrations/20260520000000_post_event_checkin_backfill.sql, which use
+ * the existence of an `event_impact` row as the canonical "impact logged"
+ * signal. Pass `impactLogged` from `useEventImpact(eventId)` (row exists).
+ *
+ * NOTE: participant self check-in (3-digit code) and the public QR form are NOT
+ * gated by this - they stay day-of only (`isEventToday` / `isSignInButtonVisible`).
+ *
+ * @param eventDateStartIso events.date_start timestamptz ISO string
+ * @param timeZone          the event's effective IANA timezone
+ * @param impactLogged      true iff an event_impact row exists for the event
+ */
+export function isCheckInOpenForLeader(
+  eventDateStartIso: string | null | undefined,
+  timeZone: string,
+  impactLogged: boolean,
+): boolean {
+  if (!eventDateStartIso) return false
+  const eventDay = localDateIn(timeZone, eventDateStartIso)
+  const today = localDateIn(timeZone)
+  if (eventDay > today) return false // future: blocked
+  if (eventDay === today) return true // event day: open
+  return !impactLogged // past: open until impact logged
+}
+
 // ---------------------------------------------------------------------------
 // datetime-local <-> ISO conversion in a target timezone
 // ---------------------------------------------------------------------------

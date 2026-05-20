@@ -240,6 +240,16 @@ export default function CheckInPage() {
             return
           } else if (msg.includes('cancelled')) {
             setErrorKind('event_cancelled')
+          } else if (
+            // Post-event backfill window guards (leaders only / impact logged /
+            // before the day) raised by the BE check-in trigger. Participants
+            // self-checking-in outside the day-of window land here.
+            msg.includes('Check-in is closed') ||
+            msg.includes('Post-event check-in') ||
+            msg.includes('not available before the day') ||
+            msg.includes('leaders only')
+          ) {
+            setErrorKind('event_not_active')
           } else {
             setErrorKind('generic')
           }
