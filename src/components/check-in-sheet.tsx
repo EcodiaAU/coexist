@@ -83,13 +83,9 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
         return
       }
 
-      // waitlisted users can't check in via the sheet
-      if (validation.status === 'waitlisted') {
-        setErrorKind('not_registered')
-        setStep('error')
-        return
-      }
-
+      // No-row, waitlisted, and cancelled all fall through to the
+      // mutation: useCheckIn self path upserts to 'attended' on the day,
+      // matching the "register + sign in on the day" model.
       checkInMutation.mutate(
         { eventId: targetEventId, userId: user.id },
         {

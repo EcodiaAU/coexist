@@ -134,9 +134,14 @@ export function isEventToday(
  *
  * Visibility window:
  *   - Opens:  calendar-day start of the event's date in the event's
- *             timezone (matching the BE
- *             enforce_event_day_check_in_window trigger).
- *   - Closes: 2 hours after `eventDateStartIso`.
+ *             timezone (matches the BE enforce_event_day_check_in_window
+ *             trigger).
+ *   - Closes: end of the same calendar day in the event's timezone.
+ *
+ * Per Tate 2026-05-23 Co-Exist incident: previously closed 2h after
+ * start, but conservation events often run 3-4 hours and late arrivals
+ * lost the sign-in CTA mid-event. Day-of is now the model (matches the
+ * BE trigger and the new register-or-sign-in-on-the-day flow).
  *
  * @param eventDateStartIso events.date_start timestamptz ISO string
  * @param timeZone          the event's effective IANA timezone
@@ -146,9 +151,7 @@ export function isSignInButtonVisible(
   timeZone: string,
 ): boolean {
   if (!eventDateStartIso) return false
-  if (!isEventToday(eventDateStartIso, timeZone)) return false
-  const startMs = new Date(eventDateStartIso).getTime()
-  return Date.now() <= startMs + 2 * 60 * 60 * 1000
+  return isEventToday(eventDateStartIso, timeZone)
 }
 
 /**

@@ -145,12 +145,23 @@ export async function syncOfflineCheckIns(): Promise<number> {
     const batch = queue.slice(i, i + BATCH)
     const results = await Promise.allSettled(
       batch.map(async (item) => {
+        // Legacy queue is self check-in only (queueOfflineCheckIn callers
+        // all pass user.id). UPSERT so a walk-up who never registered
+        // before losing wifi still lands as 'attended' on replay. The BE
+        // day-of trigger is BEFORE UPDATE - INSERTs bypass it, UPDATEs
+        // still get the day-of guard. Per Tate 2026-05-23 Co-Exist.
         const { error, count } = await supabase
           .from('event_registrations')
-          .update({ status: 'attended', checked_in_at: item.timestamp })
-          .eq('event_id', item.eventId)
-          .eq('user_id', item.userId)
-          .in('status', ['registered', 'invited'])
+          .upsert(
+            {
+              event_id: item.eventId,
+              user_id: item.userId,
+              status: 'attended',
+              checked_in_at: item.timestamp,
+              registered_at: item.timestamp,
+            },
+            { onConflict: 'event_id,user_id' },
+          )
         return { item, error, count }
       }),
     )
@@ -307,23 +318,52 @@ async function processChatMessage(action: OfflineAction): Promise<{ ok: boolean;
 }
 
 async function processCheckIn(action: OfflineAction): Promise<{ ok: boolean; conflict?: string }> {
-  const { eventId, userId, timestamp, client_action_id } = action.payload as {
+  const { eventId, userId, timestamp, client_action_id, isSelf } = action.payload as {
     eventId: string
     userId: string
     timestamp: string
     client_action_id?: string
+    isSelf?: boolean
   }
   const { data: existing } = await (supabase as any)
     .from('event_registrations')
     .select('status, client_action_id')
     .eq('event_id', eventId)
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   // Idempotent: already attended OR same client_action_id already stamped.
   if (existing?.status === 'attended') return { ok: true }
   if (client_action_id && existing?.client_action_id === client_action_id) return { ok: true }
 
+  // SELF check-in path: upsert so a walk-up who queued offline before
+  // ever registering still lands as 'attended' on replay. Mirrors the
+  // online useCheckIn / useCodeCheckIn upsert path. Per Tate 2026-05-23
+  // Co-Exist incident.
+  if (isSelf) {
+    const { error } = await (supabase as any)
+      .from('event_registrations')
+      .upsert(
+        {
+          event_id: eventId,
+          user_id: userId,
+          status: 'attended',
+          checked_in_at: timestamp,
+          registered_at: timestamp,
+          ...(client_action_id ? { client_action_id } : {}),
+        },
+        { onConflict: 'event_id,user_id' },
+      )
+    if (error) {
+      if (error.code === '23505') return { ok: true }
+      return { ok: false, conflict: 'Check-in sync failed. Please try again.' }
+    }
+    return { ok: true }
+  }
+
+  // LEADER check-in path: UPDATE only. Leaders don't auto-register
+  // arbitrary users via this path - the WalkInSheet handles that with
+  // explicit confirmation.
   const { error } = await (supabase as any)
     .from('event_registrations')
     .update({

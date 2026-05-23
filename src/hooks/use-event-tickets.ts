@@ -359,6 +359,10 @@ export function useCodeCheckIn() {
         queueOfflineAction('check-in', {
           eventId: cached.id,
           userId: user.id,
+          // 3-digit code check-in is always a self path; flag it so the
+          // offline replay handler upserts a row when none exists yet
+          // (walk-up that registered + signed in on the day with no wifi).
+          isSelf: true,
           timestamp: new Date().toISOString(),
         })
         return { eventId: cached.id, userId: user.id }
@@ -386,28 +390,32 @@ export function useCodeCheckIn() {
 
       if (regErr) throw regErr
 
-      if (!registration) throw new Error('You are not registered for this event.')
-      if (registration.status === 'attended' && registration.checked_in_at) {
+      if (registration?.status === 'attended' && registration.checked_in_at) {
         throw new Error('Already checked in.')
       }
-      if (registration.status === 'waitlisted') {
-        throw new Error('You are on the waitlist for this event.')
-      }
-      if (registration.status !== 'registered' && registration.status !== 'invited') {
-        throw new Error('You are not registered for this event.')
-      }
 
-      const { error: updateErr } = await supabase
+      // UPSERT instead of UPDATE: a walk-up who never tapped Register
+      // gets registered + checked in atomically. The BE day-of trigger
+      // (enforce_event_day_check_in_window) is BEFORE UPDATE, so INSERTs
+      // bypass it - which is what we want for day-of walk-ups. UPDATEs
+      // (existing registered / waitlisted / cancelled rows being flipped
+      // to attended) still hit the trigger and are rejected on the wrong
+      // day. Per Tate 2026-05-23 Co-Exist incident.
+      const nowIso = new Date().toISOString()
+      const { error: upsertErr } = await supabase
         .from('event_registrations')
-        .update({
-          status: 'attended',
-          checked_in_at: new Date().toISOString(),
-        })
-        .eq('event_id', event.id)
-        .eq('user_id', user.id)
-        .in('status', ['registered', 'invited'])
+        .upsert(
+          {
+            event_id: event.id,
+            user_id: user.id,
+            status: 'attended',
+            checked_in_at: nowIso,
+            registered_at: nowIso,
+          },
+          { onConflict: 'event_id,user_id' },
+        )
 
-      if (updateErr) throw updateErr
+      if (upsertErr) throw upsertErr
 
       return { eventId: event.id, userId: user.id }
     },

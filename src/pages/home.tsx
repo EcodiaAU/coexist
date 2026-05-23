@@ -410,9 +410,10 @@ function NextEventCard({
     (nextEvent as { timezone?: string | null }).timezone ??
     (nextEvent as { collectives?: { timezone?: string | null } | null }).collectives?.timezone ??
     'Australia/Sydney'
-  // Sign-in button uses a wider visibility window: event-tz calendar-day
-  // start -> date_start + 2h. Separate from happeningNow (start->end) so
-  // the pulsing ring / live-indicator logic is unaffected.
+  // Sign-in button visible all of event day in the event's timezone.
+  // Separate from happeningNow (start->end) so the pulsing ring /
+  // live-indicator logic stays unaffected. Per Tate 2026-05-23 Co-Exist:
+  // must cover late arrivals across the whole event runtime.
   const showSignInCTA = isSignInButtonVisible(nextEvent.date_start, nextEventTz)
   const days = daysUntil(nextEvent.date_start)
   const isToday = days === 0

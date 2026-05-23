@@ -146,9 +146,36 @@ export function getEventDuration(start: string, end: string | null): string {
   return `${minutes}m`
 }
 
+/**
+ * Default end-of-event grace when an event row has no explicit date_end.
+ * Mirrors the client-side check-in active window default in
+ * event-detail.tsx so a row with date_end IS NULL stays "active" through
+ * a sensible runtime instead of flipping to "past" the second
+ * date_start is reached. Per Tate 2026-05-23 Co-Exist incident: people
+ * walking up after the event started lost the Register CTA on event
+ * detail and the row dropped out of nearby/discover/collective queries.
+ */
+export const DEFAULT_EVENT_DURATION_MS = 3 * 60 * 60 * 1000
+
 export function isPastEvent(event: Event): boolean {
-  const end = event.date_end ?? event.date_start
-  return new Date(end).getTime() < Date.now()
+  const start = new Date(event.date_start).getTime()
+  const end = event.date_end
+    ? new Date(event.date_end).getTime()
+    : start + DEFAULT_EVENT_DURATION_MS
+  return end < Date.now()
+}
+
+/**
+ * Cutoff timestamp for "event hasn't ended yet" filters on Supabase
+ * queries (nearby / discover / collective events). Returns the ISO
+ * timestamp DEFAULT_EVENT_DURATION_MS ago so a row with date_end IS
+ * NULL whose date_start is still inside that grace window passes the
+ * filter. Pair with PostgREST: .or(
+ *   `date_end.gte.${nowIso},and(date_end.is.null,date_start.gte.${cutoffIso})`
+ * ).
+ */
+export function stillActiveStartCutoffIso(): string {
+  return new Date(Date.now() - DEFAULT_EVENT_DURATION_MS).toISOString()
 }
 
 /* ------------------------------------------------------------------ */
@@ -184,8 +211,14 @@ export function useMyEvents(tab: 'upcoming' | 'invited' | 'past') {
         .filter((r) => {
           if (!r.events) return false
           const evt = r.events as EventWithCollective
-          const endMs = new Date(evt.date_end ?? evt.date_start).getTime()
           const startMs = new Date(evt.date_start).getTime()
+          // Same grace as isPastEvent / stillActiveStartCutoffIso: events
+          // without an explicit date_end stay "active" for the default
+          // duration so day-of walk-ups aren't sent to a "past" tab while
+          // the event is still running.
+          const endMs = evt.date_end
+            ? new Date(evt.date_end).getTime()
+            : startMs + DEFAULT_EVENT_DURATION_MS
           if (tab === 'upcoming') {
             // Show if event hasn't started yet OR is still happening
             return startMs >= now || endMs >= now
@@ -436,11 +469,16 @@ export function useNearbyEvents(limit = 20) {
     queryKey: ['nearby-events', limit],
     queryFn: async () => {
       const now = new Date().toISOString()
+      const cutoff = stillActiveStartCutoffIso()
+      // "Still active" = explicit date_end in the future OR (date_end NULL
+      // AND date_start within the default grace window). Without the
+      // grace branch, events without a date_end vanished the second
+      // date_start passed, hiding them from walk-ups on event day.
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives(id, name, timezone)')
         .eq('status', 'published')
-        .or(`date_start.gte.${now},date_end.gte.${now}`)
+        .or(`date_end.gte.${now},and(date_end.is.null,date_start.gte.${cutoff})`)
         .order('date_start', { ascending: true })
         .limit(limit)
       if (error) throw error
@@ -460,11 +498,13 @@ export function useDiscoverEvents(filters?: {
     queryKey: ['discover-events', filters?.activityType, filters?.collectiveId],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       const now = new Date().toISOString()
+      const cutoff = stillActiveStartCutoffIso()
+      // See useNearbyEvents for the rationale on the date_end-null grace.
       let query = supabase
         .from('events')
         .select('*, collectives(id, name, timezone)')
         .eq('status', 'published')
-        .or(`date_start.gte.${now},date_end.gte.${now}`)
+        .or(`date_end.gte.${now},and(date_end.is.null,date_start.gte.${cutoff})`)
         .order('date_start', { ascending: true })
         .limit(DISCOVER_PAGE_SIZE)
 
@@ -498,12 +538,14 @@ export function useCollectiveEvents(collectiveId: string | undefined) {
     queryFn: async () => {
       if (!collectiveId) return []
       const now = new Date().toISOString()
+      const cutoff = stillActiveStartCutoffIso()
+      // See useNearbyEvents for the rationale on the date_end-null grace.
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives(id, name, timezone)')
         .eq('collective_id', collectiveId)
         .eq('status', 'published')
-        .or(`date_start.gte.${now},date_end.gte.${now}`)
+        .or(`date_end.gte.${now},and(date_end.is.null,date_start.gte.${cutoff})`)
         .order('date_start', { ascending: true })
         .limit(20)
       if (error) throw error
@@ -744,6 +786,7 @@ export function useCancelRegistration() {
 export function useCheckIn() {
   const queryClient = useQueryClient()
   const { isOffline } = useOffline()
+  const { user } = useAuth()
 
   return useMutation({
     mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }) => {
@@ -757,11 +800,45 @@ export function useCheckIn() {
         queueOfflineAction('check-in', {
           eventId,
           userId,
+          // Stamps the self/leader path so the replay handler
+          // (processCheckIn) knows whether it can upsert (self) or must
+          // strictly UPDATE an existing row (leader). Mirrors the online
+          // branching below.
+          isSelf: user?.id === userId,
           timestamp: new Date().toISOString(),
         })
         return
       }
 
+      // SELF check-in path: upsert so a walk-up who never tapped Register
+      // before the event still ends up as 'attended' on the day. INSERTs
+      // bypass the enforce_event_day_check_in_window trigger (it's BEFORE
+      // UPDATE only), so the BE day-of guard still applies whenever an
+      // existing row is being flipped. UPSERT also recovers cancelled /
+      // waitlisted self check-ins on the day. Per Tate 2026-05-23
+      // Co-Exist incident: "should be able to register and signin on
+      // the day".
+      if (user?.id === userId) {
+        const nowIso = new Date().toISOString()
+        const { error } = await supabase
+          .from('event_registrations')
+          .upsert(
+            {
+              event_id: eventId,
+              user_id: userId,
+              status: 'attended',
+              checked_in_at: nowIso,
+              registered_at: nowIso,
+            },
+            { onConflict: 'event_id,user_id' },
+          )
+        if (error) throw error
+        return
+      }
+
+      // LEADER check-in path (userId != auth.uid()): keep the existing
+      // "must already be registered or invited" gate. Unregistered walk-ups
+      // are added by leaders via the WalkInSheet, not via this mutation.
       // Must chain .select() to get the updated rows back - otherwise
       // supabase-js returns count=null and the "not checkable" guard below
       // never fires, silently succeeding even when the user is already

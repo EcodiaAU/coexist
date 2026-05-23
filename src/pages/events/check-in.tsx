@@ -185,21 +185,19 @@ export default function CheckInPage() {
         .eq('user_id', user.id)
         .maybeSingle()
 
-      if (cached.data) {
-        if (cached.data.status === 'attended' && cached.data.checked_in_at) {
-          setErrorKind('already_checked_in')
-          setState('error')
-          return
-        }
-        if (cached.data.status === 'waitlisted') {
-          setState('waitlisted')
-          return
-        }
-        if (cached.data.status !== 'registered' && cached.data.status !== 'invited') {
-          setErrorKind('not_registered')
-          setState('error')
-          return
-        }
+      // Only one cached state still blocks the offline check-in: a row
+      // already marked 'attended' with a checked_in_at timestamp. Missing
+      // / waitlisted / cancelled all fall through to the queue and get
+      // upserted to 'attended' on replay (server side does an UPSERT).
+      // Per Tate 2026-05-23 Co-Exist incident.
+      if (
+        cached.data &&
+        cached.data.status === 'attended' &&
+        cached.data.checked_in_at
+      ) {
+        setErrorKind('already_checked_in')
+        setState('error')
+        return
       }
     } catch {
       // Query failed (truly offline / no cache) - proceed with queue
