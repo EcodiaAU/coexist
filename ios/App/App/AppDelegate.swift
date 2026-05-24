@@ -25,21 +25,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     }
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Clear stale debug fields from previous launch so the debug page reflects this run only.
-        capSet(nil, forKey: "apnsTokenHex")
-        capSet(nil, forKey: "apnsError")
-        capSet(false, forKey: "didRegisterCalled")
-        capSet(false, forKey: "didFailCalled")
-        capSet(false, forKey: "didSetUNCenterDelegate")
-        capSet(nil, forKey: "lastTapResponseAt")
-        capSet(nil, forKey: "lastTapUserInfo")
-        capSet(nil, forKey: "lastTapBridgeStatus")
-        capSet(nil, forKey: "unCenterDelegateClass")
-        // Note: don't clear pendingPushRoute here - if app was killed and relaunched
-        // via tap, the route MAY have been written before this clear (but actually
-        // didFinishLaunching runs BEFORE didReceive, so we clear and the tap then
-        // writes fresh). Safe either way.
-
         // Firebase init. Method swizzling is disabled via Info.plist
         // (FirebaseAppDelegateProxyEnabled=false) so we take manual control:
         // the OS calls didRegisterForRemoteNotificationsWithDeviceToken below,
@@ -68,10 +53,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
         // 17/18+, or another lifecycle path) appears to displace it later.
         // Owning the delegate here and forwarding to Capacitor's router
         // guarantees pushNotificationActionPerformed always reaches JS.
-        // Diagnostic: persisted tap-log on /admin/push-debug was empty across
-        // 1.8.7(10)+(11) - plugin never received the tap callback.
         UNUserNotificationCenter.current().delegate = self
-        capSet(true, forKey: "didSetUNCenterDelegate")
 
         return true
     }
@@ -83,14 +65,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
         // are the right moment to re-claim - by the time iOS delivers a tap response
         // (which happens after foreground), we're guaranteed to be the delegate.
         UNUserNotificationCenter.current().delegate = self
-        // Diagnostic: capture what we just overrode (logged BEFORE the re-claim by
-        // peeking at the existing delegate's class name in the next line is moot
-        // because we just overwrote it; instead, log AFTER for confirmation).
-        if let d = UNUserNotificationCenter.current().delegate {
-            capSet(String(describing: type(of: d)), forKey: "unCenterDelegateClass")
-        } else {
-            capSet("nil", forKey: "unCenterDelegateClass")
-        }
 
         // Tint every layer behind the WebView so the home-indicator zone matches the app
         guard let w = window else { return }
@@ -119,13 +93,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     // MARK: - Push Notifications (APNs + FCM bridge)
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        // Persist diagnostic state under the CapacitorStorage prefix so the
-        // push-debug page (which reads via Capacitor Preferences) can see it.
-        let hex = deviceToken.map { String(format: "%02x", $0) }.joined()
-        capSet(hex, forKey: "apnsTokenHex")
-        capSet(true, forKey: "didRegisterCalled")
-        capSet(ISO8601DateFormatter().string(from: Date()), forKey: "apnsTokenAt")
-
         // Forward to Firebase so it mints a corresponding FCM token.
         Messaging.messaging().apnsToken = deviceToken
 
@@ -142,12 +109,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        let ns = error as NSError
-        let msg = "\(ns.domain) code=\(ns.code) - \(ns.localizedDescription)"
-        capSet(msg, forKey: "apnsError")
-        capSet(true, forKey: "didFailCalled")
-        capSet(ISO8601DateFormatter().string(from: Date()), forKey: "apnsErrorAt")
-
         NotificationCenter.default.post(
             name: .capacitorDidFailToRegisterForRemoteNotifications,
             object: error
@@ -182,10 +143,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
-        // Diagnostic: record that iOS delivered a tap response to AppDelegate.
-        capSet(ISO8601DateFormatter().string(from: Date()), forKey: "lastTapResponseAt")
-        capSet(response.notification.request.content.userInfo.description, forKey: "lastTapUserInfo")
-
         // Native-direct routing: parse the deep-link route from userInfo and write
         // to Preferences as 'pendingPushRoute'. JS reads this on mount/resume and
         // navigates - bypasses the Capacitor pushNotificationActionPerformed path
@@ -203,7 +160,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
         if let router = capacitorNotificationRouter() {
             router.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
         } else {
-            capSet("bridge-not-ready", forKey: "lastTapBridgeStatus")
             completionHandler()
         }
     }

@@ -27,8 +27,17 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            minifyEnabled false
+            // R8 code shrink/obfuscation. Produces mapping.txt (auto-bundled into the
+            // AAB) so Play Console can deobfuscate crashes/ANRs, and reduces app size.
+            // Keep rules for the Capacitor/Cordova bridge live in proguard-rules.pro.
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            ndk {
+                // Bundle native debug symbols from Capacitor/plugin .so files so Play
+                // can symbolicate native crashes/ANRs. Stripped from delivered APKs.
+                debugSymbolLevel 'FULL'
+            }
         }
     }
 }

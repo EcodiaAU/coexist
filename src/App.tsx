@@ -136,7 +136,6 @@ const AdminReportsPage = lazy(() => import('@/pages/admin/reports'))
 const AdminWorkflowsPage = lazy(() => import('@/pages/admin/workflows'))
 const AdminCreatePage = lazy(() => import('@/pages/admin/create'))
 const DevToolsPage = lazy(() => import('@/pages/admin/dev-tools'))
-const PushDebugPage = lazy(() => import('@/pages/admin/push-debug'))
 const AdminPartnersPage = lazy(() => import('@/pages/admin/partners'))
 const AdminChallengesPage = lazy(() => import('@/pages/admin/challenges'))
 const ModerationQueuePage = lazy(() => import('@/pages/admin/moderation/index'))
@@ -458,7 +457,6 @@ function App() {
             <Route path="contacts" element={<RequireCapability cap="manage_users"><AdminContactsPage /></RequireCapability>} />
             <Route path="legal-pages" element={<RequireCapability cap="manage_system"><AdminLegalPagesPage /></RequireCapability>} />
             <Route path="dev-tools" element={<RequireCapability cap="manage_system"><DevToolsPage /></RequireCapability>} />
-            <Route path="push-debug" element={<RequireCapability cap="manage_system"><PushDebugPage /></RequireCapability>} />
             <Route path="development" element={<RequireCapability cap="manage_content"><AdminDevelopmentPage /></RequireCapability>} />
             <Route path="development/modules/new" element={<RequireCapability cap="manage_content"><AdminCreateModulePage /></RequireCapability>} />
             <Route path="development/modules/:moduleId" element={<RequireCapability cap="manage_content"><AdminModuleDetailPage /></RequireCapability>} />

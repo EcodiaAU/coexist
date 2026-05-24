@@ -440,10 +440,9 @@ export function usePushRegistration() {
       // Native-direct fallback: AppDelegate.didReceive writes `pendingPushRoute`
       // to Preferences on tap (1.8.7(13)+). We drain it here on mount AND poll
       // for the first 3s after mount because on cold-launch iOS may deliver
-      // the tap response to AppDelegate AFTER React has already mounted +
-      // run the initial drain (confirmed 1.8.7(14): lastTapResponseAt fires
-      // after JS drain on cold-launch, so single-shot drain is empty and the
-      // late write strands in Preferences).
+      // the tap response to AppDelegate AFTER React has already mounted + run
+      // the initial drain, so a single-shot drain is empty and the late write
+      // would otherwise strand in Preferences.
       const drainPendingPushRoute = async (): Promise<boolean> => {
         try {
           const got = await Preferences.get({ key: 'pendingPushRoute' })
