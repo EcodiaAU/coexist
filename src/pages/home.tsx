@@ -381,11 +381,11 @@ function NextEventCard({
             onClick={() => navigate('/events')}
             role="button"
             tabIndex={0}
-            aria-label="No upcoming events - discover what's happening near you"
+            aria-label="We're finalising next month's events - have a look at what's on now"
           >
             <Search size={24} className="mx-auto text-white/60 mb-3" />
-            <p className="text-sm text-white font-medium">No upcoming events</p>
-            <p className="text-xs text-white/60 mt-1 mb-4">Discover what's happening near you</p>
+            <p className="text-sm text-white font-medium">We're finalising next month's events</p>
+            <p className="text-xs text-white/60 mt-1 mb-4">Have a look at what's on now</p>
             <Button
               variant="primary"
               size="sm"
@@ -394,7 +394,7 @@ function NextEventCard({
                 navigate('/events')
               }}
             >
-              Find Events
+              See what's on
             </Button>
           </div>
         </Section>
