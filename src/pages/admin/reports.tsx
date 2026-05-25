@@ -121,8 +121,8 @@ const exportTypes: ExportType[] = [
   },
   {
     id: 'impact-pdf',
-    title: 'Impact Report (Branded)',
-    description: 'Branded template with charts and summary stats',
+    title: 'Impact Report',
+    description: 'Headline totals, per-collective breakdown, activity-type breakdown, leadership roster. Honours date + collective filters.',
     icon: <TreePine size={20} />,
     formats: ['pdf'],
     color: 'bg-secondary-400/25 text-secondary-900',
