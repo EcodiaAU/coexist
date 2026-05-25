@@ -68,9 +68,9 @@ export function useEventSurvey(
           : null)
 
       // 3. Fallback: auto-send survey for this activity type (attendee-facing only).
-      //    Leaders should NOT see attendee feedback surveys on the impact form page - 
+      //    Leaders should NOT see attendee feedback surveys on the impact form page -
       //    those questions are irrelevant and have no impact_metric tags.
-      const survey =
+      const activityAutoSend =
         (direct ?? impactForm) ??
         (mode !== 'leader' && activityType
           ? (
@@ -78,6 +78,27 @@ export function useEventSurvey(
                 .from('surveys')
                 .select('id, title, questions')
                 .eq('activity_type', activityType)
+                .eq('auto_send_after_event', true)
+                .eq('status', 'active')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+            ).data
+          : null)
+
+      // 4. Generic fallback: an auto-send survey with no activity_type. Migration
+      //    20260518070000 seeds "How was the event?" as exactly this row - the
+      //    intent was "apply to all events when no activity-specific survey is
+      //    configured", but the activityType filter above never matches a NULL
+      //    column. This cascade honours the seed's intent for attendees.
+      const survey =
+        activityAutoSend ??
+        (mode !== 'leader'
+          ? (
+              await supabase
+                .from('surveys')
+                .select('id, title, questions')
+                .is('activity_type', null)
                 .eq('auto_send_after_event', true)
                 .eq('status', 'active')
                 .order('created_at', { ascending: false })

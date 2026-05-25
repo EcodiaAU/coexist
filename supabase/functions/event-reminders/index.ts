@@ -6,12 +6,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * event-reminders - Scheduled Supabase Edge Function
  *
  * Called by pg_cron every 30 minutes. Finds upcoming events and sends
- * reminder emails to registered attendees:
+ * reminder email + push to registered attendees:
  *   - 24 hours before event start
  *   - 2 hours before event start
  *
  * Uses the `email_reminders_sent` table to track which reminders have
- * already been sent, preventing duplicates.
+ * already been sent, preventing duplicates. (Single row = both email and
+ * push delivered for that user/event/type combo.)
  */
 
 Deno.serve(async (req: Request) => {
@@ -49,7 +50,10 @@ Deno.serve(async (req: Request) => {
 
     if (events24h?.length) {
       for (const event of events24h) {
-        const sent = await sendReminders(supabase, event, '24h', 'tomorrow')
+        const sent = await sendReminders(supabase, event, '24h', 'tomorrow', {
+          pushTitle: `${event.title} is tomorrow`,
+          pushBody: 'See you there - tap to view details and get directions.',
+        })
         results.reminders_24h += sent.sent
         results.errors += sent.errors
       }
@@ -69,7 +73,10 @@ Deno.serve(async (req: Request) => {
 
     if (events2h?.length) {
       for (const event of events2h) {
-        const sent = await sendReminders(supabase, event, '2h', 'in 2 hours')
+        const sent = await sendReminders(supabase, event, '2h', 'in 2 hours', {
+          pushTitle: `${event.title} starts in 2 hours`,
+          pushBody: 'Time to get ready - tap to view details and get directions.',
+        })
         results.reminders_2h += sent.sent
         results.errors += sent.errors
       }
@@ -104,11 +111,13 @@ async function sendReminders(
   event: EventRow,
   reminderType: '24h' | '2h',
   timeUntil: string,
+  push: { pushTitle: string; pushBody: string },
 ): Promise<{ sent: number; errors: number }> {
   let sent = 0
   let errors = 0
 
-  // Check which reminders have already been sent for this event + type
+  // Check which reminders have already been sent for this event + type.
+  // A single row covers both email and push delivery for the user/event/type.
   const { data: alreadySent } = await supabase
     .from('email_reminders_sent')
     .select('user_id')
@@ -117,12 +126,13 @@ async function sendReminders(
 
   const alreadySentIds = new Set((alreadySent ?? []).map((r) => r.user_id))
 
-  // Get all registered attendees
+  // Get all registered attendees (includes 'registered' and 'invited' for reminders;
+  // 'attended' / 'cancelled' / 'waitlisted' are excluded - they don't need a heads-up).
   const { data: registrations } = await supabase
     .from('event_registrations')
     .select('user_id, profiles!inner(display_name)')
     .eq('event_id', event.id)
-    .eq('status', 'registered')
+    .in('status', ['registered', 'invited'])
 
   if (!registrations?.length) return { sent: 0, errors: 0 }
 
@@ -134,6 +144,35 @@ async function sendReminders(
     hour: 'numeric',
     minute: '2-digit',
   })
+
+  // Build the set of pending user IDs (not already sent) for a single batched push call.
+  const pendingUserIds: string[] = []
+  for (const reg of registrations) {
+    if (!alreadySentIds.has(reg.user_id)) pendingUserIds.push(reg.user_id)
+  }
+
+  // Fire one batched push for the whole event - send-push fans out per token + honours
+  // per-user notification prefs (event_reminder toggle, quiet hours). One network call
+  // beats N parallel ones; failures inside send-push don't abort the loop here.
+  if (pendingUserIds.length > 0) {
+    try {
+      await supabase.functions.invoke('send-push', {
+        body: {
+          userIds: pendingUserIds,
+          title: push.pushTitle,
+          body: push.pushBody,
+          data: {
+            type: 'event_reminder',
+            event_id: event.id,
+            route: `/events/${event.id}`,
+          },
+        },
+      })
+    } catch (err) {
+      console.error(`[event-reminders] batched push failed for event ${event.id}:`, (err as Error).message)
+      // Don't bail - email still goes per-user below.
+    }
+  }
 
   for (const reg of registrations) {
     if (alreadySentIds.has(reg.user_id)) continue

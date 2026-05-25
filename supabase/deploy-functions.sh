@@ -21,6 +21,8 @@ FUNCTIONS=(
   moderate-content
   event-day-notify
   event-reminders
+  event-post-photo-invite
+  event-post-survey-invite
   notify-application
   notify-report
   excel-sync
