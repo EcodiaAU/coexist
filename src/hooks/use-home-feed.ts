@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import {
+  fetchEventIdsForCollective,
+  fetchEventIdsForCollectives,
+} from '@/lib/collective-event-ids'
 import type {
   Database,
   Tables,
@@ -222,38 +226,51 @@ export function useMyCollective() {
         .single()
       if (error) throw error
 
+      // Host-aware event lookup: co-hosted events count for this collective
+      // too, not just events where it's the primary host. Origin: Jess
+      // 2026-05-25 P1.
+      const hostEventIds = await fetchEventIdsForCollective(collective.id)
+
       // Next event (include currently-happening events AND any event
       // that finished within the last 2 hours, so leaders can still find
       // the event from the home page to do post-event admin and so the
       // home feed doesn't drop a still-active event the moment its
       // scheduled end_time passes).
       const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
-      const { data: nextEvent, error: nextEventError } = await supabase
-        .from('events')
-        .select('id, title, date_start, date_end, address, cover_image_url, cover_image_position_x, cover_image_position_y, collective_id, status')
-        .eq('collective_id', collective.id)
-        .eq('status', 'published')
-        .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
-        .order('date_start', { ascending: true })
-        .limit(1)
-        .maybeSingle()
-      if (nextEventError) throw nextEventError
+      let nextEvent: Event | null = null
+      if (hostEventIds && hostEventIds.length > 0) {
+        const { data, error: nextEventError } = await supabase
+          .from('events')
+          .select('id, title, date_start, date_end, address, cover_image_url, cover_image_position_x, cover_image_position_y, collective_id, status')
+          .in('id', hostEventIds)
+          .eq('status', 'published')
+          .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
+          .order('date_start', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+        if (nextEventError) throw nextEventError
+        nextEvent = (data ?? null) as Event | null
+      }
 
       // Events this month
       const monthStart = new Date()
       monthStart.setDate(1)
       monthStart.setHours(0, 0, 0, 0)
-      const { count, error: countError } = await supabase
-        .from('events')
-        .select('id', { count: 'exact', head: true })
-        .eq('collective_id', collective.id)
-        .gte('date_start', monthStart.toISOString())
-      if (countError) throw countError
+      let count = 0
+      if (hostEventIds && hostEventIds.length > 0) {
+        const { count: c, error: countError } = await supabase
+          .from('events')
+          .select('id', { count: 'exact', head: true })
+          .in('id', hostEventIds)
+          .gte('date_start', monthStart.toISOString())
+        if (countError) throw countError
+        count = c ?? 0
+      }
 
       return {
         ...collective,
-        next_event: nextEvent ?? null,
-        events_this_month: count ?? 0,
+        next_event: nextEvent,
+        events_this_month: count,
       } as CollectiveWithNextEvent
     },
     enabled: !!user,
@@ -440,11 +457,16 @@ export function useCollectiveUpcomingEvents() {
       const collectiveIds = (memberships ?? []).map((m) => m.collective_id)
       if (collectiveIds.length === 0) return []
 
+      // event_hosts union covers events hosted by any of the user's
+      // collectives, primary or co-host. Origin: Jess 2026-05-25 P1.
+      const hostEventIds = await fetchEventIdsForCollectives(collectiveIds)
+      if (hostEventIds.length === 0) return []
+
       const { endCutoff, startCutoffNoEnd } = eventStillUpNextCutoffs()
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives(id, name, timezone)')
-        .in('collective_id', collectiveIds)
+        .in('id', hostEventIds)
         .eq('status', 'published')
         .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`)
         .order('date_start', { ascending: true })

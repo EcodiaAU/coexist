@@ -589,7 +589,13 @@ export function useAuthProvider(): AuthContextValue {
     if (Capacitor.isNativePlatform()) {
       try {
         await ensureSocialLogin('google')
-        const result = await SocialLogin.login({ provider: 'google', options: { scopes: ['email', 'profile'] } })
+        // Do NOT pass `scopes` here. @capgo/capacitor-social-login on Android
+        // hard-rejects ANY scopes array unless MainActivity extends
+        // ModifiedMainActivityForSocialLoginPlugin (see GoogleProvider.java).
+        // email + profile + openid are added as defaults by the plugin on
+        // both Android and iOS, which is exactly what Supabase signInWithIdToken
+        // needs - so passing scopes is both redundant and breaks Android signup.
+        const result = await SocialLogin.login({ provider: 'google', options: {} })
         const idToken = (result?.result as unknown as Record<string, unknown>)?.idToken as string | undefined
         if (!idToken) return { error: { message: 'No ID token received from Google', status: 400 } as unknown as AuthError }
         const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: idToken })

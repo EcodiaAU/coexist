@@ -1431,13 +1431,18 @@ async function syncFromExcel(
           continue
         }
 
-        // Parse date from col 2 (Excel serial number or ISO string)
+        // Parse date from col 2 (Excel serial number or ISO string).
+        // Forms rows carry a calendar date, no time. Stamp at NOON AEST so
+        // the calendar day reads correctly in every Australian timezone
+        // (midnight-AEST = 22:00-AWST previous-or-same day, which flipped
+        // Perth events onto the wrong calendar day in viewer-local lists).
+        // Origin: Jess 2026-05-25 P1 "perth time zones didn't get fixed".
         const dateRaw = row[2]
         let dateIso: string
         if (typeof dateRaw === 'number' && dateRaw > 1000) {
-          dateIso = excelSerialToDate(dateRaw) + 'T00:00:00+10:00'
+          dateIso = excelSerialToDate(dateRaw) + 'T12:00:00+10:00'
         } else if (typeof dateRaw === 'string' && dateRaw.match(/\d{4}-\d{2}-\d{2}/)) {
-          dateIso = dateRaw.includes('T') ? dateRaw : dateRaw + 'T00:00:00+10:00'
+          dateIso = dateRaw.includes('T') ? dateRaw : dateRaw + 'T12:00:00+10:00'
         } else {
           errors.push(`${rowLabel}: unparseable date "${dateRaw}" - skipped`)
           skippedLegacy++

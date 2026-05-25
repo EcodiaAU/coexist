@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { useToast } from '@/components/toast'
 import { queueOfflineAction } from '@/lib/offline-sync'
+import { fetchEventIdsForCollective } from '@/lib/collective-event-ids'
 import type {
   Database,
   Tables,
@@ -516,7 +517,11 @@ export function useDiscoverEvents(filters?: {
         query = query.eq('activity_type', filters.activityType)
       }
       if (filters?.collectiveId) {
-        query = query.eq('collective_id', filters.collectiveId)
+        // event_hosts so co-hosted events surface here too, not just events
+        // where this collective is the primary host.
+        const ids = await fetchEventIdsForCollective(filters.collectiveId)
+        if (!ids || ids.length === 0) return [] as EventWithCollective[]
+        query = query.in('id', ids)
       }
 
       const { data, error } = await query
@@ -537,13 +542,17 @@ export function useCollectiveEvents(collectiveId: string | undefined) {
     queryKey: ['collective-events', collectiveId],
     queryFn: async () => {
       if (!collectiveId) return []
+      // event_hosts so an event with this collective as accepted co-host
+      // shows up alongside primary-host events. Origin: Jess 2026-05-25 P1.
+      const ids = await fetchEventIdsForCollective(collectiveId)
+      if (!ids || ids.length === 0) return [] as EventWithCollective[]
       const now = new Date().toISOString()
       const cutoff = stillActiveStartCutoffIso()
       // See useNearbyEvents for the rationale on the date_end-null grace.
       const { data, error } = await supabase
         .from('events')
         .select('*, collectives(id, name, timezone)')
-        .eq('collective_id', collectiveId)
+        .in('id', ids)
         .eq('status', 'published')
         .or(`date_end.gte.${now},and(date_end.is.null,date_start.gte.${cutoff})`)
         .order('date_start', { ascending: true })
