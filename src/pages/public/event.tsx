@@ -13,13 +13,15 @@ import { formatTime } from '@/lib/date-format'
 import { WebFooter } from '@/components/web-footer'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
-function formatDate(date: string, timeZone?: string) {
+function formatDate(date: string, _legacyTz?: string) {
+  // Floating local time (Tate 2026-05-25): stored wall-clock is the
+  // wall-clock for every viewer.
   return new Date(date).toLocaleDateString('en-AU', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-    timeZone,
+    timeZone: 'UTC',
   })
 }
 

@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Hand, Calendar, Users, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { wallClockNow } from '@/lib/date-format'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
@@ -22,8 +23,10 @@ export default function WelcomeBackPage() {
     queryFn: async () => {
       if (!user) return null
 
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      // Floating-local: 30 days ago in wall-clock-as-UTC space so the
+      // event.date_start comparison aligns with the viewer's calendar.
+      const thirtyDaysAgo = new Date(wallClockNow().getTime())
+      thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30)
 
       const [eventsRes] = await Promise.all([
         supabase

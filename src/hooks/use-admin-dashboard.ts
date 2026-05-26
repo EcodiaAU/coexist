@@ -2,6 +2,7 @@ import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { sumMetric } from '@/lib/impact-metrics'
 import { fetchImpactRows, fetchBaselineSettings, applyBaselineRemainder } from '@/lib/impact-query'
+import { wallClockNow } from '@/lib/date-format'
 
 /* ------------------------------------------------------------------ */
 /*  Admin dashboard data hooks                                         */
@@ -61,7 +62,10 @@ async function fetchAdminOverview(dateRange: DateRange, collectiveId?: string): 
   const rangeStart = getDateRangeStart(dateRange)
   const isAllTime = dateRange === 'all'
   const scopedToCollective = !!collectiveId
-  const now = new Date().toISOString()
+  // Floating-local: event.date_start is wall-clock-as-UTC. Use wall-
+  // clock-now so "events that have happened" counts a today-morning
+  // event from the moment the viewer's clock passes its start time.
+  const now = wallClockNow().toISOString()
 
   // Events-count query is scope-aware: collective filter is applied when set.
   const eventsCountQueryBase = supabase

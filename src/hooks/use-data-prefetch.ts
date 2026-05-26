@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { wallClockNow } from '@/lib/date-format'
 
 // Leader prefetch functions
 import {
@@ -151,7 +152,8 @@ export function useDataPrefetch() {
       queryClient.prefetchQuery({
         queryKey: ['my-events', 'upcoming', userId],
         queryFn: async () => {
-          const now = Date.now()
+          // Floating-local: compare against viewer wall-clock-now.
+          const now = wallClockNow().getTime()
           const { data, error } = await supabase
             .from('event_registrations')
             .select('*, events(*, collectives(id, name))')
@@ -176,7 +178,7 @@ export function useDataPrefetch() {
       queryClient.prefetchQuery({
         queryKey: ['discover-events', undefined, undefined],
         queryFn: async () => {
-          const now = new Date().toISOString()
+          const now = wallClockNow().toISOString()
           const { data, error } = await supabase
             .from('events')
             .select('*, collectives(id, name)')

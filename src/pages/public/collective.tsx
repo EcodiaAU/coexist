@@ -5,6 +5,7 @@ import { MapPin, Users, TreePine, Heart, Shield, ArrowRight } from 'lucide-react
 import { Capacitor } from '@capacitor/core'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { supabase } from '@/lib/supabase'
+import { wallClockNow } from '@/lib/date-format'
 import { cn } from '@/lib/cn'
 import { Skeleton } from '@/components/skeleton'
 import { OGMeta, SITE_URL } from '@/components/og-meta'
@@ -140,7 +141,7 @@ export default function PublicCollectivePage() {
         .eq('collective_id', collective!.id)
         .eq('is_public', true)
         .eq('status', 'published')
-        .gte('date_start', new Date().toISOString())
+        .gte('date_start', wallClockNow().toISOString())
         .order('date_start', { ascending: true })
         .limit(5)
       if (error) throw error
@@ -360,16 +361,17 @@ export default function PublicCollectivePage() {
                     {/* Date badge */}
                     <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-white border border-moss-100/50 shrink-0">
                       <span className="text-[11px] font-semibold text-moss-500 uppercase leading-none">
-                        {d.toLocaleDateString('en-AU', { month: 'short' })}
+                        {/* Floating local time: stored wall-clock is the wall-clock. */}
+                        {d.toLocaleDateString('en-AU', { month: 'short', timeZone: 'UTC' })}
                       </span>
                       <span className="text-lg font-bold text-neutral-900 leading-tight">
-                        {d.getDate()}
+                        {d.getUTCDate()}
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-neutral-900 truncate text-[15px]">{evt.title}</p>
                       <p className="text-xs text-neutral-500 mt-0.5 truncate">
-                        {d.toLocaleDateString('en-AU', { weekday: 'short' })}
+                        {d.toLocaleDateString('en-AU', { weekday: 'short', timeZone: 'UTC' })}
                         {evt.address ? ` · ${evt.address}` : ''}
                       </p>
                     </div>

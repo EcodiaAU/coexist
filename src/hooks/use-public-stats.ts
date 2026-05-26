@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { fetchImpactRows, BASELINE_EVENTS, BASELINE_ATTENDEES } from '@/lib/impact-query'
 import { sumMetric } from '@/lib/impact-metrics'
+import { wallClockNow } from '@/lib/date-format'
 
 export interface PublicStats {
   volunteers: number
@@ -30,7 +31,7 @@ export function usePublicStats() {
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('collectives').select('id', { count: 'exact', head: true }).eq('is_active', true).neq('is_national', true),
         supabase.from('events').select('id', { count: 'exact', head: true })
-          .lt('date_start', new Date().toISOString())
+          .lt('date_start', wallClockNow().toISOString())
           .gte('date_start', new Date('2026-01-01').toISOString()),
       ])
 

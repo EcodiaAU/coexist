@@ -5,6 +5,7 @@ import {
   fetchEventIdsForCollective,
   fetchEventIdsForCollectives,
 } from '@/lib/collective-event-ids'
+import { wallClockNow } from '@/lib/date-format'
 import type {
   Database,
   Tables,
@@ -67,7 +68,10 @@ export interface MyUpcomingEvent extends Event {
  *   the last 4 hours (or any time in the future)
  */
 function eventStillUpNextCutoffs(): { endCutoff: string; startCutoffNoEnd: string } {
-  const nowMs = Date.now()
+  // Floating-local: compare wall-clock-as-UTC event times against the
+  // viewer's wall-clock-now so the 2h-after-end grace lines up with
+  // the viewer's phone clock, not absolute UTC.
+  const nowMs = wallClockNow().getTime()
   return {
     endCutoff: new Date(nowMs - 2 * 60 * 60 * 1000).toISOString(),
     startCutoffNoEnd: new Date(nowMs - 4 * 60 * 60 * 1000).toISOString(),
@@ -252,10 +256,16 @@ export function useMyCollective() {
         nextEvent = (data ?? null) as Event | null
       }
 
-      // Events this month
-      const monthStart = new Date()
-      monthStart.setDate(1)
-      monthStart.setHours(0, 0, 0, 0)
+      // Events this month - "this month" is the viewer's wall-clock
+      // month. Build the cutoff in wall-clock-as-UTC space so it
+      // compares apples-to-apples against the stored wall-clock-as-
+      // UTC date_start values.
+      const wcMonthRef = wallClockNow()
+      const monthStart = new Date(Date.UTC(
+        wcMonthRef.getUTCFullYear(),
+        wcMonthRef.getUTCMonth(),
+        1, 0, 0, 0, 0,
+      ))
       let count = 0
       if (hostEventIds && hostEventIds.length > 0) {
         const { count: c, error: countError } = await supabase

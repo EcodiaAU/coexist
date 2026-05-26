@@ -2,6 +2,7 @@ import { useQuery, keepPreviousData, type QueryClient } from '@tanstack/react-qu
 import { supabase } from '@/lib/supabase'
 import { sumMetricWeighted } from '@/lib/impact-metrics'
 import { fetchImpactRows } from '@/lib/impact-query'
+import { wallClockNow } from '@/lib/date-format'
 
 /* ------------------------------------------------------------------ */
 /*  Leader dashboard data hooks                                        */
@@ -50,8 +51,15 @@ interface PastEventRow {
 }
 
 async function fetchLeaderDashboard(collectiveId: string): Promise<LeaderDashboardData> {
-  const now = new Date()
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  // Floating-local: event.date_start is wall-clock-as-UTC. Build `now`
+  // and `startOfMonth` in the same wall-clock-as-UTC space so a leader
+  // querying at 8pm AEST doesn't see today's morning events still
+  // listed under "upcoming" and doesn't have "events this month" miss
+  // the first of the month before UTC midnight rolls over.
+  const now = wallClockNow()
+  const startOfMonth = new Date(Date.UTC(
+    now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0,
+  )).toISOString()
 
   const [
     membersRes,
@@ -171,7 +179,9 @@ export interface CollectiveFullStats {
 }
 
 async function fetchCollectiveFullStats(collectiveId: string): Promise<CollectiveFullStats | null> {
-  const now = new Date().toISOString()
+  // Floating-local cutoff for "cleanup events that have happened" -
+  // see fetchLeaderDashboard for the rationale.
+  const now = wallClockNow().toISOString()
 
   const [{ rows, legacyRows, eventIds, eventCount, shareByEventId }, membersRes, rpcRes] =
     await Promise.all([
@@ -256,7 +266,9 @@ export function prefetchCollectiveFullStats(queryClient: QueryClient, collective
 /* ── Engagement scores ── */
 
 async function fetchEngagementScores(collectiveId: string) {
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  // Floating-local: 30 days ago in viewer-wall-clock space, since the
+  // filter compares against event.date_start (wall-clock-as-UTC).
+  const thirtyDaysAgo = new Date(wallClockNow().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
   const { data: recentEvents } = await supabase
     .from('events')
@@ -311,11 +323,13 @@ export function prefetchEngagementScores(queryClient: QueryClient, collectiveId:
 /* ── Pending items ── */
 
 async function fetchPendingItems(collectiveId: string) {
+  // Floating-local: "past" by viewer wall-clock, not absolute UTC.
+  const wcNow = wallClockNow().toISOString()
   const { data: pastEvents } = await supabase
     .from('events')
     .select('id, title, date_start')
     .eq('collective_id', collectiveId)
-    .lt('date_start', new Date().toISOString())
+    .lt('date_start', wcNow)
     .neq('status', 'cancelled')
     .neq('status', 'draft')
     .order('date_start', { ascending: false })
@@ -375,8 +389,12 @@ export function useEventCalendar(collectiveId: string | undefined, month: Date) 
     queryFn: async () => {
       if (!collectiveId) return []
 
-      const start = new Date(month.getFullYear(), month.getMonth(), 1)
-      const end = new Date(month.getFullYear(), month.getMonth() + 1, 0)
+      // Floating-local: caller's `month` Date carries the viewer's
+      // wall-clock-month via its local-tz accessors. Build start/end
+      // as wall-clock-as-UTC instants so the comparison against
+      // events.date_start (wall-clock-as-UTC) lines up day-for-day.
+      const start = new Date(Date.UTC(month.getFullYear(), month.getMonth(), 1, 0, 0, 0, 0))
+      const end = new Date(Date.UTC(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59, 999))
 
       const { data, error } = await supabase
         .from('events')

@@ -5,6 +5,7 @@ import { useOffline } from '@/hooks/use-offline'
 import { useToast } from '@/components/toast'
 import { queueOfflineAction } from '@/lib/offline-sync'
 import { fetchEventIdsForCollective } from '@/lib/collective-event-ids'
+import { formatEventLong, wallClockNow } from '@/lib/date-format'
 import type {
   Database,
   Tables,
@@ -90,8 +91,16 @@ export {
 /* ------------------------------------------------------------------ */
 /*  Date helpers                                                       */
 /* ------------------------------------------------------------------ */
+//
+// Floating local time (Tate 2026-05-25): the stored wall-clock IS the
+// wall-clock for every viewer. The legacy `timeZone` parameter is kept
+// for source-level back-compat with existing call sites but is ignored
+// - every formatter pins `timeZone: 'UTC'` so the host's typed time
+// reads back unchanged on every device.
 
-export function formatEventDate(dateStr: string, timeZone?: string): string {
+const FLOATING_TZ = 'UTC'
+
+export function formatEventDate(dateStr: string, _legacyTz?: string): string {
   const date = new Date(dateStr)
   return new Intl.DateTimeFormat('en-AU', {
     weekday: 'short',
@@ -99,25 +108,25 @@ export function formatEventDate(dateStr: string, timeZone?: string): string {
     month: 'short',
     hour: 'numeric',
     minute: '2-digit',
-    timeZone,
+    timeZone: FLOATING_TZ,
   }).format(date)
 }
 
-export function formatEventDateShort(dateStr: string, timeZone?: string): string {
+export function formatEventDateShort(dateStr: string, _legacyTz?: string): string {
   const date = new Date(dateStr)
   return new Intl.DateTimeFormat('en-AU', {
     day: 'numeric',
     month: 'short',
-    timeZone,
+    timeZone: FLOATING_TZ,
   }).format(date)
 }
 
-export function formatEventTime(dateStr: string, timeZone?: string): string {
+export function formatEventTime(dateStr: string, _legacyTz?: string): string {
   const date = new Date(dateStr)
   return new Intl.DateTimeFormat('en-AU', {
     hour: 'numeric',
     minute: '2-digit',
-    timeZone,
+    timeZone: FLOATING_TZ,
   }).format(date)
 }
 
@@ -158,25 +167,33 @@ export function getEventDuration(start: string, end: string | null): string {
  */
 export const DEFAULT_EVENT_DURATION_MS = 3 * 60 * 60 * 1000
 
-export function isPastEvent(event: Event): boolean {
+/**
+ * Floating-local (Tate 2026-05-25 + 2026-05-26): event.date_start and
+ * date_end encode the host's wall-clock as UTC. Compare against
+ * wallClockNow() - a Date whose UTC equals the viewer's local clock -
+ * so "is past" lines up with what the viewer's phone says, not with
+ * absolute UTC. `now` is injectable so tests can pass a fixed Date
+ * without faking system time or guessing the runner's host tz.
+ */
+export function isPastEvent(event: Event, now: Date = wallClockNow()): boolean {
   const start = new Date(event.date_start).getTime()
   const end = event.date_end
     ? new Date(event.date_end).getTime()
     : start + DEFAULT_EVENT_DURATION_MS
-  return end < Date.now()
+  return end < now.getTime()
 }
 
 /**
  * Cutoff timestamp for "event hasn't ended yet" filters on Supabase
  * queries (nearby / discover / collective events). Returns the ISO
- * timestamp DEFAULT_EVENT_DURATION_MS ago so a row with date_end IS
- * NULL whose date_start is still inside that grace window passes the
- * filter. Pair with PostgREST: .or(
+ * timestamp DEFAULT_EVENT_DURATION_MS before wall-clock-now, so a row
+ * with date_end IS NULL whose date_start is still inside that grace
+ * window passes the filter. Pair with PostgREST: .or(
  *   `date_end.gte.${nowIso},and(date_end.is.null,date_start.gte.${cutoffIso})`
  * ).
  */
-export function stillActiveStartCutoffIso(): string {
-  return new Date(Date.now() - DEFAULT_EVENT_DURATION_MS).toISOString()
+export function stillActiveStartCutoffIso(now: Date = wallClockNow()): string {
+  return new Date(now.getTime() - DEFAULT_EVENT_DURATION_MS).toISOString()
 }
 
 /* ------------------------------------------------------------------ */
@@ -191,7 +208,10 @@ export function useMyEvents(tab: 'upcoming' | 'invited' | 'past') {
     queryFn: async () => {
       if (!user) return []
 
-      const now = Date.now()
+      // Floating-local: compare event.date_start/date_end (wall-clock-
+      // as-UTC) against the viewer's wall-clock-now so today's morning
+      // event doesn't linger in "upcoming" until UTC midnight.
+      const now = wallClockNow().getTime()
       let query = supabase
         .from('event_registrations')
         .select('*, events(*, collectives(id, name, timezone))')
@@ -469,8 +489,11 @@ export function useNearbyEvents(limit = 20) {
   return useQuery({
     queryKey: ['nearby-events', limit],
     queryFn: async () => {
-      const now = new Date().toISOString()
-      const cutoff = stillActiveStartCutoffIso()
+      // Floating-local: compare against wall-clock-now so a past-by-
+      // viewer-clock event drops off immediately, not at UTC midnight.
+      const wcNow = wallClockNow()
+      const now = wcNow.toISOString()
+      const cutoff = stillActiveStartCutoffIso(wcNow)
       // "Still active" = explicit date_end in the future OR (date_end NULL
       // AND date_start within the default grace window). Without the
       // grace branch, events without a date_end vanished the second
@@ -498,8 +521,9 @@ export function useDiscoverEvents(filters?: {
   return useInfiniteQuery({
     queryKey: ['discover-events', filters?.activityType, filters?.collectiveId],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
-      const now = new Date().toISOString()
-      const cutoff = stillActiveStartCutoffIso()
+      const wcNow = wallClockNow()
+      const now = wcNow.toISOString()
+      const cutoff = stillActiveStartCutoffIso(wcNow)
       // See useNearbyEvents for the rationale on the date_end-null grace.
       let query = supabase
         .from('events')
@@ -546,8 +570,9 @@ export function useCollectiveEvents(collectiveId: string | undefined) {
       // shows up alongside primary-host events. Origin: Jess 2026-05-25 P1.
       const ids = await fetchEventIdsForCollective(collectiveId)
       if (!ids || ids.length === 0) return [] as EventWithCollective[]
-      const now = new Date().toISOString()
-      const cutoff = stillActiveStartCutoffIso()
+      const wcNow = wallClockNow()
+      const now = wcNow.toISOString()
+      const cutoff = stillActiveStartCutoffIso(wcNow)
       // See useNearbyEvents for the rationale on the date_end-null grace.
       const { data, error } = await supabase
         .from('events')
@@ -646,10 +671,9 @@ export function useRegisterForEvent() {
               data: {
                 name: profile?.display_name ?? 'there',
                 event_title: event.title,
-                event_date: new Date(event.date_start).toLocaleString('en-AU', {
-                  weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-                  hour: 'numeric', minute: '2-digit',
-                }),
+                // Floating local time: the stored wall-clock IS the time,
+                // no tz conversion. Tate 2026-05-25.
+                event_date: formatEventLong(event.date_start),
                 event_location: event.address ?? '',
                 event_url: `https://app.coexistaus.org/events/${eventId}`,
               },
@@ -1192,10 +1216,8 @@ export function useCancelEvent() {
 
       // Notify all registered/waitlisted/invited attendees
       if (event && registrations?.length) {
-        const eventDate = new Date(event.date_start).toLocaleString('en-AU', {
-          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-          hour: 'numeric', minute: '2-digit',
-        })
+        // Floating local time: stored wall-clock is the wall-clock.
+        const eventDate = formatEventLong(event.date_start)
 
         for (const reg of registrations) {
           const displayName = (reg as unknown as { profiles?: { display_name: string | null } }).profiles?.display_name ?? 'there'
@@ -1519,10 +1541,8 @@ export function useInviteCollective() {
         .single()
 
       const inviterName = inviterProfile?.display_name ?? 'A leader'
-      const eventDate = new Date(event.date_start).toLocaleString('en-AU', {
-        weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-        hour: 'numeric', minute: '2-digit',
-      })
+      // Floating local time: stored wall-clock is the wall-clock.
+      const eventDate = formatEventLong(event.date_start)
 
       if (isReminder) {
         // ── Remind flow: 24h cooldown, post rich announcement to chat ──
@@ -1731,10 +1751,8 @@ export function usePromoteFromWaitlist() {
             data: {
               name: promotedProfile?.display_name ?? 'there',
               event_title: event.title,
-              event_date: new Date(event.date_start).toLocaleString('en-AU', {
-                weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-                hour: 'numeric', minute: '2-digit',
-              }),
+              // Floating local time: stored wall-clock is the wall-clock.
+              event_date: formatEventLong(event.date_start),
               event_url: `https://app.coexistaus.org/events/${eventId}`,
             },
           },

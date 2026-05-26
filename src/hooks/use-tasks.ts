@@ -8,6 +8,7 @@ import { queueOfflineAction } from '@/lib/offline-sync'
 import { getCurrentPeriodKey, getDueDate, type TaskTemplate, type TaskInstance } from '@/hooks/use-admin-tasks'
 import { resolveAndGenerateDynamicInstances } from '@/hooks/use-timeline-rules'
 import { COLLECTIVE_ROLE_RANK } from '@/lib/constants'
+import { wallClockNow } from '@/lib/date-format'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -685,7 +686,7 @@ export function useGenerateTaskInstances() {
               .select('id, title, date_start')
               .eq('collective_id', collectiveId)
               .eq('status', 'published')
-              .gte('date_start', new Date().toISOString())
+              .gte('date_start', wallClockNow().toISOString())
               .order('date_start', { ascending: true })
               .limit(1)
             if (events?.[0]) nextEventMap.set(collectiveId, events[0])

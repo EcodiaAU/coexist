@@ -46,6 +46,7 @@ import { Avatar } from '@/components/avatar'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { cn } from '@/lib/cn'
+import { wallClockNow } from '@/lib/date-format'
 import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { queueOfflineAction } from '@/lib/offline-sync'
@@ -92,7 +93,8 @@ function MiniCalendar({ collectiveId }: { collectiveId: string | undefined }) {
   const { data: events = [] } = useEventCalendar(collectiveId, currentMonth)
 
   const eventDays = useMemo(
-    () => new Set(events.map((e) => new Date(e.date_start).getDate())),
+    // Floating local time: stored wall-clock day = UTC day-of-month.
+    () => new Set(events.map((e) => new Date(e.date_start).getUTCDate())),
     [events],
   )
 
@@ -969,8 +971,10 @@ export default function LeaderDashboardPage() {
 
   const Wrapper = isInLeaderLayout ? LeaderPassthroughWrapper : LeaderPageWrapper
 
-  // Find an event within ±3 hours of now (must be before early returns)
-  const mountTimeRef = useRef(Date.now())
+  // Find an event within ±3 hours of now (must be before early returns).
+  // Floating-local: event.date_start is wall-clock-as-UTC, so anchor
+  // "now" to the viewer's wall-clock too.
+  const mountTimeRef = useRef(wallClockNow().getTime())
   const currentEvent = useMemo(() => {
     if (!data?.upcomingEvents) return null
     const THREE_HOURS = 3 * 60 * 60 * 1000
@@ -1314,6 +1318,8 @@ export default function LeaderDashboardPage() {
                           month: 'short',
                           hour: 'numeric',
                           minute: '2-digit',
+                          // Floating local time: stored wall-clock is the wall-clock.
+                          timeZone: 'UTC',
                         })}
                       </p>
                       {event.address && (

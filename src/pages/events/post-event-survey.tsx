@@ -8,6 +8,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
 import { useEventDetail, ACTIVITY_TYPE_LABELS, isPastEvent } from '@/hooks/use-events'
+import { wallClockNow } from '@/lib/date-format'
 import { useEventSurvey } from '@/hooks/use-event-survey'
 import { SurveyQuestionRenderer } from '@/components/survey-questions'
 import { isQuestionVisible, stripHiddenAnswers } from '@/components/survey-questions-utils'
@@ -172,7 +173,9 @@ export default function PostEventSurveyPage() {
   const surveyWindowExpired = useMemo(() => {
     if (!event || !isPastEvent(event)) return false
     const eventEnd = new Date(event.date_end ?? event.date_start).getTime()
-    return (Date.now() - eventEnd) / (1000 * 60 * 60 * 24) > 7
+    // Floating-local: event.date_end is wall-clock-as-UTC, so the "7 day
+    // window expired" check compares against wall-clock-now.
+    return (wallClockNow().getTime() - eventEnd) / (1000 * 60 * 60 * 24) > 7
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event?.date_end, event?.date_start])
 

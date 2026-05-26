@@ -66,7 +66,7 @@ import {
 import { useOffline } from '@/hooks/use-offline'
 import { usePendingSync } from '@/hooks/use-pending-sync'
 import { triggerManualSync } from '@/lib/offline-sync'
-import { isEventToday } from '@/lib/date-format'
+import { isEventToday, wallClockNow } from '@/lib/date-format'
 import {
     Page,
     Header,
@@ -386,12 +386,14 @@ export default function EventDetailPage() {
   const [cancelReason, setCancelReason] = useState('')
   const [inviteMessage, setInviteMessage] = useState('')
   const [descriptionExpanded, setDescriptionExpanded] = useState(false)
-  const [now, setNow] = useState(() => Date.now())
+  // Floating-local: store now as wall-clock-as-UTC ms so we can compare
+  // against event.date_start (also wall-clock-as-UTC).
+  const [now, setNow] = useState(() => wallClockNow().getTime())
   const [checkInForcedOpen, setCheckInForcedOpen] = useState(false)
 
   // Re-evaluate active state every 60s so "Check In Now" appears on time
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60_000)
+    const timer = setInterval(() => setNow(wallClockNow().getTime()), 60_000)
     return () => clearInterval(timer)
   }, [])
 

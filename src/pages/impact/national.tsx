@@ -28,6 +28,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useNationalImpact, useNationalCustomMetrics } from '@/hooks/use-impact'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { supabase } from '@/lib/supabase'
+import { wallClockNow } from '@/lib/date-format'
 import { parseLocationPoint } from '@/lib/geo'
 import { MapView } from '@/components'
 import type { MapMarker } from '@/components'
@@ -138,7 +139,7 @@ function useByActivity() {
       const { data } = await supabase
         .from('events')
         .select('activity_type, collectives(state)')
-        .lt('date_start', new Date().toISOString())
+        .lt('date_start', wallClockNow().toISOString())
         .limit(2000)
 
       const events = (data ?? []) as { activity_type?: string; collectives?: { state?: string } | null }[]

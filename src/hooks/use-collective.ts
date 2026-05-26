@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase, escapeIlike } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { COLLECTIVE_ROLE_RANK } from '@/lib/constants'
+import { wallClockNow } from '@/lib/date-format'
 import type {
   Database,
   Tables,
@@ -177,7 +178,9 @@ export function useCollectiveEvents(collectiveId: string | undefined, type: 'upc
     queryKey: ['collective-events', collectiveId, type],
     queryFn: async () => {
       if (!collectiveId) throw new Error('No collective ID')
-      const now = new Date().toISOString()
+      // Floating-local: compare against viewer wall-clock-now so past/
+      // upcoming flips at the viewer's local midnight, not UTC.
+      const now = wallClockNow().toISOString()
 
       let query = supabase
         .from('events')
