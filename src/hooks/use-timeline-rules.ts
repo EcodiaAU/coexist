@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { wallClockNow } from '@/lib/date-format'
 import type { Database, TablesInsert } from '@/types/database.types'
 
 type ActivityType = Database['public']['Enums']['activity_type']
@@ -173,8 +174,10 @@ export async function resolveAndGenerateDynamicInstances(
 
   const ruleMap = new Map((rules as TimelineRule[]).map((r) => [r.template_id, r]))
 
-  // 3. For each template + collective combo, find matching events
-  const now = new Date()
+  // 3. For each template + collective combo, find matching events.
+  // Floating-local: event.date_start is wall-clock-as-UTC, so compare
+  // against the viewer's wall-clock-now.
+  const now = wallClockNow()
 
   // Build all event queries in parallel, then batch upsert task instances
   interface EventQueryJob {
@@ -200,8 +203,11 @@ export async function resolveAndGenerateDynamicInstances(
   // Fetch events for all jobs in parallel
   const eventResults = await Promise.all(
     jobs.map(async (job) => {
+      // Floating-local: now encodes the viewer's wall-clock as UTC.
+      // Use setUTCDate so "+N days" advances the wall-clock day by N
+      // independent of host device DST boundaries.
       const lookaheadEnd = new Date(now)
-      lookaheadEnd.setDate(lookaheadEnd.getDate() + job.rule.lookahead_days)
+      lookaheadEnd.setUTCDate(lookaheadEnd.getUTCDate() + job.rule.lookahead_days)
 
       let eventQuery = supabase
         .from('events')

@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { IMPACT_SELECT_COLUMNS, sumMetric, isBuiltinMetric } from '@/lib/impact-metrics'
 import type { ImpactMetricDef } from '@/lib/impact-metrics'
 import { getDateRangeStart, type DateRange } from '@/hooks/use-admin-dashboard'
+import { wallClockNow } from '@/lib/date-format'
 import {
   IMPACT_BASELINE_DATE,
   BASELINE_TREES,
@@ -507,7 +508,7 @@ export function useYearOverYear(metricDefs: ImpactMetricDef[]) {
         .select(`${IMPACT_SELECT_COLUMNS}, logged_at, events!inner(date_start, date_end)`)
         .or('notes.is.null,notes.not.like.Legacy import:%')
         .gte('events.date_start', new Date(IMPACT_BASELINE_DATE).toISOString())
-        .lt('events.date_start', new Date().toISOString())
+        .lt('events.date_start', wallClockNow().toISOString())
 
       if (error) throw error
 
@@ -624,21 +625,23 @@ export function useEventsMissingImpact() {
   return useQuery({
     queryKey: ['admin-events-missing-impact'],
     queryFn: async () => {
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      // Floating-local: thirty days ago in wall-clock-as-UTC space.
+      const wcNow = wallClockNow()
+      const thirtyDaysAgo = new Date(wcNow.getTime())
+      thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30)
 
       const { data: events, error } = await supabase
         .from('events')
         .select('id, title, activity_type, date_end, date_start, status, collective_id, collectives(name)')
         .in('status', ['completed', 'published'])
         .gte('date_start', thirtyDaysAgo.toISOString())
-        .lte('date_start', new Date().toISOString())
+        .lte('date_start', wcNow.toISOString())
         .order('date_start', { ascending: false })
 
       if (error) throw error
 
-      // Filter to events that have actually ended
-      const now = new Date()
+      // Filter to events that have actually ended (wall-clock comparison)
+      const now = wcNow
       const ended = (events ?? []).filter((e) => {
         const end = new Date(e.date_end ?? e.date_start)
         return end <= now

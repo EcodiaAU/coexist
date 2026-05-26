@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { wallClockNow } from '@/lib/date-format'
 import type { Tables, Database } from '@/types/database.types'
 
 type ActivityType = Database['public']['Enums']['activity_type']
@@ -58,8 +59,9 @@ export function useNearbyEvents(
         return (data ?? []) as EventWithCollective[]
       }
 
-      // Fallback: no location - return all upcoming published events
-      const now = new Date().toISOString()
+      // Fallback: no location - return all upcoming published events.
+      // Floating-local: compare against viewer wall-clock-now.
+      const now = wallClockNow().toISOString()
       let query = supabase
         .from('events')
         .select('*, collectives(id, name)')

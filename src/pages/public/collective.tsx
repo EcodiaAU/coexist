@@ -5,6 +5,7 @@ import { MapPin, Users, TreePine, Heart, Shield, ArrowRight } from 'lucide-react
 import { Capacitor } from '@capacitor/core'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { supabase } from '@/lib/supabase'
+import { wallClockNow } from '@/lib/date-format'
 import { cn } from '@/lib/cn'
 import { Skeleton } from '@/components/skeleton'
 import { OGMeta, SITE_URL } from '@/components/og-meta'
@@ -140,7 +141,7 @@ export default function PublicCollectivePage() {
         .eq('collective_id', collective!.id)
         .eq('is_public', true)
         .eq('status', 'published')
-        .gte('date_start', new Date().toISOString())
+        .gte('date_start', wallClockNow().toISOString())
         .order('date_start', { ascending: true })
         .limit(5)
       if (error) throw error

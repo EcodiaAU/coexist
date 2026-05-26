@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { wallClockNow } from '@/lib/date-format'
 import type { ImpactFormConfig } from '@/hooks/use-auto-survey'
 
 /* ------------------------------------------------------------------ */
@@ -126,13 +127,18 @@ export function usePendingImpactFormTasks() {
       // Visibility window: deadline + 7-day buffer for overdue tasks to still show.
       // E.g. 48h deadline → visible for ~9 days; 168h (7d) deadline → visible for ~14 days.
       const visibilityDays = Math.ceil(deadlineHours / 24) + 7
-      const windowStart = new Date()
-      windowStart.setDate(windowStart.getDate() - visibilityDays)
+      // Floating-local: build the window in wall-clock-as-UTC space so
+      // it compares apples-to-apples against events.date_start (also
+      // wall-clock-as-UTC). setUTCDate keeps "N days ago" aligned with
+      // the host wall-clock calendar.
+      const wcNow = wallClockNow()
+      const windowStart = new Date(wcNow.getTime())
+      windowStart.setUTCDate(windowStart.getUTCDate() - visibilityDays)
 
       // Fetch events where either date_start or date_end falls within the
       // last 14 days. This catches multi-day events that started before the
       // window but ended within it. We filter more precisely in JS below.
-      const now = new Date().toISOString()
+      const now = wcNow.toISOString()
       let eventsQuery = supabase
         .from('events')
         .select('id, title, activity_type, collective_id, date_end, date_start, status, collectives(name)')

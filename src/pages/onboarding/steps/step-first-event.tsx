@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Calendar, MapPin, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { wallClockNow } from '@/lib/date-format'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
@@ -30,7 +31,7 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
         .from('events')
         .select('*')
         .eq('status', 'published')
-        .gte('date_start', new Date().toISOString())
+        .gte('date_start', wallClockNow().toISOString())
         .order('date_start', { ascending: true })
         .limit(5)
 

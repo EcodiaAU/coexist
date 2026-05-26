@@ -17,12 +17,19 @@
  *     than 3h should set date_end explicitly (the event-create form prompts
  *     for it).
  *
+ * Floating-local convention (Tate 2026-05-25 + 2026-05-26): event.date_start
+ * and date_end encode the host's wall-clock as UTC ("9am 15 Jun" stored as
+ * 2026-06-15T09:00Z). isPastEvent / stillActiveStartCutoffIso take an
+ * injectable `now: Date` whose UTC value encodes the viewer's wall-clock,
+ * so the comparison sides match without host-tz contamination. Tests pass
+ * a fixed Date directly rather than faking system time.
+ *
  * The same predicate also drives the nearby/discover/collective `OR`
  * filter (rows whose date_end is null but whose date_start falls within
  * the 3h grace window stay in the listing).
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
   isPastEvent,
   stillActiveStartCutoffIso,
@@ -36,7 +43,13 @@ type Event = Tables<'events'>
 /*  Helpers                                                             */
 /* ------------------------------------------------------------------- */
 
-function aestIso(
+/**
+ * Build a wall-clock-as-UTC ISO string. In the floating-local model the
+ * stored ISO is "wall-clock numbers stamped into UTC" - so "10am 15 Jun"
+ * is `2026-06-15T10:00:00.000Z`, no offset, no tz conversion. Same
+ * format that wallClockToUtcIso produces in production.
+ */
+function wallClockIso(
   year: number,
   month: number,
   day: number,
@@ -44,7 +57,22 @@ function aestIso(
   minute = 0,
 ): string {
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00+10:00`
+  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00.000Z`
+}
+
+/**
+ * Build the wall-clock-as-UTC Date the predicate expects for "now" -
+ * a Date whose .getUTCHours() etc return the viewer's local clock
+ * numbers. Just `new Date(wallClockIso(...))`.
+ */
+function wallClockNowFixture(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute = 0,
+): Date {
+  return new Date(wallClockIso(year, month, day, hour, minute))
 }
 
 /**
@@ -57,98 +85,78 @@ function eventAt(date_start: string, date_end: string | null = null): Event {
 }
 
 /* ------------------------------------------------------------------- */
-/*  Fixtures - event on 2026-05-15 starting at 10:00 AEST              */
+/*  Fixtures - event on 2026-05-15 starting at 10:00 (host wall-clock) */
 /* ------------------------------------------------------------------- */
 
-const EVENT_START = aestIso(2026, 5, 15, 10, 0)
-const EVENT_END_EXPLICIT_3H = aestIso(2026, 5, 15, 13, 0) // 3h fixed end
-const EVENT_END_EXPLICIT_6H = aestIso(2026, 5, 15, 16, 0) // 6h long event
+const EVENT_START = wallClockIso(2026, 5, 15, 10, 0)
+const EVENT_END_EXPLICIT_3H = wallClockIso(2026, 5, 15, 13, 0) // 3h fixed end
+const EVENT_END_EXPLICIT_6H = wallClockIso(2026, 5, 15, 16, 0) // 6h long event
 
-const T_DAY_BEFORE_MORNING = new Date(aestIso(2026, 5, 14, 9, 0))
-const T_DAY_BEFORE_NIGHT = new Date(aestIso(2026, 5, 14, 23, 59))
-const T_30MIN_BEFORE = new Date(aestIso(2026, 5, 15, 9, 30))
-const T_AT_START = new Date(aestIso(2026, 5, 15, 10, 0))
-const T_30MIN_AFTER_START = new Date(aestIso(2026, 5, 15, 10, 30))
-const T_1H_AFTER_START = new Date(aestIso(2026, 5, 15, 11, 0))
-const T_2H_AFTER_START = new Date(aestIso(2026, 5, 15, 12, 0))
-const T_2H59MIN_AFTER_START = new Date(aestIso(2026, 5, 15, 12, 59))
-const T_EXACTLY_3H_AFTER_START = new Date(aestIso(2026, 5, 15, 13, 0))
-const T_3H1MIN_AFTER_START = new Date(aestIso(2026, 5, 15, 13, 1))
-const T_4H_AFTER_START = new Date(aestIso(2026, 5, 15, 14, 0))
-const T_5H_AFTER_START = new Date(aestIso(2026, 5, 15, 15, 0))
-const T_7H_AFTER_START = new Date(aestIso(2026, 5, 15, 17, 0))
-const T_NEXT_DAY = new Date(aestIso(2026, 5, 16, 9, 0))
+const T_DAY_BEFORE_MORNING = wallClockNowFixture(2026, 5, 14, 9, 0)
+const T_DAY_BEFORE_NIGHT = wallClockNowFixture(2026, 5, 14, 23, 59)
+const T_30MIN_BEFORE = wallClockNowFixture(2026, 5, 15, 9, 30)
+const T_AT_START = wallClockNowFixture(2026, 5, 15, 10, 0)
+const T_30MIN_AFTER_START = wallClockNowFixture(2026, 5, 15, 10, 30)
+const T_1H_AFTER_START = wallClockNowFixture(2026, 5, 15, 11, 0)
+const T_2H_AFTER_START = wallClockNowFixture(2026, 5, 15, 12, 0)
+const T_2H59MIN_AFTER_START = wallClockNowFixture(2026, 5, 15, 12, 59)
+const T_EXACTLY_3H_AFTER_START = wallClockNowFixture(2026, 5, 15, 13, 0)
+const T_3H1MIN_AFTER_START = wallClockNowFixture(2026, 5, 15, 13, 1)
+const T_4H_AFTER_START = wallClockNowFixture(2026, 5, 15, 14, 0)
+const T_5H_AFTER_START = wallClockNowFixture(2026, 5, 15, 15, 0)
+const T_7H_AFTER_START = wallClockNowFixture(2026, 5, 15, 17, 0)
+const T_NEXT_DAY = wallClockNowFixture(2026, 5, 16, 9, 0)
 
 describe('isPastEvent', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
   describe('with no explicit date_end (3h grace window applies)', () => {
     const evt = eventAt(EVENT_START, null)
 
     it('returns false the day before', () => {
-      vi.setSystemTime(T_DAY_BEFORE_MORNING)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_DAY_BEFORE_MORNING)).toBe(false)
     })
 
     it('returns false at midnight-before-event-day (the day before)', () => {
-      vi.setSystemTime(T_DAY_BEFORE_NIGHT)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_DAY_BEFORE_NIGHT)).toBe(false)
     })
 
     it('returns false 30 minutes before event start', () => {
-      vi.setSystemTime(T_30MIN_BEFORE)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_30MIN_BEFORE)).toBe(false)
     })
 
     it('returns false exactly at event start (walk-up window opens)', () => {
-      vi.setSystemTime(T_AT_START)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_AT_START)).toBe(false)
     })
 
     it('returns false 30 minutes into the event (walk-up window open)', () => {
-      vi.setSystemTime(T_30MIN_AFTER_START)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_30MIN_AFTER_START)).toBe(false)
     })
 
     it('returns false 1 hour into the event (mid-event walk-up)', () => {
-      vi.setSystemTime(T_1H_AFTER_START)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_1H_AFTER_START)).toBe(false)
     })
 
     it('returns false 2 hours into the event (late mid-event walk-up)', () => {
-      vi.setSystemTime(T_2H_AFTER_START)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_2H_AFTER_START)).toBe(false)
     })
 
     it('returns false 2h59min into the event (just inside grace)', () => {
-      vi.setSystemTime(T_2H59MIN_AFTER_START)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_2H59MIN_AFTER_START)).toBe(false)
     })
 
     it('returns false exactly at the 3h grace boundary (strict less-than)', () => {
-      vi.setSystemTime(T_EXACTLY_3H_AFTER_START)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_EXACTLY_3H_AFTER_START)).toBe(false)
     })
 
     it('returns true 1 minute past the 3h grace window', () => {
-      vi.setSystemTime(T_3H1MIN_AFTER_START)
-      expect(isPastEvent(evt)).toBe(true)
+      expect(isPastEvent(evt, T_3H1MIN_AFTER_START)).toBe(true)
     })
 
     it('returns true 4 hours after start', () => {
-      vi.setSystemTime(T_4H_AFTER_START)
-      expect(isPastEvent(evt)).toBe(true)
+      expect(isPastEvent(evt, T_4H_AFTER_START)).toBe(true)
     })
 
     it('returns true the next day', () => {
-      vi.setSystemTime(T_NEXT_DAY)
-      expect(isPastEvent(evt)).toBe(true)
+      expect(isPastEvent(evt, T_NEXT_DAY)).toBe(true)
     })
   })
 
@@ -156,23 +164,19 @@ describe('isPastEvent', () => {
     const evt = eventAt(EVENT_START, EVENT_END_EXPLICIT_3H)
 
     it('returns false 30 minutes before event start', () => {
-      vi.setSystemTime(T_30MIN_BEFORE)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_30MIN_BEFORE)).toBe(false)
     })
 
     it('returns false mid-event (1h in)', () => {
-      vi.setSystemTime(T_1H_AFTER_START)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_1H_AFTER_START)).toBe(false)
     })
 
     it('returns false exactly at date_end (strict less-than)', () => {
-      vi.setSystemTime(T_EXACTLY_3H_AFTER_START)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_EXACTLY_3H_AFTER_START)).toBe(false)
     })
 
     it('returns true 1 minute past date_end', () => {
-      vi.setSystemTime(T_3H1MIN_AFTER_START)
-      expect(isPastEvent(evt)).toBe(true)
+      expect(isPastEvent(evt, T_3H1MIN_AFTER_START)).toBe(true)
     })
   })
 
@@ -180,13 +184,11 @@ describe('isPastEvent', () => {
     const evt = eventAt(EVENT_START, EVENT_END_EXPLICIT_6H)
 
     it('returns false 5h into a 6h event (explicit end honoured beyond 3h default)', () => {
-      vi.setSystemTime(T_5H_AFTER_START)
-      expect(isPastEvent(evt)).toBe(false)
+      expect(isPastEvent(evt, T_5H_AFTER_START)).toBe(false)
     })
 
     it('returns true 7h after start (past explicit 6h end)', () => {
-      vi.setSystemTime(T_7H_AFTER_START)
-      expect(isPastEvent(evt)).toBe(true)
+      expect(isPastEvent(evt, T_7H_AFTER_START)).toBe(true)
     })
   })
 
@@ -196,27 +198,18 @@ describe('isPastEvent', () => {
 })
 
 describe('stillActiveStartCutoffIso', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('returns an ISO string DEFAULT_EVENT_DURATION_MS in the past', () => {
-    const now = new Date(aestIso(2026, 5, 15, 12, 0))
-    vi.setSystemTime(now)
-    const cutoff = stillActiveStartCutoffIso()
+  it('returns an ISO string DEFAULT_EVENT_DURATION_MS before the supplied now', () => {
+    const now = wallClockNowFixture(2026, 5, 15, 12, 0)
+    const cutoff = stillActiveStartCutoffIso(now)
     const expected = new Date(now.getTime() - DEFAULT_EVENT_DURATION_MS).toISOString()
     expect(cutoff).toBe(expected)
   })
 
-  it('cutoff is older than now (so PostgREST date_start.gte.<cutoff> matches rows that started within the grace window)', () => {
-    vi.setSystemTime(new Date(aestIso(2026, 5, 15, 12, 0)))
-    const cutoff = new Date(stillActiveStartCutoffIso()).getTime()
-    expect(cutoff).toBeLessThan(Date.now())
-    expect(Date.now() - cutoff).toBe(DEFAULT_EVENT_DURATION_MS)
+  it('cutoff is older than the supplied now (so PostgREST date_start.gte.<cutoff> matches rows that started within the grace window)', () => {
+    const now = wallClockNowFixture(2026, 5, 15, 12, 0)
+    const cutoff = new Date(stillActiveStartCutoffIso(now)).getTime()
+    expect(cutoff).toBeLessThan(now.getTime())
+    expect(now.getTime() - cutoff).toBe(DEFAULT_EVENT_DURATION_MS)
   })
 })
 
@@ -230,14 +223,14 @@ describe('stillActiveStartCutoffIso', () => {
  * is the integration story they fit into - documented here so the next
  * person reading these tests knows what they DON'T cover:
  *
- *   1. useRegisterForEvent (src/hooks/use-events.ts:585) has no time
+ *   1. useRegisterForEvent (src/hooks/use-events.ts) has no time
  *      gate of its own. It upserts unconditionally, so a walk-up who
  *      somehow reaches the Register CTA (or hits the deep link) registers
  *      successfully at any time. Capacity is checked; if full, the user
  *      is auto-waitlisted.
  *
- *   2. useCodeCheckIn (src/hooks/use-event-tickets.ts:321) and the self
- *      branch of useCheckIn (src/hooks/use-events.ts:821) BOTH upsert
+ *   2. useCodeCheckIn (src/hooks/use-event-tickets.ts) and the self
+ *      branch of useCheckIn (src/hooks/use-events.ts) BOTH upsert
  *      directly to status='attended'. A walk-up who never tapped Register
  *      gets registered + checked in atomically.
  *
@@ -247,7 +240,7 @@ describe('stillActiveStartCutoffIso', () => {
  *      existing rows still get the day-of guard, so wrong-day check-ins
  *      and leader-issued check-ins outside the event day are blocked.
  *
- *   4. Leader check-in (UPDATE-only path in useCheckIn, line 846) still
+ *   4. Leader check-in (UPDATE-only path in useCheckIn) still
  *      requires the target user to be in status 'registered' or 'invited'
  *      - leaders add unregistered attendees via the WalkInSheet instead
  *      (event_walk_ins table; RLS extended to assist_leaders in
