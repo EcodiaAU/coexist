@@ -16,26 +16,19 @@ interface DatePickerProps {
   max?: Date
   mode?: DatePickerMode
   className?: string
+  /**
+   * IANA timezone the wall-clock value should be interpreted in. When
+   * supplied (datetime mode only), the picker shows the wall-clock as
+   * seen in `timeZone` regardless of the browser's zone, and emits a
+   * Date whose UTC instant lands on that wall-clock in `timeZone`.
+   * Without this prop the picker behaves as a plain browser-local
+   * datetime-local input (legacy behaviour).
+   */
+  timeZone?: string
 }
 
-/**
- * Floating-local time (Tate 2026-05-25 + 2026-05-26): events have no
- * timezone. A Date passed in or out of this picker encodes a wall-clock
- * as UTC - `Date('2026-05-07T15:00Z')` means "3pm 7 May" for every
- * viewer in every device timezone. The picker never converts through
- * any IANA zone, so a Brisbane Jess picking "3pm 7 May" and a Perth
- * Kurt viewing the same event both see exactly "3pm 7 May" - no drift,
- * no +10h surprise into the next day.
- *
- * The picker previously took a `timeZone` prop. With a non-empty value
- * its trigger-button preview re-rendered the wall-clock-as-UTC Date
- * through Intl.DateTimeFormat({ timeZone: ... }), which added the host
- * tz offset on top of the already-baked wall-clock - so a Brisbane
- * Jess picking 3pm 7 May saw the button update to "1am 8 May" (3pm UTC
- * viewed in Sydney). The prop is gone; every path below is UTC-locked.
- */
-function formatDate(date: Date, mode: DatePickerMode): string {
-  const options: Intl.DateTimeFormatOptions = { timeZone: 'UTC' }
+function formatDate(date: Date, mode: DatePickerMode, timeZone?: string): string {
+  const options: Intl.DateTimeFormatOptions = { timeZone }
 
   if (mode === 'date' || mode === 'datetime') {
     options.year = 'numeric'
@@ -61,47 +54,49 @@ function toInputType(mode: DatePickerMode): string {
   }
 }
 
-function dateToInputValue(date: Date, mode: DatePickerMode): string {
-  if (mode === 'datetime') {
-    return utcIsoToWallClock(date.toISOString())
+function dateToInputValue(date: Date, mode: DatePickerMode, timeZone?: string): string {
+  if (mode === 'datetime' && timeZone) {
+    return utcIsoToWallClock(date.toISOString(), timeZone)
   }
   if (mode === 'date') {
-    const y = date.getUTCFullYear()
-    const m = String(date.getUTCMonth() + 1).padStart(2, '0')
-    const d = String(date.getUTCDate()).padStart(2, '0')
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
     return `${y}-${m}-${d}`
   }
-  // mode === 'time'
-  const h = String(date.getUTCHours()).padStart(2, '0')
-  const min = String(date.getUTCMinutes()).padStart(2, '0')
-  return `${h}:${min}`
+  if (mode === 'time') {
+    const h = String(date.getHours()).padStart(2, '0')
+    const min = String(date.getMinutes()).padStart(2, '0')
+    return `${h}:${min}`
+  }
+  // datetime-local (no timezone given - legacy browser-local behaviour)
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  const h = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  return `${y}-${m}-${d}T${h}:${min}`
 }
 
-function inputValueToDate(value: string, mode: DatePickerMode): Date | null {
+function inputValueToDate(value: string, mode: DatePickerMode, timeZone?: string): Date | null {
   if (!value) return null
 
   if (mode === 'time') {
-    // Time-only: encode HH:mm on today's UTC date so .getUTCHours
-    // round-trips. Consumers reading the result only care about
-    // hour/minute, so the date slice is arbitrary.
     const [h, m] = value.split(':').map(Number)
-    if (Number.isNaN(h) || Number.isNaN(m)) return null
     const d = new Date()
-    d.setUTCHours(h, m, 0, 0)
+    d.setHours(h, m, 0, 0)
     return d
   }
 
-  if (mode === 'datetime') {
+  if (mode === 'datetime' && timeZone) {
     try {
-      return new Date(wallClockToUtcIso(value))
+      return new Date(wallClockToUtcIso(value, timeZone))
     } catch {
       return null
     }
   }
 
-  // mode === 'date': parse YYYY-MM-DD as UTC midnight so .getUTCDate
-  // round-trips on the host wall-clock day.
-  const parsed = new Date(value + 'T00:00:00.000Z')
+  const parsed = new Date(value)
   return isNaN(parsed.getTime()) ? null : parsed
 }
 
@@ -115,6 +110,7 @@ export function DatePicker({
   max,
   mode = 'date',
   className,
+  timeZone,
 }: DatePickerProps) {
   const id = useId()
   const errorId = `${id}-error`
@@ -138,7 +134,7 @@ export function DatePicker({
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const date = inputValueToDate(e.target.value, mode)
+    const date = inputValueToDate(e.target.value, mode, timeZone)
     onChange(date)
   }
 
@@ -184,7 +180,7 @@ export function DatePicker({
               value ? 'text-neutral-900' : 'text-neutral-400',
             )}
           >
-            {value ? formatDate(value, mode) : defaultPlaceholder}
+            {value ? formatDate(value, mode, timeZone) : defaultPlaceholder}
           </span>
         </button>
 
@@ -193,10 +189,10 @@ export function DatePicker({
           ref={inputRef}
           id={id}
           type={inputType}
-          value={value ? dateToInputValue(value, mode) : ''}
+          value={value ? dateToInputValue(value, mode, timeZone) : ''}
           onChange={handleChange}
-          min={min ? dateToInputValue(min, mode) : undefined}
-          max={max ? dateToInputValue(max, mode) : undefined}
+          min={min ? dateToInputValue(min, mode, timeZone) : undefined}
+          max={max ? dateToInputValue(max, mode, timeZone) : undefined}
           aria-label={label ?? defaultPlaceholder}
           aria-invalid={!!error}
           tabIndex={-1}

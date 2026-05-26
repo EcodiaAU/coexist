@@ -114,24 +114,6 @@ export function daysUntil(dateStr: string): number {
 }
 
 /**
- * Floating-local "now" as a Date whose UTC value equals the viewer's
- * current local wall-clock. Used to compare against wall-clock-as-UTC
- * stored event dates (event.date_start, event.date_end) inside the
- * event-create / event-edit form layers so "is start date in the past"
- * lines up with what the viewer's phone says, not with absolute UTC.
- *
- * Brisbane viewer at 11am AEST:
- *   Date.now()     -> 2026-05-26T01:00Z (real UTC)
- *   wallClockNow() -> Date('2026-05-26T11:00Z')  (.getUTCHours() = 11)
- *
- * Do NOT use for audit timestamps / created_at / updated_at - those
- * should stay on `new Date().toISOString()` (absolute UTC).
- */
-export function wallClockNow(): Date {
-  return new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
-}
-
-/**
  * "YYYY-MM-DD" for an absolute timestamp.
  *
  * Floating-local model: the stored wall-clock IS the calendar date,
