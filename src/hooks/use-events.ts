@@ -5,7 +5,6 @@ import { useOffline } from '@/hooks/use-offline'
 import { useToast } from '@/components/toast'
 import { queueOfflineAction } from '@/lib/offline-sync'
 import { fetchEventIdsForCollective } from '@/lib/collective-event-ids'
-import { formatEventLong } from '@/lib/date-format'
 import type {
   Database,
   Tables,
@@ -91,16 +90,8 @@ export {
 /* ------------------------------------------------------------------ */
 /*  Date helpers                                                       */
 /* ------------------------------------------------------------------ */
-//
-// Floating local time (Tate 2026-05-25): the stored wall-clock IS the
-// wall-clock for every viewer. The legacy `timeZone` parameter is kept
-// for source-level back-compat with existing call sites but is ignored
-// - every formatter pins `timeZone: 'UTC'` so the host's typed time
-// reads back unchanged on every device.
 
-const FLOATING_TZ = 'UTC'
-
-export function formatEventDate(dateStr: string, _legacyTz?: string): string {
+export function formatEventDate(dateStr: string, timeZone?: string): string {
   const date = new Date(dateStr)
   return new Intl.DateTimeFormat('en-AU', {
     weekday: 'short',
@@ -108,25 +99,25 @@ export function formatEventDate(dateStr: string, _legacyTz?: string): string {
     month: 'short',
     hour: 'numeric',
     minute: '2-digit',
-    timeZone: FLOATING_TZ,
+    timeZone,
   }).format(date)
 }
 
-export function formatEventDateShort(dateStr: string, _legacyTz?: string): string {
+export function formatEventDateShort(dateStr: string, timeZone?: string): string {
   const date = new Date(dateStr)
   return new Intl.DateTimeFormat('en-AU', {
     day: 'numeric',
     month: 'short',
-    timeZone: FLOATING_TZ,
+    timeZone,
   }).format(date)
 }
 
-export function formatEventTime(dateStr: string, _legacyTz?: string): string {
+export function formatEventTime(dateStr: string, timeZone?: string): string {
   const date = new Date(dateStr)
   return new Intl.DateTimeFormat('en-AU', {
     hour: 'numeric',
     minute: '2-digit',
-    timeZone: FLOATING_TZ,
+    timeZone,
   }).format(date)
 }
 
@@ -655,9 +646,10 @@ export function useRegisterForEvent() {
               data: {
                 name: profile?.display_name ?? 'there',
                 event_title: event.title,
-                // Floating local time: the stored wall-clock IS the time,
-                // no tz conversion. Tate 2026-05-25.
-                event_date: formatEventLong(event.date_start),
+                event_date: new Date(event.date_start).toLocaleString('en-AU', {
+                  weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+                  hour: 'numeric', minute: '2-digit',
+                }),
                 event_location: event.address ?? '',
                 event_url: `https://app.coexistaus.org/events/${eventId}`,
               },
@@ -1200,8 +1192,10 @@ export function useCancelEvent() {
 
       // Notify all registered/waitlisted/invited attendees
       if (event && registrations?.length) {
-        // Floating local time: stored wall-clock is the wall-clock.
-        const eventDate = formatEventLong(event.date_start)
+        const eventDate = new Date(event.date_start).toLocaleString('en-AU', {
+          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+          hour: 'numeric', minute: '2-digit',
+        })
 
         for (const reg of registrations) {
           const displayName = (reg as unknown as { profiles?: { display_name: string | null } }).profiles?.display_name ?? 'there'
@@ -1525,8 +1519,10 @@ export function useInviteCollective() {
         .single()
 
       const inviterName = inviterProfile?.display_name ?? 'A leader'
-      // Floating local time: stored wall-clock is the wall-clock.
-      const eventDate = formatEventLong(event.date_start)
+      const eventDate = new Date(event.date_start).toLocaleString('en-AU', {
+        weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+        hour: 'numeric', minute: '2-digit',
+      })
 
       if (isReminder) {
         // ── Remind flow: 24h cooldown, post rich announcement to chat ──
@@ -1735,8 +1731,10 @@ export function usePromoteFromWaitlist() {
             data: {
               name: promotedProfile?.display_name ?? 'there',
               event_title: event.title,
-              // Floating local time: stored wall-clock is the wall-clock.
-              event_date: formatEventLong(event.date_start),
+              event_date: new Date(event.date_start).toLocaleString('en-AU', {
+                weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+                hour: 'numeric', minute: '2-digit',
+              }),
               event_url: `https://app.coexistaus.org/events/${eventId}`,
             },
           },

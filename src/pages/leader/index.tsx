@@ -92,8 +92,7 @@ function MiniCalendar({ collectiveId }: { collectiveId: string | undefined }) {
   const { data: events = [] } = useEventCalendar(collectiveId, currentMonth)
 
   const eventDays = useMemo(
-    // Floating local time: stored wall-clock day = UTC day-of-month.
-    () => new Set(events.map((e) => new Date(e.date_start).getUTCDate())),
+    () => new Set(events.map((e) => new Date(e.date_start).getDate())),
     [events],
   )
 
@@ -1315,8 +1314,6 @@ export default function LeaderDashboardPage() {
                           month: 'short',
                           hour: 'numeric',
                           minute: '2-digit',
-                          // Floating local time: stored wall-clock is the wall-clock.
-                          timeZone: 'UTC',
                         })}
                       </p>
                       {event.address && (

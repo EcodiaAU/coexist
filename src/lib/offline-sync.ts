@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase'
-import { formatEventLong } from '@/lib/date-format'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -427,8 +426,10 @@ async function processPromoteWaitlist(action: OfflineAction): Promise<{ ok: bool
           data: {
             name: promotedProfile?.display_name ?? 'there',
             event_title: event.title,
-            // Floating local time: stored wall-clock is the wall-clock.
-            event_date: formatEventLong(event.date_start),
+            event_date: new Date(event.date_start).toLocaleString('en-AU', {
+              weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+              hour: 'numeric', minute: '2-digit',
+            }),
             event_url: `https://app.coexistaus.org/events/${eventId}`,
           },
         },

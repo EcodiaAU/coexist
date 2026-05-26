@@ -583,8 +583,6 @@ function ImpactFormCard({ task }: { task: ImpactFormTask }) {
   const formattedEventDate = eventEnd.toLocaleDateString('en-AU', {
     day: 'numeric',
     month: 'short',
-    // Floating local time: stored wall-clock is the wall-clock.
-    timeZone: 'UTC',
   })
 
   if (isCompleted) {

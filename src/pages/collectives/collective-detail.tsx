@@ -481,10 +481,10 @@ export default function CollectiveDetailPage() {
                       <div className="absolute top-3 left-3">
                         <div className="rounded-xl bg-white/95 backdrop-blur-sm px-3 py-1.5 shadow-sm">
                           <span className="text-[10px] font-bold uppercase text-primary-500 block leading-tight">
-                            {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short', timeZone: 'UTC' })}
+                            {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short' })}
                           </span>
                           <span className="font-heading text-xl font-extrabold text-primary-900 leading-none">
-                            {new Date(event.date_start).getUTCDate()}
+                            {new Date(event.date_start).getDate()}
                           </span>
                         </div>
                       </div>
@@ -511,17 +511,17 @@ export default function CollectiveDetailPage() {
                         ) : (
                           <div className="absolute inset-0 flex flex-col items-center justify-center text-primary-600">
                             <span className="text-[9px] font-bold uppercase leading-tight">
-                              {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short', timeZone: 'UTC' })}
+                              {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short' })}
                             </span>
                             <span className="font-heading text-base font-extrabold leading-none">
-                              {new Date(event.date_start).getUTCDate()}
+                              {new Date(event.date_start).getDate()}
                             </span>
                           </div>
                         )}
                         {heroSrc && (
                           <div className="absolute top-1 left-1 rounded-md bg-white/95 backdrop-blur-sm px-1 py-0.5 shadow-sm">
                             <span className="font-heading text-[11px] font-extrabold leading-none text-primary-900">
-                              {new Date(event.date_start).getUTCDate()}
+                              {new Date(event.date_start).getDate()}
                             </span>
                           </div>
                         )}
@@ -567,10 +567,10 @@ export default function CollectiveDetailPage() {
                   >
                     <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 text-primary-300">
                       <span className="text-[9px] font-bold uppercase leading-tight">
-                        {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short', timeZone: 'UTC' })}
+                        {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short' })}
                       </span>
                       <span className="font-heading text-base font-bold leading-none">
-                        {new Date(event.date_start).getUTCDate()}
+                        {new Date(event.date_start).getDate()}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">

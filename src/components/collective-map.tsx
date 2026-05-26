@@ -197,8 +197,7 @@ const springSheet = {
 
 function formatShortDate(iso: string): string {
   const d = new Date(iso)
-  // Floating local time: stored wall-clock is the wall-clock.
-  return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+  return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
 /* ------------------------------------------------------------------ */

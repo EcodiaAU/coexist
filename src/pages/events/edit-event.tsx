@@ -92,11 +92,14 @@ export default function EditEventPage() {
         is_public: event.is_public ?? true,
         is_external_collaboration: event.is_external_collaboration ?? false,
         external_registration_url: event.external_registration_url ?? '',
-        // Floating local time (Tate 2026-05-25): event tz is unused. The
-        // wall-clock is the wall-clock for every viewer. These fields stay
-        // in the form shape for source-compat but never round-trip.
-        timezone: 'UTC',
-        timezone_overrides_collective: false,
+        // Event tz: per-event override > collective default. Mark
+        // overrides_collective so the user can opt out without
+        // unintentionally clearing a deliberately-set override.
+        timezone:
+          (event as { timezone?: string | null }).timezone ??
+          (event as { collectives?: { timezone?: string | null } | null }).collectives?.timezone ??
+          'Australia/Sydney',
+        timezone_overrides_collective: !!(event as { timezone?: string | null }).timezone,
         extras: {
           ...INITIAL_EXTRAS,
           ...((event as unknown as { event_extras?: Partial<EventExtras> | null }).event_extras ?? {}),
@@ -171,8 +174,7 @@ export default function EditEventPage() {
         is_external_collaboration: form.fields.is_external_collaboration,
         external_registration_url: form.fields.external_registration_url || null,
         checkin_window_minutes: checkinWindowMinutes,
-        // Floating local time: tz column kept on table but always NULL.
-        timezone: null,
+        timezone: form.fields.timezone_overrides_collective ? form.fields.timezone : null,
         event_extras: form.fields.extras,
       } as Parameters<typeof updateEvent.mutateAsync>[0])
 
