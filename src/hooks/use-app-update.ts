@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-
-const APP_VERSION = '1.0.0'
+import { getAppVersion, whenAppVersionReady } from '@/lib/app-version'
 
 /** Compare two semver strings. Returns -1, 0, or 1. */
 function compareSemver(a: string, b: string): number {
@@ -20,6 +19,8 @@ interface UpdateStatus {
   forceUpdate: boolean
   maintenanceMode: boolean
   maintenanceMessage?: string
+  /** Current installed version (resolved from Capacitor App on native, falls back to web constant). */
+  installedVersion: string
 }
 
 /** How often to re-check (ms) */
@@ -29,19 +30,29 @@ const CHECK_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
  * Checks the Supabase `app_settings` key/value table for maintenance mode
  * and minimum/latest version. Each row has { key: text, value: jsonb }.
  * Expected keys:
- *   maintenance_mode    → jsonb boolean or string "true"
- *   maintenance_message → jsonb string
- *   min_version         → jsonb string e.g. "1.1.0"
- *   latest_version      → jsonb string e.g. "1.2.0"
+ *   maintenance_mode    -> jsonb boolean or string "true"
+ *   maintenance_message -> jsonb string
+ *   min_version         -> jsonb string e.g. "1.8.14"
+ *   latest_version      -> jsonb string e.g. "1.8.14"
+ *
+ * The installed version is resolved at runtime from Capacitor App's
+ * `getInfo()` on native, so a 1.8.14 iOS binary reports as "1.8.14"
+ * and the comparison against min_version is meaningful. Pre-2026-05-26
+ * the hook compared a hardcoded "1.0.0", which silently force-updated
+ * every native user any time min_version was set above zero -- so the
+ * key was never set in production. The cutover rollout for floating-
+ * local will set min_version = '1.8.14' once enough native users have
+ * installed the matching build.
  *
  * Returns safe defaults if the table doesn't exist or the fetch fails.
  */
 export function useAppUpdate(): UpdateStatus {
   const [status, setStatus] = useState<UpdateStatus>({
     updateAvailable: false,
-    latestVersion: APP_VERSION,
+    latestVersion: getAppVersion(),
     forceUpdate: false,
     maintenanceMode: false,
+    installedVersion: getAppVersion(),
   })
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined)
 
@@ -50,6 +61,11 @@ export function useAppUpdate(): UpdateStatus {
 
     async function check() {
       try {
+        // Wait for the native version lookup to finish so the very
+        // first comparison uses the real CFBundleShortVersionString,
+        // not the fallback constant. On web this resolves immediately.
+        const installed = await whenAppVersionReady()
+
         const { data, error } = await supabase.from('app_settings')
           .select('key, value')
           .in('key', ['maintenance_mode', 'maintenance_message', 'min_version', 'latest_version'])
@@ -68,11 +84,18 @@ export function useAppUpdate(): UpdateStatus {
         const minVersion = config.min_version || null
         const latestVersion = config.latest_version || null
 
-        const forceUpdate = minVersion ? compareSemver(APP_VERSION, minVersion) < 0 : false
-        const updateAvailable = latestVersion ? compareSemver(APP_VERSION, latestVersion) < 0 : false
+        const forceUpdate = minVersion ? compareSemver(installed, minVersion) < 0 : false
+        const updateAvailable = latestVersion ? compareSemver(installed, latestVersion) < 0 : false
 
         if (mounted) {
-          setStatus({ updateAvailable, latestVersion, forceUpdate, maintenanceMode, maintenanceMessage })
+          setStatus({
+            updateAvailable,
+            latestVersion,
+            forceUpdate,
+            maintenanceMode,
+            maintenanceMessage,
+            installedVersion: installed,
+          })
         }
       } catch {
         // Network error - keep previous status, don't crash
@@ -91,4 +114,4 @@ export function useAppUpdate(): UpdateStatus {
   return status
 }
 
-export { APP_VERSION }
+export { getAppVersion as APP_VERSION_RESOLVER }

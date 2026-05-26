@@ -9,6 +9,7 @@ import { LeaderLayout as LeaderLayoutRoute } from '@/components/leader-layout'
 import { PageTransition } from '@/components/page-transition'
 import { KeepAlive } from '@/components/keep-alive'
 import { MaintenanceMode } from '@/components/maintenance-mode'
+import { UpdateRequired } from '@/components/update-required'
 import { useAppUpdate } from '@/hooks/use-app-update'
 import { useDeepLink } from '@/hooks/use-deep-link'
 import SplashPage from '@/pages/splash'
@@ -210,7 +211,7 @@ function PageFallback() {
 
 function App() {
   const [showSplash, setShowSplash] = useState(true)
-  const { maintenanceMode, maintenanceMessage, forceUpdate, latestVersion } = useAppUpdate()
+  const { maintenanceMode, maintenanceMessage, forceUpdate, latestVersion, installedVersion } = useAppUpdate()
   useDeepLink()
 
   // Clear the chunk-reload guard after a successful mount. If the user
@@ -230,7 +231,7 @@ function App() {
   }
 
   if (forceUpdate) {
-    return <MaintenanceMode message={`A required update (v${latestVersion}) is available. Please update the app to continue.`} />
+    return <UpdateRequired latestVersion={latestVersion} installedVersion={installedVersion} />
   }
 
   return (
