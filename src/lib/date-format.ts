@@ -1,86 +1,100 @@
 /**
  * Centralised date and time formatting utilities.
  *
- * Timezone model
- * --------------
- * Events belong to a collective which has an IANA timezone (e.g.
- * `Australia/Perth`). An event may override with its own timezone.
- * All event-facing formatting and day-of-event checks must use the
- * event's *effective* timezone, NOT the viewer's local browser zone -
- * otherwise a member in Sydney viewing a Perth event would see the
- * Perth wall-clock shifted by 2 hours.
+ * Floating local time model (Tate 2026-05-25)
+ * -------------------------------------------
+ * Events store a wall-clock (`9am 15 Jun 2026`), NOT an absolute UTC
+ * instant. The wall-clock is stamped into the timestamptz column with a
+ * UTC offset (e.g. `2026-06-15T09:00:00Z`) but is read back verbatim by
+ * every renderer regardless of viewer timezone. A Perth admin's 9am
+ * event reads as "9:00 am" to a Sydney viewer, a Perth viewer, and a
+ * Bali viewer. Anyone outside the host's locale does two seconds of
+ * mental math if they need to know their local equivalent.
  *
- * Resolve the effective timezone at the call site with
- * `eventTimezone(event, collective)`; pass it to the formatters below.
+ * Practical consequence: every formatter below pins `timeZone: 'UTC'`
+ * so the stored wall-clock comes back unchanged. The legacy `timeZone`
+ * parameter on `formatDate/formatTime/...` is kept for source-level
+ * back-compat with existing call sites but is ignored.
  */
 
-const DEFAULT_TZ = 'Australia/Sydney'
+const FLOATING_TZ = 'UTC'
+const DEFAULT_TZ = FLOATING_TZ
 
 /**
- * Resolves an event's effective IANA timezone.
- * Order: event.timezone override > collective.timezone > fallback.
+ * Legacy resolver. In the floating-local model the event's IANA tz is
+ * irrelevant for display - the wall-clock is the wall-clock. Kept as a
+ * stub so existing call sites continue to compile; returns the floating
+ * tz unconditionally.
  */
 export function eventTimezone(
-  event: { timezone?: string | null } | null | undefined,
-  collective: { timezone?: string | null } | null | undefined,
-  fallback: string = DEFAULT_TZ,
+  _event?: { timezone?: string | null } | null,
+  _collective?: { timezone?: string | null } | null,
+  _fallback?: string,
 ): string {
-  return event?.timezone ?? collective?.timezone ?? fallback
+  return FLOATING_TZ
 }
 
-/** "Wed 2 Apr" - formatted in `timeZone` if provided, else viewer-local. */
-export function formatDate(dateStr: string, timeZone?: string): string {
+/** "Wed 2 Apr" - the stored wall-clock, never tz-converted. */
+export function formatDate(dateStr: string, _legacyTz?: string): string {
   return new Date(dateStr).toLocaleDateString('en-AU', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
-    timeZone,
+    timeZone: FLOATING_TZ,
   })
 }
 
 /** "2 Apr 2025" (year always shown) */
-export function formatDateLong(dateStr: string, showYear = true, timeZone?: string): string {
+export function formatDateLong(dateStr: string, showYear = true, _legacyTz?: string): string {
   return new Date(dateStr).toLocaleDateString('en-AU', {
     day: 'numeric',
     month: 'short',
     year: showYear ? 'numeric' : undefined,
-    timeZone,
+    timeZone: FLOATING_TZ,
   })
 }
 
 /** "2 Apr" (no weekday, no year) */
-export function formatDateShort(dateStr: string, timeZone?: string): string {
+export function formatDateShort(dateStr: string, _legacyTz?: string): string {
   return new Date(dateStr).toLocaleDateString('en-AU', {
     day: 'numeric',
     month: 'short',
-    timeZone,
+    timeZone: FLOATING_TZ,
   })
 }
 
-/** "3:45 pm" - formatted in `timeZone` if provided. */
-export function formatTime(date: Date | string, timeZone?: string): string {
+/** "3:45 pm" - the stored wall-clock, never tz-converted. */
+export function formatTime(date: Date | string, _legacyTz?: string): string {
   const d = typeof date === 'string' ? new Date(date) : date
   return new Intl.DateTimeFormat('en-AU', {
     hour: 'numeric',
     minute: '2-digit',
-    timeZone,
+    timeZone: FLOATING_TZ,
   }).format(d)
 }
 
 /**
- * Short timezone label for display next to a time, e.g. "AWST", "AEDT".
- * Returns empty string if the zone matches the viewer's local zone (no
- * need to disambiguate). Falls back to the IANA name on locales that
- * don't surface a short name.
+ * Legacy timezone label helper. Always returns empty in the floating-
+ * local model - there is no tz to disambiguate, the wall-clock is the
+ * wall-clock for every viewer.
  */
-export function timezoneLabel(timeZone: string | null | undefined, ref: Date | string = new Date()): string {
-  if (!timeZone) return ''
-  const viewerTz = Intl.DateTimeFormat().resolvedOptions().timeZone
-  if (timeZone === viewerTz) return ''
-  const d = typeof ref === 'string' ? new Date(ref) : ref
-  const parts = new Intl.DateTimeFormat('en-AU', { timeZone, timeZoneName: 'short' }).formatToParts(d)
-  const tz = parts.find((p) => p.type === 'timeZoneName')?.value
-  return tz ?? timeZone
+export function timezoneLabel(_timeZone?: string | null, _ref?: Date | string): string {
+  return ''
+}
+
+/** "Sat, 14 Jun 2026, 9:00 am" - long-form event datetime in the
+ *  stored wall-clock. Use anywhere an event time is rendered (cards,
+ *  emails, push notifications, review panels). */
+export function formatEventLong(iso: string, _legacyTz?: string | null): string {
+  return new Intl.DateTimeFormat('en-AU', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: FLOATING_TZ,
+  }).format(new Date(iso))
 }
 
 /** Relative: "Just now", "5m ago", "2h ago", "3d ago", or falls back to formatDateLong */
@@ -94,208 +108,146 @@ export function formatRelative(dateStr: string): string {
   return formatDateLong(dateStr, diff > 31536000)
 }
 
-/** Days from now until dateStr (negative = past) */
+/** Days from now until dateStr (negative = past). */
 export function daysUntil(dateStr: string): number {
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
 }
 
 /**
- * "YYYY-MM-DD" for an absolute timestamp interpreted in `timeZone`. Used
- * to compare an event's local date to "today" in the event's zone,
- * matching the BE check-in-window guards which use
- * `(date AT TIME ZONE event_tz)::date` on both sides.
+ * "YYYY-MM-DD" for an absolute timestamp.
  *
- * en-CA locale is the cheapest way to coerce a Date through
- * Intl.DateTimeFormat into ISO YYYY-MM-DD shape.
+ * Floating-local model: the stored wall-clock IS the calendar date,
+ * regardless of viewer tz. `localDateIn(_, iso)` returns the UTC date
+ * slice of the stored value (= the host's calendar day). When called
+ * without `date`, returns the viewer's local calendar date (used for
+ * "today" comparisons - the viewer's own clock decides whether the
+ * host's wall-clock date is today/tomorrow/past).
+ *
+ * The first param is the LEGACY timezone (kept for back-compat); the
+ * date-portion is always extracted in UTC so the host's wall-clock day
+ * is preserved.
  */
 export function localDateIn(
-  timeZone: string,
-  date: Date | string = new Date(),
+  _legacyTz: string,
+  date?: Date | string,
 ): string {
+  if (date === undefined) {
+    // "today" in the VIEWER'S local calendar
+    const now = new Date()
+    const y = now.getFullYear()
+    const m = String(now.getMonth() + 1).padStart(2, '0')
+    const d = String(now.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
   const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString('en-CA', { timeZone })
+  // host's stored wall-clock day = UTC date slice
+  return d.toLocaleDateString('en-CA', { timeZone: FLOATING_TZ })
 }
 
 /**
- * True iff `eventDateStartIso` falls on the same calendar day as "now"
- * in the given timezone. Mirrors the BE day-of check-in window guard.
+ * True iff the event's stored calendar day matches the viewer's local
+ * calendar day. Floating-local: the host's "15 Jun 2026 9am" is "today"
+ * for any viewer whose phone clock says 15 Jun, regardless of tz.
  */
 export function isEventToday(
   eventDateStartIso: string | null | undefined,
-  timeZone: string,
+  _legacyTz?: string,
 ): boolean {
   if (!eventDateStartIso) return false
-  return localDateIn(timeZone, eventDateStartIso) === localDateIn(timeZone)
+  return localDateIn(FLOATING_TZ, eventDateStartIso) === localDateIn(FLOATING_TZ)
 }
 
 /**
- * True iff the "Tap to Sign In" button should be visible on the
- * Next-Event card.
- *
- * Visibility window:
- *   - Opens:  calendar-day start of the event's date in the event's
- *             timezone (matches the BE enforce_event_day_check_in_window
- *             trigger).
- *   - Closes: end of the same calendar day in the event's timezone.
- *
- * Per Tate 2026-05-23 Co-Exist incident: previously closed 2h after
- * start, but conservation events often run 3-4 hours and late arrivals
- * lost the sign-in CTA mid-event. Day-of is now the model (matches the
- * BE trigger and the new register-or-sign-in-on-the-day flow).
- *
- * @param eventDateStartIso events.date_start timestamptz ISO string
- * @param timeZone          the event's effective IANA timezone
+ * Day-of-event check-in CTA visibility (participant self / public QR).
+ * Visible all of the host's calendar day, in the viewer's local clock.
  */
 export function isSignInButtonVisible(
   eventDateStartIso: string | null | undefined,
-  timeZone: string,
+  _legacyTz?: string,
 ): boolean {
   if (!eventDateStartIso) return false
-  return isEventToday(eventDateStartIso, timeZone)
+  return isEventToday(eventDateStartIso)
 }
 
 /**
- * True iff a LEADER/ADMIN may check attendees in (or out) for this event.
+ * Leader/admin check-in window. Future blocked, event-day open,
+ * past open until impact logged (post-event backfill window).
  *
- * This is the asymmetric backfill window (post-event check-in, 2026-05-20):
- *   - Future (event's AEST day after today): CLOSED. Preserves the 9-May
- *     wrong-day fix - never mark attendance before the event has happened.
- *   - Event day: OPEN, regardless of impact - a leader might log impact early
- *     then keep checking in stragglers.
- *   - After the event day: OPEN only while impact has NOT been logged. This is
- *     the backfill window for lost-wifi / partner-org sign-in sheets. Once
- *     impact is logged the attendance is final and check-in CLOSES.
- *
- * Mirrors the server-side guards in
- * supabase/migrations/20260520000000_post_event_checkin_backfill.sql, which use
- * the existence of an `event_impact` row as the canonical "impact logged"
- * signal. Pass `impactLogged` from `useEventImpact(eventId)` (row exists).
- *
- * NOTE: participant self check-in (3-digit code) and the public QR form are NOT
- * gated by this - they stay day-of only (`isEventToday` / `isSignInButtonVisible`).
- *
- * @param eventDateStartIso events.date_start timestamptz ISO string
- * @param timeZone          the event's effective IANA timezone
- * @param impactLogged      true iff an event_impact row exists for the event
+ * "Event day" is the host's stored wall-clock calendar day; "today" is
+ * the viewer's local calendar day. So a Sydney leader at 11pm AEST on
+ * 15 Jun can still check in attendees for a 15 Jun Perth event because
+ * both sides say 15 Jun; the same leader at 1am AEST on 16 Jun sees
+ * the event drop into the backfill branch.
  */
 export function isCheckInOpenForLeader(
   eventDateStartIso: string | null | undefined,
-  timeZone: string,
+  _legacyTz: string,
   impactLogged: boolean,
 ): boolean {
   if (!eventDateStartIso) return false
-  const eventDay = localDateIn(timeZone, eventDateStartIso)
-  const today = localDateIn(timeZone)
+  const eventDay = localDateIn(FLOATING_TZ, eventDateStartIso)
+  const today = localDateIn(FLOATING_TZ)
   if (eventDay > today) return false // future: blocked
   if (eventDay === today) return true // event day: open
   return !impactLogged // past: open until impact logged
 }
 
 // ---------------------------------------------------------------------------
-// datetime-local <-> ISO conversion in a target timezone
+// datetime-local <-> ISO conversion
 // ---------------------------------------------------------------------------
 
 /**
- * Converts a wall-clock string (`YYYY-MM-DDTHH:mm`) entered in the
- * event's timezone into a UTC ISO string suitable for storing in
- * `timestamptz` columns.
+ * Convert a wall-clock string (`YYYY-MM-DDTHH:mm`) into a UTC ISO
+ * string. Floating-local: stamp the typed wall-clock directly into
+ * UTC so `9am Perth typed in Vic` stores as `2026-06-15T09:00:00.000Z`
+ * and reads back as "9am" for every viewer.
  *
- * Why this exists: HTML's `datetime-local` input captures a naked
- * wall-clock value with no zone. `new Date(value)` interprets it as
- * browser-local, which is wrong for cross-zone event creation (east-
- * coast admin typing "10am" for a Perth event ends up with 10am AEST,
- * not 10am AWST). This function pins the wall clock to `timeZone`
- * regardless of where the browser thinks it is.
+ * Legacy `timeZone` param is ignored (kept for source-compat).
  */
 export function wallClockToUtcIso(
-  wallClock: string, // "YYYY-MM-DDTHH:mm" (seconds tolerated, dropped)
-  timeZone: string,
+  wallClock: string,
+  _legacyTz?: string,
 ): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(wallClock)
   if (!m) throw new Error(`Invalid wall-clock value: ${wallClock}`)
   const [, ys, mos, ds, hs, mis] = m
-  const y = Number(ys), mo = Number(mos), d = Number(ds), h = Number(hs), mi = Number(mis)
-
-  // Assume the wall clock is UTC; measure how far the target zone is
-  // offset at that instant; subtract to land the correct UTC instant.
-  const asUtc = Date.UTC(y, mo - 1, d, h, mi, 0)
-  const offsetMs = tzOffsetMs(timeZone, new Date(asUtc))
-  const candidate = asUtc - offsetMs
-
-  // Refine once for DST boundary correctness: if we straddled a
-  // transition, the offset at `candidate` may differ from at `asUtc`.
-  const refinedOffsetMs = tzOffsetMs(timeZone, new Date(candidate))
-  return new Date(asUtc - refinedOffsetMs).toISOString()
+  return `${ys}-${mos}-${ds}T${hs}:${mis}:00.000Z`
 }
 
 /**
- * Inverse of `wallClockToUtcIso`: takes a UTC ISO timestamp and returns
- * the wall-clock string (`YYYY-MM-DDTHH:mm`) as seen in `timeZone`.
- * Used to populate the datetime-local input when editing an event in
- * its own timezone.
+ * Inverse of `wallClockToUtcIso`. Returns the UTC-slice wall-clock so
+ * datetime-local inputs display exactly the host's typed value.
  */
-export function utcIsoToWallClock(iso: string, timeZone: string): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date(iso))
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '00'
-  const hour = get('hour') === '24' ? '00' : get('hour')
-  return `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}`
-}
-
-/**
- * Returns the offset in ms between UTC and `timeZone` at the given
- * instant. Positive = zone is ahead of UTC.
- */
-function tzOffsetMs(timeZone: string, at: Date): number {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).formatToParts(at)
-  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value)
-  const asIfUtc = Date.UTC(
-    get('year'),
-    get('month') - 1,
-    get('day'),
-    get('hour') === 24 ? 0 : get('hour'),
-    get('minute'),
-    get('second'),
-  )
-  return asIfUtc - at.getTime()
+export function utcIsoToWallClock(iso: string, _legacyTz?: string): string {
+  const d = new Date(iso)
+  const y = d.getUTCFullYear()
+  const mo = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const da = String(d.getUTCDate()).padStart(2, '0')
+  const h = String(d.getUTCHours()).padStart(2, '0')
+  const mi = String(d.getUTCMinutes()).padStart(2, '0')
+  return `${y}-${mo}-${da}T${h}:${mi}`
 }
 
 // ---------------------------------------------------------------------------
 // Aliases kept for call-site compatibility
 // ---------------------------------------------------------------------------
 
-/** @deprecated use formatDate(dateStr, timeZone) */
+/** @deprecated use formatDate(dateStr) */
 export const formatEventDate = formatDate
-/** @deprecated use formatDate(dateStr, timeZone) */
+/** @deprecated use formatDate(dateStr) */
 export const formatCardDate = formatDate
-/** @deprecated use formatTime(date, timeZone) */
+/** @deprecated use formatTime(date) */
 export const formatEventTime = formatTime
-/** @deprecated use formatTime(date, timeZone) */
+/** @deprecated use formatTime(date) */
 export const formatCardTime = formatTime
-/** @deprecated use formatDateLong(dateStr, true, timeZone) */
+/** @deprecated use formatDateLong(dateStr, true) */
 export const formatDateTime = formatDateLong
 
-/** @deprecated use localDateIn(timeZone, date) */
+/** @deprecated use localDateIn(_, date) */
 export function localDateAEST(date: Date | string = new Date()): string {
-  return localDateIn('Australia/Sydney', date)
+  return localDateIn(FLOATING_TZ, date)
 }
-/** @deprecated use isEventToday(iso, timeZone) */
+/** @deprecated use isEventToday(iso) */
 export function isEventTodayAEST(eventDateStartIso: string | null | undefined): boolean {
-  return isEventToday(eventDateStartIso, 'Australia/Sydney')
+  return isEventToday(eventDateStartIso)
 }

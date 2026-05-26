@@ -85,7 +85,7 @@ export function buildAttendeesCsv(rows: AttendeeExportRow[], details: EventDetai
   const meta = [
     `Event: ${details.title}`,
     details.collective_name ? `Collective: ${details.collective_name}` : '',
-    `Date: ${new Date(details.date_start).toLocaleString('en-AU')}`,
+    `Date: ${new Date(details.date_start).toLocaleString('en-AU', { timeZone: 'UTC' })}`,
     details.activity_type ? `Activity: ${details.activity_type}` : '',
     details.address ? `Address: ${details.address}` : '',
     `Checked in: ${rows.length}`,
@@ -105,7 +105,7 @@ export function buildAttendeesCsv(rows: AttendeeExportRow[], details: EventDetai
 export function buildAttendeesPlainText(rows: AttendeeExportRow[], details: EventDetailsForExport): string {
   const lines: string[] = []
   lines.push(details.title)
-  lines.push(new Date(details.date_start).toLocaleString('en-AU'))
+  lines.push(new Date(details.date_start).toLocaleString('en-AU', { timeZone: 'UTC' }))
   if (details.address) lines.push(details.address)
   if (details.collective_name) lines.push(details.collective_name)
   lines.push(`Checked in: ${rows.length}`)
