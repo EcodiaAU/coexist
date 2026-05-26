@@ -1,4 +1,3 @@
-import { App } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 
 /**
@@ -7,47 +6,40 @@ import { Capacitor } from '@capacitor/core'
  * On native (iOS/Android) we resolve at runtime via `App.getInfo()`,
  * which returns the build's MARKETING_VERSION (iOS) / versionName
  * (Android). On web we use the FALLBACK_VERSION constant, which is
- * bumped alongside the native MARKETING_VERSION so the web SPA reports
+ * bumped alongside the native marketing version so the web SPA reports
  * the matching version when checked against app_settings.min_version.
  *
- * The resolved value is cached at module scope. First reads from
- * `getAppVersion()` are synchronous and return the fallback; the
- * `whenAppVersionReady()` promise resolves once the native lookup
- * lands (or immediately on web). Consumers that care about the real
- * version (the min-version force-update check) should `await
- * whenAppVersionReady()` before comparing.
+ * Lookup is LAZY (only fires when something calls
+ * `whenAppVersionReady()`) and the `@capacitor/app` import is dynamic.
+ * Doing the work at module-load time triggered a white-screen startup
+ * on iOS build 48 (1.8.14) -- the eager async IIFE landed an unhandled
+ * rejection during the cold-start race with Capacitor's plugin
+ * registration. Lazy + dynamic-import dodges that race.
  *
  * Update protocol: when bumping iOS MARKETING_VERSION /
  * Android versionName, bump FALLBACK_VERSION in the same commit.
  */
-const FALLBACK_VERSION = '1.8.14'
+const FALLBACK_VERSION = '1.8.15'
 
 let cached: string = FALLBACK_VERSION
-let resolved = false
-
-const ready: Promise<string> = (async () => {
-  if (!Capacitor.isNativePlatform()) {
-    resolved = true
-    return cached
-  }
-  try {
-    const info = await App.getInfo()
-    if (info?.version) cached = info.version
-  } catch {
-    // keep fallback
-  }
-  resolved = true
-  return cached
-})()
+let initPromise: Promise<string> | null = null
 
 export function getAppVersion(): string {
   return cached
 }
 
-export function isAppVersionResolved(): boolean {
-  return resolved
-}
-
 export function whenAppVersionReady(): Promise<string> {
-  return ready
+  if (initPromise) return initPromise
+  initPromise = (async () => {
+    try {
+      if (!Capacitor.isNativePlatform()) return cached
+      const { App } = await import('@capacitor/app')
+      const info = await App.getInfo()
+      if (info?.version) cached = info.version
+    } catch {
+      // keep fallback - never crash the app over a version lookup
+    }
+    return cached
+  })()
+  return initPromise
 }

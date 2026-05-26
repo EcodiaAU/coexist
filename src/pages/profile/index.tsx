@@ -185,14 +185,15 @@ export default function ProfilePage() {
   // by default + always include Events / Hours so the bento never looks empty
   // on a brand-new profile. "See more" expands to show every metric the user
   // has touched (including zeros for context).
+  // Native Plants dropped 2026-05-27 - same metric as Trees in practice;
+  // having both made the bento grid double-count the planting work.
   const allStatsRaw = [
-    { value: stats?.eventsAttended ?? 0, label: 'Events', icon: <Calendar size={18} />, alwaysShow: true },
-    { value: stats?.hoursVolunteered ?? 0, label: 'Hours', icon: <Clock size={18} />, alwaysShow: true },
-    { value: stats?.treesPlanted ?? 0, label: 'Trees', icon: <TreePine size={18} />, alwaysShow: false },
-    { value: stats?.rubbishCollectedKg ?? 0, label: 'Litter Removed', icon: <Trash2 size={18} />, alwaysShow: false },
-    { value: stats?.areaRestoredSqm ?? 0, label: 'Area Regenerated (sqm)', icon: <Ruler size={18} />, alwaysShow: false },
-    { value: stats?.nativePlants ?? 0, label: 'Native Plants', icon: <Sprout size={18} />, alwaysShow: false },
-    { value: stats?.wildlifeSightings ?? 0, label: 'Wildlife Sightings', icon: <Bird size={18} />, alwaysShow: false },
+    { value: stats?.eventsAttended ?? 0, label: 'Events', icon: <Calendar size={18} />, alwaysShow: true, unit: undefined },
+    { value: stats?.hoursVolunteered ?? 0, label: 'Hours', icon: <Clock size={18} />, alwaysShow: true, unit: undefined },
+    { value: stats?.treesPlanted ?? 0, label: 'Trees', icon: <TreePine size={18} />, alwaysShow: false, unit: undefined },
+    { value: stats?.rubbishCollectedKg ?? 0, label: 'Litter Removed', icon: <Trash2 size={18} />, alwaysShow: false, unit: 'kg' as const },
+    { value: stats?.areaRestoredSqm ?? 0, label: 'Area Regenerated', icon: <Ruler size={18} />, alwaysShow: false, unit: 'sqm' as const },
+    { value: stats?.wildlifeSightings ?? 0, label: 'Wildlife Sightings', icon: <Bird size={18} />, alwaysShow: false, unit: undefined },
   ]
   const initialStats = allStatsRaw.filter((s) => s.alwaysShow || s.value > 0)
   const hasMoreStats = allStatsRaw.length > initialStats.length
@@ -328,7 +329,7 @@ export default function ProfilePage() {
         <motion.div variants={fadeUp}>
           <BentoStatGrid compact>
             {allStats.map((s, i) => (
-              <BentoStatCard compact key={s.label} value={s.value} label={s.label} icon={s.icon} theme={bentoMixedTheme(i)} />
+              <BentoStatCard compact key={s.label} value={s.value} label={s.label} icon={s.icon} unit={s.unit} theme={bentoMixedTheme(i)} />
             ))}
           </BentoStatGrid>
           {hasMoreStats && (
