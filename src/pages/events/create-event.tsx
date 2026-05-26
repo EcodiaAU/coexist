@@ -45,6 +45,7 @@ import { useEventForm } from '@/hooks/use-event-form'
 import type { EventFormFields, ActivityType } from '@/hooks/use-event-form'
 import { useActivityTypeDefaults } from '@/hooks/use-activity-defaults'
 import { parseLocationPoint } from '@/lib/geo'
+import { wallClockNow } from '@/lib/date-format'
 import {
     DateTimeFields,
     LocationFields,
@@ -526,8 +527,8 @@ function StepDateTime({
             as 9am for everyone in the app - viewers do the mental math if
             they're elsewhere.
           </p>
-          <DateTimeFields fields={fields} onChange={onChange} minStart={new Date()} />
-          {fields.date_start && fields.date_start < new Date() && (
+          <DateTimeFields fields={fields} onChange={onChange} minStart={wallClockNow()} />
+          {fields.date_start && fields.date_start < wallClockNow() && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning-50 text-warning-700 text-caption">
               <Clock size={14} className="shrink-0" />
               Start date is in the past - please choose a future date
@@ -1733,8 +1734,10 @@ export default function CreateEventPage() {
 
       const isDraft = asDraft || saveAsDraft
 
-      // Validate dates
-      if (form.fields.date_start && form.fields.date_start < new Date()) {
+      // Validate dates. Floating-local: compare wall-clock-as-UTC start
+      // against viewer's wall-clock-as-UTC "now" so 3pm-today doesn't
+      // false-positive as past for a Brisbane host at 11am local.
+      if (form.fields.date_start && form.fields.date_start < wallClockNow()) {
         toastApi.error('Start date cannot be in the past')
         return
       }
@@ -1874,12 +1877,16 @@ export default function CreateEventPage() {
           for (let i = 1; i < extra.recurring_count; i++) {
             const start = new Date(form.fields.date_start!.getTime())
             const end = form.fields.date_end ? new Date(form.fields.date_end.getTime()) : null
+            // Floating-local: start/end encode the host's wall-clock as
+            // UTC. Use UTC accessors so "+ 7 days" advances the wall-
+            // clock day number by exactly 7, independent of the host
+            // device's tz and DST boundaries.
             if (extra.recurring_type === 'monthly') {
-              start.setMonth(start.getMonth() + i)
-              if (end) end.setMonth(end.getMonth() + i)
+              start.setUTCMonth(start.getUTCMonth() + i)
+              if (end) end.setUTCMonth(end.getUTCMonth() + i)
             } else {
-              start.setDate(start.getDate() + intervalDays * i)
-              if (end) end.setDate(end.getDate() + intervalDays * i)
+              start.setUTCDate(start.getUTCDate() + intervalDays * i)
+              if (end) end.setUTCDate(end.getUTCDate() + intervalDays * i)
             }
             recurringRows.push({
               ...baseInsert,

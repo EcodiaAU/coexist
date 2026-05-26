@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useCamera } from '@/hooks/use-camera'
 import { useImageUpload } from '@/hooks/use-image-upload'
 import { useToast } from '@/components/toast'
+import { wallClockNow } from '@/lib/date-format'
 import type { Database } from '@/types/database.types'
 
 function clampPercent(n: number): number {
@@ -54,14 +55,14 @@ export interface EventFormFields {
   is_external_collaboration: boolean
   external_registration_url: string
   /**
-   * IANA timezone the start/end wall-clock values are entered in.
-   * Defaults to the collective's timezone at form open; the admin can
-   * override per event (e.g. travel events). Persisted to
-   * events.timezone only when it differs from the collective.
+   * Legacy field, kept for source-compat with existing consumers. In the
+   * floating-local model (Tate 2026-05-25 + 2026-05-26) events have no
+   * timezone - the wall-clock is the wall-clock for every viewer. The
+   * DatePicker no longer reads this value; it is never persisted as a
+   * non-null events.timezone column. Always 'UTC'.
    */
   timezone: string
-  /** Tracks whether the user has explicitly overridden timezone, so we
-   *  know whether to persist it as a per-event override vs. inherit. */
+  /** Legacy field. Always false in the floating-local model. */
   timezone_overrides_collective: boolean
   /** Free-form metadata captured in the wizard - persisted to
    *  events.event_extras jsonb so edit-event can round-trip them. */
@@ -84,7 +85,7 @@ export const INITIAL_FORM_FIELDS: EventFormFields = {
   is_public: true,
   is_external_collaboration: false,
   external_registration_url: '',
-  timezone: 'Australia/Sydney',
+  timezone: 'UTC',
   timezone_overrides_collective: false,
   extras: INITIAL_EXTRAS,
 }
@@ -189,7 +190,12 @@ export function useEventForm({ initial }: UseEventFormOptions) {
   /* Validation: minimum required fields */
   const isBasicsValid = fields.title.trim().length > 0 && fields.activity_type !== ''
   const isDateValid = fields.date_start !== null
-  const isDateInPast = fields.date_start !== null && fields.date_start < new Date()
+  // Floating-local: fields.date_start is a Date whose UTC encodes the
+  // host's typed wall-clock (e.g. Date('2026-05-07T15:00Z') means
+  // "3pm 7 May"). Compare against wallClockNow() - a Date whose UTC
+  // encodes the viewer's local wall-clock - so "in the past" lines up
+  // with what the user's phone says, not with absolute UTC.
+  const isDateInPast = fields.date_start !== null && fields.date_start < wallClockNow()
   const hasLocation = fields.address.trim().length > 0 || (fields.location_lat !== null && fields.location_lng !== null)
 
   /** Build PostGIS-compatible EWKT string from lat/lng.
