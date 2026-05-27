@@ -27,7 +27,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
+    // Diagnostic build for 1.8.18 - keep real function names so the
+    // boot-error overlay stack trace is readable. Revert once the
+    // white-screen root cause is identified.
+    minify: false,
+    sourcemap: true,
     rollupOptions: {
       external: ['@capacitor-mlkit/barcode-scanning', 'posthog-js'],
       output: {
