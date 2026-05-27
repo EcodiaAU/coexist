@@ -32,6 +32,15 @@
     -->
     <script>
       (function () {
+        // Build-time env injection via Vite's %VITE_*% replacement.
+        // If undefined, Vite leaves the placeholder literal, which is
+        // exactly the diagnostic we want.
+        window.__DEBUG_BOOT = {
+          url: '%VITE_SUPABASE_URL%',
+          keyPrefix: '%VITE_SUPABASE_ANON_KEY%'.slice(0, 24),
+          mode: '%MODE%',
+          time: new Date().toISOString(),
+        };
         function paint(label, payload) {
           try {
             var div = document.getElementById('boot-error');
@@ -39,17 +48,21 @@
               div = document.createElement('div');
               div.id = 'boot-error';
               div.style.cssText = 'position:fixed;inset:0;background:#fff;color:#000;padding:20px;font:13px ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow:auto;z-index:99999;line-height:1.4';
+              div.textContent = 'BOOT ENV\n url: ' + window.__DEBUG_BOOT.url + '\n key: ' + window.__DEBUG_BOOT.keyPrefix + '...\n mode: ' + window.__DEBUG_BOOT.mode + '\n time: ' + window.__DEBUG_BOOT.time + '\n---\n';
               document.body.appendChild(div);
             }
-            var msg;
+            var head = '';
+            var stack = '';
             if (typeof payload === 'string') {
-              msg = payload;
-            } else if (payload && (payload.stack || payload.message)) {
-              msg = (payload.stack || payload.message);
+              head = payload;
+            } else if (payload) {
+              try { head = (payload.name || 'Error') + ': ' + (payload.message || String(payload)); } catch (e) { head = String(payload); }
+              try { stack = payload.stack || ''; } catch (e) { stack = ''; }
+              if (stack && stack.indexOf(head) === 0) stack = stack.slice(head.length).replace(/^\n/, '');
             } else {
-              try { msg = JSON.stringify(payload); } catch (e) { msg = String(payload); }
+              head = String(payload);
             }
-            div.textContent = (div.textContent || '') + '\n[' + label + '] ' + msg;
+            div.textContent = (div.textContent || '') + '\n[' + label + '] ' + head + (stack ? '\n  ' + stack.split('\n').join('\n  ') : '') + '\n';
           } catch (e) { /* last resort */ }
         }
         window.addEventListener('error', function (e) { paint('error', e.error || e.message || e); });
