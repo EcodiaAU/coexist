@@ -48,7 +48,7 @@ import { Card } from '@/components/card'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { prefetchEventDetail } from '@/hooks/use-events'
 import { cn } from '@/lib/cn'
-import { isSignInButtonVisible } from '@/lib/date-format'
+import { isSignInButtonVisible, wallClockNow } from '@/lib/date-format'
 import { ProximityCheckInBanner } from '@/components/proximity-check-in-banner'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
@@ -121,29 +121,45 @@ function HScroll({
 /*  Format helpers                                                     */
 /* ------------------------------------------------------------------ */
 
-function formatEventDate(iso: string, timeZone?: string): string {
+// Floating-local model: event.date_start/date_end are wall-clock-as-UTC.
+// Every event-time renderer pins timeZone 'UTC' so the stored wall-clock
+// comes back verbatim regardless of the viewer's device timezone. The
+// legacy `timeZone` param is accepted for call-site compatibility but
+// ignored (see src/lib/date-format.ts). Rendering with the collective or
+// device tz here was the homepage bug that showed a 5pm spotlight as 3am.
+function formatEventDate(iso: string, _legacyTz?: string): string {
   return new Date(iso).toLocaleDateString('en-AU', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
-    timeZone,
+    timeZone: 'UTC',
   })
 }
 
-function formatEventTime(iso: string, timeZone?: string): string {
-  return new Date(iso).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', timeZone })
+function formatEventTime(iso: string, _legacyTz?: string): string {
+  return new Date(iso).toLocaleTimeString('en-AU', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  })
 }
 
+// Calendar-day diff between the event's stored wall-clock day (UTC slice)
+// and the viewer's local calendar day. So "Today"/"Tomorrow" track the
+// host's intended day against what the viewer's own clock reads.
 function daysUntil(iso: string): number {
   const now = new Date()
   now.setHours(0, 0, 0, 0)
-  const target = new Date(iso)
-  target.setHours(0, 0, 0, 0)
+  const d = new Date(iso)
+  const target = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
   return Math.ceil((target.getTime() - now.getTime()) / 86400000)
 }
 
+// Compare against wallClockNow() (a Date whose UTC value equals the
+// viewer's local wall-clock) so the start/end window lines up with the
+// wall-clock-as-UTC stored event times.
 function isEventHappeningNow(start: string, end: string | null): boolean {
-  const now = Date.now()
+  const now = wallClockNow().getTime()
   const s = new Date(start).getTime()
   const e = end ? new Date(end).getTime() : s + 4 * 60 * 60 * 1000 // default 4h window
   return now >= s && now <= e
