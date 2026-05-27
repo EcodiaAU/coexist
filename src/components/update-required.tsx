@@ -9,8 +9,30 @@ interface UpdateRequiredProps {
   className?: string
 }
 
-const APP_STORE_URL = 'https://apps.apple.com/au/app/co-exist/id6450456311'
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=org.coexistaus.app'
+// Web (Vercel) + visible href fallback.
+const APP_STORE_WEB = 'https://apps.apple.com/au/app/co-exist/id6450456311'
+const PLAY_STORE_WEB = 'https://play.google.com/store/apps/details?id=org.coexistaus.app'
+
+// Native deep-link schemes. A plain https://apps.apple.com link does NOT open
+// the App Store app from inside a WKWebView - Apple disables universal-link
+// handling for webview-initiated navigation, so the link just tries to load
+// the store web page inside the webview and appears to do nothing. The
+// itms-apps:// (iOS) and market:// (Android) schemes are non-http, so
+// Capacitor's navigation delegate hands them straight to the OS, which opens
+// the native store app on the app's listing.
+const APP_STORE_DEEP = 'itms-apps://apps.apple.com/au/app/co-exist/id6450456311'
+const PLAY_STORE_DEEP = 'market://details?id=org.coexistaus.app'
+
+function openStore(platform: 'ios' | 'android') {
+  const isNative = Capacitor.isNativePlatform()
+  const url = isNative
+    ? platform === 'ios' ? APP_STORE_DEEP : PLAY_STORE_DEEP
+    : platform === 'ios' ? APP_STORE_WEB : PLAY_STORE_WEB
+  // '_system' matches the app's existing external-open convention
+  // (see event-detail.tsx). On native the custom scheme hands off to the
+  // OS store app; on web '_blank' opens a new tab.
+  window.open(url, isNative ? '_system' : '_blank')
+}
 
 /**
  * Blocking screen shown when the installed app version is older than
@@ -92,9 +114,15 @@ export function UpdateRequired({
         <div className="mt-4 flex flex-col gap-3 w-full">
           {(isIOS || !isNative) && (
             <a
-              href={APP_STORE_URL}
+              href={isNative ? APP_STORE_DEEP : APP_STORE_WEB}
               target={isNative ? undefined : '_blank'}
               rel="noopener noreferrer"
+              onClick={(e) => {
+                if (isNative) {
+                  e.preventDefault()
+                  openStore('ios')
+                }
+              }}
               className={cn(
                 'inline-flex items-center justify-center min-h-12 w-full px-5 rounded-2xl',
                 'bg-black text-white text-sm font-semibold',
@@ -106,9 +134,15 @@ export function UpdateRequired({
           )}
           {(isAndroid || !isNative) && (
             <a
-              href={PLAY_STORE_URL}
+              href={isNative ? PLAY_STORE_DEEP : PLAY_STORE_WEB}
               target={isNative ? undefined : '_blank'}
               rel="noopener noreferrer"
+              onClick={(e) => {
+                if (isNative) {
+                  e.preventDefault()
+                  openStore('android')
+                }
+              }}
               className={cn(
                 'inline-flex items-center justify-center min-h-12 w-full px-5 rounded-2xl',
                 'bg-primary-500 text-white text-sm font-semibold',
