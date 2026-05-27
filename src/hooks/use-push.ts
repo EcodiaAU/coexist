@@ -26,28 +26,54 @@ interface PushNotificationActionPerformed {
 
 /* ------------------------------------------------------------------ */
 /*  Capacitor Push Notifications - dynamic import                      */
+/*                                                                     */
+/*  WARNING: never return the Capacitor plugin proxy as the resolved   */
+/*  value of an async function. The proxy's get-trap returns a         */
+/*  callable wrapper for ANY property access, including `then`. When   */
+/*  JS sees `proxy.then` is a function it treats the proxy as a        */
+/*  thenable and calls `proxy.then(resolve, reject)` to assimilate     */
+/*  it. The wrapper routes that to the native bridge as a              */
+/*  `PushNotifications.then()` call, which iOS does not implement, so  */
+/*  the Promise rejects with "PushNotifications.then() is not          */
+/*  implemented on ios". That unhandled rejection caused the boot      */
+/*  overlay to paint over the React tree on 1.8.19. Capacitor 8 core   */
+/*  proxy does not guard against this. Workaround: keep the proxy in   */
+/*  a module-local ref, expose via a synchronous getter, and let       */
+/*  async callers await an `ensure*` function that resolves to         */
+/*  `undefined` (never the proxy itself).                              */
 /* ------------------------------------------------------------------ */
 
-let PushNotifications: {
+type PushNotificationsPlugin = {
   checkPermissions: () => Promise<{ receive: string }>
   requestPermissions: () => Promise<{ receive: string }>
   register: () => Promise<void>
   getDeliveredNotifications: () => Promise<{ notifications: unknown[] }>
   removeAllDeliveredNotifications: () => Promise<void>
   addListener: (event: string, handler: (...args: unknown[]) => void) => Promise<{ remove: () => void }>
-} | null = null
+}
 
-async function loadPushPlugin() {
-  if (!Capacitor.isNativePlatform()) return null
-  if (PushNotifications) return PushNotifications
-  try {
-    const mod = await import('@capacitor/push-notifications')
-    PushNotifications = mod.PushNotifications as unknown as typeof PushNotifications
-    return PushNotifications
-  } catch {
-    console.warn('[push] @capacitor/push-notifications not available')
-    return null
+let pushPluginRef: PushNotificationsPlugin | null = null
+let pushPluginLoadPromise: Promise<void> | null = null
+
+function ensurePushPlugin(): Promise<void> {
+  if (pushPluginLoadPromise) return pushPluginLoadPromise
+  if (!Capacitor.isNativePlatform()) {
+    pushPluginLoadPromise = Promise.resolve()
+    return pushPluginLoadPromise
   }
+  pushPluginLoadPromise = (async () => {
+    try {
+      const mod = await import('@capacitor/push-notifications')
+      pushPluginRef = mod.PushNotifications as unknown as PushNotificationsPlugin
+    } catch {
+      console.warn('[push] @capacitor/push-notifications not available')
+    }
+  })()
+  return pushPluginLoadPromise
+}
+
+function getPushPlugin(): PushNotificationsPlugin | null {
+  return pushPluginRef
 }
 
 /* ------------------------------------------------------------------ */
@@ -108,7 +134,8 @@ async function removeAllTokensForUser(userId: string) {
 async function clearBadgeCount() {
   if (!Capacitor.isNativePlatform()) return
   try {
-    const plugin = await loadPushPlugin()
+    await ensurePushPlugin()
+    const plugin = getPushPlugin()
     await plugin?.removeAllDeliveredNotifications()
   } catch {
     // badge API may not be available
@@ -123,7 +150,7 @@ let registrationInFlight = false
  * Returns true if registration was triggered (token will arrive via listener).
  * Deduplicated - concurrent calls are no-ops.
  */
-async function requestAndRegister(plugin: NonNullable<typeof PushNotifications>): Promise<boolean> {
+async function requestAndRegister(plugin: PushNotificationsPlugin): Promise<boolean> {
   if (registrationInFlight) {
     console.info('[push] registration already in flight - skipping')
     return false
@@ -137,7 +164,7 @@ async function requestAndRegister(plugin: NonNullable<typeof PushNotifications>)
   }
 }
 
-async function _doRequestAndRegister(plugin: NonNullable<typeof PushNotifications>): Promise<boolean> {
+async function _doRequestAndRegister(plugin: PushNotificationsPlugin): Promise<boolean> {
   // Check current permission state first
   let permState: string
   try {
@@ -216,7 +243,8 @@ async function persistTapEvent(source: 'early' | 'auth-gated', route: string, da
 export async function attachEarlyTapListener(): Promise<void> {
   if (earlyListenerAttached) return
   if (!Capacitor.isNativePlatform()) return
-  const plugin = await loadPushPlugin()
+  await ensurePushPlugin()
+  const plugin = getPushPlugin()
   if (!plugin) return
   earlyListenerAttached = true
   await plugin.addListener('pushNotificationActionPerformed', (action: unknown) => {
@@ -274,7 +302,8 @@ export function usePushRegistration() {
     let mounted = true
 
     async function setup() {
-      const plugin = await loadPushPlugin()
+      await ensurePushPlugin()
+      const plugin = getPushPlugin()
       if (!plugin || !mounted) return
 
       const platform = Capacitor.getPlatform() // 'ios' | 'android'
@@ -484,7 +513,12 @@ export function usePushRegistration() {
       await requestAndRegister(plugin)
     }
 
-    setup()
+    setup().catch((err) => {
+      // Defensive: never let a setup() rejection escape as an unhandled
+      // promise rejection. The boot-error overlay window listener treats
+      // unhandled rejections as fatal and paints over the React tree.
+      console.warn('[push] setup() failed:', err)
+    })
 
     // Clear badge count when app opens
     clearBadgeCount()
@@ -508,7 +542,8 @@ export function usePushRegistration() {
                 navigate(route)
               }
             } catch { /* best-effort */ }
-            const plugin = await loadPushPlugin()
+            await ensurePushPlugin()
+            const plugin = getPushPlugin()
             if (plugin && mounted) {
               await requestAndRegister(plugin)
             }
@@ -548,7 +583,8 @@ export function usePush() {
 
   /** Prompt for permission (call at a strategic moment, e.g. after onboarding) */
   const requestPermission = useCallback(async () => {
-    const plugin = await loadPushPlugin()
+    await ensurePushPlugin()
+    const plugin = getPushPlugin()
     if (!plugin) return false
 
     return requestAndRegister(plugin)
