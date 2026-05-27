@@ -1,3 +1,31 @@
+// On-screen boot-error overlay. Diagnostic for the 1.8.13-1.8.15 white
+// screen: any pre-React-render exception or unhandled promise rejection
+// would otherwise just leave the WebView blank. Surface the message
+// directly so the device can show us what's wrong without needing
+// remote-debugging. Drop or hide once the cold-start issue is settled.
+function showBootError(label: string, payload: unknown) {
+  try {
+    let div = document.getElementById('boot-error')
+    if (!div) {
+      div = document.createElement('div')
+      div.id = 'boot-error'
+      div.style.cssText =
+        'position:fixed;inset:0;background:#fff;color:#000;padding:20px;font:13px ui-monospace,monospace;white-space:pre-wrap;overflow:auto;z-index:99999'
+      document.body.appendChild(div)
+    }
+    const err = payload as { stack?: string; message?: string } | string | undefined
+    const text =
+      typeof err === 'string'
+        ? err
+        : err?.stack || err?.message || JSON.stringify(err)
+    div.textContent = `${div.textContent || ''}\n[${label}] ${text}`
+  } catch {
+    // last-resort, swallow
+  }
+}
+window.addEventListener('error', (e) => showBootError('error', e.error ?? e.message))
+window.addEventListener('unhandledrejection', (e) => showBootError('promise', e.reason))
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -174,24 +202,28 @@ if (Capacitor.isNativePlatform()) {
 // Initialize Sentry error reporting (no-op if VITE_SENTRY_DSN is not set)
 initSentry()
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AuthProvider>
-            <ToastProvider>
-              <SentryErrorBoundary>
-                <App />
-              </SentryErrorBoundary>
-              <CookieConsentBanner />
-            </ToastProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </HelmetProvider>
-  </StrictMode>,
-)
+try {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <HelmetProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <AuthProvider>
+              <ToastProvider>
+                <SentryErrorBoundary>
+                  <App />
+                </SentryErrorBoundary>
+                <CookieConsentBanner />
+              </ToastProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </HelmetProvider>
+    </StrictMode>,
+  )
+} catch (err) {
+  showBootError('render', err)
+}
 
 // Register service worker - detect updates and prompt reload
 if ('serviceWorker' in navigator) {
