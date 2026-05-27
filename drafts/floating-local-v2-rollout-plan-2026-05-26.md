@@ -1,7 +1,8 @@
 # Floating-local v2 rollout plan
 
 Started: 2026-05-26
-Status: code merged to main, web on previous deploy, native build in progress
+Last update: 2026-05-27 (iOS 1.8.22 build 56 uploaded, Android 1.8.22 vc24 pending Tate sign+upload)
+Status: code merged to main, web held on previous deploy, native builds being submitted
 
 This is a multi-day coordinated rollout. The branch is on main but web users are on the previous (real-UTC) deploy. Native apps are being built off main (which has the new floating-local code).
 
@@ -18,20 +19,21 @@ When iOS and Android approvals come back, we run the cutover.
 
 | Layer | State | Notes |
 |---|---|---|
-| Main branch | Has floating-local v2 code | Merged 2026-05-26 |
-| Vercel web | On previous deploy (pre-floating-local) | Rolled back after auto-deploy |
+| Main branch | Has floating-local v2 code + realtime fix + boot-overlay scope | HEAD: `cec4e4a` (Android bump) |
+| Vercel web | Pinned to `d1v9b6388` (pre-floating-local) | Auto-deploys land but alias stays on rollback target |
 | Supabase data | Real-UTC encoding | Reverted from May 25 migration |
-| iOS app store | TBD: submit 1.8.13 | Manual release mode |
-| Play Console | TBD: submit new bundle | Staged rollout halted at 0% |
-| `kv_store.coexist.min_app_version` | NOT YET CREATED | Will gate stragglers post-cutover |
+| iOS app store | 1.8.22 (56) uploaded to ASC | Awaiting Tate: set release method to Manual + Submit for Review |
+| Play Console | 1.8.22 (vc24) pending Tate sign+upload | Android Studio open. Staged rollout still halted at 0% |
+| `app_settings.min_version` row | seeded earlier | Currently at a value lower than 1.8.22; flip at cutover |
+| `UpdateRequired` blocker component | SHIPPED in 1.8.13+ | Reads `app_settings.min_version`, blocks old builds with App Store / Play Store deep links |
 
-## Pre-flight gaps (still to add before cutover)
+## Pre-flight gaps remaining
 
-1. **Min-version check + "Update required" banner.** App reads `kv_store.coexist.min_app_version` at startup. If local build version < that value, block app with a modal pointing to App Store / Play Store. Without this, native stragglers see broken times silently after cutover instead of being forced to update. ~30 lines.
+1. **Postgres trigger `enforce_event_day_check_in_window` update.** The trigger uses `(date_start AT TIME ZONE collective_tz)::date` which over-shifts late-evening events under floating-local encoding (e.g. 9pm-as-UTC viewed AT TIME ZONE Brisbane lands in next day). Replace with `(date_start AT TIME ZONE 'UTC')::date` so the wall-clock day comes through verbatim. SQL ready in `floating-local-v2-trigger-fix-2026-05-26.sql`.
 
-2. **Postgres trigger `enforce_event_day_check_in_window` update.** The trigger uses `(date_start AT TIME ZONE collective_tz)::date` which over-shifts late-evening events under floating-local encoding (e.g. 9pm-as-UTC viewed AT TIME ZONE Brisbane lands in next day). Replace with `(date_start AT TIME ZONE 'UTC')::date` so the wall-clock day comes through verbatim. SQL is in `floating-local-v2-trigger-fix-2026-05-26.sql`.
+2. **ASC release method = Manual.** Tate sets this in App Store Connect when submitting 1.8.22 for review. Without it, Apple auto-publishes 1.8.22 to all users the moment they approve, before the data migration runs. With Manual, we control the exact second of release.
 
-Either of these can ship before cutover via separate commits.
+3. **Play Console staged rollout stays halted at 0%.** New 1.8.22 AAB gets uploaded as a new release but rollout percentage stays at 0 until cutover.
 
 ## Cutover sequence
 
@@ -53,11 +55,13 @@ When iOS and Android are approved:
 
 5. **Resume Android staged rollout** to 100% in Play Console.
 
-6. **Flip min-version flag** in `kv_store`:
+6. **Flip min-version row** in `app_settings` (this is what `useAppUpdate()` reads, NOT `kv_store`):
    ```sql
-   UPDATE kv_store SET value = '1.8.13' WHERE key = 'coexist.min_app_version';
+   UPDATE app_settings SET value = '"1.8.22"'::jsonb WHERE key = 'min_version';
+   -- optionally bump latest_version too so the prompt shows the current build:
+   UPDATE app_settings SET value = '"1.8.22"'::jsonb WHERE key = 'latest_version';
    ```
-   Old native users now see the "Update required" banner.
+   Old native users now see the `UpdateRequired` blocker with App Store / Play Store deep links.
 
 ## Rollback (if cutover goes wrong)
 
