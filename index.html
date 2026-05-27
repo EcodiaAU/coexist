@@ -23,6 +23,40 @@
   </head>
   <body style="background-color:#f8f9f5">
     <div id="root"></div>
+    <!--
+      Synchronous boot-error overlay. Diagnostic for the 1.8.13-1.8.16
+      iOS white-screen. Registered BEFORE the module script loads, so
+      any error during module-level evaluation (the dominant suspect
+      after lazy app-version refactor didn't fix it) lands on screen
+      instead of leaving the WebView blank.
+    -->
+    <script>
+      (function () {
+        function paint(label, payload) {
+          try {
+            var div = document.getElementById('boot-error');
+            if (!div) {
+              div = document.createElement('div');
+              div.id = 'boot-error';
+              div.style.cssText = 'position:fixed;inset:0;background:#fff;color:#000;padding:20px;font:13px ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow:auto;z-index:99999;line-height:1.4';
+              document.body.appendChild(div);
+            }
+            var msg;
+            if (typeof payload === 'string') {
+              msg = payload;
+            } else if (payload && (payload.stack || payload.message)) {
+              msg = (payload.stack || payload.message);
+            } else {
+              try { msg = JSON.stringify(payload); } catch (e) { msg = String(payload); }
+            }
+            div.textContent = (div.textContent || '') + '\n[' + label + '] ' + msg;
+          } catch (e) { /* last resort */ }
+        }
+        window.addEventListener('error', function (e) { paint('error', e.error || e.message || e); });
+        window.addEventListener('unhandledrejection', function (e) { paint('promise', e.reason); });
+        window.__bootError = paint;
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
