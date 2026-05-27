@@ -41,7 +41,23 @@
           mode: '%MODE%',
           time: new Date().toISOString(),
         };
+        // Scope: visible overlay only paints during the boot window. After 5s
+        // (or once React signals window.__APP_MOUNTED = true) the overlay
+        // mutes itself and any further errors land in console only. Without
+        // this, a transient post-mount error (e.g. Realtime channel hiccup,
+        // network blip) paints a white overlay across a working app - the
+        // exact symptom of the 1.8.21 Supabase Realtime double-join.
+        var BOOT_WINDOW_MS = 5000;
+        var paintsAllowed = true;
+        setTimeout(function () { paintsAllowed = false; }, BOOT_WINDOW_MS);
         function paint(label, payload) {
+          var headForLog = '';
+          try {
+            if (typeof payload === 'string') headForLog = payload;
+            else if (payload) headForLog = (payload.name ? payload.name + ': ' : '') + (payload.message ? payload.message : String(payload));
+          } catch (e) { headForLog = String(payload); }
+          try { console.error('[boot-error]', label, headForLog, payload); } catch (e) { /* ignore */ }
+          if (!paintsAllowed || window.__APP_MOUNTED) return;
           try {
             var div = document.getElementById('boot-error');
             if (!div) {

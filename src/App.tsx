@@ -220,6 +220,11 @@ function App() {
   // falling straight through to ErrorBoundary.
   useEffect(() => {
     clearChunkReloadGuard()
+    // Signal "React mounted" to the index.html boot-error overlay so it
+    // stops painting visibly on post-mount errors. See index.html scope
+    // comment; mounted = working app, so a transient error shouldn't
+    // blank the screen.
+    ;(window as unknown as { __APP_MOUNTED?: boolean }).__APP_MOUNTED = true
   }, [])
 
   const handleSplashReady = useCallback(() => {
