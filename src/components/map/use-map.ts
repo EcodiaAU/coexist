@@ -117,9 +117,19 @@ export function useMap({
 
     const c = center ?? DEFAULT_CENTER
     const z = center ? zoom : DEFAULT_ZOOM_FALLBACK
+    // maxZoom MUST be set on the map options directly. The marker-cluster
+    // plugin calls map.getMaxZoom() inside its onAdd; if the map has no
+    // maxZoom set on its own options AND the tile layer's maxZoom hasn't
+    // propagated yet (which happens on a remount with a different timing),
+    // getMaxZoom() returns Infinity and the cluster plugin throws "Map has
+    // no maxZoom specified" - the route ErrorBoundary catches it as a
+    // render-phase throw via addLayer's synchronous commit, producing the
+    // "This page ran into an issue" screen on the second event-detail visit.
     const map = L.map(containerRef.current, {
       center: [c.lat, c.lng],
       zoom: z,
+      maxZoom: 19,
+      minZoom: 2,
       zoomControl: interactive,
       dragging: interactive,
       touchZoom: interactive,
