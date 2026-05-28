@@ -28,51 +28,90 @@ export function useMapMarkers({ map, markers, onMarkerClick, fitBounds = true }:
 
     // Clean previous cluster group
     if (clusterGroupRef.current) {
-      map.removeLayer(clusterGroupRef.current)
+      try { map.removeLayer(clusterGroupRef.current) } catch { /* layer already gone */ }
       clusterGroupRef.current = null
     }
 
     if (!markers?.length) return
 
-    const group = L.markerClusterGroup({
-      iconCreateFunction: createClusterIcon,
-      maxClusterRadius: 50,
-      spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false,
-      animate: true,
-    })
+    // Defer the cluster add by one frame after the map signals ready.
+    // On iOS WKWebView, the container's layout sometimes isn't fully
+    // committed by the time React's mapReady state flips, so panes can
+    // still be missing their _leaflet_pos. markercluster's onAdd / first
+    // animation then tries to read `someElement._leaflet_pos` where the
+    // element is undefined - throws as a render-phase error caught by the
+    // route ErrorBoundary, killing the page on second visit. Forcing one
+    // more invalidateSize + a rAF-deferred add + try/catch with retry
+    // bulletproofs against the race.
+    let rafId: number | null = null
+    let cancelled = false
+    let retries = 0
 
-    for (const m of markers) {
-      const icon = createPinIcon(m.variant ?? 'default')
-      const leafletMarker = L.marker([m.position.lat, m.position.lng], { icon })
+    const applyCluster = () => {
+      if (cancelled) return
+      rafId = null
+      try {
+        // Re-assert size in case container layout shifted (KeepAlive
+        // display:none -> visible toggle, address bar collapse, etc).
+        map.invalidateSize()
 
-      if (m.label) {
-        leafletMarker.bindTooltip(m.label, {
-          direction: 'top',
-          offset: [0, -46],
-          className: 'coexist-tooltip',
+        const group = L.markerClusterGroup({
+          iconCreateFunction: createClusterIcon,
+          maxClusterRadius: 50,
+          spiderfyOnMaxZoom: true,
+          showCoverageOnHover: false,
+          animate: true,
         })
+
+        for (const m of markers) {
+          const icon = createPinIcon(m.variant ?? 'default')
+          const leafletMarker = L.marker([m.position.lat, m.position.lng], { icon })
+
+          if (m.label) {
+            leafletMarker.bindTooltip(m.label, {
+              direction: 'top',
+              offset: [0, -46],
+              className: 'coexist-tooltip',
+            })
+          }
+
+          leafletMarker.on('click', () => {
+            onMarkerClickRef.current?.(m.id)
+          })
+
+          group.addLayer(leafletMarker)
+        }
+
+        map.addLayer(group)
+        clusterGroupRef.current = group
+
+        // Fit bounds if multiple markers
+        if (fitBounds && markers.length > 1) {
+          const bounds = L.latLngBounds(markers.map((m) => [m.position.lat, m.position.lng]))
+          map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 })
+        }
+      } catch (err) {
+        // Most common observed failure: TypeError reading _leaflet_pos on an
+        // undefined pane element when iOS hasn't laid out the container yet.
+        // Retry once on the next frame; if it still fails, surface and stop -
+        // a permanent rejection means the map is genuinely broken (not racing)
+        // and silent infinite retry would mask that.
+        if (retries < 1) {
+          retries += 1
+          rafId = requestAnimationFrame(applyCluster)
+        } else {
+          console.error('[map-markers] cluster add failed after retry', err)
+        }
       }
-
-      leafletMarker.on('click', () => {
-        onMarkerClickRef.current?.(m.id)
-      })
-
-      group.addLayer(leafletMarker)
     }
 
-    map.addLayer(group)
-    clusterGroupRef.current = group
-
-    // Fit bounds if multiple markers
-    if (fitBounds && markers.length > 1) {
-      const bounds = L.latLngBounds(markers.map((m) => [m.position.lat, m.position.lng]))
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 })
-    }
+    rafId = requestAnimationFrame(applyCluster)
 
     return () => {
+      cancelled = true
+      if (rafId !== null) cancelAnimationFrame(rafId)
       if (clusterGroupRef.current) {
-        map.removeLayer(clusterGroupRef.current)
+        try { map.removeLayer(clusterGroupRef.current) } catch { /* map already torn down */ }
         clusterGroupRef.current = null
       }
     }
