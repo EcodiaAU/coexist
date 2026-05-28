@@ -304,9 +304,10 @@ export function EventShareSheet({
           </div>
         </div>
 
-        {/* Event link - copy to paste into DMs / texts. Instagram strips
-            links from captions, so the graphic carries app-store links while
-            this gives a direct, openable event link for interested attendees. */}
+        {/* Event link - the graphic is just an image (no tappable link), so
+            this Copy button is the only way to hand attendees a direct,
+            openable link to the event. Instagram also strips links from
+            captions, which is why a copyable URL matters. */}
         <div className="mt-5 rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
           <p className="text-[12px] font-bold text-neutral-900 mb-1.5">Event link</p>
           <div className="flex items-center gap-2">
@@ -328,9 +329,9 @@ export function EventShareSheet({
         </div>
 
         <p className="mt-4 text-[12px] text-neutral-500 leading-relaxed">
-          Save the image, then open Instagram and post it from your camera roll.
-          The graphic includes app store links so people can install Co-Exist
-          and find this event.
+          Save the image, then post it on Instagram from your camera roll. The
+          image can&apos;t carry a tappable link, so copy the event link above
+          to share in your story, bio, or DMs.
         </p>
       </div>
     </BottomSheet>

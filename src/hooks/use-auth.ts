@@ -669,6 +669,13 @@ export function useAuthProvider(): AuthContextValue {
     } catch { /* */ }
     if (Capacitor.isNativePlatform()) {
       Preferences.remove({ key: ONBOARDING_DONE_KEY }).catch(() => {})
+      // Clear cached social-login credentials so the next sign-in shows the
+      // account picker instead of silently re-binding to the last Google /
+      // Apple account. Without this, logging out then back in via Google
+      // defaults to the previous account with no way to switch.
+      for (const provider of initialized) {
+        SocialLogin.logout({ provider }).catch(() => { /* best-effort */ })
+      }
     }
     setOnboardingDone(false)
   }, [])
