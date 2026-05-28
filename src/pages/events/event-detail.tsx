@@ -689,10 +689,13 @@ export default function EventDetailPage() {
       //   * Time unknown: disabled, reads "You're registered"
       // Leaders force-open via the warning row at the top of the Leader
       // Actions block, so this button stays disabled for everyone here.
+      // checkInOpensAt is derived from event.date_start (wall-clock-as-UTC),
+      // so pin UTC to read the wall-clock verbatim. Formatting in eventTz
+      // shifted it by the device/collective offset (floating-local bug).
       const checkinTime = checkInOpensAt?.toLocaleTimeString([], {
         hour: 'numeric',
         minute: '2-digit',
-        timeZone: eventTz,
+        timeZone: 'UTC',
       })
       const buttonLabel = isEventActive
         ? 'Check In Now'
@@ -1129,7 +1132,7 @@ export default function EventDetailPage() {
               <div className="mb-2.5 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-warning-50 border border-warning-200/40">
                 <Clock size={14} className="text-warning-600 shrink-0" />
                 <p className="text-xs text-warning-700 flex-1">
-                  Check-in opens at {checkInOpensAt?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: eventTz }) ?? '-'}
+                  Check-in opens at {checkInOpensAt?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }) ?? '-'}
                 </p>
                 <button
                   type="button"

@@ -31,13 +31,16 @@ interface CreateCarpoolSheetProps {
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
+// Floating-local: event date_start is wall-clock-as-UTC. Pin UTC so the
+// host's wall-clock comes back verbatim instead of being shifted by the
+// viewer's device offset.
 function formatEventDate(dateStr: string): string {
   const d = new Date(dateStr)
-  return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })
+  return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
 }
 
 function formatEventTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })
+  return new Date(dateStr).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' })
 }
 
 function toLocalDatetimeInputValue(d: Date): string {

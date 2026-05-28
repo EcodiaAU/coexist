@@ -438,15 +438,19 @@ const EVENT_STATUS_STYLES: Record<string, { bg: string; text: string; dot: strin
 function EventRow({ event, reducedMotion, delay = 0 }: { event: AdminCollectiveEvent; reducedMotion: boolean; delay?: number }) {
   const date = new Date(event.date_start)
   const status = EVENT_STATUS_STYLES[event.status] ?? EVENT_STATUS_STYLES.draft
+  // Floating-local: date_start is wall-clock-as-UTC. Pin UTC so the host's
+  // wall-clock day/time shows verbatim, not shifted by the viewer's offset.
   const dateLabel = date.toLocaleDateString('en-AU', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
+    timeZone: 'UTC',
   })
   const timeLabel = date.toLocaleTimeString('en-AU', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZone: 'UTC',
   })
 
   return (
