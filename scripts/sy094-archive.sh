@@ -1,5 +1,5 @@
 #!/bin/bash
-# Archive + export + upload Co-Exist iOS 1.8.22 (build 55) to ASC.
+# Archive + export + upload Co-Exist iOS 1.8.23 (build 55) to ASC.
 # Runs on SY094. Expects MAC_PASS env var (= login keychain password = MacInCloud pass).
 set -euo pipefail
 
@@ -14,8 +14,8 @@ TEAM_ID=86PUY7393S
 KEY_ID=6U5835AAQY
 ISSUER_ID=4b45186b-49e4-4a25-8a63-afd28cf12d3f
 KEY_PATH="$HOME/private_keys/AuthKey_${KEY_ID}.p8"
-ARCHIVE=/tmp/coexist-1.8.22.xcarchive
-EXPORT=/tmp/coexist-1.8.22-export
+ARCHIVE=/tmp/coexist-1.8.23.xcarchive
+EXPORT=/tmp/coexist-1.8.23-export
 
 echo "=== unlock login keychain (1h TTL) ==="
 security unlock-keychain -p "$MAC_PASS" ~/Library/Keychains/login.keychain-db

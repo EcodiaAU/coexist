@@ -5,6 +5,7 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { cn } from '@/lib/cn'
 import { useCollectiveEvents, type EventWithCollective } from '@/hooks/use-events'
+import { wallClockToUtcIso, wallClockNow } from '@/lib/date-format'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -43,9 +44,14 @@ function formatEventTime(dateStr: string): string {
   return new Date(dateStr).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' })
 }
 
-function toLocalDatetimeInputValue(d: Date): string {
+// Floating-local: carpool departure_time lives in the same wall-clock-as-UTC
+// frame as event times. Build the datetime-local input value from UTC
+// components so the typed/defaulted wall-clock is preserved verbatim; submit
+// stamps it back as UTC via wallClockToUtcIso. Using local components here was
+// the bug that showed "departing 9:30pm for an 8:30am event".
+function toWallClockInputValue(d: Date): string {
   const pad = (n: number) => n.toString().padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
 }
 
 /* ------------------------------------------------------------------ */
@@ -226,9 +232,10 @@ export function CreateCarpoolSheet({
     startTransition(() => {
       setEventId('')
       setDeparturePoint('')
-      const inOneHour = new Date(Date.now() + 60 * 60 * 1000)
-      inOneHour.setMinutes(0, 0, 0)
-      setDepartureTime(toLocalDatetimeInputValue(inOneHour))
+      // wall-clock now + 1h, rounded to the hour, in the wall-clock frame
+      const inOneHour = new Date(wallClockNow().getTime() + 60 * 60 * 1000)
+      inOneHour.setUTCMinutes(0, 0, 0)
+      setDepartureTime(toWallClockInputValue(inOneHour))
       setSeatsTotal(3)
       setNotes('')
     })
@@ -239,9 +246,10 @@ export function CreateCarpoolSheet({
     if (!eventId) return
     const ev = upcomingEvents.find((e) => e.id === eventId)
     if (!ev?.date_start) return
+    // event start is wall-clock-as-UTC; subtract 1h and keep the wall-clock
     const start = new Date(ev.date_start)
     const oneHourBefore = new Date(start.getTime() - 60 * 60 * 1000)
-    startTransition(() => setDepartureTime(toLocalDatetimeInputValue(oneHourBefore)))
+    startTransition(() => setDepartureTime(toWallClockInputValue(oneHourBefore)))
   }, [eventId, upcomingEvents])
 
   // Reset on close (after exit animation)
@@ -258,20 +266,27 @@ export function CreateCarpoolSheet({
     }
   }, [open])
 
+  // Accept either 'T' or space between date and time (the field is free text
+  // and the default is pre-filled with a 'T'). Gating submit on this prevents
+  // wallClockToUtcIso - which is strict - from throwing on a malformed entry.
+  const DEPARTURE_RE = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}$/
+
   const canSubmit =
     !!eventId &&
     departurePoint.trim().length > 0 &&
-    departureTime.length > 0 &&
+    DEPARTURE_RE.test(departureTime.trim()) &&
     seatsTotal >= 1
 
   const handleSubmit = () => {
     if (!canSubmit) return
-    // datetime-local input gives a local naive ISO; convert to UTC ISO
-    const localDate = new Date(departureTime)
+    // Floating-local: stamp the typed wall-clock directly as UTC so departure
+    // lives in the same frame as event times (stored 8:30 -> 08:30:00.000Z).
+    // Normalise a space separator to 'T' so the strict parser accepts it.
+    const wallClock = departureTime.trim().replace(' ', 'T')
     onSubmit({
       event_id: eventId,
       departure_point_text: departurePoint.trim(),
-      departure_time: localDate.toISOString(),
+      departure_time: wallClockToUtcIso(wallClock),
       seats_total: seatsTotal,
       notes: notes.trim() || undefined,
     })
@@ -333,7 +348,7 @@ export function CreateCarpoolSheet({
             icon={<Clock size={16} className="text-success-500" />}
           />
           <p className="text-[11px] text-neutral-400 mt-1">
-            Format: YYYY-MM-DD HH:mm (24h, your local time).
+            Format: YYYY-MM-DD HH:mm (24h, event local time).
           </p>
         </div>
 

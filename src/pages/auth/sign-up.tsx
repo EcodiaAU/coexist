@@ -145,14 +145,17 @@ export default function SignUpPage() {
         noindex
       />
 
-      {/* Centered container */}
-      <div className="flex-1 flex flex-col w-full max-w-[440px] mx-auto">
+      {/* Centered container. min-h-0 lets the inner scroll body actually
+          shrink + scroll instead of growing the form past the height-locked
+          root (which, with overflow-hidden, clipped the Create Account / Log in
+          CTA off-screen when an error appeared - 2026-05-28 Android/iOS report). */}
+      <div className="flex-1 min-h-0 flex flex-col w-full max-w-[440px] mx-auto">
         <motion.form
           onSubmit={handleSubmit}
           variants={shouldReduceMotion ? undefined : stagger}
           initial="hidden"
           animate="visible"
-          className="flex-1 flex flex-col"
+          className="flex-1 min-h-0 flex flex-col"
         >
           {/* Referral banner */}
           {refValid && (
@@ -178,7 +181,7 @@ export default function SignUpPage() {
           </motion.div>
 
           {/* Scrollable form body */}
-          <div className="flex-1 px-6 pt-5 overflow-y-auto">
+          <div className="flex-1 min-h-0 px-6 pt-5 overflow-y-auto">
             {/* Social sign-up */}
             <motion.div variants={childVariants} className="flex gap-3">
               <button

@@ -100,6 +100,21 @@ export function useMap({
     if (!containerRef.current || mapRef.current) return
     injectStyles()
 
+    // Defensive: if the container DOM node was reused (KeepAlive route cache,
+    // StrictMode double-invoke, fast back-nav) and still carries Leaflet's
+    // internal _leaflet_id from a prior map that wasn't fully torn down,
+    // L.map() throws "Map container is already initialized." Clear it so a
+    // re-init on the same node always succeeds.
+    const containerEl = containerRef.current as HTMLDivElement & { _leaflet_id?: number }
+    if (containerEl._leaflet_id != null) {
+      delete containerEl._leaflet_id
+    }
+
+    // Guards the rAF below from running after this effect's cleanup (rapid
+    // mount/unmount): calling invalidateSize()/setState on a removed map or
+    // unmounted component throws / warns.
+    let cancelled = false
+
     const c = center ?? DEFAULT_CENTER
     const z = center ? zoom : DEFAULT_ZOOM_FALLBACK
     const map = L.map(containerRef.current, {
@@ -122,11 +137,13 @@ export function useMap({
     mapRef.current = map
 
     requestAnimationFrame(() => {
+      if (cancelled || mapRef.current !== map) return
       map.invalidateSize()
       setMapReady(true)
     })
 
     return () => {
+      cancelled = true
       map.remove()
       mapRef.current = null
       setMapReady(false)

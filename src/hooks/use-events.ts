@@ -131,7 +131,9 @@ export function formatEventTime(dateStr: string, _legacyTz?: string): string {
 }
 
 export function getCountdown(dateStr: string): string {
-  const now = new Date()
+  // Floating-local: event date is wall-clock-as-UTC, so compare against
+  // wallClockNow() (UTC value = viewer's local clock), not absolute now.
+  const now = wallClockNow()
   const target = new Date(dateStr)
   const diff = target.getTime() - now.getTime()
 

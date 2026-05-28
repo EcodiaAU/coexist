@@ -1527,11 +1527,14 @@ export default function EventDetailPage() {
             </div>
             <div className="space-y-2">
               {eventCarpools.map((cp) => {
+                // departure_time is wall-clock-as-UTC (same frame as event
+                // times); pin UTC so it reads verbatim, not device-shifted.
                 const departure = new Date(cp.departure_time)
                 const departureLabel = departure.toLocaleString([], {
                   weekday: 'short',
                   hour: 'numeric',
                   minute: '2-digit',
+                  timeZone: 'UTC',
                 })
                 return (
                   <button

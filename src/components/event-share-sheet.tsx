@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Capacitor } from '@capacitor/core'
-import { Share2, Download, X, Loader2 } from 'lucide-react'
+import { Share2, Download, X, Loader2, Link2, Check } from 'lucide-react'
 import html2canvas from 'html2canvas'
 import { BottomSheet } from './bottom-sheet'
 import { Button } from './button'
@@ -76,6 +76,32 @@ export function EventShareSheet({
   })
 
   const [busy, setBusy] = useState<ShareSize | null>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
+
+  // Public, no-auth event page so interested attendees (who may not have the
+  // app) can open it. IG strips links from captions, so the leader's ask is to
+  // have the link to paste into DMs / texts directly.
+  const shareUrl = `${
+    import.meta.env.VITE_APP_URL || 'https://app.coexistaus.org'
+  }/event/${eventId}`
+
+  const handleCopyLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+    } catch {
+      // Fallback for WebViews where navigator.clipboard is unavailable.
+      const ta = document.createElement('textarea')
+      ta.value = shareUrl
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      try { document.execCommand('copy') } catch { /* best-effort */ }
+      document.body.removeChild(ta)
+    }
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 2000)
+  }, [shareUrl])
 
   const buildFilename = useCallback(
     (size: ShareSize) =>
@@ -138,12 +164,15 @@ export function EventShareSheet({
         }
 
         const file = new File([blob], buildFilename(size), { type: 'image/png' })
+        const shareText = `${title} - ${dateLabel}\n${shareUrl}`
         if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title,
-            text: `${title} - ${dateLabel}`,
-          })
+          await navigator.share({ files: [file], title, text: shareText })
+        } else if (navigator.share) {
+          // WKWebView/Android WebView usually can't share files but CAN share
+          // text+url. Fall back to a link share so the event link still gets
+          // out, then download the image so the user has the graphic too.
+          await navigator.share({ title, text: shareText, url: shareUrl })
+          downloadBlob()
         } else {
           downloadBlob()
         }
@@ -156,7 +185,7 @@ export function EventShareSheet({
         setBusy(null)
       }
     },
-    [captureBlob, buildFilename, title, dateLabel, preferDownload],
+    [captureBlob, buildFilename, title, dateLabel, preferDownload, shareUrl],
   )
 
   const sharedGraphicProps = {
@@ -273,6 +302,29 @@ export function EventShareSheet({
               )
             })}
           </div>
+        </div>
+
+        {/* Event link - copy to paste into DMs / texts. Instagram strips
+            links from captions, so the graphic carries app-store links while
+            this gives a direct, openable event link for interested attendees. */}
+        <div className="mt-5 rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
+          <p className="text-[12px] font-bold text-neutral-900 mb-1.5">Event link</p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0 rounded-lg bg-white border border-neutral-200 px-3 py-2">
+              <p className="text-[12px] text-neutral-600 truncate">{shareUrl}</p>
+            </div>
+            <Button
+              variant={linkCopied ? 'secondary' : 'primary'}
+              size="sm"
+              icon={linkCopied ? <Check size={14} /> : <Link2 size={14} />}
+              onClick={handleCopyLink}
+            >
+              {linkCopied ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+          <p className="mt-2 text-[11px] text-neutral-500 leading-relaxed">
+            Anyone can open this link to see the event - no app or login needed.
+          </p>
         </div>
 
         <p className="mt-4 text-[12px] text-neutral-500 leading-relaxed">

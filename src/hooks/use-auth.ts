@@ -31,11 +31,21 @@ function ensureSocialLogin(provider: 'google' | 'apple'): Promise<void> {
     const webClientId =
       import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID ||
       '528428779228-8ggdoqckphnq0hcvj0pr2b4r124530st.apps.googleusercontent.com'
-    const iOSClientId = import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID
+    // The iOS OAuth client ID. @capgo/capacitor-social-login on iOS needs this
+    // to register the Google provider; without it initialize() runs but login()
+    // throws "no provider was initialised". The value lives in
+    // ios/App/App/GoogleService-Info.plist (CLIENT_ID); fall back to it so a
+    // missing VITE_GOOGLE_IOS_CLIENT_ID on the build machine doesn't silently
+    // break iOS Google sign-in (it was never set, which was the bug).
+    const iOSClientId =
+      import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID ||
+      '528428779228-m36045vgo2dibu9uhkakj4u7o6832srb.apps.googleusercontent.com'
     config = {
       google: {
         webClientId,
-        ...(iOSClientId ? { iOSClientId, iOSServerClientId: webClientId } : {}),
+        ...(Capacitor.getPlatform() === 'ios'
+          ? { iOSClientId, iOSServerClientId: webClientId }
+          : {}),
         mode: 'online',
       },
     }
