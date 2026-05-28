@@ -11,6 +11,10 @@
 
     <!-- Theme & PWA -->
     <meta name="theme-color" content="#1B4332" />
+    <!-- Force light color scheme. Without this Android WebView's algorithmic
+         darkening can invert the splash bg (#fafaf8 -> dark) on devices where
+         the user has system dark mode on. The app is light-only by design. -->
+    <meta name="color-scheme" content="light" />
     <meta name="application-name" content="Co-Exist" />
     <meta name="apple-mobile-web-app-title" content="Co-Exist" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

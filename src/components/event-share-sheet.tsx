@@ -307,23 +307,29 @@ export function EventShareSheet({
         {/* Event link - the graphic is just an image (no tappable link), so
             this Copy button is the only way to hand attendees a direct,
             openable link to the event. Instagram also strips links from
-            captions, which is why a copyable URL matters. */}
-        <div className="mt-5 rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
-          <p className="text-[12px] font-bold text-neutral-900 mb-1.5">Event link</p>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 min-w-0 rounded-lg bg-white border border-neutral-200 px-3 py-2">
-              <p className="text-[12px] text-neutral-600 truncate">{shareUrl}</p>
-            </div>
-            <Button
-              variant={linkCopied ? 'secondary' : 'primary'}
-              size="sm"
-              icon={linkCopied ? <Check size={14} /> : <Link2 size={14} />}
-              onClick={handleCopyLink}
-            >
-              {linkCopied ? 'Copied' : 'Copy'}
-            </Button>
+            captions, which is why a copyable URL matters.
+
+            px-2 instead of p-3 (smaller side padding) + Copy stacked below
+            the URL preview on full width. Tate verbatim 2026-05-28: "event
+            link card has too much padding form the side of the screen and
+            the copy button should be underneatht the url preview because
+            its getting truncated way too much right now and looks bad". */}
+        <div className="mt-5 rounded-2xl border border-neutral-200 bg-neutral-50 px-2 py-3">
+          <p className="text-[12px] font-bold text-neutral-900 mb-1.5 px-1">Event link</p>
+          <div className="rounded-lg bg-white border border-neutral-200 px-3 py-2">
+            <p className="text-[12px] text-neutral-600 break-all">{shareUrl}</p>
           </div>
-          <p className="mt-2 text-[11px] text-neutral-500 leading-relaxed">
+          <Button
+            variant={linkCopied ? 'secondary' : 'primary'}
+            size="sm"
+            icon={linkCopied ? <Check size={14} /> : <Link2 size={14} />}
+            onClick={handleCopyLink}
+            fullWidth
+            className="mt-2"
+          >
+            {linkCopied ? 'Copied' : 'Copy link'}
+          </Button>
+          <p className="mt-2 text-[11px] text-neutral-500 leading-relaxed px-1">
             Anyone can open this link to see the event - no app or login needed.
           </p>
         </div>

@@ -35,6 +35,7 @@ import { useProfile, useProfileCollectives, useProfileStats, useMutualConnection
 import { useIsBlocked } from '@/hooks/use-user-blocks'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { REDACTED_PLACEHOLDER } from '@/lib/profile-visibility'
+import { prettyInterestLabel } from '@/lib/interests'
 
 function ViewProfileSkeleton() {
   return (
@@ -275,7 +276,7 @@ export default function ViewProfilePage() {
             </h3>
             <div className="flex flex-wrap gap-2">
               {profile.interests.map((interest) => (
-                <Chip key={interest} label={interest} selected />
+                <Chip key={interest} label={prettyInterestLabel(interest)} selected />
               ))}
             </div>
           </motion.section>

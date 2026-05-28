@@ -30,6 +30,7 @@ import { useProfile, useProfileCollectives, useProfileStats, useMutualConnection
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 import { REDACTED_PLACEHOLDER } from '@/lib/profile-visibility'
+import { prettyInterestLabel } from '@/lib/interests'
 
 function ProfileModalSkeleton() {
   return (
@@ -339,7 +340,7 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
               </h3>
               <div className="flex flex-wrap gap-2">
                 {profile.interests.map((interest) => (
-                  <Chip key={interest} label={interest} selected />
+                  <Chip key={interest} label={prettyInterestLabel(interest)} selected />
                 ))}
               </div>
             </motion.section>

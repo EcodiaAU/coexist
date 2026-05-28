@@ -71,7 +71,12 @@ function Section({
   return (
     <section className={cn(className)} aria-label={title}>
       <div className="flex items-center justify-between gap-3 mb-4">
-        <h2 className="font-heading text-sm font-bold text-neutral-500 uppercase tracking-widest min-w-0 truncate">
+        {/* text-[11px] sm:text-sm + tracking-wider keeps long titles like
+            "UPCOMING EVENTS" from truncating on narrow Android (<=360dp).
+            Tracking-widest with text-sm was the prior cause of truncation -
+            uppercase + heavy letter spacing pushed the heading past the
+            right-aligned "See All" link. Tate verbatim 2026-05-28. */}
+        <h2 className="font-heading text-[11px] sm:text-sm font-bold text-neutral-500 uppercase tracking-wider min-w-0 truncate">
           {title}
         </h2>
         {action && (
@@ -986,8 +991,13 @@ function HomeImpactSection({
             </h2>
           </motion.div>
 
-          {/* Toggles */}
-          <div className="flex items-center gap-2 mb-6 flex-nowrap min-w-0">
+          {/* Toggles - flex-wrap so the time-range group drops to a second line
+              on narrow Android (<=360dp) instead of overflowing the right side of
+              the green card. Tate verbatim 2026-05-28: "national/collective and
+              alltime/2026 filter pills on the home page impact section arent
+              scaling down and end up hitting the right side of the green outter
+              card". gap-y-2 keeps vertical breathing room when wrapped. */}
+          <div className="flex items-center gap-x-2 gap-y-2 mb-6 flex-wrap min-w-0">
             {/* Scope toggle: National / Collective (with dropdown if multiple) */}
             <div className="flex rounded-full bg-[#f4f2ec]/15 p-0.5">
               <button

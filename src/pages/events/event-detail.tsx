@@ -194,24 +194,31 @@ function InfoChip({
       </span>
       <div className="flex-1 min-w-0">
         <p className="text-[11px] uppercase tracking-wider font-semibold text-neutral-400">{label}</p>
-        <p className="text-[15px] font-bold text-neutral-900 break-words leading-snug mt-0.5">{value}</p>
-      </div>
-      {action && (
-        <button
-          type="button"
-          onClick={action.onClick}
-          className={cn(
-            'min-h-11 flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-[13px] font-bold shrink-0 mt-0.5',
-            'cursor-pointer select-none active:scale-[0.97] transition-transform duration-150',
-            'bg-neutral-100 text-neutral-600 border-neutral-200 border',
-            'hover:shadow-sm',
+        {/* text-[14px] (was 15px) and the action moves below the value on
+            narrow screens. Long addresses on Android (~360dp) wrap to 3-4
+            lines when the Directions button stays on the same row. Tate
+            verbatim 2026-05-28. Action stays inline on sm+ where the row
+            has enough horizontal room. */}
+        <div className="flex flex-wrap items-end justify-between gap-2 mt-0.5">
+          <p className="text-[14px] font-bold text-neutral-900 break-words leading-snug min-w-0 flex-1">{value}</p>
+          {action && (
+            <button
+              type="button"
+              onClick={action.onClick}
+              className={cn(
+                'min-h-11 flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-[13px] font-bold shrink-0',
+                'cursor-pointer select-none active:scale-[0.97] transition-transform duration-150',
+                'bg-neutral-100 text-neutral-600 border-neutral-200 border',
+                'hover:shadow-sm',
+              )}
+              aria-label={action.label}
+            >
+              <Compass size={13} />
+              {action.label}
+            </button>
           )}
-          aria-label={action.label}
-        >
-          <Compass size={13} />
-          {action.label}
-        </button>
-      )}
+        </div>
+      </div>
     </div>
   )
 }

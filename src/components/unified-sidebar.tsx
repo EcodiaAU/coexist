@@ -456,9 +456,14 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
     const chatItem: NavItem = { label: 'Chat', path: '/chat', icon: <MessageCircle size={17} strokeWidth={1.5} />, desktopOnly: true }
     const learnItem: NavItem = { label: 'Learn', path: '/learn', icon: <BookOpen size={17} strokeWidth={1.5} /> }
 
+    // Learn is gated to staff + collective leaders (assist/co/leader). Participants
+    // and non-admin members don't see it (Tate verbatim 2026-05-28: "participant
+    // sees Learn, that's only for assistant/coleader/leaders and staff").
     const topItems: NavItem[] = isAdminTier
       ? [highestHome, chatItem, updatesItem]
-      : [highestHome, chatItem, learnItem, updatesItem]
+      : isAnyLeader
+        ? [highestHome, chatItem, learnItem, updatesItem]
+        : [highestHome, chatItem, updatesItem]
 
     const cats: NavCategory[] = [{ label: '', items: topItems }]
 

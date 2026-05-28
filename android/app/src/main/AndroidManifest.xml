@@ -16,7 +16,22 @@
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustNothing"><!--
+            adjustNothing keeps the WebView at full height when the soft keyboard
+            opens (iOS-equivalent). Android's default adjustResize compounds with
+            our --kb-height + scroll-margin-bottom + scrollIntoView avoidance
+            and pushes focused inputs WAY off-screen. Tate verbatim 2026-05-28:
+            "clicking on a text input on android sends the field way up off the
+            screen instead of just making sure its above the keyboard like iOS".
+            The web layer handles keyboard avoidance via useKeyboardHeight
+            (visualViewport + Capacitor Keyboard events) and useKeyboard
+            (scrollIntoView({block:'nearest'})). Capacitor's
+            @capacitor/keyboard plugin's setResizeMode is unimplemented on
+            Android (KeyboardPlugin.java line 61), so Keyboard.resize:'none'
+            in capacitor.config.ts is a no-op here - we have to set this
+            manifest flag instead.
+        -->
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

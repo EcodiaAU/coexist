@@ -71,14 +71,14 @@ if (Capacitor.isNativePlatform()) {
   // Force the status bar to fully overlay the WebView with a transparent
   // background. Without this Android can render an opaque (or scrimmed) bar
   // in the notch area which breaks our full-bleed pages.
+  //
+  // setBackgroundColor is intentionally NOT called - on Android 15+ (SDK 35+)
+  // setStatusBarColor is a no-op, and Play Console flags the call as deprecated
+  // API usage. Theme android:statusBarColor=@android:color/transparent +
+  // EdgeToEdge.enable(this) in MainActivity already give us transparent bars.
   import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
     StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
     StatusBar.setStyle({ style: Style.Light }).catch(() => {})
-    if (Capacitor.getPlatform() === 'android') {
-      // setBackgroundColor only applies on Android. Transparent so the WebView
-      // shows through behind the camera notch / status icons.
-      StatusBar.setBackgroundColor({ color: '#00000000' }).catch(() => {})
-    }
   }).catch(() => { /* plugin not present */ })
 }
 

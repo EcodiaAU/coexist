@@ -1,7 +1,5 @@
 package org.coexistaus.app;
 
-import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import androidx.activity.EdgeToEdge;
 import com.getcapacitor.BridgeActivity;
@@ -14,21 +12,20 @@ public class MainActivity extends BridgeActivity {
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
 
-        // Android 15+ (API 35) adds a translucent scrim behind the status and
-        // navigation bars by default. That scrim is what shows up as a strip
-        // in the camera-notch area and breaks our full-bleed look. Disable it
-        // so the bars render fully transparent over the WebView.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            getWindow().setStatusBarColor(Color.TRANSPARENT);
-            getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        // Defensive: AppCompat reads windowActionBar (no android: prefix) to
+        // decide whether to install an ActionBar during super.onCreate, which
+        // runs while the launch theme (Theme.SplashScreen) is still active.
+        // The launch theme now sets windowActionBar=false, but hide any
+        // ActionBar that may have slipped through during decor inflation
+        // (some AppCompat versions on some OEM skins still install one).
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
         }
-        if (Build.VERSION.SDK_INT >= 29) {
-            // API 29+: opt out of the OS contrast scrim on the nav bar.
-            getWindow().setNavigationBarContrastEnforced(false);
-        }
-        if (Build.VERSION.SDK_INT >= 35) {
-            // API 35+: opt out of the OS contrast scrim on the status bar too.
-            getWindow().setStatusBarContrastEnforced(false);
-        }
+
+        // Deprecated setStatusBarColor / setNavigationBarColor were called
+        // here historically; they are no-ops when targeting SDK 35+ and
+        // Play Console flagged them as deprecated API usage. Removed - the
+        // theme's android:statusBarColor=@android:color/transparent +
+        // EdgeToEdge.enable(this) above already give us transparent bars.
     }
 }

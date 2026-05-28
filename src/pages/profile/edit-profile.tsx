@@ -83,8 +83,13 @@ function SectionCard({
           {description && <p className="text-[11px] text-neutral-500 mt-0.5">{description}</p>}
         </div>
       </div>
-      {/* Content */}
-      <div className="p-4 space-y-3">
+      {/* Content - py-4 px-2 (was p-4) so inputs aren't double-padded inside
+          the card on top of Page's px-4 outer padding. Fields now extend
+          closer to the card edge, giving more horizontal room on mobile.
+          Tate verbatim 2026-05-28: "nested x padding from the outter card,
+          get rid of that so the fields are jsut on the page and a little
+          wider". */}
+      <div className="py-4 px-2 space-y-3">
         {children}
       </div>
     </div>

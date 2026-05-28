@@ -347,7 +347,7 @@ export default function LeadACollectivePage() {
               Your Details
             </h3>
           </div>
-          <div className="p-5 space-y-4">
+          <div className="py-5 px-2 space-y-4">
 
           <div className="grid grid-cols-2 gap-3">
             <Input
@@ -417,7 +417,7 @@ export default function LeadACollectivePage() {
               Location
             </h3>
           </div>
-          <div className="p-5 space-y-4">
+          <div className="py-5 px-2 space-y-4">
 
           <div className="rounded-xl bg-white border border-neutral-100 px-4 py-2.5 text-[14px] text-primary-700 font-medium">
             Australia
@@ -479,7 +479,7 @@ export default function LeadACollectivePage() {
               Application
             </h3>
           </div>
-          <div className="p-5 space-y-4">
+          <div className="py-5 px-2 space-y-4">
 
           <Input
             type="textarea"
@@ -541,7 +541,7 @@ export default function LeadACollectivePage() {
               Skills
             </h3>
           </div>
-          <div className="p-5 space-y-3">
+          <div className="py-5 px-2 space-y-3">
           <p className="text-[12px] text-primary-500">
             Not required for the role - we are just curious to see where we can help!
           </p>
@@ -569,7 +569,7 @@ export default function LeadACollectivePage() {
               Resume
             </h3>
           </div>
-          <div className="p-5 space-y-3">
+          <div className="py-5 px-2 space-y-3">
 
           {resumeFile ? (
             <div className="flex items-center gap-3 rounded-xl bg-neutral-50 border border-neutral-200 px-4 py-3">
@@ -615,7 +615,7 @@ export default function LeadACollectivePage() {
               Anything Else
             </h3>
           </div>
-          <div className="p-5 space-y-4">
+          <div className="py-5 px-2 space-y-4">
 
           <Input
             type="textarea"

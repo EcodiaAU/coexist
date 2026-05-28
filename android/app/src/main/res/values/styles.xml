@@ -28,8 +28,20 @@
          Android 12+ ignores android:background on Theme.SplashScreen and instead
          uses windowSplashScreenBackground + windowSplashScreenAnimatedIcon.
          The icon is auto-centered (~108dp inside a 288dp safe area).
-         postSplashScreenTheme hands off to the normal app theme once the WebView is ready. -->
+         postSplashScreenTheme hands off to the normal app theme once the WebView is ready.
+
+         windowActionBar/windowNoTitle (AppCompat attrs, no android: prefix) MUST be
+         set here. Theme.SplashScreen only sets the framework android:windowActionBar
+         flag - so when BridgeActivity.super.onCreate() runs under this theme, the
+         AppCompat delegate doesn't see the no-action-bar signal and installs a
+         dark ActionBar showing the activity's android:label ("Co-Exist"). The
+         subsequent setTheme(AppTheme.NoActionBar) inside BridgeActivity.onCreate
+         swaps the theme but does NOT remove the already-installed ActionBar.
+         Tate verbatim 2026-05-28: persistent black "Co-Exist" header on mum's
+         Android device, light/dark mode both. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
         <item name="windowSplashScreenBackground">@color/splashBackground</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>

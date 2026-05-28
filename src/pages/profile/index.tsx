@@ -39,6 +39,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { bentoMixedTheme } from '@/components/bento-stats-themes'
 import { cn } from '@/lib/cn'
+import { prettyInterestLabel } from '@/lib/interests'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -269,35 +270,34 @@ export default function ProfilePage() {
           </motion.div>
         </div>
 
-        {/* Overlapping action buttons */}
-        <div className="relative z-20 -mt-5 flex justify-center gap-3 px-4">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<Pencil size={14} />}
-            onClick={() => navigate('/profile/edit')}
-            className="shadow-sm bg-white !text-neutral-700 hover:!bg-neutral-50 border border-neutral-200 whitespace-nowrap text-xs"
-          >
-            Edit Profile
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<Ticket size={14} />}
-            onClick={() => navigate('/profile/tickets')}
-            className="shadow-sm bg-white !text-neutral-700 hover:!bg-neutral-50 border border-neutral-200 whitespace-nowrap text-xs"
-          >
-            Tickets
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<Settings size={14} />}
-            onClick={() => navigate('/settings')}
-            className="shadow-sm bg-white !text-neutral-700 hover:!bg-neutral-50 border border-neutral-200 whitespace-nowrap text-xs"
-          >
-            Settings
-          </Button>
+        {/* Overlapping action buttons.
+            These sit on -mt-5 overlapping the green hero. The previous variant
+            used <Button variant=secondary> with bg-white + !text-neutral-700 +
+            hover:!bg-neutral-50 overrides on top of the secondary variant's
+            bg-primary-100. On Android the framer-motion whileTap scale combined
+            with the multi-layer bg overrides caused the buttons to briefly
+            render transparent during the tap animation, exposing the green
+            hero (and "Helen" display name above it). Tate verbatim 2026-05-28:
+            "while its in the tap animation the button goes transparent and
+            the users display name shows in place of the button". Native
+            <button> with explicit bg-white in every state, no Tailwind !
+            overrides, no framer-motion transform, no negative z-stacking. */}
+        <div className="relative z-20 -mt-5 flex justify-center gap-2 px-4">
+          {[
+            { icon: <Pencil size={14} />, label: 'Edit Profile', to: '/profile/edit' },
+            { icon: <Ticket size={14} />, label: 'Tickets', to: '/profile/tickets' },
+            { icon: <Settings size={14} />, label: 'Settings', to: '/settings' },
+          ].map((b) => (
+            <button
+              key={b.to}
+              type="button"
+              onClick={() => navigate(b.to)}
+              className="inline-flex items-center justify-center gap-1.5 min-h-11 px-3 rounded-xl bg-white text-neutral-700 text-xs font-heading font-semibold border border-neutral-200 shadow-sm whitespace-nowrap cursor-pointer select-none transition-[background-color,transform] duration-150 hover:bg-neutral-50 active:bg-neutral-50 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+            >
+              <span className="flex items-center justify-center shrink-0">{b.icon}</span>
+              <span>{b.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -549,7 +549,7 @@ export default function ProfilePage() {
             <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4">
               <div className="flex flex-wrap gap-2">
                 {profile.interests.map((interest) => (
-                  <Chip key={interest} label={interest} selected />
+                  <Chip key={interest} label={prettyInterestLabel(interest)} selected />
                 ))}
               </div>
             </div>
