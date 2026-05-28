@@ -1,5 +1,6 @@
 import { useQuery, keepPreviousData, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { STATUS_FILTERS, countByField } from '@/lib/query-builders'
 import type { Tables } from '@/types/database.types'
 
 type Event = Tables<'events'>
@@ -47,7 +48,7 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
 
   let eventsQ = supabase
     .from('events')
-    .select('id, title, date_start, date_end, address, cover_image_url, activity_type, status, timezone, collective:collective_id(timezone), event_registrations(count)')
+    .select('id, title, date_start, date_end, address, cover_image_url, activity_type, status, timezone, collective:collective_id(timezone)')
     .in('id', candidateIds)
     .order('date_start', { ascending: filter === 'upcoming' })
 
@@ -68,7 +69,17 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
 
   // Co-host names: pull every (event_id, collective_id) → name and bucket per
   // event, excluding the collective whose page we're on.
-  const [{ data: checkedInRows }, { data: hostNameRows }] = await Promise.all([
+  const [{ data: regRows }, { data: checkedInRows }, { data: hostNameRows }] = await Promise.all([
+    // Registered count: only statuses that count as "attending", matching the
+    // event-detail "going" count (use-events.ts) and every other surface via
+    // STATUS_FILTERS.events.REGISTRATION. An unfiltered `event_registrations(count)`
+    // embed counted `invited` (and cancelled/waitlisted) rows too, inflating the
+    // leader-list number above the detail page's (e.g. 13 vs 6).
+    supabase
+      .from('event_registrations')
+      .select('event_id')
+      .in('event_id', eventIds)
+      .in('status', STATUS_FILTERS.events.REGISTRATION),
     supabase
       .from('event_registrations')
       .select('event_id')
@@ -79,6 +90,8 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
       .select('event_id, collectives:collective_id(id, name)')
       .in('event_id', eventIds),
   ])
+
+  const registeredMap = countByField(regRows ?? [], 'event_id')
 
   const checkedInMap = new Map<string, number>()
   for (const row of checkedInRows ?? []) {
@@ -102,6 +115,7 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
     }
     return {
       ...e,
+      event_registrations: [{ count: registeredMap.get(e.id) ?? 0 }],
       timezone: row.timezone ?? row.collective?.timezone ?? null,
       checked_in_count: checkedInMap.get(e.id) ?? 0,
       cohost_names: cohostsByEvent.get(e.id) ?? [],
