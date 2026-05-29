@@ -51,18 +51,35 @@ function ensureSocialLogin(provider: 'google' | 'apple'): Promise<void> {
     }
   } else {
     const appleServiceId = import.meta.env.VITE_APPLE_SERVICE_ID
-    // On Android the Apple plugin requires a Service ID + redirectUrl (web OAuth flow).
-    // iOS uses native Sign in with Apple and ignores these.
-    if (Capacitor.getPlatform() === 'android' && !appleServiceId) {
-      return Promise.reject(
-        new Error('Apple sign-in is not yet configured for Android. Please use Google or email.'),
-      )
-    }
-    config = {
-      apple: {
-        clientId: appleServiceId,
-        redirectUrl: `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/callback`,
-      },
+    if (Capacitor.getPlatform() === 'ios') {
+      // Native Sign in with Apple. redirectUrl MUST be empty on iOS - the plugin
+      // docs say so explicitly ("Use empty string '' for iOS to prevent
+      // redirect"). A non-empty redirectUrl flips the plugin into its
+      // backend-exchange flow: it POSTs the auth code to that URL and expects a
+      // `?success=true` redirect back. Pointing it at Supabase's
+      // /auth/v1/callback gets "OAuth state parameter missing" instead, so the
+      // plugin throws "Success path component not provided." With redirectUrl
+      // empty, the plugin returns the Apple idToken directly, which we hand to
+      // supabase.auth.signInWithIdToken below.
+      config = {
+        apple: {
+          redirectUrl: '',
+        },
+      }
+    } else {
+      // Android has no native Sign in with Apple - it needs the Service ID +
+      // web OAuth redirect flow through Supabase's callback.
+      if (!appleServiceId) {
+        return Promise.reject(
+          new Error('Apple sign-in is not yet configured for Android. Please use Google or email.'),
+        )
+      }
+      config = {
+        apple: {
+          clientId: appleServiceId,
+          redirectUrl: `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/callback`,
+        },
+      }
     }
   }
 

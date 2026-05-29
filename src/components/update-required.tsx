@@ -10,7 +10,7 @@ interface UpdateRequiredProps {
 }
 
 // Web (Vercel) + visible href fallback.
-const APP_STORE_WEB = 'https://apps.apple.com/au/app/co-exist/id6450456311'
+const APP_STORE_WEB = 'https://apps.apple.com/au/app/co-exist/id6760897574'
 const PLAY_STORE_WEB = 'https://play.google.com/store/apps/details?id=org.coexistaus.app'
 
 // Native deep-link schemes. A plain https://apps.apple.com link does NOT open
@@ -20,7 +20,7 @@ const PLAY_STORE_WEB = 'https://play.google.com/store/apps/details?id=org.coexis
 // itms-apps:// (iOS) and market:// (Android) schemes are non-http, so
 // Capacitor's navigation delegate hands them straight to the OS, which opens
 // the native store app on the app's listing.
-const APP_STORE_DEEP = 'itms-apps://apps.apple.com/au/app/co-exist/id6450456311'
+const APP_STORE_DEEP = 'itms-apps://apps.apple.com/au/app/co-exist/id6760897574'
 const PLAY_STORE_DEEP = 'market://details?id=org.coexistaus.app'
 
 function openStore(platform: 'ios' | 'android') {
