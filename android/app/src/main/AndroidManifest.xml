@@ -41,12 +41,33 @@
                 <data android:scheme="coexist" />
             </intent-filter>
 
-            <!-- App Links: https://coexistaus.org -->
+            <!-- App Links: autoVerify on the primary marketing host
+                 (coexistaus.org has .well-known/assetlinks.json published).
+                 The autoVerify intent-filter only catches hosts whose
+                 assetlinks.json verifies cleanly per Android 12+ rules,
+                 which is why other hosts go in a separate non-verified
+                 filter below. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="coexistaus.org" />
+            </intent-filter>
+
+            <!-- Secondary hosts: QR check-in (app.coexist.au) + short link
+                 (coexist.au). Without autoVerify the OS shows the "Open with"
+                 chooser the first time, then remembers. Adding these closes
+                 the gap where scanning the public QR (URL hardcoded to
+                 https://app.coexist.au/check-in/{token} in event-day.tsx)
+                 silently opened the browser even when Co-Exist was
+                 installed. Publish assetlinks.json at these hosts to lift
+                 them into autoVerify too. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="app.coexist.au" />
+                <data android:scheme="https" android:host="coexist.au" />
             </intent-filter>
 
         </activity>

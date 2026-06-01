@@ -13,6 +13,7 @@ import { MenuSheetProvider, useMenuSheet } from '@/hooks/use-menu-sheet'
 import { useSyncManager } from '@/hooks/use-sync-manager'
 import { usePushRegistration } from '@/hooks/use-push'
 import { useAppLifecycle } from '@/hooks/use-app-lifecycle'
+import { useAndroidBackButton } from '@/hooks/use-android-back-button'
 import { useKeyboard } from '@/hooks/use-keyboard'
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height'
 import { useRolePrefetch } from '@/hooks/use-role-prefetch'
@@ -29,6 +30,11 @@ export function AppShell({ children, bare = false }: AppShellProps) {
   // Scroll focused inputs into view when native keyboard opens
   // must run in BOTH bare and full shells so auth/onboarding pages work too.
   useKeyboard()
+  // Android hardware back: minimize at root routes, history-back elsewhere.
+  // No-op on iOS / web. Wired here so it covers bare shells too (auth /
+  // onboarding) - a back-press during onboarding minimizing is the right
+  // behaviour (resume picks up where they left off).
+  useAndroidBackButton()
   // Track keyboard height via visualViewport and set --kb-height CSS variable
   // so fixed-position elements (bottom sheets, chat input) can offset above keyboard.
   const kbHeight = useKeyboardHeight()
