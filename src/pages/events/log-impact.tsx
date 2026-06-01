@@ -38,6 +38,7 @@ import { SurveyQuestionRenderer } from '@/components/survey-questions'
 import { isQuestionVisible, stripHiddenAnswers } from '@/components/survey-questions-utils'
 import { syncSurveyImpact } from '@/lib/survey-impact'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
+import { useImeSafeOnChange } from '@/hooks/use-ime-safe-on-change'
 import { useCamera } from '@/hooks/use-camera'
 import { useImageUpload } from '@/hooks/use-image-upload'
 import { useOffline } from '@/hooks/use-offline'
@@ -143,6 +144,7 @@ function SpeciesTracker({
   activityType?: string
 }) {
   const [newName, setNewName] = useState('')
+  const speciesNameInputProps = useImeSafeOnChange<HTMLInputElement>((v) => setNewName(v))
 
   const addSpecies = useCallback(() => {
     if (!newName.trim()) return
@@ -227,7 +229,7 @@ function SpeciesTracker({
           type="text"
           placeholder="Add species name..."
           value={newName}
-          onChange={(e) => setNewName(e.target.value)}
+          {...speciesNameInputProps}
           onKeyDown={(e) => e.key === 'Enter' && addSpecies()}
           className="flex-1 rounded-xl bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
         />
@@ -272,6 +274,7 @@ function WildlifeSightingTracker({
   onChange: (sightings: WildlifeSighting[]) => void
 }) {
   const [newName, setNewName] = useState('')
+  const sightingNameInputProps = useImeSafeOnChange<HTMLInputElement>((v) => setNewName(v))
 
   const addSighting = useCallback(() => {
     if (!newName.trim()) return
@@ -390,7 +393,7 @@ function WildlifeSightingTracker({
           type="text"
           placeholder="Add species name..."
           value={newName}
-          onChange={(e) => setNewName(e.target.value)}
+          {...sightingNameInputProps}
           onKeyDown={(e) => e.key === 'Enter' && addSighting()}
           className="flex-1 rounded-xl bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent"
         />

@@ -10,7 +10,14 @@ interface UpdateRequiredProps {
 }
 
 // Web (Vercel) + visible href fallback.
-const APP_STORE_WEB = 'https://apps.apple.com/au/app/co-exist/id6760897574'
+// No /au/ in the path - hardcoding the storefront country produced
+// "not available in your region" for any user whose Apple ID is signed
+// in to a non-AU storefront, even when the app IS live on AU (verified
+// 2026-06-01 via the iTunes lookup API). Apple resolves the country-less
+// /app/idXXXX URL against the user's own storefront, so a US Apple ID
+// gets the US listing (404 if not available there) and an AU Apple ID
+// gets the AU listing. This is the correct cross-store deep-link shape.
+const APP_STORE_WEB = 'https://apps.apple.com/app/id6760897574'
 const PLAY_STORE_WEB = 'https://play.google.com/store/apps/details?id=org.coexistaus.app'
 
 // Native deep-link schemes. A plain https://apps.apple.com link does NOT open
@@ -20,7 +27,7 @@ const PLAY_STORE_WEB = 'https://play.google.com/store/apps/details?id=org.coexis
 // itms-apps:// (iOS) and market:// (Android) schemes are non-http, so
 // Capacitor's navigation delegate hands them straight to the OS, which opens
 // the native store app on the app's listing.
-const APP_STORE_DEEP = 'itms-apps://apps.apple.com/au/app/co-exist/id6760897574'
+const APP_STORE_DEEP = 'itms-apps://apps.apple.com/app/id6760897574'
 const PLAY_STORE_DEEP = 'market://details?id=org.coexistaus.app'
 
 function openStore(platform: 'ios' | 'android') {
