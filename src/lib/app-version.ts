@@ -19,7 +19,7 @@ import { Capacitor } from '@capacitor/core'
  * Update protocol: when bumping iOS MARKETING_VERSION /
  * Android versionName, bump FALLBACK_VERSION in the same commit.
  */
-const FALLBACK_VERSION = '1.8.24'
+const FALLBACK_VERSION = '1.8.25'
 
 let cached: string = FALLBACK_VERSION
 let initPromise: Promise<string> | null = null
