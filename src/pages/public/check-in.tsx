@@ -14,6 +14,7 @@ import { useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import { Leaf, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { useImeSafeOnChange } from '@/hooks/use-ime-safe-on-change'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -61,6 +62,11 @@ export default function PublicCheckInPage() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [honeypot, setHoneypot] = useState('')
+
+  // IME-safe handlers for Samsung Keyboard / GBoard - see useImeSafeOnChange
+  const nameProps = useImeSafeOnChange<HTMLInputElement>(setName)
+  const emailProps = useImeSafeOnChange<HTMLInputElement>(setEmail)
+  const phoneProps = useImeSafeOnChange<HTMLInputElement>(setPhone)
 
   // Load event info on mount
   useEffect(() => {
@@ -242,7 +248,7 @@ export default function PublicCheckInPage() {
                 type="text"
                 placeholder="Jane Smith"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                {...nameProps}
                 autoComplete="name"
                 required
               />
@@ -258,7 +264,7 @@ export default function PublicCheckInPage() {
                 type="email"
                 placeholder="jane@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...emailProps}
                 autoComplete="email"
                 inputMode="email"
               />
@@ -274,7 +280,7 @@ export default function PublicCheckInPage() {
                 type="tel"
                 placeholder="0412 345 678"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                {...phoneProps}
                 autoComplete="tel"
                 inputMode="tel"
               />

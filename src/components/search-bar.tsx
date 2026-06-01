@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Search, X, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { useImeSafeOnChange } from '@/hooks/use-ime-safe-on-change'
 
 interface SearchBarProps {
   value: string
@@ -49,6 +50,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
     const shouldReduceMotion = useReducedMotion()
     const [focused, setFocused] = useState(false)
     const internalRef = useRef<HTMLInputElement | null>(null)
+    const imeProps = useImeSafeOnChange<HTMLInputElement>(onChange)
 
     const setRef = useCallback(
       (node: HTMLInputElement | null) => {
@@ -176,7 +178,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
             ref={setRef}
             type="text"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            {...imeProps}
             onFocus={handleFocus}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}

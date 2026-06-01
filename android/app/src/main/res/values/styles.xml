@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+    <!-- Base application theme. NoActionBar parent (was Light.DarkActionBar
+         until 2026-06-01) so no sub-activity in the app graph can inherit a
+         DarkActionBar. The 2026-05-28 + 2026-06-01 black-banner fixes
+         operate on the launch theme + MainActivity.onCreate flow; locking
+         the application-level theme here means nothing else (e.g. third
+         party activities, lazy-launched sub-screens) can resurrect the
+         ActionBar by inheriting from the app theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>

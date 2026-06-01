@@ -19,6 +19,7 @@ import { BottomSheet, Button, Skeleton } from '@/components'
 import { Avatar } from '@/components/avatar'
 import { UserPlus, AlertTriangle, Search as SearchIcon, UserCheck } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { useImeSafeOnChange } from '@/hooks/use-ime-safe-on-change'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -142,6 +143,25 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
 
   const [submitting, setSubmitting] = useState(false)
 
+  // IME-safe handlers - Samsung Keyboard / GBoard predictive text reversal
+  // guard. Without these, controlled inputs on Android can drop characters
+  // or appear to type backwards. See src/hooks/use-ime-safe-on-change.ts
+  // and the 2026-06-01 Brandon Marlow Samsung screenshot.
+  const searchQueryProps = useImeSafeOnChange<HTMLInputElement>(setSearchQuery)
+  const firstNameProps = useImeSafeOnChange<HTMLInputElement>(setFirstName)
+  const lastNameProps = useImeSafeOnChange<HTMLInputElement>(setLastName)
+  const emailProps = useImeSafeOnChange<HTMLInputElement>(setEmail)
+  const phoneProps = useImeSafeOnChange<HTMLInputElement>(setPhone)
+  const ageProps = useImeSafeOnChange<HTMLInputElement>(setAge)
+  const postcodeProps = useImeSafeOnChange<HTMLInputElement>(setPostcode)
+  const genderProps = useImeSafeOnChange<HTMLInputElement>(setGender)
+  const pronounsProps = useImeSafeOnChange<HTMLInputElement>(setPronouns)
+  const discoveryProps = useImeSafeOnChange<HTMLInputElement>(setCollectiveDiscovery)
+  const accessibilityProps = useImeSafeOnChange<HTMLInputElement>(setAccessibilityRequirements)
+  const emergencyNameProps = useImeSafeOnChange<HTMLInputElement>(setEmergencyContactName)
+  const emergencyPhoneProps = useImeSafeOnChange<HTMLInputElement>(setEmergencyContactPhone)
+  const emergencyRelProps = useImeSafeOnChange<HTMLInputElement>(setEmergencyContactRelationship)
+
   function resetForm() {
     setFirstName('')
     setLastName('')
@@ -240,7 +260,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
               className={cn(inputCls, 'pl-9')}
               placeholder="Search existing app users (name or email)..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              {...searchQueryProps}
               autoComplete="off"
             />
           </div>
@@ -306,7 +326,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 type="text"
                 placeholder="Jane"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                {...firstNameProps}
                 autoComplete="given-name"
               />
             </Field>
@@ -316,7 +336,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 type="text"
                 placeholder="Smith"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                {...lastNameProps}
                 autoComplete="family-name"
               />
             </Field>
@@ -328,7 +348,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
               type="email"
               placeholder="jane@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              {...emailProps}
               autoComplete="email"
               inputMode="email"
             />
@@ -340,7 +360,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
               type="tel"
               placeholder="0412 345 678"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              {...phoneProps}
               autoComplete="tel"
               inputMode="tel"
             />
@@ -355,7 +375,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 min={0}
                 max={120}
                 value={age}
-                onChange={(e) => setAge(e.target.value)}
+                {...ageProps}
                 inputMode="numeric"
               />
             </Field>
@@ -365,7 +385,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 type="text"
                 placeholder="4000"
                 value={postcode}
-                onChange={(e) => setPostcode(e.target.value)}
+                {...postcodeProps}
                 inputMode="numeric"
                 maxLength={10}
               />
@@ -379,7 +399,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 type="text"
                 placeholder="e.g. Female"
                 value={gender}
-                onChange={(e) => setGender(e.target.value)}
+                {...genderProps}
               />
             </Field>
             <Field label="Pronouns">
@@ -388,7 +408,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 type="text"
                 placeholder="e.g. she/her"
                 value={pronouns}
-                onChange={(e) => setPronouns(e.target.value)}
+                {...pronounsProps}
               />
             </Field>
           </div>
@@ -399,7 +419,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
               type="text"
               placeholder="e.g. Instagram, friend, Facebook"
               value={collectiveDiscovery}
-              onChange={(e) => setCollectiveDiscovery(e.target.value)}
+              {...discoveryProps}
             />
           </Field>
 
@@ -409,7 +429,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
               type="text"
               placeholder="Any requirements we should know about?"
               value={accessibilityRequirements}
-              onChange={(e) => setAccessibilityRequirements(e.target.value)}
+              {...accessibilityProps}
             />
           </Field>
 
@@ -426,7 +446,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 type="text"
                 placeholder="Contact name"
                 value={emergencyContactName}
-                onChange={(e) => setEmergencyContactName(e.target.value)}
+                {...emergencyNameProps}
               />
             </Field>
             <Field label="Phone">
@@ -435,7 +455,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 type="tel"
                 placeholder="0400 000 000"
                 value={emergencyContactPhone}
-                onChange={(e) => setEmergencyContactPhone(e.target.value)}
+                {...emergencyPhoneProps}
                 inputMode="tel"
               />
             </Field>
@@ -445,7 +465,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 type="text"
                 placeholder="e.g. Parent, Partner"
                 value={emergencyContactRelationship}
-                onChange={(e) => setEmergencyContactRelationship(e.target.value)}
+                {...emergencyRelProps}
               />
             </Field>
           </div>
