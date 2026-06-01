@@ -22,16 +22,21 @@ import {
   QrCode,
   ToggleLeft,
   ToggleRight,
+  Trash2,
+  Mail,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import {
   useEventDetail,
   useEventAttendees,
   useEventImpact,
+  useEventWalkIns,
+  useDeleteWalkIn,
   useCheckIn,
   useUncheckIn,
   usePromoteFromWaitlist,
   formatEventDate,
+  type EventWalkIn,
 } from '@/hooks/use-events'
 import { useOffline } from '@/hooks/use-offline'
 import { usePendingSync } from '@/hooks/use-pending-sync'
@@ -332,6 +337,10 @@ export default function EventDayPage() {
   const queryClient = useQueryClient()
   const checkIn = useCheckIn()
   const uncheckIn = useUncheckIn()
+  const { data: walkIns = [] } = useEventWalkIns(eventId)
+  const deleteWalkIn = useDeleteWalkIn()
+  const [deletingWalkInId, setDeletingWalkInId] = useState<string | null>(null)
+  const [walkInToDelete, setWalkInToDelete] = useState<EventWalkIn | null>(null)
   // bulkCheckIn removed with the "Mark all present" footer button
   const promote = usePromoteFromWaitlist()
 
@@ -363,9 +372,10 @@ export default function EventDayPage() {
   const today = localDateIn(eventTz)
   const isFutureEvent = !!eventDay && eventDay > today
   const isPastEvent = !!eventDay && eventDay < today
-  const checkInClosedMessage = isFutureEvent
-    ? 'Check-in opens on the day of the event'
-    : 'Check-in is closed - impact has been logged for this event'
+  const checkInClosedMessage = 'Check-in opens on the day of the event'
+  // The 2026-05-20 "Check-in is closed - impact has been logged" message
+  // was retired 2026-06-01: leaders now have full post-event authority
+  // for late corrections (see migration 20260601000000).
 
 
   const stagger = {
@@ -698,7 +708,7 @@ export default function EventDayPage() {
             </div>
           </motion.div>
         )}
-        {isPastEvent && checkInOpen && (
+        {isPastEvent && (
           <motion.div
             variants={fadeUp}
             className="mb-5 rounded-xl bg-primary-50 border border-primary-200 p-3 flex items-start gap-2"
@@ -707,23 +717,8 @@ export default function EventDayPage() {
             <div className="text-sm text-primary-700">
               <p className="font-semibold">Post-event check-in is open</p>
               <p className="text-primary-600 mt-0.5">
-                Missed someone on the day? You can still check attendees in and add
-                walk-ins here until you log impact data for this event.
-              </p>
-            </div>
-          </motion.div>
-        )}
-        {isPastEvent && !checkInOpen && (
-          <motion.div
-            variants={fadeUp}
-            className="mb-5 rounded-xl bg-neutral-100 border border-neutral-200 p-3 flex items-start gap-2"
-          >
-            <Check size={16} className="text-neutral-500 mt-0.5 shrink-0" />
-            <div className="text-sm text-neutral-600">
-              <p className="font-semibold">Check-in closed</p>
-              <p className="text-neutral-500 mt-0.5">
-                Impact has been logged, so attendance for this event is final.
-                Contact a national admin if it needs to change.
+                Missed someone on the day? Check attendees in, add walk-ins,
+                or undo any of it - leaders keep full control after the event.
               </p>
             </div>
           </motion.div>
@@ -838,6 +833,66 @@ export default function EventDayPage() {
               )}
             </motion.div>
 
+            {/* Walk-ins section - leader-recorded attendees that aren't in
+                event_registrations. Tate P0 2026-06-01: leaders need to
+                undo post-event walk-ins. Empty state collapses cleanly. */}
+            {walkIns.length > 0 && (
+              <motion.div variants={fadeUp} className="mt-6">
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <h3 className="text-sm font-semibold text-neutral-700">
+                    Walk-ins
+                  </h3>
+                  <span className="text-xs text-neutral-500">{walkIns.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {walkIns.map((w) => {
+                    const fullName = [w.first_name, w.last_name].filter(Boolean).join(' ')
+                    const contact = w.email || w.phone || 'No contact'
+                    const isLeaderAdded = w.created_via === 'leader_adhoc'
+                    return (
+                      <div
+                        key={w.id}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-white ring-1 ring-neutral-100 shadow-sm"
+                      >
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-50 text-emerald-700 shrink-0">
+                          <UserPlus size={16} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-neutral-900 truncate">
+                            {fullName || 'Unnamed walk-in'}
+                          </p>
+                          <p className="text-xs text-neutral-500 truncate flex items-center gap-1">
+                            <Mail size={11} className="shrink-0" />
+                            {contact}
+                            {isLeaderAdded && (
+                              <span className="ml-1 text-[10px] uppercase tracking-wider text-neutral-400">
+                                leader added
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setWalkInToDelete(w)}
+                          disabled={deletingWalkInId === w.id}
+                          className={cn(
+                            'min-w-11 min-h-11 w-11 h-11 flex items-center justify-center rounded-full',
+                            'text-neutral-400 hover:text-error hover:bg-error-50',
+                            'transition-colors duration-150 cursor-pointer select-none',
+                            'active:scale-[0.95] disabled:opacity-50 disabled:cursor-not-allowed',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error',
+                          )}
+                          aria-label={`Remove walk-in ${fullName || 'unnamed'}`}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </motion.div>
+            )}
+
             {/* Post-event action */}
             <motion.div variants={fadeUp} className="mt-6">
               <Button
@@ -940,6 +995,36 @@ export default function EventDayPage() {
         description={`Are you sure? This will mark ${uncheckTarget?.profiles?.display_name ?? 'this attendee'} as not attended.`}
         confirmLabel="Uncheck"
         variant="warning"
+      />
+
+      {/* Walk-in delete confirmation (Tate P0 2026-06-01) */}
+      <ConfirmationSheet
+        open={!!walkInToDelete}
+        onClose={() => setWalkInToDelete(null)}
+        onConfirm={() => {
+          if (!eventId || !walkInToDelete) return
+          const w = walkInToDelete
+          const displayName = [w.first_name, w.last_name].filter(Boolean).join(' ') || 'walk-in'
+          setDeletingWalkInId(w.id)
+          deleteWalkIn.mutate(
+            { eventId, walkInId: w.id },
+            {
+              onSuccess: () => toast.success(`${displayName} removed`),
+              onError: (err) => {
+                const msg = err instanceof Error ? err.message : 'Failed to remove walk-in'
+                toast.error(msg)
+              },
+              onSettled: () => {
+                setDeletingWalkInId(null)
+                setWalkInToDelete(null)
+              },
+            },
+          )
+        }}
+        title="Remove this walk-in?"
+        description={`This will delete ${[walkInToDelete?.first_name, walkInToDelete?.last_name].filter(Boolean).join(' ') || 'this walk-in'} from the event. Their impact will not be counted.`}
+        confirmLabel="Remove"
+        variant="danger"
       />
 
       {/* Attendee safety details */}

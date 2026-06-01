@@ -188,26 +188,28 @@ export function isSignInButtonVisible(
 }
 
 /**
- * Leader/admin check-in window. Future blocked, event-day open,
- * past open until impact logged (post-event backfill window).
+ * Leader/admin check-in window. Future blocked; event-day + past open.
  *
- * "Event day" is the host's stored wall-clock calendar day; "today" is
- * the viewer's local calendar day. So a Sydney leader at 11pm AEST on
- * 15 Jun can still check in attendees for a 15 Jun Perth event because
- * both sides say 15 Jun; the same leader at 1am AEST on 16 Jun sees
- * the event drop into the backfill branch.
+ * The 2026-05-20 impact_logged HARD-block was dropped 2026-06-01 per
+ * Tate: leaders need post-impact authority for late corrections
+ * (attendees who reach out days later to say they didn't get checked
+ * in, walk-ins to undo). The DB trigger enforce_event_day_check_in_window
+ * still gates self check-in on past-event-day rows, so participant
+ * self-check-in stays day-of only.
+ *
+ * impactLogged is kept in the signature for source-compat with existing
+ * call sites; it is ignored.
  */
 export function isCheckInOpenForLeader(
   eventDateStartIso: string | null | undefined,
   _legacyTz: string,
-  impactLogged: boolean,
+  _impactLogged: boolean,
 ): boolean {
   if (!eventDateStartIso) return false
   const eventDay = localDateIn(FLOATING_TZ, eventDateStartIso)
   const today = localDateIn(FLOATING_TZ)
-  if (eventDay > today) return false // future: blocked
-  if (eventDay === today) return true // event day: open
-  return !impactLogged // past: open until impact logged
+  if (eventDay > today) return false // future: blocked (2026-05-09 fix)
+  return true // event day + past: open for leaders (2026-06-01)
 }
 
 // ---------------------------------------------------------------------------

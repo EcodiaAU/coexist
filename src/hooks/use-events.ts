@@ -969,6 +969,79 @@ export function useUncheckIn() {
   })
 }
 
+/* ------------------------------------------------------------------ */
+/*  Walk-ins  -  read + delete (leader/admin authority)                */
+/* ------------------------------------------------------------------ */
+/* Origin: 2026-06-01 Tate P0 - "I cant uncheckin someone that I added */
+/* as a walkin to an event after the event has ended". Walk-ins live   */
+/* in event_walk_ins (separate from event_registrations). The DELETE   */
+/* RLS policy + future-block trigger were added in migration           */
+/* 20260601000000_post_impact_leader_unblock.sql.                      */
+
+export interface EventWalkIn {
+  id: string
+  event_id: string
+  first_name: string
+  last_name: string | null
+  email: string | null
+  phone: string | null
+  status: string | null
+  created_via: string | null
+  created_by_user_id: string | null
+  created_at: string
+  linked_user_id: string | null
+}
+
+export function useEventWalkIns(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['event-walk-ins', eventId],
+    queryFn: async (): Promise<EventWalkIn[]> => {
+      if (!eventId) return []
+      const { data, error } = await supabase
+        .from('event_walk_ins')
+        .select('id, event_id, first_name, last_name, email, phone, status, created_via, created_by_user_id, created_at, linked_user_id')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as EventWalkIn[]
+    },
+    enabled: !!eventId,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useDeleteWalkIn() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ eventId, walkInId }: { eventId: string; walkInId: string }) => {
+      const { error } = await supabase
+        .from('event_walk_ins')
+        .delete()
+        .eq('id', walkInId)
+      if (error) throw error
+    },
+    onMutate: async ({ eventId, walkInId }) => {
+      await queryClient.cancelQueries({ queryKey: ['event-walk-ins', eventId] })
+      const previous = queryClient.getQueryData<EventWalkIn[]>(['event-walk-ins', eventId])
+      queryClient.setQueryData<EventWalkIn[]>(['event-walk-ins', eventId], (old) =>
+        (old ?? []).filter((w) => w.id !== walkInId),
+      )
+      return { previous }
+    },
+    onError: (_err, { eventId }, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['event-walk-ins', eventId], context.previous)
+      }
+    },
+    onSettled: (_, __, { eventId }) => {
+      queryClient.invalidateQueries({ queryKey: ['event-walk-ins', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+    },
+  })
+}
+
 export function useBulkCheckIn() {
   const queryClient = useQueryClient()
   const { isOffline } = useOffline()
