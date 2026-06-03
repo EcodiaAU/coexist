@@ -154,8 +154,18 @@ export const Input = forwardRef<
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setUncontrolledFilled(e.currentTarget.value.length > 0)
+      // The composing guard MUST run before any setState. While the IME is
+      // composing (predictive text / autocorrect mid-word on Android GBoard +
+      // Samsung Keyboard), the parent's `value=` prop is still the pre-
+      // composition value. Flipping any local state here triggers a re-render
+      // that React reconciles against the stale `value=` and writes the empty
+      // string back into the DOM, clobbering the IME composing buffer. Net
+      // effect: the first character of every word disappears, or typing
+      // appears to do nothing at all. Verified failure mode on Android 15
+      // Pixel + Samsung One UI 2026-06-03. The compositionEnd handler below
+      // re-syncs uncontrolledFilled when the IME finalises the word.
       if (composingRef.current) return
+      setUncontrolledFilled(e.currentTarget.value.length > 0)
       onChange?.(e)
     },
     [onChange],
