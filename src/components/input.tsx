@@ -5,6 +5,7 @@ import {
   useId,
   useRef,
   useCallback,
+  useLayoutEffect,
 } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Search, Eye, EyeOff } from 'lucide-react'
@@ -89,10 +90,7 @@ export const Input = forwardRef<
   const shouldReduceMotion = useReducedMotion()
 
   const [focused, setFocused] = useState(false)
-  const [uncontrolledFilled, setUncontrolledFilled] = useState(
-    () => !!(value ?? defaultValue),
-  )
-  const filled = value !== undefined ? value.length > 0 : uncontrolledFilled
+  const [filled, setFilled] = useState(() => !!(value ?? defaultValue))
   const [showPassword, setShowPassword] = useState(false)
 
   const internalRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null)
@@ -106,6 +104,43 @@ export const Input = forwardRef<
     [ref],
   )
 
+  // Track IME composition state to avoid clobbering the Android GBoard /
+  // Samsung Keyboard composing buffer with React re-renders. Without the full
+  // hybrid-controlled pattern below, ANY ancestor re-render (sibling form
+  // state, useReducedMotion media-query change, animations finishing,
+  // unrelated query refetch) mid-composition triggers React reconciliation
+  // against the `value=` prop, and React writes the stale parent state back
+  // into the DOM input, wiping the IME's in-progress composing buffer. Net
+  // user-visible: "I'm pressing keys but nothing types" on the highlights
+  // free-text box, log-impact species fields, signup name, every <Input>-
+  // using surface. Reported 2026-06-04 on 1.8.27 even after the 17865dd
+  // guard-first race fix (which only handled <Input>'s OWN setState as the
+  // clobbering re-render, not ambient parent re-renders).
+  const composingRef = useRef(false)
+
+  // Hybrid-controlled DOM strategy: render the underlying <input>/<textarea>
+  // UNCONTROLLED (defaultValue only, no `value=` prop) so React's reconciler
+  // never touches the DOM `value` attribute on re-render. Sync external
+  // `value` prop changes into the DOM imperatively via useLayoutEffect, and
+  // BAIL during composition so the IME owns the field uninterrupted while it
+  // builds the word. compositionEnd then flushes the final value upward and
+  // the next render's effect run is a no-op because DOM and value already
+  // agree. This is the same pattern Mantine + Ant Design + several @react-
+  // aria primitives use specifically to dodge the Android IME race.
+  useLayoutEffect(() => {
+    const el = internalRef.current
+    if (!el) return
+    if (composingRef.current) return
+    if (value === undefined) return
+    if (el.value !== value) {
+      el.value = value
+    }
+    const nowFilled = value.length > 0
+    if (filled !== nowFilled) {
+      setFilled(nowFilled)
+    }
+  }, [value, filled])
+
   const handleFocus = useCallback(
     (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setFocused(true)
@@ -118,19 +153,11 @@ export const Input = forwardRef<
     (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setFocused(false)
       const val = e.currentTarget.value
-      setUncontrolledFilled(val.length > 0)
+      setFilled(val.length > 0)
       onBlur?.(e)
     },
     [onBlur],
   )
-
-  // Track IME composition state to avoid clobbering the Android GBoard /
-  // Samsung Keyboard composing buffer with React re-renders. Without this,
-  // controlled inputs on Android can drop characters or appear to type
-  // backwards because every keystroke triggers setState -> re-render before
-  // the IME has finalised the character (2026-05-16 feedback: name field
-  // typing backwards on Android during signup).
-  const composingRef = useRef(false)
 
   const handleCompositionStart = useCallback(() => {
     composingRef.current = true
@@ -142,7 +169,7 @@ export const Input = forwardRef<
       // Fire a synthetic change so the parent receives the finalised value
       // (some browsers don't emit input/change after compositionend).
       const target = e.currentTarget
-      setUncontrolledFilled(target.value.length > 0)
+      setFilled(target.value.length > 0)
       onChange?.({
         ...e,
         target,
@@ -154,18 +181,12 @@ export const Input = forwardRef<
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      // The composing guard MUST run before any setState. While the IME is
-      // composing (predictive text / autocorrect mid-word on Android GBoard +
-      // Samsung Keyboard), the parent's `value=` prop is still the pre-
-      // composition value. Flipping any local state here triggers a re-render
-      // that React reconciles against the stale `value=` and writes the empty
-      // string back into the DOM, clobbering the IME composing buffer. Net
-      // effect: the first character of every word disappears, or typing
-      // appears to do nothing at all. Verified failure mode on Android 15
-      // Pixel + Samsung One UI 2026-06-03. The compositionEnd handler below
-      // re-syncs uncontrolledFilled when the IME finalises the word.
+      // Composition guard MUST run before any setState, and stays even in the
+      // hybrid-controlled model as a defence-in-depth - some Android keyboards
+      // emit input events for predictive-text replacements that should be
+      // delivered only via the cleaner compositionEnd path.
       if (composingRef.current) return
-      setUncontrolledFilled(e.currentTarget.value.length > 0)
+      setFilled(e.currentTarget.value.length > 0)
       onChange?.(e)
     },
     [onChange],
@@ -183,6 +204,11 @@ export const Input = forwardRef<
   const isSearch = type === 'search'
   const isPassword = type === 'password'
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type
+
+  // Initial DOM value: prefer the controlled `value` (if any) at mount time,
+  // otherwise fall back to `defaultValue`, otherwise empty string. After
+  // mount the useLayoutEffect above is the canonical sync path for `value`.
+  const initialDomValue = value ?? defaultValue ?? ''
 
   const sharedClasses = cn(
     'peer w-full rounded-lg px-4 box-border',
@@ -248,8 +274,9 @@ export const Input = forwardRef<
             id={id}
             name={name}
             rows={rows}
-            value={value}
-            defaultValue={defaultValue}
+            // Hybrid-controlled: DOM owns `value` between renders; the
+            // useLayoutEffect above syncs the controlled `value` prop.
+            defaultValue={initialDomValue}
             onChange={handleChange}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}
@@ -274,8 +301,8 @@ export const Input = forwardRef<
             id={id}
             type={isTextarea ? undefined : inputType}
             name={name}
-            value={value}
-            defaultValue={defaultValue}
+            // Hybrid-controlled (see useLayoutEffect above). NO `value=` here.
+            defaultValue={initialDomValue}
             onChange={handleChange}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}
