@@ -1869,8 +1869,12 @@ export function generateIcsFile(event: Event): string {
   const start = new Date(event.date_start)
   const end = event.date_end ? new Date(event.date_end) : new Date(start.getTime() + 2 * 60 * 60 * 1000)
 
+  // Floating-local model: date_start stores the host's wall-clock stamped as
+  // UTC. Emit a FLOATING DTSTART (no trailing Z) per RFC 5545 so calendars show
+  // the same wall-clock time to every attendee (matching the in-app display).
+  // Keeping the Z made calendars treat "9:30am" as 09:30 UTC (~7pm AEST).
   const formatIcsDate = (d: Date) =>
-    d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+    d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, '')
 
   // ICS requires escaping backslashes, semicolons, commas, and newlines
   const escapeIcs = (s: string) =>
@@ -2050,8 +2054,11 @@ export function getGoogleCalendarUrl(event: Event): string {
   const start = new Date(event.date_start)
   const end = event.date_end ? new Date(event.date_end) : new Date(start.getTime() + 2 * 60 * 60 * 1000)
 
+  // Floating-local: emit wall-clock without the trailing Z so Google Calendar
+  // treats it as the user's local time (matches the in-app display), instead of
+  // interpreting the stored 09:30Z as 9:30 UTC.
   const formatGcalDate = (d: Date) =>
-    d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+    d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, '')
 
   const params = new URLSearchParams({
     action: 'TEMPLATE',

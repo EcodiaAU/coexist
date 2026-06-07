@@ -1,10 +1,15 @@
-// On-screen boot-error overlay. Diagnostic for the 1.8.13-1.8.15 white
-// screen: any pre-React-render exception or unhandled promise rejection
-// would otherwise just leave the WebView blank. Surface the message
-// directly so the device can show us what's wrong without needing
-// remote-debugging. Drop or hide once the cold-start issue is settled.
+// Pre-mount render-failure overlay. The GLOBAL window 'error' /
+// 'unhandledrejection' listeners that used to live here were REMOVED 2026-06-08:
+// being a second, ungated copy of the index.html boot overlay, they painted a
+// white screen over a fully-working app on any post-mount rejection (e.g. a
+// transient Realtime resubscribe). The index.html overlay (BOOT_WINDOW_MS +
+// window.__APP_MOUNTED gated) already covers global pre-mount errors. This
+// helper remains ONLY for the synchronous createRoot().render() catch below and
+// self-gates on __APP_MOUNTED so it can never paint over a mounted app. Do not
+// reattach global error listeners here.
 function showBootError(label: string, payload: unknown) {
   try {
+    if ((window as unknown as { __APP_MOUNTED?: boolean }).__APP_MOUNTED) return
     let div = document.getElementById('boot-error')
     if (!div) {
       div = document.createElement('div')
@@ -23,8 +28,6 @@ function showBootError(label: string, payload: unknown) {
     // last-resort, swallow
   }
 }
-window.addEventListener('error', (e) => showBootError('error', e.error ?? e.message))
-window.addEventListener('unhandledrejection', (e) => showBootError('promise', e.reason))
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

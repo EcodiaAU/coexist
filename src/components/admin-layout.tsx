@@ -258,9 +258,15 @@ export function AdminLayout() {
         {/* Mobile drawer + hamburger removed - handled by UnifiedSidebar in AppShell */}
 
         {/* Main content */}
+        {/* The min-h-0 flex chain pins this column to viewport height, so it
+            must own the scroll in EVERY nav mode. Gating overflow-y-auto on
+            showBottomTabs left desktop sidebar mode (CEO's laptop) with no
+            scroller while the inner content uses overflow-clip -> frozen,
+            unscrollable admin pages. overscroll-none stays; hide-scrollbar is
+            tab-only so desktop keeps a visible scrollbar. (2026-06-08) */}
         <div ref={scrollRef} data-parallax-scroll className={cn(
-          'flex-1 flex flex-col min-w-0 min-h-0 bg-surface-1',
-          showBottomTabs && 'overflow-y-auto overscroll-none hide-scrollbar',
+          'flex-1 flex flex-col min-w-0 min-h-0 bg-surface-1 overflow-y-auto overscroll-none',
+          showBottomTabs && 'hide-scrollbar',
         )}>
           {/* ── Shared hero bar - only for non-fullBleed pages ── */}
           {!header.fullBleed && header.title && header.title !== 'Dashboard' ? (() => {
