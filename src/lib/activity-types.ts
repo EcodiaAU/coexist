@@ -32,14 +32,21 @@ export const activityToBadge: Record<string, ActivityBadgeSlug> = {
 /*  Card gradient (used on event list cards)                           */
 /* ------------------------------------------------------------------ */
 
+// Single Co-Exist brand colour for every event type (2026-06-08): the per-type
+// colour aesthetic was removed in favour of one earthy green across all events.
+// Flat single-stop (both ends primary-800) so registration buttons + accent
+// bars render as a SOLID earthy green, matching the app's native primary CTA
+// (button.tsx variant=primary is bg-primary-800). No gradients, no crazy colours.
+const COEXIST_GRADIENT = 'from-primary-800 to-primary-800'
+
 export const ACTIVITY_META: Record<string, { gradient: string }> = {
-  clean_up: { gradient: 'from-sky-400 to-moss-500' },
-  tree_planting: { gradient: 'from-success-400 to-primary-500' },
-  ecosystem_restoration: { gradient: 'from-sprout-400 to-success-500' },
-  nature_hike: { gradient: 'from-bark-400 to-bark-500' },
-  camp_out: { gradient: 'from-moss-400 to-primary-500' },
-  spotlighting: { gradient: 'from-amber-400 to-amber-500' },
-  other: { gradient: 'from-neutral-400 to-neutral-500' },
+  clean_up: { gradient: COEXIST_GRADIENT },
+  tree_planting: { gradient: COEXIST_GRADIENT },
+  ecosystem_restoration: { gradient: COEXIST_GRADIENT },
+  nature_hike: { gradient: COEXIST_GRADIENT },
+  camp_out: { gradient: COEXIST_GRADIENT },
+  spotlighting: { gradient: COEXIST_GRADIENT },
+  other: { gradient: COEXIST_GRADIENT },
 }
 
 /* ------------------------------------------------------------------ */
@@ -54,14 +61,24 @@ export interface ActivityAccent {
   border: string
 }
 
+// Every event type now resolves to the same Co-Exist green accent. The map is
+// kept (keyed by type) only for call-site compatibility; all values are equal.
+const COEXIST_ACCENT: ActivityAccent = {
+  gradient: COEXIST_GRADIENT,
+  glow: '',
+  bg: 'bg-primary-50',
+  text: 'text-primary-700',
+  border: 'border-primary-200/50',
+}
+
 export const activityAccent: Record<string, ActivityAccent> = {
-  clean_up:               { gradient: 'from-sky-400 to-cyan-500',         glow: '',    bg: 'bg-sky-50',        text: 'text-sky-700',      border: 'border-sky-200/50' },
-  tree_planting:           { gradient: 'from-emerald-400 to-green-500',    glow: '',    bg: 'bg-emerald-50',    text: 'text-emerald-700',  border: 'border-emerald-200/50' },
-  ecosystem_restoration:   { gradient: 'from-lime-400 to-green-500',       glow: '',    bg: 'bg-lime-50',       text: 'text-lime-700',     border: 'border-lime-200/50' },
-  nature_hike:             { gradient: 'from-teal-400 to-emerald-500',     glow: '',    bg: 'bg-teal-50',       text: 'text-teal-700',     border: 'border-teal-200/50' },
-  camp_out:                { gradient: 'from-amber-400 to-orange-500',     glow: '',    bg: 'bg-amber-50',      text: 'text-amber-700',    border: 'border-amber-200/50' },
-  spotlighting:            { gradient: 'from-indigo-400 to-violet-500',    glow: '',    bg: 'bg-indigo-50',     text: 'text-indigo-700',   border: 'border-indigo-200/50' },
-  other:                   { gradient: 'from-neutral-400 to-neutral-500',  glow: '',    bg: 'bg-neutral-50',    text: 'text-neutral-700',  border: 'border-neutral-200/50' },
+  clean_up: COEXIST_ACCENT,
+  tree_planting: COEXIST_ACCENT,
+  ecosystem_restoration: COEXIST_ACCENT,
+  nature_hike: COEXIST_ACCENT,
+  camp_out: COEXIST_ACCENT,
+  spotlighting: COEXIST_ACCENT,
+  other: COEXIST_ACCENT,
 }
 
 /* ------------------------------------------------------------------ */
@@ -74,10 +91,4 @@ export function formatActivityType(type: string | null | undefined): string {
   return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-export const defaultAccent: ActivityAccent = {
-  gradient: 'from-primary-400 to-sprout-500',
-  glow: '',
-  bg: 'bg-primary-50',
-  text: 'text-primary-700',
-  border: 'border-primary-200/50',
-}
+export const defaultAccent: ActivityAccent = COEXIST_ACCENT

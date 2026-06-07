@@ -7,14 +7,16 @@
 /*  Event activity type → badge colours                                */
 /* ------------------------------------------------------------------ */
 
+// Single Co-Exist green for every event type (2026-06-08): per-type colour
+// theming removed across the app.
 export const ACTIVITY_COLORS: Record<string, string> = {
-  clean_up: 'bg-bark-100 text-bark-700',
-  tree_planting: 'bg-sprout-100 text-sprout-700',
-  ecosystem_restoration: 'bg-moss-100 text-moss-700',
-  nature_hike: 'bg-bark-100 text-bark-700',
-  camp_out: 'bg-moss-100 text-moss-700',
+  clean_up: 'bg-primary-100 text-primary-700',
+  tree_planting: 'bg-primary-100 text-primary-700',
+  ecosystem_restoration: 'bg-primary-100 text-primary-700',
+  nature_hike: 'bg-primary-100 text-primary-700',
+  camp_out: 'bg-primary-100 text-primary-700',
   spotlighting: 'bg-primary-100 text-primary-700',
-  other: 'bg-neutral-100 text-neutral-700',
+  other: 'bg-primary-100 text-primary-700',
 }
 
 /* ------------------------------------------------------------------ */

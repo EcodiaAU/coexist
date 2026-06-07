@@ -5,14 +5,16 @@ import { cn } from '@/lib/cn'
 /*  Activity-type variants                                             */
 /* ------------------------------------------------------------------ */
 
+// Single Co-Exist green for every event type (2026-06-08): per-type colour
+// theming removed. The activity label (not colour) distinguishes types now.
 const activityStyles = {
-  'clean-up': 'bg-sky-100 text-sky-800',
-  'tree-planting': 'bg-success-100 text-success-800',
-  'ecosystem-restoration': 'bg-sprout-100 text-sprout-800',
-  'nature-hike': 'bg-bark-100 text-bark-800',
-  'camp-out': 'bg-moss-100 text-moss-800',
-  spotlighting: 'bg-plum-100 text-plum-800',
-  other: 'bg-warning-100 text-warning-800',
+  'clean-up': 'bg-primary-100 text-primary-800',
+  'tree-planting': 'bg-primary-100 text-primary-800',
+  'ecosystem-restoration': 'bg-primary-100 text-primary-800',
+  'nature-hike': 'bg-primary-100 text-primary-800',
+  'camp-out': 'bg-primary-100 text-primary-800',
+  spotlighting: 'bg-primary-100 text-primary-800',
+  other: 'bg-primary-100 text-primary-800',
 } as const
 
 /* ------------------------------------------------------------------ */
