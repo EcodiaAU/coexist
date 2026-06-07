@@ -10,10 +10,72 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  *   - 24 hours before event start
  *   - 2 hours before event start
  *
+ * Floating-local timezone model (since 2026-05-26):
+ *   `events.date_start` is stored as wall-clock-as-UTC (e.g. "10am" typed
+ *   by the host is stored literally as `2026-06-06T10:00:00Z`, regardless
+ *   of the host's browser tz). To fire reminders at the right wall-clock
+ *   moment for the audience, we compare `date_start` against the current
+ *   wall-clock in the collective's IANA tz, formatted as UTC. Comparing
+ *   against real UTC `now` would fire the audience-offset hours late
+ *   (10h late for AEST, 8h late for AWST, etc).
+ *
  * Uses the `email_reminders_sent` table to track which reminders have
  * already been sent, preventing duplicates. (Single row = both email and
  * push delivered for that user/event/type combo.)
  */
+
+// Widest AU UTC offset we need to cover with the SQL pre-filter: +8 (Perth)
+// to +11 (Hobart in DST). Picking 12h padding leaves comfortable headroom.
+const TZ_PADDING_HOURS = 12
+
+interface EventRow {
+  id: string
+  title: string
+  date_start: string
+  address: string | null
+  timezone: string | null
+  collectives: { timezone: string | null } | null
+}
+
+/**
+ * Effective audience IANA timezone for an event. The floating-local model
+ * leaves `events.timezone` as NULL or 'UTC' for new events; the meaningful
+ * audience clock is the collective's tz (state-derived per migration
+ * 20260512100000_collective_event_timezone.sql). Fallback Brisbane is
+ * Co-Exist's centre-of-mass (QLD-heavy, no DST).
+ */
+function audienceTzFor(event: EventRow): string {
+  const eTz = event.timezone
+  if (eTz && eTz !== 'UTC') return eTz
+  return event.collectives?.timezone || 'Australia/Brisbane'
+}
+
+/**
+ * Returns a Date whose UTC slice equals the current wall-clock time in
+ * `tz`. Mirrors the floating-local `wallClockNow()` helper used in the
+ * frontend, but parametrised by tz instead of relying on the runtime's
+ * own offset (Deno is always UTC).
+ *
+ * Brisbane at 11:00 AEST → returns Date('2026-06-08T11:00:00.000Z').
+ */
+function wallClockNowInTz(tz: string): Date {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date())
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || '00'
+  const hour = get('hour') === '24' ? '00' : get('hour')
+  return new Date(
+    `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}.000Z`,
+  )
+}
+
+/** Hours between two Dates, signed: positive = b is later than a. */
+function hoursBetween(a: Date, b: Date): number {
+  return (b.getTime() - a.getTime()) / (3600 * 1000)
+}
 
 Deno.serve(async (req: Request) => {
   try {
@@ -34,22 +96,30 @@ Deno.serve(async (req: Request) => {
     )
 
     const now = new Date()
-    const results = { reminders_24h: 0, reminders_2h: 0, errors: 0 }
+    const results = { reminders_24h: 0, reminders_2h: 0, errors: 0, candidates_24h: 0, candidates_2h: 0 }
 
     // ── 24-hour reminders ──
-    // Find events starting between 23.5 and 24.5 hours from now
-    const h24Start = new Date(now.getTime() + 23.5 * 60 * 60 * 1000)
-    const h24End = new Date(now.getTime() + 24.5 * 60 * 60 * 1000)
+    // Pre-filter SQL window is widened by TZ_PADDING_HOURS in both
+    // directions so floating wall-clock events from any AU tz are still
+    // captured. The exact 23.5–24.5h diff is enforced per-event below
+    // using audience-tz wall-clock now.
+    const h24WindowStart = new Date(now.getTime() + (23.5 - TZ_PADDING_HOURS) * 3600 * 1000)
+    const h24WindowEnd = new Date(now.getTime() + (24.5 + TZ_PADDING_HOURS) * 3600 * 1000)
 
     const { data: events24h } = await supabase
       .from('events')
-      .select('id, title, date_start, address')
+      .select('id, title, date_start, address, timezone, collectives(timezone)')
       .eq('status', 'published')
-      .gte('date_start', h24Start.toISOString())
-      .lte('date_start', h24End.toISOString())
+      .gte('date_start', h24WindowStart.toISOString())
+      .lte('date_start', h24WindowEnd.toISOString())
 
     if (events24h?.length) {
-      for (const event of events24h) {
+      results.candidates_24h = events24h.length
+      for (const event of (events24h as unknown) as EventRow[]) {
+        const wallClockNow = wallClockNowInTz(audienceTzFor(event))
+        const diffHours = hoursBetween(wallClockNow, new Date(event.date_start))
+        if (diffHours < 23.5 || diffHours > 24.5) continue
+
         const sent = await sendReminders(supabase, event, '24h', 'tomorrow', {
           pushTitle: `${event.title} is tomorrow`,
           pushBody: 'See you there - tap to view details and get directions.',
@@ -60,19 +130,23 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── 2-hour reminders ──
-    // Find events starting between 1.5 and 2.5 hours from now
-    const h2Start = new Date(now.getTime() + 1.5 * 60 * 60 * 1000)
-    const h2End = new Date(now.getTime() + 2.5 * 60 * 60 * 1000)
+    const h2WindowStart = new Date(now.getTime() + (1.5 - TZ_PADDING_HOURS) * 3600 * 1000)
+    const h2WindowEnd = new Date(now.getTime() + (2.5 + TZ_PADDING_HOURS) * 3600 * 1000)
 
     const { data: events2h } = await supabase
       .from('events')
-      .select('id, title, date_start, address')
+      .select('id, title, date_start, address, timezone, collectives(timezone)')
       .eq('status', 'published')
-      .gte('date_start', h2Start.toISOString())
-      .lte('date_start', h2End.toISOString())
+      .gte('date_start', h2WindowStart.toISOString())
+      .lte('date_start', h2WindowEnd.toISOString())
 
     if (events2h?.length) {
-      for (const event of events2h) {
+      results.candidates_2h = events2h.length
+      for (const event of (events2h as unknown) as EventRow[]) {
+        const wallClockNow = wallClockNowInTz(audienceTzFor(event))
+        const diffHours = hoursBetween(wallClockNow, new Date(event.date_start))
+        if (diffHours < 1.5 || diffHours > 2.5) continue
+
         const sent = await sendReminders(supabase, event, '2h', 'in 2 hours', {
           pushTitle: `${event.title} starts in 2 hours`,
           pushBody: 'Time to get ready - tap to view details and get directions.',
@@ -98,13 +172,6 @@ Deno.serve(async (req: Request) => {
 })
 
 // ── Send reminders for a single event ──
-
-interface EventRow {
-  id: string
-  title: string
-  date_start: string
-  address: string | null
-}
 
 async function sendReminders(
   supabase: ReturnType<typeof createClient>,

@@ -12,8 +12,54 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  *   1. "Event starting soon" - 30 minutes before event start
  *   2. "Event is happening now" - at event start time
  *
+ * Floating-local timezone model (since 2026-05-26):
+ *   `events.date_start` is wall-clock-as-UTC. The "30 min before" and
+ *   "happening now" windows must be evaluated against the audience's
+ *   wall-clock now (collective IANA tz), not real UTC, or pushes fire the
+ *   audience-offset hours late (10h late AEST, 8h late AWST, etc). See
+ *   event-reminders for the same fix.
+ *
  * Uses `event_day_notifications_sent` tracking table to prevent duplicates.
  */
+
+// Widest AU UTC offset we cover with the SQL pre-filter padding.
+const TZ_PADDING_HOURS = 12
+
+interface EventRow {
+  id: string
+  title: string
+  date_start: string
+  date_end?: string | null
+  address: string | null
+  activity_type: string
+  collective_id: string
+  timezone: string | null
+  collectives: { timezone: string | null } | null
+}
+
+function audienceTzFor(event: EventRow): string {
+  const eTz = event.timezone
+  if (eTz && eTz !== 'UTC') return eTz
+  return event.collectives?.timezone || 'Australia/Brisbane'
+}
+
+function wallClockNowInTz(tz: string): Date {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date())
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || '00'
+  const hour = get('hour') === '24' ? '00' : get('hour')
+  return new Date(
+    `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}.000Z`,
+  )
+}
+
+function minutesBetween(a: Date, b: Date): number {
+  return (b.getTime() - a.getTime()) / (60 * 1000)
+}
 
 Deno.serve(async (req: Request) => {
   try {
@@ -34,21 +80,28 @@ Deno.serve(async (req: Request) => {
     )
 
     const now = new Date()
-    const results = { starting_soon: 0, happening_now: 0, errors: 0 }
+    const results = { starting_soon: 0, happening_now: 0, errors: 0, candidates_soon: 0, candidates_now: 0 }
 
-    // ── "Starting soon" (event starts in 15-35 minutes) ──
-    const soonStart = new Date(now.getTime() + 15 * 60 * 1000)
-    const soonEnd = new Date(now.getTime() + 35 * 60 * 1000)
+    // ── "Starting soon" (audience wall-clock: 15-35 min before start) ──
+    // SQL window widened by TZ_PADDING_HOURS each side; exact window
+    // enforced per-event using audience-tz wall-clock now.
+    const soonWindowStart = new Date(now.getTime() + (15 * 60 - TZ_PADDING_HOURS * 3600) * 1000)
+    const soonWindowEnd = new Date(now.getTime() + (35 * 60 + TZ_PADDING_HOURS * 3600) * 1000)
 
     const { data: soonEvents } = await supabase
       .from('events')
-      .select('id, title, date_start, address, activity_type, collective_id')
+      .select('id, title, date_start, address, activity_type, collective_id, timezone, collectives(timezone)')
       .eq('status', 'published')
-      .gte('date_start', soonStart.toISOString())
-      .lte('date_start', soonEnd.toISOString())
+      .gte('date_start', soonWindowStart.toISOString())
+      .lte('date_start', soonWindowEnd.toISOString())
 
     if (soonEvents?.length) {
-      for (const event of soonEvents) {
+      results.candidates_soon = soonEvents.length
+      for (const event of (soonEvents as unknown) as EventRow[]) {
+        const wallClockNow = wallClockNowInTz(audienceTzFor(event))
+        const diffMinutes = minutesBetween(wallClockNow, new Date(event.date_start))
+        if (diffMinutes < 15 || diffMinutes > 35) continue
+
         const sent = await notifyAttendees(
           supabase,
           event,
@@ -61,18 +114,26 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // ── "Happening now" (event started in the last 15 minutes) ──
-    const nowStart = new Date(now.getTime() - 15 * 60 * 1000)
+    // ── "Happening now" (audience wall-clock: started 0-15 min ago) ──
+    const nowWindowStart = new Date(now.getTime() - (15 * 60 + TZ_PADDING_HOURS * 3600) * 1000)
+    const nowWindowEnd = new Date(now.getTime() + TZ_PADDING_HOURS * 3600 * 1000)
 
     const { data: nowEvents } = await supabase
       .from('events')
-      .select('id, title, date_start, date_end, address, activity_type, collective_id')
+      .select('id, title, date_start, date_end, address, activity_type, collective_id, timezone, collectives(timezone)')
       .eq('status', 'published')
-      .gte('date_start', nowStart.toISOString())
-      .lte('date_start', now.toISOString())
+      .gte('date_start', nowWindowStart.toISOString())
+      .lte('date_start', nowWindowEnd.toISOString())
 
     if (nowEvents?.length) {
-      for (const event of nowEvents) {
+      results.candidates_now = nowEvents.length
+      for (const event of (nowEvents as unknown) as EventRow[]) {
+        const wallClockNow = wallClockNowInTz(audienceTzFor(event))
+        const diffMinutes = minutesBetween(wallClockNow, new Date(event.date_start))
+        // event started in last 15 min: date_start <= wallClockNow and (wallClockNow - date_start) <= 15min
+        // diffMinutes = wallClockNow -> date_start, so diffMinutes in [-15, 0]
+        if (diffMinutes > 0 || diffMinutes < -15) continue
+
         const sent = await notifyAttendees(
           supabase,
           event,
@@ -101,16 +162,6 @@ Deno.serve(async (req: Request) => {
 })
 
 // ── Notify all registered attendees for a single event ──
-
-interface EventRow {
-  id: string
-  title: string
-  date_start: string
-  date_end?: string | null
-  address: string | null
-  activity_type: string
-  collective_id: string
-}
 
 async function notifyAttendees(
   supabase: ReturnType<typeof createClient>,
