@@ -34,7 +34,7 @@ export interface EventDetailData extends Event {
   collectives: Pick<Collective, 'id' | 'name' | 'cover_image_url' | 'slug' | 'region' | 'state' | 'timezone'> | null
   registration_count: number
   user_registration: EventRegistration | null
-  attendees: Pick<Profile, 'id' | 'display_name' | 'avatar_url'>[]
+  attendees: Pick<Profile, 'id' | 'display_name' | 'first_name' | 'last_name' | 'avatar_url'>[]
   impact: EventImpact | null
   collaborators: Pick<Collective, 'id' | 'name' | 'slug' | 'cover_image_url'>[]
   has_been_invited: boolean
@@ -50,14 +50,14 @@ export interface AttendeeWithStatus {
   status: RegistrationStatus
   checked_in_at: string | null
   registered_at: string
-  profiles: Pick<Profile, 'id' | 'display_name' | 'avatar_url' | 'phone' | 'age' | 'gender' | 'accessibility_requirements' | 'emergency_contact_name' | 'emergency_contact_phone' | 'emergency_contact_relationship'> | null
+  profiles: Pick<Profile, 'id' | 'display_name' | 'first_name' | 'last_name' | 'avatar_url' | 'phone' | 'age' | 'gender' | 'accessibility_requirements' | 'emergency_contact_name' | 'emergency_contact_phone' | 'emergency_contact_relationship'> | null
 }
 
 export interface WaitlistEntry {
   id: string
   user_id: string
   registered_at: string
-  profiles: Pick<Profile, 'id' | 'display_name' | 'avatar_url'> | null
+  profiles: Pick<Profile, 'id' | 'display_name' | 'first_name' | 'last_name' | 'avatar_url'> | null
 }
 
 /* ------------------------------------------------------------------ */
@@ -317,7 +317,7 @@ export function useEventDetail(eventId: string | undefined) {
         // Attendee avatars (first 8)
         supabase
           .from('event_registrations')
-          .select('profiles!event_registrations_user_id_fkey(id, display_name, avatar_url)')
+          .select('profiles!event_registrations_user_id_fkey(id, display_name, first_name, last_name, avatar_url)')
           .eq('event_id', eventId)
           .in('status', ['registered', 'attended'])
           .limit(8),
@@ -339,7 +339,7 @@ export function useEventDetail(eventId: string | undefined) {
 
       const attendees = (attendeeRes.data ?? [])
         .map((a) => a.profiles)
-        .filter(Boolean) as Pick<Profile, 'id' | 'display_name' | 'avatar_url'>[]
+        .filter(Boolean) as Pick<Profile, 'id' | 'display_name' | 'first_name' | 'last_name' | 'avatar_url'>[]
 
       const collaborators = (collabRes.data ?? [])
         .map((c) => c.collectives)
@@ -399,14 +399,14 @@ export function prefetchEventDetail(
 
       const { data: attendeeData } = await supabase
         .from('event_registrations')
-        .select('profiles!event_registrations_user_id_fkey(id, display_name, avatar_url)')
+        .select('profiles!event_registrations_user_id_fkey(id, display_name, first_name, last_name, avatar_url)')
         .eq('event_id', eventId)
         .in('status', ['registered', 'attended'])
         .limit(8)
 
       const attendees = (attendeeData ?? [])
         .map((a) => a.profiles)
-        .filter(Boolean) as Pick<Profile, 'id' | 'display_name' | 'avatar_url'>[]
+        .filter(Boolean) as Pick<Profile, 'id' | 'display_name' | 'first_name' | 'last_name' | 'avatar_url'>[]
 
       const { data: impact } = await supabase
         .from('event_impact')
@@ -456,7 +456,7 @@ export function useEventAttendees(eventId: string | undefined) {
 
       const { data, error } = await supabase
         .from('event_registrations')
-        .select('user_id, status, checked_in_at, registered_at, profiles!event_registrations_user_id_fkey(id, display_name, avatar_url, phone, age, gender, accessibility_requirements, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship)')
+        .select('user_id, status, checked_in_at, registered_at, profiles!event_registrations_user_id_fkey(id, display_name, first_name, last_name, avatar_url, phone, age, gender, accessibility_requirements, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship)')
         .eq('event_id', eventId)
         .in('status', ['registered', 'attended', 'waitlisted'])
         .order('registered_at', { ascending: true })
@@ -481,7 +481,7 @@ export function useEventWaitlist(eventId: string | undefined) {
 
       const { data, error } = await supabase
         .from('event_registrations')
-        .select('id, user_id, registered_at, profiles!event_registrations_user_id_fkey(id, display_name, avatar_url)')
+        .select('id, user_id, registered_at, profiles!event_registrations_user_id_fkey(id, display_name, first_name, last_name, avatar_url)')
         .eq('event_id', eventId)
         .eq('status', 'waitlisted')
         .order('registered_at', { ascending: true })

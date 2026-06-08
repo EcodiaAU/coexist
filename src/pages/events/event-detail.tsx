@@ -79,6 +79,7 @@ import {
 } from '@/components'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
+import { attendeeName } from '@/lib/attendee-name'
 import { parseLocationPoint } from '@/lib/geo'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useGeocodeAddress } from '@/hooks/use-geocode-address'
@@ -280,12 +281,12 @@ function TicketSalesSection({
           <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Ticket Holders</p>
           <div className="max-h-[180px] overflow-y-auto space-y-1">
             {tickets.slice(0, 20).map((t) => {
-              const profile = t.profiles as unknown as { display_name: string; email: string } | null
+              const profile = t.profiles as unknown as { display_name: string; first_name: string | null; last_name: string | null; email: string } | null
               return (
                 <div key={t.id} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-neutral-50">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-neutral-800 truncate">
-                      {profile?.display_name ?? profile?.email ?? 'Unknown'}
+                      {attendeeName(profile, profile?.email ?? 'Unknown')}
                     </p>
                     <p className="text-[10px] text-neutral-400">
                       {(t.event_ticket_types as unknown as { name: string } | null)?.name ?? ''} · ${((t.price_cents ?? 0) / 100).toFixed(2)}

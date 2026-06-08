@@ -212,7 +212,7 @@ export function useEventTickets(eventId: string | undefined) {
 
       const { data, error } = await supabase
         .from('event_tickets')
-        .select('*, event_ticket_types(name), profiles:user_id(display_name, avatar_url, email)')
+        .select('*, event_ticket_types(name), profiles:user_id(display_name, first_name, last_name, avatar_url, email)')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false })
 

@@ -77,7 +77,11 @@ function escapeCsv(value: string): string {
 }
 
 function nameOf(r: AttendeeExportRow): string {
-  return r.display_name ?? [r.first_name, r.last_name].filter(Boolean).join(' ') ?? ''
+  // Full name first (Tate 2026-06-08): exports must carry First + Last so
+  // leaders/execs can disambiguate people who share a first name; the
+  // self-chosen display_name is only a fallback.
+  const full = [r.first_name, r.last_name].map((s) => (s ?? '').trim()).filter(Boolean).join(' ')
+  return full || (r.display_name ?? '')
 }
 
 export function buildAttendeesCsv(rows: AttendeeExportRow[], details: EventDetailsForExport): string {

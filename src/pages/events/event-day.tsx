@@ -61,6 +61,8 @@ import { ProfileModal } from '@/components/profile-modal'
 import { EmergencyContacts } from '@/components/emergency-contacts'
 import { SearchBar } from '@/components/search-bar'
 import { cn } from '@/lib/cn'
+import { attendeeName } from '@/lib/attendee-name'
+import { FitText } from '@/components/fit-text'
 import { supabase } from '@/lib/supabase'
 import { WalkInSheet } from '@/components/walk-in-sheet'
 import { useQueryClient } from '@tanstack/react-query'
@@ -133,19 +135,23 @@ function AttendeeRow({
       onClick={onViewDetails}
       role="button"
       tabIndex={0}
-      aria-label={`View details for ${attendee.profiles?.display_name ?? 'attendee'}`}
+      aria-label={`View details for ${attendeeName(attendee.profiles, 'attendee')}`}
     >
       <Avatar
         src={attendee.profiles?.avatar_url ?? undefined}
-        name={attendee.profiles?.display_name ?? 'Unknown'}
+        name={attendeeName(attendee.profiles)}
         size="md"
       />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className="text-sm font-medium text-neutral-900 truncate">
-            {attendee.profiles?.display_name ?? 'Unknown User'}
-          </p>
+          {/* First + Last, shrunk to fit (never truncated) so leaders can tell
+              apart people who share a first name. */}
+          <span className="flex-1 min-w-0">
+            <FitText className="font-medium text-neutral-900" max={14} min={10}>
+              {attendeeName(attendee.profiles, 'Unknown User')}
+            </FitText>
+          </span>
           {hasEmergencyInfo && (
             <AlertTriangle size={12} className="text-warning-500 shrink-0" aria-label="Has safety info" />
           )}
@@ -181,7 +187,7 @@ function AttendeeRow({
                 'transition-colors duration-150',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
               )}
-              aria-label={`Uncheck ${attendee.profiles?.display_name ?? 'attendee'}`}
+              aria-label={`Uncheck ${attendeeName(attendee.profiles, 'attendee')}`}
               title="Uncheck (mark as not attended)"
             >
               <RotateCcw size={14} strokeWidth={2.5} />
@@ -239,12 +245,12 @@ function AttendeeSafetySheet({
         <div className="flex items-center gap-3">
           <Avatar
             src={p.avatar_url ?? undefined}
-            name={p.display_name ?? 'Unknown'}
+            name={attendeeName(p)}
             size="lg"
           />
           <div>
             <p className="font-heading text-lg font-bold text-neutral-900">
-              {p.display_name ?? 'Unknown User'}
+              {attendeeName(p, 'Unknown User')}
             </p>
             {(p.age || p.gender) && (
               <p className="text-sm text-neutral-500">
@@ -420,7 +426,9 @@ export default function EventDayPage() {
     if (!searchQuery.trim()) return attendees
     const q = searchQuery.toLowerCase()
     return attendees.filter((a) =>
-      (a.profiles?.display_name ?? '').toLowerCase().includes(q),
+      // match on full name (first + last) + display_name so leaders can search
+      // by surname to disambiguate shared first names.
+      `${attendeeName(a.profiles, '')} ${a.profiles?.display_name ?? ''}`.toLowerCase().includes(q),
     )
   }, [attendees, searchQuery])
 
@@ -466,7 +474,7 @@ export default function EventDayPage() {
   const handleUncheckConfirm = useCallback(() => {
     if (!eventId || !uncheckTarget) return
     const userId = uncheckTarget.user_id
-    const displayName = uncheckTarget.profiles?.display_name ?? 'Attendee'
+    const displayName = attendeeName(uncheckTarget.profiles, 'Attendee')
     setUncheckingUserId(userId)
     uncheckIn.mutate(
       { eventId, userId },
@@ -992,7 +1000,7 @@ export default function EventDayPage() {
         onClose={() => setUncheckTarget(null)}
         onConfirm={handleUncheckConfirm}
         title="Uncheck this attendee?"
-        description={`Are you sure? This will mark ${uncheckTarget?.profiles?.display_name ?? 'this attendee'} as not attended.`}
+        description={`Are you sure? This will mark ${attendeeName(uncheckTarget?.profiles, 'this attendee')} as not attended.`}
         confirmLabel="Uncheck"
         variant="warning"
       />
