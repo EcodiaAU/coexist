@@ -32,7 +32,11 @@ export function attendeeName(
     .map((s) => (s ?? '').trim())
     .filter(Boolean)
     .join(' ')
-  if (full) return full
+  // Some profiles store names lowercase ("ana jade"); title-case so the roster
+  // reads cleanly. Capitalises the first letter of each part after a space,
+  // hyphen or apostrophe and leaves existing caps alone (keeps Finan-Jenkin,
+  // O'Brien, McDonald intact). The self-chosen display_name is left untouched.
+  if (full) return full.replace(/(^|[\s'-])([a-z])/g, (_m, sep, ch) => sep + ch.toUpperCase())
   const dn = (p.display_name ?? '').trim()
   return dn || fallback
 }

@@ -10,6 +10,11 @@ describe('attendeeName (First + Last for leader disambiguation)', () => {
     const b = attendeeName({ first_name: 'Sam', last_name: 'Toombs' })
     expect(a).not.toBe(b)
   })
+  it('title-cases lowercase stored names but keeps existing caps', () => {
+    expect(attendeeName({ first_name: 'ana', last_name: 'jade', display_name: 'Anastasia Jade' })).toBe('Ana Jade')
+    expect(attendeeName({ first_name: 'Maxwell', last_name: 'Finan-Jenkin' })).toBe('Maxwell Finan-Jenkin')
+    expect(attendeeName({ first_name: "o'brien", last_name: '' })).toBe("O'Brien")
+  })
   it('falls back to display_name when no real name', () => {
     expect(attendeeName({ display_name: 'eco_sam' })).toBe('eco_sam')
   })
