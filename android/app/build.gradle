@@ -1,5 +1,23 @@
 apply plugin: 'com.android.application'
 
+// Resolve a signing secret: env var, then gradle property, then the macOS
+// login Keychain (account 'coexist'). Lets signed builds run hands-off on the
+// Mac while the password lives only in the OS keychain - never in the repo, a
+// plaintext file, or the build log. Tate 2026-06-08.
+def signingSecret = { String name ->
+    def v = System.getenv(name) ?: project.findProperty(name)
+    if (v) return v
+    try {
+        def proc = ['security', 'find-generic-password', '-a', 'coexist', '-s', name, '-w'].execute()
+        proc.waitFor()
+        if (proc.exitValue() == 0) {
+            def t = proc.text.trim()
+            if (t) return t
+        }
+    } catch (ignored) {}
+    return ''
+}
+
 android {
     namespace = "org.coexistaus.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -19,9 +37,9 @@ android {
     signingConfigs {
         release {
             storeFile file('coexist-release.jks')
-            storePassword System.getenv('COEXIST_KEYSTORE_PASSWORD') ?: project.findProperty('COEXIST_KEYSTORE_PASSWORD') ?: ''
+            storePassword signingSecret('COEXIST_KEYSTORE_PASSWORD')
             keyAlias 'coexist'
-            keyPassword System.getenv('COEXIST_KEY_PASSWORD') ?: project.findProperty('COEXIST_KEY_PASSWORD') ?: ''
+            keyPassword signingSecret('COEXIST_KEY_PASSWORD')
         }
     }
     buildTypes {
