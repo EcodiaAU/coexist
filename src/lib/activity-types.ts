@@ -33,11 +33,11 @@ export const activityToBadge: Record<string, ActivityBadgeSlug> = {
 /* ------------------------------------------------------------------ */
 
 // Single Co-Exist brand colour for every event type (2026-06-08): the per-type
-// colour aesthetic was removed in favour of one earthy green across all events.
-// Flat single-stop (both ends primary-800) so registration buttons + accent
-// bars render as a SOLID earthy green, matching the app's native primary CTA
-// (button.tsx variant=primary is bg-primary-800). No gradients, no crazy colours.
-const COEXIST_GRADIENT = 'from-primary-800 to-primary-800'
+// colour aesthetic was removed in favour of one green across all events.
+// Flat single-stop on the LIGHT brand green (primary-400 = --color-brand #869e62,
+// the same green the app's Share button uses) so registration buttons + accent
+// bars render as a SOLID light Co-Exist green. Not the dark forest primary-800.
+const COEXIST_GRADIENT = 'from-primary-400 to-primary-400'
 
 export const ACTIVITY_META: Record<string, { gradient: string }> = {
   clean_up: { gradient: COEXIST_GRADIENT },
