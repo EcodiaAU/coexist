@@ -281,12 +281,20 @@ export function useEventDetail(eventId: string | undefined) {
       // row was RLS-denied and could fail the whole `.single()` call,
       // blocking the entire event detail page). Managers can create events
       // for any collective without needing membership.
+      // maybeSingle (not single): a missing/RLS-hidden event returns null
+      // WITHOUT throwing. .single() raised PGRST116 ("Cannot coerce result to
+      // a single JSON object", 0 rows) on any deleted event / stale link / push
+      // deep-link / event in a collective the viewer left - which surfaced as a
+      // console error AND forced the "Something went wrong" screen instead of
+      // the clean "Event not found" state. Now: real errors still throw; a 0-row
+      // returns null and the page renders the friendly not-found UI.
       const { data: event, error } = await supabase
         .from('events')
         .select('*, collectives(id, name, slug, cover_image_url, region, state, timezone)')
         .eq('id', eventId)
-        .single()
+        .maybeSingle()
       if (error) throw error
+      if (!event) return null
 
       // Parallelize all independent queries
       const [regCountRes, userRegRes, attendeeRes, impactRes, collabRes, inviteRes] = await Promise.all([
@@ -365,12 +373,15 @@ export function prefetchEventDetail(
   return queryClient.prefetchQuery({
     queryKey: ['event', eventId, userId],
     queryFn: async () => {
+      // maybeSingle: a missing event must not throw PGRST116 during prefetch
+      // (e.g. hovering/visiting a stale list entry pointing at a deleted event).
       const { data: event, error } = await supabase
         .from('events')
         .select('*, collectives(id, name, slug, cover_image_url, region, state, timezone)')
         .eq('id', eventId)
-        .single()
+        .maybeSingle()
       if (error) throw error
+      if (!event) return null
 
       const { count: regCount } = await supabase
         .from('event_registrations')
