@@ -265,8 +265,16 @@ export function AdminLayout() {
             unscrollable admin pages. overscroll-none stays; hide-scrollbar is
             tab-only so desktop keeps a visible scrollbar. (2026-06-08) */}
         <div ref={scrollRef} data-parallax-scroll className={cn(
-          'flex-1 flex flex-col min-w-0 min-h-0 bg-surface-1 overflow-y-auto overscroll-none',
-          showBottomTabs && 'hide-scrollbar',
+          'flex-1 flex flex-col min-w-0 min-h-0 bg-surface-1',
+          // Mobile/tab mode: app-shell is overflow-hidden (viewport-pinned), so THIS
+          // container owns the scroll -> overflow-y-auto. Desktop sidebar mode:
+          // app-shell is min-h-dvh (the page grows and the DOCUMENT scrolls), so
+          // putting overflow-y-auto here intercepts the wheel over content with no
+          // bounded height to scroll -> froze content-scroll on the CEO laptop while
+          // the sidebar/footer still scrolled the doc (Tate 2026-06-09). Scope the
+          // scroller to tab mode; on desktop the document scrolls. Inner content is
+          // overflow-x-clip (not overflow-clip) so Y still reaches the doc scroller.
+          showBottomTabs && 'overflow-y-auto overscroll-none hide-scrollbar',
         )}>
           {/* ── Shared hero bar - only for non-fullBleed pages ── */}
           {!header.fullBleed && header.title && header.title !== 'Dashboard' ? (() => {
