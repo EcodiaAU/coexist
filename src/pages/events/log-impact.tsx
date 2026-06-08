@@ -696,7 +696,11 @@ export default function LogImpactPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingImpact?.logged_at])
-  const canEdit = !isEditWindowExpired || isStaff
+  // Full backdatable editing (Tate 2026-06-08): leaders + admins/staff can edit
+  // an event's impact stats at any time, not just within 48h of first logging.
+  // Page access is already gated to isAssistLeader || isStaff (below), so this
+  // makes the impact log fully editable for everyone authorised to reach it.
+  const canEdit = !isEditWindowExpired || isStaff || isAssistLeader
 
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, unknown>>({})
   const setSurveyAnswer = useCallback((id: string, value: unknown) => {
@@ -1187,8 +1191,10 @@ export default function LogImpactPage() {
           />
         </motion.div>
 
-        {/* Edit window banners */}
-        {existingImpact && isEditWindowExpired && !isStaff && (
+        {/* Edit window banners. With full backdatable editing (leaders + staff
+            edit any time) the "window passed" banner only shows to anyone who
+            genuinely cannot edit - in practice nobody who can reach this page. */}
+        {existingImpact && !canEdit && (
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-sm font-medium">
             <Clock size={15} className="shrink-0" />
             The 48-hour edit window has passed. Contact a national admin to make changes.
