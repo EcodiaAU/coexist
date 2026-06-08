@@ -434,8 +434,8 @@ function QuestionEditor({
           <span className="text-[11px] font-medium text-neutral-400 hidden sm:inline">{questionTypeLabels[question.type]}</span>
         </span>
 
-        {/* Question text */}
-        <p className="flex-1 text-sm font-medium text-neutral-900 truncate min-w-0">
+        {/* Question text - wraps (never truncates) so the full prompt is readable */}
+        <p className="flex-1 text-sm font-medium text-neutral-900 break-words whitespace-normal min-w-0">
           {question.text || <span className="text-neutral-300 italic">Untitled</span>}
           {question.required && <span className="text-error-500 ml-0.5">*</span>}
         </p>
