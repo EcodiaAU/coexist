@@ -641,7 +641,7 @@ export function useRegisterForEvent() {
       // multiple users register simultaneously for the last spot)
       if (!asWaitlist) {
         const [{ data: eventData }, { count: regCount }] = await Promise.all([
-          supabase.from('events').select('capacity').eq('id', eventId).single(),
+          supabase.from('events').select('capacity').eq('id', eventId).maybeSingle(),
           supabase.from('event_registrations')
             .select('id', { count: 'exact', head: true })
             .eq('event_id', eventId)
@@ -674,7 +674,7 @@ export function useRegisterForEvent() {
           .from('events')
           .select('title, date_start, address')
           .eq('id', eventId)
-          .single()
+          .maybeSingle()
 
         if (event) {
           supabase.functions.invoke('send-email', {
@@ -1825,8 +1825,8 @@ export function usePromoteFromWaitlist() {
 
       // Send waitlist promotion email
       const [{ data: event }, { data: promotedProfile }] = await Promise.all([
-        supabase.from('events').select('title, date_start').eq('id', eventId).single(),
-        supabase.from('profiles').select('display_name').eq('id', userId).single(),
+        supabase.from('events').select('title, date_start').eq('id', eventId).maybeSingle(),
+        supabase.from('profiles').select('display_name').eq('id', userId).maybeSingle(),
       ])
 
       if (event) {
