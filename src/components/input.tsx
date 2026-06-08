@@ -5,7 +5,7 @@ import {
   useId,
   useRef,
   useCallback,
-  useLayoutEffect,
+  useEffect,
 } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Search, Eye, EyeOff } from 'lucide-react'
@@ -118,28 +118,38 @@ export const Input = forwardRef<
   // clobbering re-render, not ambient parent re-renders).
   const composingRef = useRef(false)
 
-  // Hybrid-controlled DOM strategy: render the underlying <input>/<textarea>
-  // UNCONTROLLED (defaultValue only, no `value=` prop) so React's reconciler
-  // never touches the DOM `value` attribute on re-render. Sync external
-  // `value` prop changes into the DOM imperatively via useLayoutEffect, and
-  // BAIL during composition so the IME owns the field uninterrupted while it
-  // builds the word. compositionEnd then flushes the final value upward and
-  // the next render's effect run is a no-op because DOM and value already
-  // agree. This is the same pattern Mantine + Ant Design + several @react-
-  // aria primitives use specifically to dodge the Android IME race.
-  useLayoutEffect(() => {
-    const el = internalRef.current
-    if (!el) return
+  // Controlled input with an IME-safe draft. The element is CONTROLLED
+  // (value={displayValue}); during composition we render the live DOM text
+  // (draft) so React's controlled value ALWAYS equals the DOM, making the
+  // reconciler a no-op on the input - it never writes over the IME's composing
+  // buffer. We NEVER set el.value imperatively, which is the operation that
+  // aborts the IME composition on Chromium WebView / WKWebView (the bug that
+  // made every <Input> untypable via the real soft keyboard on Android, and on
+  // some pages on iOS, while JS/CDP/hardware-key paths - which skip the IME -
+  // always worked). onChange is suppressed upward during composition and
+  // flushed on compositionEnd. Replaces the hybrid-uncontrolled strategy
+  // (63e4fe8) whose useLayoutEffect `el.value = value` write clobbered the
+  // soft-keyboard buffer. Tate 2026-06-09; root cause via multi-agent analysis.
+  const [draft, setDraft] = useState(value ?? defaultValue ?? '')
+
+  // Mirror the committed external value into the draft when NOT composing
+  // (programmatic resets / parent-driven prefills). Early-returns during
+  // composition so it can never interrupt the IME.
+  useEffect(() => {
     if (composingRef.current) return
     if (value === undefined) return
-    if (el.value !== value) {
-      el.value = value
-    }
-    const nowFilled = value.length > 0
-    if (filled !== nowFilled) {
-      setFilled(nowFilled)
-    }
-  }, [value, filled])
+    setDraft(value)
+    setFilled(value.length > 0)
+  }, [value])
+
+  // During composition the DOM is the source of truth -> render the draft so
+  // the controlled value equals the DOM (reconciler no-op). Otherwise render
+  // the controlled value when provided, falling back to draft (uncontrolled).
+  const displayValue = composingRef.current
+    ? draft
+    : value !== undefined
+      ? value
+      : draft
 
   const handleFocus = useCallback(
     (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -166,10 +176,11 @@ export const Input = forwardRef<
   const handleCompositionEnd = useCallback(
     (e: React.CompositionEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       composingRef.current = false
-      // Fire a synthetic change so the parent receives the finalised value
-      // (some browsers don't emit input/change after compositionend).
       const target = e.currentTarget
+      setDraft(target.value)
       setFilled(target.value.length > 0)
+      // Flush the finalised value upward (some browsers don't emit input/change
+      // after compositionend).
       onChange?.({
         ...e,
         target,
@@ -181,12 +192,13 @@ export const Input = forwardRef<
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      // Composition guard MUST run before any setState, and stays even in the
-      // hybrid-controlled model as a defence-in-depth - some Android keyboards
-      // emit input events for predictive-text replacements that should be
-      // delivered only via the cleaner compositionEnd path.
+      const val = e.currentTarget.value
+      // Always keep the draft current so the controlled value tracks the DOM,
+      // even mid-composition (prevents React overwriting the IME buffer).
+      setDraft(val)
+      // Do NOT propagate upstream mid-composition; compositionEnd will flush.
       if (composingRef.current) return
-      setFilled(e.currentTarget.value.length > 0)
+      setFilled(val.length > 0)
       onChange?.(e)
     },
     [onChange],
@@ -204,11 +216,6 @@ export const Input = forwardRef<
   const isSearch = type === 'search'
   const isPassword = type === 'password'
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type
-
-  // Initial DOM value: prefer the controlled `value` (if any) at mount time,
-  // otherwise fall back to `defaultValue`, otherwise empty string. After
-  // mount the useLayoutEffect above is the canonical sync path for `value`.
-  const initialDomValue = value ?? defaultValue ?? ''
 
   const sharedClasses = cn(
     'peer w-full rounded-lg px-4 box-border',
@@ -274,9 +281,9 @@ export const Input = forwardRef<
             id={id}
             name={name}
             rows={rows}
-            // Hybrid-controlled: DOM owns `value` between renders; the
-            // useLayoutEffect above syncs the controlled `value` prop.
-            defaultValue={initialDomValue}
+            // Controlled with IME-safe draft (see comment above). value equals
+            // the live DOM during composition, so React never clobbers the IME.
+            value={displayValue}
             onChange={handleChange}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}
@@ -301,8 +308,9 @@ export const Input = forwardRef<
             id={id}
             type={isTextarea ? undefined : inputType}
             name={name}
-            // Hybrid-controlled (see useLayoutEffect above). NO `value=` here.
-            defaultValue={initialDomValue}
+            // Controlled with IME-safe draft (see comment above). value equals
+            // the live DOM during composition, so React never clobbers the IME.
+            value={displayValue}
             onChange={handleChange}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}

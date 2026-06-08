@@ -579,6 +579,21 @@ button, a, [role="button"], [role="tab"], nav {
   user-select: none;
 }
 
+/* Form fields MUST stay editable. The body `user-select: none` above (for the
+   native app feel on mobile) cascades into inputs, and Android WebView
+   (Chromium) escalates an inherited `user-select: none` on an editable element
+   to `-webkit-user-modify: read-only` - which silently makes the field
+   UNTYPABLE. iOS WebKit ignores it and desktop overrides to auto >=1024px, so
+   the breakage was Android-only (create-account, log-impact, every <Input>).
+   Force these back to editable on every viewport. Tate 2026-06-09. */
+input, textarea, select, [contenteditable], [contenteditable="true"] {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-user-modify: read-write !important;
+  user-modify: read-write !important;
+  -webkit-touch-callout: default;
+}
+
 /* Full-collapse sticky overlay header - cancels the header's full height
    (h-14 + safe-top) so the hero sits flush at the viewport top. */
 .collapse-header {
