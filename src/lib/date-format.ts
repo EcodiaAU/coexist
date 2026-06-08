@@ -74,6 +74,30 @@ export function formatTime(date: Date | string, _legacyTz?: string): string {
 }
 
 /**
+ * Wall-clock time of a REAL instant (chat created_at, notification
+ * sent_at, audit timestamps) in the VIEWER'S LOCAL timezone.
+ *
+ * This is the deliberate opposite of formatTime(): formatTime() pins
+ * UTC because it renders floating-local EVENT wall-clocks (an event's
+ * "9am" is 9am for everyone). A genuine instant is NOT floating - a
+ * chat message sent at 2pm AEST is stored as 04:00Z, and pinning UTC
+ * would render it "4:00 am". Real instants must convert to the
+ * viewer's own clock.
+ *
+ * Use for: chat message times, notification times, anything stamped by
+ * the server's now()/created_at. NEVER for event.date_start/date_end
+ * (those use formatTime / formatCardTime / formatEventLong).
+ */
+export function formatClockTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date
+  return new Intl.DateTimeFormat('en-AU', {
+    hour: 'numeric',
+    minute: '2-digit',
+    // no timeZone -> viewer's local tz (the runtime default)
+  }).format(d)
+}
+
+/**
  * Legacy timezone label helper. Always returns empty in the floating-
  * local model - there is no tz to disambiguate, the wall-clock is the
  * wall-clock for every viewer.

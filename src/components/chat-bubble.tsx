@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { motion, useReducedMotion, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
 import { Reply, Megaphone, CalendarPlus, ClipboardCheck, ListChecks, MapPin, Calendar, Clock, Car, Users } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { formatTime, formatCardDate, formatCardTime } from '@/lib/date-format'
+import { formatClockTime, formatCardDate, formatCardTime } from '@/lib/date-format'
 import { ROLE_COLORS } from '@/lib/constants'
 import { useLongPress } from '@/hooks/use-long-press'
 
@@ -302,7 +302,7 @@ export function ChatBubble({
             )}
           >
             <time dateTime={timestamp.toISOString()}>
-              {formatTime(timestamp)}
+              {formatClockTime(timestamp)}
             </time>
           </p>
         </div>

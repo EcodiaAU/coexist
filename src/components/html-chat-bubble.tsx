@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, useReducedMotion, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
 import { Reply, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { formatTime } from '@/lib/date-format'
+import { formatClockTime } from '@/lib/date-format'
 import { ROLE_COLORS } from '@/lib/constants'
 import { useLongPress } from '@/hooks/use-long-press'
 
@@ -323,7 +323,7 @@ export function HtmlChatBubble({
               dateTime={timestamp.toISOString()}
               className="text-[11px] font-medium tabular-nums text-neutral-400"
             >
-              {formatTime(timestamp)}
+              {formatClockTime(timestamp)}
             </time>
           </div>
         </div>
