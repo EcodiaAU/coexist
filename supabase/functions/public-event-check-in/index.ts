@@ -11,6 +11,17 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  *   POST /    -  Submit check-in { token, first_name, email, phone?, website_url? }
  *   GET  /info?token=...  -  Fetch event title + collective name for the form header
  *
+ * DEPLOY FLAG (load-bearing): this function MUST be deployed with
+ * `--no-verify-jwt` (verify_jwt=false). It is a PUBLIC anonymous endpoint - the
+ * /check-in/:token page calls it with a plain fetch() and NO apikey/Authorization
+ * header (a phone scanning a QR has no Supabase session). With verify_jwt=true the
+ * Supabase gateway 401s every request ("Missing authorization header") BEFORE the
+ * function runs, so the page shows "Link not found / invalid or has expired" for
+ * every valid token. The function self-authenticates (token + honeypot + IP
+ * rate-limit + event-day guard), so anonymous gateway access is safe + intended.
+ * Regression found + fixed 2026-06-08. Re-deploy: supabase functions deploy
+ * public-event-check-in --no-verify-jwt .
+ *
  * Security posture:
  *   - CORS open (*)  -  public endpoint, phones scanning QR won't send Origin
  *   - Honeypot field `website_url`: silent drop, bots don't learn they failed
@@ -43,26 +54,30 @@ function json(data: unknown, status = 200): Response {
 }
 
 /* ------------------------------------------------------------------ */
-/*  AEST date helper                                                   */
+/*  Floating-local date helpers                                        */
 /* ------------------------------------------------------------------ */
+// date_start stores the host's wall-clock stamped as UTC, so the event's
+// calendar day is the UTC slice. "today" is the real current day in the
+// event's collective timezone (the scanner is physically at the event).
+// Formatting the stored wall-clock in Sydney rolled afternoon events +1 day
+// and rejected valid same-day check-ins.
 
-function todayAEST(): string {
-  // Returns YYYY-MM-DD in Australia/Sydney time
+function eventDateUTC(isoString: string): string {
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Australia/Sydney',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date())
-}
-
-function eventDateAEST(isoString: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Australia/Sydney',
+    timeZone: 'UTC',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   }).format(new Date(isoString))
+}
+
+function todayInTz(tz: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
 }
 
 /* ------------------------------------------------------------------ */
@@ -142,7 +157,7 @@ Deno.serve(async (req: Request) => {
   // Look up the event by token
   const { data: event, error: eventError } = await db
     .from('events')
-    .select('id, title, date_start, status, public_check_in_enabled, collective_id, collectives(name)')
+    .select('id, title, date_start, status, public_check_in_enabled, collective_id, collectives(name, timezone)')
     .eq('public_check_in_token', token)
     .single()
 
@@ -156,9 +171,11 @@ Deno.serve(async (req: Request) => {
     return json({ error: 'This event is not available for check-in' }, 422)
   }
 
-  // Date guard: must be the AEST calendar day of the event
-  const eventDay = eventDateAEST(event.date_start)
-  const today = todayAEST()
+  // Date guard: must be the event's calendar day. Event day = stored wall-clock
+  // day (UTC slice); "today" = current day in the event's collective timezone.
+  const eventTz = (event.collectives as { timezone?: string } | null)?.timezone ?? 'Australia/Sydney'
+  const eventDay = eventDateUTC(event.date_start)
+  const today = todayInTz(eventTz)
   if (eventDay !== today) {
     return json({ error: 'Check-in is only available on the day of the event' }, 422)
   }
