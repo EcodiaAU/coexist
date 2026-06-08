@@ -348,9 +348,17 @@ export function AdminLayout() {
             inside (stacking doubly). Child pages can now assume horizontal
             padding is already handled here and should not add their own.
           */}
+          {/* overflow-x-clip (NOT overflow-clip): on native the shell pins the
+              height chain to the viewport (height:calc(100dvh - kb) + overflow-hidden),
+              so a flex-1 child with overflow-clip is sized to the visible area and
+              CLIPS its content on the Y axis too -> the overflow-y-auto scroll
+              container above has nothing to scroll -> admin pages frozen on the
+              native app (Kurt's report). Member/leader layouts use this same flex
+              chain WITHOUT a Y clip, which is why they scroll. Clip X only so any
+              horizontal bleed is still contained while vertical scroll works. (2026-06-08) */}
           <div className={cn(
             'relative flex-1',
-            !header.fullBleed && 'overflow-clip',
+            !header.fullBleed && 'overflow-x-clip',
             header.fullBleed ? 'p-0 bg-white' : 'p-4 sm:p-6 lg:p-8',
             !header.fullBleed && 'bg-gradient-to-b from-primary-50/40 via-white to-primary-50/20',
             showBottomTabs && 'pb-[calc(5rem+var(--safe-bottom))]',
