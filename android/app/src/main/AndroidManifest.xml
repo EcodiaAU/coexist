@@ -118,7 +118,15 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Photo picker / gallery access (Android 13+ uses READ_MEDIA_IMAGES; older uses READ_EXTERNAL_STORAGE) -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Gallery access: no broad media permission needed.
+         Android 10+ (SDK 29+) reaches the system gallery picker via the Capacitor
+         camera plugin without permissions (IonCameraFlow.kt:994 - "Android 10+ does
+         not require storage permissions to use the system gallery picker"). Older
+         devices (SDK 24-32) fall back to READ_EXTERNAL_STORAGE, gated by
+         maxSdkVersion="32" so it never lands on Android 13+.
+         READ_MEDIA_IMAGES was rejected by Play policy review on 2026-06-04 (Co-Exist
+         v33) because the app does not need broad gallery access - only user-selected
+         photos for profile/event uploads. Removing satisfies the photo-and-video
+         permissions policy. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 </manifest>
