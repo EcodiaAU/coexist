@@ -45,7 +45,7 @@ export default function PublicEventPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('*, collectives(name, slug, timezone)')
+        .select('*, collectives(name, slug, timezone, region)')
         .eq('id', id!)
         .eq('is_public', true)
         .single()
@@ -80,15 +80,22 @@ export default function PublicEventPage() {
     )
   }
 
-  const collectiveName = (event as Record<string, unknown>).collectives
-    ? ((event as Record<string, unknown>).collectives as { name: string }).name
+  const collective = (event as Record<string, unknown>).collectives as
+    | { name?: string; region?: string }
+    | null
+    | undefined
+  // "Hosted by <region> Collective" (Tate 2026-06-09). Region is the
+  // human-facing place name (e.g. "Sunshine Coast"); fall back to the
+  // collective name if a region is somehow missing.
+  const collectiveLabel = collective
+    ? `${collective.region || collective.name} Collective`
     : undefined
 
   const canonicalPath = `/event/${event.id}`
   const activityLabel = ACTIVITY_LABELS[event.activity_type] || 'conservation'
   const metaDescription = event.description
     ? event.description.slice(0, 155) + (event.description.length > 155 ? '...' : '')
-    : `Join this ${activityLabel} event with Co-Exist${collectiveName ? `, hosted by ${collectiveName}` : ''} in Australia.`
+    : `Join this ${activityLabel} event with Co-Exist${collectiveLabel ? `, hosted by ${collectiveLabel}` : ''} in Australia.`
 
   const eventJsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -109,7 +116,7 @@ export default function PublicEventPage() {
     ...(event.cover_image_url && { image: event.cover_image_url }),
     organizer: {
       '@type': 'Organization',
-      name: collectiveName || 'Co-Exist Australia',
+      name: collectiveLabel || 'Co-Exist Australia',
       url: 'https://www.coexistaus.org',
     },
     ...(event.capacity && {
@@ -170,9 +177,9 @@ export default function PublicEventPage() {
             {event.title}
           </h1>
 
-          {collectiveName && (
+          {collectiveLabel && (
             <p className="mt-1 text-sm font-medium text-neutral-500">
-              Hosted by {collectiveName}
+              Hosted by {collectiveLabel}
             </p>
           )}
         </motion.div>
