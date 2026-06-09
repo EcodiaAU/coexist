@@ -338,10 +338,12 @@ export default function EventDayPage() {
   const { data: existingImpact } = useEventImpact(eventId)
   const impactLogged = !!existingImpact
   const { isAssistLeader, isLoading: roleLoading } = useCollectiveRole(event?.collective_id)
-  // Global staff who can manage any event's attendees, matching the backend
-  // is_admin_or_staff() set (national_leader/leader/manager/admin). Tate
-  // 2026-06-08: managers + admins get full flexibility to backdate attendees.
-  const isStaff = profile?.role === 'national_leader' || profile?.role === 'leader' || profile?.role === 'manager' || profile?.role === 'admin'
+  // GLOBAL staff who can manage ANY event's attendees, matching the backend
+  // is_admin_or_staff() set (national_leader/manager/admin). 'leader' is a
+  // COLLECTIVE-scoped role, not global - a collective's own leaders reach
+  // their event via isAssistLeader (useCollectiveRole above), so they keep
+  // access to their own events without seeing every other collective's.
+  const isStaff = profile?.role === 'national_leader' || profile?.role === 'manager' || profile?.role === 'admin'
 
   const queryClient = useQueryClient()
   const checkIn = useCheckIn()

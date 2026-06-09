@@ -72,8 +72,15 @@ function useImpactFormSurveys() {
 export function usePendingImpactFormTasks() {
   const { user, profile } = useAuth()
   const { data: surveyMap } = useImpactFormSurveys()
+  // GLOBAL staff = manager/admin (+ the dead national_leader alias), NOT
+  // 'leader'. profiles.role='leader' means "leads >=1 collective" (it is
+  // auto-synced to the user's highest collective role), so treating it as
+  // a global bypass leaked every collective's pending impact-form tasks to
+  // every collective leader (Fei in Hobart saw Sydney/NE Vic/Melbourne/
+  // Perth events). Matches is_admin_or_staff() and src/lib/capabilities.ts.
+  // Managers are handled below via their managed_collectives scope.
   const isAdmin = profile?.role === 'admin'
-  const isNationalLeader = profile?.role === 'leader'
+  const isNationalLeader = profile?.role === 'national_leader'
   const isManager = profile?.role === 'manager'
   const isGlobalStaff = isAdmin || isNationalLeader
 

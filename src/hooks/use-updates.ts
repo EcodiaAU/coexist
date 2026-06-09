@@ -35,12 +35,16 @@ function filterByAudience(
   const isLeaderRole = ['leader', 'co_leader', 'assist_leader'].includes(
     userRole ?? '',
   )
-  const isStaffOrAdmin = ['leader', 'national_leader', 'manager', 'admin'].includes(
+  // GLOBAL staff (national_leader/manager/admin) see every update. 'leader'
+  // is collective-scoped: a collective leader sees 'all' + 'leaders'-targeted
+  // updates + their own collectives' collective_specific ones (handled below),
+  // NOT other collectives' targeted updates.
+  const isStaffOrAdmin = ['national_leader', 'manager', 'admin'].includes(
     userRole ?? '',
   )
 
   return announcements.filter((a) => {
-    // Staff/admins always see everything
+    // Global staff always see everything
     if (isStaffOrAdmin) return true
 
     switch (a.target_audience) {
@@ -175,7 +179,8 @@ export function useUnreadUpdateCount() {
       // Apply audience filtering
       const effectiveRole = profile?.role ?? highestCollectiveRole
       const isLeaderRole = ['leader', 'co_leader', 'assist_leader'].includes(effectiveRole ?? '')
-      const isStaffOrAdmin = ['leader', 'national_leader', 'manager', 'admin'].includes(effectiveRole ?? '')
+      // GLOBAL staff only; 'leader' is collective-scoped (see filterByAudience).
+      const isStaffOrAdmin = ['national_leader', 'manager', 'admin'].includes(effectiveRole ?? '')
 
       const visibleIds = new Set(
         announcements

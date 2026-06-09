@@ -614,10 +614,12 @@ export default function LogImpactPage() {
   const { data: attendees } = useEventAttendees(eventId)
   const logImpact = useLogImpact()
   const { isAssistLeader, isLoading: roleLoading } = useCollectiveRole(event?.collective_id)
-  // Global staff who can edit any event's impact stats, matching the backend
-  // is_admin_or_staff() set (national_leader/leader/manager/admin). Tate
-  // 2026-06-08: managers + admins get full flexibility to backdate stats.
-  const isStaff = profile?.role === 'national_leader' || profile?.role === 'leader' || profile?.role === 'manager' || profile?.role === 'admin'
+  // GLOBAL staff who can edit ANY event's impact stats, matching the backend
+  // is_admin_or_staff() set (national_leader/manager/admin). 'leader' is a
+  // COLLECTIVE-scoped role, not global - a collective's own leaders reach
+  // their event via isAssistLeader (useCollectiveRole above), so they keep
+  // editing their own impact without touching other collectives'.
+  const isStaff = profile?.role === 'national_leader' || profile?.role === 'manager' || profile?.role === 'admin'
 
   const { validKeys, isPlaceholderData: metricDefsPlaceholder } = useImpactMetricDefs()
 

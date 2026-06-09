@@ -671,14 +671,20 @@ function DetailPanel({
       className="h-full flex flex-col bg-white rounded-2xl shadow-sm ring-1 ring-neutral-100 overflow-hidden"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100 shrink-0">
         <button
           type="button"
           onClick={onClose}
-          className="flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-neutral-700 transition-colors cursor-pointer"
+          className={cn(
+            'flex items-center justify-center',
+            'w-11 h-11 -ml-1 rounded-full',
+            'text-neutral-900 hover:bg-neutral-100',
+            'cursor-pointer select-none transition-colors duration-150',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
+          )}
+          aria-label="Go back"
         >
-          <ArrowLeft size={14} />
-          Back
+          <ArrowLeft size={22} />
         </button>
         <div className="flex items-center gap-1">
           <button
@@ -1162,7 +1168,12 @@ export default function AdminUpdatesPage() {
             </AnimatePresence>
           </div>
 
-          {/* Mobile detail - full overlay */}
+          {/* Mobile detail - full overlay.
+              Padding accounts for the device safe areas (top: notch/dynamic
+              island; bottom: home indicator) AND the global admin bottom tab
+              bar (56px, same z-50, wins by DOM order). Without these, the
+              back button hides under the dynamic island and the
+              edit/delete footer hides behind the tab bar. */}
           <AnimatePresence>
             {activeUpdate && (
               <motion.div
@@ -1171,6 +1182,10 @@ export default function AdminUpdatesPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
                 className="lg:hidden fixed inset-0 z-50 bg-white"
+                style={{
+                  paddingTop: 'var(--safe-top, 0px)',
+                  paddingBottom: 'calc(56px + var(--safe-bottom, 0px) + 0.75rem)',
+                }}
               >
                 <DetailPanel
                   key={`mobile-${activeUpdate.id}`}
