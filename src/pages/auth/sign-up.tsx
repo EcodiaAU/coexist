@@ -10,7 +10,7 @@ import { DateInput } from '@/components/date-input'
 import { Checkbox } from '@/components/checkbox'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
-import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
+import { adminStagger as stagger, fadeOnly } from '@/lib/admin-motion'
 
 /* ------------------------------------------------------------------ */
 /*  Password strength                                                  */
@@ -123,7 +123,11 @@ export default function SignUpPage() {
     if (authError) setError(authError.message)
   }
 
-  const childVariants = shouldReduceMotion ? undefined : fadeUp
+  // fadeOnly (opacity, NO transform) - a translateY transform on an input's
+  // ancestor leaves `transform: translateY(0px)` at rest, which breaks the
+  // Android WebView soft keyboard (won't pop up) and the IME. Login's fields
+  // sit in a plain div and type fine; this matches that. Tate 2026-06-09.
+  const childVariants = shouldReduceMotion ? undefined : fadeOnly
 
   return (
     <div
