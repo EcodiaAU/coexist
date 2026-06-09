@@ -84,11 +84,11 @@ export default function PublicEventPage() {
     | { name?: string; region?: string }
     | null
     | undefined
-  // "Hosted by <region> Collective" (Tate 2026-06-09). Region is the
-  // human-facing place name (e.g. "Sunshine Coast"); fall back to the
-  // collective name if a region is somehow missing.
+  // "Hosted by Co-Exist <region>" (Tate 2026-06-09), e.g. "Co-Exist Sunshine
+  // Coast". Region is the human-facing place name; fall back to the collective
+  // name if a region is somehow missing.
   const collectiveLabel = collective
-    ? `${collective.region || collective.name} Collective`
+    ? `Co-Exist ${collective.region || collective.name}`
     : undefined
 
   const canonicalPath = `/event/${event.id}`
