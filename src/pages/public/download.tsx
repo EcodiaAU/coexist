@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { TreePine, Globe, Shield, Heart, Leaf, Users, MapPin, Calendar } from 'lucide-react'
+import { TreePine, Globe, Shield, Heart, Users, MapPin, Calendar } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { cn } from '@/lib/cn'
 import { OGMeta } from '@/components/og-meta'
 import { APP_NAME, TAGLINE, WEBSITE_URL, INSTAGRAM_URL } from '@/lib/constants'
 import { WebFooter } from '@/components/web-footer'
-import { usePublicStats } from '@/hooks/use-public-stats'
+import { useNationalImpact } from '@/hooks/use-impact'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
 /* ------------------------------------------------------------------ */
@@ -157,13 +157,15 @@ export default function DownloadPage() {
   const shouldReduceMotion = useReducedMotion()
   const rm = !!shouldReduceMotion
   const platform = getDevicePlatform()
-  const { data: liveStats } = usePublicStats()
+  // Same canonical national-impact source the homepage uses, so the numbers
+  // match exactly (Tate 2026-06-09). Anon can read the non-PII impact tables.
+  const { data: liveStats } = useNationalImpact()
 
   const stats = [
-    { value: liveStats ? formatStat(liveStats.volunteers) : '...', label: 'Volunteers', icon: Users },
-    { value: liveStats ? String(liveStats.collectives) : '...', label: 'Collectives', icon: MapPin },
-    { value: liveStats ? formatStat(liveStats.nativePlants) : '...', label: 'Native Plants', icon: Leaf },
-    { value: liveStats ? formatStat(liveStats.events) : '...', label: 'Events', icon: Calendar },
+    { value: liveStats ? formatStat(liveStats.treesPlanted) : '...', label: 'Trees Planted', icon: TreePine },
+    { value: liveStats ? formatStat(liveStats.eventsAttended) : '...', label: 'Attendees', icon: Users },
+    { value: liveStats ? formatStat(liveStats.eventsHeld) : '...', label: 'Events', icon: Calendar },
+    { value: liveStats ? String(liveStats.collectivesCount) : '...', label: 'Collectives', icon: MapPin },
   ]
 
   return (
@@ -199,7 +201,7 @@ export default function DownloadPage() {
       <div className="relative overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0" aria-hidden="true">
-          <img src="/img/hero-download.jpg" alt="" loading="lazy" className="h-full w-full object-cover" />
+          <img src="/img/home-hero-bg.webp" alt="" loading="lazy" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70" />
         </div>
 
