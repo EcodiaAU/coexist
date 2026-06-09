@@ -118,38 +118,30 @@ export const Input = forwardRef<
   // clobbering re-render, not ambient parent re-renders).
   const composingRef = useRef(false)
 
-  // Controlled input with an IME-safe draft. The element is CONTROLLED
-  // (value={displayValue}); during composition we render the live DOM text
-  // (draft) so React's controlled value ALWAYS equals the DOM, making the
-  // reconciler a no-op on the input - it never writes over the IME's composing
-  // buffer. We NEVER set el.value imperatively, which is the operation that
-  // aborts the IME composition on Chromium WebView / WKWebView (the bug that
-  // made every <Input> untypable via the real soft keyboard on Android, and on
-  // some pages on iOS, while JS/CDP/hardware-key paths - which skip the IME -
-  // always worked). onChange is suppressed upward during composition and
-  // flushed on compositionEnd. Replaces the hybrid-uncontrolled strategy
-  // (63e4fe8) whose useLayoutEffect `el.value = value` write clobbered the
-  // soft-keyboard buffer. Tate 2026-06-09; root cause via multi-agent analysis.
-  const [draft, setDraft] = useState(value ?? defaultValue ?? '')
-
-  // Mirror the committed external value into the draft when NOT composing
-  // (programmatic resets / parent-driven prefills). Early-returns during
-  // composition so it can never interrupt the IME.
+  // IME-safe value sync. The DOM <input>/<textarea> is UNCONTROLLED (we render
+  // defaultValue, never value=), so React never writes the element's value
+  // during an in-flight IME composition - that write is exactly what drops typed
+  // characters on Android Chromium WebView. GBoard composes text/email fields
+  // (so they broke); password fields don't compose (so only they worked). We
+  // instead mirror the parent's controlled `value` into the DOM imperatively,
+  // and ONLY when it genuinely differs AND we are not composing. During normal
+  // typing the DOM already holds the right text, so this never fires; it runs
+  // only for true external changes (prefills, programmatic resets). Deps are
+  // [value] alone - NOT [value, filled] - because the earlier `filled`
+  // dependency (63e4fe8) re-ran the sync on every keystroke and clobbered the
+  // composing buffer. Origin: Tate 2026-06-09, after the fully-controlled
+  // attempt (685d8f4) reintroduced the clobber via React writing value on every
+  // composition render.
   useEffect(() => {
+    const el = internalRef.current
+    if (!el) return
     if (composingRef.current) return
     if (value === undefined) return
-    setDraft(value)
-    setFilled(value.length > 0)
+    if (el.value !== value) {
+      el.value = value
+      setFilled(value.length > 0)
+    }
   }, [value])
-
-  // During composition the DOM is the source of truth -> render the draft so
-  // the controlled value equals the DOM (reconciler no-op). Otherwise render
-  // the controlled value when provided, falling back to draft (uncontrolled).
-  const displayValue = composingRef.current
-    ? draft
-    : value !== undefined
-      ? value
-      : draft
 
   const handleFocus = useCallback(
     (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -177,7 +169,6 @@ export const Input = forwardRef<
     (e: React.CompositionEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       composingRef.current = false
       const target = e.currentTarget
-      setDraft(target.value)
       setFilled(target.value.length > 0)
       // Flush the finalised value upward (some browsers don't emit input/change
       // after compositionend).
@@ -193,10 +184,9 @@ export const Input = forwardRef<
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const val = e.currentTarget.value
-      // Always keep the draft current so the controlled value tracks the DOM,
-      // even mid-composition (prevents React overwriting the IME buffer).
-      setDraft(val)
       // Do NOT propagate upstream mid-composition; compositionEnd will flush.
+      // The DOM owns its value (uncontrolled), so there is nothing to keep in
+      // sync here - we just gate the upward onChange on composition state.
       if (composingRef.current) return
       setFilled(val.length > 0)
       onChange?.(e)
@@ -281,9 +271,9 @@ export const Input = forwardRef<
             id={id}
             name={name}
             rows={rows}
-            // Controlled with IME-safe draft (see comment above). value equals
-            // the live DOM during composition, so React never clobbers the IME.
-            value={displayValue}
+            // Uncontrolled (defaultValue + imperative sync, see effect above) so
+            // React never writes value mid-IME-composition and drops characters.
+            defaultValue={value ?? defaultValue ?? ''}
             onChange={handleChange}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}
@@ -308,9 +298,9 @@ export const Input = forwardRef<
             id={id}
             type={isTextarea ? undefined : inputType}
             name={name}
-            // Controlled with IME-safe draft (see comment above). value equals
-            // the live DOM during composition, so React never clobbers the IME.
-            value={displayValue}
+            // Uncontrolled (defaultValue + imperative sync, see effect above) so
+            // React never writes value mid-IME-composition and drops characters.
+            defaultValue={value ?? defaultValue ?? ''}
             onChange={handleChange}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}
