@@ -7,7 +7,8 @@
       "namespace": "android_app",
       "package_name": "org.coexistaus.app",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_PLAY_APP_SIGNING_SHA256"
+        "03:F6:86:26:B4:81:0C:C0:D2:DA:FB:B2:6B:7A:24:45:AF:78:AD:14:9C:69:C6:C0:71:D6:A4:1E:F9:DB:E7:87",
+        "84:50:9B:22:C1:3B:FD:94:6F:76:5D:0E:F9:27:17:A3:B8:60:F4:52:B7:C6:67:1A:3F:A3:0F:25:1E:30:BC:64"
       ]
     }
   }
