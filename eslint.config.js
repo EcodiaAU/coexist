@@ -6,7 +6,13 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores([
+    'dist',
+    // Capacitor / native build outputs are generated; do not lint them.
+    'android/app/build/**',
+    'ios/App/build/**',
+    'ios/App/DerivedData/**',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

@@ -11,6 +11,7 @@ import { Avatar } from '@/components/avatar'
 import { saveToCameraRoll } from '@/lib/photo-download'
 
 // Detect a video by storage_path extension. Keeps the schema flat.
+// eslint-disable-next-line react-refresh/only-export-components
 export function isVideoPath(path: string): boolean {
   const ext = path.split('?')[0].toLowerCase()
   return ext.endsWith('.mp4') || ext.endsWith('.mov') || ext.endsWith('.webm') || ext.endsWith('.m4v')
@@ -295,6 +296,30 @@ export function PhotoCarouselLightbox({
     setIndex((i) => Math.min(photos.length - 1, Math.max(0, i + direction)))
   }
 
+  // Long-press to trigger save (mobile gesture parity with native gallery
+  // apps). 550ms hold = save. Drag inside the carousel cancels. Hooks
+  // must precede the early-return-on-no-current so rules-of-hooks holds.
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressFired = useRef(false)
+  const handleSaveRef = useRef<() => void>(() => {})
+  const onTouchStart = useCallback(() => {
+    longPressFired.current = false
+    if (longPressTimer.current) clearTimeout(longPressTimer.current)
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true
+      handleSaveRef.current()
+    }, 550)
+  }, [])
+  const onTouchCancel = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }, [])
+  useEffect(() => () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current)
+  }, [])
+
   const current = photos[index]
   if (!current) return null
   const canDelete = !!onDelete && current.uploaded_by === currentUserId
@@ -317,29 +342,10 @@ export function PhotoCarouselLightbox({
       await saveToCameraRoll(current.url, current.storage_path, current.caption ?? undefined)
     } catch { /* user cancelled or save failed quietly */ }
   }
-
-  // Long-press to trigger save (mobile gesture parity with native gallery
-  // apps). 550ms hold = save. Drag inside the carousel cancels.
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const longPressFired = useRef(false)
-  const onTouchStart = useCallback(() => {
-    longPressFired.current = false
-    if (longPressTimer.current) clearTimeout(longPressTimer.current)
-    longPressTimer.current = setTimeout(() => {
-      longPressFired.current = true
-      handleSave()
-    }, 550)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  const onTouchCancel = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
-  }, [])
-  useEffect(() => () => {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current)
-  }, [])
+  // Keep the latest handleSave bound to the long-press ref so the
+  // setTimeout closure always invokes the freshest closure (handleSave
+  // closes over `current` which changes per render).
+  handleSaveRef.current = handleSave
 
   return (
     <motion.div
