@@ -105,9 +105,31 @@ HTML EMAIL RULES:
 - Images: use width/height attributes AND inline styles for consistency
 - Mobile: tables should be 100% width so they collapse on small screens
 - Buttons: min 44px height, border-radius for rounded corners, background-color for fill
-- Generous padding (20-40px sections)
 - Links should use the accent orange colour
 - Always include alt text on images
+
+DARK MODE (critical - emails were rendering with washed-out unreadable text):
+- The <head> MUST contain BOTH of these meta tags so clients do not remap
+  the palette in dark mode:
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+- EVERY text element MUST carry an explicit inline color. Never rely on a
+  default or inherited colour. Body copy is #2D3748 on a #ffffff or #F9F7F4
+  cell. Hero copy is #ffffff. A heading with no color: set on it will look
+  washed out in dark mode - always set it.
+- Never put light-grey text on white (it disappears in dark mode). Minimum
+  body text colour is #2D3748.
+
+PADDING / MOBILE (was too cramped and over-nested):
+- ONE level of cards. Do NOT nest a card inside a card inside a card. The
+  body content sits in a single white content cell.
+- Side padding on the main content cell: 24px (not 32-40). Vertical padding
+  between sections: 20-24px. Keep it breathable but not cavernous.
+- Do not wrap every paragraph in its own bordered box. Plain paragraphs with
+  margin are correct; reserve a bordered/tinted card for ONE genuinely
+  distinct callout (e.g. the event details block).
+- On a 360px phone the content must never feel pinched. Test mentally at
+  360px: the side padding plus content must fit comfortably.
 
 STRUCTURE (suggested, not rigid):
 1. Hero (ONE unified block: the logo and the heading text live in the

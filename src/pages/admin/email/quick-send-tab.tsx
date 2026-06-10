@@ -179,24 +179,46 @@ export function QuickSendTab() {
       .replace(/\{\{hero_focal_x\}\}/g, String(heroFocalX))
       .replace(/\{\{hero_focal_y\}\}/g, String(heroFocalY))
       .replace(/\{\{hero_overlay_opacity\}\}/g, hasImage ? String(heroOverlay) : '0')
-    // Force the hero background image (token or baked) to the real photo
-    // or empty. Emails do not use CSS background images anywhere except
-    // the hero, so this is safe.
+
+    // The hero cell is the one carrying the olive #879e62 background.
+    // The AI is inconsistent (sometimes no background-image at all, so
+    // an added photo never showed). Rewrite that cell's style directly:
+    // ensure it has the right background-image (real photo or none),
+    // cover sizing, and the focal point. This is what guarantees an
+    // added image actually renders.
     out = out.replace(
-      /background-image\s*:\s*url\((['"]?)[^'")]*\1\)/gi,
-      `background-image:url('${hasImage ? heroImageUrl : ''}')`,
+      /style="([^"]*?background-color\s*:\s*#879e62[^"]*?)"/gi,
+      (_m, css: string) => {
+        let s = css
+        // drop any existing background-image / size / position so we set
+        // them cleanly
+        s = s.replace(/background-image\s*:\s*url\([^)]*\)\s*;?/gi, '')
+        s = s.replace(/background-size\s*:\s*[^;"]*;?/gi, '')
+        s = s.replace(/background-position\s*:\s*[^;"]*;?/gi, '')
+        s = s.replace(/background-repeat\s*:\s*[^;"]*;?/gi, '')
+        s = s.replace(/;\s*;/g, ';').trim()
+        if (!s.endsWith(';')) s += ';'
+        if (hasImage) {
+          s += `background-image:url('${heroImageUrl}');background-size:cover;background-position:${heroFocalX}% ${heroFocalY}%;background-repeat:no-repeat;`
+        }
+        return `style="${s}"`
+      },
     )
+
     // Force every black wash to the right alpha. With no image the wash
     // must be fully transparent so the olive shows flat.
     out = out.replace(
       /rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*[0-9.]+\s*\)/gi,
       hasImage ? `rgba(0,0,0,${heroOverlay})` : 'rgba(0,0,0,0)',
     )
-    // Re-point the focal position if it was hardcoded.
-    if (hasImage) {
+
+    // Dark-mode safety net: clients wash out text when no color-scheme is
+    // declared. Inject the light-only metas into <head> if the AI left
+    // them out, so the palette is never remapped.
+    if (/<head[^>]*>/i.test(out) && !/name=["']color-scheme["']/i.test(out)) {
       out = out.replace(
-        /background-position\s*:\s*\d+%\s+\d+%/gi,
-        `background-position:${heroFocalX}% ${heroFocalY}%`,
+        /<head[^>]*>/i,
+        (m) => `${m}\n<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">`,
       )
     }
     return out
