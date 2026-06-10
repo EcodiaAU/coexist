@@ -565,15 +565,22 @@ export default function AdminInsightsPage() {
         </div>
       </div>
 
-      {/* ── Sticky selection bar ── */}
+      {/* ── Sticky selection bar ──
+          Sits ABOVE the mobile bottom tab bar (which /admin renders on
+          small screens) via bottom-24, then drops to bottom-6 from md
+          where the layout uses the sidebar and there is no tab bar.
+          Extra safe-area padding clears the home indicator. */}
       {selected.size > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-neutral-900 text-white shadow-xl shadow-neutral-900/20">
-          <span className="text-sm font-semibold px-1 tabular-nums">{selected.size} selected</span>
-          <button type="button" onClick={copySelected} className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-xl bg-primary-500 hover:bg-primary-400 transition-colors cursor-pointer">
+        <div
+          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-white text-neutral-900 ring-1 ring-neutral-200 shadow-2xl shadow-neutral-900/25"
+          style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        >
+          <span className="text-sm font-semibold px-1 tabular-nums text-neutral-900">{selected.size} selected</span>
+          <button type="button" onClick={copySelected} className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors cursor-pointer">
             {copied === 'sel' ? <Check size={14} /> : <Copy size={14} />} {copied === 'sel' ? 'Copied' : 'Copy as table'}
           </button>
-          <button type="button" onClick={csvSelected} className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"><Download size={14} /> CSV</button>
-          <button type="button" onClick={clearSel} aria-label="Clear selection" className="p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"><X size={15} /></button>
+          <button type="button" onClick={csvSelected} className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-xl bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors cursor-pointer"><Download size={14} /> CSV</button>
+          <button type="button" onClick={clearSel} aria-label="Clear selection" className="p-1.5 rounded-xl text-neutral-500 hover:bg-neutral-100 transition-colors cursor-pointer"><X size={15} /></button>
         </div>
       )}
     </motion.div>
