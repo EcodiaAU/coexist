@@ -23,7 +23,11 @@ interface DebugPushPayload {
 
 const FCM_PROJECT_ID = Deno.env.get('FCM_PROJECT_ID') ?? ''
 const FCM_SERVICE_ACCOUNT_KEY_RAW = Deno.env.get('FCM_SERVICE_ACCOUNT_KEY') ?? ''
-const DEBUG_PUSH_PASSPHRASE = Deno.env.get('DEBUG_PUSH_PASSPHRASE') ?? 'coexist-debug-2026'
+// No fallback: if DEBUG_PUSH_PASSPHRASE is unset the passphrase path fails
+// closed (empty string never matches a supplied header). The old hardcoded
+// fallback 'coexist-debug-2026' was public in git and, with verify_jwt=false +
+// CORS *, left this internet-reachable to anyone (closed 2026-06-08).
+const DEBUG_PUSH_PASSPHRASE = Deno.env.get('DEBUG_PUSH_PASSPHRASE') ?? ''
 
 let FCM_SERVICE_ACCOUNT_KEY: string
 try {
