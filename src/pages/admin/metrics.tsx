@@ -11,7 +11,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Repeat, TrendingUp, Users, UserCheck, CalendarDays, Copy, Check } from 'lucide-react'
+import { Repeat, TrendingUp, UserCheck, Copy, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useCollectives } from '@/hooks/use-collective'
 import { useToast } from '@/components/toast'
@@ -124,14 +124,15 @@ export default function AdminMetricsPage({ embedded = false }: { embedded?: bool
         </div>
       ) : (
         <>
-          {/* Headline stats */}
+          {/* Headline stats. The Impact tab owns the Events + Attendances
+              totals, so this Attendance tab leads with the retention
+              story only (who is unique, who came back, who actually
+              signed in) and does not repeat those two cards. */}
           <motion.div variants={v.fadeUp}>
-            <AdminHeroStatRow className="!max-w-none grid-cols-2 sm:!grid-cols-3 lg:!grid-cols-5">
-              <AdminHeroStat value={m.events_in_scope} label="Events held" icon={<CalendarDays size={18} />} color="primary" reducedMotion={rm} delay={0} sub={`${m.events_with_attendance} with sign-ins`} />
-              <AdminHeroStat value={m.total_attendances} label="Attendances" icon={<Users size={18} />} color="warning" reducedMotion={rm} delay={1} sub={`${m.avg_attendance_per_active_event} avg / event`} />
-              <AdminHeroStat value={m.unique_attendees} label="Unique people" icon={<UserCheck size={18} />} color="moss" reducedMotion={rm} delay={2} sub={`${m.registered_attendances} reg · ${m.walkin_attendances} walk-in`} />
-              <AdminHeroStat value={repeat} label="Came back" icon={<Repeat size={18} />} color="sprout" reducedMotion={rm} delay={3} sub={`${pct(repeat, m.unique_attendees)}% attended 2+`} />
-              <AdminHeroStat value={m.signins} label="Signed in" icon={<TrendingUp size={18} />} color="success" reducedMotion={rm} delay={4} sub={`${m.followthrough_pct}% of ${m.registrations} regos`} />
+            <AdminHeroStatRow className="!max-w-none grid-cols-1 sm:!grid-cols-3">
+              <AdminHeroStat value={m.unique_attendees} label="Unique people" icon={<UserCheck size={18} />} color="moss" reducedMotion={rm} delay={0} sub={`${m.registered_attendances} reg · ${m.walkin_attendances} walk-in`} />
+              <AdminHeroStat value={repeat} label="Came back" icon={<Repeat size={18} />} color="sprout" reducedMotion={rm} delay={1} sub={`${pct(repeat, m.unique_attendees)}% attended 2+`} />
+              <AdminHeroStat value={m.signins} label="Signed in" icon={<TrendingUp size={18} />} color="success" reducedMotion={rm} delay={2} sub={`${m.followthrough_pct}% of ${m.registrations} regos`} />
             </AdminHeroStatRow>
           </motion.div>
 

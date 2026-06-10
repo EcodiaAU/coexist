@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
-import { Tag, Plus, Trash2 } from 'lucide-react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Tag, Plus, Trash2, GitMerge, Loader2, ArrowRight } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
@@ -13,6 +13,117 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { type EmailTag, useTags, formatDate } from './shared'
+
+/* ================================================================== */
+/*  Merge Duplicates Sheet                                             */
+/* ================================================================== */
+
+interface DedupGroup {
+  canon: string
+  tag_ids: string[]
+  tag_names: string[]
+}
+
+function MergeDuplicatesSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const [mergingCanon, setMergingCanon] = useState<string | null>(null)
+
+  // Server surfaces near-duplicate tag groups (case/whitespace folded,
+  // trailing "collective" stripped). Only fetched while the sheet is open.
+  const { data: groups, isLoading, refetch } = useQuery({
+    queryKey: ['admin-email-tag-dedup'],
+    enabled: open,
+    queryFn: async (): Promise<DedupGroup[]> => {
+      const { data, error } = await supabase.rpc('email_tag_dedup_candidates')
+      if (error) throw error
+      return (data ?? []) as DedupGroup[]
+    },
+  })
+
+  // Merge a group into its first tag (the canonical keeper). Every other
+  // tag in the group is folded in via merge_email_tags, which moves the
+  // profile assignments then deletes the deprecated tag.
+  async function mergeGroup(group: DedupGroup) {
+    if (group.tag_ids.length < 2) return
+    setMergingCanon(group.canon)
+    const [canonicalId, ...rest] = group.tag_ids
+    try {
+      for (const deprecatedId of rest) {
+        const { error } = await supabase.rpc('merge_email_tags', {
+          p_canonical_id: canonicalId,
+          p_deprecated_id: deprecatedId,
+        })
+        if (error) throw error
+      }
+      toast.success(`Merged ${group.tag_names.length} tags into "${group.tag_names[0]}"`)
+      await refetch()
+      queryClient.invalidateQueries({ queryKey: ['admin-email-tags'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-email-subscribers'] })
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Merge failed')
+    } finally {
+      setMergingCanon(null)
+    }
+  }
+
+  return (
+    <BottomSheet open={open} onClose={onClose} snapPoints={[0.7]}>
+      <h2 className="font-heading text-lg font-semibold text-neutral-900 mb-1">Merge duplicate tags</h2>
+      <p className="text-xs text-neutral-500 mb-4">
+        We group tags that look like the same thing (e.g. "Brisbane" and "Brisbane Collective").
+        Merging keeps the first name and moves every subscriber onto it.
+      </p>
+
+      {isLoading ? (
+        <Skeleton variant="list-item" count={3} />
+      ) : !groups?.length ? (
+        <div className="py-10 text-center">
+          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-50 text-green-600 mx-auto mb-3">
+            <GitMerge size={20} />
+          </div>
+          <p className="text-sm font-semibold text-neutral-900">No duplicates found</p>
+          <p className="text-xs text-neutral-500 mt-1">Every tag is unique. Nothing to merge.</p>
+        </div>
+      ) : (
+        <div className="space-y-3 max-h-[55vh] overflow-y-auto">
+          {groups.map((g) => (
+            <div key={g.canon} className="rounded-xl border border-neutral-200 bg-white p-3.5">
+              <div className="flex items-center gap-2 flex-wrap mb-2.5">
+                {g.tag_names.map((n, i) => (
+                  <span key={n} className="inline-flex items-center gap-1.5 text-xs">
+                    <span
+                      className={cn(
+                        'px-2 py-0.5 rounded-full font-medium',
+                        i === 0
+                          ? 'bg-primary-100 text-primary-700 ring-1 ring-primary-300'
+                          : 'bg-neutral-100 text-neutral-500 line-through',
+                      )}
+                    >
+                      {n}
+                    </span>
+                    {i === 0 && g.tag_names.length > 1 && (
+                      <span className="text-[10px] font-semibold text-primary-600 uppercase tracking-wider">keep</span>
+                    )}
+                  </span>
+                ))}
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={mergingCanon === g.canon ? <Loader2 size={13} className="animate-spin" /> : <ArrowRight size={13} />}
+                loading={mergingCanon === g.canon}
+                onClick={() => mergeGroup(g)}
+              >
+                Merge into "{g.tag_names[0]}"
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </BottomSheet>
+  )
+}
 
 /* ================================================================== */
 /*  Tag Manager Sheet                                                  */
@@ -134,6 +245,7 @@ export function TagsTab() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [showCreate, setShowCreate] = useState(false)
+  const [showMerge, setShowMerge] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const deleteMutation = useMutation({
@@ -167,6 +279,9 @@ export function TagsTab() {
       <div className="flex items-center gap-2 mb-4">
         <Button variant="primary" size="sm" icon={<Plus size={14} />} onClick={() => setShowCreate(true)}>
           New Tag
+        </Button>
+        <Button variant="secondary" size="sm" icon={<GitMerge size={14} />} onClick={() => setShowMerge(true)}>
+          Merge duplicates
         </Button>
       </div>
 
@@ -204,6 +319,7 @@ export function TagsTab() {
       )}
 
       <TagManagerSheet open={showCreate} onClose={() => setShowCreate(false)} />
+      <MergeDuplicatesSheet open={showMerge} onClose={() => setShowMerge(false)} />
 
       <ConfirmationSheet
         open={!!deletingId}

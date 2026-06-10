@@ -37,6 +37,8 @@ import {
   Link as LinkIcon,
   Heading2,
   ImagePlus,
+  Image as ImageIcon,
+  UserCircle2,
   X,
 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -46,6 +48,7 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { useAdminEventPhotos } from '@/hooks/use-event-photos'
 import {
   useTags,
   useCollectives,
@@ -118,6 +121,13 @@ export function QuickSendTab() {
   const [heroFocalY, setHeroFocalY] = useState(50)
   const [heroOverlay, setHeroOverlay] = useState(0.35)
   const [uploadingHero, setUploadingHero] = useState(false)
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false)
+  // Recent event photos for the "choose from photos" path. Only
+  // queried once the picker opens so the grid does not load on every
+  // Quick Send mount.
+  const { data: recentPhotos, isLoading: photosLoading } = useAdminEventPhotos(
+    showPhotoPicker ? { limit: 60 } : { limit: 0 },
+  )
 
   async function handleHeroUpload(file: File) {
     if (!file.type.startsWith('image/')) {
@@ -167,6 +177,63 @@ export function QuickSendTab() {
   const previewRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const [editing, setEditing] = useState(false)
+
+  // "Preview as a real subscriber". Pulls a handful of opted-in
+  // subscribers; on select, resolves that person's next event and
+  // fills the {{name}}/{{next_event_*}} variables so staff see exactly
+  // what one recipient gets. Read-only; never mutates bodyHtml.
+  const [previewSubId, setPreviewSubId] = useState<string>('')
+  const { data: sampleSubs } = useQuery({
+    queryKey: ['quick-send-sample-subs'],
+    enabled: !!bodyHtml,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, first_name, email')
+        .neq('marketing_opt_in', false)
+        .not('email', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(12)
+      if (error) throw error
+      return (data ?? []) as { id: string; display_name: string | null; first_name: string | null; email: string | null }[]
+    },
+  })
+
+  const { data: previewVars } = useQuery({
+    queryKey: ['quick-send-preview-vars', previewSubId],
+    enabled: !!previewSubId,
+    queryFn: async () => {
+      const sub = sampleSubs?.find((s) => s.id === previewSubId)
+      const name = sub?.first_name || sub?.display_name || 'there'
+      const { data } = await supabase.rpc('recipient_next_events', { p_user_ids: [previewSubId] })
+      const evt = (data as { title: string; date_start: string; address: string | null; collective_name: string; event_id: string }[] | null)?.[0]
+      const brand = (n: string) => {
+        const t = (n || '').replace(/\s+collective\s*$/i, '').trim()
+        return /^co-?exist\s/i.test(t) ? t : `Co-Exist ${t || 'your local crew'}`
+      }
+      if (!evt) {
+        return {
+          name,
+          next_event_title: 'a Co-Exist event near you',
+          next_event_date: 'soon',
+          next_event_date_long: 'check the app for the next one near you',
+          next_event_collective: 'your Co-Exist crew',
+          next_event_location: '',
+          next_event_url: 'https://app.coexistaus.org/events',
+        }
+      }
+      const d = new Date(evt.date_start)
+      return {
+        name,
+        next_event_title: evt.title,
+        next_event_date: d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }),
+        next_event_date_long: d.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+        next_event_collective: brand(evt.collective_name),
+        next_event_location: evt.address || '',
+        next_event_url: `https://app.coexistaus.org/events/${evt.event_id}`,
+      }
+    },
+  })
 
   // Sync the sanitized body into the editor DOM whenever the body
   // changes externally (initial draft, tweak, etc). Suspended while
@@ -422,27 +489,87 @@ export function QuickSendTab() {
             )}
           </div>
 
-          {!heroImageUrl && (
+          {!heroImageUrl && !showPhotoPicker && (
             <div className="rounded-xl border-2 border-dashed border-neutral-200 p-5 text-center space-y-3">
               <p className="text-sm text-neutral-600">
-                Drop in a photo and the hero becomes that photo with a dark wash so the
+                Add a photo and the hero becomes that photo with a dark wash so the
                 heading stays legible. Skip for the solid olive look.
               </p>
-              <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-50 text-primary-700 ring-1 ring-primary-200/60 hover:bg-primary-100 text-sm font-medium cursor-pointer">
-                {uploadingHero ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
-                {uploadingHero ? 'Uploading...' : 'Upload a photo'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={uploadingHero}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) handleHeroUpload(file)
-                    e.target.value = ''
-                  }}
-                />
-              </label>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-50 text-primary-700 ring-1 ring-primary-200/60 hover:bg-primary-100 text-sm font-medium cursor-pointer">
+                  {uploadingHero ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
+                  {uploadingHero ? 'Uploading...' : 'Upload a photo'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploadingHero}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleHeroUpload(file)
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoPicker(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-100 text-sm font-medium cursor-pointer"
+                >
+                  <ImageIcon size={14} />
+                  Choose from event photos
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!heroImageUrl && showPhotoPicker && (
+            <div className="rounded-xl border border-neutral-200 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-neutral-900">Recent event photos</p>
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoPicker(false)}
+                  className="text-[11px] font-semibold text-neutral-500 hover:text-neutral-700 cursor-pointer"
+                >
+                  Back
+                </button>
+              </div>
+              {photosLoading ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="aspect-square rounded-lg bg-neutral-100 animate-pulse" />
+                  ))}
+                </div>
+              ) : !recentPhotos?.length ? (
+                <p className="text-xs text-neutral-500 py-6 text-center">
+                  No event photos yet. Upload one instead.
+                </p>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[320px] overflow-y-auto">
+                  {recentPhotos
+                    .filter((p) => p.url && !p.storage_path?.match(/\.(mp4|mov|webm|m4v)$/i))
+                    .map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setHeroImageUrl(p.url as string)
+                          setShowPhotoPicker(false)
+                        }}
+                        className="group relative aspect-square rounded-lg overflow-hidden ring-1 ring-neutral-200 hover:ring-2 hover:ring-primary-500 cursor-pointer"
+                        title={`${p.event_title} - ${p.collective_name}`}
+                      >
+                        <img
+                          src={p.url as string}
+                          alt={p.caption ?? p.event_title}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      </button>
+                    ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -616,6 +743,55 @@ export function QuickSendTab() {
           <p className="text-[11px] text-neutral-400 pl-1">
             Click in the preview to type. Changes save when you click away.
           </p>
+
+          {/* Preview as a real subscriber. Only shown when the body
+              uses per-recipient variables, since that is the only time
+              the resolved view differs from the editable one. */}
+          {variablesDetected.length > 0 && (sampleSubs?.length ?? 0) > 0 && (
+            <div className="rounded-xl border border-neutral-200 p-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <UserCircle2 size={14} className="text-primary-700" />
+                <span className="text-xs font-semibold text-neutral-900">See it as</span>
+                <select
+                  value={previewSubId}
+                  onChange={(e) => setPreviewSubId(e.target.value)}
+                  className="text-xs rounded-lg border border-neutral-200 bg-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-300"
+                >
+                  <option value="">Pick a subscriber...</option>
+                  {sampleSubs!.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.first_name || s.display_name || s.email}
+                    </option>
+                  ))}
+                </select>
+                {previewSubId && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewSubId('')}
+                    className="text-[11px] font-medium text-neutral-500 hover:text-neutral-700 cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {previewSubId && previewVars && (
+                <div
+                  className="prose prose-sm max-w-none rounded-lg border border-neutral-200 bg-white p-3 max-h-[420px] overflow-y-auto"
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeHtml(
+                      applyHeroSubstitution(bodyHtml).replace(
+                        /\{\{(name|next_event_title|next_event_date|next_event_date_long|next_event_collective|next_event_location|next_event_url|unsubscribe_url)\}\}/g,
+                        (_m, k: string) =>
+                          k === 'unsubscribe_url'
+                            ? 'https://app.coexistaus.org/unsubscribe'
+                            : String((previewVars as Record<string, string>)[k] ?? ''),
+                      ),
+                    ),
+                  }}
+                />
+              )}
+            </div>
+          )}
 
           <div className="rounded-xl bg-primary-50/70 border border-primary-200/60 p-3 space-y-2">
             <p className="text-xs font-semibold text-primary-900">
