@@ -168,21 +168,24 @@ const LOGO_URL = 'https://app.coexistaus.org/logos/white-wordmark.webp'
 const LOGO_DARK_URL = 'https://app.coexistaus.org/logos/black-wordmark.png'
 const APP_URL = 'https://app.coexistaus.org'
 
-// Brand palette
+// Brand palette: Co-Exist sage. Aligned with src/styles/theme + CLAUDE.md
+// primary family (#4A7C59 with darker/lighter siblings on the same hue).
+// Updated 2026-06-10 from the prior olive (#869e62) which read as a
+// muted khaki in client inboxes and was off-brand vs the in-app sage.
 const C = {
-  brand: '#869e62',
-  brandDark: '#3d4d33',
-  brandLight: '#a8b98a',
-  bg: '#f5f7f0',
-  cardBg: '#f9faf7',
-  border: '#e8eddf',
-  text: '#2d3a22',
-  textMuted: '#6b7a5a',
-  textLight: '#8a9a74',
+  brand: '#4A7C59',
+  brandDark: '#2D5A3D',
+  brandLight: '#7BA88D',
+  bg: '#F9F7F4',
+  cardBg: '#FCFAF7',
+  border: '#E8E2D5',
+  text: '#2D3748',
+  textMuted: '#5A6B58',
+  textLight: '#8B9484',
   white: '#ffffff',
   error: '#c0392b',
-  warning: '#e67e22',
-  success: '#869e62',
+  warning: '#E8913A',
+  success: '#4A7C59',
 }
 
 /** Outer email shell - logo header, gradient banner, content area, footer */

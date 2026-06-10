@@ -174,7 +174,20 @@ ${prompt}
 
 ${subject ? `The default subject line should be: "${subject}"` : ''}
 
-IMPORTANT: This is a TEMPLATE - use {{editable_field_name}} placeholders for any content the admin should customise each time they send. The {{name}} variable is always available for the recipient's name. Create sensible {{field_name}} variables for things like event details, dates, URLs, announcements, etc. Make the template flexible enough to be reused.`
+IMPORTANT: This is a TEMPLATE. Use {{editable_field_name}} placeholders for content the admin should customise each time they send.
+
+AUTO-FILLED PER RECIPIENT (resolve at send time, one campaign personalises to every subscriber):
+- {{name}} - first name (always available)
+- {{next_event_title}} - the recipient's next upcoming event from their collective
+- {{next_event_date}} - short form e.g. Sat 14 Jun
+- {{next_event_date_long}} - long form e.g. Saturday 14 June 2026
+- {{next_event_collective}} - the collective hosting that event (e.g. Brisbane, Perth)
+- {{next_event_location}} - address of the event
+- {{next_event_url}} - deep link to the event page
+
+If the user description mentions "hyping up the next event", "reminder", "what's coming up", "next event near you", or anything that should adapt per region, USE the {{next_event_*}} variables instead of asking the admin to fill them in. Each subscriber will see their own collective's next event.
+
+Use {{editable_field_name}} placeholders only for content that genuinely changes per CAMPAIGN, not per recipient. Make the template flexible enough to be reused.`
     } else {
       userMessage = `Create a ready-to-send email based on this description:
 
@@ -182,7 +195,11 @@ ${prompt}
 
 ${subject ? `Subject line: "${subject}"` : ''}
 
-Use {{name}} for the recipient's first name. This is a one-off email, not a template - fill in all the content directly.`
+AUTO-FILLED PER RECIPIENT (use these instead of hard-coding event details if the email is about an upcoming event):
+- {{name}} - recipient's first name
+- {{next_event_title}}, {{next_event_date}}, {{next_event_date_long}}, {{next_event_collective}}, {{next_event_location}}, {{next_event_url}}
+
+If the user wants to "hype up the next event for everyone" or similar, USE these variables so each subscriber sees their own collective's next event. Otherwise fill content in directly.`
     }
 
     // llm-helper-justified: this is the Co-Exist client app's own

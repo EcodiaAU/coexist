@@ -30,6 +30,21 @@ import {
   extractTemplateVariables,
 } from './shared'
 
+/**
+ * Per-recipient auto-fill variables. Mirror the keys the
+ * send-campaign Edge Function resolves at send time. Add a new entry
+ * here and in send-campaign together so the picker stays in sync.
+ */
+const AUTOFILL_VARS: { key: string; shortLabel: string; desc: string }[] = [
+  { key: 'name', shortLabel: 'first name', desc: "The recipient's first name (or 'there' if not set)." },
+  { key: 'next_event_title', shortLabel: 'event title', desc: "The recipient's next upcoming event title, from their collective." },
+  { key: 'next_event_date', shortLabel: 'date short', desc: 'Short date for the next event, e.g. Sat 14 Jun.' },
+  { key: 'next_event_date_long', shortLabel: 'date long', desc: 'Full date for the next event, e.g. Saturday 14 June 2026.' },
+  { key: 'next_event_collective', shortLabel: 'collective', desc: "The collective hosting the recipient's next event." },
+  { key: 'next_event_location', shortLabel: 'location', desc: 'Address of the next event, if set.' },
+  { key: 'next_event_url', shortLabel: 'event link', desc: "Deep link to the next event's page in the app." },
+]
+
 /* ================================================================== */
 /*  Template Editor                                                    */
 /* ================================================================== */
@@ -219,30 +234,53 @@ function TemplateEditor({
       {/* Template content area */}
       {showHtml && bodyHtml && (
         <>
-          {/* Editable fields extracted from template */}
-          {templateVars.length > 0 && (
-            <div className="rounded-xl bg-white border border-neutral-200 shadow-sm p-4">
+          {/* Editable fields extracted from template + the per-recipient
+              auto-fill variables. Auto-fills resolve at send time so one
+              campaign body lands personalised in each subscriber's inbox
+              (Brisbane folks see their next event, Perth folks see
+              theirs). Authors can drop any of them into their copy. */}
+          <div className="rounded-xl bg-white border border-neutral-200 shadow-sm p-4 space-y-3">
+            <div>
               <h4 className="text-sm font-semibold text-neutral-900 mb-1">
-                Editable Fields
+                Auto-filled per recipient
               </h4>
-              <p className="text-xs text-neutral-500 mb-3">
-                These {'{{fields}}'} will appear as form inputs when creating a campaign from this template.
+              <p className="text-xs text-neutral-500 mb-2">
+                These resolve at send time. One campaign, every subscriber sees their own.
               </p>
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full bg-primary-100 text-primary-600">
-                  {'{{name}}'} <span className="ml-1 text-neutral-400 font-normal">auto-filled</span>
-                </span>
-                {templateVars.map((v) => (
+                {AUTOFILL_VARS.map((v) => (
                   <span
-                    key={v}
-                    className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full bg-secondary-50 text-secondary-700 border border-secondary-200"
+                    key={v.key}
+                    title={v.desc}
+                    className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full bg-primary-100 text-primary-600"
                   >
-                    {`{{${v}}}`}
+                    {`{{${v.key}}}`}
+                    <span className="ml-1 text-neutral-400 font-normal hidden sm:inline">{v.shortLabel}</span>
                   </span>
                 ))}
               </div>
             </div>
-          )}
+            {templateVars.length > 0 && (
+              <div className="border-t border-neutral-100 pt-3">
+                <h4 className="text-sm font-semibold text-neutral-900 mb-1">
+                  Editable Fields
+                </h4>
+                <p className="text-xs text-neutral-500 mb-2">
+                  These {'{{fields}}'} prompt for a value each time a campaign is created from this template.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {templateVars.map((v) => (
+                    <span
+                      key={v}
+                      className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full bg-secondary-50 text-secondary-700 border border-secondary-200"
+                    >
+                      {`{{${v}}}`}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Preview / HTML toggle */}
           <div className="flex gap-1 bg-white rounded-xl p-1">
