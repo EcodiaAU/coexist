@@ -19,4 +19,11 @@ androidWebViewHierarchy: devtools
 - extendedWaitUntil:
     notVisible: "Welcome back"
     timeout: 25000
+# Authed home anchors, verified from the 2026-06-10 post-login screenshot
+# (greeting is time-of-day dynamic, so the name + stable strings anchor).
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 20000
+- assertVisible: "Explore. Connect. Protect."
+- assertVisible: "Ecodia"
 - takeScreenshot: /tmp/maestro-cx-postlogin
