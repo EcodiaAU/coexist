@@ -1,0 +1,52 @@
+# Admin surfaces via the More drawer (test account has admin role,
+# discovered 2026-06-10 harvest). Anchors from cxh-6/cxh-7 screenshots.
+# The Events screen carries live metrics (UPCOMING / REGISTRATIONS /
+# AVG ATTENDANCE): numeric invariance vs DB truth is the planned
+# extension (status_board b1aff12f); labels assert structurally here.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- tapOn: ".*More.*"
+- extendedWaitUntil:
+    visible: "Admin Home"
+    timeout: 10000
+- tapOn: "Admin Home"
+- waitForAnimationToEnd:
+    timeout: 8000
+# Admin home's All Time / All Collectives are SELECT VALUES: rendered as
+# pixels but not exposed as text in the devtools hierarchy (failure
+# screenshot 2026-06-10 201827 proves pixels present, assert misses).
+# Anchor on the admin-mode tab bar labels instead.
+- extendedWaitUntil:
+    visible: "Collectives"
+    timeout: 25000
+- assertVisible: "App"
+- tapOn: ".*More.*"
+- extendedWaitUntil:
+    visible: "Events"
+    timeout: 10000
+- tapOn: "Events"
+- extendedWaitUntil:
+    visible: "UPCOMING"
+    timeout: 15000
+- assertVisible: "REGISTRATIONS"
+- assertVisible: "AVG ATTENDANCE"
+- assertVisible: "Create New Event"
+- takeScreenshot: /tmp/maestro-cx-admin-events

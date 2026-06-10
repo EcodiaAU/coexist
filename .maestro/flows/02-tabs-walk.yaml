@@ -1,0 +1,44 @@
+# Full tab-bar walk on the authed account. Anchors observed from the
+# 2026-06-10 harvest screenshots (cxh-3 chat, cxh-4 profile, cxh-5 more).
+# Ends inside the More drawer deliberately: closing it risks tapping
+# "Admin Home" through the overlay; the next flow relaunches anyway.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+# Self-heal for 1b1e718d (see 01 flow); strict canary remains 90-.
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- tapOn: ".*Chat.*"
+- extendedWaitUntil:
+    visible: ".*Type a message.*"
+    timeout: 15000
+- tapOn: ".*Profile.*"
+- extendedWaitUntil:
+    visible: "Edit Profile"
+    timeout: 15000
+- assertVisible: "Tickets"
+- assertVisible: ".*Member since.*"
+- assertVisible: "EVENTS"
+- tapOn: ".*More.*"
+- extendedWaitUntil:
+    visible: "Admin Home"
+    timeout: 10000
+- assertVisible: "Collectives"
+- assertVisible: "Users"
+- assertVisible: "Tasks"
+- takeScreenshot: /tmp/maestro-cx-tabs-final
