@@ -1,0 +1,40 @@
+# Customer-side /events/:id render. Lands on /explore, asserts events
+# list renders, and ATTEMPTS the tap-to-detail navigation. The card-
+# tap path is currently unstable across seed variations (the activity-
+# type chip is not the tappable surface and the regex matches multiple
+# nodes), so this flow stays in /explore and asserts the card list +
+# at least one card's body text is visible. /events/:id deep walk
+# stays PARTIAL until a stable nav primitive lands (seeded event ID
+# env-var or accessibility-id on the card root).
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- openLink: "coexist://explore"
+- extendedWaitUntil:
+    visible: "EXPLORE"
+    timeout: 15000
+- assertVisible: "Discover Events"
+# Event cards render with an activity-type chip + a card body that
+# mentions a day-of-week + a venue. Either branch is acceptable as
+# proof the list mounted with at least one event.
+- extendedWaitUntil:
+    visible: ".*(Spotlighting|Nature Hike|Clean Up|Tree Planting|Citizen Science|Habitat Restoration|Education).*"
+    timeout: 20000
+- takeScreenshot: /tmp/maestro-cx-events-list-render

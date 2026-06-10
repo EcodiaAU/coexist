@@ -1,0 +1,37 @@
+# Admin development surfaces (learn-content authoring). Eight routes
+# under /admin/development/* per App.tsx 153-160 + 470-490. This flow
+# only asserts the top-level /admin/development list page (and the New
+# Module form) because the deep-routes (/admin/development/modules/:id
+# /sections/:id/quizzes/:id) need a published module to exist first.
+# Once a module exists, a separate flow will walk the detail pages.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+# /admin/development list
+- openLink: "coexist://admin/development"
+- extendedWaitUntil:
+    visible: ".*(Development|Modules|Permission required).*"
+    timeout: 20000
+# /admin/development/modules/new (create-module form)
+- openLink: "coexist://admin/development/modules/new"
+- extendedWaitUntil:
+    visible: ".*(Create Module|New Module|Module|Permission required).*"
+    timeout: 20000
+- takeScreenshot: /tmp/maestro-cx-admin-development-render

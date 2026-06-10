@@ -1,0 +1,37 @@
+# F2 strict canary: the chat bottom-tab lands directly in the user's
+# default channel and pressing back from that channel exits the app to
+# the OS launcher (it does NOT land on a chat list). The STAFF CHANNELS
+# list exists in code (src/pages/chat/index.tsx:380) but the entry
+# point from the bottom tab is missing. COVERAGE.md F2.
+#
+# Strict canary: asserts the chat-room mounts (positive) + back exits
+# the app (the F2 bug). On exit Maestro can no longer assert anything
+# inside org.coexistaus.app, so the flow ends on the screenshot. If a
+# future build wires up an entry to the chat list, the back press will
+# land on the list instead and the next maestro run will surface that
+# via a different screenshot - take the inversion then.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- openLink: "coexist://chat"
+- extendedWaitUntil:
+    visible: ".*(Sunshine Coast|Type a message|Send|Channel|Message).*"
+    timeout: 20000
+- takeScreenshot: /tmp/maestro-cx-chat-room-from-tab

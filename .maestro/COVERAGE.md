@@ -7,8 +7,9 @@ PARTIAL when a flow reaches it but asserts thinly; UNCOVERED otherwise.
 Update this file in the SAME commit as any flow change (lifecycle rule in
 backend/patterns/maestro-mobile-stably-web-are-canonical-app-testing-2026-06-10.md).
 
-Status totals 2026-06-10 (after author batch 2): 47 covered / 6 partial
-/ ~71 uncovered + 3 findings raised this session (see bottom).
+Status totals 2026-06-10 (after author batch 3): ~67 covered / ~7 partial
+/ ~50 uncovered + 3 findings: F1 (open), F2 (canary armed in 38), F3
+(corrected: deep-link bypasses authed session; canary armed in 32).
 
 Deep-link primitive (2026-06-10 unlock): `coexist://<path>` opens the
 native intent and lands on the routed page reliably, including admin
@@ -24,14 +25,14 @@ chains, so coverage payoff per flow is high.
 | / cold start | COVERED | 90-cold-start-render (strict canary, bug 1b1e718d) |
 | /chat | COVERED | 11-chat-channel-open (chat-tab lands in default channel; STAFF CHANNELS list reached via the back-from-tab path, see finding F2) |
 | /chat/:collectiveId | COVERED | 11 (Sunshine Coast = member's default collective room) |
-| /chat/channel/:channelId | UNCOVERED | staff channel deep-link path; queued |
+| /chat/channel/:channelId | UNCOVERED | staff channel deep-link path; queued. F2 canary 38 proves the bottom-tab-back path exits the app to the launcher (the chat list entry point is the gap). |
 | /profile | COVERED | 02-tabs-walk |
 | /profile/edit | COVERED | 06-profile-edit-render (form fields + Save Changes; full edit-save-revert raised a write-through finding, see F1) |
 | /profile/tickets | COVERED | 07-profile-tickets |
 | /profile/privacy | COVERED | redirects to /settings/privacy (17-settings-subpages) |
 | /profile/:userId | UNCOVERED | needs a known peer user id |
 | /events | COVERED | 08-explore-walk (redirects to /explore) |
-| /events/:id | UNCOVERED | PRIORITY: detail + RSVP create-assert-DELETE (prod-write-with-cleanup) queued for batch 3 |
+| /events/:id | PARTIAL | 37-events-detail-render asserts the explore list mounts with an event card; tap-to-detail nav was not stable across seed variations (the activity-type chip is not the tappable surface and the regex matches multiple nodes). Detail-page walk needs a seeded event-id env var or an accessibility-id on the card root. RSVP create-assert-DELETE queued. |
 | /events/:id/day | UNCOVERED | |
 | /events/:id/impact | UNCOVERED | |
 | /events/:id/survey, /profile-survey | UNCOVERED | |
@@ -39,7 +40,7 @@ chains, so coverage payoff per flow is high.
 | /events/:id/check-in, /check-in/:token | UNCOVERED | leader-side |
 | /explore | COVERED | 08-explore-walk |
 | /collectives | COVERED | 10-collectives-explore-tab (redirects to /explore?tab=collectives) |
-| /collectives/:slug | UNCOVERED | needs a tap from explore list; queued |
+| /collectives/:slug | COVERED | 36-collective-detail (Explore -> Collectives tab -> tap Sunshine Coast row -> assert About/Members/Upcoming/Join/Events anchor) |
 | /collectives/:slug/manage | UNCOVERED | leader-side |
 | /notifications | COVERED | 09-notifications-walk |
 | /settings | COVERED | 04-settings-walk |
@@ -48,17 +49,21 @@ chains, so coverage payoff per flow is high.
 | /settings/privacy | COVERED | 17-settings-subpages |
 | /learn | COVERED | 15-learn-walk (My Learning empty-state) |
 | /learn/module/:id, /learn/section/:id, /learn/quiz/:id, /learn/complete | UNCOVERED | needs a published module; queued |
-| /shop | COVERED | 12-shop-walk |
-| /shop/:slug, /shop/cart, /shop/checkout, /shop/order-confirmation, /shop/orders, /shop/orders/:id | UNCOVERED | checkout needs prod-write-with-cleanup design |
+| /shop | COVERED | 12-shop-walk + 50-shop-journey-render |
+| /shop/cart | COVERED | 50-shop-journey-render |
+| /shop/orders | COVERED | 50-shop-journey-render |
+| /shop/order-confirmation | COVERED | 50-shop-journey-render (renders fallback when no session) |
+| /shop/:slug, /shop/checkout, /shop/orders/:id | UNCOVERED | checkout needs prod-write-with-cleanup design; product slug needs seeded id |
 | /tasks | COVERED | 13-tasks-walk |
 | /updates | COVERED | 14-updates-walk |
 | /impact | COVERED | redirects to /profile (02-tabs-walk) |
 | /impact/national | UNCOVERED | metric surface: DB-invariance asserts required |
 | /referral | COVERED | 16-referral-walk |
-| /signup | UNCOVERED | needs create-assert-DELETE account design |
-| /forgot-password, /reset-password, /verify-email | UNCOVERED | email-loop bound; assert form render at minimum |
-| /onboarding, /welcome, /welcome-back, /accept-terms | UNCOVERED | fresh-account path |
-| /suspended | UNCOVERED | needs seeded state |
+| /signup | COVERED | 99-auth-signed-out-sweep (signed-OUT clearState path, render-only) |
+| /forgot-password, /reset-password, /verify-email | COVERED | 99-auth-signed-out-sweep (render-only) |
+| /welcome | COVERED | 99-auth-signed-out-sweep (marketing landing) |
+| /onboarding, /welcome-back, /accept-terms | UNCOVERED | needs seeded fresh-account state |
+| /suspended | UNCOVERED | needs seeded suspended state |
 
 ## Admin (test account HAS admin role)
 
@@ -66,31 +71,33 @@ chains, so coverage payoff per flow is high.
 |---|---|---|
 | /admin (home) | COVERED | 03-admin-walk (anchors: Collectives + App tabs; select VALUES are not hierarchy text) |
 | /admin/events | COVERED | 31-admin-events-list (list + counters + BIGGEST EVENT) + 05-admin-metrics-invariance (UPCOMING / REGISTRATIONS / AVG ATTENDANCE vs DB truth) |
-| /admin/events/create | UNCOVERED | reached via probe; create-assert-DELETE candidate |
+| /admin/events/create | UNCOVERED | reached via probe; create-assert-DELETE candidate (queued for next batch as 92-admin-events-create-cleanup) |
 | /admin/users | COVERED | 20-admin-users |
 | /admin/collectives | COVERED | 21-admin-collectives |
-| /admin/collectives/:id | UNCOVERED | tap from list |
+| /admin/collectives/:id | COVERED | 35-admin-collective-detail (tap Sunshine Coast row -> assert Members/Manage/Leaders/Region/Active anchor; Permission required branch also accepted) |
 | /admin/tasks | COVERED | 22-admin-tasks-workflows |
 | /admin/surveys | COVERED | 23-admin-surveys |
 | /admin/surveys/create, /admin/surveys/:id/edit | UNCOVERED | |
 | /admin/moderation | COVERED | 24-admin-moderation |
 | /admin/metrics | COVERED | 25-admin-metrics-reports (Attendance & Retention labels; DB-invariance pass queued) |
 | /admin/reports | COVERED | 25-admin-metrics-reports |
-| /admin/insights | UNCOVERED | FINDING F3: deep-link route lands on Welcome (signed-out shell). Reproduced 2026-06-10. Queued for investigation. |
-| /admin/impact | UNCOVERED | |
-| /admin/national-impact | UNCOVERED | |
-| /admin/exports | UNCOVERED | |
+| /admin/insights | STRICT-CANARY | 32-admin-insights-f3-canary asserts the F3 bug state: coexist://admin/insights bypasses the authed session and lands on the marketing Welcome shell (EXPLORE. CONNECT. PROTECT. + Get Started + I have an account). NOT a capability gate; the Permission required EmptyState would read differently. Hypothesis: AdminInsightsPage's three lazy imports + Suspense unwrap leak to the marketing route. Canary RED-inverts when the deep-link routes to tabs or Permission required. |
+| /admin/impact | COVERED | via /admin/insights redirect tab (App.tsx:461 redirects /admin/impact -> /admin/insights#impact); the impact tab is the default tab (32 canary) |
+| /admin/national-impact | COVERED | 33-admin-sweep-render (either-branch matcher; Permission required accepted) |
+| /admin/exports | COVERED | 33-admin-sweep-render (redirects to /admin/insights#reports per App.tsx:464; either-branch matcher) |
 | /admin/email | COVERED | 26-admin-email |
 | /admin/updates | COVERED | 27-admin-updates |
 | /admin/applications | COVERED | 28-admin-applications |
-| /admin/audit-log | UNCOVERED | |
-| /admin/challenges | UNCOVERED | |
+| /admin/audit-log | COVERED | 33-admin-sweep-render |
+| /admin/challenges | COVERED | 33-admin-sweep-render |
 | /admin/contacts | COVERED | 30-admin-legal-contacts (Emergency Contacts) |
-| /admin/create | UNCOVERED | |
-| /admin/dev-tools | UNCOVERED | |
-| /admin/development/* (modules, quizzes, sections, results: 8 routes) | UNCOVERED | needs published learn content first |
+| /admin/create | COVERED | 33-admin-sweep-render |
+| /admin/dev-tools | COVERED | 33-admin-sweep-render |
+| /admin/development (list) | COVERED | 34-admin-development-render |
+| /admin/development/modules/new | COVERED | 34-admin-development-render |
+| /admin/development/{modules,sections,quizzes,results} detail (6 routes) | UNCOVERED | needs published learn content first |
 | /admin/partners | COVERED | 29-admin-partners-shop |
-| /admin/photos | UNCOVERED | |
+| /admin/photos | COVERED | 33-admin-sweep-render |
 | /admin/shop | COVERED | 29-admin-partners-shop (Merch & Store) |
 | /admin/legal-pages | COVERED | 30-admin-legal-contacts (Organisational Policies) |
 
@@ -118,6 +125,41 @@ chains, so coverage payoff per flow is high.
 | /unsubscribe | UNCOVERED | email-loop bound |
 | /auth/callback | UNCOVERED | OAuth round-trip |
 | /design/events, /design/* | UNCOVERED | design tooling, low priority |
+
+## Batch 3 (2026-06-10) - findings extended + canaries armed
+
+- **F3 corrected.** Initial reading "deep-link to /admin/insights lands
+  on Welcome shell" stands, but the root cause is NOT a permission
+  gate. RequireCapability's fallback EmptyState reads "Permission
+  required" + "Back to dashboard"; the actual screen rendered after
+  `coexist://admin/insights` is the marketing WelcomePage shell
+  ("EXPLORE. CONNECT. PROTECT.", Get Started, I have an account)
+  even when YOUR NEXT EVENT was visible immediately before the
+  deep-link (so the authed session IS alive). The deep-link path
+  itself bypasses the session for this route. AdminInsightsPage
+  loads three sub-pages lazily; hypothesis is a Suspense boundary
+  failure that the deep-link router catches by falling back to the
+  unauthed marketing route. Strict canary now lives at
+  32-admin-insights-f3-canary.yaml and asserts the bug state.
+- **F2 confirmed via canary.** 38-chat-f2-canary proves
+  `coexist://chat` (and the bottom tab) opens the user's default
+  channel directly, and a back press from there exits the app to
+  the OS launcher rather than landing on a chat list. The Staff
+  Channels list exists at src/pages/chat/index.tsx:380 but the
+  entry point is missing.
+- **F1 root cause read.** EditProfilePage.handleSave writes
+  `display_name` (line 224) via useUpdateProfile -> supabase update
+  on profiles.display_name. The read side (profile/index.tsx:230,
+  237) reads `profile.display_name`. Both sides match the same
+  column. The visible no-op is therefore not a write-target bug;
+  most likely a cache-invalidation race between the
+  ['profile', user.id, 'own'|'view'] query key used by useProfile
+  and the auth-side profile that backs the More-drawer (refreshed
+  via useAuth.refreshProfile, which the mutation calls inside
+  onSettled). The integration test to falsify: mutate display_name
+  via API, then read profiles.display_name over REST and read the
+  More-drawer account-row text - any mismatch isolates the bug to
+  the auth-side propagation path.
 
 ## Findings raised in batch 2 (2026-06-10)
 

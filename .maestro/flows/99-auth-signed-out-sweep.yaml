@@ -1,0 +1,55 @@
+# Auth-surface render sweep (signed-OUT state). clearState:true forces
+# a fresh sign-in screen; the flow then deep-links into each auth route
+# and asserts its anchor. After this flow the session is wiped, so the
+# canonical authed 01-signin-authed-feed runs again and re-establishes
+# the session for the rest of the suite. Auth routes covered:
+#   /login (Welcome back)
+#   /signup (Create account)
+#   /forgot-password (Reset Password)
+#   /reset-password (New Password)
+#   /verify-email (Verify Your Email)
+#   /welcome (Welcome)
+# /onboarding /accept-terms /suspended need server-side state that
+# this account does not satisfy; they are gated by RequireAuth shells
+# and tested separately if and when the seed substrate provides them.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: true
+    stopApp: true
+- extendedWaitUntil:
+    visible: ".*(Welcome back|Welcome|Log In|Sign In|Create account).*"
+    timeout: 30000
+- takeScreenshot: /tmp/maestro-cx-auth-fresh-launch
+# /login is the cleared-state landing; assert here first.
+- openLink: "coexist://login"
+- extendedWaitUntil:
+    visible: ".*(Welcome back|Log In|Email).*"
+    timeout: 15000
+# /signup
+- openLink: "coexist://signup"
+- extendedWaitUntil:
+    visible: ".*(Create account|Sign up|Sign Up|Get started|Already have an account).*"
+    timeout: 15000
+# /forgot-password
+- openLink: "coexist://forgot-password"
+- extendedWaitUntil:
+    visible: ".*(Reset Password|Reset password|Forgot|email to receive).*"
+    timeout: 15000
+# /reset-password
+- openLink: "coexist://reset-password"
+- extendedWaitUntil:
+    visible: ".*(New Password|Reset|Password).*"
+    timeout: 15000
+# /verify-email
+- openLink: "coexist://verify-email"
+- extendedWaitUntil:
+    visible: ".*(Verify Your Email|Verify|verification|Check your email).*"
+    timeout: 15000
+# /welcome (marketing welcome, not /welcome-back)
+- openLink: "coexist://welcome"
+- extendedWaitUntil:
+    visible: ".*(Welcome|Co-Exist|Get started|Sign in|Log in).*"
+    timeout: 15000
+- takeScreenshot: /tmp/maestro-cx-auth-sweep-end
