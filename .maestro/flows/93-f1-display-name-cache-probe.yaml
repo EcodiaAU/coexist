@@ -1,0 +1,127 @@
+# F1 strict canary probe: two-pass display_name mutation + cleanup.
+# Tests the cache-mismatch hypothesis from COVERAGE.md F1 - whether
+# profile updates propagate to the auth-side cached profile that
+# backs the More drawer / unified sidebar.
+#
+# Test account display_name baseline = "Ecodia" (profile id
+# 4cc11fa1-8aec-4a92-928d-3c8a304dd4db, code@ecodia.au). Cleanup
+# restores baseline via UI before the F1 strict assertion fires so
+# the DB row lands at "Ecodia" regardless of whether F1 is real.
+#
+# Structure:
+#   PASS 1  /profile/edit deep-link, set "Ecodia-A", Save, assert h2
+#           tap More, screenshot drawer (no assert), home deep-link
+#   PASS 2  /profile/edit deep-link, set "Ecodia-B", Save, assert h2
+#           tap More, screenshot drawer (no assert), home deep-link
+#   CLEAN   /profile/edit deep-link, set "Ecodia", Save, assert h2
+#   STRICT  tap More, assert sidebar shows "Ecodia"
+#           (if F1 is real the sidebar still holds Ecodia-B from
+#           the auth-side cache - this assertion fails and F1 is
+#           confirmed; DB has already been restored above)
+#
+# Authoring notes:
+# - hideKeyboard on Android Capacitor presses back and CAN navigate
+#   off the form. Use scrollUntilVisible Save Changes instead.
+# - openLink to /profile/edit + /profile + /home is the canonical
+#   nav primitive here: tapping the bottom-tab "Profile" after
+#   pressing back from a drawer landed on /admin/development in
+#   first-run authoring (the bottom-tab regex matched a stale
+#   "Profile" string in another surface).
+# - eraseText: 30 covers the max_length=50 input safely (current
+#   value is "Ecodia" + the test marks; never above 8 chars).
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+# ───────────────────────── PASS 1: Ecodia-A ─────────────────────────
+- openLink: "coexist://profile/edit"
+- extendedWaitUntil:
+    visible: "Personal Details"
+    timeout: 15000
+- tapOn: "Display Name"
+- eraseText: 30
+- inputText: "Ecodia-A"
+- scrollUntilVisible:
+    element:
+      text: "Save Changes"
+    direction: DOWN
+- tapOn: "Save Changes"
+- extendedWaitUntil:
+    visible: "Ecodia-A"
+    timeout: 20000
+- takeScreenshot: /tmp/maestro-cx-93-pass1-profile
+- tapOn: ".*More.*"
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000
+- takeScreenshot: /tmp/maestro-cx-93-pass1-sidebar
+# ───────────────────────── PASS 2: Ecodia-B ─────────────────────────
+- openLink: "coexist://profile/edit"
+- extendedWaitUntil:
+    visible: "Personal Details"
+    timeout: 15000
+- tapOn: "Display Name"
+- eraseText: 30
+- inputText: "Ecodia-B"
+- scrollUntilVisible:
+    element:
+      text: "Save Changes"
+    direction: DOWN
+- tapOn: "Save Changes"
+- extendedWaitUntil:
+    visible: "Ecodia-B"
+    timeout: 20000
+- takeScreenshot: /tmp/maestro-cx-93-pass2-profile
+- tapOn: ".*More.*"
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000
+- takeScreenshot: /tmp/maestro-cx-93-pass2-sidebar
+# ───────────────────────── CLEANUP: restore Ecodia ─────────────────
+- openLink: "coexist://profile/edit"
+- extendedWaitUntil:
+    visible: "Personal Details"
+    timeout: 15000
+- tapOn: "Display Name"
+- eraseText: 30
+- inputText: "Ecodia"
+- scrollUntilVisible:
+    element:
+      text: "Save Changes"
+    direction: DOWN
+- tapOn: "Save Changes"
+- extendedWaitUntil:
+    visible: ".*Ecodia.*"
+    timeout: 20000
+- assertNotVisible: "Ecodia-A"
+- assertNotVisible: "Ecodia-B"
+- takeScreenshot: /tmp/maestro-cx-93-cleanup-profile
+# ──────────────────── F1 STRICT: drawer state after cleanup ────────
+# The sidebar reads profile.display_name from useAuth's cached
+# profile. After UI Save Changes, useUpdateProfile's onSettled fires
+# useAuth.refreshProfile - if that propagation is broken the sidebar
+# still holds the previous pass's value (Ecodia-B) and the next two
+# asserts fail. DB is already restored to "Ecodia" by this point.
+- tapOn: ".*More.*"
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000
+- takeScreenshot: /tmp/maestro-cx-93-cleanup-sidebar
+- assertNotVisible: "Ecodia-A"
+- assertNotVisible: "Ecodia-B"

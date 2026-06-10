@@ -1,0 +1,88 @@
+# PROD-WRITE WITH CLEANUP: /events/:id free RSVP create-assert-DELETE
+# round trip. Seeds the next upcoming FREE, non-external, public event
+# from Supabase via .maestro/scripts/seed-event-id.js, deep-links to the
+# detail page, taps Register, asserts the registered CTA cluster mounts
+# (Cancel Registration + a check-in branch), then cancels the RSVP via
+# the Cancel Registration confirmation sheet, and asserts Register for
+# Event reappears. Cleanup failure is itself a finding (per Tate
+# 2026-06-10).
+#
+# Anchor learning (2026-06-10, this flow): free RSVPs do NOT create
+# rows in /profile/tickets - that surface is for PAID, ticketed events
+# only (empty-state copy is literally "When you purchase tickets for
+# events, they'll appear here"). So the create-side proof has to come
+# from the event-detail page itself (Cancel Registration replaces
+# Register for Event), not from a tickets-list check. /profile/tickets
+# is already covered by 07-profile-tickets (empty-state walk).
+#
+# 90+ prefix because this mutates the event_registrations table. The
+# seed filter (is_ticketed=false + external_registration_url=is.null)
+# keeps the test on the free Register-for-Event branch (not Stripe
+# checkout, not the partner-site redirect). The test account on the
+# coexist_aosp emulator is admin+leader on Sunshine Coast - the
+# LEADER ACTIONS rail also renders on the detail page (Event Day /
+# Check-in Code / Log Impact / Edit / Duplicate / Invite / Cancel) -
+# the Cancel Registration button is at the bottom CTA region and is
+# distinct from the leader-side "Cancel" event-cancellation button.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- runScript: ../scripts/seed-event-id.js
+- openLink: "coexist://events/${output.eventId}"
+- extendedWaitUntil:
+    visible: ".*(Register for Event|Cancel Registration|Join Waitlist|You're registered|Check-in opens|Check In Now).*"
+    timeout: 25000
+# Self-heal: if a prior run left a stale registration on the test
+# account, cancel it first so the test always starts from the
+# unregistered state. Register-for-Event then becomes the canonical
+# entry path.
+- runFlow:
+    when:
+      visible: "Cancel Registration"
+    commands:
+      - tapOn: "Cancel Registration"
+      - extendedWaitUntil:
+          visible: "Cancel Registration?"
+          timeout: 10000
+      - tapOn: "Yes, Cancel"
+      - extendedWaitUntil:
+          visible: "Register for Event"
+          timeout: 15000
+# CREATE: tap Register for Event, wait for Cancel Registration to take
+# its place (the in-page CTA swap is the registered-state proof).
+- assertVisible: "Register for Event"
+- tapOn: "Register for Event"
+- extendedWaitUntil:
+    visible: "Cancel Registration"
+    timeout: 20000
+- assertNotVisible: "Register for Event"
+- takeScreenshot: /tmp/maestro-cx-91-registered
+# DELETE: tap Cancel Registration, confirm via the sheet, wait for
+# Register for Event to come back.
+- tapOn: "Cancel Registration"
+- extendedWaitUntil:
+    visible: "Cancel Registration?"
+    timeout: 10000
+- tapOn: "Yes, Cancel"
+- extendedWaitUntil:
+    visible: "Register for Event"
+    timeout: 20000
+- assertNotVisible: "Cancel Registration"
+- takeScreenshot: /tmp/maestro-cx-91-cancelled

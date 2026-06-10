@@ -7,9 +7,12 @@ PARTIAL when a flow reaches it but asserts thinly; UNCOVERED otherwise.
 Update this file in the SAME commit as any flow change (lifecycle rule in
 backend/patterns/maestro-mobile-stably-web-are-canonical-app-testing-2026-06-10.md).
 
-Status totals 2026-06-10 (after author batch 4): ~73 covered / ~6 partial
-/ ~45 uncovered + 3 findings: F1 (open), F2 (canary armed in 38), F3
+Status totals 2026-06-10 (after author batch 4): ~75 covered / ~5 partial
+/ ~44 uncovered + 2 open findings: F2 (canary armed in 38), F3
 (corrected: deep-link bypasses authed session; canary armed in 32).
+F1 reclassified FALSIFIED by 93-f1-display-name-cache-probe - the
+sidebar tracks the latest display_name across both passes and
+post-cleanup (see batch 4 notes).
 
 Deep-link primitive (2026-06-10 unlock): `coexist://<path>` opens the
 native intent and lands on the routed page reliably, including admin
@@ -27,7 +30,7 @@ chains, so coverage payoff per flow is high.
 | /chat/:collectiveId | COVERED | 11 (Sunshine Coast = member's default collective room) |
 | /chat/channel/:channelId | UNCOVERED | staff channel deep-link path; queued. F2 canary 38 proves the bottom-tab-back path exits the app to the launcher (the chat list entry point is the gap). |
 | /profile | COVERED | 02-tabs-walk |
-| /profile/edit | COVERED | 06-profile-edit-render (form fields + Save Changes; full edit-save-revert raised a write-through finding, see F1) |
+| /profile/edit | COVERED | 06-profile-edit-render (form fields + Save Changes) + 93-f1-display-name-cache-probe (two-pass display_name mutation + cleanup; sidebar propagation verified) |
 | /profile/tickets | COVERED | 07-profile-tickets |
 | /profile/privacy | COVERED | redirects to /settings/privacy (17-settings-subpages) |
 | /profile/:userId | UNCOVERED | needs a known peer user id |
@@ -186,22 +189,44 @@ chains, so coverage payoff per flow is high.
   redirect), or the page imports throw and the ErrorBoundary's fallback
   is the Welcome shell. Needs a code-side investigation.
 
-## Batch 4 (2026-06-10) - Supabase-seeded event id + render-only sweep
+## Batch 4 (2026-06-10) - Supabase-seeded event id + render sweep + F1 falsified + 91 RSVP cleanup
 
 - **Seed primitive landed.** `.maestro/scripts/seed-event-id.js` runScript
-  helper queries Supabase for the next upcoming FREE public event
-  (is_ticketed=false, is_public=true, date_start>now), exposes
-  `${output.eventId}` + `${output.eventTitle}` to the flow. Used by
-  39-events-detail-deep-walk; will be reused by 91-events-detail-rsvp-
-  cleanup. Anon key embedded (same publishable key shipped in the app
-  bundle, so adds no leakage).
-- **6 flows green this batch:** 39 events detail (deep-walk via env id),
+  helper queries Supabase for the next upcoming FREE, non-external,
+  public event (is_ticketed=false, external_registration_url=is.null,
+  is_public=true, date_start>now), exposes `${output.eventId}` and
+  `${output.eventTitle}` to the flow. Used by 39 + 91. Anon key
+  embedded (same publishable key shipped in the app bundle, so adds
+  no leakage; RLS gates everything on the server).
+- **8 flows green this batch:** 39 events detail (deep-walk via env id),
   40 design events, 41 impact national, 42 donate thank-you, 43 donate
-  donors, 44 download.
+  donors, 44 download, 91 events-detail RSVP create-assert-DELETE
+  (prod-write, full UI cleanup), 93 F1 display_name cache-probe
+  (two-pass mutation + cleanup, all asserts green).
+- **F1 falsified.** 93-f1-display-name-cache-probe ran two passes of
+  /profile/edit Save Changes with markers Ecodia-A and Ecodia-B and
+  screenshots of the More drawer after each. All three sidebar
+  screenshots show the freshly-mutated value: pass1 = Ecodia-A,
+  pass2 = Ecodia-B, post-cleanup = Ecodia. The auth-side cached
+  profile that backs the sidebar IS refreshing on Save. The 2026-06-10
+  finding (write-through no-op on display_name) does not reproduce on
+  the coexist_aosp emulator with the current build; reclassified as
+  resolved-or-unreproducible.
+- **Free-RSVP != ticket** (anchor learning from 91): /profile/tickets
+  shows the PAID ticket surface only; free RSVPs to non-ticketed
+  events do not generate rows there (empty-state copy reads "When you
+  PURCHASE tickets for events, they'll appear here"). The create-side
+  proof for a free RSVP has to come from the event-detail page itself
+  (Cancel Registration replaces Register for Event), not from a
+  tickets-list check. /profile/tickets stays covered by 07.
 - **Anchor gotcha codified.** Page Header titles ("National Impact",
   "Donor Wall") show up only as aria-label "X page header" - NOT as
   direct visible text. Anchor on the visible h1/h2 ("AUSTRALIA-WIDE" /
   "Our generous donors") instead. Cost the first run on 41+43.
+- **Tab-tap regex matched the wrong surface** (authoring trap on 93):
+  tapOn ".*Profile.*" from a More-drawer-back state landed on
+  /admin/development. openLink "coexist://profile/edit" is the safer
+  cross-phase nav primitive.
 
 ## Rules that bind authoring here
 

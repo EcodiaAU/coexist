@@ -17,13 +17,18 @@ const ANON =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqdXRsYnpla2ZvdXdzaWFwbGJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDM5MDksImV4cCI6MjA4OTUxOTkwOX0.Csl0DB-SJ7oIWvXV47GevnIUSFfH0oOohCY3Z0Kgv_U'
 
 const params = [
-  'select=id,title,is_ticketed,date_start,is_public',
+  'select=id,title,is_ticketed,date_start,is_public,external_registration_url',
   'date_start=gt.now()',
   'is_public=eq.true',
   'is_ticketed=eq.false',
+  'external_registration_url=is.null',
   'order=date_start.asc',
   'limit=1',
 ].join('&')
+// is_ticketed=false: keeps the Stripe checkout path out of the test
+// (we want the free Register-for-Event button, not Get Ticket).
+// external_registration_url=is.null: keeps externally-hosted partner
+// events out (those render "Register on Partner Site" + open a tab).
 
 const res = http.get(SUPABASE_URL + '/rest/v1/events?' + params, {
   headers: {
