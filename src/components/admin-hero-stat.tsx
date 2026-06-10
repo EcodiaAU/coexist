@@ -110,7 +110,7 @@ export function AdminHeroStat({
       >
         {display.toLocaleString()}
       </p>
-      <p className="mt-1.5 text-[10px] font-semibold text-neutral-400 tracking-wider uppercase truncate max-w-full">
+      <p className="mt-1.5 text-[11px] font-semibold text-neutral-500 tracking-wider uppercase truncate max-w-full">
         {label}
       </p>
       {sub && (

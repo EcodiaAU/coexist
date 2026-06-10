@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import {
-  Users,
   Tag,
   MapPin,
   RefreshCw,
@@ -20,6 +19,37 @@ import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { type EmailTag, useSubscribers, useTags } from './shared'
 import { TagPill } from './shared-ui'
+
+function initialsOf(name: string | null | undefined): string {
+  const trimmed = (name ?? '').trim()
+  if (!trimmed) return '?'
+  const parts = trimmed.split(/\s+/).slice(0, 2)
+  return parts.map((p) => p[0]?.toUpperCase() ?? '').join('') || '?'
+}
+
+function SubscriberAvatar({ url, name }: { url: string | null | undefined; name: string | null | undefined }) {
+  const [failed, setFailed] = useState(false)
+  const showImg = !!url && !failed
+  return (
+    <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100 shrink-0 overflow-hidden">
+      {showImg ? (
+        <img
+          src={url ?? ''}
+          alt=""
+          loading="lazy"
+          width={36}
+          height={36}
+          className="w-9 h-9 rounded-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <span className="text-xs font-semibold text-primary-700 tabular-nums">
+          {initialsOf(name)}
+        </span>
+      )}
+    </div>
+  )
+}
 
 /* ================================================================== */
 /*  Assign Tags Sheet                                                  */
@@ -230,13 +260,7 @@ export function SubscribersTab() {
         <StaggeredList className="space-y-1">
           {subscribers.map((sub) => (
             <StaggeredItem key={sub.id} className="flex items-center gap-3 p-3 rounded-xl bg-white shadow-sm">
-              <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100 shrink-0">
-                {sub.avatar_url ? (
-                  <img src={sub.avatar_url} alt="" loading="lazy" className="w-9 h-9 rounded-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
-                ) : (
-                  <Users size={16} className="text-neutral-400" />
-                )}
-              </div>
+              <SubscriberAvatar url={sub.avatar_url} name={sub.display_name} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-neutral-900 truncate">
                   {sub.display_name || 'Anonymous'}

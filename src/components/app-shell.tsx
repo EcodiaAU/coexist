@@ -104,8 +104,10 @@ function LocationAwareChrome({ showBottomTabs, syncWarning }: { showBottomTabs: 
 
   return (
     <>
-      {/* Web footer - full width, below the sidebar row so sidebar unsticks at footer */}
-      {isWeb && !isMobile && !isChatRoute && <WebFooter />}
+      {/* Web footer - public marketing surface only. The admin and leader
+          shells are internal tools and should not carry the consumer-facing
+          footer (Co-Exist links, app-store badges, acknowledgment). */}
+      {isWeb && !isMobile && !isChatRoute && !isAdminRoute && !isLeaderRoute && <WebFooter />}
 
       {/* Bottom tab bar (mobile + native) - hidden on admin/leader pages and when keyboard is open.
           Chat detail (/chat/<id>) keeps the tab bar visible so users can navigate out without back-button hunt. */}
