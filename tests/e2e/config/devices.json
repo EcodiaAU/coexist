@@ -1,0 +1,25 @@
+{
+  "smoke_tier_devices": ["android:phone-typical"],
+  "deep_tier_devices": ["android:phone-typical", "ios:phone-typical"],
+  "full_tier_devices": ["android:phone-typical", "ios:phone-typical"],
+  "ios": {
+    "phone-typical": {
+      "device_name": "Coexist-iPhone-15",
+      "device_type": "com.apple.CoreSimulator.SimDeviceType.iPhone-15",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+      "form_factor": "phone",
+      "screen_size": "6.1in",
+      "udid": null
+    }
+  },
+  "android": {
+    "phone-typical": {
+      "avd_name": "locals_pixel",
+      "avd_package": "system-images;android-34;google_apis;arm64-v8a",
+      "avd_device": "pixel_8",
+      "api_level": 34,
+      "form_factor": "phone",
+      "screen_size": "6.2in"
+    }
+  }
+}

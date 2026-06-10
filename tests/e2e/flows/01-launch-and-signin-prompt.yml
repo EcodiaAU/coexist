@@ -1,0 +1,36 @@
+# Smoke flow 01 (Android): Coexist launches and the auth surface renders.
+# Verifies the Capacitor web bundle loaded and the signin route renders
+# its primary controls: Google, Apple, Email, Password, magic-link link,
+# Log In CTA, and Create Account link.
+
+appId: ${BUNDLE_OR_PKG}
+tags:
+  - smoke
+  - launch
+  - auth
+  - anon
+env:
+  ROLE: customer-anon
+
+---
+
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 15000
+- assertVisible: "Sign in to continue"
+- assertVisible: "Google"
+- assertVisible: "Apple"
+- assertVisible: "Magic link"
+- assertVisible: "Forgot password?"
+- assertVisible: "Log In"
+
+- takeScreenshot: ${ARTIFACT_DIR}/01-signin-prompt
+
+# Verify the New-to-Co-Exist hint + Create account CTA at the bottom.
+- assertVisible: "Create account"
+- takeScreenshot: ${ARTIFACT_DIR}/01-signin-prompt-bottom

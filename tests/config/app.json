@@ -1,0 +1,70 @@
+{
+  "_schema_doc": "Capacitor shape: single repo with ios/, android/, src/ shells. Filled in by init-app-tests.sh; double-check every <PLACEHOLDER> after init.",
+  "slug": "coexist",
+  "kind": "capacitor",
+  "platforms": [
+    "ios",
+    "android"
+  ],
+  "repo": "../",
+  "ios": {
+    "bundle_id": "org.coexistaus.app",
+    "scheme": "App",
+    "workspace": "ios/App/App.xcworkspace",
+    "build_command": "npx cap sync ios && cd ios/App && xcodebuild -workspace App.xcworkspace -scheme App -destination 'generic/platform=iOS Simulator' -configuration Debug build",
+    "app_path": "ios/App/build/Debug-iphonesimulator/App.app",
+    "asc_app_id": "6760897574",
+    "team_id": "86PUY7393S"
+  },
+  "android": {
+    "package": "org.coexistaus.app",
+    "module": "app",
+    "build_command": "npx cap sync android && cd android && ./gradlew assembleDebug",
+    "apk_path": "android/app/build/outputs/apk/debug/app-debug.apk"
+  },
+  "web": {
+    "url": "https://app.coexistaus.org",
+    "build_command": "npm run build",
+    "dev_url": "http://localhost:5173"
+  },
+  "supabase": {
+    "production_project_ref": "tjutlbzekfouwsiaplbr",
+    "test_project_ref": "cxeilejzcosiojfbbelh",
+    "test_env_file": "/Users/ecodia/PRIVATE/ecodia-creds/coexist-test-supabase.env",
+    "migrations_path": "../supabase/migrations",
+    "edge_functions_path": "../supabase/functions",
+    "uses_postgis": false
+  },
+  "fixtures": {
+    "users_file": "e2e/fixtures/users.json",
+    "db_seed_file": "e2e/fixtures/db-seed.sql"
+  },
+  "tiers": {
+    "smoke_flows": [
+      "e2e/flows/01-*.yml",
+      "e2e/flows/02-*.yml",
+      "e2e/flows/03-*.yml"
+    ],
+    "deep_flows": [
+      "e2e/flows/*.yml"
+    ],
+    "edge_flows": [
+      "e2e/edge-cases/*.yml"
+    ]
+  },
+  "devices_config": "e2e/config/devices.json",
+  "networks_config": "e2e/config/networks.json",
+  "visual_baselines": "e2e/visual/baselines/",
+  "diff_tolerance_pct": 2.5,
+  "capgo": {
+    "uses_capgo": true,
+    "channel_under_test": "test",
+    "verify_capgo_update_lands_before_native_assert": true
+  },
+  "substrate": {
+    "status_board_entity_ref": "coexist",
+    "failure_severity_smoke": "time_critical",
+    "failure_severity_deep": "action_recommended",
+    "failure_severity_full": "routine_info"
+  }
+}

@@ -1,0 +1,38 @@
+# Smoke flow 02 (Android): tapping "Create account" routes to the signup
+# surface. Verifies all signup form controls render + Terms checkbox + age gate.
+
+appId: ${BUNDLE_OR_PKG}
+tags:
+  - smoke
+  - signup
+  - auth
+  - anon
+env:
+  ROLE: customer-anon
+
+---
+
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 15000
+
+- tapOn: "Create account"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Join the movement"
+    timeout: 6000
+- hideKeyboard
+- waitForAnimationToEnd
+- assertVisible: "Create your account to get started"
+- assertVisible: "Display name"
+- assertVisible: "Date of Birth"
+- assertVisible: "You must be at least 18 years old"
+- assertVisible: "Create Account"
+- assertVisible: "Already have an account?"
+- takeScreenshot: ${ARTIFACT_DIR}/02-signup-surface

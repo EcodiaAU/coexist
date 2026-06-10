@@ -1,0 +1,5 @@
+{
+  "online": {"latency_ms": 30, "bandwidth_kbps": 50000, "loss_pct": 0},
+  "slow_3g": {"latency_ms": 300, "bandwidth_kbps": 400, "loss_pct": 1},
+  "offline": {"_offline": true}
+}
