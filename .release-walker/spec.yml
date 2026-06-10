@@ -1,0 +1,119 @@
+# Release-walker spec for Coexist.
+# Phase 2B: Capacitor Android walk landing on the Welcome back signin page.
+# Schema: backend/drafts/release-walker/ARCHITECTURE.md Section 5.
+# Capacitor-specific input handling per
+# `maestro-tapon-by-text-misses-capacitor-webview-input-use-coord-tap`.
+
+app: coexist
+shape: capacitor
+platforms: [android]
+
+# Capacitor packages the WebView under a native Activity. Walker still uses
+# the native enumerate-android-native.sh path (uiautomator + adb input);
+# text anchors come from the WebView accessibility text spans.
+android_package: org.coexistaus.app
+android_launch_activity: org.coexistaus.app.MainActivity
+android_avd: coexist_aosp
+
+surfaces:
+  - id: signin
+    platforms:
+      android:
+        landing_after_clear: true
+        enter_via: launch
+        # WebView text spans surface AFTER the hierarchy-settle loop in
+        # capture.sh (separate from the pixel-settle). H1, subhead, OAuth
+        # buttons, inputs, links all appear as text= or content-desc=.
+        elements: ["text:Welcome back", "text:Sign in to continue", "text:Log In", "text:Google", "text:Apple", "text:Magic link", "text:Create account"]
+    uses_components:
+      web: [SignInPage, FormInput, PrimaryButton, Tokens]
+
+  - id: signup
+    platforms:
+      android:
+        # nav_tap_text now resolves text= AND content-desc=, and prefers
+        # clickable parents. The "Create account" link's clickable hit
+        # rect is the parent View with content-desc="Create account".
+        enter_via: tap_text:Create account
+        elements: ["text:Join the movement", "text:Create your account to get started", "text:Create Account", "text:Display name*", "text:Email*", "text:Password*", "text:Date of Birth*", "text:Terms of Service", "text:Privacy Policy"]
+    uses_components:
+      web: [SignUpPage, FormInput, PrimaryButton, Tokens]
+
+  - id: signin-after-back
+    platforms:
+      android:
+        # System back from signup should pop the nav stack back to signin.
+        # Captures the post-back hierarchy so D5 can compare signatures.
+        enter_via: back
+        elements: ["text:Log In", "text:Google", "text:Apple", "text:Magic link", "text:Create account"]
+    uses_components:
+      web: [SignInPage, FormInput, PrimaryButton, Tokens]
+
+flows:
+  - id: signin-to-signup-android
+    role: anon
+    platform: android
+    detectors: [D1, D2, D11]
+    walks_surfaces: [signin, signup]
+
+  - id: signup-back-to-signin-android
+    role: anon
+    platform: android
+    detectors: [D1, D2, D5, D11]
+    walks_surfaces: [signin, signup, signin-after-back]
+
+  # D6 carrier: walks signin only, then runs the bad-creds form from that
+  # live surface. Needs network online (the GoTrue error is a server
+  # response), so this flow never varies the network dimension.
+  - id: signin-form-android
+    role: anon
+    platform: android
+    detectors: [D1, D6, D11]
+    walks_surfaces: [signin]
+    runs_forms: [signin-bad-creds]
+
+back_stack:
+  - from: signup
+    press: back
+    expect_landing: signin
+
+forms:
+  # Fill targets are the floating Input labels (login.tsx:173,183). The
+  # walker prefers clickable nodes when resolving text; if the label span
+  # wins the bounds race (the shipped Maestro bug class), the fill-verify
+  # probe records fill_verified=false and D6 fires - that outcome is the
+  # detector working, and the fix is flipping these targets to coord:.
+  - id: signin-bad-creds
+    surface: signin
+    platform: android
+    # editfield:N = Nth EditText resolved live from the hierarchy.
+    # text:Email did NOT resolve (run 20260610T001309Z, D6 fired): the
+    # floating label never matches text= - the shipped Maestro bug class.
+    fill:
+      - target: "editfield:0"
+        value: "walker+bad@ecodia.au"
+      - target: "editfield:1"
+        value: "wrong-password-123"
+    submit: "text:Log In"
+    expect:
+      within_ms: 12000
+      # GoTrue default; login.tsx renders {error} verbatim (line 217).
+      any_of: ["text:Invalid login credentials"]
+      not_landing: signup
+
+# State-matrix layer (STATE-MATRIX.md). Capacitor shell across appearance
+# and network: the offline cells probe the white-screen / dead-shell class
+# Capacitor apps are prone to.
+matrix:
+  permissions: {}
+  dimensions:
+    appearance: [light, dark]
+    font_scale: ["1.0", "2.0"]
+    network: [online, offline]
+  flows:
+    - flow: signin-to-signup-android
+      vary: [appearance, network, font_scale]
+      pairwise: true
+    - flow: signin-form-android
+      vary: [appearance]
+      pairwise: true
