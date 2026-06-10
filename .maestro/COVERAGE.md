@@ -7,8 +7,8 @@ PARTIAL when a flow reaches it but asserts thinly; UNCOVERED otherwise.
 Update this file in the SAME commit as any flow change (lifecycle rule in
 backend/patterns/maestro-mobile-stably-web-are-canonical-app-testing-2026-06-10.md).
 
-Status totals 2026-06-10 (after author batch 3): ~67 covered / ~7 partial
-/ ~50 uncovered + 3 findings: F1 (open), F2 (canary armed in 38), F3
+Status totals 2026-06-10 (after author batch 4): ~73 covered / ~6 partial
+/ ~45 uncovered + 3 findings: F1 (open), F2 (canary armed in 38), F3
 (corrected: deep-link bypasses authed session; canary armed in 32).
 
 Deep-link primitive (2026-06-10 unlock): `coexist://<path>` opens the
@@ -32,7 +32,7 @@ chains, so coverage payoff per flow is high.
 | /profile/privacy | COVERED | redirects to /settings/privacy (17-settings-subpages) |
 | /profile/:userId | UNCOVERED | needs a known peer user id |
 | /events | COVERED | 08-explore-walk (redirects to /explore) |
-| /events/:id | PARTIAL | 37-events-detail-render asserts the explore list mounts with an event card; tap-to-detail nav was not stable across seed variations (the activity-type chip is not the tappable surface and the regex matches multiple nodes). Detail-page walk needs a seeded event-id env var or an accessibility-id on the card root. RSVP create-assert-DELETE queued. |
+| /events/:id | COVERED | 39-events-detail-deep-walk (Supabase-seeded next-free-public event id via .maestro/scripts/seed-event-id.js runScript + coexist://events/<id> deep-link; asserts Share Event + a CTA branch from Register / Cancel Registration / Check In Now / Join Waitlist / You're registered). The unstable activity-type chip tap path is bypassed. RSVP create-assert-DELETE in 91-events-detail-rsvp-cleanup. |
 | /events/:id/day | UNCOVERED | |
 | /events/:id/impact | UNCOVERED | |
 | /events/:id/survey, /profile-survey | UNCOVERED | |
@@ -57,7 +57,7 @@ chains, so coverage payoff per flow is high.
 | /tasks | COVERED | 13-tasks-walk |
 | /updates | COVERED | 14-updates-walk |
 | /impact | COVERED | redirects to /profile (02-tabs-walk) |
-| /impact/national | UNCOVERED | metric surface: DB-invariance asserts required |
+| /impact/national | COVERED | 41-impact-national-render (render walk: AUSTRALIA-WIDE + TREES PLANTED + event attendances / volunteer hours stat-tile labels). Metric-vs-DB invariance asserts on the dynamic counts are queued for a paired flow following the 05-admin-metrics-invariance pattern. |
 | /referral | COVERED | 16-referral-walk |
 | /signup | COVERED | 99-auth-signed-out-sweep (signed-OUT clearState path, render-only) |
 | /forgot-password, /reset-password, /verify-email | COVERED | 99-auth-signed-out-sweep (render-only) |
@@ -119,12 +119,13 @@ chains, so coverage payoff per flow is high.
 | /data-policy | COVERED | 18-aux-render-sweep |
 | /data-deletion | COVERED | 18-aux-render-sweep |
 | /account-deletion | COVERED | 18-aux-render-sweep |
-| /donate/thank-you, /donate/donors | UNCOVERED | post-donate state |
-| /download | UNCOVERED | |
+| /donate/thank-you | COVERED | 42-donate-thank-you-render (defaults to $25 with no ?amount query; "Thank you!" + "Donation Successful" + amount tile) |
+| /donate/donors | COVERED | 43-donate-donors-render ("Our generous donors" + either branch: People & organisations or No donors yet) |
+| /download | COVERED | 44-download-render (Co-Exist heading or "Ready to make a difference" CTA - either branch acceptable; in-app surface reachable only via deep-link) |
 | /leader, /leader-welcome | UNCOVERED | role-gated |
 | /unsubscribe | UNCOVERED | email-loop bound |
 | /auth/callback | UNCOVERED | OAuth round-trip |
-| /design/events, /design/* | UNCOVERED | design tooling, low priority |
+| /design/events | COVERED | 40-design-events-render (EventEditorialShowcase: "Event Cards & Detail" h1 + Co-Exist Design System eyebrow). Single design route in App.tsx; no /design/* sub-routes exist today. |
 
 ## Batch 3 (2026-06-10) - findings extended + canaries armed
 
@@ -184,6 +185,23 @@ chains, so coverage payoff per flow is high.
   insights surface errors at first paint (white-screen masked by the
   redirect), or the page imports throw and the ErrorBoundary's fallback
   is the Welcome shell. Needs a code-side investigation.
+
+## Batch 4 (2026-06-10) - Supabase-seeded event id + render-only sweep
+
+- **Seed primitive landed.** `.maestro/scripts/seed-event-id.js` runScript
+  helper queries Supabase for the next upcoming FREE public event
+  (is_ticketed=false, is_public=true, date_start>now), exposes
+  `${output.eventId}` + `${output.eventTitle}` to the flow. Used by
+  39-events-detail-deep-walk; will be reused by 91-events-detail-rsvp-
+  cleanup. Anon key embedded (same publishable key shipped in the app
+  bundle, so adds no leakage).
+- **6 flows green this batch:** 39 events detail (deep-walk via env id),
+  40 design events, 41 impact national, 42 donate thank-you, 43 donate
+  donors, 44 download.
+- **Anchor gotcha codified.** Page Header titles ("National Impact",
+  "Donor Wall") show up only as aria-label "X page header" - NOT as
+  direct visible text. Anchor on the visible h1/h2 ("AUSTRALIA-WIDE" /
+  "Our generous donors") instead. Cost the first run on 41+43.
 
 ## Rules that bind authoring here
 

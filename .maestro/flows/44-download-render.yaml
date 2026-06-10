@@ -1,0 +1,30 @@
+# /download: platform-aware app-download landing. Renders the APP_NAME
+# heading (public/download.tsx:223) + the platform store badges. Inside
+# the installed Capacitor app this surface is reachable via deep-link
+# only (no in-app entry); coverage exists to catch regressions on the
+# web-served version where this is the primary distribution surface.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- openLink: "coexist://download"
+- extendedWaitUntil:
+    visible: ".*(Co-Exist|Ready to make a difference).*"
+    timeout: 15000
+- takeScreenshot: /tmp/maestro-cx-download

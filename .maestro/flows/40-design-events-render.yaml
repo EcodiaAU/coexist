@@ -1,0 +1,32 @@
+# /design/events render. The EventEditorialShowcase is a designer-tooling
+# route gated on no capability (it's a static showcase for design review),
+# so a deep-link render is enough. Anchors lifted directly from
+# pages/design/event-editorial.tsx (EventEditorialShowcase: "Co-Exist
+# Design System" eyebrow + "Event Cards & Detail" h1).
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- openLink: "coexist://design/events"
+- extendedWaitUntil:
+    visible: "Event Cards & Detail"
+    timeout: 15000
+- assertVisible: "Co-Exist Design System"
+- assertVisible: ".*editorial layout.*"
+- takeScreenshot: /tmp/maestro-cx-design-events

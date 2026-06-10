@@ -1,0 +1,37 @@
+# /events/:id render-only deep walk. Seeds the next upcoming FREE public
+# event id from Supabase via runScript, then deep-links into the detail
+# page. Anchors: the title (dynamic, seeded value), "Register for Event"
+# (or "Cancel Registration" / "Check In Now" if the test account is
+# already in some prior state). Render-only - no RSVP write here; the
+# prod-write-with-cleanup happens in 91-events-detail-rsvp-cleanup.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- runScript: ../scripts/seed-event-id.js
+- openLink: "coexist://events/${output.eventId}"
+# The detail page renders the title, a Share Event button, and one of
+# the CTAs (Register for Event, Cancel Registration when already
+# registered, Check In Now on event day). Either branch is acceptable
+# proof the detail page mounted.
+- extendedWaitUntil:
+    visible: ".*(Register for Event|Cancel Registration|Check In Now|Join Waitlist|You're registered).*"
+    timeout: 20000
+- assertVisible: "Share Event"
+- takeScreenshot: /tmp/maestro-cx-events-detail-deep
