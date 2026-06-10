@@ -572,15 +572,17 @@ export default function AdminInsightsPage() {
           Extra safe-area padding clears the home indicator. */}
       {selected.size > 0 && (
         <div
-          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-white text-neutral-900 ring-1 ring-neutral-200 shadow-2xl shadow-neutral-900/25"
+          className="fixed bottom-[88px] md:bottom-6 left-3 right-3 md:left-1/2 md:right-auto md:-translate-x-1/2 z-40 flex items-center justify-between md:justify-start gap-2 px-3 py-2.5 rounded-2xl bg-white text-neutral-900 ring-1 ring-neutral-200 shadow-2xl shadow-neutral-900/25"
           style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
-          <span className="text-sm font-semibold px-1 tabular-nums text-neutral-900">{selected.size} selected</span>
-          <button type="button" onClick={copySelected} className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors cursor-pointer">
-            {copied === 'sel' ? <Check size={14} /> : <Copy size={14} />} {copied === 'sel' ? 'Copied' : 'Copy as table'}
-          </button>
-          <button type="button" onClick={csvSelected} className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-xl bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors cursor-pointer"><Download size={14} /> CSV</button>
-          <button type="button" onClick={clearSel} aria-label="Clear selection" className="p-1.5 rounded-xl text-neutral-500 hover:bg-neutral-100 transition-colors cursor-pointer"><X size={15} /></button>
+          <span className="text-sm font-semibold tabular-nums text-neutral-900 whitespace-nowrap shrink-0 pl-1">{selected.size} selected</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button type="button" onClick={copySelected} className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-semibold px-3 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all cursor-pointer">
+              {copied === 'sel' ? <Check size={15} /> : <Copy size={15} />}<span>{copied === 'sel' ? 'Copied' : 'Copy table'}</span>
+            </button>
+            <button type="button" onClick={csvSelected} aria-label="Download CSV" className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium px-3 py-2 rounded-xl bg-neutral-100 text-neutral-700 hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer"><Download size={15} />CSV</button>
+            <button type="button" onClick={clearSel} aria-label="Clear selection" className="p-2 rounded-xl text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 active:scale-[0.98] transition-all cursor-pointer shrink-0"><X size={16} /></button>
+          </div>
         </div>
       )}
     </motion.div>
