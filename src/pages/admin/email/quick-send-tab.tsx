@@ -218,6 +218,21 @@ export function QuickSendTab() {
         (m) => `${m}\n<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">`,
       )
     }
+
+    // CTA button: the orange #E8913A anchor often inherits a tall
+    // line-height, which leaves a blank line of dead space under the
+    // label. Force line-height:1 and inline-block so the button hugs
+    // its text. Matches background:#E8913A or background-color:#E8913A.
+    out = out.replace(
+      /(<a\b[^>]*\bstyle=")([^"]*#e8913a[^"]*)(")/gi,
+      (_m, pre: string, css: string, post: string) => {
+        let s = css.replace(/line-height\s*:\s*[^;"]*;?/gi, '').trim()
+        if (s && !s.endsWith(';')) s += ';'
+        if (!/display\s*:/i.test(s)) s += 'display:inline-block;'
+        s += 'line-height:1;'
+        return pre + s + post
+      },
+    )
     return out
   }
 

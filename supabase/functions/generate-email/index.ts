@@ -164,6 +164,21 @@ STRUCTURE (suggested, not rigid):
    style="text-align:center;padding:24px 0;"> with the <a> as an
    inline-block. Email clients only honour centre alignment if the
    table cell carries align="center".
+   The button <a> MUST set line-height:1 (NOT inherited, or there is a
+   blank line of dead space under the label) and symmetric padding,
+   e.g. style="display:inline-block;background:#E8913A;color:#ffffff;
+   padding:14px 30px;border-radius:12px;font-size:15px;font-weight:600;
+   line-height:1;text-decoration:none;". No <br> inside or right after
+   the button.
+
+ALIGNMENT (mobile looked uneven):
+- Centre-align the hero, every heading, the CTA, and the main message
+  paragraphs. A consistent centre column reads clean on a phone; mixed
+  left/centre looks broken.
+- Use ONE consistent vertical gap between blocks (20px). Do not mix
+  8px here and 40px there.
+- Every section uses the same horizontal padding so left and right
+  edges line up down the whole email.
 4. Footer. Social links, mailing address line, and a working
    unsubscribe link. ALWAYS use {{unsubscribe_url}} as the href on the
    unsubscribe link, e.g.
