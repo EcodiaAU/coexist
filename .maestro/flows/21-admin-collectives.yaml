@@ -1,0 +1,34 @@
+# Admin -> Collectives. Hero + Create CTA + COLLECTIVES/MEMBERS/EVENTS
+# count cards + search + Active/Archived/All tabs. Note: "Collectives" hero
+# text and the bottom tab share the literal; the hero (h1) is asserted via
+# the surrounding context cards.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- openLink: "coexist://admin/collectives"
+- extendedWaitUntil:
+    visible: "COLLECTIVES"
+    timeout: 15000
+- assertVisible: "MEMBERS"
+- assertVisible: "EVENTS"
+- assertVisible: ".*Search collectives.*"
+- assertVisible: "Active"
+- assertVisible: "Archived"
+- takeScreenshot: /tmp/maestro-cx-admin-collectives

@@ -1,0 +1,34 @@
+# Profile -> Tickets: assert the empty state copy and the Explore Events CTA.
+# Anchors from cxh-profile-tickets harvest. Empty-state copy is stable and
+# is the right early-state assertion until tickets exist on the test account.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- tapOn: ".*Profile.*"
+- extendedWaitUntil:
+    visible: "Tickets"
+    timeout: 15000
+- tapOn: "Tickets"
+- extendedWaitUntil:
+    visible: "No tickets yet"
+    timeout: 15000
+- assertVisible: ".*When you purchase tickets.*"
+- assertVisible: "Explore Events"
+- takeScreenshot: /tmp/maestro-cx-profile-tickets

@@ -1,0 +1,27 @@
+# Learn landing (My Learning). Empty-state on this account; render check.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- openLink: "coexist://learn"
+- extendedWaitUntil:
+    visible: "My Learning"
+    timeout: 15000
+- assertVisible: ".*(No modules|Development modules).*"
+- takeScreenshot: /tmp/maestro-cx-learn

@@ -1,0 +1,95 @@
+# Aux/legal/marketing render sweep: deep-link to each page, assert its h1
+# mounts. Catches the white-screen class (page errors at first paint) on a
+# wide set of low-priority surfaces in one flow. Anchors are full-string
+# headings observed 2026-06-10.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+# /about
+- openLink: "coexist://about"
+- extendedWaitUntil:
+    visible: "About Co-Exist"
+    timeout: 15000
+# /contact
+- openLink: "coexist://contact"
+- extendedWaitUntil:
+    visible: "CONTACT"
+    timeout: 15000
+# /partners
+- openLink: "coexist://partners"
+- extendedWaitUntil:
+    visible: "Our Partners"
+    timeout: 15000
+# /leadership
+- openLink: "coexist://leadership"
+- extendedWaitUntil:
+    visible: "LEADERSHIP"
+    timeout: 15000
+# /lead-a-collective
+- openLink: "coexist://lead-a-collective"
+- extendedWaitUntil:
+    visible: "Lead a Collective"
+    timeout: 15000
+# /donate
+- openLink: "coexist://donate"
+- extendedWaitUntil:
+    visible: "DONATE"
+    timeout: 15000
+# /privacy
+- openLink: "coexist://privacy"
+- extendedWaitUntil:
+    visible: "Privacy Policy"
+    timeout: 15000
+# /terms
+- openLink: "coexist://terms"
+- extendedWaitUntil:
+    visible: "Terms of Service"
+    timeout: 15000
+# /cookies
+- openLink: "coexist://cookies"
+- extendedWaitUntil:
+    visible: "Cookie Policy"
+    timeout: 15000
+# /accessibility
+- openLink: "coexist://accessibility"
+- extendedWaitUntil:
+    visible: "Accessibility Statement"
+    timeout: 15000
+# /disclaimer
+- openLink: "coexist://disclaimer"
+- extendedWaitUntil:
+    visible: "Disclaimer"
+    timeout: 15000
+# /data-policy
+- openLink: "coexist://data-policy"
+- extendedWaitUntil:
+    visible: "Data Policy"
+    timeout: 15000
+# /data-deletion
+- openLink: "coexist://data-deletion"
+- extendedWaitUntil:
+    visible: "Delete Your Data"
+    timeout: 15000
+# /account-deletion
+- openLink: "coexist://account-deletion"
+- extendedWaitUntil:
+    visible: "Delete Your Account"
+    timeout: 15000
+- takeScreenshot: /tmp/maestro-cx-aux-render-sweep

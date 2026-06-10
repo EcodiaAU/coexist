@@ -1,0 +1,41 @@
+# Admin -> Metrics (Attendance & Retention) + Reports (Quick Exports).
+# Asserts heroes and key labels; DB-invariance for these surfaces is a
+# follow-up on top of 05-admin-metrics-invariance's pattern.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+# Metrics (Attendance & Retention)
+- openLink: "coexist://admin/metrics"
+- extendedWaitUntil:
+    visible: "Attendance & Retention"
+    timeout: 15000
+- assertVisible: "EVENTS HELD"
+- assertVisible: "ATTENDANCES"
+- takeScreenshot: /tmp/maestro-cx-admin-metrics
+# Reports
+- openLink: "coexist://admin/reports"
+- extendedWaitUntil:
+    visible: "Reports"
+    timeout: 15000
+- assertVisible: "QUICK EXPORTS"
+- assertVisible: "METRICS AVAILABLE"
+- assertVisible: "Quick Exports"
+- assertVisible: "Custom Report"
+- takeScreenshot: /tmp/maestro-cx-admin-reports

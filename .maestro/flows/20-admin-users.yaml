@@ -1,0 +1,30 @@
+# Admin -> User Management. Anchors: hero, search, role filter, the first
+# few participant rows (stable test-account fixtures). Email values are
+# substrings of live rows; safe regex.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- openLink: "coexist://admin/users"
+- extendedWaitUntil:
+    visible: "User Management"
+    timeout: 15000
+- assertVisible: ".*Search by name or email.*"
+- assertVisible: "All Roles"
+- takeScreenshot: /tmp/maestro-cx-admin-users

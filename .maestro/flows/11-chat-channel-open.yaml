@@ -1,0 +1,33 @@
+# Chat bottom-tab: lands directly into the member's default channel room
+# (test account: Sunshine Coast). Asserts the channel header + composer.
+# Authoring note (2026-06-10): back from a tab-opened channel skips the
+# chat list and goes to Home (no router history pushed by tab nav); the
+# admin chat list (STAFF CHANNELS) needs its own flow that opens it via
+# a route that pushes history. For now this flow covers /chat (list) by
+# proving its default-channel destination loads.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- tapOn: ".*Chat.*"
+- extendedWaitUntil:
+    visible: ".*Type a message.*"
+    timeout: 15000
+- assertVisible: "Sunshine Coast"
+- takeScreenshot: /tmp/maestro-cx-chat-channel-room

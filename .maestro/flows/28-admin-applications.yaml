@@ -1,0 +1,31 @@
+# Admin -> Applications. Hero + TOTAL/PENDING/ACCEPTED cards +
+# Applications/Notifications subtabs. Empty-state safe.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- openLink: "coexist://admin/applications"
+- extendedWaitUntil:
+    visible: "Applications"
+    timeout: 15000
+- assertVisible: "TOTAL"
+- assertVisible: "PENDING"
+- assertVisible: "ACCEPTED"
+- assertVisible: "Notifications"
+- takeScreenshot: /tmp/maestro-cx-admin-applications
