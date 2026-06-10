@@ -41,14 +41,14 @@ import {
   UserCircle2,
   X,
 } from 'lucide-react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
-import { useAdminEventPhotos } from '@/hooks/use-event-photos'
+import { useAdminEventPhotos, type AdminEventPhoto } from '@/hooks/use-event-photos'
 import {
   useTags,
   useCollectives,
@@ -548,8 +548,8 @@ export function QuickSendTab() {
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[320px] overflow-y-auto">
                   {recentPhotos
-                    .filter((p) => p.url && !p.storage_path?.match(/\.(mp4|mov|webm|m4v)$/i))
-                    .map((p) => (
+                    .filter((p: AdminEventPhoto) => p.url && !p.storage_path?.match(/\.(mp4|mov|webm|m4v)$/i))
+                    .map((p: AdminEventPhoto) => (
                       <button
                         key={p.id}
                         type="button"

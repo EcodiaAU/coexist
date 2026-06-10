@@ -100,7 +100,7 @@ export default function AdminMetricsPage({ embedded = false }: { embedded?: bool
     try {
       await navigator.clipboard.writeText(kind === 'md' ? formatAttendanceMetricsMd(m) : metricsToCsv(m))
       setCopied(kind); setTimeout(() => setCopied(null), 1500)
-    } catch { toast({ title: 'Copy failed', variant: 'error' }) }
+    } catch { toast.error('Copy failed') }
   }
 
   const repeat = m ? m.unique_attendees - m.retention.attended_1 : 0
