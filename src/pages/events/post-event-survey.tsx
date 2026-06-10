@@ -83,18 +83,35 @@ function useSubmitSurvey() {
     }) => {
       if (!user) throw new Error('Not authenticated')
 
-      const { error } = await supabase
+      // The unique key on this table is a FUNCTIONAL index
+      // (COALESCE(event_id, ...)) which PostgREST cannot target by name
+      // or column-list for upsert. Do an explicit lookup, then update or
+      // insert.
+      const { data: existing, error: lookupError } = await supabase
         .from('survey_responses')
-        .upsert(
-          {
+        .select('id')
+        .eq('survey_id', surveyId)
+        .eq('event_id', eventId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (lookupError) throw lookupError
+      if (existing?.id) {
+        const { error: updateError } = await supabase
+          .from('survey_responses')
+          .update({ answers })
+          .eq('id', existing.id)
+        if (updateError) throw updateError
+      } else {
+        const { error: insertError } = await supabase
+          .from('survey_responses')
+          .insert({
             survey_id: surveyId,
             event_id: eventId,
             user_id: user.id,
             answers,
-          },
-          { onConflict: 'survey_responses_unique_response' },
-        )
-      if (error) throw error
+          })
+        if (insertError) throw insertError
+      }
 
       // NOTE: Attendees do NOT call syncSurveyImpact. Impact-tagged survey
       // answers are only synced to event_impact via the leader's log-impact
@@ -207,12 +224,27 @@ export default function PostEventSurveyPage() {
   }
 
   if (attendance && attendance.status !== 'attended') {
+    const wasRegistered = attendance.status === 'registered' || attendance.status === 'waitlisted'
     return (
       <Page swipeBack header={<Header title="Survey" back />}>
         <EmptyState
           illustration="error"
           title="Survey not available"
-          description="Only attendees who checked in can complete the post-event survey."
+          description={wasRegistered
+            ? "You registered but weren't checked in at this event, so we can't accept your post-event answers. If you did attend, ask an event leader to check you in (post-event backfill is open until impact is logged)."
+            : "We don't have a record of you attending this event. Only checked-in attendees can complete the post-event survey."}
+          action={{ label: 'Back to Event', to: `/events/${eventId}` }}
+        />
+      </Page>
+    )
+  }
+  if (!attendance) {
+    return (
+      <Page swipeBack header={<Header title="Survey" back />}>
+        <EmptyState
+          illustration="error"
+          title="Survey not available"
+          description="We don't have a record of you attending this event. Only checked-in attendees can complete the post-event survey. If you did attend, ask an event leader to check you in."
           action={{ label: 'Back to Event', to: `/events/${eventId}` }}
         />
       </Page>

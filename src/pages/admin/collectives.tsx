@@ -16,7 +16,6 @@ import {
   X,
 } from 'lucide-react'
 import { useAdminHeader } from '@/components/admin-layout'
-import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
@@ -195,26 +194,7 @@ export default function AdminCollectivesPage() {
     setArchiveTarget(null)
   }
 
-  // Stats summary
-  const stats = useMemo(() => {
-    if (!collectives) return null
-    const total = collectives.length
-    const totalMembers = collectives.reduce((acc, c) => acc + c.memberCount, 0)
-    const totalEvents = collectives.reduce((acc, c) => acc + c.eventCount, 0)
-    return { total, totalMembers, totalEvents }
-  }, [collectives])
-
-  const rm = !!shouldReduceMotion
-
-  const heroStats = useMemo(() => (
-    <AdminHeroStatRow>
-      <AdminHeroStat value={stats?.total ?? 0} label="Collectives" icon={<MapPin size={18} />} color="primary" delay={0} reducedMotion={rm} />
-      <AdminHeroStat value={stats?.totalMembers ?? 0} label="Members" icon={<Users size={18} />} color="moss" delay={1} reducedMotion={rm} />
-      <AdminHeroStat value={stats?.totalEvents ?? 0} label="Events" icon={<CalendarDays size={18} />} color="sprout" delay={2} reducedMotion={rm} />
-    </AdminHeroStatRow>
-  ), [stats, rm])
-
-  useAdminHeader('Collectives', { actions: heroActions, heroContent: heroStats })
+  useAdminHeader('Collectives', { actions: heroActions })
 
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 

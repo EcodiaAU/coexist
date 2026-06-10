@@ -8,6 +8,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+const JSON_HEADERS = { ...CORS_HEADERS, 'Content-Type': 'application/json' }
+
 async function loadBrandContext(): Promise<string> {
   // Load dynamic brand assets from app_images table
   let emailHeaderUrl = ''
@@ -104,12 +112,16 @@ interface GeneratePayload {
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
   try {
-    // ── Auth: require admin/staff ──
+    // Auth: require admin/staff
+
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ success: false, error: 'Missing authorization' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
+        status: 401, headers: JSON_HEADERS,
       })
     }
     const token = authHeader.replace('Bearer ', '')
@@ -120,7 +132,7 @@ Deno.serve(async (req: Request) => {
     })
     if (!gotruRes.ok) {
       return new Response(JSON.stringify({ success: false, error: 'Invalid token' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
+        status: 401, headers: JSON_HEADERS,
       })
     }
     const user = await gotruRes.json() as { id: string; email?: string }
@@ -132,14 +144,14 @@ Deno.serve(async (req: Request) => {
       .single()
     if (!callerProfile || !['national_leader', 'manager', 'admin'].includes(callerProfile.role)) {
       return new Response(JSON.stringify({ success: false, error: 'Admin access required' }), {
-        status: 403, headers: { 'Content-Type': 'application/json' },
+        status: 403, headers: JSON_HEADERS,
       })
     }
 
     if (!ANTHROPIC_API_KEY) {
       return new Response(
         JSON.stringify({ success: false, error: 'ANTHROPIC_API_KEY not configured. Add it to your Supabase Edge Function secrets.' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } },
+        { status: 500, headers: JSON_HEADERS },
       )
     }
 
@@ -148,7 +160,7 @@ Deno.serve(async (req: Request) => {
     if (!prompt) {
       return new Response(
         JSON.stringify({ success: false, error: 'prompt is required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } },
+        { status: 400, headers: JSON_HEADERS },
       )
     }
 
@@ -173,6 +185,17 @@ ${subject ? `Subject line: "${subject}"` : ''}
 Use {{name}} for the recipient's first name. This is a one-off email, not a template - fill in all the content directly.`
     }
 
+    // llm-helper-justified: this is the Co-Exist client app's own
+    // server-side Supabase Edge Function. It is invoked from Kurt's
+    // admin UI to ghost-draft branded email templates inside the
+    // running web app, has no conductor surface, and is billed to
+    // Co-Exist's own Anthropic key. EcodiaOS conductor vision is not
+    // applicable here.
+    //
+    // Haiku 4.5 handles branded HTML email template generation well
+    // and is roughly 10x cheaper than Sonnet 4. If the admin reports
+    // quality regressions (off-brand tone, malformed variables,
+    // layout drift), swap to 'claude-sonnet-4-5-20250929'.
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -181,7 +204,7 @@ Use {{name}} for the recipient's first name. This is a one-off email, not a temp
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 8000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
@@ -193,7 +216,7 @@ Use {{name}} for the recipient's first name. This is a one-off email, not a temp
       console.error('[generate-email] Anthropic error:', err)
       return new Response(
         JSON.stringify({ success: false, error: 'AI generation failed. Check API key and quota.' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } },
+        { status: 500, headers: JSON_HEADERS },
       )
     }
 
@@ -237,13 +260,13 @@ Use {{name}} for the recipient's first name. This is a one-off email, not a temp
 
     return new Response(
       JSON.stringify({ success: true, html, plainText, variables }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
+      { status: 200, headers: JSON_HEADERS },
     )
   } catch (err) {
     console.error('[generate-email] Error:', err)
     return new Response(
       JSON.stringify({ success: false, error: 'Internal error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
+      { status: 500, headers: JSON_HEADERS },
     )
   }
 })

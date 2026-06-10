@@ -342,10 +342,12 @@ export function CreateAnnouncementSheet({
     }
   }, [open])
 
+  // "Event Invite" already renders RSVP buttons inline (see chat-bubble.tsx),
+  // so the standalone "RSVP Request" option was a duplicate path. Keep
+  // historical rsvp rows rendering correctly, but stop creating new ones.
   const typeOptions = [
     { value: 'announcement' as const, label: 'Announcement', icon: Megaphone, desc: 'Share news with your collective' },
-    { value: 'event_invite' as const, label: 'Event Invite', icon: CalendarPlus, desc: 'Invite members to an event' },
-    { value: 'rsvp' as const, label: 'RSVP Request', icon: CalendarPlus, desc: 'Ask members to RSVP' },
+    { value: 'event_invite' as const, label: 'Event Invite', icon: CalendarPlus, desc: 'Invite members to an event (with RSVP)' },
   ]
 
   return (

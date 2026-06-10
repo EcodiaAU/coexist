@@ -31,6 +31,13 @@ interface PushToken {
 /*  FCM HTTP v1 sender                                                 */
 /* ------------------------------------------------------------------ */
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+const JSON_HEADERS = { ...CORS_HEADERS, 'Content-Type': 'application/json' }
+
 const FCM_PROJECT_ID = Deno.env.get('FCM_PROJECT_ID') ?? ''
 const FCM_SERVICE_ACCOUNT_KEY_RAW = Deno.env.get('FCM_SERVICE_ACCOUNT_KEY') ?? ''
 
@@ -184,18 +191,28 @@ async function sendFcmMessage(
 /* ------------------------------------------------------------------ */
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
   try {
-    // ── Auth: require service-role key or authenticated user ──
+    // Auth: require service-role key or authenticated user.
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Missing authorization', sent: 0 }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
+        status: 401, headers: JSON_HEADERS,
       })
     }
     const token = authHeader.replace('Bearer ', '')
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-    if (token !== serviceRoleKey) {
+    // Distinguish a trusted internal caller (service-role: crons, DB triggers,
+    // sibling edge functions) from an end-user JWT. End-user callers are
+    // authorized below (collective-scoped); service-role is unrestricted.
+    let isServiceRole = false
+    let callerUid: string | null = null
+    if (token === serviceRoleKey) {
+      isServiceRole = true
+    } else {
       // Validate as user token via GoTrue directly
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!
       const gotruRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
@@ -203,7 +220,14 @@ Deno.serve(async (req: Request) => {
       })
       if (!gotruRes.ok) {
         return new Response(JSON.stringify({ error: 'Invalid token', sent: 0 }), {
-          status: 401, headers: { 'Content-Type': 'application/json' },
+          status: 401, headers: JSON_HEADERS,
+        })
+      }
+      const gotruUser = await gotruRes.json().catch(() => null)
+      callerUid = gotruUser?.id ?? null
+      if (!callerUid) {
+        return new Response(JSON.stringify({ error: 'Invalid token', sent: 0 }), {
+          status: 401, headers: JSON_HEADERS,
         })
       }
     }
@@ -215,34 +239,34 @@ Deno.serve(async (req: Request) => {
 
     if (!payload.title || typeof payload.title !== 'string' || payload.title.length > 200) {
       return new Response(JSON.stringify({ error: 'title required (max 200 chars)', sent: 0 }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: JSON_HEADERS,
       })
     }
     if (!payload.body || typeof payload.body !== 'string' || payload.body.length > 1000) {
       return new Response(JSON.stringify({ error: 'body required (max 1000 chars)', sent: 0 }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: JSON_HEADERS,
       })
     }
     if (payload.userId && !UUID_RE.test(payload.userId)) {
       return new Response(JSON.stringify({ error: 'Invalid userId', sent: 0 }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: JSON_HEADERS,
       })
     }
     if (payload.userIds) {
       if (!Array.isArray(payload.userIds) || payload.userIds.length > 500) {
         return new Response(JSON.stringify({ error: 'userIds must be array (max 500)', sent: 0 }), {
-          status: 400, headers: { 'Content-Type': 'application/json' },
+          status: 400, headers: JSON_HEADERS,
         })
       }
       if (payload.userIds.some((id: string) => !UUID_RE.test(id))) {
         return new Response(JSON.stringify({ error: 'Invalid UUID in userIds', sent: 0 }), {
-          status: 400, headers: { 'Content-Type': 'application/json' },
+          status: 400, headers: JSON_HEADERS,
         })
       }
     }
     if (payload.collectiveId && !UUID_RE.test(payload.collectiveId)) {
       return new Response(JSON.stringify({ error: 'Invalid collectiveId', sent: 0 }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: JSON_HEADERS,
       })
     }
 
@@ -268,9 +292,72 @@ Deno.serve(async (req: Request) => {
       targetUserIds = (members ?? []).map((m: { user_id: string }) => m.user_id)
     }
 
+    // ── Authorization (end-user callers only) ──
+    // service-role (crons / DB triggers / sibling edge fns) is unrestricted.
+    // End-user JWTs: privileged roles (any non-participant: admin/manager/
+    // national_leader/leader/co_leader/assist_leader) keep full reach, since
+    // leader/admin flows legitimately push to event attendees + staff channels.
+    // Plain 'participant' callers (open registration) are scoped: no /admin
+    // deep-link, and targets must share an active collective with them. This
+    // closes the abuse vector (arbitrary push + forced /admin nav to any user
+    // or whole foreign collective) without breaking collective chat, where
+    // recipients are always co-members of the caller's collective.
+    if (!isServiceRole && callerUid) {
+      const route = String(payload.data?.route ?? payload.data?.url ?? '')
+
+      const { data: callerProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', callerUid)
+        .maybeSingle()
+      const callerRole = (callerProfile?.role as string | undefined) ?? 'participant'
+      const isPrivileged = callerRole !== 'participant'
+
+      if (!isPrivileged) {
+        if (route.startsWith('/admin')) {
+          return new Response(JSON.stringify({ error: 'Forbidden', sent: 0 }), {
+            status: 403, headers: JSON_HEADERS,
+          })
+        }
+
+        const { data: myCols } = await supabaseAdmin
+          .from('collective_members')
+          .select('collective_id')
+          .eq('user_id', callerUid)
+          .eq('status', 'active')
+        const myColIds = (myCols ?? []).map((c: { collective_id: string }) => c.collective_id)
+
+        if (payload.collectiveId && !myColIds.includes(payload.collectiveId)) {
+          return new Response(JSON.stringify({ error: 'Forbidden', sent: 0 }), {
+            status: 403, headers: JSON_HEADERS,
+          })
+        }
+
+        const others = targetUserIds.filter((id) => id !== callerUid)
+        if (others.length > 0) {
+          let reachable = new Set<string>()
+          if (myColIds.length > 0) {
+            const { data: shared } = await supabaseAdmin
+              .from('collective_members')
+              .select('user_id')
+              .eq('status', 'active')
+              .in('collective_id', myColIds)
+              .in('user_id', others)
+            reachable = new Set((shared ?? []).map((r: { user_id: string }) => r.user_id))
+          }
+          const unreachable = others.filter((id) => !reachable.has(id))
+          if (unreachable.length > 0) {
+            return new Response(JSON.stringify({ error: 'Forbidden: targets outside your collectives', sent: 0 }), {
+              status: 403, headers: JSON_HEADERS,
+            })
+          }
+        }
+      }
+    }
+
     if (targetUserIds.length === 0) {
       return new Response(JSON.stringify({ sent: 0 }), {
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
       })
     }
 
@@ -282,7 +369,7 @@ Deno.serve(async (req: Request) => {
 
     if (!tokens || tokens.length === 0) {
       return new Response(JSON.stringify({ sent: 0 }), {
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
       })
     }
 
@@ -377,14 +464,14 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(JSON.stringify({ sent, total: filteredTokens.length }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: JSON_HEADERS,
     })
   } catch (err) {
     console.error('[send-push] Error:', err)
     // Return 200 to prevent retries
     return new Response(
       JSON.stringify({ error: 'Internal error', sent: 0 }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
+      { status: 200, headers: JSON_HEADERS },
     )
   }
 })
