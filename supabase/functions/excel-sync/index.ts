@@ -1268,7 +1268,7 @@ async function syncFromExcel(
   let skippedLegacy = 0
   let syncedFormsRows = 0
   let skippedNoCollective = 0
-  let cancelledViaSheetAbsence = 0
+  const cancelledViaSheetAbsence = 0
   // Counts sheet rows skipped because their collective has flipped to
   // app-canonical mode (forms_migrated_at IS NOT NULL) and the row date is at
   // or after the cutover. Those rows shouldn't flow sheet -> DB; their app

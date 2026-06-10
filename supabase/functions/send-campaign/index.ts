@@ -12,6 +12,13 @@ const FROM_NAME = Deno.env.get('RESEND_FROM_NAME') ?? 'Co-Exist'
 const BATCH_SIZE = 50 // Resend supports up to 100 recipients per batch send
 const DELAY_MS = 200  // Pause between batches to respect rate limits
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+const JSON_HEADERS = { ...CORS_HEADERS, 'Content-Type': 'application/json' }
+
 interface CampaignPayload {
   campaign_id: string
   /**
@@ -96,12 +103,15 @@ async function sendBatch(
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
   try {
-    // ── Auth: require admin/staff ──
+    // Auth: require admin/staff.
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ success: false, error: 'Missing authorization' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
+        status: 401, headers: JSON_HEADERS,
       })
     }
     const token = authHeader.replace('Bearer ', '')
@@ -112,7 +122,7 @@ Deno.serve(async (req: Request) => {
     })
     if (!gotruRes.ok) {
       return new Response(JSON.stringify({ success: false, error: 'Invalid token' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
+        status: 401, headers: JSON_HEADERS,
       })
     }
     const user = await gotruRes.json() as { id: string; email?: string }
@@ -127,7 +137,7 @@ Deno.serve(async (req: Request) => {
       .single()
     if (!callerProfile || !['national_leader', 'manager', 'admin'].includes(callerProfile.role)) {
       return new Response(JSON.stringify({ success: false, error: 'Admin access required' }), {
-        status: 403, headers: { 'Content-Type': 'application/json' },
+        status: 403, headers: JSON_HEADERS,
       })
     }
 
@@ -136,7 +146,7 @@ Deno.serve(async (req: Request) => {
     if (!campaign_id) {
       return new Response(
         JSON.stringify({ success: false, error: 'campaign_id required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } },
+        { status: 400, headers: JSON_HEADERS },
       )
     }
 
@@ -150,14 +160,14 @@ Deno.serve(async (req: Request) => {
     if (cErr || !campaign) {
       return new Response(
         JSON.stringify({ success: false, error: 'Campaign not found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } },
+        { status: 404, headers: JSON_HEADERS },
       )
     }
 
     if (campaign.status === 'sent' || campaign.status === 'sending') {
       return new Response(
         JSON.stringify({ success: false, error: `Campaign already ${campaign.status}` }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } },
+        { status: 400, headers: JSON_HEADERS },
       )
     }
 
@@ -203,7 +213,7 @@ Deno.serve(async (req: Request) => {
         .eq('id', campaign_id)
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to resolve audience' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } },
+        { status: 500, headers: JSON_HEADERS },
       )
     }
 
@@ -214,7 +224,7 @@ Deno.serve(async (req: Request) => {
         .eq('id', campaign_id)
       return new Response(
         JSON.stringify({ success: false, error: 'No eligible recipients' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
+        { status: 200, headers: JSON_HEADERS },
       )
     }
 
@@ -369,13 +379,13 @@ Deno.serve(async (req: Request) => {
         sent: totalSent,
         failed: totalFailed,
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
+      { status: 200, headers: JSON_HEADERS },
     )
   } catch (err) {
     console.error('[send-campaign] Error:', err)
     return new Response(
       JSON.stringify({ success: false, error: 'Internal error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
+      { status: 500, headers: JSON_HEADERS },
     )
   }
 })

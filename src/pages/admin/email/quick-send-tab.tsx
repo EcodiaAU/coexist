@@ -103,7 +103,8 @@ export function QuickSendTab() {
   const [audienceTagIds, setAudienceTagIds] = useState<string[]>([])
   const [audienceCollectiveIds, setAudienceCollectiveIds] = useState<string[]>([])
 
-  const [showHtmlEditor, setShowHtmlEditor] = useState(false)
+  const [tweak, setTweak] = useState('')
+  const [tweaking, setTweaking] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
 
   const audienceCount = useMemo(() => {
@@ -158,6 +159,29 @@ export function QuickSendTab() {
   const handlePill = (p: (typeof SUGGESTION_PILLS)[number]) => {
     setPrompt(p.prompt)
     handleDraft(p.prompt)
+  }
+
+  // Tweak the existing draft by re-running the AI with the prior body
+  // and a short instruction. Removes the need to edit HTML by hand.
+  const handleTweak = async () => {
+    if (!tweak.trim() || !bodyHtml) return
+    setTweaking(true)
+    try {
+      const tweakPrompt = `Here is the current email HTML:\n\n${bodyHtml}\n\nApply this change and return the revised full HTML (no commentary, no markdown code fences):\n\n${tweak.trim()}`
+      const { data, error } = await supabase.functions.invoke('generate-email', {
+        body: { prompt: tweakPrompt, mode: 'content' },
+      })
+      if (error) throw error
+      const result = data as { success: boolean; html?: string; plainText?: string; error?: string }
+      if (!result.success || !result.html) throw new Error(result.error || 'Tweak failed')
+      setBodyHtml(result.html)
+      setBodyText(result.plainText || '')
+      setTweak('')
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Tweak failed - try again')
+    } finally {
+      setTweaking(false)
+    }
   }
 
   const sendCampaign = useMutation({
@@ -274,22 +298,15 @@ export function QuickSendTab() {
         </Button>
       </section>
 
-      {/* Step 2: subject + body preview */}
+      {/* Step 2: subject + body preview + plain-English tweak. No raw
+          HTML editing. Staff describe the change ("make it shorter",
+          "drop the bit about RSVPs", "warmer tone") and the AI rewrites. */}
       {bodyHtml && (
         <section ref={previewRef} className="rounded-2xl bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-              <Eye size={14} className="text-primary-700" />
-              Preview &amp; tweak
-            </h2>
-            <button
-              type="button"
-              onClick={() => setShowHtmlEditor((v) => !v)}
-              className="text-[11px] font-semibold text-primary-700 hover:text-primary-800 cursor-pointer"
-            >
-              {showHtmlEditor ? 'Hide HTML' : 'Edit HTML'}
-            </button>
-          </div>
+          <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+            <Eye size={14} className="text-primary-700" />
+            Preview
+          </h2>
 
           <Input
             label="Subject"
@@ -312,19 +329,32 @@ export function QuickSendTab() {
           )}
 
           <div
-            className="prose prose-sm max-w-none rounded-xl border border-neutral-200 bg-neutral-50 p-4 max-h-[420px] overflow-y-auto"
+            className="prose prose-sm max-w-none rounded-xl border border-neutral-200 bg-neutral-50 p-4 max-h-[480px] overflow-y-auto"
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
 
-          {showHtmlEditor && (
+          <div className="rounded-xl bg-primary-50/70 border border-primary-200/60 p-3 space-y-2">
+            <p className="text-xs font-semibold text-primary-900">
+              Want to change something? Tell the AI in plain words.
+            </p>
             <Input
               type="textarea"
-              value={bodyHtml}
-              onChange={(e) => setBodyHtml(e.target.value)}
-              rows={14}
-              inputClassName="bg-surface-3 font-mono text-xs leading-relaxed"
+              value={tweak}
+              onChange={(e) => setTweak(e.target.value)}
+              placeholder='e.g. "Make it shorter and warmer", "Drop the RSVP section", "Open with a question instead"'
+              rows={2}
             />
-          )}
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={tweaking ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+              onClick={handleTweak}
+              loading={tweaking}
+              disabled={!tweak.trim()}
+            >
+              Apply this tweak
+            </Button>
+          </div>
         </section>
       )}
 
