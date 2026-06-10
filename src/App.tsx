@@ -133,7 +133,7 @@ const AdminApplicationsPage = lazy(() => import('@/pages/admin/applications'))
 const AdminCreateSurveyPage = lazy(() => import('@/pages/admin/create-survey'))
 const AdminAuditLogPage = lazy(() => import('@/pages/admin/audit-log'))
 const AdminEmailPage = lazy(() => import('@/pages/admin/email'))
-const AdminReportsPage = lazy(() => import('@/pages/admin/reports'))
+const AdminInsightsPage = lazy(() => import('@/pages/admin/insights'))
 const AdminWorkflowsPage = lazy(() => import('@/pages/admin/workflows'))
 const AdminCreatePage = lazy(() => import('@/pages/admin/create'))
 const DevToolsPage = lazy(() => import('@/pages/admin/dev-tools'))
@@ -142,8 +142,10 @@ const AdminChallengesPage = lazy(() => import('@/pages/admin/challenges'))
 const ModerationQueuePage = lazy(() => import('@/pages/admin/moderation/index'))
 const AdminContactsPage = lazy(() => import('@/pages/admin/contacts'))
 const AdminLegalPagesPage = lazy(() => import('@/pages/admin/legal-pages'))
-const AdminImpactPage = lazy(() => import('@/pages/admin/impact'))
-const AdminMetricsPage = lazy(() => import('@/pages/admin/metrics'))
+// AdminImpactPage / AdminMetricsPage / AdminReportsPage are loaded via
+// the AdminInsightsPage tabs wrapper since the merge (2026-06-10). The
+// /admin/impact, /admin/metrics, /admin/reports, /admin/exports URLs
+// redirect to /admin/insights with a hash anchor.
 const AdminPhotosPage = lazy(() => import('@/pages/admin/photos'))
 
 // Admin Development (L&D)
@@ -449,14 +451,16 @@ function App() {
             <Route path="applications" element={<RequireCapability cap="manage_users"><AdminApplicationsPage /></RequireCapability>} />
             <Route path="surveys/create" element={<RequireCapability cap="manage_surveys"><AdminCreateSurveyPage /></RequireCapability>} />
             <Route path="surveys/:id/edit" element={<RequireCapability cap="manage_surveys"><AdminCreateSurveyPage /></RequireCapability>} />
-            <Route path="reports" element={<RequireCapability cap="view_reports"><AdminReportsPage /></RequireCapability>} />
             <Route path="national-impact" element={<RequireCapability cap="view_reports"><NationalImpactPage /></RequireCapability>} />
             <Route path="email" element={<RequireCapability cap="manage_email"><AdminEmailPage /></RequireCapability>} />
-            {/* /admin/exports merged into /admin/reports (May 2026). */}
-            <Route path="exports" element={<Navigate to="/admin/reports" replace />} />
             <Route path="audit-log" element={<RequireCapability cap="view_audit_log"><AdminAuditLogPage /></RequireCapability>} />
-            <Route path="impact" element={<RequireCapability cap="view_reports"><AdminImpactPage /></RequireCapability>} />
-            <Route path="metrics" element={<RequireCapability cap="view_reports"><AdminMetricsPage /></RequireCapability>} />
+            {/* Insights is the merged surface for Impact + Attendance (Metrics) + Reports.
+                The three legacy URLs redirect to the right tab via hash anchor (2026-06-10). */}
+            <Route path="insights" element={<RequireCapability cap="view_reports"><AdminInsightsPage /></RequireCapability>} />
+            <Route path="impact" element={<Navigate to="/admin/insights#impact" replace />} />
+            <Route path="metrics" element={<Navigate to="/admin/insights#attendance" replace />} />
+            <Route path="reports" element={<Navigate to="/admin/insights#reports" replace />} />
+            <Route path="exports" element={<Navigate to="/admin/insights#reports" replace />} />
             <Route path="photos" element={<RequireCapability cap="view_reports"><AdminPhotosPage /></RequireCapability>} />
             <Route path="shop" element={<RequireCapability cap="manage_merch"><AdminMerchPage /></RequireCapability>} />
             <Route path="partners" element={<RequireCapability cap="manage_partners"><AdminPartnersPage /></RequireCapability>} />

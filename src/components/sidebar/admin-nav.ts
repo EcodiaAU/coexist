@@ -15,7 +15,6 @@ import {
   Phone,
   Leaf,
   Image as ImageIcon,
-  BarChart3,
 } from 'lucide-react'
 import { createElement } from 'react'
 import type { NavCategory, NavItem } from './types'
@@ -55,10 +54,10 @@ export const adminNavCategories: NavCategory[] = [
     labelColor: 'text-amber-600',
     dotColor: 'bg-amber-500',
     items: [
-      { label: 'Impact', path: '/admin/impact', icon: icon(Leaf), capability: 'view_reports' },
-      { label: 'Metrics', path: '/admin/metrics', icon: icon(BarChart3), capability: 'view_reports' },
+      // Impact + Attendance (Metrics) + Reports merged into one Insights
+      // surface (2026-06-10). The legacy URLs still redirect.
+      { label: 'Insights', path: '/admin/insights', icon: icon(Leaf), capability: 'view_reports' },
       { label: 'Photos', path: '/admin/photos', icon: icon(ImageIcon), capability: 'view_reports' },
-      { label: 'Reports', path: '/admin/reports', icon: icon(FileText), capability: 'view_reports' },
       { label: 'Audit Log', path: '/admin/audit-log', icon: icon(FileText), capability: 'view_audit_log' },
     ],
   },

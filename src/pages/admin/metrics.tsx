@@ -57,8 +57,17 @@ function CohortBar({ label, count, total, delay }: { label: string; count: numbe
   )
 }
 
-export default function AdminMetricsPage() {
+function MetricsPageHeader() {
   useAdminHeader('Attendance & Retention')
+  return null
+}
+
+/**
+ * embedded=true lets the Insights wrapper host this page as a tab
+ * without the page-level useAdminHeader call (Insights sets one
+ * header for the whole tabbed surface).
+ */
+export default function AdminMetricsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const rm = !!useReducedMotion()
   const v = adminVariants(rm)
   const { toast } = useToast()
@@ -98,6 +107,7 @@ export default function AdminMetricsPage() {
 
   return (
     <motion.div className="py-6 space-y-8 pb-24" variants={v.stagger} initial="hidden" animate="visible">
+      {embedded ? null : <MetricsPageHeader />}
       {/* Filter bar - matches Impact */}
       <motion.div variants={v.fadeUp} className="flex flex-wrap items-center gap-3">
         <Dropdown options={dateRangeOptions} value={dateRange} onChange={(val) => setDateRange(val as DateRange)} className="w-40" />

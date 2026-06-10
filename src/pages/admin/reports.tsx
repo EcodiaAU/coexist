@@ -581,7 +581,17 @@ function openPrintableTable(title: string, headers: string[], rows: string[][], 
 
 type TabKey = 'quick' | 'custom'
 
-export default function AdminReportsPage() {
+function ReportsPageHeader({ heroContent }: { heroContent: React.ReactNode }) {
+  useAdminHeader('Reports', { heroContent })
+  return null
+}
+
+/**
+ * embedded=true lets the Insights wrapper host this page as a tab
+ * without the page-level useAdminHeader call. The wrapper sets one
+ * header for the whole tabbed surface.
+ */
+export default function AdminReportsPage({ embedded = false }: { embedded?: boolean } = {}) {
   // -------- Shared filters --------
   const [dateStart, setDateStart] = useState('')
   const [dateEnd, setDateEnd] = useState('')
@@ -628,7 +638,7 @@ export default function AdminReportsPage() {
     </AdminHeroStatRow>
   ), [shouldReduceMotion])
 
-  useAdminHeader('Reports', { heroContent: heroStats })
+  // Hosted by the Insights wrapper when embedded; standalone otherwise.
 
   /* -------- Quick Exports: handler -------- */
   const [generating, setGenerating] = useState<string | null>(null)
@@ -1094,6 +1104,7 @@ export default function AdminReportsPage() {
   /* -------- Render -------- */
   return (
     <div>
+      {embedded ? null : <ReportsPageHeader heroContent={heroStats} />}
       <motion.div className="space-y-6" variants={stagger} initial="hidden" animate="visible">
         {/* Tabs */}
         <motion.div variants={fadeUp} className="flex gap-2 border-b border-neutral-200">

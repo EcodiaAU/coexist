@@ -812,12 +812,22 @@ function DashboardTab() {
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function AdminImpactPage() {
-  useAdminHeader('Impact')
-
+/**
+ * embedded=true skips the page-level useAdminHeader call so the
+ * Insights wrapper can host the page-chrome and switch between
+ * Impact / Attendance / Reports tabs without three competing hero
+ * headers.
+ */
+export default function AdminImpactPage({ embedded = false }: { embedded?: boolean } = {}) {
   return (
     <div>
+      {embedded ? null : <ImpactPageHeader />}
       <DashboardTab />
     </div>
   )
+}
+
+function ImpactPageHeader() {
+  useAdminHeader('Impact')
+  return null
 }
