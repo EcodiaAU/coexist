@@ -110,24 +110,39 @@ HTML EMAIL RULES:
 - Always include alt text on images
 
 STRUCTURE (suggested, not rigid):
-1. Logo bar. The white-wordmark.png centred in a cell with explicit
-   bgcolor matching the surrounding section.
-2. Hero. The hero td must use the olive #879e62 background by default.
-   If the admin supplies {{hero_image_url}}, use it as a CSS background
-   image with background-size:cover and background-position:
-   {{hero_focal_x}}% {{hero_focal_y}}% (default 50% 50%), and overlay
-   a dark wash by wrapping the heading in an inner div with
-   background:rgba(0,0,0,{{hero_overlay_opacity}}) (default 0.35),
-   border-radius:14px, padding:32px. ALWAYS include a bgcolor olive
-   fallback so dark-mode email clients that strip background-image
-   still render the olive.
-3. Body. Content sections with clear hierarchy.
-4. CTA. Prominent button in accent orange (#E8913A). The CTA button
+1. Hero (ONE unified block: the logo and the heading text live in the
+   SAME table cell, not two separate sections). Use this exact
+   skeleton verbatim, only swapping in the heading and subtitle text:
+
+   <tr>
+     <td bgcolor="#879e62" style="background-color:#879e62;background-image:url('{{hero_image_url}}');background-size:cover;background-position:{{hero_focal_x}}% {{hero_focal_y}}%;background-repeat:no-repeat;border-radius:20px 20px 0 0;">
+       <div style="background-color:rgba(0,0,0,{{hero_overlay_opacity}});border-radius:20px 20px 0 0;padding:40px 32px;text-align:center;">
+         <img src="https://app.coexistaus.org/logos/white-wordmark.png" alt="Co-Exist" width="150" style="width:150px;height:auto;display:block;margin:0 auto 22px auto;border:0;outline:none;" />
+         <h1 style="color:#ffffff;margin:0;font-size:26px;font-weight:700;line-height:1.3;">YOUR HEADING HERE</h1>
+         <p style="color:rgba(255,255,255,0.92);margin:12px 0 0 0;font-size:15px;line-height:1.5;">Optional subtitle here</p>
+       </div>
+     </td>
+   </tr>
+
+   WHY this exact shape:
+   - The logo is centred via display:block;margin:0 auto and the cell's
+     text-align:center. NEVER left-align the logo.
+   - bgcolor + background-color:#879e62 is the ALWAYS-present olive
+     fallback. When {{hero_image_url}} is empty the url('') is ignored
+     and the whole hero is solid olive. When it is set the photo paints
+     over the olive.
+   - {{hero_overlay_opacity}} is 0 when there is no image (so a plain
+     olive hero has NO dark wash) and ~0.35 when there is an image (so
+     the white heading stays legible over any photo).
+   - Do NOT add a separate logo bar above or below this block. The logo
+     belongs inside this one hero cell.
+2. Body. Content sections with clear hierarchy.
+3. CTA. Prominent button in accent orange (#E8913A). The CTA button
    MUST be horizontally centred. Wrap it in <td align="center"
    style="text-align:center;padding:24px 0;"> with the <a> as an
    inline-block. Email clients only honour centre alignment if the
    table cell carries align="center".
-5. Footer. Social links, mailing address line, and a working
+4. Footer. Social links, mailing address line, and a working
    unsubscribe link. ALWAYS use {{unsubscribe_url}} as the href on the
    unsubscribe link, e.g.
    <a href="{{unsubscribe_url}}">Unsubscribe</a>. NEVER write a
