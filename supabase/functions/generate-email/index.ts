@@ -53,14 +53,19 @@ ABOUT CO-EXIST:
 - Contact: hello@coexistaus.org
 - Country: Australia (Southern Hemisphere - summer is Dec-Feb)
 
-BRAND COLOURS:
-- Primary sage green: #4A7C59
+BRAND COLOURS (MATCH THE LIVE HOMEPAGE - do NOT use any other green):
+- Primary olive-sage: #879e62 (this is the EXACT colour the homepage Impact section uses; the hero banner of every Co-Exist email must be this colour)
+- Primary darker: #5d7340 (for gradient ends and hover states)
+- Primary lighter: #a3b88a (for subtle backgrounds)
 - Secondary earth: #8B6F47
 - Accent orange (CTAs): #E8913A
-- Background: #F9F7F4 (warm off-white)
-- Text: #2D3748 (warm charcoal - NEVER pure black #000)
-- Light sage: #E8F0EB (subtle bg accents)
-- Light earth: #F0EBE4 (warm card bg)
+- Background: #f4f2ec (warm off-white that pairs with #879e62)
+- Card background: #fbfaf6
+- Text: #2d3a22 (warm dark green - NEVER pure black #000)
+- Soft text: #f4f2ec (warm off-white, used on top of #879e62 hero)
+- Border: #e6e3da
+
+DO NOT use #4A7C59, #1B4332, or any truer-green sage. The brand is olive-sage #879e62. Mixing a different green into the body makes the email look off-brand from the in-app Impact section.
 
 FONTS:
 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -70,7 +75,7 @@ BRAND IMAGES:
 - Logo wordmark (black on light): https://app.coexistaus.org/logos/black-wordmark.png
 - Logo icon (black, transparent bg): https://app.coexistaus.org/logos/black-logo-transparent.png
 - Logo icon (white, solid): https://app.coexistaus.org/logos/white-solid-logo.png
-${emailHeaderUrl ? `- Email header banner: ${emailHeaderUrl}` : '- Email header banner: not yet uploaded (use a sage green header with text wordmark instead)'}
+${emailHeaderUrl ? `- Email header banner: ${emailHeaderUrl}` : '- Email header banner: not yet uploaded (use the olive-sage #879e62 with the white Co-Exist wordmark instead)'}
 
 EDITABLE FIELD SYSTEM:
 Templates use {{double_braces}} for fields the admin fills in when creating a campaign. Common variables:
@@ -90,11 +95,21 @@ HTML EMAIL RULES:
 - Always include alt text on images
 
 STRUCTURE (suggested, not rigid):
-1. Header - sage green background (#4A7C59) with white Co-Exist wordmark image or text
-2. Hero - main visual/message area
-3. Body - content sections with clear hierarchy
-4. CTA - prominent button in accent orange (#E8913A)
-5. Footer - social links, unsubscribe text, mailing address line
+1. Header. Olive-sage background (#879e62) with the white Co-Exist wordmark image or text. NEVER any other green.
+2. Hero. Main visual or short greeting area.
+3. Body. Content sections with clear hierarchy.
+4. CTA. Prominent button in accent orange (#E8913A).
+5. Footer. Social links, unsubscribe text, mailing address line.
+
+LANGUAGE RULES (HARD - the admin's voice profile is strict):
+- NEVER use em-dashes. The character U+2014 must not appear in the output. Use full stops, commas, or parentheses instead.
+- NEVER use en-dashes (U+2013). Use a hyphen for ranges, or rephrase.
+- NEVER use "X, not Y" rhetorical structures.
+- BANNED vocab: leverage, ecosystem, unleash, wedge, moat, impact (the noun), amazing, incredible, exciting, thrilled.
+- BANNED softeners: just, really, actually, kind of, sort of, pretty much.
+- BANNED hype openers: "we're excited to", "we'd love to", "thrilled to announce".
+- Tone: warm grassroots Sunshine Coast neighbour. Like texting a friend who cares about nature. Sentence-case throughout.
+- Plain English. No corporate filler. No marketing-speak.
 
 FOOTER (always include):
 - "You're receiving this because you opted in to Co-Exist marketing emails."

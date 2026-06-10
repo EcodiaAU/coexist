@@ -14,6 +14,14 @@ const DELAY_MS = 200  // Pause between batches to respect rate limits
 
 interface CampaignPayload {
   campaign_id: string
+  /**
+   * If set, bypass the audience resolver and send ONE email to this
+   * address only. Used by the Quick Send "Send test to me" flow so the
+   * admin gets a real preview in their own inbox with their own name
+   * and their own collective's next event resolved. The campaign row
+   * is still recorded so the History tab shows the test send.
+   */
+  test_recipient_email?: string
 }
 
 // Per-recipient auto-fill variables. Resolved at send-time so one campaign
@@ -123,7 +131,7 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const { campaign_id } = (await req.json()) as CampaignPayload
+    const { campaign_id, test_recipient_email } = (await req.json()) as CampaignPayload
 
     if (!campaign_id) {
       return new Response(
@@ -159,13 +167,33 @@ Deno.serve(async (req: Request) => {
       .update({ status: 'sending' })
       .eq('id', campaign_id)
 
-    // 3. Resolve audience
-    const { data: audience, error: aErr } = await supabaseAdmin
-      .rpc('resolve_campaign_audience', {
+    // 3. Resolve audience. Test sends bypass the resolver and target
+    // the caller's own profile so the admin gets a real personalised
+    // preview in their own inbox.
+    let audience: { profile_id: string; email: string }[] | null = null
+    let aErr: { message?: string } | null = null
+    if (test_recipient_email) {
+      const { data: callerProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email, display_name, first_name')
+        .eq('email', test_recipient_email)
+        .maybeSingle()
+      if (!callerProfile) {
+        // Synthetic profile so the substitution still works even if the
+        // test recipient is not a Co-Exist user (e.g. a staff alias).
+        audience = [{ profile_id: '00000000-0000-0000-0000-000000000000', email: test_recipient_email }]
+      } else {
+        audience = [{ profile_id: callerProfile.id, email: callerProfile.email || test_recipient_email }]
+      }
+    } else {
+      const res = await supabaseAdmin.rpc('resolve_campaign_audience', {
         p_target_all: campaign.target_all,
         p_tag_ids: campaign.target_tag_ids || [],
         p_collective_ids: campaign.target_collective_ids || [],
       })
+      audience = res.data as { profile_id: string; email: string }[] | null
+      aErr = res.error
+    }
 
     if (aErr) {
       console.error('[send-campaign] Audience error:', aErr)

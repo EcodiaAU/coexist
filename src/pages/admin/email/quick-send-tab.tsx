@@ -190,33 +190,16 @@ export function QuickSendTab() {
       if (insertErr) throw insertErr
       const campaignId = row.id as string
 
-      // Test sends bypass the audience resolver and post one email
-      // straight to the admin's own inbox via the per-event send-email
-      // function (it already personalises with the recipient's name and
-      // event vars).
-      if (testOnly) {
-        const { error: sendErr } = await supabase.functions.invoke('send-email', {
-          body: {
-            to: profile?.email,
-            subject: subject.trim(),
-            type: 'campaign_test',
-            html: bodyHtml,
-            data: { name: profile?.first_name || profile?.display_name || 'there' },
-          },
-        })
-        if (sendErr) throw sendErr
-        await supabase
-          .from('email_campaigns')
-          .update({ status: 'sent', sent_at: new Date().toISOString(), total_recipients: 1, total_delivered: 1 })
-          .eq('id', campaignId)
-        return { testOnly: true, recipients: 1 }
-      }
-
-      const { error: bulkErr } = await supabase.functions.invoke('send-campaign', {
-        body: { campaign_id: campaignId },
-      })
-      if (bulkErr) throw bulkErr
-      return { testOnly: false }
+      // Both test and bulk sends route through send-campaign so the
+      // per-recipient {{next_event_*}} substitution + the campaign row
+      // bookkeeping use the same pipeline. test_recipient_email
+      // bypasses the audience resolver and sends one email to the
+      // admin's own address with their own profile resolved.
+      const body: { campaign_id: string; test_recipient_email?: string } = { campaign_id: campaignId }
+      if (testOnly) body.test_recipient_email = profile?.email || ''
+      const { error: sendErr } = await supabase.functions.invoke('send-campaign', { body })
+      if (sendErr) throw sendErr
+      return { testOnly, recipients: testOnly ? 1 : undefined }
     },
     onSuccess: (res) => {
       if (res?.testOnly) {
