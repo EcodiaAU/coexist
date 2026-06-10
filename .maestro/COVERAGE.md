@@ -7,12 +7,13 @@ PARTIAL when a flow reaches it but asserts thinly; UNCOVERED otherwise.
 Update this file in the SAME commit as any flow change (lifecycle rule in
 backend/patterns/maestro-mobile-stably-web-are-canonical-app-testing-2026-06-10.md).
 
-Status totals 2026-06-10 (after author batch 4): ~75 covered / ~5 partial
-/ ~44 uncovered + 2 open findings: F2 (canary armed in 38), F3
-(corrected: deep-link bypasses authed session; canary armed in 32).
-F1 reclassified FALSIFIED by 93-f1-display-name-cache-probe - the
-sidebar tracks the latest display_name across both passes and
-post-cleanup (see batch 4 notes).
+Status totals 2026-06-11 (after author batch 5): ~77 covered / ~5 partial
+/ 3 BLOCKED-by-F4 / ~39 uncovered + 3 open findings: F2 (canary armed
+in 38), F3 (corrected: deep-link bypasses authed session; canary armed
+in 32), F4 (deep-link resolver strips path segments after :id - new in
+batch 5, see Batch 5 notes). F1 reclassified FALSIFIED by 93-f1-
+display-name-cache-probe - the sidebar tracks the latest display_name
+across both passes and post-cleanup (see batch 4 notes).
 
 Deep-link primitive (2026-06-10 unlock): `coexist://<path>` opens the
 native intent and lands on the routed page reliably, including admin
@@ -36,10 +37,11 @@ chains, so coverage payoff per flow is high.
 | /profile/:userId | UNCOVERED | needs a known peer user id |
 | /events | COVERED | 08-explore-walk (redirects to /explore) |
 | /events/:id | COVERED | 39-events-detail-deep-walk (Supabase-seeded next-free-public event id via .maestro/scripts/seed-event-id.js runScript + coexist://events/<id> deep-link; asserts Share Event + a CTA branch from Register / Cancel Registration / Check In Now / Join Waitlist / You're registered). The unstable activity-type chip tap path is bypassed. RSVP create-assert-DELETE in 91-events-detail-rsvp-cleanup. |
-| /events/:id/day | UNCOVERED | |
-| /events/:id/impact | UNCOVERED | |
-| /events/:id/survey, /profile-survey | UNCOVERED | |
-| /events/:id/ticket-confirmation | UNCOVERED | rides the RSVP flow |
+| /events/:id/day | COVERED | 45-events-detail-day-render (LEADER ACTIONS rail tap from event detail - the deep-link prefix workaround for F4. Anchor: "Attendees" tab label visible only on the day-of dashboard). |
+| /events/:id/impact | COVERED | 46-events-detail-log-impact-render (LEADER ACTIONS rail tap from event detail. Anchor: "Volunteer Hours" + "Participants" section labels, since the header text only renders as aria-label "Log Impact page header" per the batch 4 anchor gotcha). |
+| /events/:id/survey | BLOCKED-F4 | deep-link `coexist://events/<id>/survey` lands on /events/<id> (F4); the in-app CTA at event-detail.tsx:675/1618 only renders when isPastEvent(event) is true and the seeded event is upcoming. Additional substrate gate at post-event-survey.tsx:226: attendance.status must equal 'attended' or the page shows the "Survey not available" EmptyState. Unblock A: seed a past event with attendance.status='attended' for the test account. Unblock B: extend use-deep-link resolver to forward path segments past :id (one-line fix, affects all 5 event sub-pages). |
+| /events/:id/profile-survey | BLOCKED-F4 | deep-link strips path (F4); no in-app CTA found from event detail or other surfaces. Unblock: extend deep-link resolver. |
+| /events/:id/ticket-confirmation | BLOCKED-F4 | deep-link strips path (F4); rides PAID ticket purchase only (free RSVPs do not create ticket rows per the batch 4 finding, so the route is unreachable from event-detail for the free-event seed). Unblock A: drive a paid Stripe checkout end-to-end with cleanup (heavy). Unblock B: extend deep-link resolver. |
 | /events/:id/check-in, /check-in/:token | UNCOVERED | leader-side |
 | /explore | COVERED | 08-explore-walk |
 | /collectives | COVERED | 10-collectives-explore-tab (redirects to /explore?tab=collectives) |
@@ -227,6 +229,35 @@ chains, so coverage payoff per flow is high.
   tapOn ".*Profile.*" from a More-drawer-back state landed on
   /admin/development. openLink "coexist://profile/edit" is the safer
   cross-phase nav primitive.
+
+## Batch 5 (2026-06-11) - event sub-pages + F4 deep-link resolver finding
+
+- **F4 new finding.** `src/hooks/use-deep-link.ts:18-37` resolves
+  custom-scheme paths by reading only `[first, second]` of the URL
+  segments. For `case 'events'` (line 25-26) the resolver returns
+  `/events/${second || ''}` regardless of any third+ segment. So
+  `coexist://events/<id>/day` (and /impact, /survey, /profile-survey,
+  /ticket-confirmation, /check-in, /edit) silently lands on
+  `/events/<id>`. The bug surfaced during batch 5: 45 + 46 false-passed
+  initially because the LEADER ACTIONS rail on event-detail also
+  contains "Event Day" and "Log Impact" button labels, so the
+  assertion matched the wrong page. Same constraint applies to the
+  `case 'collectives'` branch (line 27-28: `/collectives/<id>` only,
+  no `<id>/manage`). One-line fix would be:
+  `return third ? '/events/' + second + '/' + third : '/events/' + (second || '')`.
+  Until the fix lands, sub-page routes have to be reached by UI tap
+  from the parent surface (canonical entry path for upcoming-event
+  leaders anyway).
+- **2 flows green this batch:** 45 events-detail-day-render (LEADER
+  ACTIONS scroll + tap "Event Day" -> "Attendees" tab label assert),
+  46 events-detail-log-impact-render (LEADER ACTIONS scroll + tap
+  "Log Impact" -> "Volunteer Hours" + "Participants" assert; header
+  text is aria-label-only per the batch 4 codification).
+- **3 routes marked BLOCKED-F4:** /events/:id/survey,
+  /events/:id/profile-survey, /events/:id/ticket-confirmation. Each
+  row in the table above carries the exact unblock pathway (extend
+  the deep-link resolver, or build the substrate seed to satisfy
+  the page-level gate).
 
 ## Rules that bind authoring here
 
