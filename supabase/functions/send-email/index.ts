@@ -168,24 +168,26 @@ const LOGO_URL = 'https://app.coexistaus.org/logos/white-wordmark.webp'
 const LOGO_DARK_URL = 'https://app.coexistaus.org/logos/black-wordmark.png'
 const APP_URL = 'https://app.coexistaus.org'
 
-// Brand palette: Co-Exist sage. Aligned with src/styles/theme + CLAUDE.md
-// primary family (#4A7C59 with darker/lighter siblings on the same hue).
-// Updated 2026-06-10 from the prior olive (#869e62) which read as a
-// muted khaki in client inboxes and was off-brand vs the in-app sage.
+// Brand palette: Co-Exist olive-sage. This is the colour the homepage
+// Impact section uses (src/pages/home.tsx -> bg-[#879e62] with the
+// warm off-white #f4f2ec text on top). The 2026-06-10 detour to a
+// truer-green sage #4A7C59 was off-brand vs what subscribers see on
+// the homepage, so reverted to the homepage olive and kept the
+// matching primary-* family as darker / lighter siblings.
 const C = {
-  brand: '#4A7C59',
-  brandDark: '#2D5A3D',
-  brandLight: '#7BA88D',
-  bg: '#F9F7F4',
-  cardBg: '#FCFAF7',
-  border: '#E8E2D5',
-  text: '#2D3748',
-  textMuted: '#5A6B58',
-  textLight: '#8B9484',
+  brand: '#879e62',
+  brandDark: '#5d7340',
+  brandLight: '#a3b88a',
+  bg: '#f4f2ec',
+  cardBg: '#fbfaf6',
+  border: '#e6e3da',
+  text: '#2d3a22',
+  textMuted: '#5e6b4a',
+  textLight: '#8a9474',
   white: '#ffffff',
   error: '#c0392b',
   warning: '#E8913A',
-  success: '#4A7C59',
+  success: '#879e62',
 }
 
 /** Outer email shell - logo header, gradient banner, content area, footer */

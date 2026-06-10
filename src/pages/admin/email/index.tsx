@@ -9,6 +9,7 @@ import {
   BarChart3,
   XCircle,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useAdminHeader } from '@/components/admin-layout'
@@ -16,6 +17,7 @@ import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { Skeleton } from '@/components/skeleton'
 import { TabBar } from '@/components/tab-bar'
 import { useEmailMarketingStats } from './shared'
+import { QuickSendTab } from './quick-send-tab'
 import { CampaignsTab } from './campaigns-tab'
 import { TemplatesTab } from './templates-tab'
 import { SystemTemplatesTab } from './system-templates-tab'
@@ -24,7 +26,8 @@ import { TagsTab } from './tags-tab'
 import { DeliveryTab } from './delivery-tab'
 
 const tabs = [
-  { id: 'campaigns', label: 'Campaigns', icon: <Send size={14} /> },
+  { id: 'quick-send', label: 'Quick Send', icon: <Sparkles size={14} /> },
+  { id: 'campaigns', label: 'History', icon: <Send size={14} /> },
   { id: 'templates', label: 'Templates', icon: <FileText size={14} /> },
   { id: 'system', label: 'System', icon: <Mail size={14} /> },
   { id: 'subscribers', label: 'Subscribers', icon: <Users size={14} /> },
@@ -33,7 +36,7 @@ const tabs = [
 ]
 
 export default function AdminEmailPage() {
-  const [activeTab, setActiveTab] = useState('campaigns')
+  const [activeTab, setActiveTab] = useState('quick-send')
   const { data: stats, isLoading: statsLoading } = useEmailMarketingStats()
   const showStatsLoading = useDelayedLoading(statsLoading)
   const shouldReduceMotion = useReducedMotion()
@@ -83,6 +86,7 @@ export default function AdminEmailPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, delay: 0.25 }}
       >
+        {activeTab === 'quick-send' && <QuickSendTab />}
         {activeTab === 'campaigns' && <CampaignsTab />}
         {activeTab === 'templates' && <TemplatesTab />}
         {activeTab === 'system' && <SystemTemplatesTab />}
