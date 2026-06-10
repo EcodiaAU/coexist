@@ -1,0 +1,73 @@
+# PROD-WRITE WITH CLEANUP: /admin/events create-half. The render-only
+# half of /admin/events/create already lives in 57. This flow proves the
+# substrate -> UI -> substrate round trip: insert a sentinel `events` row
+# via the auth-password REST path (Sunshine Coast collective, status=
+# published, 28 days out, sentinel title MAESTRO-92-PROBE-<ts>), deep-link
+# the admin events list, assert the sentinel title surfaces on the
+# upcoming view, delete the row by sentinel-prefix, deep-link again,
+# assert it is gone.
+#
+# 9x prefix because it mutates the events table. Cleanup runs once before
+# the seed too, so orphans from a prior killed run self-heal - cleanup
+# failure (per Tate 2026-06-10) is itself a finding.
+#
+# Anchor strategy: the admin events list groups by collective then renders
+# event titles via use-admin-events.ts (upcoming gte now). The sentinel
+# title is unique per run thanks to the millisecond suffix, so
+# assertVisible / assertNotVisible against ${output.eventTitle} discriminate
+# directly. The page does not paginate so the title is reachable within
+# the 200-row upcoming window; scrollUntilVisible handles long lists.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+# Self-heal: sweep orphans from prior killed runs before the seed lands.
+- runScript: ../scripts/cleanup-admin-event.js
+# CREATE: insert the sentinel events row. Exposes output.eventTitle.
+- runScript: ../scripts/seed-admin-event.js
+- openLink: "coexist://admin/events"
+- extendedWaitUntil:
+    visible: "UPCOMING"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: "${output.eventTitle}"
+    direction: DOWN
+    timeout: 15000
+    speed: 40
+- assertVisible: "${output.eventTitle}"
+- takeScreenshot: /tmp/maestro-cx-92-created
+# DELETE: cleanup-admin-event.js does not touch output.eventTitle so the
+# next assertion still resolves the sentinel string verbatim. Restart the
+# app so the admin-events list remounts at the top of the upcoming view
+# (the prior step left the scroll position deep in the list when it
+# anchored the sentinel) and react-query refetches the dashboard.
+- runScript: ../scripts/cleanup-admin-event.js
+- stopApp
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- openLink: "coexist://admin/events"
+- extendedWaitUntil:
+    visible: "UPCOMING"
+    timeout: 20000
+- assertNotVisible: "${output.eventTitle}"
+- takeScreenshot: /tmp/maestro-cx-92-cleaned

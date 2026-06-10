@@ -7,15 +7,19 @@ PARTIAL when a flow reaches it but asserts thinly; UNCOVERED otherwise.
 Update this file in the SAME commit as any flow change (lifecycle rule in
 backend/patterns/maestro-mobile-stably-web-are-canonical-app-testing-2026-06-10.md).
 
-Status totals 2026-06-11 (after author batch 6): ~84 covered / ~5 partial
-/ 3 BLOCKED-by-F4 / ~32 uncovered + 4 open findings: F2 (canary armed
-in 38), F3 (corrected: deep-link bypasses authed session; canary armed
-in 32), F4 (deep-link resolver strips path segments after :id - new
-in batch 5), F5 (deep-link /shop/cart from /shop/checkout trips an
-ErrorBoundary, reproducible - new in batch 6). F1 reclassified
-FALSIFIED by 93-f1-display-name-cache-probe - the sidebar tracks the
-latest display_name across both passes and post-cleanup (see batch 4
-notes).
+Status totals 2026-06-11 (after author batch 7): ~85 covered / ~5 partial
+/ 3 BLOCKED-by-F4 / ~10 BLOCKED-substrate / ~17 uncovered + 4 open
+findings: F2 (canary armed in 38), F3 (corrected: deep-link bypasses
+authed session; canary armed in 32), F4 (deep-link resolver strips
+path segments after :id - new in batch 5), F5 (deep-link /shop/cart
+from /shop/checkout trips an ErrorBoundary, reproducible - new in
+batch 6). F1 reclassified FALSIFIED by 93-f1-display-name-cache-probe -
+the sidebar tracks the latest display_name across both passes and
+post-cleanup (see batch 4 notes). Batch 7 reclassified 10 rows from
+UNCOVERED to BLOCKED-substrate after Supabase probes proved the gating
+state (zero `dev_modules`, zero own-account `merch_orders`,
+icon-only/aria-label-only collective-manage affordance, F4 on every
+event sub-page including /check-in - see batch 7 notes).
 
 Deep-link primitive (2026-06-10 unlock): `coexist://<path>` opens the
 native intent and lands on the routed page reliably, including admin
@@ -44,25 +48,26 @@ chains, so coverage payoff per flow is high.
 | /events/:id/survey | BLOCKED-F4 | deep-link `coexist://events/<id>/survey` lands on /events/<id> (F4); the in-app CTA at event-detail.tsx:675/1618 only renders when isPastEvent(event) is true and the seeded event is upcoming. Additional substrate gate at post-event-survey.tsx:226: attendance.status must equal 'attended' or the page shows the "Survey not available" EmptyState. Unblock A: seed a past event with attendance.status='attended' for the test account. Unblock B: extend use-deep-link resolver to forward path segments past :id (one-line fix, affects all 5 event sub-pages). |
 | /events/:id/profile-survey | BLOCKED-F4 | deep-link strips path (F4); no in-app CTA found from event detail or other surfaces. Unblock: extend deep-link resolver. |
 | /events/:id/ticket-confirmation | BLOCKED-F4 | deep-link strips path (F4); rides PAID ticket purchase only (free RSVPs do not create ticket rows per the batch 4 finding, so the route is unreachable from event-detail for the free-event seed). Unblock A: drive a paid Stripe checkout end-to-end with cleanup (heavy). Unblock B: extend deep-link resolver. |
-| /events/:id/check-in, /check-in/:token | UNCOVERED | leader-side |
+| /events/:id/check-in | BLOCKED-F4 | deep-link `coexist://events/<id>/check-in` strips path (F4). The two in-app navigations to this route (proximity-check-in-banner.tsx:78 and /admin/dev-tools:1297) are GPS-gated and admin-debug respectively - neither is a stable test surface. The two visible check-in affordances on event-detail are SHEETS, not navigations: "Check In Now" opens setShowCheckInSheet (event-detail.tsx:728), "Check-in Code" opens setShowQrSheet (line 1173). Unblock A: extend deep-link resolver (one-line fix, see F4). Unblock B: stub a proximity-banner trigger for the test session. |
+| /check-in/:token | BLOCKED-substrate | external QR scan only. The token routes to /Users/ecodia/.code/coexist/src/pages/public/check-in.tsx via `https://app.coexist.au/check-in/<token>` (event-day.tsx:982). No in-app entry point; reaching it from the test session requires a deep-link with a real public_check_in_token off a published event with public_check_in_enabled=true. Unblock: seed event with public_check_in_enabled and openLink the https URL. |
 | /explore | COVERED | 08-explore-walk |
 | /collectives | COVERED | 10-collectives-explore-tab (redirects to /explore?tab=collectives) |
 | /collectives/:slug | COVERED | 36-collective-detail (Explore -> Collectives tab -> tap Sunshine Coast row -> assert About/Members/Upcoming/Join/Events anchor) |
-| /collectives/:slug/manage | UNCOVERED | leader-side |
+| /collectives/:slug/manage | BLOCKED-F4+aria | the in-app affordance is the Settings-icon button in /collectives/:slug Header rightActions (collective-detail.tsx:184) with `aria-label="Manage collective"` and NO visible text label - Maestro's text matcher cannot reach it under the batch-4 anchor-gotcha rule ("aria-label X is NOT visible text"). Deep-link `coexist://collectives/sunshine-coast/manage` strips the path (F4: `case 'collectives'` only reads `/collectives/<id>`, no `/<id>/manage`). The leader-hub Invite menu (leader/index.tsx:1080) navigates to this route but the leader hub itself is uncovered + unstable. Unblock A: extend deep-link resolver (same one-liner that unblocks event sub-pages). Unblock B: tap-by-accessibility-id if Maestro devtools hierarchy exposes the aria-label as a unique id (probe queued for batch 8). |
 | /notifications | COVERED | 09-notifications-walk |
 | /settings | COVERED | 04-settings-walk |
 | /settings/account | COVERED | 17-settings-subpages |
 | /settings/notifications | COVERED | 17-settings-subpages |
 | /settings/privacy | COVERED | 17-settings-subpages |
 | /learn | COVERED | 15-learn-walk (My Learning empty-state) |
-| /learn/module/:id, /learn/section/:id, /learn/quiz/:id, /learn/complete | UNCOVERED | needs a published module; queued |
+| /learn/module/:id, /learn/section/:id, /learn/quiz/:id, /learn/complete | BLOCKED-substrate | batch 7 anon+authed probe: `dev_modules`, `dev_sections`, `dev_quizzes` all return zero rows (PGRST205 redirected from `learn_modules` / `learning_modules` / `modules` hints to `public.dev_modules`). Without a published module the routes either bounce to /learn or render an EmptyState that has no path-discriminating anchor. Unblock: seed a dev_module + dev_section + dev_quiz triple (admin can INSERT via authed REST), or use /admin/development/modules/new to author one through the UI then reuse the id across /learn/module/:id and /learn/section/:id flows. |
 | /shop | COVERED | 12-shop-walk + 50-shop-journey-render |
 | /shop/cart | COVERED | 50-shop-journey-render |
 | /shop/orders | COVERED | 50-shop-journey-render |
 | /shop/order-confirmation | COVERED | 50-shop-journey-render (renders fallback when no session) |
 | /shop/:slug | COVERED | 53-shop-product-detail-render (seeds an active merch_products row via .maestro/scripts/seed-product-slug.js + authed REST; merch_products RLS is TO authenticated so the anon key returns zero rows; anchor: product.name as the h1 at product-detail.tsx:540). |
 | /shop/checkout | COVERED | 94-shop-checkout-with-cart-cleanup (PROD-WRITE: seed product, tap Cart on /shop/<slug>, deep-link /shop/checkout, assert "Secure checkout" hero + "Total" footer; cleanup relaunches the app then deep-links /shop/cart and taps aria-label "Remove <productName>". Cleanup must restart because the in-session deep-link /shop/checkout -> /shop/cart trips the ErrorBoundary, see F5). |
-| /shop/orders/:id | UNCOVERED | needs a real completed order; queued |
+| /shop/orders/:id | BLOCKED-substrate | batch 7 authed probe: code@ecodia.au user_id 4cc11fa1-8aec-4a92-928d-3c8a304dd4db has ZERO `merch_orders` rows (the three live orders in the table belong to user 552763c5 - not the test session). useMyOrders returns empty so the /shop/orders list shows the empty-state and there is no row to tap into /shop/orders/:id. Unblock A: seed a merch_orders row owned by the test user (items array + shipping address + status='pending' is enough to render the order detail Header "Order #<id slice>" anchor). Unblock B: drive the existing 94-shop-checkout flow further to land on order-confirmation, capture the created order id, then read /shop/orders/<id> with cleanup. |
 | /tasks | COVERED | 13-tasks-walk |
 | /updates | COVERED | 14-updates-walk |
 | /impact | COVERED | redirects to /profile (02-tabs-walk) |
@@ -71,8 +76,8 @@ chains, so coverage payoff per flow is high.
 | /signup | COVERED | 99-auth-signed-out-sweep (signed-OUT clearState path, render-only) |
 | /forgot-password, /reset-password, /verify-email | COVERED | 99-auth-signed-out-sweep (render-only) |
 | /welcome | COVERED | 99-auth-signed-out-sweep (marketing landing) |
-| /onboarding, /welcome-back, /accept-terms | UNCOVERED | needs seeded fresh-account state |
-| /suspended | UNCOVERED | needs seeded suspended state |
+| /onboarding, /welcome-back, /accept-terms | BLOCKED-substrate | the test account is past these gates (onboarded + terms accepted long ago). Reaching them requires either a fresh auth.users row that has not seen the onboarding wizard (heavy seed: auth.users INSERT is service-role only, the test session cannot drive it) or temporarily mutating profiles.onboarding_completed=false / accepted_terms_at=null on the existing session user with cleanup - which logs the running session out mid-flow. Unblock A: spin up a sibling test account `code+onboarding@ecodia.au` reserved for these flows (substrate prep, not in-flow). Unblock B: register `/onboarding` etc. as fixed render targets driven by a service-role-backed seed harness outside Maestro. |
+| /suspended | BLOCKED-substrate | requires profiles.suspended_at != null on the test session, which would lock the test account out of every other flow that runs after this one. Same dual-account unblock as /onboarding. |
 
 ## Admin (test account HAS admin role)
 
@@ -80,7 +85,7 @@ chains, so coverage payoff per flow is high.
 |---|---|---|
 | /admin (home) | COVERED | 03-admin-walk (anchors: Collectives + App tabs; select VALUES are not hierarchy text) |
 | /admin/events | COVERED | 31-admin-events-list (list + counters + BIGGEST EVENT) + 05-admin-metrics-invariance (UPCOMING / REGISTRATIONS / AVG ATTENDANCE vs DB truth) |
-| /admin/events/create | COVERED | 57-admin-events-create-render (deep-link coexist://admin/events/create renders the form under AdminLayout; anchor: "New Event" h1 + Publish Event / Save as Draft footer buttons + "Select Collectives" required-section heading. Header text itself is aria-label-only per the batch 4 codification - the visible h1 reads "New Event" not "Create Event"). The prod-write-with-cleanup half (substrate create -> UI assert in /admin/events list -> substrate delete -> assert gone) is queued as 92-admin-events-create-cleanup for the next author. |
+| /admin/events/create | COVERED | 57-admin-events-create-render (deep-link coexist://admin/events/create renders the form under AdminLayout; anchor: "New Event" h1 + Publish Event / Save as Draft footer buttons + "Select Collectives" required-section heading. Header text itself is aria-label-only per the batch 4 codification - the visible h1 reads "New Event" not "Create Event") + 92-admin-events-create-cleanup (PROD-WRITE: authed-REST INSERT into events with sentinel title MAESTRO-92-PROBE-<ts> via .maestro/scripts/seed-admin-event.js -> deep-link /admin/events upcoming list -> scrollUntilVisible + assertVisible the sentinel title -> authed-REST DELETE by title prefix via .maestro/scripts/cleanup-admin-event.js -> stopApp + relaunch to clear the scrolled state -> deep-link /admin/events -> assertNotVisible the sentinel. Cleanup script also self-heals orphans on entry. Pattern: 91-events-detail-rsvp-cleanup applied to the admin substrate write path). |
 | /admin/users | COVERED | 20-admin-users |
 | /admin/collectives | COVERED | 21-admin-collectives |
 | /admin/collectives/:id | COVERED | 35-admin-collective-detail (tap Sunshine Coast row -> assert Members/Manage/Leaders/Region/Active anchor; Permission required branch also accepted) |
@@ -105,7 +110,7 @@ chains, so coverage payoff per flow is high.
 | /admin/dev-tools | COVERED | 33-admin-sweep-render |
 | /admin/development (list) | COVERED | 34-admin-development-render |
 | /admin/development/modules/new | COVERED | 34-admin-development-render |
-| /admin/development/{modules,sections,quizzes,results} detail (6 routes) | UNCOVERED | needs published learn content first |
+| /admin/development/{modules,sections,quizzes,results} detail (6 routes) | BLOCKED-substrate | same `dev_modules` / `dev_sections` / `dev_quizzes` zero-row gate as /learn (batch 7 probe). Unblock A: drive /admin/development/modules/new to author a real module through the UI then capture the id for the detail flows. Unblock B: authed-REST seed `dev_modules` row directly (admin RLS allows it) - cheaper than the UI authoring round-trip. |
 | /admin/partners | COVERED | 29-admin-partners-shop |
 | /admin/photos | COVERED | 33-admin-sweep-render |
 | /admin/shop | COVERED | 29-admin-partners-shop (Merch & Store) |
@@ -263,6 +268,68 @@ chains, so coverage payoff per flow is high.
   row in the table above carries the exact unblock pathway (extend
   the deep-link resolver, or build the substrate seed to satisfy
   the page-level gate).
+
+## Batch 7 (2026-06-11) - admin events create-cleanup + BLOCKED-substrate triage
+
+- **1 new flow green this batch:**
+  - 92-admin-events-create-cleanup (PROD-WRITE: substrate INSERT + UI
+    assert in /admin/events upcoming list + substrate DELETE + assert-
+    gone after a stopApp+relaunch reset. The seed-admin-event.js +
+    cleanup-admin-event.js pair are the canonical admin-write template
+    for follow-on flows. 9x prefix because it mutates events).
+- **Same-route post-mutation assertion needs an app restart.** After
+  scrollUntilVisible drove the list deep enough to find the sentinel
+  title, the second deep-link to `/admin/events` re-rendered against
+  the still-scrolled state - the UPCOMING anchor was off-screen and
+  the assertion failed despite the underlying data being clean. Fix:
+  `stopApp` + `launchApp` between the mutation and the assert-gone
+  step rather than relying on the same-route deep-link to remount the
+  list. Codified in 92.
+- **10 routes reclassified UNCOVERED -> BLOCKED-substrate** after
+  Supabase probes (anon + authed-as-code@) proved the gating state.
+  Probes used the auth-password REST flow with the in-bundle anon key.
+  - **/learn/module + /learn/section + /learn/quiz + /learn/complete +
+    /admin/development sub-routes:** `dev_modules`, `dev_sections`,
+    `dev_quizzes` all return zero rows. PostgREST hints corrected the
+    code-side assumption (table names ended up dev_*, NOT learn_*).
+    Unblock pathways recorded per row.
+  - **/shop/orders/:id:** code@ecodia.au has zero `merch_orders`. The
+    three live orders in the table belong to a different user. Two
+    unblock pathways recorded (seed an order; drive 94 further to
+    capture a real one).
+  - **/onboarding + /welcome-back + /accept-terms + /suspended:**
+    reaching them mutates the test session's profiles row in ways
+    that lock it out of every other batch. Unblock is a sibling test
+    account dedicated to fresh-account flows.
+  - **/collectives/:slug/manage:** dual gate. The in-app affordance
+    is an icon-only Settings button with aria-label "Manage collective"
+    and no visible text (anchor-gotcha hard rule). The deep-link is
+    F4-stripped (collectives branch reads only `/<id>`, no `/<id>/manage`).
+    Unblock A: extend F4 resolver. Unblock B: aria-id tap if the
+    devtools hierarchy exposes it.
+- **/events/:id/check-in reclassified UNCOVERED -> BLOCKED-F4.** Triple
+  gate found by source read. (a) Deep-link is F4-stripped. (b) The two
+  visible "check in" affordances on event-detail open SHEETS, not
+  navigations: "Check In Now" -> setShowCheckInSheet (event-detail.tsx
+  :728), "Check-in Code" -> setShowQrSheet (line 1173). Neither hits
+  the /events/:id/check-in route. (c) The only in-app navigations are
+  proximity-check-in-banner.tsx:78 (GPS-gated; not stable test
+  surface) and /admin/dev-tools:1297 (admin debug button; not part of
+  a normal user journey). Unblock A: F4 resolver fix. Unblock B: stub
+  the proximity trigger for the test session.
+- **/check-in/:token reclassified UNCOVERED -> BLOCKED-substrate.** The
+  route is the QR-scan public landing only (event-day.tsx:982 builds
+  the `https://app.coexist.au/check-in/<token>` URL embedded in the QR
+  code). Reaching it requires an event with `public_check_in_enabled=
+  true` and a real `public_check_in_token`. Unblock: seed those two
+  fields then openLink the https URL.
+- **Net coverage delta:** +1 covered (92), 10 routes reclassified to
+  BLOCKED-substrate, 2 routes reclassified to BLOCKED-F4 (check-in
+  and check-in/:token), no false-positive UNCOVERED rows remain.
+- **Anchor reuse confirmed.** `${output.eventTitle}` survives a second
+  runScript call (cleanup-admin-event.js) without being clobbered -
+  Maestro only adds/updates output keys, it does not reset the dict.
+  This is the assumption every multi-script flow now depends on.
 
 ## Batch 6 (2026-06-11) - chat-channel + view-profile + shop + admin sub-create routes
 
