@@ -145,15 +145,19 @@ export function useSubscribers(search: string, tagFilter: string | null) {
       let profiles = data ?? []
 
       // Load marketing_opt_in from profiles (added by migration 005, not in generated types)
-      // The select('*') would get it but we need to be explicit - use a separate query
+      // The select('*') would get it but we need to be explicit - use a separate query.
+      // Skip the network call entirely when there are no ids. Passing a sentinel
+      // string for a uuid column 400s on PostgREST.
       const profileIds = profiles.map((p) => p.id)
-      const { data: optInData } = await supabase
-        .from('profiles')
-        .select('id, marketing_opt_in')
-        .in('id', profileIds.length ? profileIds : ['__none__'])
       const optInMap = new Map<string, boolean>()
-      for (const row of optInData ?? []) {
-        optInMap.set(row.id, row.marketing_opt_in !== false)
+      if (profileIds.length) {
+        const { data: optInData } = await supabase
+          .from('profiles')
+          .select('id, marketing_opt_in')
+          .in('id', profileIds)
+        for (const row of optInData ?? []) {
+          optInMap.set(row.id, row.marketing_opt_in !== false)
+        }
       }
 
       // If tag filter, filter by profile_tags
@@ -166,18 +170,19 @@ export function useSubscribers(search: string, tagFilter: string | null) {
         profiles = profiles.filter((p) => idSet.has(p.id))
       }
 
-      // Load tags for each profile
+      // Load tags for each profile (same uuid-sentinel guard as above)
       const finalIds = profiles.map((p) => p.id)
-      const { data: allTags } = await supabase
-        .from('profile_tags')
-        .select('profile_id, tag_id, email_tags(id, name, colour, description, created_at)')
-        .in('profile_id', finalIds.length ? finalIds : ['__none__'])
-
       const tagMap = new Map<string, EmailTag[]>()
-      for (const pt of allTags ?? []) {
-        const existing = tagMap.get(pt.profile_id) ?? []
-        if (pt.email_tags) existing.push(pt.email_tags)
-        tagMap.set(pt.profile_id, existing)
+      if (finalIds.length) {
+        const { data: allTags } = await supabase
+          .from('profile_tags')
+          .select('profile_id, tag_id, email_tags(id, name, colour, description, created_at)')
+          .in('profile_id', finalIds)
+        for (const pt of allTags ?? []) {
+          const existing = tagMap.get(pt.profile_id) ?? []
+          if (pt.email_tags) existing.push(pt.email_tags)
+          tagMap.set(pt.profile_id, existing)
+        }
       }
 
       return profiles.map((p) => ({

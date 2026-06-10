@@ -882,13 +882,15 @@ export function useCheckIn() {
         return
       }
 
-      // LEADER check-in path (userId != auth.uid()): keep the existing
-      // "must already be registered or invited" gate. Unregistered walk-ups
-      // are added by leaders via the WalkInSheet, not via this mutation.
-      // Must chain .select() to get the updated rows back - otherwise
-      // supabase-js returns count=null and the "not checkable" guard below
-      // never fires, silently succeeding even when the user is already
-      // cancelled/attended.
+      // LEADER check-in path (userId != auth.uid()): widened from the
+      // ('registered','invited')-only gate. Leaders legitimately need to
+      // override on event day for waitlisted walk-ups and for users whose
+      // row is in a non-blocking state. The DB trigger
+      // enforce_event_day_check_in_window() still enforces the date
+      // window + leader role, and 'cancelled' rows are kept out so an
+      // explicit user-side cancellation is not silently overridden.
+      // Must chain .select() so the 0-row guard below can distinguish
+      // "no row" from "row matched".
       const { data, error } = await supabase
         .from('event_registrations')
         .update({
@@ -897,10 +899,12 @@ export function useCheckIn() {
         })
         .eq('event_id', eventId)
         .eq('user_id', userId)
-        .in('status', ['registered', 'invited'])
+        .in('status', ['registered', 'invited', 'waitlisted', 'attended'])
         .select('id')
       if (error) throw error
-      if (!data || data.length === 0) throw new Error('User is not in a checkable status (registered or invited)')
+      if (!data || data.length === 0) {
+        throw new Error("Couldn't check this person in. They may have cancelled, or they aren't registered for this event. Use Add Walk-In to record them.")
+      }
     },
     onMutate: async ({ eventId, userId }) => {
       await queryClient.cancelQueries({ queryKey: ['event-attendees', eventId] })

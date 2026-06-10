@@ -72,20 +72,36 @@ async function fetchAdminEventsData(): Promise<AdminEventsData> {
 
   const eventList = (events ?? []) as (Omit<AdminEvent, 'registrationCount'>)[]
 
-  // Batch-fetch registration counts in one query instead of N
+  // Batch-fetch registration + check-in counts separately. Registration
+  // counts power the upcoming-events stats; check-in counts power the
+  // "average attendance" card, which has to reflect real turnout (status
+  // = 'attended'), not signups.
   const eventIds = eventList.map((e) => e.id)
   let regCounts = new Map<unknown, number>()
+  let checkInCounts = new Map<unknown, number>()
+  let walkInCounts = new Map<unknown, number>()
   if (eventIds.length > 0) {
-    const { data: regRows } = await supabase
-      .from('event_registrations')
-      .select('event_id')
-      .in('event_id', eventIds)
-      .in('status', STATUS_FILTERS.events.REGISTRATION)
+    const [regRes, checkInRes, walkInRes] = await Promise.all([
+      supabase
+        .from('event_registrations')
+        .select('event_id')
+        .in('event_id', eventIds)
+        .in('status', STATUS_FILTERS.events.REGISTRATION),
+      supabase
+        .from('event_registrations')
+        .select('event_id')
+        .in('event_id', eventIds)
+        .eq('status', 'attended'),
+      supabase
+        .from('event_walk_ins')
+        .select('event_id')
+        .in('event_id', eventIds)
+        .eq('status', 'attended'),
+    ])
 
-    regCounts = countByField(
-      (regRows ?? []) as { event_id: string }[],
-      'event_id',
-    )
+    regCounts = countByField((regRes.data ?? []) as { event_id: string }[], 'event_id')
+    checkInCounts = countByField((checkInRes.data ?? []) as { event_id: string }[], 'event_id')
+    walkInCounts = countByField((walkInRes.data ?? []) as { event_id: string }[], 'event_id')
   }
 
   const enriched: AdminEvent[] = eventList.map((event) => ({
@@ -98,9 +114,18 @@ async function fetchAdminEventsData(): Promise<AdminEventsData> {
 
   const totalRegistrations = enriched.reduce((sum, e) => sum + e.registrationCount, 0)
   const upcomingRegistrations = upcoming.reduce((sum, e) => sum + e.registrationCount, 0)
+  // Average actual attendance per past event = (checked-in registrations
+  // + checked-in walk-ins) / past-event count, excluding cancelled events
+  // and events with no attendance recorded at all (likely cancelled in
+  // practice or pre-impact-log placeholders).
+  const pastEligible = past.filter((e) => e.status !== 'cancelled')
+  const attendedPerEvent = pastEligible.map((e) =>
+    (checkInCounts.get(e.id) ?? 0) + (walkInCounts.get(e.id) ?? 0),
+  )
+  const eventsWithAttendance = attendedPerEvent.filter((n) => n > 0)
   const avgAttendance =
-    past.length > 0
-      ? Math.round(past.reduce((sum, e) => sum + e.registrationCount, 0) / past.length)
+    eventsWithAttendance.length > 0
+      ? Math.round(eventsWithAttendance.reduce((sum, n) => sum + n, 0) / eventsWithAttendance.length)
       : 0
 
   const hottestEvent = upcoming.length > 0
