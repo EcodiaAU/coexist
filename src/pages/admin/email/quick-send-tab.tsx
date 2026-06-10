@@ -32,6 +32,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Mail,
+  Bold,
+  Italic,
+  Link as LinkIcon,
+  Heading2,
 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/button'
@@ -106,6 +110,39 @@ export function QuickSendTab() {
   const [tweak, setTweak] = useState('')
   const [tweaking, setTweaking] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
+  const editorRef = useRef<HTMLDivElement>(null)
+  const [editing, setEditing] = useState(false)
+
+  // Sync the sanitized body into the editor DOM whenever the body
+  // changes externally (initial draft, tweak, etc). Suspended while
+  // the user is actively editing so contentEditable's live DOM is not
+  // clobbered mid-stroke.
+  useEffect(() => {
+    if (!editorRef.current || editing) return
+    editorRef.current.innerHTML = sanitizeHtml(bodyHtml)
+  }, [bodyHtml, editing])
+
+  // Apply a document.execCommand. Deprecated but the only standards-
+  // adjacent path to inline formatting that does not need a third-
+  // party editor. Email clients are forgiving about the resulting HTML.
+  const execCmd = (cmd: string, value?: string) => {
+    if (!editorRef.current) return
+    editorRef.current.focus()
+    try {
+      document.execCommand(cmd, false, value)
+    } catch {
+      /* swallow: contentEditable lives or dies by browser support */
+    }
+  }
+
+  const handleLink = () => {
+    const url = window.prompt('Link URL', 'https://')
+    if (url && /^https?:\/\//i.test(url)) {
+      execCmd('createLink', url)
+    } else if (url) {
+      toast.error('URL must start with http:// or https://')
+    }
+  }
 
   const audienceCount = useMemo(() => {
     if (audienceMode === 'all') return stats?.subscribers ?? 0
@@ -194,6 +231,9 @@ export function QuickSendTab() {
       }
       const baseName = subject.trim().slice(0, 60) || 'Quick send'
       const name = testOnly ? `${baseName} (test)` : baseName
+      // Insert as draft. send-campaign promotes status to 'sending'
+      // itself and rejects any row that is already in that state, so
+      // the row has to land in 'draft' first or the function 400s.
       const payload = {
         name,
         subject: subject.trim(),
@@ -203,7 +243,7 @@ export function QuickSendTab() {
         target_all: !testOnly && audienceMode === 'all',
         target_tag_ids: !testOnly && audienceMode === 'tag' ? audienceTagIds : [],
         target_collective_ids: !testOnly && audienceMode === 'collective' ? audienceCollectiveIds : [],
-        status: 'sending' as const,
+        status: 'draft' as const,
         created_by: user?.id,
       }
       const { data: row, error: insertErr } = await supabase
@@ -244,7 +284,12 @@ export function QuickSendTab() {
     },
   })
 
-  const safeHtml = useMemo(() => sanitizeHtml(bodyHtml), [bodyHtml])
+  // safeHtml is no longer rendered via dangerouslySetInnerHTML now
+  // that the preview is a contentEditable surface. The sanitised HTML
+  // gets pushed into editorRef.current.innerHTML directly in the
+  // bodyHtml/editing effect above. Kept as a no-op import target so
+  // the sanitiser stays linted as "used" via the effect.
+  void sanitizeHtml
 
   return (
     <div className="space-y-6 pb-24">
@@ -328,10 +373,76 @@ export function QuickSendTab() {
             </div>
           )}
 
+          {/* Inline-edit toolbar. Standard inline formatting (bold,
+              italic, link) + a centring helper for the active block,
+              so admins can fix off-centre buttons without touching HTML. */}
+          <div className="flex flex-wrap items-center gap-1 px-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 mr-1">Edit inline</span>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); execCmd('bold') }}
+              className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
+              aria-label="Bold"
+            >
+              <Bold size={13} />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); execCmd('italic') }}
+              className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
+              aria-label="Italic"
+            >
+              <Italic size={13} />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); execCmd('formatBlock', 'H2') }}
+              className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
+              aria-label="Heading"
+            >
+              <Heading2 size={13} />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); handleLink() }}
+              className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
+              aria-label="Link"
+            >
+              <LinkIcon size={13} />
+            </button>
+            <span className="mx-1 text-neutral-300">|</span>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); execCmd('justifyCenter') }}
+              className="text-[11px] font-medium px-2 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
+              aria-label="Centre"
+            >
+              Centre
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); execCmd('justifyLeft') }}
+              className="text-[11px] font-medium px-2 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
+              aria-label="Left-align"
+            >
+              Left
+            </button>
+          </div>
+
           <div
-            className="prose prose-sm max-w-none rounded-xl border border-neutral-200 bg-neutral-50 p-4 max-h-[480px] overflow-y-auto"
-            dangerouslySetInnerHTML={{ __html: safeHtml }}
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            onFocus={() => setEditing(true)}
+            onBlur={(e) => {
+              setBodyHtml(e.currentTarget.innerHTML)
+              setEditing(false)
+            }}
+            className="prose prose-sm max-w-none rounded-xl border border-neutral-200 bg-neutral-50 p-4 max-h-[480px] overflow-y-auto focus:outline-none focus:ring-2 focus:ring-primary-300 focus:bg-white"
           />
+          <p className="text-[11px] text-neutral-400 pl-1">
+            Click in the preview to type. Changes save when you click away.
+          </p>
 
           <div className="rounded-xl bg-primary-50/70 border border-primary-200/60 p-3 space-y-2">
             <p className="text-xs font-semibold text-primary-900">

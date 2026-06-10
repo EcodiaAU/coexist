@@ -95,10 +95,10 @@ HTML EMAIL RULES:
 - Always include alt text on images
 
 STRUCTURE (suggested, not rigid):
-1. Header. Olive-sage background (#879e62) with the white Co-Exist wordmark image or text. NEVER any other green.
+1. Header. Olive-sage background (#879e62) with the white Co-Exist wordmark image or text. NEVER any other green. The wordmark itself MUST be horizontally centred inside the header (text-align:center on the header td and width="120" with margin:0 auto on the img).
 2. Hero. Main visual or short greeting area.
 3. Body. Content sections with clear hierarchy.
-4. CTA. Prominent button in accent orange (#E8913A).
+4. CTA. Prominent button in accent orange (#E8913A). The CTA button MUST be horizontally centred. Wrap it in <td align="center" style="text-align:center;padding:24px 0;"> with the <a> as an inline-block. Email clients only honour center alignment if the table cell carries align="center".
 5. Footer. Social links, unsubscribe text, mailing address line.
 
 LANGUAGE RULES (HARD - the admin's voice profile is strict):
