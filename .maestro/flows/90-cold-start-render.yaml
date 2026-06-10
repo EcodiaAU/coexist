@@ -1,0 +1,12 @@
+# Cold-clear first paint. RED until status_board 1b1e718d is fixed: a
+# clean install currently shows blank pixels 60s+ while first paint
+# blocks on network. Green = the signin shell renders within 30s of a
+# cold-clear launch, which is what a new customer experiences.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 30000

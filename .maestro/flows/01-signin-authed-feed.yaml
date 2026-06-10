@@ -1,0 +1,22 @@
+# Canonical authed signin (returning-user state). Creds via MAESTRO_* env.
+# clearState deliberately false: cold-clear first paint is broken (blank
+# 60s+, status_board 1b1e718d) and is tracked by cold-start-render.yaml.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 30000
+- tapOn: "Email.*"
+- inputText: ${MAESTRO_CX_EMAIL}
+- tapOn: "Password.*"
+- inputText: ${MAESTRO_CX_PASSWORD}
+- hideKeyboard
+- tapOn: "Log In"
+- extendedWaitUntil:
+    notVisible: "Welcome back"
+    timeout: 25000
+- takeScreenshot: /tmp/maestro-cx-postlogin
