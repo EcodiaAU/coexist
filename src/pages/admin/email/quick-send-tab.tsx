@@ -158,18 +158,48 @@ export function QuickSendTab() {
     }
   }
 
-  // Substitute hero variables into the body before the row hits
-  // email_campaigns. If no image is set, replace the variables with
-  // safe-empty values so the rendered HTML degrades to the solid olive
-  // hero rather than leaving literal {{hero_image_url}} text in the
-  // email.
-  function applyHeroSubstitution(html: string): string {
+  // Resolve the hero to its final appearance. Authoritative on the
+  // client because the AI is inconsistent about keeping the {{hero_*}}
+  // tokens (it sometimes hardcodes e.g. rgba(0,0,0,0.35) and
+  // background-position:50% 50%). The hero is campaign-level (one look
+  // for the whole send), so baking it in is safe; the per-recipient
+  // {{name}}/{{next_event_*}} tokens are never touched here.
+  //
+  // Rules:
+  //  - no image  -> flat olive #879e62, NO dark wash (matches the
+  //    homepage Impact band exactly).
+  //  - with image -> the photo at the chosen focal point, with the
+  //    chosen dark wash for legibility.
+  // Works whether the hero still has tokens or was already baked, so it
+  // re-derives correctly when the admin changes the photo/focal/wash.
+  function normalizeHero(html: string): string {
     const hasImage = !!heroImageUrl.trim()
-    return html
+    let out = html
       .replace(/\{\{hero_image_url\}\}/g, hasImage ? heroImageUrl : '')
       .replace(/\{\{hero_focal_x\}\}/g, String(heroFocalX))
       .replace(/\{\{hero_focal_y\}\}/g, String(heroFocalY))
       .replace(/\{\{hero_overlay_opacity\}\}/g, hasImage ? String(heroOverlay) : '0')
+    // Force the hero background image (token or baked) to the real photo
+    // or empty. Emails do not use CSS background images anywhere except
+    // the hero, so this is safe.
+    out = out.replace(
+      /background-image\s*:\s*url\((['"]?)[^'")]*\1\)/gi,
+      `background-image:url('${hasImage ? heroImageUrl : ''}')`,
+    )
+    // Force every black wash to the right alpha. With no image the wash
+    // must be fully transparent so the olive shows flat.
+    out = out.replace(
+      /rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*[0-9.]+\s*\)/gi,
+      hasImage ? `rgba(0,0,0,${heroOverlay})` : 'rgba(0,0,0,0)',
+    )
+    // Re-point the focal position if it was hardcoded.
+    if (hasImage) {
+      out = out.replace(
+        /background-position\s*:\s*\d+%\s+\d+%/gi,
+        `background-position:${heroFocalX}% ${heroFocalY}%`,
+      )
+    }
+    return out
   }
 
   const [tweak, setTweak] = useState('')
@@ -241,8 +271,12 @@ export function QuickSendTab() {
   // clobbered mid-stroke.
   useEffect(() => {
     if (!editorRef.current || editing) return
-    editorRef.current.innerHTML = sanitizeHtml(bodyHtml)
-  }, [bodyHtml, editing])
+    // Show the resolved hero (olive or photo) in the preview so what
+    // the admin sees matches what sends. normalizeHero leaves the
+    // per-recipient {{name}}/{{next_event_*}} tokens as-is.
+    editorRef.current.innerHTML = sanitizeHtml(normalizeHero(bodyHtml))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bodyHtml, editing, heroImageUrl, heroFocalX, heroFocalY, heroOverlay])
 
   // Apply a document.execCommand. Deprecated but the only standards-
   // adjacent path to inline formatting that does not need a third-
@@ -353,7 +387,7 @@ export function QuickSendTab() {
       }
       const baseName = subject.trim().slice(0, 60) || 'Quick send'
       const name = testOnly ? `${baseName} (test)` : baseName
-      const resolvedHtml = applyHeroSubstitution(bodyHtml)
+      const resolvedHtml = normalizeHero(bodyHtml)
       // Insert as draft. send-campaign promotes status to 'sending'
       // itself and rejects any row that is already in that state, so
       // the row has to land in 'draft' first or the function 400s.
@@ -779,7 +813,7 @@ export function QuickSendTab() {
                   className="prose prose-sm max-w-none rounded-lg border border-neutral-200 bg-white p-3 max-h-[420px] overflow-y-auto"
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHtml(
-                      applyHeroSubstitution(bodyHtml).replace(
+                      normalizeHero(bodyHtml).replace(
                         /\{\{(name|next_event_title|next_event_date|next_event_date_long|next_event_collective|next_event_location|next_event_url|unsubscribe_url)\}\}/g,
                         (_m, k: string) =>
                           k === 'unsubscribe_url'
