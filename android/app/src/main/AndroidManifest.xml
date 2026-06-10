@@ -41,17 +41,20 @@
                 <data android:scheme="coexist" />
             </intent-filter>
 
-            <!-- App Links: autoVerify on the primary marketing host
-                 (coexistaus.org has .well-known/assetlinks.json published).
-                 The autoVerify intent-filter only catches hosts whose
-                 assetlinks.json verifies cleanly per Android 12+ rules,
-                 which is why other hosts go in a separate non-verified
-                 filter below. -->
+            <!-- App Links: autoVerify on the marketing host plus the
+                 web/app host. Both must publish
+                 .well-known/assetlinks.json with the matching package
+                 SHA256 fingerprint for autoVerify to succeed on
+                 Android 12+. app.coexistaus.org carries event deep
+                 links from emails (RSVP buttons land on /events/<id>)
+                 so adding it here is what lets the native app
+                 intercept those taps instead of the browser. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="coexistaus.org" />
+                <data android:scheme="https" android:host="app.coexistaus.org" />
             </intent-filter>
 
             <!-- Secondary hosts: QR check-in (app.coexist.au) + short link

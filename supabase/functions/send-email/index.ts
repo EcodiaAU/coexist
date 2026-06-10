@@ -164,7 +164,7 @@ interface SendEmailPayload {
 /*  Branded Email Template System                                      */
 /* ------------------------------------------------------------------ */
 
-const LOGO_URL = 'https://app.coexistaus.org/logos/white-wordmark.webp'
+const LOGO_URL = 'https://app.coexistaus.org/logos/white-wordmark.png'
 const LOGO_DARK_URL = 'https://app.coexistaus.org/logos/black-wordmark.png'
 const APP_URL = 'https://app.coexistaus.org'
 
@@ -197,7 +197,12 @@ function emailShell(opts: {
   heroEmoji?: string
   body: string
   footerCta?: { label: string; url: string }
+  /** Recipient email so the unsubscribe link carries the address token. */
+  recipientEmail?: string
 }): string {
+  const unsubUrl = opts.recipientEmail
+    ? `${APP_URL}/unsubscribe?email=${encodeURIComponent(opts.recipientEmail)}`
+    : `${APP_URL}/unsubscribe`
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -209,18 +214,22 @@ function emailShell(opts: {
 <!-- Container -->
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
-  <!-- Logo bar -->
-  <tr><td style="padding:0 0 20px;text-align:center;">
+  <!-- Logo bar. The wordmark is white pixels on transparent. Dark-mode
+       email clients drop transparency to black, so the cell carries an
+       explicit olive bgcolor that becomes the visible backdrop when
+       transparency is stripped. The olive bgcolor also makes the
+       wordmark sit visually attached to the hero gradient below. -->
+  <tr><td bgcolor="${C.brand}" style="background:${C.brand};padding:24px 0 0;text-align:center;border-radius:20px 20px 0 0;">
     <a href="${APP_URL}" style="text-decoration:none;">
-      <img src="${LOGO_DARK_URL}" alt="Co-Exist" width="120" style="width:120px;height:auto;" />
+      <img src="${LOGO_URL}" alt="Co-Exist" width="140" style="width:140px;height:auto;display:inline-block;border:0;outline:none;" />
     </a>
   </td></tr>
 
   <!-- Hero gradient banner -->
-  <tr><td style="background:linear-gradient(135deg,${C.brand} 0%,${C.brandDark} 100%);padding:40px 32px;border-radius:20px 20px 0 0;text-align:center;">
+  <tr><td bgcolor="${C.brand}" style="background:${C.brand};background-image:linear-gradient(135deg,${C.brand} 0%,${C.brandDark} 100%);padding:32px 32px 40px;text-align:center;">
     ${opts.heroEmoji ? `<div style="font-size:40px;margin-bottom:12px;">${opts.heroEmoji}</div>` : ''}
     <h1 style="color:${C.white};margin:0;font-size:24px;font-weight:700;line-height:1.3;">${opts.heroTitle}</h1>
-    ${opts.heroSubtitle ? `<p style="color:rgba(255,255,255,0.75);margin:10px 0 0;font-size:15px;line-height:1.5;">${opts.heroSubtitle}</p>` : ''}
+    ${opts.heroSubtitle ? `<p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:15px;line-height:1.5;">${opts.heroSubtitle}</p>` : ''}
   </td></tr>
 
   <!-- Body content -->
@@ -260,7 +269,7 @@ function emailShell(opts: {
     <p style="margin:0;font-size:10px;color:${C.textLight};">
       <a href="${APP_URL}/settings" style="color:${C.textLight};text-decoration:underline;">Manage preferences</a>
       &nbsp;&middot;&nbsp;
-      <a href="${APP_URL}/unsubscribe" style="color:${C.textLight};text-decoration:underline;">Unsubscribe</a>
+      <a href="${unsubUrl}" style="color:${C.textLight};text-decoration:underline;">Unsubscribe</a>
     </p>
   </td></tr>
 </table>
@@ -832,6 +841,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const subject = payload.subject || override?.subject || templateDef.subject(data)
+    // Thread recipient down so emailShell can build the unsubscribe link
+    // with ?email=... per recipient.
+    if (data && typeof data === 'object' && toEmail) {
+      (data as Record<string, unknown>).__recipientEmail = toEmail
+    }
     const html = payload.html || (override?.body_html
       ? buildOverrideHtml(override, data)
       : buildEmailHtml(type, data))

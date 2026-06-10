@@ -36,6 +36,8 @@ import {
   Italic,
   Link as LinkIcon,
   Heading2,
+  ImagePlus,
+  X,
 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/button'
@@ -106,6 +108,59 @@ export function QuickSendTab() {
   const [audienceMode, setAudienceMode] = useState<AudienceMode>('all')
   const [audienceTagIds, setAudienceTagIds] = useState<string[]>([])
   const [audienceCollectiveIds, setAudienceCollectiveIds] = useState<string[]>([])
+
+  // Hero image (optional). When set, the four {{hero_*}} variables in
+  // the AI body get substituted before the campaign row is inserted.
+  // Focal point and overlay let admins keep heading text legible over
+  // any photo. Image lives in the app-images public bucket.
+  const [heroImageUrl, setHeroImageUrl] = useState('')
+  const [heroFocalX, setHeroFocalX] = useState(50)
+  const [heroFocalY, setHeroFocalY] = useState(50)
+  const [heroOverlay, setHeroOverlay] = useState(0.35)
+  const [uploadingHero, setUploadingHero] = useState(false)
+
+  async function handleHeroUpload(file: File) {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Pick an image file.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5 MB.')
+      return
+    }
+    setUploadingHero(true)
+    try {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const slug = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const path = `email-heroes/${slug}`
+      const { error: upErr } = await supabase.storage.from('app-images').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type,
+      })
+      if (upErr) throw upErr
+      const { data: urlData } = supabase.storage.from('app-images').getPublicUrl(path)
+      setHeroImageUrl(urlData.publicUrl)
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Upload failed.')
+    } finally {
+      setUploadingHero(false)
+    }
+  }
+
+  // Substitute hero variables into the body before the row hits
+  // email_campaigns. If no image is set, replace the variables with
+  // safe-empty values so the rendered HTML degrades to the solid olive
+  // hero rather than leaving literal {{hero_image_url}} text in the
+  // email.
+  function applyHeroSubstitution(html: string): string {
+    const hasImage = !!heroImageUrl.trim()
+    return html
+      .replace(/\{\{hero_image_url\}\}/g, hasImage ? heroImageUrl : '')
+      .replace(/\{\{hero_focal_x\}\}/g, String(heroFocalX))
+      .replace(/\{\{hero_focal_y\}\}/g, String(heroFocalY))
+      .replace(/\{\{hero_overlay_opacity\}\}/g, hasImage ? String(heroOverlay) : '0')
+  }
 
   const [tweak, setTweak] = useState('')
   const [tweaking, setTweaking] = useState(false)
@@ -231,14 +286,15 @@ export function QuickSendTab() {
       }
       const baseName = subject.trim().slice(0, 60) || 'Quick send'
       const name = testOnly ? `${baseName} (test)` : baseName
+      const resolvedHtml = applyHeroSubstitution(bodyHtml)
       // Insert as draft. send-campaign promotes status to 'sending'
       // itself and rejects any row that is already in that state, so
       // the row has to land in 'draft' first or the function 400s.
       const payload = {
         name,
         subject: subject.trim(),
-        body_html: bodyHtml,
-        body_text: bodyText || bodyHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+        body_html: resolvedHtml,
+        body_text: bodyText || resolvedHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
         template_id: null,
         target_all: !testOnly && audienceMode === 'all',
         target_tag_ids: !testOnly && audienceMode === 'tag' ? audienceTagIds : [],
@@ -342,6 +398,123 @@ export function QuickSendTab() {
           {bodyHtml ? 'Redraft' : 'Draft with AI'}
         </Button>
       </section>
+
+      {/* Optional: hero photo with focal point + overlay. Sits between
+          prompt and preview so admins set the visual before reading
+          the draft. Empty = solid olive hero (current default). */}
+      {bodyHtml && (
+        <section className="rounded-2xl bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+              <ImagePlus size={14} className="text-primary-700" />
+              Hero photo
+              <span className="text-[10px] font-medium text-neutral-400 uppercase tracking-wider">optional</span>
+            </h2>
+            {heroImageUrl && (
+              <button
+                type="button"
+                onClick={() => setHeroImageUrl('')}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-500 hover:text-neutral-700 cursor-pointer"
+              >
+                <X size={11} />
+                Remove
+              </button>
+            )}
+          </div>
+
+          {!heroImageUrl && (
+            <div className="rounded-xl border-2 border-dashed border-neutral-200 p-5 text-center space-y-3">
+              <p className="text-sm text-neutral-600">
+                Drop in a photo and the hero becomes that photo with a dark wash so the
+                heading stays legible. Skip for the solid olive look.
+              </p>
+              <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-50 text-primary-700 ring-1 ring-primary-200/60 hover:bg-primary-100 text-sm font-medium cursor-pointer">
+                {uploadingHero ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
+                {uploadingHero ? 'Uploading...' : 'Upload a photo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingHero}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleHeroUpload(file)
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+            </div>
+          )}
+
+          {heroImageUrl && (
+            <div className="space-y-3">
+              <div
+                className="relative rounded-xl overflow-hidden ring-1 ring-neutral-200"
+                style={{
+                  backgroundImage: `url('${heroImageUrl}')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: `${heroFocalX}% ${heroFocalY}%`,
+                  height: 180,
+                }}
+              >
+                <div
+                  className="absolute inset-0 flex items-center justify-center"
+                  style={{ background: `rgba(0,0,0,${heroOverlay})` }}
+                >
+                  <p className="text-white font-heading text-base font-bold drop-shadow">
+                    Heading preview
+                  </p>
+                </div>
+                <div
+                  className="absolute w-4 h-4 -ml-2 -mt-2 rounded-full bg-white ring-2 ring-primary-600 pointer-events-none"
+                  style={{ left: `${heroFocalX}%`, top: `${heroFocalY}%` }}
+                  aria-label="Focal point"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <label className="space-y-1">
+                  <span className="font-semibold text-neutral-700">Focal point horizontal</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={heroFocalX}
+                    onChange={(e) => setHeroFocalX(Number(e.target.value))}
+                    className="w-full accent-primary-600"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="font-semibold text-neutral-700">Focal point vertical</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={heroFocalY}
+                    onChange={(e) => setHeroFocalY(Number(e.target.value))}
+                    className="w-full accent-primary-600"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="font-semibold text-neutral-700">
+                    Dark overlay {Math.round(heroOverlay * 100)}%
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={80}
+                    step={5}
+                    value={heroOverlay * 100}
+                    onChange={(e) => setHeroOverlay(Number(e.target.value) / 100)}
+                    className="w-full accent-primary-600"
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Step 2: subject + body preview + plain-English tweak. No raw
           HTML editing. Staff describe the change ("make it shorter",

@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["86PUY7393S.org.coexistaus.app"],
+        "components": [
+          { "/": "/events/*", "comment": "Open event details in the native app" },
+          { "/": "/event/*", "comment": "Public-facing event slug links" },
+          { "/": "/collective/*", "comment": "Open a collective profile" },
+          { "/": "/collectives/*", "comment": "Open a collective page" },
+          { "/": "/check-in/*", "comment": "Event QR check-in deep link" },
+          { "/": "/unsubscribe", "exclude": true, "comment": "Stay in browser for marketing opt-out" },
+          { "/": "/account-deletion", "exclude": true },
+          { "/": "/data-deletion", "exclude": true }
+        ]
+      }
+    ]
+  }
+}

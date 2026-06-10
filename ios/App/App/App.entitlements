@@ -12,6 +12,7 @@
 	<array>
 		<string>applinks:coexistaus.org</string>
 		<string>applinks:www.coexistaus.org</string>
+		<string>applinks:app.coexistaus.org</string>
 	</array>
 </dict>
 </plist>

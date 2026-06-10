@@ -38,12 +38,15 @@ interface CampaignPayload {
 // send a separate campaign per collective.
 interface RecipientVars {
   name: string
+  unsubscribe_url: string
   next_event_title: string
   next_event_date: string
   next_event_date_long: string
   next_event_collective: string
   next_event_location: string
   next_event_url: string
+  // Also referenced via the interface key but not destructured here:
+  // unsubscribe_url is set in buildVars.
 }
 
 function applyRecipientVars(html: string, vars: RecipientVars): string {
@@ -285,8 +288,21 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    function buildVars(profileId: string, _email: string): RecipientVars {
+    // Collective naming: Tate's preferred form is "Co-Exist <region>"
+    // ("Co-Exist Sunshine Coast"), not "<region> Collective"
+    // ("Sunshine Coast Collective"). The collectives table stores the
+    // bare region name, so we prefix here at substitution time. If the
+    // record already starts with "Co-Exist" leave it alone.
+    function brandCollective(name: string): string {
+      if (!name) return 'your local crew'
+      const trimmed = name.replace(/\s+collective\s*$/i, '').trim()
+      if (/^co-?exist\s/i.test(trimmed)) return trimmed
+      return `Co-Exist ${trimmed}`
+    }
+
+    function buildVars(profileId: string, email: string): RecipientVars {
       const name = nameMap.get(profileId) || 'there'
+      const unsubscribe_url = `${APP_URL}/unsubscribe?email=${encodeURIComponent(email)}`
       const evt = eventMap.get(profileId)
       if (!evt) {
         return {
@@ -294,9 +310,10 @@ Deno.serve(async (req: Request) => {
           next_event_title: 'a Co-Exist event near you',
           next_event_date: 'soon',
           next_event_date_long: 'check the app for the next one near you',
-          next_event_collective: 'your collective',
+          next_event_collective: 'your Co-Exist crew',
           next_event_location: '',
           next_event_url: `${APP_URL}/events`,
+          unsubscribe_url,
         }
       }
       // Floating-local: stored wall-clock-as-UTC, format directly without TZ shift.
@@ -312,9 +329,10 @@ Deno.serve(async (req: Request) => {
         next_event_title: evt.title,
         next_event_date: dateShort,
         next_event_date_long: dateLong,
-        next_event_collective: evt.collective_name,
+        next_event_collective: brandCollective(evt.collective_name),
         next_event_location: evt.address || '',
         next_event_url: `${APP_URL}/events/${evt.event_id}`,
+        unsubscribe_url,
       }
     }
 

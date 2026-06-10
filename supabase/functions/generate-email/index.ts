@@ -70,11 +70,26 @@ DO NOT use #4A7C59, #1B4332, or any truer-green sage. The brand is olive-sage #8
 FONTS:
 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
-BRAND IMAGES:
-- Logo wordmark (white on dark): https://app.coexistaus.org/logos/white-wordmark.webp
-- Logo wordmark (black on light): https://app.coexistaus.org/logos/black-wordmark.png
-- Logo icon (black, transparent bg): https://app.coexistaus.org/logos/black-logo-transparent.png
-- Logo icon (white, solid): https://app.coexistaus.org/logos/white-solid-logo.png
+BRAND IMAGES (logo - read carefully, this matters):
+- Use this exact URL for the wordmark in the email header:
+  https://app.coexistaus.org/logos/white-wordmark.png
+- The wordmark is WHITE pixels on a TRANSPARENT background. Some
+  email clients (Gmail dark mode, Outlook dark mode, iOS Mail dark
+  mode) render PNG transparency over a black background by default,
+  which makes the white wordmark appear on black. To avoid this,
+  the cell containing the <img> MUST carry an explicit bgcolor AND
+  inline background-color matching the surrounding section. Use the
+  brand olive #879e62 if the wordmark sits on the olive hero, or
+  the warm off-white #f4f2ec if it sits above the olive hero on the
+  outer body background.
+- Width 120px. Centre via the cell's text-align:center and the img's
+  display:inline-block.
+- NEVER use black-wordmark.png in the email. It only works on light
+  light-only contexts and looks broken in dark mode.
+- Icon fallbacks (only when the description specifically calls for
+  the icon mark instead of the wordmark):
+  https://app.coexistaus.org/logos/black-logo-transparent.png
+  https://app.coexistaus.org/logos/white-solid-logo.png
 ${emailHeaderUrl ? `- Email header banner: ${emailHeaderUrl}` : '- Email header banner: not yet uploaded (use the olive-sage #879e62 with the white Co-Exist wordmark instead)'}
 
 EDITABLE FIELD SYSTEM:
@@ -95,11 +110,38 @@ HTML EMAIL RULES:
 - Always include alt text on images
 
 STRUCTURE (suggested, not rigid):
-1. Header. Olive-sage background (#879e62) with the white Co-Exist wordmark image or text. NEVER any other green. The wordmark itself MUST be horizontally centred inside the header (text-align:center on the header td and width="120" with margin:0 auto on the img).
-2. Hero. Main visual or short greeting area.
+1. Logo bar. The white-wordmark.png centred in a cell with explicit
+   bgcolor matching the surrounding section.
+2. Hero. The hero td must use the olive #879e62 background by default.
+   If the admin supplies {{hero_image_url}}, use it as a CSS background
+   image with background-size:cover and background-position:
+   {{hero_focal_x}}% {{hero_focal_y}}% (default 50% 50%), and overlay
+   a dark wash by wrapping the heading in an inner div with
+   background:rgba(0,0,0,{{hero_overlay_opacity}}) (default 0.35),
+   border-radius:14px, padding:32px. ALWAYS include a bgcolor olive
+   fallback so dark-mode email clients that strip background-image
+   still render the olive.
 3. Body. Content sections with clear hierarchy.
-4. CTA. Prominent button in accent orange (#E8913A). The CTA button MUST be horizontally centred. Wrap it in <td align="center" style="text-align:center;padding:24px 0;"> with the <a> as an inline-block. Email clients only honour center alignment if the table cell carries align="center".
-5. Footer. Social links, unsubscribe text, mailing address line.
+4. CTA. Prominent button in accent orange (#E8913A). The CTA button
+   MUST be horizontally centred. Wrap it in <td align="center"
+   style="text-align:center;padding:24px 0;"> with the <a> as an
+   inline-block. Email clients only honour centre alignment if the
+   table cell carries align="center".
+5. Footer. Social links, mailing address line, and a working
+   unsubscribe link. ALWAYS use {{unsubscribe_url}} as the href on the
+   unsubscribe link, e.g.
+   <a href="{{unsubscribe_url}}">Unsubscribe</a>. NEVER write a
+   placeholder href like "#" or "[unsubscribe]" or "your-link-here".
+   The {{unsubscribe_url}} variable is auto-filled per recipient.
+
+COLLECTIVE NAMING (strict):
+- When referring to a regional crew, ALWAYS use the form
+  "Co-Exist <region>" (e.g. "Co-Exist Sunshine Coast", "Co-Exist
+  Brisbane", "Co-Exist Perth").
+- NEVER write "Sunshine Coast Collective", "Brisbane Collective",
+  "the X Collective", "your local collective" or any suffix-Collective
+  form. The {{next_event_collective}} variable already resolves to the
+  branded "Co-Exist <region>" string at send time.
 
 LANGUAGE RULES (HARD - the admin's voice profile is strict):
 - NEVER use em-dashes. The character U+2014 must not appear in the output. Use full stops, commas, or parentheses instead.
@@ -196,9 +238,16 @@ AUTO-FILLED PER RECIPIENT (resolve at send time, one campaign personalises to ev
 - {{next_event_title}} - the recipient's next upcoming event from their collective
 - {{next_event_date}} - short form e.g. Sat 14 Jun
 - {{next_event_date_long}} - long form e.g. Saturday 14 June 2026
-- {{next_event_collective}} - the collective hosting that event (e.g. Brisbane, Perth)
+- {{next_event_collective}} - the branded crew name (e.g. "Co-Exist Brisbane", "Co-Exist Perth")
 - {{next_event_location}} - address of the event
-- {{next_event_url}} - deep link to the event page
+- {{next_event_url}} - deep link to the event page (opens the native app on mobile via universal links, falls back to web)
+- {{unsubscribe_url}} - one-click unsubscribe link, always use this on the footer Unsubscribe link
+
+PER-CAMPAIGN HERO IMAGE (optional, filled by admin in the UI):
+- {{hero_image_url}} - CSS background-image URL for the hero
+- {{hero_focal_x}} - 0 to 100, horizontal focal point (default 50)
+- {{hero_focal_y}} - 0 to 100, vertical focal point (default 50)
+- {{hero_overlay_opacity}} - 0 to 1, dark overlay for text legibility (default 0.35)
 
 If the user description mentions "hyping up the next event", "reminder", "what's coming up", "next event near you", or anything that should adapt per region, USE the {{next_event_*}} variables instead of asking the admin to fill them in. Each subscriber will see their own collective's next event.
 

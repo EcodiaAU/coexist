@@ -28,6 +28,7 @@ const PublicCollectivePage = lazy(() => import('@/pages/public/collective'))
 const DownloadPage = lazy(() => import('@/pages/public/download'))
 const AccountDeletionPage = lazy(() => import('@/pages/public/account-deletion'))
 const DataDeletionPage = lazy(() => import('@/pages/public/data-deletion'))
+const UnsubscribePage = lazy(() => import('@/pages/public/unsubscribe'))
 const PublicCheckInPage = lazy(() => import('@/pages/public/check-in'))
 
 // Design showcase (dev only)
@@ -586,6 +587,14 @@ function App() {
           element={
             <AppShell bare>
               <DataDeletionPage />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/unsubscribe"
+          element={
+            <AppShell bare>
+              <UnsubscribePage />
             </AppShell>
           }
         />
