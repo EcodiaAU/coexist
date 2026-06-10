@@ -4,6 +4,8 @@
 <dict>
   <key>method</key>
   <string>app-store-connect</string>
+  <key>teamID</key>
+  <string>86PUY7393S</string>
   <key>signingStyle</key>
   <string>automatic</string>
   <key>generateAppStoreInformation</key>
