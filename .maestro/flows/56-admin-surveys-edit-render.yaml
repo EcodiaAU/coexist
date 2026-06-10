@@ -1,0 +1,36 @@
+# /admin/surveys/:id/edit render-only. Seeds an existing survey id via
+# runScript (authed query against surveys table) and deep-links
+# coexist://admin/surveys/<id>/edit. The route is admin/surveys/<id>/
+# edit and the resolver's default branch forwards it verbatim (the
+# 'admin' prefix is unhandled by the switch). Anchor: "Edit Survey" h1
+# (create-survey.tsx:1297, isEdit branch). If no surveys row exists in
+# the DB, the seed throws and the flow fails - re-running once any
+# survey exists works.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- runScript: ../scripts/seed-survey-id.js
+- openLink: "coexist://admin/surveys/${output.surveyId}/edit"
+- extendedWaitUntil:
+    visible: "Edit Survey"
+    timeout: 20000
+- assertVisible: "Details"
+- assertVisible: "Save Changes"
+- takeScreenshot: /tmp/maestro-cx-admin-surveys-edit

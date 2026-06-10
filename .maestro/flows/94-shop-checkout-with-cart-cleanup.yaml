@@ -1,0 +1,79 @@
+# PROD-WRITE WITH CLEANUP: /shop/checkout render via add-to-cart then
+# cleanup. The route is gated by useEffect at checkout.tsx:128-133:
+# items.length === 0 navigates to /shop/cart, so the page only mounts
+# if the cart has items. This flow seeds an active in-stock product
+# via seed-product-slug.js, deep-links /shop/<slug>, taps the "Cart"
+# button to add-to-cart (calls the stock-reservation mutation against
+# the merch_stock_reservations table), then deep-links /shop/checkout
+# and asserts the "Secure checkout" hero. Cleanup walks back to
+# /shop/cart and taps the X remove button (aria-label `Remove
+# ${productName}`) which calls removeItem + releases the reservation.
+# Cleanup failure is itself a finding (Tate 2026-06-10).
+#
+# 9x prefix because this mutates merch_stock_reservations server-side
+# AND zustand-persisted cart state in CapacitorPreferences. Stripe is
+# NEVER touched - the "Pay" button at checkout.tsx:163 is the only
+# Stripe entry and we only assert the route mounts, not the button.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- runScript: ../scripts/seed-product-slug.js
+- openLink: "coexist://shop/${output.productSlug}"
+- extendedWaitUntil:
+    visible: "${output.productName}"
+    timeout: 20000
+# Self-heal: if a prior run left this product in the cart, the cart
+# button reads "Added!" briefly then resets to "Cart". The page also
+# renders "Cart" in the unselected state, so tapping is safe either
+# way - the reservation mutation idempotently adds a new variant
+# reservation up to availableStock.
+- assertVisible: "Cart"
+- tapOn: "Cart"
+- extendedWaitUntil:
+    visible: ".*(Added!|added to cart).*"
+    timeout: 15000
+- takeScreenshot: /tmp/maestro-cx-shop-added-to-cart
+- openLink: "coexist://shop/checkout"
+- extendedWaitUntil:
+    visible: "Secure checkout"
+    timeout: 20000
+- assertVisible: "Total"
+- takeScreenshot: /tmp/maestro-cx-shop-checkout
+# CLEANUP: relaunch the app (the checkout-page-to-/shop/cart deep-link
+# transition trips an ErrorBoundary "Something went wrong" fallback,
+# reproducibly - finding F5 noted in COVERAGE.md). Fresh launch then
+# /shop/cart renders the cart with the seeded item present. Tap the X
+# remove button (aria-label `Remove ${productName}` per cart.tsx:302).
+- stopApp
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- openLink: "coexist://shop/cart"
+- extendedWaitUntil:
+    visible: "${output.productName}"
+    timeout: 20000
+- tapOn: "Remove ${output.productName}"
+- extendedWaitUntil:
+    visible: ".*(empty|Browse).*"
+    timeout: 15000
+- assertNotVisible: "${output.productName}"
+- takeScreenshot: /tmp/maestro-cx-shop-cart-cleaned

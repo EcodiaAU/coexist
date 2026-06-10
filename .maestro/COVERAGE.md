@@ -7,13 +7,15 @@ PARTIAL when a flow reaches it but asserts thinly; UNCOVERED otherwise.
 Update this file in the SAME commit as any flow change (lifecycle rule in
 backend/patterns/maestro-mobile-stably-web-are-canonical-app-testing-2026-06-10.md).
 
-Status totals 2026-06-11 (after author batch 5): ~77 covered / ~5 partial
-/ 3 BLOCKED-by-F4 / ~39 uncovered + 3 open findings: F2 (canary armed
+Status totals 2026-06-11 (after author batch 6): ~84 covered / ~5 partial
+/ 3 BLOCKED-by-F4 / ~32 uncovered + 4 open findings: F2 (canary armed
 in 38), F3 (corrected: deep-link bypasses authed session; canary armed
-in 32), F4 (deep-link resolver strips path segments after :id - new in
-batch 5, see Batch 5 notes). F1 reclassified FALSIFIED by 93-f1-
-display-name-cache-probe - the sidebar tracks the latest display_name
-across both passes and post-cleanup (see batch 4 notes).
+in 32), F4 (deep-link resolver strips path segments after :id - new
+in batch 5), F5 (deep-link /shop/cart from /shop/checkout trips an
+ErrorBoundary, reproducible - new in batch 6). F1 reclassified
+FALSIFIED by 93-f1-display-name-cache-probe - the sidebar tracks the
+latest display_name across both passes and post-cleanup (see batch 4
+notes).
 
 Deep-link primitive (2026-06-10 unlock): `coexist://<path>` opens the
 native intent and lands on the routed page reliably, including admin
@@ -29,12 +31,12 @@ chains, so coverage payoff per flow is high.
 | / cold start | COVERED | 90-cold-start-render (strict canary, bug 1b1e718d) |
 | /chat | COVERED | 11-chat-channel-open (chat-tab lands in default channel; STAFF CHANNELS list reached via the back-from-tab path, see finding F2) |
 | /chat/:collectiveId | COVERED | 11 (Sunshine Coast = member's default collective room) |
-| /chat/channel/:channelId | UNCOVERED | staff channel deep-link path; queued. F2 canary 38 proves the bottom-tab-back path exits the app to the launcher (the chat list entry point is the gap). |
+| /chat/channel/:channelId | COVERED | 51-chat-channel-deep-link-render (seeds an authed `chat_channel_members` row via .maestro/scripts/seed-channel-id.js + auth-password REST, deep-links coexist://chat/channel/<id>; anchor: dynamic channel.name as the Header title because chat-room.tsx:807-810 uses cleanChannelName(channel.name) when isChannel=true). Closes the F2 entry-point gap from the deep-link side; the in-app affordance gap stands. |
 | /profile | COVERED | 02-tabs-walk |
 | /profile/edit | COVERED | 06-profile-edit-render (form fields + Save Changes) + 93-f1-display-name-cache-probe (two-pass display_name mutation + cleanup; sidebar propagation verified) |
 | /profile/tickets | COVERED | 07-profile-tickets |
 | /profile/privacy | COVERED | redirects to /settings/privacy (17-settings-subpages) |
-| /profile/:userId | UNCOVERED | needs a known peer user id |
+| /profile/:userId | COVERED | 52-view-profile-deep-link-render (seeds a non-self profile id with display_name set via .maestro/scripts/seed-peer-user-id.js, deep-links coexist://profile/<id>; anchor: the peer's display_name appears as the Header title at view-profile.tsx:150). |
 | /events | COVERED | 08-explore-walk (redirects to /explore) |
 | /events/:id | COVERED | 39-events-detail-deep-walk (Supabase-seeded next-free-public event id via .maestro/scripts/seed-event-id.js runScript + coexist://events/<id> deep-link; asserts Share Event + a CTA branch from Register / Cancel Registration / Check In Now / Join Waitlist / You're registered). The unstable activity-type chip tap path is bypassed. RSVP create-assert-DELETE in 91-events-detail-rsvp-cleanup. |
 | /events/:id/day | COVERED | 45-events-detail-day-render (LEADER ACTIONS rail tap from event detail - the deep-link prefix workaround for F4. Anchor: "Attendees" tab label visible only on the day-of dashboard). |
@@ -58,7 +60,9 @@ chains, so coverage payoff per flow is high.
 | /shop/cart | COVERED | 50-shop-journey-render |
 | /shop/orders | COVERED | 50-shop-journey-render |
 | /shop/order-confirmation | COVERED | 50-shop-journey-render (renders fallback when no session) |
-| /shop/:slug, /shop/checkout, /shop/orders/:id | UNCOVERED | checkout needs prod-write-with-cleanup design; product slug needs seeded id |
+| /shop/:slug | COVERED | 53-shop-product-detail-render (seeds an active merch_products row via .maestro/scripts/seed-product-slug.js + authed REST; merch_products RLS is TO authenticated so the anon key returns zero rows; anchor: product.name as the h1 at product-detail.tsx:540). |
+| /shop/checkout | COVERED | 94-shop-checkout-with-cart-cleanup (PROD-WRITE: seed product, tap Cart on /shop/<slug>, deep-link /shop/checkout, assert "Secure checkout" hero + "Total" footer; cleanup relaunches the app then deep-links /shop/cart and taps aria-label "Remove <productName>". Cleanup must restart because the in-session deep-link /shop/checkout -> /shop/cart trips the ErrorBoundary, see F5). |
+| /shop/orders/:id | UNCOVERED | needs a real completed order; queued |
 | /tasks | COVERED | 13-tasks-walk |
 | /updates | COVERED | 14-updates-walk |
 | /impact | COVERED | redirects to /profile (02-tabs-walk) |
@@ -76,13 +80,14 @@ chains, so coverage payoff per flow is high.
 |---|---|---|
 | /admin (home) | COVERED | 03-admin-walk (anchors: Collectives + App tabs; select VALUES are not hierarchy text) |
 | /admin/events | COVERED | 31-admin-events-list (list + counters + BIGGEST EVENT) + 05-admin-metrics-invariance (UPCOMING / REGISTRATIONS / AVG ATTENDANCE vs DB truth) |
-| /admin/events/create | UNCOVERED | reached via probe; create-assert-DELETE candidate (queued for next batch as 92-admin-events-create-cleanup) |
+| /admin/events/create | COVERED | 57-admin-events-create-render (deep-link coexist://admin/events/create renders the form under AdminLayout; anchor: "New Event" h1 + Publish Event / Save as Draft footer buttons + "Select Collectives" required-section heading. Header text itself is aria-label-only per the batch 4 codification - the visible h1 reads "New Event" not "Create Event"). The prod-write-with-cleanup half (substrate create -> UI assert in /admin/events list -> substrate delete -> assert gone) is queued as 92-admin-events-create-cleanup for the next author. |
 | /admin/users | COVERED | 20-admin-users |
 | /admin/collectives | COVERED | 21-admin-collectives |
 | /admin/collectives/:id | COVERED | 35-admin-collective-detail (tap Sunshine Coast row -> assert Members/Manage/Leaders/Region/Active anchor; Permission required branch also accepted) |
 | /admin/tasks | COVERED | 22-admin-tasks-workflows |
 | /admin/surveys | COVERED | 23-admin-surveys |
-| /admin/surveys/create, /admin/surveys/:id/edit | UNCOVERED | |
+| /admin/surveys/create | COVERED | 55-admin-surveys-create-render (deep-link, anchor: "Create Survey" h1 + "Details" + "Survey Purpose" section headers - the form's "Survey Title" label renders with a trailing asterisk so full-string-regex matchers anchor on the section headers instead). |
+| /admin/surveys/:id/edit | COVERED | 56-admin-surveys-edit-render (seeds an existing surveys row via .maestro/scripts/seed-survey-id.js + authed REST; deep-link coexist://admin/surveys/<id>/edit; anchor: "Edit Survey" h1 + "Details" + "Save Changes" footer button). |
 | /admin/moderation | COVERED | 24-admin-moderation |
 | /admin/metrics | COVERED | 25-admin-metrics-reports (Attendance & Retention labels; DB-invariance pass queued) |
 | /admin/reports | COVERED | 25-admin-metrics-reports |
@@ -258,6 +263,51 @@ chains, so coverage payoff per flow is high.
   row in the table above carries the exact unblock pathway (extend
   the deep-link resolver, or build the substrate seed to satisfy
   the page-level gate).
+
+## Batch 6 (2026-06-11) - chat-channel + view-profile + shop + admin sub-create routes
+
+- **F5 new finding.** Deep-link to /shop/cart from a session that just
+  navigated /shop/<slug> -> /shop/checkout reproducibly trips the
+  ErrorBoundary "Something went wrong" fallback (one-shot screenshot
+  reproducible during 94 cleanup authoring). Cold-launch -> deep-link
+  /shop/cart renders normally. Likely a Stripe / reservation effect
+  cleanup that throws when the route remounts mid-checkout-state.
+  Workaround codified in 94: `stopApp` + `launchApp` before the cart
+  deep-link, then remove via aria-label tap. Root-cause investigation
+  queued (this is a finding, not a fix - same shape as F3 was at first
+  observation).
+- **3 new seed scripts.** .maestro/scripts/seed-channel-id.js,
+  seed-peer-user-id.js, seed-survey-id.js, seed-product-slug.js. All
+  four use the auth-password REST flow (POST /auth/v1/token with the
+  env-injected MAESTRO_CX_EMAIL/PASSWORD, then GET against a single
+  table with the access_token in the Authorization header). The
+  channels/profiles/surveys/merch_products tables all have
+  RLS-to-authenticated policies, so the anon-only seed-event-id
+  approach does not work here. The channels table was a 2-step probe:
+  the migration uses `chat_channel_members`, NOT the
+  `staff_channel_memberships` view name the PostgREST 404 hint pointed
+  at; codified in the seed script comment.
+- **7 flows green this batch:**
+  - 51 chat-channel-deep-link-render (closes F2 from the deep-link side)
+  - 52 view-profile-deep-link-render
+  - 53 shop-product-detail-render
+  - 55 admin-surveys-create-render
+  - 56 admin-surveys-edit-render
+  - 57 admin-events-create-render
+  - 94 shop-checkout-with-cart-cleanup (prod-write: cart-add +
+    reservation, full UI cleanup, F5 documented as the cleanup pattern)
+- **Anchor gotcha doubled down.** Input labels in this codebase
+  render as "<Label>*" with a trailing asterisk on required fields
+  (e.g. "Survey Title*", "Event Title*"). Maestro's `visible:`
+  matcher treats the string as full-string-regex per the HARD RULES,
+  so `visible: "Survey Title"` does not match `Survey Title*`.
+  Anchor on the section header text (Details, Survey Purpose) or on
+  the visible button labels instead.
+- **Co-Exist Australia Stickers** is the currently-active product the
+  seed-product-slug.js picks (sort by created_at desc, limit 1). If
+  that product is hidden / sold out the seed silently picks the next
+  newest; if the entire catalog is empty 53 and 94 fail with an
+  explicit error.
 
 ## Rules that bind authoring here
 

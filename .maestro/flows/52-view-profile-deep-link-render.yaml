@@ -1,0 +1,35 @@
+# /profile/:userId render via deep-link. Seeds a non-self profile id
+# with display_name set (signed-in REST query against profiles, filter
+# id != my user id, display_name not null) and opens
+# coexist://profile/<id>. Note: the resolver intercepts 'member' (see
+# F4 + use-deep-link.ts:29) but not 'profile' - 'profile' falls
+# through to default and routes to /profile/<id> directly.
+# Anchor: the seeded display_name appears as the Header title
+# (view-profile.tsx:150) AND in the body h2 (view-profile.tsx:163);
+# either branch satisfies route-mount coverage.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: false
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+- runScript: ../scripts/seed-peer-user-id.js
+- openLink: "coexist://profile/${output.peerUserId}"
+- extendedWaitUntil:
+    visible: "${output.peerDisplayName}"
+    timeout: 20000
+- takeScreenshot: /tmp/maestro-cx-view-profile
