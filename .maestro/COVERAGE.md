@@ -471,6 +471,35 @@ chains, so coverage payoff per flow is high.
     until A or B lands. The next worker should NOT keep authoring new
     flows on this build - all production-build APK tests fail until
     F6 is closed.
+  - **F6 RESOLVED 2026-06-11 ~10:25 AEST (root cause = corrupted local
+    node_modules, NOT a code regression).** Hypothesis #2 was correct.
+    A `pnpm install` had run against this repo at 09:53 (stray
+    `pnpm-lock.yaml` + `pnpm-workspace.yaml` appeared, since quarantined),
+    converting `node_modules/` to pnpm's symlinked `.pnpm` layout and
+    shunting `react-router-dom` into `node_modules/.ignored/`. The build
+    then resolved a hoisted `react-router` (v7) AND a second react-router
+    instance, so `<Router>`/`BrowserRouter`'s context and the `useLocation`
+    consumer came from different module instances -> "useLocation() may be
+    used only in the context of a <Router> component". This is a LOCAL
+    build artefact only; CI/Vercel run a clean `npm ci`, so the DEPLOYED
+    app was never affected (Tate confirmed deployed works; the insights
+    redesign was live and green on web throughout).
+    - **Fix:** `rm -rf node_modules && npm ci` (this repo is npm, has
+      `package-lock.json`, no `packageManager` field; do NOT `pnpm install`
+      here). Verify: `find node_modules -maxdepth 2 -name react-router-dom`
+      returns exactly `node_modules/react-router-dom` and there is no
+      `node_modules/.ignored`.
+    - **Proof F6 is environmental:** after `npm ci` + `npm run build`, a
+      scripted Chromium login against `vite preview` reaches the authed
+      home ("Good morning, Ecodia") with ZERO console errors as opposed to
+      the "Something went wrong" ErrorBoundary on the pnpm tree; the native
+      iOS build (Coexist-iPhone sim) then signed in and rendered Home +
+      /admin/insights with no boundary trip.
+    - **Action for the next worker:** F6 is NOT a bisect target. Do not
+      hunt the `<dt>` symbol or revert commits. Just rebuild deps with
+      `npm ci` and re-run; the 4 BLOCKED-F6 flows (47/48/49/58) should now
+      mount. If F6 recurs, someone ran `pnpm install` again - re-quarantine
+      the pnpm lockfiles and `npm ci`.
 
 ## Rules that bind authoring here
 
