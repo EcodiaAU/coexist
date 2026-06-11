@@ -236,10 +236,16 @@ export function AdminLayout() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const scopeCtx = useAdminCollectiveScopeProvider()
 
-  // Reset header state on route change so fullBleed is correct before the child
-  // page's useEffect fires (prevents the p-6 → p-0 flash on full-bleed pages).
+  // Reset fullBleed on route change so the new layout is correct before the
+  // child page's useAdminHeader effect fires (prevents the p-6 → p-0 flash on
+  // full-bleed pages). Title + other header content carry over from the
+  // previous page until the new page's effect runs; clearing them here meant
+  // every admin → admin navigation showed a no-hero beat while the new lazy
+  // chunk loaded (Tate 2026-06-12: "sometimes hero just doesn't show up on any
+  // admin page"). Showing the old title for a frame is less jarring than the
+  // whole hero disappearing.
   useEffect(() => {
-    setHeaderState({ title: '', fullBleed: isFullBleedRoute })
+    setHeaderState((prev) => ({ ...prev, fullBleed: isFullBleedRoute }))
     scrollRef.current?.scrollTo({ top: 0, behavior: 'instant' })
   }, [location.pathname, isFullBleedRoute])
 
