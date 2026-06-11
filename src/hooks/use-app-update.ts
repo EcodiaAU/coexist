@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from '@/lib/supabase'
 import { getAppVersion, whenAppVersionReady } from '@/lib/app-version'
 
@@ -84,8 +85,15 @@ export function useAppUpdate(): UpdateStatus {
         const minVersion = config.min_version || null
         const latestVersion = config.latest_version || null
 
-        const forceUpdate = minVersion ? compareSemver(installed, minVersion) < 0 : false
-        const updateAvailable = latestVersion ? compareSemver(installed, latestVersion) < 0 : false
+        // Force-update is a NATIVE-only gate. The web app (app.coexist.au)
+        // always serves the latest deployed bundle, so it can never be
+        // "behind" min_version - blocking it would lock web users behind an
+        // App Store screen they cannot satisfy. So min_version applies only
+        // to installed native binaries, whose real version resolves via
+        // App.getInfo(). On web, forceUpdate is always false.
+        const isNative = Capacitor.isNativePlatform()
+        const forceUpdate = isNative && minVersion ? compareSemver(installed, minVersion) < 0 : false
+        const updateAvailable = isNative && latestVersion ? compareSemver(installed, latestVersion) < 0 : false
 
         if (mounted) {
           setStatus({

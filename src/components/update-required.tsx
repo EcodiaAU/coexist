@@ -65,8 +65,8 @@ export function UpdateRequired({
   const isNative = Capacitor.isNativePlatform()
 
   const versionTagline = latestVersion
-    ? `Co-Exist ${latestVersion} fixes how event times are stored across timezones.`
-    : 'A required update is ready that fixes how event times are stored across timezones.'
+    ? `Co-Exist ${latestVersion} brings the latest fixes and improvements.`
+    : 'A required update is ready with the latest fixes and improvements.'
 
   return (
     <div
