@@ -7,13 +7,16 @@ PARTIAL when a flow reaches it but asserts thinly; UNCOVERED otherwise.
 Update this file in the SAME commit as any flow change (lifecycle rule in
 backend/patterns/maestro-mobile-stably-web-are-canonical-app-testing-2026-06-10.md).
 
-Status totals 2026-06-11 (after author batch 7): ~85 covered / ~5 partial
-/ 3 BLOCKED-by-F4 / ~10 BLOCKED-substrate / ~17 uncovered + 4 open
-findings: F2 (canary armed in 38), F3 (corrected: deep-link bypasses
-authed session; canary armed in 32), F4 (deep-link resolver strips
-path segments after :id - new in batch 5), F5 (deep-link /shop/cart
-from /shop/checkout trips an ErrorBoundary, reproducible - new in
-batch 6). F1 reclassified FALSIFIED by 93-f1-display-name-cache-probe -
+Status totals 2026-06-11 (after author batch 8): ~85 authored covered + 4 new
+flows authored-but-unverifiable-this-batch (47, 48, 49, 58) / ~5 partial / 0
+BLOCKED-by-F4 (F4 resolver fix shipped 2026-06-11) / ~10 BLOCKED-substrate /
+~13 uncovered + 5 open findings: F2 (canary armed in 38), F3 (corrected:
+deep-link bypasses authed session; canary armed in 32), F4 (deep-link
+resolver fix SHIPPED in batch 8 - src/hooks/use-deep-link.ts now forwards
+the third path segment for both events and collectives branches), F5
+(deep-link /shop/cart from /shop/checkout trips an ErrorBoundary,
+reproducible - new in batch 6), F6 (catastrophic global post-login
+ErrorBoundary trip - new in batch 8, see below). F1 reclassified FALSIFIED by 93-f1-display-name-cache-probe -
 the sidebar tracks the latest display_name across both passes and
 post-cleanup (see batch 4 notes). Batch 7 reclassified 10 rows from
 UNCOVERED to BLOCKED-substrate after Supabase probes proved the gating
@@ -45,15 +48,15 @@ chains, so coverage payoff per flow is high.
 | /events/:id | COVERED | 39-events-detail-deep-walk (Supabase-seeded next-free-public event id via .maestro/scripts/seed-event-id.js runScript + coexist://events/<id> deep-link; asserts Share Event + a CTA branch from Register / Cancel Registration / Check In Now / Join Waitlist / You're registered). The unstable activity-type chip tap path is bypassed. RSVP create-assert-DELETE in 91-events-detail-rsvp-cleanup. |
 | /events/:id/day | COVERED | 45-events-detail-day-render (LEADER ACTIONS rail tap from event detail - the deep-link prefix workaround for F4. Anchor: "Attendees" tab label visible only on the day-of dashboard). |
 | /events/:id/impact | COVERED | 46-events-detail-log-impact-render (LEADER ACTIONS rail tap from event detail. Anchor: "Volunteer Hours" + "Participants" section labels, since the header text only renders as aria-label "Log Impact page header" per the batch 4 anchor gotcha). |
-| /events/:id/survey | BLOCKED-F4 | deep-link `coexist://events/<id>/survey` lands on /events/<id> (F4); the in-app CTA at event-detail.tsx:675/1618 only renders when isPastEvent(event) is true and the seeded event is upcoming. Additional substrate gate at post-event-survey.tsx:226: attendance.status must equal 'attended' or the page shows the "Survey not available" EmptyState. Unblock A: seed a past event with attendance.status='attended' for the test account. Unblock B: extend use-deep-link resolver to forward path segments past :id (one-line fix, affects all 5 event sub-pages). |
-| /events/:id/profile-survey | BLOCKED-F4 | deep-link strips path (F4); no in-app CTA found from event detail or other surfaces. Unblock: extend deep-link resolver. |
-| /events/:id/ticket-confirmation | BLOCKED-F4 | deep-link strips path (F4); rides PAID ticket purchase only (free RSVPs do not create ticket rows per the batch 4 finding, so the route is unreachable from event-detail for the free-event seed). Unblock A: drive a paid Stripe checkout end-to-end with cleanup (heavy). Unblock B: extend deep-link resolver. |
-| /events/:id/check-in | BLOCKED-F4 | deep-link `coexist://events/<id>/check-in` strips path (F4). The two in-app navigations to this route (proximity-check-in-banner.tsx:78 and /admin/dev-tools:1297) are GPS-gated and admin-debug respectively - neither is a stable test surface. The two visible check-in affordances on event-detail are SHEETS, not navigations: "Check In Now" opens setShowCheckInSheet (event-detail.tsx:728), "Check-in Code" opens setShowQrSheet (line 1173). Unblock A: extend deep-link resolver (one-line fix, see F4). Unblock B: stub a proximity-banner trigger for the test session. |
+| /events/:id/survey | AUTHORED-BLOCKED-F6 | F4 resolver fix SHIPPED 2026-06-11 (use-deep-link.ts forwards third segment). Flow 47-events-detail-survey-render authored: seeds upcoming event, deep-links to /events/<id>/survey, asserts "Survey not available" EmptyState + "Back to Event" (the no-attendance branch at post-event-survey.tsx:241). Flow goes green once F6 lifted. Substrate unblock A (seed past event with attendance.status='attended') still queued for full-flow coverage. |
+| /events/:id/profile-survey | AUTHORED-BLOCKED-F6 | F4 fix SHIPPED. Flow 48-events-detail-profile-survey-render authored: deep-links /events/<id>/profile-survey, asserts "Welcome to your first event" / "Quick Profile Setup" / "Your Details" + Save Details / Skip for now footer. Green once F6 lifted. |
+| /events/:id/ticket-confirmation | BLOCKED-F6-then-paid-stripe | F4 fix SHIPPED unblocks the deep-link resolver, but the route still rides PAID ticket purchase only (free RSVPs do not create ticket rows per batch 4). Unblock B (deep-link resolver) is done; Unblock A (paid Stripe checkout end-to-end with cleanup) remains the substantive blocker even after F6 lifts. Not authored this batch. |
+| /events/:id/check-in | AUTHORED-BLOCKED-F6 | F4 fix SHIPPED. Flow 49-events-detail-check-in-render authored: deep-links /events/<id>/check-in, asserts "Enter Check-In Code" idle state (or Check-in Failed / Already Checked In either-branch). The SHEET-only in-app affordances + GPS-gated proximity banner + admin-debug button remain not-stable-test-surfaces, so the deep-link is the canonical entry. Green once F6 lifted. |
 | /check-in/:token | BLOCKED-substrate | external QR scan only. The token routes to /Users/ecodia/.code/coexist/src/pages/public/check-in.tsx via `https://app.coexist.au/check-in/<token>` (event-day.tsx:982). No in-app entry point; reaching it from the test session requires a deep-link with a real public_check_in_token off a published event with public_check_in_enabled=true. Unblock: seed event with public_check_in_enabled and openLink the https URL. |
 | /explore | COVERED | 08-explore-walk |
 | /collectives | COVERED | 10-collectives-explore-tab (redirects to /explore?tab=collectives) |
 | /collectives/:slug | COVERED | 36-collective-detail (Explore -> Collectives tab -> tap Sunshine Coast row -> assert About/Members/Upcoming/Join/Events anchor) |
-| /collectives/:slug/manage | BLOCKED-F4+aria | the in-app affordance is the Settings-icon button in /collectives/:slug Header rightActions (collective-detail.tsx:184) with `aria-label="Manage collective"` and NO visible text label - Maestro's text matcher cannot reach it under the batch-4 anchor-gotcha rule ("aria-label X is NOT visible text"). Deep-link `coexist://collectives/sunshine-coast/manage` strips the path (F4: `case 'collectives'` only reads `/collectives/<id>`, no `/<id>/manage`). The leader-hub Invite menu (leader/index.tsx:1080) navigates to this route but the leader hub itself is uncovered + unstable. Unblock A: extend deep-link resolver (same one-liner that unblocks event sub-pages). Unblock B: tap-by-accessibility-id if Maestro devtools hierarchy exposes the aria-label as a unique id (probe queued for batch 8). |
+| /collectives/:slug/manage | AUTHORED-BLOCKED-F6 | F4 fix SHIPPED 2026-06-11 - use-deep-link.ts now forwards the third path segment for collectives too. Flow 58-collective-manage-deep-link-render authored: deep-links coexist://collectives/sunshine-coast/manage, asserts either-branch (Access denied EmptyState since code@ is global admin but not Sunshine Coast leader, OR Manage Collective if the canManage gate flips). Green once F6 lifted. The aria-label icon-only affordance gap is now a P2 concern - the deep-link is the canonical entry. |
 | /notifications | COVERED | 09-notifications-walk |
 | /settings | COVERED | 04-settings-walk |
 | /settings/account | COVERED | 17-settings-subpages |
@@ -375,6 +378,99 @@ chains, so coverage payoff per flow is high.
   that product is hidden / sold out the seed silently picks the next
   newest; if the entire catalog is empty 53 and 94 fail with an
   explicit error.
+
+## Batch 8 (2026-06-11) - F4 resolver fix SHIPPED + 4 flows authored + F6 new
+
+- **F4 SHIPPED.** `src/hooks/use-deep-link.ts:25-32` now forwards the
+  third path segment for `case 'events'` and `case 'collectives'`. One
+  diff, no behaviour change for existing single-segment deep-links
+  (`coexist://events/<id>` still maps to `/events/<id>`). New deep-links
+  `coexist://events/<id>/{day,impact,survey,profile-survey,check-in,
+  ticket-confirmation,edit}` and `coexist://collectives/<id>/manage`
+  now resolve to their intended sub-routes. F4 is closed.
+- **4 new flows authored** but unverifiable on this build because of F6:
+  - 47-events-detail-survey-render (deep-link survey, no-attendance
+    branch with "Survey not available" + "Back to Event" anchors)
+  - 48-events-detail-profile-survey-render (deep-link profile-survey,
+    Welcome to your first event + Save Details / Skip for now)
+  - 49-events-detail-check-in-render (deep-link check-in, Enter
+    Check-In Code idle state + either-branch error states)
+  - 58-collective-manage-deep-link-render (deep-link collectives/<slug>/
+    manage, either Access denied or Manage Collective branch)
+  Each flow uses the canonical 01-style auth gate (Welcome back ->
+  inputText pair -> Log In), then bypasses home via `openLink` (F6
+  workaround: the route ErrorBoundary trips on home but the deep-link
+  routes mount independently if F6 is fixed).
+- **F6 new finding - catastrophic post-login global ErrorBoundary trip.**
+  After `pm clear org.coexistaus.app` + fresh `gradlew installDebug` of
+  the current main HEAD (92e1736) build on emulator-5554, cold launch
+  shows the "Welcome back" sign-in screen as expected, sign-in via
+  email/password completes (Welcome back becomes notVisible),
+  navigation to "/" then ERRORS at the top-level ErrorBoundary
+  (App.tsx:251) with "Something went wrong" + Reload. Every subsequent
+  deep-link to ANY route (probed /admin/events explicitly + the 4 new
+  sub-route flows) hits the same boundary. The visible failure mode
+  matches what the batch 6 F5 finding describes as a one-shot recovery
+  state, but here it is cold-launch and persistent across `pm clear`
+  cycles.
+  - **Root cause (from chromium Capacitor/Console at 2026-06-11
+    10:12:33 UTC):**
+    `Error: useLocation() may be used only in the context of a <Router>
+    component. The above error occurred in the <dt> component. React
+    will try to recreate this component tree from scratch using the
+    error boundary you provided, F.`
+    Logged at `https://localhost/assets/vendor-Bfw-n6Sb.js:112` with
+    the ErrorBoundary catch reported by
+    `https://localhost/assets/index-C4LPX0hK.js:3`. `<dt>` is a minified
+    React component name - hunt the production-build symbol to identify
+    it. The provider stack at main.tsx:209 puts BrowserRouter ABOVE
+    AuthProvider/ToastProvider/SentryErrorBoundary/App, so every
+    component below BrowserRouter should have Router context. Suspect
+    surfaces:
+      1. A non-Routes-wrapped use of useLocation by a component that
+         mounts in a context where react-router's RouterContext is not
+         set (Provider mismatch from a re-bundled dep, or an HOC that
+         renders outside Routes).
+      2. A duplicate react-router-dom in node_modules - the build has
+         only one symlinked v7.17.0 + a `.ignored/react-router-dom`
+         leaf from an upgrade, single copy on `node_modules/`. No
+         duplicate so far probed.
+      3. A regression introduced when a `useLocation` consumer was
+         hoisted out of `<Routes>` between the last GREEN APK install
+         and HEAD. The prior batch 7 build was almost certainly NOT
+         rebuilt; batch 7 only touched .maestro/ YAML and seed scripts,
+         so the GREEN emulator was running a stale APK from a much
+         earlier build. The regression is therefore older than batch 7
+         but invisible because nobody rebuilt the APK. Bisect candidate
+         commits since the last known-rebuild are 4eadeb2 (test/maestro
+         only, no app source), 92e1736 (insights.tsx Tailwind classes),
+         d286071 (insights.tsx), 1008f03 (insights.tsx + copy-table.ts),
+         6f7675b (test/maestro only), 4394cd3 (insights.tsx). Most are
+         confined to insights.tsx so the suspect is the merge between
+         insights changes and earlier branches; 7f82c80 (universal
+         links, /unsubscribe route) is a strong starting probe.
+  - **Verify gate:** chromium Capacitor/Console error at
+    `vendor-Bfw-n6Sb.js:112` matches the literal string `useLocation()
+    may be used only in the context of a <Router> component` and the
+    minified component frame names `<dt>` - reproduce via
+    `pm clear org.coexistaus.app && launchApp && Welcome back +
+    sign in -> openLink coexist://admin/events` on emulator-5554 then
+    `adb logcat -d | grep -E 'Capacitor/Console.*ERROR'` as opposed
+    to the prior cached-APK GREEN state which never re-rendered the
+    home tree on the same install.
+  - **Unblock A:** identify the `<dt>` minified component (build with
+    `sourcemap: true` in vite.config.ts temporarily, OR grep the
+    production map for `dt =` referencing useLocation, OR grep the
+    source for tiny one-line components that call useLocation and
+    might be mounted as `<dt />` symbol).
+  - **Unblock B:** revert to a known-good APK by checking out the
+    commit before the regression entered (start at 7f82c80 backwards)
+    and rebuilding.
+  - **Unblock C:** the 4 new flows + every existing flow that does
+    not survive an actual home / route mount will stay BLOCKED-F6
+    until A or B lands. The next worker should NOT keep authoring new
+    flows on this build - all production-build APK tests fail until
+    F6 is closed.
 
 ## Rules that bind authoring here
 

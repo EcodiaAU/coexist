@@ -1,0 +1,39 @@
+# /events/:id/check-in render via deep-link, post F4 fix
+# (src/hooks/use-deep-link.ts now forwards the third path segment).
+# check-in.tsx defaults to the idle 3-character code-entry state when
+# the seeded event is loaded - anchor: "Enter Check-In Code" h2 +
+# "Ask your leader for the 3-character code" subhead. Triple-gated
+# in batch 7 - SHEET-based affordances on event-detail, GPS-gated
+# proximity banner, admin-debug button - so the deep link is the
+# only sane test entry. F4 fix unblocks this.
+#
+# Home-ErrorBoundary workaround as per F6 in COVERAGE.md - the route
+# ErrorBoundary wraps only `/`, so deep-link past it.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: ".*(Welcome back|YOUR NEXT EVENT|Something went wrong).*"
+    timeout: 30000
+- runFlow:
+    when:
+      visible: "Welcome back"
+    commands:
+      - tapOn: "Email.*"
+      - inputText: ${MAESTRO_CX_EMAIL}
+      - tapOn: "Password.*"
+      - inputText: ${MAESTRO_CX_PASSWORD}
+      - hideKeyboard
+      - tapOn: "Log In"
+      - extendedWaitUntil:
+          notVisible: "Welcome back"
+          timeout: 25000
+- runScript: ../scripts/seed-event-id.js
+- openLink: "coexist://events/${output.eventId}/check-in"
+- extendedWaitUntil:
+    visible: ".*(Enter Check-In Code|Check-in Failed|Already Checked In).*"
+    timeout: 20000
+- takeScreenshot: /tmp/maestro-cx-events-check-in

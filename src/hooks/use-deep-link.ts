@@ -9,11 +9,13 @@ import { useAuth } from '@/hooks/use-auth'
  * custom scheme links (coexist://...).
  *
  * Supported deep links:
- *   coexist://events/{id}      → /events/{id}
- *   coexist://collectives/{id} → /collectives/{id}
- *   coexist://member/{id}      → /profile/{id}
- *   coexist://share/impact     → /profile (impact tab)
- *   coexist://share/event/{id} → /events/{id}
+ *   coexist://events/{id}              → /events/{id}
+ *   coexist://events/{id}/{sub}        → /events/{id}/{sub} (day, impact, survey, profile-survey, ticket-confirmation, check-in, edit)
+ *   coexist://collectives/{id}         → /collectives/{id}
+ *   coexist://collectives/{id}/{sub}   → /collectives/{id}/{sub} (manage)
+ *   coexist://member/{id}              → /profile/{id}
+ *   coexist://share/impact             → /profile (impact tab)
+ *   coexist://share/event/{id}         → /events/{id}
  */
 function resolveDeepLinkPath(rawPath: string): string {
   // Normalise: strip leading/trailing slashes, lowercase
@@ -23,9 +25,11 @@ function resolveDeepLinkPath(rawPath: string): string {
 
   switch (first) {
     case 'events':
-      return `/events/${second || ''}`
+      if (!second) return '/events/'
+      return third ? `/events/${second}/${third}` : `/events/${second}`
     case 'collectives':
-      return `/collectives/${second || ''}`
+      if (!second) return '/collectives/'
+      return third ? `/collectives/${second}/${third}` : `/collectives/${second}`
     case 'member':
       return `/profile/${second || ''}`
     case 'share':

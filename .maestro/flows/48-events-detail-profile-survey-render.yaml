@@ -1,0 +1,41 @@
+# /events/:id/profile-survey render via deep-link, post F4 fix
+# (src/hooks/use-deep-link.ts now forwards the third path segment).
+# profile-survey.tsx renders the "Quick Profile Setup" header with
+# "Welcome to your first event!" h2 + "Your Details" section header
+# + "Save Details" footer button. There is no in-app CTA for this
+# route from event-detail or other surfaces - the deep-link is the
+# only stable entry, which is why F4 was blocking. Either the form
+# renders OR the page short-circuits to the existing-profile branch.
+# Either branch is acceptable proof of mount.
+#
+# Home-ErrorBoundary workaround as per F6 in COVERAGE.md - the route
+# ErrorBoundary wraps only `/`, so deep-link past it.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: ".*(Welcome back|YOUR NEXT EVENT|Something went wrong).*"
+    timeout: 30000
+- runFlow:
+    when:
+      visible: "Welcome back"
+    commands:
+      - tapOn: "Email.*"
+      - inputText: ${MAESTRO_CX_EMAIL}
+      - tapOn: "Password.*"
+      - inputText: ${MAESTRO_CX_PASSWORD}
+      - hideKeyboard
+      - tapOn: "Log In"
+      - extendedWaitUntil:
+          notVisible: "Welcome back"
+          timeout: 25000
+- runScript: ../scripts/seed-event-id.js
+- openLink: "coexist://events/${output.eventId}/profile-survey"
+- extendedWaitUntil:
+    visible: ".*(Welcome to your first event|Quick Profile Setup|Your Details).*"
+    timeout: 20000
+- assertVisible: ".*(Save Details|Skip for now).*"
+- takeScreenshot: /tmp/maestro-cx-events-profile-survey
