@@ -546,7 +546,11 @@ export default function EventDayPage() {
     [eventId, checkInOpen, checkInClosedMessage, toast, queryClient],
   )
 
-  // Toggle the public QR check-in on/off for this event
+  // Toggle the public QR check-in on/off for this event.
+  // A BEFORE-UPDATE trigger mints the public_check_in_token server-side when
+  // enabled flips true; we need to refetch the event row so the QR component
+  // sees the new token. Without the invalidation the UI stays on
+  // "Generating QR code..." indefinitely.
   const handleTogglePublicCheckIn = useCallback(async () => {
     if (!eventId) return
     setTogglingPublicCheckIn(true)
@@ -560,12 +564,13 @@ export default function EventDayPage() {
         toast.error(error.message || 'Failed to update QR check-in')
       } else {
         setPublicCheckInEnabled(next)
+        queryClient.invalidateQueries({ queryKey: ['event', eventId] })
         toast.success(next ? 'Public QR check-in enabled' : 'Public QR check-in disabled')
       }
     } finally {
       setTogglingPublicCheckIn(false)
     }
-  }, [eventId, publicCheckInEnabled, toast])
+  }, [eventId, publicCheckInEnabled, queryClient, toast])
 
   const isLoading = eventLoading || attendeesLoading || roleLoading
   const showLoading = useDelayedLoading(isLoading)
@@ -979,7 +984,7 @@ export default function EventDayPage() {
               <div className="flex flex-col items-center gap-3 py-2">
                 <div className="p-3 rounded-2xl bg-white shadow-md ring-1 ring-neutral-100">
                   <QRCodeSVG
-                    value={`https://app.coexist.au/check-in/${(event as Record<string, unknown>).public_check_in_token}`}
+                    value={`https://app.coexistaus.org/check-in/${(event as Record<string, unknown>).public_check_in_token}`}
                     size={200}
                     level="M"
                   />
