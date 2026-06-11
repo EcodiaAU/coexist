@@ -31,8 +31,11 @@ androidWebViewHierarchy: devtools
     visible: "Admin Home"
     timeout: 10000
 - tapOn: "Admin Home"
+# "All Time" is a select VALUE (pixels only, never devtools hierarchy
+# text - the codified day-one trap; it red-herringed run 115704Z).
+# Anchor on the admin tab labels like 03-admin-walk does.
 - extendedWaitUntil:
-    visible: "All Time"
+    visible: "Collectives"
     timeout: 15000
 - tapOn: ".*More.*"
 - extendedWaitUntil:
@@ -44,13 +47,15 @@ androidWebViewHierarchy: devtools
     timeout: 15000
 - assertVisible: "REGISTRATIONS"
 - assertVisible: "AVG ATTENDANCE"
-# Copy each metric value to the clipboard, then assert equality against
-# the prehook-supplied expectation. The hero cards render value above
-# label (AdminHeroStat), so the value is the row's leading numeric tile.
-- copyTextFrom: "${MAESTRO_EXPECT_UPCOMING}"
-- assertTrue: ${maestro.copiedText == "${MAESTRO_EXPECT_UPCOMING}"}
-- copyTextFrom: "${MAESTRO_EXPECT_REGISTRATIONS}"
-- assertTrue: ${maestro.copiedText == "${MAESTRO_EXPECT_REGISTRATIONS}"}
-- copyTextFrom: "${MAESTRO_EXPECT_AVG_ATTENDANCE}"
-- assertTrue: ${maestro.copiedText == "${MAESTRO_EXPECT_AVG_ATTENDANCE}"}
+# FAIL CLOSED: if the prehook did not run, the expectations are empty and
+# this flow must go RED, never vacuous green (fault-yield doctrine; this
+# exact flow shipped as a false-green generator on 2026-06-10).
+- assertTrue: ${"${MAESTRO_EXPECT_UPCOMING}" != "" && "${MAESTRO_EXPECT_REGISTRATIONS}" != "" && "${MAESTRO_EXPECT_AVG_ATTENDANCE}" != ""}
+# Each DB-derived number must be findable on the stats surface. The find
+# itself is the assert (a wrong on-screen number means no element matches
+# the DB truth and the step fails). Fault class: stats math drift between
+# use-admin-events.ts and what AdminHeroStat renders.
+- assertVisible: "${MAESTRO_EXPECT_UPCOMING}"
+- assertVisible: "${MAESTRO_EXPECT_REGISTRATIONS}"
+- assertVisible: "${MAESTRO_EXPECT_AVG_ATTENDANCE}"
 - takeScreenshot: /tmp/maestro-cx-admin-metrics-invariance
