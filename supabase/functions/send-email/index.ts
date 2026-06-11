@@ -567,24 +567,29 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   },
 }
 
+/** Substitute {{variable}} placeholders against the template data dict. */
+function interpolate(input: string, data: Record<string, unknown>): string {
+  let out = input
+  for (const [key, value] of Object.entries(data)) {
+    out = out.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value ?? ''))
+  }
+  return out
+}
+
 /** Build email HTML from admin override fields */
 function buildOverrideHtml(
   override: { hero_title: string | null; hero_subtitle: string | null; hero_emoji: string | null; body_html: string | null; cta_label: string | null; cta_url: string | null },
   data: Record<string, unknown>,
 ): string {
-  // Replace {{variable}} placeholders in the override body with actual data
-  let body = override.body_html || ''
-  for (const [key, value] of Object.entries(data)) {
-    body = body.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value ?? ''))
-  }
+  const body = interpolate(override.body_html || '', data)
 
   return emailShell({
-    heroTitle: override.hero_title || 'Co-Exist',
-    heroSubtitle: override.hero_subtitle || undefined,
+    heroTitle: interpolate(override.hero_title || 'Co-Exist', data),
+    heroSubtitle: override.hero_subtitle ? interpolate(override.hero_subtitle, data) : undefined,
     heroEmoji: override.hero_emoji || undefined,
     body: greeting(data.name) + body,
     footerCta: override.cta_label && override.cta_url
-      ? { label: override.cta_label, url: override.cta_url }
+      ? { label: interpolate(override.cta_label, data), url: interpolate(override.cta_url, data) }
       : undefined,
   })
 }
@@ -840,7 +845,9 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    const subject = payload.subject || override?.subject || templateDef.subject(data)
+    const subject = payload.subject
+      || (override?.subject ? interpolate(override.subject, data) : null)
+      || templateDef.subject(data)
     // Thread recipient down so emailShell can build the unsubscribe link
     // with ?email=... per recipient.
     if (data && typeof data === 'object' && toEmail) {
