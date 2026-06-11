@@ -7,16 +7,20 @@ PARTIAL when a flow reaches it but asserts thinly; UNCOVERED otherwise.
 Update this file in the SAME commit as any flow change (lifecycle rule in
 backend/patterns/maestro-mobile-stably-web-are-canonical-app-testing-2026-06-10.md).
 
-Status totals 2026-06-11 (after author batch 8): ~85 authored covered + 4 new
-flows authored-but-unverifiable-this-batch (47, 48, 49, 58) / ~5 partial / 0
-BLOCKED-by-F4 (F4 resolver fix shipped 2026-06-11) / ~10 BLOCKED-substrate /
-~13 uncovered + 5 open findings: F2 (canary armed in 38), F3 (corrected:
+Status totals 2026-06-11 (after author batch 9): ~89 authored covered + 0
+flows authored-but-unverifiable / ~5 partial / 0
+BLOCKED-by-F4 (F4 resolver fix shipped 2026-06-11) /
+0 BLOCKED-by-F6 (F6 RESOLVED 2026-06-11 - corrupted pnpm node_modules, not
+a code regression; 47/48/49/58 verified GREEN this batch) /
+~10 BLOCKED-substrate /
+~13 uncovered + 4 open findings: F2 (canary armed in 38), F3 (corrected:
 deep-link bypasses authed session; canary armed in 32), F4 (deep-link
 resolver fix SHIPPED in batch 8 - src/hooks/use-deep-link.ts now forwards
 the third path segment for both events and collectives branches), F5
 (deep-link /shop/cart from /shop/checkout trips an ErrorBoundary,
-reproducible - new in batch 6), F6 (catastrophic global post-login
-ErrorBoundary trip - new in batch 8, see below). F1 reclassified FALSIFIED by 93-f1-display-name-cache-probe -
+reproducible - new in batch 6). F6 CLOSED (Batch 8 finding reclassified
+ENVIRONMENTAL, not a code regression - see Batch 8 + Batch 9 sections
+below). F1 reclassified FALSIFIED by 93-f1-display-name-cache-probe -
 the sidebar tracks the latest display_name across both passes and
 post-cleanup (see batch 4 notes). Batch 7 reclassified 10 rows from
 UNCOVERED to BLOCKED-substrate after Supabase probes proved the gating
@@ -48,15 +52,15 @@ chains, so coverage payoff per flow is high.
 | /events/:id | COVERED | 39-events-detail-deep-walk (Supabase-seeded next-free-public event id via .maestro/scripts/seed-event-id.js runScript + coexist://events/<id> deep-link; asserts Share Event + a CTA branch from Register / Cancel Registration / Check In Now / Join Waitlist / You're registered). The unstable activity-type chip tap path is bypassed. RSVP create-assert-DELETE in 91-events-detail-rsvp-cleanup. |
 | /events/:id/day | COVERED | 45-events-detail-day-render (LEADER ACTIONS rail tap from event detail - the deep-link prefix workaround for F4. Anchor: "Attendees" tab label visible only on the day-of dashboard). |
 | /events/:id/impact | COVERED | 46-events-detail-log-impact-render (LEADER ACTIONS rail tap from event detail. Anchor: "Volunteer Hours" + "Participants" section labels, since the header text only renders as aria-label "Log Impact page header" per the batch 4 anchor gotcha). |
-| /events/:id/survey | AUTHORED-BLOCKED-F6 | F4 resolver fix SHIPPED 2026-06-11 (use-deep-link.ts forwards third segment). Flow 47-events-detail-survey-render authored: seeds upcoming event, deep-links to /events/<id>/survey, asserts "Survey not available" EmptyState + "Back to Event" (the no-attendance branch at post-event-survey.tsx:241). Flow goes green once F6 lifted. Substrate unblock A (seed past event with attendance.status='attended') still queued for full-flow coverage. |
-| /events/:id/profile-survey | AUTHORED-BLOCKED-F6 | F4 fix SHIPPED. Flow 48-events-detail-profile-survey-render authored: deep-links /events/<id>/profile-survey, asserts "Welcome to your first event" / "Quick Profile Setup" / "Your Details" + Save Details / Skip for now footer. Green once F6 lifted. |
-| /events/:id/ticket-confirmation | BLOCKED-F6-then-paid-stripe | F4 fix SHIPPED unblocks the deep-link resolver, but the route still rides PAID ticket purchase only (free RSVPs do not create ticket rows per batch 4). Unblock B (deep-link resolver) is done; Unblock A (paid Stripe checkout end-to-end with cleanup) remains the substantive blocker even after F6 lifts. Not authored this batch. |
-| /events/:id/check-in | AUTHORED-BLOCKED-F6 | F4 fix SHIPPED. Flow 49-events-detail-check-in-render authored: deep-links /events/<id>/check-in, asserts "Enter Check-In Code" idle state (or Check-in Failed / Already Checked In either-branch). The SHEET-only in-app affordances + GPS-gated proximity banner + admin-debug button remain not-stable-test-surfaces, so the deep-link is the canonical entry. Green once F6 lifted. |
+| /events/:id/survey | COVERED | 47-events-detail-survey-render (deep-links to /events/<id>/survey, asserts "Survey not available" EmptyState + "Back to Event" - the no-attendance branch at post-event-survey.tsx:241). Verified GREEN batch 9 post-F6 fix. Substrate unblock A (seed past event with attendance.status='attended') queued for full-flow coverage. |
+| /events/:id/profile-survey | COVERED | 48-events-detail-profile-survey-render (deep-links /events/<id>/profile-survey, asserts "Welcome to your first event" / "Quick Profile Setup" / "Your Details" + Save Details / Skip for now footer). Verified GREEN batch 9 post-F6 fix. |
+| /events/:id/ticket-confirmation | BLOCKED-paid-stripe | F4 fix SHIPPED + F6 RESOLVED 2026-06-11. Route still rides PAID ticket purchase only (free RSVPs do not create ticket rows per batch 4). Unblock B (deep-link resolver) is done; F6 is closed; Unblock A (paid Stripe checkout end-to-end with cleanup) is the only remaining blocker. |
+| /events/:id/check-in | COVERED | 49-events-detail-check-in-render (deep-links /events/<id>/check-in, asserts "Enter Check-In Code" idle state OR Check-in Failed / Already Checked In either-branch). Verified GREEN batch 9 post-F6 fix. The SHEET-only in-app affordances + GPS-gated proximity banner + admin-debug button remain not-stable-test-surfaces, so the deep-link is the canonical entry. |
 | /check-in/:token | BLOCKED-substrate | external QR scan only. The token routes to /Users/ecodia/.code/coexist/src/pages/public/check-in.tsx via `https://app.coexist.au/check-in/<token>` (event-day.tsx:982). No in-app entry point; reaching it from the test session requires a deep-link with a real public_check_in_token off a published event with public_check_in_enabled=true. Unblock: seed event with public_check_in_enabled and openLink the https URL. |
 | /explore | COVERED | 08-explore-walk |
 | /collectives | COVERED | 10-collectives-explore-tab (redirects to /explore?tab=collectives) |
 | /collectives/:slug | COVERED | 36-collective-detail (Explore -> Collectives tab -> tap Sunshine Coast row -> assert About/Members/Upcoming/Join/Events anchor) |
-| /collectives/:slug/manage | AUTHORED-BLOCKED-F6 | F4 fix SHIPPED 2026-06-11 - use-deep-link.ts now forwards the third path segment for collectives too. Flow 58-collective-manage-deep-link-render authored: deep-links coexist://collectives/sunshine-coast/manage, asserts either-branch (Access denied EmptyState since code@ is global admin but not Sunshine Coast leader, OR Manage Collective if the canManage gate flips). Green once F6 lifted. The aria-label icon-only affordance gap is now a P2 concern - the deep-link is the canonical entry. |
+| /collectives/:slug/manage | COVERED | 58-collective-manage-deep-link-render (deep-links coexist://collectives/sunshine-coast/manage, asserts either-branch - Access denied EmptyState since code@ is global admin but not Sunshine Coast leader, OR Manage Collective if the canManage gate flips). Verified GREEN batch 9 post-F6 fix. The aria-label icon-only affordance gap is a P2 concern - the deep-link is the canonical entry. |
 | /notifications | COVERED | 09-notifications-walk |
 | /settings | COVERED | 04-settings-walk |
 | /settings/account | COVERED | 17-settings-subpages |
@@ -500,6 +504,61 @@ chains, so coverage payoff per flow is high.
       `npm ci` and re-run; the 4 BLOCKED-F6 flows (47/48/49/58) should now
       mount. If F6 recurs, someone ran `pnpm install` again - re-quarantine
       the pnpm lockfiles and `npm ci`.
+
+## Batch 9 (2026-06-11) - F6 verification + 4 BLOCKED rows flipped COVERED + regression GREEN
+
+- **F6 confirmed RESOLVED post-`npm ci` + rebuild.** Sibling worker
+  closed F6 at commit 012c305 (Batch 8 follow-up): root cause was a
+  corrupted local node_modules from a stray `pnpm install` that shunted
+  react-router-dom into `node_modules/.ignored` and produced two
+  react-router module instances at bundle time. The deployed Vercel
+  build was never affected (clean `npm ci` in CI). This batch verified
+  the fix on emulator-5554 after `cap sync android` + `gradlew
+  installDebug` against the post-fix tree.
+- **Batch 8's 4 AUTHORED-BLOCKED-F6 flows now COVERED** (each verified
+  GREEN on emulator-5554 this batch):
+  - 47-events-detail-survey-render - GREEN ("Survey not available" +
+    "Back to Event").
+  - 48-events-detail-profile-survey-render - GREEN ("Welcome to your
+    first event"/"Quick Profile Setup"/"Your Details" + Save Details
+    / Skip for now).
+  - 49-events-detail-check-in-render - GREEN ("Enter Check-In Code"
+    idle state).
+  - 58-collective-manage-deep-link-render - GREEN ("Access denied"
+    EmptyState - the canManage gate is OFF for code@, anchor matches
+    the deny branch).
+- **Regression sweep GREEN.** 4-flow baseline confirmed no batch-8 or
+  F6-fix collateral:
+  - 01-signin-authed-feed - GREEN (Welcome back -> YOUR NEXT EVENT,
+    Explore. Connect. Protect., Ecodia in sidebar).
+  - 31-admin-events-list - GREEN (UPCOMING / REGISTRATIONS /
+    AVG ATTENDANCE / Create New Event / BIGGEST EVENT).
+  - 39-events-detail-deep-walk - GREEN (Share Event + a Register /
+    Cancel Registration / Check In Now / Join Waitlist / You're
+    registered CTA branch).
+  - 92-admin-events-create-cleanup - GREEN (create -> scrollUntilVisible
+    sentinel -> DELETE -> stopApp+launchApp -> assertNotVisible
+    sentinel; cleanup self-heals orphans on entry).
+- **Stale dist + APK confirmation step codified.** Before any
+  verification run after a node_modules mutation, the rebuild order
+  is: `node node_modules/vite/bin/vite.js build` ->
+  `node node_modules/@capacitor/cli/bin/capacitor sync android` ->
+  `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+  ANDROID_SERIAL=emulator-5554 ./gradlew installDebug` -> `adb -s
+  emulator-5554 shell pm clear org.coexistaus.app`. Skipping any step
+  risks reverification against the stale cached APK that masked F6 in
+  batches 6-7. probe: scripted run of 01 returns YOUR NEXT EVENT
+  anchor after `pm clear` as opposed to the boundary "Something went
+  wrong" that a stale cached APK would have shown.
+- **Open original work order carried over to batch 10**: admin/development
+  substrate seed (dev_modules + dev_sections + dev_quizzes triple) to
+  unblock 6 detail routes + /learn/* journey; /shop/orders/:id seed for
+  code@ user_id 4cc11fa1-8aec-4a92-928d-3c8a304dd4db OR drive 94 to
+  order-confirmation; /impact/national metric invariance (extend 41 with
+  useNationalImpact canonical math runScript); sibling test account for
+  /onboarding + /welcome-back + /accept-terms + /suspended; F5
+  root-cause investigation (deep-link /shop/cart from /shop/checkout
+  ErrorBoundary).
 
 ## Rules that bind authoring here
 
