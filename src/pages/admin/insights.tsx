@@ -349,7 +349,7 @@ export default function AdminInsightsPage() {
   return (
     <motion.div className="pb-28" variants={v.stagger} initial="hidden" animate="visible">
       {/* ── Sticky filter bar + jump nav ── */}
-      <div className="sticky top-0 z-20 -mx-4 px-4 py-3 bg-white/85 backdrop-blur border-b border-neutral-100 mb-6">
+      <div className="sticky top-0 z-20 -mx-4 -mt-4 px-4 pb-3 bg-white/90 backdrop-blur border-b border-neutral-100 mb-6" style={{ paddingTop: 'calc(var(--safe-top, 0px) + 0.75rem)' }}>
         <div className="flex flex-wrap items-center gap-2">
           <Dropdown options={dateRangeOptions} value={dateRange} onChange={(x) => setDateRange(x as DateRange)} className="w-36" />
           <Dropdown options={collectiveOptions} value={collectiveId} onChange={setCollectiveId} className="w-44" />
