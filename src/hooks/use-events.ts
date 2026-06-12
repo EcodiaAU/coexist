@@ -82,8 +82,10 @@ export const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
 
 // Legacy enum values still present on real event rows. Surfaced in admin
 // filters so the matrix is reachable; not offered as event-creation options.
+// shore_cleanup was merged into clean_up by migration
+// 20260612000100_merge_shore_cleanup_into_clean_up so it no longer
+// appears here (zero rows carry it post-merge).
 const LEGACY_ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
-  { value: 'shore_cleanup' as ActivityType, label: 'Shore Cleanup' },
   { value: 'nature_walk' as ActivityType, label: 'Nature Walk' },
   { value: 'land_regeneration' as ActivityType, label: 'Land Regeneration' },
   { value: 'workshop' as ActivityType, label: 'Workshop' },

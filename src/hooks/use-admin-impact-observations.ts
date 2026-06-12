@@ -70,6 +70,29 @@ export interface ImpactSummary {
   metrics: Record<string, number>
 }
 
+/**
+ * Per-activity legacy event_impact distribution (the coexist_impact_legacy_by_activity
+ * RPC return shape). Used to attribute the pre-2026 baseline_remainder
+ * proportionally across activity types so the per-activity-scoped views
+ * reconcile with the All Types view's totals.
+ */
+export interface LegacyDistribution {
+  totals: {
+    event_count: number
+    attendees: number
+    hours: number
+    trees: number
+    rubbish: number
+  }
+  by_activity: Record<string, {
+    event_count: number
+    attendees: number
+    hours: number
+    trees: number
+    rubbish: number
+  }>
+}
+
 export interface DataQuality {
   eventsWithoutImpact: number
   zeroMetricEvents: number
@@ -156,6 +179,11 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       // week" view.
       const isNationalAllTime = isAllTime && !filters.collectiveId && !filters.activityType
       const includeLegacy = isAllTime
+      // When the user narrows to one activity_type on an all-time view we
+      // still want the baseline-remainder share to flow into this scope,
+      // proportional to the legacy distribution - otherwise sum-of-parts
+      // doesn't equal All Types (Tate 2026-06-12 common-sense matrix probe).
+      const isActivityScopedAllTime = isAllTime && !filters.collectiveId && !!filters.activityType
       const effectiveStart = rangeStart
         ?? (includeLegacy ? null : new Date(IMPACT_BASELINE_DATE).toISOString())
       const nowIso = new Date().toISOString()
@@ -180,13 +208,19 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       if (filters.collectiveId) eventsQuery = eventsQuery.eq('collective_id', filters.collectiveId)
       if (filters.activityType) eventsQuery = eventsQuery.eq('activity_type', filters.activityType)
 
-      // Fetch events and (when national all-time) baseline settings in parallel.
-      // This avoids a sequential round-trip and ensures baseline values come
-      // from app_settings rather than the hardcoded constants, so admin updates
-      // to app_settings are reflected without a code deploy.
-      const [eventsResult, baselineSettings] = await Promise.all([
+      // Fetch events and (when national all-time OR activity-scoped all-time)
+      // baseline settings in parallel. Baseline values come from app_settings
+      // rather than the hardcoded constants so admin updates are reflected
+      // without a code deploy. The activity-scoped-all-time case also pulls
+      // the per-activity legacy distribution so we can attribute the
+      // baseline_remainder proportionally and keep sum-of-parts == All Types.
+      const needsBaseline = isNationalAllTime || isActivityScopedAllTime
+      const [eventsResult, baselineSettings, legacyDist] = await Promise.all([
         eventsQuery,
-        isNationalAllTime ? fetchBaselineSettings() : Promise.resolve(null),
+        needsBaseline ? fetchBaselineSettings() : Promise.resolve(null),
+        isActivityScopedAllTime
+          ? supabase.rpc('coexist_impact_legacy_by_activity').then((r) => r.data as unknown as LegacyDistribution | null)
+          : Promise.resolve(null),
       ])
       const { data: eventsData, error: eventsErr } = eventsResult
       if (eventsErr) throw eventsErr
@@ -325,8 +359,12 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
 
       // For the national-all-time SUMMARY we exclude live rows on pre-2026
       // events (double-counting against BASELINE). The row list below still
-      // shows the full `rows` array so users see 2024/2025 events.
-      const summableLive: typeof filtered = showNationalBaseline
+      // shows the full `rows` array so users see 2024/2025 events. The same
+      // exclusion applies to the activity-scoped all-time view - the
+      // proportional baseline_remainder share covers pre-2026 history, so
+      // including pre-2026 live rows would double-count exactly the same way
+      // the All Types view's exclusion guards against.
+      const summableLive: typeof filtered = (showNationalBaseline || isActivityScopedAllTime)
         ? filtered.filter((r) => (r.events.date_start ?? '') >= baselineDateIso)
         : filtered
 
@@ -339,21 +377,36 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       for (const key of metricKeys) {
         summaryMetrics[key] = sumMetric(summableRows, key)
       }
-      if (showNationalBaseline) {
-        const bTrees    = baselineSettings?.trees     ?? BASELINE_TREES
-        const bRubbish  = baselineSettings?.rubbishKg ?? BASELINE_RUBBISH_KG
+
+      // Proportional baseline_remainder share when the user has narrowed to a
+      // single activity_type on an all-time view. share = this activity's
+      // legacy contribution / global legacy total. The full baseline_remainder
+      // mass equals the activity's All Types share once summed across types,
+      // so sum-of-parts == All Types view (Tate 2026-06-12 common-sense probe).
+      // Activities with zero legacy contribution for a metric receive zero share -
+      // we have no signal that the unimported pre-2026 history covered them.
+      function proportionalShare(metricLegacyKey: 'trees' | 'rubbish' | 'event_count' | 'attendees' | 'hours'): number {
+        if (!isActivityScopedAllTime || !legacyDist || !filters.activityType) return 0
+        const total = legacyDist.totals?.[metricLegacyKey] ?? 0
+        if (total <= 0) return 0
+        const slice = legacyDist.by_activity?.[filters.activityType]?.[metricLegacyKey] ?? 0
+        return slice / total
+      }
+
+      if (showNationalBaseline || isActivityScopedAllTime) {
+        const bTrees   = baselineSettings?.trees     ?? BASELINE_TREES
+        const bRubbish = baselineSettings?.rubbishKg ?? BASELINE_RUBBISH_KG
         if (metricKeys.includes('trees_planted')) {
-          // Already in summaryMetrics: live + legacy. Leftover = baseline -
-          // legacy_contribution. Cap at zero so legacy over-covering baseline
-          // doesn't subtract from live totals.
           const legacyTrees = sumMetric(filteredLegacy as unknown as Record<string, unknown>[], 'trees_planted')
-          const remainder = Math.max(0, bTrees - legacyTrees)
-          summaryMetrics['trees_planted'] = (summaryMetrics['trees_planted'] ?? 0) + remainder
+          const fullRemainder = Math.max(0, bTrees - (legacyDist?.totals?.trees ?? legacyTrees))
+          const share = showNationalBaseline ? 1 : proportionalShare('trees')
+          summaryMetrics['trees_planted'] = (summaryMetrics['trees_planted'] ?? 0) + fullRemainder * share
         }
         if (metricKeys.includes('rubbish_kg')) {
           const legacyRubbish = sumMetric(filteredLegacy as unknown as Record<string, unknown>[], 'rubbish_kg')
-          const remainder = Math.max(0, bRubbish - legacyRubbish)
-          summaryMetrics['rubbish_kg'] = (summaryMetrics['rubbish_kg'] ?? 0) + remainder
+          const fullRemainder = Math.max(0, bRubbish - (legacyDist?.totals?.rubbish ?? legacyRubbish))
+          const share = showNationalBaseline ? 1 : proportionalShare('rubbish')
+          summaryMetrics['rubbish_kg'] = (summaryMetrics['rubbish_kg'] ?? 0) + fullRemainder * share
         }
       }
 
@@ -383,16 +436,30 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       // Baseline remainder for the count-shaped metrics. For each: subtract
       // the legacy-contribution from the national baseline and add the
       // leftover. Cap at zero so over-coverage doesn't make the total drop.
-      const legacyEventCount = new Set(filteredLegacy.map((r) => r.event_id)).size
-      const eventsRemainder    = showNationalBaseline ? Math.max(0, bEvents    - legacyEventCount)  : 0
-      const attendeesRemainder = showNationalBaseline ? Math.max(0, bAttendees - legacyAttendeeSum) : 0
-      const hoursLegacySum     = Math.round(sumMetric(filteredLegacy as unknown as Record<string, unknown>[], 'hours_total'))
-      const hoursRemainder     = showNationalBaseline ? Math.max(0, bHours     - hoursLegacySum)    : 0
+      // For activity-scoped all-time, scale the remainder by the activity's
+      // proportional share of the legacy distribution (Tate 2026-06-12).
+      const hoursLegacySum = Math.round(sumMetric(filteredLegacy as unknown as Record<string, unknown>[], 'hours_total'))
+
+      const eventsRemainderFull    = Math.max(0, bEvents    - (legacyDist?.totals?.event_count ?? new Set(filteredLegacy.map((r) => r.event_id)).size))
+      const attendeesRemainderFull = Math.max(0, bAttendees - (legacyDist?.totals?.attendees ?? legacyAttendeeSum))
+      const hoursRemainderFull     = Math.max(0, bHours     - (legacyDist?.totals?.hours ?? hoursLegacySum))
+
+      const eventsRemainder    = showNationalBaseline ? eventsRemainderFull
+                                : isActivityScopedAllTime ? eventsRemainderFull    * proportionalShare('event_count')
+                                : 0
+      const attendeesRemainder = showNationalBaseline ? attendeesRemainderFull
+                                : isActivityScopedAllTime ? attendeesRemainderFull * proportionalShare('attendees')
+                                : 0
+      const hoursRemainder     = showNationalBaseline ? hoursRemainderFull
+                                : isActivityScopedAllTime ? hoursRemainderFull     * proportionalShare('hours')
+                                : 0
 
       const summary: ImpactSummary = {
-        totalEvents:         uniqueEventIds.size + eventsRemainder,
-        totalAttendees:      totalAttendees      + attendeesRemainder,
-        totalEstimatedHours: totalEstimatedHours + hoursRemainder,
+        // Counts must stay whole numbers - the proportional share can produce
+        // fractional remainders. Round to nearest int for events/attendees/hours.
+        totalEvents:         Math.round(uniqueEventIds.size + eventsRemainder),
+        totalAttendees:      Math.round(totalAttendees      + attendeesRemainder),
+        totalEstimatedHours: Math.round(totalEstimatedHours + hoursRemainder),
         metrics: summaryMetrics,
       }
 
