@@ -15,6 +15,14 @@ const activityStyles = {
   'camp-out': 'bg-primary-100 text-primary-800',
   spotlighting: 'bg-primary-100 text-primary-800',
   other: 'bg-primary-100 text-primary-800',
+  // Legacy DB enum slugs still present on real event rows. Rendered with
+  // the same single Co-Exist green per the 2026-06-08 mono-colour decision.
+  'shore-cleanup': 'bg-primary-100 text-primary-800',
+  'nature-walk': 'bg-primary-100 text-primary-800',
+  'land-regeneration': 'bg-primary-100 text-primary-800',
+  workshop: 'bg-primary-100 text-primary-800',
+  retreat: 'bg-primary-100 text-primary-800',
+  'marine-restoration': 'bg-primary-100 text-primary-800',
 } as const
 
 /* ------------------------------------------------------------------ */

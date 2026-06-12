@@ -40,7 +40,7 @@ import {
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import type { ImpactMetricDef } from '@/lib/impact-metrics'
 import { dateRangeOptions, getDateRangeStart, type DateRange } from '@/hooks/use-admin-dashboard'
-import { ACTIVITY_TYPE_OPTIONS, ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
+import { ACTIVITY_TYPE_FILTER_OPTIONS, ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
 import { useCollectives } from '@/hooks/use-collective'
 import type { AttendanceMetrics } from '@/lib/attendance-metrics'
 
@@ -201,10 +201,13 @@ export default function AdminInsightsPage() {
     return s ? s.slice(0, 10) : '2018-01-01'
   }, [dateRange])
   const { data: att } = useQuery({
-    queryKey: ['insights-attendance', dateRange, collectiveId],
+    queryKey: ['insights-attendance', dateRange, collectiveId, activityType],
     queryFn: async (): Promise<AttendanceMetrics> => {
       const { data, error } = await supabase.rpc('coexist_attendance_metrics', {
-        p_collective_ids: collectiveId ? [collectiveId] : null, p_from: fromDate, p_to: todayIso(),
+        p_collective_ids: collectiveId ? [collectiveId] : null,
+        p_from: fromDate,
+        p_to: todayIso(),
+        p_activity_types: activityType ? [activityType] : null,
       })
       if (error) throw error
       return data as unknown as AttendanceMetrics
@@ -216,7 +219,7 @@ export default function AdminInsightsPage() {
     [collectives],
   )
   const activityOptions = useMemo(
-    () => [{ value: '', label: 'All Types' }, ...ACTIVITY_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))],
+    () => [{ value: '', label: 'All Types' }, ...ACTIVITY_TYPE_FILTER_OPTIONS.map((o) => ({ value: o.value, label: o.label }))],
     [],
   )
   const collectiveLabel = collectiveId ? (collectives?.find((c) => c.id === collectiveId)?.name ?? 'Collective') : 'All collectives'

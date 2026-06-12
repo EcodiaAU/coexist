@@ -64,6 +64,12 @@ export interface WaitlistEntry {
 /*  Activity type helpers                                              */
 /* ------------------------------------------------------------------ */
 
+// Canonical event-creation options. The seven values below are the ones we
+// surface in the create-event flow. The DB activity_type enum carries six
+// older values (shore_cleanup, nature_walk, land_regeneration, workshop,
+// retreat, marine_restoration) that pre-date the 2026-04 canonical alignment
+// migration; existing rows still carry them, so the admin filter exposes
+// them via ACTIVITY_TYPE_FILTER_OPTIONS below.
 export const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
   { value: 'clean_up', label: 'Clean Up' },
   { value: 'tree_planting', label: 'Tree Planting' },
@@ -74,8 +80,24 @@ export const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
   { value: 'other', label: 'Other' },
 ]
 
+// Legacy enum values still present on real event rows. Surfaced in admin
+// filters so the matrix is reachable; not offered as event-creation options.
+const LEGACY_ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
+  { value: 'shore_cleanup' as ActivityType, label: 'Shore Cleanup' },
+  { value: 'nature_walk' as ActivityType, label: 'Nature Walk' },
+  { value: 'land_regeneration' as ActivityType, label: 'Land Regeneration' },
+  { value: 'workshop' as ActivityType, label: 'Workshop' },
+  { value: 'retreat' as ActivityType, label: 'Retreat' },
+  { value: 'marine_restoration' as ActivityType, label: 'Marine Restoration' },
+]
+
+export const ACTIVITY_TYPE_FILTER_OPTIONS: { value: ActivityType; label: string }[] = [
+  ...ACTIVITY_TYPE_OPTIONS,
+  ...LEGACY_ACTIVITY_TYPE_OPTIONS,
+]
+
 export const ACTIVITY_TYPE_LABELS: Record<string, string> = Object.fromEntries(
-  ACTIVITY_TYPE_OPTIONS.map((o) => [o.value, o.label]),
+  ACTIVITY_TYPE_FILTER_OPTIONS.map((o) => [o.value, o.label]),
 )
 
 /**
