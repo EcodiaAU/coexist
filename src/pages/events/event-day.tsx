@@ -438,13 +438,21 @@ export default function EventDayPage() {
   }, [attendees, searchQuery])
 
   const stats = useMemo(() => {
-    if (!attendees) return { registered: 0, checkedIn: 0, waitlisted: 0 }
+    const walkInCount = walkIns.length
+    if (!attendees) return { registered: 0, checkedIn: walkInCount, attendedRegistered: 0, waitlisted: 0 }
+    const attendedRegistered = attendees.filter((a) => a.status === 'attended').length
     return {
       registered: attendees.filter((a) => a.status === 'registered' || a.status === 'attended').length,
-      checkedIn: attendees.filter((a) => a.status === 'attended').length,
+      // attendedRegistered = registered list who showed; checkedIn = total
+      // through the gate (registered-attended + walk-ins) matching the
+      // canonical attendance definition in coexist_attendance_metrics.
+      // The progress bar uses attendedRegistered/registered (registered-list
+      // completion); the headline tile uses checkedIn (real attendance).
+      attendedRegistered,
+      checkedIn: attendedRegistered + walkInCount,
       waitlisted: attendees.filter((a) => a.status === 'waitlisted').length,
     }
-  }, [attendees])
+  }, [attendees, walkIns])
 
   const handleCheckIn = useCallback(
     (userId: string) => {
@@ -786,18 +794,18 @@ export default function EventDayPage() {
                 Check-in progress
               </span>
               <span className="font-bold text-neutral-900">
-                {stats.checkedIn}/{stats.registered}
+                {stats.attendedRegistered}/{stats.registered}
               </span>
             </div>
             <div className="h-3 rounded-full bg-neutral-100 overflow-hidden">
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-success-400 to-success-500"
                 initial={{ width: 0 }}
-                animate={{ width: `${stats.registered > 0 ? (stats.checkedIn / stats.registered) * 100 : 0}%` }}
+                animate={{ width: `${stats.registered > 0 ? (stats.attendedRegistered / stats.registered) * 100 : 0}%` }}
                 transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, ease: 'easeOut' }}
               />
             </div>
-            {stats.checkedIn === stats.registered && stats.registered > 0 && (
+            {stats.attendedRegistered === stats.registered && stats.registered > 0 && (
               <p className="text-caption font-semibold text-success-600 mt-1.5 text-center">All attendees checked in!</p>
             )}
           </motion.div>
