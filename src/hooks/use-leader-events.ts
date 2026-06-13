@@ -69,7 +69,7 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
 
   // Co-host names: pull every (event_id, collective_id) → name and bucket per
   // event, excluding the collective whose page we're on.
-  const [{ data: regRows }, { data: checkedInRows }, { data: hostNameRows }] = await Promise.all([
+  const [{ data: regRows }, { data: checkedInRows }, { data: walkInRows }, { data: hostNameRows }] = await Promise.all([
     // Registered count: only statuses that count as "attending", matching the
     // event-detail "going" count (use-events.ts) and every other surface via
     // STATUS_FILTERS.events.REGISTRATION. An unfiltered `event_registrations(count)`
@@ -85,6 +85,14 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
       .select('event_id')
       .in('event_id', eventIds)
       .not('checked_in_at', 'is', null),
+    // Walk-ins are the second half of attendance per coexist_attendance_metrics
+    // (registered.status='attended' UNION ALL event_walk_ins). Omitting them
+    // here under-reports the leader-card "checked in" by exactly walkIns.length
+    // - the bug Issy Calderwood flagged on Port Beach 2026-06-07.
+    supabase
+      .from('event_walk_ins')
+      .select('event_id')
+      .in('event_id', eventIds),
     supabase
       .from('event_hosts')
       .select('event_id, collectives:collective_id(id, name)')
@@ -95,6 +103,9 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
 
   const checkedInMap = new Map<string, number>()
   for (const row of checkedInRows ?? []) {
+    checkedInMap.set(row.event_id, (checkedInMap.get(row.event_id) ?? 0) + 1)
+  }
+  for (const row of walkInRows ?? []) {
     checkedInMap.set(row.event_id, (checkedInMap.get(row.event_id) ?? 0) + 1)
   }
 
