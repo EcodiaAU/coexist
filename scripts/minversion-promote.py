@@ -122,7 +122,7 @@ def main():
 
     apple = asc_state()
     google = play_state()
-    print("apple 1.9.3 state:", apple, "| google vc38 status:", google)
+    print("apple %s state:" % TARGET, apple, "| google vc%s status:" % TARGET_VC, google)
 
     apple_live = apple == "READY_FOR_SALE"
     google_live = google == "completed"
