@@ -30,29 +30,20 @@ VALUES
     ARRAY['image/jpeg','image/png','image/webp','video/mp4','video/quicktime']),
 
   ('announcements',     'announcements',     true,  5 * 1024 * 1024,   -- 5 MB
-    ARRAY['image/jpeg','image/png','image/webp']),
-
-  -- chat-images is public-readable because the live code stores
-  -- supabase.storage.getPublicUrl() in chat_messages.image_url. URL is
-  -- unguessable; read access in practice is gated by the chat_messages
-  -- RLS that requires collective membership to read the row carrying it.
-  ('chat-images',       'chat-images',       true,  5 * 1024 * 1024,   -- 5 MB
-    ARRAY['image/jpeg','image/png','image/webp','image/gif'])
-ON CONFLICT (id) DO NOTHING
+    ARRAY['image/jpeg','image/png','image/webp'])
 ;
 
 -- Private buckets (require auth token to read)
--- chat-voice and chat-video are aspirational - no client code writes to
--- them today. Path policy below uses {collective_id}/{user_id}/... which
--- only matches if the future media upload helper writes that shape.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES
+  ('chat-images',  'chat-images',  false, 5 * 1024 * 1024,    -- 5 MB
+    ARRAY['image/jpeg','image/png','image/webp','image/gif']),
+
   ('chat-voice',   'chat-voice',   false, 10 * 1024 * 1024,   -- 10 MB
     ARRAY['audio/aac','audio/mp4','audio/mpeg','audio/ogg','audio/webm']),
 
   ('chat-video',   'chat-video',   false, 50 * 1024 * 1024,   -- 50 MB
     ARRAY['video/mp4','video/webm','video/quicktime'])
-ON CONFLICT (id) DO NOTHING
 ;
 
 
@@ -228,37 +219,34 @@ CREATE POLICY "announcements: public read"
 -- First folder = collective_id; checked against collective_members.
 
 -- ---- chat-images ---------------------------------------------------
--- Live code path: buildStoragePath({user.id}) -> {user_id}/{ts}-{rand}.jpg
--- (use-image-upload.ts via chat-room.tsx). Same shape as post-images /
--- event-images on this project. Policy must match the user-folder-first
--- shape, not the {collective_id}/{user_id}/... shape that the legacy
--- useUploadChatImage helper (use-chat.ts) reaches for but no caller wires.
-DROP POLICY IF EXISTS "chat-images: collective member read" ON storage.objects;
-DROP POLICY IF EXISTS "chat-images: member upload to collective folder" ON storage.objects;
+CREATE POLICY "chat-images: collective member read"
+  ON storage.objects FOR SELECT TO authenticated
+  USING (
+    bucket_id = 'chat-images'
+    AND EXISTS (
+      SELECT 1 FROM public.collective_members cm
+      WHERE cm.user_id = auth.uid()
+        AND cm.collective_id = (storage.foldername(name))[1]::uuid
+    )
+  );
 
-CREATE POLICY "chat-images: public read"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'chat-images');
-
-CREATE POLICY "chat-images: auth upload to own folder"
+CREATE POLICY "chat-images: member upload to collective folder"
   ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (
     bucket_id = 'chat-images'
-    AND (storage.foldername(name))[1] = auth.uid()::text
-  );
-
-CREATE POLICY "chat-images: owner update"
-  ON storage.objects FOR UPDATE TO authenticated
-  USING (
-    bucket_id = 'chat-images'
-    AND (storage.foldername(name))[1] = auth.uid()::text
+    AND EXISTS (
+      SELECT 1 FROM public.collective_members cm
+      WHERE cm.user_id = auth.uid()
+        AND cm.collective_id = (storage.foldername(name))[1]::uuid
+    )
+    AND (storage.foldername(name))[2] = auth.uid()::text
   );
 
 CREATE POLICY "chat-images: owner delete"
   ON storage.objects FOR DELETE TO authenticated
   USING (
     bucket_id = 'chat-images'
-    AND (storage.foldername(name))[1] = auth.uid()::text
+    AND (storage.foldername(name))[2] = auth.uid()::text
   );
 
 -- ---- chat-voice ----------------------------------------------------
