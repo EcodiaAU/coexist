@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-Promote Co-Exist app_settings.min_version to 1.9.3 — but ONLY once 1.9.3 is
+Promote Co-Exist app_settings.min_version to TARGET, but ONLY once TARGET is
 actually LIVE on both stores. Forcing users to a version that is not yet
 available would block stragglers behind an un-satisfiable update screen
 (doctrine: coexist-force-update-min-version-mechanism-2026-06-11).
 
 Gate:
-  - Apple: appStoreVersion 1.9.3 appStoreState == READY_FOR_SALE (authoritative
-    "live on the App Store"; this is the long pole — Apple review takes days).
-  - Google: production track has versionCode 38 with status 'completed'
+  - Apple: appStoreVersion TARGET appStoreState == READY_FOR_SALE (authoritative
+    "live on the App Store"; this is the long pole if Apple review takes days).
+  - Google: production track has versionCode TARGET_VC with status 'completed'
     (committed + rolled out; Google update-review is hours, faster than Apple).
 
-When both pass: set min_version='1.9.3', verify the deployed web app does not
+When both pass: set min_version=TARGET, verify the deployed web app does not
 show the force screen, print PROMOTED. Idempotent: if min_version is already
-1.9.3 it prints DONE and exits 0 (the scheduler can then cancel the cron).
+TARGET it prints DONE and exits 0 (the scheduler can then cancel the cron).
 Otherwise prints PENDING with the current states and exits 0 (try again later).
 
 Exit codes: 0 always on a clean probe (PROMOTED / DONE / PENDING). Non-zero
@@ -29,8 +29,8 @@ PLAY_SA = "/Users/ecodia/PRIVATE/ecodia-creds/play/play-uploader-key.json"
 PLAY_PKG = "org.coexistaus.app"
 SUPA_REF = "tjutlbzekfouwsiaplbr"
 SUPA_ENV = "/Users/ecodia/PRIVATE/ecodia-creds/supabase.env"
-TARGET = "1.9.3"
-TARGET_VC = "38"
+TARGET = "1.9.5"
+TARGET_VC = "40"
 WEB_URL = "https://app.coexistaus.org/"
 
 
@@ -144,7 +144,7 @@ def main():
     except Exception as e:
         print("web verify skipped:", e)
 
-    print("PROMOTED: min_version is now %s — native users below it will be forced to update." % TARGET)
+    print("PROMOTED: min_version is now %s. Native users below it will be forced to update." % TARGET)
 
 
 if __name__ == "__main__":
