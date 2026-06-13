@@ -32,6 +32,7 @@ interface SendMessageInput {
   collectiveId: string
   content?: string
   imageUrl?: string
+  imagePath?: string
   voiceUrl?: string
   videoUrl?: string
   replyToId?: string
@@ -353,6 +354,7 @@ export function useSendMessage() {
           user_id: user.id,
           content: isHtml ? (input.content ?? null) : (input.content?.slice(0, MAX_MESSAGE_LENGTH) ?? null),
           image_url: input.imageUrl ?? null,
+          image_path: input.imagePath ?? null,
           voice_url: input.voiceUrl ?? null,
           video_url: input.videoUrl ?? null,
           reply_to_id: input.replyToId ?? null,
@@ -379,6 +381,7 @@ export function useSendMessage() {
         user_id: user.id,
         content: input.content ?? null,
         image_url: input.imageUrl ?? null,
+        image_path: input.imagePath ?? null,
         voice_url: input.voiceUrl ?? null,
         video_url: input.videoUrl ?? null,
         reply_to_id: input.replyToId ?? null,
@@ -434,7 +437,7 @@ export function useSendMessage() {
         if (input.replyToId) {
           pushType = 'chat_reply'
           pushBody = `Replied: ${pushBody || 'a message'}`
-        } else if (messageType === 'image' || input.imageUrl) {
+        } else if (messageType === 'image' || input.imageUrl || input.imagePath) {
           pushType = 'chat_image'
           pushBody = 'Sent a photo'
         } else if (messageType === 'voice' || input.voiceUrl) {
@@ -1253,29 +1256,13 @@ export function useSendBroadcastNotification() {
 /*  Upload chat image                                                  */
 /* ------------------------------------------------------------------ */
 
-export function useUploadChatImage(collectiveId: string) {
-  const { user } = useAuth()
-
-  return useMutation({
-    mutationFn: async (file: File) => {
-      if (!user) throw new Error('Not authenticated')
-      const ext = file.name.split('.').pop() ?? 'jpg'
-      const path = `${collectiveId}/${user.id}/${Date.now()}.${ext}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('chat-images')
-        .upload(path, file)
-      if (uploadError) throw uploadError
-
-      const { data: signedData, error: signError } = await supabase.storage
-        .from('chat-images')
-        .createSignedUrl(path, 60 * 60 * 24 * 7)
-      if (signError) throw signError
-
-      return signedData.signedUrl
-    },
-  })
-}
+/*
+ * Chat image uploads now reuse the unified useImageUpload pipeline (compression
+ * + progress) from chat-room.tsx, with a custom path built by
+ * buildChatImagePath (src/lib/chat-image-path.ts). The returned storage path
+ * is persisted to chat_messages.image_path; the renderer signs on demand
+ * via useSignedChatImage. The legacy helper here was unused and is removed.
+ */
 
 /* ------------------------------------------------------------------ */
 /*  Chat export (leader)                                               */

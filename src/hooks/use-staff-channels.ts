@@ -27,6 +27,7 @@ export interface ChannelMessageWithSender {
   user_id: string | null
   content: string | null
   image_url: string | null
+  image_path: string | null
   voice_url: string | null
   video_url: string | null
   reply_to_id: string | null
@@ -280,6 +281,7 @@ export function useSendChannelMessage() {
       collectiveId,
       content,
       imageUrl,
+      imagePath,
       replyToId,
       messageType,
     }: {
@@ -287,6 +289,7 @@ export function useSendChannelMessage() {
       collectiveId?: string | null
       content?: string
       imageUrl?: string
+      imagePath?: string
       replyToId?: string
       messageType?: string
     }) => {
@@ -300,13 +303,14 @@ export function useSendChannelMessage() {
           user_id: user.id,
           content: content || null,
           image_url: imageUrl || null,
+          image_path: imagePath || null,
           reply_to_id: replyToId || null,
           message_type: messageType || 'text',
         })
 
       if (error) throw error
     },
-    onMutate: async ({ channelId, collectiveId, content, imageUrl, replyToId, messageType }) => {
+    onMutate: async ({ channelId, collectiveId, content, imageUrl, imagePath, replyToId, messageType }) => {
       await queryClient.cancelQueries({ queryKey: ['channel-messages', channelId] })
 
       const optimisticMessage: ChannelMessageWithSender = {
@@ -316,6 +320,7 @@ export function useSendChannelMessage() {
         user_id: user!.id,
         content: content || null,
         image_url: imageUrl || null,
+        image_path: imagePath || null,
         voice_url: null,
         video_url: null,
         reply_to_id: replyToId || null,
@@ -346,7 +351,7 @@ export function useSendChannelMessage() {
       // Send push notification to other channel members (fire-and-forget)
       if (user) {
         const senderName = profile?.display_name ?? 'Someone'
-        const pushBody = variables.imageUrl
+        const pushBody = (variables.imageUrl || variables.imagePath)
           ? 'Sent a photo'
           : variables.content?.slice(0, 200) ?? 'Sent a message'
 

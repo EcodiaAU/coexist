@@ -32,6 +32,7 @@ import { supabase } from '@/lib/supabase'
 import { useEventDetail, type EventDetailData } from '@/hooks/use-events'
 import { useCarpool, useCarpoolSeats, useCarpoolBreakout, useSaveSeat, useCancelSeat } from '@/hooks/use-carpool'
 import { useEventPhotos } from '@/hooks/use-event-photos'
+import { useSignedChatImage } from '@/hooks/use-signed-chat-image'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import type { Tables, Json } from '@/types/database.types'
 
@@ -39,6 +40,62 @@ type EventRegistration = Tables<'event_registrations'>
 
 /** Union message type used throughout the chat room */
 export type AnyMessage = ChatMessageWithSender | ChannelMessageWithSender
+
+/* ------------------------------------------------------------------ */
+/*  ChatTextOrImageBubble - resolves chat_messages.image_path to a    */
+/*  short-lived signed URL on demand (chat-images bucket is private). */
+/*  Falls back to image_url for legacy / external links.              */
+/*  Hook is called at component scope so each rendered message gets   */
+/*  its own React-Query subscription.                                 */
+/* ------------------------------------------------------------------ */
+
+function ChatTextOrImageBubble({
+  msg,
+  sent,
+  roleBadge,
+  isContinuation,
+  onAvatarTap,
+  onSenderTap,
+  onLongPress,
+  onReplyTap,
+  onSwipeReply,
+  replyTo,
+}: {
+  msg: AnyMessage
+  sent: boolean
+  roleBadge?: string
+  isContinuation: boolean
+  onAvatarTap: (userId: string) => void
+  onSenderTap: (userId: string) => void
+  onLongPress: () => void
+  onReplyTap: (parentId: string) => void
+  onSwipeReply?: () => void
+  replyTo?: { message: string; senderName: string; parentId: string }
+}) {
+  const imagePath = (msg as { image_path?: string | null }).image_path
+  const signed = useSignedChatImage(imagePath ?? null)
+  const photo = imagePath ? signed.url : (msg.image_url ?? undefined)
+  return (
+    <ChatBubble
+      message={msg.content ?? ''}
+      sent={sent}
+      timestamp={new Date(msg.created_at!)}
+      senderName={msg.profiles?.display_name ?? undefined}
+      senderAvatar={msg.profiles?.avatar_url ?? undefined}
+      senderId={msg.user_id ?? undefined}
+      photo={photo}
+      roleBadge={roleBadge}
+      skipAnimation={msg._confirmed}
+      isContinuation={isContinuation}
+      onAvatarTap={onAvatarTap}
+      onSenderTap={onSenderTap}
+      onLongPress={onLongPress}
+      onReplyTap={onReplyTap}
+      onSwipeReply={onSwipeReply}
+      replyTo={replyTo}
+    />
+  )
+}
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -830,32 +887,25 @@ export function ChatMessageList({
     }
 
     // Default: text / image
+    const replyTo = msg.reply_message
+      ? {
+          message: msg.reply_message.content ?? '',
+          senderName: allMessages.find((m) => m.id === msg.reply_message!.id)?.profiles?.display_name ?? 'Someone',
+          parentId: msg.reply_message.id,
+        }
+      : undefined
     const bubble = (
-      <ChatBubble
-        message={msg.content ?? ''}
+      <ChatTextOrImageBubble
+        msg={msg}
         sent={isSent}
-        timestamp={new Date(msg.created_at!)}
-        senderName={msg.profiles?.display_name ?? undefined}
-        senderAvatar={msg.profiles?.avatar_url ?? undefined}
-        senderId={msg.user_id ?? undefined}
-        photo={msg.image_url ?? undefined}
         roleBadge={roleBadge}
-        skipAnimation={msg._confirmed}
         isContinuation={isContinuation}
-        onAvatarTap={(userId) => onProfileTap(userId)}
-        onSenderTap={(userId) => onProfileTap(userId)}
+        onAvatarTap={onProfileTap}
+        onSenderTap={onProfileTap}
         onLongPress={() => onMessageLongPress(msg)}
         onReplyTap={handleReplyTap}
         onSwipeReply={swipeReplyEnabled ? () => onMessageSwipeReply(msg) : undefined}
-        replyTo={
-          msg.reply_message
-            ? {
-                message: msg.reply_message.content ?? '',
-                senderName: allMessages.find((m) => m.id === msg.reply_message!.id)?.profiles?.display_name ?? 'Someone',
-                parentId: msg.reply_message.id,
-              }
-            : undefined
-        }
+        replyTo={replyTo}
       />
     )
 

@@ -35,6 +35,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useCamera } from '@/hooks/use-camera'
 import { useImageUpload } from '@/hooks/use-image-upload'
+import { buildChatImagePath } from '@/lib/chat-image-path'
 import { useLayout } from '@/hooks/use-layout'
 import { useKeyboardOpen } from '@/components/app-shell-context'
 import { useCollective } from '@/hooks/use-collective'
@@ -502,16 +503,34 @@ export default function ChatRoomPage() {
     }
   }, [user, isCollective, collectiveId, channelId, channel, editingMessage, isOffline, replyTo, stopTyping, editMessage, collectiveSend, channelSend, toast])
 
-  /* ---- Attach image ---- */
+  /* ---- Attach image ----
+   *
+   * Long-term design (2026-06-13):
+   *   - Upload to the private chat-images bucket at
+   *     {context_id}/{user_id}/{ts}-{rand}.jpg where context_id is the
+   *     collective_id (collective chat) or the channel.collective_id /
+   *     channelId fallback (staff channels).
+   *   - Store the storage PATH (not a URL) in chat_messages.image_path.
+   *     Renderer signs on demand via useSignedChatImage with a TTL cache,
+   *     so links never dead.
+   *   - The bucket's RLS allows either collective_members OR
+   *     chat_channel_members against folder[0], with folder[1] = auth.uid.
+   */
   const handleAttach = useCallback(async () => {
-    const result = await pickFromGallery()
-    if (!result) return
+    const picked = await pickFromGallery()
+    if (!picked) return
+    if (!user) { toast.error('Sign in to send photos'); return }
+    const ctxId = isCollective
+      ? collectiveId
+      : (channel?.collective_id ?? channelId)
+    if (!ctxId) { toast.error('Cannot upload photo in this chat'); return }
     try {
-      const uploaded = await chatUpload.upload(result.blob)
+      const customPath = buildChatImagePath(ctxId, user.id)
+      const uploaded = await chatUpload.upload(picked.blob, customPath)
       if (isCollective && collectiveId) {
         await collectiveSend.mutateAsync({
           collectiveId,
-          imageUrl: uploaded.url,
+          imagePath: uploaded.path,
           messageType: 'image',
         })
       } else if (channelId) {
@@ -519,13 +538,13 @@ export default function ChatRoomPage() {
           channelId,
           collectiveId: channel?.collective_id ?? null,
           content: '',
-          imageUrl: uploaded.url,
+          imagePath: uploaded.path,
         })
       }
     } catch {
       toast.error('Failed to upload image')
     }
-  }, [isCollective, collectiveId, channelId, channel, pickFromGallery, chatUpload, collectiveSend, channelSend, toast])
+  }, [user, isCollective, collectiveId, channelId, channel, pickFromGallery, chatUpload, collectiveSend, channelSend, toast])
 
   /* ---- Attach HTML ---- */
   /* ---- Message actions ---- */

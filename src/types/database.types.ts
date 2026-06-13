@@ -614,6 +614,7 @@ export type Database = {
           content: string | null
           created_at: string | null
           id: string
+          image_path: string | null
           image_url: string | null
           is_deleted: boolean | null
           is_pinned: boolean | null
@@ -632,6 +633,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
+          image_path?: string | null
           image_url?: string | null
           is_deleted?: boolean | null
           is_pinned?: boolean | null
@@ -650,6 +652,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
+          image_path?: string | null
           image_url?: string | null
           is_deleted?: boolean | null
           is_pinned?: boolean | null
