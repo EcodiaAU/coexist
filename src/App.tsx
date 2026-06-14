@@ -1,5 +1,6 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Suspense, useState, useCallback, useEffect } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { lazyWithRetry as lazy, clearChunkReloadGuard } from '@/lib/lazy-with-retry'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { RequireAuth, RequireRole, RequireLeaderAccess, RequireCapability } from '@/components/route-guard'
@@ -7,7 +8,6 @@ import { AppShell } from '@/components/app-shell'
 import { AdminLayout as AdminLayoutRoute } from '@/components/admin-layout'
 import { LeaderLayout as LeaderLayoutRoute } from '@/components/leader-layout'
 import { PageTransition } from '@/components/page-transition'
-import { KeepAlive } from '@/components/keep-alive'
 import { MaintenanceMode } from '@/components/maintenance-mode'
 import { UpdateRequired } from '@/components/update-required'
 import { useAppUpdate } from '@/hooks/use-app-update'
@@ -215,6 +215,7 @@ function PageFallback() {
 
 function App() {
   const [showSplash, setShowSplash] = useState(true)
+  const location = useLocation()
   const { maintenanceMode, maintenanceMessage, forceUpdate, latestVersion, installedVersion } = useAppUpdate()
   useDeepLink()
 
@@ -250,7 +251,8 @@ function App() {
          history entry and restores on back-nav, scrolls to top for new routes */}
     <ErrorBoundary>
     <Suspense fallback={<PageFallback />}>
-      <Routes>
+      <AnimatePresence mode="wait" initial={false}>
+      <Routes location={location} key={location.pathname}>
         {/* ---- Bare routes (no app shell) ---- */}
         <Route
           path="/welcome"
@@ -360,7 +362,7 @@ function App() {
         {/* ============================================================ */}
         {/*  Protected routes - AppShell mounted ONCE via layout route    */}
         {/* ============================================================ */}
-        <Route element={<RequireAuth><AppShell><KeepAlive /></AppShell></RequireAuth>}>
+        <Route element={<RequireAuth><AppShell><Outlet /></AppShell></RequireAuth>}>
 
           {/* ---- Member pages (with PageTransition) ---- */}
           <Route path="/" element={<ErrorBoundary><PageTransition><HomePage /></PageTransition></ErrorBoundary>} />
@@ -612,6 +614,7 @@ function App() {
           }
         />
       </Routes>
+      </AnimatePresence>
     </Suspense>
     </ErrorBoundary>
     </>

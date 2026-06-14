@@ -19,6 +19,7 @@ import { useKeyboardHeight } from '@/hooks/use-keyboard-height'
 import { useRolePrefetch } from '@/hooks/use-role-prefetch'
 import { useDataPrefetch } from '@/hooks/use-data-prefetch'
 import { useUnreadCounts } from '@/hooks/use-chat'
+import { useSwipeBack } from '@/hooks/use-swipe-back'
 
 interface AppShellProps {
   children: ReactNode
@@ -121,6 +122,11 @@ function LocationAwareChrome({ showBottomTabs, syncWarning }: { showBottomTabs: 
 function AppShellInner({ children }: { children: ReactNode }) {
   const { navMode } = useLayout()
   const navigate = useNavigate()
+
+  // Safari/Chambers-style edge swipe-to-go-back: left-edge start + horizontal
+  // threshold -> navigate(-1). Fire-and-forget; no live drag, no parallax.
+  // Lived inside KeepAlive until the cache layer was removed.
+  useSwipeBack()
 
   // Handles auto-sync on reconnect + toast notifications + persistent sync issue state
   const { syncIssue, pendingCount } = useSyncManager()

@@ -8,9 +8,10 @@ const MAX_VERTICAL = 40 // bail if the gesture is mostly vertical (it's a scroll
 /**
  * Safari-style edge swipe-to-go-back. A horizontal drag that STARTS within
  * EDGE_PX of the left screen edge and travels right past TRIGGER_PX calls
- * navigate(-1). React Router keeps the previous entry and the KeepAlive
- * page cache means the prior page paints instantly (the "cached" feel)  -
- * no live interactive drag, no parallax, no spring snap, just a clean cut.
+ * navigate(-1). No live interactive drag, no parallax, no spring snap -
+ * the AnimatePresence wrapper in App.tsx + PageTransition's motion.div
+ * handle the brief fade-up enter / fade-down exit, identical to the
+ * Chambers app's PageFrame.
  *
  * Capacitor iOS webviews do not provide native swipe-back, so the app has
  * to supply it. Gated to left-edge starts so it never competes with normal

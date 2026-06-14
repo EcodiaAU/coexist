@@ -21,7 +21,7 @@ interface PageProps {
   className?: string
   /** Hide the default atmospheric background (when the page provides its own) */
   noBackground?: boolean
-  /** @deprecated Swipe-back is now handled globally by KeepAlive */
+  /** @deprecated Swipe-back is now handled globally by useSwipeBack in AppShell */
   swipeBack?: boolean
 }
 
@@ -41,9 +41,10 @@ export function Page({
 
   const isDesktopNav = navMode === 'sidebar'
 
-  // Scroll save/restore is handled entirely by KeepAlive, which captures
-  // scrollTop from #main-content before hiding a page and restores it
-  // after showing. Page just provides the scroll container.
+  // No JS scroll save/restore: when the KeepAlive cache layer was removed
+  // (to match the Chambers fire-and-forget nav feel) the back-nav scroll
+  // hop went with it. Pages start at the top of their scroll container
+  // on entry, same as Chambers.
 
   const hasBottomTabs = navMode === 'bottom-tabs'
 
