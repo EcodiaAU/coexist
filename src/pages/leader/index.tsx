@@ -949,7 +949,11 @@ export default function LeaderDashboardPage() {
   // Tasks integration
   const { data: tasks } = useMyTasks()
   const generateMutation = useGenerateTaskInstances()
+  // Scope the dashboard task summary to the collective this dashboard is
+  // showing, so the pending/overdue counts match the rest of the page rather
+  // than aggregating every collective the leader belongs to.
   const groups = useGroupedTasks(tasks)
+    .filter((g) => !collectiveId || g.collective_id === collectiveId)
   const generateMutateRef = useRef(generateMutation.mutate)
   generateMutateRef.current = generateMutation.mutate
   useEffect(() => { generateMutateRef.current() }, [])

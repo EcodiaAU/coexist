@@ -42,6 +42,7 @@ import {
     usePendingImpactFormTasks,
     type ImpactFormTask,
 } from '@/hooks/use-impact-form-tasks'
+import { useLeaderCollectiveScope } from '@/hooks/use-leader-collective-scope'
 import { CATEGORY_COLORS } from '@/hooks/use-admin-tasks'
 import {
     useLeaderTodos,
@@ -705,7 +706,12 @@ function TasksTabContent({ rm }: { rm: boolean }) {
   const { data: impactFormTasks } = usePendingImpactFormTasks()
   const showLoading = useDelayedLoading(isLoading)
   const generateMutation = useGenerateTaskInstances()
+  // Scope every list on this page to the collective picked in the leader
+  // header (matches the Events tab). Admins / multi-collective leaders see
+  // one collective at a time instead of every collective's tasks at once.
+  const { selectedCollectiveId } = useLeaderCollectiveScope()
   const groups = useGroupedTasks(tasks)
+    .filter((g) => !selectedCollectiveId || g.collective_id === selectedCollectiveId)
 
   useEffect(() => {
     generateMutation.mutate()
@@ -719,8 +725,11 @@ function TasksTabContent({ rm }: { rm: boolean }) {
   }, [generateMutation, queryClient])
 
   const [showCompletedImpact, setShowCompletedImpact] = useState(false)
-  const pendingImpactForms = (impactFormTasks ?? []).filter((t) => t.status === 'pending')
-  const completedImpactForms = (impactFormTasks ?? []).filter((t) => t.status === 'completed')
+  const scopedImpactForms = (impactFormTasks ?? []).filter(
+    (t) => !selectedCollectiveId || t.collective_id === selectedCollectiveId,
+  )
+  const pendingImpactForms = scopedImpactForms.filter((t) => t.status === 'pending')
+  const completedImpactForms = scopedImpactForms.filter((t) => t.status === 'completed')
   const impactFormOverdue = pendingImpactForms.filter((t) => new Date(t.due_date) < new Date()).length
 
   const totalPending = groups.reduce((sum, g) => sum + g.pendingCount, 0) + pendingImpactForms.length
