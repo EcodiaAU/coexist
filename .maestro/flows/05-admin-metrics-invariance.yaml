@@ -50,7 +50,11 @@ androidWebViewHierarchy: devtools
 # FAIL CLOSED: if the prehook did not run, the expectations are empty and
 # this flow must go RED, never vacuous green (fault-yield doctrine; this
 # exact flow shipped as a false-green generator on 2026-06-10).
-- assertTrue: ${"${MAESTRO_EXPECT_UPCOMING}" != "" && "${MAESTRO_EXPECT_REGISTRATIONS}" != "" && "${MAESTRO_EXPECT_AVG_ATTENDANCE}" != ""}
+# Env vars are injected into the maestro JS scope as bare identifiers; the
+# prior ${"${VAR}"} form nested env-substitution inside the JS block, which
+# maestro's regex substitution cannot parse (Missing close quote) - it was a
+# false-RED on this flow for days. Reference the vars directly in one JS block.
+- assertTrue: ${MAESTRO_EXPECT_UPCOMING != '' && MAESTRO_EXPECT_REGISTRATIONS != '' && MAESTRO_EXPECT_AVG_ATTENDANCE != ''}
 # Each DB-derived number must be findable on the stats surface. The find
 # itself is the assert (a wrong on-screen number means no element matches
 # the DB truth and the step fails). Fault class: stats math drift between
