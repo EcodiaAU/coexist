@@ -1,0 +1,82 @@
+# Leader-suite event survey feedback (shipped 2026-06-17).
+# Co-Exist leaders/co-leaders/assist-leaders can now see attendee survey
+# feedback scoped to their collective; managers/admins see all, scoped to a
+# focused collective via the selector. Test account has admin role so it sees
+# the leader suite (isAnyLeader = isStaff) and can switch collectives.
+# Brisbane has 6 event survey responses (DB-verified 2026-06-17).
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: ".*(Welcome back|YOUR NEXT EVENT|I have an account|Get Started).*"
+    timeout: 30000
+    optional: true
+# Cold welcome screen -> go to the login form (coord tap; webview text-tap unreliable)
+- runFlow:
+    when:
+      visible: "I have an account"
+    commands:
+      - tapOn:
+          point: "50%,87%"
+      - extendedWaitUntil:
+          visible: ".*(Sign in to continue|Welcome back).*"
+          timeout: 10000
+# Login form: coord taps into the webview inputs, then inputText
+- runFlow:
+    when:
+      visible: ".*(Sign in to continue|Welcome back).*"
+    commands:
+      - tapOn:
+          point: "50%,46%"
+      - inputText: ${MAESTRO_CX_EMAIL}
+      - tapOn:
+          point: "50%,56%"
+      - inputText: ${MAESTRO_CX_PASSWORD}
+      - hideKeyboard
+      - tapOn:
+          point: "50%,84%"
+      - extendedWaitUntil:
+          visible: "YOUR NEXT EVENT"
+          timeout: 30000
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 25000
+- takeScreenshot: /tmp/maestro-cx-home
+# ── Open the leader-suite Feedback page via the More drawer ──
+- tapOn: ".*More.*"
+- extendedWaitUntil:
+    visible: "Feedback"
+    timeout: 10000
+- tapOn: "Feedback"
+- extendedWaitUntil:
+    visible: ".*(Event Feedback|No feedback yet).*"
+    timeout: 20000
+- takeScreenshot: /tmp/maestro-cx-feedback-default
+# ── Switch focused collective to Brisbane (admin sees all collectives) ──
+- runFlow:
+    when:
+      notVisible: "Brisbane"
+    commands:
+      - tapOn:
+          text: ".*(Adelaide|Collective|Feedback).*"
+          index: 0
+          optional: true
+- runFlow:
+    when:
+      visible: "Brisbane"
+    commands:
+      - tapOn: "Brisbane"
+- waitForAnimationToEnd:
+    timeout: 6000
+- takeScreenshot: /tmp/maestro-cx-feedback-brisbane
+# ── Expand the first event group, then a response ──
+- tapOn:
+    text: ".*response.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: /tmp/maestro-cx-feedback-expanded

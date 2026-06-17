@@ -171,6 +171,7 @@ const LeaderDashboardPage = lazy(() => import('@/pages/leader/index'))
 const LeaderEventsPage = lazy(() => import('@/pages/leader/events'))
 const LeaderTasksPage = lazy(() => import('@/pages/leader/tasks'))
 const LeaderReportsPage = lazy(() => import('@/pages/reports/index'))
+const LeaderFeedbackPage = lazy(() => import('@/pages/leader/feedback'))
 
 // Learner pages (My Leadership Journey)
 const LearnIndexPage = lazy(() => import('@/pages/learn/index'))
@@ -430,6 +431,7 @@ function App() {
             <Route index element={<LeaderDashboardPage />} />
             <Route path="events" element={<LeaderEventsPage />} />
             <Route path="tasks" element={<LeaderTasksPage />} />
+            <Route path="feedback" element={<LeaderFeedbackPage />} />
             <Route path="reports" element={<LeaderReportsPage />} />
           </Route>
 
