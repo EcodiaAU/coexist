@@ -179,6 +179,7 @@ export default function OnboardingPage() {
     <StepCollective
       key="collective"
       selectedId={data.collectiveId}
+      locationPoint={data.locationPoint}
       onSelect={(id) => updateData({ collectiveId: id })}
       onNext={goNext}
       onSkip={goNext}

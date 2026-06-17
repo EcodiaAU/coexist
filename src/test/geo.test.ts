@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
-import { COLLECTIVE_SLUG_COORDS, parseLocationPoint, resolveCollectiveCoords } from '@/lib/geo'
+import {
+  COLLECTIVE_SLUG_COORDS,
+  haversineKm,
+  parseLocationPoint,
+  resolveCollectiveCoords,
+} from '@/lib/geo'
 
 describe('parseLocationPoint', () => {
   it('returns null for falsy input', () => {
@@ -111,5 +116,33 @@ describe('resolveCollectiveCoords', () => {
     for (const slug of productionSlugs) {
       expect(resolveCollectiveCoords(null, slug), `slug ${slug}`).not.toBeNull()
     }
+  })
+})
+
+describe('haversineKm', () => {
+  it('returns 0 for identical points', () => {
+    expect(haversineKm({ lat: -16.9186, lng: 145.7781 }, { lat: -16.9186, lng: 145.7781 })).toBeCloseTo(0, 5)
+  })
+
+  it('matches a known Sydney->Melbourne distance (~714 km)', () => {
+    const sydney = { lat: -33.8688, lng: 151.2093 }
+    const melbourne = { lat: -37.8136, lng: 144.9631 }
+    expect(haversineKm(sydney, melbourne)).toBeGreaterThan(700)
+    expect(haversineKm(sydney, melbourne)).toBeLessThan(730)
+  })
+
+  it('is symmetric', () => {
+    const a = { lat: -27.4698, lng: 153.0251 }
+    const b = { lat: -16.9186, lng: 145.7781 }
+    expect(haversineKm(a, b)).toBeCloseTo(haversineKm(b, a), 6)
+  })
+
+  it('ranks the Cairns collective above Brisbane for a Cairns-local user (the reported bug)', () => {
+    const cairnsUser = { lat: -16.92, lng: 145.78 }
+    const cairns = resolveCollectiveCoords(null, 'cairns')!
+    const brisbane = resolveCollectiveCoords(null, 'brisbane')!
+    const melbourne = resolveCollectiveCoords(null, 'melbourne-city')!
+    expect(haversineKm(cairnsUser, cairns)).toBeLessThan(haversineKm(cairnsUser, brisbane))
+    expect(haversineKm(cairnsUser, cairns)).toBeLessThan(haversineKm(cairnsUser, melbourne))
   })
 })

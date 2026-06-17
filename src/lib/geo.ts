@@ -148,3 +148,22 @@ export function resolveCollectiveCoords(
   }
   return null
 }
+
+/**
+ * Great-circle distance in kilometres between two {lat,lng} points
+ * (Haversine formula, mean Earth radius 6371 km). Used to rank collectives
+ * by proximity to the user during onboarding so the nearest group surfaces
+ * first instead of being buried under the most-populous ones.
+ */
+export function haversineKm(a: MapCenter, b: MapCenter): number {
+  const R = 6371
+  const toRad = (deg: number) => (deg * Math.PI) / 180
+  const dLat = toRad(b.lat - a.lat)
+  const dLng = toRad(b.lng - a.lng)
+  const lat1 = toRad(a.lat)
+  const lat2 = toRad(b.lat)
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
+}
