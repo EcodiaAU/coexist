@@ -194,7 +194,11 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
     const isPortrait = size === 'portrait'
 
     const sidePad   = isStory ? 72  : 64
-    const topPad    = isStory ? 64  : 52
+    // Story (9:16) is full-screen on IG, so the platform overlays its top
+    // chrome (progress bars + profile-handle row + close/more buttons) on the
+    // top ~150px. Push the wordmark below that band so it never gets covered.
+    // Feed posts (square/portrait) have no top overlay and stay tight. 2026-06-17.
+    const topPad    = isStory ? 196 : 52
     const btmPad    = isStory ? 260 : isPortrait ? 150 : 120
     const logoSize  = isStory ? 120 : isPortrait ? 104 : 96
     const titleSize = isStory ? 100 : isPortrait ? 86 : 74
