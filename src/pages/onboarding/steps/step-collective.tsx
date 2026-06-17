@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useUserLocation } from '@/hooks/use-nearby'
 import { Button } from '@/components/button'
-import { Skeleton } from '@/components/skeleton'
+import { Card } from '@/components/card'
 import { cn } from '@/lib/cn'
 import { resolveCollectiveCoords, haversineKm } from '@/lib/geo'
 import type { Database } from '@/types/database.types'
@@ -29,6 +29,12 @@ interface StepCollectiveProps {
   onSelect: (id: string | null) => void
   onNext: () => void
   onSkip: () => void
+}
+
+/** Human-friendly distance label: "12 km away", "<1 km away". */
+function formatDistance(km: number): string {
+  if (km < 1) return '<1 km away'
+  return `${Math.round(km)} km away`
 }
 
 export function StepCollective({
@@ -104,6 +110,41 @@ export function StepCollective({
     return ordered.slice(0, DEFAULT_VISIBLE)
   }, [ordered, query])
 
+  /** Overlaid name + region + member count (+ distance), shared by image and fallback. */
+  function CollectiveOverlayBody({
+    collective,
+    distanceKm,
+  }: {
+    collective: Collective
+    distanceKm: number | null
+  }) {
+    return (
+      <>
+        <p className="font-heading text-lg font-semibold text-white leading-tight line-clamp-1">
+          {collective.name}
+        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-white/80">
+          {collective.region && (
+            <span className="flex items-center gap-1">
+              <MapPin size={12} aria-hidden="true" />
+              {collective.region}
+            </span>
+          )}
+          <span className="flex items-center gap-1">
+            <Users size={12} aria-hidden="true" />
+            {collective.member_count} members
+          </span>
+          {distanceKm !== null && (
+            <span className="flex items-center gap-1 text-white/70">
+              <Navigation size={12} aria-hidden="true" />
+              {formatDistance(distanceKm)}
+            </span>
+          )}
+        </div>
+      </>
+    )
+  }
+
   return (
     <div className="flex-1 flex flex-col px-4 pt-8 min-h-0">
       <motion.div
@@ -140,9 +181,13 @@ export function StepCollective({
           />
         </motion.div>
 
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-4">
           {showLoading ? (
-            <Skeleton variant="list-item" count={4} />
+            <>
+              <Card.Skeleton hasImage lines={1} />
+              <Card.Skeleton hasImage lines={1} />
+              <Card.Skeleton hasImage lines={1} />
+            </>
           ) : error ? (
             <p className="text-sm text-error-500 text-center py-8">
               Couldn't load collectives. You can skip and join one later.
@@ -151,59 +196,46 @@ export function StepCollective({
             visible.map(({ collective, distanceKm }) => {
               const isSelected = selectedId === collective.id
               return (
-                <motion.button
-                  key={collective.id}
-                  type="button"
-                  onClick={() => onSelect(isSelected ? null : collective.id)}
-                  variants={fadeUp}
-                  whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-                  className={cn(
-                    'w-full flex items-center gap-3 p-4 rounded-xl text-left cursor-pointer',
-                    'transition-colors duration-150',
-                    isSelected
-                      ? 'ring-2 ring-neutral-900 bg-white border border-neutral-100 shadow-sm'
-                      : 'bg-white border border-neutral-100 hover:bg-neutral-50',
-                  )}
-                >
-                  {collective.cover_image_url ? (
-                    <img
-                      src={collective.cover_image_url}
-                      alt=""
-                      className="w-12 h-12 rounded-lg object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg bg-neutral-50 flex items-center justify-center shrink-0">
-                      <Users size={20} className="text-neutral-400" />
-                    </div>
-                  )}
-
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-neutral-900 truncate">{collective.name}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {collective.region && (
-                        <span className="flex items-center gap-1 text-xs text-neutral-500">
-                          <MapPin size={12} />
-                          {collective.region}
+                <motion.div key={collective.id} variants={fadeUp}>
+                  <Card
+                    variant="collective"
+                    onClick={() => onSelect(isSelected ? null : collective.id)}
+                    aria-label={collective.name}
+                    className={cn(
+                      'transition-shadow duration-150',
+                      isSelected ? 'ring-2 ring-primary-500 shadow-md' : 'shadow-sm',
+                    )}
+                  >
+                    {isSelected && (
+                      <Card.Badge position="top-right">
+                        <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary-500 shadow-md">
+                          <Check size={16} className="text-white" aria-hidden="true" />
                         </span>
-                      )}
-                      <span className="text-xs text-neutral-500">
-                        {collective.member_count} members
-                      </span>
-                      {distanceKm !== null && (
-                        <span className="flex items-center gap-1 text-xs text-neutral-400">
-                          <Navigation size={11} />
-                          {formatDistance(distanceKm)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {isSelected && (
-                    <div className="w-6 h-6 rounded-full bg-neutral-900 flex items-center justify-center shrink-0">
-                      <Check size={14} className="text-white" />
-                    </div>
-                  )}
-                </motion.button>
+                      </Card.Badge>
+                    )}
+                    {collective.cover_image_url ? (
+                      <Card.Overlay
+                        src={collective.cover_image_url}
+                        alt=""
+                        aspectRatio="16/9"
+                        positionX={collective.cover_image_position_x}
+                        positionY={collective.cover_image_position_y}
+                      >
+                        <CollectiveOverlayBody collective={collective} distanceKm={distanceKm} />
+                      </Card.Overlay>
+                    ) : (
+                      <div
+                        className="relative w-full overflow-hidden bg-gradient-to-br from-primary-400 to-sprout-500"
+                        style={{ aspectRatio: '16/9' }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent" aria-hidden="true" />
+                        <div className="absolute inset-0 flex flex-col justify-end p-4">
+                          <CollectiveOverlayBody collective={collective} distanceKm={distanceKm} />
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                </motion.div>
               )
             })
           ) : query ? (
@@ -231,10 +263,4 @@ export function StepCollective({
       </div>
     </div>
   )
-}
-
-/** Human-friendly distance label: "12 km away", "<1 km away". */
-function formatDistance(km: number): string {
-  if (km < 1) return '<1 km away'
-  return `${Math.round(km)} km away`
 }

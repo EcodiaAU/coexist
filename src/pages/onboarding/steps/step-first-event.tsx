@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Calendar, MapPin, Check } from 'lucide-react'
+import { Calendar, MapPin, Check, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { wallClockNow } from '@/lib/date-format'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Button } from '@/components/button'
-import { Skeleton } from '@/components/skeleton'
+import { Card } from '@/components/card'
+import { cn } from '@/lib/cn'
 import type { Database } from '@/types/database.types'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
@@ -73,6 +74,53 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
     return d.toLocaleDateString('en-AU', { weekday: 'short', month: 'short', day: 'numeric' })
   }
 
+  /** Overlaid content shared by the image and the gradient-fallback card. */
+  function EventOverlayBody({ event }: { event: Event }) {
+    const going = rsvpedEvents.has(event.id)
+    const saving = rsvpingEvent === event.id
+    return (
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/25 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-white">
+            <Calendar size={10} aria-hidden="true" />
+            {formatDate(event.date_start)}
+          </span>
+          <p className="mt-2 font-heading text-base font-semibold text-white leading-snug line-clamp-2">
+            {event.title}
+          </p>
+          {event.address && (
+            <p className="flex items-center gap-1 mt-1 text-xs text-white/75">
+              <MapPin size={11} aria-hidden="true" />
+              <span className="truncate">{event.address}</span>
+            </p>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => rsvpMutation.mutate(event.id)}
+          disabled={saving || going}
+          aria-label={going ? 'Going' : `RSVP to ${event.title}`}
+          className={cn(
+            'shrink-0 inline-flex items-center gap-1.5 px-4 h-10 rounded-full text-sm font-semibold',
+            'transition-colors duration-150 cursor-pointer select-none active:scale-[0.96] disabled:cursor-default',
+            going
+              ? 'bg-white/20 text-white border border-white/40 backdrop-blur-sm'
+              : 'bg-white text-neutral-900 shadow-sm hover:bg-white/90',
+          )}
+        >
+          {going ? (
+            <><Check size={15} aria-hidden="true" /> Going</>
+          ) : saving ? (
+            <><Loader2 size={15} className="animate-spin" aria-hidden="true" /> Saving</>
+          ) : (
+            'RSVP'
+          )}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 flex flex-col px-4 pt-8 min-h-0">
       <motion.div
@@ -88,9 +136,13 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
           Jump in! One tap to RSVP.
         </motion.p>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 space-y-4">
           {showLoading ? (
-            <Skeleton variant="list-item" count={3} />
+            <>
+              <Card.Skeleton hasImage lines={2} />
+              <Card.Skeleton hasImage lines={2} />
+              <Card.Skeleton hasImage lines={2} />
+            </>
           ) : error ? (
             <div className="text-center py-8">
               <p className="text-sm text-error-500">Couldn't load events right now.</p>
@@ -98,35 +150,30 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
             </div>
           ) : events && events.length > 0 ? (
             events.map((event) => (
-              <motion.div
-                key={event.id}
-                variants={fadeUp}
-                className="flex items-start gap-3 p-4 rounded-xl border border-neutral-100 shadow-sm bg-white"
-              >
-                <div className="w-12 h-12 rounded-lg bg-neutral-50 flex flex-col items-center justify-center shrink-0">
-                  <Calendar size={16} className="text-neutral-400" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-neutral-900 truncate">{event.title}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{formatDate(event.date_start)}</p>
-                  {event.address && (
-                    <p className="flex items-center gap-1 text-xs text-neutral-500 mt-0.5">
-                      <MapPin size={10} />
-                      <span className="truncate">{event.address}</span>
-                    </p>
+              <motion.div key={event.id} variants={fadeUp}>
+                <Card variant="event" watermark={event.activity_type ?? undefined} className="shadow-sm">
+                  {event.cover_image_url ? (
+                    <Card.Overlay
+                      src={event.cover_image_url}
+                      alt=""
+                      aspectRatio="16/9"
+                      positionX={event.cover_image_position_x}
+                      positionY={event.cover_image_position_y}
+                    >
+                      <EventOverlayBody event={event} />
+                    </Card.Overlay>
+                  ) : (
+                    <div
+                      className="relative w-full overflow-hidden bg-gradient-to-br from-primary-400 to-sprout-500"
+                      style={{ aspectRatio: '16/9' }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" aria-hidden="true" />
+                      <div className="absolute inset-0 flex flex-col justify-end p-4">
+                        <EventOverlayBody event={event} />
+                      </div>
+                    </div>
                   )}
-                </div>
-
-                <Button
-                  size="sm"
-                  variant={rsvpedEvents.has(event.id) ? 'ghost' : 'primary'}
-                  onClick={() => rsvpMutation.mutate(event.id)}
-                  disabled={rsvpingEvent === event.id || rsvpedEvents.has(event.id)}
-                  icon={rsvpedEvents.has(event.id) ? <Check size={14} /> : undefined}
-                >
-                  {rsvpedEvents.has(event.id) ? 'Going' : rsvpingEvent === event.id ? 'Saving...' : 'RSVP'}
-                </Button>
+                </Card>
               </motion.div>
             ))
           ) : (
