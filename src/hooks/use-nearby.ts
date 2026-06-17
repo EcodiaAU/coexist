@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from '@/lib/supabase'
 import { wallClockNow } from '@/lib/date-format'
 import type { Tables, Database } from '@/types/database.types'
@@ -107,25 +108,63 @@ export function useNearbyCollectives(
 }
 
 /* ------------------------------------------------------------------ */
-/*  User location (browser geolocation)                                */
+/*  User location (native Capacitor plugin + web fallback)             */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Resolve the device's current location.
+ *
+ * On native (iOS/Android) we MUST go through the Capacitor Geolocation
+ * plugin: a raw `navigator.geolocation` call inside the WKWebView does not
+ * surface the native permission prompt on iOS (it silently fails), so the
+ * old browser-only path meant new users never saw a prompt and location
+ * ordering never kicked in. The plugin requests permission (triggering the
+ * OS dialog) and reads the position natively. On the web we fall back to
+ * the browser geolocation API.
+ *
+ * Returns null on denial / unavailability / timeout - callers degrade
+ * gracefully (e.g. onboarding falls back to member_count ordering).
+ */
+async function resolveDeviceLocation(): Promise<Location | null> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { Geolocation } = await import('@capacitor/geolocation')
+      const status = await Geolocation.checkPermissions()
+      let state = status.location
+      if (state === 'prompt' || state === 'prompt-with-rationale') {
+        const requested = await Geolocation.requestPermissions({ permissions: ['location'] })
+        state = requested.location
+      }
+      if (state !== 'granted') return null
+      // Fast coarse fix is plenty for ranking collectives by city.
+      const pos = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: false,
+        timeout: 8000,
+      })
+      return { lat: pos.coords.latitude, lng: pos.coords.longitude }
+    } catch {
+      return null
+    }
+  }
+
+  // Web fallback (PWA / browser).
+  return new Promise<Location | null>((resolve) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      resolve(null)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 10000, maximumAge: 5 * 60 * 1000 },
+    )
+  })
+}
 
 export function useUserLocation() {
   return useQuery({
     queryKey: ['user-location'],
-    queryFn: () =>
-      new Promise<Location | null>((resolve) => {
-        if (!navigator.geolocation) {
-          resolve(null)
-          return
-        }
-        navigator.geolocation.getCurrentPosition(
-          (pos) =>
-            resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-          () => resolve(null),
-          { timeout: 10000, maximumAge: 5 * 60 * 1000 },
-        )
-      }),
+    queryFn: resolveDeviceLocation,
     staleTime: 10 * 60 * 1000,
     retry: false,
   })
