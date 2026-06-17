@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import type { Tables } from '@/types/database.types'
 import { useAuth } from '@/hooks/use-auth'
+import { useUserLocation } from '@/hooks/use-nearby'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/button'
 
@@ -31,6 +32,13 @@ export default function OnboardingPage() {
   const navigate = useNavigate()
   const { user, collectiveRoles, isStaff, refreshProfile, markOnboardingComplete } = useAuth()
   const shouldReduceMotion = useReducedMotion()
+
+  // Trigger the device location permission prompt as soon as onboarding opens
+  // (step 0), so the OS dialog appears well before the "Join a Collective"
+  // step (step 2). The resolved coords are cached under ['user-location'] and
+  // read back by StepCollective to rank collectives by proximity. Fire-and-
+  // cache: we don't block any step on the result.
+  useUserLocation()
 
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState(1)
@@ -179,6 +187,7 @@ export default function OnboardingPage() {
     <StepCollective
       key="collective"
       selectedId={data.collectiveId}
+      locationPoint={data.locationPoint}
       onSelect={(id) => updateData({ collectiveId: id })}
       onNext={goNext}
       onSkip={goNext}

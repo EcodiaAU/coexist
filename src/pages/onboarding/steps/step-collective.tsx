@@ -1,40 +1,108 @@
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Users, MapPin, Check } from 'lucide-react'
+import { Users, MapPin, Check, Search, Navigation } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
+import { useUserLocation } from '@/hooks/use-nearby'
 import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
 import { cn } from '@/lib/cn'
+import { resolveCollectiveCoords, haversineKm } from '@/lib/geo'
 import type { Database } from '@/types/database.types'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
 type Collective = Database['public']['Tables']['collectives']['Row']
 
+// How many to show by default (before the user searches). Distance-sorted when
+// we have the user's location, member_count-sorted otherwise.
+const DEFAULT_VISIBLE = 12
+
 interface StepCollectiveProps {
   selectedId: string | null
+  /**
+   * Location the user entered on the previous onboarding step (the suburb/city
+   * autocomplete). Preferred signal for proximity ordering since it's exactly
+   * where they said they're based. Falls back to browser geolocation.
+   */
+  locationPoint?: { lat: number; lng: number } | null
   onSelect: (id: string | null) => void
   onNext: () => void
   onSkip: () => void
 }
 
-export function StepCollective({ selectedId, onSelect, onNext, onSkip }: StepCollectiveProps) {
+export function StepCollective({
+  selectedId,
+  locationPoint,
+  onSelect,
+  onNext,
+  onSkip,
+}: StepCollectiveProps) {
   const shouldReduceMotion = useReducedMotion()
+  const [search, setSearch] = useState('')
+
+  // Browser geolocation fallback, only fetched when the user didn't give a
+  // location on the previous step (resolves null if denied or unavailable).
+  const { data: geoLocation } = useUserLocation()
+
+  // Prefer the explicitly-entered onboarding location; fall back to geolocation.
+  const userLocation = locationPoint ?? geoLocation ?? null
 
   const { data: collectives, isLoading, error } = useQuery({
     queryKey: ['onboarding-collectives'],
     queryFn: async () => {
+      // Fetch ALL active local collectives (no member_count limit) so the
+      // distance sort can promote a small, nearby group. The old query capped
+      // at the 10 largest, which permanently hid smaller cities (e.g. Cairns)
+      // and forced those users to hunt via search.
       const { data } = await supabase
         .from('collectives')
         .select('*')
         .eq('is_active', true)
         .or('is_national.is.null,is_national.eq.false')
         .order('member_count', { ascending: false })
-        .limit(10)
       return data as Collective[]
     },
   })
   const showLoading = useDelayedLoading(isLoading)
+
+  // Annotate each collective with its distance from the user (km), then order.
+  const ordered = useMemo(() => {
+    if (!collectives) return []
+    const withDistance = collectives.map((c) => {
+      let distanceKm: number | null = null
+      if (userLocation) {
+        const coords = resolveCollectiveCoords(c.location_point, c.slug)
+        if (coords) distanceKm = haversineKm(userLocation, coords)
+      }
+      return { collective: c, distanceKm }
+    })
+
+    if (userLocation) {
+      // Nearest first; collectives with no resolvable coords sink to the
+      // bottom, kept in member_count order (the source query order).
+      withDistance.sort((a, b) => {
+        if (a.distanceKm === null && b.distanceKm === null) return 0
+        if (a.distanceKm === null) return 1
+        if (b.distanceKm === null) return -1
+        return a.distanceKm - b.distanceKm
+      })
+    }
+    return withDistance
+  }, [collectives, userLocation])
+
+  // Search filters the full list (name + region); otherwise show the top slice.
+  const query = search.trim().toLowerCase()
+  const visible = useMemo(() => {
+    if (query) {
+      return ordered.filter(
+        ({ collective }) =>
+          collective.name.toLowerCase().includes(query) ||
+          (collective.region?.toLowerCase().includes(query) ?? false),
+      )
+    }
+    return ordered.slice(0, DEFAULT_VISIBLE)
+  }, [ordered, query])
 
   return (
     <div className="flex-1 flex flex-col px-4 pt-8 min-h-0">
@@ -48,18 +116,39 @@ export function StepCollective({ selectedId, onSelect, onNext, onSkip }: StepCol
           Join a Collective
         </motion.h2>
         <motion.p variants={fadeUp} className="mt-2 text-neutral-500 leading-relaxed">
-          Collectives are local volunteer groups. Join one to find events near you.
+          {userLocation
+            ? 'Collectives are local volunteer groups. The closest ones to you are shown first.'
+            : 'Collectives are local volunteer groups. Join one to find events near you.'}
         </motion.p>
 
-        <div className="mt-6 space-y-3">
+        <motion.div variants={fadeUp} className="mt-5 relative">
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none"
+          />
+          <input
+            type="text"
+            inputMode="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search for your town or city"
+            className={cn(
+              'w-full h-12 pl-10 pr-3 rounded-xl bg-white border border-neutral-200',
+              'text-neutral-900 placeholder:text-neutral-400',
+              'focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent',
+            )}
+          />
+        </motion.div>
+
+        <div className="mt-4 space-y-3">
           {showLoading ? (
             <Skeleton variant="list-item" count={4} />
           ) : error ? (
             <p className="text-sm text-error-500 text-center py-8">
               Couldn't load collectives. You can skip and join one later.
             </p>
-          ) : collectives && collectives.length > 0 ? (
-            collectives.map((collective) => {
+          ) : visible.length > 0 ? (
+            visible.map(({ collective, distanceKm }) => {
               const isSelected = selectedId === collective.id
               return (
                 <motion.button
@@ -100,6 +189,12 @@ export function StepCollective({ selectedId, onSelect, onNext, onSkip }: StepCol
                       <span className="text-xs text-neutral-500">
                         {collective.member_count} members
                       </span>
+                      {distanceKm !== null && (
+                        <span className="flex items-center gap-1 text-xs text-neutral-400">
+                          <Navigation size={11} />
+                          {formatDistance(distanceKm)}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -111,6 +206,10 @@ export function StepCollective({ selectedId, onSelect, onNext, onSkip }: StepCol
                 </motion.button>
               )
             })
+          ) : query ? (
+            <p className="text-sm text-neutral-500 text-center py-8">
+              No collectives match "{search.trim()}". Try a nearby town, or skip and join one later.
+            </p>
           ) : (
             <p className="text-sm text-neutral-500 text-center py-8">
               No collectives available yet. Check back soon!
@@ -132,4 +231,10 @@ export function StepCollective({ selectedId, onSelect, onNext, onSkip }: StepCol
       </div>
     </div>
   )
+}
+
+/** Human-friendly distance label: "12 km away", "<1 km away". */
+function formatDistance(km: number): string {
+  if (km < 1) return '<1 km away'
+  return `${Math.round(km)} km away`
 }
