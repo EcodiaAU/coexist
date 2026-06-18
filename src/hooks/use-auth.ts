@@ -379,6 +379,12 @@ export function useAuthProvider(): AuthContextValue {
   /* ---- init: restore session + subscribe ---- */
   useEffect(() => {
     let mounted = true
+    // Tracks whether a locally-persisted session existed at boot. Used to keep
+    // a returning user in an authed shell when a token refresh is slow or fails
+    // transiently while offline, instead of dropping them to the logged-out
+    // screen (status_board 1b1e718d symptom d: late session-restore failure
+    // bounces to the Welcome-back login).
+    let hadRestoredSession = false
 
     // Immediately seed cached profile so the route guard never flashes
     // onboarding while we wait for Supabase auth to resolve.
@@ -390,11 +396,28 @@ export function useAuthProvider(): AuthContextValue {
     })
 
     // For native: restore the persisted session and set it on the client.
-    // This triggers onAuthStateChange SIGNED_IN which handles everything.
+    // The cached session is seeded OPTIMISTICALLY so first paint for a
+    // returning user renders authed content from cache WITHOUT waiting on a
+    // network token refresh - the exact dependency that blocked first paint
+    // for 60s+ on a flaky cold start (status_board 1b1e718d). setSession then
+    // reconciles with the server in the background; onAuthStateChange remains
+    // the single source of truth once it resolves.
     if (Capacitor.isNativePlatform()) {
       restoreSession().then(async (restored) => {
+        if (!mounted) return
         if (restored) {
-          await supabase.auth.setSession(restored)
+          hadRestoredSession = true
+          setSession(restored)
+          setUser(restored.user ?? null)
+          // Session is known (from cache) - unblock the UI now.
+          setIsLoading(false)
+          try {
+            await supabase.auth.setSession(restored)
+          } catch {
+            // Offline / refresh failure: keep the cached session on screen.
+            // autoRefreshToken recovers and emits TOKEN_REFRESHED when
+            // connectivity returns, which reloads profile data below.
+          }
         }
         // If no restored session, onAuthStateChange INITIAL_SESSION
         // will fire with null - handled below.
@@ -407,11 +430,17 @@ export function useAuthProvider(): AuthContextValue {
       (event, newSession) => {
         if (!mounted) return
 
-        setSession(newSession)
-        setUser(newSession?.user ?? null)
-        persistSession(newSession)
-
         if (newSession?.user) {
+          setSession(newSession)
+          setUser(newSession.user)
+          persistSession(newSession)
+          // Unblock the UI as soon as the SESSION is known. Profile / role
+          // data loads in the background below; gating isLoading on that
+          // network round trip is exactly what kept the splash (which waits
+          // on isLoading) painted over a blank shell for 60s+ on a flaky cold
+          // start (status_board 1b1e718d). The cached profile is already
+          // seeded above, so the shell renders immediately.
+          setIsLoading(false)
           const userId = newSession.user.id
           // Defer loadUserData - calling it inside onAuthStateChange can
           // deadlock because the Supabase JS client holds an internal auth
@@ -431,29 +460,41 @@ export function useAuthProvider(): AuthContextValue {
               } catch { /* referral acceptance is best-effort */ }
             } catch (err) {
               console.error('[auth] loadUserData failed:', err)
-            } finally {
-              if (mounted) {
-                setIsLoading(false)
-              }
             }
           }, 0)
         } else {
-          setProfile(null)
-          setCollectiveRoles([])
-          setPermissionOverrides(null)
-          setManagedCollectiveIds([])
-          persistProfile(null)
+          // No session in this event. Distinguish a REAL sign-out from a
+          // transient offline failure to restore a still-valid cached session.
+          // An explicit SIGNED_OUT, or any null while online, or a cold start
+          // with no cached session at all, is a real logged-out state. But a
+          // null INITIAL_SESSION while offline with a cached session in hand is
+          // just an unfinished token refresh - keep the user in the authed
+          // shell rather than bouncing them to Welcome-back (symptom d).
+          const isRealSignOut =
+            event === 'SIGNED_OUT' || !hadRestoredSession || navigator.onLine
+          if (isRealSignOut) {
+            setSession(null)
+            setUser(null)
+            setProfile(null)
+            setCollectiveRoles([])
+            setPermissionOverrides(null)
+            setManagedCollectiveIds([])
+            persistProfile(null)
+          }
+          // Either way, stop blocking first paint.
           setIsLoading(false)
         }
       },
     )
 
-    // Safety: if nothing fires within 10s, unblock the UI.
+    // Safety backstop: never let the UI hang on auth resolution. Short window
+    // because INITIAL_SESSION normally fires within a few hundred ms - this is
+    // the last-resort unblock for a wedged auth lock, not the common path.
     const safety = setTimeout(() => {
       if (mounted) {
         setIsLoading(false)
       }
-    }, 10000)
+    }, 3000)
 
     return () => {
       mounted = false

@@ -560,6 +560,29 @@ chains, so coverage payoff per flow is high.
   root-cause investigation (deep-link /shop/cart from /shop/checkout
   ErrorBoundary).
 
+## Batch 11 (2026-06-18) - 1b1e718d cold-start blank-paint FIXED
+
+Root cause: the React splash overlay (near-white bg) waited on `auth.isLoading`,
+which only flipped false AFTER `loadUserData` (profile + roles + staff network
+fetch) completed; on a flaky cold start that hung, so the splash sat over a
+blank shell for 60s+. Fix (src/hooks/use-auth.ts + src/pages/splash.tsx):
+isLoading now clears as soon as the SESSION is known (profile loads in the
+background); the splash has a 2s hard auth-deadline; the auth safety backstop
+dropped 10s -> 3s; offline session-restore keeps a returning user in the authed
+shell instead of bouncing to Welcome-back.
+
+Flow changes (this commit):
+- `90-cold-start-render.yaml` = STRICT unhealed canary, now N=5 clearState:true
+  relaunches asserting the auth shell within a 12s budget each (was 1 launch /
+  30s - that single sample undersampled the intermittent paint, the canary-gap
+  called out in the 2026-06-14 nightly). Verified 2026-06-18 on coexist_aosp:
+  online 5/5 paint <8s; fully offline (airplane) paints 3-10s (high end is
+  first-launch WebView JIT, not a network wait); pre-fix it blanked past 60s.
+  Run online + airplane-mode offline.
+- `01-signin-authed-feed.yaml` flipped clearState:false -> true and dropped the
+  self-heal double-launch (the file's own TODO: remove when 1b1e718d fixed). It
+  now tests the real cold-clear authed sign-in (symptom a).
+
 ## Rules that bind authoring here
 
 - androidWebViewHierarchy: devtools (Capacitor).
