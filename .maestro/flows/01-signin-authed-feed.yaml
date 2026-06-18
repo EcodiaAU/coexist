@@ -1,27 +1,23 @@
-# Canonical authed signin (returning-user state). Creds via MAESTRO_* env.
-# clearState deliberately false: cold-clear first paint is broken (blank
-# 60s+, status_board 1b1e718d) and is tracked by cold-start-render.yaml.
+# Canonical authed signin, COLD-CLEAR variant (status_board 1b1e718d).
+# clearState:true exercises the fresh-install authed sign-in path that used
+# to blank for 60s+. The self-heal double-launch was removed once 1b1e718d
+# was fixed (per the original TODO in this file); first paint now reaches the
+# auth shell directly, so a single cold-clear launch must render the login
+# form within budget. Creds via MAESTRO_* env. The strict unhealed cold-clear
+# canary lives in 90-cold-start-render.
 appId: org.coexistaus.app
 androidWebViewHierarchy: devtools
 ---
 - launchApp:
-    clearState: false
+    clearState: true
     stopApp: true
-# Precondition self-heal for bug 1b1e718d (intermittent blank first
-# paint when launching into freshly-cleared data): the second launch
-# reliably renders. REMOVE this block when 1b1e718d is fixed; the strict
-# detection lives in 90-cold-start-render, which stays unhealed.
+# Cold-clear lands on the signed-out auth shell. First paint must reach it
+# without waiting on the network now that the blank-paint bug is fixed (12s
+# budget mirrors the 90-cold-start canary, sized to the offline cold-JIT
+# worst case measured 2026-06-18).
 - extendedWaitUntil:
-    visible: ".*(Welcome back|YOUR NEXT EVENT).*"
-    timeout: 30000
-    optional: true
-- runFlow:
-    when:
-      notVisible: ".*(Welcome back|YOUR NEXT EVENT).*"
-    commands:
-      - stopApp
-      - launchApp:
-          clearState: false
+    visible: ".*(Welcome back|Log In|Email).*"
+    timeout: 12000
 # Conditional login: a prior flow may have left the account signed in
 # (sessions persist); signin is exercised whenever the state is signed
 # out, and the home assertions run either way.
@@ -33,7 +29,14 @@ androidWebViewHierarchy: devtools
       - inputText: ${MAESTRO_CX_EMAIL}
       - tapOn: "Password.*"
       - inputText: ${MAESTRO_CX_PASSWORD}
-      - hideKeyboard
+      # Do NOT hideKeyboard here: on Android Capacitor it issues a BACK press,
+      # and on this cold-clear (clearState:true) the login screen is the router
+      # root, so BACK exits the app to the launcher (COVERAGE.md rule). Scroll
+      # the Log In button above the keyboard instead, then tap it.
+      - scrollUntilVisible:
+          element:
+            text: "Log In"
+          direction: DOWN
       - tapOn: "Log In"
       - extendedWaitUntil:
           notVisible: "Welcome back"

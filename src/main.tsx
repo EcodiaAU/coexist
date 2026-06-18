@@ -228,8 +228,30 @@ try {
   showBootError('render', err)
 }
 
-// Register service worker - detect updates and prompt reload
-if ('serviceWorker' in navigator) {
+// Service worker registration is WEB-ONLY.
+//
+// On native Capacitor the app shell is already served from the on-device
+// bundle (androidScheme: https://localhost), so it is fully offline-capable
+// with NO network. The SW's network-first navigation handler (public/sw.js)
+// would instead insert a network round trip on every navigation, and on a
+// flaky or offline cold start with an empty cache it resolves the navigation
+// request to nothing - a blank white screen that never recovers. That is the
+// network-dependent blank first paint tracked by status_board 1b1e718d: one
+// cold-clear launch paints in ~3s, a later relaunch blanks past 60s because a
+// lingering controlled SW serves an empty cache offline. So we never register
+// it on native, and we proactively unregister any SW (and drop its caches)
+// left behind by an earlier native build so updated installs shed it. On web
+// (app.coexistaus.org) the SW keeps its genuine PWA offline value.
+if ('serviceWorker' in navigator && Capacitor.isNativePlatform()) {
+  navigator.serviceWorker.getRegistrations()
+    .then((regs) => regs.forEach((reg) => reg.unregister().catch(() => {})))
+    .catch(() => {})
+  if ('caches' in window) {
+    caches.keys()
+      .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+      .catch(() => {})
+  }
+} else if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then((reg) => {
       // Check for updates periodically (every 30 min)

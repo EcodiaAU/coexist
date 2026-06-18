@@ -1,12 +1,38 @@
-# Cold-clear first paint. RED until status_board 1b1e718d is fixed: a
-# clean install currently shows blank pixels 60s+ while first paint
-# blocks on network. Green = the signin shell renders within 30s of a
-# cold-clear launch, which is what a new customer experiences.
+# STRICT cold-clear first-paint canary (status_board 1b1e718d).
+#
+# This is the unhealed canary for the network-dependent blank-paint bug:
+# a fresh install / state-clear used to show blank pixels for 60s+ (possibly
+# indefinitely) while first paint blocked on an auth/session network round
+# trip. One cold-clear sample per night undersampled an INTERMITTENT failure
+# (the 2026-06-14 nightly: this canary PASSED while 11 other flows showed the
+# bug), so the canary now relaunches N=5 times with clearState:true and
+# asserts the auth shell paints within budget each time. Run it twice in the
+# harness: once online, once with the emulator radio in airplane-mode
+# (offline) as an adb pre-step - first paint must never wait on the network.
+#
+# Budget = 12s. Measured 2026-06-18 on coexist_aosp after the fix: online
+# cold-clear paints in <8s (5/5); fully offline (airplane) paints in 3-10s,
+# the high end being first-launch WebView JIT, NOT a network wait. 12s clears
+# the offline cold-JIT worst case while still failing hard the instant the
+# 60s+ regression returns. Pre-fix, this same launch blanked past 60s.
+#
+# Green = every cold-clear launch renders the signed-out auth/welcome shell
+# within 12s online AND offline, which is what a brand-new customer on a
+# flaky or absent network experiences.
 appId: org.coexistaus.app
 androidWebViewHierarchy: devtools
 ---
-- launchApp:
-    clearState: true
-- extendedWaitUntil:
-    visible: "Welcome back"
-    timeout: 30000
+- repeat:
+    times: 5
+    commands:
+      - launchApp:
+          clearState: true
+          stopApp: true
+      # First paint must reach the auth/welcome shell without waiting on the
+      # network. The catch-all route lands on /welcome ("Welcome"/"Get
+      # started"); an authed-but-signed-out cold clear lands on /login
+      # ("Welcome back"/"Log In").
+      - extendedWaitUntil:
+          visible: ".*(Welcome back|Welcome|Log In|Sign In|Get started|Create account|Email).*"
+          timeout: 12000
+      - takeScreenshot: /tmp/maestro-cx-coldstart
