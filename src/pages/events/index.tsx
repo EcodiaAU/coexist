@@ -67,17 +67,14 @@ function SectionHeader({ title, count, action }: { title: string; count?: number
 /* ------------------------------------------------------------------ */
 
 function ExploreHero({ rm }: { rm: boolean }) {
-  const { bgRef, fgRef, textRef } = useParallaxLayers({ textRange: 180, withScale: false })
+  const { bgRef, textRef } = useParallaxLayers({ textRange: 180, withScale: false })
   const [ready, setReady] = useState(false)
 
-  // Decode both images in parallel before showing either. This prevents the
-  // foreground layer flashing in before the background has painted.
+  // Decode the background before revealing the hero so it never flashes in.
   useEffect(() => {
     const bg = new Image()
-    const fg = new Image()
     bg.src = '/img/explore-hero-bg.webp'
-    fg.src = '/img/explore-hero-fg.webp'
-    Promise.all([bg.decode().catch(() => {}), fg.decode().catch(() => {})]).then(() => setReady(true))
+    bg.decode().catch(() => {}).then(() => setReady(true))
   }, [])
 
   return (
@@ -90,16 +87,6 @@ function ExploreHero({ rm }: { rm: boolean }) {
           <img
             src="/img/explore-hero-bg.webp"
             alt="Conservation landscape"
-            className="w-full h-full object-cover object-center sm:h-auto sm:object-fill block"
-            loading="eager"
-            fetchPriority="high"
-          />
-        </div>
-
-        <div ref={rm ? undefined : fgRef} className="absolute inset-0 z-[3] will-change-transform">
-          <img
-            src="/img/explore-hero-fg.webp"
-            alt=""
             className="w-full h-full object-cover object-center sm:h-auto sm:object-fill block"
             loading="eager"
             fetchPriority="high"
