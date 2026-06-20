@@ -34,7 +34,20 @@ interface EventRow {
   date_start: string
   address: string | null
   timezone: string | null
-  collectives: { timezone: string | null } | null
+  collectives: { timezone: string | null; slug: string | null } | null
+}
+
+/**
+ * Test / non-production events must never fire live reminder mail to real
+ * members. The canonical test marker is the collective slug 'test' (the
+ * inactive "Test" collective used for QA). The SQL selection already filters
+ * status='published' (excluding draft/cancelled/completed) and the
+ * collectives !inner join filters slug != 'test'; this guard is a null-safe
+ * second line of defence so a test-collective event can never slip through
+ * even if the embedded filter is later weakened.
+ */
+function isTestEvent(event: EventRow): boolean {
+  return event.collectives?.slug === 'test'
 }
 
 /**
@@ -108,14 +121,16 @@ Deno.serve(async (req: Request) => {
 
     const { data: events24h } = await supabase
       .from('events')
-      .select('id, title, date_start, address, timezone, collectives(timezone)')
+      .select('id, title, date_start, address, timezone, collectives!inner(timezone, slug)')
       .eq('status', 'published')
+      .neq('collectives.slug', 'test')
       .gte('date_start', h24WindowStart.toISOString())
       .lte('date_start', h24WindowEnd.toISOString())
 
     if (events24h?.length) {
       results.candidates_24h = events24h.length
       for (const event of (events24h as unknown) as EventRow[]) {
+        if (isTestEvent(event)) continue
         const wallClockNow = wallClockNowInTz(audienceTzFor(event))
         const diffHours = hoursBetween(wallClockNow, new Date(event.date_start))
         if (diffHours < 23.5 || diffHours > 24.5) continue
@@ -135,14 +150,16 @@ Deno.serve(async (req: Request) => {
 
     const { data: events2h } = await supabase
       .from('events')
-      .select('id, title, date_start, address, timezone, collectives(timezone)')
+      .select('id, title, date_start, address, timezone, collectives!inner(timezone, slug)')
       .eq('status', 'published')
+      .neq('collectives.slug', 'test')
       .gte('date_start', h2WindowStart.toISOString())
       .lte('date_start', h2WindowEnd.toISOString())
 
     if (events2h?.length) {
       results.candidates_2h = events2h.length
       for (const event of (events2h as unknown) as EventRow[]) {
+        if (isTestEvent(event)) continue
         const wallClockNow = wallClockNowInTz(audienceTzFor(event))
         const diffHours = hoursBetween(wallClockNow, new Date(event.date_start))
         if (diffHours < 1.5 || diffHours > 2.5) continue
