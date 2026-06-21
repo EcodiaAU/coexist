@@ -101,9 +101,9 @@ chains, so coverage payoff per flow is high.
 | /admin/surveys/create | COVERED | 55-admin-surveys-create-render (deep-link, anchor: "Create Survey" h1 + "Details" + "Survey Purpose" section headers - the form's "Survey Title" label renders with a trailing asterisk so full-string-regex matchers anchor on the section headers instead). |
 | /admin/surveys/:id/edit | COVERED | 56-admin-surveys-edit-render (seeds an existing surveys row via .maestro/scripts/seed-survey-id.js + authed REST; deep-link coexist://admin/surveys/<id>/edit; anchor: "Edit Survey" h1 + "Details" + "Save Changes" footer button). |
 | /admin/moderation | COVERED | 24-admin-moderation |
-| /admin/metrics | COVERED | 25-admin-metrics-reports (Attendance & Retention labels; DB-invariance pass queued) |
-| /admin/reports | COVERED | 25-admin-metrics-reports |
-| /admin/insights | STRICT-CANARY | 32-admin-insights-f3-canary asserts the F3 bug state: coexist://admin/insights bypasses the authed session and lands on the marketing Welcome shell (EXPLORE. CONNECT. PROTECT. + Get Started + I have an account). NOT a capability gate; the Permission required EmptyState would read differently. Hypothesis: AdminInsightsPage's three lazy imports + Suspense unwrap leak to the marketing route. Canary RED-inverts when the deep-link routes to tabs or Permission required. |
+| /admin/metrics | COVERED | 25-admin-metrics-reports - /admin/metrics now REDIRECTS to /admin/insights#attendance (App.tsx:466, the Impact+Attendance+Reports merge). Flow asserts the redirect lands on the authed Insights surface (hero "Insights" + OVERVIEW + ATTENDANCES). Old "Attendance & Retention" standalone labels are gone. (corrected 2026-06-22) |
+| /admin/reports | COVERED | 25-admin-metrics-reports - /admin/reports now REDIRECTS to /admin/insights#reports (App.tsx:467). Flow asserts the redirect lands on Insights (OVERVIEW + Select all). (corrected 2026-06-22) |
+| /admin/insights | HAPPY-CANARY | 32-admin-insights-f3-canary - F3 FIXED, canary INVERTED to the happy path (2026-06-22). coexist://admin/insights now routes to the authed Insights surface (OVERVIEW + Select all + ATTENDANCES); the flow assertNotVisible the marketing Welcome shell (EXPLORE. CONNECT. PROTECT. / Get Started / I have an account). Goes RED again if the lazy-load/Suspense-boundary regression returns and the deep-link falls back to the unauthed marketing route. |
 | /admin/impact | COVERED | via /admin/insights redirect tab (App.tsx:461 redirects /admin/impact -> /admin/insights#impact); the impact tab is the default tab (32 canary) |
 | /admin/national-impact | COVERED | 33-admin-sweep-render (either-branch matcher; Permission required accepted) |
 | /admin/exports | COVERED | 33-admin-sweep-render (redirects to /admin/insights#reports per App.tsx:464; either-branch matcher) |
@@ -207,6 +207,36 @@ chains, so coverage payoff per flow is high.
   insights surface errors at first paint (white-screen masked by the
   redirect), or the page imports throw and the ErrorBoundary's fallback
   is the Welcome shell. Needs a code-side investigation.
+  - **RESOLVED 2026-06-22.** F3 is FIXED: coexist://admin/insights now
+    routes to the authed Insights surface (OVERVIEW + Select all +
+    469 EVENTS / 7,752 ATTENDANCES), verified on-device coexist_aosp.
+    32-admin-insights-f3-canary was INVERTED to the happy path (asserts
+    the authed Insights surface, assertNotVisible the marketing shell).
+
+## Nightly suite repair (2026-06-22)
+
+Harness/assert drift fixes off the 20260621 nightly (0 app regressions;
+these were stale asserts + a missing re-login path, not app bugs):
+- **F3 canary inverted** (item 1) - see RESOLVED note above.
+- **Shared re-login subflow** `.maestro/subflows/relogin.yaml` (items 2+3).
+  90-cold-start-render clears the session (clearState:true x5) right before
+  91-94 (lexical order), and 99-auth-signed-out-sweep clears it before
+  99-walkin-count-verify. Those flows previously "recovered" with a bare
+  stopApp+launchApp and NO re-login, so the non-optional `YOUR NEXT EVENT`
+  wait could never pass once signed out. They now re-login via the shared
+  subflow. The subflow uses field-anchored taps (tapOn Email/Password by
+  placeholder, never a 50%,55% point-tap which typed both creds into the
+  email field on the Capacitor webview - the 99 finding), taps Log In after
+  the keyboard settles (no scroll - the form fits above the keyboard and
+  scrolling moved the button), and retries the submit (the cold-clear
+  emulator intermittently bounces back to /login). It is a no-op when
+  already authed (/login redirects to home).
+- **Admin assert-drift** (item 4): 21-admin-collectives (no more uppercase
+  COLLECTIVES/MEMBERS/EVENTS stat cards - assert hero "Collectives" + row
+  "N members"/"N events"); 25-admin-metrics-reports (metrics+reports now
+  redirect to Insights); 26-admin-email (campaigns tab renamed "History",
+  default tab "Quick Send"); 11-leader-feedback (deep-link /leader/feedback
+  directly - the leader "Feedback" drawer item sits below the fold).
 
 ## Batch 4 (2026-06-10) - Supabase-seeded event id + render sweep + F1 falsified + 91 RSVP cleanup
 

@@ -1,6 +1,9 @@
-# Admin -> Email Marketing. Hero + SUBSCRIBERS / CAMPAIGNS SENT /
-# BOUNCES / SUPPRESSED metric cards + Campaigns/Templates/System tabs +
-# All Status filter + New Campaign CTA.
+# Admin -> Email Marketing. Hero + SUBSCRIBERS / CAMPAIGNS SENT / BOUNCES /
+# SUPPRESSED metric cards + tab bar (Quick Send / History / Templates / System
+# / Subscribers / Tags / Delivery; default tab Quick Send). The campaigns tab
+# was renamed "History" (the old "Campaigns" / "New Campaign" asserts were
+# stale) - assert the real tab labels (verified on-device coexist_aosp
+# 2026-06-22).
 appId: org.coexistaus.app
 androidWebViewHierarchy: devtools
 ---
@@ -15,9 +18,7 @@ androidWebViewHierarchy: devtools
     when:
       notVisible: "YOUR NEXT EVENT"
     commands:
-      - stopApp
-      - launchApp:
-          clearState: false
+      - runFlow: ../subflows/relogin.yaml
 - extendedWaitUntil:
     visible: "YOUR NEXT EVENT"
     timeout: 30000
@@ -29,7 +30,8 @@ androidWebViewHierarchy: devtools
 - assertVisible: "CAMPAIGNS SENT"
 - assertVisible: "BOUNCES"
 - assertVisible: "SUPPRESSED"
-- assertVisible: "Campaigns"
+# Tab bar (default tab is Quick Send; the campaigns tab is now "History").
+- assertVisible: "Quick Send"
+- assertVisible: "History"
 - assertVisible: "Templates"
-- assertVisible: "New Campaign"
 - takeScreenshot: /tmp/maestro-cx-admin-email

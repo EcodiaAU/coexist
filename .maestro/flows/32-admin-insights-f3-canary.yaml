@@ -1,21 +1,22 @@
-# F3 strict canary: coexist://admin/insights deep-link lands on the
-# signed-OUT WelcomePage marketing shell ("EXPLORE. CONNECT. PROTECT."
-# + Get Started / I have an account) even when the session is alive
-# (YOUR NEXT EVENT was visible immediately before the deep-link).
-# Reproduced 2026-06-10 with this flow on emulator-5554.
+# F3 happy-path canary (INVERTED 2026-06-22 - the bug it guarded is FIXED).
 #
-# This is NOT a capability gate (the EmptyState for missing
-# view_reports reads "Permission required" + "Back to dashboard");
-# the deep-link bypasses the active session for /admin/insights
-# specifically. Hypothesis: AdminInsightsPage's lazy import throws
-# (it loads three sub-pages lazily), the Suspense boundary surfaces
-# the Welcome shell rather than a permission EmptyState, and the
-# router falls back to the unauthed marketing route. Needs a
-# code-side fix on lazy-load + boundary handling.
+# History: coexist://admin/insights used to deep-link onto the signed-OUT
+# WelcomePage marketing shell ("EXPLORE. CONNECT. PROTECT." + Get Started /
+# I have an account) even with a live session - AdminInsightsPage's lazy
+# import threw, the Suspense boundary surfaced the Welcome shell, and the
+# router fell back to the unauthed marketing route. This canary used to
+# assert that buggy outcome and stay RED until F3 was fixed.
 #
-# This canary stays RED until F3 is fixed. The fix lands when the
-# deep-link routes to an authed-admin screen (insights tabs OR
-# Permission required EmptyState, never the marketing Welcome).
+# F3 is now fixed: the deep-link routes to the authed admin Insights screen
+# (hero "Insights", OVERVIEW stat grid 469 EVENTS / 7,752 ATTENDANCES, the
+# All Time / All Collectives / All Types filter bar, "Select all"). Verified
+# on-device coexist_aosp 2026-06-22.
+#
+# So this canary is inverted to the HAPPY path: it asserts the authed
+# Insights surface renders and that the marketing Welcome shell does NOT.
+# Green = deep-link lands on authed Insights, never the unauthed marketing
+# route. It goes RED again the instant the lazy-load/boundary regression
+# returns and the deep-link falls back to the Welcome shell.
 appId: org.coexistaus.app
 androidWebViewHierarchy: devtools
 ---
@@ -30,20 +31,21 @@ androidWebViewHierarchy: devtools
     when:
       notVisible: "YOUR NEXT EVENT"
     commands:
-      - stopApp
-      - launchApp:
-          clearState: false
+      - runFlow: ../subflows/relogin.yaml
 - extendedWaitUntil:
     visible: "YOUR NEXT EVENT"
     timeout: 30000
 - openLink: "coexist://admin/insights"
-# Assert the actual buggy outcome: marketing Welcome shell renders.
-# When this assert FAILS (because we routed to insights tabs or
-# Permission required), F3 has been fixed and this canary should be
-# inverted to the happy-path assertion.
+# HAPPY PATH: the authed Insights surface must render. OVERVIEW + Select all
+# are unique to the authed admin Insights page.
 - extendedWaitUntil:
-    visible: "EXPLORE. CONNECT. PROTECT."
-    timeout: 15000
-- assertVisible: "Get Started"
-- assertVisible: "I have an account"
-- takeScreenshot: /tmp/maestro-cx-f3-canary-welcome-shell
+    visible: "OVERVIEW"
+    timeout: 20000
+- assertVisible: "Select all"
+- assertVisible: "ATTENDANCES"
+# The marketing Welcome shell must NOT be the landing. These strings are
+# unique to the signed-out WelcomePage that the F3 bug used to surface.
+- assertNotVisible: "EXPLORE. CONNECT. PROTECT."
+- assertNotVisible: "Get Started"
+- assertNotVisible: "I have an account"
+- takeScreenshot: /tmp/maestro-cx-f3-canary-authed-insights

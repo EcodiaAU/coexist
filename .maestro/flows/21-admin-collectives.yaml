@@ -1,7 +1,8 @@
-# Admin -> Collectives. Hero + Create CTA + COLLECTIVES/MEMBERS/EVENTS
-# count cards + search + Active/Archived/All tabs. Note: "Collectives" hero
-# text and the bottom tab share the literal; the hero (h1) is asserted via
-# the surrounding context cards.
+# Admin -> Collectives. Hero "Collectives" + Create CTA + search + Active/
+# Archived/All tabs + a list of collective rows, each rendering "N members"
+# and "N events" inline (lowercase). The old uppercase COLLECTIVES/MEMBERS/
+# EVENTS stat cards were removed in the collectives redesign - assert what
+# actually renders now (verified on-device coexist_aosp 2026-06-22).
 appId: org.coexistaus.app
 androidWebViewHierarchy: devtools
 ---
@@ -16,19 +17,19 @@ androidWebViewHierarchy: devtools
     when:
       notVisible: "YOUR NEXT EVENT"
     commands:
-      - stopApp
-      - launchApp:
-          clearState: false
+      - runFlow: ../subflows/relogin.yaml
 - extendedWaitUntil:
     visible: "YOUR NEXT EVENT"
     timeout: 30000
 - openLink: "coexist://admin/collectives"
+# Hero "Collectives" (also the bottom-tab label) is the landing anchor.
 - extendedWaitUntil:
-    visible: "COLLECTIVES"
+    visible: "Collectives"
     timeout: 15000
-- assertVisible: "MEMBERS"
-- assertVisible: "EVENTS"
 - assertVisible: ".*Search collectives.*"
 - assertVisible: "Active"
 - assertVisible: "Archived"
+# Collective rows render "N members" / "N events" inline (lowercase).
+- assertVisible: ".*members.*"
+- assertVisible: ".*events.*"
 - takeScreenshot: /tmp/maestro-cx-admin-collectives

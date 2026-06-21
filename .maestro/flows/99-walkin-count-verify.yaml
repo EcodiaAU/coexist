@@ -1,0 +1,55 @@
+# Verify the 2026-06-13 walk-in count fix renders correctly on native.
+# Signs in as the admin test account, deep-links straight to the Port Beach
+# Tree Planting w/ Perth NRM event day page, asserts the Checked In stat
+# card reads 53 (30 registered-attended + 23 walk-ins) against 61 Registered.
+#
+# Repaired 2026-06-22: the deep-link used the https app-link, which opens the
+# EXTERNAL browser on coexist_aosp (Android App Link verification is not
+# reliable on the emulator, so https://app.coexistaus.org/... falls back to the
+# WebView browser, which has no session and redirects to /login). Switched to
+# the coexist:// custom scheme, which always opens the app (as every other flow
+# does). The day page was also redesigned to "N Registered / N Checked In / N
+# Waitlisted" stat cards - the old "30/61" progress bar is gone, so assert the
+# real cards. The discriminating probe (Checked In = 53, not the pre-fix 30) is
+# preserved.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 30000
+    optional: true
+# 99-auth-signed-out-sweep runs immediately before this flow (lexical order)
+# and clears the session, so re-login when the home is not visible. The shared
+# subflow uses FIELD-ANCHORED taps: the prior inline login point-tapped
+# 50%,55% for the password and missed the Capacitor webview input, typing the
+# password into the email field behind a Gboard clipboard panel (2026-06-21
+# finding). Field-anchored tapOn "Email."/"Password." fixes every login site.
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      - runFlow: ../subflows/relogin.yaml
+- extendedWaitUntil:
+    visible: "YOUR NEXT EVENT"
+    timeout: 20000
+# Deep-link straight to the Port Beach Tree Planting event day page via the
+# custom scheme (the https app-link opens the external browser on the emulator).
+- openLink: "coexist://events/8d7e2802-536f-4a0e-82ad-335015c992cf/day"
+- extendedWaitUntil:
+    visible: ".*Port Beach Tree.*"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "Checked In"
+    timeout: 10000
+# The discriminating probe: the Checked In stat card must read 53, not the
+# pre-fix 30 (registered-attended only); post-fix is 53 (+ 23 walk-ins). The
+# day page now renders separate Registered / Checked In / Waitlisted cards.
+- assertVisible: "53"
+- assertVisible: "Checked In"
+- assertVisible: "Registered"
+- assertVisible: "61"
+- takeScreenshot: /tmp/maestro-cx-eventday-walkin-verify
