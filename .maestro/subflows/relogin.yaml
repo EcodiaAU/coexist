@@ -1,0 +1,91 @@
+# Shared re-login subflow. Self-healing sign-in used by the cleanup flows
+# (91-94) after 90-cold-start-render logs the app OUT (clearState:true x5),
+# and by 99-walkin-count-verify which runs after 99-auth-signed-out-sweep
+# leaves the session signed out.
+#
+# Why a shared subflow (2026-06-22): the cleanup flows previously "recovered"
+# from a logged-out state with stopApp + launchApp(clearState:false) and NO
+# re-login, so their non-optional `extendedWaitUntil "YOUR NEXT EVENT"` could
+# never pass once 90 had cleared the session. And 99's inline login point-tapped
+# 50%,55% for the password field, which on Capacitor webview missed the input
+# and typed the password into the email field (screenshot: "code@ecodia.au<pw>")
+# behind a Gboard clipboard panel. This factors a robust login here: FIELD-
+# ANCHORED taps (tapOn the Email/Password inputs by placeholder text, never a
+# percentage point) so every login site is robust.
+#
+# Two on-device findings folded in (2026-06-22, coexist_aosp):
+#  1. The caller gates on `notVisible "YOUR NEXT EVENT"`, which can fire even
+#     when authed (home slow to paint, or the relaunch restored a non-home
+#     route). openLink /login then REDIRECTS an authed session to home, so the
+#     login form never shows and a hard login-form assert fails. Fix: the wait
+#     also accepts "YOUR NEXT EVENT", and the login steps run only `when:
+#     notVisible "YOUR NEXT EVENT"` - already-authed is a no-op.
+#  2. The whole login form fits ABOVE the soft keyboard on coexist_aosp (OR /
+#     Email / Password / Magic link / Forgot / Log In / Create account are all
+#     visible with the keyboard up), so NO scroll is needed to reach Log In.
+#     The earlier `scrollUntilVisible "Log In"` actually MOVED the already-
+#     visible button and the immediate tap landed stale, so the form never
+#     submitted ("Welcome back" stayed up with both fields correctly filled).
+#     pressKey Enter is no help either: the password field's IME action is
+#     "next" (the > key), not submit. Fix: after inputText, let the keyboard
+#     settle (waitForAnimationToEnd) and tapOn "Log In" directly. Verified
+#     on-device 2026-06-22: a settled tap submits and reaches the authed home.
+#     hideKeyboard is NOT used: on Android Capacitor it issues a BACK press and
+#     would exit the router-root login screen to the launcher.
+#
+# Creds come from MAESTRO_CX_EMAIL / MAESTRO_CX_PASSWORD injected by
+# run-app-tests.sh; env is inherited by subflows.
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- openLink: "coexist://login"
+- extendedWaitUntil:
+    visible: ".*(Welcome back|Sign in to continue|Log In|Email|YOUR NEXT EVENT).*"
+    timeout: 20000
+# Already authed? /login redirected to home (YOUR NEXT EVENT visible) - no-op.
+# Otherwise sign in.
+- runFlow:
+    when:
+      notVisible: "YOUR NEXT EVENT"
+    commands:
+      # Field-anchored taps: tapOn by placeholder text focuses the actual
+      # <input>; a 50%,55% point-tap lands between fields on a Capacitor webview
+      # and misses (per maestro-tapon-by-text-misses-capacitor-webview-input).
+      - tapOn: "Email.*"
+      - inputText: ${MAESTRO_CX_EMAIL}
+      - tapOn: "Password.*"
+      - inputText: ${MAESTRO_CX_PASSWORD}
+      # Let the keyboard settle, then tap Log In directly (it sits above the
+      # keyboard; no scroll - scrolling moved the button and the tap missed).
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - tapOn: "Log In"
+      - extendedWaitUntil:
+          visible: "YOUR NEXT EVENT"
+          timeout: 25000
+          optional: true
+      # The submit intermittently bounces back to the login form on the
+      # cold-clear swiftshader emulator (the auth round-trip returns to /login
+      # with the creds still filled). Retry the tap up to twice more - when
+      # authed, "Log In" is gone so the retry is skipped.
+      - runFlow:
+          when:
+            visible: "Log In"
+          commands:
+            - tapOn: "Log In"
+            - extendedWaitUntil:
+                visible: "YOUR NEXT EVENT"
+                timeout: 25000
+                optional: true
+      - runFlow:
+          when:
+            visible: "Log In"
+          commands:
+            - tapOn: "Log In"
+            - extendedWaitUntil:
+                visible: "YOUR NEXT EVENT"
+                timeout: 30000
+                optional: true
+      - extendedWaitUntil:
+          visible: "YOUR NEXT EVENT"
+          timeout: 30000

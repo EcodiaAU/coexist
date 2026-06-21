@@ -27,13 +27,14 @@ androidWebViewHierarchy: devtools
     visible: "YOUR NEXT EVENT"
     timeout: 30000
     optional: true
+# 90-cold-start-render runs immediately before this flow (lexical order) with
+# clearState:true x5, which logs the app OUT. A bare stopApp+launchApp cannot
+# recover that, so re-login via the shared subflow when the home is not visible.
 - runFlow:
     when:
       notVisible: "YOUR NEXT EVENT"
     commands:
-      - stopApp
-      - launchApp:
-          clearState: false
+      - runFlow: ../subflows/relogin.yaml
 - extendedWaitUntil:
     visible: "YOUR NEXT EVENT"
     timeout: 30000
