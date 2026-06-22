@@ -82,60 +82,65 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Display headings - Avenir, heavy weight, very tight tracking to match the
-   Co-Exist posts (Tate: Avenir, letter-spacing ~ -120 in Canva). */
+/* Display headings - Avenir, thin-geometric, cinematic very-tight tracking. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 300; /* thin geometric editorial */
-  letter-spacing: -0.055em;
-  line-height: 1.04;
+  font-weight: 400;
+  letter-spacing: -0.07em;
+  line-height: 1.02;
   text-wrap: balance;
 }
 
 /* Utility class (legacy name) - now resolves to the Avenir heading stack */
-.font-serif { font-family: var(--font-heading); letter-spacing: -0.04em; }
+.font-serif { font-family: var(--font-heading); letter-spacing: -0.05em; }
 .eyebrow {
   font-family: var(--font-body);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.28em; /* cinematic credit-roll spacing */
 }
 
 /* Co-Exist signature: sage highlight box behind a keyword in a heading. */
 .mark {
   background: var(--color-sage);
   color: var(--color-olive-900);
-  padding: 0.08em 0.26em;
-  border-radius: 0.16em;
+  padding: 0.04em 0.26em;
+  border-radius: 0.14em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 
-/* Animated highlight: a vertical ROLL (odometer/turn). The track translates
-   up one slot per word; the box width animates to the active word. */
+/* Animated highlight: a vertical ROLL (odometer/turn). Padding lives on the
+   words so the JS-measured width always includes it (no horizontal clip); the
+   1.5em slot height fits ascenders + descenders (no vertical clip). */
 .wordroll {
-  display: inline-flex;
+  display: inline-block;
   overflow: hidden;
-  height: 1.12em;
-  vertical-align: -0.2em;
-  transition: width 0.55s cubic-bezier(0.76, 0, 0.24, 1);
+  height: 1.5em;
+  vertical-align: -0.4em;
+  border-radius: 0.14em;
+  background: var(--color-sage);
+  color: var(--color-olive-900);
+  transition: width 0.5s cubic-bezier(0.76, 0, 0.24, 1);
 }
 .wordroll-track {
   display: flex;
   flex-direction: column;
-  transition: transform 0.55s cubic-bezier(0.76, 0, 0.24, 1);
+  transition: transform 0.5s cubic-bezier(0.76, 0, 0.24, 1);
 }
 .wordroll-word {
-  display: block;
-  height: 1.12em;
-  line-height: 1.12em;
+  display: flex;
+  align-items: center;
+  height: 1.5em;
+  padding: 0 0.3em;
   white-space: nowrap;
+  width: max-content; /* size to own content so width measure is natural, not clamped to the box */
 }
 
-/* Headings that contain a highlight need looser leading so the box clears the
-   line above. Apply .has-mark to such headings. */
-.has-mark { line-height: 1.45; }
+/* Headings with a roll need looser leading so the 1.5em box clears the line
+   above and sits well. */
+.has-mark { line-height: 1.6; }
 
 /* Oversized faint watermark (wordmark / icon) behind feature sections */
 .watermark {
