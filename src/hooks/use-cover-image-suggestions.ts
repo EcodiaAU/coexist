@@ -39,6 +39,15 @@ interface PhotoRow {
 
 const BUCKET = 'event-photos'
 
+/**
+ * Never suggest seed / stock / placeholder imagery. Real uploads are named with
+ * a millisecond timestamp prefix; mock and stock fixtures carry obvious markers
+ * (e.g. "mock-nature1.jpg"). The live seed rows were archived in prod on
+ * 2026-06-22, but this guards the surface so any re-seeded fixture can never
+ * reappear as a cover suggestion. Tate 2026-06-22: "get rid of anything stock".
+ */
+const STOCK_MARKER = /mock|stock|sample|placeholder|seed|dummy|unsplash|pexels|getty|shutterstock/i
+
 function publicUrl(path: string): string {
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
 }
@@ -121,6 +130,7 @@ export function useCoverImageSuggestions({ collectiveIds, activityType }: Params
       for (const { row } of scored) {
         const path = row.storage_path
         if (!path || seenPaths.has(path)) continue
+        if (STOCK_MARKER.test(path)) continue
 
         const eventId = row.event_id ?? '∅'
         const used = perEvent.get(eventId) ?? 0
