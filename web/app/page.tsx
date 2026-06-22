@@ -51,7 +51,7 @@ export default async function HomePage() {
 
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 pt-28 pb-10">
           <p className="eyebrow text-oncream/70">Co-Exist Australia</p>
-          <h1 className="mt-6 max-w-4xl text-[3.6rem] leading-[0.95] text-oncream sm:text-[7.5rem]">{heroTitle}</h1>
+          <h1 className="display-tight mt-6 max-w-4xl text-[3.6rem] leading-[0.92] text-oncream sm:text-[7.5rem]">{heroTitle}</h1>
           <p className="mt-7 max-w-md text-base text-oncream/85">{heroSubtitle}</p>
           <div className="mt-9 flex flex-wrap gap-3">
             <Link href="/collectives" className="rounded-full bg-oncream px-7 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-olive-900 transition-all duration-300 hover:px-9">
@@ -63,7 +63,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-6xl border-t border-oncream/15 px-6 py-8">
+        <div className="mx-auto w-full max-w-6xl border-t border-oncream/15 px-6 pt-8 pb-20">
           <div className="grid grid-cols-2 gap-y-7 sm:grid-cols-4">
             {tiles.map((t) => (
               <div key={t.label}>
@@ -81,17 +81,19 @@ export default async function HomePage() {
       {/* About - full-bleed image half */}
       <section className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal className="relative order-1 min-h-[56vh] overflow-hidden md:order-2">
-          <Image src="/images/nature.webp" alt="A Co-Exist conservation activity" fill className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          <Image src="/images/kurt.webp" alt="Kurt Jones, founder of Co-Exist Australia" fill className="object-cover object-top transition-transform duration-[1.2s] hover:scale-105" />
         </Reveal>
         <div className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
           <Reveal className="max-w-md">
             <p className="eyebrow text-primary-600">The movement</p>
             <h2 className="has-mark mt-5 text-4xl text-neutral-900 sm:text-5xl">
-              Young people driving <WordSwap words={['change', 'what matters', 'the future', 'real outcomes']} />
+              Young Australians taking the lead on{' '}
+              <WordSwap words={['conservation', 'climate action', 'their communities']} />
             </h2>
             <p className="mt-6 text-[15px] leading-relaxed text-neutral-500">
-              Co-Exist builds collectives that enable young Australians to lead conservation projects
-              in their own communities. Find your people, get outside, do something real.
+              Founder Kurt Jones started Co-Exist in 2022 after the outdoors gave him direction as a
+              kid. The idea was simple: give young people a real job to do in nature, and a community
+              to do it with.
             </p>
             <Link href="/about" className="mt-7 inline-block text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 transition-colors hover:text-primary-900">
               Read our story →
@@ -109,7 +111,8 @@ export default async function HomePage() {
           <Reveal className="max-w-md">
             <p className="eyebrow text-primary-600">What is a collective?</p>
             <h2 className="has-mark mt-5 text-4xl text-neutral-900 sm:text-5xl">
-              Youth-led groups, doing <WordSwap words={['good', 'the work', 'real change', 'something that lasts']} />
+              Youth-led groups running{' '}
+              <WordSwap words={['beach cleanups', 'tree plantings', 'nature walks']} />
             </h2>
             <p className="mt-6 text-[15px] leading-relaxed text-neutral-500">
               Urban landcare, beach cleanups, nature walks, conservation retreats. The idea is simple:
@@ -158,7 +161,7 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-4xl px-6 py-28 text-center">
           <Reveal>
             <h2 className="has-mark text-4xl text-oncream sm:text-6xl">
-              Help build communities that <WordSwap words={['protect nature', 'restore landscapes', 'bring nature back', 'rewild their patch']} />
+              Help build communities that <WordSwap words={['protect nature', 'restore habitat', 'last']} />
             </h2>
             <p className="mx-auto mt-7 max-w-md text-[15px] text-oncream/80">
               Every contribution helps young people get outside and lead real conservation in their community.

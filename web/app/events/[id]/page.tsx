@@ -83,7 +83,7 @@ export default async function EventDetailPage({ params }: Params) {
               <dt className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Hosted by</dt>
               <dd className="mt-1 font-semibold text-neutral-900">
                 <Link href={`/collectives/${event.collective.slug}`} className="hover:text-primary-700">
-                  {event.collective.name}
+                  Co-Exist {event.collective.name}
                 </Link>
               </dd>
             </div>

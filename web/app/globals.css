@@ -86,10 +86,12 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 400;
-  letter-spacing: -0.07em;
-  line-height: 1.02;
+  letter-spacing: -0.075em;
+  line-height: 1.0;
   text-wrap: balance;
 }
+/* Big display titles (hero, page covers) sit even tighter */
+.display-tight { letter-spacing: -0.09em; }
 
 /* Utility class (legacy name) - now resolves to the Avenir heading stack */
 .font-serif { font-family: var(--font-heading); letter-spacing: -0.05em; }
