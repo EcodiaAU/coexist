@@ -452,7 +452,12 @@ export function useSendMessage() {
           pushBody = 'Posted an announcement'
         }
 
-        // Fetch members and send push (background, non-blocking)
+        // Fetch members and send push (background, non-blocking).
+        // CANONICAL SINGLE PATH for chat-message push. Do NOT add a server-side
+        // AFTER INSERT trigger on chat_messages that also calls send-push: that
+        // was tried in 1.8.7 (trg_notify_chat_message_push) and produced double
+        // notifications for every member on every message. Dropped 2026-06-22
+        // (migration 20260622000000). Push origination stays here, client-side.
         supabase
           .from('collective_members')
           .select('user_id')
