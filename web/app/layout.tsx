@@ -24,13 +24,32 @@ export const metadata: Metadata = {
     siteName: 'Co-Exist Australia',
     type: 'website',
     locale: 'en_AU',
+    images: ['/images/hero.webp'],
   },
+  alternates: { canonical: '/' },
+}
+
+const ORG_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': 'NGO',
+  name: 'Co-Exist Australia',
+  url: SITE_URL,
+  description:
+    'A nationwide movement of young people gathering to preserve and protect their local environment.',
+  sameAs: [
+    'https://www.instagram.com/coexistaus',
+    'https://www.facebook.com/coexistaus',
+  ],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-AU" className={montserrat.variable}>
       <body className="flex min-h-screen flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}
+        />
         <SiteHeader />
         <div className="flex-1">{children}</div>
         <SiteFooter />
