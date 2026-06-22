@@ -192,13 +192,13 @@ function ShopHero({
         </div>
 
 
-        {/* Hero text - behind the people so they pass in front. Pushed down
-            so "Shop" lands roughly mid-sky rather than crammed at the top. */}
+        {/* Hero text - behind the people so they pass in front. Sits high in
+            the sky above their heads so it stays clear of the foreground. */}
         <div
           ref={rm ? undefined : textRef}
-          className="absolute inset-x-0 top-[28%] sm:top-[20%] z-[2] flex justify-center will-change-transform"
+          className="absolute inset-x-0 top-[8%] sm:top-[7%] z-[2] flex justify-center will-change-transform"
         >
-          <h1 style={{ fontSize: 'clamp(3.5rem, 10vw, 10rem)' }} className="font-heading font-bold text-[#fff] tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]">
+          <h1 style={{ fontSize: 'clamp(2.25rem, 6.5vw, 4.75rem)' }} className="font-heading font-bold text-[#fff] tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]">
             Shop
           </h1>
         </div>
