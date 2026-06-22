@@ -34,27 +34,31 @@
   --color-olive-900: #2d3220;
   --color-olive-950: #191c12;
 
-  /* Warm paper / cream canvas (replaces stark white) */
-  --color-cream: #f4efe3;
-  --color-cream-soft: #efe8d8;
-  --color-paper: #faf7ef;
-  --color-surface-1: #f4efe3;
+  /* Canvas = white (match the live Co-Exist site). "cream/paper" tokens kept
+     as aliases so existing classes resolve; they now read white / near-white. */
+  --color-cream: #ffffff;
+  --color-cream-soft: #f6f7f3;
+  --color-paper: #ffffff;
+  --color-surface-1: #f6f7f3;
 
-  /* Cream text used on olive backgrounds */
-  --color-oncream: #f1ebdb;
+  /* Light text used on olive backgrounds */
+  --color-oncream: #f4f3ec;
 
-  /* Neutrals - warm-leaning greys for body text on cream */
-  --color-neutral-50: #faf7ef;
-  --color-neutral-100: #f0ece2;
-  --color-neutral-200: #e3ddcf;
-  --color-neutral-300: #cabfa9;
-  --color-neutral-400: #9c9482;
-  --color-neutral-500: #6f6a5c;
-  --color-neutral-600: #514d43;
-  --color-neutral-700: #3c392f;
-  --color-neutral-800: #2a2820;
-  --color-neutral-900: #1f1d16;
-  --color-neutral-950: #121009;
+  /* Sage highlight accent (the live-site "Collective?" celery green) */
+  --color-sage: #e5eec1;
+
+  /* Neutrals - crisp, near-neutral greys for dark text on white */
+  --color-neutral-50: #f7f7f6;
+  --color-neutral-100: #f0f1ee;
+  --color-neutral-200: #e4e5e1;
+  --color-neutral-300: #cbccc6;
+  --color-neutral-400: #9a9b94;
+  --color-neutral-500: #6c6d66;
+  --color-neutral-600: #4f5049;
+  --color-neutral-700: #3a3b35;
+  --color-neutral-800: #26261f;
+  --color-neutral-900: #1a1a15;
+  --color-neutral-950: #0e0e0a;
 
   --color-success-500: #3aac5c;
   --color-error-500: #c0492f;
@@ -95,6 +99,16 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.22em;
+}
+
+/* Co-Exist signature: sage highlight box behind a keyword in a heading. */
+.mark {
+  background: var(--color-sage);
+  color: var(--color-olive-900);
+  padding: 0.02em 0.22em;
+  border-radius: 0.14em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* First-party rich HTML (legal pages, future CMS prose) */

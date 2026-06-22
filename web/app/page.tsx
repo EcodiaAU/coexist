@@ -75,18 +75,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Impact band - editorial serif numerals on cream */}
-      <section className="bg-cream">
+      {/* Impact band - one dark olive band (mirrors the live-site stats band) */}
+      <section className="bg-olive-800 text-oncream">
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
-          <p className="eyebrow text-center text-primary-600">Our impact so far</p>
+          <p className="eyebrow text-center text-sage">Our impact so far</p>
           <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
             {tiles.map((t) => (
               <div key={t.label} className="text-center">
-                <div className="font-serif text-5xl font-medium tracking-tight text-olive-700 tabular-nums sm:text-6xl">
+                <div className="font-serif text-5xl font-medium tracking-tight text-oncream tabular-nums sm:text-6xl">
                   {t.value}
                   {t.unit && <span className="ml-1 text-2xl">{t.unit}</span>}
                 </div>
-                <div className="mt-3 text-xs uppercase tracking-[0.15em] text-neutral-500">{t.label}</div>
+                <div className="mt-3 text-xs uppercase tracking-[0.15em] text-oncream/60">{t.label}</div>
               </div>
             ))}
           </div>
@@ -99,7 +99,7 @@ export default async function HomePage() {
           <div>
             <p className="eyebrow text-primary-600">The movement</p>
             <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">
-              A nationwide movement of young people driving change
+              A nationwide movement of young people driving <span className="mark">change</span>
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-neutral-600">
               Co-Exist builds collectives that enable young Australians to lead conservation
@@ -116,23 +116,23 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* What's a collective - deep olive feature section */}
-      <section className="bg-olive-700 text-oncream">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-2">
-          <div className="relative order-2 aspect-[4/3] overflow-hidden rounded-[2rem] md:order-1">
+      {/* What's a collective - white with photo (matches the live-site layout) */}
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 md:grid-cols-2">
+          <div className="relative order-2 aspect-[4/3] overflow-hidden rounded-[2rem] shadow-sm md:order-1">
             <Image src="/images/collective.webp" alt="A local Co-Exist collective" fill className="object-cover" />
           </div>
           <div className="order-1 md:order-2">
-            <p className="eyebrow text-oncream/70">What is a collective?</p>
-            <h2 className="mt-3 text-4xl text-oncream sm:text-5xl">
-              Youth-led groups, doing good in their own backyard
+            <p className="eyebrow text-primary-600">What is a collective?</p>
+            <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">
+              Youth-led groups, doing <span className="mark">good</span> in their own backyard
             </h2>
-            <p className="mt-6 text-lg leading-relaxed text-oncream/85">
+            <p className="mt-6 text-lg leading-relaxed text-neutral-600">
               Collectives host urban landcare, beach cleanups, nature walks and conservation
               retreats. The idea is simple: do good, feel good. Connecting people to themselves,
               to each other, and to nature.
             </p>
-            <Link href="/collectives" className="mt-7 inline-block font-serif text-lg italic text-oncream hover:text-white">
+            <Link href="/collectives" className="mt-7 inline-block font-serif text-lg italic text-primary-700 hover:text-primary-800">
               Find a collective near you →
             </Link>
           </div>
@@ -173,7 +173,7 @@ export default async function HomePage() {
       {/* Donate CTA - deep olive */}
       <section className="bg-olive-800 text-oncream">
         <div className="mx-auto max-w-4xl px-6 py-24 text-center">
-          <h2 className="text-4xl text-oncream sm:text-6xl">Help us build communities that protect nature</h2>
+          <h2 className="text-4xl text-oncream sm:text-6xl">Help us build communities that <span className="mark">protect nature</span></h2>
           <p className="mx-auto mt-5 max-w-xl text-lg text-oncream/85">
             Every contribution helps young people get outside and lead real conservation work in
             their community.
