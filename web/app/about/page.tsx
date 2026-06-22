@@ -2,6 +2,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
+import { getSiteContent, getTeamMembers } from '@/lib/queries'
+
+export const revalidate = 1800
 
 export const metadata: Metadata = {
   title: 'About',
@@ -9,7 +12,22 @@ export const metadata: Metadata = {
     'Co-Exist is a movement built by young people, for young people. Our mission: creating communities that preserve and protect wildlife and wild places.',
 }
 
-export default function AboutPage() {
+const GROUP_LABEL: Record<string, string> = { board: 'Board', core: 'Core team', leader: 'Collective leaders' }
+const GROUP_ORDER = ['board', 'core', 'leader']
+
+export default async function AboutPage() {
+  const [content, team] = await Promise.all([getSiteContent(), getTeamMembers()])
+  const mission = content.mission || 'Creating communities that preserve and protect wildlife and wild places.'
+  const vision = content.vision || 'Young people connected to nature and leading its protection and restoration.'
+  const founderQuote =
+    content.founder_quote ||
+    'Imagine if we had a collective in every major town. Think of the amount of waste we could be cleaning. Large scale social and environmental impact. It is possible.'
+  const founderName = content.founder_name || 'Kurt Jones, Founder & CEO'
+
+  const groupedTeam = GROUP_ORDER.map((g) => [g, team.filter((m) => m.team_group === g)] as const).filter(
+    ([, list]) => list.length > 0,
+  )
+
   return (
     <main>
       <PageHeader
@@ -47,15 +65,11 @@ export default function AboutPage() {
         <div className="mx-auto grid max-w-6xl gap-5 px-5 py-16 md:grid-cols-2">
           <div className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-sm">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-600">Our mission</p>
-            <p className="mt-3 text-xl font-semibold leading-relaxed text-neutral-900">
-              Creating communities that preserve and protect wildlife and wild places.
-            </p>
+            <p className="mt-3 text-xl font-semibold leading-relaxed text-neutral-900">{mission}</p>
           </div>
           <div className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-sm">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-600">Our vision</p>
-            <p className="mt-3 text-xl font-semibold leading-relaxed text-neutral-900">
-              Young people connected to nature and leading its protection and restoration.
-            </p>
+            <p className="mt-3 text-xl font-semibold leading-relaxed text-neutral-900">{vision}</p>
           </div>
         </div>
       </section>
@@ -64,14 +78,45 @@ export default function AboutPage() {
       <section className="bg-primary-700">
         <div className="mx-auto max-w-4xl px-5 py-16 text-center">
           <blockquote className="text-2xl font-semibold leading-relaxed text-white sm:text-3xl">
-            “Imagine if we had a collective in every major town. Think of the amount of waste
-            we could be cleaning. Large scale social and environmental impact. It is possible.”
+            “{founderQuote}”
           </blockquote>
-          <p className="mt-6 text-sm font-bold uppercase tracking-wider text-white/70">
-            Kurt Jones, Founder &amp; CEO
-          </p>
+          <p className="mt-6 text-sm font-bold uppercase tracking-wider text-white/70">{founderName}</p>
         </div>
       </section>
+
+      {/* Team (CMS-managed) */}
+      {groupedTeam.length > 0 && (
+        <section className="bg-white">
+          <div className="mx-auto max-w-6xl px-5 py-16">
+            <h2 className="text-2xl font-extrabold text-neutral-900 sm:text-3xl">Meet the team</h2>
+            {groupedTeam.map(([group, members]) => (
+              <div key={group} className="mt-8">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
+                  {GROUP_LABEL[group] ?? group}
+                </p>
+                <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                  {members.map((m) => (
+                    <div key={m.id} className="rounded-2xl border border-neutral-100 bg-white p-5 text-center shadow-sm">
+                      <div className="mx-auto h-20 w-20 overflow-hidden rounded-full bg-primary-50">
+                        {m.photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={m.photo_url} alt={m.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-lg font-bold text-primary-400">
+                            {m.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="mt-3 font-bold text-neutral-900">{m.name}</h3>
+                      {m.role_title && <p className="mt-0.5 text-sm text-neutral-500">{m.role_title}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="bg-white">

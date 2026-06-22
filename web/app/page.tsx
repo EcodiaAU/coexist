@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { getPublicImpactStats, type PublicImpactStats } from '@/lib/public-stats'
+import { getSiteContent, getPartners } from '@/lib/queries'
 
 // Revalidate the homepage (and its live impact figures) on a schedule rather
 // than per request - the numbers move slowly and this keeps DB load bounded.
@@ -26,7 +27,14 @@ async function loadStats(): Promise<PublicImpactStats> {
 const fmt = (n: number) => new Intl.NumberFormat('en-AU').format(n)
 
 export default async function HomePage() {
-  const stats = await loadStats()
+  const [stats, content, partners] = await Promise.all([loadStats(), getSiteContent(), getPartners()])
+  const heroTitle = content.home_hero_title || 'Explore. Connect. Protect.'
+  const heroSubtitle =
+    content.home_hero_subtitle || 'Young people gathering to preserve and protect their local environment.'
+  const founderQuote =
+    content.founder_quote ||
+    'Imagine if we had a collective in every major town. Think of the amount of waste we could be cleaning. Large scale social and environmental impact. It is possible.'
+  const founderName = content.founder_name || 'Kurt Jones, Founder & CEO'
 
   const tiles = [
     { value: fmt(stats.rubbishKg) + ' kgs', label: 'Litter removed' },
@@ -52,11 +60,9 @@ export default async function HomePage() {
             Co-Exist Australia
           </p>
           <h1 className="mt-3 max-w-3xl text-4xl font-extrabold leading-tight text-white sm:text-6xl">
-            Explore. Connect. Protect.
+            {heroTitle}
           </h1>
-          <p className="mt-5 max-w-xl text-lg text-white/90">
-            Young people gathering to preserve and protect their local environment.
-          </p>
+          <p className="mt-5 max-w-xl text-lg text-white/90">{heroSubtitle}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/collectives"
@@ -156,15 +162,34 @@ export default async function HomePage() {
       <section className="bg-primary-700">
         <div className="mx-auto max-w-4xl px-5 py-20 text-center">
           <blockquote className="text-2xl font-semibold leading-relaxed text-white sm:text-3xl">
-            “Imagine if we had a collective in every major town. Think of the amount
-            of waste we could be cleaning. Large scale social and environmental
-            impact. It is possible.”
+            “{founderQuote}”
           </blockquote>
-          <p className="mt-6 text-sm font-bold uppercase tracking-wider text-white/70">
-            Kurt Jones, Founder &amp; CEO
-          </p>
+          <p className="mt-6 text-sm font-bold uppercase tracking-wider text-white/70">{founderName}</p>
         </div>
       </section>
+
+      {/* Partners */}
+      {partners.length > 0 && (
+        <section className="border-y border-neutral-100 bg-white">
+          <div className="mx-auto max-w-6xl px-5 py-12">
+            <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
+              With the support of
+            </h2>
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+              {partners.map((p) =>
+                p.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={p.id} src={p.logo_url} alt={p.name} className="h-10 w-auto object-contain opacity-80" />
+                ) : (
+                  <span key={p.id} className="text-sm font-semibold text-neutral-500">
+                    {p.name}
+                  </span>
+                ),
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Donate CTA */}
       <section className="bg-white">

@@ -166,6 +166,78 @@ export async function getLegalPage(slug: string): Promise<LegalPageVM | null> {
   return (data as LegalPageVM) ?? null
 }
 
+/* ------------------------------------------------------------------ */
+/*  CMS: site_content (singletons) + team_members + partners           */
+/*  New P6 tables, not yet in generated database.types - cast the       */
+/*  client for these reads (type regen is a follow-up cleanup).         */
+/* ------------------------------------------------------------------ */
+
+export interface TeamMemberVM {
+  id: string
+  name: string
+  role_title: string | null
+  bio: string | null
+  photo_url: string | null
+  team_group: string
+}
+
+export interface PartnerVM {
+  id: string
+  name: string
+  logo_url: string | null
+  url: string | null
+}
+
+/** Returns a flat key->text map of editable copy, with safe fallback to {}. */
+export async function getSiteContent(): Promise<Record<string, string>> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = getPublicSupabase() as any
+    const { data, error } = await supabase.from('site_content').select('key, value')
+    if (error) return {}
+    const out: Record<string, string> = {}
+    for (const row of data ?? []) {
+      const v = row.value
+      out[row.key] = typeof v === 'string' ? v : (v?.text ?? '')
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
+export async function getTeamMembers(): Promise<TeamMemberVM[]> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = getPublicSupabase() as any
+    const { data, error } = await supabase
+      .from('team_members')
+      .select('id, name, role_title, bio, photo_url, team_group, sort_order, is_published')
+      .eq('is_published', true)
+      .order('sort_order', { ascending: true })
+    if (error) return []
+    return (data ?? []) as TeamMemberVM[]
+  } catch {
+    return []
+  }
+}
+
+export async function getPartners(): Promise<PartnerVM[]> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = getPublicSupabase() as any
+    const { data, error } = await supabase
+      .from('partners')
+      .select('id, name, logo_url, url, sort_order, is_published')
+      .eq('is_published', true)
+      .order('sort_order', { ascending: true })
+    if (error) return []
+    return (data ?? []) as PartnerVM[]
+  } catch {
+    return []
+  }
+}
+
 export async function getLegalSlugs(): Promise<string[]> {
   const supabase = getPublicSupabase()
   const { data, error } = await supabase
