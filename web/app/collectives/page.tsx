@@ -59,7 +59,7 @@ export default async function CollectivesPage() {
                     <Link
                       key={c.id}
                       href={`/collectives/${c.slug}`}
-                      className="group overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-sm transition-shadow hover:shadow-md"
+                      className="group overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
                     >
                       <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100">
                         {c.cover_image_url ? (

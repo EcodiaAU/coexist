@@ -48,7 +48,7 @@ export default async function EventsPage() {
               <Link
                 key={e.id}
                 href={`/events/${e.id}`}
-                className="group overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-sm transition-shadow hover:shadow-md"
+                className="group overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100">
                   {e.cover_image_url ? (
