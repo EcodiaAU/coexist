@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/*
+ * Co-Exist marketing site theme. Tokens ported from the app's design system
+ * (src/styles/globals.css @theme + DESIGN-SYSTEM.md) so the site and app are
+ * visually one product: brand olive #869e62, white canvas, Montserrat,
+ * photography-forward, no decorative noise.
+ */
+@theme {
+  /* Brand - Co-Exist olive green */
+  --color-brand: #869e62;
+
+  /* Primary - Olive Green scale */
+  --color-primary-50: #f5f7f0;
+  --color-primary-100: #e8eddf;
+  --color-primary-200: #d1dbbf;
+  --color-primary-300: #b3c496;
+  --color-primary-400: #869e62;
+  --color-primary-500: #748b50;
+  --color-primary-600: #5d7340;
+  --color-primary-700: #4a5c34;
+  --color-primary-800: #3d4d33;
+  --color-primary-900: #333f2b;
+  --color-primary-950: #1a2115;
+
+  /* Secondary - Forest Dark scale */
+  --color-secondary-100: #e5e5e5;
+  --color-secondary-300: #9dab88;
+  --color-secondary-500: #5c6d47;
+  --color-secondary-700: #3d4d33;
+  --color-secondary-900: #2b3524;
+
+  /* Neutrals - true greys */
+  --color-neutral-50: #ffffff;
+  --color-neutral-100: #fafafa;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+  --color-neutral-950: #0a0a0a;
+
+  /* Semantic */
+  --color-success-50: #f0f7f1;
+  --color-success-500: #3aac5c;
+  --color-success-600: #2d8a48;
+  --color-error-500: #dc4545;
+
+  /* Surfaces */
+  --color-surface-1: #fafafa;
+
+  /* Fonts - app uses Montserrat for heading + body */
+  --font-heading: var(--font-montserrat), system-ui, sans-serif;
+  --font-body: var(--font-montserrat), system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-neutral-900);
+  background: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
