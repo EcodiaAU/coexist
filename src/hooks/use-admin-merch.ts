@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import type { Database } from '@/types/database.types'
 import { supabase } from '@/lib/supabase'
 import type {
   Product,
@@ -237,7 +238,7 @@ export function useUpdateOrderStatus() {
 
       const { error } = await supabase
         .from('merch_orders')
-        .update(updates)
+        .update(updates as Database['public']['Tables']['merch_orders']['Update'])
         .eq('id', orderId)
       if (error) throw error
 

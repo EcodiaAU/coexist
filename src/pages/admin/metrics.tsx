@@ -88,7 +88,7 @@ export default function AdminMetricsPage({ embedded = false }: { embedded?: bool
     queryKey: ['attendance-metrics', dateRange, collectiveId],
     queryFn: async (): Promise<AttendanceMetrics> => {
       const { data, error } = await supabase.rpc('coexist_attendance_metrics', {
-        p_collective_ids: collectiveId ? [collectiveId] : null, p_from: fromDate, p_to: toDate,
+        p_collective_ids: collectiveId ? [collectiveId] : undefined, p_from: fromDate, p_to: toDate,
       })
       if (error) throw error
       return data as unknown as AttendanceMetrics

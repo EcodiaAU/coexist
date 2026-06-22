@@ -115,7 +115,7 @@ export function useEventProximity(): UseEventProximityReturn {
             enableHighAccuracy: false,
             timeout: 8000,
           })
-          position = coarseCoords as GeolocationPosition
+          position = coarseCoords as unknown as GeolocationPosition
 
           // Phase 2 (warm the GPS for next interval): if coarse accuracy is
           // poor, kick off a high-accuracy fetch in the background. We don't
@@ -135,7 +135,7 @@ export function useEventProximity(): UseEventProximityReturn {
               enableHighAccuracy: true,
               timeout: 30000,
             })
-            position = fallbackCoords as GeolocationPosition
+            position = fallbackCoords as unknown as GeolocationPosition
           } catch {
             setLocationError("Couldn't get your location - check GPS settings are enabled.")
             setNearbyEvent(null)

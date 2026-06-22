@@ -36,6 +36,7 @@ export interface ButtonProps {
   children?: ReactNode
   className?: string
   'aria-label'?: string
+  title?: string
 }
 
 function Spinner({ className }: { className?: string }) {
@@ -80,6 +81,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       className,
       'aria-label': ariaLabel,
+      title,
     },
     ref,
   ) {
@@ -92,6 +94,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={isDisabled}
         onClick={onClick}
+        title={title}
         aria-label={ariaLabel}
         aria-busy={loading}
         aria-disabled={isDisabled}

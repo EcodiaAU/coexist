@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import type { Database } from '@/types/database.types'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { subscribeWithReconnect } from '@/lib/realtime'
@@ -472,7 +473,7 @@ export function useUpdateUpdate() {
 
       const { data, error } = await supabase
         .from('updates')
-        .update(payload)
+        .update(payload as Database['public']['Tables']['updates']['Update'])
         .eq('id', id)
         .select()
         .single()
