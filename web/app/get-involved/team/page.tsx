@@ -38,6 +38,7 @@ export default function TeamPage() {
         eyebrow="Join our team"
         title="Help build the movement"
         subtitle="Co-Exist is powered by young people who decided to do something. There is room for you."
+        image="/images/collective.webp"
       />
       <section className="mx-auto max-w-5xl px-5 py-14">
         <div className="grid gap-5 md:grid-cols-3">

@@ -36,6 +36,7 @@ export default function SupportPage() {
         eyebrow="Support us"
         title="Help us put young people back into nature"
         subtitle="Co-Exist is a registered charity. Your support goes straight into local conservation and the communities that drive it."
+        image="/images/nature.webp"
       />
       <section className="mx-auto max-w-5xl px-5 py-14">
         <div className="grid gap-5 md:grid-cols-3">

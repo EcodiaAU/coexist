@@ -43,6 +43,7 @@ export default function GetInvolvedPage() {
         eyebrow="Get involved"
         title="Find your way in"
         subtitle="Whatever you have to give - an afternoon, your skills, or your support - there is a place for you here."
+        image="/images/collective.webp"
       />
       <section className="mx-auto max-w-5xl px-5 py-14">
         <div className="grid gap-5 sm:grid-cols-2">

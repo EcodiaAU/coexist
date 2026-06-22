@@ -20,7 +20,7 @@ export default async function NewsPage() {
 
   return (
     <main>
-      <PageHeader eyebrow="From the movement" title="News & updates" />
+      <PageHeader eyebrow="From the movement" title="News & updates" image="/images/nature.webp" />
 
       <section className="mx-auto max-w-3xl px-5 py-14">
         {news.length === 0 ? (

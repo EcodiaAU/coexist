@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <main>
-      <PageHeader eyebrow="Contact us" title="Say hello" subtitle="We would love to hear from you." />
+      <PageHeader eyebrow="Contact us" title="Say hello" subtitle="We would love to hear from you." image="/images/hero.webp" />
       <section className="mx-auto grid max-w-5xl gap-10 px-5 py-14 md:grid-cols-[1.4fr_1fr]">
         <ContactForm />
         <div className="space-y-6">
