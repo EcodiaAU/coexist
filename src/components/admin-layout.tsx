@@ -1,7 +1,8 @@
-import { type ReactNode, useState, useEffect, useRef, createContext, useContext, useCallback, useMemo, Suspense } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { type ReactNode, useState, useEffect, useRef, createContext, useContext, useCallback, useMemo } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { AdminCollectiveScopeContext, useAdminCollectiveScopeProvider } from '@/hooks/use-admin-collective-scope'
+import { AnimatedOutlet } from '@/components/animated-outlet'
 import { WAVE_PATHS } from '@/components/wave-paths'
 
 import {
@@ -378,9 +379,7 @@ export function AdminLayout() {
             showBottomTabs && 'pb-[calc(5rem+var(--safe-bottom))]',
           )}>
 
-            <Suspense fallback={null}>
-              <Outlet />
-            </Suspense>
+            <AnimatedOutlet />
           </div>
         </div>
 

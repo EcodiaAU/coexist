@@ -1,13 +1,12 @@
-import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { Suspense, useState, useCallback, useEffect } from 'react'
-import { AnimatePresence } from 'framer-motion'
 import { lazyWithRetry as lazy, clearChunkReloadGuard } from '@/lib/lazy-with-retry'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { RequireAuth, RequireRole, RequireLeaderAccess, RequireCapability } from '@/components/route-guard'
 import { AppShell } from '@/components/app-shell'
+import { AnimatedOutlet } from '@/components/animated-outlet'
 import { AdminLayout as AdminLayoutRoute } from '@/components/admin-layout'
 import { LeaderLayout as LeaderLayoutRoute } from '@/components/leader-layout'
-import { PageTransition } from '@/components/page-transition'
 import { MaintenanceMode } from '@/components/maintenance-mode'
 import { UpdateRequired } from '@/components/update-required'
 import { useAppUpdate } from '@/hooks/use-app-update'
@@ -216,7 +215,6 @@ function PageFallback() {
 
 function App() {
   const [showSplash, setShowSplash] = useState(true)
-  const location = useLocation()
   const { maintenanceMode, maintenanceMessage, forceUpdate, latestVersion, installedVersion } = useAppUpdate()
   useDeepLink()
 
@@ -252,8 +250,13 @@ function App() {
          history entry and restores on back-nav, scrolls to top for new routes */}
     <ErrorBoundary>
     <Suspense fallback={<PageFallback />}>
-      <AnimatePresence mode="wait" initial={false}>
-      <Routes location={location} key={location.pathname}>
+      {/* Page enter/exit transitions are scoped to the <Outlet/> INSIDE each
+          persistent layout shell (AppShell / AdminLayout / LeaderLayout) via
+          AnimatedOutlet, NOT keyed around the whole <Routes>. Keying <Routes>
+          by pathname remounted the layout shells on every nav and reset the
+          sidebar scroll to 0 (2026-06-22 bug). React Router now reconciles the
+          shells by type and keeps the sidebar mounted across navigation. */}
+      <Routes>
         {/* ---- Bare routes (no app shell) ---- */}
         <Route
           path="/welcome"
@@ -363,68 +366,68 @@ function App() {
         {/* ============================================================ */}
         {/*  Protected routes - AppShell mounted ONCE via layout route    */}
         {/* ============================================================ */}
-        <Route element={<RequireAuth><AppShell><Outlet /></AppShell></RequireAuth>}>
+        <Route element={<RequireAuth><AppShell><AnimatedOutlet /></AppShell></RequireAuth>}>
 
-          {/* ---- Member pages (with PageTransition) ---- */}
-          <Route path="/" element={<ErrorBoundary><PageTransition><HomePage /></PageTransition></ErrorBoundary>} />
-          <Route path="/explore" element={<PageTransition><ExplorePage /></PageTransition>} />
+          {/* ---- Member pages (animated by AnimatedOutlet in AppShell) ---- */}
+          <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
+          <Route path="/explore" element={<ExplorePage />} />
           <Route path="/events" element={<Navigate to="/explore" replace />} />
-          <Route path="/events/create" element={<PageTransition><CreateEventPage /></PageTransition>} />
-          <Route path="/events/:id" element={<ErrorBoundary><PageTransition><EventDetailPage /></PageTransition></ErrorBoundary>} />
-          <Route path="/events/:id/check-in" element={<PageTransition><CheckInPage /></PageTransition>} />
-          <Route path="/events/:id/profile-survey" element={<PageTransition><ProfileSurveyPage /></PageTransition>} />
-          <Route path="/events/:id/day" element={<PageTransition><EventDayPage /></PageTransition>} />
-          <Route path="/events/:id/impact" element={<ErrorBoundary><PageTransition><LogImpactPage /></PageTransition></ErrorBoundary>} />
-          <Route path="/events/:id/survey" element={<PageTransition><PostEventSurveyPage /></PageTransition>} />
-          <Route path="/events/:id/edit" element={<PageTransition><EditEventPage /></PageTransition>} />
-          <Route path="/events/:id/ticket-confirmation" element={<PageTransition><TicketConfirmationPage /></PageTransition>} />
+          <Route path="/events/create" element={<CreateEventPage />} />
+          <Route path="/events/:id" element={<ErrorBoundary><EventDetailPage /></ErrorBoundary>} />
+          <Route path="/events/:id/check-in" element={<CheckInPage />} />
+          <Route path="/events/:id/profile-survey" element={<ProfileSurveyPage />} />
+          <Route path="/events/:id/day" element={<EventDayPage />} />
+          <Route path="/events/:id/impact" element={<ErrorBoundary><LogImpactPage /></ErrorBoundary>} />
+          <Route path="/events/:id/survey" element={<PostEventSurveyPage />} />
+          <Route path="/events/:id/edit" element={<EditEventPage />} />
+          <Route path="/events/:id/ticket-confirmation" element={<TicketConfirmationPage />} />
           <Route path="/collectives" element={<Navigate to="/explore?tab=collectives" replace />} />
-          <Route path="/collectives/:slug" element={<PageTransition><CollectiveDetailPage /></PageTransition>} />
-          <Route path="/collectives/:slug/manage" element={<PageTransition><CollectiveManagePage /></PageTransition>} />
-          <Route path="/tasks" element={<PageTransition><TasksPage /></PageTransition>} />
-          <Route path="/chat" element={<PageTransition><ChatListPage /></PageTransition>} />
-          <Route path="/chat/channel/:channelId" element={<ErrorBoundary><PageTransition><ChatRoomPage /></PageTransition></ErrorBoundary>} />
-          <Route path="/chat/:collectiveId" element={<ErrorBoundary><PageTransition><ChatRoomPage /></PageTransition></ErrorBoundary>} />
-          <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
-          <Route path="/profile/edit" element={<PageTransition><EditProfilePage /></PageTransition>} />
-          <Route path="/profile/tickets" element={<PageTransition><MyTicketsPage /></PageTransition>} />
-          <Route path="/profile/:userId" element={<PageTransition><ViewProfilePage /></PageTransition>} />
+          <Route path="/collectives/:slug" element={<CollectiveDetailPage />} />
+          <Route path="/collectives/:slug/manage" element={<CollectiveManagePage />} />
+          <Route path="/tasks" element={<TasksPage />} />
+          <Route path="/chat" element={<ChatListPage />} />
+          <Route path="/chat/channel/:channelId" element={<ErrorBoundary><ChatRoomPage /></ErrorBoundary>} />
+          <Route path="/chat/:collectiveId" element={<ErrorBoundary><ChatRoomPage /></ErrorBoundary>} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/edit" element={<EditProfilePage />} />
+          <Route path="/profile/tickets" element={<MyTicketsPage />} />
+          <Route path="/profile/:userId" element={<ViewProfilePage />} />
           <Route path="/impact" element={<Navigate to="/profile" replace />} />
-          <Route path="/referral" element={<PageTransition><ReferralPage /></PageTransition>} />
-          <Route path="/notifications" element={<PageTransition><NotificationsPage /></PageTransition>} />
-          <Route path="/updates" element={<PageTransition><UpdatesPage /></PageTransition>} />
-          <Route path="/settings" element={<PageTransition><SettingsPage /></PageTransition>} />
-          <Route path="/settings/notifications" element={<PageTransition><SettingsNotificationsPage /></PageTransition>} />
-          <Route path="/settings/privacy" element={<PageTransition><SettingsPrivacyPage /></PageTransition>} />
+          <Route path="/referral" element={<ReferralPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/updates" element={<UpdatesPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/settings/notifications" element={<SettingsNotificationsPage />} />
+          <Route path="/settings/privacy" element={<SettingsPrivacyPage />} />
           {/* 1.8.4 item 4 (fork_motzkqf5_016150) - canonical privacy lives at
               /settings/privacy; legacy deep-links from earlier builds resolve here. */}
           <Route path="/profile/privacy" element={<Navigate to="/settings/privacy" replace />} />
           <Route path="/privacy/settings" element={<Navigate to="/settings/privacy" replace />} />
-          <Route path="/settings/account" element={<PageTransition><SettingsAccountPage /></PageTransition>} />
+          <Route path="/settings/account" element={<SettingsAccountPage />} />
 
-          <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
-          <Route path="/partners" element={<PageTransition><PartnersPage /></PageTransition>} />
-          <Route path="/leadership" element={<PageTransition><LeadershipPage /></PageTransition>} />
-          <Route path="/lead-a-collective" element={<PageTransition><LeadACollectivePage /></PageTransition>} />
-          <Route path="/donate" element={<PageTransition><DonatePage /></PageTransition>} />
-          <Route path="/donate/thank-you" element={<PageTransition><DonateThankYouPage /></PageTransition>} />
-          <Route path="/donate/donors" element={<PageTransition><DonorWallPage /></PageTransition>} />
-          <Route path="/shop" element={<PageTransition><ShopPage /></PageTransition>} />
-          <Route path="/shop/cart" element={<PageTransition><CartPage /></PageTransition>} />
-          <Route path="/shop/checkout" element={<PageTransition><CheckoutPage /></PageTransition>} />
-          <Route path="/shop/order-confirmation" element={<PageTransition><OrderConfirmationPage /></PageTransition>} />
-          <Route path="/shop/orders" element={<PageTransition><OrdersPage /></PageTransition>} />
-          <Route path="/shop/orders/:orderId" element={<PageTransition><OrderDetailPage /></PageTransition>} />
-          <Route path="/shop/:slug" element={<PageTransition><ProductDetailPage /></PageTransition>} />
-          <Route path="/reports" element={<PageTransition><ReportsPage /></PageTransition>} />
-          <Route path="/impact/national" element={<PageTransition><NationalImpactPage /></PageTransition>} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/partners" element={<PartnersPage />} />
+          <Route path="/leadership" element={<LeadershipPage />} />
+          <Route path="/lead-a-collective" element={<LeadACollectivePage />} />
+          <Route path="/donate" element={<DonatePage />} />
+          <Route path="/donate/thank-you" element={<DonateThankYouPage />} />
+          <Route path="/donate/donors" element={<DonorWallPage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/shop/cart" element={<CartPage />} />
+          <Route path="/shop/checkout" element={<CheckoutPage />} />
+          <Route path="/shop/order-confirmation" element={<OrderConfirmationPage />} />
+          <Route path="/shop/orders" element={<OrdersPage />} />
+          <Route path="/shop/orders/:orderId" element={<OrderDetailPage />} />
+          <Route path="/shop/:slug" element={<ProductDetailPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/impact/national" element={<NationalImpactPage />} />
 
           {/* ---- My Leadership Journey (learner) ---- */}
-          <Route path="/learn" element={<PageTransition><LearnIndexPage /></PageTransition>} />
-          <Route path="/learn/module/:moduleId" element={<PageTransition><LearnModulePage /></PageTransition>} />
-          <Route path="/learn/section/:sectionId" element={<PageTransition><LearnSectionPage /></PageTransition>} />
-          <Route path="/learn/quiz/:quizId" element={<PageTransition><LearnQuizPage /></PageTransition>} />
-          <Route path="/learn/complete" element={<PageTransition><LearnCompletePage /></PageTransition>} />
+          <Route path="/learn" element={<LearnIndexPage />} />
+          <Route path="/learn/module/:moduleId" element={<LearnModulePage />} />
+          <Route path="/learn/section/:sectionId" element={<LearnSectionPage />} />
+          <Route path="/learn/quiz/:quizId" element={<LearnQuizPage />} />
+          <Route path="/learn/complete" element={<LearnCompletePage />} />
 
           {/* ---- Leader Dashboard & sub-pages ---- */}
           <Route path="/leader" element={<RequireLeaderAccess><ErrorBoundary><LeaderLayoutRoute /></ErrorBoundary></RequireLeaderAccess>}>
@@ -616,7 +619,6 @@ function App() {
           }
         />
       </Routes>
-      </AnimatePresence>
     </Suspense>
     </ErrorBoundary>
     </>

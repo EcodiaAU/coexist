@@ -14,9 +14,13 @@ interface PageTransitionProps {
  * Chambers app's PageFrame shape (src/App.tsx PageFrame) so the two
  * Ecodia mobile surfaces share one motion language.
  *
- * Pairs with the AnimatePresence wrapper around <Routes> in App.tsx, which
- * holds the outgoing route subtree until this motion.div's exit completes,
- * then mounts the new one.
+ * DEPRECATED (2026-06-22): route transitions are now owned by AnimatedOutlet
+ * (src/components/animated-outlet.tsx), which scopes the AnimatePresence +
+ * keyed motion.div to the <Outlet/> INSIDE each persistent layout shell. The
+ * old pattern keyed the whole <Routes> by pathname and remounted the layout
+ * shells on every nav, resetting the sidebar scroll to 0. This component has no
+ * live callers; kept only for the barrel re-export. New routes do not wrap
+ * pages in PageTransition.
  *
  * Also provides a local Suspense boundary so lazy-loaded pages suspend
  * inside the shell rather than bubbling to the root Suspense and

@@ -1,5 +1,6 @@
-import { type ReactNode, useState, useEffect, useRef, createContext, useContext, useCallback, useMemo, Suspense } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { type ReactNode, useState, useEffect, useRef, createContext, useContext, useCallback, useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
+import { AnimatedOutlet } from '@/components/animated-outlet'
 
 import {
     LayoutDashboard,
@@ -287,9 +288,7 @@ export function LeaderLayout() {
             showBottomTabs && 'pb-[calc(5rem+var(--safe-bottom))]',
           )}>
 
-            <Suspense fallback={null}>
-              <Outlet />
-            </Suspense>
+            <AnimatedOutlet />
           </div>
         </div>
 
