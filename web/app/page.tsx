@@ -1,73 +1,197 @@
+import Image from 'next/image'
+import Link from 'next/link'
 import { getPublicImpactStats, type PublicImpactStats } from '@/lib/public-stats'
 
 // Revalidate the homepage (and its live impact figures) on a schedule rather
 // than per request - the numbers move slowly and this keeps DB load bounded.
 export const revalidate = 1800
 
-// P0 smoke fallback so `next build` and a stats outage never 500 the homepage.
+// Baseline fallback so `next build` and a stats outage never 500 the homepage.
 const FALLBACK: PublicImpactStats = {
   volunteers: 5500,
   collectives: 15,
-  nativePlants: 46400,
-  treesPlanted: 36637,
+  plants: 46400,
   rubbishKg: 5900,
   events: 340,
 }
 
-async function loadStats(): Promise<{ stats: PublicImpactStats; live: boolean }> {
+async function loadStats(): Promise<PublicImpactStats> {
   try {
-    return { stats: await getPublicImpactStats(), live: true }
+    return await getPublicImpactStats()
   } catch {
-    return { stats: FALLBACK, live: false }
+    return FALLBACK
   }
 }
 
 const fmt = (n: number) => new Intl.NumberFormat('en-AU').format(n)
 
 export default async function HomePage() {
-  const { stats, live } = await loadStats()
+  const stats = await loadStats()
 
   const tiles = [
-    { value: stats.rubbishKg, suffix: ' kgs', label: 'Litter removed' },
-    { value: stats.nativePlants || stats.treesPlanted, suffix: '', label: 'Native plants planted' },
-    { value: stats.collectives, suffix: '', label: 'Collectives across Australia' },
-    { value: stats.volunteers, suffix: '', label: 'Young volunteers' },
+    { value: fmt(stats.rubbishKg) + ' kgs', label: 'Litter removed' },
+    { value: fmt(stats.plants), label: 'Native plants planted' },
+    { value: fmt(stats.collectives), label: 'Collectives across Australia' },
+    { value: fmt(stats.volunteers), label: 'Young volunteers' },
   ]
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-20">
-      <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-primary-600">
-        Co-Exist Australia
-      </p>
-      <h1 className="mt-3 text-4xl sm:text-6xl font-extrabold text-neutral-900">
-        Explore. Connect. Protect.
-      </h1>
-      <p className="mt-4 max-w-2xl text-lg text-neutral-600">
-        Young people gathering to preserve and protect their local environment.
-      </p>
-
-      <section className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {tiles.map((t) => (
-          <div
-            key={t.label}
-            className="rounded-2xl border border-neutral-100 bg-white p-5 shadow-sm"
-          >
-            <div className="text-3xl font-extrabold tabular-nums text-neutral-900">
-              {fmt(t.value)}
-              {t.suffix}
-            </div>
-            <div className="mt-1 text-xs uppercase tracking-wider text-neutral-500">
-              {t.label}
-            </div>
+    <main>
+      {/* Hero */}
+      <section className="relative isolate overflow-hidden">
+        <Image
+          src="/images/hero.webp"
+          alt="Young people in nature on a Co-Exist conservation day"
+          fill
+          priority
+          className="-z-10 object-cover"
+        />
+        <div className="-z-10 absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/30" />
+        <div className="mx-auto max-w-6xl px-5 py-28 sm:py-40">
+          <p className="text-[12px] font-bold uppercase tracking-[0.25em] text-white/80">
+            Co-Exist Australia
+          </p>
+          <h1 className="mt-3 max-w-3xl text-4xl font-extrabold leading-tight text-white sm:text-6xl">
+            Explore. Connect. Protect.
+          </h1>
+          <p className="mt-5 max-w-xl text-lg text-white/90">
+            Young people gathering to preserve and protect their local environment.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/collectives"
+              className="rounded-full bg-primary-500 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-600"
+            >
+              Join a collective
+            </Link>
+            <Link
+              href="/events"
+              className="rounded-full bg-white/95 px-6 py-3 text-sm font-bold text-neutral-900 shadow-sm transition-colors hover:bg-white"
+            >
+              Attend an event
+            </Link>
           </div>
-        ))}
+        </div>
       </section>
 
-      <p className="mt-8 text-xs text-neutral-400">
-        {live
-          ? 'Live figures from the Co-Exist impact substrate.'
-          : 'Showing baseline figures (live substrate not reachable in this environment).'}
-      </p>
+      {/* Impact band (live) */}
+      <section className="border-b border-neutral-100 bg-white">
+        <div className="mx-auto max-w-6xl px-5 py-14">
+          <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
+            Our impact so far
+          </h2>
+          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {tiles.map((t) => (
+              <div
+                key={t.label}
+                className="rounded-2xl border border-neutral-100 bg-white p-6 text-center shadow-sm"
+              >
+                <div className="text-3xl font-extrabold tabular-nums text-neutral-900 sm:text-4xl">
+                  {t.value}
+                </div>
+                <div className="mt-2 text-xs uppercase tracking-wider text-neutral-500">
+                  {t.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About */}
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-20 md:grid-cols-2">
+          <div>
+            <h2 className="text-3xl font-extrabold text-neutral-900 sm:text-4xl">
+              A nationwide movement of young people driving positive change
+            </h2>
+            <p className="mt-5 text-lg leading-relaxed text-neutral-600">
+              Co-Exist builds collectives that enable young Australians to lead
+              conservation projects in their own communities. We make it easy to
+              find your people, get outside, and do something real for the places
+              you love.
+            </p>
+            <Link
+              href="/about"
+              className="mt-6 inline-block text-sm font-bold text-primary-700 hover:text-primary-800"
+            >
+              Read our story →
+            </Link>
+          </div>
+          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-neutral-100 shadow-sm">
+            <Image src="/images/nature.webp" alt="A Co-Exist conservation activity" fill className="object-cover" />
+          </div>
+        </div>
+      </section>
+
+      {/* What's a collective */}
+      <section className="bg-surface-1">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-20 md:grid-cols-2">
+          <div className="relative order-2 aspect-[4/3] overflow-hidden rounded-3xl border border-neutral-100 shadow-sm md:order-1">
+            <Image src="/images/collective.webp" alt="A local Co-Exist collective" fill className="object-cover" />
+          </div>
+          <div className="order-1 md:order-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-600">
+              What is a collective?
+            </p>
+            <h2 className="mt-3 text-3xl font-extrabold text-neutral-900 sm:text-4xl">
+              Youth-led groups, doing good in their own backyard
+            </h2>
+            <p className="mt-5 text-lg leading-relaxed text-neutral-600">
+              Collectives host urban landcare, beach cleanups, nature walks and
+              conservation retreats. The idea is simple: do good, feel good.
+              Connecting people to themselves, to each other, and to nature.
+            </p>
+            <Link
+              href="/collectives"
+              className="mt-6 inline-block text-sm font-bold text-primary-700 hover:text-primary-800"
+            >
+              Find a collective near you →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Founder quote */}
+      <section className="bg-primary-700">
+        <div className="mx-auto max-w-4xl px-5 py-20 text-center">
+          <blockquote className="text-2xl font-semibold leading-relaxed text-white sm:text-3xl">
+            “Imagine if we had a collective in every major town. Think of the amount
+            of waste we could be cleaning. Large scale social and environmental
+            impact. It is possible.”
+          </blockquote>
+          <p className="mt-6 text-sm font-bold uppercase tracking-wider text-white/70">
+            Kurt Jones, Founder &amp; CEO
+          </p>
+        </div>
+      </section>
+
+      {/* Donate CTA */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-4xl px-5 py-20 text-center">
+          <h2 className="text-3xl font-extrabold text-neutral-900 sm:text-4xl">
+            Help us build communities that protect nature
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-lg text-neutral-600">
+            Every contribution helps young people get outside and lead real
+            conservation work in their community.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/donate"
+              className="rounded-full bg-primary-500 px-7 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-600"
+            >
+              Donate
+            </Link>
+            <Link
+              href="/get-involved/support"
+              className="rounded-full border border-neutral-200 px-7 py-3 text-sm font-bold text-neutral-800 transition-colors hover:bg-neutral-50"
+            >
+              Other ways to help
+            </Link>
+          </div>
+        </div>
+      </section>
     </main>
   )
 }
