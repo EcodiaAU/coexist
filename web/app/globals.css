@@ -86,9 +86,9 @@ body {
    Co-Exist posts (Tate: Avenir, letter-spacing ~ -120 in Canva). */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 300; /* thin geometric editorial */
   letter-spacing: -0.055em;
-  line-height: 1.05;
+  line-height: 1.04;
   text-wrap: balance;
 }
 
@@ -112,21 +112,42 @@ h1, h2, h3, h4, h5, h6 {
   box-decoration-break: clone;
 }
 
-/* Animated highlight reel: words stacked in one grid cell, crossfade on hover */
-.mark-reel {
-  display: inline-grid;
-  vertical-align: baseline;
+/* Animated highlight: a vertical ROLL (odometer/turn). The track translates
+   up one slot per word; the box width animates to the active word. */
+.wordroll {
+  display: inline-flex;
   overflow: hidden;
+  height: 1.12em;
+  vertical-align: -0.2em;
+  transition: width 0.55s cubic-bezier(0.76, 0, 0.24, 1);
 }
-.mark-reel-word {
-  grid-area: 1 / 1;
-  transition: opacity 0.45s cubic-bezier(0.2, 0.7, 0.2, 1),
-    transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+.wordroll-track {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.55s cubic-bezier(0.76, 0, 0.24, 1);
+}
+.wordroll-word {
+  display: block;
+  height: 1.12em;
+  line-height: 1.12em;
+  white-space: nowrap;
 }
 
 /* Headings that contain a highlight need looser leading so the box clears the
    line above. Apply .has-mark to such headings. */
-.has-mark { line-height: 1.4; }
+.has-mark { line-height: 1.45; }
+
+/* Oversized faint watermark (wordmark / icon) behind feature sections */
+.watermark {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.05;
+  font-weight: 300;
+  letter-spacing: -0.05em;
+  line-height: 0.8;
+  white-space: nowrap;
+}
 
 /* Scroll reveal (paired with the Reveal client component) */
 .reveal {
