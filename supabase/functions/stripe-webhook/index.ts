@@ -93,9 +93,17 @@ Deno.serve(async (req: Request) => {
             projectName = proj?.name ?? metadata.project_id
           }
 
+          // Anonymous (public-site) donations carry an empty user_id and a
+          // donor_email/donor_name instead. Map '' -> null and record the donor.
+          const donorUserId = metadata.user_id && metadata.user_id !== '' ? metadata.user_id : null
+          const donorEmail = metadata.donor_email || session.customer_details?.email || null
+          const donorName = metadata.donor_name || session.customer_details?.name || null
+
           // 1. Record donation (include all metadata fields)
           const { error: donationError } = await supabase.from('donations').insert({
-            user_id: metadata.user_id,
+            user_id: donorUserId,
+            donor_email: donorEmail,
+            donor_name: donorName,
             amount: amountDollars,
             currency: 'AUD',
             stripe_payment_id: paymentIntentId ?? session.id,
@@ -111,11 +119,11 @@ Deno.serve(async (req: Request) => {
             break
           }
 
-          // 2. Award points (1 point per dollar)
+          // 2. Award points (1 point per dollar) - authenticated donors only
           const points = Math.floor(amountDollars)
-          if (points > 0) {
+          if (points > 0 && donorUserId) {
             await supabase.rpc('award_points', {
-              p_user_id: metadata.user_id,
+              p_user_id: donorUserId,
               p_amount: points,
               p_reason: metadata.frequency === 'monthly'
                 ? 'recurring_donation'
@@ -123,8 +131,9 @@ Deno.serve(async (req: Request) => {
             })
           }
 
-          // 3. Send receipt email via template
-          await sendTemplateEmail(supabase, 'donation_receipt', metadata.user_id, {
+          // 3. Send receipt email via template - authenticated donors only
+          // (anonymous donors receive Stripe's own receipt; no profile to resolve).
+          if (donorUserId) await sendTemplateEmail(supabase, 'donation_receipt', donorUserId, {
             name: '', // resolved via userId
             amount: amountDollars.toFixed(2),
             currency: 'AUD',
@@ -136,7 +145,7 @@ Deno.serve(async (req: Request) => {
             receipt_url: 'https://app.coexistaus.org/profile/donations',
           })
 
-          console.log('Donation checkout completed:', session.id, `$${amountDollars}`)
+          console.log('Donation checkout completed:', session.id, `$${amountDollars}`, donorUserId ? '(member)' : '(anon)')
         }
 
         if (metadata.type === 'merch') {
