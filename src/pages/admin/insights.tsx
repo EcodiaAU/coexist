@@ -16,6 +16,7 @@
  */
 import { useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import type { Database } from '@/types/database.types'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import {
@@ -204,10 +205,12 @@ export default function AdminInsightsPage() {
     queryKey: ['insights-attendance', dateRange, collectiveId, activityType],
     queryFn: async (): Promise<AttendanceMetrics> => {
       const { data, error } = await supabase.rpc('coexist_attendance_metrics', {
-        p_collective_ids: collectiveId ? [collectiveId] : null,
+        p_collective_ids: collectiveId ? [collectiveId] : undefined,
         p_from: fromDate,
         p_to: todayIso(),
-        p_activity_types: activityType ? [activityType] : null,
+        p_activity_types: activityType
+          ? [activityType as Database['public']['Enums']['activity_type']]
+          : undefined,
       })
       if (error) throw error
       return data as unknown as AttendanceMetrics

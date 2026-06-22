@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import type { Database } from '@/types/database.types'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
@@ -512,7 +513,7 @@ function NotificationSettingsTab() {
     mutationFn: async ({ id, field, value }: { id: string; field: 'notify_email' | 'notify_push'; value: boolean }) => {
       const { error } = await supabase
         .from('notification_recipients')
-        .update({ [field]: value })
+        .update({ [field]: value } as Database['public']['Tables']['notification_recipients']['Update'])
         .eq('id', id)
       if (error) throw error
     },

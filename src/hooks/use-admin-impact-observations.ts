@@ -517,8 +517,8 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
           legacyIds = new Set<string>()
           legacyEventIdsByCollective.set(collectiveId, legacyIds)
         }
-        const isFirstSightingOfEvent = !legacyIds.has(r.event_id)
-        legacyIds.add(r.event_id)
+        const isFirstSightingOfEvent = !legacyIds.has(r.event_id as string)
+        legacyIds.add(r.event_id as string)
         const existing = byCollective.get(collectiveId)
         if (existing) {
           if (isFirstSightingOfEvent && !rows.some((row) => row.eventId === r.event_id)) {

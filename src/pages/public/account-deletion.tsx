@@ -39,7 +39,7 @@ async function softDeleteUser(userId: string): Promise<{ error: string | null; a
       deleted_at: new Date().toISOString(),
       deletion_status: 'pending_deletion',
       deletion_requested_at: new Date().toISOString(),
-    } as unknown as Record<string, unknown>)
+    })
     .eq('id', userId)
 
   if (error) return { error: 'Failed to process deletion request. Please contact support.', alreadyPending: false }

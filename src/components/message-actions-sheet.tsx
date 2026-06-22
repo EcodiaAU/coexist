@@ -47,6 +47,13 @@ interface MessageActionsProps {
    * sheet. Wired only in collective mode for non-optimistic messages.
    */
   onReact?: (emoji: ReactionEmoji) => void
+  /**
+   * Emojis the current user has already applied to this message. Used to
+   * highlight them in the react row so that "tap to remove" (unreact) is a
+   * discoverable, explicit action rather than a hidden second-tap, matching
+   * the iMessage / Slack pattern. Added 22 Jun 2026.
+   */
+  activeReactions?: string[]
 }
 
 export function MessageActionsSheet({
@@ -61,6 +68,7 @@ export function MessageActionsSheet({
   onReport,
   onBlockUser,
   onReact,
+  activeReactions,
 }: MessageActionsProps) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
@@ -129,25 +137,36 @@ export function MessageActionsSheet({
                 role="group"
                 aria-label="React with emoji"
               >
-                {REACTION_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => {
-                      onReact(emoji)
-                      onClose()
-                    }}
-                    aria-label={`React with ${emoji}`}
-                    className={cn(
-                      'flex items-center justify-center min-h-11 min-w-11 rounded-full',
-                      'text-2xl leading-none',
-                      'hover:bg-white active:scale-[0.88]',
-                      'transition-transform duration-100 cursor-pointer select-none',
-                    )}
-                  >
-                    {emoji}
-                  </button>
-                ))}
+                {REACTION_EMOJIS.map((emoji) => {
+                  const isActive = activeReactions?.includes(emoji) ?? false
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => {
+                        onReact(emoji)
+                        onClose()
+                      }}
+                      aria-pressed={isActive}
+                      aria-label={
+                        isActive
+                          ? `Remove your ${emoji} reaction`
+                          : `React with ${emoji}`
+                      }
+                      className={cn(
+                        'flex items-center justify-center min-h-11 min-w-11 rounded-full',
+                        'text-2xl leading-none',
+                        'active:scale-[0.88]',
+                        'transition-transform duration-100 cursor-pointer select-none',
+                        isActive
+                          ? 'bg-primary-100 ring-2 ring-primary-400'
+                          : 'hover:bg-white',
+                      )}
+                    >
+                      {emoji}
+                    </button>
+                  )
+                })}
               </div>
             )}
 

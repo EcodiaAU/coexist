@@ -128,7 +128,7 @@ export default function ViewProfilePage() {
   if (!profile) {
     // Defensive belt-and-braces: if isFetched is false but profile is also
     // falsy and we are not loading or erroring, show the page chrome only.
-    return <Page swipeBack header={<Header title="Profile" back />} />
+    return <Page swipeBack header={<Header title="Profile" back />}><></></Page>
   }
 
   const stagger = {

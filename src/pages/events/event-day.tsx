@@ -422,7 +422,7 @@ export default function EventDayPage() {
   const [togglingPublicCheckIn, setTogglingPublicCheckIn] = useState(false)
   useEffect(() => {
     if (event) {
-      setPublicCheckInEnabled((event as Record<string, unknown>).public_check_in_enabled as boolean ?? false)
+      setPublicCheckInEnabled((event as unknown as Record<string, unknown>).public_check_in_enabled as boolean ?? false)
     }
   }, [event])
 
@@ -988,11 +988,11 @@ export default function EventDayPage() {
             </button>
 
             {/* QR code (shown only when enabled and token is minted) */}
-            {publicCheckInEnabled && (event as Record<string, unknown>).public_check_in_token ? (
+            {publicCheckInEnabled && (event as unknown as Record<string, unknown>).public_check_in_token ? (
               <div className="flex flex-col items-center gap-3 py-2">
                 <div className="p-3 rounded-2xl bg-white shadow-md ring-1 ring-neutral-100">
                   <QRCodeSVG
-                    value={`https://app.coexistaus.org/check-in/${(event as Record<string, unknown>).public_check_in_token}`}
+                    value={`https://app.coexistaus.org/check-in/${(event as unknown as Record<string, unknown>).public_check_in_token}`}
                     size={200}
                     level="M"
                   />

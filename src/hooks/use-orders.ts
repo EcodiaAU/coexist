@@ -118,7 +118,7 @@ export function useSavedAddresses() {
       const seen = new Set<string>()
       const addresses: ShippingAddress[] = []
       for (const row of data ?? []) {
-        const addr = row.shipping_address as ShippingAddress | null
+        const addr = row.shipping_address as unknown as ShippingAddress | null
         if (!addr?.line1) continue
         const key = `${addr.line1}|${addr.postcode}`
         if (seen.has(key)) continue

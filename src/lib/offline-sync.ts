@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import type { Database } from '@/types/database.types'
 import { formatEventLong } from '@/lib/date-format'
 
 /* ------------------------------------------------------------------ */
@@ -445,7 +446,7 @@ async function processProfileUpdate(action: OfflineAction): Promise<{ ok: boolea
   }
   const { error } = await supabase
     .from('profiles')
-    .update(updates)
+    .update(updates as Database['public']['Tables']['profiles']['Update'])
     .eq('id', userId)
   if (error) return { ok: false, conflict: 'Profile update failed. Your changes will be retried.' }
   return { ok: true }

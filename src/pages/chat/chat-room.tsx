@@ -71,7 +71,10 @@ import { CreateCarpoolSheet, type CreateCarpoolSubmitData } from '@/components/c
 import { useTyping } from '@/hooks/use-typing'
 import { useOffline } from '@/hooks/use-offline'
 import { useCollectiveMembers } from '@/hooks/use-collective'
-import { useToggleReaction } from '@/hooks/use-message-reactions'
+import {
+  useToggleReaction,
+  useMessageReactions,
+} from '@/hooks/use-message-reactions'
 import type { ReactionEmoji } from '@/lib/reactions'
 import { resolveMentionedUserIds, type MentionCandidate } from '@/components/mention-picker-utils'
 import {
@@ -588,6 +591,21 @@ export default function ChatRoomPage() {
       })
     },
     [selectedMessage, isCollective, effectiveCollectiveId, toggleReactionFromSheet],
+  )
+
+  /* Which emojis the current user has already applied to the selected
+     message. Drives the highlighted "tap to remove" (unreact) state in the
+     actions sheet's react row. Reuses the realtime-backed reaction cache. */
+  const selectedMessageReactions = useMessageReactions(
+    selectedMessage?.id,
+    isCollective ? effectiveCollectiveId : undefined,
+  )
+  const selectedActiveReactions = useMemo(
+    () =>
+      selectedMessageReactions
+        .filter((g) => g.userReacted)
+        .map((g) => g.emoji),
+    [selectedMessageReactions],
   )
 
   const handleEdit = useCallback(() => {
@@ -1120,6 +1138,7 @@ export default function ChatRoomPage() {
             ? handleReactFromSheet
             : undefined
         }
+        activeReactions={selectedActiveReactions}
         onReport={() => {
           setReportTarget(selectedMessage)
           setShowReportSheet(true)

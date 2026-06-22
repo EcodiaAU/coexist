@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      _audit_excel_dedup_20260513: {
+        Row: {
+          audited_at: string
+          event_snapshot: Json
+          extra_id: string
+          impact_snapshot: Json | null
+          keeper_id: string
+        }
+        Insert: {
+          audited_at?: string
+          event_snapshot: Json
+          extra_id: string
+          impact_snapshot?: Json | null
+          keeper_id: string
+        }
+        Update: {
+          audited_at?: string
+          event_snapshot?: Json
+          extra_id?: string
+          impact_snapshot?: Json | null
+          keeper_id?: string
+        }
+        Relationships: []
+      }
+      activity_type_defaults: {
+        Row: {
+          activity_type: string
+          cover_image_position_x: number
+          cover_image_position_y: number
+          cover_image_url: string
+          updated_at: string
+        }
+        Insert: {
+          activity_type: string
+          cover_image_position_x?: number
+          cover_image_position_y?: number
+          cover_image_url: string
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: string
+          cover_image_position_x?: number
+          cover_image_position_y?: number
+          cover_image_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_images: {
         Row: {
           key: string
@@ -191,6 +239,225 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carpool_breakout_chats: {
+        Row: {
+          archived_at: string | null
+          carpool_id: string
+          channel_id: string
+          deleted_at: string | null
+          warning_posted_at: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          carpool_id: string
+          channel_id: string
+          deleted_at?: string | null
+          warning_posted_at?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          carpool_id?: string
+          channel_id?: string
+          deleted_at?: string | null
+          warning_posted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carpool_breakout_chats_carpool_id_fkey"
+            columns: ["carpool_id"]
+            isOneToOne: true
+            referencedRelation: "carpool_widgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carpool_breakout_chats_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carpool_geocode_cache: {
+        Row: {
+          cached_at: string
+          display_name: string | null
+          lat: number
+          lng: number
+          text_normalized: string
+        }
+        Insert: {
+          cached_at?: string
+          display_name?: string | null
+          lat: number
+          lng: number
+          text_normalized: string
+        }
+        Update: {
+          cached_at?: string
+          display_name?: string | null
+          lat?: number
+          lng?: number
+          text_normalized?: string
+        }
+        Relationships: []
+      }
+      carpool_seats: {
+        Row: {
+          carpool_id: string
+          created_at: string
+          id: string
+          passenger_id: string
+          pickup_address_text: string
+          pickup_lat: number | null
+          pickup_lng: number | null
+          status: string
+        }
+        Insert: {
+          carpool_id: string
+          created_at?: string
+          id?: string
+          passenger_id: string
+          pickup_address_text: string
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          status?: string
+        }
+        Update: {
+          carpool_id?: string
+          created_at?: string
+          id?: string
+          passenger_id?: string
+          pickup_address_text?: string
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carpool_seats_carpool_id_fkey"
+            columns: ["carpool_id"]
+            isOneToOne: false
+            referencedRelation: "carpool_widgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carpool_seats_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carpool_seats_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carpool_widgets: {
+        Row: {
+          collective_id: string
+          created_at: string
+          departure_lat: number | null
+          departure_lng: number | null
+          departure_point_text: string
+          departure_time: string
+          driver_id: string
+          event_id: string
+          expires_at: string | null
+          id: string
+          message_id: string | null
+          notes: string | null
+          seats_total: number
+          status: string
+        }
+        Insert: {
+          collective_id: string
+          created_at?: string
+          departure_lat?: number | null
+          departure_lng?: number | null
+          departure_point_text: string
+          departure_time: string
+          driver_id: string
+          event_id: string
+          expires_at?: string | null
+          id?: string
+          message_id?: string | null
+          notes?: string | null
+          seats_total: number
+          status?: string
+        }
+        Update: {
+          collective_id?: string
+          created_at?: string
+          departure_lat?: number | null
+          departure_lng?: number | null
+          departure_point_text?: string
+          departure_time?: string
+          driver_id?: string
+          event_id?: string
+          expires_at?: string | null
+          id?: string
+          message_id?: string | null
+          notes?: string | null
+          seats_total?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carpool_widgets_collective_id_fkey"
+            columns: ["collective_id"]
+            isOneToOne: false
+            referencedRelation: "collectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carpool_widgets_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carpool_widgets_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carpool_widgets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "carpool_widgets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "carpool_widgets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carpool_widgets_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
             referencedColumns: ["id"]
           },
         ]
@@ -576,6 +843,7 @@ export type Database = {
           collective_id: string | null
           created_at: string
           id: string
+          lifecycle_status: string
           name: string
           state: string | null
           type: string
@@ -584,6 +852,7 @@ export type Database = {
           collective_id?: string | null
           created_at?: string
           id?: string
+          lifecycle_status?: string
           name: string
           state?: string | null
           type: string
@@ -592,6 +861,7 @@ export type Database = {
           collective_id?: string | null
           created_at?: string
           id?: string
+          lifecycle_status?: string
           name?: string
           state?: string | null
           type?: string
@@ -609,10 +879,14 @@ export type Database = {
       chat_messages: {
         Row: {
           announcement_id: string | null
+          carpool_id: string | null
           channel_id: string | null
+          client_action_id: string | null
           collective_id: string | null
           content: string | null
           created_at: string | null
+          event_photos_event_id: string | null
+          event_survey_event_id: string | null
           id: string
           image_path: string | null
           image_url: string | null
@@ -628,10 +902,14 @@ export type Database = {
         }
         Insert: {
           announcement_id?: string | null
+          carpool_id?: string | null
           channel_id?: string | null
+          client_action_id?: string | null
           collective_id?: string | null
           content?: string | null
           created_at?: string | null
+          event_photos_event_id?: string | null
+          event_survey_event_id?: string | null
           id?: string
           image_path?: string | null
           image_url?: string | null
@@ -647,10 +925,14 @@ export type Database = {
         }
         Update: {
           announcement_id?: string | null
+          carpool_id?: string | null
           channel_id?: string | null
+          client_action_id?: string | null
           collective_id?: string | null
           content?: string | null
           created_at?: string | null
+          event_photos_event_id?: string | null
+          event_survey_event_id?: string | null
           id?: string
           image_path?: string | null
           image_url?: string | null
@@ -673,6 +955,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "chat_messages_carpool_id_fkey"
+            columns: ["carpool_id"]
+            isOneToOne: false
+            referencedRelation: "carpool_widgets"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "chat_messages_channel_id_fkey"
             columns: ["channel_id"]
             isOneToOne: false
@@ -684,6 +973,48 @@ export type Database = {
             columns: ["collective_id"]
             isOneToOne: false
             referencedRelation: "collectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_event_photos_event_id_fkey"
+            columns: ["event_photos_event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "chat_messages_event_photos_event_id_fkey"
+            columns: ["event_photos_event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "chat_messages_event_photos_event_id_fkey"
+            columns: ["event_photos_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_event_survey_event_id_fkey"
+            columns: ["event_survey_event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "chat_messages_event_survey_event_id_fkey"
+            columns: ["event_survey_event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "chat_messages_event_survey_event_id_fkey"
+            columns: ["event_survey_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
           {
@@ -826,21 +1157,21 @@ export type Database = {
       chat_read_receipts: {
         Row: {
           channel_id: string | null
-          collective_id: string
+          collective_id: string | null
           id: string
           last_read_at: string | null
           user_id: string
         }
         Insert: {
           channel_id?: string | null
-          collective_id: string
+          collective_id?: string | null
           id?: string
           last_read_at?: string | null
           user_id: string
         }
         Update: {
           channel_id?: string | null
-          collective_id?: string
+          collective_id?: string | null
           id?: string
           last_read_at?: string | null
           user_id?: string
@@ -1041,6 +1372,20 @@ export type Database = {
             foreignKeyName: "collective_event_collaborators_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "collective_event_collaborators_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "collective_event_collaborators_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -1193,6 +1538,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          handled: boolean
+          id: string
+          message: string
+          name: string
+          source: string
+          topic: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          handled?: boolean
+          id?: string
+          message: string
+          name: string
+          source?: string
+          topic?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          handled?: boolean
+          id?: string
+          message?: string
+          name?: string
+          source?: string
+          topic?: string | null
+        }
+        Relationships: []
       }
       contact_submissions: {
         Row: {
@@ -2322,6 +2700,20 @@ export type Database = {
             foreignKeyName: "email_reminders_sent_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "email_reminders_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "email_reminders_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -2492,6 +2884,20 @@ export type Database = {
             foreignKeyName: "event_day_notifications_sent_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_day_notifications_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_day_notifications_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -2515,6 +2921,7 @@ export type Database = {
         Row: {
           area_restored_sqm: number | null
           attendees: number | null
+          client_action_id: string | null
           coastline_cleaned_m: number | null
           custom_metrics: Json | null
           event_id: string
@@ -2533,6 +2940,7 @@ export type Database = {
         Insert: {
           area_restored_sqm?: number | null
           attendees?: number | null
+          client_action_id?: string | null
           coastline_cleaned_m?: number | null
           custom_metrics?: Json | null
           event_id: string
@@ -2551,6 +2959,7 @@ export type Database = {
         Update: {
           area_restored_sqm?: number | null
           attendees?: number | null
+          client_action_id?: string | null
           coastline_cleaned_m?: number | null
           custom_metrics?: Json | null
           event_id?: string
@@ -2567,6 +2976,20 @@ export type Database = {
           wildlife_sightings?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "event_impact_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_impact_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
           {
             foreignKeyName: "event_impact_event_id_fkey"
             columns: ["event_id"]
@@ -2627,6 +3050,20 @@ export type Database = {
             foreignKeyName: "event_invites_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_invites_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_invites_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -2676,6 +3113,20 @@ export type Database = {
             foreignKeyName: "event_maybe_reminders_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_maybe_reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_maybe_reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -2719,6 +3170,20 @@ export type Database = {
             foreignKeyName: "event_organisations_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_organisations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_organisations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -2731,9 +3196,88 @@ export type Database = {
           },
         ]
       }
+      event_photos: {
+        Row: {
+          archived_at: string | null
+          bytes: number | null
+          caption: string | null
+          created_at: string
+          event_id: string
+          height: number | null
+          id: string
+          storage_path: string
+          thumbnail_path: string | null
+          uploaded_by: string
+          width: number | null
+        }
+        Insert: {
+          archived_at?: string | null
+          bytes?: number | null
+          caption?: string | null
+          created_at?: string
+          event_id: string
+          height?: number | null
+          id?: string
+          storage_path: string
+          thumbnail_path?: string | null
+          uploaded_by: string
+          width?: number | null
+        }
+        Update: {
+          archived_at?: string | null
+          bytes?: number | null
+          caption?: string | null
+          created_at?: string
+          event_id?: string
+          height?: number | null
+          id?: string
+          storage_path?: string
+          thumbnail_path?: string | null
+          uploaded_by?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_photos_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_photos_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_photos_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_photos_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_photos_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_registrations: {
         Row: {
           checked_in_at: string | null
+          client_action_id: string | null
           event_id: string
           id: string
           invited_at: string | null
@@ -2743,6 +3287,7 @@ export type Database = {
         }
         Insert: {
           checked_in_at?: string | null
+          client_action_id?: string | null
           event_id: string
           id?: string
           invited_at?: string | null
@@ -2752,6 +3297,7 @@ export type Database = {
         }
         Update: {
           checked_in_at?: string | null
+          client_action_id?: string | null
           event_id?: string
           id?: string
           invited_at?: string | null
@@ -2760,6 +3306,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
           {
             foreignKeyName: "event_registrations_event_id_fkey"
             columns: ["event_id"]
@@ -2877,6 +3437,20 @@ export type Database = {
             foreignKeyName: "event_ticket_types_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_ticket_types_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_ticket_types_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -2933,6 +3507,20 @@ export type Database = {
             foreignKeyName: "event_tickets_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -2959,10 +3547,139 @@ export type Database = {
           },
         ]
       }
+      event_walk_ins: {
+        Row: {
+          accessibility_requirements: string | null
+          age: number | null
+          client_ip: unknown
+          collective_discovery: string | null
+          created_at: string
+          created_by_user_id: string | null
+          created_via: string
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relationship: string | null
+          event_id: string
+          first_name: string
+          gender: string | null
+          id: string
+          last_name: string | null
+          linked_user_id: string | null
+          phone: string | null
+          postcode: string | null
+          pronouns: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          accessibility_requirements?: string | null
+          age?: number | null
+          client_ip?: unknown
+          collective_discovery?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          created_via: string
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
+          event_id: string
+          first_name: string
+          gender?: string | null
+          id?: string
+          last_name?: string | null
+          linked_user_id?: string | null
+          phone?: string | null
+          postcode?: string | null
+          pronouns?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          accessibility_requirements?: string | null
+          age?: number | null
+          client_ip?: unknown
+          collective_discovery?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          created_via?: string
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
+          event_id?: string
+          first_name?: string
+          gender?: string | null
+          id?: string
+          last_name?: string | null
+          linked_user_id?: string | null
+          phone?: string | null
+          postcode?: string | null
+          pronouns?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_walk_ins_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_walk_ins_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_walk_ins_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_walk_ins_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_walk_ins_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_walk_ins_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_walk_ins_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           activity_type: Database["public"]["Enums"]["activity_type"]
           address: string | null
+          cancelled_via_sheet_sync_at: string | null
           capacity: number | null
           check_in_code: string | null
           checkin_window_minutes: number | null
@@ -2975,12 +3692,15 @@ export type Database = {
           date_end: string | null
           date_start: string
           description: string | null
+          event_extras: Json
           external_registration_url: string | null
           id: string
           is_external_collaboration: boolean | null
           is_public: boolean | null
           is_ticketed: boolean | null
           location_point: unknown
+          public_check_in_enabled: boolean
+          public_check_in_token: string | null
           series_id: string | null
           status: Database["public"]["Enums"]["event_status"] | null
           timezone: string | null
@@ -2990,6 +3710,7 @@ export type Database = {
         Insert: {
           activity_type: Database["public"]["Enums"]["activity_type"]
           address?: string | null
+          cancelled_via_sheet_sync_at?: string | null
           capacity?: number | null
           check_in_code?: string | null
           checkin_window_minutes?: number | null
@@ -3002,12 +3723,15 @@ export type Database = {
           date_end?: string | null
           date_start: string
           description?: string | null
+          event_extras?: Json
           external_registration_url?: string | null
           id?: string
           is_external_collaboration?: boolean | null
           is_public?: boolean | null
           is_ticketed?: boolean | null
           location_point?: unknown
+          public_check_in_enabled?: boolean
+          public_check_in_token?: string | null
           series_id?: string | null
           status?: Database["public"]["Enums"]["event_status"] | null
           timezone?: string | null
@@ -3017,6 +3741,7 @@ export type Database = {
         Update: {
           activity_type?: Database["public"]["Enums"]["activity_type"]
           address?: string | null
+          cancelled_via_sheet_sync_at?: string | null
           capacity?: number | null
           check_in_code?: string | null
           checkin_window_minutes?: number | null
@@ -3029,12 +3754,15 @@ export type Database = {
           date_end?: string | null
           date_start?: string
           description?: string | null
+          event_extras?: Json
           external_registration_url?: string | null
           id?: string
           is_external_collaboration?: boolean | null
           is_public?: boolean | null
           is_ticketed?: boolean | null
           location_point?: unknown
+          public_check_in_enabled?: boolean
+          public_check_in_token?: string | null
           series_id?: string | null
           status?: Database["public"]["Enums"]["event_status"] | null
           timezone?: string | null
@@ -3757,6 +4485,33 @@ export type Database = {
           },
         ]
       }
+      newsletter_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          source: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          source?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
       notification_recipients: {
         Row: {
           created_at: string
@@ -4086,6 +4841,20 @@ export type Database = {
             foreignKeyName: "points_ledger_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "points_ledger_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "points_ledger_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -4128,6 +4897,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "post_event_survey_responses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "post_event_survey_responses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
           {
             foreignKeyName: "post_event_survey_responses_event_id_fkey"
             columns: ["event_id"]
@@ -4424,6 +5207,49 @@ export type Database = {
           value?: number
         }
         Relationships: []
+      }
+      public_check_in_rate_limits: {
+        Row: {
+          attempted_at: string
+          event_id: string
+          id: string
+          ip: unknown
+        }
+        Insert: {
+          attempted_at?: string
+          event_id: string
+          id?: string
+          ip: unknown
+        }
+        Update: {
+          attempted_at?: string
+          event_id?: string
+          id?: string
+          ip?: unknown
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_check_in_rate_limits_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "public_check_in_rate_limits_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "public_check_in_rate_limits_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_tokens: {
         Row: {
@@ -4724,6 +5550,7 @@ export type Database = {
       survey_responses: {
         Row: {
           answers: Json
+          client_action_id: string | null
           event_id: string | null
           id: string
           submitted_at: string | null
@@ -4733,6 +5560,7 @@ export type Database = {
         }
         Insert: {
           answers?: Json
+          client_action_id?: string | null
           event_id?: string | null
           id?: string
           submitted_at?: string | null
@@ -4742,6 +5570,7 @@ export type Database = {
         }
         Update: {
           answers?: Json
+          client_action_id?: string | null
           event_id?: string | null
           id?: string
           submitted_at?: string | null
@@ -4750,6 +5579,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "survey_responses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "survey_responses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
           {
             foreignKeyName: "survey_responses_event_id_fkey"
             columns: ["event_id"]
@@ -4837,6 +5680,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "surveys_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "surveys_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
           },
           {
             foreignKeyName: "surveys_event_id_fkey"
@@ -4973,6 +5830,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_instances_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "task_instances_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
           },
           {
             foreignKeyName: "task_instances_event_id_fkey"
@@ -5333,6 +6204,97 @@ export type Database = {
       }
     }
     Views: {
+      admin_event_photos_view: {
+        Row: {
+          archived_at: string | null
+          bytes: number | null
+          caption: string | null
+          collective_id: string | null
+          collective_name: string | null
+          collective_region: string | null
+          collective_state: string | null
+          created_at: string | null
+          event_activity_type:
+            | Database["public"]["Enums"]["activity_type"]
+            | null
+          event_date_end: string | null
+          event_date_start: string | null
+          event_id: string | null
+          event_title: string | null
+          height: number | null
+          id: string | null
+          storage_path: string | null
+          thumbnail_path: string | null
+          uploaded_by: string | null
+          uploader_avatar_url: string | null
+          uploader_display_name: string | null
+          width: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_photos_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_photos_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_photos_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_photos_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_photos_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_collective_id_fkey"
+            columns: ["collective_id"]
+            isOneToOne: false
+            referencedRelation: "collectives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_dupe_suspect: {
+        Row: {
+          collective_id: string | null
+          dupe_count: number | null
+          earliest_created_at: string | null
+          event_date: string | null
+          event_ids: string[] | null
+          latest_created_at: string | null
+          title_lower: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_collective_id_fkey"
+            columns: ["collective_id"]
+            isOneToOne: false
+            referencedRelation: "collectives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_hosts: {
         Row: {
           collective_id: string | null
@@ -5342,6 +6304,31 @@ export type Database = {
           host_index: number | null
         }
         Relationships: []
+      }
+      event_potential_duplicates: {
+        Row: {
+          collective_id: string | null
+          event_a_created_at: string | null
+          event_a_id: string | null
+          event_a_title: string | null
+          event_a_uuid_version: string | null
+          event_b_created_at: string | null
+          event_b_id: string | null
+          event_b_title: string | null
+          event_b_uuid_version: string | null
+          event_date: string | null
+          jaccard: number | null
+          shared_tokens: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_collective_id_fkey"
+            columns: ["collective_id"]
+            isOneToOne: false
+            referencedRelation: "collectives"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       geography_columns: {
         Row: {
@@ -5427,8 +6414,64 @@ export type Database = {
         }
         Relationships: []
       }
+      v_carpool_seats_safe: {
+        Row: {
+          carpool_id: string | null
+          created_at: string | null
+          id: string | null
+          passenger_id: string | null
+          pickup_address_text: string | null
+          pickup_lat: number | null
+          pickup_lng: number | null
+          status: string | null
+        }
+        Insert: {
+          carpool_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          passenger_id?: string | null
+          pickup_address_text?: never
+          pickup_lat?: never
+          pickup_lng?: never
+          status?: string | null
+        }
+        Update: {
+          carpool_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          passenger_id?: string | null
+          pickup_address_text?: never
+          pickup_lat?: never
+          pickup_lng?: never
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carpool_seats_carpool_id_fkey"
+            columns: ["carpool_id"]
+            isOneToOne: false
+            referencedRelation: "carpool_widgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carpool_seats_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carpool_seats_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      _is_national_role: { Args: { p_role: string }; Returns: boolean }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined
@@ -5565,41 +6608,57 @@ export type Database = {
         }
         Returns: undefined
       }
-      admin_list_users:
-        | {
-            Args: {
-              offset_val?: number
-              result_limit?: number
-              role_filter?: string
-              search_term?: string
-            }
-            Returns: {
-              avatar_url: string
-              collective_count: number
-              created_at: string
-              display_name: string
-              email: string
-              id: string
-              last_sign_in_at: string
-              role: string
-            }[]
-          }
-        | {
-            Args: {
-              result_limit?: number
-              role_filter?: string
-              search_term?: string
-            }
-            Returns: {
-              avatar_url: string
-              created_at: string
-              display_name: string
-              email: string
-              id: string
-              is_suspended: boolean
-              role: string
-            }[]
-          }
+      admin_list_users: {
+        Args: {
+          offset_val?: number
+          result_limit?: number
+          role_filter?: string
+          search_term?: string
+        }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          is_suspended: boolean
+          role: string
+        }[]
+      }
+      admin_photos_by_attendee: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          archived_at: string | null
+          bytes: number | null
+          caption: string | null
+          collective_id: string | null
+          collective_name: string | null
+          collective_region: string | null
+          collective_state: string | null
+          created_at: string | null
+          event_activity_type:
+            | Database["public"]["Enums"]["activity_type"]
+            | null
+          event_date_end: string | null
+          event_date_start: string | null
+          event_id: string | null
+          event_title: string | null
+          height: number | null
+          id: string | null
+          storage_path: string | null
+          thumbnail_path: string | null
+          uploaded_by: string | null
+          uploader_avatar_url: string | null
+          uploader_display_name: string | null
+          width: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "admin_event_photos_view"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       award_points: {
         Args: {
           p_amount: number
@@ -5616,8 +6675,23 @@ export type Database = {
       check_user_suspended: { Args: { uid: string }; Returns: Json }
       cleanup_deleted_accounts: { Args: never; Returns: number }
       cleanup_expired_reservations: { Args: never; Returns: number }
+      coexist_attendance_metrics: {
+        Args: {
+          p_activity_types?: Database["public"]["Enums"]["activity_type"][]
+          p_collective_ids?: string[]
+          p_from?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      coexist_impact_legacy_by_activity: { Args: never; Returns: Json }
+      cron_carpool_archive_sweep: { Args: never; Returns: undefined }
+      cron_event_day_notify: { Args: never; Returns: undefined }
+      cron_event_post_photo_invite: { Args: never; Returns: undefined }
+      cron_event_post_survey_invite: { Args: never; Returns: undefined }
       cron_excel_from_sync: { Args: never; Returns: undefined }
       cron_excel_to_sync: { Args: never; Returns: undefined }
+      cron_stats_drift_check: { Args: never; Returns: undefined }
       decrement_stock: {
         Args: {
           p_product_id: string
@@ -5658,11 +6732,24 @@ export type Database = {
         | { Args: { schema_name: string; table_name: string }; Returns: string }
         | { Args: { table_name: string }; Returns: string }
       email_subscriber_count: { Args: never; Returns: number }
+      email_tag_dedup_candidates: {
+        Args: never
+        Returns: {
+          canon: string
+          tag_ids: string[]
+          tag_names: string[]
+        }[]
+      }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      event_effective_timezone: {
+        Args: { p_event_id: string }
+        Returns: string
+      }
       event_host_count: { Args: { p_event_id: string }; Returns: number }
       expire_stale_pending_tickets: { Args: never; Returns: number }
       generate_event_check_in_code: { Args: never; Returns: string }
+      generate_public_check_in_token: { Args: never; Returns: string }
       generate_ticket_code: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
@@ -5771,6 +6858,7 @@ export type Database = {
         }
         Returns: number
       }
+      get_carpool_seat_pickup: { Args: { p_seat_id: string }; Returns: Json }
       get_charity_impact_report: {
         Args: { p_date_from: string; p_date_to: string; p_scope?: string }
         Returns: Json
@@ -5798,6 +6886,7 @@ export type Database = {
         Returns: {
           activity_type: Database["public"]["Enums"]["activity_type"]
           address: string | null
+          cancelled_via_sheet_sync_at: string | null
           capacity: number | null
           check_in_code: string | null
           checkin_window_minutes: number | null
@@ -5810,14 +6899,18 @@ export type Database = {
           date_end: string | null
           date_start: string
           description: string | null
+          event_extras: Json
           external_registration_url: string | null
           id: string
           is_external_collaboration: boolean | null
           is_public: boolean | null
           is_ticketed: boolean | null
           location_point: unknown
+          public_check_in_enabled: boolean
+          public_check_in_token: string | null
           series_id: string | null
           status: Database["public"]["Enums"]["event_status"] | null
+          timezone: string | null
           title: string
           updated_at: string | null
         }[]
@@ -5839,6 +6932,7 @@ export type Database = {
         }[]
       }
       get_national_stats: { Args: never; Returns: Json }
+      get_platform_impact_stats: { Args: never; Returns: Json }
       get_product_available_stock: {
         Args: { p_exclude_user_id?: string; p_product_id: string }
         Returns: Json
@@ -5850,6 +6944,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
+      get_public_stats: { Args: never; Returns: Json }
       get_user_impact_stats: { Args: { p_user_id: string }; Returns: Json }
       get_user_profile_v1: { Args: { target_user_id: string }; Returns: Json }
       gettransactionid: { Args: never; Returns: unknown }
@@ -5884,6 +6979,7 @@ export type Database = {
       }
       is_admin: { Args: { uid: string }; Returns: boolean }
       is_admin_or_staff: { Args: { uid: string }; Returns: boolean }
+      is_admin_tier: { Args: { uid: string }; Returns: boolean }
       is_collective_leader_or_above: {
         Args: { cid: string; uid: string }
         Returns: boolean
@@ -5903,6 +6999,14 @@ export type Database = {
       }
       is_super_admin: { Args: { uid: string }; Returns: boolean }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      merge_email_tags: {
+        Args: { p_canonical_id: string; p_deprecated_id: string }
+        Returns: number
+      }
+      notify_chat_mentions: {
+        Args: { p_mentioned_user_ids: string[]; p_message_id: string }
+        Returns: number
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -5943,6 +7047,17 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      recipient_next_events: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          address: string
+          collective_name: string
+          date_start: string
+          event_id: string
+          title: string
+          user_id: string
+        }[]
+      }
       recover_pending_deletion: { Args: { uid: string }; Returns: undefined }
       release_all_reservations: {
         Args: { p_user_id: string }
@@ -5988,6 +7103,24 @@ export type Database = {
         Returns: undefined
       }
       role_rank: { Args: { r: string }; Returns: number }
+      save_carpool_seat: {
+        Args: {
+          p_carpool_id: string
+          p_pickup_address_text: string
+          p_pickup_lat?: number
+          p_pickup_lng?: number
+        }
+        Returns: Json
+      }
+      search_app_users_for_event: {
+        Args: { p_event_id: string; p_max_results?: number; p_query: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          email: string
+          id: string
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       st_3dclosestpoint: {
@@ -6577,6 +7710,7 @@ export type Database = {
         Returns: undefined
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      unsubscribe_by_email: { Args: { p_email: string }; Returns: undefined }
       update_event_location: {
         Args: { p_event_id: string; p_lat: number; p_lng: number }
         Returns: undefined

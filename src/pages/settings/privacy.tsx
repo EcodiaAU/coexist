@@ -193,7 +193,7 @@ export default function SettingsPrivacyPage() {
       setMarketingOptIn(value)
       supabase
         .from('profiles')
-        .update({ marketing_opt_in: value } as unknown as Record<string, unknown>)
+        .update({ marketing_opt_in: value })
         .eq('id', user.id)
         .then(({ error }) => {
           if (error) {

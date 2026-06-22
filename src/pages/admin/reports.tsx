@@ -482,7 +482,7 @@ async function fetchPerEventReport(
       .from('event_impact')
       .select(IMPACT_SELECT_COLUMNS)
       .in('event_id', eventIds)
-    for (const r of (impactRows ?? []) as Record<string, unknown>[]) {
+    for (const r of (impactRows ?? []) as unknown as Record<string, unknown>[]) {
       impactByEvent.set(r.event_id as string, r)
     }
   }
