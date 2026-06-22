@@ -1,6 +1,11 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
+import { Reveal } from '@/components/reveal'
+import { getPublicImpactStats, type PublicImpactStats } from '@/lib/public-stats'
+import { getPartners } from '@/lib/queries'
+
+export const revalidate = 1800
 
 export const metadata: Metadata = {
   title: 'Support us',
@@ -8,26 +13,61 @@ export const metadata: Metadata = {
     'Donate, partner, or fundraise for Co-Exist. Become a corporate partner and put young people back into nature across Australia. ACNC registered charity.',
 }
 
+const FALLBACK: PublicImpactStats = { volunteers: 5500, collectives: 15, plants: 46400, rubbishKg: 5900, events: 340 }
+const fmt = (n: number) => new Intl.NumberFormat('en-AU').format(n)
+
 const WAYS = [
   { title: 'Donate', body: 'A one-off or regular gift funds events, equipment and the people who make conservation days happen.', href: '/donate', cta: 'Make a donation' },
   { title: 'Fundraise', body: 'Run your own fundraiser, or rally your workplace or school. We will help you set it up.', href: '/contact', cta: 'Get in touch' },
   { title: 'Volunteer', body: 'Give your time and skills. Lead a collective, or help run the movement behind the scenes.', href: '/get-involved/team', cta: 'Join the team' },
 ]
 
-export default function SupportPage() {
+const ENABLES = [
+  { k: 'Events on the ground', v: 'Plantings, clean-ups and nature days run by local young people, every week, all over the country.' },
+  { k: 'Gear that gets reused', v: 'Tools, gloves, native seedlings and safety kit that equip a whole collective, not just one day.' },
+  { k: 'Leaders, supported', v: 'Training and backing for the young people who start and run collectives in their own towns.' },
+]
+
+export default async function SupportPage() {
+  let stats: PublicImpactStats = FALLBACK
+  try { stats = await getPublicImpactStats() } catch { stats = FALLBACK }
+  const partners = await getPartners().catch(() => [])
+
+  const tiles = [
+    { value: fmt(stats.rubbishKg), unit: 'kg', label: 'Litter removed' },
+    { value: fmt(stats.plants), unit: '', label: 'Native plants' },
+    { value: fmt(stats.collectives), unit: '', label: 'Collectives' },
+    { value: fmt(stats.volunteers), unit: '', label: 'Young volunteers' },
+  ]
+
   return (
     <main>
       <PageHeader
         eyebrow="Support us"
-        title="Help us put young people back into nature"
-        subtitle="Co-Exist is a registered charity. Your support goes straight into local conservation and the communities that drive it."
+        title="Back young people in nature"
+        subtitle="Co-Exist is a registered charity. Your support goes straight into local conservation and the young people driving it."
         image="/images/nature.webp"
       />
+
+      {/* Live impact strip - what support has already built */}
+      <section className="border-b border-neutral-200 bg-white">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-8 px-6 py-12 sm:grid-cols-4">
+          {tiles.map((t) => (
+            <div key={t.label}>
+              <p className="text-3xl text-neutral-900 sm:text-4xl">
+                {t.value}
+                {t.unit && <span className="text-lg text-neutral-400"> {t.unit}</span>}
+              </p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-neutral-400">{t.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Corporate partner - feature band */}
       <section className="bg-olive-800 text-oncream">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-2">
-          <div>
+          <Reveal>
             <p className="eyebrow text-sage">For business</p>
             <h2 className="mt-4 text-4xl text-oncream sm:text-5xl">Become a corporate partner</h2>
             <p className="mt-6 max-w-md text-[15px] leading-relaxed text-oncream/85">
@@ -38,34 +78,69 @@ export default function SupportPage() {
             <Link href="/contact" className="mt-8 inline-block rounded-full bg-oncream px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-olive-900 transition-all duration-300 hover:px-10">
               Start a conversation
             </Link>
-          </div>
-          <div className="rounded-3xl border border-oncream/15 p-8">
+          </Reveal>
+          <Reveal delay={120} className="rounded-3xl border border-oncream/15 p-8">
             <blockquote className="text-2xl font-light leading-snug text-oncream sm:text-3xl">
               &ldquo;You&apos;re actually making a difference to the world around you.&rdquo;
             </blockquote>
             <p className="eyebrow mt-6 text-sage">Sam Lundberg, Co-Exist volunteer</p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* What your support enables */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <p className="eyebrow text-primary-600">Where it goes</p>
+          <h2 className="mt-3 max-w-2xl text-4xl text-neutral-900 sm:text-5xl">Every dollar does something you can see</h2>
+          <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-3">
+            {ENABLES.map((e, i) => (
+              <Reveal key={e.k} delay={i * 80} className="border-t border-neutral-200 pt-6">
+                <h3 className="text-xl text-neutral-900">{e.k}</h3>
+                <p className="mt-3 text-[15px] leading-relaxed text-neutral-500">{e.v}</p>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Ways to support */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <p className="eyebrow text-primary-600">Ways to support</p>
-        <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">More ways to help</h2>
-        <div className="mt-10 grid gap-x-8 gap-y-10 md:grid-cols-3">
-          {WAYS.map((w) => (
-            <div key={w.title} className="flex flex-col border-t border-neutral-200 pt-6">
-              <h3 className="text-2xl text-neutral-900">{w.title}</h3>
-              <p className="mt-3 flex-1 text-[15px] leading-relaxed text-neutral-500">{w.body}</p>
-              <Link href={w.href} className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 hover:text-primary-900">
-                {w.cta} →
-              </Link>
+      {/* Partners we already work with */}
+      {partners.length > 0 && (
+        <section className="border-y border-neutral-200 bg-neutral-50">
+          <div className="mx-auto max-w-6xl px-6 py-16">
+            <p className="eyebrow text-center text-neutral-400">In good company</p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-8">
+              {partners.map((p) =>
+                p.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={p.id} src={p.logo_url} alt={p.name} className="h-9 w-auto object-contain opacity-50 transition-opacity hover:opacity-100" />
+                ) : null,
+              )}
             </div>
-          ))}
+          </div>
+        </section>
+      )}
+
+      {/* Ways to support */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <p className="eyebrow text-primary-600">Ways to support</p>
+          <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">More ways to help</h2>
+          <div className="mt-10 grid gap-x-8 gap-y-10 md:grid-cols-3">
+            {WAYS.map((w) => (
+              <div key={w.title} className="flex flex-col border-t border-neutral-200 pt-6">
+                <h3 className="text-2xl text-neutral-900">{w.title}</h3>
+                <p className="mt-3 flex-1 text-[15px] leading-relaxed text-neutral-500">{w.body}</p>
+                <Link href={w.href} className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 hover:text-primary-900">
+                  {w.cta} →
+                </Link>
+              </div>
+            ))}
+          </div>
+          <p className="mt-12 text-sm text-neutral-400">
+            Co-Exist Australia Ltd is an ACNC registered charity. ABN 39 660 776 983. Donations over $2 are tax deductible.
+          </p>
         </div>
-        <p className="mt-12 text-sm text-neutral-400">
-          Co-Exist Australia Ltd is an ACNC registered charity. ABN 39 660 776 983.
-        </p>
       </section>
     </main>
   )

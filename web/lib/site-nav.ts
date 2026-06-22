@@ -32,3 +32,14 @@ export const NAV: NavItem[] = [
 
 /** Prominent CTA shown as a filled button, separate from the nav list. */
 export const DONATE_HREF = '/donate'
+
+/** Social channels (verified from the live site footer). */
+export interface Social {
+  label: string
+  href: string
+  icon: 'instagram' | 'facebook'
+}
+export const SOCIALS: Social[] = [
+  { label: 'Instagram', href: 'https://www.instagram.com/coexistaus', icon: 'instagram' },
+  { label: 'Facebook', href: 'https://www.facebook.com/coexistaus', icon: 'facebook' },
+]

@@ -18,13 +18,13 @@ export function PageHeader({
 }) {
   if (image) {
     return (
-      <section className="relative isolate flex min-h-[58vh] items-end overflow-hidden">
-        <Image src={image} alt="" fill priority className="-z-10 object-cover" />
-        <div className="-z-10 absolute inset-0 bg-gradient-to-t from-olive-950/85 via-olive-950/35 to-olive-900/20" />
-        <div className="mx-auto w-full max-w-6xl px-6 pb-16 pt-40">
-          {eyebrow && <p className="eyebrow text-oncream/75">{eyebrow}</p>}
-          <h1 className="display-tight mt-4 max-w-4xl text-5xl leading-[0.98] text-oncream sm:text-7xl">{title}</h1>
-          {subtitle && <p className="mt-5 max-w-xl text-base text-oncream/85">{subtitle}</p>}
+      <section className="film-cover relative isolate flex min-h-[62vh] items-end overflow-hidden">
+        <Image src={image} alt="" fill priority quality={90} sizes="100vw" className="-z-10 object-cover" />
+        <div className="grain-layer absolute inset-0 z-0" />
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-14 pt-40 sm:pb-20">
+          {eyebrow && <p className="eyebrow text-oncream/70">{eyebrow}</p>}
+          <h1 className="display-tight mt-4 max-w-4xl text-[3.25rem] leading-[0.92] text-oncream sm:text-7xl">{title}</h1>
+          {subtitle && <p className="mt-5 max-w-md text-[15px] leading-relaxed text-oncream/85">{subtitle}</p>}
         </div>
       </section>
     )
@@ -33,8 +33,8 @@ export function PageHeader({
     <section className="bg-white">
       <div className="mx-auto max-w-6xl px-6 pb-12 pt-36 sm:pt-44">
         {eyebrow && <p className="eyebrow text-primary-600">{eyebrow}</p>}
-        <h1 className="display-tight mt-5 max-w-4xl text-5xl leading-[0.98] text-neutral-900 sm:text-8xl">{title}</h1>
-        {subtitle && <p className="mt-6 max-w-xl text-base leading-relaxed text-neutral-500">{subtitle}</p>}
+        <h1 className="display-tight mt-5 max-w-4xl text-[3.25rem] leading-[0.92] text-neutral-900 sm:text-8xl">{title}</h1>
+        {subtitle && <p className="mt-6 max-w-md text-[15px] leading-relaxed text-neutral-500">{subtitle}</p>}
       </div>
     </section>
   )

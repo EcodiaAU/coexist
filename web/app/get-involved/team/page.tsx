@@ -1,33 +1,38 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
+import { Reveal } from '@/components/reveal'
+import { WordSwap } from '@/components/word-swap'
 import { APP_URL } from '@/lib/env'
 
 export const metadata: Metadata = {
   title: 'Join our team',
   description:
-    'Lead a collective, volunteer your skills, or help run Co-Exist behind the scenes. Be part of building the movement.',
+    'Lead a collective, volunteer your skills, or help run Co-Exist behind the scenes. Co-Exist is built by young people who decided to do something. There is room for you.',
 }
 
 const ROLES = [
   {
     title: 'Lead a collective',
-    body: 'Start and run a local group in your area. We give you the tools, training and support to make it happen.',
+    body: 'Start and run a local group in your area. We give you the playbook, the training and a community of leaders behind you, so you are never doing it alone.',
     href: `${APP_URL}/lead-a-collective`,
     cta: 'Start a collective',
     external: true,
   },
   {
     title: 'Volunteer your skills',
-    body: 'Photography, social media, design, event support, fundraising. If you have a skill, we have a use for it.',
+    body: 'Photography, social, design, event support, fundraising. If you have a skill and a few hours, we have somewhere it makes a real difference.',
     href: '/contact',
     cta: 'Get in touch',
+    external: false,
   },
   {
     title: 'Help run the movement',
-    body: 'We are always looking for committed people to help coordinate collectives and grow Co-Exist nationally.',
+    body: 'We are always looking for committed people to help coordinate collectives, support leaders and grow Co-Exist across the country.',
     href: '/contact',
     cta: 'Register interest',
+    external: false,
   },
 ]
 
@@ -35,28 +40,83 @@ export default function TeamPage() {
   return (
     <main>
       <PageHeader
-        eyebrow="Join our team"
-        title="Help build the movement"
-        subtitle="Co-Exist is powered by young people who decided to do something. There is room for you."
-        image="/images/collective.webp"
+        eyebrow="Join the movement"
+        title="There is room for you"
+        subtitle="Co-Exist is powered by young people who decided to stop scrolling and start doing. No experience needed, just the want to."
+        image="/images/gather.webp"
       />
-      <section className="mx-auto max-w-5xl px-5 py-14">
-        <div className="grid gap-5 md:grid-cols-3">
-          {ROLES.map((r) => (
-            <div key={r.title} className="flex flex-col rounded-3xl border border-neutral-100 bg-white p-7 shadow-sm">
-              <h2 className="text-lg font-bold text-neutral-900">{r.title}</h2>
-              <p className="mt-3 flex-1 leading-relaxed text-neutral-600">{r.body}</p>
-              {r.external ? (
-                <a href={r.href} className="mt-5 inline-block text-sm font-bold text-primary-700 hover:text-primary-800">
-                  {r.cta} →
-                </a>
-              ) : (
-                <Link href={r.href} className="mt-5 inline-block text-sm font-bold text-primary-700 hover:text-primary-800">
-                  {r.cta} →
-                </Link>
-              )}
+
+      {/* Why join - full-bleed split */}
+      <section className="grid items-stretch bg-white md:grid-cols-2">
+        <Reveal className="grain relative order-1 min-h-[54vh] overflow-hidden md:order-2">
+          <Image src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill quality={88} sizes="(max-width:768px) 100vw, 50vw" className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+        </Reveal>
+        <div className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
+          <Reveal className="max-w-md">
+            <p className="eyebrow text-primary-600">Why join</p>
+            <h2 className="has-mark mt-5 text-4xl text-neutral-900 sm:text-5xl">
+              Do something that
+              <span className="mt-2 block"><WordSwap words={['actually matters', 'lasts', 'feels good', 'is yours']} /></span>
+            </h2>
+            <p className="mt-6 text-[15px] leading-relaxed text-neutral-500">
+              You meet people who care about the same things you do. You learn skills you keep for
+              life. And you get outside and do real work for the place you live. That is the whole
+              offer, and it is a good one.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Ways in - editorial numbered list */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 pb-24 pt-4">
+          <p className="eyebrow text-primary-600">Ways in</p>
+          <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">Three ways to get involved</h2>
+          <div className="mt-12 border-t border-neutral-200">
+            {ROLES.map((r, i) => (
+              <Reveal key={r.title} delay={i * 80}>
+                <div className="grid gap-3 border-b border-neutral-200 py-9 md:grid-cols-[5rem_1fr_auto] md:items-center md:gap-10">
+                  <span className="text-4xl font-light leading-none text-primary-300 sm:text-5xl">0{i + 1}</span>
+                  <div>
+                    <h3 className="text-2xl text-neutral-900">{r.title}</h3>
+                    <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-neutral-500">{r.body}</p>
+                  </div>
+                  {r.external ? (
+                    <a href={r.href} className="shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 transition-colors hover:text-primary-900">
+                      {r.cta} →
+                    </a>
+                  ) : (
+                    <Link href={r.href} className="shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 transition-colors hover:text-primary-900">
+                      {r.cta} →
+                    </Link>
+                  )}
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Closing CTA - olive band, watermark + grain */}
+      <section className="relative isolate overflow-hidden bg-olive-800 text-oncream">
+        <div className="grain-layer absolute inset-0 z-0" />
+        <span className="watermark left-[-2%] top-1/2 -translate-y-1/2 text-[24vw] text-olive-950">Co-Exist</span>
+        <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center">
+          <Reveal>
+            <h2 className="text-4xl text-oncream sm:text-6xl">Start where you are</h2>
+            <p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-oncream/80">
+              You do not need to wait until you are ready, or qualified, or older. The people already
+              doing this started exactly where you are now.
+            </p>
+            <div className="mt-9 flex flex-wrap justify-center gap-3">
+              <a href={`${APP_URL}/lead-a-collective`} className="rounded-full bg-oncream px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-olive-900 transition-all duration-300 hover:px-10">
+                Start a collective
+              </a>
+              <Link href="/contact" className="rounded-full border border-oncream/40 px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-oncream transition-all duration-300 hover:border-oncream hover:bg-oncream/10">
+                Talk to us first
+              </Link>
             </div>
-          ))}
+          </Reveal>
         </div>
       </section>
     </main>

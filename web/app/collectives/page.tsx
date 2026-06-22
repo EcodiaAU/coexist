@@ -34,7 +34,7 @@ export default async function CollectivesPage() {
         eyebrow="Get involved"
         title="Find your collective"
         subtitle={`${collectives.length} youth-led collectives across Australia, each running conservation in their own backyard.`}
-        image="/images/gather.webp"
+        image="/images/collective.webp"
       />
 
       {/* Our collective reach - interactive map (ported from the app) */}

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
 import { DonateForm } from '@/components/donate-form'
+import { Reveal } from '@/components/reveal'
 
 export const metadata: Metadata = {
   title: 'Donate',
@@ -18,36 +19,38 @@ export default function DonatePage() {
   return (
     <main>
       <PageHeader
-        eyebrow="Support us"
+        eyebrow="Donate"
         title="Put young people back into nature"
-        subtitle="Co-Exist is a registered charity. Every dollar funds events, equipment and the local communities driving real conservation. Give securely in seconds, no account needed."
+        subtitle="Co-Exist is a registered charity. Every dollar funds events, equipment and the young people driving real conservation. Give securely in seconds, no account needed."
+        image="/images/gather.webp"
       />
 
-      <section className="mx-auto grid max-w-5xl gap-12 px-6 py-16 md:grid-cols-[1fr_1.1fr]">
+      {/* Gift + form */}
+      <section className="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-[1fr_1.05fr] lg:gap-16">
         <div>
-          <h2 className="text-3xl text-neutral-900">Where your gift goes</h2>
-          <ul className="mt-6 space-y-5">
+          <p className="eyebrow text-primary-600">Where your gift goes</p>
+          <h2 className="mt-3 text-3xl text-neutral-900 sm:text-4xl">Small gifts, real ground covered</h2>
+          <div className="mt-8 space-y-px overflow-hidden rounded-3xl border border-neutral-200">
             {IMPACT.map((i) => (
-              <li key={i.amount} className="flex gap-4">
-                <span className="text-2xl font-bold text-olive-700">{i.amount}</span>
-                <span className="text-neutral-600">{i.blurb}</span>
-              </li>
+              <div key={i.amount} className="flex items-center gap-5 bg-white px-6 py-5">
+                <span className="w-16 shrink-0 text-2xl text-olive-700">{i.amount}</span>
+                <span className="text-[15px] leading-relaxed text-neutral-600">{i.blurb}</span>
+              </div>
             ))}
-          </ul>
-          <div className="mt-8 rounded-3xl bg-olive-800 p-6 text-oncream">
-            <p className="text-xl font-bold">Why it matters</p>
-            <p className="mt-2 text-sm leading-relaxed text-oncream/85">
-              Co-Exist exists so young Australians can lead conservation in their own
-              communities. Your support is what gets them outside, together, doing work that
-              lasts.
+          </div>
+          <div className="mt-6 rounded-3xl bg-olive-800 p-7 text-oncream">
+            <p className="text-lg">Why it matters</p>
+            <p className="mt-2 text-[14px] leading-relaxed text-oncream/85">
+              Co-Exist exists so young Australians can lead conservation in their own communities.
+              Your support is what gets them outside, together, doing work that lasts.
             </p>
           </div>
-          <p className="mt-6 text-sm text-neutral-500">
+          <p className="mt-6 text-sm leading-relaxed text-neutral-500">
             Prefer to give by bank transfer, or leave a gift in your will?{' '}
             <a href="/contact" className="font-semibold text-primary-700 hover:text-primary-800">
               Get in touch
             </a>{' '}
-            and we will sort it out. ACNC registered charity, ABN 39 660 776 983.
+            and we will sort it out. ACNC registered charity, ABN 39 660 776 983. Donations over $2 are tax deductible.
           </p>
         </div>
 
@@ -55,18 +58,21 @@ export default function DonatePage() {
       </section>
 
       {/* Supporter voices */}
-      <section className="bg-olive-800 text-oncream">
-        <div className="mx-auto max-w-6xl px-6 py-24">
+      <section className="relative isolate overflow-hidden bg-olive-800 text-oncream">
+        <div className="grain-layer absolute inset-0 z-0" />
+        <div className="relative z-10 mx-auto max-w-6xl px-6 py-24">
           <p className="eyebrow text-center text-sage">Why people give</p>
           <div className="mt-12 grid gap-10 md:grid-cols-3">
             {[
               'Your support helps young people lead real change.',
               'Thanks to Co-Exist, I found my people, and my voice.',
               'We are building a movement that lasts. Your support makes it real.',
-            ].map((quote) => (
-              <blockquote key={quote} className="text-2xl font-light leading-snug text-oncream">
-                &ldquo;{quote}&rdquo;
-              </blockquote>
+            ].map((quote, i) => (
+              <Reveal key={quote} delay={i * 90}>
+                <blockquote className="text-2xl font-light leading-snug text-oncream">
+                  &ldquo;{quote}&rdquo;
+                </blockquote>
+              </Reveal>
             ))}
           </div>
         </div>

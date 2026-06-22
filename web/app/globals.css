@@ -74,10 +74,18 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Off-canvas mobile sheet lives just past the right edge; clip the overflow it
+   adds so no page ever scrolls sideways. `clip` (not `hidden`) avoids creating a
+   scroll container, so the sticky header keeps working. */
+html, body {
+  overflow-x: clip;
+}
+
 body {
   font-family: var(--font-body);
   color: var(--color-neutral-900);
   background: var(--color-cream);
+  letter-spacing: 0; /* modern: body/small text sits at 0 tracking */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -86,21 +94,85 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 400;
-  letter-spacing: -0.075em;
+  letter-spacing: -0.085em;
   line-height: 1.0;
   text-wrap: balance;
 }
-/* Big display titles (hero, page covers) sit even tighter */
-.display-tight { letter-spacing: -0.09em; }
+/* Big display titles (hero, page covers) sit even tighter - letters almost kiss */
+.display-tight { letter-spacing: -0.105em; }
 
 /* Utility class (legacy name) - now resolves to the Avenir heading stack */
 .font-serif { font-family: var(--font-heading); letter-spacing: -0.05em; }
 .eyebrow {
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.28em; /* cinematic credit-roll spacing */
+  letter-spacing: 0.2em; /* modern label tracking, less credits-y */
+}
+
+/* ============================================================
+   Film + grain layer - the youthful, tinted, 16mm aesthetic.
+   .film-cover  -> stack over a full-bleed image (legibility
+                   gradient + warm/green duotone tint).
+   .grain       -> fine film grain, sits over a section.
+   body grain   -> a whisper of sitewide grain ties it together.
+   ============================================================ */
+.film-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* bottom-up olive for text legibility */
+  background:
+    linear-gradient(to top, rgba(25,28,18,0.88) 0%, rgba(25,28,18,0.34) 45%, rgba(45,50,32,0.12) 100%);
+}
+.film-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* warm-shadow / cool-highlight duotone wash = filtered film look */
+  background:
+    linear-gradient(135deg, rgba(71,79,47,0.32), rgba(120,90,50,0.20)),
+    radial-gradient(120% 90% at 70% 10%, rgba(229,238,193,0.10), transparent 60%);
+  mix-blend-mode: multiply;
+}
+
+/* Fine grain texture as a stand-alone overlay div (no pseudo-element, so it
+   never collides with .film-cover::after). Drop in: <div class="grain-layer
+   pointer-events-none absolute inset-0" />. */
+.grain-layer {
+  pointer-events: none;
+  opacity: 0.17;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* A whisper of grain across the whole site - ties the film look together. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* subtle grain drift for a living 16mm feel */
+  body::after { animation: grain-drift 6s steps(6) infinite; }
+}
+@keyframes grain-drift {
+  0% { transform: translate(0,0); }
+  20% { transform: translate(-4%, 3%); }
+  40% { transform: translate(3%, -4%); }
+  60% { transform: translate(-3%, 2%); }
+  80% { transform: translate(2%, 3%); }
+  100% { transform: translate(0,0); }
 }
 
 /* Co-Exist signature: sage highlight box behind a keyword in a heading. */
