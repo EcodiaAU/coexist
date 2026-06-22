@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Montserrat } from 'next/font/google'
+import { Montserrat, Cormorant_Garamond } from 'next/font/google'
 import { SITE_URL } from '@/lib/env'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
@@ -7,8 +7,21 @@ import './globals.css'
 
 const montserrat = Montserrat({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-montserrat',
+  display: 'swap',
+})
+
+// Editorial display serif - gorgeous, high-contrast, narrow. Closest free,
+// self-hostable match to the Co-Exist wordmark + new marketing aesthetic
+// (likely a licensed cut e.g. PP Editorial New / Reckless; swap family here to
+// drop the exact brand serif in). Used for display headlines only, with tight
+// tracking; Montserrat carries body + labels.
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-serif',
   display: 'swap',
 })
 
@@ -44,7 +57,7 @@ const ORG_JSONLD = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-AU" className={montserrat.variable}>
+    <html lang="en-AU" className={`${montserrat.variable} ${cormorant.variable}`}>
       <body className="flex min-h-screen flex-col">
         <script
           type="application/ld+json"

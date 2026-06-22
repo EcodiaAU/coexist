@@ -37,7 +37,7 @@ export default async function EventsPage() {
             </p>
             <Link
               href="/collectives"
-              className="mt-5 inline-block rounded-full bg-primary-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-primary-600"
+              className="mt-5 inline-block rounded-full bg-olive-700 px-6 py-2.5 text-sm font-bold text-white hover:bg-olive-800"
             >
               Find a collective
             </Link>

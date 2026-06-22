@@ -25,12 +25,11 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 border-b border-neutral-100 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-neutral-200/70 bg-cream/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-        <Link href="/" className="flex items-center gap-2" aria-label="Co-Exist home">
-          <span className="text-lg font-extrabold tracking-tight text-neutral-900">
-            Co<span className="text-primary-500">-</span>Exist
-          </span>
+        <Link href="/" className="flex items-center" aria-label="Co-Exist Australia home">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-7 w-auto" />
         </Link>
 
         {/* Desktop nav */}
@@ -67,7 +66,7 @@ export function SiteHeader() {
         <div className="hidden items-center md:flex">
           <Link
             href={DONATE_HREF}
-            className="rounded-full bg-primary-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-600"
+            className="rounded-full bg-olive-700 px-5 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-olive-800"
           >
             Donate
           </Link>
@@ -92,7 +91,7 @@ export function SiteHeader() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="border-t border-neutral-100 bg-white md:hidden">
+        <div className="border-t border-neutral-200 bg-cream md:hidden">
           <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-5 py-4">
             {NAV.map((item) => (
               <div key={item.label}>
@@ -116,7 +115,7 @@ export function SiteHeader() {
             <Link
               href={DONATE_HREF}
               onClick={() => setOpen(false)}
-              className="mt-3 rounded-full bg-primary-500 px-5 py-2 text-center text-sm font-bold text-white"
+              className="mt-3 rounded-full bg-olive-700 px-5 py-2 text-center text-sm font-bold text-white"
             >
               Donate
             </Link>

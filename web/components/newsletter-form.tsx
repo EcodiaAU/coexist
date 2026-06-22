@@ -54,7 +54,7 @@ export function NewsletterForm({ className = '' }: { className?: string }) {
       <button
         type="submit"
         disabled={state === 'submitting'}
-        className="rounded-full bg-primary-500 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-primary-600 disabled:opacity-60"
+        className="rounded-full bg-olive-700 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-olive-800 disabled:opacity-60"
       >
         {state === 'submitting' ? '…' : 'Join'}
       </button>

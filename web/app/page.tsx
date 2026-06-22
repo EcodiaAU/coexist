@@ -3,11 +3,8 @@ import Link from 'next/link'
 import { getPublicImpactStats, type PublicImpactStats } from '@/lib/public-stats'
 import { getSiteContent, getPartners } from '@/lib/queries'
 
-// Revalidate the homepage (and its live impact figures) on a schedule rather
-// than per request - the numbers move slowly and this keeps DB load bounded.
 export const revalidate = 1800
 
-// Baseline fallback so `next build` and a stats outage never 500 the homepage.
 const FALLBACK: PublicImpactStats = {
   volunteers: 5500,
   collectives: 15,
@@ -37,10 +34,10 @@ export default async function HomePage() {
   const founderName = content.founder_name || 'Kurt Jones, Founder & CEO'
 
   const tiles = [
-    { value: fmt(stats.rubbishKg) + ' kgs', label: 'Litter removed' },
-    { value: fmt(stats.plants), label: 'Native plants planted' },
-    { value: fmt(stats.collectives), label: 'Collectives across Australia' },
-    { value: fmt(stats.volunteers), label: 'Young volunteers' },
+    { value: fmt(stats.rubbishKg), unit: 'kgs', label: 'Litter removed' },
+    { value: fmt(stats.plants), unit: '', label: 'Native plants planted' },
+    { value: fmt(stats.collectives), unit: '', label: 'Collectives Australia-wide' },
+    { value: fmt(stats.volunteers), unit: '', label: 'Young volunteers' },
   ]
 
   return (
@@ -54,25 +51,23 @@ export default async function HomePage() {
           priority
           className="-z-10 object-cover"
         />
-        <div className="-z-10 absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/30" />
-        <div className="mx-auto max-w-6xl px-5 py-28 sm:py-40">
-          <p className="text-[12px] font-bold uppercase tracking-[0.25em] text-white/80">
-            Co-Exist Australia
-          </p>
-          <h1 className="mt-3 max-w-3xl text-4xl font-extrabold leading-tight text-white sm:text-6xl">
+        <div className="-z-10 absolute inset-0 bg-gradient-to-t from-olive-950/85 via-olive-900/55 to-olive-900/40" />
+        <div className="mx-auto max-w-6xl px-6 py-32 sm:py-44">
+          <p className="eyebrow text-oncream/80">Co-Exist Australia</p>
+          <h1 className="mt-5 max-w-4xl text-[2.9rem] leading-[1.02] text-oncream sm:text-7xl">
             {heroTitle}
           </h1>
-          <p className="mt-5 max-w-xl text-lg text-white/90">{heroSubtitle}</p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <p className="mt-6 max-w-xl text-lg text-oncream/90">{heroSubtitle}</p>
+          <div className="mt-9 flex flex-wrap gap-3">
             <Link
               href="/collectives"
-              className="rounded-full bg-primary-500 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-600"
+              className="rounded-full bg-oncream px-7 py-3 text-sm font-bold text-olive-900 transition-colors hover:bg-white"
             >
               Join a collective
             </Link>
             <Link
               href="/events"
-              className="rounded-full bg-white/95 px-6 py-3 text-sm font-bold text-neutral-900 shadow-sm transition-colors hover:bg-white"
+              className="rounded-full border border-oncream/50 px-7 py-3 text-sm font-bold text-oncream transition-colors hover:bg-oncream/10"
             >
               Attend an event
             </Link>
@@ -80,108 +75,92 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Impact band (live) */}
-      <section className="border-b border-neutral-100 bg-white">
-        <div className="mx-auto max-w-6xl px-5 py-14">
-          <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
-            Our impact so far
-          </h2>
-          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* Impact band - editorial serif numerals on cream */}
+      <section className="bg-cream">
+        <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
+          <p className="eyebrow text-center text-primary-600">Our impact so far</p>
+          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
             {tiles.map((t) => (
-              <div
-                key={t.label}
-                className="rounded-2xl border border-neutral-100 bg-white p-6 text-center shadow-sm"
-              >
-                <div className="text-3xl font-extrabold tabular-nums text-neutral-900 sm:text-4xl">
+              <div key={t.label} className="text-center">
+                <div className="font-serif text-5xl font-medium tracking-tight text-olive-700 tabular-nums sm:text-6xl">
                   {t.value}
+                  {t.unit && <span className="ml-1 text-2xl">{t.unit}</span>}
                 </div>
-                <div className="mt-2 text-xs uppercase tracking-wider text-neutral-500">
-                  {t.label}
-                </div>
+                <div className="mt-3 text-xs uppercase tracking-[0.15em] text-neutral-500">{t.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* About */}
-      <section className="bg-white">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-20 md:grid-cols-2">
+      {/* About - cream */}
+      <section className="bg-paper">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 md:grid-cols-2">
           <div>
-            <h2 className="text-3xl font-extrabold text-neutral-900 sm:text-4xl">
-              A nationwide movement of young people driving positive change
+            <p className="eyebrow text-primary-600">The movement</p>
+            <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">
+              A nationwide movement of young people driving change
             </h2>
-            <p className="mt-5 text-lg leading-relaxed text-neutral-600">
-              Co-Exist builds collectives that enable young Australians to lead
-              conservation projects in their own communities. We make it easy to
-              find your people, get outside, and do something real for the places
-              you love.
+            <p className="mt-6 text-lg leading-relaxed text-neutral-600">
+              Co-Exist builds collectives that enable young Australians to lead conservation
+              projects in their own communities. We make it easy to find your people, get
+              outside, and do something real for the places you love.
             </p>
-            <Link
-              href="/about"
-              className="mt-6 inline-block text-sm font-bold text-primary-700 hover:text-primary-800"
-            >
+            <Link href="/about" className="mt-7 inline-block font-serif text-lg italic text-primary-700 hover:text-primary-800">
               Read our story →
             </Link>
           </div>
-          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-neutral-100 shadow-sm">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] shadow-sm">
             <Image src="/images/nature.webp" alt="A Co-Exist conservation activity" fill className="object-cover" />
           </div>
         </div>
       </section>
 
-      {/* What's a collective */}
-      <section className="bg-surface-1">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-20 md:grid-cols-2">
-          <div className="relative order-2 aspect-[4/3] overflow-hidden rounded-3xl border border-neutral-100 shadow-sm md:order-1">
+      {/* What's a collective - deep olive feature section */}
+      <section className="bg-olive-700 text-oncream">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-2">
+          <div className="relative order-2 aspect-[4/3] overflow-hidden rounded-[2rem] md:order-1">
             <Image src="/images/collective.webp" alt="A local Co-Exist collective" fill className="object-cover" />
           </div>
           <div className="order-1 md:order-2">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-600">
-              What is a collective?
-            </p>
-            <h2 className="mt-3 text-3xl font-extrabold text-neutral-900 sm:text-4xl">
+            <p className="eyebrow text-oncream/70">What is a collective?</p>
+            <h2 className="mt-3 text-4xl text-oncream sm:text-5xl">
               Youth-led groups, doing good in their own backyard
             </h2>
-            <p className="mt-5 text-lg leading-relaxed text-neutral-600">
-              Collectives host urban landcare, beach cleanups, nature walks and
-              conservation retreats. The idea is simple: do good, feel good.
-              Connecting people to themselves, to each other, and to nature.
+            <p className="mt-6 text-lg leading-relaxed text-oncream/85">
+              Collectives host urban landcare, beach cleanups, nature walks and conservation
+              retreats. The idea is simple: do good, feel good. Connecting people to themselves,
+              to each other, and to nature.
             </p>
-            <Link
-              href="/collectives"
-              className="mt-6 inline-block text-sm font-bold text-primary-700 hover:text-primary-800"
-            >
+            <Link href="/collectives" className="mt-7 inline-block font-serif text-lg italic text-oncream hover:text-white">
               Find a collective near you →
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Founder quote */}
-      <section className="bg-primary-700">
-        <div className="mx-auto max-w-4xl px-5 py-20 text-center">
-          <blockquote className="text-2xl font-semibold leading-relaxed text-white sm:text-3xl">
+      {/* Founder quote - cream, large serif */}
+      <section className="bg-cream">
+        <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+          <blockquote className="font-serif text-3xl font-medium leading-[1.25] text-olive-800 sm:text-[2.6rem]">
             “{founderQuote}”
           </blockquote>
-          <p className="mt-6 text-sm font-bold uppercase tracking-wider text-white/70">{founderName}</p>
+          <p className="eyebrow mt-8 text-primary-600">{founderName}</p>
         </div>
       </section>
 
       {/* Partners */}
       {partners.length > 0 && (
-        <section className="border-y border-neutral-100 bg-white">
-          <div className="mx-auto max-w-6xl px-5 py-12">
-            <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
-              With the support of
-            </h2>
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+        <section className="border-y border-neutral-200 bg-paper">
+          <div className="mx-auto max-w-6xl px-6 py-14">
+            <p className="eyebrow text-center text-neutral-400">With the support of</p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-5">
               {partners.map((p) =>
                 p.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={p.id} src={p.logo_url} alt={p.name} className="h-10 w-auto object-contain opacity-80" />
+                  <img key={p.id} src={p.logo_url} alt={p.name} className="h-10 w-auto object-contain opacity-70" />
                 ) : (
-                  <span key={p.id} className="text-sm font-semibold text-neutral-500">
+                  <span key={p.id} className="font-serif text-lg italic text-neutral-500">
                     {p.name}
                   </span>
                 ),
@@ -191,26 +170,24 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Donate CTA */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-4xl px-5 py-20 text-center">
-          <h2 className="text-3xl font-extrabold text-neutral-900 sm:text-4xl">
-            Help us build communities that protect nature
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-neutral-600">
-            Every contribution helps young people get outside and lead real
-            conservation work in their community.
+      {/* Donate CTA - deep olive */}
+      <section className="bg-olive-800 text-oncream">
+        <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+          <h2 className="text-4xl text-oncream sm:text-6xl">Help us build communities that protect nature</h2>
+          <p className="mx-auto mt-5 max-w-xl text-lg text-oncream/85">
+            Every contribution helps young people get outside and lead real conservation work in
+            their community.
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
             <Link
               href="/donate"
-              className="rounded-full bg-primary-500 px-7 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-600"
+              className="rounded-full bg-oncream px-8 py-3.5 text-sm font-bold text-olive-900 transition-colors hover:bg-white"
             >
               Donate
             </Link>
             <Link
               href="/get-involved/support"
-              className="rounded-full border border-neutral-200 px-7 py-3 text-sm font-bold text-neutral-800 transition-colors hover:bg-neutral-50"
+              className="rounded-full border border-oncream/50 px-8 py-3.5 text-sm font-bold text-oncream transition-colors hover:bg-oncream/10"
             >
               Other ways to help
             </Link>

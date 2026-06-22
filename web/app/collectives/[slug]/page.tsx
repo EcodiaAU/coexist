@@ -55,7 +55,7 @@ export default async function CollectiveDetailPage({ params }: Params) {
         <div className="mt-10 flex flex-wrap gap-3">
           <a
             href={`${APP_URL}/collective/${c.slug}`}
-            className="rounded-full bg-primary-500 px-7 py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-600"
+            className="rounded-full bg-olive-700 px-7 py-3 text-sm font-bold text-white shadow-sm hover:bg-olive-800"
           >
             Join this collective
           </a>

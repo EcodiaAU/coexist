@@ -38,7 +38,7 @@ export default function DonatePage() {
               <p className="mt-3 flex-1 text-sm leading-relaxed text-neutral-600">{t.blurb}</p>
               <a
                 href={donateHref(t.amount)}
-                className="mt-5 rounded-full bg-primary-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600"
+                className="mt-5 rounded-full bg-olive-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-olive-800"
               >
                 Give ${t.amount}
               </a>

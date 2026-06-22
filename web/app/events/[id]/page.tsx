@@ -105,7 +105,7 @@ export default async function EventDetailPage({ params }: Params) {
         <div className="mt-10">
           <a
             href={registerHref}
-            className="inline-block rounded-full bg-primary-500 px-7 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-600"
+            className="inline-block rounded-full bg-olive-700 px-7 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-olive-800"
           >
             Register for this event
           </a>

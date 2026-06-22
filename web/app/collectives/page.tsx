@@ -100,7 +100,7 @@ export default async function CollectivesPage() {
           </p>
           <a
             href={`${APP_URL}/lead-a-collective`}
-            className="mt-5 inline-block rounded-full bg-primary-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-primary-600"
+            className="mt-5 inline-block rounded-full bg-olive-700 px-6 py-2.5 text-sm font-bold text-white hover:bg-olive-800"
           >
             Start a collective
           </a>

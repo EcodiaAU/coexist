@@ -1,59 +1,67 @@
 @import "tailwindcss";
 
 /*
- * Co-Exist marketing site theme. Tokens ported from the app's design system
- * (src/styles/globals.css @theme + DESIGN-SYSTEM.md) so the site and app are
- * visually one product: brand olive #869e62, white canvas, Montserrat,
- * photography-forward, no decorative noise.
+ * Co-Exist marketing site - editorial aesthetic (2026 rebrand direction).
+ * High-contrast display serif (Fraunces, matching the Co-Exist wordmark),
+ * Montserrat for body/labels, a warm cream canvas, and an olive-green system
+ * spanning deep army-green feature sections -> sage -> light sage -> cream.
  */
 @theme {
-  /* Brand - Co-Exist olive green */
-  --color-brand: #869e62;
-
-  /* Primary - Olive Green scale */
+  /* Brand olive / sage scale (buttons, accents, light sections) */
   --color-primary-50: #f5f7f0;
   --color-primary-100: #e8eddf;
   --color-primary-200: #d1dbbf;
-  --color-primary-300: #b3c496;
-  --color-primary-400: #869e62;
-  --color-primary-500: #748b50;
-  --color-primary-600: #5d7340;
-  --color-primary-700: #4a5c34;
-  --color-primary-800: #3d4d33;
-  --color-primary-900: #333f2b;
-  --color-primary-950: #1a2115;
+  --color-primary-300: #acc088;
+  --color-primary-400: #869e62; /* brand sage */
+  --color-primary-500: #6f8a4e;
+  --color-primary-600: #5a7340;
+  --color-primary-700: #475c34;
+  --color-primary-800: #3a4b2c;
+  --color-primary-900: #2f3d26;
+  --color-primary-950: #1c2417;
 
-  /* Secondary - Forest Dark scale */
-  --color-secondary-100: #e5e5e5;
-  --color-secondary-300: #9dab88;
-  --color-secondary-500: #5c6d47;
-  --color-secondary-700: #3d4d33;
-  --color-secondary-900: #2b3524;
+  /* Deep army-olive - the feature-section + hero-overlay green from the new
+     marketing aesthetic. */
+  --color-olive-50: #f3f4ec;
+  --color-olive-100: #e3e6d3;
+  --color-olive-200: #c7cead;
+  --color-olive-300: #a3ae7f;
+  --color-olive-400: #818d5b;
+  --color-olive-500: #646f44;
+  --color-olive-600: #4e5836;
+  --color-olive-700: #474f2f; /* primary feature green (screenshots) */
+  --color-olive-800: #3a4028;
+  --color-olive-900: #2d3220;
+  --color-olive-950: #191c12;
 
-  /* Neutrals - true greys */
-  --color-neutral-50: #ffffff;
-  --color-neutral-100: #fafafa;
-  --color-neutral-200: #e5e5e5;
-  --color-neutral-300: #d4d4d4;
-  --color-neutral-400: #a3a3a3;
-  --color-neutral-500: #737373;
-  --color-neutral-600: #525252;
-  --color-neutral-700: #404040;
-  --color-neutral-800: #262626;
-  --color-neutral-900: #171717;
-  --color-neutral-950: #0a0a0a;
+  /* Warm paper / cream canvas (replaces stark white) */
+  --color-cream: #f4efe3;
+  --color-cream-soft: #efe8d8;
+  --color-paper: #faf7ef;
+  --color-surface-1: #f4efe3;
 
-  /* Semantic */
-  --color-success-50: #f0f7f1;
+  /* Cream text used on olive backgrounds */
+  --color-oncream: #f1ebdb;
+
+  /* Neutrals - warm-leaning greys for body text on cream */
+  --color-neutral-50: #faf7ef;
+  --color-neutral-100: #f0ece2;
+  --color-neutral-200: #e3ddcf;
+  --color-neutral-300: #cabfa9;
+  --color-neutral-400: #9c9482;
+  --color-neutral-500: #6f6a5c;
+  --color-neutral-600: #514d43;
+  --color-neutral-700: #3c392f;
+  --color-neutral-800: #2a2820;
+  --color-neutral-900: #1f1d16;
+  --color-neutral-950: #121009;
+
   --color-success-500: #3aac5c;
-  --color-success-600: #2d8a48;
-  --color-error-500: #dc4545;
+  --color-error-500: #c0492f;
 
-  /* Surfaces */
-  --color-surface-1: #fafafa;
-
-  /* Fonts - app uses Montserrat for heading + body */
-  --font-heading: var(--font-montserrat), system-ui, sans-serif;
+  /* Fonts */
+  --font-serif: var(--font-serif), Georgia, 'Times New Roman', serif;
+  --font-heading: var(--font-serif), Georgia, serif;
   --font-body: var(--font-montserrat), system-ui, sans-serif;
 }
 
@@ -64,53 +72,54 @@ html {
 body {
   font-family: var(--font-body);
   color: var(--color-neutral-900);
-  background: #ffffff;
+  background: var(--color-cream);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+/* Editorial display headings - high-contrast serif, very tight tracking to
+   match the new Co-Exist marketing aesthetic (closely-set, stacked lines). */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  letter-spacing: -0.015em;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  line-height: 1.02;
   text-wrap: balance;
+}
+
+/* Utility classes used across the site */
+.font-serif { font-family: var(--font-heading); }
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
 }
 
 /* First-party rich HTML (legal pages, future CMS prose) */
 .rich-content {
   color: var(--color-neutral-700);
-  line-height: 1.7;
+  line-height: 1.75;
 }
 .rich-content h2 {
-  font-size: 1.35rem;
-  font-weight: 700;
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 500;
   color: var(--color-neutral-900);
-  margin-top: 2rem;
+  margin-top: 2.25rem;
   margin-bottom: 0.5rem;
 }
 .rich-content h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 500;
   color: var(--color-neutral-900);
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }
-.rich-content p {
-  margin-bottom: 1rem;
-}
-.rich-content a {
-  color: var(--color-primary-700);
-  text-decoration: underline;
-}
-.rich-content ul {
-  list-style: disc;
-  padding-left: 1.25rem;
-  margin-bottom: 1rem;
-}
-.rich-content ol {
-  list-style: decimal;
-  padding-left: 1.25rem;
-  margin-bottom: 1rem;
-}
-.rich-content li {
-  margin-bottom: 0.35rem;
-}
+.rich-content p { margin-bottom: 1rem; }
+.rich-content a { color: var(--color-primary-700); text-decoration: underline; }
+.rich-content ul { list-style: disc; padding-left: 1.25rem; margin-bottom: 1rem; }
+.rich-content ol { list-style: decimal; padding-left: 1.25rem; margin-bottom: 1rem; }
+.rich-content li { margin-bottom: 0.35rem; }

@@ -37,7 +37,7 @@ export default async function AboutPage() {
       />
 
       {/* Story */}
-      <section className="bg-white">
+      <section className="bg-cream">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 md:grid-cols-2">
           <div>
             <h2 className="text-2xl font-extrabold text-neutral-900 sm:text-3xl">Our story</h2>
@@ -75,18 +75,18 @@ export default async function AboutPage() {
       </section>
 
       {/* Founder quote */}
-      <section className="bg-primary-700">
-        <div className="mx-auto max-w-4xl px-5 py-16 text-center">
-          <blockquote className="text-2xl font-semibold leading-relaxed text-white sm:text-3xl">
+      <section className="bg-olive-700 text-oncream">
+        <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+          <blockquote className="font-serif text-3xl font-medium leading-[1.25] text-oncream sm:text-[2.4rem]">
             “{founderQuote}”
           </blockquote>
-          <p className="mt-6 text-sm font-bold uppercase tracking-wider text-white/70">{founderName}</p>
+          <p className="eyebrow mt-8 text-oncream/70">{founderName}</p>
         </div>
       </section>
 
       {/* Team (CMS-managed) */}
       {groupedTeam.length > 0 && (
-        <section className="bg-white">
+        <section className="bg-cream">
           <div className="mx-auto max-w-6xl px-5 py-16">
             <h2 className="text-2xl font-extrabold text-neutral-900 sm:text-3xl">Meet the team</h2>
             {groupedTeam.map(([group, members]) => (
@@ -119,7 +119,7 @@ export default async function AboutPage() {
       )}
 
       {/* CTA */}
-      <section className="bg-white">
+      <section className="bg-cream">
         <div className="mx-auto max-w-4xl px-5 py-16 text-center">
           <h2 className="text-2xl font-extrabold text-neutral-900 sm:text-3xl">
             Every action counts
@@ -128,7 +128,7 @@ export default async function AboutPage() {
             Together we can create a lasting impact for people and the planet.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link href="/collectives" className="rounded-full bg-primary-500 px-6 py-3 text-sm font-bold text-white hover:bg-primary-600">
+            <Link href="/collectives" className="rounded-full bg-olive-700 px-6 py-3 text-sm font-bold text-white hover:bg-olive-800">
               Join a collective
             </Link>
             <Link href="/get-involved/support" className="rounded-full border border-neutral-200 px-6 py-3 text-sm font-bold text-neutral-800 hover:bg-neutral-50">

@@ -22,9 +22,8 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl px-5 py-14">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-2">
-            <span className="text-lg font-extrabold tracking-tight text-neutral-900">
-              Co<span className="text-primary-500">-</span>Exist
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-8 w-auto" />
             <p className="mt-4 max-w-md text-sm leading-relaxed text-neutral-600">
               Co-Exist acknowledges the Traditional Custodians of the lands and
               waters where we gather, and pays respect to Elders past and present.
