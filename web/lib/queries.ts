@@ -238,6 +238,75 @@ export async function getPartners(): Promise<PartnerVM[]> {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/*  Shop (merch_products has no anon SELECT policy -> read server-side  */
+/*  with the service-role client; the catalog is public anyway).       */
+/* ------------------------------------------------------------------ */
+
+export interface ProductVariant {
+  id: string
+  label?: string
+  price_cents?: number
+  is_active?: boolean
+}
+export interface ProductVM {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  price: number | null
+  base_price_cents: number | null
+  images: string[]
+  variants: ProductVariant[]
+  category: string | null
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapProduct(r: any): ProductVM {
+  return {
+    id: r.id,
+    name: r.name,
+    slug: r.slug,
+    description: r.description,
+    price: r.price != null ? Number(r.price) : null,
+    base_price_cents: r.base_price_cents,
+    images: Array.isArray(r.images) ? r.images : [],
+    variants: Array.isArray(r.variants) ? r.variants : [],
+    category: r.category,
+  }
+}
+
+export async function getProducts(): Promise<ProductVM[]> {
+  try {
+    const supabase = getServerSupabase()
+    const { data, error } = await supabase
+      .from('merch_products')
+      .select('id, name, slug, description, price, base_price_cents, images, variants, category, is_active')
+      .eq('is_active', true)
+      .order('created_at', { ascending: true })
+    if (error) return []
+    return (data ?? []).map(mapProduct)
+  } catch {
+    return []
+  }
+}
+
+export async function getProduct(slug: string): Promise<ProductVM | null> {
+  try {
+    const supabase = getServerSupabase()
+    const { data, error } = await supabase
+      .from('merch_products')
+      .select('id, name, slug, description, price, base_price_cents, images, variants, category, is_active')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .maybeSingle()
+    if (error || !data) return null
+    return mapProduct(data)
+  } catch {
+    return null
+  }
+}
+
 export async function getLegalSlugs(): Promise<string[]> {
   const supabase = getPublicSupabase()
   const { data, error } = await supabase

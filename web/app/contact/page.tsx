@@ -7,30 +7,49 @@ export const metadata: Metadata = {
   description: 'Get in touch with Co-Exist Australia. Partnerships, volunteering, media, or just to say hello.',
 }
 
+const REASONS = ['start a collective', 'partner with us', 'volunteer', 'just say hi']
+
 export default function ContactPage() {
   return (
     <main>
-      <PageHeader eyebrow="Contact us" title="Say hello" subtitle="We would love to hear from you." image="/images/hero.webp" />
-      <section className="mx-auto grid max-w-5xl gap-10 px-5 py-14 md:grid-cols-[1.4fr_1fr]">
-        <ContactForm />
-        <div className="space-y-6">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">Email</p>
-            <a href="mailto:hello@coexistaus.org" className="mt-1 block font-semibold text-primary-700 hover:text-primary-800">
-              hello@coexistaus.org
-            </a>
-          </div>
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">Follow</p>
-            <div className="mt-1 flex gap-4 text-sm font-semibold text-neutral-700">
-              <a href="https://www.instagram.com/coexistaus" className="hover:text-primary-700">Instagram</a>
-              <a href="https://www.facebook.com/coexistaus" className="hover:text-primary-700">Facebook</a>
-            </div>
-          </div>
-          <p className="text-sm text-neutral-500">
-            Co-Exist Australia Ltd is an ACNC registered charity. ABN 39 660 776 983.
+      <PageHeader
+        eyebrow="Contact us"
+        title="Say hello"
+        subtitle="Whether you want to start a collective, partner with us, or just say hi, we read every message."
+        image="/images/hero.webp"
+      />
+
+      <section className="mx-auto grid max-w-6xl gap-14 px-6 py-20 md:grid-cols-[1fr_1.1fr]">
+        <div>
+          <h2 className="has-mark text-4xl text-neutral-900 sm:text-5xl">
+            Drop us a line to <span className="mark">{REASONS[0]}</span>
+          </h2>
+          <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-neutral-500">
+            We are a small team of young people who care a lot. Real replies, no auto-responders.
+            Tell us what you have in mind.
           </p>
+
+          <div className="mt-10 space-y-8">
+            <div>
+              <p className="eyebrow text-neutral-400">Email</p>
+              <a href="mailto:hello@coexistaus.org" className="mt-2 block text-2xl text-neutral-900 transition-colors hover:text-primary-700">
+                hello@coexistaus.org
+              </a>
+            </div>
+            <div>
+              <p className="eyebrow text-neutral-400">Follow along</p>
+              <div className="mt-2 flex gap-5 text-lg text-neutral-700">
+                <a href="https://www.instagram.com/coexistaus" className="transition-colors hover:text-primary-700">Instagram</a>
+                <a href="https://www.facebook.com/coexistaus" className="transition-colors hover:text-primary-700">Facebook</a>
+              </div>
+            </div>
+            <p className="text-xs text-neutral-400">
+              Co-Exist Australia Ltd is an ACNC registered charity. ABN 39 660 776 983.
+            </p>
+          </div>
         </div>
+
+        <ContactForm />
       </section>
     </main>
   )

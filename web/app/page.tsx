@@ -78,17 +78,17 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* About - full-bleed image half */}
+      {/* About - full-bleed image half (people in nature, not a face) */}
       <section className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal className="relative order-1 min-h-[56vh] overflow-hidden md:order-2">
-          <Image src="/images/kurt.webp" alt="Kurt Jones, founder of Co-Exist Australia" fill className="object-cover object-top transition-transform duration-[1.2s] hover:scale-105" />
+          <Image src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
         </Reveal>
         <div className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
           <Reveal className="max-w-md">
             <p className="eyebrow text-primary-600">The movement</p>
             <h2 className="has-mark mt-5 text-4xl text-neutral-900 sm:text-5xl">
-              Young Australians taking the lead on{' '}
-              <WordSwap words={['conservation', 'climate action', 'their communities']} />
+              Young Australians taking the lead on
+              <span className="mt-2 block"><WordSwap words={['conservation', 'climate action', 'their communities']} /></span>
             </h2>
             <p className="mt-6 text-[15px] leading-relaxed text-neutral-500">
               Founder Kurt Jones started Co-Exist in 2022 after the outdoors gave him direction as a
@@ -105,14 +105,14 @@ export default async function HomePage() {
       {/* What's a collective - full-bleed image half */}
       <section className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal className="relative order-1 min-h-[56vh] overflow-hidden">
-          <Image src="/images/collective.webp" alt="A local Co-Exist collective" fill className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          <Image src="/images/gather.webp" alt="A local Co-Exist collective gathering" fill className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
         </Reveal>
         <div className="order-2 flex items-center px-6 py-24 md:px-16">
           <Reveal className="max-w-md">
             <p className="eyebrow text-primary-600">What is a collective?</p>
             <h2 className="has-mark mt-5 text-4xl text-neutral-900 sm:text-5xl">
-              Youth-led groups running{' '}
-              <WordSwap words={['beach cleanups', 'tree plantings', 'nature walks']} />
+              Youth-led groups running
+              <span className="mt-2 block"><WordSwap words={['beach cleanups', 'tree plantings', 'nature walks']} /></span>
             </h2>
             <p className="mt-6 text-[15px] leading-relaxed text-neutral-500">
               Urban landcare, beach cleanups, nature walks, conservation retreats. The idea is simple:
@@ -125,13 +125,15 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Founder quote - with faint wordmark watermark */}
-      <section className="relative overflow-hidden bg-olive-800 text-oncream">
-        <span className="watermark left-[-2%] top-1/2 -translate-y-1/2 text-[26vw] text-oncream">Co-Exist</span>
-        <div className="relative mx-auto max-w-4xl px-6 py-28 text-center">
-          <Reveal>
-            <blockquote className="text-3xl font-light leading-[1.2] text-oncream sm:text-[2.6rem]">“{founderQuote}”</blockquote>
-            <p className="eyebrow mt-9 text-sage">{founderName}</p>
+      {/* Founder quote - Kurt's photo beside the quote */}
+      <section className="bg-olive-800 text-oncream">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-[auto_1fr]">
+          <Reveal className="mx-auto h-44 w-44 shrink-0 overflow-hidden rounded-full sm:h-56 sm:w-56">
+            <Image src="/images/kurt.webp" alt="Kurt Jones, founder of Co-Exist" width={224} height={224} className="h-full w-full object-cover" />
+          </Reveal>
+          <Reveal delay={120}>
+            <blockquote className="text-2xl font-light leading-[1.25] text-oncream sm:text-4xl">“{founderQuote}”</blockquote>
+            <p className="eyebrow mt-7 text-sage">{founderName}</p>
           </Reveal>
         </div>
       </section>
@@ -161,7 +163,8 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-4xl px-6 py-28 text-center">
           <Reveal>
             <h2 className="has-mark text-4xl text-oncream sm:text-6xl">
-              Help build communities that <WordSwap words={['protect nature', 'restore habitat', 'last']} />
+              Help build communities that
+              <span className="mt-2 block"><WordSwap words={['protect nature', 'restore habitat', 'last']} /></span>
             </h2>
             <p className="mx-auto mt-7 max-w-md text-[15px] text-oncream/80">
               Every contribution helps young people get outside and lead real conservation in their community.

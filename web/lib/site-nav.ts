@@ -1,5 +1,3 @@
-import { APP_URL } from './env'
-
 export interface NavItem {
   label: string
   href: string
@@ -29,7 +27,7 @@ export const NAV: NavItem[] = [
   { label: 'About', href: '/about' },
   { label: 'News', href: '/news' },
   { label: 'Contact', href: '/contact' },
-  { label: 'Shop', href: `${APP_URL}/shop`, external: true },
+  { label: 'Shop', href: '/shop' },
 ]
 
 /** Prominent CTA shown as a filled button, separate from the nav list. */
