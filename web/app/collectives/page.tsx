@@ -1,8 +1,8 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getCollectives, type CollectiveVM } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
+import { CollectiveMapClient } from '@/components/collective-map-client'
 import { APP_URL } from '@/lib/env'
 
 export const revalidate = 1800
@@ -37,13 +37,14 @@ export default async function CollectivesPage() {
         image="/images/gather.webp"
       />
 
-      {/* Our collective reach - the Co-Exist Australia map */}
+      {/* Our collective reach - interactive map (ported from the app) */}
       <section className="bg-white">
-        <div className="mx-auto max-w-5xl px-6 py-16 text-center">
-          <p className="eyebrow text-primary-600">Our collective reach</p>
-          <div className="relative mx-auto mt-8 aspect-[1480/1080] w-full max-w-3xl">
-            <Image src="/images/map.webp" alt="Map of Co-Exist collectives across Australia" fill className="object-contain" />
-          </div>
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          <p className="eyebrow text-center text-primary-600">Our collective reach</p>
+          <p className="mx-auto mt-3 max-w-md text-center text-[15px] text-neutral-500">
+            Tap a pin to explore the collective near you.
+          </p>
+          <CollectiveMapClient collectives={collectives} className="mt-8 h-[68vh] min-h-[460px]" />
         </div>
       </section>
 
