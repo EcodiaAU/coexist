@@ -26,10 +26,10 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-neutral-200/70 bg-cream/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+      <div className="mx-auto flex h-24 max-w-6xl items-center justify-between px-6">
         <Link href="/" className="flex items-center" aria-label="Co-Exist Australia home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-7 w-auto" />
+          <img src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-11 w-auto" />
         </Link>
 
         {/* Desktop nav */}
