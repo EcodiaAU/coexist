@@ -298,7 +298,7 @@ export default function SettingsAccountPage() {
         deleted_at: new Date().toISOString(),
         deletion_status: 'pending_deletion',
         deletion_requested_at: new Date().toISOString(),
-      } as unknown as Record<string, unknown>)
+      })
       .eq('id', user.id)
 
     if (error) {

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import type { Json } from '@/types/database.types'
 
 /**
  * Safely patch a user's notification_preferences JSONB column.
@@ -37,7 +38,7 @@ export async function patchNotificationPrefs(
 
     const { error: writeErr } = await supabase
       .from('profiles')
-      .update({ notification_preferences: merged } as unknown as Record<string, unknown>)
+      .update({ notification_preferences: merged as Json })
       .eq('id', userId)
     return { error: writeErr }
   } catch (err) {

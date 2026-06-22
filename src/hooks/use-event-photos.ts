@@ -7,6 +7,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { Database } from '@/types/database.types'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { useImageUpload } from '@/hooks/use-image-upload'
@@ -189,7 +190,7 @@ export function useAdminEventPhotos(filters: AdminPhotoFilters) {
           p_limit: filters.limit ?? 200,
         })
         if (error) throw error
-        return (data ?? []).map((p: AdminEventPhoto) => ({ ...p, url: publicUrl(p.storage_path) }))
+        return ((data ?? []) as unknown as AdminEventPhoto[]).map((p) => ({ ...p, url: publicUrl(p.storage_path) }))
       }
 
       let q = supabase
@@ -199,7 +200,7 @@ export function useAdminEventPhotos(filters: AdminPhotoFilters) {
         .limit(filters.limit ?? 200)
 
       if (filters.collectiveId) q = q.eq('collective_id', filters.collectiveId)
-      if (filters.activityType) q = q.eq('event_activity_type', filters.activityType)
+      if (filters.activityType) q = q.eq('event_activity_type', filters.activityType as Database['public']['Enums']['activity_type'])
       if (filters.uploaderUserId) q = q.eq('uploaded_by', filters.uploaderUserId)
       if (filters.fromDate) q = q.gte('event_date_start', filters.fromDate)
       if (filters.toDate) q = q.lte('event_date_start', filters.toDate)

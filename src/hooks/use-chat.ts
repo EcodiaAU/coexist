@@ -20,7 +20,19 @@ export interface ChatMessageWithSender extends Omit<ChatMessage, 'message_type'>
   profiles: Pick<Profile, 'id' | 'display_name' | 'avatar_url'> | null
   reply_message: Pick<ChatMessage, 'id' | 'content' | 'user_id'> | null
   sender_role?: string
-  message_type?: 'text' | 'image' | 'voice' | 'video' | 'poll' | 'announcement' | 'system' | 'html' | null
+  message_type?:
+    | 'text'
+    | 'image'
+    | 'voice'
+    | 'video'
+    | 'poll'
+    | 'announcement'
+    | 'system'
+    | 'html'
+    | 'carpool'
+    | 'event_photos'
+    | 'event_survey'
+    | null
   /** Client-only: optimistic message not yet confirmed by server */
   _optimistic?: boolean
   _optimisticId?: string
@@ -392,6 +404,10 @@ export function useSendMessage() {
         message_type: (input.messageType ?? 'text') as ChatMessageWithSender['message_type'],
         poll_id: input.pollId ?? null,
         announcement_id: input.announcementId ?? null,
+        carpool_id: null,
+        event_photos_event_id: null,
+        event_survey_event_id: null,
+        client_action_id: null,
         profiles: {
           id: user.id,
           display_name: profile?.display_name ?? 'You',

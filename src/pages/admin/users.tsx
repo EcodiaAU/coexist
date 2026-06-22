@@ -303,7 +303,7 @@ function UserSettingsSheet({
       }
       const { data: rows, error } = await supabase
         .from('profiles')
-        .update({ role } as Record<string, unknown>)
+        .update({ role: role as UserRole })
         .eq('id', userId)
         .select('id')
       if (error) throw error

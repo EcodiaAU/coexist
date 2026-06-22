@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { Database } from '@/types/database.types'
 import { supabase } from '@/lib/supabase'
 
 /* ------------------------------------------------------------------ */
@@ -259,7 +260,7 @@ export function useUpdateModule() {
       }
       const { data, error } = await supabase
         .from('dev_modules')
-        .update(updates)
+        .update(updates as Database['public']['Tables']['dev_modules']['Update'])
         .eq('id', id)
         .select()
         .single()
@@ -450,7 +451,7 @@ export function useUpdateSection() {
       }
       const { data, error } = await supabase
         .from('dev_sections')
-        .update(updates)
+        .update(updates as Database['public']['Tables']['dev_sections']['Update'])
         .eq('id', id)
         .select()
         .single()

@@ -174,7 +174,7 @@ export default function EditEventPage() {
         // Floating local time: tz column kept on table but always NULL.
         timezone: null,
         event_extras: form.fields.extras,
-      } as Parameters<typeof updateEvent.mutateAsync>[0])
+      } as unknown as Parameters<typeof updateEvent.mutateAsync>[0])
 
       // Save ticket types
       await saveTickets.mutateAsync({
