@@ -63,10 +63,11 @@
   --color-success-500: #3aac5c;
   --color-error-500: #c0492f;
 
-  /* Fonts */
-  --font-serif: var(--font-serif), Georgia, 'Times New Roman', serif;
-  --font-heading: var(--font-serif), Georgia, serif;
-  --font-body: var(--font-montserrat), system-ui, sans-serif;
+  /* Fonts - Avenir is the Co-Exist brand font (posts). It is licensed, but
+     ships on Apple devices as "Avenir Next", so most of the audience sees the
+     real thing; Montserrat is the close geometric fallback elsewhere. */
+  --font-heading: 'Avenir Next', 'Avenir', var(--font-montserrat), system-ui, sans-serif;
+  --font-body: 'Avenir Next', 'Avenir', var(--font-montserrat), system-ui, sans-serif;
 }
 
 html {
@@ -81,18 +82,18 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Editorial display headings - high-contrast serif, very tight tracking to
-   match the new Co-Exist marketing aesthetic (closely-set, stacked lines). */
+/* Display headings - Avenir, heavy weight, very tight tracking to match the
+   Co-Exist posts (Tate: Avenir, letter-spacing ~ -120 in Canva). */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 600;
-  letter-spacing: -0.022em;
-  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1.04;
   text-wrap: balance;
 }
 
-/* Utility classes used across the site */
-.font-serif { font-family: var(--font-heading); }
+/* Utility class (legacy name) - now resolves to the Avenir heading stack */
+.font-serif { font-family: var(--font-heading); letter-spacing: -0.04em; }
 .eyebrow {
   font-family: var(--font-body);
   font-size: 11px;

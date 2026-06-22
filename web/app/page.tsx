@@ -106,7 +106,7 @@ export default async function HomePage() {
               projects in their own communities. We make it easy to find your people, get
               outside, and do something real for the places you love.
             </p>
-            <Link href="/about" className="mt-7 inline-block font-serif text-lg italic text-primary-700 hover:text-primary-800">
+            <Link href="/about" className="mt-7 inline-block font-semibold text-sm uppercase tracking-wider text-primary-700 hover:text-primary-800">
               Read our story →
             </Link>
           </div>
@@ -132,7 +132,7 @@ export default async function HomePage() {
               retreats. The idea is simple: do good, feel good. Connecting people to themselves,
               to each other, and to nature.
             </p>
-            <Link href="/collectives" className="mt-7 inline-block font-serif text-lg italic text-primary-700 hover:text-primary-800">
+            <Link href="/collectives" className="mt-7 inline-block font-semibold text-sm uppercase tracking-wider text-primary-700 hover:text-primary-800">
               Find a collective near you →
             </Link>
           </div>
@@ -160,7 +160,7 @@ export default async function HomePage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img key={p.id} src={p.logo_url} alt={p.name} className="h-10 w-auto object-contain opacity-70" />
                 ) : (
-                  <span key={p.id} className="font-serif text-lg italic text-neutral-500">
+                  <span key={p.id} className="font-semibold text-sm uppercase tracking-wider text-neutral-500">
                     {p.name}
                   </span>
                 ),
