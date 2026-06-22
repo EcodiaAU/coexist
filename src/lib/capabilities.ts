@@ -21,6 +21,7 @@ export const CAPABILITIES: CapabilityDef[] = [
   { key: 'manage_content', label: 'Manage Content', description: 'Moderate photos, chat messages', category: 'content' },
   { key: 'send_announcements', label: 'Send Updates', description: 'Create/publish global updates', category: 'content' },
   { key: 'manage_email', label: 'Manage Email', description: 'Create and send email campaigns', category: 'content' },
+  { key: 'manage_marketing', label: 'Manage Marketing Site', description: 'Edit the public coexistaus.org site copy, team and partners', category: 'content' },
 
   // Operations
   { key: 'manage_events', label: 'Manage Events', description: 'Create/edit/cancel events across collectives', category: 'operations' },
@@ -96,6 +97,7 @@ export const ROLE_DEFAULT_CAPS: Record<UnifiedRole, readonly string[]> = {
     'manage_merch',
     'send_announcements',
     'manage_email',
+    'manage_marketing',
     'manage_charity',
     'view_reports',
     'manage_exports',

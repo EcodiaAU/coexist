@@ -143,6 +143,7 @@ const AdminChallengesPage = lazy(() => import('@/pages/admin/challenges'))
 const ModerationQueuePage = lazy(() => import('@/pages/admin/moderation/index'))
 const AdminContactsPage = lazy(() => import('@/pages/admin/contacts'))
 const AdminLegalPagesPage = lazy(() => import('@/pages/admin/legal-pages'))
+const AdminSitePage = lazy(() => import('@/pages/admin/site'))
 // AdminImpactPage / AdminMetricsPage / AdminReportsPage are loaded via
 // the AdminInsightsPage tabs wrapper since the merge (2026-06-10). The
 // /admin/impact, /admin/metrics, /admin/reports, /admin/exports URLs
@@ -473,6 +474,7 @@ function App() {
             <Route path="moderation" element={<RequireCapability cap="manage_content"><ModerationQueuePage /></RequireCapability>} />
             <Route path="contacts" element={<RequireCapability cap="manage_users"><AdminContactsPage /></RequireCapability>} />
             <Route path="legal-pages" element={<RequireCapability cap="manage_system"><AdminLegalPagesPage /></RequireCapability>} />
+            <Route path="site" element={<RequireCapability cap="manage_marketing"><AdminSitePage /></RequireCapability>} />
             <Route path="dev-tools" element={<RequireCapability cap="manage_system"><DevToolsPage /></RequireCapability>} />
             <Route path="development" element={<RequireCapability cap="manage_content"><AdminDevelopmentPage /></RequireCapability>} />
             <Route path="development/modules/new" element={<RequireCapability cap="manage_content"><AdminCreateModulePage /></RequireCapability>} />
