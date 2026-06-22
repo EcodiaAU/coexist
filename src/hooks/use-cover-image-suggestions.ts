@@ -5,15 +5,37 @@
  * without digging through their downloads or falling back on the generic
  * per-activity default images. Suggestions are drawn from the shared
  * event-photos library (admin_event_photos_view, which is security_invoker
- * so RLS limits rows to collectives the user is an active member of) and
- * filtered by the collective(s) and/or activity type already chosen on the
- * form. The same photo never appears twice, and a single photo-heavy event
- * cannot crowd out the rest.
+ * so RLS limits rows to collectives the user is an active member of).
+ *
+ * Matching is RELEVANCE-RANKED, not a strict AND: a photo that matches both
+ * the chosen collective and activity type ranks highest, then collective-only,
+ * then activity-only. This means a Sunshine Coast tree-planting event still
+ * gets suggestions (Sunshine Coast's own photos, plus tree-planting photos
+ * from elsewhere) even when no photo matches that exact combination. The same
+ * photo never appears twice, and a single photo-heavy event cannot crowd out
+ * the rest.
  */
 
 import { useQuery } from '@tanstack/react-query'
 import type { Database } from '@/types/database.types'
 import { supabase } from '@/lib/supabase'
+
+/**
+ * Minimal shape of the admin_event_photos_view rows we read. supabase-js
+ * degrades the builder's row type once a free-form `.or()` filter is in the
+ * chain, so we select('*') and cast to this (matching the useAdminEventPhotos
+ * pattern in use-event-photos.ts).
+ */
+interface PhotoRow {
+  storage_path: string | null
+  thumbnail_path: string | null
+  event_id: string | null
+  event_title: string | null
+  event_date_start: string | null
+  created_at: string | null
+  collective_id: string | null
+  event_activity_type: string | null
+}
 
 const BUCKET = 'event-photos'
 
@@ -33,8 +55,8 @@ export interface CoverImageSuggestion {
 /** Max suggestions surfaced, and max per source event (for variety). */
 const MAX_SUGGESTIONS = 18
 const MAX_PER_EVENT = 3
-/** Rows pulled before client-side dedup/cap. */
-const FETCH_LIMIT = 80
+/** Rows pulled before client-side rank/dedup/cap. */
+const FETCH_LIMIT = 120
 
 interface Params {
   collectiveIds: string[]
@@ -54,28 +76,49 @@ export function useCoverImageSuggestions({ collectiveIds, activityType }: Params
     enabled,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<CoverImageSuggestion[]> => {
-      let q = supabase
-        .from('admin_event_photos_view')
-        .select('storage_path, thumbnail_path, event_id, event_title, event_date_start, created_at')
-        .is('archived_at', null)
-        .not('storage_path', 'is', null)
-        .order('event_date_start', { ascending: false, nullsFirst: false })
-        .order('created_at', { ascending: false })
-        .limit(FETCH_LIMIT)
+      // Relevance net: match the collective(s) OR the activity type. We fetch
+      // each axis separately (a free-form `.or()` on this wide view trips
+      // supabase-js type-recursion), then merge and rank client-side so an
+      // exact (collective AND activity) match floats to the top without
+      // excluding the still-relevant single-axis matches.
+      const base = () =>
+        supabase
+          .from('admin_event_photos_view')
+          .select('*')
+          .is('archived_at', null)
+          .not('storage_path', 'is', null)
+          .order('event_date_start', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false })
+          .limit(FETCH_LIMIT)
 
-      if (hasCollective) q = q.in('collective_id', collectiveIds)
+      const queries = []
+      if (hasCollective) queries.push(base().in('collective_id', collectiveIds))
       if (hasActivity) {
-        q = q.eq('event_activity_type', activityType as Database['public']['Enums']['activity_type'])
+        queries.push(
+          base().eq('event_activity_type', activityType as Database['public']['Enums']['activity_type']),
+        )
       }
 
-      const { data, error } = await q
-      if (error) throw error
+      const results = await Promise.all(queries)
+      const firstError = results.find((r) => r.error)?.error
+      if (firstError) throw firstError
+
+      const rows = results.flatMap((r) => (r.data ?? []) as unknown as PhotoRow[])
+      const collectiveSet = new Set(collectiveIds)
+      const scored = rows.map((row) => {
+        const matchesCollective = !!row.collective_id && collectiveSet.has(row.collective_id)
+        const matchesActivity = hasActivity && row.event_activity_type === activityType
+        return { row, score: (matchesCollective ? 2 : 0) + (matchesActivity ? 1 : 0) }
+      })
+      // Higher score first; recency order within a score band is preserved
+      // because Array.prototype.sort is stable.
+      scored.sort((a, b) => b.score - a.score)
 
       const seenPaths = new Set<string>()
       const perEvent = new Map<string, number>()
       const out: CoverImageSuggestion[] = []
 
-      for (const row of data ?? []) {
+      for (const { row } of scored) {
         const path = row.storage_path
         if (!path || seenPaths.has(path)) continue
 

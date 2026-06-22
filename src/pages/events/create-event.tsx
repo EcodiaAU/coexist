@@ -870,7 +870,9 @@ function StepCoverImage({
   onSelectSuggestion: (s: CoverImageSuggestion) => void
 }) {
   return (
-    <div className="space-y-4">
+    // Cap the cover step to a centered column on desktop so the 16:9 preview
+    // does not blow out to a full-width banner on the full-bleed form.
+    <div className="space-y-4 sm:max-w-xl">
       {/* Upload area */}
       <div className="relative rounded-2xl overflow-hidden shadow-sm">
         <button
