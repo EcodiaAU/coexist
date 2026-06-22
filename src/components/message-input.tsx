@@ -192,12 +192,19 @@ export function MessageInput({
     [mentionState, value, onValueChange],
   )
 
+  // Carpool offers are open to any collective member (the create-widget edge
+  // function only requires active membership, not a leader role), so it sits in
+  // a member-available set. Poll / Announce / Push Alert stay leader-only.
+  const carpoolAction = { icon: Car, label: 'Carpool', onClick: onCreateCarpool, color: 'text-white bg-success-600 shadow-sm' }
   const leaderActions = [
     { icon: BarChart3, label: 'Poll', onClick: onCreatePoll, color: 'text-white bg-primary-600 shadow-sm' },
     { icon: Megaphone, label: 'Announce', onClick: onCreateAnnouncement, color: 'text-white bg-accent-600 shadow-sm' },
-    { icon: Car, label: 'Carpool', onClick: onCreateCarpool, color: 'text-white bg-success-600 shadow-sm' },
+    carpoolAction,
     { icon: Bell, label: 'Push Alert', onClick: onBroadcastNotification, color: 'text-white bg-warning-600 shadow-sm' },
   ]
+  const actions = isLeader ? leaderActions : [carpoolAction]
+  // Show the actions menu to leaders, or to any member when carpool is offered.
+  const canUseActions = isLeader || !!onCreateCarpool
 
   return (
     <div
@@ -213,7 +220,7 @@ export function MessageInput({
     >
       {/* Leader actions panel */}
       <AnimatePresence>
-        {showLeaderActions && isLeader && (
+        {showLeaderActions && canUseActions && (
           <motion.div
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -223,7 +230,7 @@ export function MessageInput({
           >
             <div className="flex items-center gap-1.5 mb-1.5">
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 flex-1">
-                Leader Actions
+                {isLeader ? 'Leader Actions' : 'Actions'}
               </p>
               <button
                 type="button"
@@ -235,7 +242,7 @@ export function MessageInput({
               </button>
             </div>
             <div className="flex gap-2">
-              {leaderActions.map((action) => (
+              {actions.map((action) => (
                 <button
                   key={action.label}
                   type="button"
@@ -314,13 +321,13 @@ export function MessageInput({
             disabled && 'opacity-50',
           )}
         >
-          {/* Leader plus button */}
-          {isLeader && (
+          {/* Actions plus button (leaders: full set; members: carpool) */}
+          {canUseActions && (
             <button
               type="button"
               onClick={() => setShowLeaderActions(!showLeaderActions)}
               disabled={disabled}
-              aria-label="Leader actions"
+              aria-label={isLeader ? 'Leader actions' : 'Actions'}
               className={cn(
                 'flex-shrink-0 rounded-full min-w-11 min-h-11 flex items-center justify-center',
                 'transition-transform duration-200 active:scale-[0.93]',
