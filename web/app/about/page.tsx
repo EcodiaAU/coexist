@@ -49,13 +49,25 @@ export default async function AboutPage() {
             <h2 className="mt-5 text-4xl text-neutral-900 sm:text-5xl">It started with one reason to get outside</h2>
             <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-neutral-500">
               <p>
-                Co-Exist began with founder Kurt Jones, who found purpose outdoors after growing up
-                disconnected from nature. He saw what happens when young people are given a reason to
-                get outside together, and a real job to do.
+                Co-Exist was founded on a simple but powerful idea: when young people connect with
+                nature, they step up to protect it.
               </p>
               <p>
-                It launched in 2022 with a simple idea: a nationwide movement where young Australians
-                lead climate action and community in their own neighbourhoods, through local collectives.
+                Founder Kurt Jones knows this firsthand. Growing up in a low-income area, he struggled
+                to find direction, often feeling disconnected from his community and the natural world.
+                It was an outdoor program that changed his life. Surrounded by the raw beauty of nature,
+                Kurt found a sense of purpose, resilience, and a passion for conservation.
+              </p>
+              <p>
+                He threw himself into wildlife restoration and environmental education, but noticed a
+                gap: there weren&apos;t enough spaces for young people to lead in conservation and feel
+                like they truly belonged. He set out to change that.
+              </p>
+              <p>
+                In 2022, Kurt formally launched Co-Exist with a bold vision: a nationwide movement where
+                young Australians reconnect with nature, take real climate action, and build stronger
+                communities through local collectives. Today it is a thriving community of young leaders
+                running conservation in cities and towns across the country.
               </p>
             </div>
           </Reveal>

@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
 import { ContactForm } from '@/components/contact-form'
+import { WordSwap } from '@/components/word-swap'
 
 export const metadata: Metadata = {
   title: 'Contact',
   description: 'Get in touch with Co-Exist Australia. Partnerships, volunteering, media, or just to say hello.',
 }
-
-const REASONS = ['start a collective', 'partner with us', 'volunteer', 'just say hi']
 
 export default function ContactPage() {
   return (
@@ -22,7 +21,10 @@ export default function ContactPage() {
       <section className="mx-auto grid max-w-6xl gap-14 px-6 py-20 md:grid-cols-[1fr_1.1fr]">
         <div>
           <h2 className="has-mark text-4xl text-neutral-900 sm:text-5xl">
-            Drop us a line to <span className="mark">{REASONS[0]}</span>
+            Drop us a line to
+            <span className="mt-2 block">
+              <WordSwap words={['start a collective', 'partner with us', 'volunteer', 'ask us anything', 'just say hi']} />
+            </span>
           </h2>
           <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-neutral-500">
             We are a small team of young people who care a lot. Real replies, no auto-responders.

@@ -43,16 +43,33 @@ export default function DonatePage() {
             </p>
           </div>
           <p className="mt-6 text-sm text-neutral-500">
-            ACNC registered charity. ABN 39 660 776 983. For partnership or major-gift
-            conversations,{' '}
+            Prefer to give by bank transfer, or leave a gift in your will?{' '}
             <a href="/contact" className="font-semibold text-primary-700 hover:text-primary-800">
-              get in touch
-            </a>
-            .
+              Get in touch
+            </a>{' '}
+            and we will sort it out. ACNC registered charity, ABN 39 660 776 983.
           </p>
         </div>
 
         <DonateForm />
+      </section>
+
+      {/* Supporter voices */}
+      <section className="bg-olive-800 text-oncream">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <p className="eyebrow text-center text-sage">Why people give</p>
+          <div className="mt-12 grid gap-10 md:grid-cols-3">
+            {[
+              'Your support helps young people lead real change.',
+              'Thanks to Co-Exist, I found my people, and my voice.',
+              'We are building a movement that lasts. Your support makes it real.',
+            ].map((quote) => (
+              <blockquote key={quote} className="text-2xl font-light leading-snug text-oncream">
+                &ldquo;{quote}&rdquo;
+              </blockquote>
+            ))}
+          </div>
+        </div>
       </section>
     </main>
   )
