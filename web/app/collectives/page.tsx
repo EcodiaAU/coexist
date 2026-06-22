@@ -42,6 +42,7 @@ export default async function CollectivesPage() {
         eyebrow="Get involved"
         title="Find your collective"
         subtitle={`${collectives.length} youth-led collectives across Australia, each running conservation in their own backyard. Find your people.`}
+        image="/images/collective.webp"
       />
 
       <section className="mx-auto max-w-6xl px-5 py-14">

@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
+import { Reveal } from '@/components/reveal'
 import { getSiteContent, getTeamMembers } from '@/lib/queries'
 
 export const revalidate = 1800
@@ -34,80 +35,81 @@ export default async function AboutPage() {
         eyebrow="About Co-Exist"
         title="A movement built by young people, for young people"
         subtitle="When young people connect with nature, they step up to protect it."
+        image="/images/hero.webp"
       />
 
-      {/* Story */}
-      <section className="bg-cream">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 md:grid-cols-2">
-          <div>
-            <h2 className="text-2xl font-extrabold text-neutral-900 sm:text-3xl">Our story</h2>
-            <div className="mt-5 space-y-4 text-lg leading-relaxed text-neutral-600">
+      {/* Story - full-bleed image half */}
+      <section className="grid items-stretch bg-white md:grid-cols-2">
+        <Reveal className="relative order-1 min-h-[52vh] overflow-hidden md:order-2">
+          <Image src="/images/nature.webp" alt="Young people in nature with Co-Exist" fill className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+        </Reveal>
+        <div className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
+          <Reveal className="max-w-md">
+            <p className="eyebrow text-primary-600">Our story</p>
+            <h2 className="mt-5 text-4xl text-neutral-900 sm:text-5xl">It started with one reason to get outside</h2>
+            <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-neutral-500">
               <p>
-                Co-Exist began with founder Kurt Jones, who found purpose outdoors after
-                growing up disconnected from nature. He saw what happens when young people
-                are given a reason to get outside together, and a real job to do.
+                Co-Exist began with founder Kurt Jones, who found purpose outdoors after growing up
+                disconnected from nature. He saw what happens when young people are given a reason to
+                get outside together, and a real job to do.
               </p>
               <p>
-                Co-Exist launched in 2022 with a simple idea: build a nationwide movement
-                where young Australians take the lead on climate action and community in
-                their own neighbourhoods, through local collectives.
+                It launched in 2022 with a simple idea: a nationwide movement where young Australians
+                lead climate action and community in their own neighbourhoods, through local collectives.
               </p>
             </div>
-          </div>
-          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-neutral-100 shadow-sm">
-            <Image src="/images/nature.webp" alt="Young people in nature with Co-Exist" fill className="object-cover" />
-          </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* Mission / Vision */}
-      <section className="bg-surface-1">
-        <div className="mx-auto grid max-w-6xl gap-5 px-5 py-16 md:grid-cols-2">
-          <div className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-sm">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-600">Our mission</p>
-            <p className="mt-3 text-xl font-semibold leading-relaxed text-neutral-900">{mission}</p>
-          </div>
-          <div className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-sm">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-600">Our vision</p>
-            <p className="mt-3 text-xl font-semibold leading-relaxed text-neutral-900">{vision}</p>
-          </div>
+      {/* Mission / Vision - flat editorial statements */}
+      <section className="bg-olive-800 text-oncream">
+        <div className="mx-auto grid max-w-6xl gap-x-16 gap-y-12 px-6 py-24 md:grid-cols-2">
+          <Reveal>
+            <p className="eyebrow text-sage">Our mission</p>
+            <p className="mt-5 text-3xl leading-snug text-oncream sm:text-4xl">{mission}</p>
+          </Reveal>
+          <Reveal delay={120}>
+            <p className="eyebrow text-sage">Our vision</p>
+            <p className="mt-5 text-3xl leading-snug text-oncream sm:text-4xl">{vision}</p>
+          </Reveal>
         </div>
       </section>
 
-      {/* Founder quote */}
-      <section className="bg-olive-700 text-oncream">
-        <div className="mx-auto max-w-4xl px-6 py-24 text-center">
-          <blockquote className="font-serif text-3xl font-medium leading-[1.25] text-oncream sm:text-[2.4rem]">
-            “{founderQuote}”
-          </blockquote>
-          <p className="eyebrow mt-8 text-oncream/70">{founderName}</p>
+      {/* Founder quote with watermark */}
+      <section className="relative overflow-hidden bg-white">
+        <span className="watermark left-[-2%] top-1/2 -translate-y-1/2 text-[24vw] text-olive-900">Co-Exist</span>
+        <div className="relative mx-auto max-w-4xl px-6 py-28 text-center">
+          <Reveal>
+            <blockquote className="text-3xl leading-[1.2] text-neutral-900 sm:text-[2.6rem]">“{founderQuote}”</blockquote>
+            <p className="eyebrow mt-9 text-primary-600">{founderName}</p>
+          </Reveal>
         </div>
       </section>
 
-      {/* Team (CMS-managed) */}
+      {/* Team (CMS-managed) - flat editorial grid */}
       {groupedTeam.length > 0 && (
-        <section className="bg-cream">
-          <div className="mx-auto max-w-6xl px-5 py-16">
-            <h2 className="text-2xl font-extrabold text-neutral-900 sm:text-3xl">Meet the team</h2>
+        <section className="bg-white">
+          <div className="mx-auto max-w-6xl px-6 pb-24">
+            <p className="eyebrow text-primary-600">The people</p>
+            <h2 className="mt-4 text-4xl text-neutral-900 sm:text-5xl">Meet the team</h2>
             {groupedTeam.map(([group, members]) => (
-              <div key={group} className="mt-8">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
-                  {GROUP_LABEL[group] ?? group}
-                </p>
-                <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div key={group} className="mt-12">
+                <p className="eyebrow text-neutral-400">{GROUP_LABEL[group] ?? group}</p>
+                <div className="mt-6 grid gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
                   {members.map((m) => (
-                    <div key={m.id} className="rounded-2xl border border-neutral-100 bg-white p-5 text-center shadow-sm">
-                      <div className="mx-auto h-20 w-20 overflow-hidden rounded-full bg-primary-50">
+                    <div key={m.id}>
+                      <div className="relative aspect-square overflow-hidden bg-primary-50">
                         {m.photo_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={m.photo_url} alt={m.name} className="h-full w-full object-cover" />
                         ) : (
-                          <div className="flex h-full items-center justify-center text-lg font-bold text-primary-400">
+                          <div className="flex h-full items-center justify-center text-3xl font-light text-primary-300">
                             {m.name.charAt(0)}
                           </div>
                         )}
                       </div>
-                      <h3 className="mt-3 font-bold text-neutral-900">{m.name}</h3>
+                      <h3 className="mt-4 text-xl text-neutral-900">{m.name}</h3>
                       {m.role_title && <p className="mt-0.5 text-sm text-neutral-500">{m.role_title}</p>}
                     </div>
                   ))}
@@ -119,22 +121,22 @@ export default async function AboutPage() {
       )}
 
       {/* CTA */}
-      <section className="bg-cream">
-        <div className="mx-auto max-w-4xl px-5 py-16 text-center">
-          <h2 className="text-2xl font-extrabold text-neutral-900 sm:text-3xl">
-            Every action counts
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-lg text-neutral-600">
-            Together we can create a lasting impact for people and the planet.
-          </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link href="/collectives" className="rounded-full bg-olive-700 px-6 py-3 text-sm font-bold text-white hover:bg-olive-800">
-              Join a collective
-            </Link>
-            <Link href="/get-involved/support" className="rounded-full border border-neutral-200 px-6 py-3 text-sm font-bold text-neutral-800 hover:bg-neutral-50">
-              Support our work
-            </Link>
-          </div>
+      <section className="bg-olive-700 text-oncream">
+        <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+          <Reveal>
+            <h2 className="text-4xl text-oncream sm:text-6xl">Every action counts</h2>
+            <p className="mx-auto mt-6 max-w-md text-[15px] text-oncream/80">
+              Together we can create a lasting impact for people and the planet.
+            </p>
+            <div className="mt-9 flex flex-wrap justify-center gap-3">
+              <Link href="/collectives" className="rounded-full bg-oncream px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-olive-900 transition-all duration-300 hover:px-10">
+                Join a collective
+              </Link>
+              <Link href="/get-involved/support" className="rounded-full border border-oncream/40 px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-oncream transition-all duration-300 hover:border-oncream hover:bg-oncream/10">
+                Support our work
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
     </main>

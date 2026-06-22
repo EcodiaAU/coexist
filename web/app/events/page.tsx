@@ -26,6 +26,7 @@ export default async function EventsPage() {
         eyebrow="Get involved"
         title="Upcoming events"
         subtitle="Conservation days run by collectives around the country. Everyone is welcome. Come for the work, stay for the people."
+        image="/images/nature.webp"
       />
 
       <section className="mx-auto max-w-6xl px-5 py-14">
