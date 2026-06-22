@@ -52,6 +52,10 @@ import {
 } from './components/event-form-fields'
 import { CoverImageFocalPointPicker } from '@/components/cover-image-focal-point-picker'
 import { coverImagePositionStyle } from '@/lib/cover-image'
+import {
+  useCoverImageSuggestions,
+  type CoverImageSuggestion,
+} from '@/hooks/use-cover-image-suggestions'
 import type { Database } from '@/types/database.types'
 import {
     Page,
@@ -755,6 +759,85 @@ function StepDetails({
   )
 }
 
+/* ------------------------------------------------------------------ */
+/*  Cover image suggestions - real photos from past events             */
+/* ------------------------------------------------------------------ */
+
+function CoverImageSuggestions({
+  suggestions,
+  loading,
+  selectedUrl,
+  onSelect,
+}: {
+  suggestions: CoverImageSuggestion[]
+  loading: boolean
+  selectedUrl: string
+  onSelect: (s: CoverImageSuggestion) => void
+}) {
+  if (!loading && suggestions.length === 0) return null
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Sparkles size={15} className="text-primary-500" />
+        <p className="text-sm font-semibold text-primary-700">
+          Suggested from past events
+        </p>
+      </div>
+      <p className="text-caption text-neutral-500">
+        Photos from this collective and activity type. Tap one to use it.
+      </p>
+
+      {loading && suggestions.length === 0 ? (
+        <div className="flex gap-2 overflow-hidden">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-20 w-28 shrink-0 rounded-xl bg-neutral-100 animate-pulse"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 snap-x">
+          {suggestions.map((s) => {
+            const active = s.url === selectedUrl
+            return (
+              <button
+                key={s.storagePath}
+                type="button"
+                onClick={() => onSelect(s)}
+                aria-label={`Use photo from ${s.eventTitle ?? 'a past event'}`}
+                aria-pressed={active}
+                className={cn(
+                  'relative h-20 w-28 shrink-0 snap-start overflow-hidden rounded-xl',
+                  'cursor-pointer select-none active:scale-[0.96] transition-transform duration-150',
+                  active
+                    ? 'ring-2 ring-primary-500 ring-offset-1'
+                    : 'ring-1 ring-neutral-200 hover:ring-neutral-300',
+                )}
+              >
+                <img
+                  src={s.thumbnailUrl}
+                  alt={s.eventTitle ?? 'Past event photo'}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+                {active && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-primary-900/30">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow">
+                      <Check size={15} className="text-primary-600" />
+                    </span>
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function StepCoverImage({
   coverImageUrl,
   onUploadGallery,
@@ -767,6 +850,9 @@ function StepCoverImage({
   positionX,
   positionY,
   onPositionChange,
+  suggestions,
+  suggestionsLoading,
+  onSelectSuggestion,
 }: {
   coverImageUrl: string
   onUploadGallery: () => void
@@ -779,6 +865,9 @@ function StepCoverImage({
   positionX: number
   positionY: number
   onPositionChange: (x: number, y: number) => void
+  suggestions: CoverImageSuggestion[]
+  suggestionsLoading: boolean
+  onSelectSuggestion: (s: CoverImageSuggestion) => void
 }) {
   return (
     <div className="space-y-4">
@@ -835,6 +924,13 @@ function StepCoverImage({
         uploading={uploading}
         error={uploadError}
         variant="bar"
+      />
+
+      <CoverImageSuggestions
+        suggestions={suggestions}
+        loading={suggestionsLoading}
+        selectedUrl={coverImageUrl}
+        onSelect={onSelectSuggestion}
       />
 
       {coverImageUrl && (
@@ -1563,6 +1659,24 @@ export default function CreateEventPage() {
 
   const form = useEventForm({ mode: 'create' })
 
+  // Cover image suggestions: real photos from past events of the chosen
+  // collective(s) / activity type, so the organiser can pick one without
+  // hunting through downloads or settling for the generic default image.
+  const coverSuggestions = useCoverImageSuggestions({
+    collectiveIds: extra.selected_collective_ids,
+    activityType: form.fields.activity_type,
+  })
+  const handleSelectCoverSuggestion = useCallback(
+    (s: CoverImageSuggestion) => {
+      form.updateFields({
+        cover_image_url: s.url,
+        cover_image_position_x: 50,
+        cover_image_position_y: 50,
+      })
+    },
+    [form],
+  )
+
   const createEvent = useCreateEvent()
   const { data: activityDefaults } = useActivityTypeDefaults()
 
@@ -2079,6 +2193,9 @@ export default function CreateEventPage() {
             positionX={form.fields.cover_image_position_x}
             positionY={form.fields.cover_image_position_y}
             onPositionChange={form.setCoverImagePosition}
+            suggestions={coverSuggestions.suggestions}
+            suggestionsLoading={coverSuggestions.isLoading}
+            onSelectSuggestion={handleSelectCoverSuggestion}
           />
         ),
       },
@@ -2119,7 +2236,7 @@ export default function CreateEventPage() {
         content: <StepPartner extra={extra} onExtraChange={updateExtra} fields={form.fields} onFieldsChange={form.updateFields} />,
       },
     ] as const
-  }, [extra, form, sectionStatus, toggleCollective, updateExtra])
+  }, [extra, form, sectionStatus, toggleCollective, updateExtra, coverSuggestions.suggestions, coverSuggestions.isLoading, handleSelectCoverSuggestion])
 
   return (
     <Page
