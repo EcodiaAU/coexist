@@ -139,7 +139,7 @@ export default async function AboutPage() {
                 <p className="label text-neutral-400">Collective leaders</p>
                 <div className="mt-7 grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
                   {leaders.map((l) => (
-                    <PersonCard key={l.id} name={l.name} sub={`${l.collective} collective`} photo={l.avatar_url ?? teamPhoto(l.fullName) ?? teamPhoto(l.name)} />
+                    <PersonCard key={l.id} name={l.name} sub={`${l.collective} collective`} photo={teamPhoto(l.fullName) ?? teamPhoto(l.name) ?? l.avatar_url} />
                   ))}
                 </div>
               </div>
