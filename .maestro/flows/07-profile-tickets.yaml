@@ -26,9 +26,16 @@ androidWebViewHierarchy: devtools
     visible: "Tickets"
     timeout: 15000
 - tapOn: "Tickets"
+# The My Tickets list is fixture-dependent. A fresh account renders the empty
+# state ("No tickets yet" + Explore Events CTA), but the shared test account
+# accrues real tickets from campout / guest-checkout / event-registration test
+# flows, so it renders the populated "Upcoming" / "Past" sections instead. The
+# page header (Header title="My Tickets") is NOT a reliable anchor: on-device
+# it renders as just the back chevron with no visible title text. So assert
+# whichever of the two valid list-body states the account currently has. (Was:
+# hard "No tickets yet" empty-state assert, which broke once the account gained
+# tickets via the campout/guest-checkout test flows.)
 - extendedWaitUntil:
-    visible: "No tickets yet"
+    visible: ".*(No tickets yet|Upcoming|Past).*"
     timeout: 15000
-- assertVisible: ".*When you purchase tickets.*"
-- assertVisible: "Explore Events"
 - takeScreenshot: /tmp/maestro-cx-profile-tickets

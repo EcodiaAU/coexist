@@ -57,9 +57,12 @@ androidWebViewHierarchy: devtools
 - extendedWaitUntil:
     visible: ".*(National Impact|Impact|Permission required).*"
     timeout: 20000
-# /admin/exports redirects to /admin/insights#reports (App.tsx:464)
+# /admin/exports redirects to /admin/insights#reports (App.tsx). The legacy
+# standalone Reports/exports surface was folded into the Insights page during
+# the rebrand: header is "Insights" with an OVERVIEW stat grid (flow 32's F3
+# canary proves these render on the insights deep-link), so anchor on those.
 - openLink: "coexist://admin/exports"
 - extendedWaitUntil:
-    visible: ".*(Reports|Impact|Permission required).*"
+    visible: ".*(Insights|OVERVIEW|Reports|Permission required).*"
     timeout: 20000
 - takeScreenshot: /tmp/maestro-cx-admin-sweep-render
