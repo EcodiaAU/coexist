@@ -50,11 +50,11 @@ const GIFT_LINES: { icon: typeof Leaf; amount: string; text: string }[] = [
 /* ------------------------------------------------------------------ */
 
 function DonateHero({ rm }: { rm: boolean }) {
-  const { bgRef, fgRef, textRef } = useParallaxLayers({ textRange: 110, withScale: false })
+  const { bgRef, fgRef, textRef } = useParallaxLayers({ textRange: 180, withScale: false })
 
   return (
     <div className="relative">
-      <div className="relative w-full h-[112vw] min-h-[500px] sm:h-auto overflow-hidden">
+      <div className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
         <div ref={rm ? undefined : bgRef} className="h-full will-change-transform">
           <img
             src="/img/donate-hero-bg.webp"
@@ -71,26 +71,13 @@ function DonateHero({ rm }: { rm: boolean }) {
           />
         </div>
 
-        {/* Warm forest wash so the wordmark sits in an editorial lower third. */}
-        <div className="absolute inset-0 z-[4] bg-gradient-to-t from-secondary-950/92 via-secondary-950/45 to-transparent" />
-
         <div
           ref={rm ? undefined : textRef}
-          className="absolute inset-x-0 bottom-[24%] z-[5] flex flex-col items-center px-7 text-center will-change-transform"
+          className="absolute inset-x-0 top-[20%] sm:top-[16%] z-[2] flex flex-col items-center px-6 will-change-transform"
         >
-          <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/75 mb-3">
-            Co-Exist Australia
-          </span>
-          <span
-            role="heading"
-            aria-level={1}
-            className="font-heading text-[3.25rem] sm:text-[4.5rem] lg:text-[5.5rem] font-black uppercase text-white leading-[0.86] tracking-[-0.04em] drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)]"
-          >
+          <span role="heading" aria-level={1} className="font-heading text-[2.5rem] sm:text-[3.5rem] lg:text-[5rem] font-bold uppercase text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)] leading-[0.85] block">
             Donate
           </span>
-          <p className="mt-3.5 max-w-[20rem] text-[15px] leading-snug text-white/85 font-medium drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
-            Fund the hands-on work restoring Australia's wild places.
-          </p>
         </div>
       </div>
 
@@ -157,7 +144,7 @@ function DonationForm({ rm }: { rm: boolean }) {
           <Heart size={19} className="text-primary-600" />
         </div>
         <div>
-          <h2 className="font-heading font-black text-neutral-900 text-xl tracking-[-0.02em]">Make a donation</h2>
+          <h2 className="font-heading text-xl sm:text-2xl font-bold text-neutral-900">Make a donation</h2>
           <div className="flex items-center gap-1.5 mt-0.5">
             <Shield size={11} className="text-neutral-400" />
             <p className="text-[11px] text-neutral-500 font-medium">Secure payment via Stripe</p>
@@ -180,7 +167,7 @@ function DonationForm({ rm }: { rm: boolean }) {
       </div>
 
       {/* Preset amounts */}
-      <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-[0.14em] mb-2.5">Choose an amount</p>
+      <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-2.5">Choose an amount</p>
       <div className="grid grid-cols-4 gap-2.5 mb-4">
         {PRESET_AMOUNTS.map((preset) => {
           const active = selectedAmount === preset
@@ -257,7 +244,7 @@ function DonationForm({ rm }: { rm: boolean }) {
 
       {/* Optional message */}
       <div className="mb-4">
-        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-[0.14em] mb-2.5 flex items-center gap-1.5">
+        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
           <MessageCircle size={12} />
           Leave a message
         </p>
@@ -332,18 +319,20 @@ export default function DonatePage() {
         <DonateHero rm={rm} />
 
         <div className="relative z-10 px-5 lg:px-6 pt-6">
-          <div className="max-w-lg mx-auto">
+          <div className="max-w-lg lg:max-w-5xl mx-auto">
             <motion.div
               variants={rm ? undefined : stagger}
               initial="hidden"
               animate="visible"
-              className="space-y-5"
+              className="space-y-5 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-7 lg:items-start"
             >
-              {/* Donation form */}
+              {/* Donation form (left column on laptop) */}
               <motion.div variants={fadeUp}>
                 <DonationForm rm={rm} />
               </motion.div>
 
+              {/* Supporting cards (right column on laptop, stacked on mobile) */}
+              <div className="space-y-5">
               {/* Where your gift goes */}
               <motion.div variants={fadeUp}>
                 <div className="rounded-3xl bg-secondary-950 text-white p-6 overflow-hidden relative">
@@ -394,9 +383,10 @@ export default function DonatePage() {
                   </div>
                 </div>
               </motion.div>
-
-              <div className="h-20" />
+              </div>
             </motion.div>
+
+            <div className="h-20" />
           </div>
         </div>
       </div>
