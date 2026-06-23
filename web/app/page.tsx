@@ -49,15 +49,18 @@ export default async function HomePage() {
       {/* Hero with stats overlaid at the foot of the image */}
       <section className="relative isolate flex min-h-[90vh] flex-col overflow-hidden">
         <ParallaxImage src="/images/hero.webp" priority blurDataURL={BLUR['/images/hero.webp']} />
-        {/* home hero carries title + stats at the foot, so it darkens toward the bottom */}
-        <div className="-z-10 absolute inset-0 bg-black/20" />
-        <div className="-z-10 absolute inset-0 bg-gradient-to-t from-olive-950/95 via-olive-950/40 to-transparent" />
+        {/* blur gradient (sharp top -> blurred through the centre + foot) carries
+            legibility for the centred title and the foot stats, instead of a dark wash */}
+        <div className="hero-blur-foot absolute inset-0 z-0" />
+        <div className="paper-texture absolute inset-0 z-0" />
+        <div className="grain-layer absolute inset-0 z-0" />
+        <div className="absolute inset-0 z-0 bg-black/12" />
 
-        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 pt-28 pb-10">
+        <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 pt-28 pb-10 text-center">
           <p className="eyebrow text-oncream/70">Co-Exist Australia</p>
-          <h1 className="display-tight mt-6 max-w-4xl text-[3.6rem] leading-[0.92] text-oncream sm:text-[7.5rem]">{heroTitle}</h1>
-          <p className="mt-7 max-w-md text-base text-oncream/85">{heroSubtitle}</p>
-          <div className="mt-9 flex flex-wrap gap-3">
+          <h1 className="display-tight mx-auto mt-6 max-w-4xl text-[3.6rem] leading-[0.92] text-oncream sm:text-[7.5rem]">{heroTitle}</h1>
+          <p className="mx-auto mt-7 max-w-md text-base text-oncream/85">{heroSubtitle}</p>
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
             <Link href="/collectives" className="rounded-full bg-oncream px-7 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-olive-900 transition-all duration-300 hover:px-9">
               Join a collective
             </Link>
@@ -67,7 +70,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-6xl border-t border-oncream/15 px-6 pt-9 pb-28 lg:pb-36">
+        <div className="relative z-10 mx-auto w-full max-w-6xl border-t border-oncream/15 px-6 pt-9 pb-28 lg:pb-36">
           <div className="grid grid-cols-2 gap-y-7 sm:grid-cols-4">
             {tiles.map((t, i) => (
               <div key={t.label} className={i > 0 ? 'border-l border-oncream/12 pl-6 sm:pl-8' : ''}>
