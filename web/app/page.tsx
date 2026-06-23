@@ -50,7 +50,7 @@ export default async function HomePage() {
       <section className="relative isolate flex min-h-[90vh] flex-col overflow-hidden">
         <ParallaxImage src="/images/hero.webp" priority blurDataURL={BLUR['/images/hero.webp']} />
         <div className="grain-layer absolute inset-0 z-0" />
-        <div className="absolute inset-0 z-0 bg-black/12" />
+        <div className="absolute inset-0 z-0 bg-black/25" />
 
         <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 pt-28 pb-10 text-center">
           <p className="eyebrow text-oncream/70">Co-Exist Australia</p>

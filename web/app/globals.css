@@ -149,9 +149,9 @@ h1, h2, h3, h4, h5, h6 {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  /* Faint legibility floor only - the heavy lifting is now .hero-blur, not a
-     dark wash. Kept light so white text reads without the image going murky. */
-  background: rgba(0, 0, 0, 0.12);
+  /* Tiny dark overlay behind hero text - subtle, just enough to lift white text
+     off the image without going murky. */
+  background: rgba(0, 0, 0, 0.25);
 }
 
 /* Soft blur gradient at the FOOT of a hero image. backdrop-filter blurs the
