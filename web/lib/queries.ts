@@ -206,17 +206,98 @@ export async function getSiteContent(): Promise<Record<string, string>> {
   }
 }
 
+const norm = (s: string | null | undefined) => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
+
+/**
+ * Board + core team from the curated team_members table (correct people + titles;
+ * the app's raw admin role is not publishable - it includes operational accounts
+ * and departed staff). Avatars are enriched live from the app's profiles by exact
+ * name match where one exists. The 'leader' group is intentionally excluded -
+ * collective leaders come live from getCollectiveLeaders().
+ */
 export async function getTeamMembers(): Promise<TeamMemberVM[]> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const supabase = getPublicSupabase() as any
+    const supabase = getServerSupabase() as any
     const { data, error } = await supabase
       .from('team_members')
       .select('id, name, role_title, bio, photo_url, team_group, sort_order, is_published')
       .eq('is_published', true)
+      .neq('team_group', 'leader')
       .order('sort_order', { ascending: true })
     if (error) return []
-    return (data ?? []) as TeamMemberVM[]
+    const team = (data ?? []) as TeamMemberVM[]
+
+    // enrich avatars from live app profiles by exact name match
+    try {
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('display_name, first_name, last_name, avatar_url')
+        .not('avatar_url', 'is', null)
+        .is('deleted_at', null)
+      const byName = new Map<string, string>()
+      for (const p of profs ?? []) {
+        const full = norm([p.first_name, p.last_name].filter(Boolean).join(' '))
+        const disp = norm(p.display_name)
+        if (full && !byName.has(full)) byName.set(full, p.avatar_url)
+        if (disp && !byName.has(disp)) byName.set(disp, p.avatar_url)
+      }
+      for (const m of team) {
+        if (!m.photo_url) m.photo_url = byName.get(norm(m.name)) ?? null
+      }
+    } catch {
+      /* avatar enrichment is best-effort */
+    }
+    return team
+  } catch {
+    return []
+  }
+}
+
+export interface LeaderVM {
+  id: string
+  name: string
+  fullName: string
+  collective: string
+  avatar_url: string | null
+  member_count: number | null
+}
+
+/** Live collective leaders from the app (collectives.leader_id -> profiles). */
+export async function getCollectiveLeaders(): Promise<LeaderVM[]> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = getServerSupabase() as any
+    const { data: cols } = await supabase
+      .from('collectives')
+      .select('id, name, member_count, leader_id')
+      .eq('is_active', true)
+      .not('leader_id', 'is', null)
+    if (!cols?.length) return []
+    const ids = cols.map((c: { leader_id: string }) => c.leader_id)
+    const { data: profs } = await supabase
+      .from('profiles')
+      .select('id, display_name, first_name, last_name, avatar_url, is_suspended, deleted_at')
+      .in('id', ids)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pm = new Map<string, any>(
+      (profs ?? [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((p: any) => !p.deleted_at && p.is_suspended !== true)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((p: any) => [p.id, p]),
+    )
+    return (cols as { id: string; name: string; member_count: number | null; leader_id: string }[])
+      .map((c) => {
+        const p = pm.get(c.leader_id)
+        if (!p) return null
+        const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ').trim()
+        const name = (p.display_name || fullName || '').trim()
+        if (!name) return null
+        return { id: c.id, name, fullName: fullName || name, collective: c.name, avatar_url: p.avatar_url ?? null, member_count: c.member_count ?? null }
+      })
+      .filter((x): x is LeaderVM => x !== null)
+      .sort((a, b) => (b.member_count ?? 0) - (a.member_count ?? 0))
   } catch {
     return []
   }

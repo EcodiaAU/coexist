@@ -26,6 +26,19 @@ export default async function CollectivesPage() {
   const n = collectives.length + 1
   const spans = bentoSpans(n)
 
+  // Place tiles so size roughly tracks membership: the biggest collectives land
+  // on the 2x2 feature slots, the rest on the small slots (grid order preserved).
+  const big: number[] = []
+  const small: number[] = []
+  for (let i = 0; i < collectives.length; i++) {
+    ;(spans[i].includes('row-span-2') ? big : small).push(i)
+  }
+  const byMembers = [...collectives].sort((a, b) => (b.member_count ?? 0) - (a.member_count ?? 0))
+  const placed: CollectiveVM[] = new Array(collectives.length)
+  let si = 0
+  for (const idx of big) placed[idx] = byMembers[si++]
+  for (const idx of small) placed[idx] = byMembers[si++]
+
   return (
     <main>
       <PageHeader
@@ -44,7 +57,7 @@ export default async function CollectivesPage() {
           <p className="py-16 text-center text-neutral-500">Collectives are loading. Check back shortly.</p>
         ) : (
           <div className={BENTO_GRID}>
-            {collectives.map((c, i) => (
+            {placed.map((c, i) => (
               <BentoTile key={c.id} href={`/collectives/${c.slug}`} image={c.cover_image_url} alt={c.name} span={spans[i]}>
                 <div className="absolute inset-x-0 bottom-0 p-5">
                   <h2 className={`uppercase leading-[0.96] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-4xl sm:text-5xl' : 'text-xl'}`}>{c.name}</h2>

@@ -3,8 +3,26 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
-import { getSiteContent, getTeamMembers } from '@/lib/queries'
+import { getSiteContent, getTeamMembers, getCollectiveLeaders } from '@/lib/queries'
+import { teamPhoto } from '@/lib/team-photos'
 import { BLUR } from '@/lib/blur'
+
+function PersonCard({ name, sub, photo }: { name: string; sub?: string | null; photo?: string | null }) {
+  return (
+    <div>
+      <div className="relative aspect-square overflow-hidden rounded-2xl bg-olive-100">
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photo} alt={name} loading="lazy" className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full items-center justify-center text-4xl font-light text-olive-500/60">{name.charAt(0)}</div>
+        )}
+      </div>
+      <h3 className="mt-3 text-lg leading-tight text-neutral-900">{name}</h3>
+      {sub && <p className="mt-0.5 text-[13px] text-neutral-500">{sub}</p>}
+    </div>
+  )
+}
 
 export const revalidate = 1800
 
@@ -14,11 +32,11 @@ export const metadata: Metadata = {
     'Co-Exist is a movement built by young people, for young people. Our mission: creating communities that preserve and protect wildlife and wild places.',
 }
 
-const GROUP_LABEL: Record<string, string> = { board: 'Board', core: 'Core team', leader: 'Collective leaders' }
-const GROUP_ORDER = ['board', 'core', 'leader']
+const GROUP_LABEL: Record<string, string> = { board: 'Board', core: 'Core team' }
+const GROUP_ORDER = ['board', 'core']
 
 export default async function AboutPage() {
-  const [content, team] = await Promise.all([getSiteContent(), getTeamMembers()])
+  const [content, team, leaders] = await Promise.all([getSiteContent(), getTeamMembers(), getCollectiveLeaders()])
   const mission = content.mission || 'Creating communities that preserve and protect wildlife and wild places.'
   const vision = content.vision || 'Young people connected to nature and leading its protection and restoration.'
   const founderQuote =
@@ -99,25 +117,33 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* Team (CMS-managed) - flat editorial grid */}
-      {groupedTeam.length > 0 && (
+      {/* Team - board + core (curated) and live collective leaders, with app avatars */}
+      {(groupedTeam.length > 0 || leaders.length > 0) && (
         <section className="bg-white">
           <div className="mx-auto max-w-6xl px-6 pb-24">
-            <p className="eyebrow text-primary-600">The people</p>
-            <h2 className="mt-4 text-4xl text-neutral-900 sm:text-5xl">Meet the team</h2>
+            <h2 className="text-4xl text-neutral-900 sm:text-5xl">Meet the team</h2>
+
             {groupedTeam.map(([group, members]) => (
               <div key={group} className="mt-12 border-t border-neutral-200 pt-8">
                 <p className="label text-neutral-400">{GROUP_LABEL[group] ?? group}</p>
-                <div className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-7 grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
                   {members.map((m) => (
-                    <div key={m.id} className="flex items-baseline justify-between gap-4 border-b border-neutral-100 pb-3">
-                      <h3 className="text-lg text-neutral-900">{m.name}</h3>
-                      {m.role_title && <p className="shrink-0 text-right text-[13px] text-neutral-400">{m.role_title}</p>}
-                    </div>
+                    <PersonCard key={m.id} name={m.name} sub={m.role_title} photo={teamPhoto(m.name) ?? m.photo_url} />
                   ))}
                 </div>
               </div>
             ))}
+
+            {leaders.length > 0 && (
+              <div className="mt-12 border-t border-neutral-200 pt-8">
+                <p className="label text-neutral-400">Collective leaders</p>
+                <div className="mt-7 grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
+                  {leaders.map((l) => (
+                    <PersonCard key={l.id} name={l.name} sub={`${l.collective} collective`} photo={l.avatar_url ?? teamPhoto(l.fullName) ?? teamPhoto(l.name)} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
       )}
