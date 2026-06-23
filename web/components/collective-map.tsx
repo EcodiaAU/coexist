@@ -95,7 +95,7 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
   }, [])
 
   return (
-    <div className={`relative overflow-hidden rounded-3xl ${className}`}>
+    <div className={`relative overflow-hidden ${className}`}>
       <div ref={ref} className="cx-cmap h-full w-full" style={{ zIndex: 0 }} />
 
       <div className="absolute left-4 top-4 z-[500] rounded-full bg-white/90 px-4 py-2 text-xs font-bold text-olive-800 shadow-sm backdrop-blur">

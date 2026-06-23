@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { getCollectives, type CollectiveVM } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
 import { CollectiveMapClient } from '@/components/collective-map-client'
+import { bentoFeatured, bentoLastFill } from '@/lib/bento'
 import { APP_URL } from '@/lib/env'
 
 export const revalidate = 1800
@@ -13,13 +14,6 @@ export const metadata: Metadata = {
     'Co-Exist collectives are youth-led groups running local conservation across Australia. Find your nearest collective and join the movement.',
 }
 
-function span(i: number): string {
-  const m = i % 6
-  if (m === 0) return 'sm:col-span-2 sm:row-span-2'
-  if (m === 3) return 'sm:col-span-2'
-  return ''
-}
-
 export default async function CollectivesPage() {
   let collectives: CollectiveVM[] = []
   try {
@@ -27,6 +21,10 @@ export default async function CollectivesPage() {
   } catch {
     collectives = []
   }
+
+  // total grid tiles = collectives + the "start a collective" CTA tile
+  const n = collectives.length + 1
+  const ctaIdx = n - 1
 
   return (
     <main>
@@ -37,28 +35,20 @@ export default async function CollectivesPage() {
         image="/images/collective.webp"
       />
 
-      {/* Our collective reach - interactive map (ported from the app) */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-6xl px-6 pb-10 pt-12">
-          <p className="eyebrow text-center text-primary-600">Our collective reach</p>
-          <p className="mx-auto mt-3 max-w-md text-center text-[15px] text-neutral-500">
-            Tap a pin to explore the collective near you.
-          </p>
-          <CollectiveMapClient collectives={collectives} className="mt-8 h-[68vh] min-h-[460px]" />
-        </div>
-      </section>
+      {/* Full-bleed interactive map (ported from the app), flush to hero + grid */}
+      <CollectiveMapClient collectives={collectives} className="h-[58vh] min-h-[420px] w-full" />
 
-      {/* Bento grid of collectives - full-bleed, flush, no rounded corners */}
-      <section className="pb-16">
+      {/* Full-bleed flush bento - flat bottom (CTA is the last tile, fills its row) */}
+      <section>
         {collectives.length === 0 ? (
           <p className="py-16 text-center text-neutral-500">Collectives are loading. Check back shortly.</p>
         ) : (
-          <div className="grid auto-rows-[46vw] grid-flow-row-dense grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
+          <div className="grid auto-rows-[46vw] grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
             {collectives.map((c, i) => (
               <Link
                 key={c.id}
                 href={`/collectives/${c.slug}`}
-                className={`group relative isolate overflow-hidden bg-olive-800 ${span(i)}`}
+                className={`group relative isolate overflow-hidden bg-olive-800 ${bentoFeatured(i)}`}
               >
                 {c.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -66,25 +56,24 @@ export default async function CollectivesPage() {
                 ) : null}
                 <div className="absolute inset-0 -z-10 bg-gradient-to-t from-olive-950/85 via-olive-950/20 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
-                  <h2 className={`uppercase leading-[0.98] tracking-[-0.02em] text-oncream ${i % 6 === 0 ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>{c.name}</h2>
+                  <h2 className={`uppercase leading-[0.98] tracking-[-0.02em] text-oncream ${i === 0 ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>{c.name}</h2>
                   {c.member_count ? (
                     <p className="mt-1 text-[11px] uppercase tracking-[0.02em] text-oncream/60">{c.member_count} members</p>
                   ) : null}
                 </div>
               </Link>
             ))}
+
+            {/* CTA tile - fills the rest of the last row so the grid bottom is flat */}
+            <a
+              href={`${APP_URL}/lead-a-collective`}
+              className={`group flex flex-col items-center justify-center bg-olive-700 p-5 text-center text-oncream transition-colors hover:bg-olive-600 ${bentoLastFill(n, ctaIdx)}`}
+            >
+              <span className="text-xl leading-tight text-oncream sm:text-2xl">Start a collective</span>
+              <span className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-oncream/70">Not near one yet? →</span>
+            </a>
           </div>
         )}
-
-        <div className="mx-6 mt-14 rounded-3xl bg-olive-700 p-10 text-center text-oncream lg:mx-auto lg:max-w-6xl">
-          <h2 className="text-3xl sm:text-4xl">No collective near you yet?</h2>
-          <p className="mx-auto mt-3 max-w-md text-[15px] text-oncream/80">
-            We are always growing. Register your interest in leading one and we will help you start it.
-          </p>
-          <a href={`${APP_URL}/lead-a-collective`} className="mt-6 inline-block rounded-full bg-oncream px-7 py-3 text-[13px] font-semibold uppercase tracking-wider text-olive-900 hover:bg-white">
-            Start a collective
-          </a>
-        </div>
       </section>
     </main>
   )

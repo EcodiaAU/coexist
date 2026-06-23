@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getProducts, type ProductVM } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
+import { bentoFeatured, bentoLastFill } from '@/lib/bento'
 
 export const revalidate = 900
 
@@ -14,14 +15,6 @@ export const metadata: Metadata = {
 function price(p: ProductVM): string {
   const c = p.base_price_cents ?? (p.price != null ? Math.round(p.price * 100) : 0)
   return `$${(c / 100).toFixed(c % 100 === 0 ? 0 : 2)}`
-}
-
-// Bento span pattern - matches the events + collectives grids.
-function span(i: number): string {
-  const m = i % 6
-  if (m === 0) return 'sm:col-span-2 sm:row-span-2'
-  if (m === 3) return 'sm:col-span-2'
-  return ''
 }
 
 export default async function ShopPage() {
@@ -41,18 +34,18 @@ export default async function ShopPage() {
         image="/images/collective.webp"
       />
 
-      <section className="pb-14">
+      <section>
         {products.length === 0 ? (
           <p className="mx-auto max-w-6xl px-6 py-16 text-center text-neutral-500">Our shop is restocking. Check back soon.</p>
         ) : (
-          <div className="grid auto-rows-[46vw] grid-flow-row-dense grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
+          <div className="grid auto-rows-[46vw] grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
             {products.map((p, i) => {
               const hover = p.images[1]
               return (
                 <Link
                   key={p.id}
                   href={`/shop/${p.slug}`}
-                  className={`group relative isolate overflow-hidden bg-neutral-200 ${span(i)}`}
+                  className={`group relative isolate overflow-hidden bg-neutral-200 ${bentoFeatured(i)} ${bentoLastFill(products.length, i)}`}
                 >
                   {p.images[0] ? (
                     <>
@@ -68,7 +61,7 @@ export default async function ShopPage() {
                   )}
                   <div className="absolute inset-0 -z-10 bg-gradient-to-t from-olive-950/80 via-olive-950/10 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5">
-                    <h2 className={`leading-[1.05] text-oncream ${i % 6 === 0 ? 'text-2xl sm:text-3xl' : 'text-lg'}`}>{p.name}</h2>
+                    <h2 className={`leading-[1.05] text-oncream ${i === 0 ? 'text-2xl sm:text-3xl' : 'text-lg'}`}>{p.name}</h2>
                     <span className="shrink-0 text-sm text-oncream/85">{price(p)}</span>
                   </div>
                 </Link>

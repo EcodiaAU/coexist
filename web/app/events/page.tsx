@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { getUpcomingEvents } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
 import { formatDateShort } from '@/lib/format'
+import { bentoFeatured, bentoLastFill } from '@/lib/bento'
 
 export const revalidate = 900
 
@@ -10,14 +11,6 @@ export const metadata: Metadata = {
   title: 'Events',
   description:
     'Upcoming Co-Exist conservation events across Australia. Beach cleanups, tree planting, nature walks and more. Find one near you and get involved.',
-}
-
-// Bento span pattern - varied tile sizes, dense packing fills the gaps.
-function span(i: number): string {
-  const m = i % 6
-  if (m === 0) return 'sm:col-span-2 sm:row-span-2'
-  if (m === 3) return 'sm:col-span-2'
-  return ''
 }
 
 export default async function EventsPage() {
@@ -37,7 +30,7 @@ export default async function EventsPage() {
         image="/images/nature.webp"
       />
 
-      <section className="pb-14">
+      <section>
         {events.length === 0 ? (
           <div className="mx-auto max-w-6xl px-6 py-20 text-center">
             <p className="text-2xl text-neutral-900">No upcoming events listed right now</p>
@@ -52,12 +45,12 @@ export default async function EventsPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid auto-rows-[46vw] grid-flow-row-dense grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
+          <div className="grid auto-rows-[46vw] grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
             {events.map((e, i) => (
               <Link
                 key={e.id}
                 href={`/events/${e.id}`}
-                className={`group relative isolate overflow-hidden bg-olive-800 ${span(i)}`}
+                className={`group relative isolate overflow-hidden bg-olive-800 ${bentoFeatured(i)} ${bentoLastFill(events.length, i)}`}
               >
                 {e.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -74,7 +67,7 @@ export default async function EventsPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-oncream/70">
                     {formatDateShort(e.date_start, e.timezone)}
                   </p>
-                  <h2 className={`mt-1 leading-[1.05] text-oncream ${i % 6 === 0 ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>
+                  <h2 className={`mt-1 leading-[1.05] text-oncream ${i === 0 ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>
                     {e.title}
                   </h2>
                   {e.collective && (
