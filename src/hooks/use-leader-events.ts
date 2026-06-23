@@ -93,9 +93,12 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
       .from('event_walk_ins')
       .select('event_id')
       .in('event_id', eventIds),
+    // event_hosts is a VIEW, so PostgREST cannot embed collectives off it
+    // (no inferable FK) - the embed 400s. Pull the plain (event_id,
+    // collective_id) pairs and resolve names in a second query below.
     supabase
       .from('event_hosts')
-      .select('event_id, collectives:collective_id(id, name)')
+      .select('event_id, collective_id')
       .in('event_id', eventIds),
   ])
 
@@ -109,13 +112,22 @@ async function fetchLeaderCollectiveEvents(collectiveId: string, filter: string)
     checkedInMap.set(row.event_id, (checkedInMap.get(row.event_id) ?? 0) + 1)
   }
 
-  type HostNameRow = { event_id: string; collectives: { id: string; name: string } | null }
+  // Resolve co-host collective names in a second query (the view embed 400s).
+  type HostRow = { event_id: string; collective_id: string }
+  const hostPairs = (hostNameRows ?? []) as unknown as HostRow[]
+  const hostCollectiveIds = [...new Set(hostPairs.map((r) => r.collective_id).filter((id) => id && id !== collectiveId))]
+  const { data: hostCollectives } = hostCollectiveIds.length
+    ? await supabase.from('collectives').select('id, name').in('id', hostCollectiveIds)
+    : { data: [] as { id: string; name: string }[] }
+  const collectiveNameById = new Map((hostCollectives ?? []).map((c) => [c.id as string, c.name as string]))
+
   const cohostsByEvent = new Map<string, string[]>()
-  for (const row of (hostNameRows ?? []) as unknown as HostNameRow[]) {
-    if (!row.collectives) continue
-    if (row.collectives.id === collectiveId) continue
+  for (const row of hostPairs) {
+    if (!row.collective_id || row.collective_id === collectiveId) continue
+    const name = collectiveNameById.get(row.collective_id)
+    if (!name) continue
     const list = cohostsByEvent.get(row.event_id) ?? []
-    list.push(row.collectives.name)
+    list.push(name)
     cohostsByEvent.set(row.event_id, list)
   }
 
