@@ -326,9 +326,34 @@ export async function getPartners(): Promise<PartnerVM[]> {
 
 export interface ProductVariant {
   id: string
-  label?: string
+  label: string
+  size?: string
+  colour?: string
   price_cents?: number
   is_active?: boolean
+  stock?: number
+}
+
+// Variants come from a jsonb column in two shapes: simple {key,label} (stickers,
+// tote) and apparel {id,sku,size,colour,stock,...} with no label. Normalise both
+// to a consistent ProductVariant so the buy UI never falls back to a bare "Option".
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normVariant(v: any): ProductVariant {
+  const id = String(v.id ?? v.key ?? v.sku ?? '')
+  const label =
+    (typeof v.label === 'string' && v.label) ||
+    [v.size, v.colour].filter(Boolean).join(' / ') ||
+    v.sku ||
+    'Option'
+  return {
+    id,
+    label,
+    size: v.size ?? undefined,
+    colour: v.colour ?? undefined,
+    price_cents: v.price_cents ?? undefined,
+    is_active: v.is_active,
+    stock: typeof v.stock === 'number' ? v.stock : undefined,
+  }
 }
 export interface ProductVM {
   id: string
@@ -352,7 +377,7 @@ function mapProduct(r: any): ProductVM {
     price: r.price != null ? Number(r.price) : null,
     base_price_cents: r.base_price_cents,
     images: Array.isArray(r.images) ? r.images : [],
-    variants: Array.isArray(r.variants) ? r.variants : [],
+    variants: Array.isArray(r.variants) ? r.variants.map(normVariant) : [],
     category: r.category,
   }
 }

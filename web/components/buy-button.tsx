@@ -1,8 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { getBrowserSupabase } from '@/lib/supabase-browser'
 import type { ProductVariant } from '@/lib/queries'
+
+const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', 'ONE SIZE']
+function sizeRank(s: string) {
+  const i = SIZE_ORDER.indexOf(s.trim().toUpperCase())
+  return i === -1 ? 999 : i
+}
+function uniq(values: (string | undefined)[]) {
+  return [...new Set(values.filter((v): v is string => !!v))]
+}
+
+const chip = (selected: boolean) =>
+  `rounded-none border px-4 py-2 text-xs font-normal uppercase tracking-[0.18em] transition-colors ${
+    selected
+      ? 'border-olive-700 bg-olive-700 text-white'
+      : 'border-neutral-300 text-neutral-700 hover:border-olive-700 hover:text-olive-700'
+  }`
 
 export function BuyButton({
   productId,
@@ -11,24 +27,59 @@ export function BuyButton({
   productId: string
   variants: ProductVariant[]
 }) {
-  const active = variants.filter((v) => v.is_active !== false)
-  const [variantId, setVariantId] = useState<string | undefined>(active[0]?.id)
+  const active = useMemo(() => variants.filter((v) => v.is_active !== false), [variants])
+
+  // Apparel variants carry size/colour axes; simple variants only a label.
+  const sizes = useMemo(
+    () => uniq(active.map((v) => v.size)).sort((a, b) => sizeRank(a) - sizeRank(b)),
+    [active],
+  )
+  const colours = useMemo(() => uniq(active.map((v) => v.colour)), [active])
+  const hasAxes = sizes.length > 0 || colours.length > 0
+
+  // Open on an in-stock combo where one exists, so a part-sold-out product
+  // (e.g. one tee size left) does not land on "Sold out".
+  const initial = useMemo(
+    () => active.find((v) => v.stock == null || v.stock > 0) ?? active[0],
+    [active],
+  )
+  const [size, setSize] = useState<string | undefined>(initial?.size ?? sizes[0])
+  const [colour, setColour] = useState<string | undefined>(initial?.colour ?? colours[0])
+  const [variantId, setVariantId] = useState<string | undefined>(initial?.id)
   const [qty, setQty] = useState(1)
   const [state, setState] = useState<'idle' | 'submitting' | 'error'>('idle')
 
+  // Which concrete variant the current selection resolves to.
+  const selected = useMemo(() => {
+    if (!hasAxes) return active.find((v) => v.id === variantId)
+    return active.find(
+      (v) =>
+        (sizes.length === 0 || v.size === size) && (colours.length === 0 || v.colour === colour),
+    )
+  }, [hasAxes, active, variantId, sizes.length, colours.length, size, colour])
+
+  const soldOut = selected != null && selected.stock === 0
+
   async function buy() {
-    if (active.length > 0 && !variantId) {
+    const chosen = selected
+    if (active.length > 0 && !chosen) {
       setState('error')
       return
     }
     setState('submitting')
     try {
       const supabase = getBrowserSupabase()
-      const variant = active.find((v) => v.id === variantId)
       const { data, error } = await supabase.functions.invoke('public-checkout', {
         body: {
           type: 'merch',
-          items: [{ product_id: productId, variant_id: variantId, variant_label: variant?.label, quantity: qty }],
+          items: [
+            {
+              product_id: productId,
+              variant_id: chosen?.id,
+              variant_label: chosen?.label,
+              quantity: qty,
+            },
+          ],
         },
       })
       if (error || !data?.url) throw new Error('no url')
@@ -40,26 +91,50 @@ export function BuyButton({
 
   return (
     <div>
-      {active.length > 0 && (
-        <div className="mt-6">
-          <p className="label text-neutral-400">Size / option</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {active.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                onClick={() => setVariantId(v.id)}
-                className={`rounded-none border px-4 py-2 text-xs font-normal uppercase tracking-[0.18em] transition-colors ${
-                  variantId === v.id
-                    ? 'border-olive-700 bg-olive-700 text-white'
-                    : 'border-neutral-300 text-neutral-700 hover:border-olive-700 hover:text-olive-700'
-                }`}
-              >
-                {v.label ?? 'Option'}
-              </button>
-            ))}
-          </div>
+      {hasAxes ? (
+        <div className="mt-6 space-y-5">
+          {colours.length > 0 && (
+            <div>
+              <p className="label text-neutral-400">
+                Colour{colour ? <span className="ml-2 text-neutral-600">{colour}</span> : null}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {colours.map((c) => (
+                  <button key={c} type="button" onClick={() => setColour(c)} className={chip(colour === c)}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {sizes.length > 0 && (
+            <div>
+              <p className="label text-neutral-400">
+                Size{size ? <span className="ml-2 text-neutral-600">{size}</span> : null}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {sizes.map((s) => (
+                  <button key={s} type="button" onClick={() => setSize(s)} className={chip(size === s)}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+      ) : (
+        active.length > 0 && (
+          <div className="mt-6">
+            <p className="label text-neutral-400">Option</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {active.map((v) => (
+                <button key={v.id} type="button" onClick={() => setVariantId(v.id)} className={chip(variantId === v.id)}>
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )
       )}
 
       <div className="mt-6 flex items-center gap-4">
@@ -71,10 +146,10 @@ export function BuyButton({
         <button
           type="button"
           onClick={buy}
-          disabled={state === 'submitting'}
+          disabled={state === 'submitting' || soldOut}
           className="flex-1 rounded-none bg-olive-700 px-8 py-3.5 text-[13px] font-normal uppercase tracking-[0.18em] text-white transition-all duration-300 hover:bg-olive-900 hover:tracking-[0.22em] disabled:opacity-60"
         >
-          {state === 'submitting' ? 'Taking you to checkout...' : 'Buy now'}
+          {soldOut ? 'Sold out' : state === 'submitting' ? 'Taking you to checkout...' : 'Buy now'}
         </button>
       </div>
       {state === 'error' && (
