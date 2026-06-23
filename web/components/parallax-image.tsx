@@ -8,17 +8,25 @@ import { useEffect, useRef } from 'react'
  * container (extra headroom top + bottom) and translates at a fraction of scroll
  * so it drifts slower than the page. Respects prefers-reduced-motion. Place inside
  * a position:relative + overflow-hidden section.
+ *
+ * `paper` renders the brand paper-texture INSIDE the transformed container, so the
+ * texture is locked to the image and parallaxes with it (one printed surface).
+ * `blur` applies a light uniform blur across the whole image for a soft hero.
  */
 export function ParallaxImage({
   src,
   priority = false,
   blurDataURL,
   className = '',
+  paper = false,
+  blur = false,
 }: {
   src: string
   priority?: boolean
   blurDataURL?: string
   className?: string
+  paper?: boolean
+  blur?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -58,9 +66,12 @@ export function ParallaxImage({
         unoptimized
         sizes="100vw"
         {...(priority ? { fetchPriority: 'high' as const } : {})}
-        className={`object-cover ${className}`}
+        className={`object-cover ${blur ? 'blur-[3px]' : ''} ${className}`}
         {...(blurDataURL ? { placeholder: 'blur' as const, blurDataURL } : {})}
       />
+      {/* paper texture rides inside the transformed container so it is locked to
+          the image and parallaxes with it (printed-surface feel) */}
+      {paper && <div className="paper-texture absolute inset-0" />}
     </div>
   )
 }

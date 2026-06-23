@@ -48,8 +48,7 @@ export default async function HomePage() {
     <main>
       {/* Hero with stats overlaid at the foot of the image */}
       <section className="relative isolate flex min-h-[90vh] flex-col overflow-hidden">
-        <ParallaxImage src="/images/hero.webp" priority blurDataURL={BLUR['/images/hero.webp']} />
-        <div className="paper-texture absolute inset-0 z-0" />
+        <ParallaxImage src="/images/hero.webp" priority paper blur blurDataURL={BLUR['/images/hero.webp']} />
         <div className="grain-layer absolute inset-0 z-0" />
         <div className="absolute inset-0 z-0 bg-black/12" />
 

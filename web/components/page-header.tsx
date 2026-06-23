@@ -20,8 +20,7 @@ export function PageHeader({
   if (image) {
     return (
       <section className="film-cover relative isolate flex min-h-[72vh] items-center justify-center overflow-hidden lg:min-h-[82vh]">
-        <ParallaxImage src={image} priority blurDataURL={BLUR[image]} />
-        <div className="paper-texture absolute inset-0 z-0" />
+        <ParallaxImage src={image} priority paper blur blurDataURL={BLUR[image]} />
         <div className="grain-layer absolute inset-0 z-0" />
         <div className="relative z-10 mx-auto w-full max-w-3xl px-6 py-32 text-center">
           {eyebrow && <p className="eyebrow text-oncream/70">{eyebrow}</p>}

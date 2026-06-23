@@ -37,8 +37,9 @@ export default async function ShopPage() {
           priority
           blurDataURL={BLUR['/images/collective.webp']}
           className="object-[50%_75%]"
+          paper
+          blur
         />
-        <div className="paper-texture absolute inset-0 z-0" />
         <div className="grain-layer absolute inset-0 z-0" />
         <div className="relative z-10 mx-auto w-full max-w-3xl px-6 py-32 text-center">
           <h1
