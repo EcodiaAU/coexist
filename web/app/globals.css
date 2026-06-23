@@ -149,8 +149,8 @@ h1, h2, h3, h4, h5, h6 {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  /* very subtle flat black overlay (not a gradient) behind the title text */
-  background: rgba(0, 0, 0, 0.22);
+  /* subtle flat black overlay (not a gradient) behind the title text */
+  background: rgba(0, 0, 0, 0.32);
 }
 
 /* Fine grain texture as a stand-alone overlay div (no pseudo-element, so it

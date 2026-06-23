@@ -1,80 +1,48 @@
 /**
  * Bento helpers for a full-bleed, flush, flat-bottomed grid.
  *
- * 2 cols on mobile, 3 on desktop. For real bento variety some desktop tiles are
- * 2x2 features; the rest are 1x1, and the LAST tile is widened to fill the rest
- * of its row so the grid always ends on a flat edge. We simulate CSS sparse
- * auto-placement so the spans never leave holes and the bottom is always flat,
- * for any tile count.
+ * 2 cols on mobile, 3 on desktop. The layout is built from rectangular blocks
+ * that each tile a clean 3-wide region, cycled for variety: big-left, big-right,
+ * and an all-small row. Every block ends on a flat edge, so the grid bottom is
+ * always flat. The desktop spans rely on CSS sparse auto-placement, so the tile
+ * EMISSION ORDER below matches row-major fill. Mobile is a plain 2-col grid (the
+ * sm: spans don't apply) with the last tile widened to keep its row full.
+ *
+ * n = total number of tiles.
  */
 
-// Shared grid sizing. 1x1 tiles are big; 2x2 features are large. Bump here.
 export const BENTO_GRID =
   'grid auto-rows-[58vw] grid-cols-2 sm:auto-rows-[18rem] sm:grid-cols-3'
 
-const COLS = 3
+const BIG = 'sm:col-span-2 sm:row-span-2'
+const ONE = 'sm:col-span-1'
 
-/**
- * Returns a span className per tile (length n). Desktop spans use sm:; mobile is
- * a plain 2-col grid (the sm: spans don't apply) with the last tile filling its
- * row.
- */
+// Each template consumes 3 tiles and fills a 3-col region. Emission order is
+// row-major so sparse placement lands them exactly.
+const BIG_LEFT = [BIG, ONE, ONE] //  [ BIG ][s] with [s] under the right column
+const BIG_RIGHT = [ONE, BIG, ONE] //  [s][ BIG ] with [s] under the left column
+const ALL_SMALL = [ONE, ONE, ONE]
+const CYCLE = [BIG_LEFT, ALL_SMALL, BIG_RIGHT, ALL_SMALL, BIG_RIGHT, BIG_LEFT]
+
 export function bentoSpans(n: number): string[] {
-  const occ: boolean[][] = []
-  const ensure = (r: number) => {
-    while (occ.length <= r) occ.push(new Array(COLS).fill(false))
+  if (n <= 0) return []
+  const out: string[] = []
+  const fullBlocks = Math.floor(n / 3)
+  for (let bk = 0; bk < fullBlocks; bk++) {
+    const tpl = CYCLE[bk % CYCLE.length]
+    out.push(tpl[0], tpl[1], tpl[2])
   }
-  const free = (r: number, c: number) => {
-    ensure(r)
-    return !occ[r][c]
-  }
-  const fill = (r: number, c: number, w: number, h: number) => {
-    for (let dr = 0; dr < h; dr++) {
-      ensure(r + dr)
-      for (let dc = 0; dc < w; dc++) occ[r + dr][c + dc] = true
-    }
+  const tail = n % 3
+  for (let k = 0; k < tail; k++) out.push(ONE)
+
+  // Tail's last tile fills the rest of its (fresh) row so the bottom stays flat.
+  if (tail > 0) {
+    const colOfLast = (tail - 1) % 3
+    const fill = 3 - colOfLast
+    out[n - 1] = fill === 3 ? 'sm:col-span-3' : fill === 2 ? 'sm:col-span-2' : 'sm:col-span-1'
   }
 
-  const out: string[] = new Array(n).fill('sm:col-span-1')
-  let r = 0
-  let c = 0
-  const advance = () => {
-    // move to the next free cell, scanning row-major
-    while (true) {
-      c++
-      if (c >= COLS) {
-        c = 0
-        r++
-      }
-      if (free(r, c)) return
-    }
-  }
-  // start at first free
-  ensure(0)
-
-  for (let i = 0; i < n; i++) {
-    // make sure (r,c) is free (it should be)
-    while (!free(r, c)) advance()
-    const isLast = i === n - 1
-    const colsLeft = COLS - c
-    // A 2x2 feature at every fresh row start (the geometry naturally spaces them
-    // ~2 rows apart), as long as enough tiles remain to keep the bottom flat.
-    const wantBig = c === 0 && !isLast && n - i >= 4 && colsLeft >= 2
-
-    if (wantBig) {
-      fill(r, c, 2, 2)
-      out[i] = 'sm:col-span-2 sm:row-span-2'
-    } else if (isLast) {
-      fill(r, c, colsLeft, 1)
-      out[i] = colsLeft >= 3 ? 'sm:col-span-3' : colsLeft === 2 ? 'sm:col-span-2' : 'sm:col-span-1'
-    } else {
-      fill(r, c, 1, 1)
-      out[i] = 'sm:col-span-1'
-    }
-    if (i < n - 1) advance()
-  }
-
-  // Mobile (2 cols): all tiles are 1x1; widen the last so its row is full.
+  // Mobile (2 cols): widen the last tile if its row would otherwise be half-empty.
   if (n > 1 && (n - 1) % 2 === 0) out[n - 1] = `col-span-2 ${out[n - 1]}`
 
   return out

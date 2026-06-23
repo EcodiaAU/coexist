@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import { BLUR } from '@/lib/blur'
+import { ParallaxImage } from '@/components/parallax-image'
 
 /**
  * Cinematic page header. Optionally renders over a full-bleed image with a dark
@@ -20,17 +20,7 @@ export function PageHeader({
   if (image) {
     return (
       <section className="film-cover relative isolate flex min-h-[72vh] items-end overflow-hidden lg:min-h-[82vh]">
-        <Image
-          src={image}
-          alt=""
-          fill
-          priority
-          quality={80}
-          sizes="100vw"
-          fetchPriority="high"
-          className="-z-10 object-cover"
-          {...(BLUR[image] ? { placeholder: 'blur' as const, blurDataURL: BLUR[image] } : {})}
-        />
+        <ParallaxImage src={image} priority blurDataURL={BLUR[image]} />
         <div className="grain-layer absolute inset-0 z-0" />
         <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-14 pt-40 sm:pb-20">
           {eyebrow && <p className="eyebrow text-oncream/70">{eyebrow}</p>}

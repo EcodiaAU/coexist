@@ -3,6 +3,7 @@ import { APP_URL } from '@/lib/env'
 import { SocialIcons } from './social-icons'
 import { AcknowledgementFlags } from './acknowledgement-flags'
 import { Certifications } from './certifications'
+import { StoreBadges } from './store-badges'
 
 const BEQUEST_URL = 'https://gatheredhere.com.au/c/coexistaustralia'
 
@@ -53,7 +54,7 @@ function Col({ title, links }: { title: string; links: { label: string; href: st
 export function SiteFooter() {
   return (
     <footer className="border-t border-neutral-100 bg-surface-1">
-      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-6">
+      <div className="mx-auto w-full max-w-[1700px] px-5 py-16 sm:px-8 lg:px-14">
         <div className="grid gap-12 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -63,7 +64,8 @@ export function SiteFooter() {
               we live, work and gather, and pay our respects to Elders past and present. Always was,
               always will be Aboriginal land.
             </p>
-            <AcknowledgementFlags className="mt-5" />
+            <StoreBadges className="mt-7" />
+            <AcknowledgementFlags className="mt-7" />
             <SocialIcons tone="dark" className="mt-6" />
             <Certifications className="mt-7" />
           </div>

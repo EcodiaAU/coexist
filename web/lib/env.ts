@@ -31,3 +31,7 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.coexistau
 
 /** This marketing site's own canonical origin (for metadata / sitemap / OG). */
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://coexistaus.org'
+
+/** Co-Exist app store listings (verified from the app repo). */
+export const APP_STORE_URL = 'https://apps.apple.com/au/app/co-exist/id6760897574'
+export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=org.coexistaus.app'

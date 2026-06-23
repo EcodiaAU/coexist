@@ -36,7 +36,11 @@ export function BentoTile({
             src={image}
             alt={alt}
             loading="lazy"
-            className={`absolute inset-0 -z-30 h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.06] ${hoverImage ? 'group-hover:opacity-0' : ''}`}
+            className={
+              hoverImage
+                ? 'absolute inset-0 -z-30 h-full w-full object-cover transition-opacity duration-500 ease-out group-hover:opacity-0'
+                : 'absolute inset-0 -z-30 h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.06]'
+            }
           />
           {hoverImage ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -45,13 +49,13 @@ export function BentoTile({
               alt=""
               aria-hidden
               loading="lazy"
-              className="absolute inset-0 -z-30 h-full w-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+              className="absolute inset-0 -z-30 h-full w-full object-cover opacity-0 transition-opacity duration-500 delay-[280ms] group-hover:opacity-100"
             />
           ) : null}
         </>
       ) : null}
       {tint ? <div className="absolute inset-0 -z-20 bg-olive-900/35 mix-blend-multiply transition-opacity duration-500 group-hover:opacity-50" /> : null}
-      <div className="absolute inset-0 -z-20 bg-gradient-to-t from-olive-950/85 via-olive-950/10 to-transparent" />
+      <div className="absolute inset-0 -z-20 bg-gradient-to-t from-olive-950/90 via-olive-950/12 to-transparent" />
       <div className="grain-layer absolute inset-0 -z-10" />
       {children}
     </>
