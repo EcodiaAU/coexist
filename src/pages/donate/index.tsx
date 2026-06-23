@@ -134,13 +134,13 @@ function DonationForm({ rm }: { rm: boolean }) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-white border border-neutral-100 shadow-[0_8px_40px_-12px_rgba(61,77,51,0.18)] p-6">
+    <div className="relative overflow-hidden rounded-md bg-white border border-neutral-100 shadow-[0_8px_40px_-12px_rgba(61,77,51,0.18)] p-6">
       {/* Leaf watermark */}
       <Leaf className="pointer-events-none absolute -top-5 -right-5 text-primary-600/[0.06]" size={120} strokeWidth={1.5} />
 
       {/* Header */}
       <div className="relative flex items-center gap-3 mb-6">
-        <div className="w-11 h-11 rounded-2xl bg-primary-50 flex items-center justify-center shrink-0">
+        <div className="w-11 h-11 rounded-md bg-primary-50 flex items-center justify-center shrink-0">
           <Heart size={19} className="text-primary-600" />
         </div>
         <div>
@@ -178,7 +178,7 @@ function DonationForm({ rm }: { rm: boolean }) {
               onClick={() => handlePresetSelect(preset)}
               whileTap={rm ? undefined : { scale: 0.95 }}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-0.5 py-3.5 px-1 rounded-2xl border transition-all duration-200 cursor-pointer',
+                'relative flex flex-col items-center justify-center gap-0.5 py-3.5 px-1 rounded-md border transition-all duration-200 cursor-pointer',
                 active
                   ? 'border-primary-600 bg-primary-600 text-white shadow-[0_6px_18px_-6px_rgba(134,158,98,0.7)]'
                   : 'border-neutral-200 bg-white hover:border-primary-300 hover:bg-primary-50/40',
@@ -211,7 +211,7 @@ function DonationForm({ rm }: { rm: boolean }) {
 
       {/* Impact callout */}
       <div
-        className="relative mb-5 px-4 py-3.5 rounded-2xl bg-gradient-to-br from-primary-50 to-white border border-primary-100 overflow-hidden"
+        className="relative mb-5 px-4 py-3.5 rounded-md bg-gradient-to-br from-primary-50 to-white border border-primary-100 overflow-hidden"
         style={{ minHeight: '84px' }}
       >
         <Sprout className="pointer-events-none absolute -bottom-3 -right-2 text-primary-600/[0.07]" size={72} strokeWidth={1.5} />
@@ -264,7 +264,7 @@ function DonationForm({ rm }: { rm: boolean }) {
       </div>
 
       {/* Public toggle */}
-      <div className="mb-6 px-4 py-3 rounded-2xl bg-neutral-100/70 border border-neutral-200">
+      <div className="mb-6 px-4 py-3 rounded-md bg-neutral-100/70 border border-neutral-200">
         <Toggle
           checked={isPublic}
           onChange={setIsPublic}
@@ -282,13 +282,13 @@ function DonationForm({ rm }: { rm: boolean }) {
         icon={createDonation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Heart size={18} />}
         onClick={handleDonate}
         disabled={!isValid || !user || createDonation.isPending}
-        className="shadow-[0_8px_24px_-8px_rgba(61,77,51,0.5)] !rounded-2xl"
+        className="shadow-[0_8px_24px_-8px_rgba(61,77,51,0.5)] !rounded-md"
       >
         {createDonation.isPending ? 'Setting up...' : `Donate $${amount}${frequency === 'monthly' ? '/mo' : ''}`}
       </Button>
 
       {createDonation.isError && (
-        <p className="text-xs text-red-500 text-center mt-2">Something went wrong. Please try again.</p>
+        <p className="text-xs text-error-500 text-center mt-2">Something went wrong. Please try again.</p>
       )}
 
       {!user && (
@@ -335,13 +335,13 @@ export default function DonatePage() {
               <div className="space-y-5">
               {/* Where your gift goes */}
               <motion.div variants={fadeUp}>
-                <div className="rounded-3xl bg-secondary-950 text-white p-6 overflow-hidden relative">
+                <div className="rounded-md bg-secondary-950 text-white p-6 overflow-hidden relative">
                   <TreePine className="pointer-events-none absolute -bottom-6 -right-4 text-white/[0.05]" size={130} strokeWidth={1.4} />
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-300 mb-4">Where your gift goes</p>
                   <div className="space-y-3.5">
                     {GIFT_LINES.map(({ icon: Icon, amount, text }) => (
                       <div key={amount} className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                        <div className="w-9 h-9 rounded-sm bg-white/10 flex items-center justify-center shrink-0">
                           <Icon size={16} className="text-primary-200" />
                         </div>
                         <p className="text-[15px] leading-snug text-white/85 pt-1.5">
@@ -357,10 +357,10 @@ export default function DonatePage() {
               <motion.div variants={fadeUp}>
                 <Link
                   to="/donate/donors"
-                  className="relative flex items-center gap-3 p-4 rounded-2xl bg-white border border-neutral-100 shadow-sm transition-all active:scale-[0.98] duration-200 overflow-hidden"
+                  className="relative flex items-center gap-3 p-4 rounded-md bg-white border border-neutral-100 shadow-sm transition-all active:scale-[0.98] duration-200 overflow-hidden"
                 >
                   <Users className="pointer-events-none absolute -bottom-3 -right-3 text-primary-600/[0.05]" size={64} strokeWidth={1.5} />
-                  <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-sm bg-primary-50 flex items-center justify-center shrink-0">
                     <Users size={18} className="text-primary-600" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -373,7 +373,7 @@ export default function DonatePage() {
 
               {/* Tax note */}
               <motion.div variants={fadeUp}>
-                <div className="flex items-start gap-3 px-4 py-3.5 rounded-2xl bg-white border border-neutral-100 shadow-sm">
+                <div className="flex items-start gap-3 px-4 py-3.5 rounded-md bg-white border border-neutral-100 shadow-sm">
                   <Shield size={16} className="text-primary-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs text-neutral-700 font-semibold">Tax-deductible giving</p>
