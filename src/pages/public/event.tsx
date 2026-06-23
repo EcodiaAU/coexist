@@ -366,17 +366,17 @@ export default function PublicEventPage() {
           </motion.div>
         )}
 
-        {/* CTAs */}
+        {/* CTAs (secondary when buying a ticket: the buy card above leads) */}
         <motion.div
           variants={shouldReduceMotion ? undefined : fadeUp}
           className={cn(
-            'mt-8 flex flex-col gap-3',
-            'sticky bottom-4 rounded-2xl bg-white/95 p-4 shadow-sm',
+            'mt-4 flex flex-col gap-3',
+            !isTicketed && 'mt-8 sticky bottom-4 rounded-2xl bg-white/95 p-4 shadow-sm',
             'sm:relative sm:bottom-auto sm:bg-transparent sm:p-0 sm:shadow-none',
           )}
         >
           <Button
-            variant="primary"
+            variant={isTicketed ? 'secondary' : 'primary'}
             size="lg"
             fullWidth
             icon={<ExternalLink size={18} />}
