@@ -1691,10 +1691,11 @@ export default function LeaderTasksPage() {
 
         {/* ── Segmented toggle + page-level Add button ── */}
         <motion.div
-          className="flex items-center justify-center gap-3"
+          className="flex items-center gap-4"
           variants={rm ? undefined : { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } } }}
         >
           <SegmentedControl
+            className="flex-1"
             segments={[
               { id: 'tasks' as const, label: 'Tasks', icon: <ClipboardList size={15} /> },
               { id: 'todos' as const, label: 'My Todos', icon: <CheckCircle2 size={15} /> },
@@ -1713,7 +1714,7 @@ export default function LeaderTasksPage() {
               setShowCreate(true)
             }}
             aria-label="Add a personal to-do for yourself"
-            className="shrink-0 flex items-center justify-center w-11 h-11 rounded-sm bg-primary-700 text-white shadow-md hover:bg-primary-800 active:scale-[0.97] cursor-pointer transition-[colors,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1"
+            className="shrink-0 flex items-center justify-center w-11 h-11 rounded-sm bg-primary-700 text-white shadow-sm hover:bg-primary-800 active:scale-[0.97] cursor-pointer transition-[colors,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1"
           >
             <Plus size={18} />
           </button>

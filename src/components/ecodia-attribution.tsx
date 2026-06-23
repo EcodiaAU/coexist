@@ -20,7 +20,7 @@ export function EcodiaAttribution({ className }: EcodiaAttributionProps) {
       aria-label="the world we build next"
       style={{ fontFamily: "'EB Garamond', Georgia, 'Times New Roman', serif" }}
       className={cn(
-        'inline-block italic text-[15px] leading-none opacity-60 transition-opacity duration-200 hover:opacity-90',
+        'inline-block italic text-[15px] leading-none no-underline opacity-60 transition-opacity duration-200 hover:opacity-90',
         className,
       )}
     >
