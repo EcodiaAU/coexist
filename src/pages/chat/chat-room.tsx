@@ -264,6 +264,9 @@ export default function ChatRoomPage() {
   /* ---- Channel-specific hooks ---- */
   const { data: channels } = useMyStaffChannels()
   const channel = isChannel ? channels?.find((c) => c.id === channelId) : undefined
+  // Campout group chats are open to ticket holders, not staff-gated, so their
+  // copy (empty state, composer placeholder) must not say "staff".
+  const isCampoutChannel = isChannel && channel?.type === 'campout'
   const channelMarkRead = useMarkChannelRead()
   const channelSend = useSendChannelMessage()
   const channelDelete = useDeleteChannelMessage()
@@ -948,6 +951,7 @@ export default function ChatRoomPage() {
       <ChatMessageList
         isCollective={isCollective}
         isChannel={isChannel}
+        channelType={channel?.type}
         messageGroups={messageGroups}
         allMessages={allMessages}
         memberRoles={memberRoles}
@@ -1083,9 +1087,11 @@ export default function ChatRoomPage() {
               ? 'Edit message...'
               : isOffline && isCollective
                 ? 'Type a message (will send when online)...'
-                : isChannel
-                  ? 'Message staff...'
-                  : 'Type a message...'
+                : isCampoutChannel
+                  ? 'Message the campout...'
+                  : isChannel
+                    ? 'Message staff...'
+                    : 'Type a message...'
           }
           initialValue={editingMessage ? editText : (savedDraft?.content ?? '')}
           onValueChange={

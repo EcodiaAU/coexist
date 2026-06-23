@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { MessageCircle, Users, ChevronRight, Lock, Globe, MapPin, Leaf, MessagesSquare, Shield } from 'lucide-react'
+import { MessageCircle, Users, ChevronRight, Lock, Globe, MapPin, Leaf, MessagesSquare, Shield, Tent } from 'lucide-react'
 import { Page } from '@/components/page'
 import { EmptyState } from '@/components/empty-state'
 import { cn } from '@/lib/cn'
@@ -40,6 +40,12 @@ const CHANNEL_TYPE_CONFIG: Record<string, {
     badge: 'bg-primary-50 text-primary-700',
     label: 'Staff',
   },
+  campout: {
+    icon: Tent,
+    iconBg: 'bg-primary-50 text-primary-600',
+    badge: 'bg-primary-50 text-primary-700',
+    label: 'Campout',
+  },
 }
 
 /** Strip redundant words from channel name for cleaner display */
@@ -60,6 +66,9 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
   const hasUnread = unread > 0
   const config = CHANNEL_TYPE_CONFIG[channel.type] ?? CHANNEL_TYPE_CONFIG.staff_collective
   const Icon = config.icon
+  // Campout chats are open to ticket holders, not staff-gated, so they skip
+  // the lock badge and the "Staff only" caption the staff channels carry.
+  const isCampout = channel.type === 'campout'
 
   return (
     <motion.div
@@ -82,10 +91,12 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
           )}>
             <Icon size={22} strokeWidth={2} />
           </div>
-          {/* Lock badge */}
-          <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white flex items-center justify-center shadow-sm ring-1 ring-neutral-100">
-            <Lock size={10} strokeWidth={2} className="text-neutral-500" />
-          </div>
+          {/* Lock badge (staff channels only) */}
+          {!isCampout && (
+            <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white flex items-center justify-center shadow-sm ring-1 ring-neutral-100">
+              <Lock size={10} strokeWidth={2} className="text-neutral-500" />
+            </div>
+          )}
           {hasUnread && (
             <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-primary-500 ring-2 ring-white" />
           )}
@@ -103,7 +114,9 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
             <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', config.badge)}>
               {config.label}
             </span>
-            <span className="text-[11px] font-medium text-neutral-400">Staff only</span>
+            <span className="text-[11px] font-medium text-neutral-400">
+              {isCampout ? 'Group chat' : 'Staff only'}
+            </span>
           </div>
         </div>
 
@@ -309,7 +322,12 @@ export default function ChatListPage() {
     ])
   }, [queryClient])
 
-  const hasStaffChannels = (staffChannels?.length ?? 0) > 0
+  // Campout group chats render in their own section, not under "Staff only".
+  // Everything else (staff_* + carpool) keeps its existing placement.
+  const campoutChannels = (staffChannels ?? []).filter((c) => c.type === 'campout')
+  const otherChannels = (staffChannels ?? []).filter((c) => c.type !== 'campout')
+  const hasStaffChannels = otherChannels.length > 0
+  const hasCampoutChannels = campoutChannels.length > 0
 
   if (showLoading) {
     return (
@@ -346,7 +364,7 @@ export default function ChatListPage() {
     )
   }
 
-  if (!myCollectives?.length && !hasStaffChannels && !isGlobalStaff) {
+  if (!myCollectives?.length && !hasStaffChannels && !hasCampoutChannels && !isGlobalStaff) {
     return (
       <Page noBackground className="!px-0 bg-white">
         <div className="px-4 lg:px-6 pt-14">
@@ -374,6 +392,28 @@ export default function ChatListPage() {
               animate="visible"
             >
 
+              {/* Campouts section */}
+              {hasCampoutChannels && (
+                <motion.div variants={fadeUp}>
+                  <SectionDivider icon={Tent} label="Campouts" />
+                  <motion.div
+                    className="space-y-3"
+                    variants={shouldReduceMotion ? undefined : stagger}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    {campoutChannels.map((channel) => (
+                      <StaffChannelRow
+                        key={channel.id}
+                        channel={channel}
+                        unread={channelUnreads[channel.id] ?? 0}
+                        index={0}
+                      />
+                    ))}
+                  </motion.div>
+                </motion.div>
+              )}
+
               {/* Staff Channels section */}
               {hasStaffChannels && (
                 <motion.div variants={fadeUp}>
@@ -384,7 +424,7 @@ export default function ChatListPage() {
                     initial="hidden"
                     animate="visible"
                   >
-                    {staffChannels!.map((channel) => (
+                    {otherChannels.map((channel) => (
                       <StaffChannelRow
                         key={channel.id}
                         channel={channel}

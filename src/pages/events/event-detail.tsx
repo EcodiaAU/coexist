@@ -39,6 +39,7 @@ import {
     RefreshCw,
     UserCheck,
     Share2,
+    Tent,
 } from 'lucide-react'
 import { EventShareSheet } from '@/components/event-share-sheet'
 import { EventPhotosSection } from '@/components/event-photos-section'
@@ -86,6 +87,7 @@ import { useGeocodeAddress } from '@/hooks/use-geocode-address'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { useEventTicketTypes, useMyEventTicket, useCreateTicketCheckout, useCancelPendingTicket, useTicketSalesSummary, useEventTickets } from '@/hooks/use-event-tickets'
 import { useEventCarpools } from '@/hooks/use-event-carpools'
+import { useEventCampoutChannel } from '@/hooks/use-staff-channels'
 import { MapView } from '@/components'
 import { activityAccent, defaultAccent } from '@/lib/activity-types'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
@@ -378,6 +380,8 @@ export default function EventDetailPage() {
 
   // Coordination - carpool breakout chats for this event (Worker 3)
   const { data: eventCarpools } = useEventCarpools(id)
+  // Campout group chat - RLS exposes it only to confirmed ticket holders + staff
+  const { data: campoutChannel } = useEventCampoutChannel(id)
   const [selectedTicketType, setSelectedTicketType] = useState<string | null>(null)
 
   const [showCancelSheet, setShowCancelSheet] = useState(false)
@@ -1567,6 +1571,41 @@ export default function EventDetailPage() {
                 )
               })}
             </div>
+          </motion.div>
+        )}
+
+        {/* ── Campout group chat (confirmed ticket holders + staff) ── */}
+        {campoutChannel && (
+          <motion.div
+            variants={shouldReduceMotion ? undefined : fadeUp}
+            className="rounded-2xl p-4 bg-white border border-neutral-100 shadow-sm"
+          >
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-6 h-6 rounded-lg bg-primary-50 flex items-center justify-center">
+                <Tent size={11} className="text-primary-600" />
+              </div>
+              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
+                Group chat
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(`/chat/channel/${campoutChannel.id}`)}
+              className="w-full flex items-center gap-3 min-h-11 p-2 rounded-lg hover:bg-neutral-50 active:scale-[0.98] transition-[opacity,transform] duration-150 text-left cursor-pointer"
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center shrink-0">
+                <Tent size={15} className="text-primary-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-neutral-900 truncate">
+                  {campoutChannel.name}
+                </p>
+                <p className="text-[11px] text-neutral-500 truncate">
+                  Chat with everyone coming to this campout
+                </p>
+              </div>
+              <ChevronRight size={14} className="ml-auto shrink-0 text-neutral-400" />
+            </button>
           </motion.div>
         )}
 

@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Lock, Camera, MessageSquareHeart } from 'lucide-react'
+import { Lock, Camera, MessageSquareHeart, Tent } from 'lucide-react'
 import { ChatBubble, PollCard, AnnouncementCard, CarpoolCard } from '@/components/chat-bubble'
 import { HtmlChatBubble } from '@/components/html-chat-bubble'
 import { MessageReactions } from '@/components/message-reactions'
@@ -523,6 +523,8 @@ export interface ChatMessageListProps {
   /** 'collective' or 'channel' */
   isCollective: boolean
   isChannel: boolean
+  /** Channel subtype (e.g. 'campout', 'staff_collective') when isChannel */
+  channelType?: string
   /** Messages grouped by date */
   messageGroups: { date: string; messages: AnyMessage[] }[]
   allMessages: AnyMessage[]
@@ -570,6 +572,7 @@ export interface ChatMessageListProps {
 export function ChatMessageList({
   isCollective,
   isChannel,
+  channelType,
   messageGroups,
   allMessages,
   memberRoles,
@@ -952,7 +955,7 @@ export function ChatMessageList({
         // their own breathing room.
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth px-3 py-1"
         role="log"
-        aria-label={isChannel ? 'Staff chat messages' : 'Chat messages'}
+        aria-label={isChannel ? (channelType === 'campout' ? 'Campout chat messages' : 'Staff chat messages') : 'Chat messages'}
         aria-live="polite"
       >
         {showLoading ? (
@@ -961,17 +964,31 @@ export function ChatMessageList({
           </div>
         ) : allMessages.length === 0 ? (
           isChannel ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center py-12">
-                <div className="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
-                  <Lock size={24} strokeWidth={2.5} className="text-primary-500" />
+            channelType === 'campout' ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center py-12">
+                  <div className="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
+                    <Tent size={24} strokeWidth={2.5} className="text-primary-500" />
+                  </div>
+                  <p className="text-base font-bold text-neutral-900">Campout group chat</p>
+                  <p className="text-sm text-neutral-500 mt-1.5">
+                    Say hi to everyone coming to this campout
+                  </p>
                 </div>
-                <p className="text-base font-bold text-neutral-900">Staff-only chat</p>
-                <p className="text-sm text-neutral-500 mt-1.5">
-                  Messages here are only visible to staff members
-                </p>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center py-12">
+                  <div className="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
+                    <Lock size={24} strokeWidth={2.5} className="text-primary-500" />
+                  </div>
+                  <p className="text-base font-bold text-neutral-900">Staff-only chat</p>
+                  <p className="text-sm text-neutral-500 mt-1.5">
+                    Messages here are only visible to staff members
+                  </p>
+                </div>
+              </div>
+            )
           ) : (
             <EmptyState
               illustration="empty"
