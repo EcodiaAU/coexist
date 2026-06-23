@@ -77,7 +77,7 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
       <Link
         to={`/chat/channel/${channel.id}`}
         className={cn(
-          'group relative flex items-center gap-4 rounded-2xl p-4',
+          'group relative flex items-center gap-4 rounded-md p-4',
           'bg-white border border-neutral-100 shadow-sm',
           'transition-transform duration-200 active:scale-[0.97]',
           hasUnread && 'ring-2 ring-primary-400/60',
@@ -86,7 +86,7 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
         {/* Channel type icon */}
         <div className="relative flex-shrink-0">
           <div className={cn(
-            'h-12 w-12 rounded-xl flex items-center justify-center',
+            'h-12 w-12 rounded-sm flex items-center justify-center',
             config.iconBg,
           )}>
             <Icon size={22} strokeWidth={2} />
@@ -167,7 +167,7 @@ function CollectiveChatRow({
       <Link
         to={`/chat/${collectiveId}`}
         className={cn(
-          'group relative flex items-center gap-4 rounded-2xl p-4',
+          'group relative flex items-center gap-4 rounded-md p-4',
           'bg-white border border-neutral-100 shadow-sm',
           'transition-transform duration-200 active:scale-[0.97]',
           hasUnread && 'ring-2 ring-primary-400/60',
@@ -177,7 +177,7 @@ function CollectiveChatRow({
         <div className="relative flex-shrink-0">
           <div
             className={cn(
-              'h-12 w-12 overflow-hidden rounded-xl',
+              'h-12 w-12 overflow-hidden rounded-sm',
               hasUnread
                 ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-white'
                 : 'ring-1 ring-neutral-100',
@@ -334,9 +334,9 @@ export default function ChatListPage() {
       <Page noBackground className="!px-0 bg-white">
         <div className="px-4 lg:px-6 pt-14 pb-4 space-y-3">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="rounded-2xl bg-white border border-neutral-100 p-4 animate-pulse">
+            <div key={i} className="rounded-md bg-white border border-neutral-100 p-4 animate-pulse">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-neutral-100" />
+                <div className="w-12 h-12 rounded-sm bg-neutral-100" />
                 <div className="flex-1 space-y-2">
                   <div className="h-4 bg-neutral-100 rounded w-2/3" />
                   <div className="h-3 bg-neutral-100 rounded w-1/3" />

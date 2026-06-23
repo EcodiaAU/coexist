@@ -139,7 +139,7 @@ function ReportCard({
       <motion.div
         initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-sm overflow-hidden"
+        className="bg-white rounded-md shadow-sm overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">

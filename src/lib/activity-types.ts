@@ -37,7 +37,7 @@ export const activityToBadge: Record<string, ActivityBadgeSlug> = {
 // Flat single-stop on the LIGHT brand green (primary-400 = --color-brand #869e62,
 // the same green the app's Share button uses) so registration buttons + accent
 // bars render as a SOLID light Co-Exist green. Not the dark forest primary-800.
-const COEXIST_GRADIENT = 'from-primary-400 to-primary-400'
+const COEXIST_GRADIENT = 'bg-primary-400'
 
 export const ACTIVITY_META: Record<string, { gradient: string }> = {
   clean_up: { gradient: COEXIST_GRADIENT },

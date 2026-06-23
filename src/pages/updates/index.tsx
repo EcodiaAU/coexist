@@ -157,7 +157,7 @@ function CardThumbnail({ images }: { images: string[] }) {
 
   if (images.length === 1) {
     return (
-      <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 ring-1 ring-black/[0.04]">
+      <div className="w-24 h-24 rounded-sm overflow-hidden shrink-0 ring-1 ring-black/[0.04]">
         <img src={images[0]} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
       </div>
     )
@@ -165,7 +165,7 @@ function CardThumbnail({ images }: { images: string[] }) {
 
   // 2x2 mini grid for multiple images
   return (
-    <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 grid grid-cols-2 gap-0.5 bg-primary-100 ring-1 ring-black/[0.04]">
+    <div className="w-24 h-24 rounded-sm overflow-hidden shrink-0 grid grid-cols-2 gap-0.5 bg-primary-100 ring-1 ring-black/[0.04]">
       {images.slice(0, 4).map((src, i) => (
         <div key={i} className="relative overflow-hidden">
           <img src={src} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
@@ -267,7 +267,7 @@ function UpdateDetailView({
         {extraImages.length > 0 && (
           <div className="mt-6 space-y-3">
             {extraImages.map((src, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden ring-1 ring-black/[0.04]">
+              <div key={i} className="rounded-md overflow-hidden ring-1 ring-black/[0.04]">
                 <img src={src} alt="" loading="lazy" decoding="async" className="w-full object-cover" />
               </div>
             ))}
@@ -305,9 +305,9 @@ function UpdateCard({
       variants={fadeUp}
       onClick={handleTap}
       className={cn(
-        'group rounded-2xl overflow-hidden cursor-pointer',
+        'group rounded-md overflow-hidden cursor-pointer',
         'transition-transform duration-200 active:scale-[0.985]',
-        'bg-amber-50',
+        'bg-bark-50',
         isUrgent && 'border-l-[3px] border-l-warning-500',
         isUnread && !isUrgent && 'border-l-[3px] border-l-primary-500',
       )}
@@ -490,7 +490,7 @@ export default function UpdatesPage() {
             transition={{ duration: 0.35 }}
             className="flex items-center gap-2.5"
           >
-            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary-50 text-primary-600">
+            <div className="flex items-center justify-center w-8 h-8 rounded-sm bg-primary-50 text-primary-600">
               <Megaphone size={14} />
             </div>
             <h1 className="font-heading text-xl font-bold text-neutral-900 tracking-tight">
@@ -537,7 +537,7 @@ export default function UpdatesPage() {
                       type="button"
                       onClick={() => handleNotificationTap(n)}
                       className={cn(
-                        'flex items-start gap-3 w-full text-left rounded-2xl px-3.5 py-3',
+                        'flex items-start gap-3 w-full text-left rounded-md px-3.5 py-3',
                         'bg-white border border-neutral-100 shadow-sm',
                         'transition-transform active:scale-[0.985]',
                         !isUnread && 'opacity-70',
@@ -546,7 +546,7 @@ export default function UpdatesPage() {
                     >
                       <div
                         className={cn(
-                          'flex items-center justify-center shrink-0 w-9 h-9 rounded-xl text-base',
+                          'flex items-center justify-center shrink-0 w-9 h-9 rounded-sm text-base',
                           'bg-neutral-100',
                           meta.color,
                         )}
@@ -592,7 +592,7 @@ export default function UpdatesPage() {
           {showLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-[88px] rounded-2xl bg-amber-50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+                <div key={i} className="h-[88px] rounded-md bg-bark-50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
               ))}
             </div>
           ) : isError ? (

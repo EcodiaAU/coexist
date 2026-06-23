@@ -208,7 +208,7 @@ export default function ContactPage() {
         <motion.form
           variants={shouldReduceMotion ? undefined : fadeUp}
           onSubmit={handleSubmit}
-          className="rounded-2xl bg-surface-0 shadow-sm p-5 space-y-4"
+          className="rounded-md bg-surface-0 shadow-sm p-5 space-y-4"
         >
           <h2 className="font-heading text-[15px] font-semibold text-neutral-900">
             Send us a message
@@ -269,7 +269,7 @@ export default function ContactPage() {
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400/70 mb-1.5 px-1">
             Get in touch
           </h3>
-          <div className="rounded-2xl bg-surface-0 shadow-sm overflow-hidden">
+          <div className="rounded-md bg-surface-0 shadow-sm overflow-hidden">
             {CONTACT_INFO.map(({ icon, label, value, href }, idx) => (
               <a
                 key={label}
@@ -283,7 +283,7 @@ export default function ContactPage() {
                   idx > 0 && 'border-t border-neutral-100',
                 )}
               >
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0 bg-primary-50 text-primary-600">
+                <span className="flex items-center justify-center w-8 h-8 rounded-sm shrink-0 bg-primary-50 text-primary-600">
                   {icon}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -298,7 +298,7 @@ export default function ContactPage() {
         {/* Location note */}
         <motion.div
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="flex items-start gap-3 px-4 py-3.5 rounded-2xl bg-neutral-50"
+          className="flex items-start gap-3 px-4 py-3.5 rounded-md bg-neutral-50"
         >
           <MapPin size={18} className="text-primary-500 mt-0.5 shrink-0" />
           <div>

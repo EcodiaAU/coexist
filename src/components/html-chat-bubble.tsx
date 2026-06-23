@@ -151,7 +151,7 @@ export function HtmlChatBubble({
           <button
             type="button"
             onClick={toggleExpand}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-600 active:bg-neutral-200 transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-sm bg-neutral-100 text-neutral-600 active:bg-neutral-200 transition-colors"
             aria-label="Exit fullscreen"
           >
             <Minimize2 size={20} />
@@ -217,7 +217,7 @@ export function HtmlChatBubble({
         ) : (
           <button
             type="button"
-            className="flex-shrink-0 self-end flex items-center justify-center min-h-11 min-w-11 rounded-full cursor-pointer select-none active:scale-[0.93] transition-transform duration-150"
+            className="flex-shrink-0 self-end flex items-center justify-center min-h-11 min-w-11 rounded-full cursor-pointer select-none active:scale-[0.98] transition-transform duration-150"
             onClick={() => senderId && onAvatarTap?.(senderId)}
             aria-label={senderName ? `View ${senderName}'s profile` : 'View profile'}
           >
@@ -276,7 +276,7 @@ export function HtmlChatBubble({
         {/* HTML bubble */}
         <div
           className={cn(
-            'w-full rounded-2xl overflow-hidden transition-colors duration-150',
+            'w-full rounded-md overflow-hidden transition-colors duration-150',
             sent
               ? 'rounded-br-md bg-white shadow-sm ring-1 ring-neutral-100'
               : 'rounded-bl-md bg-white shadow-sm ring-1 ring-neutral-100',
@@ -293,7 +293,7 @@ export function HtmlChatBubble({
             <button
               type="button"
               onClick={toggleExpand}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 active:bg-neutral-100 transition-colors cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-sm text-neutral-400 active:bg-neutral-100 transition-colors cursor-pointer"
               aria-label="Expand to fullscreen"
             >
               <Maximize2 size={15} />

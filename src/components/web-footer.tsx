@@ -134,7 +134,7 @@ export function WebFooter({ className }: WebFooterProps) {
                 rel="noopener noreferrer"
                 className={cn(
                   'inline-flex items-center gap-3 px-4 py-2.5',
-                  'rounded-lg bg-primary-900',
+                  'rounded-sm bg-primary-900',
                   'hover:bg-primary-800 transition-colors duration-150',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                 )}
@@ -158,7 +158,7 @@ export function WebFooter({ className }: WebFooterProps) {
                 rel="noopener noreferrer"
                 className={cn(
                   'inline-flex items-center gap-3 px-4 py-2.5',
-                  'rounded-lg bg-primary-900',
+                  'rounded-sm bg-primary-900',
                   'hover:bg-primary-800 transition-colors duration-150',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                 )}

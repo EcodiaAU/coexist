@@ -113,8 +113,8 @@ function MobileProfileCard({ onNavigate }: { onNavigate: (path: string) => void 
       onClick={() => onNavigate('/profile')}
       className={cn(
         'w-full flex items-center gap-3.5 p-3 group',
-        'bg-gradient-to-br from-primary-50/80 to-primary-50/30',
-        'rounded-2xl border border-neutral-100',
+        'bg-primary-50',
+        'rounded-md border border-neutral-100',
         'cursor-pointer select-none text-left',
         'hover:from-primary-50 hover:to-primary-50/50',
         'transition-transform duration-200 active:scale-[0.98]',
@@ -257,7 +257,7 @@ function MobileSidebarOverlay({
               'fixed top-0 right-0 bottom-0',
               'w-[min(84vw,360px)]',
               'bg-white gpu-panel',
-              'shadow-xl',
+              'shadow-sm',
               'flex flex-col',
               'outline-none',
             )}
@@ -287,9 +287,9 @@ function MobileSidebarOverlay({
                     type="button"
                     onClick={onClose}
                     className={cn(
-                      'flex items-center justify-center w-11 h-11 rounded-xl',
+                      'flex items-center justify-center w-11 h-11 rounded-sm',
                       'bg-neutral-50 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100',
-                      'transition-transform duration-150 active:scale-[0.90]',
+                      'transition-transform duration-150 active:scale-[0.98]',
                       'cursor-pointer select-none',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                     )}
@@ -332,7 +332,7 @@ function MobileSidebarOverlay({
                 onClick={() => handleNavigate('/settings')}
                 className={cn(
                   'flex items-center gap-2.5 w-full px-2.5 h-9',
-                  'rounded-xl text-[13px]',
+                  'rounded-sm text-[13px]',
                   'text-neutral-400 hover:bg-neutral-50 hover:text-neutral-700',
                   'transition-[colors,transform] duration-150 active:scale-[0.97]',
                   'cursor-pointer select-none',

@@ -27,9 +27,9 @@ export const adminNavCategories: NavCategory[] = [
   {
     label: 'Programme',
     sectionHeader: 'Admin',
-    sectionBorderColor: 'border-amber-500',
-    labelColor: 'text-amber-600',
-    dotColor: 'bg-amber-500',
+    sectionBorderColor: 'border-secondary-600',
+    labelColor: 'text-secondary-700',
+    dotColor: 'bg-secondary-600',
     items: [
       { label: 'Collectives', path: '/admin/collectives', icon: icon(MapPin), capability: 'manage_collectives' },
       { label: 'Events', path: '/admin/events', icon: icon(CalendarDays), capability: 'manage_events' },
@@ -40,8 +40,8 @@ export const adminNavCategories: NavCategory[] = [
   },
   {
     label: 'Engage',
-    labelColor: 'text-amber-600',
-    dotColor: 'bg-amber-500',
+    labelColor: 'text-secondary-700',
+    dotColor: 'bg-secondary-600',
     items: [
       { label: 'Tasks', path: '/admin/tasks', icon: icon(ClipboardCheck), capability: 'manage_workflows' },
       { label: 'Surveys', path: '/admin/surveys', icon: icon(ClipboardList), capability: 'manage_surveys' },
@@ -51,8 +51,8 @@ export const adminNavCategories: NavCategory[] = [
   },
   {
     label: 'Insights',
-    labelColor: 'text-amber-600',
-    dotColor: 'bg-amber-500',
+    labelColor: 'text-secondary-700',
+    dotColor: 'bg-secondary-600',
     items: [
       // Impact + Attendance (Metrics) + Reports merged into one Insights
       // surface (2026-06-10). The legacy URLs still redirect.
@@ -63,8 +63,8 @@ export const adminNavCategories: NavCategory[] = [
   },
   {
     label: 'Settings',
-    labelColor: 'text-amber-600',
-    dotColor: 'bg-amber-500',
+    labelColor: 'text-secondary-700',
+    dotColor: 'bg-secondary-600',
     items: [
       { label: 'Organisational Policies', path: '/admin/legal-pages', icon: icon(FileText), capability: 'manage_system' },
       { label: 'Applications', path: '/admin/applications', icon: icon(ClipboardList), capability: 'manage_users' },

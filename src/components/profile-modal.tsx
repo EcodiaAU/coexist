@@ -62,7 +62,7 @@ const TINT_COLORS = {
 function DetailRow({ icon, label, value, tint = 'primary' }: { icon: ReactNode; label: string; value: string; tint?: keyof typeof TINT_COLORS }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3 border-b border-neutral-100 last:border-b-0">
-      <div className={cn('flex items-center justify-center w-7 h-7 rounded-lg shrink-0', TINT_COLORS[tint])}>
+      <div className={cn('flex items-center justify-center w-7 h-7 rounded-sm shrink-0', TINT_COLORS[tint])}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -182,7 +182,7 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
 
           {/* Mutual Connections */}
           {mutualData && (mutualData.sharedCollectives.length > 0 || mutualData.sharedEventCount > 0) && (
-            <motion.div variants={fadeUp} className="mt-2 rounded-xl bg-surface-0 shadow-sm px-4 py-3">
+            <motion.div variants={fadeUp} className="mt-2 rounded-sm bg-surface-0 shadow-sm px-4 py-3">
               <div className="flex items-center gap-2 text-sm text-neutral-500">
                 <Users size={16} />
                 <div>
@@ -235,7 +235,7 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
                 </div>
                 Details
               </h3>
-              <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+              <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
                 {(profile.first_name || profile.last_name) && (
                   <DetailRow icon={<User size={14} />} label="Name" value={[profile.first_name, profile.last_name].filter(Boolean).join(' ')} tint="primary" />
                 )}
@@ -266,8 +266,8 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
           {/* Privacy notice - shown to non-staff viewers in place of sensitive sections */}
           {!canSeeSensitive && (
             <motion.section variants={fadeUp} className="mt-6">
-              <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 flex items-start gap-3">
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0 bg-neutral-200 text-neutral-600">
+              <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3 flex items-start gap-3">
+                <div className="flex items-center justify-center w-7 h-7 rounded-sm shrink-0 bg-neutral-200 text-neutral-600">
                   <Shield size={14} />
                 </div>
                 <div className="flex-1">
@@ -289,7 +289,7 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
                 </div>
                 Emergency Contact
               </h3>
-              <div className="rounded-2xl overflow-hidden bg-white border border-neutral-100 shadow-sm">
+              <div className="rounded-md overflow-hidden bg-white border border-neutral-100 shadow-sm">
                 <div className="p-4">
                   <div className="flex items-start gap-3">
                     <div className="shrink-0 w-10 h-10 rounded-full bg-warning-50 flex items-center justify-center">
@@ -361,7 +361,7 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
                   markers={[{ id: userId ?? 'user', position: pos, variant: 'default', label: profile.location ?? undefined }]}
                   interactive={false}
                   aria-label={`${profile.display_name ?? 'User'} location`}
-                  className="h-40 rounded-2xl"
+                  className="h-40 rounded-md"
                 />
               </motion.section>
             )

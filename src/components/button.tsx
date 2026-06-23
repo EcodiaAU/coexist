@@ -12,7 +12,7 @@ const variantStyles = {
   danger:
     'bg-error text-white hover:opacity-90 focus-visible:ring-error',
   auth:
-    'bg-primary-800 text-white hover:bg-primary-950 focus-visible:ring-primary-400 rounded-2xl h-[54px] text-[15px] font-bold',
+    'bg-primary-800 text-white hover:bg-primary-950 focus-visible:ring-primary-400 rounded-md h-[54px] text-[15px] font-bold',
 } as const
 
 const sizeStyles = {
@@ -104,7 +104,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         transition={{ type: 'spring', stiffness: 400, damping: 26, mass: 0.7 }}
         className={cn(
           'relative inline-flex items-center justify-center font-heading font-semibold',
-          'rounded-xl cursor-pointer select-none',
+          'rounded-sm cursor-pointer select-none',
           'transition-colors duration-150',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
           variantStyles[variant],

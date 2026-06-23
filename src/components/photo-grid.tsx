@@ -55,7 +55,7 @@ const PhotoItem = memo(function PhotoItem({
       whileTap={shouldReduceMotion ? undefined : TAP_SCALE}
       transition={SPRING_TRANSITION}
       className={cn(
-        'relative aspect-square overflow-hidden rounded-lg',
+        'relative aspect-square overflow-hidden rounded-sm',
         'cursor-pointer select-none',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
       )}
@@ -123,7 +123,7 @@ export function PhotoGrid({
         {Array.from({ length: maxVisible }).map((_, i) => (
           <div
             key={i}
-            className="aspect-square animate-pulse rounded-lg bg-white"
+            className="aspect-square animate-pulse rounded-sm bg-white"
           />
         ))}
         <span className="sr-only">Loading photos</span>

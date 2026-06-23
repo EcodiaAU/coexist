@@ -140,7 +140,7 @@ export default function LeadershipPage() {
           <h3 className="text-[11px] font-bold uppercase tracking-widest text-neutral-400 mb-3 px-1">
             Who We're Looking For
           </h3>
-          <div className="rounded-2xl bg-gradient-to-br from-bark-500 via-bark-700 to-bark-800 shadow-sm p-6 space-y-3.5">
+          <div className="rounded-md bg-bark-800 shadow-sm p-6 space-y-3.5">
             <p className="text-[14px] text-white/90 leading-snug font-medium mb-1">
               We're looking for young people who:
             </p>
@@ -159,7 +159,7 @@ export default function LeadershipPage() {
             Ready to Get Involved?
           </h3>
           <div className="space-y-4">
-            <div className="rounded-2xl bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 shadow-sm p-6">
+            <div className="rounded-md bg-secondary-800 shadow-sm p-6">
               <p className="text-[14px] text-white/85 leading-relaxed">
                 Collectives are Co-Exist's local action teams - they are youth-led groups that deliver events and environmental initiatives on the ground.
               </p>
@@ -176,10 +176,10 @@ export default function LeadershipPage() {
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-bark-50 to-bark-100 border border-bark-200/60 p-5 hover:shadow-lg active:scale-[0.98] transition-all"
+                  className="group relative overflow-hidden rounded-md bg-bark-100 border border-bark-200/60 p-5 hover:shadow-sm active:scale-[0.98] transition-all"
                 >
                   <div className="flex items-center gap-4">
-                    <span className="flex items-center justify-center w-11 h-11 rounded-xl bg-bark-700 shadow-sm shrink-0 group-hover:bg-bark-800 transition-colors">
+                    <span className="flex items-center justify-center w-11 h-11 rounded-sm bg-bark-700 shadow-sm shrink-0 group-hover:bg-bark-800 transition-colors">
                       <FileText size={18} className="text-white" />
                     </span>
                     <div className="flex-1 min-w-0">
@@ -202,7 +202,7 @@ export default function LeadershipPage() {
 
         {/* Call to action */}
         <motion.section variants={shouldReduceMotion ? undefined : fadeUp}>
-          <div className="rounded-2xl bg-gradient-to-br from-sprout-500 via-sprout-600 to-primary-800 shadow-sm p-6 space-y-4">
+          <div className="rounded-md bg-primary-800 shadow-sm p-6 space-y-4">
             <div className="flex items-center gap-3 mb-1">
               <Sparkles size={20} className="text-white/70" />
               <span className="font-heading text-base font-bold text-white">

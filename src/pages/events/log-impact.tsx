@@ -91,7 +91,7 @@ function SectionCard({
   return (
     <div
       className={cn(
-        'rounded-2xl bg-white shadow-sm border border-neutral-100/80',
+        'rounded-md bg-white shadow-sm border border-neutral-100/80',
         className,
       )}
     >
@@ -117,7 +117,7 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-3 mb-4">
-      <span className={cn('flex items-center justify-center w-8 h-8 rounded-xl shrink-0', iconBg)}>
+      <span className={cn('flex items-center justify-center w-8 h-8 rounded-sm shrink-0', iconBg)}>
         <span className={iconColor}>{icon}</span>
       </span>
       <h3 className="text-sm font-bold text-neutral-800 tracking-tight">{title}</h3>
@@ -177,8 +177,8 @@ function SpeciesTracker({
       <SectionHeader
         icon={<Leaf size={16} />}
         title={activityType === 'tree_planting' ? 'Species Planted' : 'Species'}
-        iconColor="text-emerald-600"
-        iconBg="bg-emerald-50"
+        iconColor="text-primary-600"
+        iconBg="bg-primary-50"
       />
 
       <AnimatePresence initial={false}>
@@ -189,15 +189,15 @@ function SpeciesTracker({
             animate={{ opacity: 1, height: 'auto', marginBottom: 8 }}
             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex items-center gap-3 rounded-xl bg-emerald-50/60 px-3 py-2.5"
+            className="flex items-center gap-3 rounded-sm bg-primary-50/60 px-3 py-2.5"
           >
-            <Leaf size={13} className="text-emerald-500 shrink-0" />
+            <Leaf size={13} className="text-primary-500 shrink-0" />
             <span className="flex-1 text-sm font-medium text-neutral-800 truncate">{s.name}</span>
             <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
                 onClick={() => updateCount(i, s.count - 1)}
-                className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-500 text-base font-bold active:scale-[0.92] transition-transform duration-100 cursor-pointer"
+                className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-500 text-base font-bold active:scale-[0.98] transition-transform duration-100 cursor-pointer"
                 aria-label={`Decrease ${s.name} count`}
               >
                 −
@@ -206,7 +206,7 @@ function SpeciesTracker({
               <button
                 type="button"
                 onClick={() => updateCount(i, s.count + 1)}
-                className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-500 text-base font-bold active:scale-[0.92] transition-transform duration-100 cursor-pointer"
+                className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-500 text-base font-bold active:scale-[0.98] transition-transform duration-100 cursor-pointer"
                 aria-label={`Increase ${s.name} count`}
               >
                 +
@@ -215,7 +215,7 @@ function SpeciesTracker({
             <button
               type="button"
               onClick={() => removeSpecies(i)}
-              className="w-8 h-8 flex items-center justify-center text-neutral-300 hover:text-red-400 active:scale-[0.92] transition-all duration-100 cursor-pointer"
+              className="w-8 h-8 flex items-center justify-center text-neutral-300 hover:text-error-400 active:scale-[0.98] transition-all duration-100 cursor-pointer"
               aria-label={`Remove ${s.name}`}
             >
               <X size={14} />
@@ -231,13 +231,13 @@ function SpeciesTracker({
           value={newName}
           {...speciesNameInputProps}
           onKeyDown={(e) => e.key === 'Enter' && addSpecies()}
-          className="flex-1 rounded-xl bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+          className="flex-1 rounded-sm bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
         />
         <button
           type="button"
           onClick={addSpecies}
           disabled={!newName.trim()}
-          className="flex items-center justify-center gap-1.5 px-4 rounded-xl bg-emerald-500 text-white text-sm font-semibold disabled:opacity-40 active:scale-[0.97] transition-all duration-150 cursor-pointer"
+          className="flex items-center justify-center gap-1.5 px-4 rounded-sm bg-primary-500 text-white text-sm font-semibold disabled:opacity-40 active:scale-[0.97] transition-all duration-150 cursor-pointer"
           aria-label="Add species"
         >
           <Plus size={15} />
@@ -261,8 +261,8 @@ export interface WildlifeSighting {
 }
 
 const CONFIDENCE_OPTIONS: { value: WildlifeSighting['confidence']; label: string; color: string }[] = [
-  { value: 'certain', label: 'Certain', color: 'text-emerald-700' },
-  { value: 'probable', label: 'Probable', color: 'text-amber-700' },
+  { value: 'certain', label: 'Certain', color: 'text-primary-700' },
+  { value: 'probable', label: 'Probable', color: 'text-bark-700' },
   { value: 'possible', label: 'Possible', color: 'text-neutral-600' },
 ]
 
@@ -319,7 +319,7 @@ function WildlifeSightingTracker({
             animate={{ opacity: 1, height: 'auto', marginBottom: 10 }}
             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
             transition={{ duration: 0.2 }}
-            className="rounded-xl bg-sky-50/50 border border-sky-100 p-3 space-y-2.5"
+            className="rounded-sm bg-sky-50/50 border border-sky-100 p-3 space-y-2.5"
           >
             <div className="flex items-center gap-2">
               <Bird size={13} className="text-sky-500 shrink-0" />
@@ -328,7 +328,7 @@ function WildlifeSightingTracker({
                 <button
                   type="button"
                   onClick={() => updateSighting(i, { count: s.count - 1 })}
-                  className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-500 text-base font-bold active:scale-[0.92] transition-transform duration-100 cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-500 text-base font-bold active:scale-[0.98] transition-transform duration-100 cursor-pointer"
                   aria-label={`Decrease ${s.species_name} count`}
                 >
                   −
@@ -337,7 +337,7 @@ function WildlifeSightingTracker({
                 <button
                   type="button"
                   onClick={() => updateSighting(i, { count: s.count + 1 })}
-                  className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-500 text-base font-bold active:scale-[0.92] transition-transform duration-100 cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-500 text-base font-bold active:scale-[0.98] transition-transform duration-100 cursor-pointer"
                   aria-label={`Increase ${s.species_name} count`}
                 >
                   +
@@ -346,7 +346,7 @@ function WildlifeSightingTracker({
               <button
                 type="button"
                 onClick={() => removeSighting(i)}
-                className="w-8 h-8 flex items-center justify-center text-neutral-300 hover:text-red-400 active:scale-[0.92] transition-all duration-100 cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center text-neutral-300 hover:text-error-400 active:scale-[0.98] transition-all duration-100 cursor-pointer"
                 aria-label={`Remove ${s.species_name}`}
               >
                 <X size={14} />
@@ -358,7 +358,7 @@ function WildlifeSightingTracker({
                 <select
                   value={s.confidence}
                   onChange={(e) => updateSighting(i, { confidence: e.target.value as WildlifeSighting['confidence'] })}
-                  className="appearance-none rounded-lg bg-white border border-sky-200 pl-2.5 pr-7 py-1.5 text-xs font-medium text-neutral-700 focus:outline-none focus:ring-2 focus:ring-sky-400 cursor-pointer"
+                  className="appearance-none rounded-sm bg-white border border-sky-200 pl-2.5 pr-7 py-1.5 text-xs font-medium text-neutral-700 focus:outline-none focus:ring-2 focus:ring-sky-400 cursor-pointer"
                   aria-label={`Confidence for ${s.species_name}`}
                 >
                   {CONFIDENCE_OPTIONS.map((o) => (
@@ -372,7 +372,7 @@ function WildlifeSightingTracker({
                 placeholder="Scientific name (optional)"
                 value={s.scientific_name ?? ''}
                 onChange={(e) => updateSighting(i, { scientific_name: e.target.value || undefined })}
-                className="flex-1 min-w-0 rounded-lg bg-white border border-sky-200 px-2.5 py-1.5 text-xs text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                className="flex-1 min-w-0 rounded-sm bg-white border border-sky-200 px-2.5 py-1.5 text-xs text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
               />
               <label className="flex items-center gap-1.5 text-xs text-neutral-600 cursor-pointer select-none whitespace-nowrap">
                 <input
@@ -395,13 +395,13 @@ function WildlifeSightingTracker({
           value={newName}
           {...sightingNameInputProps}
           onKeyDown={(e) => e.key === 'Enter' && addSighting()}
-          className="flex-1 rounded-xl bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent"
+          className="flex-1 rounded-sm bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent"
         />
         <button
           type="button"
           onClick={addSighting}
           disabled={!newName.trim()}
-          className="flex items-center justify-center gap-1.5 px-4 rounded-xl bg-sky-500 text-white text-sm font-semibold disabled:opacity-40 active:scale-[0.97] transition-all duration-150 cursor-pointer"
+          className="flex items-center justify-center gap-1.5 px-4 rounded-sm bg-sky-500 text-white text-sm font-semibold disabled:opacity-40 active:scale-[0.97] transition-all duration-150 cursor-pointer"
           aria-label="Add sighting"
         >
           <Plus size={15} />
@@ -443,13 +443,13 @@ function PhotoUploadSection({
   isOffline?: boolean
   accent?: 'neutral' | 'amber' | 'emerald'
 }) {
-  const accentRing = accent === 'amber' ? 'ring-amber-400' : accent === 'emerald' ? 'ring-emerald-400' : 'ring-primary-400'
-  const accentBg = accent === 'amber' ? 'bg-amber-500' : accent === 'emerald' ? 'bg-emerald-500' : 'bg-neutral-600'
+  const accentRing = accent === 'amber' ? 'ring-bark-400' : accent === 'emerald' ? 'ring-primary-400' : 'ring-primary-400'
+  const accentBg = accent === 'amber' ? 'bg-bark-500' : accent === 'emerald' ? 'bg-primary-500' : 'bg-neutral-600'
 
   return (
     <div className="space-y-2">
       {isOffline && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-medium">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-bark-50 text-bark-700 text-xs font-medium">
           <WifiOff size={13} />
           Offline - photos will be queued when you regain signal.
         </div>
@@ -465,13 +465,13 @@ function PhotoUploadSection({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.18 }}
-                className="relative shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-neutral-100 shadow-sm"
+                className="relative shrink-0 w-20 h-20 rounded-sm overflow-hidden bg-neutral-100 shadow-sm"
               >
                 <img src={p} alt={`Photo ${i + 1}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 <button
                   type="button"
                   onClick={() => onRemove(i)}
-                  className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center cursor-pointer active:scale-[0.92] transition-transform duration-100"
+                  className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center cursor-pointer active:scale-[0.98] transition-transform duration-100"
                   aria-label={`Remove photo ${i + 1}`}
                 >
                   <X size={11} />
@@ -481,13 +481,13 @@ function PhotoUploadSection({
           </AnimatePresence>
 
           {failedUploads?.map((f, i) => (
-            <div key={`failed-${i}`} className="relative shrink-0 w-20 h-20 rounded-xl bg-red-50 border border-red-200 flex flex-col items-center justify-center gap-1">
-              <AlertTriangle size={15} className="text-red-500" />
+            <div key={`failed-${i}`} className="relative shrink-0 w-20 h-20 rounded-sm bg-error-50 border border-error-200 flex flex-col items-center justify-center gap-1">
+              <AlertTriangle size={15} className="text-error-500" />
               <button
                 type="button"
                 onClick={() => onRetry?.(i)}
                 disabled={uploading || isOffline}
-                className="flex items-center gap-1 text-[10px] font-semibold text-red-600 cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-1 text-[10px] font-semibold text-error-600 cursor-pointer disabled:opacity-50"
                 aria-label={`Retry failed upload ${i + 1}`}
               >
                 <RefreshCw size={10} />
@@ -496,7 +496,7 @@ function PhotoUploadSection({
               <button
                 type="button"
                 onClick={() => onClearFailed?.(i)}
-                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full text-red-400 hover:text-red-600 flex items-center justify-center cursor-pointer"
+                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full text-error-400 hover:text-error-600 flex items-center justify-center cursor-pointer"
                 aria-label={`Dismiss failed upload ${i + 1}`}
               >
                 <X size={10} />
@@ -509,7 +509,7 @@ function PhotoUploadSection({
             onClick={onAdd}
             disabled={uploading || isOffline}
             className={cn(
-              'shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-neutral-200',
+              'shrink-0 w-20 h-20 rounded-sm border-2 border-dashed border-neutral-200',
               'flex flex-col items-center justify-center gap-1',
               'text-neutral-400 hover:text-neutral-500 hover:border-neutral-300 hover:bg-neutral-50',
               'cursor-pointer select-none',
@@ -560,7 +560,7 @@ function EventHeroBanner({
   dateEnd?: string | null
 }) {
   return (
-    <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-emerald-600 shadow-sm">
+    <div className="rounded-md overflow-hidden bg-primary-600 shadow-sm">
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
@@ -571,7 +571,7 @@ function EventHeroBanner({
               {title}
             </h2>
           </div>
-          <div className="shrink-0 w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
+          <div className="shrink-0 w-10 h-10 rounded-sm bg-white/15 flex items-center justify-center">
             <Sparkles size={20} className="text-white" />
           </div>
         </div>
@@ -1099,7 +1099,7 @@ export default function LogImpactPage() {
             transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.1, type: 'spring', stiffness: 200 }}
             className="relative w-20 h-20 mb-5"
           >
-            <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-primary-100 flex items-center justify-center">
+            <div className="relative w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center">
               <CheckCircle2 size={36} className="text-primary-600" />
             </div>
           </motion.div>
@@ -1148,19 +1148,19 @@ export default function LogImpactPage() {
       footer={
         <div className="space-y-2">
           {anyPhotoFailed && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-50 text-red-600 text-sm font-medium">
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-sm bg-error-50 text-error-600 text-sm font-medium">
               <AlertTriangle size={14} />
               Some photos failed to upload - retry or dismiss them first.
             </div>
           )}
           {anyPhotoUploading && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary-50 text-primary-700 text-sm font-medium">
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-sm bg-primary-50 text-primary-700 text-sm font-medium">
               <RefreshCw size={14} className="animate-spin" />
               Photo upload in progress…
             </div>
           )}
           {!canSubmitSurvey && (
-            <div className="px-3 py-2.5 rounded-xl bg-amber-50 text-amber-700 text-sm font-medium">
+            <div className="px-3 py-2.5 rounded-sm bg-bark-50 text-bark-700 text-sm font-medium">
               Answer the required questions above before submitting.
             </div>
           )}
@@ -1200,13 +1200,13 @@ export default function LogImpactPage() {
             edit any time) the "window passed" banner only shows to anyone who
             genuinely cannot edit - in practice nobody who can reach this page. */}
         {existingImpact && !canEdit && (
-          <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-sm font-medium">
+          <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex items-center gap-2.5 px-4 py-3 rounded-md bg-error-50 border border-error-100 text-error-700 text-sm font-medium">
             <Clock size={15} className="shrink-0" />
             The 48-hour edit window has passed. Contact a national admin to make changes.
           </motion.div>
         )}
         {existingImpact && !isEditWindowExpired && (
-          <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-100 text-amber-700 text-sm font-medium">
+          <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex items-center gap-2.5 px-4 py-3 rounded-md bg-bark-50 border border-bark-100 text-bark-700 text-sm font-medium">
             <Clock size={15} className="shrink-0" />
             Editing existing data - {editHoursRemaining}h left to update.
           </motion.div>
@@ -1234,7 +1234,7 @@ export default function LogImpactPage() {
                     value={eventDurationHours}
                     onChange={(e) => setEventDurationHours(e.target.value)}
                     placeholder="0"
-                    className="w-24 rounded-xl bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-right font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent"
+                    className="w-24 rounded-sm bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-right font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent"
                     min="0"
                     step="0.5"
                   />
@@ -1258,7 +1258,7 @@ export default function LogImpactPage() {
                       setAttendeesOverridden(true)
                     }}
                     placeholder={String(checkedInCount)}
-                    className="w-20 rounded-xl bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-right font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent"
+                    className="w-20 rounded-sm bg-neutral-50 border border-neutral-200 px-3 py-2.5 text-[16px] text-right font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent"
                     min="0"
                     step="1"
                   />
@@ -1279,7 +1279,7 @@ export default function LogImpactPage() {
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-50">
+            <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-sm bg-violet-50">
               <span className="text-xs text-violet-700">
                 <span className="font-bold">{eventDurationHours || '0'} hrs</span>
                 <span className="text-violet-400 mx-1.5">×</span>
@@ -1290,7 +1290,7 @@ export default function LogImpactPage() {
             </div>
 
             {finalAttendeeCount === 0 && (
-              <p className="mt-2 text-xs text-amber-600 font-medium">
+              <p className="mt-2 text-xs text-bark-600 font-medium">
                 No participants yet - check in on the Event Day page or enter the count above.
               </p>
             )}
@@ -1324,7 +1324,7 @@ export default function LogImpactPage() {
         )}
 
         {!surveyLoading && surveyQuestions.length === 0 && (
-          <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-neutral-50 border border-neutral-100 text-neutral-500 text-sm">
+          <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex items-center gap-2.5 px-4 py-3 rounded-md bg-neutral-50 border border-neutral-100 text-neutral-500 text-sm">
             <ClipboardList size={15} className="shrink-0" />
             No custom impact questions for this event type.
           </motion.div>
@@ -1373,7 +1373,7 @@ export default function LogImpactPage() {
             <div className="grid grid-cols-2 divide-x divide-neutral-100">
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">Before</span>
+                  <span className="text-xs font-bold text-bark-600 uppercase tracking-wider">Before</span>
                 </div>
                 <PhotoUploadSection
                   photos={beforePhotos}
@@ -1392,7 +1392,7 @@ export default function LogImpactPage() {
               </div>
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">After</span>
+                  <span className="text-xs font-bold text-primary-600 uppercase tracking-wider">After</span>
                 </div>
                 <PhotoUploadSection
                   photos={afterPhotos}

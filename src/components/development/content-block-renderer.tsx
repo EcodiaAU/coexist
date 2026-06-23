@@ -13,7 +13,7 @@ interface ContentBlockRendererProps {
   className?: string
 }
 
-const BlockFallback = () => <div className="h-24 animate-pulse rounded-lg bg-white" />
+const BlockFallback = () => <div className="h-24 animate-pulse rounded-sm bg-white" />
 
 export function ContentBlockRenderer({ block, className }: ContentBlockRendererProps) {
   return (
@@ -63,7 +63,7 @@ export function ContentBlockRenderer({ block, className }: ContentBlockRendererP
 
       {/* Quiz block  rendered separately by the parent page */}
       {block.content_type === 'quiz' && (
-        <div className="rounded-xl bg-moss-50 border border-moss-200 p-4 text-center">
+        <div className="rounded-sm bg-moss-50 border border-moss-200 p-4 text-center">
           <p className="text-sm font-semibold text-moss-700">Quiz section</p>
           <p className="text-xs text-moss-500 mt-0.5">Complete the quiz below to continue</p>
         </div>

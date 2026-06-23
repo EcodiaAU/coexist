@@ -295,7 +295,7 @@ function ComposeModal({
         <h2 className="font-heading text-lg font-semibold text-neutral-900">{isEdit ? 'Edit Update' : 'New Update'}</h2>
         <button
           onClick={onClose}
-          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.93] transition-[colors,transform] duration-150 cursor-pointer"
+          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
           aria-label="Close"
         >
           <X size={20} />
@@ -319,7 +319,7 @@ function ComposeModal({
               type="button"
               onClick={() => setShowLinkInput(!showLinkInput)}
               className={cn(
-                'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg',
+                'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-sm',
                 'transition-colors duration-150 cursor-pointer select-none',
                 showLinkInput
                   ? 'bg-primary-100 text-neutral-700'
@@ -340,7 +340,7 @@ function ComposeModal({
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden mb-2"
               >
-                <div className="flex items-end gap-2 p-3 rounded-xl bg-neutral-50 ring-1 ring-neutral-100">
+                <div className="flex items-end gap-2 p-3 rounded-sm bg-neutral-50 ring-1 ring-neutral-100">
                   <div className="flex-1 space-y-2">
                     <Input
                       label="URL"
@@ -379,7 +379,7 @@ function ComposeModal({
             rows={8}
             maxLength={10000}
             className={cn(
-              'w-full rounded-xl px-4 py-3 text-sm text-neutral-900 leading-relaxed',
+              'w-full rounded-sm px-4 py-3 text-sm text-neutral-900 leading-relaxed',
               'bg-white ring-1 ring-neutral-100 placeholder:text-neutral-300',
               'focus:outline-none focus:ring-2 focus:ring-primary-400',
               'resize-y min-h-[120px]',
@@ -407,7 +407,7 @@ function ComposeModal({
           {(existingImages.length > 0 || previews.length > 0) && (
             <div className="grid grid-cols-4 gap-2 mb-3">
               {existingImages.map((src, i) => (
-                <div key={`existing-${i}`} className="relative aspect-square rounded-xl overflow-hidden group ring-1 ring-neutral-100">
+                <div key={`existing-${i}`} className="relative aspect-square rounded-sm overflow-hidden group ring-1 ring-neutral-100">
                   <img src={src} alt="" loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                   <button
                     type="button"
@@ -419,7 +419,7 @@ function ComposeModal({
                 </div>
               ))}
               {previews.map((src, i) => (
-                <div key={`new-${i}`} className="relative aspect-square rounded-xl overflow-hidden group ring-1 ring-neutral-100">
+                <div key={`new-${i}`} className="relative aspect-square rounded-sm overflow-hidden group ring-1 ring-neutral-100">
                   <img src={src} alt="" loading="lazy" className="w-full h-full object-cover" />
                   <button
                     type="button"
@@ -438,7 +438,7 @@ function ComposeModal({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className={cn(
-                'flex items-center justify-center gap-2 w-full h-16 rounded-xl',
+                'flex items-center justify-center gap-2 w-full h-16 rounded-sm',
                 'border-2 border-dashed border-neutral-100 bg-neutral-50',
                 'text-sm text-neutral-500 font-medium',
                 'cursor-pointer hover:border-neutral-200 hover:bg-neutral-50',
@@ -477,7 +477,7 @@ function ComposeModal({
                 type="button"
                 onClick={() => setPriority('normal')}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-semibold',
+                  'flex-1 flex items-center justify-center gap-1.5 h-10 rounded-sm text-xs font-semibold',
                   'transition-colors duration-150 cursor-pointer select-none',
                   priority === 'normal'
                     ? 'bg-primary-600 text-white shadow-sm'
@@ -490,7 +490,7 @@ function ComposeModal({
                 type="button"
                 onClick={() => setPriority('urgent')}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-semibold',
+                  'flex-1 flex items-center justify-center gap-1.5 h-10 rounded-sm text-xs font-semibold',
                   'transition-colors duration-150 cursor-pointer select-none',
                   priority === 'urgent'
                     ? 'bg-warning-500 text-white shadow-sm'
@@ -509,7 +509,7 @@ function ComposeModal({
               type="button"
               onClick={() => setIsPinned(!isPinned)}
               className={cn(
-                'flex items-center justify-center gap-1.5 w-full h-10 rounded-xl text-xs font-semibold',
+                'flex items-center justify-center gap-1.5 w-full h-10 rounded-sm text-xs font-semibold',
                 'transition-colors duration-150 cursor-pointer select-none',
                 isPinned
                   ? 'bg-primary-600 text-white shadow-sm'
@@ -532,7 +532,7 @@ function ComposeModal({
               type="button"
               onClick={() => { setTargetAudience('all'); setSelectedCollectiveId(null) }}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold',
+                'flex-1 flex items-center justify-center gap-2 h-11 rounded-sm text-sm font-semibold',
                 'transition-colors duration-150 cursor-pointer select-none',
                 targetAudience === 'all'
                   ? 'bg-primary-600 text-white shadow-sm'
@@ -545,7 +545,7 @@ function ComposeModal({
               type="button"
               onClick={() => setTargetAudience('collective_specific')}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold',
+                'flex-1 flex items-center justify-center gap-2 h-11 rounded-sm text-sm font-semibold',
                 'transition-colors duration-150 cursor-pointer select-none',
                 targetAudience === 'collective_specific'
                   ? 'bg-primary-600 text-white shadow-sm'
@@ -565,7 +565,7 @@ function ComposeModal({
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className="space-y-1.5 max-h-48 overflow-y-auto rounded-xl ring-1 ring-neutral-100 p-2 bg-neutral-50">
+                <div className="space-y-1.5 max-h-48 overflow-y-auto rounded-sm ring-1 ring-neutral-100 p-2 bg-neutral-50">
                   {(allCollectives ?? []).map((c) => {
                     const isSelected = selectedCollectiveId === c.id
                     return (
@@ -574,7 +574,7 @@ function ComposeModal({
                         type="button"
                         onClick={() => setSelectedCollectiveId(c.id)}
                         className={cn(
-                          'flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-left',
+                          'flex items-center gap-2.5 w-full px-3 py-2.5 rounded-sm text-left',
                           'transition-colors duration-150 cursor-pointer select-none',
                           isSelected
                             ? 'bg-primary-100 ring-1 ring-primary-400'
@@ -582,9 +582,9 @@ function ComposeModal({
                         )}
                       >
                         {c.cover_image_url ? (
-                          <img src={c.cover_image_url} alt="" loading="lazy" className="w-8 h-8 rounded-lg object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                          <img src={c.cover_image_url} alt="" loading="lazy" className="w-8 h-8 rounded-sm object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                         ) : (
-                          <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-sm bg-primary-100 flex items-center justify-center shrink-0">
                             <Users size={14} className="text-neutral-400" />
                           </div>
                         )}
@@ -668,7 +668,7 @@ function DetailPanel({
       animate={{ opacity: 1, x: 0 }}
       exit={reducedMotion ? undefined : { opacity: 0, x: 12 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="h-full flex flex-col bg-white rounded-2xl shadow-sm ring-1 ring-neutral-100 overflow-hidden"
+      className="h-full flex flex-col bg-white rounded-md shadow-sm ring-1 ring-neutral-100 overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100 shrink-0">
@@ -690,7 +690,7 @@ function DetailPanel({
           <button
             type="button"
             onClick={handleCopyContent}
-            className="p-2 rounded-lg text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer"
+            className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer"
             title="Copy content"
           >
             <Copy size={15} />
@@ -698,7 +698,7 @@ function DetailPanel({
           <button
             type="button"
             onClick={onEdit}
-            className="p-2 rounded-lg text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer"
+            className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer"
             title="Edit"
           >
             <Pencil size={15} />
@@ -706,7 +706,7 @@ function DetailPanel({
           <button
             type="button"
             onClick={onDelete}
-            className="p-2 rounded-lg text-neutral-400 hover:bg-error-50 hover:text-error-600 transition-colors cursor-pointer"
+            className="p-2 rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 transition-colors cursor-pointer"
             title="Delete"
           >
             <Trash2 size={15} />
@@ -782,7 +782,7 @@ function DetailPanel({
           </div>
 
           {/* Stats row */}
-          <div className="flex items-center gap-4 py-2 px-3 rounded-xl bg-neutral-50">
+          <div className="flex items-center gap-4 py-2 px-3 rounded-sm bg-neutral-50">
             <div className="flex items-center gap-1.5">
               <Eye size={13} className="text-neutral-400" />
               <span className="text-xs font-semibold text-neutral-700">{update.read_count}</span>
@@ -807,7 +807,7 @@ function DetailPanel({
           {images.length > 1 && (
             <div className="space-y-2">
               {images.slice(1).map((src, i) => (
-                <div key={i} className="rounded-xl overflow-hidden ring-1 ring-black/[0.04]">
+                <div key={i} className="rounded-sm overflow-hidden ring-1 ring-black/[0.04]">
                   <img src={src} alt="" loading="lazy" className="w-full object-cover" />
                 </div>
               ))}
@@ -872,7 +872,7 @@ function UpdateRow({
       transition={{ delay: Math.min(index * 0.025, 0.2), duration: 0.2, ease: 'easeOut' }}
       onClick={onSelect}
       className={cn(
-        'flex items-start gap-3.5 p-4 rounded-xl bg-white cursor-pointer',
+        'flex items-start gap-3.5 p-4 rounded-sm bg-white cursor-pointer',
         'ring-1 transition-all duration-150',
         isSelected
           ? 'ring-primary-400 shadow-sm bg-primary-50'
@@ -885,10 +885,10 @@ function UpdateRow({
         <img
           src={images[0]}
           alt=""
-          className="w-14 h-14 rounded-xl object-cover shrink-0 ring-1 ring-black/[0.04]"
+          className="w-14 h-14 rounded-sm object-cover shrink-0 ring-1 ring-black/[0.04]"
         />
       ) : (
-        <div className="w-14 h-14 rounded-xl bg-white border border-neutral-100 flex items-center justify-center shrink-0">
+        <div className="w-14 h-14 rounded-sm bg-white border border-neutral-100 flex items-center justify-center shrink-0">
           <Megaphone size={20} className="text-neutral-400" />
         </div>
       )}
@@ -956,7 +956,7 @@ function UpdateRow({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onEdit() }}
-          className="p-2 rounded-lg text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer"
+          className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer"
           title="Edit"
         >
           <Pencil size={15} />
@@ -964,7 +964,7 @@ function UpdateRow({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onDelete() }}
-          className="p-2 rounded-lg text-neutral-400 hover:bg-error-50 hover:text-error-600 transition-colors cursor-pointer"
+          className="p-2 rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 transition-colors cursor-pointer"
           title="Delete"
         >
           <Trash2 size={15} />
@@ -1088,7 +1088,7 @@ export default function AdminUpdatesPage() {
             compact
             className="flex-1"
           />
-          <div className="flex items-center gap-0.5 rounded-xl shadow-sm bg-white p-0.5">
+          <div className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5">
             {([
               { key: 'all', label: 'All' },
               { key: 'national', label: 'National' },
@@ -1099,7 +1099,7 @@ export default function AdminUpdatesPage() {
                 type="button"
                 onClick={() => setAudienceFilter(f.key)}
                 className={cn(
-                  'px-3.5 min-h-11 rounded-lg text-sm font-semibold',
+                  'px-3.5 min-h-11 rounded-sm text-sm font-semibold',
                   'transition-colors duration-150 cursor-pointer select-none',
                   audienceFilter === f.key
                     ? 'bg-primary-100 text-neutral-900'

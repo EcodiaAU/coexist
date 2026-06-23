@@ -88,7 +88,7 @@ export function Toggle({
         className={cn(
           'relative inline-flex items-center justify-center shrink-0 cursor-pointer',
           'min-w-11 min-h-11',
-          'transition-transform duration-150 active:scale-[0.93]',
+          'transition-transform duration-150 active:scale-[0.98]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
           'disabled:opacity-50 disabled:cursor-not-allowed',
         )}

@@ -83,7 +83,7 @@ export function TopNav({ notificationCount = 0, className }: TopNavProps) {
                 key={link.path}
                 to={link.path}
                 className={cn(
-                  'relative px-4 py-2 rounded-lg text-sm font-medium',
+                  'relative px-4 py-2 rounded-sm text-sm font-medium',
                   'transition-colors duration-150',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                   active
@@ -177,9 +177,9 @@ export function TopNav({ notificationCount = 0, className }: TopNavProps) {
                   transition={{ duration: 0.15 }}
                   className={cn(
                     'absolute right-0 top-full mt-2',
-                    'w-56 py-1.5 rounded-xl',
+                    'w-56 py-1.5 rounded-sm',
                     'bg-white',
-                    'shadow-lg',
+                    'shadow-sm',
                   )}
                   role="menu"
                 >

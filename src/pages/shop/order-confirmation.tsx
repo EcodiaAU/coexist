@@ -202,7 +202,7 @@ function OrderSummaryCard({
   const showLoading = useDelayedLoading(isLoading)
   if (showLoading) {
     return (
-      <div className="bg-white border border-neutral-100 shadow-sm rounded-2xl overflow-hidden">
+      <div className="bg-white border border-neutral-100 shadow-sm rounded-md overflow-hidden">
         <div className="p-5 space-y-4">
           <div className="flex items-center justify-between">
             <Skeleton variant="text" className="w-32" />
@@ -210,7 +210,7 @@ function OrderSummaryCard({
           </div>
           {[0, 1].map((i) => (
             <div key={i} className="flex items-center gap-3">
-              <Skeleton className="w-12 h-12 rounded-xl" />
+              <Skeleton className="w-12 h-12 rounded-sm" />
               <div className="flex-1 space-y-1.5">
                 <Skeleton variant="text" className="w-3/4" />
                 <Skeleton variant="text" className="w-1/3" />
@@ -229,7 +229,7 @@ function OrderSummaryCard({
 
   if (isError || !order) {
     return (
-      <div className="bg-white border border-neutral-100 shadow-sm rounded-2xl overflow-hidden">
+      <div className="bg-white border border-neutral-100 shadow-sm rounded-md overflow-hidden">
         <div className="p-5 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-50 border border-neutral-100">
             <Package size={16} className="text-neutral-500" />
@@ -253,7 +253,7 @@ function OrderSummaryCard({
       initial={rm ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5, duration: 0.4 }}
-      className="bg-white border border-neutral-100 shadow-sm rounded-2xl overflow-hidden"
+      className="bg-white border border-neutral-100 shadow-sm rounded-md overflow-hidden"
     >
       <div className="p-5">
         {/* Order ID + Status */}
@@ -281,7 +281,7 @@ function OrderSummaryCard({
               <img
                 src={item.image_url ?? '/img/placeholder-merch.jpg'}
                 alt={item.product_name}
-                className="w-12 h-12 rounded-xl object-cover border border-neutral-100 shadow-sm"
+                className="w-12 h-12 rounded-sm object-cover border border-neutral-100 shadow-sm"
               />
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">
@@ -333,7 +333,7 @@ function OrderSummaryCard({
         </div>
 
         {/* Total row */}
-        <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-2xl bg-neutral-50">
+        <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-md bg-neutral-50">
           <span className="text-sm font-semibold text-neutral-900">
             Total ({itemCount} item{itemCount !== 1 ? 's' : ''})
           </span>
@@ -356,9 +356,9 @@ function ImpactCard({ rm }: { rm: boolean }) {
       initial={rm ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6, duration: 0.4 }}
-      className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-neutral-100 shadow-sm"
+      className="flex items-start gap-3 p-4 rounded-md bg-white border border-neutral-100 shadow-sm"
     >
-      <div className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shrink-0">
+      <div className="w-10 h-10 rounded-sm bg-primary-500 flex items-center justify-center shrink-0">
         <Leaf size={18} className="text-white" />
       </div>
       <div className="flex-1 min-w-0">
@@ -436,7 +436,7 @@ export default function OrderConfirmationPage() {
                       size="lg"
                       fullWidth
                       icon={<Truck size={18} />}
-                      className="!rounded-2xl"
+                      className="!rounded-md"
                     >
                       Track your order
                     </Button>
@@ -447,7 +447,7 @@ export default function OrderConfirmationPage() {
                     variant="ghost"
                     fullWidth
                     icon={<ShoppingBag size={16} />}
-                    className="!rounded-2xl"
+                    className="!rounded-md"
                   >
                     Continue shopping
                   </Button>

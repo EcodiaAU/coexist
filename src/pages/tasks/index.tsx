@@ -113,7 +113,7 @@ function TaskCard({ task }: { task: MyTask }) {
     <motion.div
       layout={!shouldReduceMotion}
       className={cn(
-        'rounded-xl overflow-hidden transition-colors duration-150',
+        'rounded-sm overflow-hidden transition-colors duration-150',
         isCompleted ? 'bg-white border border-neutral-100 shadow-sm' : isSkipped ? 'bg-white border border-neutral-100 shadow-sm' : 'bg-white border border-neutral-100 shadow-sm',
         isOverdue && 'bg-white border border-error-200 shadow-sm',
       )}
@@ -231,7 +231,7 @@ function TaskCard({ task }: { task: MyTask }) {
                 compact
               />
               {hasSurvey && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-plum-50 border border-plum-100 mb-1">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-plum-50 border border-plum-100 mb-1">
                   <ClipboardList size={14} className="text-plum-500 shrink-0" />
                   <p className="text-[11px] text-plum-600">
                     This task includes a survey that must be completed

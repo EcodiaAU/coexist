@@ -85,7 +85,7 @@ export function EventHero({ event, past, userStatus, accent, onShare }: EventHer
                   </motion.span>
                 )}
               </div>
-              <h1 className="font-heading text-[22px] sm:text-2xl font-bold text-white leading-tight drop-shadow-lg">
+              <h1 className="font-heading text-[22px] sm:text-2xl font-bold text-white leading-tight drop-shadow-sm">
                 {event.title}
               </h1>
               {event.collectives && (
@@ -179,8 +179,8 @@ export function EventHeroOverlay({ hasCoverImage, onShare }: EventHeroOverlayPro
       transition={{ type: 'spring', stiffness: 400, damping: 22 }}
       className={cn(
         'relative inline-flex items-center gap-1.5 pl-3 pr-3.5 h-10 rounded-full',
-        'bg-gradient-to-br from-primary-400 to-primary-600 text-white',
-        'shadow-lg shadow-primary-900/25 ring-1 ring-white/30',
+        'bg-primary-600 text-white',
+        'shadow-sm ring-1 ring-white/30',
         'cursor-pointer select-none font-bold text-[12px]',
         'transition-shadow duration-150',
       )}

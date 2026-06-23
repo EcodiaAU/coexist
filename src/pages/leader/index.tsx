@@ -116,7 +116,7 @@ function MiniCalendar({ collectiveId }: { collectiveId: string | undefined }) {
   ]
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 p-5">
+    <div className="rounded-md bg-white shadow-sm border border-neutral-100 p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-heading text-sm font-bold text-neutral-900">
           {monthNames[month]} {year}
@@ -125,7 +125,7 @@ function MiniCalendar({ collectiveId }: { collectiveId: string | undefined }) {
           <button
             type="button"
             onClick={() => setCurrentMonth(new Date(year, month - 1))}
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-50 text-primary-500 hover:bg-primary-100 active:scale-95 transition-[background-color,transform] duration-150 cursor-pointer select-none"
+            className="flex items-center justify-center w-8 h-8 rounded-sm bg-primary-50 text-primary-500 hover:bg-primary-100 active:scale-95 transition-[background-color,transform] duration-150 cursor-pointer select-none"
             aria-label="Previous month"
           >
             <ChevronLeft size={14} />
@@ -133,7 +133,7 @@ function MiniCalendar({ collectiveId }: { collectiveId: string | undefined }) {
           <button
             type="button"
             onClick={() => setCurrentMonth(new Date(year, month + 1))}
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-50 text-primary-500 hover:bg-primary-100 active:scale-95 transition-[background-color,transform] duration-150 cursor-pointer select-none"
+            className="flex items-center justify-center w-8 h-8 rounded-sm bg-primary-50 text-primary-500 hover:bg-primary-100 active:scale-95 transition-[background-color,transform] duration-150 cursor-pointer select-none"
             aria-label="Next month"
           >
             <ChevronRight size={14} />
@@ -160,7 +160,7 @@ function MiniCalendar({ collectiveId }: { collectiveId: string | undefined }) {
             <div
               key={i}
               className={cn(
-                'relative flex items-center justify-center w-8 h-8 mx-auto rounded-lg text-xs transition-colors',
+                'relative flex items-center justify-center w-8 h-8 mx-auto rounded-sm text-xs transition-colors',
                 hasEvent && 'bg-moss-100 text-moss-700 font-bold',
                 isToday && !hasEvent && 'ring-2 ring-primary-200 text-primary-700 font-semibold',
                 isToday && hasEvent && 'bg-moss-200 text-moss-800 font-bold ring-2 ring-moss-300',
@@ -248,7 +248,7 @@ function TaskCard({ task }: { task: MyTask }) {
     <motion.div
       layout={!shouldReduceMotion ? 'position' : false}
       className={cn(
-        'rounded-2xl overflow-hidden transition-opacity duration-200',
+        'rounded-md overflow-hidden transition-opacity duration-200',
         isCompleted && 'opacity-50',
         isSkipped && 'opacity-40',
         !isCompleted && !isSkipped && 'bg-white shadow-sm border border-neutral-100',
@@ -258,10 +258,10 @@ function TaskCard({ task }: { task: MyTask }) {
       <div className="flex items-stretch">
         {!isCompleted && !isSkipped && (
           <div className={cn(
-            'w-1 shrink-0 rounded-l-2xl',
+            'w-1 shrink-0 rounded-l-md',
             urgency === 'overdue' && 'bg-error-500',
             urgency === 'today' && 'bg-warning-500',
-            urgency === 'tomorrow' && 'bg-amber-400',
+            urgency === 'tomorrow' && 'bg-bark-400',
             urgency === 'soon' && 'bg-moss-400',
             urgency === 'normal' && 'bg-primary-200',
           )} />
@@ -360,7 +360,7 @@ function TaskCard({ task }: { task: MyTask }) {
                   href={task.template.attachment_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-neutral-50 border border-neutral-100 hover:bg-neutral-100 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-sm bg-neutral-50 border border-neutral-100 hover:bg-neutral-100 transition-colors"
                 >
                   <FileText size={18} className="text-primary-500 shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -378,7 +378,7 @@ function TaskCard({ task }: { task: MyTask }) {
                 compact
               />
               {hasSurvey && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-plum-50 border border-plum-100 mb-1">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-plum-50 border border-plum-100 mb-1">
                   <ClipboardList size={14} className="text-plum-500 shrink-0" />
                   <p className="text-[11px] text-plum-600">
                     This task includes a survey that must be completed
@@ -525,9 +525,9 @@ function InviteAction({ collectiveSlug, collectiveId, collectiveName }: { collec
   }
 
   return (
-    <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4">
+    <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-4">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-lg bg-moss-100 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-sm bg-moss-100 flex items-center justify-center">
           <Send size={14} className="text-moss-600" />
         </div>
         <div>
@@ -535,14 +535,14 @@ function InviteAction({ collectiveSlug, collectiveId, collectiveName }: { collec
           <p className="text-[11px] text-neutral-500">Grow your collective</p>
         </div>
       </div>
-      <div className="flex items-center gap-2 bg-neutral-50 rounded-xl px-3 py-2 border border-neutral-100 mb-3">
+      <div className="flex items-center gap-2 bg-neutral-50 rounded-sm px-3 py-2 border border-neutral-100 mb-3">
         <span className="text-xs text-neutral-500 truncate flex-1 font-mono">{inviteUrl}</span>
       </div>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={handleCopy}
-          className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-white border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 active:scale-[0.97] transition-transform cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-sm bg-white border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 active:scale-[0.97] transition-transform cursor-pointer"
         >
           {copied ? <Check size={13} /> : <Copy size={13} />}
           {copied ? 'Copied!' : 'Copy'}
@@ -550,7 +550,7 @@ function InviteAction({ collectiveSlug, collectiveId, collectiveName }: { collec
         <button
           type="button"
           onClick={handleShare}
-          className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-moss-600 text-xs font-bold text-white hover:bg-moss-500 active:scale-[0.97] transition-transform cursor-pointer shadow-sm"
+          className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-sm bg-moss-600 text-xs font-bold text-white hover:bg-moss-500 active:scale-[0.97] transition-transform cursor-pointer shadow-sm"
         >
           <Share2 size={13} />
           Share
@@ -569,7 +569,7 @@ type TodoTimeGroup = 'overdue' | 'today' | 'tomorrow' | 'this_week' | 'later' | 
 const TIME_GROUP_CONFIG: Record<TodoTimeGroup, { label: string; color: string; dotColor: string; icon: React.ReactNode }> = {
   overdue:   { label: 'Overdue',    color: 'text-error-600',   dotColor: 'bg-error-500',   icon: <Flame size={11} /> },
   today:     { label: 'Today',      color: 'text-warning-700', dotColor: 'bg-warning-500',  icon: <Clock size={11} /> },
-  tomorrow:  { label: 'Tomorrow',   color: 'text-amber-600',   dotColor: 'bg-amber-400',   icon: <Calendar size={11} /> },
+  tomorrow:  { label: 'Tomorrow',   color: 'text-bark-600',   dotColor: 'bg-bark-400',   icon: <Calendar size={11} /> },
   this_week: { label: 'This Week',  color: 'text-moss-600',    dotColor: 'bg-moss-400',    icon: <CalendarDays size={11} /> },
   later:     { label: 'Later',      color: 'text-neutral-500', dotColor: 'bg-neutral-400',  icon: <CalendarDays size={11} /> },
   no_date:   { label: 'No Due Date',color: 'text-neutral-400', dotColor: 'bg-neutral-300',  icon: <Circle size={11} /> },
@@ -747,9 +747,9 @@ function UpcomingTodosWidget() {
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+      <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
         <div className="px-4 py-3 border-b border-neutral-100">
-          <div className="h-4 w-32 bg-neutral-100 rounded-lg animate-pulse" />
+          <div className="h-4 w-32 bg-neutral-100 rounded-sm animate-pulse" />
         </div>
         <div className="divide-y divide-neutral-100">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -768,8 +768,8 @@ function UpcomingTodosWidget() {
 
   if (totalCount === 0) {
     return (
-      <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 p-6 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-3">
+      <div className="rounded-md bg-white shadow-sm border border-neutral-100 p-6 text-center">
+        <div className="w-12 h-12 rounded-md bg-primary-50 flex items-center justify-center mx-auto mb-3">
           <ListTodo size={22} className="text-neutral-400" />
         </div>
         <p className="text-sm font-semibold text-neutral-900 mb-1">All caught up</p>
@@ -787,11 +787,11 @@ function UpcomingTodosWidget() {
   }
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+    <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-sm bg-primary-100 flex items-center justify-center">
             <ListTodo size={15} className="text-neutral-500" />
           </div>
           <div>
@@ -995,17 +995,17 @@ export default function LeaderDashboardPage() {
       <Wrapper>
         <div className="relative min-h-dvh overflow-x-hidden bg-white">
           {/* Hero skeleton */}
-          <div className="relative h-[280px] bg-gradient-to-br from-primary-200 via-moss-200 to-primary-300 animate-pulse" />
+          <div className="relative h-[280px] bg-primary-300 animate-pulse" />
           <div className="relative z-10 px-4 sm:px-6 lg:px-8 -mt-6 space-y-4 pb-20">
             <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-20 rounded-2xl bg-neutral-100 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+                <div key={i} className="h-20 rounded-md bg-neutral-100 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
               ))}
             </div>
-            <div className="h-12 rounded-2xl bg-neutral-100" />
+            <div className="h-12 rounded-md bg-neutral-100" />
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-20 rounded-2xl bg-neutral-100" />
+                <div key={i} className="h-20 rounded-md bg-neutral-100" />
               ))}
             </div>
           </div>
@@ -1045,8 +1045,8 @@ export default function LeaderDashboardPage() {
       label: 'Current Event',
       icon: <Flame size={18} />,
       to: `/events/${currentEvent.id}`,
-      iconBg: 'bg-amber-100',
-      iconText: 'text-amber-600',
+      iconBg: 'bg-bark-100',
+      iconText: 'text-bark-600',
       badge: 0,
       pulse: true,
     }] : []),
@@ -1110,7 +1110,7 @@ export default function LeaderDashboardPage() {
                 className="w-full h-auto min-h-[360px] sm:min-h-0 object-cover block"
               />
             ) : (
-              <div className="w-full aspect-[16/9] bg-gradient-to-br from-moss-600 via-primary-700 to-primary-900" />
+              <div className="w-full aspect-[16/9] bg-primary-900" />
             )}
             {/* Dark overlay for text legibility */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" />
@@ -1159,11 +1159,11 @@ export default function LeaderDashboardPage() {
                   key={action.label}
                   to={action.to}
                   className={cn(
-                    'group relative flex flex-col items-center gap-1.5 rounded-xl shadow-sm border p-3 hover:shadow-md active:scale-[0.96] transition-transform duration-150',
+                    'group relative flex flex-col items-center gap-1.5 rounded-sm shadow-sm border p-3 hover:shadow-md active:scale-[0.98] transition-transform duration-150',
                     action.isCode
                       ? 'bg-primary-50 border-primary-100'
                       : 'bg-white border-neutral-100',
-                    action.pulse && 'ring-2 ring-amber-400/50',
+                    action.pulse && 'ring-2 ring-bark-400/50',
                   )}
                 >
                   {action.isCode ? (
@@ -1174,15 +1174,15 @@ export default function LeaderDashboardPage() {
                   ) : (
                     <>
                       <div className={cn(
-                        'relative flex items-center justify-center w-9 h-9 rounded-lg transition-transform group-hover:scale-105',
+                        'relative flex items-center justify-center w-9 h-9 rounded-sm transition-transform group-hover:scale-105',
                         action.iconBg, action.iconText,
                       )}>
                         {action.icon}
                         {action.pulse && (
-                          <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 animate-pulse ring-2 ring-white" />
+                          <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-bark-400 animate-pulse ring-2 ring-white" />
                         )}
                         {action.badge > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold leading-none">
+                          <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-error-500 text-white text-[9px] font-bold leading-none">
                             {action.badge > 99 ? '99+' : action.badge}
                           </span>
                         )}
@@ -1234,7 +1234,7 @@ export default function LeaderDashboardPage() {
               <SectionHeader icon={<Bell size={14} />}>
                 Needs Attention
               </SectionHeader>
-              <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden">
+              <div className="rounded-md bg-white border border-neutral-100 shadow-sm overflow-hidden">
                 {pendingItems.map((item, idx) => (
                   <Link
                     key={item.id}
@@ -1245,7 +1245,7 @@ export default function LeaderDashboardPage() {
                       idx > 0 && 'border-t border-neutral-100',
                     )}
                   >
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-warning-100 shrink-0">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-sm bg-warning-100 shrink-0">
                       <AlertTriangle size={14} className="text-warning-600" />
                     </div>
                     <span className="text-sm text-neutral-900 flex-1 font-medium">{item.message}</span>
@@ -1296,7 +1296,7 @@ export default function LeaderDashboardPage() {
                   <Link
                     key={event.id}
                     to={`/events/${event.id}`}
-                    className="flex items-center gap-4 p-4 rounded-2xl bg-white shadow-sm border border-neutral-100 hover:shadow-md active:scale-[0.99] transition-transform duration-150"
+                    className="flex items-center gap-4 p-4 rounded-md bg-white shadow-sm border border-neutral-100 hover:shadow-md active:scale-[0.99] transition-transform duration-150"
                   >
                     {event.cover_image_url ? (
                       <img
@@ -1304,10 +1304,10 @@ export default function LeaderDashboardPage() {
                         alt=""
                         loading="lazy"
                         decoding="async"
-                        className="w-14 h-14 rounded-xl object-cover shrink-0"
+                        className="w-14 h-14 rounded-sm object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-14 h-14 rounded-xl bg-moss-50 flex items-center justify-center shrink-0">
+                      <div className="w-14 h-14 rounded-sm bg-moss-50 flex items-center justify-center shrink-0">
                         <CalendarDays size={22} className="text-moss-400" />
                       </div>
                     )}
@@ -1338,8 +1338,8 @@ export default function LeaderDashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="p-6 rounded-2xl bg-white border border-neutral-100 shadow-sm text-center">
-                <div className="w-12 h-12 rounded-2xl bg-moss-100 flex items-center justify-center mx-auto mb-3">
+              <div className="p-6 rounded-md bg-white border border-neutral-100 shadow-sm text-center">
+                <div className="w-12 h-12 rounded-md bg-moss-100 flex items-center justify-center mx-auto mb-3">
                   <CalendarDays size={24} className="text-moss-400" />
                 </div>
                 <p className="text-sm font-medium text-neutral-900 mb-3">No upcoming events</p>
@@ -1363,9 +1363,9 @@ export default function LeaderDashboardPage() {
           {/* ── Attendance rate ── */}
           {(data?.attendanceRate ?? 0) > 0 && (
             <motion.div variants={rm ? undefined : fadeUp}>
-              <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 p-4">
+              <div className="rounded-md bg-white shadow-sm border border-neutral-100 p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-success-100 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-sm bg-success-100 flex items-center justify-center">
                     <CheckCircle2 size={14} className="text-success-600" />
                   </div>
                   <span className="text-xs font-semibold text-neutral-500">Attendance Rate</span>
@@ -1375,7 +1375,7 @@ export default function LeaderDashboardPage() {
                 </div>
                 <div className="h-2 rounded-full bg-neutral-100 overflow-hidden">
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-success-400 to-success-500"
+                    className="h-full rounded-full bg-success-500"
                     initial={{ width: 0 }}
                     animate={{ width: `${data?.attendanceRate}%` }}
                     transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
@@ -1397,7 +1397,7 @@ export default function LeaderDashboardPage() {
                   <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <UserPlus size={11} /> Recently Joined
                   </p>
-                  <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+                  <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
                     {data.recentMembers.map((member, idx) => {
                       const profile = (member as unknown as { profiles?: { display_name?: string; avatar_url?: string } }).profiles
                       return (
@@ -1434,7 +1434,7 @@ export default function LeaderDashboardPage() {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-neutral-500 bg-white shadow-sm border border-neutral-100 rounded-2xl p-4">No recent members</p>
+                <p className="text-sm text-neutral-500 bg-white shadow-sm border border-neutral-100 rounded-md p-4">No recent members</p>
               )}
 
               {/* Invite / grow */}

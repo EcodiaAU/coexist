@@ -59,7 +59,7 @@ export function LikeButton({
       type="button"
       onClick={handleClick}
       className={cn(
-        'relative inline-flex items-center justify-center gap-1.5 p-2 rounded-xl',
+        'relative inline-flex items-center justify-center gap-1.5 p-2 rounded-sm',
         'min-h-11 min-w-11',
         'cursor-pointer select-none',
         'transition-colors duration-150',

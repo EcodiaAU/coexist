@@ -28,9 +28,9 @@ const variantStyles: Record<SkeletonVariant, string> = {
   text: 'h-4 rounded w-full',
   title: 'h-6 rounded w-3/4',
   avatar: 'rounded-full',
-  card: 'h-48 rounded-2xl w-full',
-  'stat-card': 'h-24 rounded-xl w-full',
-  image: 'aspect-video rounded-xl w-full',
+  card: 'h-48 rounded-md w-full',
+  'stat-card': 'h-24 rounded-sm w-full',
+  image: 'aspect-video rounded-sm w-full',
   'list-item': '', // composite - handled separately
 }
 

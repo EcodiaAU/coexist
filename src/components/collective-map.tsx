@@ -141,7 +141,7 @@ function injectStyles() {
       border: none !important;
       box-shadow: none !important;
       padding: 0 !important;
-      font-family: 'Montserrat', sans-serif !important;
+      font-family: 'Eau Sans', 'Montserrat', sans-serif !important;
       font-size: 11px !important;
       font-weight: 600 !important;
       color: #334155 !important;
@@ -470,7 +470,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
   }, [shouldReduceMotion, showVicIndividual, vicIds])
 
   return (
-    <div className={cn('relative overflow-hidden rounded-2xl', className)}>
+    <div className={cn('relative overflow-hidden rounded-md', className)}>
       {/* Map container */}
       <div
         ref={containerRef}
@@ -494,7 +494,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
 
       {/* Top-left badge */}
       <div className="absolute top-3 left-3 z-[500]">
-        <div className="flex items-center gap-2 rounded-xl bg-white/90 backdrop-blur-sm px-3 py-2 shadow-sm">
+        <div className="flex items-center gap-2 rounded-sm bg-white/90 backdrop-blur-sm px-3 py-2 shadow-sm">
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-400">
             <TreePine size={12} className="text-white" />
           </div>
@@ -515,7 +515,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
             exit={{ y: '110%', opacity: 0 }}
             transition={shouldReduceMotion ? { duration: 0.12 } : springSheet}
           >
-            <div className="overflow-hidden rounded-2xl bg-white shadow-lg shadow-black/8 pointer-events-auto max-h-full flex flex-col">
+            <div className="overflow-hidden rounded-md bg-white shadow-sm pointer-events-auto max-h-full flex flex-col">
               {/* Hero image - full bleed, shrinks to fit container */}
               {selected.cover_image_url ? (
                 <div className="relative w-full overflow-hidden shrink min-h-0" style={{ aspectRatio: '16 / 8' }}>
@@ -539,7 +539,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
                   {/* Close button */}
                   <button
                     onClick={(e) => { e.stopPropagation(); handleClose() }}
-                    className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white active:scale-[0.90] transition-transform duration-150 cursor-pointer"
+                    className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white active:scale-[0.98] transition-transform duration-150 cursor-pointer"
                     aria-label="Close"
                   >
                     <X size={14} />
@@ -548,7 +548,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
               ) : (
                 <>
                   {/* Green accent when no image */}
-                  <div className="h-1 bg-gradient-to-r from-primary-300 via-primary-400 to-primary-300" />
+                  <div className="h-1 bg-primary-300" />
                 </>
               )}
 
@@ -567,7 +567,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleClose() }}
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-200/60 text-secondary-400 active:scale-[0.90] transition-transform duration-150 cursor-pointer"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-200/60 text-secondary-400 active:scale-[0.98] transition-transform duration-150 cursor-pointer"
                       aria-label="Close"
                     >
                       <X size={14} />
@@ -599,7 +599,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
                     onClick={() => navigate(`/collectives/${selected.slug}`)}
                     className={cn(
                       'flex items-center gap-1.5 shrink-0',
-                      'rounded-xl bg-primary-400 px-3.5 py-2',
+                      'rounded-sm bg-primary-400 px-3.5 py-2',
                       'text-xs font-semibold text-white',
                       'active:scale-[0.97] transition-transform duration-150',
                     )}
@@ -631,7 +631,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
                   onClick={() => selectCollective(c)}
                   className={cn(
                     'shrink-0 w-[120px] overflow-hidden p-0',
-                    'rounded-xl bg-white/90 backdrop-blur-sm shadow-sm',
+                    'rounded-sm bg-white/90 backdrop-blur-sm shadow-sm',
                     'text-left leading-none',
                     'active:scale-[0.97] transition-transform duration-150',
                   )}
@@ -644,7 +644,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="h-16 w-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
+                    <div className="h-16 w-full bg-primary-200 flex items-center justify-center">
                       <TreePine size={18} className="text-neutral-400" />
                     </div>
                   )}

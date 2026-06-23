@@ -16,7 +16,6 @@ import {
     Heart,
     ShoppingBag,
     Hash,
-    Search,
     Camera,
     CheckCircle2,
     GraduationCap,
@@ -368,11 +367,13 @@ function NextEventCard({
   isLoading,
   showLoading,
   rm,
+  firstName,
 }: {
   events: ReturnType<typeof useMyUpcomingEvents>['data']
   isLoading: boolean
   showLoading: boolean
   rm: boolean
+  firstName?: string
 }) {
   const navigate = useNavigate()
   const [checkIn, setCheckIn] = useState<{
@@ -383,9 +384,9 @@ function NextEventCard({
 
   if (isLoading && showLoading) {
     return (
-      <div className="rounded-2xl bg-surface-1 shadow-sm p-6 animate-pulse space-y-3">
+      <div className="rounded-md bg-surface-1 shadow-sm p-6 animate-pulse space-y-3">
         <div className="h-3 w-28 rounded-full bg-primary-100" />
-        <div className="h-6 w-3/4 rounded-xl bg-primary-50" />
+        <div className="h-6 w-3/4 rounded-sm bg-primary-50" />
         <div className="h-4 w-1/2 rounded-full bg-primary-50" />
       </div>
     )
@@ -394,31 +395,26 @@ function NextEventCard({
   const nextEvent = events?.[0]
 
   if (!nextEvent) {
+    // No upcoming event: the greeting becomes the page lead here (instead of a
+    // separate bold greeting clashing with a "Your Next Event" card above), with
+    // a single CTA. Prose cut. (Tate 2026-06-23.)
     return (
       <motion.div variants={rm ? undefined : fadeUp}>
-        <Section title="Your Next Event">
-          <div
-            className="rounded-2xl bg-gradient-to-br from-primary-600 to-moss-600 shadow-sm p-6 text-center cursor-pointer active:scale-[0.98] transition-transform duration-150"
+        <div className="px-1 pt-1 pb-1">
+          <p className="font-heading text-3xl sm:text-4xl font-normal display-tight text-neutral-900">
+            {getGreeting(firstName)}
+          </p>
+          <p className="text-sm text-neutral-500 mt-2 mb-5">
+            No events on your calendar yet.
+          </p>
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => navigate('/events')}
-            role="button"
-            tabIndex={0}
-            aria-label="We're finalising next month's events - have a look at what's on now"
           >
-            <Search size={24} className="mx-auto text-white/60 mb-3" />
-            <p className="text-sm text-white font-medium">We're finalising next month's events</p>
-            <p className="text-xs text-white/60 mt-1 mb-4">Have a look at what's on now</p>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation()
-                navigate('/events')
-              }}
-            >
-              See what's on
-            </Button>
-          </div>
-        </Section>
+            See what's on
+          </Button>
+        </div>
       </motion.div>
     )
   }
@@ -482,7 +478,7 @@ function NextEventCard({
       {nextEvent.registration_status === 'attended' && happeningNow ? (
         /* Checked in - prompt to share photos */
         <div className="mt-5 space-y-2.5">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 text-white/90 text-xs font-bold">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-white/15 text-white/90 text-xs font-bold">
             <CheckCircle2 size={14} className="text-sprout-300 shrink-0" />
             You're checked in!
           </div>
@@ -505,7 +501,7 @@ function NextEventCard({
         <div className="mt-5 relative">
           {/* Pulsing ring behind the button - only animate once event is live */}
           {happeningNow && (
-            <div className="absolute inset-0 rounded-xl bg-white/20 animate-pulse" />
+            <div className="absolute inset-0 rounded-sm bg-white/20 animate-pulse" />
           )}
           <Button
             variant="primary"
@@ -565,11 +561,11 @@ function NextEventCard({
           /* Gradient card when no cover image */
           <div
             className={cn(
-              'relative rounded-2xl overflow-hidden',
+              'relative rounded-md overflow-hidden',
               'active:scale-[0.98] transition-transform duration-150 cursor-pointer',
               happeningNow
-                ? 'bg-gradient-to-br from-primary-500 to-primary-700 ring-2 ring-primary-400/60 shadow-sm'
-                : 'bg-gradient-to-br from-primary-600 to-primary-800 shadow-sm',
+                ? 'bg-primary-700 ring-2 ring-primary-400/60 shadow-sm'
+                : 'bg-primary-800 shadow-sm',
             )}
             onClick={() => navigate(`/events/${nextEvent.id}`)}
             role="button"
@@ -610,7 +606,7 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
         <div className="relative -mx-6">
           <div className="flex gap-3 px-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="shrink-0 w-56 h-32 rounded-2xl bg-surface-1 shadow-sm animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+              <div key={i} className="shrink-0 w-56 h-32 rounded-md bg-surface-1 shadow-sm animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
             ))}
           </div>
         </div>
@@ -686,7 +682,7 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
                   </Card.Overlay>
                 ) : (
                   /* Fallback gradient when no cover image */
-                  <div className="bg-gradient-to-br from-primary-400 to-sprout-500 p-4" style={{ aspectRatio: '4/3' }}>
+                  <div className="bg-sprout-500 p-4" style={{ aspectRatio: '4/3' }}>
                     <div className="flex flex-col justify-end h-full">
                       <div className="flex items-center gap-2 mb-2">
                         <span className={cn(
@@ -782,7 +778,7 @@ function NationalEventsSection({ rm }: { rm: boolean }) {
                     </div>
                   </Card.Overlay>
                 ) : (
-                  <div className="bg-gradient-to-br from-moss-500 to-sprout-600 p-4" style={{ aspectRatio: '16/9' }}>
+                  <div className="bg-sprout-600 p-4" style={{ aspectRatio: '16/9' }}>
                     <div className="flex flex-col justify-end h-full">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-white/15 text-white/80">
@@ -824,7 +820,7 @@ function UpdatesSection({ rm }: { rm: boolean }) {
         <div className="relative -mx-6">
           <div className="flex gap-3 px-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="shrink-0 w-64 h-28 rounded-2xl bg-surface-1 shadow-sm animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+              <div key={i} className="shrink-0 w-64 h-28 rounded-md bg-surface-1 shadow-sm animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
             ))}
           </div>
         </div>
@@ -847,7 +843,7 @@ function UpdatesSection({ rm }: { rm: boolean }) {
               type="button"
               onClick={() => navigate('/updates')}
               aria-label={item.title}
-              className="shrink-0 w-56 snap-start text-left rounded-2xl overflow-hidden bg-amber-50 shadow-sm active:scale-[0.98] transition-transform duration-150 flex flex-col"
+              className="shrink-0 w-56 snap-start text-left rounded-md overflow-hidden bg-bark-50 shadow-sm active:scale-[0.98] transition-transform duration-150 flex flex-col"
             >
               {/* Image - fixed 4/3 ratio, only rendered when present */}
               {item.image_url && (
@@ -964,7 +960,7 @@ function HomeImpactSection({
 
   return (
     <motion.div variants={rm ? undefined : fadeUp} className="-mx-2 sm:-mx-3">
-      <div ref={sectionRef} className="relative overflow-hidden bg-[#879e62] rounded-2xl">
+      <div ref={sectionRef} className="relative overflow-hidden bg-[#879e62] rounded-md">
 
         <div className="relative px-5 sm:px-7 pt-14 pb-16 sm:pt-16 sm:pb-20">
           {/* Header - editorial style */}
@@ -1004,7 +1000,7 @@ function HomeImpactSection({
                 type="button"
                 onClick={() => setScope('national')}
                 className={cn(
-                  'px-3.5 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.95] cursor-pointer select-none whitespace-nowrap',
+                  'px-3.5 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
                   scope === 'national'
                     ? 'bg-white/90 text-primary-900 shadow-sm'
                     : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
@@ -1026,7 +1022,7 @@ function HomeImpactSection({
                       }
                     }}
                     className={cn(
-                      'px-3.5 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.95] cursor-pointer select-none flex items-center gap-1 max-w-[160px]',
+                      'px-3.5 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none flex items-center gap-1 max-w-[160px]',
                       scope === 'collective'
                         ? 'bg-white/90 text-primary-900 shadow-sm'
                         : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
@@ -1043,7 +1039,7 @@ function HomeImpactSection({
 
                   {/* Dropdown for multiple collectives */}
                   {hasMultiple && dropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1.5 min-w-[180px] max-h-[240px] overflow-y-auto rounded-xl bg-white shadow-lg border border-neutral-100 z-50">
+                    <div className="absolute top-full left-0 mt-1.5 min-w-[180px] max-h-[240px] overflow-y-auto rounded-sm bg-white shadow-sm border border-neutral-100 z-50">
                       {collectives.map((c) => (
                         <button
                           key={c.id}
@@ -1075,7 +1071,7 @@ function HomeImpactSection({
                 type="button"
                 onClick={() => setTimeRange('all-time')}
                 className={cn(
-                  'px-3 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.95] cursor-pointer select-none whitespace-nowrap',
+                  'px-3 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
                   timeRange === 'all-time'
                     ? 'bg-white/90 text-primary-900 shadow-sm'
                     : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
@@ -1087,7 +1083,7 @@ function HomeImpactSection({
                 type="button"
                 onClick={() => setTimeRange('current-year')}
                 className={cn(
-                  'px-3 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.95] cursor-pointer select-none whitespace-nowrap',
+                  'px-3 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
                   timeRange === 'current-year'
                     ? 'bg-white/90 text-primary-900 shadow-sm'
                     : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
@@ -1101,10 +1097,10 @@ function HomeImpactSection({
           {/* Content - bento card grid */}
           {isInitialLoading ? (
             <div className="space-y-3">
-              <div className="h-36 rounded-3xl bg-white/20 animate-pulse" />
+              <div className="h-36 rounded-md bg-white/20 animate-pulse" />
               <div className="grid grid-cols-2 gap-3">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-24 rounded-3xl bg-white/15 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+                  <div key={i} className="h-24 rounded-md bg-white/15 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
                 ))}
               </div>
             </div>
@@ -1175,11 +1171,11 @@ function CtaCards({ rm }: { rm: boolean }) {
       {/* Donate */}
       <button
         onClick={() => navigate('/donate')}
-        className="relative h-44 rounded-3xl overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 bg-primary-600"
+        className="relative h-44 rounded-md overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 bg-primary-600"
         aria-label="Donate"
       >
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
-          <span className="flex items-center justify-center w-11 h-11 rounded-2xl bg-white/20 text-white shadow-sm">
+          <span className="flex items-center justify-center w-11 h-11 rounded-md bg-white/20 text-white shadow-sm">
             <Heart size={20} strokeWidth={2.4} />
           </span>
           <div>
@@ -1195,11 +1191,11 @@ function CtaCards({ rm }: { rm: boolean }) {
       {/* Shop merch */}
       <button
         onClick={() => navigate('/shop')}
-        className="relative h-44 rounded-3xl overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 bg-bark-600"
+        className="relative h-44 rounded-md overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 bg-bark-600"
         aria-label="Shop merch"
       >
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
-          <span className="flex items-center justify-center w-11 h-11 rounded-2xl bg-white/20 text-white shadow-sm">
+          <span className="flex items-center justify-center w-11 h-11 rounded-md bg-white/20 text-white shadow-sm">
             <ShoppingBag size={20} strokeWidth={2.4} />
           </span>
           <div>
@@ -1257,25 +1253,29 @@ export default function HomePage() {
 {/* 1. Parallax layered hero */}
           <HomeHero rm={rm} />
 
-          {/* Greeting */}
-          <div className="px-4 pt-6 mb-2">
-            <motion.p
-              initial={rm ? {} : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="font-heading text-xl sm:text-2xl font-bold text-neutral-900"
-            >
-              {getGreeting(firstName)}
-            </motion.p>
-            <motion.p
-              initial={rm ? {} : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="text-sm text-neutral-500 mt-1"
-            >
-              Explore. Connect. Protect.
-            </motion.p>
-          </div>
+          {/* Greeting - only when there is an upcoming event. When there is
+              not, the greeting leads the empty NextEventCard instead, so the two
+              do not stack and clash. (Tate 2026-06-23.) */}
+          {myEvents.data && myEvents.data.length > 0 && (
+            <div className="px-4 pt-6 mb-2">
+              <motion.p
+                initial={rm ? {} : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="font-heading text-3xl sm:text-4xl font-normal display-tight text-neutral-900"
+              >
+                {getGreeting(firstName)}
+              </motion.p>
+              <motion.p
+                initial={rm ? {} : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="text-sm text-neutral-500 mt-2"
+              >
+                Explore. Connect. Protect.
+              </motion.p>
+            </div>
+          )}
 
           {/* Error fallback */}
           {initialError && (
@@ -1304,7 +1304,7 @@ export default function HomePage() {
                 {pendingSurveys.data.map((survey) => (
                   <div
                     key={survey.event_id}
-                    className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-bark-600 to-bark-700 shadow-sm p-4 active:scale-[0.98] transition-transform duration-150 cursor-pointer"
+                    className="flex items-center gap-3 rounded-md bg-bark-700 shadow-sm p-4 active:scale-[0.98] transition-transform duration-150 cursor-pointer"
                     onClick={() => navigate(`/events/${survey.event_id}/survey`)}
                     role="button"
                     tabIndex={0}
@@ -1333,6 +1333,7 @@ export default function HomePage() {
               isLoading={myEvents.isLoading}
               showLoading={showLoading}
               rm={rm}
+              firstName={firstName}
             />
 
             {/* 3. Upcoming Events carousel */}

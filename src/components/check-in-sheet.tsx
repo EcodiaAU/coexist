@@ -210,7 +210,7 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
               {checkedInOffline && (
                 <motion.div
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                  className="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg bg-warning-50 text-warning-700 text-caption"
+                  className="flex items-center gap-2 mt-3 px-3 py-2 rounded-sm bg-warning-50 text-warning-700 text-caption"
                 >
                   <WifiOff size={14} />
                   Queued offline - will sync when you reconnect

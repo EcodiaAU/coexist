@@ -42,7 +42,7 @@ function AppStoreBadge({ className, onClick }: { className?: string; onClick?: (
       onClick={onClick}
       className={cn(
         'inline-flex items-center gap-2.5 px-5 py-3',
-        'rounded-xl bg-black text-white',
+        'rounded-sm bg-black text-white',
         'hover:bg-gray-900 active:scale-[0.97]',
         'transition-colors duration-150',
         'cursor-pointer select-none',
@@ -69,7 +69,7 @@ function PlayStoreBadge({ className, onClick }: { className?: string; onClick?: 
       onClick={onClick}
       className={cn(
         'inline-flex items-center gap-2.5 px-5 py-3',
-        'rounded-xl bg-black text-white',
+        'rounded-sm bg-black text-white',
         'hover:bg-gray-900 active:scale-[0.97]',
         'transition-colors duration-150',
         'cursor-pointer select-none',
@@ -155,7 +155,7 @@ export default function PublicCollectivePage() {
   if (showLoading) {
     return (
       <div className="min-h-dvh bg-white">
-        <div className="h-56 animate-pulse bg-gradient-to-br from-primary-100 to-moss-100" />
+        <div className="h-56 animate-pulse bg-moss-100" />
         <div className="mx-auto max-w-2xl p-6 space-y-4">
           <Skeleton variant="title" />
           <Skeleton variant="text" count={3} />
@@ -168,7 +168,7 @@ export default function PublicCollectivePage() {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-moss-50 to-white p-6 text-center">
         <OGMeta title="Collective Not Found" description="This collective doesn't exist or is no longer active." />
-        <div className="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center mb-4">
+        <div className="w-16 h-16 rounded-md bg-primary-100 flex items-center justify-center mb-4">
           <Users size={28} className="text-neutral-400" />
         </div>
         <h1 className="font-heading text-2xl font-bold text-neutral-900">Collective not found</h1>
@@ -176,7 +176,7 @@ export default function PublicCollectivePage() {
         <button
           type="button"
           onClick={() => navigate('/download')}
-          className="mt-6 px-6 py-3 rounded-xl bg-primary-800 text-white font-heading font-semibold hover:bg-primary-900 active:scale-[0.97] transition-transform cursor-pointer"
+          className="mt-6 px-6 py-3 rounded-sm bg-primary-800 text-white font-heading font-semibold hover:bg-primary-900 active:scale-[0.97] transition-transform cursor-pointer"
         >
           Get the {APP_NAME} App
         </button>
@@ -257,7 +257,7 @@ export default function PublicCollectivePage() {
               aria-hidden="true"
             />
           ) : (
-            <div className="h-full w-full bg-gradient-to-br from-moss-600 via-primary-700 to-primary-900" />
+            <div className="h-full w-full bg-primary-900" />
           )}
           {/* Gradient overlays */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
@@ -287,7 +287,7 @@ export default function PublicCollectivePage() {
           {/* Collective name */}
           <motion.h1
             variants={fadeUp}
-            className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-tight drop-shadow-lg"
+            className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-tight drop-shadow-sm"
           >
             {collective.name}
           </motion.h1>
@@ -353,13 +353,13 @@ export default function PublicCollectivePage() {
                   <div
                     key={evt.id}
                     className={cn(
-                      'flex items-center gap-3.5 rounded-xl p-3.5',
+                      'flex items-center gap-3.5 rounded-sm p-3.5',
                       'bg-gradient-to-r from-moss-50/60 to-white',
                       'border border-moss-100/50',
                     )}
                   >
                     {/* Date badge */}
-                    <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-white border border-moss-100/50 shrink-0">
+                    <div className="flex flex-col items-center justify-center w-12 h-12 rounded-sm bg-white border border-moss-100/50 shrink-0">
                       <span className="text-[11px] font-semibold text-moss-500 uppercase leading-none">
                         {/* Floating local time: stored wall-clock is the wall-clock. */}
                         {d.toLocaleDateString('en-AU', { month: 'short', timeZone: 'UTC' })}
@@ -386,10 +386,10 @@ export default function PublicCollectivePage() {
         {/* ── Join CTA section ── */}
         <motion.div
           variants={fadeUp}
-          className="rounded-2xl bg-gradient-to-br from-moss-600 via-moss-700 to-primary-800 p-6 text-center relative overflow-hidden"
+          className="rounded-md bg-primary-800 p-6 text-center relative overflow-hidden"
         >
           <div className="relative z-10">
-            <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-3">
+            <div className="w-14 h-14 rounded-md bg-white/15 flex items-center justify-center mx-auto mb-3">
               <TreePine size={26} className="text-white" />
             </div>
             <h2 className="font-heading text-xl font-bold text-white mb-1.5">
@@ -407,7 +407,7 @@ export default function PublicCollectivePage() {
                 onClick={handleOpenInApp}
                 className={cn(
                   'w-full flex items-center justify-center gap-2.5 px-6 py-3.5',
-                  'rounded-xl bg-white text-primary-800',
+                  'rounded-sm bg-white text-primary-800',
                   'font-heading font-semibold',
                   'hover:bg-white/90 active:scale-[0.97]',
                   'transition-colors duration-150',
@@ -443,7 +443,7 @@ export default function PublicCollectivePage() {
                 onClick={() => navigate('/')}
                 className={cn(
                   'w-full px-6 py-3',
-                  'rounded-xl bg-white/10 text-white/80',
+                  'rounded-sm bg-white/10 text-white/80',
                   'text-sm font-medium',
                   'hover:bg-white/15 active:scale-[0.97]',
                   'transition-colors duration-150',
@@ -478,7 +478,7 @@ export default function PublicCollectivePage() {
             onClick={handleOpenInApp}
             className={cn(
               'flex-1 flex items-center justify-center gap-2 py-3',
-              'rounded-xl bg-primary-800 text-white',
+              'rounded-sm bg-primary-800 text-white',
               'font-heading font-semibold text-sm',
               'active:scale-[0.97] transition-transform',
               'cursor-pointer select-none',
@@ -491,7 +491,7 @@ export default function PublicCollectivePage() {
             onClick={handleDownload}
             className={cn(
               'flex-1 flex items-center justify-center gap-2 py-3',
-              'rounded-xl bg-moss-100 text-moss-800',
+              'rounded-sm bg-moss-100 text-moss-800',
               'font-heading font-semibold text-sm',
               'active:scale-[0.97] transition-transform',
               'cursor-pointer select-none',

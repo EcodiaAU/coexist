@@ -82,7 +82,7 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
           <Link
             to="/profile"
             className={cn(
-              'flex items-center gap-2 min-w-0 rounded-lg p-1',
+              'flex items-center gap-2 min-w-0 rounded-sm p-1',
               'transition-[colors,transform] duration-150 active:scale-[0.97] cursor-pointer select-none',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
               !collapsed && 'flex-1',
@@ -110,8 +110,8 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
             to="/settings"
             className={cn(
               'flex items-center justify-center shrink-0',
-              'size-8 rounded-lg text-[13px]',
-              'transition-[colors,transform] duration-150 active:scale-[0.93] cursor-pointer select-none',
+              'size-8 rounded-sm text-[13px]',
+              'transition-[colors,transform] duration-150 active:scale-[0.98] cursor-pointer select-none',
               'focus-visible:outline-none focus-visible:ring-2',
               dAccent.focusRing,
               location.pathname.startsWith('/settings')
@@ -129,11 +129,11 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
             onClick={onToggleCollapse}
             className={cn(
               'flex items-center justify-center shrink-0',
-              'size-8 rounded-lg',
+              'size-8 rounded-sm',
               'text-primary-300',
               dAccent.collapseHover,
               'cursor-pointer select-none',
-              'transition-transform duration-200 active:scale-[0.90]',
+              'transition-transform duration-200 active:scale-[0.98]',
               'focus-visible:outline-none focus-visible:ring-2',
               dAccent.focusRing,
             )}

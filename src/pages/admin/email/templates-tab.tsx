@@ -202,7 +202,7 @@ function TemplateEditor({
       />
 
       {/* AI Generator */}
-      <div className="rounded-xl bg-neutral-50 border border-neutral-200 p-4 space-y-3">
+      <div className="rounded-sm bg-neutral-50 border border-neutral-200 p-4 space-y-3">
         <div className="flex items-center gap-2">
           <Sparkles size={16} className="text-primary-500" />
           <h4 className="text-sm font-semibold text-neutral-900">
@@ -239,7 +239,7 @@ function TemplateEditor({
               campaign body lands personalised in each subscriber's inbox
               (Brisbane folks see their next event, Perth folks see
               theirs). Authors can drop any of them into their copy. */}
-          <div className="rounded-xl bg-white border border-neutral-200 shadow-sm p-4 space-y-3">
+          <div className="rounded-sm bg-white border border-neutral-200 shadow-sm p-4 space-y-3">
             <div>
               <h4 className="text-sm font-semibold text-neutral-900 mb-1">
                 Auto-filled per recipient
@@ -283,11 +283,11 @@ function TemplateEditor({
           </div>
 
           {/* Preview / HTML toggle */}
-          <div className="flex gap-1 bg-white rounded-xl p-1">
+          <div className="flex gap-1 bg-white rounded-sm p-1">
             <button
               onClick={() => setActiveView('preview')}
               className={cn(
-                'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer',
+                'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-sm transition-colors duration-150 cursor-pointer',
                 activeView === 'preview' ? 'bg-primary-50 shadow-sm text-neutral-900' : 'text-neutral-500 hover:text-neutral-700',
               )}
             >
@@ -296,7 +296,7 @@ function TemplateEditor({
             <button
               onClick={() => setActiveView('html')}
               className={cn(
-                'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer',
+                'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-sm transition-colors duration-150 cursor-pointer',
                 activeView === 'html' ? 'bg-primary-50 shadow-sm text-neutral-900' : 'text-neutral-500 hover:text-neutral-700',
               )}
             >
@@ -306,7 +306,7 @@ function TemplateEditor({
 
           {activeView === 'preview' ? (
             <div
-              className="prose prose-sm max-w-none text-neutral-900 rounded-xl bg-white p-4 border border-neutral-200 shadow-sm max-h-[500px] overflow-y-auto"
+              className="prose prose-sm max-w-none text-neutral-900 rounded-sm bg-white p-4 border border-neutral-200 shadow-sm max-h-[500px] overflow-y-auto"
               dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml }}
             />
           ) : (
@@ -417,7 +417,7 @@ export function TemplatesTab() {
           {templates.map((tpl) => (
             <StaggeredItem
               key={tpl.id}
-              className="bg-white rounded-xl shadow-sm p-4 cursor-pointer transition-colors group"
+              className="bg-white rounded-sm shadow-sm p-4 cursor-pointer transition-colors group"
             >
               <div className="flex items-start justify-between gap-2" onClick={() => setEditing(tpl)}>
                 <div className="flex-1 min-w-0">
@@ -431,10 +431,10 @@ export function TemplatesTab() {
                   </div>
                 </div>
                 <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                  <button onClick={() => setEditing(tpl)} className="flex items-center justify-center min-w-11 min-h-11 rounded-lg text-neutral-400 hover:bg-primary-100 hover:text-primary-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.93]" aria-label="Edit">
+                  <button onClick={() => setEditing(tpl)} className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-primary-100 hover:text-primary-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.98]" aria-label="Edit">
                     <Edit3 size={14} />
                   </button>
-                  <button onClick={() => setDeletingId(tpl.id)} className="flex items-center justify-center min-w-11 min-h-11 rounded-lg text-neutral-400 hover:bg-error-100 hover:text-error-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.93]" aria-label="Delete">
+                  <button onClick={() => setDeletingId(tpl.id)} className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-error-100 hover:text-error-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.98]" aria-label="Delete">
                     <Trash2 size={14} />
                   </button>
                 </div>

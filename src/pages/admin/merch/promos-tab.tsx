@@ -30,9 +30,9 @@ const TYPE_COLOURS: Record<PromoType, string> = {
 }
 
 const CARD_GRADIENTS: Record<PromoType, string> = {
-  percentage: 'from-info-500/90 to-info-700',
-  flat: 'from-success-500/90 to-success-700',
-  free_shipping: 'from-plum-500/90 to-plum-700',
+  percentage: 'bg-info-600',
+  flat: 'bg-success-600',
+  free_shipping: 'bg-plum-600',
 }
 
 const TYPE_ICONS: Record<PromoType, typeof Percent> = {
@@ -126,7 +126,7 @@ function PromoFormSheet({
                 type="button"
                 onClick={() => setType(t)}
                 className={cn(
-                  'flex-1 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-colors duration-150',
+                  'flex-1 py-2.5 rounded-sm text-xs font-semibold cursor-pointer transition-colors duration-150',
                   type === t
                     ? `${TYPE_COLOURS[t]} ring-2 shadow-sm`
                     : 'bg-neutral-50 text-neutral-400 hover:bg-neutral-100',
@@ -215,7 +215,7 @@ export default function PromosTab() {
               <StaggeredItem
                 key={promo.id}
                 className={cn(
-                  'rounded-2xl p-5 shadow-lg bg-gradient-to-br relative overflow-hidden',
+                  'rounded-md p-5 shadow-sm relative overflow-hidden',
                   CARD_GRADIENTS[promo.type],
                   !promo.is_active && 'opacity-60 grayscale-[30%]',
                 )}
@@ -223,7 +223,7 @@ export default function PromosTab() {
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/15">
+                      <span className="flex items-center justify-center w-9 h-9 rounded-sm bg-white/15">
                         <Icon size={18} className="text-white" />
                       </span>
                       <div>
@@ -241,7 +241,7 @@ export default function PromosTab() {
                         setEditPromo(promo)
                         setFormOpen(true)
                       }}
-                      className="flex items-center gap-1.5 px-3.5 min-h-11 rounded-lg bg-white/15 text-white/90 text-sm font-semibold hover:bg-white/25 cursor-pointer transition-colors"
+                      className="flex items-center gap-1.5 px-3.5 min-h-11 rounded-sm bg-white/15 text-white/90 text-sm font-semibold hover:bg-white/25 cursor-pointer transition-colors"
                     >
                       <Edit3 size={12} />
                       Edit

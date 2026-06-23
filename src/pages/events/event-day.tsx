@@ -80,7 +80,7 @@ function CheckInCodeDisplay({ checkInCode, title }: { checkInCode: string | null
       <p className="text-caption text-neutral-500 mb-4">
         Tell your attendees this code to check in
       </p>
-      <div className="px-5 py-5 rounded-2xl bg-white shadow-md">
+      <div className="px-5 py-5 rounded-md bg-white shadow-md">
         <p className="text-[11px] uppercase tracking-wider text-neutral-500 text-center mb-2">Check-in code</p>
         <p className="text-5xl font-heading font-bold text-neutral-900 tracking-[0.4em] text-center">
           {checkInCode ?? '---'}
@@ -123,12 +123,12 @@ function AttendeeRow({
     <motion.div
       layout
       className={cn(
-        'flex items-center gap-3 px-4 py-3.5 cursor-pointer rounded-xl mb-2',
+        'flex items-center gap-3 px-4 py-3.5 cursor-pointer rounded-sm mb-2',
         'transition-colors duration-200',
         isCheckedIn
           ? 'bg-white ring-1 ring-success-300/60 shadow-sm border-l-4 border-l-success-400'
           : isWaitlisted
-            ? 'bg-white ring-1 ring-amber-300/60 shadow-sm border-l-4 border-l-warning-400'
+            ? 'bg-white ring-1 ring-bark-300/60 shadow-sm border-l-4 border-l-warning-400'
             : 'bg-white ring-1 ring-neutral-200/60 shadow-sm',
         'active:scale-[0.98] active:shadow-none',
       )}
@@ -158,7 +158,7 @@ function AttendeeRow({
         </div>
         <p className={cn(
           'text-caption font-medium',
-          isCheckedIn ? 'text-success-600' : isWaitlisted ? 'text-amber-600' : 'text-neutral-500',
+          isCheckedIn ? 'text-success-600' : isWaitlisted ? 'text-bark-600' : 'text-neutral-500',
         )}>
           {isCheckedIn
             ? `Checked in ${attendee.checked_in_at ? new Intl.DateTimeFormat('en-AU', { hour: 'numeric', minute: '2-digit' }).format(new Date(attendee.checked_in_at)) : ''}`
@@ -171,7 +171,7 @@ function AttendeeRow({
       {isCheckedIn ? (
         <div className="flex items-center gap-2">
           <span
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-success-500 text-white shadow-sm shadow-success-300/50"
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-success-500 text-white shadow-sm"
             aria-label="Checked in"
           >
             <Check size={18} strokeWidth={2.5} />
@@ -262,7 +262,7 @@ function AttendeeSafetySheet({
 
         {/* Phone */}
         {p.phone && (
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-neutral-50">
+          <div className="flex items-start gap-3 p-3 rounded-sm bg-neutral-50">
             <Phone size={16} className="text-primary-500 mt-0.5 shrink-0" />
             <div>
               <p className="text-xs font-semibold text-primary-500 uppercase tracking-wider">Phone</p>
@@ -275,7 +275,7 @@ function AttendeeSafetySheet({
 
         {/* Accessibility */}
         {p.accessibility_requirements && (
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-sky-50">
+          <div className="flex items-start gap-3 p-3 rounded-sm bg-sky-50">
             <Accessibility size={16} className="text-sky-600 mt-0.5 shrink-0" />
             <div>
               <p className="text-xs font-semibold text-sky-600 uppercase tracking-wider">Accessibility Needs</p>
@@ -285,7 +285,7 @@ function AttendeeSafetySheet({
         )}
 
         {/* Emergency contact */}
-        <div className="p-3 rounded-lg bg-warning-50 border border-warning-200">
+        <div className="p-3 rounded-sm bg-warning-50 border border-warning-200">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={16} className="text-warning-600" />
             <p className="text-xs font-semibold text-warning-700 uppercase tracking-wider">
@@ -647,7 +647,7 @@ export default function EventDayPage() {
               variant="primary"
               icon={<UserPlus size={16} />}
               onClick={() => setShowWalkIn(true)}
-              className="flex-1 shadow-md shadow-primary-300/30 whitespace-nowrap"
+              className="flex-1 shadow-md whitespace-nowrap"
             >
               Add Walk-In
             </Button>
@@ -674,7 +674,7 @@ export default function EventDayPage() {
           <motion.div variants={fadeUp} className="mb-4">
             <div
               className={cn(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm',
+                'flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm',
                 isOffline
                   ? 'bg-warning-50 text-warning-800 ring-1 ring-warning-200/60'
                   : 'bg-primary-50 text-primary-800 ring-1 ring-primary-200/60',
@@ -723,7 +723,7 @@ export default function EventDayPage() {
         {isFutureEvent && (
           <motion.div
             variants={fadeUp}
-            className="mb-5 rounded-xl bg-warning-50 border border-warning-200 p-3 flex items-start gap-2"
+            className="mb-5 rounded-sm bg-warning-50 border border-warning-200 p-3 flex items-start gap-2"
           >
             <Clock size={16} className="text-warning-600 mt-0.5 shrink-0" />
             <div className="text-sm text-warning-700">
@@ -737,7 +737,7 @@ export default function EventDayPage() {
         {isPastEvent && (
           <motion.div
             variants={fadeUp}
-            className="mb-5 rounded-xl bg-primary-50 border border-primary-200 p-3 flex items-start gap-2"
+            className="mb-5 rounded-sm bg-primary-50 border border-primary-200 p-3 flex items-start gap-2"
           >
             <UserCheck size={16} className="text-primary-600 mt-0.5 shrink-0" />
             <div className="text-sm text-primary-700">
@@ -752,7 +752,7 @@ export default function EventDayPage() {
 
         {/* Check-in code banner */}
         {event.check_in_code && (
-          <motion.div variants={fadeUp} className="mb-5 rounded-xl bg-white border border-neutral-100 p-4 text-center shadow-sm">
+          <motion.div variants={fadeUp} className="mb-5 rounded-sm bg-white border border-neutral-100 p-4 text-center shadow-sm">
             <p className="text-[11px] uppercase tracking-wider text-primary-600 font-semibold mb-1">Today's check-in code</p>
             <p className="text-4xl font-heading font-bold text-primary-700 tracking-[0.3em]">
               {event.check_in_code}
@@ -762,32 +762,32 @@ export default function EventDayPage() {
 
         {/* Stats row */}
         <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3 mb-5">
-          <div className="rounded-xl bg-white border border-neutral-100 p-3 text-center shadow-sm">
+          <div className="rounded-sm bg-white border border-neutral-100 p-3 text-center shadow-sm">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-sky-500/15 mx-auto mb-1.5">
               <ClipboardList size={16} className="text-sky-600" />
             </div>
             <p className="text-xl font-bold text-sky-700">{stats.registered}</p>
             <p className="text-caption font-medium text-sky-600">Registered</p>
           </div>
-          <div className="rounded-xl bg-white border border-neutral-100 p-3 text-center shadow-sm">
+          <div className="rounded-sm bg-white border border-neutral-100 p-3 text-center shadow-sm">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success-500/15 mx-auto mb-1.5">
               <UserCheck size={16} className="text-success-600" />
             </div>
             <p className="text-xl font-bold text-success-700">{stats.checkedIn}</p>
             <p className="text-caption font-medium text-success-600">Checked In</p>
           </div>
-          <div className="rounded-xl bg-white border border-neutral-100 p-3 text-center shadow-sm">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/15 mx-auto mb-1.5">
-              <Clock size={16} className="text-amber-600" />
+          <div className="rounded-sm bg-white border border-neutral-100 p-3 text-center shadow-sm">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-bark-500/15 mx-auto mb-1.5">
+              <Clock size={16} className="text-bark-600" />
             </div>
-            <p className="text-xl font-bold text-amber-700">{stats.waitlisted}</p>
-            <p className="text-caption font-medium text-amber-600">Waitlisted</p>
+            <p className="text-xl font-bold text-bark-700">{stats.waitlisted}</p>
+            <p className="text-caption font-medium text-bark-600">Waitlisted</p>
           </div>
         </motion.div>
 
         {/* Live count bar */}
         {stats.registered > 0 && (
-          <motion.div variants={fadeUp} className="mb-5 rounded-xl bg-white ring-1 ring-primary-100 p-3 shadow-sm">
+          <motion.div variants={fadeUp} className="mb-5 rounded-sm bg-white ring-1 ring-primary-100 p-3 shadow-sm">
             <div className="flex items-center justify-between text-caption mb-2">
               <span className="text-neutral-500 font-medium flex items-center gap-1.5">
                 <Sparkles size={13} className="text-success-500" />
@@ -799,7 +799,7 @@ export default function EventDayPage() {
             </div>
             <div className="h-3 rounded-full bg-neutral-100 overflow-hidden">
               <motion.div
-                className="h-full rounded-full bg-gradient-to-r from-success-400 to-success-500"
+                className="h-full rounded-full bg-success-500"
                 initial={{ width: 0 }}
                 animate={{ width: `${stats.registered > 0 ? (stats.attendedRegistered / stats.registered) * 100 : 0}%` }}
                 transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, ease: 'easeOut' }}
@@ -878,9 +878,9 @@ export default function EventDayPage() {
                     return (
                       <div
                         key={w.id}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-white ring-1 ring-neutral-100 shadow-sm"
+                        className="flex items-center gap-3 p-3 rounded-sm bg-white ring-1 ring-neutral-100 shadow-sm"
                       >
-                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-50 text-emerald-700 shrink-0">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-50 text-primary-700 shrink-0">
                           <UserPlus size={16} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -905,7 +905,7 @@ export default function EventDayPage() {
                             'min-w-11 min-h-11 w-11 h-11 flex items-center justify-center rounded-full',
                             'text-neutral-400 hover:text-error hover:bg-error-50',
                             'transition-colors duration-150 cursor-pointer select-none',
-                            'active:scale-[0.95] disabled:opacity-50 disabled:cursor-not-allowed',
+                            'active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed',
                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error',
                           )}
                           aria-label={`Remove walk-in ${fullName || 'unnamed'}`}
@@ -962,7 +962,7 @@ export default function EventDayPage() {
               onClick={handleTogglePublicCheckIn}
               disabled={togglingPublicCheckIn}
               className={cn(
-                'w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors duration-150',
+                'w-full flex items-center justify-between px-4 py-3 rounded-sm transition-colors duration-150',
                 publicCheckInEnabled
                   ? 'bg-success-50 ring-1 ring-success-200'
                   : 'bg-neutral-50 ring-1 ring-neutral-200',
@@ -990,7 +990,7 @@ export default function EventDayPage() {
             {/* QR code (shown only when enabled and token is minted) */}
             {publicCheckInEnabled && (event as unknown as Record<string, unknown>).public_check_in_token ? (
               <div className="flex flex-col items-center gap-3 py-2">
-                <div className="p-3 rounded-2xl bg-white shadow-md ring-1 ring-neutral-100">
+                <div className="p-3 rounded-md bg-white shadow-md ring-1 ring-neutral-100">
                   <QRCodeSVG
                     value={`https://app.coexistaus.org/check-in/${(event as unknown as Record<string, unknown>).public_check_in_token}`}
                     size={200}

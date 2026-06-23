@@ -245,12 +245,12 @@ export default function LeadACollectivePage() {
   if (submitted) {
     return (
       <Page noBackground className="!px-0 bg-primary-50" stickyOverlay={<Header title="" back transparent className="collapse-header" />}>
-        <div className="relative overflow-hidden bg-gradient-to-br from-moss-700 via-primary-800 to-primary-900">
+        <div className="relative overflow-hidden bg-primary-900">
           <div
             className="relative z-10 px-4 sm:px-6 lg:px-8 pb-16 text-center"
             style={{ paddingTop: '4.5rem' }}
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/15 mb-5">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-md bg-white/15 mb-5">
               <Star size={32} className="text-white" />
             </div>
             <h1 className="font-heading text-3xl font-bold text-white mb-3">
@@ -279,7 +279,7 @@ export default function LeadACollectivePage() {
     <Page noBackground className="!px-0 bg-primary-50" stickyOverlay={<Header title="" back transparent className="collapse-header" />}>
       {/* Hero - sage gradient only, no decorative circles
           (2026-05-16 Tate). */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-moss-700 via-primary-800 to-primary-900">
+      <div className="relative overflow-hidden bg-primary-900">
         <div
           className="relative z-10 px-4 sm:px-6 lg:px-8 pb-16"
           style={{ paddingTop: '4.5rem' }}
@@ -288,7 +288,7 @@ export default function LeadACollectivePage() {
             initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 mb-4"
+            className="inline-flex items-center justify-center w-14 h-14 rounded-md bg-white/15 mb-4"
           >
             <Users size={28} className="text-white" />
           </motion.div>
@@ -320,10 +320,10 @@ export default function LeadACollectivePage() {
         {/* Intro banner - rich gradient */}
         <motion.div
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl bg-gradient-to-br from-sprout-600 via-primary-700 to-secondary-800 shadow-sm p-5"
+          className="rounded-md bg-secondary-800 shadow-sm p-5"
         >
           <div className="flex items-start gap-3">
-            <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/15 shrink-0">
+            <span className="flex items-center justify-center w-10 h-10 rounded-sm bg-white/15 shrink-0">
               <Megaphone size={18} className="text-white" />
             </span>
             <div>
@@ -339,10 +339,10 @@ export default function LeadACollectivePage() {
         {/* ---- Personal Details ---- */}
         <motion.section
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl overflow-hidden bg-white shadow-sm border border-neutral-100"
+          className="rounded-md overflow-hidden bg-white shadow-sm border border-neutral-100"
         >
           {/* Colored section header */}
-          <div className="bg-gradient-to-r from-primary-700 to-primary-800 px-5 py-3">
+          <div className="bg-primary-800 px-5 py-3">
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-white/80">
               Your Details
             </h3>
@@ -378,7 +378,7 @@ export default function LeadACollectivePage() {
             inputClassName="bg-neutral-50 border border-neutral-200"
           />
 
-          <div className="rounded-xl bg-neutral-50 border border-neutral-200 px-4 flex items-center min-h-11 [&>label]:items-center [&>label_span:first-child]:mt-0">
+          <div className="rounded-sm bg-neutral-50 border border-neutral-200 px-4 flex items-center min-h-11 [&>label]:items-center [&>label_span:first-child]:mt-0">
             <Checkbox
               checked={newsOptIn}
               onChange={setNewsOptIn}
@@ -408,10 +408,10 @@ export default function LeadACollectivePage() {
         {/* ---- Location ---- */}
         <motion.section
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl overflow-hidden bg-white shadow-sm border border-neutral-100"
+          className="rounded-md overflow-hidden bg-white shadow-sm border border-neutral-100"
         >
           {/* Colored section header */}
-          <div className="bg-gradient-to-r from-moss-600 to-moss-700 px-5 py-3">
+          <div className="bg-moss-700 px-5 py-3">
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-white/80 flex items-center gap-1.5">
               <MapPin size={12} />
               Location
@@ -419,7 +419,7 @@ export default function LeadACollectivePage() {
           </div>
           <div className="py-5 px-2 space-y-4">
 
-          <div className="rounded-xl bg-white border border-neutral-100 px-4 py-2.5 text-[14px] text-primary-700 font-medium">
+          <div className="rounded-sm bg-white border border-neutral-100 px-4 py-2.5 text-[14px] text-primary-700 font-medium">
             Australia
           </div>
 
@@ -472,9 +472,9 @@ export default function LeadACollectivePage() {
         {/* ---- Application Questions ---- */}
         <motion.section
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl overflow-hidden bg-white shadow-sm border border-neutral-100"
+          className="rounded-md overflow-hidden bg-white shadow-sm border border-neutral-100"
         >
-          <div className="bg-gradient-to-r from-moss-600 to-moss-700 px-5 py-3">
+          <div className="bg-moss-700 px-5 py-3">
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-white/80">
               Application
             </h3>
@@ -492,7 +492,7 @@ export default function LeadACollectivePage() {
           />
 
           {/* Roles */}
-          <div className="rounded-xl bg-neutral-50 border border-neutral-200 p-4">
+          <div className="rounded-sm bg-neutral-50 border border-neutral-200 p-4">
             <label className="block text-[13px] font-medium text-primary-700 mb-1.5">
               What Role/s are you interested in? <span className="text-error">*</span>
             </label>
@@ -534,9 +534,9 @@ export default function LeadACollectivePage() {
         {/* ---- Skills ---- */}
         <motion.section
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl overflow-hidden bg-white shadow-sm border border-neutral-100"
+          className="rounded-md overflow-hidden bg-white shadow-sm border border-neutral-100"
         >
-          <div className="bg-gradient-to-r from-sprout-600 to-sprout-700 px-5 py-3">
+          <div className="bg-sprout-700 px-5 py-3">
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-white/80">
               Skills
             </h3>
@@ -561,9 +561,9 @@ export default function LeadACollectivePage() {
         {/* ---- Resume Upload ---- */}
         <motion.section
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl overflow-hidden bg-white shadow-sm border border-neutral-100"
+          className="rounded-md overflow-hidden bg-white shadow-sm border border-neutral-100"
         >
-          <div className="bg-gradient-to-r from-bark-600 to-bark-700 px-5 py-3">
+          <div className="bg-bark-700 px-5 py-3">
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-white/80 flex items-center gap-1.5">
               <Upload size={12} />
               Resume
@@ -572,20 +572,20 @@ export default function LeadACollectivePage() {
           <div className="py-5 px-2 space-y-3">
 
           {resumeFile ? (
-            <div className="flex items-center gap-3 rounded-xl bg-neutral-50 border border-neutral-200 px-4 py-3">
+            <div className="flex items-center gap-3 rounded-sm bg-neutral-50 border border-neutral-200 px-4 py-3">
               <FileText size={18} className="text-primary-600 shrink-0" />
               <span className="text-[14px] text-neutral-900 truncate flex-1">{resumeFile.name}</span>
               <button
                 type="button"
                 onClick={() => setResumeFile(null)}
-                className="text-neutral-400 hover:text-neutral-700 active:scale-[0.90] transition-[colors,transform] duration-150 cursor-pointer"
+                className="text-neutral-400 hover:text-neutral-700 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
               >
                 <X size={16} />
               </button>
             </div>
           ) : (
             <label className={cn(
-              'relative flex items-center gap-3 rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50',
+              'relative flex items-center gap-3 rounded-sm border-2 border-dashed border-neutral-300 bg-neutral-50',
               'px-4 py-4 cursor-pointer transition-colors',
               'hover:border-neutral-300 hover:bg-neutral-50',
             )}>
@@ -608,9 +608,9 @@ export default function LeadACollectivePage() {
         {/* ---- Additional Info + How Heard ---- */}
         <motion.section
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl overflow-hidden bg-white shadow-sm border border-neutral-100"
+          className="rounded-md overflow-hidden bg-white shadow-sm border border-neutral-100"
         >
-          <div className="bg-gradient-to-r from-warning-500 to-bark-600 px-5 py-3">
+          <div className="bg-bark-600 px-5 py-3">
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-white/80">
               Anything Else
             </h3>
@@ -655,7 +655,7 @@ export default function LeadACollectivePage() {
         {/* Acknowledgement */}
         <motion.div
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="flex items-start gap-3 px-4 py-3.5 rounded-2xl bg-neutral-50"
+          className="flex items-start gap-3 px-4 py-3.5 rounded-md bg-neutral-50"
         >
           <TreePine size={18} className="text-neutral-400 mt-0.5 shrink-0" />
           <p className="text-[12px] text-neutral-400 leading-relaxed">

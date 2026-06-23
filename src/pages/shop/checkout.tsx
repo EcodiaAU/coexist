@@ -172,7 +172,7 @@ export default function CheckoutPage() {
           className="px-4 pb-5 flex items-center gap-4"
           style={{ paddingTop: '3.5rem' }}
         >
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-neutral-50 shrink-0 border border-neutral-100">
+          <div className="flex items-center justify-center w-12 h-12 rounded-sm bg-neutral-50 shrink-0 border border-neutral-100">
             <Lock size={22} className="text-neutral-500" />
           </div>
           <div>
@@ -199,7 +199,7 @@ export default function CheckoutPage() {
             <motion.div
               variants={fadeUp}
               className={cn(
-                'flex items-center gap-2.5 px-4 py-3 rounded-xl',
+                'flex items-center gap-2.5 px-4 py-3 rounded-sm',
                 reservationExpiring
                   ? 'bg-warning-50 border border-warning-200'
                   : 'bg-white border border-neutral-100',
@@ -219,7 +219,7 @@ export default function CheckoutPage() {
           {reservationExpired && (
             <motion.div
               variants={fadeUp}
-              className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-error-50 ring-1 ring-error-200/50"
+              className="flex items-center gap-2.5 px-4 py-3 rounded-sm bg-error-50 ring-1 ring-error-200/50"
             >
               <Clock size={16} className="text-error-600 shrink-0" />
               <div className="flex-1 min-w-0">
@@ -244,7 +244,7 @@ export default function CheckoutPage() {
                       type="button"
                       onClick={() => handleSelectSaved(saved)}
                       className={cn(
-                        'w-full text-left p-3.5 min-h-11 rounded-xl cursor-pointer select-none active:scale-[0.98] transition-transform duration-150',
+                        'w-full text-left p-3.5 min-h-11 rounded-sm cursor-pointer select-none active:scale-[0.98] transition-transform duration-150',
                         isSelected
                           ? 'ring-2 ring-primary-500 bg-white shadow-sm'
                           : 'bg-white border border-neutral-100 shadow-sm hover:border-neutral-200',
@@ -264,7 +264,7 @@ export default function CheckoutPage() {
           {/* Shipping address form */}
           <motion.section
             variants={fadeUp}
-            className="rounded-2xl overflow-hidden border border-neutral-100 shadow-sm"
+            className="rounded-md overflow-hidden border border-neutral-100 shadow-sm"
           >
             <div className="bg-white px-4 py-3 flex items-center gap-2 border-b border-neutral-100">
               <MapPin size={16} className="text-neutral-500" />
@@ -334,7 +334,7 @@ export default function CheckoutPage() {
           {/* Order summary */}
           <motion.section
             variants={fadeUp}
-            className="rounded-2xl overflow-hidden border border-neutral-100 shadow-sm"
+            className="rounded-md overflow-hidden border border-neutral-100 shadow-sm"
           >
             <div className="bg-white px-4 py-3 border-b border-neutral-100">
               <h3 className="text-[11px] uppercase tracking-[0.15em] font-bold text-neutral-400">Order summary</h3>
@@ -344,14 +344,14 @@ export default function CheckoutPage() {
               {/* Item thumbnails */}
               <div className="space-y-2.5">
                 {items.map((item) => (
-                  <div key={item.variant.id} className="flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-neutral-50 transition-colors">
-                    <div className="relative rounded-lg overflow-hidden ring-1 ring-neutral-900/[0.06] shrink-0">
+                  <div key={item.variant.id} className="flex items-center gap-3 p-2 -mx-2 rounded-sm hover:bg-neutral-50 transition-colors">
+                    <div className="relative rounded-sm overflow-hidden ring-1 ring-neutral-900/[0.06] shrink-0">
                       <img
                         src={item.product.images[0] ?? '/img/placeholder-merch.jpg'}
                         alt={item.product.name}
                         className="w-12 h-12 object-cover"
                       />
-                      <div className="absolute inset-0 ring-1 ring-inset ring-black/[0.04] rounded-lg pointer-events-none" />
+                      <div className="absolute inset-0 ring-1 ring-inset ring-black/[0.04] rounded-sm pointer-events-none" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] sm:text-sm font-medium text-neutral-900 line-clamp-2 leading-snug">

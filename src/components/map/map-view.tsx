@@ -58,12 +58,12 @@ function MapPlaceholder({ className, ariaLabel }: { className?: string; ariaLabe
       role="status"
       aria-label={`Loading ${ariaLabel}`}
       className={cn(
-        'relative w-full overflow-hidden rounded-2xl bg-white',
+        'relative w-full overflow-hidden rounded-md bg-white',
         className,
       )}
     >
       <div className="absolute inset-0 animate-pulse">
-        <div className="h-full w-full bg-gradient-to-br from-primary-200 via-primary-100 to-primary-200" />
+        <div className="h-full w-full bg-primary-200" />
       </div>
       <div className="flex h-full min-h-[200px] w-full flex-col items-center justify-center gap-2 text-neutral-400">
         <MapPinLucide size={32} strokeWidth={1.5} aria-hidden="true" />
@@ -101,7 +101,7 @@ export function MapView({
       role="region"
       aria-label={ariaLabel}
       className={cn(
-        'relative w-full overflow-hidden rounded-2xl bg-white',
+        'relative w-full overflow-hidden rounded-md bg-white',
         className,
       )}
     >

@@ -127,9 +127,9 @@ export function EventPhotosSection({
         <motion.div
           initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl bg-gradient-to-br from-primary-100 via-primary-50 to-success-50 p-6 text-center ring-1 ring-primary-100/60"
+          className="rounded-md bg-success-50 p-6 text-center ring-1 ring-primary-100/60"
         >
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-3">
+          <div className="mx-auto w-14 h-14 rounded-md bg-white shadow-sm flex items-center justify-center mb-3">
             <Camera size={26} className="text-primary-600" />
           </div>
           <p className="font-heading text-base font-bold text-neutral-900">
@@ -151,7 +151,7 @@ export function EventPhotosSection({
 
       {/* Empty state - no upload permission */}
       {!isLoading && totalPhotos === 0 && !canUpload && (
-        <div className="rounded-2xl bg-neutral-50 p-5 text-center">
+        <div className="rounded-md bg-neutral-50 p-5 text-center">
           <p className="text-sm text-neutral-500">No photos yet for this event.</p>
         </div>
       )}
@@ -160,7 +160,7 @@ export function EventPhotosSection({
       {isLoading && (
         <div className="grid grid-cols-3 gap-1.5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-square rounded-xl bg-neutral-100 animate-pulse" style={{ animationDelay: `${i * 50}ms` }} />
+            <div key={i} className="aspect-square rounded-sm bg-neutral-100 animate-pulse" style={{ animationDelay: `${i * 50}ms` }} />
           ))}
         </div>
       )}
@@ -175,7 +175,7 @@ export function EventPhotosSection({
                 key={p.id}
                 type="button"
                 onClick={() => setLightboxIndex(i)}
-                className="relative aspect-square rounded-xl overflow-hidden bg-neutral-100 active:scale-[0.97] transition-transform duration-150"
+                className="relative aspect-square rounded-sm overflow-hidden bg-neutral-100 active:scale-[0.97] transition-transform duration-150"
                 aria-label={isVid ? 'View video' : 'View photo'}
               >
                 {p.url && (
@@ -210,7 +210,7 @@ export function EventPhotosSection({
 
       {/* Upload progress overlay */}
       {uploadCount.total > 0 && (
-        <div className="mt-3 flex items-center gap-2 rounded-xl bg-primary-50 ring-1 ring-primary-100 p-3 text-xs font-semibold text-primary-700">
+        <div className="mt-3 flex items-center gap-2 rounded-sm bg-primary-50 ring-1 ring-primary-100 p-3 text-xs font-semibold text-primary-700">
           <Loader2 size={14} className="animate-spin" />
           Uploading {uploadCount.done} of {uploadCount.total}…
         </div>
@@ -373,7 +373,7 @@ export function PhotoCarouselLightbox({
           <button
             type="button"
             onClick={handleSave}
-            className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.96] transition-transform duration-150"
+            className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.98] transition-transform duration-150"
             aria-label="Save to photos"
           >
             <Download size={18} />
@@ -381,7 +381,7 @@ export function PhotoCarouselLightbox({
           <button
             type="button"
             onClick={handleShare}
-            className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.96] transition-transform duration-150"
+            className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.98] transition-transform duration-150"
             aria-label="Share"
           >
             <Share2 size={18} />
@@ -390,7 +390,7 @@ export function PhotoCarouselLightbox({
             <button
               type="button"
               onClick={() => onDelete && onDelete(current)}
-              className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.96] transition-transform duration-150"
+              className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.98] transition-transform duration-150"
               aria-label="Delete"
             >
               <Trash2 size={18} />
@@ -399,7 +399,7 @@ export function PhotoCarouselLightbox({
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.96] transition-transform duration-150"
+            className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.98] transition-transform duration-150"
             aria-label="Close"
           >
             <X size={20} />
@@ -448,14 +448,14 @@ export function PhotoCarouselLightbox({
                     src={p.url}
                     controls
                     playsInline
-                    className="max-w-full max-h-full rounded-xl pointer-events-auto"
+                    className="max-w-full max-h-full rounded-sm pointer-events-auto"
                   />
                 ) : (
                   <img
                     src={p.url}
                     alt={p.caption ?? ''}
                     draggable={false}
-                    className="max-w-full max-h-full object-contain rounded-xl select-none pointer-events-none"
+                    className="max-w-full max-h-full object-contain rounded-sm select-none pointer-events-none"
                   />
                 ))}
               </div>

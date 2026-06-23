@@ -204,7 +204,7 @@ export function SubscribersTab() {
   return (
     <>
       {/* Auto-sync bar */}
-      <div className="flex items-center justify-between gap-3 mb-4 rounded-xl bg-white border border-neutral-100 p-3">
+      <div className="flex items-center justify-between gap-3 mb-4 rounded-sm bg-white border border-neutral-100 p-3">
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-neutral-700">Auto-tagging</p>
           <p className="text-[11px] text-neutral-400">
@@ -238,11 +238,11 @@ export function SubscribersTab() {
       </div>
 
       <div className="flex gap-2 mb-4">
-        <div className="flex-1 rounded-xl bg-success-50 p-3">
+        <div className="flex-1 rounded-sm bg-success-50 p-3">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-success-600">Opted In</p>
           <p className="text-lg font-bold text-success-700 tabular-nums">{optedIn.length}</p>
         </div>
-        <div className="flex-1 rounded-xl bg-neutral-50 p-3">
+        <div className="flex-1 rounded-sm bg-neutral-50 p-3">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Opted Out</p>
           <p className="text-lg font-bold text-neutral-600 tabular-nums">{optedOut.length}</p>
         </div>
@@ -259,7 +259,7 @@ export function SubscribersTab() {
       ) : (
         <StaggeredList className="space-y-1">
           {subscribers.map((sub) => (
-            <StaggeredItem key={sub.id} className="flex items-center gap-3 p-3 rounded-xl bg-white shadow-sm">
+            <StaggeredItem key={sub.id} className="flex items-center gap-3 p-3 rounded-sm bg-white shadow-sm">
               <SubscriberAvatar url={sub.avatar_url} name={sub.display_name} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-neutral-900 truncate">
@@ -291,7 +291,7 @@ export function SubscribersTab() {
                   name: sub.display_name || 'User',
                   tags: sub.tags ?? [],
                 })}
-                className="flex items-center justify-center min-w-11 min-h-11 rounded-lg text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer shrink-0"
+                className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer shrink-0"
                 aria-label="Manage tags"
               >
                 <Tag size={14} />

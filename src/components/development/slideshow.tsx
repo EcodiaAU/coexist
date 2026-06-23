@@ -15,7 +15,7 @@ export function Slideshow({ images, captions = [], className }: SlideshowProps) 
 
   if (images.length === 0) {
     return (
-      <div className={cn('rounded-xl bg-primary-100 p-8 text-center text-sm text-primary-500', className)}>
+      <div className={cn('rounded-sm bg-primary-100 p-8 text-center text-sm text-primary-500', className)}>
         No images in this slideshow
       </div>
     )
@@ -30,7 +30,7 @@ export function Slideshow({ images, captions = [], className }: SlideshowProps) 
   const next = () => go(current === images.length - 1 ? 0 : current + 1)
 
   return (
-    <div className={cn('rounded-xl overflow-hidden', className)}>
+    <div className={cn('rounded-sm overflow-hidden', className)}>
       {/* Image area */}
       <div className="relative aspect-[16/10] bg-primary-900 overflow-hidden">
         <AnimatePresence mode="wait" initial={false} custom={direction}>

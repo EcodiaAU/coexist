@@ -62,8 +62,8 @@ function SummaryCards({ items }: { items: FlatVariant[] }) {
       {cards.map((c) => {
         const Icon = c.icon
         return (
-          <div key={c.label} className="p-3.5 rounded-2xl bg-white border border-neutral-100 shadow-sm text-center">
-            <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center mx-auto mb-1', c.iconBg)}>
+          <div key={c.label} className="p-3.5 rounded-md bg-white border border-neutral-100 shadow-sm text-center">
+            <div className={cn('w-7 h-7 rounded-sm flex items-center justify-center mx-auto mb-1', c.iconBg)}>
               <Icon size={14} />
             </div>
             <p className="font-heading text-xl font-bold tabular-nums text-neutral-900">
@@ -111,7 +111,7 @@ function InlineStepper({
         type="button"
         onClick={(e) => { e.stopPropagation(); handleAdjust(-1) }}
         disabled={item.variant.stock === 0}
-        className="flex items-center justify-center w-8 h-8 rounded-l-xl bg-white/80 border border-neutral-100 text-neutral-500 hover:bg-error-50 hover:text-error-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-[0.92] transition-transform duration-150"
+        className="flex items-center justify-center w-8 h-8 rounded-l-sm bg-white/80 border border-neutral-100 text-neutral-500 hover:bg-error-50 hover:text-error-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98] transition-transform duration-150"
       >
         <Minus size={12} />
       </button>
@@ -121,7 +121,7 @@ function InlineStepper({
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); handleAdjust(1) }}
-        className="flex items-center justify-center w-8 h-8 rounded-r-xl bg-white/80 border border-neutral-100 text-neutral-500 hover:bg-success-50 hover:text-success-600 cursor-pointer active:scale-[0.92] transition-transform duration-150"
+        className="flex items-center justify-center w-8 h-8 rounded-r-sm bg-white/80 border border-neutral-100 text-neutral-500 hover:bg-success-50 hover:text-success-600 cursor-pointer active:scale-[0.98] transition-transform duration-150"
       >
         <Plus size={12} />
       </button>
@@ -193,7 +193,7 @@ function BatchAdjustSheet({
         </div>
 
         {/* Selected items preview */}
-        <div className="max-h-32 overflow-y-auto space-y-1 rounded-xl bg-neutral-50 p-2.5">
+        <div className="max-h-32 overflow-y-auto space-y-1 rounded-sm bg-neutral-50 p-2.5">
           {selected.map((item) => (
             <div
               key={`${item.product.id}-${item.variant.id}`}
@@ -221,7 +221,7 @@ function BatchAdjustSheet({
                 type="button"
                 disabled={processing}
                 onClick={() => handleBatchApply(qa.value)}
-                className="py-3 rounded-xl text-sm font-bold bg-gradient-to-br from-success-500 to-success-600 text-white shadow-sm cursor-pointer active:scale-[0.95] transition-transform duration-150 disabled:opacity-50"
+                className="py-3 rounded-sm text-sm font-bold bg-success-600 text-white shadow-sm cursor-pointer active:scale-[0.98] transition-transform duration-150 disabled:opacity-50"
               >
                 {qa.label}
               </button>
@@ -240,7 +240,7 @@ function BatchAdjustSheet({
               value={adjustment}
               onChange={(e) => setAdjustment(e.target.value)}
               placeholder="+/- amount"
-              className="flex-1 h-12 px-4 rounded-xl bg-neutral-50 text-sm font-semibold text-neutral-900 placeholder:text-neutral-400/50 outline-none focus:ring-2 focus:ring-primary-300/50 tabular-nums"
+              className="flex-1 h-12 px-4 rounded-sm bg-neutral-50 text-sm font-semibold text-neutral-900 placeholder:text-neutral-400/50 outline-none focus:ring-2 focus:ring-primary-300/50 tabular-nums"
             />
             <Button
               variant="primary"
@@ -304,7 +304,7 @@ function ProductGroup({
       : 'border-neutral-100'
 
   return (
-    <div className={cn('rounded-2xl border overflow-hidden shadow-sm bg-white', headerBorder)}>
+    <div className={cn('rounded-md border overflow-hidden shadow-sm bg-white', headerBorder)}>
       {/* Product header row */}
       <button
         type="button"
@@ -323,7 +323,7 @@ function ProductGroup({
         <img
           src={product.images[0] ?? '/img/placeholder-merch.jpg'}
           alt={product.name}
-          className="w-10 h-10 rounded-lg object-cover shrink-0"
+          className="w-10 h-10 rounded-sm object-cover shrink-0"
         />
         <div className="flex-1 min-w-0 text-left">
           <p className="text-sm font-bold text-neutral-900 truncate">{product.name}</p>
@@ -545,7 +545,7 @@ export default function InventoryTab() {
               s === 'stock-asc' ? 'name' : s === 'name' ? 'product' : 'stock-asc',
             )
           }
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap bg-white border border-neutral-100 text-neutral-700 cursor-pointer transition-[color,background-color,transform] hover:shadow-sm active:scale-[0.97] shrink-0 mb-px"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-sm text-xs font-semibold whitespace-nowrap bg-white border border-neutral-100 text-neutral-700 cursor-pointer transition-[color,background-color,transform] hover:shadow-sm active:scale-[0.97] shrink-0 mb-px"
         >
           <ArrowUpDown size={12} />
           {sort === 'stock-asc' ? 'Stock ↑' : sort === 'name' ? 'A-Z' : 'Product'}
@@ -569,7 +569,7 @@ export default function InventoryTab() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="mb-4 flex items-center gap-2 p-3 rounded-2xl bg-primary-600 shadow-sm"
+            className="mb-4 flex items-center gap-2 p-3 rounded-md bg-primary-600 shadow-sm"
           >
             <span className="text-sm font-semibold text-white flex-1">
               {selectedItems.length} selected
@@ -577,14 +577,14 @@ export default function InventoryTab() {
             <button
               type="button"
               onClick={selectAll}
-              className="px-4 min-h-11 rounded-lg bg-white/15 text-sm font-semibold text-white hover:bg-white/25 cursor-pointer transition-colors"
+              className="px-4 min-h-11 rounded-sm bg-white/15 text-sm font-semibold text-white hover:bg-white/25 cursor-pointer transition-colors"
             >
               All
             </button>
             <button
               type="button"
               onClick={clearSelection}
-              className="px-4 min-h-11 rounded-lg bg-white/15 text-sm font-semibold text-white hover:bg-white/25 cursor-pointer transition-colors"
+              className="px-4 min-h-11 rounded-sm bg-white/15 text-sm font-semibold text-white hover:bg-white/25 cursor-pointer transition-colors"
             >
               Clear
             </button>

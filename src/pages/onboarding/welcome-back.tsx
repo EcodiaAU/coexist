@@ -97,9 +97,9 @@ export default function WelcomeBackPage() {
               {missedData.missedEventsCount > 0 && (
                 <motion.div
                   variants={fadeUp}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-white border border-neutral-100 shadow-sm"
+                  className="flex items-center gap-4 p-4 rounded-sm bg-white border border-neutral-100 shadow-sm"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-neutral-50 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-sm bg-neutral-50 flex items-center justify-center shrink-0">
                     <Calendar size={20} className="text-neutral-400" />
                   </div>
                   <div>
@@ -113,9 +113,9 @@ export default function WelcomeBackPage() {
 
               <motion.div
                 variants={fadeUp}
-                className="flex items-center gap-4 p-4 rounded-xl bg-white border border-neutral-100 shadow-sm"
+                className="flex items-center gap-4 p-4 rounded-sm bg-white border border-neutral-100 shadow-sm"
               >
-                <div className="w-10 h-10 rounded-lg bg-neutral-50 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-sm bg-neutral-50 flex items-center justify-center shrink-0">
                   <Users size={20} className="text-neutral-400" />
                 </div>
                 <div>

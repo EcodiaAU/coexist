@@ -61,7 +61,7 @@ function MenuSection({
       <h3 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 mb-1.5 px-1">
         {title}
       </h3>
-      <div className="rounded-2xl bg-surface-0 shadow-sm overflow-hidden">
+      <div className="rounded-md bg-surface-0 shadow-sm overflow-hidden">
         { }
         {items.map(({ label, to, icon, iconBg, iconColor, description: _description, badge }, idx) => (
           <button
@@ -79,7 +79,7 @@ function MenuSection({
           >
             <span
               className={cn(
-                'flex items-center justify-center w-8 h-8 rounded-lg shrink-0',
+                'flex items-center justify-center w-8 h-8 rounded-sm shrink-0',
                 iconBg,
                 iconColor,
               )}
@@ -183,7 +183,7 @@ export default function MorePage() {
             onClick={() => navigate('/profile')}
             className={cn(
               'w-full flex items-center gap-4 p-4',
-              'rounded-2xl',
+              'rounded-md',
               'bg-white border border-neutral-100 shadow-sm',
               'active:scale-[0.98] transition-transform duration-150',
               'cursor-pointer select-none',

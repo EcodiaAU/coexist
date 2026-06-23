@@ -51,14 +51,14 @@ function QuickAction({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, delay: reducedMotion ? 0 : 0.15 + delay * 0.06 }}
         className={cn(
-          'group relative flex flex-col items-center gap-2 p-4 rounded-xl text-center',
+          'group relative flex flex-col items-center gap-2 p-4 rounded-sm text-center',
           cardBg,
           'shadow-sm border border-neutral-100',
           'hover:shadow-md active:scale-[0.97] transition-transform duration-150',
         )}
       >
         <div className={cn(
-          'flex items-center justify-center w-11 h-11 rounded-xl shrink-0 transition-transform group-hover:scale-105',
+          'flex items-center justify-center w-11 h-11 rounded-sm shrink-0 transition-transform group-hover:scale-105',
           bg,
         )}>
           {icon}
@@ -106,7 +106,7 @@ function SectionCard({
       initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: reducedMotion ? 0 : 0.2 + delay * 0.1 }}
-      className={cn('rounded-2xl shadow-sm border border-neutral-100 overflow-hidden flex flex-col', cardBg)}
+      className={cn('rounded-md shadow-sm border border-neutral-100 overflow-hidden flex flex-col', cardBg)}
     >
       {/* Header */}
       <Link
@@ -114,7 +114,7 @@ function SectionCard({
         className="flex items-center gap-3.5 p-5 transition-[colors,transform] duration-150 active:scale-[0.99] group"
       >
         <div className={cn(
-          'flex items-center justify-center w-11 h-11 rounded-xl shrink-0',
+          'flex items-center justify-center w-11 h-11 rounded-sm shrink-0',
           accentColor,
         )}>
           {icon}
@@ -148,7 +148,7 @@ function SectionCard({
               key={action.label}
               to={action.to}
               className={cn(
-                'inline-flex items-center gap-1.5 px-3.5 min-h-11 rounded-lg text-sm font-semibold',
+                'inline-flex items-center gap-1.5 px-3.5 min-h-11 rounded-sm text-sm font-semibold',
                 actionBg,
                 'transition-[colors,transform] duration-150 active:scale-[0.97]',
               )}
@@ -255,11 +255,11 @@ export default function AdminCreatePage() {
             delay={3}
           />
           <QuickAction
-            icon={<BookOpen size={18} className="text-amber-600" />}
+            icon={<BookOpen size={18} className="text-bark-600" />}
             label="New Module"
             description="Build a learning module"
             to="/admin/development/modules/new"
-            bg="bg-amber-50"
+            bg="bg-bark-50"
             cardBg="bg-white"
             reducedMotion={rm}
             delay={4}
@@ -285,10 +285,10 @@ export default function AdminCreatePage() {
 
         {summaryLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
-            <Skeleton className="h-52 rounded-2xl" />
-            <Skeleton className="h-52 rounded-2xl" />
-            <Skeleton className="h-52 rounded-2xl" />
-            <Skeleton className="h-52 rounded-2xl" />
+            <Skeleton className="h-52 rounded-md" />
+            <Skeleton className="h-52 rounded-md" />
+            <Skeleton className="h-52 rounded-md" />
+            <Skeleton className="h-52 rounded-md" />
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -351,11 +351,11 @@ export default function AdminCreatePage() {
               delay={2}
             />
             <SectionCard
-              icon={<GraduationCap size={20} className="text-amber-600" />}
+              icon={<GraduationCap size={20} className="text-bark-600" />}
               title="Development"
               description="Learning modules, leadership development, and onboarding pathways"
               to="/admin/development"
-              accentColor="bg-amber-50"
+              accentColor="bg-bark-50"
               cardBg="bg-white"
               actionBg="bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
               stats={[

@@ -318,7 +318,7 @@ export function CheckInModeView({
           </div>
 
           {isOffline && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-warning-50 text-warning-700 text-sm font-medium mb-4">
+            <div className="flex items-center gap-2 p-3 rounded-sm bg-warning-50 text-warning-700 text-sm font-medium mb-4">
               <WifiOff size={16} />
               You're offline. Check-in will be queued and synced later.
             </div>
@@ -337,7 +337,7 @@ export function CheckInModeView({
                 value={digits[i]}
                 onChange={(e) => handleDigitChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}
-                className="w-16 h-20 text-center text-3xl font-heading font-bold rounded-xl border-2 border-neutral-200 bg-white focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-colors"
+                className="w-16 h-20 text-center text-3xl font-heading font-bold rounded-sm border-2 border-neutral-200 bg-white focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-colors"
                 autoComplete="off"
               />
             ))}

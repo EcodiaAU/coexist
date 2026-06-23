@@ -96,8 +96,11 @@ interface LeaderHeroCfg { hue: string; defaultSubtitle: string; w: number }
 // All leader heroes standardised to Co-Exist sage/olive/green tones to
 // match the profile-page hero. 2026-05-16 Tate: every hero in the app
 // must read as the same brand-green family - no bark, no warm tones.
-const LEADER_HERO_MOSS    = 'from-moss-600 via-moss-700 to-primary-900'
-const LEADER_HERO_PRIMARY = 'from-primary-700 via-primary-800 to-moss-900'
+// Deep army-olive from the Co-Exist marketing web app (olive-700 #474f2f), so
+// the leader portal reads as the same product as the site + admin. Subtle depth
+// shift between sections that the persistent hero glides between.
+const LEADER_HERO_MOSS    = 'bg-olive-700'
+const LEADER_HERO_PRIMARY = 'bg-olive-800'
 
 const PAGE_HERO_CONFIG: Record<string, LeaderHeroCfg> = {
   'Dashboard':      { hue: LEADER_HERO_MOSS,    defaultSubtitle: 'Your collective at a glance',          w: 1 },
@@ -239,7 +242,7 @@ export function LeaderLayout() {
               <div
                 className={cn(
                   'relative overflow-hidden',
-                  'bg-gradient-to-br',
+                  'transition-colors duration-700 ease-in-out',
                   cfg.hue,
                   'px-6 pt-12 pb-14 sm:px-8 sm:pt-16 sm:pb-16',
                   'before:absolute before:inset-x-0 before:bottom-full before:h-[200px] before:bg-inherit',
@@ -248,7 +251,7 @@ export function LeaderLayout() {
                 <div className="relative z-10">
                   <div className="flex items-end justify-between gap-4 flex-wrap">
                     <div>
-                      <h1 className="font-heading text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                      <h1 className="font-heading text-3xl sm:text-4xl font-normal display-tight text-white">
                         {header.title}
                       </h1>
                       {subtitle && (
@@ -273,7 +276,7 @@ export function LeaderLayout() {
                     className="w-full h-7 sm:h-10 block"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <path d={WAVE_PATHS[cfg.w % WAVE_PATHS.length]} className="fill-surface-1" />
+                    <path d={WAVE_PATHS[0]} className="fill-white" />
                   </svg>
                 </div>
               </div>
@@ -284,7 +287,7 @@ export function LeaderLayout() {
           <div className={cn(
             'relative flex-1',
             header.fullBleed ? 'p-0 bg-white' : 'p-4 sm:p-6 lg:p-8',
-            !header.fullBleed && 'bg-gradient-to-b from-moss-50/40 via-white to-primary-50/20',
+            !header.fullBleed && 'bg-neutral-50',
             showBottomTabs && 'pb-[calc(5rem+var(--safe-bottom))]',
           )}>
 

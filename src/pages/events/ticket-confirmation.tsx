@@ -51,8 +51,8 @@ export default function TicketConfirmationPage() {
     return (
       <Page swipeBack header={<Header title="Your Ticket" back />}>
         <div className="p-6 space-y-6">
-          <Skeleton className="h-48 rounded-2xl" />
-          <Skeleton className="h-32 rounded-2xl" />
+          <Skeleton className="h-48 rounded-md" />
+          <Skeleton className="h-32 rounded-md" />
         </div>
       </Page>
     )
@@ -97,7 +97,7 @@ export default function TicketConfirmationPage() {
         )}
 
         {isPending && (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-warning-50 border border-warning-200/40">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-warning-50 border border-warning-200/40">
             <Clock size={18} className="text-warning-600 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-warning-700">Payment processing</p>
@@ -111,7 +111,7 @@ export default function TicketConfirmationPage() {
           initial={shouldReduceMotion ? undefined : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden"
+          className="rounded-md bg-white border border-neutral-100 shadow-sm overflow-hidden"
         >
           {/* Event info header */}
           <div className="bg-neutral-50 p-5 border-b border-neutral-100">
@@ -137,7 +137,7 @@ export default function TicketConfirmationPage() {
           {/* QR code */}
           {ticket.ticket_code && !isPending && (
             <div className="flex flex-col items-center py-6 px-5">
-              <div className="bg-white p-3 rounded-xl shadow-sm border border-neutral-100">
+              <div className="bg-white p-3 rounded-sm shadow-sm border border-neutral-100">
                 <QRCodeSVG
                   value={`coexist://ticket/${ticket.ticket_code}`}
                   size={180}
@@ -148,7 +148,7 @@ export default function TicketConfirmationPage() {
               <button
                 type="button"
                 onClick={copyCode}
-                className="flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-primary-50 hover:bg-primary-100 active:scale-[0.97] transition-all cursor-pointer"
+                className="flex items-center gap-2 mt-4 px-4 py-2 rounded-sm bg-primary-50 hover:bg-primary-100 active:scale-[0.97] transition-all cursor-pointer"
               >
                 <span className="font-mono text-lg font-bold text-neutral-900 tracking-wider">
                   {ticket.ticket_code}

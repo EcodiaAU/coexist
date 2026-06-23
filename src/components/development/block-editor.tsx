@@ -99,7 +99,7 @@ function DropZone({
         onDrop={handleDrop}
         onClick={() => !uploading && inputRef.current?.click()}
         className={cn(
-          'relative flex flex-col items-center justify-center py-8 px-4 rounded-xl border-2 border-dashed transition-colors cursor-pointer',
+          'relative flex flex-col items-center justify-center py-8 px-4 rounded-sm border-2 border-dashed transition-colors cursor-pointer',
           'active:scale-[0.98]',
           dragOver
             ? 'border-primary-400 bg-primary-50 scale-[1.01]'
@@ -151,14 +151,14 @@ function SlideCard({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className="flex gap-3 p-2.5 rounded-xl bg-white border border-neutral-100 shadow-sm"
+      className="flex gap-3 p-2.5 rounded-sm bg-white border border-neutral-100 shadow-sm"
     >
       <img
         src={slide.url}
         alt={slide.caption || `Slide ${index + 1}`}
         loading="lazy"
         decoding="async"
-        className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover shrink-0 bg-primary-100"
+        className="w-16 h-16 sm:w-20 sm:h-20 rounded-sm object-cover shrink-0 bg-primary-100"
       />
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
         <p className="text-[11px] text-neutral-500 font-medium">Slide {index + 1}</p>
@@ -172,7 +172,7 @@ function SlideCard({
       <button
         type="button"
         onClick={onRemove}
-        className="flex items-center justify-center w-8 h-8 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 transition-colors self-center shrink-0"
+        className="flex items-center justify-center w-8 h-8 rounded-sm text-error-300 hover:text-error-500 hover:bg-error-50 transition-colors self-center shrink-0"
       >
         <Trash2 size={14} />
       </button>
@@ -203,7 +203,7 @@ function QuizPicker({
 
   if (selected && !open) {
     return (
-      <div className="flex items-center gap-3 p-3 rounded-xl bg-moss-50 border border-moss-200">
+      <div className="flex items-center gap-3 p-3 rounded-sm bg-moss-50 border border-moss-200">
         <CircleDot size={16} className="text-moss-600 shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-moss-800 truncate">{selected.title}</p>
@@ -211,7 +211,7 @@ function QuizPicker({
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button type="button" onClick={() => setOpen(true)} className="text-xs text-moss-500 hover:text-moss-700 font-semibold">Change</button>
-          <button type="button" onClick={() => onChange(null)} className="text-red-400 hover:text-red-600 ml-1"><X size={14} /></button>
+          <button type="button" onClick={() => onChange(null)} className="text-error-400 hover:text-error-600 ml-1"><X size={14} /></button>
         </div>
       </div>
     )
@@ -223,21 +223,21 @@ function QuizPicker({
       {isLoading ? (
         <p className="text-xs text-neutral-500 text-center py-4">Loading quizzes...</p>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-6 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50">
+        <div className="text-center py-6 rounded-sm border-2 border-dashed border-neutral-200 bg-neutral-50">
           <CircleDot size={24} className="text-neutral-400 mx-auto mb-1" />
           <p className="text-xs text-neutral-500">
             {quizzes.length === 0 ? 'No quizzes yet  create one first' : 'No matching quizzes'}
           </p>
         </div>
       ) : (
-        <div className="max-h-48 overflow-y-auto space-y-1 rounded-xl border border-neutral-200 p-1.5">
+        <div className="max-h-48 overflow-y-auto space-y-1 rounded-sm border border-neutral-200 p-1.5">
           {filtered.map((q) => (
             <button
               key={q.id}
               type="button"
               onClick={() => { onChange(q.id); setOpen(false); setSearch('') }}
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors',
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-left transition-colors',
                 value === q.id ? 'bg-moss-50 ring-1 ring-moss-300' : 'hover:bg-neutral-50 active:bg-neutral-100',
               )}
             >
@@ -287,7 +287,7 @@ function SortableBlock({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group flex items-start gap-3 rounded-xl border border-white/60 bg-white/80 p-3.5 shadow-sm transition-shadow',
+        'group flex items-start gap-3 rounded-sm border border-white/60 bg-white/80 p-3.5 shadow-sm transition-shadow',
         isDragging && 'shadow-sm ring-2 ring-primary-300/50 z-10',
       )}
     >
@@ -302,7 +302,7 @@ function SortableBlock({
 
       {/* Thumbnail for visual types */}
       {block.content_type === 'slideshow' && block.image_urls?.[0] && (
-        <img src={block.image_urls[0]} alt="" loading="lazy" decoding="async" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+        <img src={block.image_urls[0]} alt="" loading="lazy" decoding="async" className="w-10 h-10 rounded-sm object-cover shrink-0" />
       )}
 
       <div className="flex-1 min-w-0">
@@ -325,14 +325,14 @@ function SortableBlock({
         <button
           type="button"
           onClick={onEdit}
-          className="flex items-center justify-center w-9 h-9 rounded-lg text-primary-400 hover:text-primary-600 hover:bg-neutral-100 transition-colors"
+          className="flex items-center justify-center w-9 h-9 rounded-sm text-primary-400 hover:text-primary-600 hover:bg-neutral-100 transition-colors"
         >
           <Pencil size={14} />
         </button>
         <button
           type="button"
           onClick={onRemove}
-          className="flex items-center justify-center w-9 h-9 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-100/60 transition-colors"
+          className="flex items-center justify-center w-9 h-9 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-100/60 transition-colors"
         >
           <Trash2 size={14} />
         </button>
@@ -429,7 +429,7 @@ function BlockEditForm({
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
-      className="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-4 sm:p-5 space-y-4 overflow-hidden"
+      className="rounded-sm border-2 border-neutral-200 bg-neutral-50 p-4 sm:p-5 space-y-4 overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -440,7 +440,7 @@ function BlockEditForm({
           </span>
           <span className="text-sm font-semibold text-neutral-900">Edit Block</span>
         </div>
-        <button type="button" onClick={onCancel} className="flex items-center justify-center w-9 h-9 rounded-lg text-primary-400 hover:text-primary-600 hover:bg-neutral-100 transition-colors">
+        <button type="button" onClick={onCancel} className="flex items-center justify-center w-9 h-9 rounded-sm text-primary-400 hover:text-primary-600 hover:bg-neutral-100 transition-colors">
           <X size={18} />
         </button>
       </div>
@@ -475,7 +475,7 @@ function BlockEditForm({
                   type="button"
                   onClick={() => setDraft({ ...draft, video_provider: p.key, video_url: p.key !== draft.video_provider ? '' : draft.video_url })}
                   className={cn(
-                    'inline-flex items-center gap-1.5 px-3.5 min-h-[44px] rounded-xl text-sm font-semibold transition-transform active:scale-[0.97]',
+                    'inline-flex items-center gap-1.5 px-3.5 min-h-[44px] rounded-sm text-sm font-semibold transition-transform active:scale-[0.97]',
                     draft.video_provider === p.key
                       ? 'bg-sky-600 text-white shadow-sm'
                       : 'bg-white text-neutral-500 border border-neutral-200 hover:border-neutral-300',
@@ -490,13 +490,13 @@ function BlockEditForm({
 
           {draft.video_provider === 'upload' ? (
             draft.video_url ? (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-sky-50 border border-sky-200">
+              <div className="flex items-center gap-3 p-3 rounded-sm bg-sky-50 border border-sky-200">
                 <Video size={18} className="text-sky-600 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-sky-800 truncate">{draft.file_name ?? 'Uploaded video'}</p>
                   <p className="text-xs text-sky-500">Ready</p>
                 </div>
-                <button type="button" onClick={() => setDraft({ ...draft, video_url: null, file_name: null })} className="text-red-400 hover:text-red-600">
+                <button type="button" onClick={() => setDraft({ ...draft, video_url: null, file_name: null })} className="text-error-400 hover:text-error-600">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -531,8 +531,8 @@ function BlockEditForm({
       {draft.content_type === 'file' && (
         <div className="space-y-3">
           {draft.file_url ? (
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-bark-50 border border-bark-200">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-bark-100 shrink-0">
+            <div className="flex items-center gap-3 p-3.5 rounded-sm bg-bark-50 border border-bark-200">
+              <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-bark-100 shrink-0">
                 {draft.file_name?.endsWith('.pdf') ? <FileDown size={18} className="text-bark-600" /> : <Presentation size={18} className="text-bark-600" />}
               </div>
               <div className="flex-1 min-w-0">
@@ -541,7 +541,7 @@ function BlockEditForm({
                   {draft.file_size_bytes ? `${(draft.file_size_bytes / (1024 * 1024)).toFixed(1)} MB` : 'Uploaded'}
                 </p>
               </div>
-              <button type="button" onClick={() => setDraft({ ...draft, file_url: null, file_name: null, file_size_bytes: null })} className="text-red-400 hover:text-red-600">
+              <button type="button" onClick={() => setDraft({ ...draft, file_url: null, file_name: null, file_size_bytes: null })} className="text-error-400 hover:text-error-600">
                 <Trash2 size={14} />
               </button>
             </div>
@@ -743,7 +743,7 @@ export function BlockEditor({ blocks, onChange, className }: BlockEditorProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-12 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50"
+          className="flex flex-col items-center justify-center py-12 rounded-sm border-2 border-dashed border-neutral-200 bg-neutral-50"
         >
           <FileText size={32} className="text-neutral-400 mb-3" />
           <p className="text-sm font-medium text-neutral-500 mb-1">No content blocks yet</p>
@@ -761,7 +761,7 @@ export function BlockEditor({ blocks, onChange, className }: BlockEditorProps) {
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-1.5 p-3 rounded-xl bg-neutral-50 border border-neutral-100"
+              className="space-y-1.5 p-3 rounded-sm bg-neutral-50 border border-neutral-100"
             >
               {BLOCK_TYPES.map((bt) => (
                 <button
@@ -769,11 +769,11 @@ export function BlockEditor({ blocks, onChange, className }: BlockEditorProps) {
                   type="button"
                   onClick={() => addBlock(bt.type)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-4 min-h-[52px] rounded-xl text-left transition-transform active:scale-[0.98]',
+                    'w-full flex items-center gap-3 px-4 min-h-[52px] rounded-sm text-left transition-transform active:scale-[0.98]',
                     'bg-white border border-neutral-100 hover:border-neutral-300 hover:shadow-sm',
                   )}
                 >
-                  <span className={cn('flex items-center justify-center w-9 h-9 rounded-lg shrink-0', bt.color)}>
+                  <span className={cn('flex items-center justify-center w-9 h-9 rounded-sm shrink-0', bt.color)}>
                     {bt.icon}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -786,7 +786,7 @@ export function BlockEditor({ blocks, onChange, className }: BlockEditorProps) {
               <button
                 type="button"
                 onClick={() => setShowTypePicker(false)}
-                className="w-full flex items-center justify-center gap-1 min-h-[44px] rounded-xl text-sm text-neutral-500 hover:text-neutral-700 transition-colors"
+                className="w-full flex items-center justify-center gap-1 min-h-[44px] rounded-sm text-sm text-neutral-500 hover:text-neutral-700 transition-colors"
               >
                 <X size={14} />
                 Cancel
@@ -796,7 +796,7 @@ export function BlockEditor({ blocks, onChange, className }: BlockEditorProps) {
             <button
               type="button"
               onClick={() => setShowTypePicker(true)}
-              className="inline-flex items-center gap-1.5 px-4 min-h-[48px] rounded-xl border border-dashed border-neutral-300 text-sm font-semibold text-neutral-500 hover:border-neutral-400 hover:text-neutral-600 hover:bg-neutral-50 transition-transform active:scale-[0.98] w-full justify-center"
+              className="inline-flex items-center gap-1.5 px-4 min-h-[48px] rounded-sm border border-dashed border-neutral-300 text-sm font-semibold text-neutral-500 hover:border-neutral-400 hover:text-neutral-600 hover:bg-neutral-50 transition-transform active:scale-[0.98] w-full justify-center"
             >
               <Plus size={15} />
               Add Block

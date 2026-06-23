@@ -88,17 +88,17 @@ export default function LeaderEventsPage() {
         <div className="relative z-10 px-4 sm:px-6 lg:px-8 pt-14 space-y-6">
           <div className="flex flex-col items-center gap-2 pb-2">
             <div className="h-3 w-16 rounded-full bg-moss-200/40 animate-pulse" />
-            <div className="h-8 w-40 rounded-lg bg-moss-200/30 animate-pulse" />
+            <div className="h-8 w-40 rounded-sm bg-moss-200/30 animate-pulse" />
           </div>
           <div className="flex justify-center gap-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 w-24 rounded-2xl bg-white shadow-sm animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+              <div key={i} className="h-16 w-24 rounded-md bg-white shadow-sm animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
             ))}
           </div>
-          <div className="h-10 rounded-xl bg-white/80 shadow-sm animate-pulse" />
+          <div className="h-10 rounded-sm bg-white/80 shadow-sm animate-pulse" />
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 rounded-2xl bg-white shadow-sm animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
+              <div key={i} className="h-24 rounded-md bg-white shadow-sm animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
             ))}
           </div>
         </div>
@@ -169,7 +169,7 @@ export default function LeaderEventsPage() {
             { value: stats?.past ?? 0, label: 'Past', color: 'text-neutral-900' },
             { value: stats?.drafts ?? 0, label: 'Drafts', color: 'text-neutral-500' },
           ].map((s) => (
-            <div key={s.label} className="flex flex-col items-center rounded-2xl bg-white shadow-sm border border-neutral-100 px-5 py-3 min-w-[80px]">
+            <div key={s.label} className="flex flex-col items-center rounded-md bg-white shadow-sm border border-neutral-100 px-5 py-3 min-w-[80px]">
               <span className={cn('font-heading text-2xl font-extrabold tabular-nums', s.color)}>{s.value}</span>
               <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mt-0.5">{s.label}</span>
             </div>
@@ -178,14 +178,14 @@ export default function LeaderEventsPage() {
 
         {/* ── Filter bar ── */}
         <motion.div variants={rm ? undefined : fadeUp}>
-          <div className="flex gap-1 rounded-xl bg-white shadow-sm border border-neutral-100 p-1">
+          <div className="flex gap-1 rounded-sm bg-white shadow-sm border border-neutral-100 p-1">
             {FILTERS.map((f) => (
               <button
                 key={f.id}
                 type="button"
                 onClick={() => setFilter(f.id)}
                 className={cn(
-                  'flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer select-none whitespace-nowrap',
+                  'flex-1 px-3 py-2 rounded-sm text-xs font-semibold transition-colors duration-150 cursor-pointer select-none whitespace-nowrap',
                   filter === f.id
                     ? 'bg-moss-600 text-white shadow-sm'
                     : 'text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50',
@@ -211,9 +211,9 @@ export default function LeaderEventsPage() {
             initial="hidden"
             animate="visible"
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
-            className="flex flex-col items-center justify-center text-center py-16 rounded-2xl bg-white shadow-sm border border-neutral-100"
+            className="flex flex-col items-center justify-center text-center py-16 rounded-md bg-white shadow-sm border border-neutral-100"
           >
-            <div className="w-14 h-14 rounded-2xl bg-moss-50 flex items-center justify-center mb-4">
+            <div className="w-14 h-14 rounded-md bg-moss-50 flex items-center justify-center mb-4">
               <Search size={24} className="text-moss-400" />
             </div>
             <p className="font-heading text-base font-bold text-neutral-900 mb-1">
@@ -255,7 +255,7 @@ export default function LeaderEventsPage() {
                   <Link
                     to={`/events/${event.id}`}
                     className={cn(
-                      'flex items-start gap-3 p-3 rounded-2xl bg-white shadow-sm border hover:shadow-md active:scale-[0.99] transition-[border-color,transform] duration-200',
+                      'flex items-start gap-3 p-3 rounded-md bg-white shadow-sm border hover:shadow-md active:scale-[0.99] transition-[border-color,transform] duration-200',
                       lowAttendance ? 'border-warning-200' : 'border-neutral-100 hover:border-neutral-200',
                     )}
                   >
@@ -267,10 +267,10 @@ export default function LeaderEventsPage() {
                         alt=""
                         loading="lazy"
                         decoding="async"
-                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover shrink-0"
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-sm object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gradient-to-br from-moss-50 to-moss-100 flex items-center justify-center shrink-0">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-sm bg-moss-100 flex items-center justify-center shrink-0">
                         <CalendarDays size={28} className="text-moss-400" />
                       </div>
                     )}

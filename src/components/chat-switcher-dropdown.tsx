@@ -103,7 +103,7 @@ export function ChatSwitcherDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute right-0 top-full mt-2 z-50 w-60 max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-13rem-var(--safe-bottom,0px))] rounded-xl bg-white shadow-lg ring-1 ring-neutral-200/70 overflow-hidden"
+            className="absolute right-0 top-full mt-2 z-50 w-60 max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-13rem-var(--safe-bottom,0px))] rounded-sm bg-white shadow-sm ring-1 ring-neutral-200/70 overflow-hidden"
           >
             <div className="max-h-[inherit] overflow-y-auto py-1">
               {/* Collectives */}
@@ -133,7 +133,7 @@ export function ChatSwitcherDropdown({
                             {c.coverUrl ? (
                               <img src={c.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-400 to-secondary-600">
+                              <div className="flex h-full w-full items-center justify-center bg-secondary-600">
                                 <Leaf size={11} className="text-white" />
                               </div>
                             )}
@@ -191,7 +191,7 @@ export function ChatSwitcherDropdown({
                           : 'text-neutral-700 hover:bg-neutral-50',
                       )}
                     >
-                      <div className="h-6 w-6 rounded-md bg-gradient-to-br from-plum-400 to-plum-600 flex items-center justify-center shrink-0">
+                      <div className="h-6 w-6 rounded-md bg-plum-600 flex items-center justify-center shrink-0">
                         <Lock size={11} className="text-white" />
                       </div>
                       <span className="truncate">{ch.name}</span>
@@ -220,7 +220,7 @@ export function ChatSwitcherDropdown({
                           : 'text-neutral-700 hover:bg-neutral-50',
                       )}
                     >
-                      <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shrink-0">
+                      <div className="h-6 w-6 rounded-md bg-primary-600 flex items-center justify-center shrink-0">
                         <Tent size={11} className="text-white" />
                       </div>
                       <span className="truncate">{ch.name}</span>
@@ -249,7 +249,7 @@ export function ChatSwitcherDropdown({
                           : 'text-neutral-700 hover:bg-neutral-50',
                       )}
                     >
-                      <div className="h-6 w-6 rounded-md bg-gradient-to-br from-success-400 to-success-600 flex items-center justify-center shrink-0">
+                      <div className="h-6 w-6 rounded-md bg-success-600 flex items-center justify-center shrink-0">
                         <Car size={11} className="text-white" />
                       </div>
                       <span className="truncate">{ch.name}</span>
@@ -284,7 +284,7 @@ export function ChatSwitcherDropdown({
                           {c.coverUrl ? (
                             <img src={c.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-400 to-secondary-600">
+                            <div className="flex h-full w-full items-center justify-center bg-secondary-600">
                               <Leaf size={11} className="text-white" />
                             </div>
                           )}

@@ -67,7 +67,7 @@ export default function AdminMerchPage() {
     <motion.div variants={stagger} initial="hidden" animate="visible" className="min-h-full">
       {/* Hero - brand sage gradient, no decorative circles
           (2026-05-16 Tate: standardise heroes to plain sage gradients). */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-moss-700 via-primary-800 to-primary-900">
+      <div className="relative overflow-hidden bg-primary-800">
 
         <div
           className="relative z-10 px-4 sm:px-6 lg:px-8 pt-10 pb-14 text-center"
@@ -77,7 +77,7 @@ export default function AdminMerchPage() {
             initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 mb-4"
+            className="inline-flex items-center justify-center w-14 h-14 rounded-md bg-white/15 mb-4"
           >
             <Store size={28} className="text-white" />
           </motion.div>

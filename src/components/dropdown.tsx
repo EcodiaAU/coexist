@@ -257,7 +257,7 @@ export function Dropdown({
             }}
             tabIndex={0}
             className={cn(
-              'flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl mx-1.5',
+              'flex items-center justify-between gap-3 px-4 py-2.5 rounded-sm mx-1.5',
               'cursor-pointer select-none',
               'transition-colors duration-100',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-400',
@@ -326,7 +326,7 @@ export function Dropdown({
                       }
                     }}
                     className={cn(
-                      'bg-white rounded-2xl shadow-xl border border-neutral-100',
+                      'bg-white rounded-md shadow-sm border border-neutral-100',
                       'max-h-60 overflow-y-auto',
                       'py-1.5',
                     )}
@@ -344,7 +344,7 @@ export function Dropdown({
                   <div
                     data-scroll-hint
                     className={cn(
-                      'absolute bottom-0 left-0 right-0 h-10 rounded-b-2xl',
+                      'absolute bottom-0 left-0 right-0 h-10 rounded-b-md',
                       'bg-gradient-to-t from-primary-200/80 via-primary-100/50 to-transparent',
                       'pointer-events-none transition-opacity duration-200',
                     )}

@@ -27,17 +27,17 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item._key })
   const style = { transform: CSS.Transform.toString(transform), transition }
   return (
-    <div ref={setNodeRef} style={style} className={cn('group flex items-center gap-3 rounded-2xl bg-white p-3.5 shadow-sm transition-shadow', isDragging && 'shadow-sm ring-2 ring-neutral-300/50 z-10')}>
+    <div ref={setNodeRef} style={style} className={cn('group flex items-center gap-3 rounded-md bg-white p-3.5 shadow-sm transition-shadow', isDragging && 'shadow-sm ring-2 ring-neutral-300/50 z-10')}>
       <button type="button" className="cursor-grab touch-none text-neutral-300 hover:text-neutral-500 active:cursor-grabbing" {...attributes} {...listeners}><GripVertical size={18} /></button>
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-bold text-neutral-900 truncate">{item.module.title}</p>
         <span className="flex items-center gap-0.5 text-[11px] text-neutral-400"><Clock size={10} />{item.module.estimated_minutes}m</span>
       </div>
-      <button type="button" onClick={onToggleRequired} className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors', item.is_required ? 'bg-moss-100 text-moss-700' : 'bg-neutral-50 text-neutral-400')}>
+      <button type="button" onClick={onToggleRequired} className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-bold transition-colors', item.is_required ? 'bg-moss-100 text-moss-700' : 'bg-neutral-50 text-neutral-400')}>
         {item.is_required && <Check size={10} />}
         {item.is_required ? 'Required' : 'Optional'}
       </button>
-      <button type="button" onClick={onRemove} className="flex items-center justify-center w-9 h-9 rounded-xl text-error-400 hover:text-error-600 hover:bg-error-50 transition-[transform,opacity] sm:opacity-0 sm:group-hover:opacity-100"><Trash2 size={16} /></button>
+      <button type="button" onClick={onRemove} className="flex items-center justify-center w-9 h-9 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-[transform,opacity] sm:opacity-0 sm:group-hover:opacity-100"><Trash2 size={16} /></button>
     </div>
   )
 }
@@ -87,13 +87,13 @@ export default function AdminEditSectionPage() {
     } catch { toast.error('Failed to update section') }
   }, [sectionId, title, description, category, thumbnailUrl, prerequisiteId, moduleItems, updateSection, saveSectionModules, toast, navigate])
 
-  if (sectionLoading || smLoading) return <div className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton className="h-10 w-32 rounded-xl" /><Skeleton className="h-48 rounded-2xl" /><Skeleton className="h-32 rounded-2xl" /></div>
+  if (sectionLoading || smLoading) return <div className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton className="h-10 w-32 rounded-sm" /><Skeleton className="h-48 rounded-md" /><Skeleton className="h-32 rounded-md" /></div>
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">
-      <motion.div variants={fadeUp} className="rounded-2xl bg-white shadow-sm p-5 sm:p-6 space-y-4">
+      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6 space-y-4">
         <div className="flex items-center gap-2.5 mb-1">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-secondary-500 to-secondary-700 shadow-lg shadow-secondary-600/20"><Layers size={16} className="text-white" /></div>
+          <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-secondary-700 shadow-sm"><Layers size={16} className="text-white" /></div>
           <h2 className="font-heading text-base font-bold text-neutral-900">Section Details</h2>
         </div>
         <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -111,9 +111,9 @@ export default function AdminEditSectionPage() {
           <Button variant="secondary" size="sm" icon={<Plus size={14} />} onClick={() => setShowPicker(!showPicker)}>Add</Button>
         </div>
         {showPicker && (
-          <div className="rounded-2xl bg-white shadow-sm p-4 mb-4 max-h-60 overflow-y-auto space-y-1.5">
+          <div className="rounded-md bg-white shadow-sm p-4 mb-4 max-h-60 overflow-y-auto space-y-1.5">
             {allModules.filter((m) => m.status === 'published' && !selectedIds.has(m.id)).map((m) => (
-              <button key={m.id} type="button" onClick={() => setModuleItems((prev) => [...prev, { _key: `sm-${Date.now()}-${m.id}`, module: m, is_required: true }])} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-neutral-50 text-left transition-colors">
+              <button key={m.id} type="button" onClick={() => setModuleItems((prev) => [...prev, { _key: `sm-${Date.now()}-${m.id}`, module: m, is_required: true }])} className="w-full flex items-center gap-3 p-2.5 rounded-sm hover:bg-neutral-50 text-left transition-colors">
                 <span className="text-[13px] text-neutral-900 truncate flex-1 font-semibold">{m.title}</span><Plus size={14} className="text-neutral-400" />
               </button>
             ))}

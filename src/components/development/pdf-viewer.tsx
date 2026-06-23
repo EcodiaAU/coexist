@@ -42,7 +42,7 @@ export function PdfViewer({ url, fileName, fileSizeBytes, className }: PdfViewer
   const canPreview = type === 'pdf'
 
   return (
-    <div className={cn('rounded-xl overflow-hidden border border-neutral-200', className)}>
+    <div className={cn('rounded-sm overflow-hidden border border-neutral-200', className)}>
       {/* Inline viewer for PDFs */}
       {canPreview && (
         <div className="w-full aspect-[3/4] max-h-[600px] bg-primary-50">
@@ -56,8 +56,8 @@ export function PdfViewer({ url, fileName, fileSizeBytes, className }: PdfViewer
 
       {/* Presentation/doc  show a branded card with download */}
       {!canPreview && (
-        <div className="flex flex-col items-center justify-center py-10 px-6 bg-gradient-to-br from-bark-50 to-primary-50">
-          <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-sm mb-3">
+        <div className="flex flex-col items-center justify-center py-10 px-6 bg-primary-50">
+          <div className="flex items-center justify-center w-16 h-16 rounded-md bg-white shadow-sm mb-3">
             {fileIcon(type)}
           </div>
           <p className="text-xs font-medium text-bark-500 mb-1">{fileLabel(type)}</p>
@@ -72,7 +72,7 @@ export function PdfViewer({ url, fileName, fileSizeBytes, className }: PdfViewer
 
       {/* File info bar */}
       <div className="flex items-center gap-3 px-4 py-3 bg-white border-t border-neutral-100">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-bark-100 shrink-0">
+        <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-bark-100 shrink-0">
           {fileIcon(type)}
         </div>
         <div className="flex-1 min-w-0">
@@ -88,7 +88,7 @@ export function PdfViewer({ url, fileName, fileSizeBytes, className }: PdfViewer
           target="_blank"
           rel="noopener noreferrer"
           download={fileName ?? undefined}
-          className="inline-flex items-center gap-1.5 px-3.5 min-h-[36px] rounded-lg bg-primary-100 text-primary-700 text-xs font-semibold hover:bg-primary-200 transition-colors active:scale-[0.97]"
+          className="inline-flex items-center gap-1.5 px-3.5 min-h-[36px] rounded-sm bg-primary-100 text-primary-700 text-xs font-semibold hover:bg-primary-200 transition-colors active:scale-[0.97]"
         >
           <ExternalLink size={12} />
           {canPreview ? 'Open' : 'Download'}

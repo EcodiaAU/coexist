@@ -101,8 +101,8 @@ function CategoryPills({
           type="button"
           onClick={() => onChange(CATEGORY_ALL)}
           className={cn(
-            'shrink-0 snap-start px-4 h-10 rounded-2xl text-sm font-semibold transition-transform duration-200 select-none cursor-pointer',
-            'flex items-center gap-1.5 active:scale-[0.96]',
+            'shrink-0 snap-start px-4 h-10 rounded-md text-sm font-semibold transition-transform duration-200 select-none cursor-pointer',
+            'flex items-center gap-1.5 active:scale-[0.98]',
             active === CATEGORY_ALL
               ? 'bg-neutral-900 text-white shadow-sm'
               : 'bg-white text-neutral-600 hover:bg-neutral-50 border border-neutral-100 shadow-sm',
@@ -117,8 +117,8 @@ function CategoryPills({
             type="button"
             onClick={() => onChange(cat)}
             className={cn(
-              'shrink-0 snap-start px-4 h-10 rounded-2xl text-sm font-semibold capitalize transition-transform duration-200 select-none cursor-pointer whitespace-nowrap',
-              'flex items-center gap-1.5 active:scale-[0.96]',
+              'shrink-0 snap-start px-4 h-10 rounded-md text-sm font-semibold capitalize transition-transform duration-200 select-none cursor-pointer whitespace-nowrap',
+              'flex items-center gap-1.5 active:scale-[0.98]',
               active === cat
                 ? 'bg-neutral-900 text-white shadow-sm'
                 : 'bg-white text-neutral-600 hover:bg-neutral-50 border border-neutral-100 shadow-sm',
@@ -231,7 +231,7 @@ function ProductCard({ product, onClick, index: _index }: { product: Product; on
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() }
       }}
     >
-      <div className="relative rounded-2xl overflow-hidden shadow-sm transition-colors duration-200">
+      <div className="relative rounded-md overflow-hidden shadow-sm transition-colors duration-200">
         {/* Full-bleed image with overlay */}
         <div className="relative aspect-[4/5] overflow-hidden">
           <img
@@ -253,13 +253,13 @@ function ProductCard({ product, onClick, index: _index }: { product: Product; on
           )}
 
           {lowStock && inStock && (
-            <span className="absolute top-3 right-3 px-2.5 py-1 bg-amber-500 text-white text-[11px] font-bold rounded-xl uppercase tracking-wider">
+            <span className="absolute top-3 right-3 px-2.5 py-1 bg-bark-500 text-white text-[11px] font-bold rounded-sm uppercase tracking-wider">
               Low Stock
             </span>
           )}
 
           {inStock && isNewProduct(product.created_at) && (
-            <span className="absolute top-3 left-3 px-2.5 py-1 bg-white text-neutral-900 text-[11px] font-bold rounded-xl uppercase tracking-wider">
+            <span className="absolute top-3 left-3 px-2.5 py-1 bg-white text-neutral-900 text-[11px] font-bold rounded-sm uppercase tracking-wider">
               New
             </span>
           )}
@@ -303,7 +303,7 @@ function FeaturedProduct({ product, onClick }: { product: Product; onClick: () =
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() }
       }}
     >
-      <div className="relative rounded-3xl overflow-hidden bg-white border border-neutral-100 shadow-sm">
+      <div className="relative rounded-md overflow-hidden bg-white border border-neutral-100 shadow-sm">
         <div className="relative aspect-[16/9] sm:aspect-[2/1] overflow-hidden">
           <img
             src={product.images[0] ?? '/img/placeholder-merch.jpg'}
@@ -382,21 +382,21 @@ function ShopSkeleton() {
       </div>
       {/* Search + pills skeleton */}
       <div className="space-y-3 px-5 lg:px-6">
-        <Skeleton className="w-full h-12 rounded-2xl" />
+        <Skeleton className="w-full h-12 rounded-md" />
         <div className="flex gap-2">
-          <Skeleton className="w-18 h-10 rounded-2xl" />
-          <Skeleton className="w-22 h-10 rounded-2xl" />
-          <Skeleton className="w-26 h-10 rounded-2xl" />
+          <Skeleton className="w-18 h-10 rounded-md" />
+          <Skeleton className="w-22 h-10 rounded-md" />
+          <Skeleton className="w-26 h-10 rounded-md" />
         </div>
       </div>
       {/* Featured skeleton */}
       <div className="px-5 lg:px-6">
-        <Skeleton className="w-full h-[200px] rounded-3xl" />
+        <Skeleton className="w-full h-[200px] rounded-md" />
       </div>
       {/* Grid skeleton */}
       <div className="grid grid-cols-2 gap-3.5 px-5 lg:px-6">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-3xl overflow-hidden bg-white shadow-sm">
+          <div key={i} className="rounded-md overflow-hidden bg-white shadow-sm">
             <Skeleton className="h-1 w-full rounded-none" />
             <Skeleton className="aspect-[4/5] rounded-none" />
             <div className="p-3.5 space-y-2">
@@ -594,7 +594,7 @@ export default function ShopPage() {
           <button
             type="button"
             onClick={() => navigate('/shop/orders')}
-            className="fixed right-5 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white text-neutral-600 shadow-sm active:scale-[0.95] transition-transform cursor-pointer border border-neutral-100"
+            className="fixed right-5 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white text-neutral-600 shadow-sm active:scale-[0.98] transition-transform cursor-pointer border border-neutral-100"
             style={{ bottom: hasBottomTabs ? 'calc(9.5rem + var(--safe-bottom, 0px))' : 'calc(6rem + var(--safe-bottom, 0px))' }}
             aria-label="My orders"
           >
@@ -605,7 +605,7 @@ export default function ShopPage() {
           <button
             type="button"
             onClick={() => navigate('/shop/cart')}
-            className="fixed right-5 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-neutral-900 text-white shadow-sm active:scale-[0.95] transition-transform cursor-pointer"
+            className="fixed right-5 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-neutral-900 text-white shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
             style={{ bottom: hasBottomTabs ? 'calc(4.5rem + var(--safe-bottom, 0px))' : 'calc(1.5rem + var(--safe-bottom, 0px))' }}
             aria-label={`Cart (${cartCount} items)`}
           >

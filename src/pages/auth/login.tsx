@@ -124,7 +124,7 @@ export default function LoginPage() {
                 onClick={() => handleSocial('google')}
                 className={cn(
                   'flex-1 flex items-center justify-center gap-2.5',
-                  'h-[52px] rounded-2xl',
+                  'h-[52px] rounded-md',
                   'bg-white border-2 border-neutral-200 text-neutral-900',
                   'text-sm font-semibold',
                   'active:scale-[0.97] transition-all duration-200',
@@ -145,7 +145,7 @@ export default function LoginPage() {
                 onClick={() => handleSocial('apple')}
                 className={cn(
                   'flex-1 flex items-center justify-center gap-2.5',
-                  'h-[52px] rounded-2xl',
+                  'h-[52px] rounded-md',
                   'bg-white border-2 border-neutral-200 text-neutral-900',
                   'text-sm font-semibold',
                   'active:scale-[0.97] transition-all duration-200',
@@ -175,7 +175,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 required
-                inputClassName="bg-white border-2 border-neutral-200 text-neutral-900 focus:border-primary-500 rounded-xl"
+                inputClassName="bg-white border-2 border-neutral-200 text-neutral-900 focus:border-primary-500 rounded-sm"
               />
 
               <Input
@@ -185,7 +185,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
-                inputClassName="bg-white border-2 border-neutral-200 text-neutral-900 focus:border-primary-500 rounded-xl"
+                inputClassName="bg-white border-2 border-neutral-200 text-neutral-900 focus:border-primary-500 rounded-sm"
               />
 
               <div className="flex items-center justify-center gap-6 pt-1">
@@ -211,7 +211,7 @@ export default function LoginPage() {
               <motion.div
                 initial={rm ? false : { opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 px-4 py-3 bg-error-50 border border-error-100 rounded-xl text-sm text-error-600 text-center font-medium"
+                className="mt-4 px-4 py-3 bg-error-50 border border-error-100 rounded-sm text-sm text-error-600 text-center font-medium"
                 role="alert"
               >
                 {error}

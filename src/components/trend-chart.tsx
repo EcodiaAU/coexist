@@ -39,12 +39,12 @@ export function TrendChart({
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
-      className="group relative overflow-hidden rounded-2xl bg-white border border-neutral-100 shadow-sm transition-colors duration-200 p-5 sm:p-6"
+      className="group relative overflow-hidden rounded-md bg-white border border-neutral-100 shadow-sm transition-colors duration-200 p-5 sm:p-6"
     >
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-neutral-50 group-hover:bg-neutral-100 transition-colors duration-200">
+            <span className="flex items-center justify-center w-10 h-10 rounded-sm bg-neutral-50 group-hover:bg-neutral-100 transition-colors duration-200">
               {icon}
             </span>
             <div>
@@ -76,7 +76,7 @@ export function TrendChart({
                 {/* Bar track - relative with defined flex-1 height so % children work */}
                 <div className="relative w-full flex-1">
                   <motion.div
-                    className="absolute bottom-0 left-[15%] right-[15%] rounded-lg"
+                    className="absolute bottom-0 left-[15%] right-[15%] rounded-sm"
                     style={{
                       background: allZero
                         ? 'var(--color-neutral-200)'

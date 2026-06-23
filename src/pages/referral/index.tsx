@@ -122,7 +122,7 @@ export default function ReferralPage() {
           {/* Hero */}
           <motion.div
             variants={fadeUp}
-            className="mt-4 rounded-2xl bg-white border border-neutral-100 shadow-sm p-5 text-center"
+            className="mt-4 rounded-md bg-white border border-neutral-100 shadow-sm p-5 text-center"
           >
             <div className="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center mx-auto mb-3">
               <Gift size={28} className="text-primary-600" />
@@ -145,14 +145,14 @@ export default function ReferralPage() {
             </h3>
             {code ? (
               <div className="flex items-center gap-2">
-                <div className="flex-1 rounded-xl bg-white border border-neutral-100 px-4 py-3 text-center font-heading text-lg font-bold text-neutral-900 tracking-wider select-all shadow-sm">
+                <div className="flex-1 rounded-sm bg-white border border-neutral-100 px-4 py-3 text-center font-heading text-lg font-bold text-neutral-900 tracking-wider select-all shadow-sm">
                   {code}
                 </div>
                 <button
                   type="button"
                   onClick={handleCopy}
                   className={cn(
-                    'flex items-center justify-center min-h-11 min-w-11 rounded-xl active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none shadow-sm',
+                    'flex items-center justify-center min-h-11 min-w-11 rounded-sm active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none shadow-sm',
                     copied
                       ? 'bg-success-100/80 border border-success-200/40 text-success-600'
                       : 'bg-white border border-neutral-100 text-neutral-600 hover:bg-neutral-50',

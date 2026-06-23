@@ -65,7 +65,7 @@ export function CreatePollSheet({ open, onClose, onSubmit, loading }: CreatePoll
       <div className="pb-4">
         {/* Header */}
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-primary-100 text-primary-600">
             <BarChart3 size={20} />
           </div>
           <div>
@@ -108,7 +108,7 @@ export function CreatePollSheet({ open, onClose, onSubmit, loading }: CreatePoll
                   <button
                     type="button"
                     onClick={() => removeOption(i)}
-                    className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-error-400 hover:bg-error-50 active:scale-[0.95] transition-transform duration-150 cursor-pointer select-none"
+                    className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-error-400 hover:bg-error-50 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                     aria-label={`Remove option ${i + 1}`}
                   >
                     <Trash2 size={16} />

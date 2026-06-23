@@ -133,7 +133,7 @@ export function MessageActionsSheet({
                 under every message bubble. Tapping toggles + closes. */}
             {onReact && (
               <div
-                className="mx-1 mb-2 flex items-center justify-around rounded-2xl bg-neutral-50 px-2 py-2 ring-1 ring-neutral-100"
+                className="mx-1 mb-2 flex items-center justify-around rounded-md bg-neutral-50 px-2 py-2 ring-1 ring-neutral-100"
                 role="group"
                 aria-label="React with emoji"
               >
@@ -173,7 +173,7 @@ export function MessageActionsSheet({
             <button
               type="button"
               onClick={onReply}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+              className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
             >
               <Reply size={18} className="text-neutral-400" />
               Reply
@@ -183,7 +183,7 @@ export function MessageActionsSheet({
               <button
                 type="button"
                 onClick={onEdit}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+                className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
                 <Pencil size={18} className="text-neutral-400" />
                 Edit message
@@ -194,7 +194,7 @@ export function MessageActionsSheet({
               <button
                 type="button"
                 onClick={onPin}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+                className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
                 <Pin size={18} className="text-neutral-400" />
                 {message.is_pinned ? 'Unpin message' : 'Pin message'}
@@ -205,7 +205,7 @@ export function MessageActionsSheet({
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+                className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
                 <Trash2 size={18} />
                 Delete message
@@ -221,7 +221,7 @@ export function MessageActionsSheet({
                   <button
                     type="button"
                     onClick={onReport}
-                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-warning-700 hover:bg-warning-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+                    className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-warning-700 hover:bg-warning-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                   >
                     <Flag size={18} />
                     Report message
@@ -232,7 +232,7 @@ export function MessageActionsSheet({
                   <button
                     type="button"
                     onClick={onBlockUser}
-                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+                    className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                   >
                     <ShieldOff size={18} />
                     Block user

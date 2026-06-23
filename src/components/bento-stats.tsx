@@ -72,8 +72,8 @@ export function BentoStatCard({
         // without needing a border (2026-05-16 Tate feedback: no borders
         // on the leader/admin stat cards).
         compact
-          ? 'rounded-2xl bg-primary-50/70'
-          : 'rounded-3xl bg-neutral-50',
+          ? 'rounded-md bg-primary-50/70'
+          : 'rounded-md bg-neutral-50',
         hero
           ? compact
             ? 'p-3 sm:p-4'
@@ -89,7 +89,7 @@ export function BentoStatCard({
       <div className={cn('flex items-start justify-between', compact ? 'mb-1.5' : 'mb-3')}>
         <span
           className={cn(
-            'inline-flex items-center justify-center rounded-lg',
+            'inline-flex items-center justify-center rounded-sm',
             compact
               ? 'bg-white/80 text-primary-700'
               : 'bg-neutral-100 text-neutral-700',

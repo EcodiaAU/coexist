@@ -212,7 +212,7 @@ export default function DataDeletionPage() {
             {step === 'info' && (
               <>
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="text-center space-y-3">
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center">
+                  <div className="mx-auto w-14 h-14 rounded-md bg-primary-100 flex items-center justify-center">
                     <Database size={28} className="text-primary-700" />
                   </div>
                   <h2 className="font-heading text-2xl font-bold text-neutral-900">Delete Your Data</h2>
@@ -221,7 +221,7 @@ export default function DataDeletionPage() {
                   </p>
                 </motion.div>
 
-                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 p-5 space-y-4">
+                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-md shadow-sm border border-neutral-100 p-5 space-y-4">
                   <h3 className="font-heading font-semibold text-neutral-900">How it works</h3>
                   <ul className="space-y-3 text-sm text-neutral-600">
                     <li className="flex gap-3">
@@ -263,7 +263,7 @@ export default function DataDeletionPage() {
             {step === 'login' && (
               <>
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="text-center space-y-3">
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center">
+                  <div className="mx-auto w-14 h-14 rounded-md bg-primary-100 flex items-center justify-center">
                     <Lock size={28} className="text-primary-700" />
                   </div>
                   <h2 className="font-heading text-2xl font-bold text-neutral-900">Confirm Your Identity</h2>
@@ -276,7 +276,7 @@ export default function DataDeletionPage() {
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="space-y-3">
                   <button
                     type="button"
-                    className="w-full h-12 rounded-xl border border-neutral-200 bg-white flex items-center justify-center gap-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50"
+                    className="w-full h-12 rounded-sm border border-neutral-200 bg-white flex items-center justify-center gap-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50"
                     onClick={() => handleOAuthLogin('google')}
                     disabled={loading}
                   >
@@ -290,7 +290,7 @@ export default function DataDeletionPage() {
                   </button>
                   <button
                     type="button"
-                    className="w-full h-12 rounded-xl border border-neutral-200 bg-black flex items-center justify-center gap-3 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                    className="w-full h-12 rounded-sm border border-neutral-200 bg-black flex items-center justify-center gap-3 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
                     onClick={() => handleOAuthLogin('apple')}
                     disabled={loading}
                   >
@@ -364,7 +364,7 @@ export default function DataDeletionPage() {
             {step === 'select' && (
               <>
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="text-center space-y-3">
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center">
+                  <div className="mx-auto w-14 h-14 rounded-md bg-primary-100 flex items-center justify-center">
                     <Database size={28} className="text-primary-700" />
                   </div>
                   <h2 className="font-heading text-2xl font-bold text-neutral-900">Choose Data to Delete</h2>
@@ -377,7 +377,7 @@ export default function DataDeletionPage() {
                   {/* Select all */}
                   <button
                     type="button"
-                    className="w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-sm bg-neutral-50 hover:bg-neutral-100 transition-colors"
                     onClick={toggleAll}
                   >
                     <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${allSelected ? 'bg-primary-700 border-primary-700' : 'border-primary-300 bg-white'}`}>
@@ -387,7 +387,7 @@ export default function DataDeletionPage() {
                   </button>
 
                   {/* Category list */}
-                  <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden divide-y divide-neutral-100">
+                  <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden divide-y divide-neutral-100">
                     {DATA_CATEGORIES.map((cat) => {
                       const isSelected = selected.has(cat.id)
                       return (
@@ -400,7 +400,7 @@ export default function DataDeletionPage() {
                           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'bg-primary-700 border-primary-700' : 'border-primary-300 bg-white'}`}>
                             {isSelected && <CheckCircle size={14} className="text-white" />}
                           </div>
-                          <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-sm bg-primary-50 flex items-center justify-center shrink-0">
                             <span className="text-primary-500">{cat.icon}</span>
                           </div>
                           <div className="flex-1 min-w-0">
@@ -447,7 +447,7 @@ export default function DataDeletionPage() {
             {step === 'done' && (
               <>
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="text-center space-y-3">
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center">
+                  <div className="mx-auto w-14 h-14 rounded-md bg-primary-100 flex items-center justify-center">
                     <CheckCircle size={28} className="text-primary-700" />
                   </div>
                   <h2 className="font-heading text-2xl font-bold text-neutral-900">Data Deleted</h2>
@@ -456,7 +456,7 @@ export default function DataDeletionPage() {
                   </p>
                 </motion.div>
 
-                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 p-5 space-y-3">
+                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-md shadow-sm border border-neutral-100 p-5 space-y-3">
                   <h3 className="font-heading font-semibold text-neutral-900">What was deleted</h3>
                   <ul className="space-y-1.5 text-sm text-neutral-600">
                     {deletedCategories.map((cat) => (
@@ -468,7 +468,7 @@ export default function DataDeletionPage() {
                   </ul>
                 </motion.div>
 
-                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 p-5 space-y-3">
+                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-md shadow-sm border border-neutral-100 p-5 space-y-3">
                   <h3 className="font-heading font-semibold text-neutral-900">What was retained</h3>
                   <ul className="space-y-1.5 text-sm text-neutral-600">
                     <li className="flex items-center gap-2">

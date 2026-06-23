@@ -85,7 +85,7 @@ export default function DonorWallPage() {
                 key={donor.id}
                 variants={fadeUp}
                 className={cn(
-                  'flex items-center gap-3 p-3 rounded-xl',
+                  'flex items-center gap-3 p-3 rounded-sm',
                   'bg-white border border-neutral-100 shadow-sm',
                 )}
               >

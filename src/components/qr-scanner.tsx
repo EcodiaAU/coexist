@@ -76,12 +76,12 @@ function WebQrScanner({ onScan, onError }: { onScan: (value: string) => void; on
   }, [cameraReady, onScan])
 
   return (
-    <div className="relative w-full aspect-square max-w-[280px] mx-auto rounded-2xl overflow-hidden bg-black">
+    <div className="relative w-full aspect-square max-w-[280px] mx-auto rounded-md overflow-hidden bg-black">
       <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" muted playsInline />
       <canvas ref={canvasRef} className="hidden" />
       {/* Scan overlay */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-[70%] aspect-square border-2 border-white/60 rounded-xl relative">
+        <div className="w-[70%] aspect-square border-2 border-white/60 rounded-sm relative">
           <motion.div
             className="absolute left-2 right-2 h-0.5 bg-primary-400 rounded-full"
             animate={{ top: ['10%', '90%', '10%'] }}
@@ -224,7 +224,7 @@ export function QrScanner({
   if (isNative) {
     // Native: Capacitor handles the camera overlay
     return (
-      <div className="relative w-52 h-52 rounded-2xl bg-neutral-50 shadow-sm flex items-center justify-center mb-5">
+      <div className="relative w-52 h-52 rounded-md bg-neutral-50 shadow-sm flex items-center justify-center mb-5">
         <Camera size={44} className="text-primary-300" />
         <motion.div
           className="absolute left-4 right-4 h-0.5 bg-primary-500 rounded-full"

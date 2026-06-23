@@ -91,7 +91,7 @@ export function StatCard({
       }
       aria-label={ariaLabel ?? `${label}: ${value}`}
       className={cn(
-        'rounded-2xl bg-white shadow-sm border border-neutral-100',
+        'rounded-md bg-white shadow-sm border border-neutral-100',
         compact ? 'p-3' : 'p-4',
         className,
       )}
@@ -112,7 +112,7 @@ export function StatCard({
         {icon && (
           <span
             className={cn(
-              'flex items-center justify-center shrink-0 rounded-xl',
+              'flex items-center justify-center shrink-0 rounded-sm',
               compact ? 'w-7 h-7' : 'w-10 h-10 ml-3',
               accent ?? 'bg-primary-50 text-primary-600',
             )}

@@ -318,7 +318,7 @@ export default function AdminPartnersPage() {
                 <StaggeredItem
                   key={org.id}
                   className={cn(
-                    'flex items-center gap-3 p-4 rounded-xl bg-white shadow-sm',
+                    'flex items-center gap-3 p-4 rounded-sm bg-white shadow-sm',
                     String(org.id).startsWith('temp-') && 'opacity-60',
                   )}
                 >
@@ -326,10 +326,10 @@ export default function AdminPartnersPage() {
                     <img
                       src={org.logo_url}
                       alt=""
-                      className="w-10 h-10 rounded-lg object-contain bg-white shrink-0"
+                      className="w-10 h-10 rounded-sm object-contain bg-white shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg bg-neutral-50 shadow-sm flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-sm bg-neutral-50 shadow-sm flex items-center justify-center shrink-0">
                       <Building2 size={18} className="text-neutral-400" />
                     </div>
                   )}
@@ -362,7 +362,7 @@ export default function AdminPartnersPage() {
                   <button
                     type="button"
                     onClick={() => setDeleteTarget({ id: org.id, type: 'org' })}
-                    className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-lg text-neutral-400 hover:bg-error-50 hover:text-error-600 cursor-pointer"
+                    className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 cursor-pointer"
                     aria-label={`Delete ${org.name}`}
                   >
                     <Trash2 size={16} />
@@ -403,7 +403,7 @@ export default function AdminPartnersPage() {
                 <StaggeredItem
                   key={offer.id}
                   className={cn(
-                    'p-4 rounded-xl bg-white shadow-sm',
+                    'p-4 rounded-sm bg-white shadow-sm',
                     String(offer.id).startsWith('temp-') && 'opacity-60',
                   )}
                 >
@@ -448,7 +448,7 @@ export default function AdminPartnersPage() {
       {/* Corporate Programs tab */}
       {activeTab === 'corporate' && (
         <div className="space-y-4">
-          <div className="p-6 rounded-xl bg-white border border-neutral-100 shadow-sm">
+          <div className="p-6 rounded-sm bg-white border border-neutral-100 shadow-sm">
             <h3 className="font-heading text-base font-semibold text-neutral-900 mb-2">
               Corporate Volunteer Programs
             </h3>
@@ -457,21 +457,21 @@ export default function AdminPartnersPage() {
               sponsored challenges.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-3 rounded-lg bg-white/70">
+              <div className="p-3 rounded-sm bg-white/70">
                 <Handshake size={18} className="text-neutral-400 mb-1" />
                 <p className="text-sm font-medium text-neutral-900">Corporate Events</p>
                 <p className="text-xs text-neutral-400">
                   Tag events with corporate partners for separate tracking
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-white/70">
+              <div className="p-3 rounded-sm bg-white/70">
                 <Receipt size={18} className="text-neutral-400 mb-1" />
                 <p className="text-sm font-medium text-neutral-900">Invoice Generation</p>
                 <p className="text-xs text-neutral-400">
                   Generate branded invoices for corporate sponsors
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-white/70">
+              <div className="p-3 rounded-sm bg-white/70">
                 <Trophy size={18} className="text-neutral-400 mb-1" />
                 <p className="text-sm font-medium text-neutral-900">Sponsored Challenges</p>
                 <p className="text-xs text-neutral-400">
@@ -490,7 +490,7 @@ export default function AdminPartnersPage() {
           <h2 className="font-heading text-lg font-semibold text-neutral-900">Add Organisation</h2>
           <button
             onClick={() => setShowCreateOrg(false)}
-            className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.93] transition-[colors,transform] duration-150 cursor-pointer"
+            className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
             aria-label="Close"
           >
             <X size={20} />
@@ -559,7 +559,7 @@ export default function AdminPartnersPage() {
           <h2 className="font-heading text-lg font-semibold text-neutral-900">Add Partner Offer</h2>
           <button
             onClick={() => setShowCreateOffer(false)}
-            className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.93] transition-[colors,transform] duration-150 cursor-pointer"
+            className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
             aria-label="Close"
           >
             <X size={20} />

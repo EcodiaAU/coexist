@@ -116,14 +116,14 @@ const ICON_TO_COLOR: Record<string, HeroStatColor> = {
 
 /** Map metric icon keys to bar chart gradient classes */
 const ICON_TO_BAR: Record<string, string> = {
-  tree: 'from-moss-400 to-moss-500', leaf: 'from-sprout-400 to-sprout-500',
-  weed: 'from-sprout-400 to-sprout-500', trash: 'from-bark-400 to-bark-500',
-  wave: 'from-info-400 to-info-500', eye: 'from-warning-400 to-warning-500',
-  area: 'from-plum-400 to-plum-500', clock: 'from-bark-400 to-bark-500',
-  sparkle: 'from-warning-400 to-warning-500', droplet: 'from-info-400 to-info-500',
-  mountain: 'from-bark-400 to-bark-500', flower: 'from-primary-400 to-primary-500',
-  bug: 'from-moss-400 to-moss-500', flame: 'from-coral-400 to-coral-500',
-  fish: 'from-info-400 to-info-500', wind: 'from-primary-400 to-primary-500',
+  tree: 'bg-moss-500', leaf: 'bg-sprout-500',
+  weed: 'bg-sprout-500', trash: 'bg-bark-500',
+  wave: 'bg-info-500', eye: 'bg-warning-500',
+  area: 'bg-plum-500', clock: 'bg-bark-500',
+  sparkle: 'bg-warning-500', droplet: 'bg-info-500',
+  mountain: 'bg-bark-500', flower: 'bg-primary-500',
+  bug: 'bg-moss-500', flame: 'bg-coral-500',
+  fish: 'bg-info-500', wind: 'bg-primary-500',
 }
 
 /* ------------------------------------------------------------------ */
@@ -265,19 +265,19 @@ function YoYChart({ data, defs, rm }: { data: YearSummary[]; defs: ImpactMetricD
   const topMetrics = metricTotals.slice(0, 3)
 
   const bars: { key: string; label: string; color: string; unit: string; getValue: (y: YearSummary) => number }[] = [
-    { key: '_attendees', label: 'Attendees', color: 'from-warning-400 to-warning-500', unit: '', getValue: (y) => y.attendees },
+    { key: '_attendees', label: 'Attendees', color: 'bg-warning-500', unit: '', getValue: (y) => y.attendees },
     ...topMetrics.map((m) => ({
       key: m.def.key,
       label: m.def.label,
-      color: ICON_TO_BAR[m.def.icon] ?? 'from-primary-400 to-primary-500',
+      color: ICON_TO_BAR[m.def.icon] ?? 'bg-primary-500',
       unit: m.def.unit,
       getValue: (y: YearSummary) => y.metrics[m.def.key] ?? 0,
     })),
-    { key: '_hours', label: 'Est. Vol Hours', color: 'from-bark-400 to-bark-500', unit: '', getValue: (y) => y.estimatedHours },
+    { key: '_hours', label: 'Est. Vol Hours', color: 'bg-bark-500', unit: '', getValue: (y) => y.estimatedHours },
   ]
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 p-5">
+    <div className="rounded-md bg-white shadow-sm border border-neutral-100 p-5">
       <h3 className="font-heading text-sm font-semibold text-neutral-900 mb-5">
         Year-over-Year Impact
       </h3>
@@ -295,7 +295,7 @@ function YoYChart({ data, defs, rm }: { data: YearSummary[]; defs: ImpactMetricD
                     <div className="w-20 text-[10px] text-neutral-400 text-right truncate">{bar.label}</div>
                     <div className="flex-1 h-3.5 bg-neutral-50 rounded-full overflow-hidden">
                       <motion.div
-                        className={cn('h-full rounded-full bg-gradient-to-r', bar.color)}
+                        className={cn('h-full rounded-full', bar.color)}
                         initial={rm ? { width: `${(val / max) * 100}%` } : { width: 0 }}
                         animate={{ width: `${Math.max((val / max) * 100, val > 0 ? 2 : 0)}%` }}
                         transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -327,7 +327,7 @@ function DataQualityPanel() {
   const legacyPct = total > 0 ? Math.round((data.legacyCount / total) * 100) : 0
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 p-5">
+    <div className="rounded-md bg-white shadow-sm border border-neutral-100 p-5">
       <h3 className="flex items-center gap-2 font-heading text-sm font-semibold text-neutral-900 mb-4">
         <Database size={16} className="text-neutral-400" />
         Data Quality
@@ -341,11 +341,11 @@ function DataQualityPanel() {
 
           <div className="flex h-3 rounded-full overflow-hidden bg-neutral-50">
             <div
-              className="bg-gradient-to-r from-primary-400 to-primary-500 transition-all duration-500"
+              className="bg-primary-500 transition-all duration-500"
               style={{ width: `${legacyPct}%` }}
             />
             <div
-              className="bg-gradient-to-r from-sprout-400 to-sprout-500 transition-all duration-500"
+              className="bg-sprout-500 transition-all duration-500"
               style={{ width: `${100 - legacyPct}%` }}
             />
           </div>
@@ -362,7 +362,7 @@ function DataQualityPanel() {
         </div>
 
         {data.eventsWithoutImpact > 0 && (
-          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-warning-50 border border-warning-200/50">
+          <div className="flex items-start gap-2.5 p-3 rounded-sm bg-warning-50 border border-warning-200/50">
             <AlertTriangle size={14} className="text-warning-500 mt-0.5 shrink-0" />
             <div>
               <p className="text-xs font-semibold text-warning-700">
@@ -374,7 +374,7 @@ function DataQualityPanel() {
         )}
 
         {data.zeroMetricEvents > 0 && (
-          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-neutral-50 border border-neutral-100">
+          <div className="flex items-start gap-2.5 p-3 rounded-sm bg-neutral-50 border border-neutral-100">
             <Leaf size={14} className="text-neutral-400 mt-0.5 shrink-0" />
             <div>
               <p className="text-xs font-semibold text-neutral-600">
@@ -499,12 +499,12 @@ function DashboardTab() {
       <div className="py-8 space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-24 rounded-2xl bg-neutral-50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+            <div key={i} className="h-24 rounded-md bg-neutral-50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
           ))}
         </div>
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-12 rounded-xl bg-neutral-50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+            <div key={i} className="h-12 rounded-sm bg-neutral-50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
           ))}
         </div>
       </div>
@@ -530,12 +530,12 @@ function DashboardTab() {
       {driftStatus && (
         <motion.div variants={v.fadeUp}>
           {driftStatus.status === 'drift' ? (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-warning-50 border border-warning-200 text-warning-700 text-xs font-medium w-fit">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-warning-50 border border-warning-200 text-warning-700 text-xs font-medium w-fit">
               <AlertTriangle size={13} />
               Stats drift detected vs master sheet - check status board
             </div>
           ) : (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success-50 border border-success-200 text-success-700 text-xs font-medium w-fit">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-success-50 border border-success-200 text-success-700 text-xs font-medium w-fit">
               <Database size={13} />
               Stats synced with master sheet
               {driftStatus.run_at && (
@@ -579,7 +579,7 @@ function DashboardTab() {
       {sortedCollectives.length > 0 && (
         <motion.div variants={v.fadeUp}>
           <h2 className="font-heading text-[13px] font-bold text-neutral-700/60 uppercase tracking-widest mb-3">By Collective</h2>
-          <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+          <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -643,7 +643,7 @@ function DashboardTab() {
             <span className="text-xs text-neutral-500 font-medium">{sortedEvents.length} event{sortedEvents.length !== 1 ? 's' : ''}</span>
           )}
         </div>
-        <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+        <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

@@ -57,7 +57,7 @@ function MenuRow({
       className="flex items-center w-full min-h-[52px] px-4 py-3 text-left transition-colors duration-100 cursor-pointer hover:bg-surface-3 active:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-400"
       aria-label={label}
     >
-      <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mr-3 bg-neutral-100 text-neutral-500" aria-hidden="true">
+      <span className="flex items-center justify-center w-8 h-8 rounded-sm shrink-0 mr-3 bg-neutral-100 text-neutral-500" aria-hidden="true">
         {icon}
       </span>
       <span className="flex-1 min-w-0">
@@ -93,8 +93,8 @@ function BlockedUsersSheet({ open, onClose }: { open: boolean; onClose: () => vo
 
       {isLoading ? (
         <div className="space-y-3">
-          <Skeleton variant="text" className="h-12 rounded-lg" />
-          <Skeleton variant="text" className="h-12 rounded-lg" />
+          <Skeleton variant="text" className="h-12 rounded-sm" />
+          <Skeleton variant="text" className="h-12 rounded-sm" />
         </div>
       ) : !blockedUsers || blockedUsers.length === 0 ? (
         <p className="text-sm text-neutral-500 text-center py-6">
@@ -103,7 +103,7 @@ function BlockedUsersSheet({ open, onClose }: { open: boolean; onClose: () => vo
       ) : (
         <div className="space-y-2 max-h-[50vh] overflow-y-auto">
           {blockedUsers.map((block) => (
-            <div key={block.blocked_id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-neutral-50">
+            <div key={block.blocked_id} className="flex items-center justify-between px-3 py-2.5 rounded-sm bg-neutral-50">
               <span className="text-sm text-neutral-700 truncate flex-1">{block.blocked_id}</span>
               <button
                 type="button"
@@ -113,7 +113,7 @@ function BlockedUsersSheet({ open, onClose }: { open: boolean; onClose: () => vo
                     onError: () => toast.error('Failed to unblock'),
                   })
                 }}
-                className="text-xs font-medium text-neutral-500 hover:text-neutral-700 px-3 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer select-none"
+                className="text-xs font-medium text-neutral-500 hover:text-neutral-700 px-3 py-1.5 rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer select-none"
               >
                 Unblock
               </button>
@@ -219,7 +219,7 @@ export default function SettingsPrivacyPage() {
           {/* ---- Visibility ---- */}
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <SectionHeader label="Visibility" />
-            <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
+            <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden">
               <MenuRow
                 icon={<Eye size={18} />}
                 label="Profile Visibility"
@@ -268,7 +268,7 @@ export default function SettingsPrivacyPage() {
           {/* ---- Blocked Users ---- */}
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <SectionHeader label="Blocked Users" />
-            <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
+            <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden">
               <MenuRow
                 icon={<ShieldOff size={18} />}
                 label="Blocked Users"

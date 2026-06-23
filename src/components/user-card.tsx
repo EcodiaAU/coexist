@@ -32,7 +32,7 @@ function StatBox({
   label: string
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-surface-2 px-3 py-2.5">
+    <div className="flex flex-1 flex-col items-center gap-1 rounded-sm bg-surface-2 px-3 py-2.5">
       <span className="text-neutral-400" aria-hidden="true">
         {icon}
       </span>
@@ -78,7 +78,7 @@ export function UserCard({
         }
         transition={{ type: 'spring', stiffness: 400, damping: 28 }}
         className={cn(
-          'w-72 overflow-hidden rounded-2xl bg-surface-0 shadow-lg',
+          'w-72 overflow-hidden rounded-md bg-surface-0 shadow-sm',
           className,
         )}
       >

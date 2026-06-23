@@ -22,7 +22,7 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  leader: 'bg-amber-100 text-amber-700 border-amber-200',
+  leader: 'bg-bark-100 text-bark-700 border-bark-200',
   co_leader: 'bg-sky-100 text-sky-700 border-sky-200',
   assist_leader: 'bg-secondary-100 text-secondary-700 border-secondary-200',
   national_leader: 'bg-bark-100 text-bark-700 border-bark-200',
@@ -89,14 +89,14 @@ export function AudiencePicker({
               type="button"
               onClick={() => toggleRole(role.value)}
               className={cn(
-                'flex items-center gap-2.5 px-3.5 min-h-[48px] rounded-xl border-2 text-left transition-transform active:scale-[0.97]',
+                'flex items-center gap-2.5 px-3.5 min-h-[48px] rounded-sm border-2 text-left transition-transform active:scale-[0.97]',
                 isSelected
                   ? ROLE_COLORS[role.value]
                   : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300',
               )}
             >
               <span className={cn(
-                'flex items-center justify-center w-7 h-7 rounded-lg shrink-0',
+                'flex items-center justify-center w-7 h-7 rounded-sm shrink-0',
                 isSelected ? 'bg-white/60' : 'bg-primary-50',
               )}>
                 {ROLE_ICONS[role.value]}
@@ -121,7 +121,7 @@ export function AudiencePicker({
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-50 border border-neutral-100"
+          className="flex items-center gap-2 px-3 py-2 rounded-sm bg-neutral-50 border border-neutral-100"
         >
           <Users size={12} className="text-primary-500 shrink-0" />
           <p className="text-xs text-primary-600 flex-1">

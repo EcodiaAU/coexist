@@ -39,7 +39,7 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="rounded-2xl bg-sprout-50 border border-sprout-200/50 p-4 flex items-center gap-2.5"
+        className="rounded-md bg-sprout-50 border border-sprout-200/50 p-4 flex items-center gap-2.5"
       >
         <CheckCircle2 size={16} className="text-sprout-600 shrink-0" />
         <p className="text-sm font-medium text-sprout-800">
@@ -55,7 +55,7 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <div className="rounded-2xl bg-warning-50 border border-warning-200/50 p-4 space-y-3">
+      <div className="rounded-md bg-warning-50 border border-warning-200/50 p-4 space-y-3">
         <div className="flex items-center gap-2">
           <AlertTriangle size={16} className="text-warning-600 shrink-0" />
           <h3 className="text-sm font-semibold text-warning-800">
@@ -67,7 +67,7 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
         </p>
         <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
           {missingImpact!.map((e) => (
-            <div key={e.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/70">
+            <div key={e.id} className="flex items-center gap-3 px-3 py-2 rounded-sm bg-white/70">
               <Link
                 to={`/events/${e.id}/impact`}
                 className="flex-1 min-w-0 hover:opacity-80 active:scale-[0.99] transition-all"

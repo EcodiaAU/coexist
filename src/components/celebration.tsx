@@ -53,7 +53,7 @@ export function Celebration({
         <motion.div
           className={cn(
             'fixed inset-0 z-[100] flex flex-col items-center justify-center',
-            'bg-gradient-to-b from-primary-900/95 via-primary-800/95 to-primary-900/95',
+            'bg-primary-900',
             'text-white',
             className,
           )}

@@ -131,10 +131,10 @@ export default function LearnModulePage() {
     return (
       <Page noBackground className="!px-0 bg-white" stickyOverlay={<Header title="" back transparent onBack={() => navigate('/learn')} />}>
         <div className="max-w-3xl mx-auto space-y-6 pb-20 pt-20 px-5">
-          <Skeleton className="h-10 w-64 rounded-xl" />
+          <Skeleton className="h-10 w-64 rounded-sm" />
           <Skeleton className="h-3 rounded-full" />
-          <Skeleton className="h-64 rounded-2xl" />
-          <Skeleton className="h-48 rounded-2xl" />
+          <Skeleton className="h-64 rounded-md" />
+          <Skeleton className="h-48 rounded-md" />
         </div>
       </Page>
     )
@@ -144,7 +144,7 @@ export default function LearnModulePage() {
     return (
       <Page noBackground className="!px-0 bg-white" stickyOverlay={<Header title="" back transparent onBack={() => navigate('/learn')} />}>
         <div className="flex flex-col items-center justify-center py-32 px-5">
-          <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-neutral-100 mb-4">
+          <div className="flex items-center justify-center w-16 h-16 rounded-md bg-neutral-100 mb-4">
             <BookOpen size={28} strokeWidth={1.5} className="text-neutral-400" />
           </div>
           <p className="text-[15px] font-bold text-neutral-900">Module not found</p>
@@ -221,10 +221,10 @@ export default function LearnModulePage() {
               initial={rm ? {} : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-5 mb-8 -mt-2"
+              className="rounded-md bg-white border border-neutral-100 shadow-sm p-5 mb-8 -mt-2"
             >
               <div className="flex items-center gap-2 mb-2">
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary-50">
+                <div className="flex items-center justify-center w-7 h-7 rounded-sm bg-primary-50">
                   <BookOpen size={13} className="text-primary-600" />
                 </div>
                 <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">About this module</span>
@@ -243,7 +243,7 @@ export default function LearnModulePage() {
                 initial={rm ? {} : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, delay: rm ? 0 : Math.min(i * 0.05, 0.4) }}
-                className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-5 sm:p-6"
+                className="rounded-md bg-white border border-neutral-100 shadow-sm p-5 sm:p-6"
               >
                 <ContentBlockRenderer block={block} />
               </motion.div>
