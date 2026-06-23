@@ -50,7 +50,7 @@ const GIFT_LINES: { icon: typeof Leaf; amount: string; text: string }[] = [
 /* ------------------------------------------------------------------ */
 
 function DonateHero({ rm }: { rm: boolean }) {
-  const { bgRef, fgRef, textRef } = useParallaxLayers({ textRange: 180, withScale: false })
+  const { bgRef, fgRef, textRef } = useParallaxLayers({ textRange: 110, withScale: false })
 
   return (
     <div className="relative">
@@ -72,11 +72,11 @@ function DonateHero({ rm }: { rm: boolean }) {
         </div>
 
         {/* Warm forest wash so the wordmark sits in an editorial lower third. */}
-        <div className="absolute inset-0 z-[4] bg-gradient-to-t from-secondary-950/90 via-secondary-900/25 to-transparent" />
+        <div className="absolute inset-0 z-[4] bg-gradient-to-t from-secondary-950/92 via-secondary-950/45 to-transparent" />
 
         <div
           ref={rm ? undefined : textRef}
-          className="absolute inset-x-0 bottom-[12%] z-[5] flex flex-col items-center px-7 text-center will-change-transform"
+          className="absolute inset-x-0 bottom-[24%] z-[5] flex flex-col items-center px-7 text-center will-change-transform"
         >
           <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/75 mb-3">
             Co-Exist Australia
