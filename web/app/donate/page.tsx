@@ -47,13 +47,31 @@ export default function DonatePage() {
               </p>
             </div>
           </div>
-          <p className="mt-6 text-sm leading-relaxed text-neutral-500">
-            Prefer to give by bank transfer, or leave a gift in your will?{' '}
-            <a href="/contact" className="font-semibold text-primary-700 hover:text-primary-800">
-              Get in touch
-            </a>{' '}
-            and we will sort it out. ACNC registered charity, ABN 39 660 776 983. Donations over $2 are tax deductible.
-          </p>
+          <div className="mt-6 border-t border-neutral-200 pt-6">
+            <p className="label text-neutral-400">Donate via deposit</p>
+            <p className="mt-2 text-sm text-neutral-500">Prefer to give by bank transfer? These are our details.</p>
+            <dl className="mt-4 space-y-2 text-sm">
+              <div className="flex gap-4">
+                <dt className="w-20 shrink-0 text-neutral-400">Bank</dt>
+                <dd className="text-neutral-800">Bendigo Bank</dd>
+              </div>
+              <div className="flex gap-4">
+                <dt className="w-20 shrink-0 text-neutral-400">BSB</dt>
+                <dd className="tabular-nums text-neutral-800">633 000</dd>
+              </div>
+              <div className="flex gap-4">
+                <dt className="w-20 shrink-0 text-neutral-400">Account</dt>
+                <dd className="tabular-nums text-neutral-800">195 774 351</dd>
+              </div>
+            </dl>
+            <p className="mt-5 text-xs leading-relaxed text-neutral-400">
+              Prefer to leave a gift in your will?{' '}
+              <a href="https://gatheredhere.com.au/c/coexistaustralia" target="_blank" rel="noopener noreferrer" className="text-primary-700 hover:text-primary-800">
+                Make a bequest
+              </a>
+              . ACNC registered charity, ABN 39 660 776 983. Donations over $2 are tax deductible.
+            </p>
+          </div>
         </div>
 
         <div className="md:sticky md:top-28 md:self-start">

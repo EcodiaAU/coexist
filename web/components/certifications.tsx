@@ -11,7 +11,7 @@ const CERTS = [
 
 export function Certifications({ className = '' }: { className?: string }) {
   return (
-    <div className={`inline-flex flex-wrap items-center gap-x-6 gap-y-4 border border-oncream/10 bg-olive-950 px-5 py-3 ${className}`}>
+    <div className={`inline-flex flex-wrap items-center gap-x-6 gap-y-4 ${className}`}>
       {CERTS.map((c) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img key={c.src} src={c.src} alt={c.alt} className="h-10 w-auto object-contain" />
