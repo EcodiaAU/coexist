@@ -1,5 +1,4 @@
-import { useMemo } from 'react'
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { QRCodeSVG } from 'qrcode.react'
 import {
@@ -9,14 +8,12 @@ import {
   Clock,
   Ticket,
   Copy,
-  CalendarPlus,
 } from 'lucide-react'
 import { useEventDetail, formatEventDate, formatEventTime } from '@/hooks/use-events'
 import { useMyEventTicket } from '@/hooks/use-event-tickets'
 import {
   Page,
   Header,
-  Button,
   Skeleton,
   EmptyState,
   WhatsNext,
@@ -27,12 +24,10 @@ import { cn } from '@/lib/cn'
 
 export default function TicketConfirmationPage() {
   const { id: eventId } = useParams<{ id: string }>()
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
   const { toast } = useToast()
 
-  const ticketId = searchParams.get('ticket_id')
 
   const { data: event, isLoading: eventLoading } = useEventDetail(eventId)
   const { data: ticket, isLoading: ticketLoading } = useMyEventTicket(eventId)
@@ -40,10 +35,15 @@ export default function TicketConfirmationPage() {
   const isLoading = eventLoading || ticketLoading
   const showLoading = useDelayedLoading(isLoading)
 
+  // Check-in is the event's 3-character code - the same PIN every event uses at
+  // the door. Show that, not the per-ticket code; fall back to the ticket code
+  // only for an event that has no check-in code set.
+  const checkInCode = (event as { check_in_code?: string | null } | undefined)?.check_in_code || null
+  const displayCode = checkInCode || ticket?.ticket_code || null
   const copyCode = () => {
-    if (ticket?.ticket_code) {
-      navigator.clipboard.writeText(ticket.ticket_code)
-      toast.success('Ticket code copied')
+    if (displayCode) {
+      navigator.clipboard.writeText(displayCode)
+      toast.success(checkInCode ? 'Check-in code copied' : 'Ticket code copied')
     }
   }
 
@@ -134,12 +134,12 @@ export default function TicketConfirmationPage() {
             </div>
           </div>
 
-          {/* QR code */}
-          {ticket.ticket_code && !isPending && (
+          {/* Check-in code (the event's 3-char PIN) */}
+          {displayCode && !isPending && (
             <div className="flex flex-col items-center py-6 px-5">
               <div className="bg-white p-3 rounded-sm shadow-sm border border-neutral-100">
                 <QRCodeSVG
-                  value={`coexist://ticket/${ticket.ticket_code}`}
+                  value={displayCode}
                   size={180}
                   level="M"
                   bgColor="transparent"
@@ -150,12 +150,14 @@ export default function TicketConfirmationPage() {
                 onClick={copyCode}
                 className="flex items-center gap-2 mt-4 px-4 py-2 rounded-sm bg-primary-50 hover:bg-primary-100 active:scale-[0.97] transition-all cursor-pointer"
               >
-                <span className="font-mono text-lg font-bold text-neutral-900 tracking-wider">
-                  {ticket.ticket_code}
+                <span className={cn('font-mono font-bold text-neutral-900', checkInCode ? 'text-3xl tracking-[0.35em] pl-[0.35em]' : 'text-lg tracking-wider')}>
+                  {displayCode}
                 </span>
                 <Copy size={14} className="text-neutral-400" />
               </button>
-              <p className="text-[11px] text-neutral-400 mt-2">Show this at the event for check-in</p>
+              <p className="text-[11px] text-neutral-400 mt-2">
+                {checkInCode ? 'Your check-in code - show this at the event' : 'Show this at the event for check-in'}
+              </p>
             </div>
           )}
 
@@ -202,14 +204,8 @@ export default function TicketConfirmationPage() {
               {
                 label: 'View Event',
                 description: 'See full event details',
-                icon: <Ticket size={18} />,
-                to: `/events/${event.id}`,
-              },
-              {
-                label: 'My Events',
-                description: 'See all your upcoming events',
                 icon: <Calendar size={18} />,
-                to: '/events',
+                to: `/events/${event.id}`,
               },
               {
                 label: 'My Tickets',
