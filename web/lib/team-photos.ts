@@ -1,7 +1,8 @@
 /**
  * Team headshots grabbed from the live coexistaus.org/about page, keyed by
  * normalised full name. Primary photo source for board, core and leaders
- * (Charlie Bennett excluded - departed).
+ * Charlie Bennett is listed under Pioneers with his live-site headshot.
+ * Anyone absent here falls back to the olive monogram in PersonCard.
  */
 const norm = (s: string | null | undefined): string => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
 
@@ -29,7 +30,7 @@ const MAP: Record<string, string> = {
   'nicola tsiolis': '/images/team/nicola-tsiolis.png',
   'charlotte kenning': '/images/team/charlotte-kenning.jpg',
   'benjamin monga': '/images/team/benjamin-monga.jpg',
-  'sarah st george': '/images/team/sarah-st-george.jpg',
+  'charlie bennett': '/images/team/charlie-bennett.jpg',
   'emily oulton': '/images/team/emily-oulton.jpg',
   'juliane mateo': '/images/team/juliane-mateo.jpg',
   'billy radalj': '/images/team/billy-radalj.png',

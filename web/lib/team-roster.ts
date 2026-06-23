@@ -49,7 +49,6 @@ export const TEAM_ROSTER: RosterGroup[] = [
       { name: 'Yee Zhao', role: 'Co-Leader' },
       { name: 'Ryan Eadie', role: 'Co-Leader' },
       { name: 'Benjamin Monga', role: 'Assistant Leader' },
-      { name: 'Sarah St George', role: 'Assistant Leader' },
       { name: 'Emily Oulton', role: 'Assistant Leader' },
       { name: 'Billy Radalj', role: 'Assistant Leader' },
       { name: 'Shizuku Yamagishi', role: 'Assistant Leader' },
@@ -64,6 +63,7 @@ export const TEAM_ROSTER: RosterGroup[] = [
   {
     label: 'Pioneers',
     members: [
+      { name: 'Charlie Bennett', role: 'Pioneer' },
       { name: 'Genevieve Deaconos', role: 'Pioneer' },
       { name: 'David Mackenzie', role: 'Pioneer' },
       { name: 'Linda Barnes', role: 'Pioneer' },
