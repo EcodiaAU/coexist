@@ -49,9 +49,6 @@ export default async function HomePage() {
       {/* Hero with stats overlaid at the foot of the image */}
       <section className="relative isolate flex min-h-[90vh] flex-col overflow-hidden">
         <ParallaxImage src="/images/hero.webp" priority blurDataURL={BLUR['/images/hero.webp']} />
-        {/* blur gradient (sharp top -> blurred through the centre + foot) carries
-            legibility for the centred title and the foot stats, instead of a dark wash */}
-        <div className="hero-blur-foot absolute inset-0 z-0" />
         <div className="paper-texture absolute inset-0 z-0" />
         <div className="grain-layer absolute inset-0 z-0" />
         <div className="absolute inset-0 z-0 bg-black/12" />
