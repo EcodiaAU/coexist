@@ -26,16 +26,12 @@ export default async function EventsPage() {
 
   return (
     <main>
-      <div className="relative isolate">
-        <PageHeader
-          eyebrow="Get involved"
-          title="Upcoming events"
-          subtitle="Conservation days run by collectives around the country. Everyone welcome. Come for the work, stay for the people."
-          image="/images/nature.webp"
-        />
-        {/* olive-900/30 mix-blend-multiply wash over the hero to match bento tile tinting */}
-        <div className="pointer-events-none absolute inset-0 z-20 bg-olive-900/30 mix-blend-multiply" />
-      </div>
+      <PageHeader
+        eyebrow="Get involved"
+        title="Upcoming events"
+        subtitle="Conservation days run by collectives around the country. Everyone welcome. Come for the work, stay for the people."
+        image="/images/nature.webp"
+      />
 
       <section>
         {events.length === 0 ? (
@@ -58,22 +54,18 @@ export default async function EventsPage() {
             {events.map((e, i) => (
               <BentoTile key={e.id} href={`/events/${e.id}`} image={e.cover_image_url} alt={e.title} span={spans[i]}>
                 <div className="absolute inset-x-0 bottom-0 p-5">
-                  {/* date label: deeper tint floor so it reads on bright sky photos */}
-                  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="relative z-10">
-                    <p className="label rounded-[2px] bg-black/40 px-1.5 py-0.5 text-[10px] text-sage backdrop-blur-[2px]">
-                      {formatDateShort(e.date_start, e.timezone)}
+                  <p className="label text-[10px] text-sage" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.55)' }}>
+                    {formatDateShort(e.date_start, e.timezone)}
+                  </p>
+                  <h2 className={`display-tight mt-1.5 uppercase leading-[0.96] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-3xl sm:text-4xl' : 'text-base leading-[1.05] sm:text-xl sm:leading-[0.96] line-clamp-2'}`}>
+                    {e.title}
+                  </h2>
+                  {e.collective && (
+                    <p className="mt-2 flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] text-oncream/80">
+                      <span className="inline-block h-px w-3 bg-sage/60" />
+                      Co-Exist {e.collective.name}
                     </p>
-                    <h2 className={`display-tight mt-1.5 uppercase leading-[0.96] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-3xl sm:text-4xl' : 'text-base leading-[1.05] sm:text-xl sm:leading-[0.96] line-clamp-2'}`}>
-                      {e.title}
-                    </h2>
-                    {e.collective && (
-                      <p className="mt-2 flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] text-oncream/80">
-                        <span className="inline-block h-px w-3 bg-sage/60" />
-                        Co-Exist {e.collective.name}
-                      </p>
-                    )}
-                  </div>
+                  )}
                 </div>
               </BentoTile>
             ))}

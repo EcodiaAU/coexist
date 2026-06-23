@@ -107,25 +107,6 @@ export default function TeamPage() {
           </div>
         </div>
       </section>
-
-      {/* Full-bleed image strip, breaks white midsection before newsletter band */}
-      <section className="relative h-[40vh] overflow-hidden">
-        <Image
-          src="/images/gather.webp"
-          alt="Co-Exist members gathered outdoors"
-          fill
-          quality={88}
-          sizes="100vw"
-          placeholder="blur"
-          blurDataURL={BLUR['/images/gather.webp']}
-          className="object-cover"
-        />
-        {/* flat-black scrim consistent with hero grade */}
-        <div className="absolute inset-0 bg-black/30" />
-        {/* olive tint */}
-        <div className="absolute inset-0 bg-olive-900/20" />
-        <div className="grain-layer" />
-      </section>
     </main>
   )
 }
