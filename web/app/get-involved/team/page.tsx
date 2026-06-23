@@ -59,7 +59,7 @@ export default function TeamPage() {
           <Reveal className="max-w-md">
             <p className="eyebrow text-primary-600">Why join</p>
             <h2 className="display-tight has-mark mt-5 text-5xl text-neutral-900 sm:text-6xl">
-              Do something that
+              Find something that
               <span className="mt-2 block"><WordSwap words={['actually matters', 'lasts', 'feels good', 'is yours']} /></span>
             </h2>
             <p className="mt-6 text-[15px] leading-relaxed text-neutral-500">
@@ -73,7 +73,7 @@ export default function TeamPage() {
 
       {/* Ways in - editorial numbered list */}
       <section className="bg-white">
-        <div className="mx-auto max-w-6xl px-6 pb-24 pt-4">
+        <div className="max-w-6xl px-6 pb-24 pt-4 md:px-16">
           <p className="eyebrow text-primary-600">Ways in</p>
           <h2 className="display-tight mt-3 text-5xl text-neutral-900 sm:text-6xl">Three ways to get involved</h2>
           <div className="mt-12 border-t border-neutral-300">
