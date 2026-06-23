@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { getUpcomingEvents } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
 import { formatDateShort } from '@/lib/format'
-import { bentoFeatured, bentoLastFill } from '@/lib/bento'
+import { bentoFeatured, bentoLastFill, BENTO_GRID } from '@/lib/bento'
 
 export const revalidate = 900
 
@@ -45,7 +45,7 @@ export default async function EventsPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid auto-rows-[46vw] grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
+          <div className={BENTO_GRID}>
             {events.map((e, i) => (
               <Link
                 key={e.id}

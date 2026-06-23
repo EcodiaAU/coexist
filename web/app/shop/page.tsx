@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getProducts, type ProductVM } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
-import { bentoFeatured, bentoLastFill } from '@/lib/bento'
+import { bentoFeatured, bentoLastFill, BENTO_GRID } from '@/lib/bento'
 
 export const revalidate = 900
 
@@ -38,7 +38,7 @@ export default async function ShopPage() {
         {products.length === 0 ? (
           <p className="mx-auto max-w-6xl px-6 py-16 text-center text-neutral-500">Our shop is restocking. Check back soon.</p>
         ) : (
-          <div className="grid auto-rows-[46vw] grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
+          <div className={BENTO_GRID}>
             {products.map((p, i) => {
               const hover = p.images[1]
               return (

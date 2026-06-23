@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { getCollectives, type CollectiveVM } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
 import { CollectiveMapClient } from '@/components/collective-map-client'
-import { bentoFeatured, bentoLastFill } from '@/lib/bento'
+import { bentoFeatured, bentoLastFill, BENTO_GRID } from '@/lib/bento'
 import { APP_URL } from '@/lib/env'
 
 export const revalidate = 1800
@@ -36,14 +36,14 @@ export default async function CollectivesPage() {
       />
 
       {/* Full-bleed interactive map (ported from the app), flush to hero + grid */}
-      <CollectiveMapClient collectives={collectives} className="h-[58vh] min-h-[420px] w-full" />
+      <CollectiveMapClient collectives={collectives} className="h-[78vh] min-h-[540px] w-full" />
 
       {/* Full-bleed flush bento - flat bottom (CTA is the last tile, fills its row) */}
       <section>
         {collectives.length === 0 ? (
           <p className="py-16 text-center text-neutral-500">Collectives are loading. Check back shortly.</p>
         ) : (
-          <div className="grid auto-rows-[46vw] grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
+          <div className={BENTO_GRID}>
             {collectives.map((c, i) => (
               <Link
                 key={c.id}

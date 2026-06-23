@@ -22,7 +22,7 @@ export default function ContactPage() {
       <section className="mx-auto grid max-w-6xl gap-14 px-6 py-20 md:grid-cols-[1fr_1.1fr]">
         <div>
           <h2 className="has-mark text-4xl text-neutral-900 sm:text-5xl">
-            Drop us a line to
+            Get in touch to
             <span className="mt-2 block">
               <WordSwap words={['start a collective', 'partner with us', 'volunteer', 'ask us anything', 'just say hi']} />
             </span>

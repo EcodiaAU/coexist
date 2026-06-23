@@ -149,20 +149,10 @@ h1, h2, h3, h4, h5, h6 {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  /* bottom-up olive for text legibility */
+  /* light bottom-only scrim - just enough so the title reads, image stays clean
+     (no full-image dark filter) */
   background:
-    linear-gradient(to top, rgba(25,28,18,0.88) 0%, rgba(25,28,18,0.34) 45%, rgba(45,50,32,0.12) 100%);
-}
-.film-cover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  /* warm-shadow / cool-highlight duotone wash = filtered film look */
-  background:
-    linear-gradient(135deg, rgba(71,79,47,0.32), rgba(120,90,50,0.20)),
-    radial-gradient(120% 90% at 70% 10%, rgba(229,238,193,0.10), transparent 60%);
-  mix-blend-mode: multiply;
+    linear-gradient(to top, rgba(20,23,15,0.6) 0%, rgba(20,23,15,0.18) 28%, transparent 52%);
 }
 
 /* Fine grain texture as a stand-alone overlay div (no pseudo-element, so it

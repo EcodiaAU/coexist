@@ -112,7 +112,7 @@ export default async function SupportPage() {
       </section>
 
       {/* Collaborations & sponsorships - featured brand */}
-      <section className="border-y border-neutral-200 bg-neutral-50">
+      <section className="border-y border-neutral-200 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-16 text-center">
           <h2 className="text-2xl text-neutral-900 sm:text-3xl">Collaborations &amp; sponsorships</h2>
           <div className="mt-8 flex justify-center">
