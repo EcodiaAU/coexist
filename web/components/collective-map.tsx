@@ -109,7 +109,7 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
   }, [])
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div className={`relative isolate overflow-hidden ${className}`}>
       <div ref={ref} className="cx-cmap h-full w-full" style={{ zIndex: 0 }} />
 
       {/* Grain overlay over the map container */}

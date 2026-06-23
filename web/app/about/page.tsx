@@ -3,8 +3,9 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
-import { getSiteContent, getTeamMembers, getCollectiveLeaders } from '@/lib/queries'
+import { getSiteContent } from '@/lib/queries'
 import { teamPhoto } from '@/lib/team-photos'
+import { TEAM_ROSTER } from '@/lib/team-roster'
 import { BLUR } from '@/lib/blur'
 
 function PersonCard({ name, sub, photo }: { name: string; sub?: string | null; photo?: string | null }) {
@@ -40,21 +41,14 @@ export const metadata: Metadata = {
     'Co-Exist is a movement built by young people, for young people. Our mission: creating communities that preserve and protect wildlife and wild places.',
 }
 
-const GROUP_LABEL: Record<string, string> = { board: 'Board', core: 'Core team' }
-const GROUP_ORDER = ['board', 'core']
-
 export default async function AboutPage() {
-  const [content, team, leaders] = await Promise.all([getSiteContent(), getTeamMembers(), getCollectiveLeaders()])
+  const content = await getSiteContent()
   const mission = content.mission || 'Creating communities that preserve and protect wildlife and wild places.'
   const vision = content.vision || 'Young people connected to nature and leading its protection and restoration.'
   const founderQuote =
     content.founder_quote ||
     'Imagine if we had a collective in every major town. Think of the amount of waste we could be cleaning. Large scale social and environmental impact. It is possible.'
   const founderName = content.founder_name || 'Kurt Jones, Founder & CEO'
-
-  const groupedTeam = GROUP_ORDER.map((g) => [g, team.filter((m) => m.team_group === g)] as const).filter(
-    ([, list]) => list.length > 0,
-  )
 
   return (
     <main>
@@ -139,36 +133,22 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* Team - board + core (curated) and live collective leaders, with app avatars */}
-      {(groupedTeam.length > 0 || leaders.length > 0) && (
-        <section className="bg-white">
-          <div className="mx-auto max-w-6xl px-6 pb-24">
-            <h2 className="display-tight text-5xl text-neutral-900 sm:text-6xl">Meet the team</h2>
-
-            {groupedTeam.map(([group, members]) => (
-              <div key={group} className="mt-12 border-t border-neutral-200 pt-8">
-                <p className="label text-neutral-400">{GROUP_LABEL[group] ?? group}</p>
-                <div className="mt-7 grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
-                  {members.map((m) => (
-                    <PersonCard key={m.id} name={m.name} sub={m.role_title} photo={teamPhoto(m.name) ?? m.photo_url} />
-                  ))}
-                </div>
+      {/* Team - full roster mirroring the live about page (Board / Team / Pioneers) */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 pb-24">
+          <h2 className="display-tight text-5xl text-neutral-900 sm:text-6xl">Meet the team</h2>
+          {TEAM_ROSTER.map((g) => (
+            <div key={g.label} className="mt-12 border-t border-neutral-200 pt-8">
+              <p className="label text-neutral-400">{g.label}</p>
+              <div className="mt-7 grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
+                {g.members.map((m) => (
+                  <PersonCard key={m.name} name={m.name} sub={m.role} photo={teamPhoto(m.name)} />
+                ))}
               </div>
-            ))}
-
-            {leaders.length > 0 && (
-              <div className="mt-12 border-t border-neutral-200 pt-8">
-                <p className="label text-neutral-400">Collective leaders</p>
-                <div className="mt-7 grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
-                  {leaders.map((l) => (
-                    <PersonCard key={l.id} name={l.name} sub={`${l.collective} collective`} photo={teamPhoto(l.fullName) ?? teamPhoto(l.name) ?? l.avatar_url} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* CTA */}
       <section className="bg-olive-700 text-oncream">
