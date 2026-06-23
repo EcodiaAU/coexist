@@ -94,12 +94,14 @@ Deno.serve(async (req: Request) => {
     if (tt.sale_end && now > new Date(tt.sale_end)) return json({ error: 'Ticket sales have ended' }, 400)
 
     // ---- Resolve or provision the buyer's account ----
+    // Direct auth.users lookup via a service-role-only RPC. The old
+    // listUsers({perPage:200}) only saw the first page, so an existing account
+    // beyond it was missed and createUser then 500'd on a duplicate email - the
+    // exact "email already linked" failure an authed person hits buying as a guest.
     let userId: string | null = null
-    // getUserByEmail is not in supabase-js admin; list + filter (small project scale).
-    const { data: existing } = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 })
-    const found = existing?.users?.find((u) => (u.email ?? '').toLowerCase() === email)
-    if (found) {
-      userId = found.id
+    const { data: existingId } = await supabase.rpc('get_auth_user_id_by_email', { p_email: email })
+    if (existingId) {
+      userId = existingId as string
     } else {
       const randomPw = crypto.randomUUID() + crypto.randomUUID()
       const { data: created, error: createErr } = await supabase.auth.admin.createUser({
@@ -108,11 +110,19 @@ Deno.serve(async (req: Request) => {
         email_confirm: true,
         user_metadata: name ? { display_name: name, full_name: name } : {},
       })
-      if (createErr || !created?.user) {
-        console.error('[guest-checkout] createUser failed:', createErr?.message)
-        return json({ error: 'Could not start checkout. Please try again.' }, 500)
+      if (created?.user) {
+        userId = created.user.id
+      } else {
+        // Defensive: a race (or an account the RPC somehow missed) makes
+        // createUser fail on a duplicate. Re-resolve and reuse rather than 500.
+        const { data: retryId } = await supabase.rpc('get_auth_user_id_by_email', { p_email: email })
+        if (retryId) {
+          userId = retryId as string
+        } else {
+          console.error('[guest-checkout] createUser failed:', createErr?.message)
+          return json({ error: 'Could not start checkout. Please try again.' }, 500)
+        }
       }
-      userId = created.user.id
     }
 
     // ---- Lightweight abuse guard: cap recent reservations per buyer ----
