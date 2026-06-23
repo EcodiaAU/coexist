@@ -24,6 +24,7 @@ import SplashPage from '@/pages/splash'
 // Public pages (no auth required)
 const PublicEventPage = lazy(() => import('@/pages/public/event'))
 const PublicCampoutsPage = lazy(() => import('@/pages/public/campouts'))
+const CampoutTypePage = lazy(() => import('@/pages/public/campout-type'))
 const PublicCollectivePage = lazy(() => import('@/pages/public/collective'))
 const DownloadPage = lazy(() => import('@/pages/public/download'))
 const AccountDeletionPage = lazy(() => import('@/pages/public/account-deletion'))
@@ -555,6 +556,14 @@ function App() {
           element={
             <AppShell bare>
               <PublicCampoutsPage />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/campouts/:type"
+          element={
+            <AppShell bare>
+              <CampoutTypePage />
             </AppShell>
           }
         />
