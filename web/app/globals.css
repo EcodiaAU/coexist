@@ -216,16 +216,20 @@ body::after {
    above and sits well. */
 .has-mark { line-height: 1.6; }
 
-/* Oversized faint watermark (wordmark / icon) behind feature sections */
+/* Corner watermark - small, uppercase, tracked, tucked into a corner of a
+   feature section. Higher opacity than the old giant faint wordmark. Parent must
+   be position:relative + overflow-hidden so it never spills on mobile. */
 .watermark {
   position: absolute;
   pointer-events: none;
   user-select: none;
-  opacity: 0.05;
-  font-weight: 300;
-  letter-spacing: -0.05em;
-  line-height: 0.8;
+  text-transform: uppercase;
+  opacity: 0.12;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  line-height: 1;
   white-space: nowrap;
+  font-size: clamp(1.6rem, 5vw, 3rem);
 }
 
 /* Scroll reveal (paired with the Reveal client component) */

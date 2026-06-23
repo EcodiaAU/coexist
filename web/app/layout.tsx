@@ -3,6 +3,7 @@ import { Montserrat } from 'next/font/google'
 import { SITE_URL } from '@/lib/env'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
+import { NewsletterBand } from '@/components/newsletter-band'
 import './globals.css'
 
 const montserrat = Montserrat({
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <SiteHeader />
         <div className="flex-1">{children}</div>
+        <NewsletterBand />
         <SiteFooter />
       </body>
     </html>

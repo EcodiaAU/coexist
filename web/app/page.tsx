@@ -4,6 +4,7 @@ import { getPublicImpactStats, type PublicImpactStats } from '@/lib/public-stats
 import { getSiteContent, getPartners } from '@/lib/queries'
 import { WordSwap } from '@/components/word-swap'
 import { Reveal } from '@/components/reveal'
+import { BLUR } from '@/lib/blur'
 
 export const revalidate = 1800
 
@@ -46,7 +47,7 @@ export default async function HomePage() {
     <main>
       {/* Hero with stats overlaid at the foot of the image */}
       <section className="relative isolate flex min-h-[90vh] flex-col">
-        <Image src="/images/hero.webp" alt="Young people in nature on a Co-Exist conservation day" fill priority className="-z-10 object-cover" />
+        <Image src="/images/hero.webp" alt="Young people in nature on a Co-Exist conservation day" fill priority quality={90} sizes="100vw" placeholder="blur" blurDataURL={BLUR['/images/hero.webp']} className="-z-10 object-cover" />
         <div className="-z-10 absolute inset-0 bg-gradient-to-t from-olive-950/90 via-olive-950/45 to-olive-900/25" />
 
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 pt-28 pb-10">
@@ -63,7 +64,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-6xl border-t border-oncream/15 px-6 pt-8 pb-20">
+        <div className="mx-auto w-full max-w-6xl border-t border-oncream/15 px-6 pt-9 pb-28 lg:pb-36">
           <div className="grid grid-cols-2 gap-y-7 sm:grid-cols-4">
             {tiles.map((t) => (
               <div key={t.label}>
@@ -81,7 +82,7 @@ export default async function HomePage() {
       {/* About - full-bleed image half (people in nature, not a face) */}
       <section className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal className="relative order-1 min-h-[56vh] overflow-hidden md:order-2">
-          <Image src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          <Image src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/nature.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
         </Reveal>
         <div className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
           <Reveal className="max-w-md">
@@ -105,7 +106,7 @@ export default async function HomePage() {
       {/* What's a collective - full-bleed image half */}
       <section className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal className="relative order-1 min-h-[56vh] overflow-hidden">
-          <Image src="/images/gather.webp" alt="A local Co-Exist collective gathering" fill className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          <Image src="/images/gather.webp" alt="A local Co-Exist collective gathering" fill sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/gather.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
         </Reveal>
         <div className="order-2 flex items-center px-6 py-24 md:px-16">
           <Reveal className="max-w-md">
@@ -129,7 +130,7 @@ export default async function HomePage() {
       <section className="bg-olive-800 text-oncream">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-[auto_1fr]">
           <Reveal className="mx-auto h-44 w-44 shrink-0 overflow-hidden rounded-full sm:h-56 sm:w-56">
-            <Image src="/images/kurt.webp" alt="Kurt Jones, founder of Co-Exist" width={224} height={224} className="h-full w-full object-cover" />
+            <Image src="/images/kurt.webp" alt="Kurt Jones, founder of Co-Exist" width={224} height={224} placeholder="blur" blurDataURL={BLUR['/images/kurt.webp']} className="h-full w-full object-cover" />
           </Reveal>
           <Reveal delay={120}>
             <blockquote className="text-2xl font-light leading-[1.25] text-oncream sm:text-4xl">“{founderQuote}”</blockquote>

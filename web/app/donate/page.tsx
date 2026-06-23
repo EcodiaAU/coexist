@@ -77,6 +77,31 @@ export default function DonatePage() {
           </div>
         </div>
       </section>
+
+      {/* Bequest / leave a legacy */}
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-2">
+          <Reveal>
+            <p className="eyebrow text-primary-600">Leave a legacy</p>
+            <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">Leave the world in safe hands</h2>
+          </Reveal>
+          <Reveal delay={120}>
+            <p className="text-[15px] leading-relaxed text-neutral-600">
+              A bequest is a vote of confidence in our young people. You can make a lasting difference
+              by amplifying young voices, supporting wellbeing, and equipping young leaders in
+              conservation with the tools they need to protect the planet.
+            </p>
+            <a
+              href="https://gatheredhere.com.au/c/coexistaustralia"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-7 inline-block rounded-full bg-olive-700 px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-white transition-all duration-300 hover:bg-olive-800 hover:px-10"
+            >
+              Leave a legacy
+            </a>
+          </Reveal>
+        </div>
+      </section>
     </main>
   )
 }

@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
 import { getSiteContent, getTeamMembers } from '@/lib/queries'
+import { BLUR } from '@/lib/blur'
 
 export const revalidate = 1800
 
@@ -41,7 +42,7 @@ export default async function AboutPage() {
       {/* Story - full-bleed image half */}
       <section className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal className="relative order-1 min-h-[52vh] overflow-hidden md:order-2">
-          <Image src="/images/nature.webp" alt="Young people in nature with Co-Exist" fill className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          <Image src="/images/nature.webp" alt="Young people in nature with Co-Exist" fill sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/nature.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
         </Reveal>
         <div className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
           <Reveal className="max-w-md">
@@ -90,7 +91,7 @@ export default async function AboutPage() {
 
       {/* Founder quote with watermark */}
       <section className="relative overflow-hidden bg-white">
-        <span className="watermark left-[-2%] top-1/2 -translate-y-1/2 text-[24vw] text-olive-900">Co-Exist</span>
+        <span className="watermark bottom-6 right-6 text-olive-900">Co-Exist</span>
         <div className="relative mx-auto max-w-4xl px-6 py-28 text-center">
           <Reveal>
             <blockquote className="text-3xl leading-[1.2] text-neutral-900 sm:text-[2.6rem]">“{founderQuote}”</blockquote>

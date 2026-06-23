@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
 import { WordSwap } from '@/components/word-swap'
 import { APP_URL } from '@/lib/env'
+import { BLUR } from '@/lib/blur'
 
 export const metadata: Metadata = {
   title: 'Join our team',
@@ -49,7 +50,7 @@ export default function TeamPage() {
       {/* Why join - full-bleed split */}
       <section className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal className="grain relative order-1 min-h-[54vh] overflow-hidden md:order-2">
-          <Image src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill quality={88} sizes="(max-width:768px) 100vw, 50vw" className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          <Image src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill quality={88} sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/nature.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
         </Reveal>
         <div className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
           <Reveal className="max-w-md">
@@ -73,26 +74,37 @@ export default function TeamPage() {
           <p className="eyebrow text-primary-600">Ways in</p>
           <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">Three ways to get involved</h2>
           <div className="mt-12 border-t border-neutral-200">
-            {ROLES.map((r, i) => (
-              <Reveal key={r.title} delay={i * 80}>
-                <div className="grid gap-3 border-b border-neutral-200 py-9 md:grid-cols-[5rem_1fr_auto] md:items-center md:gap-10">
-                  <span className="text-4xl font-light leading-none text-primary-300 sm:text-5xl">0{i + 1}</span>
-                  <div>
-                    <h3 className="text-2xl text-neutral-900">{r.title}</h3>
-                    <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-neutral-500">{r.body}</p>
-                  </div>
-                  {r.external ? (
-                    <a href={r.href} className="shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 transition-colors hover:text-primary-900">
-                      {r.cta} →
-                    </a>
-                  ) : (
-                    <Link href={r.href} className="shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 transition-colors hover:text-primary-900">
-                      {r.cta} →
-                    </Link>
-                  )}
-                </div>
-              </Reveal>
-            ))}
+            {ROLES.map((r, i) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const Wrap: any = r.external ? 'a' : Link
+              return (
+                <Reveal key={r.title} delay={i * 110}>
+                  <Wrap
+                    href={r.href}
+                    {...(r.external ? { target: '_self' } : {})}
+                    className="group/role relative block overflow-hidden border-b border-neutral-200"
+                  >
+                    {/* sage wipe on hover */}
+                    <span className="absolute inset-0 -z-0 origin-left scale-x-0 bg-primary-50 transition-transform duration-500 ease-out group-hover/role:scale-x-100" />
+                    {/* growing left accent */}
+                    <span className="absolute left-0 top-0 z-10 h-full w-[3px] origin-top scale-y-0 bg-primary-500 transition-transform duration-500 ease-out group-hover/role:scale-y-100" />
+                    <div className="relative z-10 grid gap-3 px-2 py-9 transition-[padding] duration-500 group-hover/role:px-5 md:grid-cols-[5rem_1fr_auto] md:items-center md:gap-10">
+                      <span className="text-4xl font-light leading-none text-primary-300 transition-all duration-500 group-hover/role:text-primary-500 sm:text-5xl">
+                        0{i + 1}
+                      </span>
+                      <div>
+                        <h3 className="text-2xl text-neutral-900">{r.title}</h3>
+                        <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-neutral-500">{r.body}</p>
+                      </div>
+                      <span className="flex shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">
+                        {r.cta}
+                        <span className="transition-transform duration-500 group-hover/role:translate-x-1.5">→</span>
+                      </span>
+                    </div>
+                  </Wrap>
+                </Reveal>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -100,7 +112,7 @@ export default function TeamPage() {
       {/* Closing CTA - olive band, watermark + grain */}
       <section className="relative isolate overflow-hidden bg-olive-800 text-oncream">
         <div className="grain-layer absolute inset-0 z-0" />
-        <span className="watermark left-[-2%] top-1/2 -translate-y-1/2 text-[24vw] text-olive-950">Co-Exist</span>
+        <span className="watermark bottom-6 right-6 text-olive-950">Co-Exist</span>
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center">
           <Reveal>
             <h2 className="text-4xl text-oncream sm:text-6xl">Start where you are</h2>
