@@ -70,11 +70,6 @@ export default async function CollectivesPage() {
                   >
                     {c.name}
                   </h2>
-                  {c.member_count ? (
-                    <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-oncream/80">
-                      {c.member_count} members
-                    </p>
-                  ) : null}
                 </div>
               </BentoTile>
             ))}

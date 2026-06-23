@@ -30,15 +30,13 @@ export default async function ShopPage() {
 
   return (
     <main>
-      {/* Hero: centred title, soft foot-blur + paper texture (matches PageHeader) */}
+      {/* Hero: centred title over the image (matches PageHeader) */}
       <section className="film-cover relative isolate flex min-h-[72vh] items-center justify-center overflow-hidden lg:min-h-[82vh]">
         <ParallaxImage
           src="/images/collective.webp"
           priority
           blurDataURL={BLUR['/images/collective.webp']}
           className="object-[50%_75%]"
-          paper
-          blur
         />
         <div className="grain-layer absolute inset-0 z-0" />
         <div className="relative z-10 mx-auto w-full max-w-3xl px-6 py-32 text-center">
