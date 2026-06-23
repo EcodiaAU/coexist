@@ -70,7 +70,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-2 gap-y-7 sm:grid-cols-4">
             {tiles.map((t, i) => (
               <div key={t.label} className={i > 0 ? 'border-l border-oncream/12 pl-6 sm:pl-8' : ''}>
-                <div className="text-[3.25rem] font-light leading-none tracking-[-0.06em] text-oncream tabular-nums">
+                <div className="text-[3.25rem] font-normal leading-none tracking-[-0.06em] text-oncream tabular-nums">
                   {t.value}
                   {t.unit && <span className="text-2xl">{t.unit}</span>}
                 </div>
