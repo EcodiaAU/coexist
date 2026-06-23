@@ -102,7 +102,7 @@ export function SiteFooter() {
               rel="noopener noreferrer"
               aria-label="the world we build next"
               style={{ fontFamily: "'EB Garamond', Georgia, 'Times New Roman', serif" }}
-              className="inline-block w-fit italic text-[15px] leading-none no-underline text-oncream/50 transition-opacity duration-200 hover:text-oncream/80"
+              className="inline-block w-fit italic text-[15px] leading-none no-underline text-oncream"
             >
               the world we build next
             </a>
