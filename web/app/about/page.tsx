@@ -101,10 +101,6 @@ export default async function AboutPage() {
 
       {/* Mission / Vision - flat editorial statements */}
       <section className="relative overflow-hidden bg-olive-800 text-oncream">
-        {/* watermark texture */}
-        <div className="watermark pointer-events-none absolute inset-0 flex items-center justify-center select-none">
-          CO-EXIST
-        </div>
         {/* grain overlay */}
         <div className="grain-layer absolute inset-0 pointer-events-none" />
         <div className="relative mx-auto grid max-w-6xl gap-x-16 gap-y-12 px-6 py-24 md:grid-cols-2">
