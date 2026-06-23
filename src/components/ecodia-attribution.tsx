@@ -1,4 +1,3 @@
-import { ECODIA_CODE_URL } from '@/lib/constants'
 import { cn } from '@/lib/cn'
 
 interface EcodiaAttributionProps {
@@ -6,32 +5,26 @@ interface EcodiaAttributionProps {
 }
 
 /**
- * Small "Built by Ecodia Code" attribution link.
- * Binary black/white pill  each half inverts independently on hover.
- * Matches the web footer design at a smaller scale.
+ * Ecodia attribution mark. "the world we build next" -> ecodia.au.
+ * EB Garamond italic signature, lowercase, opacity-recede. Inherits the
+ * surrounding text colour, so it works on light and dark footers with no
+ * colour prop. The phrase always renders whole, never abbreviated.
+ * Canonical spec: patterns/ecodia-attribution-mark-the-world-we-build-next-2026-06-23.md
  */
 export function EcodiaAttribution({ className }: EcodiaAttributionProps) {
   return (
     <a
-      href={ECODIA_CODE_URL}
+      href="https://ecodia.au"
       target="_blank"
       rel="noopener noreferrer"
+      aria-label="the world we build next"
+      style={{ fontFamily: "'EB Garamond', Georgia, 'Times New Roman', serif" }}
       className={cn(
-        'inline-flex items-center gap-1.5',
+        'inline-block italic text-[15px] leading-none opacity-60 transition-opacity duration-200 hover:opacity-90',
         className,
       )}
     >
-      <span className="text-[10px] text-neutral-400">
-        Built by
-      </span>
-      <span className="inline-flex">
-        <span className="bg-white text-black p-2 text-[10px] font-semibold leading-none transition-colors duration-150 hover:bg-black hover:text-white">
-          Ecodia
-        </span>
-        <span className="bg-black text-white p-2 text-[10px] font-semibold leading-none transition-colors duration-150 hover:bg-white hover:text-black">
-          Code
-        </span>
-      </span>
+      the world we build next
     </a>
   )
 }
