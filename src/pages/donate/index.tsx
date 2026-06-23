@@ -335,9 +335,9 @@ export default function DonatePage() {
               <div className="space-y-5">
               {/* Where your gift goes */}
               <motion.div variants={fadeUp}>
-                <div className="rounded-md bg-secondary-950 text-white p-6 overflow-hidden relative">
-                  <TreePine className="pointer-events-none absolute -bottom-6 -right-4 text-white/[0.05]" size={130} strokeWidth={1.4} />
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-300 mb-4">Where your gift goes</p>
+                <div className="rounded-md bg-primary-800 text-white p-6 overflow-hidden relative">
+                  <TreePine className="pointer-events-none absolute -bottom-6 -right-4 text-white/[0.06]" size={130} strokeWidth={1.4} />
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-200 mb-4">Where your gift goes</p>
                   <div className="space-y-3.5">
                     {GIFT_LINES.map(({ icon: Icon, amount, text }) => (
                       <div key={amount} className="flex items-start gap-3">
