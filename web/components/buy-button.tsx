@@ -49,10 +49,10 @@ export function BuyButton({
                 key={v.id}
                 type="button"
                 onClick={() => setVariantId(v.id)}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+                className={`rounded-none border px-4 py-2 text-xs font-normal uppercase tracking-[0.18em] transition-colors ${
                   variantId === v.id
                     ? 'border-olive-700 bg-olive-700 text-white'
-                    : 'border-neutral-300 text-neutral-700 hover:border-neutral-500'
+                    : 'border-neutral-300 text-neutral-700 hover:border-olive-700 hover:text-olive-700'
                 }`}
               >
                 {v.label ?? 'Option'}
@@ -63,18 +63,18 @@ export function BuyButton({
       )}
 
       <div className="mt-6 flex items-center gap-4">
-        <div className="flex items-center rounded-full border border-neutral-300">
-          <button type="button" aria-label="Decrease" onClick={() => setQty((q) => Math.max(1, q - 1))} className="px-4 py-2 text-lg text-neutral-600">-</button>
-          <span className="w-8 text-center text-sm font-semibold">{qty}</span>
-          <button type="button" aria-label="Increase" onClick={() => setQty((q) => Math.min(20, q + 1))} className="px-4 py-2 text-lg text-neutral-600">+</button>
+        <div className="flex items-center rounded-none border border-neutral-300">
+          <button type="button" aria-label="Decrease" onClick={() => setQty((q) => Math.max(1, q - 1))} className="px-4 py-2.5 text-base text-neutral-600 hover:bg-neutral-100 transition-colors">-</button>
+          <span className="w-8 text-center text-sm font-normal">{qty}</span>
+          <button type="button" aria-label="Increase" onClick={() => setQty((q) => Math.min(20, q + 1))} className="px-4 py-2.5 text-base text-neutral-600 hover:bg-neutral-100 transition-colors">+</button>
         </div>
         <button
           type="button"
           onClick={buy}
           disabled={state === 'submitting'}
-          className="flex-1 rounded-full bg-olive-700 px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-white transition-all duration-300 hover:bg-olive-800 disabled:opacity-60"
+          className="flex-1 rounded-none bg-olive-700 px-8 py-3.5 text-[13px] font-normal uppercase tracking-[0.18em] text-white transition-all duration-300 hover:bg-olive-900 hover:tracking-[0.22em] disabled:opacity-60"
         >
-          {state === 'submitting' ? 'Taking you to checkout…' : 'Buy now'}
+          {state === 'submitting' ? 'Taking you to checkout...' : 'Buy now'}
         </button>
       </div>
       {state === 'error' && (

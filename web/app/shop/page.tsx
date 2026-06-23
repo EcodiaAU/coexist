@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import { getProducts, type ProductVM } from '@/lib/queries'
-import { PageHeader } from '@/components/page-header'
+import { ParallaxImage } from '@/components/parallax-image'
 import { BentoTile } from '@/components/bento-tile'
 import { bentoSpans, BENTO_GRID } from '@/lib/bento'
+import { BLUR } from '@/lib/blur'
 
 export const revalidate = 900
 
@@ -29,12 +30,32 @@ export default async function ShopPage() {
 
   return (
     <main>
-      <PageHeader
-        eyebrow="Shop"
-        title="Merch"
-        subtitle="Natural, durable Co-Exist gear. Every purchase puts young people back into nature. Checkout in seconds, no account needed."
-        image="/images/collective.webp"
-      />
+      {/* Inline hero: object-position shifted lower, left-anchored flat-black scrim for subtitle legibility */}
+      <section className="film-cover relative isolate flex min-h-[72vh] items-end overflow-hidden lg:min-h-[82vh]">
+        <ParallaxImage
+          src="/images/collective.webp"
+          priority
+          blurDataURL={BLUR['/images/collective.webp']}
+          className="object-[50%_75%]"
+        />
+        <div className="grain-layer absolute inset-0 z-0" />
+        {/* Left-anchored flat-black gradient scrim to lift text off bright grass */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-14 pt-40 sm:pb-20">
+          <h1
+            className="display-tight mt-4 max-w-4xl text-[3.25rem] leading-[0.92] text-oncream sm:text-7xl"
+            style={{ textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}
+          >
+            Merch
+          </h1>
+          <p
+            className="mt-5 max-w-md text-[15px] leading-relaxed text-oncream/85"
+            style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}
+          >
+            Natural, durable Co-Exist gear. Every purchase puts young people back into nature. Checkout in seconds, no account needed.
+          </p>
+        </div>
+      </section>
 
       <section>
         {products.length === 0 ? (
@@ -51,9 +72,13 @@ export default async function ShopPage() {
                 span={spans[i]}
                 tint={false}
               >
-                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5">
-                  <h2 className={`uppercase leading-[0.98] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-2xl sm:text-3xl' : 'text-base'}`}>{p.name}</h2>
-                  <span className="shrink-0 text-sm text-oncream/90">{price(p)}</span>
+                {/* Price: quiet top-right tag */}
+                <span className="absolute right-4 top-4 z-10 tabular-nums text-[11px] tracking-[0.14em] uppercase text-oncream/80">
+                  {price(p)}
+                </span>
+                {/* Name: bottom-left, tighter on small tiles */}
+                <div className="absolute inset-x-0 bottom-0 p-5">
+                  <h2 className={`uppercase leading-[0.98] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-2xl sm:text-3xl' : 'text-sm leading-tight'}`}>{p.name}</h2>
                 </div>
               </BentoTile>
             ))}

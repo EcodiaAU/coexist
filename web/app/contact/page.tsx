@@ -28,14 +28,20 @@ export default function ContactPage() {
             </span>
           </h2>
           <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-neutral-500">
-            We are a small team of young people who care a lot. Real replies, no auto-responders.
-            Tell us what you have in mind.
+            We are a small team of young people who care a lot. Tell us what you have in mind.
+          </p>
+
+          <p className="mt-4 text-lg text-neutral-700">
+            Real replies, no auto-responders. We aim to respond within one business day.
           </p>
 
           <div className="mt-10 space-y-8">
             <div>
               <p className="label text-neutral-400">Email</p>
-              <a href="mailto:hello@coexistaus.org" className="mt-2 block text-2xl text-neutral-900 transition-colors hover:text-primary-700">
+              <a
+                href="mailto:hello@coexistaus.org"
+                className="mt-2 block text-2xl text-neutral-900 underline decoration-neutral-300 underline-offset-4 transition-[text-decoration-color] hover:decoration-olive-700"
+              >
                 hello@coexistaus.org
               </a>
             </div>

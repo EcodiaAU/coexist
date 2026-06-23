@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getLegalPage, getLegalSlugs } from '@/lib/queries'
 import { formatDateShort } from '@/lib/format'
+import { PageHeader } from '@/components/page-header'
 
 export const revalidate = 3600
 
@@ -29,16 +30,19 @@ export default async function LegalPage({ params }: Params) {
   if (!page) notFound()
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-14">
-      <h1 className="text-3xl font-extrabold text-neutral-900 sm:text-4xl">{page.title}</h1>
-      {page.updated_at && (
-        <p className="mt-2 text-sm text-neutral-400">Last updated {formatDateShort(page.updated_at)}</p>
-      )}
-      {/* First-party, admin-authored CMS content (legal_pages.content is HTML). */}
-      <div
-        className="rich-content mt-8"
-        dangerouslySetInnerHTML={{ __html: page.content }}
-      />
+    <main>
+      <PageHeader title={page.title} />
+      <section className="mx-auto max-w-2xl px-6 pt-12 pb-24">
+        {page.updated_at && (
+          <p className="label text-neutral-400">Last updated {formatDateShort(page.updated_at)}</p>
+        )}
+        <div className="mt-6 border-t border-neutral-200" />
+        {/* First-party, admin-authored CMS content (legal_pages.content is HTML). */}
+        <div
+          className="rich-content mt-8 text-[17px] text-neutral-800 [&_h2]:mt-10 [&_h2]:border-t [&_h2]:border-neutral-200 [&_h2]:pt-6 [&_a]:text-olive-800 [&_a]:underline [&_a]:underline-offset-4 [&_a]:decoration-olive-700/40 hover:[&_a]:decoration-olive-800"
+          dangerouslySetInnerHTML={{ __html: page.content }}
+        />
+      </section>
     </main>
   )
 }

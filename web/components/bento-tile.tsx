@@ -55,7 +55,7 @@ export function BentoTile({
         </>
       ) : null}
       {tint ? <div className="absolute inset-0 -z-20 bg-olive-900/35 mix-blend-multiply transition-opacity duration-500 group-hover:opacity-50" /> : null}
-      <div className="absolute inset-0 -z-20 bg-gradient-to-t from-olive-950/90 via-olive-950/12 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 -z-20 h-1/2 bg-gradient-to-t from-olive-950/90 via-olive-950/12 to-transparent" />
       <div className="grain-layer absolute inset-0 -z-10" />
       {children}
     </>

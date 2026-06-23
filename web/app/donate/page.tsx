@@ -28,22 +28,24 @@ export default function DonatePage() {
       {/* Gift + form */}
       <section className="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-[1fr_1.05fr] lg:gap-16">
         <div>
-          <p className="eyebrow text-primary-600">Where your gift goes</p>
-          <h2 className="mt-3 text-3xl text-neutral-900 sm:text-4xl">Small gifts, real ground covered</h2>
-          <div className="mt-8 space-y-px overflow-hidden rounded-3xl border border-neutral-200">
+          <h2 className="display-tight text-3xl text-neutral-900 sm:text-4xl">Small gifts, real ground covered</h2>
+          <div className="mt-8 divide-y divide-neutral-200 border-t border-neutral-200">
             {IMPACT.map((i) => (
-              <div key={i.amount} className="flex items-center gap-5 bg-white px-6 py-5">
-                <span className="w-16 shrink-0 text-2xl text-olive-700">{i.amount}</span>
+              <div key={i.amount} className="flex items-center gap-5 bg-white py-5">
+                <span className="w-16 shrink-0 font-normal tabular-nums text-2xl text-olive-700">{i.amount}</span>
                 <span className="text-[15px] leading-relaxed text-neutral-600">{i.blurb}</span>
               </div>
             ))}
           </div>
-          <div className="mt-6 rounded-3xl bg-olive-800 p-7 text-oncream">
-            <p className="text-lg">Why it matters</p>
-            <p className="mt-2 text-[14px] leading-relaxed text-oncream/85">
-              Co-Exist exists so young Australians can lead conservation in their own communities.
-              Your support is what gets them outside, together, doing work that lasts.
-            </p>
+          <div className="relative mt-6 overflow-hidden bg-olive-800 p-7 text-oncream">
+            <div className="grain-layer absolute inset-0 z-0" />
+            <div className="relative z-10">
+              <p className="text-lg">Why it matters</p>
+              <p className="mt-2 text-[14px] leading-relaxed text-oncream/85">
+                Co-Exist exists so young Australians can lead conservation in their own communities.
+                Your support is what gets them outside, together, doing work that lasts.
+              </p>
+            </div>
           </div>
           <p className="mt-6 text-sm leading-relaxed text-neutral-500">
             Prefer to give by bank transfer, or leave a gift in your will?{' '}
@@ -54,26 +56,29 @@ export default function DonatePage() {
           </p>
         </div>
 
-        <DonateForm />
+        <div className="md:sticky md:top-28 md:self-start">
+          <DonateForm />
+        </div>
       </section>
 
       {/* Supporter voices - with real faces from the live donate page */}
       <section className="relative isolate overflow-hidden bg-olive-800 text-oncream">
         <div className="grain-layer absolute inset-0 z-0" />
         <div className="relative z-10 mx-auto max-w-6xl px-6 py-24">
-          <h2 className="text-center text-3xl text-oncream sm:text-4xl">Why people give</h2>
-          <div className="mt-14 grid gap-12 md:grid-cols-3">
+          <h2 className="display-tight text-center text-3xl text-oncream sm:text-4xl">Why people give</h2>
+          <div className="mt-14 grid gap-8 md:grid-cols-3">
             {[
               { quote: 'Your support helps young people lead real change.', photo: '/images/donors/d1.jpg' },
               { quote: 'Thanks to Co-Exist, I found my people, and my voice.', photo: '/images/donors/d2.jpg' },
               { quote: 'We are building a movement that lasts. Your support makes it real.', photo: '/images/donors/d3.jpg' },
             ].map((t, i) => (
-              <Reveal key={t.quote} delay={i * 110} className="flex flex-col items-center text-center">
-                <div className="h-20 w-20 overflow-hidden rounded-full ring-1 ring-oncream/20">
+              <Reveal key={t.quote} delay={i * 110} className="flex flex-col items-start text-left">
+                <div className="relative aspect-[4/5] w-full overflow-hidden">
+                  <div className="absolute inset-0 z-10 bg-olive-800/30" />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={t.photo} alt="" className="h-full w-full object-cover" />
                 </div>
-                <blockquote className="mt-6 text-xl font-light leading-snug text-oncream">
+                <blockquote className="mt-5 text-xl font-light leading-snug text-oncream">
                   &ldquo;{t.quote}&rdquo;
                 </blockquote>
               </Reveal>
@@ -86,8 +91,7 @@ export default function DonatePage() {
       <section className="bg-white">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-2">
           <Reveal>
-            <p className="eyebrow text-primary-600">Leave a legacy</p>
-            <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">Leave the world in safe hands</h2>
+            <h2 className="display-tight text-4xl text-neutral-900 sm:text-5xl">Leave the world in safe hands</h2>
           </Reveal>
           <Reveal delay={120}>
             <p className="text-[15px] leading-relaxed text-neutral-600">
@@ -99,7 +103,7 @@ export default function DonatePage() {
               href="https://gatheredhere.com.au/c/coexistaustralia"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-7 inline-block rounded-full bg-olive-700 px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-white transition-all duration-300 hover:bg-olive-800 hover:px-10"
+              className="mt-7 inline-block bg-olive-700 px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-white transition-colors duration-300 hover:bg-olive-800"
             >
               Leave a legacy
             </a>

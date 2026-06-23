@@ -22,35 +22,41 @@ export default async function NewsPage() {
     <main>
       <PageHeader eyebrow="From the movement" title="News & updates" image="/images/nature.webp" />
 
-      <section className="mx-auto max-w-3xl px-5 py-14">
+      <section className="mx-auto max-w-6xl px-5 py-14">
         {news.length === 0 ? (
-          <div className="rounded-2xl border border-neutral-100 bg-white p-10 text-center shadow-sm">
-            <p className="text-lg font-semibold text-neutral-900">Nothing new just yet</p>
-            <p className="mt-2 text-neutral-600">
+          <div className="py-24 text-center md:py-32">
+            <p className="display-tight text-2xl font-normal text-neutral-900">Nothing new just yet</p>
+            <p className="mt-4 text-neutral-500">
               Stories and updates from across the movement will appear here. Subscribe below to get them in your inbox.
             </p>
           </div>
         ) : (
-          <div className="space-y-8">
-            {news.map((n) => (
-              <article key={n.id} className="rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm">
+          <div>
+            {news.map((n, i) => (
+              <article key={n.id} className={i > 0 ? 'border-t border-neutral-200' : ''}>
                 {n.image_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={n.image_url}
-                    alt={n.title}
-                    loading="lazy"
-                    className="mb-5 aspect-[16/9] w-full rounded-xl object-cover"
-                  />
+                  <div className="relative overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={n.image_url}
+                      alt={n.title}
+                      loading="lazy"
+                      className="aspect-[16/9] w-full object-cover"
+                    />
+                    <div className="grain-layer" />
+                    <div className="absolute inset-0 bg-olive-800/30" />
+                  </div>
                 )}
-                <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                  {formatDateShort(n.created_at)}
-                  {n.is_pinned ? ' · Pinned' : ''}
-                </p>
-                <h2 className="mt-1.5 text-xl font-bold text-neutral-900">{n.title}</h2>
-                {n.content && (
-                  <p className="mt-3 whitespace-pre-line leading-relaxed text-neutral-700">{n.content}</p>
-                )}
+                <div className="py-8">
+                  <p className="label text-neutral-400">
+                    {formatDateShort(n.created_at)}
+                    {n.is_pinned ? ', Pinned' : ''}
+                  </p>
+                  <h2 className="display-tight mt-2 text-2xl font-normal text-neutral-900">{n.title}</h2>
+                  {n.content && (
+                    <p className="mt-4 max-w-3xl whitespace-pre-line leading-relaxed text-neutral-600">{n.content}</p>
+                  )}
+                </div>
               </article>
             ))}
           </div>

@@ -31,19 +31,19 @@ export function ContactForm() {
 
   if (state === 'done') {
     return (
-      <div className="rounded-2xl border border-neutral-100 bg-white p-8 text-center shadow-sm">
-        <p className="text-lg font-semibold text-neutral-900">Thanks for reaching out</p>
+      <div className="border-t border-neutral-200 py-8 text-center">
+        <p className="text-lg font-normal text-neutral-900">Thanks for reaching out</p>
         <p className="mt-2 text-neutral-600">We have got your message and will be in touch soon.</p>
       </div>
     )
   }
 
   const input =
-    'w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-primary-400'
+    'w-full border-0 border-b border-neutral-300 bg-transparent rounded-none px-0 py-2.5 text-sm outline-none focus:border-olive-700 transition-colors'
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={onSubmit} className="space-y-6 border-t border-neutral-200 pt-6">
+      <div className="grid gap-6 sm:grid-cols-2">
         <label className="block">
           <span className="text-xs font-semibold text-neutral-600">Name</span>
           <input required value={form.name} onChange={(e) => set('name', e.target.value)} className={`mt-1 ${input}`} />
@@ -74,7 +74,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={state === 'submitting'}
-        className="rounded-full bg-olive-700 px-7 py-3 text-sm font-bold text-white transition-colors hover:bg-olive-800 disabled:opacity-60"
+        className="w-full rounded-none bg-olive-700 px-7 py-3 text-sm font-medium text-white transition-colors hover:bg-olive-800 disabled:opacity-60"
       >
         {state === 'submitting' ? 'Sending…' : 'Send message'}
       </button>

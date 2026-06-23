@@ -25,7 +25,7 @@ export function PageHeader({
         <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-14 pt-40 sm:pb-20">
           {eyebrow && <p className="eyebrow text-oncream/70">{eyebrow}</p>}
           <h1 className="display-tight mt-4 max-w-4xl text-[3.25rem] leading-[0.92] text-oncream sm:text-7xl">{title}</h1>
-          {subtitle && <p className="mt-5 max-w-md text-[15px] leading-relaxed text-oncream/85">{subtitle}</p>}
+          {subtitle && <p className="mt-5 max-w-xl text-base leading-relaxed text-oncream/90">{subtitle}</p>}
         </div>
       </section>
     )

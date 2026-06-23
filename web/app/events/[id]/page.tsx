@@ -48,68 +48,111 @@ export default async function EventDetailPage({ params }: Params) {
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {event.cover_image_url && (
-        <div className="relative aspect-[21/9] w-full overflow-hidden bg-neutral-100">
+      {/* Cinematic hero: full-bleed cover + olive film tint + grain + bottom flat-black gradient */}
+      {event.cover_image_url ? (
+        <section className="relative isolate flex min-h-[58vh] items-end overflow-hidden bg-neutral-900 sm:min-h-[68vh]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={event.cover_image_url} alt={event.title} className="h-full w-full object-cover" />
-        </div>
+          <img
+            src={event.cover_image_url}
+            alt={event.title}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* olive film tint */}
+          <div className="absolute inset-0 bg-olive-900/40" />
+          {/* grain overlay */}
+          <div className="grain-layer absolute inset-0 z-0" />
+          {/* bottom flat-black gradient */}
+          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 to-transparent" />
+          {/* title lockup */}
+          <div className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-12 pt-40 sm:pb-16">
+            <span className="mark inline-block text-oncream/90 text-[11px] tracking-[0.18em] uppercase">
+              {activityLabel(event.activity_type)}
+            </span>
+            <h1 className="display-tight mt-3 text-[2.75rem] font-normal leading-[0.92] text-oncream sm:text-6xl">
+              {event.title}
+            </h1>
+          </div>
+        </section>
+      ) : (
+        /* No cover image: plain white header with title */
+        <section className="flex min-h-[32vh] items-end bg-white border-b border-neutral-200">
+          <div className="mx-auto w-full max-w-4xl px-6 pb-12 pt-32">
+            <span className="mark inline-block text-[11px] tracking-[0.18em] uppercase text-olive-700">
+              {activityLabel(event.activity_type)}
+            </span>
+            <h1 className="display-tight mt-3 text-[2.75rem] font-normal leading-[0.92] text-neutral-900 sm:text-6xl">
+              {event.title}
+            </h1>
+          </div>
+        </section>
       )}
 
-      <article className="mx-auto max-w-3xl px-5 py-12">
-        <Link href="/events" className="text-sm font-semibold text-primary-700 hover:text-primary-800">
-          ← All events
+      <article className="mx-auto max-w-4xl px-5 py-12">
+        {/* Back link */}
+        <Link
+          href="/events"
+          className="label inline-flex items-center gap-1 text-neutral-500 hover:text-neutral-900 transition-colors"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M7.5 2L3.5 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          All events
         </Link>
 
-        <span className="mt-5 inline-block rounded-full bg-primary-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-primary-700">
-          {activityLabel(event.activity_type)}
-        </span>
-        <h1 className="mt-3 text-3xl font-extrabold text-neutral-900 sm:text-4xl">{event.title}</h1>
-
-        <dl className="mt-6 grid gap-4 rounded-2xl border border-neutral-100 bg-white p-5 shadow-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">When</dt>
-            <dd className="mt-1 font-semibold text-neutral-900">
+        {/* Flat spec row replacing rounded card */}
+        <dl className="mt-8 border-y border-neutral-200 divide-y divide-neutral-100">
+          <div className="flex gap-6 py-3">
+            <dt className="label w-24 shrink-0 text-neutral-400">When</dt>
+            <dd className="text-[15px] text-neutral-900">
               {formatEventDate(event.date_start, event.timezone)}
             </dd>
           </div>
           {event.address && (
-            <div>
-              <dt className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Where</dt>
-              <dd className="mt-1 font-semibold text-neutral-900">{event.address}</dd>
+            <div className="flex gap-6 py-3">
+              <dt className="label w-24 shrink-0 text-neutral-400">Where</dt>
+              <dd className="text-[15px] text-neutral-900">{event.address}</dd>
             </div>
           )}
           {event.collective && (
-            <div>
-              <dt className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Hosted by</dt>
-              <dd className="mt-1 font-semibold text-neutral-900">
-                <Link href={`/collectives/${event.collective.slug}`} className="hover:text-primary-700">
+            <div className="flex gap-6 py-3">
+              <dt className="label w-24 shrink-0 text-neutral-400">Hosted by</dt>
+              <dd className="text-[15px] text-neutral-900">
+                <Link
+                  href={`/collectives/${event.collective.slug}`}
+                  className="label inline-flex items-center gap-1 text-neutral-700 hover:text-olive-700 transition-colors"
+                >
                   Co-Exist {event.collective.name}
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                    <path d="M2.5 5h5M5 2.5l2.5 2.5L5 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </Link>
               </dd>
             </div>
           )}
           {event.capacity ? (
-            <div>
-              <dt className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Capacity</dt>
-              <dd className="mt-1 font-semibold text-neutral-900">{event.capacity} spots</dd>
+            <div className="flex gap-6 py-3">
+              <dt className="label w-24 shrink-0 text-neutral-400">Capacity</dt>
+              <dd className="text-[15px] text-neutral-900">{event.capacity} spots</dd>
             </div>
           ) : null}
         </dl>
 
+        {/* Description constrained to max-w-prose */}
         {event.description && (
-          <div className="mt-8 whitespace-pre-line text-lg leading-relaxed text-neutral-700">
+          <div className="mt-8 max-w-prose whitespace-pre-line text-[17px] leading-relaxed text-neutral-700">
             {event.description}
           </div>
         )}
 
-        <div className="mt-10">
+        {/* Flat CTA band */}
+        <div className="mt-12 border-t border-neutral-200 pt-8">
           <a
             href={registerHref}
-            className="inline-block rounded-full bg-olive-700 px-7 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-olive-800"
+            className="inline-block bg-olive-700 px-8 py-3.5 text-sm font-medium tracking-wide text-white transition-colors hover:bg-olive-800"
           >
             Register for this event
           </a>
-          <p className="mt-2 text-xs text-neutral-400">
+          <p className="mt-3 text-xs text-neutral-400">
             Registration happens in the Co-Exist app, where you can check in on the day.
           </p>
         </div>

@@ -27,8 +27,9 @@ const SLUG_COORDS: Record<string, [number, number]> = {
   cairns: [-16.9186, 145.7781],
 }
 
-const AUS_CENTER: L.LatLngExpression = [-28.5, 134.5]
-const AUS_ZOOM = 3.4
+// Tighter center + zoom: removes dead ocean to the west/east
+const AUS_CENTER: L.LatLngExpression = [-27.5, 134.0]
+const AUS_ZOOM = 4.0
 const PIN = '#2d3220'
 const PIN_ACTIVE = '#475c34'
 
@@ -45,12 +46,16 @@ function injectStyles() {
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return
   const s = document.createElement('style')
   s.id = STYLE_ID
+  // Map water/bg matches canvas cream #f4f3ec so it dissolves into the page.
+  // Zoom controls and count pill use flat squared brand idiom: no shadows, olive hairline, cream fill.
   s.textContent = `
     .cx-pin{background:none!important;border:none!important}
-    .cx-cmap,.cx-cmap.leaflet-container{background:#f4efe3!important;cursor:grab}
+    .cx-cmap,.cx-cmap.leaflet-container{background:#f4f3ec!important;cursor:grab}
     .cx-cmap .leaflet-control-attribution{display:none!important}
-    .cx-cmap .leaflet-control-zoom{border:none!important;border-radius:10px!important;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)!important}
-    .cx-cmap .leaflet-control-zoom a{width:32px!important;height:32px!important;line-height:32px!important;color:#3a4b2c!important;background:#fff!important;border-bottom:1px solid #e4e5e1!important}
+    .cx-cmap .leaflet-control-zoom{border:1px solid #474f2f!important;border-radius:0!important;overflow:hidden;box-shadow:none!important}
+    .cx-cmap .leaflet-control-zoom a{width:32px!important;height:32px!important;line-height:32px!important;color:#2d3220!important;background:#f4f3ec!important;border-bottom:1px solid #474f2f!important;border-radius:0!important;box-shadow:none!important;font-size:16px!important}
+    .cx-cmap .leaflet-control-zoom a:last-child{border-bottom:none!important}
+    .cx-cmap .leaflet-control-zoom a:hover{background:#e5eec1!important}
     .cx-cmap-label{background:none!important;border:none!important;box-shadow:none!important;font-family:var(--font-body),sans-serif!important;font-size:11px!important;font-weight:600!important;color:#2d3220!important;white-space:nowrap!important}
     .cx-cmap-label::before{display:none!important}
   `
@@ -72,9 +77,17 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
     if (!ref.current || mapRef.current) return
     injectStyles()
     const map = L.map(ref.current, {
-      center: AUS_CENTER, zoom: AUS_ZOOM, zoomControl: true, attributionControl: false,
-      zoomSnap: 0.25, minZoom: 3, maxZoom: 12, scrollWheelZoom: false,
-      maxBounds: L.latLngBounds([-48, 100], [-5, 165]), maxBoundsViscosity: 0.7,
+      center: AUS_CENTER,
+      zoom: AUS_ZOOM,
+      zoomControl: true,
+      attributionControl: false,
+      zoomSnap: 0.25,
+      minZoom: 3.5,
+      maxZoom: 12,
+      scrollWheelZoom: false,
+      // Tighter maxBounds: clips dead ocean, keeps all Australian land masses
+      maxBounds: L.latLngBounds([-45, 110], [-9, 155]),
+      maxBoundsViscosity: 0.85,
     })
     map.zoomControl.setPosition('bottomright')
     L.geoJSON(australiaGeoJson as GeoJSON.FeatureCollection, {
@@ -84,7 +97,8 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
 
     for (const { c, pos } of pinned) {
       const m = L.marker(pos as L.LatLngExpression, { icon: icon(false) })
-      m.bindTooltip(c.name, { permanent: true, direction: 'right', offset: [10, -12], className: 'cx-cmap-label' })
+      // Hover/active tooltips only (permanent: false)
+      m.bindTooltip(c.name, { permanent: false, direction: 'right', offset: [10, -12], className: 'cx-cmap-label' })
       m.on('click', () => { setSelected(c); map.flyTo(pos as L.LatLngExpression, 8, { duration: 0.9 }) })
       m.addTo(map)
     }
@@ -98,13 +112,17 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
     <div className={`relative overflow-hidden ${className}`}>
       <div ref={ref} className="cx-cmap h-full w-full" style={{ zIndex: 0 }} />
 
-      <div className="absolute left-4 top-4 z-[500] rounded-full bg-white/90 px-4 py-2 text-xs font-bold text-olive-800 shadow-sm backdrop-blur">
+      {/* Grain overlay over the map container */}
+      <div className="grain-layer pointer-events-none absolute inset-0" style={{ zIndex: 1 }} />
+
+      {/* Count pill: flat squared, olive hairline, cream fill, no shadow */}
+      <div className="absolute left-4 top-4 z-[500] border border-olive-700 bg-cream px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-olive-800">
         {collectives.length} collectives across Australia
       </div>
 
-      {/* Selected card */}
+      {/* Selected card: flat, squared, olive hairline, cream fill, no shadow, no rounded */}
       {selected && (
-        <div className="absolute inset-x-4 bottom-4 z-[500] overflow-hidden rounded-2xl bg-white shadow-lg">
+        <div className="absolute inset-x-4 bottom-4 z-[500] overflow-hidden border border-olive-700 bg-cream">
           <div className="flex items-stretch">
             {selected.cover_image_url && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -113,15 +131,15 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
             <div className="flex-1 p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-xl text-neutral-900">{selected.name}</h3>
-                  {selected.state && <p className="text-sm text-neutral-500">{selected.state}</p>}
+                  <h3 className="text-xl tracking-[-0.02em] text-neutral-900">{selected.name}</h3>
+                  {selected.state && <p className="mt-0.5 text-xs uppercase tracking-[0.1em] text-neutral-500">{selected.state}</p>}
                 </div>
                 <button onClick={() => setSelected(null)} aria-label="Close" className="text-neutral-400 hover:text-neutral-700">✕</button>
               </div>
               {selected.description && <p className="mt-2 line-clamp-2 text-sm text-neutral-500">{selected.description}</p>}
               <button
                 onClick={() => router.push(`/collectives/${selected.slug}`)}
-                className="mt-4 rounded-full bg-olive-700 px-6 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-white hover:bg-olive-800"
+                className="mt-4 border border-olive-700 bg-olive-700 px-6 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-oncream hover:bg-olive-800"
               >
                 View collective
               </button>

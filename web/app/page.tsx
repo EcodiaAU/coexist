@@ -69,11 +69,11 @@ export default async function HomePage() {
 
         <div className="mx-auto w-full max-w-6xl border-t border-oncream/15 px-6 pt-9 pb-28 lg:pb-36">
           <div className="grid grid-cols-2 gap-y-7 sm:grid-cols-4">
-            {tiles.map((t) => (
-              <div key={t.label}>
-                <div className="text-3xl font-light tracking-[-0.05em] text-oncream tabular-nums sm:text-[2.75rem]">
+            {tiles.map((t, i) => (
+              <div key={t.label} className={i > 0 ? 'border-l border-oncream/12 pl-6 sm:pl-8' : ''}>
+                <div className="text-[3.25rem] font-light leading-none tracking-[-0.06em] text-oncream tabular-nums">
                   {t.value}
-                  {t.unit && <span className="text-xl">{t.unit}</span>}
+                  {t.unit && <span className="text-2xl">{t.unit}</span>}
                 </div>
                 <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-oncream/55">{t.label}</div>
               </div>
@@ -84,10 +84,12 @@ export default async function HomePage() {
 
       {/* About - full-bleed image half (people in nature, not a face) */}
       <section className="grid items-stretch bg-white md:grid-cols-2">
-        <Reveal className="relative order-1 min-h-[56vh] overflow-hidden md:order-2">
+        <Reveal className="relative order-1 min-h-[72vh] overflow-hidden md:order-2">
           <Image src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/nature.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          <div className="absolute inset-0 bg-olive-900/15 mix-blend-multiply" />
+          <div className="grain-layer absolute inset-0" />
         </Reveal>
-        <div className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
+        <div className="order-2 flex items-center px-6 py-32 md:order-1 md:px-16">
           <Reveal className="max-w-md">
             <p className="eyebrow text-primary-600">The movement</p>
             <h2 className="has-mark mt-5 text-4xl text-neutral-900 sm:text-5xl">
@@ -110,6 +112,8 @@ export default async function HomePage() {
       <section className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal className="relative order-1 min-h-[56vh] overflow-hidden">
           <Image src="/images/gather.webp" alt="A local Co-Exist collective gathering" fill sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/gather.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          <div className="absolute inset-0 bg-olive-900/15 mix-blend-multiply" />
+          <div className="grain-layer absolute inset-0" />
         </Reveal>
         <div className="order-2 flex items-center px-6 py-24 md:px-16">
           <Reveal className="max-w-md">
@@ -132,11 +136,15 @@ export default async function HomePage() {
       {/* Founder quote - Kurt's photo beside the quote */}
       <section className="bg-olive-800 text-oncream">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-[auto_1fr]">
-          <Reveal className="mx-auto h-44 w-44 shrink-0 overflow-hidden rounded-full sm:h-56 sm:w-56">
-            <Image src="/images/kurt.webp" alt="Kurt Jones, founder of Co-Exist" width={224} height={224} placeholder="blur" blurDataURL={BLUR['/images/kurt.webp']} className="h-full w-full object-cover" />
+          <Reveal className="relative mx-auto w-44 shrink-0 overflow-hidden rounded-none sm:w-56">
+            <div className="relative aspect-[4/5]">
+              <Image src="/images/kurt.webp" alt="Kurt Jones, founder of Co-Exist" fill placeholder="blur" blurDataURL={BLUR['/images/kurt.webp']} className="object-cover" />
+              <div className="absolute inset-0 bg-olive-900/15 mix-blend-multiply" />
+              <div className="grain-layer absolute inset-0" />
+            </div>
           </Reveal>
           <Reveal delay={120}>
-            <blockquote className="text-2xl font-light leading-[1.25] text-oncream sm:text-4xl">“{founderQuote}”</blockquote>
+            <blockquote className="text-[1.6rem] font-light leading-[1.25] text-oncream sm:text-[2.75rem]">&ldquo;{founderQuote}&rdquo;</blockquote>
             <p className="label mt-7 text-sage">{founderName}</p>
           </Reveal>
         </div>
@@ -144,14 +152,14 @@ export default async function HomePage() {
 
       {/* Partners */}
       {partners.length > 0 && (
-        <section className="bg-white">
-          <div className="mx-auto max-w-6xl px-6 py-16">
+        <section className="bg-cream">
+          <div className="mx-auto max-w-6xl px-6 py-10">
             <p className="eyebrow text-center text-neutral-400">With the support of</p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-14 gap-y-5">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
               {partners.map((p) =>
                 p.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={p.id} src={p.logo_url} alt={p.name} className="h-9 w-auto object-contain opacity-50 transition-opacity hover:opacity-100" />
+                  <img key={p.id} src={p.logo_url} alt={p.name} className="h-8 w-auto object-contain grayscale opacity-40 transition-all duration-300 hover:grayscale-0 hover:opacity-100" />
                 ) : (
                   <span key={p.id} className="text-[13px] font-semibold uppercase tracking-wider text-neutral-400">{p.name}</span>
                 ),
@@ -164,9 +172,9 @@ export default async function HomePage() {
       {/* Donate CTA - watermark */}
       <section className="relative overflow-hidden bg-olive-700 text-oncream">
         <span className="watermark right-[-3%] bottom-[-8%] text-[22vw] text-oncream">Protect</span>
-        <div className="relative mx-auto max-w-4xl px-6 py-28 text-center">
+        <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
           <Reveal>
-            <h2 className="has-mark text-4xl text-oncream sm:text-6xl">
+            <h2 className="display-tight has-mark text-[2.75rem] text-oncream sm:text-6xl">
               Help build communities that
               <span className="mt-2 block"><WordSwap words={['protect nature', 'restore habitat', 'last']} /></span>
             </h2>

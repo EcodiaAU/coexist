@@ -60,21 +60,46 @@ export default async function CollectivesPage() {
             {placed.map((c, i) => (
               <BentoTile key={c.id} href={`/collectives/${c.slug}`} image={c.cover_image_url} alt={c.name} span={spans[i]}>
                 <div className="absolute inset-x-0 bottom-0 p-5">
-                  <h2 className={`uppercase leading-[0.96] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-4xl sm:text-5xl' : 'text-xl'}`}>{c.name}</h2>
+                  {/* Large tiles keep bigger type; small tiles use tightened 2xl ramp */}
+                  <h2
+                    className={`uppercase leading-[0.96] text-oncream ${
+                      spans[i].includes('row-span-2')
+                        ? 'text-4xl tracking-[-0.03em] sm:text-5xl'
+                        : 'text-2xl tracking-[-0.03em]'
+                    }`}
+                  >
+                    {c.name}
+                  </h2>
                   {c.member_count ? (
-                    <p className="mt-1.5 text-[10px] uppercase tracking-[0.14em] text-oncream/70">{c.member_count} members</p>
+                    <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-oncream/80">
+                      {c.member_count} members
+                    </p>
                   ) : null}
                 </div>
               </BentoTile>
             ))}
 
-            {/* CTA tile - fills the rest of the last row so the grid bottom is flat */}
+            {/* CTA tile: tinted background image + grain so it reads as content, not a hole.
+                Flat-bottom bento math (bentoSpans) is preserved. */}
             <a
               href={`${APP_URL}/lead-a-collective`}
-              className={`group flex flex-col items-center justify-center bg-olive-700 p-5 text-center text-oncream transition-colors hover:bg-olive-600 ${spans[n - 1]}`}
+              className={`group relative flex flex-col items-center justify-center overflow-hidden p-5 text-center ${spans[n - 1]}`}
+              style={{
+                backgroundImage: 'url(/images/nature.webp)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
             >
-              <span className="text-xl leading-tight text-oncream sm:text-2xl">Start a collective</span>
-              <span className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-oncream/70">Not near one yet? →</span>
+              {/* Flat black scrim matching PageHeader/BentoTile convention */}
+              <div className="absolute inset-0 bg-black/55" />
+              {/* Grain over the CTA tile */}
+              <div className="grain-layer pointer-events-none absolute inset-0" />
+              <span className="relative z-10 text-2xl leading-tight text-oncream tracking-[-0.02em] sm:text-3xl">
+                Start a collective
+              </span>
+              <span className="relative z-10 mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-oncream/70">
+                Not near one yet?
+              </span>
             </a>
           </div>
         )}

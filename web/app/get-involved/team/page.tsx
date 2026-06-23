@@ -49,13 +49,16 @@ export default function TeamPage() {
 
       {/* Why join - full-bleed split */}
       <section className="grid items-stretch bg-white md:grid-cols-2">
-        <Reveal className="grain relative order-1 min-h-[54vh] overflow-hidden md:order-2">
+        <Reveal className="relative order-1 min-h-[54vh] overflow-hidden md:order-2">
           <Image src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill quality={88} sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/nature.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          {/* olive-900/15 tint + grain to match hero grade */}
+          <div className="absolute inset-0 bg-olive-900/15" />
+          <div className="grain-layer" />
         </Reveal>
         <div className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
           <Reveal className="max-w-md">
             <p className="eyebrow text-primary-600">Why join</p>
-            <h2 className="has-mark mt-5 text-4xl text-neutral-900 sm:text-5xl">
+            <h2 className="display-tight has-mark mt-5 text-5xl text-neutral-900 sm:text-6xl">
               Do something that
               <span className="mt-2 block"><WordSwap words={['actually matters', 'lasts', 'feels good', 'is yours']} /></span>
             </h2>
@@ -72,8 +75,8 @@ export default function TeamPage() {
       <section className="bg-white">
         <div className="mx-auto max-w-6xl px-6 pb-24 pt-4">
           <p className="eyebrow text-primary-600">Ways in</p>
-          <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">Three ways to get involved</h2>
-          <div className="mt-12 border-t border-neutral-200">
+          <h2 className="display-tight mt-3 text-5xl text-neutral-900 sm:text-6xl">Three ways to get involved</h2>
+          <div className="mt-12 border-t border-neutral-300">
             {ROLES.map((r, i) => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const Wrap: any = r.external ? 'a' : Link
@@ -82,10 +85,10 @@ export default function TeamPage() {
                   <Wrap
                     href={r.href}
                     {...(r.external ? { target: '_self' } : {})}
-                    className="group/role relative block border-b border-neutral-200"
+                    className="group/role relative block border-b border-neutral-300"
                   >
-                    <div className="grid gap-3 py-9 md:grid-cols-[5rem_1fr_auto] md:items-center md:gap-10">
-                      <span className="text-4xl font-light leading-none text-primary-300 transition-colors duration-300 group-hover/role:text-primary-500 sm:text-5xl">
+                    <div className="grid gap-3 py-12 md:grid-cols-[5rem_1fr_auto] md:items-center md:gap-10 md:py-14">
+                      <span className="text-6xl font-light leading-none text-primary-300 transition-colors duration-300 group-hover/role:text-primary-500 sm:text-7xl">
                         0{i + 1}
                       </span>
                       <div>
@@ -103,6 +106,25 @@ export default function TeamPage() {
             })}
           </div>
         </div>
+      </section>
+
+      {/* Full-bleed image strip, breaks white midsection before newsletter band */}
+      <section className="relative h-[40vh] overflow-hidden">
+        <Image
+          src="/images/gather.webp"
+          alt="Co-Exist members gathered outdoors"
+          fill
+          quality={88}
+          sizes="100vw"
+          placeholder="blur"
+          blurDataURL={BLUR['/images/gather.webp']}
+          className="object-cover"
+        />
+        {/* flat-black scrim consistent with hero grade */}
+        <div className="absolute inset-0 bg-black/30" />
+        {/* olive tint */}
+        <div className="absolute inset-0 bg-olive-900/20" />
+        <div className="grain-layer" />
       </section>
     </main>
   )

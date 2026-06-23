@@ -44,19 +44,19 @@ export function DonateForm() {
   }
 
   const inputCls =
-    'w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors duration-200 focus:border-primary-400'
+    'w-full border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors duration-200 focus:border-primary-400'
 
   return (
-    <form onSubmit={onSubmit} className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
+    <form onSubmit={onSubmit} className="border border-neutral-200 bg-white p-6 sm:p-8">
       {/* Frequency toggle */}
-      <div className="flex gap-1 rounded-full bg-neutral-100 p-1">
+      <div className="flex border border-neutral-200">
         {(['one_time', 'monthly'] as const).map((f) => (
           <button
             key={f}
             type="button"
             onClick={() => setFrequency(f)}
-            className={`flex-1 rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 ${
-              frequency === f ? 'bg-olive-700 text-white shadow-sm' : 'text-neutral-600 hover:text-neutral-900'
+            className={`flex-1 px-4 py-2.5 text-sm font-semibold uppercase tracking-wider transition-colors duration-200 ${
+              frequency === f ? 'bg-olive-700 text-white' : 'bg-white text-neutral-600 hover:text-neutral-900'
             }`}
           >
             {f === 'one_time' ? 'One-time' : 'Monthly'}
@@ -65,7 +65,7 @@ export function DonateForm() {
       </div>
 
       {/* Amount presets */}
-      <div className="mt-5 grid grid-cols-4 gap-2">
+      <div className="mt-5 grid grid-cols-4 gap-px bg-neutral-200">
         {PRESETS.map((a) => (
           <button
             key={a}
@@ -74,10 +74,10 @@ export function DonateForm() {
               setAmount(a)
               setCustom('')
             }}
-            className={`rounded-xl border py-3 text-lg font-bold transition-all duration-200 active:scale-95 ${
+            className={`py-3 text-lg font-normal tabular-nums transition-colors duration-200 ${
               !custom && amount === a
-                ? 'border-olive-700 bg-olive-700 text-white shadow-sm'
-                : 'border-neutral-200 text-neutral-800 hover:border-olive-400 hover:text-olive-700'
+                ? 'bg-olive-700 text-white'
+                : 'bg-white text-neutral-800 hover:bg-neutral-50 hover:text-olive-700'
             }`}
           >
             ${a}
@@ -87,7 +87,7 @@ export function DonateForm() {
 
       <div className="mt-3">
         <label className="text-xs font-semibold text-neutral-600">Or enter an amount</label>
-        <div className="mt-1 flex items-center rounded-xl border border-neutral-200 bg-white px-4 focus-within:border-primary-400">
+        <div className="mt-1 flex items-center border border-neutral-200 bg-white px-4 focus-within:border-primary-400">
           <span className="text-neutral-500">$</span>
           <input
             type="number"
@@ -120,7 +120,7 @@ export function DonateForm() {
       <button
         type="submit"
         disabled={state === 'submitting'}
-        className="mt-5 w-full rounded-full bg-olive-700 px-7 py-3.5 text-sm font-bold text-white transition-colors hover:bg-olive-800 disabled:opacity-60"
+        className="mt-5 w-full bg-olive-700 px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-olive-800 disabled:opacity-60"
       >
         {state === 'submitting'
           ? 'Taking you to checkout…'

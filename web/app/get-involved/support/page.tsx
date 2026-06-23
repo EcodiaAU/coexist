@@ -58,14 +58,14 @@ export default async function SupportPage() {
 
       {/* Live impact strip - what support has already built */}
       <section className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-8 px-6 py-12 sm:grid-cols-4">
-          {tiles.map((t) => (
-            <div key={t.label}>
-              <p className="text-3xl text-neutral-900 sm:text-4xl">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 px-6 py-16 sm:grid-cols-4 sm:py-20">
+          {tiles.map((t, i) => (
+            <div key={t.label} className={i > 0 ? 'border-l border-neutral-200 pl-8' : ''}>
+              <p className="display-tight text-4xl font-light text-neutral-900 sm:text-5xl" style={{ letterSpacing: '-0.04em' }}>
                 {t.value}
-                {t.unit && <span className="text-lg text-neutral-400"> {t.unit}</span>}
+                {t.unit && <span className="ml-1 text-xl font-light text-neutral-400">{t.unit}</span>}
               </p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-neutral-400">{t.label}</p>
+              <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-neutral-400">{t.label}</p>
             </div>
           ))}
         </div>
@@ -86,9 +86,10 @@ export default async function SupportPage() {
               Start a conversation
             </Link>
           </Reveal>
-          <Reveal delay={120} className="rounded-3xl border border-oncream/15 p-8">
-            <blockquote className="text-2xl font-light leading-snug text-oncream sm:text-3xl">
-              &ldquo;You&apos;re actually making a difference to the world around you.&rdquo;
+          <Reveal delay={120} className="border-l-2 border-sage pl-8">
+            <span className="block font-light leading-none text-sage" style={{ fontSize: '4rem', lineHeight: 1 }} aria-hidden="true">&ldquo;</span>
+            <blockquote className="display-tight -mt-2 text-3xl font-light leading-snug text-oncream sm:text-4xl">
+              You&apos;re actually making a difference to the world around you.
             </blockquote>
             <p className="label mt-6 text-sage">Sam Lundberg, Co-Exist volunteer</p>
           </Reveal>
@@ -96,10 +97,10 @@ export default async function SupportPage() {
       </section>
 
       {/* What your support enables */}
-      <section className="bg-white">
+      <section className="bg-cream">
         <div className="mx-auto max-w-6xl px-6 py-24">
           <p className="eyebrow text-primary-600">Where it goes</p>
-          <h2 className="mt-3 max-w-2xl text-4xl text-neutral-900 sm:text-5xl">Every dollar does something you can see</h2>
+          <h2 className="display-tight mt-3 max-w-2xl text-4xl text-neutral-900 sm:text-5xl">Every dollar does something you can see</h2>
           <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-3">
             {ENABLES.map((e, i) => (
               <Reveal key={e.k} delay={i * 80} className="border-t border-neutral-200 pt-6">
@@ -114,16 +115,16 @@ export default async function SupportPage() {
       {/* Collaborations & sponsorships - featured brand */}
       <section className="border-y border-neutral-200 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-16 text-center">
-          <h2 className="text-2xl text-neutral-900 sm:text-3xl">Collaborations &amp; sponsorships</h2>
-          <div className="mt-8 flex justify-center">
+          <h2 className="display-tight text-3xl text-neutral-900 sm:text-4xl">Collaborations &amp; sponsorships</h2>
+          <div className="mt-10 flex justify-center border-t border-neutral-200 pt-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/brands/sunslayer.jpg" alt="Sunslayer" className="h-16 w-auto object-contain" />
+            <img src="/images/brands/sunslayer.jpg" alt="Sunslayer" className="h-14 w-auto object-contain grayscale opacity-60 transition-all duration-300 hover:grayscale-0 hover:opacity-100" />
           </div>
-          <p className="mt-12 text-sm font-semibold uppercase tracking-[0.18em] text-neutral-400">Supporters &amp; corporate donors</p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-14 gap-y-10">
+          <p className="label mt-12 text-neutral-400">Supporters &amp; corporate donors</p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-14 gap-y-10 border-t border-neutral-200 pt-8">
             {BRANDS.map((bd) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={bd.name} src={bd.src} alt={bd.name} className="h-11 w-auto object-contain opacity-70 transition-opacity hover:opacity-100" />
+              <img key={bd.name} src={bd.src} alt={bd.name} className="h-10 w-auto max-w-[120px] object-contain grayscale opacity-60 transition-all duration-300 hover:grayscale-0 hover:opacity-100" />
             ))}
           </div>
         </div>
@@ -133,7 +134,7 @@ export default async function SupportPage() {
       <section className="bg-white">
         <div className="mx-auto max-w-6xl px-6 py-24">
           <p className="eyebrow text-primary-600">Ways to support</p>
-          <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">More ways to help</h2>
+          <h2 className="display-tight mt-3 text-4xl text-neutral-900 sm:text-5xl">More ways to help</h2>
           <div className="mt-10 grid gap-x-8 gap-y-10 md:grid-cols-3">
             {WAYS.map((w) => (
               <div key={w.title} className="flex flex-col border-t border-neutral-200 pt-6">
