@@ -57,7 +57,9 @@ export function bentoSpans(n: number): string[] {
     while (!free(r, c)) advance()
     const isLast = i === n - 1
     const colsLeft = COLS - c
-    const wantBig = c === 0 && !isLast && i % 5 === 0 && n - i >= 4 && colsLeft >= 2
+    // A 2x2 feature at every fresh row start (the geometry naturally spaces them
+    // ~2 rows apart), as long as enough tiles remain to keep the bottom flat.
+    const wantBig = c === 0 && !isLast && n - i >= 4 && colsLeft >= 2
 
     if (wantBig) {
       fill(r, c, 2, 2)
