@@ -224,6 +224,20 @@ export default function SettingsNotificationsPage() {
             </div>
           </motion.div>
 
+          {/* ---- Email ---- */}
+          <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+            <SectionHeader label="Email" />
+            <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden p-4 space-y-1">
+              <Toggle
+                checked={prefs.email_enabled}
+                onChange={(val) => updatePref('email_enabled', val)}
+                label="Email Notifications"
+                description="Event confirmations, reminders, cancellations and invites by email. Turn off to stop registration and other event emails. Receipts and account emails still send."
+                className="py-2.5"
+              />
+            </div>
+          </motion.div>
+
           {/* ---- Sound & Quiet Hours ---- */}
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <SectionHeader label="Sound & Schedule" />

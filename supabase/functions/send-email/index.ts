@@ -141,6 +141,30 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Notification-preference gate                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Maps a transactional email type to the notification_preferences key that
+ * governs it. Toggling one of these off in Settings -> Notifications now
+ * suppresses BOTH the push (via send-push) AND the email (here), so a setting
+ * is respected on every delivery channel rather than push only.
+ *
+ * Types absent from this map (welcome, password_reset, donation_receipt,
+ * order_confirmation, order_shipped, refund_confirmation, payment_failed,
+ * subscription_cancelled, data-export-request, collective_application) are
+ * operational and always send. Marketing-category types are gated separately
+ * by profiles.marketing_opt_in further down.
+ */
+const TYPE_TO_PREF_KEY: Record<string, string> = {
+  event_confirmation: 'registration_confirmed',
+  event_reminder: 'event_reminder',
+  event_cancelled: 'event_cancelled',
+  event_invite: 'event_invite',
+  waitlist_promoted: 'waitlist_promotion',
+}
+
+/* ------------------------------------------------------------------ */
 /*  Resend API call                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -806,6 +830,34 @@ Deno.serve(async (req: Request) => {
         return new Response(
           JSON.stringify({ success: false, error: 'User opted out of marketing or not found' }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+    }
+
+    // ── Respect per-type notification preferences + email channel master ──
+    // Mirrors the preference gate in send-push so a setting toggled off silences
+    // the type on every channel, not push alone. Quiet hours is intentionally
+    // NOT applied to email: a queued inbox message is not disruptive the way a
+    // phone buzz is. Only an explicit `false` suppresses (opt-out model); an
+    // absent key means the user never changed it and is treated as enabled.
+    // Requires userId; sends addressed only by `to`/`email` (e.g. admin/test
+    // sends) carry no preference subject and pass through.
+    const prefKey = TYPE_TO_PREF_KEY[type]
+    if (prefKey && payload.userId) {
+      const prefClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      )
+      const { data: prefProfile } = await prefClient
+        .from('profiles')
+        .select('notification_preferences')
+        .eq('id', payload.userId)
+        .maybeSingle()
+      const prefs = (prefProfile?.notification_preferences ?? {}) as Record<string, unknown>
+      if (prefs[prefKey] === false || prefs.email_enabled === false) {
+        return new Response(
+          JSON.stringify({ success: false, skipped: true, reason: 'User disabled this notification type or the email channel' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
       }
     }
