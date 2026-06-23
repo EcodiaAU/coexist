@@ -42,7 +42,7 @@ export function BuyButton({
     <div>
       {active.length > 0 && (
         <div className="mt-6">
-          <p className="eyebrow text-neutral-400">Size / option</p>
+          <p className="label text-neutral-400">Size / option</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {active.map((v) => (
               <button

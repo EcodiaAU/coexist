@@ -83,7 +83,7 @@ export default async function SupportPage() {
             <blockquote className="text-2xl font-light leading-snug text-oncream sm:text-3xl">
               &ldquo;You&apos;re actually making a difference to the world around you.&rdquo;
             </blockquote>
-            <p className="eyebrow mt-6 text-sage">Sam Lundberg, Co-Exist volunteer</p>
+            <p className="label mt-6 text-sage">Sam Lundberg, Co-Exist volunteer</p>
           </Reveal>
         </div>
       </section>

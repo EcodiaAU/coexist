@@ -46,7 +46,7 @@ export default async function ProductPage({ params }: Params) {
         </div>
 
         <div className="md:sticky md:top-28 md:self-start">
-          {p.category && <p className="eyebrow text-primary-600">{p.category}</p>}
+          {p.category && <p className="label text-primary-600">{p.category}</p>}
           <h1 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">{p.name}</h1>
           <p className="mt-3 text-2xl text-neutral-500">{price}</p>
 

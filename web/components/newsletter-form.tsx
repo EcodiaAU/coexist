@@ -50,7 +50,7 @@ export function NewsletterForm({
         value={firstName}
         onChange={(e) => setFirstName(e.target.value)}
         placeholder="First name"
-        className="w-full rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm outline-none focus:border-primary-400 sm:w-28"
+        className="w-full rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-primary-400 sm:w-28"
         aria-label="First name"
       />
       <input
@@ -59,7 +59,7 @@ export function NewsletterForm({
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@email.com"
-        className="w-full rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm outline-none focus:border-primary-400"
+        className="w-full rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-primary-400"
         aria-label="Email address"
       />
       <button

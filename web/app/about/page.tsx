@@ -89,13 +89,12 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* Founder quote with watermark */}
+      {/* Founder quote */}
       <section className="relative overflow-hidden bg-white">
-        <span className="watermark bottom-6 right-6 text-olive-900">Co-Exist</span>
         <div className="relative mx-auto max-w-4xl px-6 py-28 text-center">
           <Reveal>
             <blockquote className="text-3xl leading-[1.2] text-neutral-900 sm:text-[2.6rem]">“{founderQuote}”</blockquote>
-            <p className="eyebrow mt-9 text-primary-600">{founderName}</p>
+            <p className="label mt-9 text-primary-600">{founderName}</p>
           </Reveal>
         </div>
       </section>
@@ -108,7 +107,7 @@ export default async function AboutPage() {
             <h2 className="mt-4 text-4xl text-neutral-900 sm:text-5xl">Meet the team</h2>
             {groupedTeam.map(([group, members]) => (
               <div key={group} className="mt-12">
-                <p className="eyebrow text-neutral-400">{GROUP_LABEL[group] ?? group}</p>
+                <p className="label text-neutral-400">{GROUP_LABEL[group] ?? group}</p>
                 <div className="mt-6 grid gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
                   {members.map((m) => (
                     <div key={m.id}>

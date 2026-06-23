@@ -82,23 +82,19 @@ export default function TeamPage() {
                   <Wrap
                     href={r.href}
                     {...(r.external ? { target: '_self' } : {})}
-                    className="group/role relative block overflow-hidden border-b border-neutral-200"
+                    className="group/role relative block border-b border-neutral-200"
                   >
-                    {/* sage wipe on hover */}
-                    <span className="absolute inset-0 -z-0 origin-left scale-x-0 bg-primary-50 transition-transform duration-500 ease-out group-hover/role:scale-x-100" />
-                    {/* growing left accent */}
-                    <span className="absolute left-0 top-0 z-10 h-full w-[3px] origin-top scale-y-0 bg-primary-500 transition-transform duration-500 ease-out group-hover/role:scale-y-100" />
-                    <div className="relative z-10 grid gap-3 px-2 py-9 transition-[padding] duration-500 group-hover/role:px-5 md:grid-cols-[5rem_1fr_auto] md:items-center md:gap-10">
-                      <span className="text-4xl font-light leading-none text-primary-300 transition-all duration-500 group-hover/role:text-primary-500 sm:text-5xl">
+                    <div className="grid gap-3 py-9 md:grid-cols-[5rem_1fr_auto] md:items-center md:gap-10">
+                      <span className="text-4xl font-light leading-none text-primary-300 transition-colors duration-300 group-hover/role:text-primary-500 sm:text-5xl">
                         0{i + 1}
                       </span>
                       <div>
-                        <h3 className="text-2xl text-neutral-900">{r.title}</h3>
+                        <h3 className="text-2xl text-neutral-900 transition-colors duration-300 group-hover/role:text-primary-800">{r.title}</h3>
                         <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-neutral-500">{r.body}</p>
                       </div>
                       <span className="flex shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">
                         {r.cta}
-                        <span className="transition-transform duration-500 group-hover/role:translate-x-1.5">→</span>
+                        <span className="transition-transform duration-300 group-hover/role:translate-x-1">→</span>
                       </span>
                     </div>
                   </Wrap>
@@ -106,29 +102,6 @@ export default function TeamPage() {
               )
             })}
           </div>
-        </div>
-      </section>
-
-      {/* Closing CTA - olive band, watermark + grain */}
-      <section className="relative isolate overflow-hidden bg-olive-800 text-oncream">
-        <div className="grain-layer absolute inset-0 z-0" />
-        <span className="watermark bottom-6 right-6 text-olive-950">Co-Exist</span>
-        <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 text-center">
-          <Reveal>
-            <h2 className="text-4xl text-oncream sm:text-6xl">Start where you are</h2>
-            <p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-oncream/80">
-              You do not need to wait until you are ready, or qualified, or older. The people already
-              doing this started exactly where you are now.
-            </p>
-            <div className="mt-9 flex flex-wrap justify-center gap-3">
-              <a href={`${APP_URL}/lead-a-collective`} className="rounded-full bg-oncream px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-olive-900 transition-all duration-300 hover:px-10">
-                Start a collective
-              </a>
-              <Link href="/contact" className="rounded-full border border-oncream/40 px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-oncream transition-all duration-300 hover:border-oncream hover:bg-oncream/10">
-                Talk to us first
-              </Link>
-            </div>
-          </Reveal>
         </div>
       </section>
     </main>

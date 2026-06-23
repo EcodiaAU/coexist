@@ -103,12 +103,38 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Utility class (legacy name) - now resolves to the Avenir heading stack */
 .font-serif { font-family: var(--font-heading); letter-spacing: -0.05em; }
+/* Decorative eyebrow labels removed site-wide (Tate: less is more). Kept as a
+   no-op so the class still resolves; nothing renders. */
 .eyebrow {
+  display: none;
+}
+
+/* .label - the small uppercase tracked style for CONTENT that must stay visible
+   (attributions, names, group labels, form labels) now that .eyebrow is hidden. */
+.label {
   font-family: var(--font-body);
   font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.2em; /* modern label tracking, less credits-y */
+  letter-spacing: 0.18em;
+}
+
+/* Billing-block watermark - dense, cramped, varied-case credits-style text in
+   cream, tucked into a corner of a feature section. 0 tracking so it crams up.
+   Parent must be position:relative + overflow-hidden. */
+.billing-block {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  color: var(--color-oncream);
+  opacity: 0.16;
+  letter-spacing: -0.01em;
+  line-height: 1.04;
+  font-weight: 700;
+  font-size: clamp(0.72rem, 1.5vw, 1rem);
+  max-width: 24ch;
+  text-align: justify;
+  text-wrap: pretty;
 }
 
 /* ============================================================

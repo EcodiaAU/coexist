@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
 import { DonateForm } from '@/components/donate-form'
 import { Reveal } from '@/components/reveal'
+import { BillingBlock } from '@/components/billing-block'
 
 export const metadata: Metadata = {
   title: 'Donate',
@@ -57,20 +58,28 @@ export default function DonatePage() {
         <DonateForm />
       </section>
 
-      {/* Supporter voices */}
+      {/* Supporter voices - with real faces from the live donate page */}
       <section className="relative isolate overflow-hidden bg-olive-800 text-oncream">
         <div className="grain-layer absolute inset-0 z-0" />
+        <BillingBlock
+          className="bottom-6 right-6 hidden sm:block"
+          text="WHY PEOPLE GIVE. young people back into nature. EVERY GIFT FUNDS EVENTS, GEAR AND THE LEADERS WHO MAKE IT HAPPEN. thank you."
+        />
         <div className="relative z-10 mx-auto max-w-6xl px-6 py-24">
-          <p className="eyebrow text-center text-sage">Why people give</p>
-          <div className="mt-12 grid gap-10 md:grid-cols-3">
+          <h2 className="text-center text-3xl text-oncream sm:text-4xl">Why people give</h2>
+          <div className="mt-14 grid gap-12 md:grid-cols-3">
             {[
-              'Your support helps young people lead real change.',
-              'Thanks to Co-Exist, I found my people, and my voice.',
-              'We are building a movement that lasts. Your support makes it real.',
-            ].map((quote, i) => (
-              <Reveal key={quote} delay={i * 90}>
-                <blockquote className="text-2xl font-light leading-snug text-oncream">
-                  &ldquo;{quote}&rdquo;
+              { quote: 'Your support helps young people lead real change.', photo: '/images/donors/d1.jpg' },
+              { quote: 'Thanks to Co-Exist, I found my people, and my voice.', photo: '/images/donors/d2.jpg' },
+              { quote: 'We are building a movement that lasts. Your support makes it real.', photo: '/images/donors/d3.jpg' },
+            ].map((t, i) => (
+              <Reveal key={t.quote} delay={i * 110} className="flex flex-col items-center text-center">
+                <div className="h-20 w-20 overflow-hidden rounded-full ring-1 ring-oncream/20">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={t.photo} alt="" className="h-full w-full object-cover" />
+                </div>
+                <blockquote className="mt-6 text-xl font-light leading-snug text-oncream">
+                  &ldquo;{t.quote}&rdquo;
                 </blockquote>
               </Reveal>
             ))}

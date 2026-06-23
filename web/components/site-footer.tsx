@@ -65,6 +65,7 @@ export function SiteFooter() {
             </p>
             <AcknowledgementFlags className="mt-5" />
             <SocialIcons tone="dark" className="mt-6" />
+            <Certifications className="mt-7" />
           </div>
 
           <Col title="Community" links={COMMUNITY} />
@@ -72,13 +73,7 @@ export function SiteFooter() {
           <Col title="Co-Exist" links={COEXIST} />
         </div>
 
-        {/* Accreditations */}
-        <div className="mt-14 border-t border-neutral-200 pt-8">
-          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-neutral-400">Accredited &amp; certified</p>
-          <Certifications tone="dark" className="mt-4" />
-        </div>
-
-        <div className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-neutral-200 pt-6 text-xs text-neutral-500 sm:flex-row sm:items-center">
+        <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-neutral-200 pt-6 text-xs text-neutral-500 sm:flex-row sm:items-center">
           <p>© {new Date().getFullYear()} Co-Exist Australia Ltd · ABN 39 660 776 983 · ACNC registered charity</p>
           <div className="flex items-center gap-5">
             <Link href="/legal/privacy" className="hover:text-primary-700">Privacy</Link>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
 import { ContactForm } from '@/components/contact-form'
 import { WordSwap } from '@/components/word-swap'
+import { SocialIcons } from '@/components/social-icons'
 
 export const metadata: Metadata = {
   title: 'Contact',
@@ -33,17 +34,14 @@ export default function ContactPage() {
 
           <div className="mt-10 space-y-8">
             <div>
-              <p className="eyebrow text-neutral-400">Email</p>
+              <p className="label text-neutral-400">Email</p>
               <a href="mailto:hello@coexistaus.org" className="mt-2 block text-2xl text-neutral-900 transition-colors hover:text-primary-700">
                 hello@coexistaus.org
               </a>
             </div>
             <div>
-              <p className="eyebrow text-neutral-400">Follow along</p>
-              <div className="mt-2 flex gap-5 text-lg text-neutral-700">
-                <a href="https://www.instagram.com/coexistaus" className="transition-colors hover:text-primary-700">Instagram</a>
-                <a href="https://www.facebook.com/coexistaus" className="transition-colors hover:text-primary-700">Facebook</a>
-              </div>
+              <p className="label text-neutral-400">Follow along</p>
+              <SocialIcons tone="dark" className="mt-3" />
             </div>
             <p className="text-xs text-neutral-400">
               Co-Exist Australia Ltd is an ACNC registered charity. ABN 39 660 776 983.

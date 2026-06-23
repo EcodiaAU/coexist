@@ -134,7 +134,7 @@ export default async function HomePage() {
           </Reveal>
           <Reveal delay={120}>
             <blockquote className="text-2xl font-light leading-[1.25] text-oncream sm:text-4xl">“{founderQuote}”</blockquote>
-            <p className="eyebrow mt-7 text-sage">{founderName}</p>
+            <p className="label mt-7 text-sage">{founderName}</p>
           </Reveal>
         </div>
       </section>

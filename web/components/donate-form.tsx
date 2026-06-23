@@ -44,10 +44,10 @@ export function DonateForm() {
   }
 
   const inputCls =
-    'w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-primary-400'
+    'w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors duration-200 focus:border-primary-400'
 
   return (
-    <form onSubmit={onSubmit} className="rounded-3xl border border-neutral-200 bg-white p-7 shadow-sm">
+    <form onSubmit={onSubmit} className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
       {/* Frequency toggle */}
       <div className="flex gap-1 rounded-full bg-neutral-100 p-1">
         {(['one_time', 'monthly'] as const).map((f) => (
@@ -55,8 +55,8 @@ export function DonateForm() {
             key={f}
             type="button"
             onClick={() => setFrequency(f)}
-            className={`flex-1 rounded-full px-4 py-2 text-sm font-bold transition-colors ${
-              frequency === f ? 'bg-olive-700 text-white' : 'text-neutral-600 hover:text-neutral-900'
+            className={`flex-1 rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 ${
+              frequency === f ? 'bg-olive-700 text-white shadow-sm' : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >
             {f === 'one_time' ? 'One-time' : 'Monthly'}
@@ -74,10 +74,10 @@ export function DonateForm() {
               setAmount(a)
               setCustom('')
             }}
-            className={`rounded-xl border py-3 text-lg font-bold transition-colors ${
+            className={`rounded-xl border py-3 text-lg font-bold transition-all duration-200 active:scale-95 ${
               !custom && amount === a
-                ? 'border-olive-700 bg-olive-700 text-white'
-                : 'border-neutral-200 text-neutral-800 hover:border-neutral-300'
+                ? 'border-olive-700 bg-olive-700 text-white shadow-sm'
+                : 'border-neutral-200 text-neutral-800 hover:border-olive-400 hover:text-olive-700'
             }`}
           >
             ${a}
@@ -95,7 +95,7 @@ export function DonateForm() {
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
             placeholder="Custom amount"
-            className="w-full bg-transparent px-2 py-2.5 text-sm outline-none"
+            className="w-full bg-transparent px-2 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
           />
         </div>
       </div>
