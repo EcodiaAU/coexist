@@ -54,7 +54,7 @@ function DonateHero({ rm }: { rm: boolean }) {
 
   return (
     <div className="relative">
-      <div className="relative w-full h-[112vw] min-h-[500px] sm:h-auto overflow-hidden">
+      <div className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
         <div ref={rm ? undefined : bgRef} className="h-full will-change-transform">
           <img
             src="/img/donate-hero-bg.webp"
@@ -71,26 +71,13 @@ function DonateHero({ rm }: { rm: boolean }) {
           />
         </div>
 
-        {/* Warm forest wash so the wordmark sits in an editorial lower third. */}
-        <div className="absolute inset-0 z-[4] bg-gradient-to-t from-secondary-950/90 via-secondary-900/25 to-transparent" />
-
         <div
           ref={rm ? undefined : textRef}
-          className="absolute inset-x-0 bottom-[12%] z-[5] flex flex-col items-center px-7 text-center will-change-transform"
+          className="absolute inset-x-0 top-[20%] sm:top-[16%] z-[2] flex flex-col items-center px-6 will-change-transform"
         >
-          <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/75 mb-3">
-            Co-Exist Australia
-          </span>
-          <span
-            role="heading"
-            aria-level={1}
-            className="font-heading text-[3.25rem] sm:text-[4.5rem] lg:text-[5.5rem] font-black uppercase text-white leading-[0.86] tracking-[-0.04em] drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)]"
-          >
+          <span role="heading" aria-level={1} className="font-heading text-[2.5rem] sm:text-[3.5rem] lg:text-[5rem] font-bold uppercase text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)] leading-[0.85] block">
             Donate
           </span>
-          <p className="mt-3.5 max-w-[20rem] text-[15px] leading-snug text-white/85 font-medium drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
-            Fund the hands-on work restoring Australia's wild places.
-          </p>
         </div>
       </div>
 
@@ -147,17 +134,17 @@ function DonationForm({ rm }: { rm: boolean }) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-md bg-white border border-neutral-100 shadow-[0_8px_40px_-12px_rgba(61,77,51,0.18)] p-6">
+    <div className="relative overflow-hidden rounded-3xl bg-white border border-neutral-100 shadow-[0_8px_40px_-12px_rgba(61,77,51,0.18)] p-6">
       {/* Leaf watermark */}
       <Leaf className="pointer-events-none absolute -top-5 -right-5 text-primary-600/[0.06]" size={120} strokeWidth={1.5} />
 
       {/* Header */}
       <div className="relative flex items-center gap-3 mb-6">
-        <div className="w-11 h-11 rounded-md bg-primary-50 flex items-center justify-center shrink-0">
+        <div className="w-11 h-11 rounded-2xl bg-primary-50 flex items-center justify-center shrink-0">
           <Heart size={19} className="text-primary-600" />
         </div>
         <div>
-          <h2 className="font-heading font-black text-neutral-900 text-xl tracking-[-0.02em]">Make a donation</h2>
+          <h2 className="font-heading text-xl sm:text-2xl font-bold text-neutral-900">Make a donation</h2>
           <div className="flex items-center gap-1.5 mt-0.5">
             <Shield size={11} className="text-neutral-400" />
             <p className="text-[11px] text-neutral-500 font-medium">Secure payment via Stripe</p>
@@ -180,7 +167,7 @@ function DonationForm({ rm }: { rm: boolean }) {
       </div>
 
       {/* Preset amounts */}
-      <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-[0.14em] mb-2.5">Choose an amount</p>
+      <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-2.5">Choose an amount</p>
       <div className="grid grid-cols-4 gap-2.5 mb-4">
         {PRESET_AMOUNTS.map((preset) => {
           const active = selectedAmount === preset
@@ -191,7 +178,7 @@ function DonationForm({ rm }: { rm: boolean }) {
               onClick={() => handlePresetSelect(preset)}
               whileTap={rm ? undefined : { scale: 0.95 }}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-0.5 py-3.5 px-1 rounded-md border transition-all duration-200 cursor-pointer',
+                'relative flex flex-col items-center justify-center gap-0.5 py-3.5 px-1 rounded-2xl border transition-all duration-200 cursor-pointer',
                 active
                   ? 'border-primary-600 bg-primary-600 text-white shadow-[0_6px_18px_-6px_rgba(134,158,98,0.7)]'
                   : 'border-neutral-200 bg-white hover:border-primary-300 hover:bg-primary-50/40',
@@ -224,7 +211,7 @@ function DonationForm({ rm }: { rm: boolean }) {
 
       {/* Impact callout */}
       <div
-        className="relative mb-5 px-4 py-3.5 rounded-md bg-gradient-to-br from-primary-50 to-white border border-primary-100 overflow-hidden"
+        className="relative mb-5 px-4 py-3.5 rounded-2xl bg-gradient-to-br from-primary-50 to-white border border-primary-100 overflow-hidden"
         style={{ minHeight: '84px' }}
       >
         <Sprout className="pointer-events-none absolute -bottom-3 -right-2 text-primary-600/[0.07]" size={72} strokeWidth={1.5} />
@@ -257,7 +244,7 @@ function DonationForm({ rm }: { rm: boolean }) {
 
       {/* Optional message */}
       <div className="mb-4">
-        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-[0.14em] mb-2.5 flex items-center gap-1.5">
+        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
           <MessageCircle size={12} />
           Leave a message
         </p>
@@ -277,7 +264,7 @@ function DonationForm({ rm }: { rm: boolean }) {
       </div>
 
       {/* Public toggle */}
-      <div className="mb-6 px-4 py-3 rounded-md bg-neutral-100/70 border border-neutral-200">
+      <div className="mb-6 px-4 py-3 rounded-2xl bg-neutral-100/70 border border-neutral-200">
         <Toggle
           checked={isPublic}
           onChange={setIsPublic}
@@ -295,13 +282,13 @@ function DonationForm({ rm }: { rm: boolean }) {
         icon={createDonation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Heart size={18} />}
         onClick={handleDonate}
         disabled={!isValid || !user || createDonation.isPending}
-        className="shadow-[0_8px_24px_-8px_rgba(61,77,51,0.5)] !rounded-md"
+        className="shadow-[0_8px_24px_-8px_rgba(61,77,51,0.5)] !rounded-2xl"
       >
         {createDonation.isPending ? 'Setting up...' : `Donate $${amount}${frequency === 'monthly' ? '/mo' : ''}`}
       </Button>
 
       {createDonation.isError && (
-        <p className="text-xs text-error-500 text-center mt-2">Something went wrong. Please try again.</p>
+        <p className="text-xs text-red-500 text-center mt-2">Something went wrong. Please try again.</p>
       )}
 
       {!user && (
@@ -332,27 +319,29 @@ export default function DonatePage() {
         <DonateHero rm={rm} />
 
         <div className="relative z-10 px-5 lg:px-6 pt-6">
-          <div className="max-w-lg mx-auto">
+          <div className="max-w-lg lg:max-w-5xl mx-auto">
             <motion.div
               variants={rm ? undefined : stagger}
               initial="hidden"
               animate="visible"
-              className="space-y-5"
+              className="space-y-5 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-7 lg:items-start"
             >
-              {/* Donation form */}
+              {/* Donation form (left column on laptop) */}
               <motion.div variants={fadeUp}>
                 <DonationForm rm={rm} />
               </motion.div>
 
+              {/* Supporting cards (right column on laptop, stacked on mobile) */}
+              <div className="space-y-5">
               {/* Where your gift goes */}
               <motion.div variants={fadeUp}>
-                <div className="rounded-md bg-secondary-950 text-white p-6 overflow-hidden relative">
+                <div className="rounded-3xl bg-secondary-950 text-white p-6 overflow-hidden relative">
                   <TreePine className="pointer-events-none absolute -bottom-6 -right-4 text-white/[0.05]" size={130} strokeWidth={1.4} />
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-300 mb-4">Where your gift goes</p>
                   <div className="space-y-3.5">
                     {GIFT_LINES.map(({ icon: Icon, amount, text }) => (
                       <div key={amount} className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-sm bg-white/10 flex items-center justify-center shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
                           <Icon size={16} className="text-primary-200" />
                         </div>
                         <p className="text-[15px] leading-snug text-white/85 pt-1.5">
@@ -368,10 +357,10 @@ export default function DonatePage() {
               <motion.div variants={fadeUp}>
                 <Link
                   to="/donate/donors"
-                  className="relative flex items-center gap-3 p-4 rounded-md bg-white border border-neutral-100 shadow-sm transition-all active:scale-[0.98] duration-200 overflow-hidden"
+                  className="relative flex items-center gap-3 p-4 rounded-2xl bg-white border border-neutral-100 shadow-sm transition-all active:scale-[0.98] duration-200 overflow-hidden"
                 >
                   <Users className="pointer-events-none absolute -bottom-3 -right-3 text-primary-600/[0.05]" size={64} strokeWidth={1.5} />
-                  <div className="w-10 h-10 rounded-sm bg-primary-50 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center shrink-0">
                     <Users size={18} className="text-primary-600" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -384,7 +373,7 @@ export default function DonatePage() {
 
               {/* Tax note */}
               <motion.div variants={fadeUp}>
-                <div className="flex items-start gap-3 px-4 py-3.5 rounded-md bg-white border border-neutral-100 shadow-sm">
+                <div className="flex items-start gap-3 px-4 py-3.5 rounded-2xl bg-white border border-neutral-100 shadow-sm">
                   <Shield size={16} className="text-primary-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs text-neutral-700 font-semibold">Tax-deductible giving</p>
@@ -394,9 +383,10 @@ export default function DonatePage() {
                   </div>
                 </div>
               </motion.div>
-
-              <div className="h-20" />
+              </div>
             </motion.div>
+
+            <div className="h-20" />
           </div>
         </div>
       </div>
