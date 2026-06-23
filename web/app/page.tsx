@@ -39,7 +39,7 @@ export default async function HomePage() {
 
   const tiles = [
     { value: fmt(stats.rubbishKg), unit: 'kg', label: 'Litter removed' },
-    { value: fmt(stats.plants), unit: '', label: 'Native plants' },
+    { value: fmt(stats.plants), unit: '', label: 'Trees planted' },
     { value: fmt(stats.collectives), unit: '', label: 'Collectives' },
     { value: fmt(stats.volunteers), unit: '', label: 'Young volunteers' },
   ]
