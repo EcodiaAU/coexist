@@ -290,7 +290,7 @@ body::after {
   will-change: opacity, transform;
 }
 .reveal.in {
-  opacity: 0.5;
+  opacity: 1;
   transform: none;
 }
 @media (prefers-reduced-motion: reduce) {
