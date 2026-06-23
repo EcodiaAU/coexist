@@ -22,8 +22,8 @@ export interface PublicImpactStats {
   /** Cumulative people who have taken part (baseline-inclusive). */
   volunteers: number
   collectives: number
-  /** Plants + trees in the ground (baseline-inclusive). The live site's
-   *  "native plants planted" figure is this combined ecological output. */
+  /** Trees planted (baseline-inclusive), matching the app's /impact
+   *  dashboard. native_plants is a separate metric and is not included. */
   plants: number
   rubbishKg: number
   events: number
@@ -51,7 +51,6 @@ export async function getPublicImpactStats(): Promise<PublicImpactStats> {
   ])
 
   const liveTrees = sumMetric(live.rows, 'trees_planted')
-  const liveNative = sumMetric(live.rows, 'native_plants')
   const liveRubbish = sumMetric(live.rows, 'rubbish_kg')
   const liveAttendees = sumMetric(live.rows, 'attendees')
   const legacyTrees = sumMetric(legacy.legacyRows, 'trees_planted')
@@ -67,7 +66,10 @@ export async function getPublicImpactStats(): Promise<PublicImpactStats> {
   return {
     volunteers: applyBaselineRemainder(liveAttendees, legacyAttendees, BASELINE_ATTENDEES, true),
     collectives: collectivesRes.count ?? 0,
-    plants: treesPlanted + liveNative,
+    // Trees only, to match the app's /impact dashboard exactly and keep the
+    // "Trees planted" hero label truthful. native_plants (a separate metric,
+    // 520 at time of writing) is deliberately NOT folded in here.
+    plants: treesPlanted,
     rubbishKg: Math.round(
       applyBaselineRemainder(liveRubbish, legacyRubbish, BASELINE_RUBBISH_KG, true),
     ),
