@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { getUpcomingEvents } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
 import { formatDateShort } from '@/lib/format'
+import { BentoTile } from '@/components/bento-tile'
 import { bentoSpans, BENTO_GRID } from '@/lib/bento'
 
 export const revalidate = 900
@@ -49,36 +50,21 @@ export default async function EventsPage() {
         ) : (
           <div className={BENTO_GRID}>
             {events.map((e, i) => (
-              <Link
-                key={e.id}
-                href={`/events/${e.id}`}
-                className={`group relative isolate overflow-hidden bg-olive-800 ${spans[i]}`}
-              >
-                {e.cover_image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={e.cover_image_url}
-                    alt={e.title}
-                    loading="lazy"
-                    className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-[1.2s] group-hover:scale-105"
-                  />
-                ) : null}
-                <div className="absolute inset-0 -z-10 bg-gradient-to-t from-olive-950/85 via-olive-950/25 to-transparent" />
-
+              <BentoTile key={e.id} href={`/events/${e.id}`} image={e.cover_image_url} alt={e.title} span={spans[i]}>
                 <div className="absolute inset-x-0 bottom-0 p-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-oncream/70">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sage">
                     {formatDateShort(e.date_start, e.timezone)}
                   </p>
-                  <h2 className={`mt-1 leading-[1.05] text-oncream ${spans[i].includes('row-span-2') ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>
+                  <h2 className={`mt-1.5 uppercase leading-[0.96] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-3xl sm:text-4xl' : 'text-lg'}`}>
                     {e.title}
                   </h2>
                   {e.collective && (
-                    <p className="mt-2 text-[11px] uppercase tracking-[0.14em] text-oncream/60">
+                    <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-oncream/65">
                       Co-Exist {e.collective.name}
                     </p>
                   )}
                 </div>
-              </Link>
+              </BentoTile>
             ))}
           </div>
         )}

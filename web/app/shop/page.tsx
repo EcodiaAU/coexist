@@ -1,7 +1,7 @@
-import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getProducts, type ProductVM } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
+import { BentoTile } from '@/components/bento-tile'
 import { bentoSpans, BENTO_GRID } from '@/lib/bento'
 
 export const revalidate = 900
@@ -41,35 +41,22 @@ export default async function ShopPage() {
           <p className="mx-auto max-w-6xl px-6 py-16 text-center text-neutral-500">Our shop is restocking. Check back soon.</p>
         ) : (
           <div className={BENTO_GRID}>
-            {products.map((p, i) => {
-              const hover = p.images[1]
-              return (
-                <Link
-                  key={p.id}
-                  href={`/shop/${p.slug}`}
-                  className={`group flex flex-col bg-neutral-50 transition-colors hover:bg-neutral-100 ${spans[i]}`}
-                >
-                  <div className="relative flex-1 overflow-hidden">
-                    {p.images[0] ? (
-                      <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.images[0]} alt={p.name} loading="lazy" className={`absolute inset-0 h-full w-full object-contain p-5 transition-all duration-700 ${hover ? 'group-hover:opacity-0' : 'group-hover:scale-105'}`} />
-                        {hover && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={hover} alt="" aria-hidden loading="lazy" className="absolute inset-0 h-full w-full object-contain p-5 opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
-                        )}
-                      </>
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-primary-300">Co-Exist</div>
-                    )}
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3 px-5 pb-5">
-                    <h2 className={`leading-tight text-neutral-900 ${spans[i].includes('row-span-2') ? 'text-xl sm:text-2xl' : 'text-base'}`}>{p.name}</h2>
-                    <span className="shrink-0 text-sm text-neutral-500">{price(p)}</span>
-                  </div>
-                </Link>
-              )
-            })}
+            {products.map((p, i) => (
+              <BentoTile
+                key={p.id}
+                href={`/shop/${p.slug}`}
+                image={p.images[0]}
+                hoverImage={p.images[1]}
+                alt={p.name}
+                span={spans[i]}
+                tint={false}
+              >
+                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5">
+                  <h2 className={`uppercase leading-[0.98] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-2xl sm:text-3xl' : 'text-base'}`}>{p.name}</h2>
+                  <span className="shrink-0 text-sm text-oncream/90">{price(p)}</span>
+                </div>
+              </BentoTile>
+            ))}
           </div>
         )}
       </section>

@@ -1,8 +1,8 @@
-import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getCollectives, type CollectiveVM } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
 import { CollectiveMapClient } from '@/components/collective-map-client'
+import { BentoTile } from '@/components/bento-tile'
 import { bentoSpans, BENTO_GRID } from '@/lib/bento'
 import { APP_URL } from '@/lib/env'
 
@@ -45,23 +45,14 @@ export default async function CollectivesPage() {
         ) : (
           <div className={BENTO_GRID}>
             {collectives.map((c, i) => (
-              <Link
-                key={c.id}
-                href={`/collectives/${c.slug}`}
-                className={`group relative isolate overflow-hidden bg-olive-800 ${spans[i]}`}
-              >
-                {c.cover_image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.cover_image_url} alt={c.name} loading="lazy" className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-[1.2s] group-hover:scale-105" />
-                ) : null}
-                <div className="absolute inset-0 -z-10 bg-gradient-to-t from-olive-950/85 via-olive-950/20 to-transparent" />
+              <BentoTile key={c.id} href={`/collectives/${c.slug}`} image={c.cover_image_url} alt={c.name} span={spans[i]}>
                 <div className="absolute inset-x-0 bottom-0 p-5">
-                  <h2 className={`uppercase leading-[0.98] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>{c.name}</h2>
+                  <h2 className={`uppercase leading-[0.96] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-4xl sm:text-5xl' : 'text-xl'}`}>{c.name}</h2>
                   {c.member_count ? (
-                    <p className="mt-1 text-[11px] uppercase tracking-[0.02em] text-oncream/60">{c.member_count} members</p>
+                    <p className="mt-1.5 text-[10px] uppercase tracking-[0.14em] text-oncream/70">{c.member_count} members</p>
                   ) : null}
                 </div>
-              </Link>
+              </BentoTile>
             ))}
 
             {/* CTA tile - fills the rest of the last row so the grid bottom is flat */}

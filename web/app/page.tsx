@@ -48,7 +48,9 @@ export default async function HomePage() {
       {/* Hero with stats overlaid at the foot of the image */}
       <section className="relative isolate flex min-h-[90vh] flex-col">
         <Image src="/images/hero.webp" alt="Young people in nature on a Co-Exist conservation day" fill priority fetchPriority="high" quality={80} sizes="100vw" placeholder="blur" blurDataURL={BLUR['/images/hero.webp']} className="-z-10 object-cover" />
-        <div className="-z-10 absolute inset-0 bg-black/28" />
+        {/* home hero carries title + stats at the foot, so it darkens toward the bottom */}
+        <div className="-z-10 absolute inset-0 bg-black/15" />
+        <div className="-z-10 absolute inset-0 bg-gradient-to-t from-olive-950/95 via-olive-950/35 to-transparent" />
 
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 pt-28 pb-10">
           <p className="eyebrow text-oncream/70">Co-Exist Australia</p>
