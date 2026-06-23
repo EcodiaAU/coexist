@@ -48,17 +48,17 @@ export default async function CollectivesPage() {
         </div>
       </section>
 
-      {/* Bento grid of collectives - name only (region is the same as the name) */}
-      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+      {/* Bento grid of collectives - full-bleed, flush, no rounded corners */}
+      <section className="pb-16">
         {collectives.length === 0 ? (
           <p className="py-16 text-center text-neutral-500">Collectives are loading. Check back shortly.</p>
         ) : (
-          <div className="grid auto-rows-[13rem] grid-flow-row-dense grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid auto-rows-[46vw] grid-flow-row-dense grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
             {collectives.map((c, i) => (
               <Link
                 key={c.id}
                 href={`/collectives/${c.slug}`}
-                className={`group relative isolate overflow-hidden rounded-2xl bg-olive-800 ${span(i)}`}
+                className={`group relative isolate overflow-hidden bg-olive-800 ${span(i)}`}
               >
                 {c.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -68,7 +68,7 @@ export default async function CollectivesPage() {
                 <div className="absolute inset-x-0 bottom-0 p-5">
                   <h2 className={`leading-[1.02] text-oncream ${i % 6 === 0 ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>{c.name}</h2>
                   {c.member_count ? (
-                    <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-oncream/60">{c.member_count} members</p>
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.02em] text-oncream/60">{c.member_count} members</p>
                   ) : null}
                 </div>
               </Link>
@@ -76,7 +76,7 @@ export default async function CollectivesPage() {
           </div>
         )}
 
-        <div className="mt-14 rounded-3xl bg-olive-700 p-10 text-center text-oncream">
+        <div className="mx-6 mt-14 rounded-3xl bg-olive-700 p-10 text-center text-oncream lg:mx-auto lg:max-w-6xl">
           <h2 className="text-3xl sm:text-4xl">No collective near you yet?</h2>
           <p className="mx-auto mt-3 max-w-md text-[15px] text-oncream/80">
             We are always growing. Register your interest in leading one and we will help you start it.

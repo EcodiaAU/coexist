@@ -37,9 +37,9 @@ export default async function EventsPage() {
         image="/images/nature.webp"
       />
 
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+      <section className="py-14">
         {events.length === 0 ? (
-          <div className="py-20 text-center">
+          <div className="mx-auto max-w-6xl px-6 py-20 text-center">
             <p className="text-2xl text-neutral-900">No upcoming events listed right now</p>
             <p className="mx-auto mt-3 max-w-md text-neutral-500">
               New events are added all the time. Join a collective to hear about the next one near you.
@@ -52,12 +52,12 @@ export default async function EventsPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid auto-rows-[14rem] grid-flow-row-dense grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid auto-rows-[46vw] grid-flow-row-dense grid-cols-2 sm:auto-rows-[15rem] sm:grid-cols-4">
             {events.map((e, i) => (
               <Link
                 key={e.id}
                 href={`/events/${e.id}`}
-                className={`group relative isolate overflow-hidden rounded-2xl bg-olive-800 ${span(i)}`}
+                className={`group relative isolate overflow-hidden bg-olive-800 ${span(i)}`}
               >
                 {e.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element

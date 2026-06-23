@@ -1,5 +1,4 @@
 import { NewsletterForm } from './newsletter-form'
-import { BillingBlock } from './billing-block'
 
 /**
  * Prominent, on-aesthetic newsletter section. Sits just above the footer on
@@ -10,10 +9,6 @@ export function NewsletterBand() {
   return (
     <section className="relative isolate overflow-hidden bg-olive-800 text-oncream">
       <div className="grain-layer absolute inset-0 z-0" />
-      <BillingBlock
-        className="bottom-6 right-6 hidden sm:block"
-        text="CO-EXIST AUSTRALIA. a nationwide movement of young people protecting the places they love. EXPLORE. CONNECT. PROTECT. join a collective, attend an event, get outside. EST. 2022."
-      />
       <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center sm:py-24">
         <h2 className="text-4xl text-oncream sm:text-5xl">News and events, worth opening</h2>
         <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-oncream/80">

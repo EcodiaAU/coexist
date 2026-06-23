@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
 import { DonateForm } from '@/components/donate-form'
 import { Reveal } from '@/components/reveal'
-import { BillingBlock } from '@/components/billing-block'
 
 export const metadata: Metadata = {
   title: 'Donate',
@@ -61,10 +60,6 @@ export default function DonatePage() {
       {/* Supporter voices - with real faces from the live donate page */}
       <section className="relative isolate overflow-hidden bg-olive-800 text-oncream">
         <div className="grain-layer absolute inset-0 z-0" />
-        <BillingBlock
-          className="bottom-6 right-6 hidden sm:block"
-          text="WHY PEOPLE GIVE. young people back into nature. EVERY GIFT FUNDS EVENTS, GEAR AND THE LEADERS WHO MAKE IT HAPPEN. thank you."
-        />
         <div className="relative z-10 mx-auto max-w-6xl px-6 py-24">
           <h2 className="text-center text-3xl text-oncream sm:text-4xl">Why people give</h2>
           <div className="mt-14 grid gap-12 md:grid-cols-3">
