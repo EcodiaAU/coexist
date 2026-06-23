@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, Lock, Leaf, Star, Car } from 'lucide-react'
+import { ChevronDown, Lock, Leaf, Star, Car, Tent } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useMyCollectives, useCollectives } from '@/hooks/use-collective'
 import { useMyStaffChannels } from '@/hooks/use-staff-channels'
@@ -49,11 +49,12 @@ export function ChatSwitcherDropdown({
     return c ? { id: m.collective_id, name: c.name, coverUrl: c.cover_image_url } : null
   }).filter(Boolean) as { id: string; name: string; coverUrl: string | null }[] ?? []
 
-  // Carpool breakouts are NOT staff chats - render them in a separate
-  // 'Carpool Chats' section so the Staff Channels group stays scoped to
+  // Campout group chats and carpool breakouts are NOT staff chats - render
+  // them in their own sections so the Staff Channels group stays scoped to
   // actual staff communications (collective/state/national).
   const allChannels = staffChannels ?? []
-  const channels = allChannels.filter((c) => (c.type as string) !== 'carpool_breakout')
+  const channels = allChannels.filter((c) => (c.type as string) !== 'carpool_breakout' && (c.type as string) !== 'campout')
+  const campoutChats = allChannels.filter((c) => (c.type as string) === 'campout')
   const carpoolChats = allChannels.filter((c) => (c.type as string) === 'carpool_breakout')
 
   // Staff/admin: show collectives they're NOT a member of
@@ -64,7 +65,7 @@ export function ChatSwitcherDropdown({
         .map((c) => ({ id: c.id, name: c.name, coverUrl: c.cover_image_url }))
     : []
 
-  const hasOptions = collectives.length > 1 || channels.length > 0 || carpoolChats.length > 0 || otherCollectives.length > 0
+  const hasOptions = collectives.length > 1 || channels.length > 0 || campoutChats.length > 0 || carpoolChats.length > 0 || otherCollectives.length > 0
 
   const handleSetPrimary = async (collectiveId: string) => {
     if (!user) return
@@ -199,10 +200,39 @@ export function ChatSwitcherDropdown({
                 </div>
               )}
 
+              {/* Campout group chats - per-event, ticket holders */}
+              {campoutChats.length > 0 && (
+                <div>
+                  {(collectives.length > 0 || channels.length > 0) && <div className="h-px bg-neutral-100 mx-3 my-1" />}
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Campouts</p>
+                  {campoutChats.map((ch) => (
+                    <button
+                      key={ch.id}
+                      type="button"
+                      onClick={() => {
+                        setOpen(false)
+                        if (ch.id !== currentChannelId) navigate(`/chat/channel/${ch.id}`)
+                      }}
+                      className={cn(
+                        'flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[13px] transition-colors duration-100 cursor-pointer',
+                        ch.id === currentChannelId
+                          ? 'bg-primary-50 text-primary-900 font-semibold'
+                          : 'text-neutral-700 hover:bg-neutral-50',
+                      )}
+                    >
+                      <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shrink-0">
+                        <Tent size={11} className="text-white" />
+                      </div>
+                      <span className="truncate">{ch.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Carpool chats - per-event breakouts */}
               {carpoolChats.length > 0 && (
                 <div>
-                  {(collectives.length > 0 || channels.length > 0) && <div className="h-px bg-neutral-100 mx-3 my-1" />}
+                  {(collectives.length > 0 || channels.length > 0 || campoutChats.length > 0) && <div className="h-px bg-neutral-100 mx-3 my-1" />}
                   <p className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Carpool Chats</p>
                   {carpoolChats.map((ch) => (
                     <button
@@ -231,7 +261,7 @@ export function ChatSwitcherDropdown({
               {/* All collectives (staff/admin only) */}
               {otherCollectives.length > 0 && (
                 <div>
-                  {(collectives.length > 0 || channels.length > 0 || carpoolChats.length > 0) && <div className="h-px bg-neutral-100 mx-3 my-1" />}
+                  {(collectives.length > 0 || channels.length > 0 || campoutChats.length > 0 || carpoolChats.length > 0) && <div className="h-px bg-neutral-100 mx-3 my-1" />}
                   <p className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">All Collectives</p>
                   {otherCollectives.map((c) => {
                     const isCurrent = c.id === currentCollectiveId

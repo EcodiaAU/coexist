@@ -842,6 +842,7 @@ export type Database = {
         Row: {
           collective_id: string | null
           created_at: string
+          event_id: string | null
           id: string
           lifecycle_status: string
           name: string
@@ -851,6 +852,7 @@ export type Database = {
         Insert: {
           collective_id?: string | null
           created_at?: string
+          event_id?: string | null
           id?: string
           lifecycle_status?: string
           name: string
@@ -860,6 +862,7 @@ export type Database = {
         Update: {
           collective_id?: string | null
           created_at?: string
+          event_id?: string | null
           id?: string
           lifecycle_status?: string
           name?: string
@@ -872,6 +875,13 @@ export type Database = {
             columns: ["collective_id"]
             isOneToOne: false
             referencedRelation: "collectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_channels_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
