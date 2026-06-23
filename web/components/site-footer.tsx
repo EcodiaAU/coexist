@@ -94,7 +94,19 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-10 flex flex-col gap-5 border-t border-oncream/15 pt-6 text-xs text-oncream/55 lg:flex-row lg:items-center lg:justify-between">
-          <p>© {new Date().getFullYear()} Co-Exist Australia Ltd · ABN 39 660 776 983 · ACNC registered charity</p>
+          <div className="flex flex-col gap-2">
+            <p>© {new Date().getFullYear()} Co-Exist Australia Ltd · ABN 39 660 776 983 · ACNC registered charity</p>
+            <a
+              href="https://ecodia.au"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="the world we build next"
+              style={{ fontFamily: "'EB Garamond', Georgia, 'Times New Roman', serif" }}
+              className="inline-block w-fit italic text-[15px] leading-none no-underline text-oncream/50 transition-opacity duration-200 hover:text-oncream/80"
+            >
+              the world we build next
+            </a>
+          </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
             <Certifications />
             <Link href="/legal/privacy" className="transition-colors hover:text-oncream">Privacy</Link>
