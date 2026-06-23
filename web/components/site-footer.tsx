@@ -54,8 +54,8 @@ function Col({ title, links }: { title: string; links: { label: string; href: st
 export function SiteFooter() {
   return (
     <footer className="border-t border-neutral-100 bg-surface-1">
-      <div className="mx-auto w-full max-w-[1700px] px-5 py-16 sm:px-8 lg:px-14">
-        <div className="grid gap-12 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
+      <div className="mx-auto w-full max-w-[1700px] px-5 py-12 sm:px-8 lg:px-14">
+        <div className="grid gap-10 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-9 w-auto" />
@@ -64,10 +64,11 @@ export function SiteFooter() {
               we live, work and gather, and pay our respects to Elders past and present. Always was,
               always will be Aboriginal land.
             </p>
-            <StoreBadges className="mt-7" />
-            <AcknowledgementFlags className="mt-7" />
-            <SocialIcons tone="dark" className="mt-6" />
-            <Certifications className="mt-7" />
+            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-4">
+              <AcknowledgementFlags />
+              <SocialIcons tone="dark" />
+            </div>
+            <StoreBadges className="mt-6" />
           </div>
 
           <Col title="Community" links={COMMUNITY} />
@@ -75,9 +76,10 @@ export function SiteFooter() {
           <Col title="Co-Exist" links={COEXIST} />
         </div>
 
-        <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-neutral-200 pt-6 text-xs text-neutral-500 sm:flex-row sm:items-center">
+        <div className="mt-10 flex flex-col gap-5 border-t border-neutral-200 pt-6 text-xs text-neutral-500 lg:flex-row lg:items-center lg:justify-between">
           <p>© {new Date().getFullYear()} Co-Exist Australia Ltd · ABN 39 660 776 983 · ACNC registered charity</p>
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+            <Certifications />
             <Link href="/legal/privacy" className="hover:text-primary-700">Privacy</Link>
             <Link href="/legal/terms" className="hover:text-primary-700">Terms</Link>
           </div>

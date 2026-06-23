@@ -31,7 +31,7 @@ export default async function ShopPage() {
     <main>
       <PageHeader
         eyebrow="Shop"
-        title="Wear what you stand for"
+        title="Merch"
         subtitle="Natural, durable Co-Exist gear. Every purchase puts young people back into nature. Checkout in seconds, no account needed."
         image="/images/collective.webp"
       />
