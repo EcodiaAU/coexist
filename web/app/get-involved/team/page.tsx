@@ -42,7 +42,7 @@ export default function TeamPage() {
     <main>
       <PageHeader
         eyebrow="Join the movement"
-        title="There is room for you"
+        title="Join the team"
         subtitle="Co-Exist is powered by young people who decided to stop scrolling and start doing. No experience needed, just the want to."
         image="/images/gather.webp"
       />

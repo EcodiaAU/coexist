@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { getUpcomingEvents } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
 import { formatDateShort } from '@/lib/format'
-import { bentoFeatured, bentoLastFill, BENTO_GRID } from '@/lib/bento'
+import { bentoSpans, BENTO_GRID } from '@/lib/bento'
 
 export const revalidate = 900
 
@@ -20,6 +20,8 @@ export default async function EventsPage() {
   } catch {
     events = []
   }
+
+  const spans = bentoSpans(events.length)
 
   return (
     <main>
@@ -50,7 +52,7 @@ export default async function EventsPage() {
               <Link
                 key={e.id}
                 href={`/events/${e.id}`}
-                className={`group relative isolate overflow-hidden bg-olive-800 ${bentoFeatured(i)} ${bentoLastFill(events.length, i)}`}
+                className={`group relative isolate overflow-hidden bg-olive-800 ${spans[i]}`}
               >
                 {e.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -67,7 +69,7 @@ export default async function EventsPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-oncream/70">
                     {formatDateShort(e.date_start, e.timezone)}
                   </p>
-                  <h2 className={`mt-1 leading-[1.05] text-oncream ${i === 0 ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>
+                  <h2 className={`mt-1 leading-[1.05] text-oncream ${spans[i].includes('row-span-2') ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>
                     {e.title}
                   </h2>
                   {e.collective && (

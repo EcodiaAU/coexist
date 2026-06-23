@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { getCollectives, type CollectiveVM } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
 import { CollectiveMapClient } from '@/components/collective-map-client'
-import { bentoFeatured, bentoLastFill, BENTO_GRID } from '@/lib/bento'
+import { bentoSpans, BENTO_GRID } from '@/lib/bento'
 import { APP_URL } from '@/lib/env'
 
 export const revalidate = 1800
@@ -24,7 +24,7 @@ export default async function CollectivesPage() {
 
   // total grid tiles = collectives + the "start a collective" CTA tile
   const n = collectives.length + 1
-  const ctaIdx = n - 1
+  const spans = bentoSpans(n)
 
   return (
     <main>
@@ -48,7 +48,7 @@ export default async function CollectivesPage() {
               <Link
                 key={c.id}
                 href={`/collectives/${c.slug}`}
-                className={`group relative isolate overflow-hidden bg-olive-800 ${bentoFeatured(i)}`}
+                className={`group relative isolate overflow-hidden bg-olive-800 ${spans[i]}`}
               >
                 {c.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -56,7 +56,7 @@ export default async function CollectivesPage() {
                 ) : null}
                 <div className="absolute inset-0 -z-10 bg-gradient-to-t from-olive-950/85 via-olive-950/20 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
-                  <h2 className={`uppercase leading-[0.98] tracking-[-0.02em] text-oncream ${i === 0 ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>{c.name}</h2>
+                  <h2 className={`uppercase leading-[0.98] tracking-[-0.02em] text-oncream ${spans[i].includes('row-span-2') ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>{c.name}</h2>
                   {c.member_count ? (
                     <p className="mt-1 text-[11px] uppercase tracking-[0.02em] text-oncream/60">{c.member_count} members</p>
                   ) : null}
@@ -67,7 +67,7 @@ export default async function CollectivesPage() {
             {/* CTA tile - fills the rest of the last row so the grid bottom is flat */}
             <a
               href={`${APP_URL}/lead-a-collective`}
-              className={`group flex flex-col items-center justify-center bg-olive-700 p-5 text-center text-oncream transition-colors hover:bg-olive-600 ${bentoLastFill(n, ctaIdx)}`}
+              className={`group flex flex-col items-center justify-center bg-olive-700 p-5 text-center text-oncream transition-colors hover:bg-olive-600 ${spans[n - 1]}`}
             >
               <span className="text-xl leading-tight text-oncream sm:text-2xl">Start a collective</span>
               <span className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-oncream/70">Not near one yet? →</span>

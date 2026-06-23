@@ -149,10 +149,8 @@ h1, h2, h3, h4, h5, h6 {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  /* light bottom-only scrim - just enough so the title reads, image stays clean
-     (no full-image dark filter) */
-  background:
-    linear-gradient(to top, rgba(20,23,15,0.6) 0%, rgba(20,23,15,0.18) 28%, transparent 52%);
+  /* very subtle flat black overlay (not a gradient) behind the title text */
+  background: rgba(0, 0, 0, 0.22);
 }
 
 /* Fine grain texture as a stand-alone overlay div (no pseudo-element, so it

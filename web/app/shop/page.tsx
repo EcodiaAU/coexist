@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getProducts, type ProductVM } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
-import { bentoFeatured, bentoLastFill, BENTO_GRID } from '@/lib/bento'
+import { bentoSpans, BENTO_GRID } from '@/lib/bento'
 
 export const revalidate = 900
 
@@ -25,6 +25,8 @@ export default async function ShopPage() {
     products = []
   }
 
+  const spans = bentoSpans(products.length)
+
   return (
     <main>
       <PageHeader
@@ -45,24 +47,25 @@ export default async function ShopPage() {
                 <Link
                   key={p.id}
                   href={`/shop/${p.slug}`}
-                  className={`group relative isolate overflow-hidden bg-neutral-200 ${bentoFeatured(i)} ${bentoLastFill(products.length, i)}`}
+                  className={`group flex flex-col bg-neutral-50 transition-colors hover:bg-neutral-100 ${spans[i]}`}
                 >
-                  {p.images[0] ? (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.images[0]} alt={p.name} loading="lazy" className={`absolute inset-0 -z-10 h-full w-full object-cover transition-all duration-700 ${hover ? 'group-hover:opacity-0' : 'group-hover:scale-105'}`} />
-                      {hover && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={hover} alt="" aria-hidden loading="lazy" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-primary-300">Co-Exist</div>
-                  )}
-                  <div className="absolute inset-0 -z-10 bg-gradient-to-t from-olive-950/80 via-olive-950/10 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5">
-                    <h2 className={`leading-[1.05] text-oncream ${i === 0 ? 'text-2xl sm:text-3xl' : 'text-lg'}`}>{p.name}</h2>
-                    <span className="shrink-0 text-sm text-oncream/85">{price(p)}</span>
+                  <div className="relative flex-1 overflow-hidden">
+                    {p.images[0] ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.images[0]} alt={p.name} loading="lazy" className={`absolute inset-0 h-full w-full object-contain p-5 transition-all duration-700 ${hover ? 'group-hover:opacity-0' : 'group-hover:scale-105'}`} />
+                        {hover && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={hover} alt="" aria-hidden loading="lazy" className="absolute inset-0 h-full w-full object-contain p-5 opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-primary-300">Co-Exist</div>
+                    )}
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3 px-5 pb-5">
+                    <h2 className={`leading-tight text-neutral-900 ${spans[i].includes('row-span-2') ? 'text-xl sm:text-2xl' : 'text-base'}`}>{p.name}</h2>
+                    <span className="shrink-0 text-sm text-neutral-500">{price(p)}</span>
                   </div>
                 </Link>
               )
