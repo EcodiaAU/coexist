@@ -102,11 +102,11 @@ const ROLE_COLORS: Record<string, string> = {
 }
 
 const ROLE_CARD_ACCENTS: Record<string, { bg: string; border: string; icon: string }> = {
-  leader: { bg: 'bg-gradient-to-br from-warning-50 to-warning-100/60', border: 'border-warning-200/60', icon: 'bg-warning-100 text-warning-600' },
+  leader: { bg: 'bg-warning-50', border: 'border-warning-200/60', icon: 'bg-warning-100 text-warning-600' },
   co_leader: { bg: 'bg-white', border: 'border-neutral-100', icon: 'bg-primary-100 text-primary-600' },
-  assist_leader: { bg: 'bg-gradient-to-br from-info-50 to-info-100/60', border: 'border-info-200/60', icon: 'bg-info-100 text-info-600' },
-  participant: { bg: 'bg-gradient-to-br from-neutral-50 to-neutral-100/60', border: 'border-neutral-200/60', icon: 'bg-neutral-100 text-neutral-500' },
-  member: { bg: 'bg-gradient-to-br from-neutral-50 to-neutral-100/60', border: 'border-neutral-200/60', icon: 'bg-neutral-100 text-neutral-500' },
+  assist_leader: { bg: 'bg-info-50', border: 'border-info-200/60', icon: 'bg-info-100 text-info-600' },
+  participant: { bg: 'bg-neutral-50', border: 'border-neutral-200/60', icon: 'bg-neutral-100 text-neutral-500' },
+  member: { bg: 'bg-neutral-50', border: 'border-neutral-200/60', icon: 'bg-neutral-100 text-neutral-500' },
 }
 
 const ALL_ROLES: CollectiveRole[] = ['leader', 'co_leader', 'assist_leader', 'participant']
@@ -141,15 +141,15 @@ function RichStatCard({
       initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: 14, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.35, delay: reducedMotion ? 0 : delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="flex items-center gap-3 rounded-xl bg-white shadow-sm px-4 py-3.5 active:scale-[0.98] transition-transform duration-150"
+      className="flex items-center gap-3 rounded-sm bg-white shadow-sm px-4 py-3.5 active:scale-[0.98] transition-transform duration-150"
       aria-label={`${label}: ${value}`}
     >
-      <span className={cn('flex items-center justify-center w-10 h-10 rounded-xl shrink-0', color)} aria-hidden="true">
+      <span className={cn('flex items-center justify-center w-10 h-10 rounded-sm shrink-0', color)} aria-hidden="true">
         {icon}
       </span>
       <div className="min-w-0">
         <p
-          style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+          style={{ fontFamily: 'var(--font-heading)' }}
           className="text-xl sm:text-2xl font-bold text-neutral-900 tabular-nums"
         >
           {display.toLocaleString()}
@@ -182,9 +182,9 @@ function HeroStat({
   const display = useCountUp(value, 1200, !reducedMotion)
 
   const variantStyles = {
-    primary: 'bg-gradient-to-br from-primary-700 via-primary-800 to-primary-950 text-white',
-    dark: 'bg-gradient-to-br from-primary-900 via-primary-950 to-neutral-900 text-white',
-    accent: 'bg-gradient-to-br from-moss-600 via-moss-700 to-primary-800 text-white',
+    primary: 'bg-primary-900 text-white',
+    dark: 'bg-primary-950 text-white',
+    accent: 'bg-primary-800 text-white',
     default: 'bg-white text-neutral-900 shadow-sm',
   }
   const iconBg = { primary: 'bg-white/15', dark: 'bg-white/10', accent: 'bg-white/15', default: 'bg-primary-50' }
@@ -198,15 +198,15 @@ function HeroStat({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, delay: reducedMotion ? 0 : delay, ease: [0.25, 0.46, 0.45, 0.94] }}
       style={{ willChange: 'transform' }}
-      className={cn('relative overflow-hidden rounded-2xl p-4 sm:p-5', variantStyles[variant])}
+      className={cn('relative overflow-hidden rounded-md p-4 sm:p-5', variantStyles[variant])}
     >
       {/* Decorative circles removed per design system - heroes are
           plain gradients only (2026-05-16 Tate). */}
       <div className="relative z-10">
-        <span className={cn('flex items-center justify-center w-9 h-9 rounded-xl mb-3', iconBg[variant], iconColor[variant])} aria-hidden="true">
+        <span className={cn('flex items-center justify-center w-9 h-9 rounded-sm mb-3', iconBg[variant], iconColor[variant])} aria-hidden="true">
           {icon}
         </span>
-        <p style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }} className={cn('text-2xl sm:text-3xl font-bold tracking-tight tabular-nums', valColor[variant])}>
+        <p style={{ fontFamily: 'var(--font-heading)' }} className={cn('text-2xl sm:text-3xl font-bold tracking-tight tabular-nums', valColor[variant])}>
           {display.toLocaleString()}
         </p>
         <p className={cn('mt-0.5 text-sm font-medium', labelColor[variant])}>{label}</p>
@@ -262,7 +262,7 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
       {showStatsLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-2xl" />
+            <Skeleton key={i} className="h-32 rounded-md" />
           ))}
         </div>
       ) : statsLoading ? null : stats ? (
@@ -342,7 +342,7 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
           <span className="text-xs text-neutral-400 font-medium">({leaders.length})</span>
         </div>
         {leaders.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-neutral-100 p-6 text-center">
+          <div className="rounded-md border border-dashed border-neutral-100 p-6 text-center">
             <p className="text-sm text-neutral-400">No leaders assigned yet</p>
           </div>
         ) : (
@@ -357,7 +357,7 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25, delay: rm ? 0 : 0.4 + i * 0.05 }}
                   className={cn(
-                    'relative overflow-hidden rounded-2xl p-4 border',
+                    'relative overflow-hidden rounded-md p-4 border',
                     accent.bg,
                     accent.border,
                   )}
@@ -409,7 +409,7 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
           </div>
         </div>
         {upcomingEvents.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-neutral-100 p-6 text-center">
+          <div className="rounded-md border border-dashed border-neutral-100 p-6 text-center">
             <p className="text-sm text-neutral-400">No upcoming events</p>
           </div>
         ) : (
@@ -461,7 +461,7 @@ function EventRow({ event, reducedMotion, delay = 0 }: { event: AdminCollectiveE
     >
       <Link
         to={`/events/${event.id}`}
-        className="group flex items-stretch gap-3 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
+        className="group flex items-stretch gap-3 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
       >
         {/* Cover image (or date block if no image) */}
         {event.cover_image_url ? (
@@ -610,7 +610,7 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
   return (
     <div className="space-y-5">
       {/* ── Search & controls ── */}
-      <div className="rounded-2xl bg-neutral-50 border border-neutral-100 p-4">
+      <div className="rounded-md bg-neutral-50 border border-neutral-100 p-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <SearchBar value={search} onChange={setSearch} placeholder="Search by name or handle..." compact className="flex-1" />
           <div className="flex items-center gap-2">
@@ -619,7 +619,7 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
               onClick={() => setShowInactive((p) => !p)}
               className={cn(
                 'h-10 px-3.5 rounded-full text-xs font-semibold',
-                'active:scale-[0.95] transition-[color,background-color,transform] duration-200 cursor-pointer select-none',
+                'active:scale-[0.98] transition-[color,background-color,transform] duration-200 cursor-pointer select-none',
                 showInactive
                   ? 'bg-primary-700 text-white shadow-sm'
                   : 'bg-white text-neutral-500 hover:bg-neutral-50 shadow-sm',
@@ -668,7 +668,7 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
               <div
                 key={member.id}
                 className={cn(
-                  'flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors duration-200',
+                  'flex items-center gap-3 rounded-md px-4 py-3 transition-colors duration-200',
                   isInactive
                     ? 'opacity-50 bg-neutral-50/80'
                     : 'bg-white shadow-sm hover:shadow',
@@ -713,7 +713,7 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
                     <button
                       type="button"
                       onClick={() => handleRestore(member)}
-                      className="p-2.5 rounded-xl text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.93] transition-[colors,transform]"
+                      className="p-2.5 rounded-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.98] transition-[colors,transform]"
                       aria-label="Restore member"
                     >
                       <RotateCcw size={14} />
@@ -723,7 +723,7 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
                       <button
                         type="button"
                         onClick={() => setRoleAssignMember(member)}
-                        className="p-2.5 rounded-xl text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.93] transition-[colors,transform]"
+                        className="p-2.5 rounded-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.98] transition-[colors,transform]"
                         aria-label="Change role"
                       >
                         <Shield size={14} />
@@ -731,7 +731,7 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
                       <button
                         type="button"
                         onClick={() => setRemovingMember(member)}
-                        className="p-2.5 rounded-xl text-neutral-400 hover:bg-error-50 hover:text-error-500 cursor-pointer active:scale-[0.93] transition-[colors,transform]"
+                        className="p-2.5 rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-500 cursor-pointer active:scale-[0.98] transition-[colors,transform]"
                         aria-label="Remove member"
                       >
                         <UserMinus size={14} />
@@ -772,14 +772,14 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
                     onClick={() => handleRoleChange(roleAssignMember.user_id, role)}
                     disabled={isActive}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-xl px-4 py-3.5 min-h-11 text-sm',
+                      'flex w-full items-center gap-3 rounded-sm px-4 py-3.5 min-h-11 text-sm',
                       'active:scale-[0.97] transition-[color,background-color,transform] duration-150 cursor-pointer select-none border',
                       isActive
                         ? cn(accent.bg, accent.border, 'text-neutral-700')
                         : 'bg-white border-transparent text-neutral-900 hover:bg-neutral-50',
                     )}
                   >
-                    <span className={cn('flex items-center justify-center w-8 h-8 rounded-lg', isActive ? accent.icon : 'bg-neutral-50 text-neutral-400')}>
+                    <span className={cn('flex items-center justify-center w-8 h-8 rounded-sm', isActive ? accent.icon : 'bg-neutral-50 text-neutral-400')}>
                       <RoleIcon size={16} />
                     </span>
                     <span className="font-medium">{ROLE_LABELS[role]}</span>
@@ -860,7 +860,7 @@ function AddMemberModal({
         <h2 className="font-heading text-lg font-semibold text-neutral-900">Add Member</h2>
         <button
           onClick={onClose}
-          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.93] transition-[colors,transform] duration-150 cursor-pointer"
+          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
           aria-label="Close"
         >
           <X size={20} />
@@ -898,7 +898,7 @@ function AddMemberModal({
                   onClick={() => handleAdd(user.id)}
                   disabled={addMember.isPending}
                   className={cn(
-                    'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left',
+                    'flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-left',
                     'hover:bg-neutral-50 active:scale-[0.98] transition-[color,background-color,transform] duration-150',
                     'cursor-pointer select-none',
                   )}
@@ -968,7 +968,7 @@ function EventsTab({ collectiveId, reducedMotion }: { collectiveId: string; redu
               onClick={() => setStatusFilter(s)}
               className={cn(
                 'h-9 px-4 rounded-full text-xs font-semibold capitalize',
-                'active:scale-[0.95] transition-[color,background-color,transform] duration-200 cursor-pointer select-none shadow-sm',
+                'active:scale-[0.98] transition-[color,background-color,transform] duration-200 cursor-pointer select-none shadow-sm',
                 isActive ? colors.active : colors.inactive,
                 isActive && 'shadow-sm',
               )}
@@ -1119,14 +1119,14 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
   return (
     <div className="space-y-6 max-w-xl">
       {/* ── Cover image ── */}
-      <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
+      <div className="rounded-md bg-white shadow-sm overflow-hidden">
         <div className="bg-neutral-50 px-5 py-3 border-b border-neutral-100">
           <h3 className="font-heading text-sm font-semibold text-neutral-700">
             Cover Image
           </h3>
         </div>
         <div className="p-5">
-          <div className="relative rounded-xl overflow-hidden bg-neutral-50" style={{ aspectRatio: '16/9' }}>
+          <div className="relative rounded-sm overflow-hidden bg-neutral-50" style={{ aspectRatio: '16/9' }}>
             {coverPreview ? (
               <img src={coverPreview} alt="Cover" loading="lazy" className="w-full h-full object-cover" />
             ) : (
@@ -1137,7 +1137,7 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
             )}
             {uploading && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <div className="bg-white rounded-xl px-4 py-2 shadow-sm">
+                <div className="bg-white rounded-sm px-4 py-2 shadow-sm">
                   <p className="text-xs font-semibold text-neutral-700 tabular-nums">{progress ?? 0}%</p>
                 </div>
               </div>
@@ -1147,7 +1147,7 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
             <label
               className={cn(
                 'relative inline-flex items-center justify-center font-heading font-semibold',
-                'rounded-xl cursor-pointer select-none',
+                'rounded-sm cursor-pointer select-none',
                 'transition-colors duration-150',
                 'min-h-11 px-4 text-sm gap-1.5',
                 'bg-neutral-100 text-neutral-900 shadow-sm hover:bg-neutral-200 hover:shadow',
@@ -1186,7 +1186,7 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
       </div>
 
       {/* ── Edit form ── */}
-      <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
+      <div className="rounded-md bg-white shadow-sm overflow-hidden">
         <div className="bg-neutral-50 px-5 py-3 border-b border-neutral-100">
           <h3 className="font-heading text-sm font-semibold text-neutral-700">
             Collective Details
@@ -1273,8 +1273,8 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
       </div>
 
       {/* ── Danger zone ── */}
-      <div className="rounded-2xl overflow-hidden border border-error-200/40">
-        <div className="bg-gradient-to-r from-error-50 via-error-50/60 to-white px-5 py-3 border-b border-error-100/60">
+      <div className="rounded-md overflow-hidden border border-error-200/40">
+        <div className="bg-error-50 px-5 py-3 border-b border-error-100/60">
           <h3 className="font-heading text-sm font-semibold text-error-600 flex items-center gap-2">
             <AlertTriangle size={14} />
             Danger Zone
@@ -1374,11 +1374,11 @@ export default function AdminCollectiveDetailPage() {
   if (showLoading) {
     return (
       <div className="space-y-4 p-6">
-        <Skeleton className="h-8 w-32 rounded-lg" />
-        <Skeleton className="h-48 rounded-2xl" />
+        <Skeleton className="h-8 w-32 rounded-sm" />
+        <Skeleton className="h-48 rounded-md" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-2xl" />
+            <Skeleton key={i} className="h-32 rounded-md" />
           ))}
         </div>
       </div>

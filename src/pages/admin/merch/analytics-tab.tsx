@@ -99,10 +99,10 @@ export default function AnalyticsTab() {
             {analytics.by_product.map((row, idx) => (
               <div
                 key={row.product_id}
-                className="rounded-2xl p-5 bg-white border border-neutral-100 shadow-sm"
+                className="rounded-md p-5 bg-white border border-neutral-100 shadow-sm"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${PRODUCT_ICON_STYLES[idx % PRODUCT_ICON_STYLES.length]}`}>
+                  <div className={`w-7 h-7 rounded-sm flex items-center justify-center ${PRODUCT_ICON_STYLES[idx % PRODUCT_ICON_STYLES.length]}`}>
                     <ShoppingBag size={14} />
                   </div>
                   <p className="text-sm font-bold text-neutral-900">{row.product_name}</p>
@@ -131,7 +131,7 @@ export default function AnalyticsTab() {
             {analytics.by_period.map((row) => (
               <div
                 key={row.date}
-                className="flex items-center justify-between px-4 py-3 rounded-xl text-sm bg-white border border-neutral-100 shadow-sm"
+                className="flex items-center justify-between px-4 py-3 rounded-sm text-sm bg-white border border-neutral-100 shadow-sm"
               >
                 <span className="text-neutral-500 font-medium">{row.date}</span>
                 <div className="flex gap-3">

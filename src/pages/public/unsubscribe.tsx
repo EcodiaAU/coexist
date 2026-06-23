@@ -85,10 +85,10 @@ export default function UnsubscribePage() {
 
   return (
     <div className="min-h-screen bg-[#f4f2ec] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-sm border border-neutral-200/80 overflow-hidden">
+      <div className="w-full max-w-md bg-white rounded-md shadow-sm border border-neutral-200/80 overflow-hidden">
         {/* Header */}
         <div className="bg-[#879e62] px-6 py-8 text-center">
-          <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 mx-auto mb-3">
+          <div className="flex items-center justify-center w-12 h-12 rounded-md bg-white/20 mx-auto mb-3">
             <Leaf size={22} className="text-white" />
           </div>
           <h1 className="font-heading text-xl font-bold text-white">Co-Exist</h1>
@@ -116,7 +116,7 @@ export default function UnsubscribePage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full pl-9 pr-3 h-11 rounded-xl bg-neutral-50 border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+                    className="w-full pl-9 pr-3 h-11 rounded-sm bg-neutral-50 border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
                   />
                 </div>
               </div>

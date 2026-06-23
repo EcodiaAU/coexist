@@ -48,8 +48,8 @@ function CohortBar({ label, count, total, delay }: { label: string; count: numbe
   return (
     <div className="flex items-center gap-3 py-1.5">
       <span className="w-14 shrink-0 text-sm text-neutral-600">{label}</span>
-      <div className="flex-1 h-7 rounded-lg bg-neutral-100 overflow-hidden">
-        <motion.div className="h-full bg-primary-400 rounded-lg" initial={{ width: 0 }}
+      <div className="flex-1 h-7 rounded-sm bg-neutral-100 overflow-hidden">
+        <motion.div className="h-full bg-primary-400 rounded-sm" initial={{ width: 0 }}
           animate={{ width: `${Math.max(p, count > 0 ? 3 : 0)}%` }} transition={{ duration: 0.6, delay }} />
       </div>
       <span className="w-24 shrink-0 text-right text-sm tabular-nums text-neutral-700">{count} <span className="text-neutral-400">({p}%)</span></span>
@@ -118,9 +118,9 @@ export default function AdminMetricsPage({ embedded = false }: { embedded?: bool
       {isLoading || !m ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-24 rounded-2xl bg-neutral-50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />)}
+            {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-24 rounded-md bg-neutral-50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />)}
           </div>
-          <div className="h-56 rounded-2xl bg-neutral-50 animate-pulse" />
+          <div className="h-56 rounded-md bg-neutral-50 animate-pulse" />
         </div>
       ) : (
         <>
@@ -137,7 +137,7 @@ export default function AdminMetricsPage({ embedded = false }: { embedded?: bool
           </motion.div>
 
           {/* Return frequency */}
-          <motion.div variants={v.fadeUp} className="rounded-2xl bg-white shadow-sm border border-neutral-100 p-5">
+          <motion.div variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 p-5">
             <p className="text-sm font-semibold text-neutral-900">Return frequency</p>
             <p className="text-xs text-neutral-500 mb-3">How many unique people came to N events in this window.</p>
             <CohortBar label="1 event" count={m.retention.attended_1} total={m.unique_attendees} delay={0.05} />
@@ -152,7 +152,7 @@ export default function AdminMetricsPage({ embedded = false }: { embedded?: bool
 
           {/* Per collective */}
           {m.per_collective.length > 1 && (
-            <motion.div variants={v.fadeUp} className="rounded-2xl bg-white shadow-sm border border-neutral-100 p-5 overflow-x-auto">
+            <motion.div variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 p-5 overflow-x-auto">
               <p className="text-sm font-semibold text-neutral-900 mb-3">By collective</p>
               <table className="w-full text-sm">
                 <thead><tr className="text-left text-xs uppercase tracking-wide text-neutral-400">

@@ -424,7 +424,7 @@ function UserSettingsSheet({
       <BottomSheet open={open} onClose={onClose} snapPoints={[0.92]}>
         <div className="space-y-5 pb-6">
           {/* User header */}
-          <div className="flex items-center gap-4 p-4 -mx-1 rounded-2xl bg-white border border-neutral-100">
+          <div className="flex items-center gap-4 p-4 -mx-1 rounded-md bg-white border border-neutral-100">
             <Avatar src={user.avatar_url} name={user.display_name ?? ''} size="lg" />
             <div className="flex-1 min-w-0">
               <p className="text-lg font-bold text-neutral-900 truncate">{user.display_name}</p>
@@ -448,13 +448,13 @@ function UserSettingsSheet({
               type="button"
               onClick={() => { setNewRole(user.role); setShowRoleChange(!showRoleChange) }}
               className={cn(
-                'flex items-center gap-3 p-3.5 rounded-xl transition-colors active:scale-[0.97]',
+                'flex items-center gap-3 p-3.5 rounded-sm transition-colors active:scale-[0.97]',
                 showRoleChange
                   ? 'bg-neutral-100 ring-1 ring-neutral-200'
                   : 'bg-neutral-50 ring-1 ring-neutral-100',
               )}
             >
-              <div className="w-9 h-9 rounded-lg bg-primary-200 text-primary-700 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-sm bg-primary-200 text-primary-700 flex items-center justify-center shrink-0">
                 <UserCog size={17} />
               </div>
               <span className="text-sm font-semibold text-neutral-900">Change Role</span>
@@ -464,9 +464,9 @@ function UserSettingsSheet({
               type="button"
               onClick={() => user.email && resetPasswordMutation.mutate(user.email)}
               disabled={resetPasswordMutation.isPending}
-              className="flex items-center gap-3 p-3.5 rounded-xl bg-neutral-50 ring-1 ring-neutral-100 transition-colors active:scale-[0.97]"
+              className="flex items-center gap-3 p-3.5 rounded-sm bg-neutral-50 ring-1 ring-neutral-100 transition-colors active:scale-[0.97]"
             >
-              <div className="w-9 h-9 rounded-lg bg-primary-200 text-primary-700 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-sm bg-primary-200 text-primary-700 flex items-center justify-center shrink-0">
                 <KeyRound size={17} />
               </div>
               <span className="text-sm font-semibold text-neutral-900">Reset Password</span>
@@ -477,9 +477,9 @@ function UserSettingsSheet({
                 type="button"
                 onClick={() => unsuspendMutation.mutate(user.id)}
                 disabled={unsuspendMutation.isPending}
-                className="flex items-center gap-3 p-3.5 rounded-xl bg-success-50 ring-1 ring-success-200/40 transition-colors active:scale-[0.97]"
+                className="flex items-center gap-3 p-3.5 rounded-sm bg-success-50 ring-1 ring-success-200/40 transition-colors active:scale-[0.97]"
               >
-                <div className="w-9 h-9 rounded-lg bg-success-200 text-success-700 flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-sm bg-success-200 text-success-700 flex items-center justify-center shrink-0">
                   <Shield size={17} />
                 </div>
                 <span className="text-sm font-semibold text-success-800">Unsuspend</span>
@@ -489,13 +489,13 @@ function UserSettingsSheet({
                 type="button"
                 onClick={() => setShowSuspendForm(!showSuspendForm)}
                 className={cn(
-                  'flex items-center gap-3 p-3.5 rounded-xl transition-colors active:scale-[0.97]',
+                  'flex items-center gap-3 p-3.5 rounded-sm transition-colors active:scale-[0.97]',
                   showSuspendForm
                     ? 'bg-warning-200 ring-1 ring-warning-300/60'
                     : 'bg-warning-50 ring-1 ring-warning-200/40',
                 )}
               >
-                <div className="w-9 h-9 rounded-lg bg-warning-200 text-warning-700 flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-sm bg-warning-200 text-warning-700 flex items-center justify-center shrink-0">
                   <Ban size={17} />
                 </div>
                 <span className="text-sm font-semibold text-warning-800">Suspend</span>
@@ -506,9 +506,9 @@ function UserSettingsSheet({
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-3 p-3.5 rounded-xl bg-error-50 ring-1 ring-error-200/40 transition-colors active:scale-[0.97]"
+                className="flex items-center gap-3 p-3.5 rounded-sm bg-error-50 ring-1 ring-error-200/40 transition-colors active:scale-[0.97]"
               >
-                <div className="w-9 h-9 rounded-lg bg-error-200 text-error-700 flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-sm bg-error-200 text-error-700 flex items-center justify-center shrink-0">
                   <Trash2 size={17} />
                 </div>
                 <span className="text-sm font-semibold text-error-800">Delete User</span>
@@ -526,7 +526,7 @@ function UserSettingsSheet({
                 exit="exit"
                 className="overflow-hidden"
               >
-                <div className="p-3.5 bg-neutral-50 rounded-xl ring-1 ring-neutral-100 space-y-3">
+                <div className="p-3.5 bg-neutral-50 rounded-sm ring-1 ring-neutral-100 space-y-3">
                   <Dropdown
                     options={roleOptions.filter((o) => o.value !== 'all')}
                     value={newRole}
@@ -557,7 +557,7 @@ function UserSettingsSheet({
                 exit="exit"
                 className="overflow-hidden"
               >
-                <div className="p-3.5 bg-error-50 rounded-xl ring-1 ring-error-200/40 space-y-3">
+                <div className="p-3.5 bg-error-50 rounded-sm ring-1 ring-error-200/40 space-y-3">
                   <p className="text-xs text-error-600">User will see the reason and can submit an appeal</p>
                   <Input
                     type="textarea"
@@ -597,7 +597,7 @@ function UserSettingsSheet({
                 type="button"
                 onClick={() => setShowAddCollective(!showAddCollective)}
                 className={cn(
-                  'flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg transition-colors active:scale-[0.97]',
+                  'flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-sm transition-colors active:scale-[0.97]',
                   showAddCollective
                     ? 'bg-neutral-200 text-neutral-900'
                     : 'bg-neutral-100 text-neutral-600',
@@ -618,7 +618,7 @@ function UserSettingsSheet({
                   exit="exit"
                   className="overflow-hidden"
                 >
-                  <div className="mb-3 p-3.5 bg-neutral-50 rounded-xl ring-1 ring-neutral-100 space-y-2.5">
+                  <div className="mb-3 p-3.5 bg-neutral-50 rounded-sm ring-1 ring-neutral-100 space-y-2.5">
                     <Dropdown
                       options={availableCollectives.map((c) => ({ value: c.id, label: `${c.name}${c.state ? ` (${c.state})` : ''}` }))}
                       value={addCollectiveId}
@@ -663,7 +663,7 @@ function UserSettingsSheet({
             {rolesLoading ? (
               <Skeleton variant="list-item" count={2} />
             ) : !activeRoles.length ? (
-              <div className="py-4 px-3 rounded-xl bg-neutral-50 ring-1 ring-neutral-200/40 text-center">
+              <div className="py-4 px-3 rounded-sm bg-neutral-50 ring-1 ring-neutral-200/40 text-center">
                 <Users size={20} className="text-neutral-400 mx-auto mb-1" />
                 <p className="text-xs text-neutral-500">Not a member of any collective</p>
               </div>
@@ -676,12 +676,12 @@ function UserSettingsSheet({
                       key={membership.id}
                       layout
                       className={cn(
-                        'flex items-center gap-3 p-3 rounded-xl transition-colors duration-200',
+                        'flex items-center gap-3 p-3 rounded-sm transition-colors duration-200',
                         COLLECTIVE_ROLE_SURFACE[membership.role],
                       )}
                     >
                       <div className={cn(
-                        'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                        'w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
                         COLLECTIVE_ROLE_COLORS[membership.role],
                       )}>
                         <Icon size={15} />
@@ -718,7 +718,7 @@ function UserSettingsSheet({
                             },
                           )
                         }
-                        className="p-2.5 rounded-lg text-neutral-400 active:bg-error-100 active:text-error-600 shrink-0 transition-colors"
+                        className="p-2.5 rounded-sm text-neutral-400 active:bg-error-100 active:text-error-600 shrink-0 transition-colors"
                         title="Remove from collective"
                       >
                         <X size={14} />
@@ -734,7 +734,7 @@ function UserSettingsSheet({
           {user.role === 'manager' && isSuperAdmin && allCollectives && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-9 h-9 rounded-lg bg-plum-200 text-plum-700 flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-sm bg-plum-200 text-plum-700 flex items-center justify-center shrink-0">
                   <Settings size={15} />
                 </div>
                 <div>
@@ -751,7 +751,7 @@ function UserSettingsSheet({
                     <label
                       key={collective.id}
                       className={cn(
-                        'flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors',
+                        'flex items-center gap-3 p-3 rounded-sm cursor-pointer transition-colors',
                         isManaged
                           ? 'bg-plum-50 ring-1 ring-plum-200/60'
                           : 'bg-white ring-1 ring-neutral-100 hover:bg-neutral-50',
@@ -795,14 +795,14 @@ function UserSettingsSheet({
                 type="button"
                 onClick={() => setCapsExpanded(!capsExpanded)}
                 className={cn(
-                  'flex items-center justify-between w-full p-3.5 rounded-xl transition-colors active:scale-[0.98]',
+                  'flex items-center justify-between w-full p-3.5 rounded-sm transition-colors active:scale-[0.98]',
                   capsExpanded
                     ? 'bg-plum-100 ring-1 ring-plum-200/60'
                     : 'bg-plum-50 ring-1 ring-plum-200/40',
                 )}
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-plum-200 text-plum-700 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-sm bg-plum-200 text-plum-700 flex items-center justify-center">
                     <Sparkles size={15} />
                   </div>
                   <div className="text-left">
@@ -842,7 +842,7 @@ function UserSettingsSheet({
                             <p className="text-[11px] uppercase tracking-wider font-bold text-neutral-400 mb-2 px-1">
                               {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS]}
                             </p>
-                            <div className="rounded-xl overflow-hidden ring-1 ring-neutral-100">
+                            <div className="rounded-sm overflow-hidden ring-1 ring-neutral-100">
                               {caps.map((cap, i) => {
                                 const isEnabled = capsData?.capabilities.has(cap.key) ?? false
                                 const isDefault = ROLE_DEFAULT_CAPS[userRole].includes(cap.key)
@@ -973,7 +973,7 @@ export default function AdminUsersPage() {
 
       {/* Bulk actions */}
       {selectedUsers.size > 0 && (
-        <motion.div variants={fadeUp} className="flex items-center gap-2 mb-4 p-3 bg-neutral-50 rounded-xl ring-1 ring-neutral-100">
+        <motion.div variants={fadeUp} className="flex items-center gap-2 mb-4 p-3 bg-neutral-50 rounded-sm ring-1 ring-neutral-100">
           <span className="text-sm text-neutral-700 font-semibold">
             {selectedUsers.size} selected
           </span>
@@ -1020,7 +1020,7 @@ export default function AdminUsersPage() {
             <StaggeredItem
               key={user.id}
               className={cn(
-                'flex items-center gap-3 p-3.5 rounded-xl',
+                'flex items-center gap-3 p-3.5 rounded-sm',
                 'transition-colors duration-200',
                 user.is_suspended
                   ? 'bg-error-50 ring-1 ring-error-200/60 opacity-70'
@@ -1066,7 +1066,7 @@ export default function AdminUsersPage() {
               <button
                 type="button"
                 onClick={() => setSettingsUser(user)}
-                className="p-2.5 rounded-xl bg-neutral-50 text-neutral-500 active:bg-neutral-200 active:text-neutral-700 transition-colors shrink-0"
+                className="p-2.5 rounded-sm bg-neutral-50 text-neutral-500 active:bg-neutral-200 active:text-neutral-700 transition-colors shrink-0"
                 title="User settings"
               >
                 <Settings size={18} />

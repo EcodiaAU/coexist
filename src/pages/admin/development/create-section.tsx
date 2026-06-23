@@ -47,7 +47,7 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
       exit={{ opacity: 0, scale: 0.95, x: -20 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        'group flex items-center gap-3 rounded-2xl p-3.5 transition-colors duration-200',
+        'group flex items-center gap-3 rounded-md p-3.5 transition-colors duration-200',
         isDragging
           ? 'bg-white shadow-sm ring-2 ring-neutral-300/50 z-10 scale-[1.02]'
           : 'bg-white shadow-sm',
@@ -68,7 +68,7 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
         onClick={onToggleRequired}
         whileTap={{ scale: 0.93 }}
         className={cn(
-          'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors duration-200',
+          'inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-bold transition-colors duration-200',
           item.is_required ? 'bg-moss-100 text-moss-700' : 'bg-neutral-50 text-neutral-400',
         )}
       >
@@ -86,7 +86,7 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
         onClick={onRemove}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="flex items-center justify-center w-9 h-9 rounded-xl text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors"
+        className="flex items-center justify-center w-9 h-9 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors"
       >
         <Trash2 size={16} />
       </motion.button>
@@ -110,7 +110,7 @@ function ModulePicker({ modules, selectedIds, onSelect }: { modules: DevModule[]
         <div className="max-h-60 overflow-y-auto space-y-1.5">
           {filtered.map((m) => (
             <motion.button key={m.id} type="button" onClick={() => onSelect(m)} whileTap={{ scale: 0.98 }}
-              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors text-left">
+              className="w-full flex items-center gap-3 p-3 rounded-sm hover:bg-neutral-50 transition-colors text-left">
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-semibold text-neutral-900 truncate">{m.title}</p>
                 <p className="text-[11px] text-neutral-500 capitalize">{m.category.replace('_', ' ')} · {m.estimated_minutes}m</p>
@@ -197,9 +197,9 @@ export default function AdminCreateSectionPage() {
   return (
     <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">
       {/* Details */}
-      <motion.div variants={fadeUp} className="rounded-2xl bg-white shadow-sm p-5 sm:p-6 space-y-4">
+      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6 space-y-4">
         <div className="flex items-center gap-2.5 mb-1">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-secondary-500 to-secondary-700 shadow-lg shadow-secondary-600/20">
+          <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-secondary-700 shadow-sm">
             <Layers size={16} className="text-white" />
           </div>
           <h2 className="font-heading text-base font-bold text-neutral-900">Section Details</h2>
@@ -214,9 +214,9 @@ export default function AdminCreateSectionPage() {
       </motion.div>
 
       {/* Audience */}
-      <motion.div variants={fadeUp} className="rounded-2xl bg-white shadow-sm p-5 sm:p-6">
+      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-600/20">
+          <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-700 shadow-sm">
             <Users size={16} className="text-white" />
           </div>
           <h2 className="font-heading text-base font-bold text-neutral-900">Target Audience</h2>
@@ -233,7 +233,7 @@ export default function AdminCreateSectionPage() {
         <AnimatePresence>
           {showPicker && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
-              <div className="rounded-2xl bg-white shadow-sm p-4 mb-4">
+              <div className="rounded-md bg-white shadow-sm p-4 mb-4">
                 <ModulePicker modules={allModules} selectedIds={selectedIds} onSelect={(m) => setModuleItems((prev) => [...prev, { _key: `sm-${Date.now()}-${m.id}`, module: m, is_required: true }])} />
               </div>
             </motion.div>
@@ -242,9 +242,9 @@ export default function AdminCreateSectionPage() {
         <AnimatePresence mode="wait">
           {moduleItems.length === 0 ? (
             <motion.div key="empty" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
-              className="flex flex-col items-center justify-center py-14 rounded-2xl bg-neutral-50"
+              className="flex flex-col items-center justify-center py-14 rounded-md bg-neutral-50"
             >
-              <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-secondary-500 to-secondary-700 shadow-lg mb-3">
+              <div className="flex items-center justify-center w-12 h-12 rounded-md bg-secondary-700 shadow-sm mb-3">
                 <Layers size={24} strokeWidth={1.5} className="text-white" />
               </div>
               <p className="text-[13px] font-semibold text-neutral-600 mb-1">No modules added</p>

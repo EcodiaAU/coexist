@@ -116,12 +116,12 @@ function EventListSkeleton() {
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
       {Array.from({ length: 4 }, (_, i) => (
-        <div key={i} className="rounded-2xl bg-white ring-1 ring-primary-100 shadow-md shadow-primary-900/5 overflow-hidden animate-pulse">
+        <div key={i} className="rounded-md bg-white ring-1 ring-primary-100 shadow-md overflow-hidden animate-pulse">
           <div className="bg-neutral-100" style={{ aspectRatio: '2/1' }} />
           <div className="p-4 space-y-3">
-            <div className="h-4 bg-neutral-100 rounded-lg w-3/4" />
-            <div className="h-3 bg-neutral-100 rounded-lg w-1/2" />
-            <div className="h-3 bg-neutral-50 rounded-lg w-2/3" />
+            <div className="h-4 bg-neutral-100 rounded-sm w-3/4" />
+            <div className="h-3 bg-neutral-100 rounded-sm w-1/2" />
+            <div className="h-3 bg-neutral-50 rounded-sm w-2/3" />
           </div>
         </div>
       ))}
@@ -292,7 +292,7 @@ export default function ExplorePage() {
                                 watermark={event.activity_type}
                                 onClick={() => navigate(`/events/${event.id}`)}
                                 aria-label={event.title}
-                                className="bg-white shadow-md shadow-primary-900/5 ring-1 ring-primary-100 rounded-2xl"
+                                className="bg-white shadow-md ring-1 ring-primary-100 rounded-md"
                               >
                                 <div className="relative">
                                   {event.cover_image_url ? (
@@ -307,7 +307,7 @@ export default function ExplorePage() {
                                     <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2/1' }}>
                                       <div className={cn('absolute inset-0 bg-gradient-to-br opacity-10', meta?.gradient ?? 'from-primary-400 to-moss-500')} />
                                       <div className="absolute inset-0 bg-neutral-50 flex items-center justify-center">
-                                        <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
+                                        <div className="w-12 h-12 rounded-md bg-white shadow-sm flex items-center justify-center">
                                           <Leaf size={22} strokeWidth={2} className="text-neutral-300" />
                                         </div>
                                       </div>
@@ -407,7 +407,7 @@ export default function ExplorePage() {
                                 type="button"
                                 onClick={() => navigate(`/collectives/${c.slug}`)}
                                 className={cn(
-                                  'w-full rounded-2xl bg-white overflow-hidden text-left',
+                                  'w-full rounded-md bg-white overflow-hidden text-left',
                                   'shadow-sm',
                                   'border border-neutral-100',
                                   'active:scale-[0.98] transition-all duration-150 cursor-pointer select-none',
@@ -419,7 +419,7 @@ export default function ExplorePage() {
                                   {c.cover_image_url ? (
                                     <img src={c.cover_image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
                                   ) : (
-                                    <div className="absolute inset-0 bg-gradient-to-br from-primary-100 to-primary-50 flex items-center justify-center">
+                                    <div className="absolute inset-0 bg-primary-50 flex items-center justify-center">
                                       <Users size={28} className="text-primary-200" />
                                     </div>
                                   )}
@@ -452,7 +452,7 @@ export default function ExplorePage() {
                   {/* ── Find a Collective Map ── */}
                   <section className="px-4 lg:px-6">
                     <SectionHeader title="Find a Collective" />
-                    <div className="rounded-2xl overflow-hidden border border-neutral-100 shadow-sm">
+                    <div className="rounded-md overflow-hidden border border-neutral-100 shadow-sm">
                       <CollectiveMap className="h-[75vh] min-h-[500px]" />
                     </div>
                   </section>

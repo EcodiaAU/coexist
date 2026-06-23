@@ -220,9 +220,9 @@ function NationalStat({
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, ease: 'easeOut' }}
-      className="flex flex-col items-center justify-center text-center rounded-3xl p-6 pb-8 min-h-[150px] bg-white border border-neutral-100 shadow-sm"
+      className="flex flex-col items-center justify-center text-center rounded-md p-6 pb-8 min-h-[150px] bg-white border border-neutral-100 shadow-sm"
     >
-      <div className={cn('mb-4 flex items-center justify-center w-11 h-11 rounded-2xl', cfg.iconBg, cfg.iconColor)} aria-hidden="true">
+      <div className={cn('mb-4 flex items-center justify-center w-11 h-11 rounded-md', cfg.iconBg, cfg.iconColor)} aria-hidden="true">
         {icon}
       </div>
       <div className="font-heading text-4xl font-extrabold text-neutral-900 tabular-nums leading-none">
@@ -281,12 +281,12 @@ export default function NationalImpactPage() {
     const skeleton = (
         <div className="p-5 space-y-5">
           <div className="grid grid-cols-2 gap-4">
-            <div className="h-36 rounded-3xl bg-neutral-100 animate-pulse" />
-            <div className="h-36 rounded-3xl bg-neutral-100 animate-pulse" />
-            <div className="h-36 rounded-3xl bg-neutral-100 animate-pulse" />
-            <div className="h-36 rounded-3xl bg-neutral-100 animate-pulse" />
+            <div className="h-36 rounded-md bg-neutral-100 animate-pulse" />
+            <div className="h-36 rounded-md bg-neutral-100 animate-pulse" />
+            <div className="h-36 rounded-md bg-neutral-100 animate-pulse" />
+            <div className="h-36 rounded-md bg-neutral-100 animate-pulse" />
           </div>
-          <div className="h-64 rounded-3xl bg-neutral-100 animate-pulse" />
+          <div className="h-64 rounded-md bg-neutral-100 animate-pulse" />
         </div>
     )
     if (isAdmin) return skeleton
@@ -362,12 +362,12 @@ export default function NationalImpactPage() {
 
         {/* ─── Time range toggle ─── */}
         <motion.div variants={fadeUp} className="px-5 pt-4 pb-2 flex justify-end">
-          <div className="flex rounded-lg bg-neutral-100 p-0.5">
+          <div className="flex rounded-sm bg-neutral-100 p-0.5">
             <button
               type="button"
               onClick={() => setTimeRange('all-time')}
               className={cn(
-                'px-3.5 min-h-11 rounded-md text-sm font-semibold transition-transform active:scale-[0.95] cursor-pointer select-none',
+                'px-3.5 min-h-11 rounded-md text-sm font-semibold transition-transform active:scale-[0.98] cursor-pointer select-none',
                 timeRange === 'all-time'
                   ? 'bg-white text-primary-700 shadow-sm'
                   : 'text-neutral-400 hover:text-neutral-600',
@@ -379,7 +379,7 @@ export default function NationalImpactPage() {
               type="button"
               onClick={() => setTimeRange('current-year')}
               className={cn(
-                'px-3.5 min-h-11 rounded-md text-sm font-semibold transition-transform active:scale-[0.95] cursor-pointer select-none',
+                'px-3.5 min-h-11 rounded-md text-sm font-semibold transition-transform active:scale-[0.98] cursor-pointer select-none',
                 timeRange === 'current-year'
                   ? 'bg-white text-primary-700 shadow-sm'
                   : 'text-neutral-400 hover:text-neutral-600',
@@ -395,9 +395,9 @@ export default function NationalImpactPage() {
           variants={fadeUp}
           className="px-5 pb-2"
         >
-          <div className="rounded-3xl bg-white border border-neutral-100 shadow-sm p-7 overflow-hidden">
+          <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-7 overflow-hidden">
             <div className="flex items-center gap-2 mb-5">
-              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-primary-50 text-primary-600">
+              <div className="flex items-center justify-center w-10 h-10 rounded-md bg-primary-50 text-primary-600">
                 <Globe size={20} strokeWidth={2.5} />
               </div>
               <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-400 font-bold">
@@ -502,13 +502,13 @@ export default function NationalImpactPage() {
           className="mx-5 mt-10"
         >
           <SectionHeading>Geographic Activity</SectionHeading>
-          <div className="rounded-3xl bg-white border border-neutral-100 shadow-sm p-5 overflow-hidden">
+          <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-5 overflow-hidden">
             <MapView
               center={{ lat: -28.0, lng: 134.0 }}
               zoom={4}
               markers={eventMapPoints ?? []}
               aria-label="National activity map showing event locations"
-              className="h-72 rounded-2xl"
+              className="h-72 rounded-md"
             />
           </div>
         </motion.section>
@@ -520,7 +520,7 @@ export default function NationalImpactPage() {
             className="mx-5 mt-10"
           >
             <SectionHeading>Monthly Est. Volunteer Hours</SectionHeading>
-            <div className="rounded-3xl bg-white border border-neutral-100 shadow-sm p-6">
+            <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-6">
               <div className="flex items-end gap-4 h-36">
                 {trends.map((t, i) => {
                   const max = Math.max(...trends.map((tr) => tr.impact), 1)
@@ -529,7 +529,7 @@ export default function NationalImpactPage() {
                     <div key={t.month} className="flex-1 flex flex-col items-center gap-2">
                       <span className="text-[11px] text-neutral-900 tabular-nums font-bold">{t.impact === 0 ? '-' : t.impact}</span>
                       <motion.div
-                        className="w-full rounded-xl bg-primary-500 min-h-[6px]"
+                        className="w-full rounded-sm bg-primary-500 min-h-[6px]"
                         initial={shouldReduceMotion ? { height: `${height}%` } : { height: 0 }}
                         animate={{ height: `${height}%` }}
                         transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}
@@ -550,7 +550,7 @@ export default function NationalImpactPage() {
             className="mx-5 mt-10"
           >
             <SectionHeading>By Activity Type</SectionHeading>
-            <div className="rounded-3xl bg-white border border-neutral-100 shadow-sm p-6 space-y-5">
+            <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-6 space-y-5">
               {breakdown.byActivity.map(([type, count]) => {
                 const total = breakdown.byActivity.reduce((s, [, c]) => s + c, 0)
                 const percent = total > 0 ? Math.round((count / total) * 100) : 0
@@ -583,7 +583,7 @@ export default function NationalImpactPage() {
             className="mx-5 mt-10"
           >
             <SectionHeading>By State / Region</SectionHeading>
-            <div className="rounded-3xl bg-white border border-neutral-100 shadow-sm p-6 space-y-1">
+            <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-6 space-y-1">
               {breakdown.byState.map(([state, count], i) => {
                 const maxCount = breakdown.byState[0]?.[1] ?? 1
                 const barWidth = Math.max((count / maxCount) * 100, 8)
@@ -595,7 +595,7 @@ export default function NationalImpactPage() {
                     <span className="text-sm text-neutral-900 font-bold w-16 shrink-0">{state}</span>
                     <div className="flex-1 h-3 bg-neutral-100 rounded-full overflow-hidden">
                       <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-400 shadow-sm"
+                        className="h-full rounded-full bg-primary-400 shadow-sm"
                         initial={shouldReduceMotion ? { width: `${barWidth}%` } : { width: 0 }}
                         animate={{ width: `${barWidth}%` }}
                         transition={{ duration: 0.5, delay: 0.3 + i * 0.05, ease: 'easeOut' }}
@@ -621,18 +621,18 @@ export default function NationalImpactPage() {
               <Trophy size={14} strokeWidth={2.5} className="text-warning-500" />
               Top Collectives
             </SectionHeading>
-            <div className="rounded-3xl bg-white border border-neutral-100 shadow-sm p-6 space-y-2">
+            <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-6 space-y-2">
               {topCollectives.map((c, i) => (
                 <div
                   key={c.id}
                   className={cn(
-                    'flex items-center gap-4 py-3.5 rounded-2xl px-3 transition-colors',
+                    'flex items-center gap-4 py-3.5 rounded-md px-3 transition-colors',
                     i === 0 && 'bg-warning-50/60',
                   )}
                 >
                   <span
                     className={cn(
-                      'flex items-center justify-center w-9 h-9 rounded-xl text-sm font-extrabold shrink-0',
+                      'flex items-center justify-center w-9 h-9 rounded-sm text-sm font-extrabold shrink-0',
                       i < 3
                         ? MEDAL_STYLES[i]
                         : 'bg-neutral-100 text-neutral-500 shadow-sm',

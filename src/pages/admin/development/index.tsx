@@ -86,7 +86,7 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2.5">
-        <div className={cn('flex items-center justify-center w-9 h-9 rounded-xl', iconBg)}>
+        <div className={cn('flex items-center justify-center w-9 h-9 rounded-sm', iconBg)}>
           {icon}
         </div>
         <div>
@@ -98,7 +98,7 @@ function SectionHeader({
         <motion.div
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 text-white text-[12px] font-bold shadow-sm shadow-primary-900/15"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-sm bg-primary-700 text-white text-[12px] font-bold shadow-sm"
         >
           <Plus size={13} />
           {newLabel}
@@ -118,12 +118,12 @@ function ModuleRow({ module, onDelete, compact }: { module: DevModule; onDelete:
       whileTap={{ scale: 0.985 }}
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       className={cn(
-        'group flex items-center gap-3 rounded-2xl bg-white shadow-sm transition-shadow',
+        'group flex items-center gap-3 rounded-md bg-white shadow-sm transition-shadow',
         compact ? 'p-2.5 ml-6 border border-neutral-100' : 'p-3.5',
       )}
     >
       <div className={cn(
-        'flex items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-sm shrink-0',
+        'flex items-center justify-center rounded-sm bg-bark-600 shadow-sm shrink-0',
         compact ? 'w-8 h-8' : 'w-10 h-10',
       )}>
         <BookOpen size={compact ? 14 : 17} className="text-white" />
@@ -143,14 +143,14 @@ function ModuleRow({ module, onDelete, compact }: { module: DevModule; onDelete:
       <div className="flex items-center gap-1 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <Link
           to={`/admin/development/modules/${module.id}/edit`}
-          className={cn('flex items-center justify-center rounded-xl text-amber-500 hover:text-amber-700 hover:bg-amber-50 transition-colors', compact ? 'w-8 h-8' : 'w-10 h-10')}
+          className={cn('flex items-center justify-center rounded-sm text-bark-500 hover:text-bark-700 hover:bg-bark-50 transition-colors', compact ? 'w-8 h-8' : 'w-10 h-10')}
         >
           <Pencil size={compact ? 14 : 16} />
         </Link>
         <button
           type="button"
           onClick={onDelete}
-          className={cn('flex items-center justify-center rounded-xl text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors', compact ? 'w-8 h-8' : 'w-10 h-10')}
+          className={cn('flex items-center justify-center rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors', compact ? 'w-8 h-8' : 'w-10 h-10')}
         >
           <Trash2 size={compact ? 14 : 16} />
         </button>
@@ -164,9 +164,9 @@ function QuizRow({ quiz, onDelete }: { quiz: DevQuiz; onDelete: () => void }) {
     <motion.div
       whileTap={{ scale: 0.985 }}
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-      className="group flex items-center gap-3 p-3.5 rounded-2xl bg-white shadow-sm transition-shadow"
+      className="group flex items-center gap-3 p-3.5 rounded-md bg-white shadow-sm transition-shadow"
     >
-      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-moss-400 to-moss-600 shadow-sm shrink-0">
+      <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-moss-600 shadow-sm shrink-0">
         <CircleDot size={17} className="text-white" />
       </div>
       <div className="flex-1 min-w-0">
@@ -185,14 +185,14 @@ function QuizRow({ quiz, onDelete }: { quiz: DevQuiz; onDelete: () => void }) {
       <div className="flex items-center gap-1 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <Link
           to={`/admin/development/quizzes/${quiz.id}/edit`}
-          className="flex items-center justify-center w-10 h-10 rounded-xl text-sky-500 hover:text-sky-700 hover:bg-sky-50 transition-colors"
+          className="flex items-center justify-center w-10 h-10 rounded-sm text-sky-500 hover:text-sky-700 hover:bg-sky-50 transition-colors"
         >
           <Pencil size={16} />
         </Link>
         <button
           type="button"
           onClick={onDelete}
-          className="flex items-center justify-center w-10 h-10 rounded-xl text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors"
+          className="flex items-center justify-center w-10 h-10 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors"
         >
           <Trash2 size={16} />
         </button>
@@ -228,9 +228,9 @@ function SectionCard({
       <motion.div
         whileTap={{ scale: 0.985 }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="group flex items-center gap-3 p-3.5 rounded-2xl bg-white shadow-sm transition-shadow"
+        className="group flex items-center gap-3 p-3.5 rounded-md bg-white shadow-sm transition-shadow"
       >
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-secondary-400 to-secondary-600 shadow-sm shrink-0">
+        <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-secondary-600 shadow-sm shrink-0">
           <Layers size={17} className="text-white" />
         </div>
         <button
@@ -255,7 +255,7 @@ function SectionCard({
             <button
               type="button"
               onClick={() => setExpanded(!expanded)}
-              className="flex items-center justify-center w-10 h-10 rounded-xl text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50 transition-colors"
+              className="flex items-center justify-center w-10 h-10 rounded-sm text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50 transition-colors"
             >
               <motion.div
                 animate={{ rotate: expanded ? 180 : 0 }}
@@ -268,14 +268,14 @@ function SectionCard({
           <div className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1">
             <Link
               to={`/admin/development/sections/${section.id}/edit`}
-              className="flex items-center justify-center w-10 h-10 rounded-xl text-secondary-500 hover:text-secondary-700 hover:bg-secondary-50 transition-colors"
+              className="flex items-center justify-center w-10 h-10 rounded-sm text-secondary-500 hover:text-secondary-700 hover:bg-secondary-50 transition-colors"
             >
               <Pencil size={16} />
             </Link>
             <button
               type="button"
               onClick={onDeleteSection}
-              className="flex items-center justify-center w-10 h-10 rounded-xl text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors"
+              className="flex items-center justify-center w-10 h-10 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors"
             >
               <Trash2 size={16} />
             </button>
@@ -318,8 +318,8 @@ function SectionCard({
 
 function EmptyRow({ icon, label, to, cta }: { icon: React.ReactNode; label: string; to: string; cta: string }) {
   return (
-    <Link to={to} className="flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed border-neutral-200 bg-white hover:bg-neutral-50 transition-colors">
-      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-neutral-100 text-neutral-400 shrink-0">
+    <Link to={to} className="flex items-center gap-3 p-4 rounded-md border-2 border-dashed border-neutral-200 bg-white hover:bg-neutral-50 transition-colors">
+      <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-neutral-100 text-neutral-400 shrink-0">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -369,9 +369,9 @@ export default function AdminDevelopmentPage() {
         <motion.div
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/20 text-white text-[13px] font-bold hover:bg-white/30 transition-colors backdrop-blur-sm border border-white/10 shadow-sm shadow-black/5"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-white/20 text-white text-[13px] font-bold hover:bg-white/30 transition-colors backdrop-blur-sm border border-white/10 shadow-sm"
         >
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/20">
+          <div className="flex items-center justify-center w-7 h-7 rounded-sm bg-white/20">
             <BarChart3 size={15} />
           </div>
           <div className="text-left">
@@ -437,7 +437,7 @@ export default function AdminDevelopmentPage() {
       <motion.section variants={fadeUp} className="space-y-3">
         <SectionHeader
           icon={<Layers size={17} className="text-white" />}
-          iconBg="bg-gradient-to-br from-secondary-400 to-secondary-600 shadow-sm"
+          iconBg="bg-secondary-600 shadow-sm"
           label="Sections"
           count={filteredSections.length}
           newTo="/admin/development/sections/new"
@@ -445,8 +445,8 @@ export default function AdminDevelopmentPage() {
         />
         {isLoading ? (
           <div className="space-y-2">
-            <Skeleton className="h-[68px] rounded-2xl" />
-            <Skeleton className="h-[68px] rounded-2xl" />
+            <Skeleton className="h-[68px] rounded-md" />
+            <Skeleton className="h-[68px] rounded-md" />
           </div>
         ) : filteredSections.length === 0 ? (
           <EmptyRow
@@ -474,7 +474,7 @@ export default function AdminDevelopmentPage() {
       <motion.section variants={fadeUp} className="space-y-3 ml-4 border-l-2 border-neutral-100 pl-4">
         <SectionHeader
           icon={<BookOpen size={17} className="text-white" />}
-          iconBg="bg-gradient-to-br from-amber-400 to-amber-600 shadow-sm"
+          iconBg="bg-bark-600 shadow-sm"
           label="Modules"
           count={(modules ?? []).length}
           newTo="/admin/development/modules/new"
@@ -496,7 +496,7 @@ export default function AdminDevelopmentPage() {
       <motion.section variants={fadeUp} className="space-y-3">
         <SectionHeader
           icon={<CircleDot size={17} className="text-white" />}
-          iconBg="bg-gradient-to-br from-moss-400 to-moss-600 shadow-sm"
+          iconBg="bg-moss-600 shadow-sm"
           label="Quizzes"
           count={filteredQuizzes.length}
           newTo="/admin/development/quizzes/new"
@@ -504,8 +504,8 @@ export default function AdminDevelopmentPage() {
         />
         {isLoading ? (
           <div className="space-y-2">
-            <Skeleton className="h-[68px] rounded-2xl" />
-            <Skeleton className="h-[68px] rounded-2xl" />
+            <Skeleton className="h-[68px] rounded-md" />
+            <Skeleton className="h-[68px] rounded-md" />
           </div>
         ) : filteredQuizzes.length === 0 ? (
           <EmptyRow

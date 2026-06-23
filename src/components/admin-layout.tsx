@@ -1,6 +1,6 @@
 import { type ReactNode, useState, useEffect, useRef, createContext, useContext, useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { AdminCollectiveScopeContext, useAdminCollectiveScopeProvider } from '@/hooks/use-admin-collective-scope'
 import { AnimatedOutlet } from '@/components/animated-outlet'
 import { WAVE_PATHS } from '@/components/wave-paths'
@@ -93,9 +93,13 @@ interface HeroCfg { hue: string; tall?: boolean; w: number }
 // match the profile-page hero (solid #879e62). 2026-05-16 Tate: every
 // hero in the app must read as the same brand-green family - no purples,
 // oranges, ambers, accents, secondaries.
-const BRAND_HERO = 'from-primary-700 via-primary-800 to-primary-900'
-const BRAND_HERO_DEEP = 'from-primary-800 via-primary-900 to-primary-950'
-const BRAND_HERO_MOSS = 'from-moss-700 via-primary-800 to-primary-900'
+// All admin heroes use the deep army-olive scale from the Co-Exist marketing
+// web app (olive-700 #474f2f is the site's feature green), so the tool reads as
+// the same product as the site. Subtle depth shifts between sections that the
+// persistent hero glides between. The former moss/emerald hue is retired.
+const BRAND_HERO = 'bg-olive-700'
+const BRAND_HERO_DEEP = 'bg-olive-800'
+const BRAND_HERO_MOSS = 'bg-olive-600'
 
 const PAGE_HERO_CONFIG: Record<string, HeroCfg> = {
   'Dashboard':           { hue: BRAND_HERO_DEEP, w: 0 },
@@ -259,7 +263,7 @@ export function AdminLayout() {
   return (
     <AdminCollectiveScopeContext.Provider value={scopeCtx}>
     <AdminHeaderContext.Provider value={headerCtx}>
-      <div className="flex flex-1 min-h-0">
+      <div className="admin-shell flex flex-1 min-h-0">
         {/* Desktop sidebar is handled by UnifiedSidebar in AppShell */}
 
         {/* Mobile drawer + hamburger removed - handled by UnifiedSidebar in AppShell */}
@@ -283,26 +287,35 @@ export function AdminLayout() {
           // overflow-x-clip (not overflow-clip) so Y still reaches the doc scroller.
           showBottomTabs && 'overflow-y-auto overscroll-none hide-scrollbar',
         )}>
-          {/* ── Shared hero bar - only for non-fullBleed pages ── */}
-          {!header.fullBleed && header.title && header.title !== 'Dashboard' ? (() => {
-            const cfg = PAGE_HERO_CONFIG[header.title] ?? DEFAULT_HERO
-            return (
-              <div
-                className={cn(
-                  'relative overflow-hidden shrink-0',
-                  'bg-gradient-to-br transition-[background] duration-700 ease-in-out',
-                  cfg.hue,
-                  cfg.tall
-                    ? 'px-4 pb-14 sm:px-6 sm:pb-16 lg:px-8'
-                    : 'px-4 pb-10 sm:px-6 sm:pb-12 lg:px-8',
-                  // Extend the gradient above the hero so overscroll never exposes the surface bg
-                  'before:absolute before:inset-x-0 before:bottom-full before:h-[200px] before:bg-inherit',
-                )}
-                style={{
-                  paddingTop: cfg.tall ? '3.5rem' : '2rem',
-                }}
-              >
-                <div className="relative z-10">
+          {/* ── Shared hero bar ──────────────────────────────────────────────
+              ONE persistent element across every non-fullBleed admin page. It
+              never remounts on navigation: the background-colour GLIDES to the
+              next section hue (transition-colors), the height is CONSTANT (sized
+              to fit a stat-card hero so plain-title pages don't make it jump),
+              and the wave shape is FIXED. Only the inner content (title +
+              actions + stats) cross-fades when the page changes. (Tate 2026-06-23
+              - was remounting bg + wave on every nav and jumping height.) */}
+          {!header.fullBleed && header.title && header.title !== 'Dashboard' ? (
+            <div
+              className={cn(
+                'relative overflow-hidden shrink-0',
+                'min-h-[15rem] sm:min-h-[16rem]',
+                'px-4 pt-14 pb-16 sm:px-6 lg:px-8',
+                'transition-colors duration-700 ease-in-out',
+                (PAGE_HERO_CONFIG[header.title] ?? DEFAULT_HERO).hue,
+                // Extend the colour above the hero so overscroll never exposes the surface bg
+                'before:absolute before:inset-x-0 before:bottom-full before:h-[200px] before:bg-inherit',
+              )}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={header.title}
+                  className="relative z-10"
+                  initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={shouldReduceMotion ? undefined : { opacity: 0, y: -6 }}
+                  transition={{ duration: 0.22, ease: 'easeOut' }}
+                >
                   {/* Back button - dark circle, consistent across all sub-pages */}
                   {showBackButton && (
                     <motion.button
@@ -324,7 +337,7 @@ export function AdminLayout() {
                     </motion.button>
                   )}
 
-                  <h1 className="font-heading text-2xl sm:text-3xl font-bold text-white tracking-tight text-center">
+                  <h1 className="font-heading text-3xl sm:text-4xl font-normal display-tight text-white text-center">
                     {header.title}
                   </h1>
                   {header.actions && (
@@ -337,22 +350,22 @@ export function AdminLayout() {
                   {header.heroContent && (
                     <div className="mt-5">{header.heroContent}</div>
                   )}
-                </div>
+                </motion.div>
+              </AnimatePresence>
 
-                {/* Wave divider */}
-                <div className="absolute bottom-0 left-0 right-0 z-20">
-                  <svg
-                    viewBox="0 0 1440 70"
-                    preserveAspectRatio="none"
-                    className="w-full h-7 sm:h-10 block"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d={WAVE_PATHS[cfg.w % WAVE_PATHS.length]} className="fill-surface-1" />
-                  </svg>
-                </div>
+              {/* Wave divider - one fixed shape, never reloads between pages */}
+              <div className="absolute bottom-0 left-0 right-0 z-20">
+                <svg
+                  viewBox="0 0 1440 70"
+                  preserveAspectRatio="none"
+                  className="w-full h-7 sm:h-10 block"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d={WAVE_PATHS[0]} className="fill-white" />
+                </svg>
               </div>
-            )
-          })() : null}
+            </div>
+          ) : null}
 
           {/* Content rendered by nested <Route> children */}
           {/*
@@ -375,7 +388,7 @@ export function AdminLayout() {
             'relative flex-1',
             !header.fullBleed && 'overflow-x-clip',
             header.fullBleed ? 'p-0 bg-white' : 'p-4 sm:p-6 lg:p-8',
-            !header.fullBleed && 'bg-gradient-to-b from-primary-50/40 via-white to-primary-50/20',
+            !header.fullBleed && 'bg-neutral-50',
             showBottomTabs && 'pb-[calc(5rem+var(--safe-bottom))]',
           )}>
 

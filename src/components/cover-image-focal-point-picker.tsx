@@ -153,7 +153,7 @@ export function CoverImageFocalPointPicker({
           }
         }}
         className={cn(
-          'relative rounded-xl overflow-hidden border border-neutral-200 select-none',
+          'relative rounded-sm overflow-hidden border border-neutral-200 select-none',
           disabled ? 'cursor-not-allowed opacity-70' : 'cursor-crosshair',
         )}
         data-testid="cover-image-focal-point-picker"
@@ -228,7 +228,7 @@ export function CoverImageFocalPointPicker({
 
       <div className="flex flex-col gap-1">
         <p className="text-xs font-medium text-neutral-700">Live preview</p>
-        <div className="rounded-xl overflow-hidden bg-neutral-100">
+        <div className="rounded-sm overflow-hidden bg-neutral-100">
           <img
             src={imageUrl}
             alt="Cover preview"

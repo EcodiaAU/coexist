@@ -140,7 +140,7 @@ export default function OrderDetailPage() {
 
         {/* Tracking info */}
         {order.tracking_number && (
-          <motion.section variants={fadeUp} className="p-3 rounded-xl bg-white border border-neutral-100 shadow-sm">
+          <motion.section variants={fadeUp} className="p-3 rounded-sm bg-white border border-neutral-100 shadow-sm">
             <div className="flex items-center gap-2">
               <Truck size={16} className="text-neutral-500" />
               <span className="text-sm font-medium text-neutral-900">Tracking number</span>
@@ -160,7 +160,7 @@ export default function OrderDetailPage() {
                 <img
                   src={item.image_url ?? '/img/placeholder-merch.jpg'}
                   alt={item.product_name}
-                  className="w-16 h-16 object-cover rounded-xl shrink-0"
+                  className="w-16 h-16 object-cover rounded-sm shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] sm:text-sm font-medium text-neutral-900 line-clamp-2 leading-snug">
@@ -197,7 +197,7 @@ export default function OrderDetailPage() {
               Shipping address
             </h3>
           </div>
-          <div className="p-3 rounded-xl bg-white shadow-sm border border-neutral-100 text-sm text-neutral-900">
+          <div className="p-3 rounded-sm bg-white shadow-sm border border-neutral-100 text-sm text-neutral-900">
             <p className="font-medium">{order.shipping_address.full_name}</p>
             <p>{order.shipping_address.line1}</p>
             {order.shipping_address.line2 && <p>{order.shipping_address.line2}</p>}

@@ -61,7 +61,7 @@ export default function ReturnsTab() {
       {returns.map((ret) => (
         <StaggeredItem
           key={ret.id}
-          className="p-4 bg-white border border-neutral-100 rounded-2xl shadow-sm"
+          className="p-4 bg-white border border-neutral-100 rounded-md shadow-sm"
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">

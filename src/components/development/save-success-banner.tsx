@@ -34,7 +34,7 @@ export function SaveSuccessBanner({
           exit={{ opacity: 0, y: -12 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className={cn(
-            'rounded-2xl bg-gradient-to-br from-moss-50 to-moss-100/60 border border-moss-200 shadow-sm p-5',
+            'rounded-md bg-moss-100 border border-moss-200 shadow-sm p-5',
             className,
           )}
         >

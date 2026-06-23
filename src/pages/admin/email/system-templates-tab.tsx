@@ -481,7 +481,7 @@ function SystemTemplateEditor({
       <Header title="" back onBack={onClose} />
 
       {/* Template info header */}
-      <div className="rounded-xl bg-white border border-neutral-100 p-4">
+      <div className="rounded-sm bg-white border border-neutral-100 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-neutral-900">{template.label}</h3>
@@ -559,11 +559,11 @@ function SystemTemplateEditor({
         </p>
 
         {/* Preview / HTML toggle */}
-        <div className="flex gap-1 bg-neutral-50 rounded-xl p-1">
+        <div className="flex gap-1 bg-neutral-50 rounded-sm p-1">
           <button
             onClick={() => setActiveView('preview')}
             className={cn(
-              'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer',
+              'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-sm transition-colors duration-150 cursor-pointer',
               activeView === 'preview' ? 'bg-white shadow-sm text-neutral-900' : 'text-neutral-400 hover:text-neutral-600',
             )}
           >
@@ -572,7 +572,7 @@ function SystemTemplateEditor({
           <button
             onClick={() => setActiveView('html')}
             className={cn(
-              'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer',
+              'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-sm transition-colors duration-150 cursor-pointer',
               activeView === 'html' ? 'bg-white shadow-sm text-neutral-900' : 'text-neutral-400 hover:text-neutral-600',
             )}
           >
@@ -582,7 +582,7 @@ function SystemTemplateEditor({
 
         {activeView === 'preview' ? (
           <div
-            className="rounded-xl bg-[#f5f7f0] border border-neutral-100 shadow-sm max-h-[600px] overflow-y-auto"
+            className="rounded-sm bg-[#f5f7f0] border border-neutral-100 shadow-sm max-h-[600px] overflow-y-auto"
             dangerouslySetInnerHTML={{ __html: sanitizedPreview }}
           />
         ) : (
@@ -598,7 +598,7 @@ function SystemTemplateEditor({
       </div>
 
       {/* Available variables */}
-      <div className="rounded-xl bg-neutral-50 border border-neutral-100 p-3">
+      <div className="rounded-sm bg-neutral-50 border border-neutral-100 p-3">
         <p className="text-[11px] font-semibold text-neutral-500 mb-2">Available Variables</p>
         <div className="flex flex-wrap gap-1.5">
           {Object.keys(template.sampleData).map((key) => (
@@ -677,7 +677,7 @@ export function SystemTemplatesTab() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl bg-white border border-neutral-100 p-4">
+      <div className="rounded-sm bg-white border border-neutral-100 p-4">
         <h4 className="text-sm font-semibold text-neutral-900">System Email Templates</h4>
         <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
           Customise the hero banner, subject line, body content, and CTA for every automated email Co-Exist sends.
@@ -739,7 +739,7 @@ function TemplateGroup({
                 type="button"
                 onClick={() => onEdit(tpl)}
                 className={cn(
-                  'w-full flex items-center gap-3 p-3 rounded-xl bg-white border transition-[shadow,transform] duration-150 cursor-pointer active:scale-[0.99]',
+                  'w-full flex items-center gap-3 p-3 rounded-sm bg-white border transition-[shadow,transform] duration-150 cursor-pointer active:scale-[0.99]',
                   isDisabled ? 'border-error-200 opacity-60' : isCustomised ? 'border-success-200 shadow-sm' : 'border-neutral-100 hover:shadow-sm',
                 )}
               >

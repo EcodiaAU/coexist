@@ -708,9 +708,9 @@ function PushTestSuite() {
         </div>
 
         {showTokensLoading ? (
-          <Skeleton className="h-10 rounded-lg" />
+          <Skeleton className="h-10 rounded-sm" />
         ) : tokensLoading ? null : !tokens?.length ? (
-          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-warning-50 border border-warning-200">
+          <div className="flex items-center gap-2 p-2.5 rounded-sm bg-warning-50 border border-warning-200">
             <AlertCircle size={14} className="text-warning-600 shrink-0" />
             <p className="text-[11px] text-warning-700">
               No tokens registered. Push won't work until the app runs on a real device.
@@ -723,7 +723,7 @@ function PushTestSuite() {
               const stale = ageMins > 60 * 24 * 7
               return (
                 <span key={i} className={cn(
-                  'inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium border',
+                  'inline-flex items-center gap-1.5 px-2 py-1 rounded-sm text-[11px] font-medium border',
                   stale ? 'bg-warning-50 border-warning-200 text-warning-700' : 'bg-success-50/50 border-success-200 text-success-700',
                 )}>
                   <span className="uppercase font-bold">{t.platform}</span>
@@ -868,7 +868,7 @@ function ResultGroup({ label, results }: { label: string; results: PushTestResul
         <div
           key={r.id}
           className={cn(
-            'flex items-start gap-2 px-2.5 py-2 rounded-lg text-xs',
+            'flex items-start gap-2 px-2.5 py-2 rounded-sm text-xs',
             r.status === 'pass' ? 'bg-success-50/40' :
             r.status === 'fail' ? 'bg-error-50/40' :
             'bg-neutral-50',
@@ -976,7 +976,7 @@ function EmailTestSection() {
           value={recipientEmail}
           onChange={(e) => setRecipientEmail(e.target.value)}
           placeholder={user?.email ?? 'your@email.com'}
-          className="w-full h-11 px-3 rounded-xl border border-neutral-100 bg-white text-sm text-neutral-900 placeholder:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-300"
+          className="w-full h-11 px-3 rounded-sm border border-neutral-100 bg-white text-sm text-neutral-900 placeholder:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-300"
         />
         <p className="text-[11px] text-neutral-400">
           Leave blank to send to your account email ({user?.email}).
@@ -986,7 +986,7 @@ function EmailTestSection() {
       {/* Sample data preview */}
       <div className="space-y-1.5">
         <p className="text-xs font-medium text-neutral-500">Sample Data</p>
-        <div className="rounded-lg bg-neutral-50 p-2.5 overflow-x-auto">
+        <div className="rounded-sm bg-neutral-50 p-2.5 overflow-x-auto">
           <pre className="text-[11px] text-neutral-600 font-mono whitespace-pre-wrap break-all">
             {JSON.stringify(selectedTemplate.sampleData, null, 2)}
           </pre>
@@ -1006,7 +1006,7 @@ function EmailTestSection() {
       </Button>
 
       {sendTest.isSuccess && (
-        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-success-50 border border-success-200">
+        <div className="flex items-center gap-2 p-2.5 rounded-sm bg-success-50 border border-success-200">
           <CheckCircle2 size={14} className="text-success-600 shrink-0" />
           <p className="text-[11px] text-success-700">
             Sent via Resend. Check your inbox (and spam folder).
@@ -1015,7 +1015,7 @@ function EmailTestSection() {
       )}
 
       {sendTest.isError && (
-        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-error-50 border border-error-200">
+        <div className="flex items-center gap-2 p-2.5 rounded-sm bg-error-50 border border-error-200">
           <XCircle size={14} className="text-error-600 shrink-0" />
           <p className="text-[11px] text-error-700">
             {(sendTest.error as Error).message}
@@ -1066,7 +1066,7 @@ export default function DevToolsPage() {
     >
       {/* ---- User Context ---- */}
       <motion.div variants={fadeUp}>
-        <div className="rounded-2xl bg-white p-4 shadow-sm border border-neutral-100">
+        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100">
           <div className="flex items-center gap-3 mb-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-full bg-info-100 text-info-600">
               <Bug size={18} />
@@ -1087,7 +1087,7 @@ export default function DevToolsPage() {
 
       {/* ---- Seed Event Creator ---- */}
       <motion.div variants={fadeUp}>
-        <div className="rounded-2xl bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
+        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
           <h3 className="text-sm font-semibold text-neutral-900 flex items-center gap-2">
             <Calendar size={16} className="text-neutral-400" />
             Create Test Event (Happening Now)
@@ -1134,7 +1134,7 @@ export default function DevToolsPage() {
 
       {/* ---- Active Test Events ---- */}
       <motion.div variants={fadeUp}>
-        <div className="rounded-2xl bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
+        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-neutral-900 flex items-center gap-2">
               <Users size={16} className="text-neutral-400" />
@@ -1154,7 +1154,7 @@ export default function DevToolsPage() {
           {showLoading ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
-                <Skeleton key={i} className="h-28 rounded-xl" />
+                <Skeleton key={i} className="h-28 rounded-sm" />
               ))}
             </div>
           ) : !testEvents?.length ? (
@@ -1173,7 +1173,7 @@ export default function DevToolsPage() {
 
       {/* ---- Push Notification Test Suite ---- */}
       <motion.div variants={fadeUp}>
-        <div className="rounded-2xl bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
+        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent-100 text-accent-600">
               <Bell size={18} />
@@ -1191,7 +1191,7 @@ export default function DevToolsPage() {
 
       {/* ---- Email (Resend) Test ---- */}
       <motion.div variants={fadeUp}>
-        <div className="rounded-2xl bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
+        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-full bg-success-100 text-success-600">
               <Mail size={18} />
@@ -1209,7 +1209,7 @@ export default function DevToolsPage() {
 
       {/* ---- Quick-Nav to Flows ---- */}
       <motion.div variants={fadeUp}>
-        <div className="rounded-2xl bg-white p-4 shadow-sm border border-neutral-100 space-y-3">
+        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-3">
           <h3 className="text-sm font-semibold text-neutral-900">Quick Navigation</h3>
           <p className="text-xs text-neutral-400 mb-2">
             Jump directly to any day-of page. Use a test event ID from above.
@@ -1261,7 +1261,7 @@ function TestEventCard({
 
   return (
     <div className={cn(
-      'rounded-xl border p-3 space-y-3',
+      'rounded-sm border p-3 space-y-3',
       isActive ? 'border-success-200 bg-success-50/30' : isPast ? 'border-neutral-100 bg-neutral-50' : 'border-neutral-100',
     )}>
       <div className="flex items-start justify-between">
@@ -1290,27 +1290,27 @@ function TestEventCard({
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
         <button type="button" onClick={() => navigate(`/events/${event.id}/day`)}
-          className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-lg bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
+          className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-sm bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
           <ClipboardCheck size={16} className="text-neutral-500" />
           <span className="text-[11px] font-medium text-neutral-600">Day</span>
         </button>
         <button type="button" onClick={() => navigate(`/events/${event.id}/check-in`)}
-          className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-lg bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
+          className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-sm bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
           <Hash size={16} className="text-success-500" />
           <span className="text-[11px] font-medium text-neutral-600">Check-In</span>
         </button>
         <button type="button" onClick={() => navigate(`/events/${event.id}/impact`)}
-          className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-lg bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
+          className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-sm bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
           <TreePine size={16} className="text-success-600" />
           <span className="text-[11px] font-medium text-neutral-600">Impact</span>
         </button>
         <button type="button" onClick={() => navigate(`/events/${event.id}/survey`)}
-          className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-lg bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
+          className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-sm bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
           <Star size={16} className="text-warning-500" />
           <span className="text-[11px] font-medium text-neutral-600">Survey</span>
         </button>
         <button type="button" onClick={() => navigate(`/events/${event.id}`)}
-          className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-lg bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
+          className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-sm bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
           <MapPin size={16} className="text-info-500" />
           <span className="text-[11px] font-medium text-neutral-600">Detail</span>
         </button>

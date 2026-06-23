@@ -125,7 +125,7 @@ function EditCollectiveSheet({
           <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
             Cover Image
           </label>
-          <div className="mt-1.5 relative rounded-xl overflow-hidden bg-neutral-100" style={{ aspectRatio: '16/9' }}>
+          <div className="mt-1.5 relative rounded-sm overflow-hidden bg-neutral-100" style={{ aspectRatio: '16/9' }}>
             {coverPreview ? (
               <img src={coverPreview} alt="Cover" loading="lazy" className="w-full h-full object-cover" />
             ) : (
@@ -136,7 +136,7 @@ function EditCollectiveSheet({
             )}
             {uploading && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <div className="bg-white rounded-xl px-4 py-2 shadow-sm">
+                <div className="bg-white rounded-sm px-4 py-2 shadow-sm">
                   <p className="text-xs font-semibold text-primary-700 tabular-nums">{progress ?? 0}%</p>
                 </div>
               </div>
@@ -289,7 +289,7 @@ function RoleAssignSheet({
                 onClick={() => onAssign(role)}
                 disabled={isActive}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none',
+                  'flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none',
                   isActive
                     ? 'bg-white text-primary-400'
                     : 'text-neutral-900 hover:bg-neutral-50',
@@ -473,9 +473,9 @@ export default function CollectiveManagePage() {
     >
       <motion.div variants={shouldReduceMotion ? undefined : stagger} initial="hidden" animate="visible" className="space-y-6 py-4">
         {/* Collective info card */}
-        <motion.div variants={fadeUp} className="rounded-2xl bg-white p-4 shadow-sm">
+        <motion.div variants={fadeUp} className="rounded-md bg-white p-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-primary-100">
+            <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-sm bg-primary-100">
               {collective.cover_image_url ? (
                 <img src={collective.cover_image_url} alt={collective.name} loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
               ) : (
@@ -545,7 +545,7 @@ export default function CollectiveManagePage() {
                   key={member.id}
                   variants={fadeUp}
                   layout
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-neutral-50 transition-colors"
+                  className="flex items-center gap-3 rounded-sm px-3 py-2.5 hover:bg-neutral-50 transition-colors"
                 >
                   {/* Avatar - tappable to user card */}
                   <button

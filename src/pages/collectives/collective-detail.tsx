@@ -244,7 +244,7 @@ export default function CollectiveDetailPage() {
             wrapperClassName="h-full w-full"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-800 to-primary-950">
+          <div className="flex h-full w-full items-center justify-center bg-primary-950">
             <TreePine size={80} className="text-primary-600/30" />
           </div>
         )}
@@ -270,7 +270,7 @@ export default function CollectiveDetailPage() {
             initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.45 }}
-            className="font-heading text-[2rem] sm:text-4xl font-extrabold text-white leading-[1.1] tracking-tight drop-shadow-lg"
+            className="font-heading text-[2rem] sm:text-4xl font-extrabold text-white leading-[1.1] tracking-tight drop-shadow-sm"
           >
             {collective.name}
           </motion.h1>
@@ -331,7 +331,7 @@ export default function CollectiveDetailPage() {
         <motion.div variants={fadeUp} className="grid grid-cols-1 gap-2.5">
           {/* Description card - editorial quote style */}
           {collective.description && (
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <div className="rounded-md bg-white p-5 shadow-sm">
               <p className="text-[15px] leading-[1.65] text-primary-700 font-medium italic">
                 "{collective.description}"
               </p>
@@ -393,7 +393,7 @@ export default function CollectiveDetailPage() {
             </h2>
             <span className="text-sm font-bold text-neutral-500 tabular-nums">{collective.member_count}</span>
           </div>
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <div className="rounded-md bg-white p-4 shadow-sm">
             <div className="flex flex-wrap gap-1.5">
               {members.slice(0, 30).map((member) => (
                 <Link
@@ -457,14 +457,14 @@ export default function CollectiveDetailPage() {
                 <Link
                   key={event.id}
                   to={`/events/${event.id}`}
-                  className={`group relative overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-150 active:scale-[0.98] ${
+                  className={`group relative overflow-hidden rounded-md bg-white shadow-sm transition-all duration-150 active:scale-[0.98] ${
                     i === 0 ? 'p-0' : 'p-2'
                   }`}
                 >
                   {i === 0 ? (
                     /* Featured first event - large card with hero image + date overlay */
                     <div className="relative">
-                      <div className="relative aspect-[2.5/1] overflow-hidden bg-gradient-to-br from-primary-100 to-primary-50">
+                      <div className="relative aspect-[2.5/1] overflow-hidden bg-primary-50">
                         {heroSrc ? (
                           <OptimizedImage
                             src={heroSrc}
@@ -479,7 +479,7 @@ export default function CollectiveDetailPage() {
                         )}
                       </div>
                       <div className="absolute top-3 left-3">
-                        <div className="rounded-xl bg-white/95 backdrop-blur-sm px-3 py-1.5 shadow-sm">
+                        <div className="rounded-sm bg-white/95 backdrop-blur-sm px-3 py-1.5 shadow-sm">
                           <span className="text-[10px] font-bold uppercase text-primary-500 block leading-tight">
                             {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short', timeZone: 'UTC' })}
                           </span>
@@ -500,7 +500,7 @@ export default function CollectiveDetailPage() {
                   ) : (
                     /* Compact event rows - small hero thumbnail on the left for visual continuity */
                     <div className="flex items-center gap-3">
-                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-primary-100 to-primary-50">
+                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-sm bg-primary-50">
                         {heroSrc ? (
                           <OptimizedImage
                             src={heroSrc}
@@ -563,9 +563,9 @@ export default function CollectiveDetailPage() {
                   <Link
                     key={event.id}
                     to={`/events/${event.id}`}
-                    className="group flex items-center gap-3 rounded-xl bg-white/60 p-3 transition-all duration-150 hover:bg-white active:scale-[0.99]"
+                    className="group flex items-center gap-3 rounded-sm bg-white/60 p-3 transition-all duration-150 hover:bg-white active:scale-[0.99]"
                   >
-                    <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 text-primary-300">
+                    <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-sm bg-surface-2 text-primary-300">
                       <span className="text-[9px] font-bold uppercase leading-tight">
                         {new Date(event.date_start).toLocaleDateString('en-AU', { month: 'short', timeZone: 'UTC' })}
                       </span>

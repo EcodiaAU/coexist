@@ -213,7 +213,7 @@ export default function AdminPhotosPage() {
   const hasFilters = !!collectiveId || dateRange !== 'all' || !!activityType || !!attendedByUserId
 
   return (
-    <div className="px-2 sm:px-4 lg:px-6 pt-6 pb-24 max-w-7xl mx-auto">
+    <div className="px-2 sm:px-4 lg:px-6 pt-6 pb-24 w-full">
       <AnimatePresence mode="wait">
         {openedGroup ? (
           /* --- LIBRARY VIEW: photos from a single event --- */
@@ -231,7 +231,7 @@ export default function AdminPhotosPage() {
             >
               <ChevronLeft size={14} /> Back to all events
             </button>
-            <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4 mb-4">
+            <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-4 mb-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
                 {openedGroup.collective_name}
                 {openedGroup.event_activity_type && ` · ${formatActivityType(openedGroup.event_activity_type)}`}
@@ -303,13 +303,13 @@ export default function AdminPhotosPage() {
                 )}
               </div>
               {uploadProg.total > 0 && (
-                <div className="mt-3 flex items-center gap-2 rounded-xl bg-primary-50 ring-1 ring-primary-100 p-2.5 text-xs font-semibold text-primary-700">
+                <div className="mt-3 flex items-center gap-2 rounded-sm bg-primary-50 ring-1 ring-primary-100 p-2.5 text-xs font-semibold text-primary-700">
                   <Loader2 size={13} className="animate-spin" />
                   Uploading {uploadProg.done} of {uploadProg.total}…
                 </div>
               )}
               {zipProg.total > 0 && (
-                <div className="mt-3 flex items-center gap-2 rounded-xl bg-primary-50 ring-1 ring-primary-100 p-2.5 text-xs font-semibold text-primary-700">
+                <div className="mt-3 flex items-center gap-2 rounded-sm bg-primary-50 ring-1 ring-primary-100 p-2.5 text-xs font-semibold text-primary-700">
                   <Loader2 size={13} className="animate-spin" />
                   Bundling {zipProg.done} of {zipProg.total}…
                 </div>
@@ -416,7 +416,7 @@ export default function AdminPhotosPage() {
             {isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-40 rounded-2xl bg-neutral-100 animate-pulse" />
+                  <div key={i} className="h-40 rounded-md bg-neutral-100 animate-pulse" />
                 ))}
               </div>
             ) : groups.length === 0 ? (
@@ -437,7 +437,7 @@ export default function AdminPhotosPage() {
 
 function StatBox({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-3">
+    <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-3">
       <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{label}</p>
       <p className="font-heading text-2xl font-bold text-neutral-900 tabular-nums mt-0.5">{value.toLocaleString()}</p>
     </div>
@@ -451,7 +451,7 @@ function EventGroupCard({ group, onOpen }: { group: EventGroup; onOpen: () => vo
     <button
       type="button"
       onClick={onOpen}
-      className="block w-full text-left rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden active:scale-[0.99] transition-transform duration-150 hover:border-neutral-200"
+      className="block w-full text-left rounded-md bg-white border border-neutral-100 shadow-sm overflow-hidden active:scale-[0.99] transition-transform duration-150 hover:border-neutral-200"
     >
       {/* Photo strip */}
       <div className="grid grid-cols-4 gap-0.5 bg-neutral-100">
@@ -520,7 +520,7 @@ function PhotoLibraryGrid({
             type="button"
             onClick={() => onPhotoClick(i)}
             className={cn(
-              'group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 ring-1 active:scale-[0.97] transition-transform duration-150',
+              'group relative aspect-square rounded-sm overflow-hidden bg-neutral-100 ring-1 active:scale-[0.97] transition-transform duration-150',
               isSelected ? 'ring-2 ring-primary-500' : 'ring-neutral-200/60',
             )}
             aria-label={isVid ? 'View video' : 'View photo'}

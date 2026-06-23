@@ -244,23 +244,23 @@ export default function AdminDashboardPage() {
         <div className="relative w-full aspect-[16/9] bg-neutral-200 animate-pulse overflow-hidden">
           <div className="absolute inset-x-0 top-[15%] flex flex-col items-center gap-3 px-6">
             <div className="h-3 w-28 rounded-full bg-white/20" />
-            <div className="h-9 w-64 rounded-lg bg-white/15" />
-            <div className="h-4 w-48 rounded-lg bg-white/10" />
+            <div className="h-9 w-64 rounded-sm bg-white/15" />
+            <div className="h-4 w-48 rounded-sm bg-white/10" />
           </div>
         </div>
         <div className="bg-white px-4 sm:px-6 lg:px-8 pt-8 space-y-6 pb-20">
           {/* Stat cards skeleton */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="col-span-2 h-36 rounded-2xl bg-neutral-50 animate-pulse" />
+            <div className="col-span-2 h-36 rounded-md bg-neutral-50 animate-pulse" />
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-28 rounded-2xl bg-neutral-50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+              <div key={i} className="h-28 rounded-md bg-neutral-50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
             ))}
           </div>
 
           {/* Outstanding surveys card skeleton */}
           <div className="space-y-3">
-            <div className="h-5 w-44 rounded-lg bg-neutral-100 animate-pulse" />
-            <div className="h-40 rounded-2xl bg-neutral-50 animate-pulse" />
+            <div className="h-5 w-44 rounded-sm bg-neutral-100 animate-pulse" />
+            <div className="h-40 rounded-md bg-neutral-50 animate-pulse" />
           </div>
         </div>
       </div>

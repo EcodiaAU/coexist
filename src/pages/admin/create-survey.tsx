@@ -287,13 +287,13 @@ function OptionChipBuilder({
                       if (e.key === 'Escape') { setEditingIdx(null) }
                     }}
                     onBlur={commitEdit}
-                    className="flex-1 min-w-0 h-9 px-2.5 rounded-lg bg-white border-2 border-primary-400 text-sm text-neutral-900 outline-none"
+                    className="flex-1 min-w-0 h-9 px-2.5 rounded-sm bg-white border-2 border-primary-400 text-sm text-neutral-900 outline-none"
                   />
                 ) : (
                   <button
                     type="button"
                     onClick={() => startEditing(i)}
-                    className="flex-1 min-w-0 h-9 px-2.5 rounded-lg bg-white border border-neutral-100 text-sm text-neutral-700 text-left truncate hover:bg-neutral-50 hover:border-neutral-200 transition-colors cursor-pointer"
+                    className="flex-1 min-w-0 h-9 px-2.5 rounded-sm bg-white border border-neutral-100 text-sm text-neutral-700 text-left truncate hover:bg-neutral-50 hover:border-neutral-200 transition-colors cursor-pointer"
                   >
                     {opt}
                   </button>
@@ -305,7 +305,7 @@ function OptionChipBuilder({
                     type="button"
                     onClick={() => moveOption(i, -1)}
                     disabled={i === 0}
-                    className="flex items-center justify-center min-w-9 min-h-9 rounded-lg text-neutral-400 hover:text-neutral-600 active:bg-neutral-100 disabled:opacity-20 cursor-pointer transition-colors"
+                    className="flex items-center justify-center min-w-9 min-h-9 rounded-sm text-neutral-400 hover:text-neutral-600 active:bg-neutral-100 disabled:opacity-20 cursor-pointer transition-colors"
                     aria-label="Move option up"
                   >
                     <ChevronUp size={14} />
@@ -314,7 +314,7 @@ function OptionChipBuilder({
                     type="button"
                     onClick={() => moveOption(i, 1)}
                     disabled={i === options.length - 1}
-                    className="flex items-center justify-center min-w-9 min-h-9 rounded-lg text-neutral-400 hover:text-neutral-600 active:bg-neutral-100 disabled:opacity-20 cursor-pointer transition-colors"
+                    className="flex items-center justify-center min-w-9 min-h-9 rounded-sm text-neutral-400 hover:text-neutral-600 active:bg-neutral-100 disabled:opacity-20 cursor-pointer transition-colors"
                     aria-label="Move option down"
                   >
                     <ChevronDown size={14} />
@@ -325,7 +325,7 @@ function OptionChipBuilder({
                 <button
                   type="button"
                   onClick={() => removeOption(i)}
-                  className="flex items-center justify-center min-w-9 min-h-9 rounded-lg text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer shrink-0"
+                  className="flex items-center justify-center min-w-9 min-h-9 rounded-sm text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer shrink-0"
                   aria-label={`Remove "${opt}"`}
                 >
                   <X size={12} />
@@ -340,7 +340,7 @@ function OptionChipBuilder({
               <span className="flex items-center justify-center w-5 h-5 rounded-md bg-neutral-50 text-[10px] font-bold text-neutral-300 shrink-0">
                 +
               </span>
-              <div className="flex-1 h-9 px-2.5 rounded-lg bg-neutral-50/50 border border-dashed border-neutral-200 flex items-center">
+              <div className="flex-1 h-9 px-2.5 rounded-sm bg-neutral-50/50 border border-dashed border-neutral-200 flex items-center">
                 <span className="text-sm text-neutral-400 italic">Other (write-in)</span>
               </div>
             </div>
@@ -358,7 +358,7 @@ function OptionChipBuilder({
             onKeyDown={handleKeyDown}
             onBlur={() => { if (draft.trim()) addOption() }}
             placeholder={options.length === 0 ? 'Type your first option...' : 'Add another option...'}
-            className="w-full h-9 px-3 rounded-lg bg-surface-3 border border-neutral-100/50 outline-none text-sm text-neutral-900 placeholder:text-neutral-300 focus:ring-2 focus:ring-primary-500 transition-shadow"
+            className="w-full h-9 px-3 rounded-sm bg-surface-3 border border-neutral-100/50 outline-none text-sm text-neutral-900 placeholder:text-neutral-300 focus:ring-2 focus:ring-primary-500 transition-shadow"
           />
         </div>
         <Button
@@ -416,7 +416,7 @@ function QuestionEditor({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.2 }}
-      className="rounded-xl bg-white border border-neutral-100 shadow-sm overflow-hidden"
+      className="rounded-sm bg-white border border-neutral-100 shadow-sm overflow-hidden"
     >
       {/* Header row - always visible, tappable to expand */}
       <div
@@ -446,7 +446,7 @@ function QuestionEditor({
             type="button"
             onClick={onMoveUp}
             disabled={isFirst}
-            className="flex items-center justify-center min-w-9 min-h-9 sm:min-w-8 sm:min-h-8 rounded-lg text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 active:bg-neutral-200 disabled:opacity-20 cursor-pointer transition-colors"
+            className="flex items-center justify-center min-w-9 min-h-9 sm:min-w-8 sm:min-h-8 rounded-sm text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 active:bg-neutral-200 disabled:opacity-20 cursor-pointer transition-colors"
             aria-label="Move up"
           >
             <ChevronUp size={16} />
@@ -455,7 +455,7 @@ function QuestionEditor({
             type="button"
             onClick={onMoveDown}
             disabled={isLast}
-            className="flex items-center justify-center min-w-9 min-h-9 sm:min-w-8 sm:min-h-8 rounded-lg text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 active:bg-neutral-200 disabled:opacity-20 cursor-pointer transition-colors"
+            className="flex items-center justify-center min-w-9 min-h-9 sm:min-w-8 sm:min-h-8 rounded-sm text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 active:bg-neutral-200 disabled:opacity-20 cursor-pointer transition-colors"
             aria-label="Move down"
           >
             <ChevronDown size={16} />
@@ -463,7 +463,7 @@ function QuestionEditor({
           <button
             type="button"
             onClick={onRemove}
-            className="flex items-center justify-center min-w-9 min-h-9 sm:min-w-8 sm:min-h-8 rounded-lg text-neutral-300 hover:text-error-600 hover:bg-error-50 active:bg-error-100 cursor-pointer transition-colors"
+            className="flex items-center justify-center min-w-9 min-h-9 sm:min-w-8 sm:min-h-8 rounded-sm text-neutral-300 hover:text-error-600 hover:bg-error-50 active:bg-error-100 cursor-pointer transition-colors"
             aria-label="Remove question"
           >
             <Trash2 size={14} />
@@ -551,7 +551,7 @@ function QuestionEditor({
                     onChange={(v) => update({ profile_field: v })}
                     label="Profile Field"
                   />
-                  <div className="rounded-xl bg-plum-50 border border-plum-100 px-3 py-2.5">
+                  <div className="rounded-sm bg-plum-50 border border-plum-100 px-3 py-2.5">
                     <p className="text-[11px] text-plum-600 leading-relaxed">
                       This field will be auto-filled from the respondent's profile. They can review but not edit the value.
                     </p>
@@ -588,7 +588,7 @@ function QuestionEditor({
                   />
 
                   {/* Allow "Other" option */}
-                  <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-neutral-50/50 border border-neutral-100/50">
+                  <div className="flex items-center justify-between px-3 py-2.5 rounded-sm bg-neutral-50/50 border border-neutral-100/50">
                     <div>
                       <p className="text-sm font-medium text-neutral-700">Allow "Other" answer</p>
                       <p className="text-[11px] text-neutral-400">
@@ -618,7 +618,7 @@ function QuestionEditor({
                     label="Star Count"
                   />
                   {/* Rating preview */}
-                  <div className="rounded-xl bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
+                  <div className="rounded-sm bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
                     <p className="text-[11px] text-neutral-400 mb-1.5 flex items-center gap-1">
                       <Eye size={10} /> Preview
                     </p>
@@ -670,7 +670,7 @@ function QuestionEditor({
                     />
                   </div>
                   {/* Scale preview */}
-                  <div className="rounded-xl bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
+                  <div className="rounded-sm bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
                     <p className="text-[11px] text-neutral-400 mb-1.5 flex items-center gap-1">
                       <Eye size={10} /> Preview
                     </p>
@@ -685,7 +685,7 @@ function QuestionEditor({
                         ).map((n) => (
                           <span
                             key={n}
-                            className="flex items-center justify-center w-7 h-7 rounded-lg bg-white border border-neutral-200 text-xs font-medium text-neutral-600"
+                            className="flex items-center justify-center w-7 h-7 rounded-sm bg-white border border-neutral-200 text-xs font-medium text-neutral-600"
                           >
                             {n}
                           </span>
@@ -702,7 +702,7 @@ function QuestionEditor({
               {/* Free text config */}
               {question.type === 'free_text' && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-neutral-50/50 border border-neutral-100/50">
+                  <div className="flex items-center justify-between px-3 py-2.5 rounded-sm bg-neutral-50/50 border border-neutral-100/50">
                     <div>
                       <p className="text-sm font-medium text-neutral-700">Multi-line</p>
                       <p className="text-[11px] text-neutral-400">Allow longer paragraph responses</p>
@@ -741,16 +741,16 @@ function QuestionEditor({
                     placeholder="e.g. Share your thoughts..."
                   />
                   {/* Free text preview */}
-                  <div className="rounded-xl bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
+                  <div className="rounded-sm bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
                     <p className="text-[11px] text-neutral-400 mb-1.5 flex items-center gap-1">
                       <Eye size={10} /> Preview
                     </p>
                     {question.text_multiline !== false ? (
-                      <div className="h-16 rounded-lg bg-white border border-neutral-200 px-3 py-2 text-xs text-neutral-300">
+                      <div className="h-16 rounded-sm bg-white border border-neutral-200 px-3 py-2 text-xs text-neutral-300">
                         {question.placeholder || 'Type your response here...'}
                       </div>
                     ) : (
-                      <div className="h-9 rounded-lg bg-white border border-neutral-200 px-3 flex items-center text-xs text-neutral-300">
+                      <div className="h-9 rounded-sm bg-white border border-neutral-200 px-3 flex items-center text-xs text-neutral-300">
                         {question.placeholder || 'Type your response here...'}
                       </div>
                     )}
@@ -817,12 +817,12 @@ function QuestionEditor({
                     onChange={(v) => update({ impact_metric: v || undefined })}
                   />
                   {/* Number preview */}
-                  <div className="rounded-xl bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
+                  <div className="rounded-sm bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
                     <p className="text-[11px] text-neutral-400 mb-1.5 flex items-center gap-1">
                       <Eye size={10} /> Preview
                     </p>
                     <div className="flex items-center gap-2">
-                      <div className="h-9 w-32 rounded-lg bg-white border border-neutral-200 px-3 flex items-center text-xs text-neutral-300">
+                      <div className="h-9 w-32 rounded-sm bg-white border border-neutral-200 px-3 flex items-center text-xs text-neutral-300">
                         {question.placeholder || '0'}
                       </div>
                       {(question.number_min != null || question.number_max != null) && (
@@ -856,12 +856,12 @@ function QuestionEditor({
                     />
                   </div>
                   {/* Date preview */}
-                  <div className="rounded-xl bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
+                  <div className="rounded-sm bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
                     <p className="text-[11px] text-neutral-400 mb-1.5 flex items-center gap-1">
                       <Eye size={10} /> Preview
                     </p>
                     <div className="flex items-center gap-2">
-                      <div className="h-9 w-40 rounded-lg bg-white border border-neutral-200 px-3 flex items-center text-xs text-neutral-300">
+                      <div className="h-9 w-40 rounded-sm bg-white border border-neutral-200 px-3 flex items-center text-xs text-neutral-300">
                         <Calendar size={12} className="mr-1.5" /> Select a date
                       </div>
                       {(question.date_min || question.date_max) && (
@@ -885,11 +885,11 @@ function QuestionEditor({
                     onChange={(e) => update({ placeholder: e.target.value || undefined })}
                     placeholder="e.g. you@example.com"
                   />
-                  <div className="rounded-xl bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
+                  <div className="rounded-sm bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
                     <p className="text-[11px] text-neutral-400 mb-1.5 flex items-center gap-1">
                       <Eye size={10} /> Preview
                     </p>
-                    <div className="h-9 w-56 rounded-lg bg-white border border-neutral-200 px-3 flex items-center text-xs text-neutral-300">
+                    <div className="h-9 w-56 rounded-sm bg-white border border-neutral-200 px-3 flex items-center text-xs text-neutral-300">
                       <Mail size={12} className="mr-1.5 text-neutral-400" />
                       {question.placeholder || 'you@example.com'}
                     </div>
@@ -909,11 +909,11 @@ function QuestionEditor({
                     onChange={(e) => update({ placeholder: e.target.value || undefined })}
                     placeholder="e.g. 0412 345 678"
                   />
-                  <div className="rounded-xl bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
+                  <div className="rounded-sm bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
                     <p className="text-[11px] text-neutral-400 mb-1.5 flex items-center gap-1">
                       <Eye size={10} /> Preview
                     </p>
-                    <div className="h-9 w-48 rounded-lg bg-white border border-neutral-200 px-3 flex items-center text-xs text-neutral-300">
+                    <div className="h-9 w-48 rounded-sm bg-white border border-neutral-200 px-3 flex items-center text-xs text-neutral-300">
                       <Phone size={12} className="mr-1.5 text-neutral-400" />
                       {question.placeholder || '0412 345 678'}
                     </div>
@@ -926,15 +926,15 @@ function QuestionEditor({
 
               {/* Yes/No preview */}
               {question.type === 'yes_no' && (
-                <div className="rounded-xl bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
+                <div className="rounded-sm bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
                   <p className="text-[11px] text-neutral-400 mb-1.5 flex items-center gap-1">
                     <Eye size={10} /> Preview
                   </p>
                   <div className="flex gap-2">
-                    <span className="flex items-center justify-center h-9 px-5 rounded-lg bg-white border border-neutral-200 text-sm font-medium text-neutral-600">
+                    <span className="flex items-center justify-center h-9 px-5 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-600">
                       Yes
                     </span>
-                    <span className="flex items-center justify-center h-9 px-5 rounded-lg bg-white border border-neutral-200 text-sm font-medium text-neutral-600">
+                    <span className="flex items-center justify-center h-9 px-5 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-600">
                       No
                     </span>
                   </div>
@@ -943,12 +943,12 @@ function QuestionEditor({
 
               {/* Multiple choice / checkbox / dropdown preview */}
               {hasOptions && (question.options?.length ?? 0) > 0 && (
-                <div className="rounded-xl bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
+                <div className="rounded-sm bg-neutral-50/50 border border-neutral-100/50 px-3 py-2.5">
                   <p className="text-[11px] text-neutral-400 mb-1.5 flex items-center gap-1">
                     <Eye size={10} /> Preview
                   </p>
                   {question.type === 'dropdown' ? (
-                    <div className="h-9 w-56 rounded-lg bg-white border border-neutral-200 px-3 flex items-center justify-between text-xs text-neutral-300">
+                    <div className="h-9 w-56 rounded-sm bg-white border border-neutral-200 px-3 flex items-center justify-between text-xs text-neutral-300">
                       <span>Select an option</span>
                       <ChevronDown size={12} />
                     </div>
@@ -979,7 +979,7 @@ function QuestionEditor({
               )}
 
               {/* Required toggle */}
-              <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-neutral-50/50 border border-neutral-100/50">
+              <div className="flex items-center justify-between px-3 py-2.5 rounded-sm bg-neutral-50/50 border border-neutral-100/50">
                 <div>
                   <p className="text-sm font-medium text-neutral-700">Required</p>
                   <p className="text-[11px] text-neutral-400">
@@ -1278,12 +1278,12 @@ export default function CreateSurveyPage() {
     return (
       <div className="max-w-4xl mx-auto pb-8">
         <div className="mb-8">
-          <div className="h-7 w-48 rounded-lg bg-neutral-100 animate-pulse" />
-          <div className="h-4 w-72 rounded-lg bg-neutral-50 animate-pulse mt-2" />
+          <div className="h-7 w-48 rounded-sm bg-neutral-100 animate-pulse" />
+          <div className="h-4 w-72 rounded-sm bg-neutral-50 animate-pulse mt-2" />
         </div>
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 rounded-xl bg-neutral-50 animate-pulse" />
+            <div key={i} className="h-20 rounded-sm bg-neutral-50 animate-pulse" />
           ))}
         </div>
       </div>
@@ -1305,7 +1305,7 @@ export default function CreateSurveyPage() {
       </div>
 
       {/* Title & settings card */}
-      <section className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-5 mb-6">
+      <section className="rounded-md bg-white border border-neutral-100 shadow-sm p-5 mb-6">
         <h2 className="text-sm font-semibold text-neutral-900 mb-4">Details</h2>
 
         <div className="space-y-4">
@@ -1335,14 +1335,14 @@ export default function CreateSurveyPage() {
                 type="button"
                 onClick={() => { setAutoSendAfterEvent(false); setIsImpactForm(false) }}
                 className={cn(
-                  'w-full flex items-start gap-3 px-4 py-3.5 rounded-xl border text-left transition-colors cursor-pointer',
+                  'w-full flex items-start gap-3 px-4 py-3.5 rounded-sm border text-left transition-colors cursor-pointer',
                   !autoSendAfterEvent && !isImpactForm
                     ? 'border-primary-400 bg-primary-50'
                     : 'border-neutral-100 bg-neutral-50/30 hover:bg-neutral-50',
                 )}
               >
                 <span className={cn(
-                  'flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mt-0.5',
+                  'flex items-center justify-center w-8 h-8 rounded-sm shrink-0 mt-0.5',
                   !autoSendAfterEvent && !isImpactForm ? 'bg-primary-100 text-primary-600' : 'bg-neutral-100 text-neutral-400',
                 )}>
                   <ClipboardList size={16} />
@@ -1358,14 +1358,14 @@ export default function CreateSurveyPage() {
                 type="button"
                 onClick={() => { setAutoSendAfterEvent(true); setIsImpactForm(false) }}
                 className={cn(
-                  'w-full flex items-start gap-3 px-4 py-3.5 rounded-xl border text-left transition-colors cursor-pointer',
+                  'w-full flex items-start gap-3 px-4 py-3.5 rounded-sm border text-left transition-colors cursor-pointer',
                   autoSendAfterEvent && !isImpactForm
                     ? 'border-plum-400 bg-plum-50'
                     : 'border-neutral-100 bg-neutral-50/30 hover:bg-neutral-50',
                 )}
               >
                 <span className={cn(
-                  'flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mt-0.5',
+                  'flex items-center justify-center w-8 h-8 rounded-sm shrink-0 mt-0.5',
                   autoSendAfterEvent && !isImpactForm ? 'bg-plum-100 text-plum-600' : 'bg-neutral-100 text-neutral-400',
                 )}>
                   <Send size={16} />
@@ -1381,14 +1381,14 @@ export default function CreateSurveyPage() {
                 type="button"
                 onClick={() => { setIsImpactForm(true); setAutoSendAfterEvent(false) }}
                 className={cn(
-                  'w-full flex items-start gap-3 px-4 py-3.5 rounded-xl border text-left transition-colors cursor-pointer',
+                  'w-full flex items-start gap-3 px-4 py-3.5 rounded-sm border text-left transition-colors cursor-pointer',
                   isImpactForm
                     ? 'border-moss-400 bg-moss-50'
                     : 'border-neutral-100 bg-neutral-50/30 hover:bg-neutral-50',
                 )}
               >
                 <span className={cn(
-                  'flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mt-0.5',
+                  'flex items-center justify-center w-8 h-8 rounded-sm shrink-0 mt-0.5',
                   isImpactForm ? 'bg-moss-100 text-moss-600' : 'bg-neutral-100 text-neutral-400',
                 )}>
                   <BarChart3 size={16} />
@@ -1427,7 +1427,7 @@ export default function CreateSurveyPage() {
 
           {/* Impact form guidance */}
           {isImpactForm && (
-            <div className="rounded-xl bg-moss-50 border border-moss-100 px-3.5 py-3">
+            <div className="rounded-sm bg-moss-50 border border-moss-100 px-3.5 py-3">
               <p className="text-[11px] text-moss-700 leading-relaxed">
                 <strong>How it works:</strong> When an event of this type is completed, a shared task is
                 automatically created for the collective&apos;s leaders. Any leader, co-leader, or assist-leader
@@ -1448,8 +1448,8 @@ export default function CreateSurveyPage() {
         </div>
 
         {questions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 px-4 rounded-2xl border-2 border-dashed border-neutral-200 bg-neutral-50/30">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-neutral-100 mb-3">
+          <div className="flex flex-col items-center justify-center py-10 px-4 rounded-md border-2 border-dashed border-neutral-200 bg-neutral-50/30">
+            <div className="flex items-center justify-center w-12 h-12 rounded-sm bg-neutral-100 mb-3">
               <ClipboardList size={24} className="text-neutral-400" />
             </div>
             <p className="text-sm font-medium text-neutral-500 text-center">
@@ -1481,9 +1481,9 @@ export default function CreateSurveyPage() {
       </section>
 
       {/* Add question buttons */}
-      <section className="rounded-2xl border border-neutral-200 bg-gradient-to-b from-neutral-50 to-white overflow-hidden shadow-sm mb-6">
+      <section className="rounded-md border border-neutral-200 bg-neutral-50 overflow-hidden shadow-sm mb-6">
         <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-neutral-100 bg-neutral-50/50">
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary-500 text-white">
+          <div className="flex items-center justify-center w-7 h-7 rounded-sm bg-primary-500 text-white">
             <Plus size={15} />
           </div>
           <h3 className="text-sm font-semibold text-neutral-900">Add Question</h3>
@@ -1498,13 +1498,13 @@ export default function CreateSurveyPage() {
                 type="button"
                 onClick={() => addQuestion(qt.value)}
                 className={cn(
-                  'flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl text-center',
+                  'flex flex-col items-center gap-1.5 px-2 py-3 rounded-sm text-center',
                   'bg-white border border-neutral-100/60',
-                  'active:bg-neutral-100 active:scale-[0.96]',
+                  'active:bg-neutral-100 active:scale-[0.98]',
                   'transition-[colors,transform] duration-150 cursor-pointer group select-none',
                 )}
               >
-                <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary-50 text-neutral-500 group-active:bg-primary-100 transition-colors">
+                <span className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-50 text-neutral-500 group-active:bg-primary-100 transition-colors">
                   {qt.icon}
                 </span>
                 <p className="text-[11px] font-medium text-neutral-700 leading-tight">{qt.label}</p>
@@ -1520,13 +1520,13 @@ export default function CreateSurveyPage() {
                 type="button"
                 onClick={() => addQuestion(qt.value)}
                 className={cn(
-                  'flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left',
+                  'flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-left',
                   'bg-white border border-neutral-100/60 hover:border-primary-200 hover:bg-neutral-50/50',
                   'active:bg-neutral-100 active:scale-[0.98]',
                   'transition-[colors,transform] duration-150 cursor-pointer group select-none',
                 )}
               >
-                <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary-50 text-neutral-500 group-hover:bg-primary-100 transition-colors shrink-0">
+                <span className="flex items-center justify-center w-7 h-7 rounded-sm bg-primary-50 text-neutral-500 group-hover:bg-primary-100 transition-colors shrink-0">
                   {qt.icon}
                 </span>
                 <div>
@@ -1546,7 +1546,7 @@ export default function CreateSurveyPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
-            className="rounded-xl bg-error-50 border border-error-200 p-4 mb-6"
+            className="rounded-sm bg-error-50 border border-error-200 p-4 mb-6"
           >
             <div className="flex items-start gap-2">
               <AlertCircle size={16} className="text-error-500 mt-0.5 shrink-0" />
@@ -1566,7 +1566,7 @@ export default function CreateSurveyPage() {
       {/* Submit bar - fixed above bottom tab bar */}
       <div className="fixed bottom-[calc(56px+var(--safe-bottom)+0.75rem)] sm:bottom-4 inset-x-0 z-30 pointer-events-none px-4 sm:px-6">
         <div className="max-w-4xl mx-auto pointer-events-auto">
-          <div className="rounded-2xl bg-white/95 backdrop-blur-sm border border-neutral-100 shadow-sm px-4 py-3">
+          <div className="rounded-md bg-white/95 backdrop-blur-sm border border-neutral-100 shadow-sm px-4 py-3">
             {/* Status line - mobile only */}
             <div className="mb-2 sm:hidden">
               {questions.length === 0 ? (

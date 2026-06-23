@@ -34,15 +34,15 @@ interface EventInfo {
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-event-check-in`
 
 const inputCls = cn(
-  'w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3.5 text-base text-neutral-900',
+  'w-full rounded-md border border-neutral-200 bg-white/80 px-4 py-3.5 text-base text-neutral-900',
   'placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40',
   'focus:border-primary-400 transition-colors duration-150',
 )
 
 const btnCls = cn(
-  'w-full rounded-2xl bg-primary-500 text-white font-bold text-base py-4',
+  'w-full rounded-md bg-primary-500 text-white font-bold text-base py-4',
   'flex items-center justify-center gap-2',
-  'shadow-md shadow-primary-300/40 active:scale-[0.98] transition-transform duration-100',
+  'shadow-md active:scale-[0.98] transition-transform duration-100',
   'disabled:opacity-60 disabled:cursor-not-allowed',
 )
 
@@ -149,7 +149,7 @@ export default function PublicCheckInPage() {
     <div className="min-h-dvh bg-gradient-to-b from-primary-50 to-white flex flex-col">
       {/* Header */}
       <header className="px-5 pt-8 pb-4 flex items-center gap-2">
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary-500 shadow-sm">
+        <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-500 shadow-sm">
           <Leaf size={18} className="text-white" />
         </div>
         <span className="font-heading font-bold text-primary-700 text-lg tracking-tight">Co-Exist</span>
@@ -232,7 +232,7 @@ export default function PublicCheckInPage() {
 
             {/* Error banner */}
             {pageState === 'error' && errorMessage && (
-              <div className="flex items-start gap-2.5 rounded-xl bg-error-50 border border-error-200 px-4 py-3">
+              <div className="flex items-start gap-2.5 rounded-sm bg-error-50 border border-error-200 px-4 py-3">
                 <AlertCircle size={16} className="text-error-500 mt-0.5 shrink-0" />
                 <p className="text-sm text-error-700">{errorMessage}</p>
               </div>

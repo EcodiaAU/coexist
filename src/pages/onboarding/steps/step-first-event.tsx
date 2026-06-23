@@ -103,7 +103,7 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
           aria-label={going ? 'Going' : `RSVP to ${event.title}`}
           className={cn(
             'shrink-0 inline-flex items-center gap-1.5 px-4 h-10 rounded-full text-sm font-semibold',
-            'transition-colors duration-150 cursor-pointer select-none active:scale-[0.96] disabled:cursor-default',
+            'transition-colors duration-150 cursor-pointer select-none active:scale-[0.98] disabled:cursor-default',
             going
               ? 'bg-white/20 text-white border border-white/40 backdrop-blur-sm'
               : 'bg-white text-neutral-900 shadow-sm hover:bg-white/90',
@@ -164,7 +164,7 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
                     </Card.Overlay>
                   ) : (
                     <div
-                      className="relative w-full overflow-hidden bg-gradient-to-br from-primary-400 to-sprout-500"
+                      className="relative w-full overflow-hidden bg-sprout-500"
                       style={{ aspectRatio: '16/9' }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" aria-hidden="true" />

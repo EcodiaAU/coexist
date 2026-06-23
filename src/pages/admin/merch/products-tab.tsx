@@ -74,26 +74,26 @@ function VariantOptionRow({
   }, [inputValue, addValue])
 
   return (
-    <div className="p-3 bg-white/70 rounded-xl border border-neutral-100 space-y-2">
+    <div className="p-3 bg-white/70 rounded-sm border border-neutral-100 space-y-2">
       <div className="flex items-center gap-2">
         <input
           type="text"
           value={option.name}
           onChange={(e) => onChange({ ...option, name: e.target.value })}
           placeholder="Option name (e.g. Size)"
-          className="flex-1 h-11 px-3 rounded-lg bg-neutral-50 text-[16px] sm:text-sm font-semibold text-neutral-900 placeholder:text-neutral-400/50 outline-none focus:ring-2 focus:ring-primary-300/50"
+          className="flex-1 h-11 px-3 rounded-sm bg-neutral-50 text-[16px] sm:text-sm font-semibold text-neutral-900 placeholder:text-neutral-400/50 outline-none focus:ring-2 focus:ring-primary-300/50"
         />
         <button
           type="button"
           onClick={onRemove}
-          className="w-11 h-11 flex items-center justify-center rounded-lg text-neutral-400 hover:text-error-600 hover:bg-error-50 active:bg-error-100 cursor-pointer transition-colors shrink-0"
+          className="w-11 h-11 flex items-center justify-center rounded-sm text-neutral-400 hover:text-error-600 hover:bg-error-50 active:bg-error-100 cursor-pointer transition-colors shrink-0"
         >
           <Trash2 size={16} />
         </button>
       </div>
 
       {/* Values as pills + inline input */}
-      <div className="flex flex-wrap items-center gap-1.5 min-h-[44px] px-3 py-2 rounded-lg bg-white border border-neutral-100 focus-within:ring-2 focus-within:ring-primary-300/50">
+      <div className="flex flex-wrap items-center gap-1.5 min-h-[44px] px-3 py-2 rounded-sm bg-white border border-neutral-100 focus-within:ring-2 focus-within:ring-primary-300/50">
         {option.values.map((val, idx) => (
           <span
             key={val}
@@ -358,7 +358,7 @@ function ProductFormSheet({
               <div
                 key={url + idx}
                 className={cn(
-                  'relative group w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-colors',
+                  'relative group w-16 h-16 rounded-sm overflow-hidden border-2 shrink-0 transition-colors',
                   idx === 0 ? 'border-primary-400 shadow-sm' : 'border-neutral-100',
                   dragIdx === idx && 'opacity-50 scale-95',
                 )}
@@ -378,7 +378,7 @@ function ProductFormSheet({
                   </span>
                 )}
                 <div className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <GripVertical size={12} className="text-white drop-shadow-lg" />
+                  <GripVertical size={12} className="text-white drop-shadow-sm" />
                 </div>
                 <button
                   type="button"
@@ -395,7 +395,7 @@ function ProductFormSheet({
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               className={cn(
-                'w-16 h-16 rounded-lg border-2 border-dashed border-primary-300/50 flex flex-col items-center justify-center gap-0.5 shrink-0',
+                'w-16 h-16 rounded-sm border-2 border-dashed border-primary-300/50 flex flex-col items-center justify-center gap-0.5 shrink-0',
                 'text-neutral-400 hover:text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50',
                 'active:bg-neutral-100 cursor-pointer transition-colors',
                 uploading && 'opacity-60 pointer-events-none',
@@ -468,7 +468,7 @@ function ProductFormSheet({
                 type="button"
                 onClick={() => setStatus(s)}
                 className={cn(
-                  'flex-1 min-h-[44px] rounded-xl text-sm font-semibold capitalize cursor-pointer transition-colors duration-150',
+                  'flex-1 min-h-[44px] rounded-sm text-sm font-semibold capitalize cursor-pointer transition-colors duration-150',
                   status === s && s === 'active' && 'bg-success-100 text-success-700 ring-2 ring-success-300 shadow-sm',
                   status === s && s === 'draft' && 'bg-warning-100 text-warning-700 ring-2 ring-warning-300 shadow-sm',
                   status === s && s === 'archived' && 'bg-primary-100 text-primary-600 ring-2 ring-primary-300 shadow-sm',
@@ -492,7 +492,7 @@ function ProductFormSheet({
             <button
               type="button"
               onClick={() => setOptions((prev) => [...prev, { name: '', values: [] }])}
-              className="flex items-center gap-1 min-h-[36px] px-3 rounded-lg text-xs font-semibold text-neutral-600 hover:bg-neutral-100 active:bg-neutral-100 cursor-pointer transition-colors"
+              className="flex items-center gap-1 min-h-[36px] px-3 rounded-sm text-xs font-semibold text-neutral-600 hover:bg-neutral-100 active:bg-neutral-100 cursor-pointer transition-colors"
             >
               <Plus size={14} />
               Add option
@@ -500,7 +500,7 @@ function ProductFormSheet({
           </div>
 
           {options.length === 0 ? (
-            <div className="py-3 px-4 rounded-xl bg-neutral-50 text-center">
+            <div className="py-3 px-4 rounded-sm bg-neutral-50 text-center">
               <p className="text-xs text-neutral-400">No variant options yet</p>
               <p className="text-[11px] text-neutral-400/70 mt-0.5">Add Size, Colour, etc.</p>
             </div>
@@ -525,11 +525,11 @@ function ProductFormSheet({
               Generated variants
               <span className="ml-1 text-neutral-400 normal-case font-normal">({generatedVariants.length})</span>
             </p>
-            <div className="space-y-1 max-h-40 overflow-y-auto rounded-xl -mx-0.5 px-0.5">
+            <div className="space-y-1 max-h-40 overflow-y-auto rounded-sm -mx-0.5 px-0.5">
               {generatedVariants.map((v) => (
                 <div
                   key={v.id}
-                  className="flex items-center justify-between min-h-[36px] px-3 py-1.5 bg-white/70 rounded-lg text-xs"
+                  className="flex items-center justify-between min-h-[36px] px-3 py-1.5 bg-white/70 rounded-sm text-xs"
                 >
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="font-medium text-neutral-900 truncate">{variantLabel(v)}</span>
@@ -588,7 +588,7 @@ function VariantSummary({
       <button
         type="button"
         onClick={() => setExpanded((p) => !p)}
-        className="w-full flex items-center justify-between min-h-[40px] px-2.5 py-1.5 bg-white/60 rounded-lg text-[11px] cursor-pointer hover:bg-white/80 active:bg-white transition-colors"
+        className="w-full flex items-center justify-between min-h-[40px] px-2.5 py-1.5 bg-white/60 rounded-sm text-[11px] cursor-pointer hover:bg-white/80 active:bg-white transition-colors"
       >
         <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
           {/* Compact pills for sizes/colours */}
@@ -647,7 +647,7 @@ function VariantSummary({
               return (
                 <div
                   key={v.id}
-                  className="flex items-center min-h-[44px] px-2.5 rounded-lg hover:bg-white/60 active:bg-white/80 transition-colors"
+                  className="flex items-center min-h-[44px] px-2.5 rounded-sm hover:bg-white/60 active:bg-white/80 transition-colors"
                 >
                   {/* Label */}
                   <div className="flex-1 min-w-0 flex items-center gap-1.5">
@@ -676,7 +676,7 @@ function VariantSummary({
                   <button
                     type="button"
                     onClick={() => onAdjustStock(v.id, v.stock)}
-                    className="ml-1 min-h-[44px] px-3 text-[11px] font-semibold text-neutral-500 hover:text-neutral-700 active:bg-neutral-100 cursor-pointer rounded-lg transition-colors"
+                    className="ml-1 min-h-[44px] px-3 text-[11px] font-semibold text-neutral-500 hover:text-neutral-700 active:bg-neutral-100 cursor-pointer rounded-sm transition-colors"
                   >
                     Adjust
                   </button>
@@ -869,7 +869,7 @@ export default function ProductsTab() {
               <div
                 key={product.id}
                 className={cn(
-                  'rounded-xl bg-surface-1 border border-neutral-100 overflow-hidden',
+                  'rounded-sm bg-surface-1 border border-neutral-100 overflow-hidden',
                   product.status === 'archived' && 'opacity-60',
                 )}
               >
@@ -879,7 +879,7 @@ export default function ProductsTab() {
                   <img
                     src={product.images[0] ?? '/img/placeholder-merch.jpg'}
                     alt={product.name}
-                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover shrink-0"
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-sm object-cover shrink-0"
                   />
 
                   {/* Info */}
@@ -922,7 +922,7 @@ export default function ProductsTab() {
                         setEditProduct(product)
                         setFormOpen(true)
                       }}
-                      className="w-10 h-10 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 active:bg-neutral-100 cursor-pointer transition-colors"
+                      className="w-10 h-10 flex items-center justify-center rounded-sm text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 active:bg-neutral-100 cursor-pointer transition-colors"
                       aria-label={`Edit ${product.name}`}
                     >
                       <Edit3 size={15} />
@@ -931,7 +931,7 @@ export default function ProductsTab() {
                       <button
                         type="button"
                         onClick={() => setArchiveTarget(product)}
-                        className="w-10 h-10 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 active:bg-neutral-100 cursor-pointer transition-colors"
+                        className="w-10 h-10 flex items-center justify-center rounded-sm text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 active:bg-neutral-100 cursor-pointer transition-colors"
                         aria-label={`Archive ${product.name}`}
                       >
                         <Archive size={15} />

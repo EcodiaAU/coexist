@@ -238,7 +238,7 @@ function MobileSheet({
         aria-label="Bottom sheet"
         onKeyDown={handleKeyDown}
         className={cn(
-          'fixed inset-x-0 bottom-0 z-10 bg-surface-0 rounded-t-2xl shadow-lg flex flex-col',
+          'fixed inset-x-0 bottom-0 z-10 bg-surface-0 rounded-t-md shadow-sm flex flex-col',
           className,
         )}
         style={{
@@ -276,7 +276,7 @@ function MobileSheet({
 
         {/* Scroll hint gradient */}
         {canScrollDown && (
-          <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-surface-0 to-transparent rounded-b-2xl pointer-events-none" />
+          <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-surface-0 to-transparent rounded-b-md pointer-events-none" />
         )}
       </div>
     </div>,
@@ -450,7 +450,7 @@ function DesktopModal({
               aria-modal="true"
               aria-label="Dialog"
               className={cn(
-                'relative w-full max-w-md bg-surface-0 rounded-2xl shadow-lg pointer-events-auto gpu-panel',
+                'relative w-full max-w-md bg-surface-0 rounded-md shadow-sm pointer-events-auto gpu-panel',
                 className,
               )}
               initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96, y: 12 }}
@@ -472,7 +472,7 @@ function DesktopModal({
               <AnimatePresence>
                 {canScrollDown && (
                   <motion.div
-                    className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-surface-0 to-transparent rounded-b-2xl pointer-events-none"
+                    className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-surface-0 to-transparent rounded-b-md pointer-events-none"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}

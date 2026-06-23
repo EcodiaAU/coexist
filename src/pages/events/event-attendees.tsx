@@ -27,7 +27,7 @@ export function EventAttendees({ event, accent, capacityText, capacityPercent, f
     <motion.div
       variants={fadeUpVariants}
       className={cn(
-        'rounded-2xl p-4.5 space-y-3 relative overflow-hidden',
+        'rounded-md p-4.5 space-y-3 relative overflow-hidden',
         'border shadow-sm',
         accent.border,
       )}
@@ -36,7 +36,7 @@ export function EventAttendees({ event, accent, capacityText, capacityPercent, f
       <div className="absolute inset-0 bg-white/92" aria-hidden="true" />
       <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br text-white', accent.gradient)}>
+          <div className={cn('w-8 h-8 rounded-sm flex items-center justify-center shadow-sm bg-gradient-to-br text-white', accent.gradient)}>
             <Users size={15} />
           </div>
           <span className="text-[15px] font-bold text-neutral-900">{capacityText}</span>
@@ -56,9 +56,9 @@ export function EventAttendees({ event, accent, capacityText, capacityPercent, f
             className={cn(
               'h-full rounded-full shadow-sm',
               capacityPercent >= 90
-                ? 'bg-gradient-to-r from-error-400 to-error-500'
+                ? 'bg-error-500'
                 : capacityPercent >= 70
-                  ? 'bg-gradient-to-r from-warning-400 to-warning-500'
+                  ? 'bg-warning-500'
                   : cn('bg-gradient-to-r', accent.gradient),
             )}
             animate={{ width: `${capacityPercent}%` }}

@@ -485,9 +485,9 @@ export function QuickSendTab() {
   return (
     <div className="space-y-6 pb-24">
       {/* Step 1: prompt */}
-      <section className="rounded-2xl bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
+      <section className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-100 text-primary-700">
+          <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary-100 text-primary-700">
             <Sparkles size={16} />
           </div>
           <div>
@@ -538,7 +538,7 @@ export function QuickSendTab() {
           prompt and preview so admins set the visual before reading
           the draft. Empty = solid olive hero (current default). */}
       {bodyHtml && (
-        <section className="rounded-2xl bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
+        <section className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
               <ImagePlus size={14} className="text-primary-700" />
@@ -558,13 +558,13 @@ export function QuickSendTab() {
           </div>
 
           {!heroImageUrl && !showPhotoPicker && (
-            <div className="rounded-xl border-2 border-dashed border-neutral-200 p-5 text-center space-y-3">
+            <div className="rounded-sm border-2 border-dashed border-neutral-200 p-5 text-center space-y-3">
               <p className="text-sm text-neutral-600">
                 Add a photo and the hero becomes that photo with a dark wash so the
                 heading stays legible. Skip for the solid olive look.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-2">
-                <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-50 text-primary-700 ring-1 ring-primary-200/60 hover:bg-primary-100 text-sm font-medium cursor-pointer">
+                <label className="inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-primary-50 text-primary-700 ring-1 ring-primary-200/60 hover:bg-primary-100 text-sm font-medium cursor-pointer">
                   {uploadingHero ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
                   {uploadingHero ? 'Uploading...' : 'Upload a photo'}
                   <input
@@ -582,7 +582,7 @@ export function QuickSendTab() {
                 <button
                   type="button"
                   onClick={() => setShowPhotoPicker(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-100 text-sm font-medium cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-100 text-sm font-medium cursor-pointer"
                 >
                   <ImageIcon size={14} />
                   Choose from event photos
@@ -592,7 +592,7 @@ export function QuickSendTab() {
           )}
 
           {!heroImageUrl && showPhotoPicker && (
-            <div className="rounded-xl border border-neutral-200 p-4 space-y-3">
+            <div className="rounded-sm border border-neutral-200 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-neutral-900">Recent event photos</p>
                 <button
@@ -606,7 +606,7 @@ export function QuickSendTab() {
               {photosLoading ? (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="aspect-square rounded-lg bg-neutral-100 animate-pulse" />
+                    <div key={i} className="aspect-square rounded-sm bg-neutral-100 animate-pulse" />
                   ))}
                 </div>
               ) : !recentPhotos?.length ? (
@@ -625,7 +625,7 @@ export function QuickSendTab() {
                           setHeroImageUrl(p.url as string)
                           setShowPhotoPicker(false)
                         }}
-                        className="group relative aspect-square rounded-lg overflow-hidden ring-1 ring-neutral-200 hover:ring-2 hover:ring-primary-500 cursor-pointer"
+                        className="group relative aspect-square rounded-sm overflow-hidden ring-1 ring-neutral-200 hover:ring-2 hover:ring-primary-500 cursor-pointer"
                         title={`${p.event_title} - ${p.collective_name}`}
                       >
                         <img
@@ -644,7 +644,7 @@ export function QuickSendTab() {
           {heroImageUrl && (
             <div className="space-y-3">
               <div
-                className="relative rounded-xl overflow-hidden ring-1 ring-neutral-200"
+                className="relative rounded-sm overflow-hidden ring-1 ring-neutral-200"
                 style={{
                   backgroundImage: `url('${heroImageUrl}')`,
                   backgroundSize: 'cover',
@@ -715,7 +715,7 @@ export function QuickSendTab() {
           HTML editing. Staff describe the change ("make it shorter",
           "drop the bit about RSVPs", "warmer tone") and the AI rewrites. */}
       {bodyHtml && (
-        <section ref={previewRef} className="rounded-2xl bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
+        <section ref={previewRef} className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
           <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
             <Eye size={14} className="text-primary-700" />
             Preview
@@ -806,7 +806,7 @@ export function QuickSendTab() {
               setBodyHtml(e.currentTarget.innerHTML)
               setEditing(false)
             }}
-            className="prose prose-sm max-w-none rounded-xl border border-neutral-200 bg-neutral-50 p-4 max-h-[480px] overflow-y-auto focus:outline-none focus:ring-2 focus:ring-primary-300 focus:bg-white"
+            className="prose prose-sm max-w-none rounded-sm border border-neutral-200 bg-neutral-50 p-4 max-h-[480px] overflow-y-auto focus:outline-none focus:ring-2 focus:ring-primary-300 focus:bg-white"
           />
           <p className="text-[11px] text-neutral-400 pl-1">
             Click in the preview to type. Changes save when you click away.
@@ -816,14 +816,14 @@ export function QuickSendTab() {
               uses per-recipient variables, since that is the only time
               the resolved view differs from the editable one. */}
           {variablesDetected.length > 0 && (sampleSubs?.length ?? 0) > 0 && (
-            <div className="rounded-xl border border-neutral-200 p-3 space-y-2">
+            <div className="rounded-sm border border-neutral-200 p-3 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <UserCircle2 size={14} className="text-primary-700" />
                 <span className="text-xs font-semibold text-neutral-900">See it as</span>
                 <select
                   value={previewSubId}
                   onChange={(e) => setPreviewSubId(e.target.value)}
-                  className="text-xs rounded-lg border border-neutral-200 bg-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-300"
+                  className="text-xs rounded-sm border border-neutral-200 bg-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-300"
                 >
                   <option value="">Pick a subscriber...</option>
                   {sampleSubs!.map((s) => (
@@ -844,7 +844,7 @@ export function QuickSendTab() {
               </div>
               {previewSubId && previewVars && (
                 <div
-                  className="prose prose-sm max-w-none rounded-lg border border-neutral-200 bg-white p-3 max-h-[420px] overflow-y-auto"
+                  className="prose prose-sm max-w-none rounded-sm border border-neutral-200 bg-white p-3 max-h-[420px] overflow-y-auto"
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHtml(
                       normalizeHero(bodyHtml).replace(
@@ -861,7 +861,7 @@ export function QuickSendTab() {
             </div>
           )}
 
-          <div className="rounded-xl bg-primary-50/70 border border-primary-200/60 p-3 space-y-2">
+          <div className="rounded-sm bg-primary-50/70 border border-primary-200/60 p-3 space-y-2">
             <p className="text-xs font-semibold text-primary-900">
               Want to change something? Tell the AI in plain words.
             </p>
@@ -888,7 +888,7 @@ export function QuickSendTab() {
 
       {/* Step 3: audience */}
       {bodyHtml && (
-        <section className="rounded-2xl bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
+        <section className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
               <Users size={14} className="text-primary-700" />
@@ -984,7 +984,7 @@ export function QuickSendTab() {
 
       {/* Step 4: send */}
       {bodyHtml && (
-        <section className="rounded-2xl bg-primary-50/70 border border-primary-200/70 p-5 space-y-3">
+        <section className="rounded-md bg-primary-50/70 border border-primary-200/70 p-5 space-y-3">
           <div className="flex items-center gap-2">
             <CheckCircle2 size={16} className="text-primary-700" />
             <p className="text-sm font-semibold text-primary-900">

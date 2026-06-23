@@ -233,7 +233,7 @@ function DropdownPortal({
             left: pos.left,
             width: pos.width,
           }}
-          className="z-[9999] rounded-xl bg-white shadow-lg border border-neutral-100 overflow-hidden max-h-64 overflow-y-auto"
+          className="z-[9999] rounded-sm bg-white shadow-sm border border-neutral-100 overflow-hidden max-h-64 overflow-y-auto"
         >
           {results.map((place, i) => (
             <li

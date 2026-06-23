@@ -88,7 +88,7 @@ function MergeDuplicatesSheet({ open, onClose }: { open: boolean; onClose: () =>
       ) : (
         <div className="space-y-3 max-h-[55vh] overflow-y-auto">
           {groups.map((g) => (
-            <div key={g.canon} className="rounded-xl border border-neutral-200 bg-white p-3.5">
+            <div key={g.canon} className="rounded-sm border border-neutral-200 bg-white p-3.5">
               <div className="flex items-center gap-2 flex-wrap mb-2.5">
                 {g.tag_names.map((n, i) => (
                   <span key={n} className="inline-flex items-center gap-1.5 text-xs">
@@ -297,7 +297,7 @@ export function TagsTab() {
       ) : (
         <StaggeredList className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {tags.map((tag) => (
-            <StaggeredItem key={tag.id} className="bg-white rounded-xl shadow-sm p-4 flex items-start justify-between gap-3">
+            <StaggeredItem key={tag.id} className="bg-white rounded-sm shadow-sm p-4 flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: tag.colour }} />
@@ -308,7 +308,7 @@ export function TagsTab() {
               </div>
               <button
                 onClick={() => setDeletingId(tag.id)}
-                className="flex items-center justify-center min-w-11 min-h-11 rounded-lg text-neutral-400 hover:bg-error-100 hover:text-error-600 transition-colors cursor-pointer shrink-0"
+                className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-error-100 hover:text-error-600 transition-colors cursor-pointer shrink-0"
                 aria-label="Delete tag"
               >
                 <Trash2 size={14} />

@@ -79,10 +79,10 @@ const MOCK_EVENTS = [
 
 const activityTagStyle: Record<string, { bg: string; text: string; iconBg: string; iconText: string }> = {
   clean_up:               { bg: 'bg-sky-500/90',     text: 'text-white', iconBg: 'bg-sky-100',     iconText: 'text-sky-700' },
-  tree_planting:           { bg: 'bg-emerald-600/90', text: 'text-white', iconBg: 'bg-emerald-100', iconText: 'text-emerald-700' },
+  tree_planting:           { bg: 'bg-primary-600/90', text: 'text-white', iconBg: 'bg-primary-100', iconText: 'text-primary-700' },
   ecosystem_restoration:   { bg: 'bg-sprout-600/90',  text: 'text-white', iconBg: 'bg-sprout-100',  iconText: 'text-sprout-700' },
   nature_hike:             { bg: 'bg-bark-500/90',    text: 'text-white', iconBg: 'bg-bark-100',    iconText: 'text-bark-700' },
-  camp_out:                { bg: 'bg-amber-600/90',   text: 'text-white', iconBg: 'bg-amber-100',   iconText: 'text-amber-700' },
+  camp_out:                { bg: 'bg-bark-600/90',   text: 'text-white', iconBg: 'bg-bark-100',   iconText: 'text-bark-700' },
   spotlighting:            { bg: 'bg-primary-700/90', text: 'text-white', iconBg: 'bg-primary-100', iconText: 'text-primary-700' },
   other:                   { bg: 'bg-neutral-600/90', text: 'text-white', iconBg: 'bg-neutral-100', iconText: 'text-neutral-700' },
 }
@@ -122,7 +122,7 @@ function EditorialEventCard({
       variants={shouldReduceMotion ? undefined : fadeUp}
       whileTap={shouldReduceMotion ? undefined : { scale: 0.975 }}
       transition={{ type: 'spring', stiffness: 400, damping: 26, mass: 0.7 }}
-      className="relative w-full rounded-2xl overflow-hidden cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 group"
+      className="relative w-full rounded-md overflow-hidden cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 group"
       aria-label={`${event.title} - ${event.date}`}
     >
       {/* Full-bleed photo */}
@@ -203,7 +203,7 @@ function InfoRow({
     <div className="flex items-start gap-3.5 py-3 first:pt-0 last:pb-0">
       <span
         className={cn(
-          'flex items-center justify-center w-9 h-9 rounded-xl shrink-0',
+          'flex items-center justify-center w-9 h-9 rounded-sm shrink-0',
           accent.iconBg, accent.iconText,
         )}
         aria-hidden="true"
@@ -219,8 +219,8 @@ function InfoRow({
           type="button"
           onClick={action.onClick}
           className={cn(
-            'min-h-[36px] flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-[12px] font-bold shrink-0 mt-0.5',
-            'cursor-pointer select-none active:scale-[0.96] transition-transform duration-150',
+            'min-h-[36px] flex items-center justify-center gap-1 px-3 py-1.5 rounded-sm text-[12px] font-bold shrink-0 mt-0.5',
+            'cursor-pointer select-none active:scale-[0.98] transition-transform duration-150',
             'bg-neutral-100 text-neutral-600 hover:bg-neutral-200',
           )}
         >
@@ -289,7 +289,7 @@ function EditorialEventDetail({
 
         {/* Title on hero */}
         <div className="absolute bottom-0 left-0 right-0 z-10 p-5 pb-14">
-          <h1 className="font-heading text-[24px] font-bold text-white leading-tight drop-shadow-lg">
+          <h1 className="font-heading text-[24px] font-bold text-white leading-tight drop-shadow-sm">
             {event.title}
           </h1>
           <p className="text-[13px] font-medium text-white/65 mt-1.5 drop-shadow">
@@ -311,7 +311,7 @@ function EditorialEventDetail({
         {/* Key details card */}
         <motion.div
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl bg-white border border-neutral-200 p-5"
+          className="rounded-md bg-white border border-neutral-200 p-5"
           style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
           <SectionLabel>Key Details</SectionLabel>
@@ -347,7 +347,7 @@ function EditorialEventDetail({
         {/* Map placeholder */}
         <motion.div
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl overflow-hidden border border-neutral-200"
+          className="rounded-md overflow-hidden border border-neutral-200"
           style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)', aspectRatio: '16/9' }}
         >
           <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
@@ -361,7 +361,7 @@ function EditorialEventDetail({
         {/* Description */}
         <motion.div
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl bg-white border border-neutral-200 p-5"
+          className="rounded-md bg-white border border-neutral-200 p-5"
           style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
           <SectionLabel>About This Event</SectionLabel>
@@ -389,14 +389,14 @@ function EditorialEventDetail({
         {/* Good to Know */}
         <motion.div
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl bg-white border border-neutral-200 p-5"
+          className="rounded-md bg-white border border-neutral-200 p-5"
           style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
           <SectionLabel>Good to Know</SectionLabel>
           <div className="space-y-4">
             {event.meeting_point && (
               <div className="flex items-start gap-3">
-                <span className={cn('flex items-center justify-center w-7 h-7 rounded-lg shrink-0', tag.iconBg, tag.iconText)}>
+                <span className={cn('flex items-center justify-center w-7 h-7 rounded-sm shrink-0', tag.iconBg, tag.iconText)}>
                   <MapPin size={13} />
                 </span>
                 <div>
@@ -407,7 +407,7 @@ function EditorialEventDetail({
             )}
             {event.what_to_bring && (
               <div className="flex items-start gap-3">
-                <span className={cn('flex items-center justify-center w-7 h-7 rounded-lg shrink-0', tag.iconBg, tag.iconText)}>
+                <span className={cn('flex items-center justify-center w-7 h-7 rounded-sm shrink-0', tag.iconBg, tag.iconText)}>
                   <Backpack size={13} />
                 </span>
                 <div>
@@ -418,7 +418,7 @@ function EditorialEventDetail({
             )}
             {event.what_to_wear && (
               <div className="flex items-start gap-3">
-                <span className={cn('flex items-center justify-center w-7 h-7 rounded-lg shrink-0', tag.iconBg, tag.iconText)}>
+                <span className={cn('flex items-center justify-center w-7 h-7 rounded-sm shrink-0', tag.iconBg, tag.iconText)}>
                   <Shirt size={13} />
                 </span>
                 <div>
@@ -453,11 +453,11 @@ function EditorialEventDetail({
           type="button"
           whileTap={{ scale: 0.97 }}
           className={cn(
-            'w-full min-h-[52px] rounded-2xl font-heading font-bold text-[15px] text-white',
+            'w-full min-h-[52px] rounded-md font-heading font-bold text-[15px] text-white',
             'flex items-center justify-center gap-2',
             'cursor-pointer select-none',
             'bg-primary-800 hover:bg-primary-950',
-            'shadow-lg shadow-primary-800/15',
+            'shadow-sm',
             'active:shadow-md transition-shadow duration-150',
           )}
         >
@@ -483,12 +483,12 @@ function PhoneFrame({
     <div className="flex flex-col items-center">
       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-4">{label}</p>
       <div
-        className="relative rounded-[40px] bg-neutral-900 p-2 shadow-2xl shadow-black/20"
+        className="relative rounded-[40px] bg-neutral-900 p-2 shadow-sm"
         style={{ width: 320 }}
       >
         {/* Notch */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50">
-          <div className="w-[100px] h-[26px] bg-neutral-900 rounded-b-2xl" />
+          <div className="w-[100px] h-[26px] bg-neutral-900 rounded-b-md" />
         </div>
         {/* Screen */}
         <div

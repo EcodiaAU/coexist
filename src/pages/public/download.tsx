@@ -50,7 +50,7 @@ function AppStoreBadge({ className, onClick }: { className?: string; onClick?: (
       onClick={onClick}
       className={cn(
         'inline-flex items-center gap-3 px-5 py-3.5',
-        'rounded-xl bg-black text-white',
+        'rounded-sm bg-black text-white',
         'hover:bg-gray-900 active:scale-[0.97]',
         'transition-colors duration-150',
         'cursor-pointer select-none',
@@ -78,7 +78,7 @@ function PlayStoreBadge({ className, onClick }: { className?: string; onClick?: 
       onClick={onClick}
       className={cn(
         'inline-flex items-center gap-3 px-5 py-3.5',
-        'rounded-xl bg-black text-white',
+        'rounded-sm bg-black text-white',
         'hover:bg-gray-900 active:scale-[0.97]',
         'transition-colors duration-150',
         'cursor-pointer select-none',
@@ -113,8 +113,8 @@ function FeatureCard({ icon: Icon, title, desc, accent }: {
   accent: string
 }) {
   return (
-    <div className="rounded-2xl bg-white border border-neutral-100 p-5 shadow-sm">
-      <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center mb-3', accent)}>
+    <div className="rounded-md bg-white border border-neutral-100 p-5 shadow-sm">
+      <div className={cn('w-11 h-11 rounded-sm flex items-center justify-center mb-3', accent)}>
         <Icon size={20} className="text-white" />
       </div>
       <h3 className="font-heading text-[15px] font-semibold text-neutral-900 mb-1">{title}</h3>
@@ -132,7 +132,7 @@ function AppIcon() {
 
   if (imgFailed) {
     return (
-      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-moss-400 to-moss-600 flex items-center justify-center">
+      <div className="w-14 h-14 rounded-sm bg-moss-600 flex items-center justify-center">
         <TreePine size={28} className="text-white" />
       </div>
     )
@@ -142,7 +142,7 @@ function AppIcon() {
     <img
       src="/logos/icon.webp"
       alt={APP_NAME}
-      className="w-14 h-14 rounded-xl"
+      className="w-14 h-14 rounded-sm"
       onError={() => setImgFailed(true)}
     />
   )
@@ -214,7 +214,7 @@ export default function DownloadPage() {
         >
           {/* App icon */}
           <motion.div variants={fadeUp} className="mx-auto mb-5">
-            <div className="w-20 h-20 rounded-[22px] bg-white shadow-2xl shadow-black/20 flex items-center justify-center mx-auto">
+            <div className="w-20 h-20 rounded-[22px] bg-white shadow-sm flex items-center justify-center mx-auto">
               <AppIcon />
             </div>
           </motion.div>
@@ -237,7 +237,7 @@ export default function DownloadPage() {
                 <button
                   type="button"
                   onClick={() => navigate(WEB_APP_URL)}
-                  className="w-full py-3 rounded-xl bg-white/10 text-white/70 text-sm font-medium hover:bg-white/15 active:scale-[0.97] transition-transform cursor-pointer select-none"
+                  className="w-full py-3 rounded-sm bg-white/10 text-white/70 text-sm font-medium hover:bg-white/15 active:scale-[0.97] transition-transform cursor-pointer select-none"
                 >
                   Or continue on web
                 </button>
@@ -254,7 +254,7 @@ export default function DownloadPage() {
                 <button
                   type="button"
                   onClick={() => navigate(WEB_APP_URL)}
-                  className="w-full py-3 rounded-xl bg-white/10 text-white/70 text-sm font-medium hover:bg-white/15 active:scale-[0.97] transition-transform cursor-pointer select-none"
+                  className="w-full py-3 rounded-sm bg-white/10 text-white/70 text-sm font-medium hover:bg-white/15 active:scale-[0.97] transition-transform cursor-pointer select-none"
                 >
                   Or continue on web
                 </button>
@@ -277,7 +277,7 @@ export default function DownloadPage() {
                 <button
                   type="button"
                   onClick={() => navigate(WEB_APP_URL)}
-                  className="w-full py-3 rounded-xl bg-white/10 text-white/70 text-sm font-medium hover:bg-white/15 active:scale-[0.97] transition-transform cursor-pointer select-none"
+                  className="w-full py-3 rounded-sm bg-white/10 text-white/70 text-sm font-medium hover:bg-white/15 active:scale-[0.97] transition-transform cursor-pointer select-none"
                 >
                   <span className="flex items-center justify-center gap-2">
                     <Globe size={16} />
@@ -319,7 +319,7 @@ export default function DownloadPage() {
               variants={fadeUp}
               className="text-center"
             >
-              <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center mx-auto mb-2">
+              <div className="w-10 h-10 rounded-sm bg-neutral-100 flex items-center justify-center mx-auto mb-2">
                 <stat.icon size={18} className="text-moss-600" />
               </div>
               <p className="font-heading text-xl font-bold text-neutral-900">{stat.value}</p>
@@ -350,7 +350,7 @@ export default function DownloadPage() {
               icon={Calendar}
               title="Join Events"
               desc="Find and register for local conservation events near you"
-              accent="bg-gradient-to-br from-moss-500 to-moss-600"
+              accent="bg-moss-600"
             />
           </motion.div>
           <motion.div variants={fadeUp}>
@@ -358,7 +358,7 @@ export default function DownloadPage() {
               icon={Users}
               title="Collectives"
               desc="Connect with your local volunteer group and make friends"
-              accent="bg-gradient-to-br from-primary-600 to-primary-700"
+              accent="bg-primary-700"
             />
           </motion.div>
           <motion.div variants={fadeUp}>
@@ -366,7 +366,7 @@ export default function DownloadPage() {
               icon={TreePine}
               title="Track Impact"
               desc="See your trees planted, litter removed, and hours volunteered"
-              accent="bg-gradient-to-br from-moss-600 to-moss-700"
+              accent="bg-moss-700"
             />
           </motion.div>
           <motion.div variants={fadeUp}>
@@ -374,7 +374,7 @@ export default function DownloadPage() {
               icon={Heart}
               title="Earn Badges"
               desc="Level up from New to Lifetime as you grow your impact"
-              accent="bg-gradient-to-br from-primary-700 to-moss-700"
+              accent="bg-moss-700"
             />
           </motion.div>
         </div>
@@ -390,7 +390,7 @@ export default function DownloadPage() {
         viewport={{ once: true }}
         transition={{ duration: 0.4 }}
       >
-        <div className="rounded-2xl bg-gradient-to-br from-primary-800 via-primary-900 to-moss-900 p-6 text-center relative overflow-hidden">
+        <div className="rounded-md bg-moss-900 p-6 text-center relative overflow-hidden">
           <div className="relative z-10">
             <h2 className="font-heading text-xl font-bold text-white mb-1.5">Ready to make a difference?</h2>
             <p className="text-sm text-white/50 mb-5">Download the app and join your nearest collective</p>

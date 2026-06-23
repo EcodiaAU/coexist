@@ -169,9 +169,9 @@ export default function LearnQuizPage() {
     return (
       <Page header={<Header title="" back />}>
         <div className="max-w-2xl mx-auto space-y-6 pb-20 pt-4">
-          <Skeleton className="h-10 w-48 rounded-xl" />
+          <Skeleton className="h-10 w-48 rounded-sm" />
           <Skeleton className="h-3 rounded-full" />
-          <Skeleton className="h-64 rounded-2xl" />
+          <Skeleton className="h-64 rounded-md" />
         </div>
       </Page>
     )
@@ -181,7 +181,7 @@ export default function LearnQuizPage() {
     return (
       <Page header={<Header title="" back />}>
         <div className="flex flex-col items-center justify-center py-20">
-          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-neutral-100 mb-4">
+          <div className="flex items-center justify-center w-14 h-14 rounded-md bg-neutral-100 mb-4">
             <CircleDot size={24} strokeWidth={1.5} className="text-neutral-400" />
           </div>
           <p className="text-[15px] font-bold text-neutral-900">Quiz not found</p>
@@ -200,7 +200,7 @@ export default function LearnQuizPage() {
     return (
       <Page header={<Header title="" back />}>
         <div className="max-w-2xl mx-auto pb-20 pt-4 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-neutral-100 mb-5">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-md bg-neutral-100 mb-5">
             <RotateCcw size={28} className="text-neutral-500" />
           </div>
           <h2 className="font-heading text-xl font-bold text-neutral-900 mb-2">
@@ -258,7 +258,7 @@ export default function LearnQuizPage() {
           </p>
 
           {/* Score card */}
-          <div className="inline-flex items-center gap-5 px-7 py-5 rounded-2xl bg-white border border-neutral-100 shadow-sm mb-8">
+          <div className="inline-flex items-center gap-5 px-7 py-5 rounded-md bg-white border border-neutral-100 shadow-sm mb-8">
             <div className="text-center">
               <p className={cn('text-4xl font-bold tabular-nums', results.passed ? 'text-primary-600' : 'text-bark-600')}>
                 {results.score}%
@@ -275,7 +275,7 @@ export default function LearnQuizPage() {
           </div>
 
           {/* Per-question breakdown */}
-          <div className="rounded-2xl bg-neutral-50 border border-neutral-100 p-4 mb-8 text-left max-h-72 overflow-y-auto">
+          <div className="rounded-md bg-neutral-50 border border-neutral-100 p-4 mb-8 text-left max-h-72 overflow-y-auto">
             <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-400 mb-3">Question Breakdown</p>
             <div className="space-y-1.5">
               {orderedQuestions.map((q, i) => {
@@ -284,7 +284,7 @@ export default function LearnQuizPage() {
                 const correctIds = new Set((q.options ?? []).filter((o) => o.is_correct).map((o) => o.id))
                 const isCorrect = q.question_type === 'short_answer' || (correctIds.size === selectedIds.size && [...correctIds].every((id) => selectedIds.has(id)))
                 return (
-                  <div key={q.id} className={cn('flex items-center gap-2.5 py-2.5 px-3 rounded-xl', isCorrect ? 'bg-primary-50' : 'bg-white')}>
+                  <div key={q.id} className={cn('flex items-center gap-2.5 py-2.5 px-3 rounded-sm', isCorrect ? 'bg-primary-50' : 'bg-white')}>
                     <div className={cn('flex items-center justify-center w-6 h-6 rounded-full shrink-0', isCorrect ? 'bg-moss-100 text-moss-600' : 'bg-error-100 text-error-500')}>
                       {isCorrect ? <Check size={11} /> : <X size={11} />}
                     </div>
@@ -343,14 +343,14 @@ export default function LearnQuizPage() {
           <div className="flex items-center gap-2 shrink-0">
             {timeRemaining !== null ? (
               <span className={cn(
-                'flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-lg tabular-nums',
+                'flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-sm tabular-nums',
                 timeRemaining <= 60 ? 'text-error-600 bg-error-50 animate-pulse' : 'text-neutral-500 bg-neutral-50',
               )}>
                 <Clock size={11} />
                 {formatTime(timeRemaining)}
               </span>
             ) : quiz.time_limit_minutes ? (
-              <span className="flex items-center gap-1 text-[11px] font-bold text-neutral-500 bg-neutral-50 px-2 py-1 rounded-lg">
+              <span className="flex items-center gap-1 text-[11px] font-bold text-neutral-500 bg-neutral-50 px-2 py-1 rounded-sm">
                 <Clock size={11} />
                 {quiz.time_limit_minutes}m
               </span>
@@ -361,7 +361,7 @@ export default function LearnQuizPage() {
         {/* Progress bar */}
         <div className="mt-2.5 h-1 rounded-full bg-primary-100 overflow-hidden">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-primary-500 to-moss-500"
+            className="h-full rounded-full bg-moss-500"
             animate={{ width: `${progressPct}%` }}
             transition={{ duration: 0.25 }}
           />
@@ -378,7 +378,7 @@ export default function LearnQuizPage() {
               type="button"
               onClick={() => setCurrentIndex(i)}
               className={cn(
-                'w-8 h-8 rounded-lg text-[11px] font-bold tabular-nums transition-colors shrink-0',
+                'w-8 h-8 rounded-sm text-[11px] font-bold tabular-nums transition-colors shrink-0',
                 i === currentIndex
                   ? 'bg-primary-600 text-white shadow-sm'
                   : answered

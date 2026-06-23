@@ -72,10 +72,10 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+    <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
       {/* Section header - tinted */}
       <div className={cn('flex items-center gap-3 px-4 pt-4 pb-3', headerBg)}>
-        <div className={cn('shrink-0 w-9 h-9 rounded-xl flex items-center justify-center', iconBg)}>
+        <div className={cn('shrink-0 w-9 h-9 rounded-sm flex items-center justify-center', iconBg)}>
           {icon}
         </div>
         <div>
@@ -286,7 +286,7 @@ export default function EditProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           className="relative -mx-4 lg:-mx-6 overflow-hidden"
         >
-          <div className="bg-gradient-to-br from-primary-500 via-primary-400 to-moss-400 py-8">
+          <div className="bg-moss-400 py-8">
             <div className="relative z-10 flex flex-col items-center">
               <div className="relative">
                 <div className="ring-4 ring-white/30 rounded-full overflow-hidden flex items-center justify-center aspect-square w-24">
@@ -299,7 +299,7 @@ export default function EditProfilePage() {
                 <button
                   onClick={handleAvatarChange}
                   disabled={cameraLoading || uploading}
-                  className="absolute -bottom-1 -right-1 flex items-center justify-center w-11 h-11 rounded-full bg-white shadow-sm text-primary-600 hover:bg-neutral-50 active:scale-[0.93] transition-[colors,transform] duration-150 disabled:opacity-50"
+                  className="absolute -bottom-1 -right-1 flex items-center justify-center w-11 h-11 rounded-full bg-white shadow-sm text-primary-600 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 disabled:opacity-50"
                   aria-label="Change avatar"
                 >
                   <Camera size={16} />

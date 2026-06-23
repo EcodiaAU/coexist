@@ -54,7 +54,7 @@ export function SaveSeatSheet({
       <div className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
         {/* Header */}
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success-50 text-success-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-success-50 text-success-600">
             <Car size={20} />
           </div>
           <div className="min-w-0">
@@ -70,7 +70,7 @@ export function SaveSeatSheet({
         </div>
 
         {/* Privacy reminder */}
-        <div className="mb-3 rounded-xl bg-neutral-50 px-3.5 py-2.5 ring-1 ring-neutral-100">
+        <div className="mb-3 rounded-sm bg-neutral-50 px-3.5 py-2.5 ring-1 ring-neutral-100">
           <div className="flex items-start gap-2">
             <MapPin size={14} className="text-neutral-400 shrink-0 mt-0.5" />
             <p className="text-[11px] text-neutral-500 leading-relaxed">

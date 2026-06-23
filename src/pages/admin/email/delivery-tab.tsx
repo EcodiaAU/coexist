@@ -16,11 +16,11 @@ export function DeliveryTab() {
 
   return (
     <>
-      <div className="flex gap-1 bg-white rounded-xl p-1 mb-4">
+      <div className="flex gap-1 bg-white rounded-sm p-1 mb-4">
         <button
           onClick={() => setSubTab('bounces')}
           className={cn(
-            'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer',
+            'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-sm transition-colors duration-150 cursor-pointer',
             subTab === 'bounces' ? 'bg-primary-50 shadow-sm text-neutral-900' : 'text-neutral-400 hover:text-neutral-600',
           )}
         >
@@ -29,7 +29,7 @@ export function DeliveryTab() {
         <button
           onClick={() => setSubTab('complaints')}
           className={cn(
-            'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer',
+            'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-sm transition-colors duration-150 cursor-pointer',
             subTab === 'complaints' ? 'bg-primary-50 shadow-sm text-neutral-900' : 'text-neutral-400 hover:text-neutral-600',
           )}
         >
@@ -46,7 +46,7 @@ export function DeliveryTab() {
           ) : (
             <StaggeredList className="space-y-1">
               {bounces.map((event) => (
-                <StaggeredItem key={event.id} className="flex items-center gap-3 p-3 rounded-xl bg-white shadow-sm">
+                <StaggeredItem key={event.id} className="flex items-center gap-3 p-3 rounded-sm bg-white shadow-sm">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-error-100 shrink-0">
                     <XCircle size={16} className="text-error-500" />
                   </div>
@@ -73,7 +73,7 @@ export function DeliveryTab() {
           ) : (
             <StaggeredList className="space-y-1">
               {complaints.map((event) => (
-                <StaggeredItem key={event.id} className="flex items-center gap-3 p-3 rounded-xl bg-white shadow-sm">
+                <StaggeredItem key={event.id} className="flex items-center gap-3 p-3 rounded-sm bg-white shadow-sm">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-warning-100 shrink-0">
                     <AlertTriangle size={16} className="text-warning-500" />
                   </div>

@@ -78,7 +78,7 @@ function EventPicker({
         type="button"
         onClick={() => setDropdownOpen(!dropdownOpen)}
         className={cn(
-          'w-full rounded-xl px-3.5 py-2.5 text-left text-sm min-h-11 flex items-center gap-2 transition-transform duration-150',
+          'w-full rounded-sm px-3.5 py-2.5 text-left text-sm min-h-11 flex items-center gap-2 transition-transform duration-150',
           'active:scale-[0.99] cursor-pointer select-none',
           selectedId
             ? 'bg-success-50 text-success-800 ring-2 ring-success-400'
@@ -106,7 +106,7 @@ function EventPicker({
       </button>
 
       {dropdownOpen && events.length > 0 && (
-        <div className="absolute z-30 mt-1.5 w-full rounded-xl bg-white shadow-lg ring-1 ring-success-200/60 max-h-52 overflow-y-auto overscroll-contain">
+        <div className="absolute z-30 mt-1.5 w-full rounded-sm bg-white shadow-sm ring-1 ring-success-200/60 max-h-52 overflow-y-auto overscroll-contain">
           {events.map((event) => (
             <button
               key={event.id}
@@ -119,7 +119,7 @@ function EventPicker({
                 'w-full text-left px-3.5 py-2.5 flex items-start gap-2.5 transition-[colors,transform] duration-100 min-h-11',
                 'hover:bg-neutral-50 active:bg-neutral-100 active:scale-[0.98] cursor-pointer select-none',
                 event.id === selectedId && 'bg-success-50',
-                'first:rounded-t-xl last:rounded-b-xl',
+                'first:rounded-t-sm last:rounded-b-sm',
               )}
             >
               <div className="flex-1 min-w-0">
@@ -173,8 +173,8 @@ function SeatsStepper({
         disabled={value <= min}
         aria-label="Decrease seats"
         className={cn(
-          'flex items-center justify-center min-h-11 min-w-11 rounded-xl ring-1 ring-neutral-200 bg-white text-neutral-700',
-          'active:scale-[0.95] transition-transform duration-150 cursor-pointer select-none',
+          'flex items-center justify-center min-h-11 min-w-11 rounded-sm ring-1 ring-neutral-200 bg-white text-neutral-700',
+          'active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none',
           'hover:bg-neutral-50',
           'disabled:opacity-40 disabled:cursor-not-allowed',
         )}
@@ -193,8 +193,8 @@ function SeatsStepper({
         disabled={value >= max}
         aria-label="Increase seats"
         className={cn(
-          'flex items-center justify-center min-h-11 min-w-11 rounded-xl ring-1 ring-neutral-200 bg-white text-neutral-700',
-          'active:scale-[0.95] transition-transform duration-150 cursor-pointer select-none',
+          'flex items-center justify-center min-h-11 min-w-11 rounded-sm ring-1 ring-neutral-200 bg-white text-neutral-700',
+          'active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none',
           'hover:bg-neutral-50',
           'disabled:opacity-40 disabled:cursor-not-allowed',
         )}
@@ -297,7 +297,7 @@ export function CreateCarpoolSheet({
       <div className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
         {/* Header */}
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success-100 text-success-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-success-100 text-success-600">
             <Car size={20} />
           </div>
           <div>

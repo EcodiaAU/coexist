@@ -295,7 +295,7 @@ export default function PublicEventPage() {
         {isTicketed && activeType && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
-            className="mt-8 rounded-2xl border border-neutral-100 bg-white p-5 shadow-sm"
+            className="mt-8 rounded-md border border-neutral-100 bg-white p-5 shadow-sm"
           >
             <div className="flex items-center gap-2">
               <Ticket size={18} className="text-primary-500" />
@@ -310,7 +310,7 @@ export default function PublicEventPage() {
                     type="button"
                     onClick={() => setSelectedType(t.id)}
                     className={cn(
-                      'flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors',
+                      'flex w-full items-center justify-between rounded-sm border px-4 py-3 text-left transition-colors',
                       activeTypeId === t.id ? 'border-primary-500 bg-primary-50' : 'border-neutral-200 hover:bg-neutral-50',
                     )}
                   >
@@ -334,7 +334,7 @@ export default function PublicEventPage() {
                 value={buyName}
                 onChange={(e) => setBuyName(e.target.value)}
                 placeholder="Your name (optional)"
-                className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-neutral-900 outline-none focus:border-primary-500"
+                className="w-full rounded-sm border border-neutral-200 px-4 py-3 text-neutral-900 outline-none focus:border-primary-500"
               />
               <input
                 value={buyEmail}
@@ -343,7 +343,7 @@ export default function PublicEventPage() {
                 inputMode="email"
                 autoComplete="email"
                 placeholder="Email for your ticket"
-                className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-neutral-900 outline-none focus:border-primary-500"
+                className="w-full rounded-sm border border-neutral-200 px-4 py-3 text-neutral-900 outline-none focus:border-primary-500"
               />
             </div>
 
@@ -371,7 +371,7 @@ export default function PublicEventPage() {
           variants={shouldReduceMotion ? undefined : fadeUp}
           className={cn(
             'mt-4 flex flex-col gap-3',
-            !isTicketed && 'mt-8 sticky bottom-4 rounded-2xl bg-white/95 p-4 shadow-sm',
+            !isTicketed && 'mt-8 sticky bottom-4 rounded-md bg-white/95 p-4 shadow-sm',
             'sm:relative sm:bottom-auto sm:bg-transparent sm:p-0 sm:shadow-none',
           )}
         >

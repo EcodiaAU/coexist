@@ -84,7 +84,7 @@ function CreateCollectiveModal({
         <h2 className="font-heading text-lg font-semibold text-neutral-900">Create Collective</h2>
         <button
           onClick={onClose}
-          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.93] transition-[colors,transform] duration-150 cursor-pointer"
+          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
           aria-label="Close"
         >
           <X size={20} />
@@ -210,14 +210,14 @@ export default function AdminCollectivesPage() {
               compact
               className="flex-1"
             />
-            <div className="flex items-center gap-0.5 rounded-xl shadow-sm bg-white p-0.5">
+            <div className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5">
               {(['active', 'archived', 'all'] as const).map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => setStatusFilter(s)}
                   className={cn(
-                    'px-3.5 min-h-11 rounded-lg text-sm font-semibold capitalize',
+                    'px-3.5 min-h-11 rounded-sm text-sm font-semibold capitalize',
                     'transition-colors duration-150 cursor-pointer select-none',
                     statusFilter === s
                       ? 'bg-neutral-100 text-neutral-900'
@@ -256,7 +256,7 @@ export default function AdminCollectivesPage() {
                     <Link
                       to={`/admin/collectives/${c.id}`}
                       className={cn(
-                        'flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl',
+                        'flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm',
                         'bg-white shadow-sm',
                         'active:scale-[0.99] transition-[color,background-color,transform] duration-150',
                         !c.is_active && 'opacity-60',
@@ -267,10 +267,10 @@ export default function AdminCollectivesPage() {
                         <img
                           src={c.cover_image_url}
                           alt=""
-                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-sm object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-sm bg-neutral-100 flex items-center justify-center shrink-0">
                           <MapPin size={20} className="text-neutral-400 sm:hidden" />
                           <MapPin size={24} className="text-neutral-400 hidden sm:block" />
                         </div>
@@ -319,7 +319,7 @@ export default function AdminCollectivesPage() {
                             e.stopPropagation()
                             setArchiveTarget(c)
                           }}
-                          className="flex items-center justify-center min-w-10 min-h-10 sm:min-w-11 sm:min-h-11 rounded-lg text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.93] transition-[colors,transform]"
+                          className="flex items-center justify-center min-w-10 min-h-10 sm:min-w-11 sm:min-h-11 rounded-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.98] transition-[colors,transform]"
                           aria-label={c.is_active ? `Archive ${c.name}` : `Restore ${c.name}`}
                         >
                           {c.is_active ? <Archive size={16} /> : <RotateCcw size={16} />}

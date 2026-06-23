@@ -30,7 +30,7 @@ export function RegisterButton({
       disabled={loading}
       className={cn(
         'relative flex items-center justify-center gap-2',
-        'min-w-[180px] min-h-12 px-6 py-3 rounded-xl font-heading font-semibold text-sm',
+        'min-w-[180px] min-h-12 px-6 py-3 rounded-sm font-heading font-semibold text-sm',
         'transition-colors focus-visible:outline-none focus-visible:ring-2',
         registered
           ? 'bg-success-50 text-success-700 border-2 border-success-200 focus-visible:ring-success-400'

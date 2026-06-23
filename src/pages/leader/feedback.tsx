@@ -198,12 +198,12 @@ export default function LeaderFeedbackPage() {
         <div className="relative z-10 px-4 sm:px-6 lg:px-8 pt-14 space-y-4">
           <div className="flex flex-col items-center gap-2 pb-2">
             <div className="h-3 w-16 rounded-full bg-moss-200/40 animate-pulse" />
-            <div className="h-8 w-44 rounded-lg bg-moss-200/30 animate-pulse" />
+            <div className="h-8 w-44 rounded-sm bg-moss-200/30 animate-pulse" />
           </div>
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="h-20 rounded-2xl bg-white shadow-sm animate-pulse"
+              className="h-20 rounded-md bg-white shadow-sm animate-pulse"
               style={{ animationDelay: `${i * 100}ms` }}
             />
           ))}
@@ -257,7 +257,7 @@ export default function LeaderFeedbackPage() {
           ].map((s) => (
             <div
               key={s.label}
-              className="flex flex-col items-center rounded-2xl bg-white shadow-sm border border-neutral-100 px-6 py-3 min-w-[96px]"
+              className="flex flex-col items-center rounded-md bg-white shadow-sm border border-neutral-100 px-6 py-3 min-w-[96px]"
             >
               <span className={cn('font-heading text-2xl font-extrabold tabular-nums', s.color)}>
                 {s.value}
@@ -286,7 +286,7 @@ export default function LeaderFeedbackPage() {
               return (
                 <div
                   key={group.eventId}
-                  className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden"
+                  className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden"
                 >
                   {/* Event header */}
                   <button
@@ -295,7 +295,7 @@ export default function LeaderFeedbackPage() {
                     className="w-full text-left p-4 cursor-pointer active:bg-neutral-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-moss-100 shrink-0">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-moss-100 shrink-0">
                         <MessageSquareText size={18} className="text-moss-600" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -332,7 +332,7 @@ export default function LeaderFeedbackPage() {
                         return (
                           <div
                             key={response.id}
-                            className="rounded-xl bg-neutral-50/60 overflow-hidden"
+                            className="rounded-sm bg-neutral-50/60 overflow-hidden"
                           >
                             <button
                               type="button"
@@ -349,7 +349,7 @@ export default function LeaderFeedbackPage() {
                                   </p>
                                   <div className="flex items-center gap-2 mt-0.5 text-xs text-neutral-400">
                                     {rating != null && (
-                                      <span className="flex items-center gap-0.5 text-amber-500">
+                                      <span className="flex items-center gap-0.5 text-bark-500">
                                         <Star size={11} fill="currentColor" />
                                         {rating}
                                       </span>

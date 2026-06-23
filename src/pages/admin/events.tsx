@@ -126,14 +126,14 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
       <Link
         to={`/events/${event.id}`}
         className={cn(
-          'block rounded-2xl overflow-hidden',
+          'block rounded-md overflow-hidden',
           'bg-white shadow-sm',
           'active:scale-[0.99] transition-[color,background-color,transform] duration-150',
           isPast && 'opacity-60',
         )}
       >
         {/* Image header */}
-        <div className="relative h-28 bg-gradient-to-br from-primary-50 to-primary-100">
+        <div className="relative h-28 bg-primary-100">
           {event.cover_image_url ? (
             <img
               src={event.cover_image_url}
@@ -202,7 +202,7 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/events/${event.id}/day`) }}
-                className="flex items-center justify-center min-w-11 min-h-11 rounded-lg hover:bg-neutral-50 text-neutral-400 hover:text-neutral-600 active:scale-[0.93] transition-[colors,transform] cursor-pointer"
+                className="flex items-center justify-center min-w-11 min-h-11 rounded-sm hover:bg-neutral-50 text-neutral-400 hover:text-neutral-600 active:scale-[0.98] transition-[colors,transform] cursor-pointer"
                 title="Event Day"
               >
                 <ClipboardList size={16} />
@@ -210,7 +210,7 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/events/${event.id}/edit`) }}
-                className="flex items-center justify-center min-w-11 min-h-11 rounded-lg hover:bg-neutral-50 text-neutral-400 hover:text-neutral-600 active:scale-[0.93] transition-[colors,transform] cursor-pointer"
+                className="flex items-center justify-center min-w-11 min-h-11 rounded-sm hover:bg-neutral-50 text-neutral-400 hover:text-neutral-600 active:scale-[0.98] transition-[colors,transform] cursor-pointer"
                 title="Edit Event"
               >
                 <Pencil size={16} />
@@ -232,7 +232,7 @@ function CollectiveSection({ group, startIndex }: { group: CollectiveGroup; star
     <div>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-sm bg-primary-100 flex items-center justify-center">
             <MapPin size={14} className="text-neutral-500" />
           </div>
           <div>
@@ -270,7 +270,7 @@ function HottestEventSpotlight({ event }: { event: AdminEvent }) {
     <Link
       to={`/events/${event.id}`}
       className={cn(
-        'block rounded-2xl overflow-hidden',
+        'block rounded-md overflow-hidden',
         'bg-white border border-neutral-100',
         'shadow-sm',
         'hover:shadow-sm active:scale-[0.99] transition-[shadow,transform] duration-150',
@@ -278,7 +278,7 @@ function HottestEventSpotlight({ event }: { event: AdminEvent }) {
     >
       <div className="flex items-center gap-4 p-5">
         {/* Image */}
-        <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-neutral-200">
+        <div className="relative w-24 h-24 rounded-sm overflow-hidden shrink-0 bg-neutral-200">
           {event.cover_image_url ? (
             <img src={event.cover_image_url} alt={event.title} loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
           ) : (
@@ -331,7 +331,7 @@ function PastEventRow({ event, index }: { event: AdminEvent; index: number }) {
       <Link
         to={`/events/${event.id}`}
         className={cn(
-          'flex items-center gap-3 p-3 rounded-xl',
+          'flex items-center gap-3 p-3 rounded-sm',
           'bg-white/60',
           'hover:bg-white hover:shadow-sm active:scale-[0.99] transition-[color,background-color,transform] duration-150',
         )}
@@ -340,10 +340,10 @@ function PastEventRow({ event, index }: { event: AdminEvent; index: number }) {
           <img
             src={event.cover_image_url}
             alt={event.title}
-            className="w-10 h-10 rounded-lg object-cover shrink-0"
+            className="w-10 h-10 rounded-sm object-cover shrink-0"
           />
         ) : (
-          <div className="w-10 h-10 rounded-lg bg-neutral-50 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-sm bg-neutral-50 flex items-center justify-center shrink-0">
             <CalendarDays size={16} className="text-neutral-300" />
           </div>
         )}
@@ -479,7 +479,7 @@ export default function AdminEventsPage() {
             <button
               type="button"
               onClick={() => navigate('/admin/events/create')}
-              className="w-full flex items-center justify-center gap-2.5 rounded-2xl py-4 text-base font-bold text-white shadow-sm active:scale-[0.98] transition-transform duration-150 cursor-pointer bg-brand"
+              className="w-full flex items-center justify-center gap-2.5 rounded-md py-4 text-base font-bold text-white shadow-sm active:scale-[0.98] transition-transform duration-150 cursor-pointer bg-brand"
             >
               <Plus size={20} strokeWidth={2.5} />
               Create New Event
@@ -503,15 +503,15 @@ export default function AdminEventsPage() {
 
             <div className="flex items-center gap-2">
               {/* Status toggle */}
-              <div className="flex items-center gap-0.5 rounded-xl shadow-sm bg-white p-0.5 overflow-x-auto">
+              <div className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5 overflow-x-auto">
                 {(['upcoming', 'past', 'draft', 'cancelled', 'all'] as const).map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => setStatusFilter(s)}
                     className={cn(
-                      'px-3.5 min-h-11 rounded-lg text-sm font-semibold capitalize',
-                      'active:scale-[0.95] transition-[colors,transform] duration-150 cursor-pointer select-none',
+                      'px-3.5 min-h-11 rounded-sm text-sm font-semibold capitalize',
+                      'active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer select-none',
                       statusFilter === s
                         ? 'bg-neutral-100 text-neutral-900'
                         : 'text-neutral-400 hover:text-neutral-600',

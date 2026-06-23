@@ -51,7 +51,7 @@ export function WhatsNext({
               else if (s.to) navigate(s.to)
             }}
             className={cn(
-              'flex items-center gap-3 w-full p-3 rounded-xl',
+              'flex items-center gap-3 w-full p-3 rounded-sm',
               'bg-white/60 border border-neutral-100',
               'text-left transition-colors duration-150',
               'hover:bg-neutral-50',
@@ -63,7 +63,7 @@ export function WhatsNext({
             transition={{ delay: 0.4 + i * 0.1, duration: 0.2 }}
           >
             {s.icon && (
-              <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary-100 text-primary-400 shrink-0">
+              <span className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-100 text-primary-400 shrink-0">
                 {s.icon}
               </span>
             )}

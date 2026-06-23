@@ -69,10 +69,10 @@ export default function LearnSectionPage() {
     return (
       <Page noBackground className="!px-0 bg-white" stickyOverlay={<Header title="" back transparent onBack={() => navigate('/learn')} />}>
         <div className="max-w-3xl mx-auto space-y-6 pb-20 pt-4">
-          <Skeleton className="h-10 w-48 rounded-xl" />
-          <Skeleton className="h-24 rounded-2xl" />
-          <Skeleton className="h-20 rounded-2xl" />
-          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-10 w-48 rounded-sm" />
+          <Skeleton className="h-24 rounded-md" />
+          <Skeleton className="h-20 rounded-md" />
+          <Skeleton className="h-20 rounded-md" />
         </div>
       </Page>
     )
@@ -82,7 +82,7 @@ export default function LearnSectionPage() {
     return (
       <Page noBackground className="!px-0 bg-white" stickyOverlay={<Header title="" back transparent onBack={() => navigate('/learn')} />}>
         <div className="flex flex-col items-center justify-center py-20">
-          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-neutral-100 mb-4">
+          <div className="flex items-center justify-center w-14 h-14 rounded-md bg-neutral-100 mb-4">
             <Layers size={24} strokeWidth={1.5} className="text-neutral-400" />
           </div>
           <p className="text-[15px] font-bold text-neutral-900">Section not found</p>
@@ -141,7 +141,7 @@ export default function LearnSectionPage() {
       >
         {sectionModules.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-neutral-100 mb-4">
+            <div className="flex items-center justify-center w-14 h-14 rounded-md bg-neutral-100 mb-4">
               <BookOpen size={28} strokeWidth={1.5} className="text-neutral-400" />
             </div>
             <p className="text-sm font-bold text-neutral-900">No modules in this section yet</p>
@@ -167,8 +167,8 @@ export default function LearnSectionPage() {
           return (
             <motion.div key={sm.id} variants={rm ? undefined : fadeUp}>
               {isLocked ? (
-                <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-neutral-50 border border-neutral-100 opacity-50">
-                  <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-neutral-100 shrink-0">
+                <div className="flex items-center gap-3.5 p-4 rounded-md bg-neutral-50 border border-neutral-100 opacity-50">
+                  <div className="flex items-center justify-center w-11 h-11 rounded-sm bg-neutral-100 shrink-0">
                     <Lock size={16} className="text-neutral-400" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -183,7 +183,7 @@ export default function LearnSectionPage() {
                     whileTap={{ scale: 0.98 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     className={cn(
-                      'flex items-center gap-3.5 p-4 rounded-2xl border shadow-sm transition-shadow',
+                      'flex items-center gap-3.5 p-4 rounded-md border shadow-sm transition-shadow',
                       status === 'completed'
                         ? 'bg-white border-neutral-100'
                         : 'bg-white border-neutral-100',
@@ -192,7 +192,7 @@ export default function LearnSectionPage() {
                     {/* Step number / status */}
                     <div
                       className={cn(
-                        'flex items-center justify-center w-11 h-11 rounded-xl shrink-0',
+                        'flex items-center justify-center w-11 h-11 rounded-sm shrink-0',
                         status === 'completed' && 'bg-primary-50',
                         status === 'in_progress' && 'bg-primary-50',
                         status === 'not_started' && 'bg-neutral-50',
@@ -228,7 +228,7 @@ export default function LearnSectionPage() {
                     </div>
 
                     {status === 'in_progress' ? (
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-100 shrink-0">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-neutral-100 shrink-0">
                         <Play size={11} className="text-neutral-600" />
                         <span className="text-[11px] font-bold text-neutral-600">Continue</span>
                       </div>

@@ -203,9 +203,9 @@ export default function PostEventSurveyPage() {
     return (
       <Page swipeBack header={<Header title="Survey" back />}>
         <div className="p-4 space-y-4">
-          <Skeleton className="h-20 rounded-2xl" />
-          <Skeleton className="h-32 rounded-2xl" />
-          <Skeleton className="h-32 rounded-2xl" />
+          <Skeleton className="h-20 rounded-md" />
+          <Skeleton className="h-32 rounded-md" />
+          <Skeleton className="h-32 rounded-md" />
         </div>
       </Page>
     )
@@ -327,7 +327,7 @@ export default function PostEventSurveyPage() {
     >
       <div className="p-4 space-y-6 pb-6">
         {/* Event context */}
-        <div className="rounded-2xl bg-white p-4 border border-neutral-100">
+        <div className="rounded-md bg-white p-4 border border-neutral-100">
           <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
             {ACTIVITY_TYPE_LABELS[event.activity_type] ?? event.activity_type}
           </p>

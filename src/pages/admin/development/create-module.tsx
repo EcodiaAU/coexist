@@ -69,9 +69,9 @@ export default function AdminCreateModulePage() {
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">
-      <motion.div variants={fadeUp} className="rounded-2xl bg-white shadow-sm p-5 sm:p-6 space-y-4">
+      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6 space-y-4">
         <div className="flex items-center gap-2.5 mb-1">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 shadow-sm shadow-amber-600/20">
+          <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-bark-700 shadow-sm">
             <BookOpen size={16} className="text-white" />
           </div>
           <h2 className="font-heading text-base font-bold text-neutral-900">Module Details</h2>
@@ -84,9 +84,9 @@ export default function AdminCreateModulePage() {
         </div>
       </motion.div>
 
-      <motion.div variants={fadeUp} className="rounded-2xl bg-white shadow-sm p-5 sm:p-6">
+      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-sm shadow-primary-600/20">
+          <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-700 shadow-sm">
             <Users size={16} className="text-white" />
           </div>
           <h2 className="font-heading text-base font-bold text-neutral-900">Target Audience</h2>

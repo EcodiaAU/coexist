@@ -67,7 +67,7 @@ export function MessageReactions({
           className={cn(
             'flex items-center gap-1 rounded-full px-2 py-0.5 min-h-7',
             'text-xs font-semibold tabular-nums',
-            'transition-transform duration-150 active:scale-[0.94] cursor-pointer select-none',
+            'transition-transform duration-150 active:scale-[0.98] cursor-pointer select-none',
             g.userReacted
               ? 'bg-primary-100 text-primary-700 ring-1 ring-primary-300'
               : 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-50',

@@ -75,7 +75,7 @@ function EventPicker({
         type="button"
         onClick={() => setDropdownOpen(!dropdownOpen)}
         className={cn(
-          'w-full rounded-xl px-3.5 py-2.5 text-left text-sm min-h-11 flex items-center gap-2 transition-transform duration-150',
+          'w-full rounded-sm px-3.5 py-2.5 text-left text-sm min-h-11 flex items-center gap-2 transition-transform duration-150',
           'active:scale-[0.99] cursor-pointer select-none',
           selectedId
             ? 'bg-primary-50 text-primary-800 ring-2 ring-primary-400'
@@ -103,7 +103,7 @@ function EventPicker({
       </button>
 
       {dropdownOpen && events.length > 0 && (
-        <div className="absolute z-30 mt-1.5 w-full rounded-xl bg-white shadow-lg ring-1 ring-primary-200/60 max-h-52 overflow-y-auto overscroll-contain">
+        <div className="absolute z-30 mt-1.5 w-full rounded-sm bg-white shadow-sm ring-1 ring-primary-200/60 max-h-52 overflow-y-auto overscroll-contain">
           {events.map((event) => (
             <button
               key={event.id}
@@ -116,7 +116,7 @@ function EventPicker({
                 'w-full text-left px-3.5 py-2.5 flex items-start gap-2.5 transition-[colors,transform] duration-100 min-h-11',
                 'hover:bg-neutral-50 active:bg-neutral-100 active:scale-[0.98] cursor-pointer select-none',
                 event.id === selectedId && 'bg-primary-50',
-                'first:rounded-t-xl last:rounded-b-xl',
+                'first:rounded-t-sm last:rounded-b-sm',
               )}
             >
               <div className="flex-1 min-w-0">
@@ -192,7 +192,7 @@ function CollectivePicker({
       )}
 
       {/* List */}
-      <div className="max-h-40 overflow-y-auto overscroll-contain rounded-xl ring-1 ring-primary-200/60 bg-white">
+      <div className="max-h-40 overflow-y-auto overscroll-contain rounded-sm ring-1 ring-primary-200/60 bg-white">
         {isLoading ? (
           <div className="px-3.5 py-3 text-xs text-neutral-500">Loading collectives...</div>
         ) : filtered.length === 0 ? (
@@ -211,7 +211,7 @@ function CollectivePicker({
                   'w-full text-left px-3 py-2.5 flex items-center gap-2.5 transition-[colors,transform] duration-100 min-h-11',
                   'hover:bg-neutral-50 active:bg-neutral-100 active:scale-[0.98] cursor-pointer select-none',
                   isSelected && 'bg-primary-50',
-                  'first:rounded-t-xl last:rounded-b-xl',
+                  'first:rounded-t-sm last:rounded-b-sm',
                 )}
               >
                 <Avatar
@@ -355,7 +355,7 @@ export function CreateAnnouncementSheet({
       <div className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
         {/* Header */}
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-100 text-accent-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-accent-100 text-accent-600">
             <Megaphone size={20} />
           </div>
           <div>
@@ -374,8 +374,8 @@ export function CreateAnnouncementSheet({
                 type="button"
                 onClick={() => setType(opt.value)}
                 className={cn(
-                  'flex-1 rounded-xl py-2.5 px-2 text-center transition-transform duration-150 min-h-11',
-                  'active:scale-[0.95] cursor-pointer select-none',
+                  'flex-1 rounded-sm py-2.5 px-2 text-center transition-transform duration-150 min-h-11',
+                  'active:scale-[0.98] cursor-pointer select-none',
                   type === opt.value
                     ? 'bg-primary-600 text-white shadow-sm'
                     : 'bg-primary-50 text-primary-600 ring-1 ring-primary-200/60',
