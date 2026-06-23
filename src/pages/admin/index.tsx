@@ -1,36 +1,26 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
     Users,
     MapPin,
     CalendarDays,
-    TreePine, Clock,
-    Leaf,
-    Eye,
-    Globe,
-    TrendingUp,
-    ChevronRight,
-    Trash2,
-    BarChart3,
-    Sparkles,
+    Clock,
+    ClipboardList,
     ArrowUpRight,
-    GraduationCap,
 } from 'lucide-react'
 import { useAdminHeader } from '@/components/admin-layout'
 import { Dropdown } from '@/components/dropdown'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
-import type { BentoTheme } from '@/components/bento-stats-themes'
 import { WaveTransition } from '@/components/wave-transition'
 import { EmptyState } from '@/components/empty-state'
+import { EventsMissingImpactCard } from '@/components/events-missing-impact-card'
 import { cn } from '@/lib/cn'
 import { Link } from 'react-router-dom'
 import { useParallaxLayers } from '@/hooks/use-parallax-scroll'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 import {
     useAdminOverview,
-    useTrendData,
-    type TrendMonth,
     type DateRange,
     dateRangeOptions,
 } from '@/hooks/use-admin-dashboard'
@@ -227,139 +217,6 @@ function SectionHeader({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Bar chart - elevated style                                         */
-/* ------------------------------------------------------------------ */
-
-function TrendChart({
-  data,
-  dataKey,
-  label,
-  icon,
-  accentFrom,
-  accentTo,
-}: {
-  data: TrendMonth[]
-  dataKey: string
-  label: string
-  icon: React.ReactNode
-  accentFrom: string
-  accentTo: string
-}) {
-  const shouldReduceMotion = useReducedMotion()
-  const values = data.map((d) => (d[dataKey as keyof TrendMonth] as number) ?? 0)
-  const max = Math.max(...values, 1)
-  const total = values.reduce((a, b) => a + b, 0)
-  const allZero = max <= 0 || total <= 0
-
-  // Placeholder staircase when there's no data
-  const placeholders = [35, 55, 42, 70, 48, 62]
-
-  return (
-    <motion.div
-      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45 }}
-      className="group relative overflow-hidden rounded-2xl bg-white border border-neutral-100 shadow-sm transition-colors duration-200 p-5 sm:p-6"
-    >
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-neutral-50 group-hover:bg-neutral-100 transition-colors duration-200">
-              {icon}
-            </span>
-            <div>
-              <h3 className="font-heading text-sm font-bold text-neutral-900 tracking-tight">{label}</h3>
-              <p className="text-xs text-neutral-400 font-medium mt-0.5">
-                {allZero ? 'No data yet' : `${total.toLocaleString()} total`}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-2 sm:gap-3 h-36 sm:h-44">
-          {data.map((d, i) => {
-            const val = (d[dataKey as keyof TrendMonth] as number) ?? 0
-            const pct = allZero
-              ? placeholders[i % placeholders.length]!
-              : Math.round(Math.max((val / max) * 100, val > 0 ? 12 : 4))
-            const isMax = !allZero && val === max && val > 0
-            return (
-              <div key={d.month} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
-                {/* Value label */}
-                <span className={cn(
-                  'text-[11px] sm:text-xs font-semibold tabular-nums',
-                  allZero ? 'text-transparent' : isMax ? 'text-neutral-800' : 'text-neutral-400',
-                )}>
-                  {val > 0 ? val : '\u00A0'}
-                </span>
-
-                {/* Bar track - relative with defined flex-1 height so % children work */}
-                <div className="relative w-full flex-1">
-                  <motion.div
-                    className="absolute bottom-0 left-[15%] right-[15%] rounded-lg"
-                    style={{
-                      background: allZero
-                        ? 'var(--color-neutral-200)'
-                        : `linear-gradient(to top, ${accentFrom}, ${accentTo})`,
-                    }}
-                    initial={shouldReduceMotion ? { height: `${pct}%` } : { height: '0%' }}
-                    animate={{ height: `${pct}%` }}
-                    transition={{ duration: 0.6, delay: i * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  />
-                </div>
-
-                {/* Month label */}
-                <span className={cn(
-                  'text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide',
-                  isMax ? 'text-neutral-600' : 'text-neutral-300',
-                )}>{d.month}</span>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Quick-link card                                                    */
-/* ------------------------------------------------------------------ */
-
-function QuickLink({
-  to,
-  label,
-  sub,
-  icon,
-  accent,
-}: {
-  to: string
-  label: string
-  sub: string
-  icon: React.ReactNode
-  accent: string
-}) {
-  return (
-    <Link
-      to={to}
-      className="group relative flex items-center gap-3.5 rounded-2xl bg-white border border-neutral-100 shadow-sm p-4 transition-all duration-200 active:scale-[0.98]"
-    >
-      <span className={cn(
-        'flex items-center justify-center w-10 h-10 rounded-xl text-white shrink-0',
-        accent,
-      )}>
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="font-heading text-sm font-bold text-neutral-900 tracking-tight">{label}</p>
-        <p className="text-xs text-neutral-400 font-medium truncate">{sub}</p>
-      </div>
-      <ChevronRight size={16} className="text-neutral-300 group-hover:text-neutral-500 transition-colors shrink-0" />
-    </Link>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Admin Dashboard Page                                               */
 /* ------------------------------------------------------------------ */
 
@@ -369,7 +226,6 @@ export default function AdminDashboardPage() {
   const { data: collectivesData } = useCollectives({ includeNational: false })
   const { data, isLoading, isError } = useAdminOverview(dateRange, collectiveId || undefined)
   const showLoading = useDelayedLoading(isLoading)
-  const { data: trends } = useTrendData()
 
   const collectiveOptions = useMemo(() => ([
     { value: '', label: 'All Collectives' },
@@ -378,8 +234,6 @@ export default function AdminDashboardPage() {
 
   const shouldReduceMotion = useReducedMotion()
   const rm = !!shouldReduceMotion
-
-  const impactRef = useRef<HTMLDivElement>(null)
 
   useAdminHeader('Dashboard', { fullBleed: true })
 
@@ -403,24 +257,10 @@ export default function AdminDashboardPage() {
             ))}
           </div>
 
-          {/* Impact section skeleton */}
+          {/* Outstanding surveys card skeleton */}
           <div className="space-y-3">
-            <div className="h-5 w-40 rounded-lg bg-neutral-100 animate-pulse" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 rounded-xl bg-neutral-50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
-              ))}
-            </div>
-          </div>
-
-          {/* Trend charts skeleton */}
-          <div className="space-y-3">
-            <div className="h-5 w-32 rounded-lg bg-neutral-100 animate-pulse" />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="h-56 rounded-2xl bg-neutral-50 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
-              ))}
-            </div>
+            <div className="h-5 w-44 rounded-lg bg-neutral-100 animate-pulse" />
+            <div className="h-40 rounded-2xl bg-neutral-50 animate-pulse" />
           </div>
         </div>
       </div>
@@ -437,19 +277,6 @@ export default function AdminDashboardPage() {
       />
     )
   }
-
-  // Build impact items (only show non-zero)
-  const impactItems: {
-    value: number
-    label: string
-    icon: React.ReactNode
-    theme: BentoTheme
-    unit?: string
-  }[] = [
-    { value: data?.totalTrees ?? 0,         label: 'Trees Planted',     icon: <TreePine size={16} />, theme: 'sprout' },
-    { value: data?.totalRubbish ?? 0,       label: 'Litter Removed',    icon: <Trash2 size={16} />,   theme: 'sky',     unit: 'kg' },
-    { value: data?.totalLeadersEmpowered ?? 0, label: 'Leaders Empowered', icon: <GraduationCap size={16} />, theme: 'bark' },
-  ]
 
   return (
     <div className="relative min-h-dvh">
@@ -495,106 +322,16 @@ export default function AdminDashboardPage() {
             </BentoStatGrid>
           </motion.div>
 
-          {/* ── Environmental Impact ── */}
-          {impactItems.length > 0 && (
-            <motion.div variants={rm ? undefined : fadeUp} ref={impactRef}>
-              <SectionHeader
-                icon={<Leaf size={16} />}
-                sub={dateRangeOptions.find((o) => o.value === dateRange)?.label}
-              >
-                Environmental Impact
-              </SectionHeader>
-              <BentoStatGrid compact>
-                {impactItems.map((item) => (
-                  <BentoStatCard
-                    key={item.label}
-                    value={item.value}
-                    label={item.label}
-                    icon={item.icon}
-                    theme={item.theme}
-                    unit={item.unit}
-                  />
-                ))}
-              </BentoStatGrid>
-            </motion.div>
-          )}
-
-          {/* ── Trend charts ── */}
-          {trends && trends.length > 0 && (
-            <motion.div variants={rm ? undefined : fadeUp}>
-              <SectionHeader icon={<BarChart3 size={16} />} sub="Last 6 months">
-                Growth Trends
-              </SectionHeader>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <TrendChart
-                  data={trends}
-                  dataKey="members"
-                  label="Member Growth"
-                  icon={<TrendingUp size={17} className="text-primary-600" />}
-                  accentFrom="var(--color-primary-600)"
-                  accentTo="var(--color-primary-400)"
-                />
-                <TrendChart
-                  data={trends}
-                  dataKey="events"
-                  label="Event Frequency"
-                  icon={<CalendarDays size={17} className="text-moss-600" />}
-                  accentFrom="var(--color-moss-600)"
-                  accentTo="var(--color-moss-400)"
-                />
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── Quick links ── */}
+          {/* ── Outstanding impact surveys ── */}
           <motion.div variants={rm ? undefined : fadeUp}>
-            <SectionHeader icon={<Sparkles size={16} />}>
-              Quick Actions
+            <SectionHeader
+              icon={<ClipboardList size={16} />}
+              sub="Finished events still waiting on a logged impact survey"
+              action={{ label: 'Impact dashboard', to: '/admin/impact' }}
+            >
+              Impact Surveys
             </SectionHeader>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-              <QuickLink
-                to="/admin/collectives"
-                label="Collectives"
-                sub="Manage local chapters"
-                icon={<MapPin size={18} />}
-                accent="bg-gradient-to-br from-moss-500 to-moss-600"
-              />
-              <QuickLink
-                to="/admin/events"
-                label="Events"
-                sub="Track conservation activities"
-                icon={<CalendarDays size={18} />}
-                accent="bg-gradient-to-br from-warning-500 to-warning-600"
-              />
-              <QuickLink
-                to="/admin/users"
-                label="Users"
-                sub="Members, roles, permissions"
-                icon={<Users size={18} />}
-                accent="bg-gradient-to-br from-primary-500 to-primary-600"
-              />
-              <QuickLink
-                to="/admin/email"
-                label="Email"
-                sub="Campaigns and subscribers"
-                icon={<BarChart3 size={18} />}
-                accent="bg-gradient-to-br from-moss-500 to-moss-600"
-              />
-              <QuickLink
-                to="/admin/impact"
-                label="Impact Dashboard"
-                sub="Observations and metrics"
-                icon={<Leaf size={18} />}
-                accent="bg-gradient-to-br from-sprout-500 to-sprout-600"
-              />
-              <QuickLink
-                to="/admin/reports"
-                label="Reports"
-                sub="Generate reports and exports"
-                icon={<TrendingUp size={18} />}
-                accent="bg-gradient-to-br from-bark-500 to-bark-600"
-              />
-            </div>
+            <EventsMissingImpactCard showWhenEmpty />
           </motion.div>
 
         </motion.div>

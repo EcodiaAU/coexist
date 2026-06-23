@@ -23,7 +23,7 @@ import {
   CalendarDays, Users, UserCheck, Repeat, Clock, Leaf, TreePine, Trash2,
   Waves, Eye, Ruler, Sprout, Sparkles, Droplets, Mountain, Flower2, Bug,
   Flame, Fish, Wind, ExternalLink, Copy, Check, Download, Table as TableIcon,
-  X,
+  X, TrendingUp,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAdminHeader } from '@/components/admin-layout'
@@ -40,7 +40,8 @@ import {
 } from '@/hooks/use-admin-impact-observations'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import type { ImpactMetricDef } from '@/lib/impact-metrics'
-import { dateRangeOptions, getDateRangeStart, type DateRange } from '@/hooks/use-admin-dashboard'
+import { dateRangeOptions, getDateRangeStart, useTrendData, type DateRange } from '@/hooks/use-admin-dashboard'
+import { TrendChart } from '@/components/trend-chart'
 import { ACTIVITY_TYPE_FILTER_OPTIONS, ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
 import { useCollectives } from '@/hooks/use-collective'
 import type { AttendanceMetrics } from '@/lib/attendance-metrics'
@@ -196,6 +197,7 @@ export default function AdminInsightsPage() {
 
   const { data: obs, isLoading: obsLoading } = useImpactObservations(filters, activeDefs)
   const { data: yoy } = useYearOverYear(activeDefs)
+  const { data: trends } = useTrendData()
 
   const fromDate = useMemo(() => {
     const s = getDateRangeStart(dateRange)
@@ -339,7 +341,8 @@ export default function AdminInsightsPage() {
   }
 
   const jump = [
-    { id: 'overview', label: 'Overview' }, { id: 'impact', label: 'Impact' },
+    { id: 'overview', label: 'Overview' }, { id: 'growth', label: 'Growth' },
+    { id: 'impact', label: 'Impact' },
     { id: 'attendance', label: 'Attendance' }, { id: 'collectives', label: 'By collective' },
     { id: 'years', label: 'Years' }, { id: 'data', label: 'Raw data' },
   ]
@@ -384,6 +387,31 @@ export default function AdminInsightsPage() {
             </AdminHeroStatRow>
           </motion.div>
         </div>
+
+        {/* ── Growth over time ── */}
+        {trends && trends.length > 0 && (
+          <div>
+            <Section id="growth" title="Growth over time" hint="New members and events per month, last 6 months." />
+            <motion.div variants={v.fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <TrendChart
+                data={trends}
+                dataKey="members"
+                label="Member Growth"
+                icon={<TrendingUp size={17} className="text-primary-600" />}
+                accentFrom="var(--color-primary-600)"
+                accentTo="var(--color-primary-400)"
+              />
+              <TrendChart
+                data={trends}
+                dataKey="events"
+                label="Event Frequency"
+                icon={<CalendarDays size={17} className="text-moss-600" />}
+                accentFrom="var(--color-moss-600)"
+                accentTo="var(--color-moss-400)"
+              />
+            </motion.div>
+          </div>
+        )}
 
         {/* ── Impact ── */}
         <div>

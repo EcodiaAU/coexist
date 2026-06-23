@@ -42,7 +42,6 @@ import {
   useImpactObservations,
   useYearOverYear,
   useImpactDataQuality,
-  useEventsMissingImpact,
   type ObservationFilters,
   type CollectiveBreakdown,
   type EventImpactRow,
@@ -56,10 +55,9 @@ import type { ImpactMetricDef } from '@/lib/impact-metrics'
 import { dateRangeOptions, type DateRange } from '@/hooks/use-admin-dashboard'
 import { ACTIVITY_TYPE_OPTIONS, ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
 import { useCollectives } from '@/hooks/use-collective'
-import { useNotifyLeadersForImpactForm } from '@/hooks/use-impact-form-tasks'
 import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
-import { useToast } from '@/components/toast'
+import { EventsMissingImpactCard } from '@/components/events-missing-impact-card'
 // supabase direct import removed - metrics config UI removed
 
 /* ------------------------------------------------------------------ */
@@ -423,10 +421,6 @@ function DashboardTab() {
   const { data, isLoading } = useImpactObservations(filters, activeDefs)
   const { data: yoyData } = useYearOverYear(activeDefs)
   const { data: collectives } = useCollectives({ includeNational: true })
-  const { data: missingImpact } = useEventsMissingImpact()
-  const notifyLeaders = useNotifyLeadersForImpactForm()
-  const { toast } = useToast()
-  const [nudgingEvent, setNudgingEvent] = useState<string | null>(null)
   const showLoading = useDelayedLoading(isLoading)
 
   // Drift status badge - reads last run result from app_settings (written by nightly cron)
@@ -579,65 +573,7 @@ function DashboardTab() {
       </motion.div>
 
       {/* ── Events missing impact ── */}
-      {(missingImpact?.length ?? 0) > 0 && (
-        <motion.div variants={v.fadeUp}>
-          <div className="rounded-2xl bg-warning-50 border border-warning-200/50 p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={16} className="text-warning-600 shrink-0" />
-              <h3 className="text-sm font-semibold text-warning-800">
-                {missingImpact!.length} event{missingImpact!.length !== 1 ? 's' : ''} missing impact data
-              </h3>
-            </div>
-            <p className="text-xs text-warning-700">
-              These events ended in the last 30 days but no leader has logged impact yet.
-            </p>
-            <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
-              {missingImpact!.map((e) => (
-                <div key={e.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/70">
-                  <Link
-                    to={`/events/${e.id}/impact`}
-                    className="flex-1 min-w-0 hover:opacity-80 active:scale-[0.99] transition-all"
-                  >
-                    <p className="text-sm font-medium text-neutral-800 truncate">{e.title}</p>
-                    <p className="text-[11px] text-neutral-400">
-                      {e.collective_name ?? 'Unknown'} · {ACTIVITY_TYPE_LABELS[e.activity_type] ?? e.activity_type} · {e.days_since}d ago
-                    </p>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNudgingEvent(e.id)
-                      notifyLeaders.mutate(
-                        { eventId: e.id, eventTitle: e.title, collectiveId: e.collective_id },
-                        {
-                          onSuccess: (result) => {
-                            toast.success(`Reminder sent to ${result?.sent ?? 0} leader${(result?.sent ?? 0) !== 1 ? 's' : ''}`)
-                            setNudgingEvent(null)
-                          },
-                          onError: () => {
-                            toast.error('Failed to send reminder')
-                            setNudgingEvent(null)
-                          },
-                        },
-                      )
-                    }}
-                    disabled={nudgingEvent === e.id}
-                    className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-warning-200 text-warning-800 hover:bg-warning-300 active:scale-[0.97] transition-all shrink-0 cursor-pointer disabled:opacity-50"
-                  >
-                    {nudgingEvent === e.id ? 'Sending...' : 'Nudge'}
-                  </button>
-                  <span className={cn(
-                    'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
-                    e.days_since > 7 ? 'bg-error-100 text-error-700' : e.days_since > 3 ? 'bg-warning-100 text-warning-700' : 'bg-neutral-100 text-neutral-500',
-                  )}>
-                    {e.days_since}d
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      )}
+      <EventsMissingImpactCard />
 
       {/* ── Per-collective breakdown ── */}
       {sortedCollectives.length > 0 && (
