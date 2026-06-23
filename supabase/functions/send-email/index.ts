@@ -50,6 +50,11 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     description: 'Event registration confirmation. Data: { name, event_title, event_date, event_location, event_url }',
     subject: (d) => `You're registered: ${d.event_title}`,
   },
+  ticket_confirmation: {
+    category: 'transactional',
+    description: 'Ticket purchase confirmation. Data: { name, event_title, event_date, event_location, ticket_code, quantity, amount, currency, ticket_url }',
+    subject: (d) => `You're going: ${d.event_title}`,
+  },
   event_reminder: {
     category: 'transactional',
     description: '24h event reminder. Data: { name, event_title, event_date, event_location, event_url }',
