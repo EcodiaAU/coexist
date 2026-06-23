@@ -39,7 +39,7 @@ export default async function CollectivesPage() {
 
       {/* Our collective reach - interactive map (ported from the app) */}
       <section className="bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mx-auto max-w-6xl px-6 pb-10 pt-12">
           <p className="eyebrow text-center text-primary-600">Our collective reach</p>
           <p className="mx-auto mt-3 max-w-md text-center text-[15px] text-neutral-500">
             Tap a pin to explore the collective near you.
@@ -66,7 +66,7 @@ export default async function CollectivesPage() {
                 ) : null}
                 <div className="absolute inset-0 -z-10 bg-gradient-to-t from-olive-950/85 via-olive-950/20 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
-                  <h2 className={`leading-[1.02] text-oncream ${i % 6 === 0 ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>{c.name}</h2>
+                  <h2 className={`uppercase leading-[0.98] tracking-[-0.02em] text-oncream ${i % 6 === 0 ? 'text-3xl sm:text-4xl' : 'text-xl'}`}>{c.name}</h2>
                   {c.member_count ? (
                     <p className="mt-1 text-[11px] uppercase tracking-[0.02em] text-oncream/60">{c.member_count} members</p>
                   ) : null}

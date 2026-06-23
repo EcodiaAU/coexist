@@ -41,7 +41,7 @@ export default async function ShopPage() {
         image="/images/collective.webp"
       />
 
-      <section className="py-14">
+      <section className="pb-14">
         {products.length === 0 ? (
           <p className="mx-auto max-w-6xl px-6 py-16 text-center text-neutral-500">Our shop is restocking. Check back soon.</p>
         ) : (

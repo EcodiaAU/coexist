@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getUpcomingEvents } from '@/lib/queries'
 import { PageHeader } from '@/components/page-header'
-import { activityLabel, formatDateShort } from '@/lib/format'
+import { formatDateShort } from '@/lib/format'
 
 export const revalidate = 900
 
@@ -37,7 +37,7 @@ export default async function EventsPage() {
         image="/images/nature.webp"
       />
 
-      <section className="py-14">
+      <section className="pb-14">
         {events.length === 0 ? (
           <div className="mx-auto max-w-6xl px-6 py-20 text-center">
             <p className="text-2xl text-neutral-900">No upcoming events listed right now</p>
@@ -69,10 +69,6 @@ export default async function EventsPage() {
                   />
                 ) : null}
                 <div className="absolute inset-0 -z-10 bg-gradient-to-t from-olive-950/85 via-olive-950/25 to-transparent" />
-
-                <span className="absolute left-4 top-4 rounded-full bg-oncream/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-olive-900">
-                  {activityLabel(e.activity_type)}
-                </span>
 
                 <div className="absolute inset-x-0 bottom-0 p-5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-oncream/70">
