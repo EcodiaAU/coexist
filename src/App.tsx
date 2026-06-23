@@ -59,6 +59,7 @@ const AcceptTermsPage = lazy(() => import('@/pages/auth/accept-terms'))
 const OnboardingPage = lazy(() => import('@/pages/onboarding/onboarding'))
 const LeaderWelcomePage = lazy(() => import('@/pages/onboarding/leader-welcome'))
 const WelcomeBackPage = lazy(() => import('@/pages/onboarding/welcome-back'))
+const ClaimTicketPage = lazy(() => import('@/pages/claim-ticket'))
 
 // Main app
 const HomePage = lazy(() => import('@/pages/home'))
@@ -564,6 +565,17 @@ function App() {
           element={
             <AppShell bare>
               <CampoutTypePage />
+            </AppShell>
+          }
+        />
+        {/* Eventbrite migration claim link. Public so it can greet signed-out
+            invitees, stash the target, and send them to log in / sign up;
+            after onboarding it resumes here and grants the free ticket. */}
+        <Route
+          path="/claim/:eventId/:token"
+          element={
+            <AppShell bare>
+              <ClaimTicketPage />
             </AppShell>
           }
         />
