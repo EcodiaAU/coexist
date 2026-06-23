@@ -55,7 +55,7 @@ export function ParallaxImage({
         alt=""
         fill
         priority={priority}
-        quality={80}
+        quality={58}
         sizes="100vw"
         {...(priority ? { fetchPriority: 'high' as const } : {})}
         className={`object-cover ${className}`}
