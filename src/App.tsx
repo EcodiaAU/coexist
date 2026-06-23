@@ -373,6 +373,8 @@ function App() {
 
           {/* ---- Member pages (animated by AnimatedOutlet in AppShell) ---- */}
           <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
+          {/* Canonical home is /, never /home (stale links / deep-link fallbacks). */}
+          <Route path="/home" element={<Navigate to="/" replace />} />
           <Route path="/explore" element={<ExplorePage />} />
           <Route path="/events" element={<Navigate to="/explore" replace />} />
           <Route path="/events/create" element={<CreateEventPage />} />
@@ -435,6 +437,8 @@ function App() {
           {/* ---- Leader Dashboard & sub-pages ---- */}
           <Route path="/leader" element={<RequireLeaderAccess><ErrorBoundary><LeaderLayoutRoute /></ErrorBoundary></RequireLeaderAccess>}>
             <Route index element={<LeaderDashboardPage />} />
+            {/* Canonical home is /leader, never /leader/home (stale links / notifications). */}
+            <Route path="home" element={<Navigate to="/leader" replace />} />
             <Route path="events" element={<LeaderEventsPage />} />
             <Route path="tasks" element={<LeaderTasksPage />} />
             <Route path="feedback" element={<LeaderFeedbackPage />} />
@@ -450,6 +454,8 @@ function App() {
               + RLS is_admin_tier() helper in 20260509300000_admin_rls_audit.sql. */}
           <Route path="/admin" element={<RequireRole minRole="manager"><ErrorBoundary><AdminLayoutRoute /></ErrorBoundary></RequireRole>}>
             <Route index element={<AdminDashboardPage />} />
+            {/* Canonical home is /admin, never /admin/home (stale links / notifications). */}
+            <Route path="home" element={<Navigate to="/admin" replace />} />
             <Route path="collectives" element={<RequireCapability cap="manage_collectives"><AdminCollectivesPage /></RequireCapability>} />
             <Route path="collectives/:collectiveId" element={<RequireCapability cap="manage_collectives"><AdminCollectiveDetailPage /></RequireCapability>} />
             <Route path="users" element={<RequireCapability cap="manage_users"><AdminUsersPage /></RequireCapability>} />
