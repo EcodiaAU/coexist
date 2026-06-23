@@ -1,14 +1,12 @@
 /**
- * Accreditation logos (verified from the live coexistaus.org support page):
- * 1% for the Planet, ACNC Registered Charity, Social Traders, Climate Active.
- * Two of the four are white-on-transparent, so they render on a dark olive strip
- * rather than a separate light section.
+ * Accreditation logos (verified from the live coexistaus.org footer):
+ * 1% for the Planet, Little Phil (Certified Impact Partner), ACNC Registered
+ * Charity. Two are white-on-transparent, so they render on a dark olive strip.
  */
 const CERTS = [
   { src: '/images/certs/onepercent.png', alt: '1% for the Planet member' },
+  { src: '/images/certs/littlephil.png', alt: 'Little Phil Certified Impact Partner' },
   { src: '/images/certs/acnc.png', alt: 'ACNC Registered Charity' },
-  { src: '/images/certs/socialtraders.png', alt: 'Social Traders certified' },
-  { src: '/images/certs/climateactive.jpg', alt: 'Climate Active' },
 ]
 
 export function Certifications({ className = '' }: { className?: string }) {

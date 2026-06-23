@@ -25,8 +25,9 @@ export function PageHeader({
           alt=""
           fill
           priority
-          quality={90}
+          quality={80}
           sizes="100vw"
+          fetchPriority="high"
           className="-z-10 object-cover"
           {...(BLUR[image] ? { placeholder: 'blur' as const, blurDataURL: BLUR[image] } : {})}
         />

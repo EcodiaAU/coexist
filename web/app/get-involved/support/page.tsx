@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
 import { Reveal } from '@/components/reveal'
 import { getPublicImpactStats, type PublicImpactStats } from '@/lib/public-stats'
-import { getPartners } from '@/lib/queries'
 
 export const revalidate = 1800
 
@@ -28,10 +27,18 @@ const ENABLES = [
   { k: 'Leaders, supported', v: 'Training and backing for the young people who start and run collectives in their own towns.' },
 ]
 
+// Corporate brands + sponsors (from the live support page). Distinct from the
+// foundation funders shown on the home page.
+const BRANDS = [
+  { name: 'Habitat Co', src: '/images/brands/habitatco.png' },
+  { name: 'Zorali', src: '/images/brands/zorali.jpg' },
+  { name: 'Endless Parks', src: '/images/brands/endlessparks.jpg' },
+  { name: 'Survival', src: '/images/brands/survival.png' },
+]
+
 export default async function SupportPage() {
   let stats: PublicImpactStats = FALLBACK
   try { stats = await getPublicImpactStats() } catch { stats = FALLBACK }
-  const partners = await getPartners().catch(() => [])
 
   const tiles = [
     { value: fmt(stats.rubbishKg), unit: 'kg', label: 'Litter removed' },
@@ -104,22 +111,23 @@ export default async function SupportPage() {
         </div>
       </section>
 
-      {/* Partners we already work with */}
-      {partners.length > 0 && (
-        <section className="border-y border-neutral-200 bg-neutral-50">
-          <div className="mx-auto max-w-6xl px-6 py-16">
-            <p className="eyebrow text-center text-neutral-400">In good company</p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-8">
-              {partners.map((p) =>
-                p.logo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img key={p.id} src={p.logo_url} alt={p.name} className="h-9 w-auto object-contain opacity-50 transition-opacity hover:opacity-100" />
-                ) : null,
-              )}
-            </div>
+      {/* Collaborations & sponsorships - featured brand */}
+      <section className="border-y border-neutral-200 bg-neutral-50">
+        <div className="mx-auto max-w-6xl px-6 py-16 text-center">
+          <h2 className="text-2xl text-neutral-900 sm:text-3xl">Collaborations &amp; sponsorships</h2>
+          <div className="mt-8 flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/brands/sunslayer.jpg" alt="Sunslayer" className="h-16 w-auto object-contain" />
           </div>
-        </section>
-      )}
+          <p className="mt-12 text-sm font-semibold uppercase tracking-[0.18em] text-neutral-400">Supporters &amp; corporate donors</p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-14 gap-y-10">
+            {BRANDS.map((bd) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={bd.name} src={bd.src} alt={bd.name} className="h-11 w-auto object-contain opacity-70 transition-opacity hover:opacity-100" />
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Ways to support */}
       <section className="bg-white">

@@ -106,23 +106,13 @@ export default async function AboutPage() {
             <p className="eyebrow text-primary-600">The people</p>
             <h2 className="mt-4 text-4xl text-neutral-900 sm:text-5xl">Meet the team</h2>
             {groupedTeam.map(([group, members]) => (
-              <div key={group} className="mt-12">
+              <div key={group} className="mt-12 border-t border-neutral-200 pt-8">
                 <p className="label text-neutral-400">{GROUP_LABEL[group] ?? group}</p>
-                <div className="mt-6 grid gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
                   {members.map((m) => (
-                    <div key={m.id}>
-                      <div className="relative aspect-square overflow-hidden bg-primary-50">
-                        {m.photo_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={m.photo_url} alt={m.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-3xl font-light text-primary-300">
-                            {m.name.charAt(0)}
-                          </div>
-                        )}
-                      </div>
-                      <h3 className="mt-4 text-xl text-neutral-900">{m.name}</h3>
-                      {m.role_title && <p className="mt-0.5 text-sm text-neutral-500">{m.role_title}</p>}
+                    <div key={m.id} className="flex items-baseline justify-between gap-4 border-b border-neutral-100 pb-3">
+                      <h3 className="text-lg text-neutral-900">{m.name}</h3>
+                      {m.role_title && <p className="shrink-0 text-right text-[13px] text-neutral-400">{m.role_title}</p>}
                     </div>
                   ))}
                 </div>
