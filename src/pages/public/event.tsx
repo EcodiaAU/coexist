@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Calendar, MapPin, Users, TreePine, ExternalLink, Download } from 'lucide-react'
+import { Calendar, MapPin, Users, TreePine, ExternalLink, Download, Ticket } from 'lucide-react'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
@@ -55,6 +56,64 @@ export default function PublicEventPage() {
     enabled: !!id,
   })
   const showLoading = useDelayedLoading(isLoading)
+
+  // Guest ticket purchase (no account needed) for public ticketed events.
+  const isTicketed = !!(event as { is_ticketed?: boolean } | undefined)?.is_ticketed
+  const { data: ticketTypes } = useQuery({
+    queryKey: ['public-event-tickets', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('event_ticket_types')
+        .select('id, name, description, price_cents, is_active, sort_order')
+        .eq('event_id', id!)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!id && isTicketed,
+  })
+  const [buyName, setBuyName] = useState('')
+  const [buyEmail, setBuyEmail] = useState('')
+  const [selectedType, setSelectedType] = useState<string | null>(null)
+  const [buying, setBuying] = useState(false)
+  const [buyError, setBuyError] = useState<string | null>(null)
+
+  const activeTypeId = selectedType ?? ticketTypes?.[0]?.id ?? null
+  const activeType = ticketTypes?.find((t) => t.id === activeTypeId) ?? null
+
+  async function handleBuy() {
+    if (!activeTypeId) return
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyEmail.trim())) {
+      setBuyError('Please enter a valid email address')
+      return
+    }
+    setBuying(true)
+    setBuyError(null)
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/guest-ticket-checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          event_id: id,
+          ticket_type_id: activeTypeId,
+          email: buyEmail.trim(),
+          name: buyName.trim(),
+          quantity: 1,
+        }),
+      })
+      const out = await res.json()
+      if (!res.ok || !out.url) throw new Error(out.error || 'Could not start checkout')
+      window.location.href = out.url
+    } catch (e) {
+      setBuyError(e instanceof Error ? e.message : 'Could not start checkout')
+      setBuying(false)
+    }
+  }
 
   if (showLoading) {
     return (
@@ -228,6 +287,81 @@ export default function PublicEventPage() {
             <h2 className="font-heading text-lg font-semibold text-neutral-900">About this event</h2>
             <p className="mt-2 whitespace-pre-line text-neutral-500 leading-relaxed">
               {event.description}
+            </p>
+          </motion.div>
+        )}
+
+        {/* Guest ticket purchase (no account required) */}
+        {isTicketed && activeType && (
+          <motion.div
+            variants={shouldReduceMotion ? undefined : fadeUp}
+            className="mt-8 rounded-2xl border border-neutral-100 bg-white p-5 shadow-sm"
+          >
+            <div className="flex items-center gap-2">
+              <Ticket size={18} className="text-primary-500" />
+              <h2 className="font-heading text-lg font-semibold text-neutral-900">Get your ticket</h2>
+            </div>
+
+            {ticketTypes && ticketTypes.length > 1 ? (
+              <div className="mt-3 space-y-2">
+                {ticketTypes.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setSelectedType(t.id)}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors',
+                      activeTypeId === t.id ? 'border-primary-500 bg-primary-50' : 'border-neutral-200 hover:bg-neutral-50',
+                    )}
+                  >
+                    <span>
+                      <span className="font-medium text-neutral-900">{t.name}</span>
+                      {t.description && <span className="block text-xs text-neutral-500">{t.description}</span>}
+                    </span>
+                    <span className="font-semibold text-neutral-900">${(t.price_cents / 100).toFixed(2)}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-neutral-500">
+                {activeType.name} ·{' '}
+                <span className="font-semibold text-neutral-900">${(activeType.price_cents / 100).toFixed(2)}</span>
+              </p>
+            )}
+
+            <div className="mt-4 space-y-3">
+              <input
+                value={buyName}
+                onChange={(e) => setBuyName(e.target.value)}
+                placeholder="Your name (optional)"
+                className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-neutral-900 outline-none focus:border-primary-500"
+              />
+              <input
+                value={buyEmail}
+                onChange={(e) => { setBuyEmail(e.target.value); setBuyError(null) }}
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="Email for your ticket"
+                className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-neutral-900 outline-none focus:border-primary-500"
+              />
+            </div>
+
+            {buyError && <p className="mt-2 text-sm text-error-500">{buyError}</p>}
+
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              loading={buying}
+              disabled={buying}
+              onClick={handleBuy}
+              className="mt-4"
+            >
+              {`Get ticket - $${(activeType.price_cents / 100).toFixed(2)}`}
+            </Button>
+            <p className="mt-2 text-center text-xs text-neutral-400">
+              No account needed. We'll email your ticket and a link to the group chat.
             </p>
           </motion.div>
         )}
