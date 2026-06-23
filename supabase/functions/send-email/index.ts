@@ -355,6 +355,27 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     footerCta: { label: 'View Event Details', url: d.event_url as string || APP_URL },
   }),
 
+  // Ticket purchase confirmation. ticket_url is the access link: for guest
+  // buyers it is a single-use magic link that signs them in and opens the
+  // ticket + event group chat; for members it is the direct ticket page.
+  ticket_confirmation: (d) => emailShell({
+    heroTitle: 'You\'re going!',
+    heroSubtitle: d.event_title as string,
+    heroEmoji: '\u{1F3AB}',
+    body: greeting(d.name) +
+      p(`Your ticket for <strong>${d.event_title}</strong> is confirmed. Tap below to view your ticket and join the group chat.`) +
+      infoCard([
+        ['Event', d.event_title],
+        ['Date', d.event_date],
+        ['Location', d.event_location],
+        ['Ticket code', d.ticket_code],
+        ['Quantity', d.quantity],
+        ['Paid', `$${d.amount} ${d.currency || 'AUD'}`],
+      ]) +
+      ctaButton('View your ticket', (d.ticket_url as string) || APP_URL),
+    footerCta: { label: 'Open the App', url: APP_URL },
+  }),
+
   event_reminder: (d) => emailShell({
     heroTitle: `Coming up ${d.time_until || 'soon'}!`,
     heroSubtitle: d.event_title as string,

@@ -288,12 +288,33 @@ Deno.serve(async (req: Request) => {
             })
           }
 
-          // 4. Send ticket confirmation email
+          // 4. Send ticket confirmation email.
           const { data: ticketEvent } = await supabase
             .from('events')
             .select('title, date_start, address')
             .eq('id', ticket.event_id)
             .single()
+
+          // The plain ticket page is auth-gated, so a guest (who has only a
+          // shell account, no password) can only reach it via a magic link.
+          // For guests, make the email CTA a fresh single-use magic link that
+          // signs them in and lands on the ticket (backup to the success
+          // redirect). Members keep the normal direct link.
+          const ticketPath = `/events/${ticket.event_id}/ticket-confirmation?ticket_id=${ticketId}`
+          let ticketUrl = `https://app.coexistaus.org${ticketPath}`
+          if (metadata.guest === 'true') {
+            const appUrl = Deno.env.get('APP_URL') ?? 'https://app.coexistaus.org'
+            const { data: linkData } = await supabase.auth.admin.getUserById(ticket.user_id)
+            const guestEmail = linkData?.user?.email
+            if (guestEmail) {
+              const { data: magic } = await supabase.auth.admin.generateLink({
+                type: 'magiclink',
+                email: guestEmail,
+                options: { redirectTo: `${appUrl}${ticketPath}` },
+              })
+              if (magic?.properties?.action_link) ticketUrl = magic.properties.action_link
+            }
+          }
 
           await sendTemplateEmail(supabase, 'ticket_confirmation', ticket.user_id, {
             name: '',
@@ -306,7 +327,7 @@ Deno.serve(async (req: Request) => {
             quantity: ticket.quantity,
             amount: amountDollars.toFixed(2),
             currency: 'AUD',
-            ticket_url: `https://app.coexistaus.org/events/${ticket.event_id}/ticket-confirmation?ticket_id=${ticketId}`,
+            ticket_url: ticketUrl,
           })
 
           console.log('Event ticket confirmed:', ticketId, `$${amountDollars}`, `code: ${ticket.ticket_code}`)

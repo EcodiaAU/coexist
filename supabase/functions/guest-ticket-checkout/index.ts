@@ -1,0 +1,198 @@
+/**
+ * guest-ticket-checkout - Supabase Edge Function (PUBLIC, no auth)
+ *
+ * Lets someone buy an event ticket with just an email, no account signup.
+ * Flow:
+ *   1. Validate the event + ticket type (published, ticketed, public, on sale).
+ *   2. Resolve the buyer's account by email; if none, create a shell account
+ *      (email_confirm=true, random password). The handle_new_user() trigger
+ *      makes their profile. Existing members reuse their account.
+ *   3. Reserve a ticket atomically via the SAME reserve_event_ticket rpc the
+ *      authed flow uses (capacity-checked, 15-min pending expiry).
+ *   4. Generate a single-use magic link to the ticket page and use it as the
+ *      Stripe success_url, so the buyer returns already signed in.
+ *   5. Create the Stripe Checkout session (metadata.guest='true' so the webhook
+ *      sends a magic-link confirmation email instead of an auth-gated one).
+ *
+ * The webhook (stripe-webhook) then confirms the ticket, creates the
+ * registration, and the sync_campout_chat_membership trigger auto-joins the
+ * campout group chat. Returns { url } for the client to redirect to Stripe.
+ */
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import Stripe from 'https://esm.sh/stripe@14?target=deno'
+
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
+  apiVersion: '2024-04-10',
+})
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+// Where the app (and the ticket page) actually lives. The marketing site links
+// here; magic-link redirects must land on the app origin, not the referrer.
+const APP_URL = Deno.env.get('APP_URL') ?? 'https://app.coexistaus.org'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  const json = (data: unknown, status = 200) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+
+  try {
+    const body = await req.json()
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // ---- Validate input ----
+    if (typeof body.event_id !== 'string' || !UUID_RE.test(body.event_id)) {
+      return json({ error: 'Invalid event_id' }, 400)
+    }
+    if (typeof body.ticket_type_id !== 'string' || !UUID_RE.test(body.ticket_type_id)) {
+      return json({ error: 'Invalid ticket_type_id' }, 400)
+    }
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+    if (!EMAIL_RE.test(email) || email.length > 254) {
+      return json({ error: 'A valid email is required' }, 400)
+    }
+    const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : ''
+    const qty = typeof body.quantity === 'number' ? Math.max(1, Math.min(10, Math.floor(body.quantity))) : 1
+
+    // ---- Verify event ----
+    const { data: evt, error: evtErr } = await supabase
+      .from('events')
+      .select('id, title, is_ticketed, is_public, status, cover_image_url')
+      .eq('id', body.event_id)
+      .single()
+    if (evtErr || !evt) return json({ error: 'Event not found' }, 404)
+    if (!evt.is_ticketed) return json({ error: 'This event does not require tickets' }, 400)
+    if (!evt.is_public) return json({ error: 'This event is not open to the public' }, 400)
+    if (evt.status !== 'published') return json({ error: 'Event is not open for registration' }, 400)
+
+    // ---- Verify ticket type + sale window ----
+    const { data: tt, error: ttErr } = await supabase
+      .from('event_ticket_types')
+      .select('id, name, price_cents, sale_start, sale_end, is_active')
+      .eq('id', body.ticket_type_id)
+      .eq('event_id', body.event_id)
+      .single()
+    if (ttErr || !tt) return json({ error: 'Ticket type not found' }, 404)
+    if (!tt.is_active) return json({ error: 'This ticket type is no longer available' }, 400)
+    const now = new Date()
+    if (tt.sale_start && now < new Date(tt.sale_start)) return json({ error: 'Tickets are not on sale yet' }, 400)
+    if (tt.sale_end && now > new Date(tt.sale_end)) return json({ error: 'Ticket sales have ended' }, 400)
+
+    // ---- Resolve or provision the buyer's account ----
+    let userId: string | null = null
+    // getUserByEmail is not in supabase-js admin; list + filter (small project scale).
+    const { data: existing } = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 })
+    const found = existing?.users?.find((u) => (u.email ?? '').toLowerCase() === email)
+    if (found) {
+      userId = found.id
+    } else {
+      const randomPw = crypto.randomUUID() + crypto.randomUUID()
+      const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+        email,
+        password: randomPw,
+        email_confirm: true,
+        user_metadata: name ? { display_name: name, full_name: name } : {},
+      })
+      if (createErr || !created?.user) {
+        console.error('[guest-checkout] createUser failed:', createErr?.message)
+        return json({ error: 'Could not start checkout. Please try again.' }, 500)
+      }
+      userId = created.user.id
+    }
+
+    // ---- Lightweight abuse guard: cap recent reservations per buyer ----
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { count: recentCount } = await supabase
+      .from('event_tickets')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', oneHourAgo)
+    if ((recentCount ?? 0) >= 8) {
+      return json({ error: 'Too many checkout attempts. Please try again later.' }, 429)
+    }
+
+    // ---- Reserve the ticket (same atomic rpc the authed flow uses) ----
+    const { data: ticketId, error: reserveErr } = await supabase.rpc('reserve_event_ticket', {
+      p_event_id: body.event_id,
+      p_ticket_type_id: body.ticket_type_id,
+      p_user_id: userId,
+      p_quantity: qty,
+    })
+    if (reserveErr) {
+      const msg = reserveErr.message ?? ''
+      if (msg.includes('Sold out')) return json({ error: msg }, 409)
+      if (msg.toLowerCase().includes('sale')) return json({ error: msg }, 400)
+      console.error('[guest-checkout] reserve failed:', msg)
+      return json({ error: 'Could not reserve a ticket' }, 500)
+    }
+
+    // ---- Single-use magic link to the ticket page = instant login on return ----
+    const ticketPath = `/events/${body.event_id}/ticket-confirmation?ticket_id=${ticketId}`
+    const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+      options: { redirectTo: `${APP_URL}${ticketPath}` },
+    })
+    if (linkErr || !linkData?.properties?.action_link) {
+      console.error('[guest-checkout] generateLink failed:', linkErr?.message)
+      return json({ error: 'Could not start checkout. Please try again.' }, 500)
+    }
+    const successUrl = linkData.properties.action_link
+
+    // ---- Stripe Checkout session ----
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer_email: email,
+      line_items: [
+        {
+          price_data: {
+            currency: 'aud',
+            product_data: {
+              name: `${evt.title} - ${tt.name}`,
+              ...(evt.cover_image_url ? { images: [evt.cover_image_url] } : {}),
+            },
+            unit_amount: tt.price_cents,
+          },
+          quantity: qty,
+        },
+      ],
+      success_url: successUrl,
+      cancel_url: `${APP_URL}/event/${body.event_id}`,
+      metadata: {
+        type: 'event_ticket',
+        ticket_id: String(ticketId),
+        event_id: body.event_id,
+        ticket_type_id: body.ticket_type_id,
+        user_id: userId,
+        quantity: String(qty),
+        guest: 'true',
+      },
+    })
+
+    // Persist the session id for webhook traceability + refund lookups.
+    await supabase
+      .from('event_tickets')
+      .update({ stripe_checkout_session_id: session.id })
+      .eq('id', ticketId)
+
+    return json({ url: session.url })
+  } catch (err) {
+    console.error('[guest-checkout] error:', (err as Error).message)
+    return json({ error: 'Checkout failed' }, 500)
+  }
+})
