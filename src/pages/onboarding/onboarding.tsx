@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useUserLocation } from '@/hooks/use-nearby'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/button'
+import { takePendingClaim } from '@/lib/pending-claim'
 
 import { StepNameHandle } from './steps/step-name-handle'
 import { StepLocation } from './steps/step-location'
@@ -162,9 +163,12 @@ export default function OnboardingPage() {
   if (showCelebration) {
     return (
       <StepCelebration
-        onContinue={() =>
-          navigate(isLeaderAfterComplete.current ? '/leader-welcome' : '/', { replace: true })
-        }
+        onContinue={() => {
+          // An Eventbrite-migration invitee who just signed up resumes their
+          // campout claim ahead of the normal landing.
+          const pendingClaim = takePendingClaim()
+          navigate(pendingClaim ?? (isLeaderAfterComplete.current ? '/leader-welcome' : '/'), { replace: true })
+        }}
       />
     )
   }

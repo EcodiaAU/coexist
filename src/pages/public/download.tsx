@@ -1,32 +1,14 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { TreePine, Globe, Shield, Heart, Users, MapPin, Calendar } from 'lucide-react'
-import { Capacitor } from '@capacitor/core'
 import { cn } from '@/lib/cn'
 import { OGMeta } from '@/components/og-meta'
-import { APP_NAME, TAGLINE, WEBSITE_URL, INSTAGRAM_URL } from '@/lib/constants'
+import { APP_NAME, WEBSITE_URL, INSTAGRAM_URL } from '@/lib/constants'
 import { WebFooter } from '@/components/web-footer'
 import { useNationalImpact } from '@/hooks/use-impact'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
+import { getDevicePlatform, APP_STORE_URL, PLAY_STORE_URL } from '@/lib/device-platform'
 
-/* ------------------------------------------------------------------ */
-/*  Platform detection                                                 */
-/* ------------------------------------------------------------------ */
-
-function getDevicePlatform(): 'ios' | 'android' | 'web' {
-  if (typeof window === 'undefined') return 'web'
-  if (Capacitor.isNativePlatform()) {
-    return Capacitor.getPlatform() as 'ios' | 'android'
-  }
-  const ua = navigator.userAgent.toLowerCase()
-  if (/iphone|ipad|ipod/.test(ua)) return 'ios'
-  if (/android/.test(ua)) return 'android'
-  return 'web'
-}
-
-const APP_STORE_URL = 'https://apps.apple.com/au/app/co-exist/id6760897574'
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=org.coexistaus.app&hl=en'
 const WEB_APP_URL = '/'
 
 /* ------------------------------------------------------------------ */
@@ -124,31 +106,6 @@ function FeatureCard({ icon: Icon, title, desc, accent }: {
 }
 
 /* ------------------------------------------------------------------ */
-/*  App icon with fallback                                             */
-/* ------------------------------------------------------------------ */
-
-function AppIcon() {
-  const [imgFailed, setImgFailed] = useState(false)
-
-  if (imgFailed) {
-    return (
-      <div className="w-14 h-14 rounded-sm bg-moss-600 flex items-center justify-center">
-        <TreePine size={28} className="text-white" />
-      </div>
-    )
-  }
-
-  return (
-    <img
-      src="/logos/icon.webp"
-      alt={APP_NAME}
-      className="w-14 h-14 rounded-sm"
-      onError={() => setImgFailed(true)}
-    />
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -212,17 +169,13 @@ export default function DownloadPage() {
           initial="hidden"
           animate="visible"
         >
-          {/* App icon */}
-          <motion.div variants={fadeUp} className="mx-auto mb-5">
-            <div className="w-20 h-20 rounded-[22px] bg-white shadow-sm flex items-center justify-center mx-auto">
-              <AppIcon />
-            </div>
-          </motion.div>
-
+          {/* Co-Exist white wordmark */}
           <motion.div variants={fadeUp}>
-            <h1 className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-tight text-center">
-              {APP_NAME}
-            </h1>
+            <img
+              src="/logos/white-wordmark.webp"
+              alt={APP_NAME}
+              className="mx-auto h-14 sm:h-16 w-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]"
+            />
           </motion.div>
 
           {/* ── Platform-aware download buttons ── */}
