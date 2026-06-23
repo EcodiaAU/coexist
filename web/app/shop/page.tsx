@@ -30,26 +30,26 @@ export default async function ShopPage() {
 
   return (
     <main>
-      {/* Inline hero: object-position shifted lower, left-anchored flat-black scrim for subtitle legibility */}
-      <section className="film-cover relative isolate flex min-h-[72vh] items-end overflow-hidden lg:min-h-[82vh]">
+      {/* Hero: centred title, soft foot-blur + paper texture (matches PageHeader) */}
+      <section className="film-cover relative isolate flex min-h-[72vh] items-center justify-center overflow-hidden lg:min-h-[82vh]">
         <ParallaxImage
           src="/images/collective.webp"
           priority
           blurDataURL={BLUR['/images/collective.webp']}
           className="object-[50%_75%]"
         />
+        <div className="hero-blur absolute inset-0 z-0" />
+        <div className="paper-texture absolute inset-0 z-0" />
         <div className="grain-layer absolute inset-0 z-0" />
-        {/* Left-anchored flat-black gradient scrim to lift text off bright grass */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
-        <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-14 pt-40 sm:pb-20">
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-6 py-32 text-center">
           <h1
-            className="display-tight mt-4 max-w-4xl text-[3.25rem] leading-[0.92] text-oncream sm:text-7xl"
+            className="display-tight mx-auto mt-4 max-w-4xl text-[3.25rem] leading-[0.92] text-oncream sm:text-7xl"
             style={{ textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}
           >
             Merch
           </h1>
           <p
-            className="mt-5 max-w-md text-[15px] leading-relaxed text-oncream/85"
+            className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-oncream/85"
             style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}
           >
             Natural, durable Co-Exist gear. Every purchase puts young people back into nature. Checkout in seconds, no account needed.
