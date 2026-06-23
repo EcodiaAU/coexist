@@ -198,7 +198,7 @@ function ShopHero({
           ref={rm ? undefined : textRef}
           className="absolute inset-x-0 top-[8%] sm:top-[7%] z-[2] flex justify-center will-change-transform"
         >
-          <h1 style={{ fontSize: 'clamp(2.25rem, 6.5vw, 4.75rem)' }} className="font-heading font-bold text-[#fff] tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]">
+          <h1 className="font-heading text-[2.5rem] sm:text-[3.5rem] lg:text-[5rem] font-bold uppercase text-white leading-[0.85] tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]">
             Shop
           </h1>
         </div>
@@ -350,7 +350,7 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-2">
-        <h2 className="text-[11px] uppercase tracking-[0.15em] font-bold text-neutral-400">{title}</h2>
+        <h2 className="text-[11px] uppercase tracking-widest font-bold text-neutral-400">{title}</h2>
       </div>
       {action && (
         <button
