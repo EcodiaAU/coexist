@@ -10,6 +10,7 @@ import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
 import { OGMeta, SITE_URL } from '@/components/og-meta'
 import { APP_NAME } from '@/lib/constants'
+import { isEventSoldOut } from '@/lib/event-sold-out'
 import { formatTime } from '@/lib/date-format'
 import { WebFooter } from '@/components/web-footer'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
@@ -59,6 +60,8 @@ export default function PublicEventPage() {
 
   // Guest ticket purchase (no account needed) for public ticketed events.
   const isTicketed = !!(event as { is_ticketed?: boolean } | undefined)?.is_ticketed
+  // Sold out externally (e.g. Eventbrite): close native guest sales.
+  const soldOut = isEventSoldOut(event)
   const { data: ticketTypes } = useQuery({
     queryKey: ['public-event-tickets', id],
     queryFn: async () => {
@@ -291,8 +294,26 @@ export default function PublicEventPage() {
           </motion.div>
         )}
 
+        {/* Sold out (e.g. on Eventbrite): native guest sales closed. */}
+        {isTicketed && soldOut && (
+          <motion.div
+            variants={shouldReduceMotion ? undefined : fadeUp}
+            className="mt-8 rounded-md border border-neutral-200 bg-neutral-50 p-5"
+          >
+            <div className="flex items-center gap-2">
+              <Ticket size={18} className="text-neutral-400" />
+              <h2 className="font-heading text-lg font-semibold text-neutral-900">Sold out</h2>
+            </div>
+            <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
+              Tickets for this campout have sold out. If you booked through Eventbrite, use the
+              claim link from your confirmation email to grab your free app ticket and join the
+              group chat.
+            </p>
+          </motion.div>
+        )}
+
         {/* Guest ticket purchase (no account required) */}
-        {isTicketed && activeType && (
+        {isTicketed && !soldOut && activeType && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
             className="mt-8 rounded-md border border-neutral-100 bg-white p-5 shadow-sm"

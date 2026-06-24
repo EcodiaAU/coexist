@@ -82,6 +82,7 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { attendeeName } from '@/lib/attendee-name'
 import { parseLocationPoint } from '@/lib/geo'
+import { isEventSoldOut } from '@/lib/event-sold-out'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useGeocodeAddress } from '@/hooks/use-geocode-address'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
@@ -373,6 +374,9 @@ export default function EventDetailPage() {
 
   // Ticketed events
   const isTicketed = event?.is_ticketed ?? false
+  // Sold out on an external platform (e.g. Eventbrite): native in-app sales are
+  // closed, but the per-event claim link still works (it bypasses capacity).
+  const soldOut = isEventSoldOut(event)
   const { data: ticketTypes } = useEventTicketTypes(isTicketed ? id : undefined)
   const { data: myTicket } = useMyEventTicket(isTicketed ? id : undefined)
   const ticketCheckout = useCreateTicketCheckout()
@@ -896,6 +900,25 @@ export default function EventDetailPage() {
               >
                 {isStale ? 'Clear & Try Again' : 'Cancel'}
               </Button>
+            </div>
+          </div>
+        )
+      }
+
+      // Sold out (e.g. on Eventbrite): close native sales. Eventbrite buyers
+      // still get in via their claim link (it bypasses this entirely), and any
+      // already-confirmed/pending holder is handled by the branches above.
+      if (soldOut) {
+        return (
+          <div className="flex items-start gap-2.5 px-5 py-4 rounded-md bg-neutral-50 text-neutral-700 text-sm border border-neutral-200">
+            <Ticket size={18} className="mt-0.5 shrink-0 text-neutral-400" />
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-neutral-900">Sold out</p>
+              <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                Tickets for this campout have sold out. If you booked through Eventbrite,
+                use the claim link from your confirmation email to grab your free app ticket
+                and join the group chat.
+              </p>
             </div>
           </div>
         )
