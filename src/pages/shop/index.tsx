@@ -198,7 +198,7 @@ function ShopHero({
           ref={rm ? undefined : textRef}
           className="absolute inset-x-0 top-[8%] sm:top-[7%] z-[2] flex justify-center will-change-transform"
         >
-          <h1 className="font-heading text-[2.5rem] sm:text-[3.5rem] lg:text-[5rem] font-bold uppercase text-white leading-[0.85] tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]">
+          <h1 className="font-heading text-[3.75rem] sm:text-[5.25rem] lg:text-[7rem] font-bold uppercase text-white leading-[0.85] tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]">
             Shop
           </h1>
         </div>
