@@ -100,11 +100,11 @@ export function SiteFooter() {
               href="https://ecodia.au"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="the world we build next"
+              aria-label="built by Ecodia"
               style={{ fontFamily: "'EB Garamond', Georgia, 'Times New Roman', serif" }}
               className="inline-block w-fit italic text-[15px] leading-none no-underline text-oncream"
             >
-              the world we build next
+              built by Ecodia
             </a>
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
