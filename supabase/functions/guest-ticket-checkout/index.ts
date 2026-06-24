@@ -175,9 +175,13 @@ Deno.serve(async (req: Request) => {
     const successUrl = linkData.properties.action_link
 
     // ---- Stripe Checkout session ----
+    // Promo codes are enabled only on event-ticket sessions (tickets only,
+    // never donations/merch). A 100%-off code makes amount_total 0; Stripe
+    // still completes the session and the webhook confirms it.
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer_email: email,
+      allow_promotion_codes: true,
       line_items: [
         {
           price_data: {

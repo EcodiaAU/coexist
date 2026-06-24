@@ -474,10 +474,13 @@ Deno.serve(async (req: Request) => {
         const customerEmail = await getUserEmail(body.user_id)
         const unitPriceCents = ticketType.price_cents
 
-        // Create Stripe checkout session
+        // Create Stripe checkout session. Promo codes (e.g. SUPERSTAR 100%,
+        // LEGEND 50%) are enabled ONLY on event-ticket sessions, so they can be
+        // entered against tickets but never against donations or merch.
         const ticketSession = await stripe.checkout.sessions.create({
           mode: 'payment',
           customer_email: customerEmail,
+          allow_promotion_codes: true,
           line_items: [
             {
               price_data: {
