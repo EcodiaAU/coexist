@@ -38,6 +38,7 @@ import {
     WifiOff,
     RefreshCw,
     UserCheck,
+    UserPlus,
     Share2,
     Tent,
 } from 'lucide-react'
@@ -83,6 +84,9 @@ import { cn } from '@/lib/cn'
 import { attendeeName } from '@/lib/attendee-name'
 import { parseLocationPoint } from '@/lib/geo'
 import { isEventSoldOut } from '@/lib/event-sold-out'
+import { useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { IssueTicketSheet } from '@/components/issue-ticket-sheet'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useGeocodeAddress } from '@/hooks/use-geocode-address'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
@@ -235,6 +239,8 @@ function InfoChip({
 /*  Ticket Sales Section (leaders/admins only)                         */
 /* ------------------------------------------------------------------ */
 
+const LIVE_TICKET_STATUSES = ['pending', 'confirmed', 'checked_in']
+
 function TicketSalesSection({
   eventId,
   accent,
@@ -246,6 +252,50 @@ function TicketSalesSection({
 }) {
   const { data: summary } = useTicketSalesSummary(eventId)
   const { data: tickets } = useEventTickets(eventId)
+  const { isManager, isAdmin } = useAuth()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const canManageTickets = isManager || isAdmin
+
+  const [issueOpen, setIssueOpen] = useState(false)
+  const [revokingId, setRevokingId] = useState<string | null>(null)
+
+  // Count live tickets per user so duplicates (same person, >1 active ticket)
+  // can be flagged for cleanup. Tate hit this: two live tickets to one event.
+  const liveCountByUser = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const t of tickets ?? []) {
+      if (LIVE_TICKET_STATUSES.includes(t.status as string)) {
+        m.set(t.user_id as string, (m.get(t.user_id as string) ?? 0) + 1)
+      }
+    }
+    return m
+  }, [tickets])
+
+  function refreshTickets() {
+    queryClient.invalidateQueries({ queryKey: ['admin-event-tickets', eventId] })
+    queryClient.invalidateQueries({ queryKey: ['ticket-sales-summary', eventId] })
+    queryClient.invalidateQueries({ queryKey: ['event-ticket-types', eventId] })
+  }
+
+  async function handleRevoke(ticketId: string, isPaid: boolean, label: string) {
+    const verb = isPaid ? 'Refund and remove' : 'Remove'
+    if (!window.confirm(`${verb} ${label}'s ticket?${isPaid ? ' This refunds their payment in Stripe.' : ''}`)) return
+    setRevokingId(ticketId)
+    try {
+      const { data, error } = await supabase.functions.invoke('revoke-event-ticket', {
+        body: { ticket_id: ticketId },
+      })
+      const result = (data ?? {}) as { ok?: boolean; action?: string; error?: string }
+      if (error || result.error) throw new Error(result.error || error?.message || 'Could not remove the ticket')
+      toast.success(result.action === 'refunded' ? 'Ticket refunded and removed' : 'Ticket removed')
+      refreshTickets()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not remove the ticket')
+    } finally {
+      setRevokingId(null)
+    }
+  }
 
   if (!summary) return null
 
@@ -261,6 +311,16 @@ function TicketSalesSection({
           <Ticket size={14} className={accent.text} />
         </div>
         <h3 className="text-sm font-bold text-neutral-900">Ticket Sales</h3>
+        {canManageTickets && (
+          <button
+            type="button"
+            onClick={() => setIssueOpen(true)}
+            className={cn('ml-auto flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-sm', accent.bg, accent.text)}
+          >
+            <UserPlus size={13} />
+            Issue ticket
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -278,18 +338,25 @@ function TicketSalesSection({
         </div>
       </div>
 
-      {/* Recent ticket holders */}
+      {/* Ticket holders */}
       {tickets && tickets.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Ticket Holders</p>
-          <div className="max-h-[180px] overflow-y-auto space-y-1">
-            {tickets.slice(0, 20).map((t) => {
+          <div className="max-h-[260px] overflow-y-auto space-y-1">
+            {tickets.map((t) => {
               const profile = t.profiles as unknown as { display_name: string; first_name: string | null; last_name: string | null; email: string } | null
+              const label = attendeeName(profile, profile?.email ?? 'Unknown')
+              const isLive = LIVE_TICKET_STATUSES.includes(t.status as string)
+              const isDuplicate = isLive && (liveCountByUser.get(t.user_id as string) ?? 0) > 1
+              const isPaid = !!(t as { stripe_payment_intent_id?: string | null }).stripe_payment_intent_id && (t.price_cents ?? 0) > 0
               return (
                 <div key={t.id} className="flex items-center gap-2.5 py-1.5 px-2 rounded-sm hover:bg-neutral-50">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-neutral-800 truncate">
-                      {attendeeName(profile, profile?.email ?? 'Unknown')}
+                    <p className="text-xs font-medium text-neutral-800 truncate flex items-center gap-1.5">
+                      {label}
+                      {isDuplicate && (
+                        <span className="text-[8px] font-bold px-1 py-0.5 rounded-full bg-warning-100 text-warning-700 uppercase">Dupe</span>
+                      )}
                     </p>
                     <p className="text-[10px] text-neutral-400">
                       {(t.event_ticket_types as unknown as { name: string } | null)?.name ?? ''} · ${((t.price_cents ?? 0) / 100).toFixed(2)}
@@ -304,14 +371,31 @@ function TicketSalesSection({
                   )}>
                     {t.status === 'checked_in' ? 'In' : t.status}
                   </span>
-                  {t.ticket_code && (
-                    <span className="font-mono text-[9px] text-neutral-300">{t.ticket_code}</span>
+                  {canManageTickets && isLive && (
+                    <button
+                      type="button"
+                      disabled={revokingId === t.id}
+                      onClick={() => handleRevoke(t.id, isPaid, label)}
+                      title={isPaid ? 'Refund and remove ticket' : 'Remove ticket'}
+                      className="text-neutral-300 hover:text-error-500 disabled:opacity-40 transition-colors p-1"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   )}
                 </div>
               )
             })}
           </div>
         </div>
+      )}
+
+      {canManageTickets && (
+        <IssueTicketSheet
+          eventId={eventId}
+          open={issueOpen}
+          onClose={() => setIssueOpen(false)}
+          onSuccess={refreshTickets}
+        />
       )}
     </motion.div>
   )
@@ -915,9 +999,8 @@ export default function EventDetailPage() {
             <div className="flex-1 min-w-0">
               <p className="font-bold text-neutral-900">Sold out</p>
               <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-                Tickets for this campout have sold out. If you booked through Eventbrite,
-                use the claim link from your confirmation email to grab your free app ticket
-                and join the group chat.
+                Tickets for this campout have sold out. If the organisers sent you a claim
+                link, open it to grab your free app ticket and join the group chat.
               </p>
             </div>
           </div>
