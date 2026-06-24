@@ -192,11 +192,12 @@ function ShopHero({
         </div>
 
 
-        {/* Hero text - behind the people so they pass in front. Sits high in
-            the sky above their heads so it stays clear of the foreground. */}
+        {/* Hero text - behind the people so they pass in front. Sits in the
+            sky above their heads. top matched to the Donate hero (20%/16%) so
+            the three hero titles share a vertical anchor. */}
         <div
           ref={rm ? undefined : textRef}
-          className="absolute inset-x-0 top-[8%] sm:top-[7%] z-[2] flex justify-center will-change-transform"
+          className="absolute inset-x-0 top-[20%] sm:top-[16%] z-[2] flex justify-center will-change-transform"
         >
           {/* span+role=heading, not <h1>: the global unlayered `h1` rule in
               globals.css clamps font-size to var(--text-h1) and beats the
