@@ -305,9 +305,8 @@ export default function PublicEventPage() {
               <h2 className="font-heading text-lg font-semibold text-neutral-900">Sold out</h2>
             </div>
             <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
-              Tickets for this campout have sold out. If you booked through Eventbrite, use the
-              claim link from your confirmation email to grab your free app ticket and join the
-              group chat.
+              Tickets for this campout have sold out. If the organisers sent you a claim link,
+              open it to grab your free app ticket and join the group chat.
             </p>
           </motion.div>
         )}

@@ -136,6 +136,16 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Too many checkout attempts. Please try again later.' }, 429)
     }
 
+    // ---- Block a second live ticket for the same person (duplicate guard) ----
+    const { data: dupTicket } = await supabase
+      .from('event_tickets')
+      .select('id')
+      .eq('event_id', body.event_id)
+      .eq('user_id', userId)
+      .in('status', ['confirmed', 'checked_in'])
+      .maybeSingle()
+    if (dupTicket) return json({ error: 'You already have a ticket for this event' }, 409)
+
     // ---- Reserve the ticket (same atomic rpc the authed flow uses) ----
     const { data: ticketId, error: reserveErr } = await supabase.rpc('reserve_event_ticket', {
       p_event_id: body.event_id,
