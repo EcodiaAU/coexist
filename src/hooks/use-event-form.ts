@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { useCamera } from '@/hooks/use-camera'
 import { useImageUpload } from '@/hooks/use-image-upload'
 import { useToast } from '@/components/toast'
-import { wallClockNow } from '@/lib/date-format'
+import { wallClockNow, wallClockNextHour } from '@/lib/date-format'
 import type { Database } from '@/types/database.types'
 
 function clampPercent(n: number): number {
@@ -99,11 +99,16 @@ export interface UseEventFormOptions {
   initial?: Partial<EventFormFields>
 }
 
-export function useEventForm({ initial }: UseEventFormOptions) {
-  const [fields, setFields] = useState<EventFormFields>({
+export function useEventForm({ mode, initial }: UseEventFormOptions) {
+  const [fields, setFields] = useState<EventFormFields>(() => ({
     ...INITIAL_FORM_FIELDS,
+    // Create mode seeds the start time to the next whole hour (minutes
+    // :00) so the native time spinner opens on a round time instead of
+    // the current minute (Jess 2026-06-24). Edit mode passes the real
+    // event start in `initial`, which overrides this.
+    ...(mode === 'create' ? { date_start: wallClockNextHour() } : {}),
     ...initial,
-  })
+  }))
   const { toast } = useToast()
 
   const updateFields = useCallback((updates: Partial<EventFormFields>) => {
@@ -114,9 +119,16 @@ export function useEventForm({ initial }: UseEventFormOptions) {
     setFields((prev) => ({ ...prev, extras: { ...prev.extras, ...updates } }))
   }, [])
 
-  const resetFields = useCallback((values: Partial<EventFormFields>) => {
-    setFields({ ...INITIAL_FORM_FIELDS, ...values })
-  }, [])
+  const resetFields = useCallback(
+    (values: Partial<EventFormFields>) => {
+      setFields({
+        ...INITIAL_FORM_FIELDS,
+        ...(mode === 'create' ? { date_start: wallClockNextHour() } : {}),
+        ...values,
+      })
+    },
+    [mode],
+  )
 
   /* Cover image upload helpers */
   const { capture, pickFromGallery, loading: cameraLoading } = useCamera()
