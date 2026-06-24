@@ -198,9 +198,13 @@ function ShopHero({
           ref={rm ? undefined : textRef}
           className="absolute inset-x-0 top-[8%] sm:top-[7%] z-[2] flex justify-center will-change-transform"
         >
-          <h1 className="font-heading text-[3.75rem] sm:text-[5.25rem] lg:text-[7rem] font-bold uppercase text-white leading-[0.85] tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]">
+          {/* span+role=heading, not <h1>: the global unlayered `h1` rule in
+              globals.css clamps font-size to var(--text-h1) and beats the
+              Tailwind size utilities. Donate/Explore heroes use the same span
+              pattern for exactly this reason. */}
+          <span role="heading" aria-level={1} className="font-heading text-[2.5rem] sm:text-[3.5rem] lg:text-[5rem] font-bold uppercase text-white leading-[0.85] tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)] block">
             Shop
-          </h1>
+          </span>
         </div>
       </div>
 
