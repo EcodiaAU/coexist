@@ -24,7 +24,7 @@ const SUPPORT = [
 
 const COEXIST = [
   { label: 'About', href: '/about' },
-  { label: 'News', href: '/news' },
+  { label: 'Download the app', href: '/get-involved/download' },
   { label: 'Contact', href: '/contact' },
   { label: 'Open the app', href: APP_URL, external: true },
 ]

@@ -15,14 +15,6 @@ export interface RosterGroup {
 
 export const TEAM_ROSTER: RosterGroup[] = [
   {
-    label: 'Board',
-    members: [
-      { name: 'Eliot Sanger', role: 'Chair' },
-      { name: 'Nerida Bradley', role: 'Secretary' },
-      { name: 'James Hattam', role: 'Board Member' },
-    ],
-  },
-  {
     label: 'Team',
     members: [
       { name: 'Kurt Jones', role: 'Founder & CEO' },
@@ -58,6 +50,14 @@ export const TEAM_ROSTER: RosterGroup[] = [
       { name: 'Emilie Corkeron', role: 'Assistant Leader' },
       { name: 'Star Bright', role: 'Assistant Leader' },
       { name: 'Madisen Coelho', role: 'Assistant Leader' },
+    ],
+  },
+  {
+    label: 'Board',
+    members: [
+      { name: 'Eliot Sanger', role: 'Chair' },
+      { name: 'Nerida Bradley', role: 'Secretary' },
+      { name: 'James Hattam', role: 'Board Member' },
     ],
   },
   {

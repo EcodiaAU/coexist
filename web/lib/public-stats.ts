@@ -6,6 +6,7 @@ import {
   BASELINE_ATTENDEES,
   BASELINE_RUBBISH_KG,
   BASELINE_TREES,
+  BASELINE_EVENTS,
 } from '@shared/impact-core'
 import { sumMetric } from '@shared/impact-metrics'
 
@@ -33,7 +34,8 @@ export async function getPublicImpactStats(): Promise<PublicImpactStats> {
   const supabase = getServerSupabase()
   const now = new Date().toISOString()
 
-  const [live, legacy, collectivesRes, eventsRes] = await Promise.all([
+  const baselineIso = new Date('2026-01-01').toISOString()
+  const [live, legacy, collectivesRes, eventsRes, legacyEventsRes] = await Promise.all([
     // post-baseline live rows (national, unweighted)
     fetchImpactRows(supabase, { timeRange: 'all-time' }),
     // all non-legacy-excluded rows incl pre-baseline, to compute legacy sums
@@ -43,11 +45,17 @@ export async function getPublicImpactStats(): Promise<PublicImpactStats> {
       .select('id', { count: 'exact', head: true })
       .eq('is_active', true)
       .neq('is_national', true),
+    // post-baseline past events (live meetup count)
     supabase
       .from('events')
       .select('id', { count: 'exact', head: true })
       .lt('date_start', now)
-      .gte('date_start', new Date('2026-01-01').toISOString()),
+      .gte('date_start', baselineIso),
+    // pre-baseline past events (rows that exist before 2026) - the legacy count
+    supabase
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .lt('date_start', baselineIso),
   ])
 
   const liveTrees = sumMetric(live.rows, 'trees_planted')
@@ -73,6 +81,10 @@ export async function getPublicImpactStats(): Promise<PublicImpactStats> {
     rubbishKg: Math.round(
       applyBaselineRemainder(liveRubbish, legacyRubbish, BASELINE_RUBBISH_KG, true),
     ),
-    events: eventsRes.count ?? 0,
+    // Meetups: baseline-inclusive like every other metric (the app's /impact
+    // dashboard shows ~480, not the bare post-2026 count). Pre-2026 meetups are
+    // captured by BASELINE_EVENTS (340); the helper avoids double-counting any
+    // pre-2026 event rows that already exist.
+    events: applyBaselineRemainder(eventsRes.count ?? 0, legacyEventsRes.count ?? 0, BASELINE_EVENTS, true),
   }
 }

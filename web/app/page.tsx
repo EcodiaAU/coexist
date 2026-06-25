@@ -2,7 +2,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getPublicImpactStats, type PublicImpactStats } from '@/lib/public-stats'
 import { getSiteContent, getPartners } from '@/lib/queries'
-import { WordSwap } from '@/components/word-swap'
 import { Reveal } from '@/components/reveal'
 import { ParallaxImage } from '@/components/parallax-image'
 import { BLUR } from '@/lib/blur'
@@ -31,28 +30,36 @@ export default async function HomePage() {
   const [stats, content, partners] = await Promise.all([loadStats(), getSiteContent(), getPartners()])
   const heroTitle = content.home_hero_title || 'Explore. Connect. Protect.'
   const heroSubtitle =
-    content.home_hero_subtitle || 'Young people gathering to preserve and protect their local environment.'
-  const founderQuote =
-    content.founder_quote ||
-    'Imagine if we had a collective in every major town. Think of the amount of waste we could be cleaning. Large scale social and environmental impact. It is possible.'
-  const founderName = content.founder_name || 'Kurt Jones, Founder & CEO'
+    content.home_hero_subtitle ||
+    'Young people gathering to preserve and protect their local environment.'
 
   const tiles = [
     { value: fmt(stats.rubbishKg), unit: 'kg', label: 'Litter removed' },
-    { value: fmt(stats.plants), unit: '', label: 'Trees planted' },
-    { value: fmt(stats.collectives), unit: '', label: 'Collectives' },
+    { value: fmt(stats.plants), unit: '', label: 'Natives planted' },
+    { value: fmt(stats.collectives), unit: '', label: 'Collectives across Australia' },
     { value: fmt(stats.volunteers), unit: '', label: 'Young volunteers' },
+    { value: fmt(stats.events), unit: '', label: 'Meetups' },
   ]
+
+  // Partner band: drop Bloomberg + GreenCollar; all funders in one row at full
+  // opacity, with VFFF ordered into the middle.
+  const visiblePartners = partners.filter((p) => !/bloomberg|greencollar/i.test(p.name))
+  const vfff = visiblePartners.find((p) => /vincent fairfax|vfff/i.test(p.name))
+  const restPartners = visiblePartners.filter((p) => p !== vfff)
+  const partnerMid = Math.floor(restPartners.length / 2)
+  const orderedPartners = vfff
+    ? [...restPartners.slice(0, partnerMid), vfff, ...restPartners.slice(partnerMid)]
+    : visiblePartners
 
   return (
     <main>
-      {/* Hero with stats overlaid at the foot of the image */}
-      <section className="relative isolate flex min-h-[90vh] flex-col overflow-hidden">
+      {/* Hero - parallax retained, content mirrors coexistaus.org (clean: title + subtitle + CTAs) */}
+      <section className="relative isolate flex min-h-[90vh] flex-col items-center justify-center overflow-hidden">
         <ParallaxImage src="/images/hero.webp" priority blurDataURL={BLUR['/images/hero.webp']} />
         <div className="grain-layer absolute inset-0 z-0" />
         <div className="absolute inset-0 z-0 bg-black/25" />
 
-        <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 pt-28 pb-10 text-center">
+        <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-6 py-32 text-center">
           <p className="eyebrow text-oncream/70">Co-Exist Australia</p>
           <h1 className="display-tight mx-auto mt-6 max-w-4xl text-[3.6rem] leading-[0.92] text-oncream sm:text-[7.5rem]">{heroTitle}</h1>
           <p className="mx-auto mt-7 max-w-md text-base text-oncream/85">{heroSubtitle}</p>
@@ -65,49 +72,71 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-6xl border-t border-oncream/15 px-6 pt-9 pb-28 lg:pb-36">
-          <div className="grid grid-cols-2 gap-y-7 sm:grid-cols-4">
-            {tiles.map((t, i) => (
-              <div key={t.label} className={i > 0 ? 'border-l border-oncream/12 pl-6 sm:pl-8' : ''}>
-                <div className="text-[3.25rem] font-normal leading-none tracking-[-0.06em] text-oncream tabular-nums">
-                  {t.value}
-                  {t.unit && <span className="text-2xl">{t.unit}</span>}
-                </div>
-                <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-oncream/55">{t.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
 
-      {/* About - full-bleed image half (people in nature, not a face) */}
-      <section className="grid items-stretch bg-white md:grid-cols-2">
-        <Reveal className="relative order-1 min-h-[72vh] overflow-hidden md:order-2">
-          <Image src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/nature.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
-          <div className="absolute inset-0 bg-olive-900/15 mix-blend-multiply" />
-          <div className="grain-layer absolute inset-0" />
+      {/* About Co-Exist - copy mirrors coexistaus.org; Australia map on the LEFT for laptops */}
+      <section className="grid items-center bg-white md:grid-cols-2">
+        <Reveal className="order-1 flex items-center justify-center px-6 py-14 md:order-1 md:py-24">
+          <Image src="/images/map.webp" alt="Map of Co-Exist collectives across Australia" width={520} height={620} className="h-auto w-full max-w-md object-contain" />
         </Reveal>
-        <div className="order-2 flex items-center px-6 py-32 md:order-1 md:px-16">
-          <Reveal className="max-w-md">
+        <div className="order-2 flex items-center px-6 py-16 md:order-2 md:px-16 md:py-24">
+          <Reveal className="max-w-xl">
             <p className="eyebrow text-primary-600">The movement</p>
-            <h2 className="has-mark mt-5 text-4xl text-neutral-900 sm:text-5xl">
-              Young Australians taking the lead on
-              <span className="mt-2 block"><WordSwap words={['conservation', 'climate action', 'their communities']} /></span>
-            </h2>
-            <p className="mt-6 text-[15px] leading-relaxed text-neutral-500">
-              Founder Kurt Jones started Co-Exist in 2022 after the outdoors gave him direction as a
-              kid. The idea was simple: give young people a real job to do in nature, and a community
-              to do it with.
+            <h2 className="mt-5 text-4xl text-neutral-900 sm:text-5xl">About Co-Exist</h2>
+            <p className="mt-6 text-[15px] leading-relaxed text-neutral-600">
+              Co-Exist is a nationwide movement of young people driving positive change. We come
+              together to connect with each other, explore our wild places, and most importantly
+              protect and preserve our natural environment. Co-Exist empowers young Australians to
+              build friendships, learn new skills, and lead local conservation projects together.
             </p>
-            <Link href="/about" className="mt-7 inline-block text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 transition-colors hover:text-primary-900">
-              Read our story →
+            <p className="mt-4 text-[15px] leading-relaxed text-neutral-600">
+              Our founder, Kurt Jones, realised the importance of connecting with nature for mental
+              health through his experiences in community conservation. He was inspired to create
+              outdoor volunteering and conservation opportunities for other young people.
+            </p>
+            <p className="mt-4 text-[15px] leading-relaxed text-neutral-600">
+              By building collectives across Australia, we are empowering the next generation of
+              nature lovers to get involved in community conservation at a grassroots level. Are you
+              up for the challenge?
+            </p>
+            <Link href="/about" className="mt-7 inline-block rounded-full bg-black px-7 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-white transition-all duration-300 hover:px-9">
+              Tell me more
             </Link>
           </Reveal>
         </div>
       </section>
 
-      {/* What's a collective - full-bleed image half */}
+      {/* Imagine what we could achieve together - impact stats (dedicated section, mirrors original) */}
+      <section className="bg-olive-800 text-oncream">
+        <div className="mx-auto max-w-6xl px-6 py-24 text-center">
+          <Reveal>
+            <h2 className="display-tight mx-auto max-w-3xl text-[2.5rem] leading-[1.02] text-oncream sm:text-6xl">
+              Imagine what we could achieve together
+            </h2>
+            <p className="mx-auto mt-7 max-w-2xl text-[15px] leading-relaxed text-oncream/80">
+              Our collectives create long-term impact through leadership, connection and action.
+              Whether it is a beach cleanup or a tree-planting event, our community loves getting
+              hands-on with likeminded people and seeing the hard work pay off.
+            </p>
+            <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] text-oncream/55">
+              Here is what we have achieved so far
+            </p>
+          </Reveal>
+          <div className="mt-12 grid grid-cols-2 gap-y-10 sm:grid-cols-5">
+            {tiles.map((t, i) => (
+              <Reveal key={t.label} delay={i * 80} className={`text-center ${i > 0 ? 'sm:border-l sm:border-oncream/15' : ''}`}>
+                <div className="text-[3.25rem] font-semibold leading-none tracking-[-0.06em] text-oncream tabular-nums">
+                  {t.value}
+                  {t.unit && <span className="text-2xl">{t.unit}</span>}
+                </div>
+                <div className="mx-auto mt-2 max-w-[12ch] text-[11px] font-semibold uppercase tracking-[0.18em] text-oncream/70">{t.label}</div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* What's a Collective? - mirrors original copy + activity list */}
       <section className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal className="relative order-1 min-h-[56vh] overflow-hidden">
           <Image src="/images/gather.webp" alt="A local Co-Exist collective gathering" fill sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/gather.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
@@ -116,69 +145,38 @@ export default async function HomePage() {
         </Reveal>
         <div className="order-2 flex items-center px-6 py-24 md:px-16">
           <Reveal className="max-w-md">
-            <p className="eyebrow text-primary-600">What is a collective?</p>
-            <h2 className="has-mark mt-5 text-4xl text-neutral-900 sm:text-5xl">
-              Youth-led groups running
-              <span className="mt-2 block"><WordSwap words={['beach cleanups', 'tree plantings', 'nature walks']} /></span>
-            </h2>
-            <p className="mt-6 text-[15px] leading-relaxed text-neutral-500">
-              Urban landcare, beach cleanups, nature walks, conservation retreats. The idea is simple:
-              do good, feel good. Connecting people to themselves, each other, and nature.
+            <p className="eyebrow text-primary-600">Get involved</p>
+            <h2 className="mt-5 text-4xl text-neutral-900 sm:text-5xl">Join a collective</h2>
+            <p className="mt-6 text-[15px] leading-relaxed text-neutral-600">
+              Find your people and get hands-on for the places you love. Collectives are made up of,
+              and led by, young people who share a love for the natural world. Across Australia, they
+              host:
             </p>
-            <Link href="/collectives" className="mt-7 inline-block text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 transition-colors hover:text-primary-900">
-              Find a collective near you →
+            <ul className="mt-5 space-y-2.5">
+              {['Urban landcare and plantings', 'Beach and river cleanups', 'Nature walks and wildlife spotting', 'Conservation campouts and retreats'].map((item) => (
+                <li key={item} className="flex items-start gap-3 text-[15px] text-neutral-700">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-olive-700" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link href="/collectives" className="mt-8 inline-block rounded-full bg-black px-7 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-white transition-all duration-300 hover:px-9">
+              Find your people
             </Link>
           </Reveal>
         </div>
       </section>
 
-      {/* Founder quote - Kurt's photo beside the quote */}
-      <section className="bg-olive-800 text-oncream">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-[auto_1fr]">
-          <Reveal className="relative mx-auto w-44 shrink-0 overflow-hidden rounded-none sm:w-56">
-            <div className="relative aspect-[4/5]">
-              <Image src="/images/kurt.webp" alt="Kurt Jones, founder of Co-Exist" fill placeholder="blur" blurDataURL={BLUR['/images/kurt.webp']} className="object-cover" />
-              <div className="absolute inset-0 bg-olive-900/15 mix-blend-multiply" />
-              <div className="grain-layer absolute inset-0" />
-            </div>
-          </Reveal>
-          <Reveal delay={120}>
-            <blockquote className="text-[1.6rem] font-light leading-[1.25] text-oncream sm:text-[2.75rem]">&ldquo;{founderQuote}&rdquo;</blockquote>
-            <p className="label mt-7 text-sage">{founderName}</p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Partners */}
-      {partners.length > 0 && (
-        <section className="bg-cream">
-          <div className="mx-auto max-w-6xl px-6 py-10">
-            <p className="eyebrow text-center text-neutral-400">With the support of</p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
-              {partners.map((p) =>
-                p.logo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img key={p.id} src={p.logo_url} alt={p.name} className="h-8 w-auto object-contain grayscale opacity-40 transition-all duration-300 hover:grayscale-0 hover:opacity-100" />
-                ) : (
-                  <span key={p.id} className="text-[13px] font-semibold uppercase tracking-wider text-neutral-400">{p.name}</span>
-                ),
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Donate CTA - watermark */}
+      {/* Make an immediate impact - donate */}
       <section className="relative overflow-hidden bg-olive-700 text-oncream">
         <span className="watermark right-[-3%] bottom-[-8%] text-[22vw] text-oncream">Protect</span>
         <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
           <Reveal>
-            <h2 className="display-tight has-mark text-[2.75rem] text-oncream sm:text-6xl">
-              Help build communities that
-              <span className="mt-2 block"><WordSwap words={['protect nature', 'restore habitat', 'last']} /></span>
-            </h2>
-            <p className="mx-auto mt-7 max-w-md text-[15px] text-oncream/80">
-              Every contribution helps young people get outside and lead real conservation in their community.
+            <h2 className="display-tight text-[2.75rem] text-oncream sm:text-6xl">Make an immediate impact</h2>
+            <p className="mx-auto mt-7 max-w-xl text-[15px] leading-relaxed text-oncream/80">
+              If you cannot join a collective or attend an event right now, you can still help by
+              donating to Co-Exist. Funds go towards building communities, supporting mental
+              wellbeing and organising conservation events for young people.
             </p>
             <div className="mt-9 flex flex-wrap justify-center gap-3">
               <Link href="/donate" className="rounded-full bg-oncream px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-olive-900 transition-all duration-300 hover:px-10">
@@ -191,6 +189,26 @@ export default async function HomePage() {
           </Reveal>
         </div>
       </section>
+
+      {/* Supported by - all funders in one full-opacity row, VFFF in the middle */}
+      {orderedPartners.length > 0 && (
+        <section className="bg-white">
+          <div className="mx-auto max-w-6xl px-6 py-16 text-center">
+            <p className="eyebrow text-neutral-400">Supported by</p>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-x-12 gap-y-7">
+              {orderedPartners.map((p) => {
+                const isVfff = vfff && p === vfff
+                return p.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={p.id} src={p.logo_url} alt={p.name} className={`w-auto object-contain opacity-100 ${isVfff ? 'h-16 sm:h-20' : 'h-11'}`} />
+                ) : (
+                  <span key={p.id} className="text-[13px] font-semibold uppercase tracking-wider text-neutral-500">{p.name}</span>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
     </main>
   )
 }

@@ -39,3 +39,4 @@ ios/App/App/GoogleService-Info.plist
 
 # Claude Code agent worktrees
 .claude/worktrees/
+.vercel

@@ -18,6 +18,7 @@ export const NAV: NavItem[] = [
     label: 'Get Involved',
     href: '/get-involved',
     children: [
+      { label: 'Download the app', href: '/get-involved/download' },
       { label: 'Attend an event', href: '/events' },
       { label: 'Join a collective', href: '/collectives' },
       { label: 'Join our team', href: '/get-involved/team' },
@@ -25,7 +26,6 @@ export const NAV: NavItem[] = [
     ],
   },
   { label: 'About', href: '/about' },
-  { label: 'News', href: '/news' },
   { label: 'Contact', href: '/contact' },
   { label: 'Shop', href: '/shop' },
 ]
