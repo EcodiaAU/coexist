@@ -68,7 +68,7 @@ function Field({
 }
 
 const inputCls = cn(
-  'w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900',
+  'w-full rounded-sm border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900',
   'placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40',
   'focus:border-primary-400 transition-colors duration-150',
 )
@@ -282,7 +282,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                   {searchResults.map((u) => (
                     <div
                       key={u.id}
-                      className="flex items-center gap-3 px-3 py-2 bg-white rounded-xl ring-1 ring-neutral-200/60"
+                      className="flex items-center gap-3 px-3 py-2 bg-white rounded-sm ring-1 ring-neutral-200/60"
                     >
                       <Avatar src={u.avatar_url ?? undefined} name={u.display_name ?? 'User'} size="sm" />
                       <div className="flex-1 min-w-0">
@@ -433,7 +433,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
             />
           </Field>
 
-          <div className="rounded-xl border border-warning-200 bg-warning-50 p-3 space-y-3">
+          <div className="rounded-sm border border-warning-200 bg-warning-50 p-3 space-y-3">
             <div className="flex items-center gap-2">
               <AlertTriangle size={14} className="text-warning-600 shrink-0" />
               <p className="text-xs font-semibold text-warning-700 uppercase tracking-wider">

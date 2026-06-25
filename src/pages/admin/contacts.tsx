@@ -139,7 +139,7 @@ function ContactFormModal({
         <h2 className="font-heading text-lg font-semibold text-neutral-900">{isEdit ? 'Edit Contact' : 'Add Contact'}</h2>
         <button
           onClick={onClose}
-          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.93] transition-[colors,transform] duration-150 cursor-pointer"
+          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
           aria-label="Close"
         >
           <X size={20} />
@@ -196,7 +196,7 @@ function ContactFormModal({
                 type="button"
                 onClick={() => toggleState(state)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 min-h-[36px]',
+                  'px-3 py-1.5 rounded-sm text-xs font-semibold transition-colors duration-150 min-h-[36px]',
                   selectedStates.includes(state)
                     ? 'bg-primary-600 text-white shadow-sm'
                     : 'bg-neutral-50 text-neutral-500 hover:bg-neutral-100',
@@ -209,7 +209,7 @@ function ContactFormModal({
               <button
                 type="button"
                 onClick={() => setSelectedStates([])}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-neutral-400 hover:text-neutral-600 min-h-[36px]"
+                className="px-3 py-1.5 rounded-sm text-xs font-semibold text-neutral-400 hover:text-neutral-600 min-h-[36px]"
               >
                 Clear all
               </button>
@@ -360,12 +360,12 @@ export default function AdminContactsPage() {
             compact
             className="flex-1"
           />
-          <div className="flex items-center gap-0.5 rounded-xl shadow-sm bg-white p-0.5 overflow-x-auto">
+          <div className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5 overflow-x-auto">
             <button
               type="button"
               onClick={() => setCategoryFilter('')}
               className={cn(
-                'px-3 min-h-11 rounded-lg text-sm font-semibold whitespace-nowrap',
+                'px-3 min-h-11 rounded-sm text-sm font-semibold whitespace-nowrap',
                 'transition-colors duration-150 cursor-pointer select-none',
                 !categoryFilter
                   ? 'bg-neutral-100 text-neutral-900'
@@ -380,7 +380,7 @@ export default function AdminContactsPage() {
                 type="button"
                 onClick={() => setCategoryFilter(cat.id)}
                 className={cn(
-                  'px-3 min-h-11 rounded-lg text-sm font-semibold whitespace-nowrap',
+                  'px-3 min-h-11 rounded-sm text-sm font-semibold whitespace-nowrap',
                   'transition-colors duration-150 cursor-pointer select-none',
                   categoryFilter === cat.id
                     ? 'bg-neutral-100 text-neutral-900'
@@ -420,7 +420,7 @@ export default function AdminContactsPage() {
                     <div className="flex items-center gap-2.5 mb-3">
                       <span
                         className={cn(
-                          'flex items-center justify-center w-8 h-8 rounded-lg',
+                          'flex items-center justify-center w-8 h-8 rounded-sm',
                           colors.bg,
                           colors.text,
                         )}
@@ -448,7 +448,7 @@ export default function AdminContactsPage() {
                             ease: 'easeOut',
                           }}
                           className={cn(
-                            'flex items-center gap-3 p-3.5 rounded-xl bg-white shadow-sm',
+                            'flex items-center gap-3 p-3.5 rounded-sm bg-white shadow-sm',
                             'transition-colors duration-150',
                             !contact.is_active && 'opacity-50',
                           )}
@@ -506,7 +506,7 @@ export default function AdminContactsPage() {
                             <button
                               type="button"
                               onClick={() => { setEditTarget(contact); setShowForm(true) }}
-                              className="flex items-center justify-center min-w-11 min-h-11 rounded-lg text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.93] transition-[colors,transform]"
+                              className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.98] transition-[colors,transform]"
                               aria-label={`Edit ${contact.name}`}
                             >
                               <Pencil size={15} />
@@ -514,7 +514,7 @@ export default function AdminContactsPage() {
                             <button
                               type="button"
                               onClick={() => setDeleteTarget(contact)}
-                              className="flex items-center justify-center min-w-11 min-h-11 rounded-lg text-neutral-400 hover:bg-red-50 hover:text-red-500 cursor-pointer active:scale-[0.93] transition-[colors,transform]"
+                              className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-red-50 hover:text-red-500 cursor-pointer active:scale-[0.98] transition-[colors,transform]"
                               aria-label={`Delete ${contact.name}`}
                             >
                               <Trash2 size={15} />

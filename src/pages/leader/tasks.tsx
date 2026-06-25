@@ -222,7 +222,7 @@ function TaskCard({ task }: { task: MyTask }) {
     : urgency === 'today'
     ? 'bg-white border-l-4 border-l-warning-400 shadow-sm'
     : urgency === 'tomorrow'
-    ? 'bg-white border-l-4 border-l-amber-300 shadow-sm'
+    ? 'bg-white border-l-4 border-l-warning-300 shadow-sm'
     : urgency === 'soon'
     ? 'bg-white border-l-4 border-l-moss-400 shadow-sm'
     : 'bg-white shadow-sm border border-neutral-100'
@@ -231,7 +231,7 @@ function TaskCard({ task }: { task: MyTask }) {
     <motion.div
       layout={!shouldReduceMotion ? 'position' : false}
       className={cn(
-        'rounded-2xl overflow-hidden transition-all duration-200',
+        'rounded-md overflow-hidden transition-all duration-200',
         isCompleted && 'opacity-60',
         isSkipped && 'opacity-45',
         cardBg,
@@ -240,10 +240,10 @@ function TaskCard({ task }: { task: MyTask }) {
       <div className="flex items-stretch">
         {!isCompleted && !isSkipped && (
           <div className={cn(
-            'w-1.5 shrink-0 rounded-l-2xl',
+            'w-1.5 shrink-0 rounded-l-md',
             urgency === 'overdue' && 'bg-error-500',
             urgency === 'today' && 'bg-warning-500',
-            urgency === 'tomorrow' && 'bg-amber-400',
+            urgency === 'tomorrow' && 'bg-bark-400',
             urgency === 'soon' && 'bg-moss-400',
             urgency === 'normal' && 'bg-primary-300',
           )} />
@@ -273,7 +273,7 @@ function TaskCard({ task }: { task: MyTask }) {
             ) : (
               <div className={cn(
                 'w-6 h-6 rounded-full border-2 transition-colors',
-                urgency === 'today' ? 'border-warning-300' : urgency === 'tomorrow' ? 'border-amber-300' : urgency === 'soon' ? 'border-moss-300' : 'border-primary-200',
+                urgency === 'today' ? 'border-warning-300' : urgency === 'tomorrow' ? 'border-bark-300' : urgency === 'soon' ? 'border-moss-300' : 'border-primary-200',
               )} />
             )}
           </div>
@@ -360,7 +360,7 @@ function TaskCard({ task }: { task: MyTask }) {
                   href={task.template.attachment_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-neutral-50 border border-neutral-100 hover:bg-neutral-100 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-sm bg-neutral-50 border border-neutral-100 hover:bg-neutral-100 transition-colors"
                 >
                   <FileText size={18} className="text-primary-500 shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -378,7 +378,7 @@ function TaskCard({ task }: { task: MyTask }) {
                 compact
               />
               {hasSurvey && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-plum-50 border border-plum-100 mb-1">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-plum-50 border border-plum-100 mb-1">
                   <ClipboardList size={14} className="text-plum-500 shrink-0" />
                   <p className="text-[11px] text-plum-600">
                     This task includes a survey that must be completed
@@ -592,7 +592,7 @@ function ImpactFormCard({ task }: { task: ImpactFormTask }) {
     return (
       <motion.div
         layout={!shouldReduceMotion ? 'position' : false}
-        className="rounded-2xl bg-neutral-50 overflow-hidden opacity-60"
+        className="rounded-md bg-neutral-50 overflow-hidden opacity-60"
       >
         <div className="flex items-center gap-3 p-3">
           <div className="w-6 h-6 rounded-full bg-success-500 flex items-center justify-center shadow-sm shrink-0">
@@ -622,20 +622,20 @@ function ImpactFormCard({ task }: { task: ImpactFormTask }) {
     : urgency === 'today'
     ? 'bg-white border-l-4 border-l-warning-400 shadow-sm'
     : urgency === 'tomorrow'
-    ? 'bg-white border-l-4 border-l-amber-300 shadow-sm'
+    ? 'bg-white border-l-4 border-l-warning-300 shadow-sm'
     : 'bg-white border-l-4 border-l-moss-400 shadow-sm'
 
   return (
     <motion.div
       layout={!shouldReduceMotion ? 'position' : false}
-      className={cn('rounded-2xl overflow-hidden transition-all duration-200', cardBg)}
+      className={cn('rounded-md overflow-hidden transition-all duration-200', cardBg)}
     >
       <div className="flex items-stretch">
         <div className={cn(
-          'w-1.5 shrink-0 rounded-l-2xl',
+          'w-1.5 shrink-0 rounded-l-md',
           urgency === 'overdue' && 'bg-error-500',
           urgency === 'today' && 'bg-warning-500',
-          urgency === 'tomorrow' && 'bg-amber-400',
+          urgency === 'tomorrow' && 'bg-bark-400',
           urgency === 'normal' && 'bg-moss-400',
         )} />
 
@@ -646,7 +646,7 @@ function ImpactFormCard({ task }: { task: ImpactFormTask }) {
         >
           <div className="mt-0.5 shrink-0">
             <div className={cn(
-              'w-8 h-8 rounded-xl flex items-center justify-center',
+              'w-8 h-8 rounded-sm flex items-center justify-center',
               urgency === 'overdue' ? 'bg-error-100' : 'bg-moss-100',
             )}>
               <BarChart3 size={16} className={cn(
@@ -740,9 +740,9 @@ function TasksTabContent({ rm }: { rm: boolean }) {
     return (
       <div className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <Skeleton className="h-20 rounded-2xl" />
-          <Skeleton className="h-20 rounded-2xl" />
-          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-md" />
+          <Skeleton className="h-20 rounded-md" />
+          <Skeleton className="h-20 rounded-md" />
         </div>
         <Skeleton variant="list-item" count={5} />
       </div>
@@ -769,7 +769,7 @@ function TasksTabContent({ rm }: { rm: boolean }) {
           initial={rm ? undefined : { scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 350, damping: 25, mass: 0.8 }}
-          className="w-20 h-20 rounded-3xl bg-moss-50 flex items-center justify-center mb-5"
+          className="w-20 h-20 rounded-md bg-moss-50 flex items-center justify-center mb-5"
         >
           <Sparkles size={36} className="text-moss-500" />
         </motion.div>
@@ -789,7 +789,7 @@ function TasksTabContent({ rm }: { rm: boolean }) {
         variants={rm ? undefined : { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } } }}
         className="grid grid-cols-1 sm:grid-cols-2 gap-3"
       >
-        <div className="rounded-2xl bg-white border border-neutral-100 p-4 flex flex-col items-center justify-center text-center">
+        <div className="rounded-md bg-white border border-neutral-100 p-4 flex flex-col items-center justify-center text-center">
           <div className="relative w-12 h-12 mb-2">
             <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
               <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="3" className="text-moss-200/60" />
@@ -810,7 +810,7 @@ function TasksTabContent({ rm }: { rm: boolean }) {
         </div>
 
         <div className={cn(
-          'rounded-2xl p-4 flex flex-col items-center justify-center text-center',
+          'rounded-md p-4 flex flex-col items-center justify-center text-center',
           totalOverdue > 0
             ? 'bg-white border-l-4 border-l-error-400'
             : 'bg-white border border-neutral-100',
@@ -1015,7 +1015,7 @@ function TodoModal({
                   type="button"
                   onClick={() => setPriority(opt.value as TodoPriority)}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-sm cursor-pointer transition-all duration-150',
+                    'flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-sm text-sm cursor-pointer transition-all duration-150',
                     active
                       ? 'bg-neutral-100 border border-neutral-200 font-medium shadow-sm'
                       : 'bg-white border border-neutral-100 hover:bg-neutral-50 text-neutral-500',
@@ -1084,7 +1084,7 @@ function TodoItem({
       animate={{ opacity: 1, y: 0 }}
       exit={rm ? undefined : { opacity: 0, x: -20, transition: { duration: 0.15 } }}
       className={cn(
-        'group relative flex items-start gap-3 px-4 py-3.5 rounded-2xl transition-colors duration-150',
+        'group relative flex items-start gap-3 px-4 py-3.5 rounded-md transition-colors duration-150',
         completed
           ? 'bg-neutral-50'
           : overdue
@@ -1166,7 +1166,7 @@ function TodoItem({
           <button
             type="button"
             onClick={() => onEdit(todo)}
-            className="p-2 rounded-xl text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 cursor-pointer transition-colors"
+            className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 cursor-pointer transition-colors"
             title="Edit"
           >
             <Pencil size={14} />
@@ -1174,7 +1174,7 @@ function TodoItem({
           <button
             type="button"
             onClick={() => onDelete(todo.id)}
-            className="p-2 rounded-xl text-neutral-400 hover:bg-error-50 hover:text-error-600 cursor-pointer transition-colors"
+            className="p-2 rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 cursor-pointer transition-colors"
             title="Delete"
           >
             <Trash2 size={14} />
@@ -1241,7 +1241,7 @@ function CalendarView({
         <button
           type="button"
           onClick={prevMonth}
-          className="p-2 rounded-xl hover:bg-neutral-100 cursor-pointer transition-colors text-neutral-500"
+          className="p-2 rounded-sm hover:bg-neutral-100 cursor-pointer transition-colors text-neutral-500"
         >
           <ChevronLeft size={18} />
         </button>
@@ -1251,7 +1251,7 @@ function CalendarView({
         <button
           type="button"
           onClick={nextMonth}
-          className="p-2 rounded-xl hover:bg-neutral-100 cursor-pointer transition-colors text-neutral-500"
+          className="p-2 rounded-sm hover:bg-neutral-100 cursor-pointer transition-colors text-neutral-500"
         >
           <ChevronRight size={18} />
         </button>
@@ -1287,7 +1287,7 @@ function CalendarView({
                 if (!isSelected) onDateClick(key)
               }}
               className={cn(
-                'relative flex flex-col items-center justify-center py-2 rounded-xl cursor-pointer transition-all duration-150',
+                'relative flex flex-col items-center justify-center py-2 rounded-sm cursor-pointer transition-all duration-150',
                 !isCurrentMonth && 'opacity-30',
                 isSelected
                   ? 'bg-primary-700 text-white shadow-md'
@@ -1413,8 +1413,8 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
     return (
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-3">
-          <Skeleton className="h-20 rounded-2xl" />
-          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-md" />
+          <Skeleton className="h-20 rounded-md" />
         </div>
         <Skeleton variant="list-item" count={5} />
       </div>
@@ -1428,12 +1428,12 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
         variants={rm ? undefined : { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } } }}
         className="grid grid-cols-3 gap-2"
       >
-        <div className="rounded-2xl bg-white/80 backdrop-blur-sm p-3 text-center shadow-sm">
+        <div className="rounded-md bg-white/80 backdrop-blur-sm p-3 text-center shadow-sm">
           <p className="font-heading text-xl font-extrabold text-neutral-900 tabular-nums">{pendingTodos.length}</p>
           <p className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">To do</p>
         </div>
         <div className={cn(
-          'rounded-2xl p-3 text-center shadow-sm',
+          'rounded-md p-3 text-center shadow-sm',
           overdueCount > 0 ? 'bg-error-50/80' : 'bg-white/80 backdrop-blur-sm',
         )}>
           <p className={cn(
@@ -1445,7 +1445,7 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
             overdueCount > 0 ? 'text-error-400' : 'text-neutral-400',
           )}>Overdue</p>
         </div>
-        <div className="rounded-2xl bg-neutral-50 p-3 text-center shadow-sm">
+        <div className="rounded-md bg-neutral-50 p-3 text-center shadow-sm">
           <p className="font-heading text-xl font-extrabold text-moss-600 tabular-nums">{completedTodos.length}</p>
           <p className="text-[11px] font-semibold text-moss-500 uppercase tracking-wider">Done</p>
         </div>
@@ -1457,12 +1457,12 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
         className="flex items-center gap-2"
       >
         {/* View toggle */}
-        <div className="flex bg-neutral-100 rounded-xl p-0.5 shrink-0">
+        <div className="flex bg-neutral-100 rounded-sm p-0.5 shrink-0">
           <button
             type="button"
             onClick={() => setView('list')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all duration-150',
+              'flex items-center gap-1.5 px-3 py-2 rounded-sm text-xs font-medium cursor-pointer transition-all duration-150',
               view === 'list'
                 ? 'bg-white text-primary-800 shadow-sm'
                 : 'text-primary-500 hover:text-primary-700',
@@ -1475,7 +1475,7 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
             type="button"
             onClick={() => setView('calendar')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all duration-150',
+              'flex items-center gap-1.5 px-3 py-2 rounded-sm text-xs font-medium cursor-pointer transition-all duration-150',
               view === 'calendar'
                 ? 'bg-white text-primary-800 shadow-sm'
                 : 'text-primary-500 hover:text-primary-700',
@@ -1493,7 +1493,7 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
           type="button"
           onClick={() => setEditMode(!editMode)}
           className={cn(
-            'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all duration-150',
+            'flex items-center gap-1.5 px-3 py-2 rounded-sm text-xs font-medium cursor-pointer transition-all duration-150',
             editMode
               ? 'bg-primary-700 text-white shadow-sm'
               : 'bg-white text-primary-600 shadow-sm hover:bg-neutral-50',
@@ -1507,7 +1507,7 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
         <button
           type="button"
           onClick={() => setShowCreate(true)}
-          className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-700 text-white shadow-md hover:bg-primary-800 cursor-pointer transition-colors"
+          className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary-700 text-white shadow-md hover:bg-primary-800 cursor-pointer transition-colors"
         >
           <Plus size={18} />
         </button>
@@ -1526,7 +1526,7 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
                   initial={rm ? undefined : { scale: 0.85, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: 'spring', stiffness: 350, damping: 25, mass: 0.8 }}
-                  className="w-20 h-20 rounded-3xl bg-sky-50 flex items-center justify-center mb-5"
+                  className="w-20 h-20 rounded-md bg-sky-50 flex items-center justify-center mb-5"
                 >
                   <Sparkles size={36} className="text-sky-500" />
                 </motion.div>
@@ -1670,7 +1670,7 @@ export default function LeaderTasksPage() {
   return (
     <div className="relative min-h-dvh overflow-x-hidden">
       {/* Background - blends both page palettes */}
-      <div className="absolute inset-0 bg-gradient-to-b from-amber-50/50 via-white to-moss-50/15" />
+      <div className="absolute inset-0 bg-gradient-to-b from-bark-50/50 via-white to-moss-50/15" />
       <Header title="Tasks" back transparent className="absolute left-0 right-0 z-30" />
 
 
@@ -1685,16 +1685,17 @@ export default function LeaderTasksPage() {
           className="text-center pb-1"
           variants={rm ? undefined : { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } } }}
         >
-          <p className="text-xs font-semibold uppercase tracking-widest text-amber-500/80 mb-1">Stay on track</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-bark-500/80 mb-1">Stay on track</p>
           <h1 className="font-heading text-2xl font-extrabold text-primary-900">Tasks & To-Dos</h1>
         </motion.div>
 
         {/* ── Segmented toggle + page-level Add button ── */}
         <motion.div
-          className="flex items-center justify-center gap-3"
+          className="flex items-center gap-4"
           variants={rm ? undefined : { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } } }}
         >
           <SegmentedControl
+            className="flex-1"
             segments={[
               { id: 'tasks' as const, label: 'Tasks', icon: <ClipboardList size={15} /> },
               { id: 'todos' as const, label: 'My Todos', icon: <CheckCircle2 size={15} /> },
@@ -1713,7 +1714,7 @@ export default function LeaderTasksPage() {
               setShowCreate(true)
             }}
             aria-label="Add a personal to-do for yourself"
-            className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-primary-700 text-white shadow-md hover:bg-primary-800 active:scale-[0.97] cursor-pointer transition-[colors,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1"
+            className="shrink-0 flex items-center justify-center w-11 h-11 rounded-sm bg-primary-700 text-white shadow-sm hover:bg-primary-800 active:scale-[0.97] cursor-pointer transition-[colors,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1"
           >
             <Plus size={18} />
           </button>

@@ -31,12 +31,12 @@ interface SegmentedControlProps<T extends string = string> {
 
 const VARIANT_STYLES: Record<SegmentedControlVariant, { track: string; active: string; inactive: string }> = {
   filled: {
-    track: 'bg-neutral-100 rounded-xl p-1',
+    track: 'bg-neutral-100 rounded-sm p-1',
     active: 'bg-white text-primary-800 shadow-sm ring-1 ring-primary-200/40',
     inactive: 'text-neutral-500 hover:text-neutral-700 active:bg-white/50',
   },
   pill: {
-    track: 'bg-white/80 border border-neutral-200/50 rounded-2xl p-1 shadow-sm',
+    track: 'bg-white/80 border border-neutral-200/50 rounded-md p-1 shadow-sm',
     active: 'bg-primary-600 text-white shadow-sm',
     inactive: 'text-neutral-500 hover:text-neutral-700',
   },
@@ -76,7 +76,7 @@ export function SegmentedControl<T extends string = string>({
             onClick={() => onChange(seg.id)}
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5',
-              'min-h-11 rounded-xl text-sm font-semibold',
+              'min-h-11 rounded-sm text-sm font-semibold',
               'cursor-pointer select-none',
               'transition-all duration-200',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1',

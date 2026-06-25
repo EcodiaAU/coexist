@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Lock, Camera, MessageSquareHeart } from 'lucide-react'
+import { Lock, Camera, MessageSquareHeart, Tent } from 'lucide-react'
 import { ChatBubble, PollCard, AnnouncementCard, CarpoolCard } from '@/components/chat-bubble'
 import { HtmlChatBubble } from '@/components/html-chat-bubble'
 import { MessageReactions } from '@/components/message-reactions'
@@ -309,13 +309,13 @@ function InlineEventPhotos({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        'w-full max-w-[88%] min-w-0 rounded-2xl overflow-hidden bg-neutral-50 border border-neutral-200 shadow-sm',
+        'w-full max-w-[88%] min-w-0 rounded-md overflow-hidden bg-neutral-50 border border-neutral-200 shadow-sm',
         sent ? 'ml-auto' : 'mr-auto',
       )}
     >
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-50 text-primary-600">
             <Camera size={16} strokeWidth={2.4} />
           </div>
           <div className="flex-1 min-w-0">
@@ -333,7 +333,7 @@ function InlineEventPhotos({
           </p>
         )}
         {preview.length > 0 && (
-          <div className="grid grid-cols-4 gap-0.5 rounded-xl overflow-hidden mb-3">
+          <div className="grid grid-cols-4 gap-0.5 rounded-sm overflow-hidden mb-3">
             {preview.map((p, i) => (
               <div key={p.id} className="relative aspect-square bg-neutral-100">
                 {p.url && (
@@ -357,7 +357,7 @@ function InlineEventPhotos({
         <button
           type="button"
           onClick={() => navigate(`/events/${eventId}?tab=photos`)}
-          className="w-full rounded-xl bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
+          className="w-full rounded-sm bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
         >
           {photos.length === 0 ? 'Add the first photo' : 'Open album & add yours'}
         </button>
@@ -385,13 +385,13 @@ function InlineEventSurvey({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        'w-full max-w-[88%] min-w-0 rounded-2xl overflow-hidden bg-neutral-50 border border-neutral-200 shadow-sm',
+        'w-full max-w-[88%] min-w-0 rounded-md overflow-hidden bg-neutral-50 border border-neutral-200 shadow-sm',
         sent ? 'ml-auto' : 'mr-auto',
       )}
     >
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-50 text-primary-600">
             <MessageSquareHeart size={16} strokeWidth={2.4} />
           </div>
           <div className="flex-1 min-w-0">
@@ -407,7 +407,7 @@ function InlineEventSurvey({
         <button
           type="button"
           onClick={() => navigate(`/events/${eventId}/survey`)}
-          className="w-full rounded-xl bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
+          className="w-full rounded-sm bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
         >
           Share feedback
         </button>
@@ -523,6 +523,8 @@ export interface ChatMessageListProps {
   /** 'collective' or 'channel' */
   isCollective: boolean
   isChannel: boolean
+  /** Channel subtype (e.g. 'campout', 'staff_collective') when isChannel */
+  channelType?: string
   /** Messages grouped by date */
   messageGroups: { date: string; messages: AnyMessage[] }[]
   allMessages: AnyMessage[]
@@ -570,6 +572,7 @@ export interface ChatMessageListProps {
 export function ChatMessageList({
   isCollective,
   isChannel,
+  channelType,
   messageGroups,
   allMessages,
   memberRoles,
@@ -952,7 +955,7 @@ export function ChatMessageList({
         // their own breathing room.
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth px-3 py-1"
         role="log"
-        aria-label={isChannel ? 'Staff chat messages' : 'Chat messages'}
+        aria-label={isChannel ? (channelType === 'campout' ? 'Campout chat messages' : 'Staff chat messages') : 'Chat messages'}
         aria-live="polite"
       >
         {showLoading ? (
@@ -961,17 +964,31 @@ export function ChatMessageList({
           </div>
         ) : allMessages.length === 0 ? (
           isChannel ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center py-12">
-                <div className="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
-                  <Lock size={24} strokeWidth={2.5} className="text-primary-500" />
+            channelType === 'campout' ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center py-12">
+                  <div className="w-14 h-14 rounded-md bg-primary-50 flex items-center justify-center mx-auto mb-4">
+                    <Tent size={24} strokeWidth={2.5} className="text-primary-500" />
+                  </div>
+                  <p className="text-base font-bold text-neutral-900">Campout group chat</p>
+                  <p className="text-sm text-neutral-500 mt-1.5">
+                    Say hi to everyone coming to this campout
+                  </p>
                 </div>
-                <p className="text-base font-bold text-neutral-900">Staff-only chat</p>
-                <p className="text-sm text-neutral-500 mt-1.5">
-                  Messages here are only visible to staff members
-                </p>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center py-12">
+                  <div className="w-14 h-14 rounded-md bg-primary-50 flex items-center justify-center mx-auto mb-4">
+                    <Lock size={24} strokeWidth={2.5} className="text-primary-500" />
+                  </div>
+                  <p className="text-base font-bold text-neutral-900">Staff-only chat</p>
+                  <p className="text-sm text-neutral-500 mt-1.5">
+                    Messages here are only visible to staff members
+                  </p>
+                </div>
+              </div>
+            )
           ) : (
             <EmptyState
               illustration="empty"
@@ -1044,7 +1061,7 @@ export function ChatMessageList({
                           // the always-visible MessageReactions add-button
                           // row that was pushing layout down ~32px under
                           // every message.
-                          'rounded-2xl transition-shadow duration-300',
+                          'rounded-md transition-shadow duration-300',
                           isContinuation ? 'py-0.5' : 'py-1',
                           isHighlighted && 'ring-2 ring-primary-400 ring-offset-2 ring-offset-white shadow-md',
                         )}

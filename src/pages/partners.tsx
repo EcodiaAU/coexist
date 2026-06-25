@@ -80,8 +80,8 @@ function PartnersSkeleton() {
   return (
     <div className="space-y-4 pb-10">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="rounded-2xl bg-surface-0 shadow-sm p-5 flex items-start gap-4">
-          <Skeleton className="w-14 h-14 rounded-xl shrink-0" />
+        <div key={i} className="rounded-md bg-surface-0 shadow-sm p-5 flex items-start gap-4">
+          <Skeleton className="w-14 h-14 rounded-sm shrink-0" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-3/5" />
             <Skeleton className="h-3 w-full" />
@@ -102,10 +102,10 @@ function PartnersSkeleton() {
 /* ------------------------------------------------------------------ */
 
 const TYPE_GRADIENTS: Record<string, string> = {
-  corporate: 'from-primary-700 to-primary-900',
-  ngo: 'from-sprout-600 to-primary-700',
-  government: 'from-moss-700 to-primary-800',
-  community: 'from-moss-500 to-bark-600',
+  corporate: 'bg-primary-900',
+  ngo: 'bg-primary-700',
+  government: 'bg-primary-800',
+  community: 'bg-bark-600',
 }
 
 /* ------------------------------------------------------------------ */
@@ -119,7 +119,7 @@ export default function PartnersPage() {
   return (
     <Page swipeBack noBackground className="!px-0 bg-white" stickyOverlay={<Header title="" back transparent className="collapse-header" />}>
       {/* Hero - sage gradient, no circles (2026-05-16 Tate). */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-moss-700 via-primary-800 to-primary-900">
+      <div className="relative overflow-hidden bg-primary-900">
 
         <div
           className="relative z-10 px-4 sm:px-6 lg:px-8 pt-10 pb-14 text-center"
@@ -129,7 +129,7 @@ export default function PartnersPage() {
             initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 mb-4"
+            className="inline-flex items-center justify-center w-14 h-14 rounded-md bg-white/15 mb-4"
           >
             <Handshake size={28} className="text-white" />
           </motion.div>
@@ -163,7 +163,7 @@ export default function PartnersPage() {
             variants={shouldReduceMotion ? undefined : stagger}
           >
             {partners.map((partner, i) => {
-              const gradient = TYPE_GRADIENTS[partner.type ?? ''] ?? 'from-primary-600 to-primary-800'
+              const gradient = TYPE_GRADIENTS[partner.type ?? ''] ?? 'bg-primary-800'
               const useRichCard = i < 6 // first 6 get full gradient cards
 
               return (
@@ -171,7 +171,7 @@ export default function PartnersPage() {
                   key={partner.id}
                   variants={shouldReduceMotion ? undefined : fadeUp}
                   className={cn(
-                    'rounded-2xl overflow-hidden shadow-sm',
+                    'rounded-md overflow-hidden shadow-sm',
                     useRichCard
                       ? cn('bg-gradient-to-br', gradient)
                       : 'bg-surface-0 shadow-sm',
@@ -181,7 +181,7 @@ export default function PartnersPage() {
                     {/* Logo */}
                     <div
                       className={cn(
-                        'w-14 h-14 rounded-xl flex items-center justify-center shrink-0 overflow-hidden',
+                        'w-14 h-14 rounded-sm flex items-center justify-center shrink-0 overflow-hidden',
                         useRichCard ? 'bg-white/15' : 'bg-neutral-50',
                       )}
                     >

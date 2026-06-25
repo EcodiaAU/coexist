@@ -49,7 +49,7 @@ export default function AcceptTermsPage() {
         animate="visible"
       >
         <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex items-center gap-3 mb-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-neutral-50 text-neutral-400">
+          <div className="flex items-center justify-center w-12 h-12 rounded-sm bg-neutral-50 text-neutral-400">
             <FileText size={24} />
           </div>
           <div>
@@ -65,7 +65,7 @@ export default function AcceptTermsPage() {
           the updated terms to continue using Co-Exist.
         </motion.p>
 
-        <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex-1 overflow-y-auto rounded-xl border border-neutral-100 bg-white p-4 mb-4 max-h-[50vh]">
+        <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex-1 overflow-y-auto rounded-sm border border-neutral-100 bg-white p-4 mb-4 max-h-[50vh]">
           <h2 className="font-heading text-sm font-semibold text-neutral-900 mb-2">
             Summary of Changes
           </h2>

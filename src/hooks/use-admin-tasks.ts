@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import type { Database } from '@/types/database.types'
 import { supabase, escapeIlike } from '@/lib/supabase'
 
 /* ------------------------------------------------------------------ */
@@ -263,7 +264,7 @@ export function useAdminUpdateTemplate() {
     }: Partial<TaskTemplate> & { id: string }) => {
       const { data, error } = await supabase
         .from('task_templates')
-        .update(updates)
+        .update(updates as Database['public']['Tables']['task_templates']['Update'])
         .eq('id', id)
         .select('*, collectives(id, name), surveys(id, title)')
         .single()

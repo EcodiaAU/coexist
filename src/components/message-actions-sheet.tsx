@@ -47,6 +47,13 @@ interface MessageActionsProps {
    * sheet. Wired only in collective mode for non-optimistic messages.
    */
   onReact?: (emoji: ReactionEmoji) => void
+  /**
+   * Emojis the current user has already applied to this message. Used to
+   * highlight them in the react row so that "tap to remove" (unreact) is a
+   * discoverable, explicit action rather than a hidden second-tap, matching
+   * the iMessage / Slack pattern. Added 22 Jun 2026.
+   */
+  activeReactions?: string[]
 }
 
 export function MessageActionsSheet({
@@ -61,6 +68,7 @@ export function MessageActionsSheet({
   onReport,
   onBlockUser,
   onReact,
+  activeReactions,
 }: MessageActionsProps) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
@@ -125,36 +133,47 @@ export function MessageActionsSheet({
                 under every message bubble. Tapping toggles + closes. */}
             {onReact && (
               <div
-                className="mx-1 mb-2 flex items-center justify-around rounded-2xl bg-neutral-50 px-2 py-2 ring-1 ring-neutral-100"
+                className="mx-1 mb-2 flex items-center justify-around rounded-md bg-neutral-50 px-2 py-2 ring-1 ring-neutral-100"
                 role="group"
                 aria-label="React with emoji"
               >
-                {REACTION_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => {
-                      onReact(emoji)
-                      onClose()
-                    }}
-                    aria-label={`React with ${emoji}`}
-                    className={cn(
-                      'flex items-center justify-center min-h-11 min-w-11 rounded-full',
-                      'text-2xl leading-none',
-                      'hover:bg-white active:scale-[0.88]',
-                      'transition-transform duration-100 cursor-pointer select-none',
-                    )}
-                  >
-                    {emoji}
-                  </button>
-                ))}
+                {REACTION_EMOJIS.map((emoji) => {
+                  const isActive = activeReactions?.includes(emoji) ?? false
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => {
+                        onReact(emoji)
+                        onClose()
+                      }}
+                      aria-pressed={isActive}
+                      aria-label={
+                        isActive
+                          ? `Remove your ${emoji} reaction`
+                          : `React with ${emoji}`
+                      }
+                      className={cn(
+                        'flex items-center justify-center min-h-11 min-w-11 rounded-full',
+                        'text-2xl leading-none',
+                        'active:scale-[0.88]',
+                        'transition-transform duration-100 cursor-pointer select-none',
+                        isActive
+                          ? 'bg-primary-100 ring-2 ring-primary-400'
+                          : 'hover:bg-white',
+                      )}
+                    >
+                      {emoji}
+                    </button>
+                  )
+                })}
               </div>
             )}
 
             <button
               type="button"
               onClick={onReply}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+              className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
             >
               <Reply size={18} className="text-neutral-400" />
               Reply
@@ -164,7 +183,7 @@ export function MessageActionsSheet({
               <button
                 type="button"
                 onClick={onEdit}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+                className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
                 <Pencil size={18} className="text-neutral-400" />
                 Edit message
@@ -175,7 +194,7 @@ export function MessageActionsSheet({
               <button
                 type="button"
                 onClick={onPin}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+                className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
                 <Pin size={18} className="text-neutral-400" />
                 {message.is_pinned ? 'Unpin message' : 'Pin message'}
@@ -186,7 +205,7 @@ export function MessageActionsSheet({
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+                className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
                 <Trash2 size={18} />
                 Delete message
@@ -202,7 +221,7 @@ export function MessageActionsSheet({
                   <button
                     type="button"
                     onClick={onReport}
-                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-warning-700 hover:bg-warning-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+                    className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-warning-700 hover:bg-warning-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                   >
                     <Flag size={18} />
                     Report message
@@ -213,7 +232,7 @@ export function MessageActionsSheet({
                   <button
                     type="button"
                     onClick={onBlockUser}
-                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+                    className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                   >
                     <ShieldOff size={18} />
                     Block user

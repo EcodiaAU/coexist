@@ -131,7 +131,7 @@ export function UpdateRequired({
                 }
               }}
               className={cn(
-                'inline-flex items-center justify-center min-h-12 w-full px-5 rounded-2xl',
+                'inline-flex items-center justify-center min-h-12 w-full px-5 rounded-md',
                 'bg-black text-white text-sm font-semibold',
                 'active:scale-[0.98] transition-transform duration-150',
               )}
@@ -151,7 +151,7 @@ export function UpdateRequired({
                 }
               }}
               className={cn(
-                'inline-flex items-center justify-center min-h-12 w-full px-5 rounded-2xl',
+                'inline-flex items-center justify-center min-h-12 w-full px-5 rounded-md',
                 'bg-primary-500 text-white text-sm font-semibold',
                 'active:scale-[0.98] transition-transform duration-150',
               )}

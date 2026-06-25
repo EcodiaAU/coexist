@@ -46,7 +46,7 @@ export function Radio({
             htmlFor={optionId}
             className={cn(
               'flex items-start gap-3 cursor-pointer select-none',
-              'rounded-lg min-h-11 active:scale-[0.98] transition-transform duration-150',
+              'rounded-sm min-h-11 active:scale-[0.98] transition-transform duration-150',
               disabled && 'opacity-50 cursor-not-allowed',
             )}
           >

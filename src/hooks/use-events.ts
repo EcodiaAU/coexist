@@ -1806,7 +1806,7 @@ export function useInviteCollective() {
           data: { event_id: eventId },
           read: false,
         }))
-        supabase.from('notifications').insert(notifications).then(({ error: notifErr }) => {
+        supabase.from('notifications').insert(notifications as Database['public']['Tables']['notifications']['Insert'][]).then(({ error: notifErr }) => {
           if (notifErr) console.error('[invite-all] notification insert error:', notifErr)
         })
       }

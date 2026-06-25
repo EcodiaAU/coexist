@@ -83,7 +83,7 @@ export function QuizQuestionCard({
           <img
             src={question.image_url}
             alt="Question illustration"
-            className="mt-3 rounded-xl max-h-48 object-contain"
+            className="mt-3 rounded-sm max-h-48 object-contain"
           />
         )}
       </div>
@@ -100,11 +100,11 @@ export function QuizQuestionCard({
                 onClick={() => handleOptionClick(opt.id)}
                 disabled={disabled || submitted}
                 className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-transform border-2',
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-sm text-left text-sm font-medium transition-transform border-2',
                   state === 'default' && 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50',
                   state === 'selected' && 'border-primary-500 bg-primary-50 text-primary-800',
                   state === 'correct' && 'border-moss-400 bg-moss-50 text-moss-800',
-                  state === 'incorrect' && 'border-red-300 bg-red-50 text-red-700',
+                  state === 'incorrect' && 'border-error-300 bg-error-50 text-error-700',
                   (disabled || submitted) && 'cursor-default',
                 )}
               >
@@ -115,7 +115,7 @@ export function QuizQuestionCard({
                     state === 'default' && 'border-neutral-300',
                     state === 'selected' && 'border-primary-500 bg-primary-500 text-white',
                     state === 'correct' && 'border-moss-500 bg-moss-500 text-white',
-                    state === 'incorrect' && 'border-red-400 bg-red-400 text-white',
+                    state === 'incorrect' && 'border-error-400 bg-error-400 text-white',
                   )}
                 >
                   {state === 'correct' && <Check size={12} />}
@@ -141,7 +141,7 @@ export function QuizQuestionCard({
           onClick={handleSubmit}
           disabled={!canSubmit || disabled}
           className={cn(
-            'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-transform',
+            'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-sm text-sm font-semibold transition-transform',
             canSubmit
               ? 'bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98]'
               : 'bg-neutral-200 text-neutral-400 cursor-not-allowed',
@@ -156,7 +156,7 @@ export function QuizQuestionCard({
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-xl bg-neutral-50 border border-neutral-200 px-4 py-3"
+          className="rounded-sm bg-neutral-50 border border-neutral-200 px-4 py-3"
         >
           <p className="text-xs font-semibold text-neutral-500 mb-1">Explanation</p>
           <p className="text-sm text-neutral-700">{question.explanation}</p>

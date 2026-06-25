@@ -35,12 +35,12 @@ export function UploadProgress({
             className={cn('w-full', className)}
           >
             {error ? (
-              <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-error-50 text-error-600 text-xs">
+              <div className="flex items-center gap-2 py-1.5 px-3 rounded-sm bg-error-50 text-error-600 text-xs">
                 <AlertCircle size={14} />
                 {error}
               </div>
             ) : isDone ? (
-              <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-success-50 text-success-600 text-xs">
+              <div className="flex items-center gap-2 py-1.5 px-3 rounded-sm bg-success-50 text-success-600 text-xs">
                 <CheckCircle2 size={14} />
                 Uploaded
               </div>
@@ -78,7 +78,7 @@ export function UploadProgress({
           exit={{ opacity: 0 }}
           className={cn(
             'absolute inset-0 z-10 flex flex-col items-center justify-center',
-            'bg-white rounded-xl gpu-backdrop',
+            'bg-white rounded-sm gpu-backdrop',
             className,
           )}
         >

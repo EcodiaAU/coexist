@@ -331,7 +331,7 @@ export default function AdminSurveysPage() {
                 return (
                   <StaggeredItem
                     key={survey.id}
-                    className="rounded-xl bg-white shadow-sm overflow-hidden"
+                    className="rounded-sm bg-white shadow-sm overflow-hidden"
                   >
                     {/* Tappable main area - navigates to edit */}
                     <button
@@ -340,7 +340,7 @@ export default function AdminSurveysPage() {
                       className="w-full text-left p-4 pb-3 cursor-pointer active:bg-neutral-50 transition-colors"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-100 shrink-0">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary-100 shrink-0">
                           <ClipboardList size={18} className="text-primary-500" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -396,7 +396,7 @@ export default function AdminSurveysPage() {
                           setSelectedSurvey(survey.id)
                           setActiveTab('results')
                         }}
-                        className="flex items-center gap-1.5 min-h-11 px-3 rounded-lg text-xs font-medium text-neutral-500 hover:bg-neutral-50 active:bg-neutral-100 transition-colors cursor-pointer select-none active:scale-[0.97] whitespace-nowrap"
+                        className="flex items-center gap-1.5 min-h-11 px-3 rounded-sm text-xs font-medium text-neutral-500 hover:bg-neutral-50 active:bg-neutral-100 transition-colors cursor-pointer select-none active:scale-[0.97] whitespace-nowrap"
                       >
                         <BarChart3 size={14} />
                         Results
@@ -404,7 +404,7 @@ export default function AdminSurveysPage() {
                       <button
                         type="button"
                         onClick={() => navigate(`/admin/surveys/${survey.id}/edit`)}
-                        className="flex items-center gap-1.5 min-h-11 px-3 rounded-lg text-xs font-medium text-neutral-500 hover:bg-neutral-50 active:bg-neutral-100 transition-colors cursor-pointer select-none active:scale-[0.97] whitespace-nowrap"
+                        className="flex items-center gap-1.5 min-h-11 px-3 rounded-sm text-xs font-medium text-neutral-500 hover:bg-neutral-50 active:bg-neutral-100 transition-colors cursor-pointer select-none active:scale-[0.97] whitespace-nowrap"
                       >
                         <Pencil size={14} />
                         Edit
@@ -413,7 +413,7 @@ export default function AdminSurveysPage() {
                       <button
                         type="button"
                         onClick={() => setDeleteTarget(survey.id)}
-                        className="flex items-center justify-center min-h-11 min-w-11 rounded-lg text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer select-none active:scale-[0.93]"
+                        className="flex items-center justify-center min-h-11 min-w-11 rounded-sm text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer select-none active:scale-[0.98]"
                         aria-label="Delete survey"
                       >
                         <Trash2 size={15} />
@@ -433,7 +433,7 @@ export default function AdminSurveysPage() {
           {TEMPLATES.map((template, index) => (
             <StaggeredItem
               key={template.name}
-              className="rounded-xl bg-white shadow-sm overflow-hidden"
+              className="rounded-sm bg-white shadow-sm overflow-hidden"
             >
               <button
                 type="button"
@@ -441,7 +441,7 @@ export default function AdminSurveysPage() {
                 className="w-full text-left p-4 cursor-pointer active:bg-neutral-50 transition-colors"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-plum-50 shrink-0">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-plum-50 shrink-0">
                     <Copy size={16} className="text-plum-500" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -520,7 +520,7 @@ export default function AdminSurveysPage() {
                     return (
                       <StaggeredItem
                         key={response.id}
-                        className="rounded-xl bg-white shadow-sm overflow-hidden"
+                        className="rounded-sm bg-white shadow-sm overflow-hidden"
                       >
                         {/* Response header - tappable to expand */}
                         <button
@@ -597,7 +597,7 @@ export default function AdminSurveysPage() {
                               <button
                                 type="button"
                                 onClick={() => openEditSheet(response)}
-                                className="flex items-center gap-1.5 min-h-11 px-3 rounded-lg text-xs font-medium text-neutral-500 hover:bg-neutral-50 active:bg-neutral-100 transition-colors cursor-pointer select-none active:scale-[0.97]"
+                                className="flex items-center gap-1.5 min-h-11 px-3 rounded-sm text-xs font-medium text-neutral-500 hover:bg-neutral-50 active:bg-neutral-100 transition-colors cursor-pointer select-none active:scale-[0.97]"
                               >
                                 <Pencil size={14} />
                                 Edit
@@ -606,7 +606,7 @@ export default function AdminSurveysPage() {
                               <button
                                 type="button"
                                 onClick={() => setDeleteResponseTarget(response.id)}
-                                className="flex items-center justify-center min-h-11 min-w-11 rounded-lg text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer select-none active:scale-[0.93]"
+                                className="flex items-center justify-center min-h-11 min-w-11 rounded-sm text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer select-none active:scale-[0.98]"
                                 aria-label="Delete response"
                               >
                                 <Trash2 size={15} />
@@ -639,7 +639,7 @@ export default function AdminSurveysPage() {
               </div>
 
               {surveyQuestions.length > 0 && (
-                <div className="rounded-xl bg-neutral-50 p-4">
+                <div className="rounded-sm bg-neutral-50 p-4">
                   <SurveyQuestionRenderer
                     questions={surveyQuestions}
                     answers={editAnswers}
@@ -694,7 +694,7 @@ export default function AdminSurveysPage() {
       {/* Auto-Survey Settings */}
       {activeTab === 'settings' && autoConfig && (
         <motion.div variants={fadeUp} className="space-y-4">
-          <div className="p-5 rounded-xl bg-white shadow-sm space-y-5">
+          <div className="p-5 rounded-sm bg-white shadow-sm space-y-5">
             <div>
               <h3 className="font-heading text-sm font-semibold text-neutral-900 mb-1">
                 Automated Post-Event Surveys
@@ -757,7 +757,7 @@ export default function AdminSurveysPage() {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-100">
+          <div className="p-4 rounded-sm bg-neutral-50 border border-neutral-100">
             <p className="text-xs text-neutral-500">
               When an event leader logs impact data, checked-in attendees will receive an in-app notification
               linking to the post-event survey. A banner also appears on their home screen for up to 7 days.
@@ -766,7 +766,7 @@ export default function AdminSurveysPage() {
 
           {/* Leader Impact Forms settings */}
           {impactFormConfig && (
-            <div className="p-5 rounded-xl bg-white shadow-sm space-y-5">
+            <div className="p-5 rounded-sm bg-white shadow-sm space-y-5">
               <div>
                 <h3 className="font-heading text-sm font-semibold text-neutral-900 mb-1">
                   Leader Impact Forms
@@ -831,7 +831,7 @@ export default function AdminSurveysPage() {
             </div>
           )}
 
-          <div className="p-4 rounded-xl bg-moss-50 border border-moss-100">
+          <div className="p-4 rounded-sm bg-moss-50 border border-moss-100">
             <p className="text-xs text-moss-700">
               <strong>Impact forms vs attendee surveys:</strong> Impact forms are sent to collective <em>leaders</em> as shared tasks.
               Attendee surveys are sent to <em>all checked-in attendees</em>. You can have both active for the same activity type -

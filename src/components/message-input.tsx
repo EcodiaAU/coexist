@@ -192,12 +192,19 @@ export function MessageInput({
     [mentionState, value, onValueChange],
   )
 
+  // Carpool offers are open to any collective member (the create-widget edge
+  // function only requires active membership, not a leader role), so it sits in
+  // a member-available set. Poll / Announce / Push Alert stay leader-only.
+  const carpoolAction = { icon: Car, label: 'Carpool', onClick: onCreateCarpool, color: 'text-white bg-success-600 shadow-sm' }
   const leaderActions = [
     { icon: BarChart3, label: 'Poll', onClick: onCreatePoll, color: 'text-white bg-primary-600 shadow-sm' },
     { icon: Megaphone, label: 'Announce', onClick: onCreateAnnouncement, color: 'text-white bg-accent-600 shadow-sm' },
-    { icon: Car, label: 'Carpool', onClick: onCreateCarpool, color: 'text-white bg-success-600 shadow-sm' },
+    carpoolAction,
     { icon: Bell, label: 'Push Alert', onClick: onBroadcastNotification, color: 'text-white bg-warning-600 shadow-sm' },
   ]
+  const actions = isLeader ? leaderActions : [carpoolAction]
+  // Show the actions menu to leaders, or to any member when carpool is offered.
+  const canUseActions = isLeader || !!onCreateCarpool
 
   return (
     <div
@@ -213,7 +220,7 @@ export function MessageInput({
     >
       {/* Leader actions panel */}
       <AnimatePresence>
-        {showLeaderActions && isLeader && (
+        {showLeaderActions && canUseActions && (
           <motion.div
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -223,19 +230,19 @@ export function MessageInput({
           >
             <div className="flex items-center gap-1.5 mb-1.5">
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 flex-1">
-                Leader Actions
+                {isLeader ? 'Leader Actions' : 'Actions'}
               </p>
               <button
                 type="button"
                 onClick={() => setShowLeaderActions(false)}
-                className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 hover:bg-neutral-100 active:scale-[0.95] transition-transform duration-150 cursor-pointer select-none"
+                className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 hover:bg-neutral-100 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                 aria-label="Close actions"
               >
                 <X size={14} />
               </button>
             </div>
             <div className="flex gap-2">
-              {leaderActions.map((action) => (
+              {actions.map((action) => (
                 <button
                   key={action.label}
                   type="button"
@@ -245,8 +252,8 @@ export function MessageInput({
                   }}
                   disabled={!action.onClick}
                   className={cn(
-                    'flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 px-1',
-                    'transition-transform duration-150 active:scale-[0.95] cursor-pointer select-none min-h-11',
+                    'flex flex-1 flex-col items-center gap-1 rounded-sm py-2.5 px-1',
+                    'transition-transform duration-150 active:scale-[0.98] cursor-pointer select-none min-h-11',
                     action.color,
                     'hover:shadow-sm',
                     !action.onClick && 'opacity-40 cursor-default',
@@ -285,14 +292,14 @@ export function MessageInput({
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="px-3 pt-2"
           >
-            <div className="flex items-center gap-2 rounded-xl bg-warning-100 px-3.5 py-2.5 border border-warning-200/60">
+            <div className="flex items-center gap-2 rounded-sm bg-warning-100 px-3.5 py-2.5 border border-warning-200/60">
               <p className="text-xs font-semibold text-warning-800">
                 Please keep it friendly! Your message contains language that isn't allowed. Try rephrasing it.
               </p>
               <button
                 type="button"
                 onClick={() => setProfanityWarning(false)}
-                className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-warning-500 hover:bg-warning-200 active:scale-[0.93] transition-[colors,transform] duration-150 shrink-0 cursor-pointer"
+                className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-warning-500 hover:bg-warning-200 active:scale-[0.98] transition-[colors,transform] duration-150 shrink-0 cursor-pointer"
                 aria-label="Dismiss warning"
               >
                 <X size={14} />
@@ -308,22 +315,22 @@ export function MessageInput({
           role="toolbar"
           aria-label={ariaLabel}
           className={cn(
-            'flex items-end gap-2 rounded-2xl bg-surface-3 px-3.5 py-2.5',
+            'flex items-end gap-2 rounded-md bg-surface-3 px-3.5 py-2.5',
             'transition-[background-color,box-shadow] duration-200',
             'focus-within:bg-white focus-within:shadow-sm focus-within:ring-2 focus-within:ring-primary-400/70',
             disabled && 'opacity-50',
           )}
         >
-          {/* Leader plus button */}
-          {isLeader && (
+          {/* Actions plus button (leaders: full set; members: carpool) */}
+          {canUseActions && (
             <button
               type="button"
               onClick={() => setShowLeaderActions(!showLeaderActions)}
               disabled={disabled}
-              aria-label="Leader actions"
+              aria-label={isLeader ? 'Leader actions' : 'Actions'}
               className={cn(
                 'flex-shrink-0 rounded-full min-w-11 min-h-11 flex items-center justify-center',
-                'transition-transform duration-200 active:scale-[0.93]',
+                'transition-transform duration-200 active:scale-[0.98]',
                 showLeaderActions
                   ? 'bg-primary-600 text-white rotate-45'
                   : 'text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600',
@@ -344,7 +351,7 @@ export function MessageInput({
               aria-label="Attach photo"
               className={cn(
                 'flex-shrink-0 rounded-full min-w-11 min-h-11 flex items-center justify-center text-neutral-400',
-                'transition-[colors,transform] duration-150 active:scale-[0.93]',
+                'transition-[colors,transform] duration-150 active:scale-[0.98]',
                 'hover:bg-neutral-100 hover:text-neutral-600',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                 'disabled:pointer-events-none',

@@ -54,7 +54,7 @@ function ContentCard({
           whileTap={{ scale: 0.98 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           className={cn(
-            'flex items-center gap-3.5 p-3.5 rounded-2xl border shadow-sm transition-shadow',
+            'flex items-center gap-3.5 p-3.5 rounded-md border shadow-sm transition-shadow',
             status === 'completed'
               ? 'bg-white border-neutral-100'
               : 'bg-white border-neutral-100',
@@ -62,10 +62,10 @@ function ContentCard({
         >
           {/* Thumbnail or icon */}
           {item.thumbnail_url ? (
-            <img src={item.thumbnail_url} alt="" loading="lazy" decoding="async" className="w-14 h-14 rounded-xl object-cover shrink-0" />
+            <img src={item.thumbnail_url} alt="" loading="lazy" decoding="async" className="w-14 h-14 rounded-sm object-cover shrink-0" />
           ) : (
             <div className={cn(
-              'flex items-center justify-center w-14 h-14 rounded-xl shrink-0',
+              'flex items-center justify-center w-14 h-14 rounded-sm shrink-0',
               'bg-neutral-50',
             )}>
               {isModule ? (
@@ -190,7 +190,7 @@ export default function LearnIndexPage() {
             initial={rm ? {} : { scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.4, type: 'spring', stiffness: 200, damping: 18 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-50 mb-5"
+            className="inline-flex items-center justify-center w-16 h-16 rounded-md bg-primary-50 mb-5"
           >
             <GraduationCap size={32} className="text-primary-600" />
           </motion.div>
@@ -211,7 +211,7 @@ export default function LearnIndexPage() {
               initial={rm ? {} : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
-              className="mt-6 inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-neutral-50 border border-neutral-100"
+              className="mt-6 inline-flex items-center gap-3 px-5 py-3 rounded-md bg-neutral-50 border border-neutral-100"
             >
               <ProgressRing percent={overallPct} size={44} strokeWidth={4} />
               <div className="text-left">
@@ -232,9 +232,9 @@ export default function LearnIndexPage() {
       <div className="px-4 sm:px-6 lg:px-8 pb-20">
         {contentLoading ? (
           <div className="space-y-3 pt-4">
-            <Skeleton className="h-20 rounded-2xl" />
-            <Skeleton className="h-20 rounded-2xl" />
-            <Skeleton className="h-20 rounded-2xl" />
+            <Skeleton className="h-20 rounded-md" />
+            <Skeleton className="h-20 rounded-md" />
+            <Skeleton className="h-20 rounded-md" />
           </div>
         ) : contentError ? (
           <EmptyState
@@ -247,9 +247,9 @@ export default function LearnIndexPage() {
           <motion.div
             initial={rm ? {} : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-20 rounded-2xl"
+            className="flex flex-col items-center justify-center py-20 rounded-md"
           >
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-neutral-50 mb-4">
+            <div className="flex items-center justify-center w-16 h-16 rounded-md bg-neutral-50 mb-4">
               <Compass size={32} strokeWidth={1.5} className="text-neutral-500" />
             </div>
             <p className="text-[15px] font-bold text-neutral-900">No modules available yet</p>

@@ -35,7 +35,7 @@ function resolveDeepLinkPath(rawPath: string): string {
     case 'share':
       if (second === 'impact') return '/profile'
       if (second === 'event' && third) return `/events/${third}`
-      return '/home'
+      return '/'
     default:
       return `/${rawPath}`
   }

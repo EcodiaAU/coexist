@@ -62,7 +62,7 @@ describe('useAuth hook', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: { subscription: { unsubscribe: vi.fn() } as any },
     } as never)
-    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((cb: never) => {
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((cb) => {
       authCb = cb as unknown as (event: string, session: unknown) => void
       return { data: { subscription: { unsubscribe: vi.fn() } } } as never
     })

@@ -48,7 +48,7 @@ export default function LearnCompletePage() {
             initial={rm ? {} : { scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.15, type: 'spring', stiffness: 250, damping: 14 }}
-            className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-moss-100 shadow-sm mb-8"
+            className="inline-flex items-center justify-center w-24 h-24 rounded-md bg-moss-100 shadow-sm mb-8"
           >
             <PartyPopper size={44} className="text-moss-700" />
           </motion.div>
@@ -97,9 +97,9 @@ export default function LearnCompletePage() {
             initial={rm ? {} : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.45 }}
-            className="inline-flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-white border border-moss-200/60 shadow-sm mb-10"
+            className="inline-flex items-center gap-3 px-5 py-3.5 rounded-md bg-white border border-moss-200/60 shadow-sm mb-10"
           >
-            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-moss-50">
+            <div className="flex items-center justify-center w-11 h-11 rounded-sm bg-moss-50">
               {isModule ? (
                 <BookOpen size={20} className="text-moss-600" />
               ) : (

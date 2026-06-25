@@ -53,7 +53,7 @@ export default function SuspendedAccountPage() {
         </p>
 
         {/* Reason card */}
-        <div className="mt-6 rounded-xl bg-white border border-neutral-100 p-4 text-left">
+        <div className="mt-6 rounded-sm bg-white border border-neutral-100 p-4 text-left">
           <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">
             Reason
           </p>
@@ -61,7 +61,7 @@ export default function SuspendedAccountPage() {
         </div>
 
         {/* Appeal info */}
-        <div className="mt-6 rounded-xl bg-white border border-neutral-100 p-4">
+        <div className="mt-6 rounded-sm bg-white border border-neutral-100 p-4">
           <p className="text-sm text-neutral-900 leading-relaxed">
             If you believe this is a mistake, please contact us to appeal:
           </p>

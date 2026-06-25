@@ -39,22 +39,22 @@ const VARIANT_CONFIG: Record<CardVariant, {
 }> = {
   impact: {
     icon: TrendingUp,
-    gradient: 'from-primary-600 to-primary-800',
+    gradient: 'bg-primary-800',
     accent: 'text-primary-200',
   },
   badge: {
     icon: Award,
-    gradient: 'from-bark-500 to-bark-700',
+    gradient: 'bg-bark-700',
     accent: 'text-bark-200',
   },
   event: {
     icon: Calendar,
-    gradient: 'from-primary-500 to-primary-700',
+    gradient: 'bg-primary-700',
     accent: 'text-primary-200',
   },
   milestone: {
     icon: TreePine,
-    gradient: 'from-secondary-600 to-secondary-800',
+    gradient: 'bg-secondary-800',
     accent: 'text-secondary-200',
   },
 }
@@ -140,7 +140,7 @@ export function ShareableCard({
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          'relative w-full max-w-[340px] overflow-hidden rounded-2xl',
+          'relative w-full max-w-[340px] overflow-hidden rounded-md',
           'bg-gradient-to-br',
           config.gradient,
           'p-6 text-white shadow-sm',
@@ -174,7 +174,7 @@ export function ShareableCard({
               <img
                 src={imageUrl}
                 alt={title}
-                className="h-24 w-24 rounded-xl object-cover shadow-sm"
+                className="h-24 w-24 rounded-sm object-cover shadow-sm"
                 crossOrigin="anonymous"
               />
             </div>
@@ -191,7 +191,7 @@ export function ShareableCard({
           )}
 
           {/* Attribution */}
-          <div className="mt-6 flex items-center justify-between bg-white/10 rounded-lg px-3 pt-3 pb-2 -mx-1">
+          <div className="mt-6 flex items-center justify-between bg-white/10 rounded-sm px-3 pt-3 pb-2 -mx-1">
             {userName && (
               <p className="text-xs text-white/70">{userName}</p>
             )}

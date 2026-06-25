@@ -154,7 +154,7 @@ export default function CartPage() {
               initial={rm ? false : { opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-neutral-100 mb-5"
+              className="inline-flex items-center justify-center w-16 h-16 rounded-md bg-neutral-100 mb-5"
             >
               <ShoppingBag size={30} className="text-neutral-400" />
             </motion.div>
@@ -183,7 +183,7 @@ export default function CartPage() {
             </Button>
           </Link>
 
-          <div className="flex items-center gap-4 mt-8 px-5 py-3 rounded-2xl bg-white border border-neutral-100 shadow-sm">
+          <div className="flex items-center gap-4 mt-8 px-5 py-3 rounded-md bg-white border border-neutral-100 shadow-sm">
             <div className="flex items-center gap-1.5 text-neutral-500">
               <Truck size={14} />
               <span className="text-xs font-medium">Free over $75</span>
@@ -235,7 +235,7 @@ export default function CartPage() {
           className="relative z-10 px-4 sm:px-6 lg:px-8 pb-12 flex items-center gap-4"
           style={{ paddingTop: '3.5rem' }}
         >
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-neutral-100 shrink-0">
+          <div className="flex items-center justify-center w-12 h-12 rounded-sm bg-neutral-100 shrink-0">
             <ShoppingBag size={22} className="text-neutral-400" />
           </div>
           <div>
@@ -268,19 +268,19 @@ export default function CartPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={rm ? undefined : { opacity: 0, x: -60, height: 0, marginBottom: 0 }}
                 transition={{ duration: 0.25 }}
-                className="relative rounded-2xl overflow-hidden bg-white border border-neutral-100 shadow-sm"
+                className="relative rounded-md overflow-hidden bg-white border border-neutral-100 shadow-sm"
               >
                 <div className="flex gap-3.5 p-3.5">
                   {/* Image */}
                   <Link to={`/shop/${item.product.slug}`} className="shrink-0 group">
-                    <div className="relative rounded-xl overflow-hidden ring-1 ring-primary-900/[0.06]">
+                    <div className="relative rounded-sm overflow-hidden ring-1 ring-primary-900/[0.06]">
                       <img
                         src={item.product.images[0] ?? '/img/placeholder-merch.jpg'}
                         alt={item.product.name}
                         className="w-[84px] h-[84px] object-cover group-active:scale-[0.97] transition-transform duration-150"
                         loading="lazy"
                       />
-                      <div className="absolute inset-0 ring-1 ring-inset ring-black/[0.04] rounded-xl pointer-events-none" />
+                      <div className="absolute inset-0 ring-1 ring-inset ring-black/[0.04] rounded-sm pointer-events-none" />
                     </div>
                   </Link>
 
@@ -298,7 +298,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => handleRemove(item.variant.id)}
-                        className="flex items-center justify-center w-11 h-11 -mt-0.5 -mr-1 rounded-full text-neutral-400 hover:text-error-500 hover:bg-error-50 cursor-pointer select-none active:scale-[0.92] transition-transform duration-150"
+                        className="flex items-center justify-center w-11 h-11 -mt-0.5 -mr-1 rounded-full text-neutral-400 hover:text-error-500 hover:bg-error-50 cursor-pointer select-none active:scale-[0.98] transition-transform duration-150"
                         aria-label={`Remove ${item.product.name}`}
                       >
                         <X size={16} />
@@ -313,11 +313,11 @@ export default function CartPage() {
                         {formatPrice(item.variant.price_cents * item.quantity)}
                       </p>
 
-                      <div className="inline-flex items-center gap-0 bg-neutral-50 rounded-xl border border-neutral-100">
+                      <div className="inline-flex items-center gap-0 bg-neutral-50 rounded-sm border border-neutral-100">
                         <button
                           type="button"
                           onClick={() => handleUpdateQuantity(item, item.quantity - 1)}
-                          className="flex items-center justify-center w-11 h-11 rounded-l-xl text-neutral-600 hover:bg-neutral-100 cursor-pointer select-none active:scale-[0.92] transition-transform duration-150"
+                          className="flex items-center justify-center w-11 h-11 rounded-l-sm text-neutral-600 hover:bg-neutral-100 cursor-pointer select-none active:scale-[0.98] transition-transform duration-150"
                           aria-label="Decrease quantity"
                         >
                           <Minus size={14} />
@@ -328,7 +328,7 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => handleUpdateQuantity(item, item.quantity + 1)}
-                          className="flex items-center justify-center w-11 h-11 rounded-r-xl text-neutral-600 hover:bg-neutral-100 cursor-pointer select-none active:scale-[0.92] transition-transform duration-150"
+                          className="flex items-center justify-center w-11 h-11 rounded-r-sm text-neutral-600 hover:bg-neutral-100 cursor-pointer select-none active:scale-[0.98] transition-transform duration-150"
                           aria-label="Increase quantity"
                         >
                           <Plus size={14} />
@@ -344,7 +344,7 @@ export default function CartPage() {
           {/* Promo code */}
           <motion.div variants={fadeUp} className="pt-1">
             {promoCode ? (
-              <div className="flex items-center gap-2.5 px-4 py-3 bg-white border border-neutral-100 shadow-sm rounded-xl">
+              <div className="flex items-center gap-2.5 px-4 py-3 bg-white border border-neutral-100 shadow-sm rounded-sm">
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-neutral-100">
                   <Tag size={14} className="text-neutral-500" />
                 </div>
@@ -355,7 +355,7 @@ export default function CartPage() {
                 <button
                   type="button"
                   onClick={() => setPromoCode(null)}
-                  className="flex items-center justify-center w-11 h-11 rounded-full text-neutral-400 hover:bg-neutral-100 cursor-pointer select-none active:scale-[0.92] transition-transform duration-150"
+                  className="flex items-center justify-center w-11 h-11 rounded-full text-neutral-400 hover:bg-neutral-100 cursor-pointer select-none active:scale-[0.98] transition-transform duration-150"
                   aria-label="Remove promo code"
                 >
                   <X size={14} />
@@ -387,7 +387,7 @@ export default function CartPage() {
           {/* Order summary */}
           <motion.div
             variants={fadeUp}
-            className="rounded-2xl overflow-hidden border border-neutral-100 shadow-sm"
+            className="rounded-md overflow-hidden border border-neutral-100 shadow-sm"
           >
             {/* Header */}
             <div className="bg-white px-4 py-3 border-b border-neutral-100">

@@ -106,7 +106,7 @@ function MenuRow({
     >
       <span
         className={cn(
-          'flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mr-3',
+          'flex items-center justify-center w-8 h-8 rounded-sm shrink-0 mr-3',
           danger ? 'bg-error-100 text-error-600' : 'bg-neutral-100 text-neutral-500',
         )}
         aria-hidden="true"
@@ -150,7 +150,7 @@ function AboutSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <BottomSheet open={open} onClose={onClose} snapPoints={[0.7]}>
       <div className="text-center">
-        <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-primary-100 flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-3 rounded-md bg-primary-100 flex items-center justify-center">
           <Heart size={28} className="text-neutral-400" />
         </div>
         <h2 className="font-heading text-xl font-bold text-neutral-900">
@@ -188,7 +188,7 @@ function AboutSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
             href={WEBSITE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-4 py-2 text-sm font-medium text-primary-500 hover:bg-primary-100 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-sm bg-surface-2 px-4 py-2 text-sm font-medium text-primary-500 hover:bg-primary-100 transition-colors"
           >
             Website
           </a>
@@ -196,7 +196,7 @@ function AboutSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
             href={INSTAGRAM_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-4 py-2 text-sm font-medium text-primary-500 hover:bg-primary-100 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-sm bg-surface-2 px-4 py-2 text-sm font-medium text-primary-500 hover:bg-primary-100 transition-colors"
           >
             Instagram
           </a>
@@ -204,14 +204,14 @@ function AboutSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
             href={FACEBOOK_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-4 py-2 text-sm font-medium text-primary-500 hover:bg-primary-100 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-sm bg-surface-2 px-4 py-2 text-sm font-medium text-primary-500 hover:bg-primary-100 transition-colors"
           >
             Facebook
           </a>
         </div>
 
         {/* Aboriginal Acknowledgment */}
-        <div className="mt-6 rounded-xl bg-secondary-50/40 shadow-sm p-4 text-left">
+        <div className="mt-6 rounded-sm bg-secondary-50/40 shadow-sm p-4 text-left">
           <p className="text-xs font-semibold uppercase tracking-wider text-neutral-900 mb-1.5">
             Acknowledgment of Country
           </p>
@@ -408,7 +408,7 @@ function SettingsSkeleton() {
   return (
     <div className="space-y-3 py-6">
       {Array.from({ length: 8 }).map((_, i) => (
-        <Skeleton key={i} variant="text" className="h-13 rounded-lg" />
+        <Skeleton key={i} variant="text" className="h-13 rounded-sm" />
       ))}
     </div>
   )
@@ -462,7 +462,7 @@ export default function SettingsPage() {
             {/* ---- Settings Sections ---- */}
             <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
               <SectionHeader label="Preferences" className="pt-4" />
-              <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
+              <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden">
                 <MenuRow
                   icon={<Bell size={18} />}
                   label="Notifications"
@@ -488,7 +488,7 @@ export default function SettingsPage() {
             {/* ---- About ---- */}
             <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
               <SectionHeader label="About" />
-              <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
+              <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden">
                 <MenuRow
                   icon={<Heart size={18} />}
                   label="About Co-Exist"

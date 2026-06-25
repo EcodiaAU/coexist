@@ -1,38 +1,28 @@
-import { useMemo } from 'react'
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { QRCodeSVG } from 'qrcode.react'
 import {
   CheckCircle2,
   Calendar,
   MapPin,
   Clock,
   Ticket,
-  Copy,
-  CalendarPlus,
 } from 'lucide-react'
 import { useEventDetail, formatEventDate, formatEventTime } from '@/hooks/use-events'
 import { useMyEventTicket } from '@/hooks/use-event-tickets'
 import {
   Page,
   Header,
-  Button,
   Skeleton,
   EmptyState,
   WhatsNext,
 } from '@/components'
-import { useToast } from '@/components/toast'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { cn } from '@/lib/cn'
 
 export default function TicketConfirmationPage() {
   const { id: eventId } = useParams<{ id: string }>()
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
-  const { toast } = useToast()
-
-  const ticketId = searchParams.get('ticket_id')
 
   const { data: event, isLoading: eventLoading } = useEventDetail(eventId)
   const { data: ticket, isLoading: ticketLoading } = useMyEventTicket(eventId)
@@ -40,19 +30,12 @@ export default function TicketConfirmationPage() {
   const isLoading = eventLoading || ticketLoading
   const showLoading = useDelayedLoading(isLoading)
 
-  const copyCode = () => {
-    if (ticket?.ticket_code) {
-      navigator.clipboard.writeText(ticket.ticket_code)
-      toast.success('Ticket code copied')
-    }
-  }
-
   if (showLoading) {
     return (
       <Page swipeBack header={<Header title="Your Ticket" back />}>
         <div className="p-6 space-y-6">
-          <Skeleton className="h-48 rounded-2xl" />
-          <Skeleton className="h-32 rounded-2xl" />
+          <Skeleton className="h-48 rounded-md" />
+          <Skeleton className="h-32 rounded-md" />
         </div>
       </Page>
     )
@@ -97,7 +80,7 @@ export default function TicketConfirmationPage() {
         )}
 
         {isPending && (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-warning-50 border border-warning-200/40">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-warning-50 border border-warning-200/40">
             <Clock size={18} className="text-warning-600 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-warning-700">Payment processing</p>
@@ -111,7 +94,7 @@ export default function TicketConfirmationPage() {
           initial={shouldReduceMotion ? undefined : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden"
+          className="rounded-md bg-white border border-neutral-100 shadow-sm overflow-hidden"
         >
           {/* Event info header */}
           <div className="bg-neutral-50 p-5 border-b border-neutral-100">
@@ -134,28 +117,17 @@ export default function TicketConfirmationPage() {
             </div>
           </div>
 
-          {/* QR code */}
-          {ticket.ticket_code && !isPending && (
-            <div className="flex flex-col items-center py-6 px-5">
-              <div className="bg-white p-3 rounded-xl shadow-sm border border-neutral-100">
-                <QRCodeSVG
-                  value={`coexist://ticket/${ticket.ticket_code}`}
-                  size={180}
-                  level="M"
-                  bgColor="transparent"
-                />
+          {/* On the day, your collective leader checks you in - the QR and
+              check-in code are a leader-side tool, not shown to attendees. */}
+          {!isPending && (
+            <div className="flex flex-col items-center text-center py-6 px-5">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-success-50">
+                <CheckCircle2 size={24} className="text-success-600" />
               </div>
-              <button
-                type="button"
-                onClick={copyCode}
-                className="flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-primary-50 hover:bg-primary-100 active:scale-[0.97] transition-all cursor-pointer"
-              >
-                <span className="font-mono text-lg font-bold text-neutral-900 tracking-wider">
-                  {ticket.ticket_code}
-                </span>
-                <Copy size={14} className="text-neutral-400" />
-              </button>
-              <p className="text-[11px] text-neutral-400 mt-2">Show this at the event for check-in</p>
+              <p className="text-sm font-semibold text-neutral-900 mt-3">You're all set</p>
+              <p className="text-[12px] text-neutral-500 mt-1 max-w-[260px] leading-relaxed">
+                Just turn up on the day - your collective leader will check you in. No need to show anything.
+              </p>
             </div>
           )}
 
@@ -202,14 +174,8 @@ export default function TicketConfirmationPage() {
               {
                 label: 'View Event',
                 description: 'See full event details',
-                icon: <Ticket size={18} />,
-                to: `/events/${event.id}`,
-              },
-              {
-                label: 'My Events',
-                description: 'See all your upcoming events',
                 icon: <Calendar size={18} />,
-                to: '/events',
+                to: `/events/${event.id}`,
               },
               {
                 label: 'My Tickets',

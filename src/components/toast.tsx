@@ -208,7 +208,7 @@ const ToastCard = memo(function ToastCard({
       }}
       className={cn(
         'pointer-events-auto w-full max-w-sm gpu-panel',
-        'flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg',
+        'flex items-center gap-3 rounded-sm px-4 py-3 shadow-sm',
         config.bgClass,
       )}
     >
@@ -217,14 +217,14 @@ const ToastCard = memo(function ToastCard({
       {action && (
         <button
           onClick={handleAction}
-          className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold text-primary-700 hover:bg-primary-50 active:scale-[0.97] transition-[colors,transform] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+          className="shrink-0 rounded-sm px-3 py-1.5 text-sm font-semibold text-primary-700 hover:bg-primary-50 active:scale-[0.97] transition-[colors,transform] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
         >
           {action.label}
         </button>
       )}
       <button
         onClick={handleDismiss}
-        className="shrink-0 rounded-full p-0.5 text-neutral-400 transition-[colors,transform] duration-150 hover:bg-black/5 hover:text-neutral-500 active:scale-[0.90] cursor-pointer"
+        className="shrink-0 rounded-full p-0.5 text-neutral-400 transition-[colors,transform] duration-150 hover:bg-black/5 hover:text-neutral-500 active:scale-[0.98] cursor-pointer"
         aria-label="Dismiss notification"
       >
         <X size={16} />

@@ -360,7 +360,7 @@ export default function CheckInPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
-                className="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg bg-warning-50 text-warning-700 text-caption"
+                className="flex items-center gap-2 mt-3 px-3 py-2 rounded-sm bg-warning-50 text-warning-700 text-caption"
               >
                 <WifiOff size={14} />
                 Queued offline - will sync when you reconnect
@@ -375,7 +375,7 @@ export default function CheckInPage() {
                 transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.6 }}
                 className="mt-6 w-full max-w-xs"
               >
-                <div className="rounded-xl bg-primary-50 border border-neutral-200 p-4 text-center">
+                <div className="rounded-sm bg-primary-50 border border-neutral-200 p-4 text-center">
                   <p className="text-sm font-semibold text-neutral-900">
                     Quick profile setup
                   </p>
@@ -507,7 +507,7 @@ export default function CheckInPage() {
             </div>
 
             {/* Event card preview */}
-            <div className="rounded-xl bg-white p-4 mb-6">
+            <div className="rounded-sm bg-white p-4 mb-6">
               <p className="text-sm font-semibold text-neutral-900">{event.title}</p>
               <p className="text-caption text-neutral-500 mt-0.5">
                 {event.collectives?.name}
@@ -516,7 +516,7 @@ export default function CheckInPage() {
 
             {/* Offline banner */}
             {isOffline && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-warning-50 text-warning-700 text-sm font-medium mb-4">
+              <div className="flex items-center gap-2 p-3 rounded-sm bg-warning-50 text-warning-700 text-sm font-medium mb-4">
                 <WifiOff size={16} />
                 You're offline. Check-in will be queued and synced later.
               </div>
@@ -536,7 +536,7 @@ export default function CheckInPage() {
                   value={digits[i]}
                   onChange={(e) => handleDigitChange(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
-                  className="w-18 h-22 text-center text-3xl font-heading font-bold rounded-xl border-2 border-neutral-200 bg-white focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-colors"
+                  className="w-18 h-22 text-center text-3xl font-heading font-bold rounded-sm border-2 border-neutral-200 bg-white focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-colors"
                   autoComplete="off"
                 />
               ))}
@@ -555,7 +555,7 @@ export default function CheckInPage() {
 
             {/* Offline notice */}
             {!isOffline && (
-              <div className="mt-6 flex items-start gap-2 p-3 rounded-lg bg-warning-50 text-warning-700 text-caption">
+              <div className="mt-6 flex items-start gap-2 p-3 rounded-sm bg-warning-50 text-warning-700 text-caption">
                 <AlertCircle size={16} className="shrink-0 mt-0.5" />
                 <span>
                   No signal? Check-in will be queued and synced when you're back online.

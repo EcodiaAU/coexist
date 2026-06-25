@@ -98,10 +98,10 @@ export function CookieConsentBanner({ className }: { className?: string }) {
             className,
           )}
         >
-          <div className="rounded-2xl bg-white shadow-lg overflow-hidden">
+          <div className="rounded-md bg-white shadow-sm overflow-hidden">
             {/* Header */}
             <div className="flex items-start gap-3 p-4 pb-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white text-neutral-400 shrink-0">
+              <div className="flex items-center justify-center w-8 h-8 rounded-sm bg-white text-neutral-400 shrink-0">
                 <Cookie size={18} />
               </div>
               <div className="flex-1 min-w-0">
@@ -114,7 +114,7 @@ export function CookieConsentBanner({ className }: { className?: string }) {
               </div>
               <button
                 onClick={handleRejectNonEssential}
-                className="flex items-center justify-center w-11 h-11 rounded-full text-neutral-500 hover:bg-neutral-100 active:scale-[0.93] transition-[colors,transform] duration-150 shrink-0"
+                className="flex items-center justify-center w-11 h-11 rounded-full text-neutral-500 hover:bg-neutral-100 active:scale-[0.98] transition-[colors,transform] duration-150 shrink-0"
                 aria-label="Reject non-essential cookies"
               >
                 <X size={16} />

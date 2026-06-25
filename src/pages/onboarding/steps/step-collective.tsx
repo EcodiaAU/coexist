@@ -174,7 +174,7 @@ export function StepCollective({
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search for your town or city"
             className={cn(
-              'w-full h-12 pl-10 pr-3 rounded-xl bg-white border border-neutral-200',
+              'w-full h-12 pl-10 pr-3 rounded-sm bg-white border border-neutral-200',
               'text-neutral-900 placeholder:text-neutral-400',
               'focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent',
             )}
@@ -225,7 +225,7 @@ export function StepCollective({
                       </Card.Overlay>
                     ) : (
                       <div
-                        className="relative w-full overflow-hidden bg-gradient-to-br from-primary-400 to-sprout-500"
+                        className="relative w-full overflow-hidden bg-sprout-500"
                         style={{ aspectRatio: '16/9' }}
                       >
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent" aria-hidden="true" />

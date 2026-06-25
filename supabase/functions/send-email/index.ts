@@ -50,6 +50,11 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     description: 'Event registration confirmation. Data: { name, event_title, event_date, event_location, event_url }',
     subject: (d) => `You're registered: ${d.event_title}`,
   },
+  ticket_confirmation: {
+    category: 'transactional',
+    description: 'Ticket purchase confirmation. Data: { name, event_title, event_date, event_location, ticket_code, quantity, amount, currency, ticket_url }',
+    subject: (d) => `You're going: ${d.event_title}`,
+  },
   event_reminder: {
     category: 'transactional',
     description: '24h event reminder. Data: { name, event_title, event_date, event_location, event_url }',
@@ -138,6 +143,30 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     description: 'Weekly announcement digest. Data: { name, announcements[] }',
     subject: () => 'This week at Co-Exist',
   },
+}
+
+/* ------------------------------------------------------------------ */
+/*  Notification-preference gate                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Maps a transactional email type to the notification_preferences key that
+ * governs it. Toggling one of these off in Settings -> Notifications now
+ * suppresses BOTH the push (via send-push) AND the email (here), so a setting
+ * is respected on every delivery channel rather than push only.
+ *
+ * Types absent from this map (welcome, password_reset, donation_receipt,
+ * order_confirmation, order_shipped, refund_confirmation, payment_failed,
+ * subscription_cancelled, data-export-request, collective_application) are
+ * operational and always send. Marketing-category types are gated separately
+ * by profiles.marketing_opt_in further down.
+ */
+const TYPE_TO_PREF_KEY: Record<string, string> = {
+  event_confirmation: 'registration_confirmed',
+  event_reminder: 'event_reminder',
+  event_cancelled: 'event_cancelled',
+  event_invite: 'event_invite',
+  waitlist_promoted: 'waitlist_promotion',
 }
 
 /* ------------------------------------------------------------------ */
@@ -353,6 +382,27 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
       ]) +
       p('We\'ll send you a reminder before the event. See you there!'),
     footerCta: { label: 'View Event Details', url: d.event_url as string || APP_URL },
+  }),
+
+  // Ticket purchase confirmation. ticket_url is the access link: for guest
+  // buyers it is a single-use magic link that signs them in and opens the
+  // ticket + event group chat; for members it is the direct ticket page.
+  ticket_confirmation: (d) => emailShell({
+    heroTitle: 'You\'re going!',
+    heroSubtitle: d.event_title as string,
+    heroEmoji: '\u{1F3AB}',
+    body: greeting(d.name) +
+      p(`Your ticket for <strong>${d.event_title}</strong> is confirmed. Tap below to view your ticket and join the group chat.`) +
+      infoCard([
+        ['Event', d.event_title],
+        ['Date', d.event_date],
+        ['Location', d.event_location],
+        ['Ticket code', d.ticket_code],
+        ['Quantity', d.quantity],
+        ['Paid', `$${d.amount} ${d.currency || 'AUD'}`],
+      ]) +
+      ctaButton('View your ticket', (d.ticket_url as string) || APP_URL),
+    footerCta: { label: 'Open the App', url: APP_URL },
   }),
 
   event_reminder: (d) => emailShell({
@@ -806,6 +856,34 @@ Deno.serve(async (req: Request) => {
         return new Response(
           JSON.stringify({ success: false, error: 'User opted out of marketing or not found' }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+    }
+
+    // ── Respect per-type notification preferences + email channel master ──
+    // Mirrors the preference gate in send-push so a setting toggled off silences
+    // the type on every channel, not push alone. Quiet hours is intentionally
+    // NOT applied to email: a queued inbox message is not disruptive the way a
+    // phone buzz is. Only an explicit `false` suppresses (opt-out model); an
+    // absent key means the user never changed it and is treated as enabled.
+    // Requires userId; sends addressed only by `to`/`email` (e.g. admin/test
+    // sends) carry no preference subject and pass through.
+    const prefKey = TYPE_TO_PREF_KEY[type]
+    if (prefKey && payload.userId) {
+      const prefClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      )
+      const { data: prefProfile } = await prefClient
+        .from('profiles')
+        .select('notification_preferences')
+        .eq('id', payload.userId)
+        .maybeSingle()
+      const prefs = (prefProfile?.notification_preferences ?? {}) as Record<string, unknown>
+      if (prefs[prefKey] === false || prefs.email_enabled === false) {
+        return new Response(
+          JSON.stringify({ success: false, skipped: true, reason: 'User disabled this notification type or the email channel' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
       }
     }

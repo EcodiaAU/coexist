@@ -156,6 +156,23 @@ export function wallClockNow(): Date {
 }
 
 /**
+ * Wall-clock "now" rounded UP to the next whole hour, minutes/seconds
+ * zeroed. Used to seed the create-event time pickers (Jess 2026-06-24):
+ * the native datetime-local spinner otherwise opens on the current
+ * minute (e.g. 11:48), forcing a scroll back to :00 every time. We never
+ * schedule events at 11:48, so a :00 default that's already in the
+ * future is the sensible starting position.
+ *
+ * 11:48 wall-clock -> Date whose .getUTCHours()=12, .getUTCMinutes()=0.
+ */
+export function wallClockNextHour(): Date {
+  const d = wallClockNow()
+  d.setUTCMinutes(0, 0, 0)
+  d.setUTCHours(d.getUTCHours() + 1)
+  return d
+}
+
+/**
  * "YYYY-MM-DD" for an absolute timestamp.
  *
  * Floating-local model: the stored wall-clock IS the calendar date,

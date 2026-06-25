@@ -53,7 +53,7 @@ function QuestionCard({
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="group rounded-xl border border-white/60 bg-white/80 shadow-sm p-4">
+    <div className="group rounded-sm border border-white/60 bg-white/80 shadow-sm p-4">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 text-primary-300">
           <GripVertical size={18} />
@@ -124,14 +124,14 @@ function QuestionCard({
           <button
             type="button"
             onClick={onEdit}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-primary-400 hover:text-primary-600 hover:bg-neutral-100 transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-sm text-primary-400 hover:text-primary-600 hover:bg-neutral-100 transition-colors"
           >
             <MessageSquare size={14} />
           </button>
           <button
             type="button"
             onClick={onRemove}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-100/60 transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-100/60 transition-colors"
           >
             <Trash2 size={14} />
           </button>
@@ -228,7 +228,7 @@ function QuestionForm({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className="rounded-xl border-2 border-neutral-200 bg-neutral-50 p-5 space-y-4"
+      className="rounded-sm border-2 border-neutral-200 bg-neutral-50 p-5 space-y-4"
     >
       <p className="text-sm font-semibold text-neutral-900">
         {initial ? 'Edit Question' : 'Add Question'}
@@ -244,7 +244,7 @@ function QuestionForm({
               type="button"
               onClick={() => setType(qt.type)}
               className={cn(
-                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition-colors',
                 draft.question_type === qt.type
                   ? 'bg-primary-600 text-white'
                   : 'bg-white text-primary-500 hover:bg-primary-100',
@@ -281,7 +281,7 @@ function QuestionForm({
                 type="button"
                 onClick={() => updateOption(i, { is_correct: !opt.is_correct })}
                 className={cn(
-                  'flex items-center justify-center w-8 h-8 rounded-lg border-2 transition-colors shrink-0',
+                  'flex items-center justify-center w-8 h-8 rounded-sm border-2 transition-colors shrink-0',
                   opt.is_correct
                     ? 'border-moss-500 bg-moss-100 text-moss-600'
                     : 'border-neutral-200 bg-white text-neutral-400 hover:border-neutral-300',
@@ -300,7 +300,7 @@ function QuestionForm({
                 <button
                   type="button"
                   onClick={() => removeOption(i)}
-                  className="text-red-400 hover:text-red-600 transition-colors"
+                  className="text-error-400 hover:text-error-600 transition-colors"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -400,7 +400,7 @@ export function QuestionBuilder({ questions, onChange, className }: QuestionBuil
 
       {/* Empty state */}
       {questions.length === 0 && !isAdding && (
-        <div className="flex flex-col items-center justify-center py-10 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50">
+        <div className="flex flex-col items-center justify-center py-10 rounded-sm border-2 border-dashed border-neutral-200 bg-neutral-50">
           <CircleDot size={28} className="text-primary-300 mb-2" />
           <p className="text-sm font-medium text-neutral-500 mb-1">No questions yet</p>
           <p className="text-xs text-neutral-400 mb-4">Add questions to build your quiz</p>
@@ -425,7 +425,7 @@ export function QuestionBuilder({ questions, onChange, className }: QuestionBuil
         <button
           type="button"
           onClick={() => setIsAdding(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-neutral-300 text-sm font-semibold text-neutral-500 hover:border-neutral-400 hover:text-neutral-600 hover:bg-neutral-50 transition-transform active:scale-[0.98] w-full justify-center"
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-sm border border-dashed border-neutral-300 text-sm font-semibold text-neutral-500 hover:border-neutral-400 hover:text-neutral-600 hover:bg-neutral-50 transition-transform active:scale-[0.98] w-full justify-center"
         >
           <Plus size={15} />
           Add Question

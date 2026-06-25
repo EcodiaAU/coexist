@@ -36,7 +36,7 @@ export function DonationThermometer({
         <motion.div
           className={cn(
             'absolute bottom-0 left-0 right-0 rounded-full',
-            'bg-gradient-to-t from-primary-500 via-accent-400 to-accent-300',
+            'bg-accent-300',
           )}
           initial={{ height: shouldReduceMotion ? `${percentage}%` : '0%' }}
           animate={{ height: `${percentage}%` }}
@@ -64,7 +64,7 @@ export function DonationThermometer({
         </motion.div>
 
         {/* Bubble at bulb */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-gradient-to-t from-primary-500 to-accent-400 -mb-1" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-accent-400 -mb-1" />
       </div>
 
       {/* Labels */}

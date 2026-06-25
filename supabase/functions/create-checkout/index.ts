@@ -444,6 +444,18 @@ Deno.serve(async (req: Request) => {
           return json({ error: 'Ticket sales have ended' }, 400)
         }
 
+        // Block a second live ticket for the same person (duplicate guard).
+        // Pending (abandoned checkout) may retry; a held confirmed/checked-in
+        // ticket may not - one person, one ticket per event.
+        const { data: dupTicket } = await supabase
+          .from('event_tickets')
+          .select('id')
+          .eq('event_id', body.event_id)
+          .eq('user_id', body.user_id)
+          .in('status', ['confirmed', 'checked_in'])
+          .maybeSingle()
+        if (dupTicket) return json({ error: 'You already have a ticket for this event' }, 409)
+
         // Reserve ticket atomically via RPC (checks capacity with FOR UPDATE)
         const { data: ticketId, error: reserveErr } = await supabase.rpc('reserve_event_ticket', {
           p_event_id: body.event_id,
@@ -462,10 +474,13 @@ Deno.serve(async (req: Request) => {
         const customerEmail = await getUserEmail(body.user_id)
         const unitPriceCents = ticketType.price_cents
 
-        // Create Stripe checkout session
+        // Create Stripe checkout session. Promo codes (e.g. SUPERSTAR 100%,
+        // LEGEND 50%) are enabled ONLY on event-ticket sessions, so they can be
+        // entered against tickets but never against donations or merch.
         const ticketSession = await stripe.checkout.sessions.create({
           mode: 'payment',
           customer_email: customerEmail,
+          allow_promotion_codes: true,
           line_items: [
             {
               price_data: {

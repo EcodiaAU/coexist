@@ -77,7 +77,7 @@ function DetailRow({ icon, label, value, tint = 'primary' }: { icon: React.React
   const t = detailTints[tint]
   return (
     <div className={cn('flex items-center gap-3 px-4 py-3 border-l-4', t.stripe)}>
-      <div className={cn('shrink-0 w-8 h-8 rounded-lg flex items-center justify-center', t.iconBg, t.iconText)}>
+      <div className={cn('shrink-0 w-8 h-8 rounded-sm flex items-center justify-center', t.iconBg, t.iconText)}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -97,7 +97,7 @@ function SectionHeading({ icon, iconBg, title, action }: { icon?: React.ReactNod
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2.5">
         {icon && (
-          <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center text-white', iconBg ?? 'bg-primary-500')}>
+          <div className={cn('w-7 h-7 rounded-sm flex items-center justify-center text-white', iconBg ?? 'bg-primary-500')}>
             {icon}
           </div>
         )}
@@ -209,7 +209,7 @@ export default function ProfilePage() {
           <div className="relative z-10 flex justify-end px-4 mt-2">
             <button
               onClick={() => navigate('/settings')}
-              className="flex items-center justify-center w-11 h-11 rounded-full bg-white/15 text-white/90 hover:bg-white/25 active:scale-[0.93] transition-[colors,transform] duration-150"
+              className="flex items-center justify-center w-11 h-11 rounded-full bg-white/15 text-white/90 hover:bg-white/25 active:scale-[0.98] transition-[colors,transform] duration-150"
               aria-label="Settings"
             >
               <Settings size={18} />
@@ -223,7 +223,7 @@ export default function ProfilePage() {
             initial="hidden"
             animate="visible"
           >
-            <div className="rounded-full p-1 bg-gradient-to-br from-sprout-300/50 to-moss-300/50 shadow-xl">
+            <div className="rounded-full p-1 bg-moss-300 shadow-sm">
               <div className="rounded-full ring-3 ring-white/40 overflow-hidden flex items-center justify-center aspect-square w-24">
                 <Avatar
                   src={profile.avatar_url}
@@ -292,7 +292,7 @@ export default function ProfilePage() {
               key={b.to}
               type="button"
               onClick={() => navigate(b.to)}
-              className="inline-flex items-center justify-center gap-1.5 min-h-11 px-3 rounded-xl bg-white text-neutral-700 text-xs font-heading font-semibold border border-neutral-200 shadow-sm whitespace-nowrap cursor-pointer select-none transition-[background-color,transform] duration-150 hover:bg-neutral-50 active:bg-neutral-50 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+              className="inline-flex items-center justify-center gap-1.5 min-h-11 px-3 rounded-sm bg-white text-neutral-700 text-xs font-heading font-semibold border border-neutral-200 shadow-sm whitespace-nowrap cursor-pointer select-none transition-[background-color,transform] duration-150 hover:bg-neutral-50 active:bg-neutral-50 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
             >
               <span className="flex items-center justify-center shrink-0">{b.icon}</span>
               <span>{b.label}</span>
@@ -309,7 +309,7 @@ export default function ProfilePage() {
           animate="visible"
           className="mt-6 mx-auto max-w-sm"
         >
-          <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm px-5 py-4 text-center">
+          <div className="rounded-md bg-white border border-neutral-100 shadow-sm px-5 py-4 text-center">
             <p className="text-sm text-neutral-500 leading-relaxed italic">
               &ldquo;{profile.bio}&rdquo;
             </p>
@@ -353,13 +353,13 @@ export default function ProfilePage() {
             action={
               <button
                 onClick={() => navigate('/profile/edit')}
-                className="flex items-center gap-1 text-xs font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 px-3 min-h-9 rounded-full active:scale-[0.95] transition-[colors,transform] duration-150 cursor-pointer"
+                className="flex items-center gap-1 text-xs font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 px-3 min-h-9 rounded-full active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
               >
                 Edit <ChevronRight size={13} />
               </button>
             }
           />
-          <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+          <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
             {hasDetails ? (
               <>
                 {(profile.first_name || profile.last_name) && (
@@ -416,14 +416,14 @@ export default function ProfilePage() {
               profile.emergency_contact_name ? (
                 <button
                   onClick={() => navigate('/profile/edit')}
-                  className="flex items-center gap-1 text-xs font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 px-3 min-h-9 rounded-full active:scale-[0.95] transition-[colors,transform] duration-150 cursor-pointer"
+                  className="flex items-center gap-1 text-xs font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 px-3 min-h-9 rounded-full active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
                 >
                   Edit <ChevronRight size={13} />
                 </button>
               ) : undefined
             }
           />
-          <div className="rounded-2xl overflow-hidden shadow-sm">
+          <div className="rounded-md overflow-hidden shadow-sm">
             {profile.emergency_contact_name ? (
               <div className="bg-white p-4 border border-neutral-100 border-l-4 border-l-warning-400">
                 <div className="flex items-start gap-3">
@@ -496,7 +496,7 @@ export default function ProfilePage() {
                     onClick={() => navigate(`/collectives/${collective.slug}`)}
                     className="flex flex-row items-center gap-3 p-3 bg-white shadow-sm border border-neutral-100"
                   >
-                    <div className="shrink-0 w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-moss-300 to-primary-300 shadow-sm">
+                    <div className="shrink-0 w-12 h-12 rounded-sm overflow-hidden bg-primary-300 shadow-sm">
                       {collective.cover_image_url ? (
                         <img
                           src={collective.cover_image_url}
@@ -546,7 +546,7 @@ export default function ProfilePage() {
               iconBg="bg-sprout-600"
               title="Interests"
             />
-            <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4">
+            <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-4">
               <div className="flex flex-wrap gap-2">
                 {profile.interests.map((interest) => (
                   <Chip key={interest} label={prettyInterestLabel(interest)} selected />

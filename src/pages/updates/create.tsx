@@ -95,7 +95,7 @@ export default function CreateUpdatePage() {
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4">
-        <div className="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center mb-5">
+        <div className="w-16 h-16 rounded-md bg-primary-100 flex items-center justify-center mb-5">
           <Shield size={28} className="text-neutral-400" />
         </div>
         <h2 className="font-heading text-lg font-bold text-neutral-900 mb-2">Admin Only</h2>
@@ -176,11 +176,11 @@ export default function CreateUpdatePage() {
         transition={{ duration: 0.35, ease: 'easeOut' }}
       >
         {/* ── Compose Card ── */}
-        <div className="rounded-2xl shadow-sm overflow-hidden border border-neutral-100">
+        <div className="rounded-md shadow-sm overflow-hidden border border-neutral-100">
           {/* Section header */}
           <div className="border-b border-neutral-100 bg-white px-5 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-50 text-primary-600">
+              <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary-50 text-primary-600">
                 <Megaphone size={18} />
               </div>
               <div>
@@ -220,11 +220,11 @@ export default function CreateUpdatePage() {
         </div>
 
         {/* ── Images Card ── */}
-        <div className="rounded-2xl shadow-sm overflow-hidden border border-neutral-100">
+        <div className="rounded-md shadow-sm overflow-hidden border border-neutral-100">
           {/* Section header */}
           <div className="border-b border-neutral-100 bg-white px-5 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-moss-50 text-moss-600">
+              <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-moss-50 text-moss-600">
                 <ImageIcon size={18} />
               </div>
               <div>
@@ -243,7 +243,7 @@ export default function CreateUpdatePage() {
                     key={i}
                     initial={rm ? false : { opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="relative aspect-square rounded-xl overflow-hidden group ring-1 ring-neutral-100"
+                    className="relative aspect-square rounded-sm overflow-hidden group ring-1 ring-neutral-100"
                   >
                     <img
                       src={src}
@@ -276,7 +276,7 @@ export default function CreateUpdatePage() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className={cn(
-                  'flex items-center justify-center gap-2.5 w-full h-24 rounded-xl',
+                  'flex items-center justify-center gap-2.5 w-full h-24 rounded-sm',
                   'border-2 border-dashed border-neutral-300 bg-neutral-50',
                   'text-sm text-neutral-600 font-medium',
                   'cursor-pointer hover:border-neutral-400 hover:bg-neutral-100',
@@ -309,11 +309,11 @@ export default function CreateUpdatePage() {
         </div>
 
         {/* ── Settings Card ── */}
-        <div className="rounded-2xl shadow-sm overflow-hidden border border-neutral-100">
+        <div className="rounded-md shadow-sm overflow-hidden border border-neutral-100">
           {/* Section header */}
           <div className="border-b border-neutral-100 bg-white px-5 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-neutral-100 text-neutral-600">
+              <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-neutral-100 text-neutral-600">
                 <FileText size={18} />
               </div>
               <div>
@@ -335,7 +335,7 @@ export default function CreateUpdatePage() {
                   type="button"
                   onClick={() => setPriority('normal')}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold',
+                    'flex-1 flex items-center justify-center gap-2 h-11 rounded-sm text-sm font-semibold',
                     'transition-transform duration-150 active:scale-[0.97] cursor-pointer select-none',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                     priority === 'normal'
@@ -351,7 +351,7 @@ export default function CreateUpdatePage() {
                   type="button"
                   onClick={() => setPriority('urgent')}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold',
+                    'flex-1 flex items-center justify-center gap-2 h-11 rounded-sm text-sm font-semibold',
                     'transition-transform duration-150 active:scale-[0.97] cursor-pointer select-none',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-400',
                     priority === 'urgent'
@@ -384,7 +384,7 @@ export default function CreateUpdatePage() {
                       type="button"
                       onClick={() => setTargetAudience(opt.value)}
                       className={cn(
-                        'flex items-center gap-3.5 w-full px-4 py-3.5 rounded-xl text-left',
+                        'flex items-center gap-3.5 w-full px-4 py-3.5 rounded-sm text-left',
                         'transition-transform duration-150 active:scale-[0.98] cursor-pointer select-none',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                         isSelected
@@ -394,7 +394,7 @@ export default function CreateUpdatePage() {
                       aria-pressed={isSelected}
                     >
                       <div className={cn(
-                        'flex items-center justify-center w-10 h-10 rounded-xl shrink-0',
+                        'flex items-center justify-center w-10 h-10 rounded-sm shrink-0',
                         isSelected
                           ? 'bg-primary-600 text-white'
                           : 'bg-primary-100 text-primary-500',
@@ -435,7 +435,7 @@ export default function CreateUpdatePage() {
                         type="button"
                         onClick={() => setSelectedCollectiveId(collective.id)}
                         className={cn(
-                          'flex items-center gap-3 w-full px-4 py-3 rounded-xl text-left',
+                          'flex items-center gap-3 w-full px-4 py-3 rounded-sm text-left',
                           'transition-colors duration-150 cursor-pointer select-none',
                           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                           isSelected
@@ -450,10 +450,10 @@ export default function CreateUpdatePage() {
                             alt=""
                             loading="lazy"
                             decoding="async"
-                            className="w-10 h-10 rounded-xl object-cover shrink-0"
+                            className="w-10 h-10 rounded-sm object-cover shrink-0"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
+                          <div className="w-10 h-10 rounded-sm bg-primary-100 flex items-center justify-center shrink-0">
                             <Users size={16} className="text-neutral-400" />
                           </div>
                         )}
@@ -483,7 +483,7 @@ export default function CreateUpdatePage() {
               type="button"
               onClick={() => setIsPinned(!isPinned)}
               className={cn(
-                'flex items-center gap-3.5 w-full px-4 py-3.5 rounded-xl',
+                'flex items-center gap-3.5 w-full px-4 py-3.5 rounded-sm',
                 'transition-transform duration-150 active:scale-[0.98] cursor-pointer select-none',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                 isPinned
@@ -493,7 +493,7 @@ export default function CreateUpdatePage() {
               aria-pressed={isPinned}
             >
               <div className={cn(
-                'flex items-center justify-center w-10 h-10 rounded-xl shrink-0',
+                'flex items-center justify-center w-10 h-10 rounded-sm shrink-0',
                 isPinned
                   ? 'bg-primary-600 text-white'
                   : 'bg-primary-100 text-primary-500',
@@ -523,7 +523,7 @@ export default function CreateUpdatePage() {
             onClick={() => setShowPreview(true)}
             disabled={!canSubmit}
             className={cn(
-              'flex items-center justify-center gap-2 h-12 px-6 rounded-xl',
+              'flex items-center justify-center gap-2 h-12 px-6 rounded-sm',
               'text-sm font-semibold',
               'bg-white text-primary-700 ring-1 ring-primary-200',
               'shadow-sm hover:bg-neutral-50',
@@ -562,7 +562,7 @@ export default function CreateUpdatePage() {
           </h3>
 
           <div
-            className="rounded-2xl shadow-sm overflow-hidden bg-white"
+            className="rounded-md shadow-sm overflow-hidden bg-white"
           >
             {isPinned && (
               <div className="flex items-center gap-1 px-4 pt-3">
@@ -575,7 +575,7 @@ export default function CreateUpdatePage() {
             {previews.length > 0 && (
               <div className="mx-4 mt-3">
                 {previews.length === 1 ? (
-                  <div className="rounded-xl overflow-hidden">
+                  <div className="rounded-sm overflow-hidden">
                     <img
                       src={previews[0]}
                       alt=""
@@ -585,7 +585,7 @@ export default function CreateUpdatePage() {
                   </div>
                 ) : (
                   <div className={cn(
-                    'grid gap-1.5 rounded-xl overflow-hidden',
+                    'grid gap-1.5 rounded-sm overflow-hidden',
                     previews.length === 2 ? 'grid-cols-2' : 'grid-cols-3',
                   )}>
                     {previews.slice(0, 6).map((src, i) => (

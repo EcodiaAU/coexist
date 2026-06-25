@@ -88,7 +88,7 @@ export function AdminHeroStat({
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
       className={cn(
-        'flex flex-col items-center justify-center text-center rounded-2xl',
+        'flex flex-col items-center justify-center text-center rounded-md',
         'px-3 py-3 sm:px-4 sm:py-4',
         'bg-white shadow-sm border border-neutral-100',
         className,
@@ -98,14 +98,14 @@ export function AdminHeroStat({
       {/* Icon badge */}
       {icon && (
         <span
-          className={cn('flex items-center justify-center w-9 h-9 rounded-xl mb-2.5', c.icon)}
+          className={cn('flex items-center justify-center w-9 h-9 rounded-sm mb-2.5', c.icon)}
           aria-hidden="true"
         >
           {icon}
         </span>
       )}
       <p
-        style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+        style={{ fontFamily: 'var(--font-heading)' }}
         className={cn('text-2xl sm:text-3xl font-bold tracking-tight tabular-nums leading-none', c.value)}
       >
         {display.toLocaleString()}

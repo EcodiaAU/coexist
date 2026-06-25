@@ -36,19 +36,19 @@ export default function AdminModuleDetailPage() {
     ) : undefined,
     actions: module ? (
       <Link to={`/admin/development/modules/${moduleId}/edit`}>
-        <motion.div whileTap={{ scale: 0.95 }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 text-white text-[12px] font-bold hover:bg-white/20 transition-colors">
+        <motion.div whileTap={{ scale: 0.95 }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-white/15 text-white text-[12px] font-bold hover:bg-white/20 transition-colors">
           <Pencil size={13} /> Edit
         </motion.div>
       </Link>
     ) : undefined,
   })
 
-  if (isLoading) return <div className="max-w-3xl mx-auto space-y-6"><Skeleton className="h-8 w-48 rounded-xl" /><Skeleton className="h-32 rounded-2xl" /><Skeleton className="h-64 rounded-2xl" /></div>
+  if (isLoading) return <div className="max-w-3xl mx-auto space-y-6"><Skeleton className="h-8 w-48 rounded-sm" /><Skeleton className="h-32 rounded-md" /><Skeleton className="h-64 rounded-md" /></div>
 
   if (!module) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 shadow-sm mb-4"><BookOpen size={24} strokeWidth={1.5} className="text-white" /></div>
+        <div className="flex items-center justify-center w-14 h-14 rounded-md bg-bark-700 shadow-sm mb-4"><BookOpen size={24} strokeWidth={1.5} className="text-white" /></div>
         <p className="text-[15px] font-bold text-neutral-700">Module not found</p>
         <Button variant="ghost" size="sm" onClick={() => navigate('/admin/development')} className="mt-3">Back to Development</Button>
       </div>
@@ -57,12 +57,12 @@ export default function AdminModuleDetailPage() {
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">
-      <motion.div variants={fadeUp} className="rounded-2xl bg-white shadow-sm p-5 sm:p-6">
+      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6">
         <div className="flex items-start gap-4">
           {module.thumbnail_url ? (
-            <img src={module.thumbnail_url} alt="" loading="lazy" className="w-20 h-20 rounded-xl object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+            <img src={module.thumbnail_url} alt="" loading="lazy" className="w-20 h-20 rounded-sm object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
           ) : (
-            <div className="flex items-center justify-center w-20 h-20 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 shadow-sm shrink-0">
+            <div className="flex items-center justify-center w-20 h-20 rounded-sm bg-bark-700 shadow-sm shrink-0">
               <BookOpen size={28} className="text-white" />
             </div>
           )}
@@ -87,15 +87,15 @@ export default function AdminModuleDetailPage() {
           <span className="text-[11px] font-bold text-neutral-400 tabular-nums bg-neutral-100 px-1.5 py-0.5 rounded-full">{blocks.length}</span>
         </div>
         {blocks.length === 0 ? (
-          <div className="flex flex-col items-center py-12 rounded-2xl bg-neutral-50">
-            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 shadow-sm mb-3"><BookOpen size={24} strokeWidth={1.5} className="text-white" /></div>
+          <div className="flex flex-col items-center py-12 rounded-md bg-neutral-50">
+            <div className="flex items-center justify-center w-12 h-12 rounded-md bg-bark-700 shadow-sm mb-3"><BookOpen size={24} strokeWidth={1.5} className="text-white" /></div>
             <p className="text-[13px] font-semibold text-neutral-500">No content blocks</p>
             <Link to={`/admin/development/modules/${moduleId}/edit`} className="mt-3"><Button variant="secondary" size="sm" icon={<Pencil size={12} />}>Add Content</Button></Link>
           </div>
         ) : (
           <div className="space-y-4">
             {blocks.map((block) => (
-              <div key={block.id} className="rounded-2xl bg-white shadow-sm p-4">
+              <div key={block.id} className="rounded-md bg-white shadow-sm p-4">
                 <ContentBlockRenderer block={block} />
               </div>
             ))}

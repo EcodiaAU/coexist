@@ -52,6 +52,10 @@ import {
 } from './components/event-form-fields'
 import { CoverImageFocalPointPicker } from '@/components/cover-image-focal-point-picker'
 import { coverImagePositionStyle } from '@/lib/cover-image'
+import {
+  useCoverImageSuggestions,
+  type CoverImageSuggestion,
+} from '@/hooks/use-cover-image-suggestions'
 import type { Database } from '@/types/database.types'
 import {
     Page,
@@ -220,10 +224,10 @@ const STEPS = [
     title: 'Ticketing',
     subtitle: 'Free or paid? Set up tickets',
     icon: <Ticket size={20} />,
-    gradient: 'from-amber-400/15 via-warning-400/10 to-transparent',
-    accentColor: 'text-amber-600',
-    accentBg: 'bg-amber-500',
-    cardBorder: 'border-l-amber-400',
+    gradient: 'from-bark-400/15 via-warning-400/10 to-transparent',
+    accentColor: 'text-bark-600',
+    accentBg: 'bg-bark-500',
+    cardBorder: 'border-l-warning-400',
     cardGlow: 'bg-white',
   },
   {
@@ -294,7 +298,7 @@ function StepCard({
   return (
     <div
       className={cn(
-        'rounded-2xl shadow-sm',
+        'rounded-md shadow-sm',
         'border border-neutral-100',
         'border-l-[3px]',
         cardBorder,
@@ -393,11 +397,11 @@ function StepCollective({
                   type="button"
                   onClick={() => onToggle(c.id)}
                   className={cn(
-                    'w-full min-h-11 flex items-center gap-3 p-3 rounded-xl cursor-pointer select-none text-left',
+                    'w-full min-h-11 flex items-center gap-3 p-3 rounded-sm cursor-pointer select-none text-left',
                     'active:scale-[0.98] transition-all duration-200',
                     'border',
                     isSelected
-                      ? 'border-sprout-400 bg-gradient-to-r from-sprout-50 to-moss-50 ring-1 ring-sprout-300/50'
+                      ? 'border-sprout-400 bg-moss-50 ring-1 ring-sprout-300/50'
                       : 'border-neutral-100 bg-surface-0 hover:bg-surface-1',
                   )}
                 >
@@ -405,11 +409,11 @@ function StepCollective({
                     <img
                       src={c.cover_image_url}
                       alt=""
-                      className="w-10 h-10 rounded-lg object-cover shrink-0"
+                      className="w-10 h-10 rounded-sm object-cover shrink-0"
                     />
                   ) : (
                     <div className={cn(
-                      'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
+                      'w-10 h-10 rounded-sm flex items-center justify-center shrink-0',
                       isSelected ? 'bg-sprout-500 text-white' : 'bg-surface-2 text-neutral-400',
                     )}>
                       <Leaf size={18} />
@@ -443,8 +447,8 @@ function StepCollective({
       </StepCard>
 
       {selectedIds.length > 1 && (
-        <div className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-sprout-50 to-moss-50 border border-sprout-200/60">
-          <div className="w-9 h-9 rounded-xl bg-sprout-500 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 p-4 rounded-md bg-moss-50 border border-sprout-200/60">
+          <div className="w-9 h-9 rounded-sm bg-sprout-500 flex items-center justify-center shrink-0">
             <Users size={16} className="text-white" />
           </div>
           <p className="text-sm text-sprout-700 font-medium">
@@ -529,7 +533,7 @@ function StepDateTime({
           </p>
           <DateTimeFields fields={fields} onChange={onChange} minStart={wallClockNow()} />
           {fields.date_start && fields.date_start < wallClockNow() && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning-50 text-warning-700 text-caption">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-warning-50 text-warning-700 text-caption">
               <Clock size={14} className="shrink-0" />
               Start date is in the past - please choose a future date
             </div>
@@ -591,7 +595,7 @@ function StepDateTime({
                   }
                 />
 
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-sky-50 text-sky-700 text-caption">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-sky-50 text-sky-700 text-caption">
                   <Calendar size={14} />
                   This will create {extra.recurring_count} linked events
                 </div>
@@ -755,6 +759,85 @@ function StepDetails({
   )
 }
 
+/* ------------------------------------------------------------------ */
+/*  Cover image suggestions - real photos from past events             */
+/* ------------------------------------------------------------------ */
+
+function CoverImageSuggestions({
+  suggestions,
+  loading,
+  selectedUrl,
+  onSelect,
+}: {
+  suggestions: CoverImageSuggestion[]
+  loading: boolean
+  selectedUrl: string
+  onSelect: (s: CoverImageSuggestion) => void
+}) {
+  if (!loading && suggestions.length === 0) return null
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Sparkles size={15} className="text-primary-500" />
+        <p className="text-sm font-semibold text-primary-700">
+          Suggested from past events
+        </p>
+      </div>
+      <p className="text-caption text-neutral-500">
+        Photos from this collective and activity type. Tap one to use it.
+      </p>
+
+      {loading && suggestions.length === 0 ? (
+        <div className="flex gap-2 overflow-hidden">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-20 w-28 shrink-0 rounded-sm bg-neutral-100 animate-pulse"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 snap-x">
+          {suggestions.map((s) => {
+            const active = s.url === selectedUrl
+            return (
+              <button
+                key={s.storagePath}
+                type="button"
+                onClick={() => onSelect(s)}
+                aria-label={`Use photo from ${s.eventTitle ?? 'a past event'}`}
+                aria-pressed={active}
+                className={cn(
+                  'relative h-20 w-28 shrink-0 snap-start overflow-hidden rounded-sm',
+                  'cursor-pointer select-none active:scale-[0.98] transition-transform duration-150',
+                  active
+                    ? 'ring-2 ring-primary-500 ring-offset-1'
+                    : 'ring-1 ring-neutral-200 hover:ring-neutral-300',
+                )}
+              >
+                <img
+                  src={s.thumbnailUrl}
+                  alt={s.eventTitle ?? 'Past event photo'}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+                {active && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-primary-900/30">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow">
+                      <Check size={15} className="text-primary-600" />
+                    </span>
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function StepCoverImage({
   coverImageUrl,
   onUploadGallery,
@@ -767,6 +850,9 @@ function StepCoverImage({
   positionX,
   positionY,
   onPositionChange,
+  suggestions,
+  suggestionsLoading,
+  onSelectSuggestion,
 }: {
   coverImageUrl: string
   onUploadGallery: () => void
@@ -779,11 +865,16 @@ function StepCoverImage({
   positionX: number
   positionY: number
   onPositionChange: (x: number, y: number) => void
+  suggestions: CoverImageSuggestion[]
+  suggestionsLoading: boolean
+  onSelectSuggestion: (s: CoverImageSuggestion) => void
 }) {
   return (
-    <div className="space-y-4">
+    // Cap the cover step to a centered column on desktop so the 16:9 preview
+    // does not blow out to a full-width banner on the full-bleed form.
+    <div className="space-y-4 sm:max-w-xl">
       {/* Upload area */}
-      <div className="relative rounded-2xl overflow-hidden shadow-sm">
+      <div className="relative rounded-md overflow-hidden shadow-sm">
         <button
           type="button"
           onClick={onUploadGallery}
@@ -795,7 +886,7 @@ function StepCoverImage({
             'disabled:opacity-50 disabled:cursor-not-allowed',
             coverImageUrl
               ? 'p-0'
-              : 'py-20 bg-gradient-to-br from-surface-2 via-surface-1 to-primary-50',
+              : 'py-20 bg-primary-50',
           )}
           aria-label="Upload cover image"
         >
@@ -811,7 +902,7 @@ function StepCoverImage({
             />
           ) : (
             <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-md bg-primary-100 flex items-center justify-center mb-4">
                 <Upload size={28} className="text-neutral-400" />
               </div>
               <p className="text-sm font-semibold text-primary-700">
@@ -835,6 +926,13 @@ function StepCoverImage({
         uploading={uploading}
         error={uploadError}
         variant="bar"
+      />
+
+      <CoverImageSuggestions
+        suggestions={suggestions}
+        loading={suggestionsLoading}
+        selectedUrl={coverImageUrl}
+        onSelect={onSelectSuggestion}
       />
 
       {coverImageUrl && (
@@ -892,9 +990,9 @@ function StepCoverImage({
 
       {/* Soft warning when no cover image */}
       {!coverImageUrl && !uploading && (
-        <div className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl bg-amber-50 border border-amber-200/60">
-          <Image size={16} className="text-amber-500 shrink-0" />
-          <p className="text-caption text-amber-700">
+        <div className="flex items-center gap-2.5 px-3.5 py-3 rounded-sm bg-bark-50 border border-bark-200/60">
+          <Image size={16} className="text-bark-500 shrink-0" />
+          <p className="text-caption text-bark-700">
             Events with cover images get more registrations - consider adding one
           </p>
         </div>
@@ -921,17 +1019,17 @@ function StepVisibility({
         type="button"
         onClick={() => onChange({ is_public: true })}
         className={cn(
-          'w-full min-h-11 flex items-center gap-4 p-4 rounded-2xl cursor-pointer select-none text-left',
+          'w-full min-h-11 flex items-center gap-4 p-4 rounded-md cursor-pointer select-none text-left',
           'active:scale-[0.97] transition-transform duration-200',
           'border',
           fields.is_public
-            ? 'border-primary-400 shadow-sm bg-gradient-to-r from-primary-50 to-sprout-50 ring-1 ring-primary-300/50'
+            ? 'border-primary-400 shadow-sm bg-sprout-50 ring-1 ring-primary-300/50'
             : 'border-neutral-100 bg-surface-0 hover:bg-surface-1',
         )}
       >
         <div
           className={cn(
-            'w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+            'w-11 h-11 rounded-sm flex items-center justify-center shrink-0 transition-colors',
             fields.is_public
               ? 'bg-primary-500 text-white'
               : 'bg-surface-2 text-neutral-400',
@@ -957,17 +1055,17 @@ function StepVisibility({
         type="button"
         onClick={() => onChange({ is_public: false })}
         className={cn(
-          'w-full min-h-11 flex items-center gap-4 p-4 rounded-2xl cursor-pointer select-none text-left',
+          'w-full min-h-11 flex items-center gap-4 p-4 rounded-md cursor-pointer select-none text-left',
           'active:scale-[0.97] transition-transform duration-200',
           'border',
           !fields.is_public
-            ? 'border-plum-400 shadow-sm bg-gradient-to-r from-plum-50 to-primary-50 ring-1 ring-plum-300/50'
+            ? 'border-plum-400 shadow-sm bg-primary-50 ring-1 ring-plum-300/50'
             : 'border-neutral-100 bg-surface-0 hover:bg-surface-1',
         )}
       >
         <div
           className={cn(
-            'w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+            'w-11 h-11 rounded-sm flex items-center justify-center shrink-0 transition-colors',
             !fields.is_public
               ? 'bg-plum-500 text-white'
               : 'bg-surface-2 text-neutral-400',
@@ -1061,10 +1159,10 @@ function StepTicketing({
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -16 }}
-                  className="rounded-xl bg-white border border-neutral-100 p-3.5 space-y-2.5"
+                  className="rounded-sm bg-white border border-neutral-100 p-3.5 space-y-2.5"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-amber-100 text-amber-600 text-xs font-bold shrink-0">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-sm bg-bark-100 text-bark-600 text-xs font-bold shrink-0">
                       {idx + 1}
                     </span>
                     <Input
@@ -1077,7 +1175,7 @@ function StepTicketing({
                     <button
                       type="button"
                       onClick={() => removeTier(tier.id)}
-                      className="flex items-center justify-center min-w-9 min-h-9 rounded-lg text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer"
+                      className="flex items-center justify-center min-w-9 min-h-9 rounded-sm text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer"
                       aria-label="Remove tier"
                     >
                       <Trash2 size={14} />
@@ -1104,7 +1202,7 @@ function StepTicketing({
                           value={tier.price_dollars}
                           onChange={(e) => updateTier(tier.id, { price_dollars: e.target.value })}
                           placeholder="0.00"
-                          className="w-full h-10 pl-7 pr-3 rounded-lg bg-surface-3 text-[16px] text-neutral-900 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400"
+                          className="w-full h-10 pl-7 pr-3 rounded-sm bg-surface-3 text-[16px] text-neutral-900 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400"
                         />
                       </div>
                     </div>
@@ -1117,7 +1215,7 @@ function StepTicketing({
                         value={tier.capacity}
                         onChange={(e) => updateTier(tier.id, { capacity: e.target.value })}
                         placeholder="∞"
-                        className="w-full h-10 px-3 rounded-lg bg-surface-3 text-[16px] text-neutral-900 text-center focus:outline-none focus:ring-2 focus:ring-primary-400"
+                        className="w-full h-10 px-3 rounded-sm bg-surface-3 text-[16px] text-neutral-900 text-center focus:outline-none focus:ring-2 focus:ring-primary-400"
                       />
                     </div>
                   </div>
@@ -1136,7 +1234,7 @@ function StepTicketing({
             </Button>
           </StepCard>
 
-          <div className="px-3 py-2 rounded-lg bg-amber-50/60 text-amber-700 text-xs">
+          <div className="px-3 py-2 rounded-sm bg-bark-50/60 text-bark-700 text-xs">
             Attendees will be redirected to Stripe to complete payment. You'll see revenue and ticket sales in the admin dashboard.
           </div>
         </>
@@ -1177,8 +1275,8 @@ function StepInvite({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
           >
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-moss-50 to-sprout-50 border border-moss-200/60">
-              <div className="w-9 h-9 rounded-xl bg-moss-500 flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-3 p-4 rounded-md bg-sprout-50 border border-moss-200/60">
+              <div className="w-9 h-9 rounded-sm bg-moss-500 flex items-center justify-center shrink-0">
                 <Users size={16} className="text-white" />
               </div>
               <p className="text-sm text-moss-700 font-medium">
@@ -1219,7 +1317,7 @@ function StepPartner({
             type="button"
             onClick={() => onFieldsChange({ is_external_collaboration: false, external_registration_url: '' })}
             className={cn(
-              'flex-1 px-4 py-3 rounded-xl border text-sm font-semibold transition-all cursor-pointer select-none',
+              'flex-1 px-4 py-3 rounded-sm border text-sm font-semibold transition-all cursor-pointer select-none',
               !fields.is_external_collaboration
                 ? 'border-primary-400 bg-primary-50 text-primary-700'
                 : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50',
@@ -1234,7 +1332,7 @@ function StepPartner({
             type="button"
             onClick={() => onFieldsChange({ is_external_collaboration: true })}
             className={cn(
-              'flex-1 px-4 py-3 rounded-xl border text-sm font-semibold transition-all cursor-pointer select-none',
+              'flex-1 px-4 py-3 rounded-sm border text-sm font-semibold transition-all cursor-pointer select-none',
               fields.is_external_collaboration
                 ? 'border-bark-400 bg-bark-50 text-bark-700'
                 : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50',
@@ -1285,7 +1383,7 @@ function StepPartner({
       )}
 
       {!extra.partner_name && !fields.is_external_collaboration && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-surface-2/60 text-neutral-500">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-surface-2/60 text-neutral-500">
           <HelpCircle size={16} className="shrink-0 text-neutral-400" />
           <p className="text-caption italic">
             You can skip this step - partners are optional.
@@ -1308,7 +1406,7 @@ function StepReview({ fields, extra }: { fields: EventFormFields; extra: CreateE
   return (
     <div className="space-y-4">
       {/* Preview card */}
-      <div className="rounded-2xl overflow-hidden shadow-sm border border-neutral-100">
+      <div className="rounded-md overflow-hidden shadow-sm border border-neutral-100">
         <Card variant="event">
           {fields.cover_image_url && (
             <Card.Image
@@ -1469,15 +1567,15 @@ function StepReview({ fields, extra }: { fields: EventFormFields; extra: CreateE
         if (warnings.length === 0) return null
         return (
           <StepCard className="!p-0 overflow-hidden">
-            <div className="px-5 py-3 bg-amber-50 border-b border-amber-200/60">
-              <p className="text-overline tracking-wider text-amber-600">
+            <div className="px-5 py-3 bg-bark-50 border-b border-bark-200/60">
+              <p className="text-overline tracking-wider text-bark-600">
                 Recommended
               </p>
             </div>
             <div className="px-5 py-2 space-y-1">
               {warnings.map((w) => (
-                <div key={w.label} className="flex items-center gap-2.5 py-2 text-caption text-amber-700">
-                  <span className="text-amber-400 shrink-0">{w.icon}</span>
+                <div key={w.label} className="flex items-center gap-2.5 py-2 text-caption text-bark-700">
+                  <span className="text-bark-400 shrink-0">{w.icon}</span>
                   {w.label}
                 </div>
               ))}
@@ -1490,8 +1588,8 @@ function StepReview({ fields, extra }: { fields: EventFormFields; extra: CreateE
       })()}
 
       {/* Ready banner */}
-      <div className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-success-50 to-sprout-50 border border-success-200/60">
-        <div className="w-9 h-9 rounded-xl bg-success-500 flex items-center justify-center shrink-0">
+      <div className="flex items-center gap-3 p-4 rounded-md bg-sprout-50 border border-success-200/60">
+        <div className="w-9 h-9 rounded-sm bg-success-500 flex items-center justify-center shrink-0">
           <CheckCircle2 size={18} className="text-white" />
         </div>
         <div>
@@ -1562,6 +1660,24 @@ export default function CreateEventPage() {
   }, [])
 
   const form = useEventForm({ mode: 'create' })
+
+  // Cover image suggestions: real photos from past events of the chosen
+  // collective(s) / activity type, so the organiser can pick one without
+  // hunting through downloads or settling for the generic default image.
+  const coverSuggestions = useCoverImageSuggestions({
+    collectiveIds: extra.selected_collective_ids,
+    activityType: form.fields.activity_type,
+  })
+  const handleSelectCoverSuggestion = useCallback(
+    (s: CoverImageSuggestion) => {
+      form.updateFields({
+        cover_image_url: s.url,
+        cover_image_position_x: 50,
+        cover_image_position_y: 50,
+      })
+    },
+    [form],
+  )
 
   const createEvent = useCreateEvent()
   const { data: activityDefaults } = useActivityTypeDefaults()
@@ -2079,6 +2195,9 @@ export default function CreateEventPage() {
             positionX={form.fields.cover_image_position_x}
             positionY={form.fields.cover_image_position_y}
             onPositionChange={form.setCoverImagePosition}
+            suggestions={coverSuggestions.suggestions}
+            suggestionsLoading={coverSuggestions.isLoading}
+            onSelectSuggestion={handleSelectCoverSuggestion}
           />
         ),
       },
@@ -2119,7 +2238,7 @@ export default function CreateEventPage() {
         content: <StepPartner extra={extra} onExtraChange={updateExtra} fields={form.fields} onFieldsChange={form.updateFields} />,
       },
     ] as const
-  }, [extra, form, sectionStatus, toggleCollective, updateExtra])
+  }, [extra, form, sectionStatus, toggleCollective, updateExtra, coverSuggestions.suggestions, coverSuggestions.isLoading, handleSelectCoverSuggestion])
 
   return (
     <Page
@@ -2162,10 +2281,10 @@ export default function CreateEventPage() {
           initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="rounded-2xl p-4 bg-gradient-to-br from-primary-500/15 via-sprout-400/10 to-transparent"
+          className="rounded-md p-4 bg-gradient-to-br from-primary-500/15 via-sprout-400/10 to-transparent"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white bg-primary-500">
+            <div className="w-11 h-11 rounded-sm flex items-center justify-center text-white bg-primary-500">
               <Sparkles size={20} />
             </div>
             <div className="flex-1 min-w-0">
@@ -2202,7 +2321,7 @@ export default function CreateEventPage() {
               >
                 <div
                   className={cn(
-                    'w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0',
+                    'w-9 h-9 rounded-sm flex items-center justify-center text-white shrink-0',
                     def.step.accentBg,
                   )}
                 >

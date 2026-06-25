@@ -243,7 +243,7 @@ export function EventShareSheet({
                   {/* Preview frame */}
                   <div
                     className={cn(
-                      'rounded-2xl overflow-hidden ring-1 ring-neutral-200/80 shadow-sm bg-neutral-50',
+                      'rounded-md overflow-hidden ring-1 ring-neutral-200/80 shadow-sm bg-neutral-50',
                       'relative',
                     )}
                     style={{ width: PREVIEW_WIDTH, height: ph }}
@@ -314,9 +314,9 @@ export function EventShareSheet({
             link card has too much padding form the side of the screen and
             the copy button should be underneatht the url preview because
             its getting truncated way too much right now and looks bad". */}
-        <div className="mt-5 rounded-2xl border border-neutral-200 bg-neutral-50 px-2 py-3">
+        <div className="mt-5 rounded-md border border-neutral-200 bg-neutral-50 px-2 py-3">
           <p className="text-[12px] font-bold text-neutral-900 mb-1.5 px-1">Event link</p>
-          <div className="rounded-lg bg-white border border-neutral-200 px-3 py-2">
+          <div className="rounded-sm bg-white border border-neutral-200 px-3 py-2">
             <p className="text-[12px] text-neutral-600 break-all">{shareUrl}</p>
           </div>
           <Button

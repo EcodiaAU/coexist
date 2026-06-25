@@ -160,7 +160,7 @@ export function ChatBubble({
         ) : (
           <button
             type="button"
-            className="flex-shrink-0 self-end flex items-center justify-center min-h-11 min-w-11 rounded-full cursor-pointer select-none active:scale-[0.93] transition-transform duration-150"
+            className="flex-shrink-0 self-end flex items-center justify-center min-h-11 min-w-11 rounded-full cursor-pointer select-none active:scale-[0.98] transition-transform duration-150"
             onClick={() => senderId && onAvatarTap?.(senderId)}
             aria-label={senderName ? `View ${senderName}'s profile` : 'View profile'}
           >
@@ -223,7 +223,7 @@ export function ChatBubble({
             redrawing the chat tail. */}
         <div
           className={cn(
-            'min-w-0 max-w-full rounded-2xl px-4 py-2.5',
+            'min-w-0 max-w-full rounded-md px-4 py-2.5',
             sent
               ? cn('bg-primary-200 text-neutral-900', isContinuation ? 'rounded-br-md rounded-tr-md' : 'rounded-br-md')
               : cn('bg-neutral-200 text-neutral-900', isContinuation ? 'rounded-bl-md rounded-tl-md' : 'rounded-bl-md'),
@@ -253,7 +253,7 @@ export function ChatBubble({
               </>
             )
             const wrapperClass = cn(
-              'mb-2.5 rounded-xl border-l-[3px] px-3 py-2 w-full text-left',
+              'mb-2.5 rounded-sm border-l-[3px] px-3 py-2 w-full text-left',
               sent
                 ? 'border-neutral-200 bg-neutral-50'
                 : 'border-neutral-300 bg-white',
@@ -283,7 +283,7 @@ export function ChatBubble({
               src={photo}
               alt="Shared image"
               loading="lazy"
-              className="mb-2.5 max-w-full rounded-xl shadow-sm"
+              className="mb-2.5 max-w-full rounded-sm shadow-sm"
             />
           )}
 
@@ -361,14 +361,14 @@ export function PollCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        'w-full max-w-[85%] rounded-2xl p-5',
+        'w-full max-w-[85%] rounded-md p-5',
         'bg-white border border-neutral-100 shadow-sm',
         sent ? 'ml-auto' : 'mr-auto',
       )}
     >
       {/* Poll icon + question */}
       <div className="flex items-start gap-3 mb-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-600">
           <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <rect x="1" y="8" width="3" height="6" rx="1" fill="currentColor" opacity="0.6" />
             <rect x="6" y="4" width="3" height="10" rx="1" fill="currentColor" opacity="0.8" />
@@ -403,7 +403,7 @@ export function PollCard({
                 }
               }}
               className={cn(
-                'relative w-full overflow-hidden rounded-xl px-3.5 py-3 text-left transition-transform duration-200',
+                'relative w-full overflow-hidden rounded-sm px-3.5 py-3 text-left transition-transform duration-200',
                 'min-h-11 cursor-pointer select-none',
                 isSelected
                   ? 'bg-primary-50 ring-2 ring-primary-400/40'
@@ -419,7 +419,7 @@ export function PollCard({
                   animate={{ width: `${pct}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                   className={cn(
-                    'absolute inset-y-0 left-0 rounded-xl',
+                    'absolute inset-y-0 left-0 rounded-sm',
                     isSelected ? 'bg-primary-100' : 'bg-neutral-100',
                   )}
                 />
@@ -553,7 +553,7 @@ export function AnnouncementCard({
         // 1.8.4 item 10: explicit min-w-0 + max-w + overflow-hidden chain
         // ensures cover-image badge + RSVP scroll-strip clip at the card
         // boundary on narrow phones rather than bleeding into the chat list.
-        'w-full max-w-[88%] min-w-0 rounded-2xl overflow-hidden',
+        'w-full max-w-[88%] min-w-0 rounded-md overflow-hidden',
         // Slightly off-white so the widget visually separates from the chat
         // bg-white. Same border + shadow keeps it elevated.
         'bg-neutral-50 border border-neutral-200 shadow-sm',
@@ -580,7 +580,7 @@ export function AnnouncementCard({
       <div className="p-5 min-w-0 overflow-hidden">
         {/* Header */}
         <div className="flex items-center gap-3 mb-3 min-w-0">
-          <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl', typeInfo.iconBg, typeInfo.iconColor)}>
+          <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-md', typeInfo.iconBg, typeInfo.iconColor)}>
             <IconComponent size={20} strokeWidth={2.5} />
           </div>
           <div className="flex-1 min-w-0">
@@ -599,7 +599,7 @@ export function AnnouncementCard({
 
         {/* Event details summary */}
         {eventDetails && (
-          <div className="rounded-xl bg-neutral-50 p-3 mb-3 space-y-1.5 min-w-0 overflow-hidden">
+          <div className="rounded-sm bg-neutral-50 p-3 mb-3 space-y-1.5 min-w-0 overflow-hidden">
             <div className="flex items-center gap-2 min-w-0">
               <Calendar size={13} className="text-neutral-400 shrink-0" />
               <span className="text-xs font-semibold text-neutral-700 truncate">
@@ -632,7 +632,7 @@ export function AnnouncementCard({
           <button
             type="button"
             onClick={() => onViewEvent(metadata.event_id as string)}
-            className="w-full rounded-xl bg-primary-600 py-2.5 text-center text-sm font-semibold text-white mb-2 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11"
+            className="w-full rounded-sm bg-primary-600 py-2.5 text-center text-sm font-semibold text-white mb-2 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11"
           >
             View Event Details
           </button>
@@ -661,7 +661,7 @@ export function AnnouncementCard({
                 type="button"
                 onClick={() => onRespond(opt)}
                 className={cn(
-                  'rounded-xl py-2.5 px-3 text-center text-xs font-semibold transition-transform duration-150 min-h-11',
+                  'rounded-sm py-2.5 px-3 text-center text-xs font-semibold transition-transform duration-150 min-h-11',
                   'active:scale-[0.97] cursor-pointer select-none',
                   fullWidth ? 'w-full' : 'flex-1 min-w-0',
                   isSelected
@@ -841,7 +841,7 @@ export function CarpoolCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        'w-full max-w-[85%] min-w-0 rounded-2xl overflow-hidden',
+        'w-full max-w-[85%] min-w-0 rounded-md overflow-hidden',
         'bg-white border border-neutral-100 shadow-sm',
         sent ? 'ml-auto' : 'mr-auto',
         isMuted && 'opacity-70',
@@ -867,7 +867,7 @@ export function CarpoolCard({
       <div className="p-5 min-w-0 overflow-hidden">
         {/* Header chip */}
         <div className="flex items-center gap-3 mb-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-success-50 text-success-600">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-success-50 text-success-600">
             <Car size={20} strokeWidth={2.5} />
           </div>
           <div className="flex-1 min-w-0">
@@ -884,7 +884,7 @@ export function CarpoolCard({
 
         {/* Linked event preview */}
         {(eventTitle || eventDetails) && (
-          <div className="rounded-xl bg-neutral-50 p-3 mb-3 space-y-1.5 min-w-0 overflow-hidden">
+          <div className="rounded-sm bg-neutral-50 p-3 mb-3 space-y-1.5 min-w-0 overflow-hidden">
             {eventTitle && (
               <p className="text-[13px] font-bold text-neutral-900 truncate">{eventTitle}</p>
             )}
@@ -927,7 +927,7 @@ export function CarpoolCard({
 
         {/* Trip details - structured rows in a tinted panel so the widget
             reads as a single unit rather than loose text lines. */}
-        <div className="mb-3 rounded-xl bg-success-50/60 ring-1 ring-success-100 divide-y divide-success-100/70 overflow-hidden">
+        <div className="mb-3 rounded-sm bg-success-50/60 ring-1 ring-success-100 divide-y divide-success-100/70 overflow-hidden">
           <div className="flex items-center gap-2.5 px-3 py-2 min-w-0">
             <MapPin size={14} className="text-success-700 shrink-0" />
             <div className="flex-1 min-w-0">
@@ -956,7 +956,7 @@ export function CarpoolCard({
         </div>
 
         {notes && (
-          <p className="text-xs text-neutral-600 leading-relaxed mb-3 break-words bg-neutral-50 rounded-lg px-3 py-2 ring-1 ring-neutral-100">
+          <p className="text-xs text-neutral-600 leading-relaxed mb-3 break-words bg-neutral-50 rounded-sm px-3 py-2 ring-1 ring-neutral-100">
             "{notes}"
           </p>
         )}
@@ -992,14 +992,14 @@ export function CarpoolCard({
           </p>
         ) : viewerIsDriver ? (
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-lg px-3 py-2 text-center">
+            <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-sm px-3 py-2 text-center">
               You're driving
             </p>
             {breakoutChannelId && onOpenChat && (
               <button
                 type="button"
                 onClick={onOpenChat}
-                className="w-full rounded-xl bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
+                className="w-full rounded-sm bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
               >
                 Open carpool chat
               </button>
@@ -1007,14 +1007,14 @@ export function CarpoolCard({
           </div>
         ) : viewerHasSeat ? (
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-lg px-3 py-2 text-center">
+            <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-sm px-3 py-2 text-center">
               You're on this carpool
             </p>
             {breakoutChannelId && onOpenChat && (
               <button
                 type="button"
                 onClick={onOpenChat}
-                className="w-full rounded-xl bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
+                className="w-full rounded-sm bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
               >
                 Open carpool chat
               </button>
@@ -1023,7 +1023,7 @@ export function CarpoolCard({
               <button
                 type="button"
                 onClick={onCancelSeat}
-                className="w-full rounded-xl bg-neutral-50 ring-1 ring-neutral-200 py-2.5 text-center text-sm font-semibold text-neutral-700 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-neutral-100"
+                className="w-full rounded-sm bg-neutral-50 ring-1 ring-neutral-200 py-2.5 text-center text-sm font-semibold text-neutral-700 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-neutral-100"
               >
                 Cancel my seat
               </button>
@@ -1033,7 +1033,7 @@ export function CarpoolCard({
           <button
             type="button"
             disabled
-            className="w-full rounded-xl bg-neutral-100 py-2.5 text-center text-sm font-semibold text-neutral-400 cursor-not-allowed select-none min-h-11"
+            className="w-full rounded-sm bg-neutral-100 py-2.5 text-center text-sm font-semibold text-neutral-400 cursor-not-allowed select-none min-h-11"
           >
             Carpool full
           </button>
@@ -1042,7 +1042,7 @@ export function CarpoolCard({
             <button
               type="button"
               onClick={onSaveSeat}
-              className="w-full rounded-xl bg-success-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-success-700 shadow-sm"
+              className="w-full rounded-sm bg-success-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-success-700 shadow-sm"
             >
               Save me a seat
             </button>

@@ -86,11 +86,11 @@ export default function LeaderWelcomePage() {
               key={tool.title}
               variants={fadeUp}
               className={cn(
-                'flex items-start gap-4 p-4 rounded-xl',
+                'flex items-start gap-4 p-4 rounded-sm',
                 'bg-white border border-neutral-100 shadow-sm',
               )}
             >
-              <div className="w-10 h-10 rounded-lg bg-neutral-50 flex items-center justify-center shrink-0 text-neutral-400">
+              <div className="w-10 h-10 rounded-sm bg-neutral-50 flex items-center justify-center shrink-0 text-neutral-400">
                 {tool.icon}
               </div>
               <div>

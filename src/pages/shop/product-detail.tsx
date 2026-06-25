@@ -54,7 +54,7 @@ function ImageGallery({ images, alt }: { images: string[]; alt: string }) {
 
   if (images.length === 0) {
     return (
-      <div className="w-full aspect-[4/5] sm:aspect-square bg-neutral-50 flex items-center justify-center rounded-b-3xl">
+      <div className="w-full aspect-[4/5] sm:aspect-square bg-neutral-50 flex items-center justify-center rounded-b-md">
         <div className="flex flex-col items-center gap-3">
           <div className="w-20 h-20 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
             <ShoppingBag size={32} className="text-neutral-400" />
@@ -66,7 +66,7 @@ function ImageGallery({ images, alt }: { images: string[]; alt: string }) {
   }
 
   return (
-    <div className="relative -mx-4 lg:mx-auto lg:max-w-md lg:rounded-2xl lg:overflow-hidden">
+    <div className="relative -mx-4 lg:mx-auto lg:max-w-md lg:rounded-md lg:overflow-hidden">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
@@ -123,7 +123,7 @@ function ImageGallery({ images, alt }: { images: string[]; alt: string }) {
               'hidden lg:flex absolute left-3 top-1/2 -translate-y-1/2',
               'items-center justify-center w-10 h-10 rounded-full',
               'bg-white shadow-sm',
-              'cursor-pointer select-none active:scale-[0.95] transition-transform duration-150',
+              'cursor-pointer select-none active:scale-[0.98] transition-transform duration-150',
               'hover:bg-white',
               currentIndex === 0 && 'opacity-0 pointer-events-none',
             )}
@@ -138,7 +138,7 @@ function ImageGallery({ images, alt }: { images: string[]; alt: string }) {
               'hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2',
               'items-center justify-center w-10 h-10 rounded-full',
               'bg-white shadow-sm',
-              'cursor-pointer select-none active:scale-[0.95] transition-transform duration-150',
+              'cursor-pointer select-none active:scale-[0.98] transition-transform duration-150',
               'hover:bg-white',
               currentIndex === images.length - 1 && 'opacity-0 pointer-events-none',
             )}
@@ -171,7 +171,7 @@ function TrustBadges() {
   ]
 
   return (
-    <div className="flex items-center justify-center gap-6 py-4 px-3 rounded-2xl bg-white border border-neutral-100 shadow-sm">
+    <div className="flex items-center justify-center gap-6 py-4 px-3 rounded-md bg-white border border-neutral-100 shadow-sm">
       {badges.map(({ icon: Icon, label }) => (
         <div key={label} className="flex flex-col items-center gap-1.5">
           <div className="w-9 h-9 rounded-full bg-neutral-50 flex items-center justify-center shadow-sm">
@@ -198,14 +198,14 @@ function QuantityStepper({
   max?: number
 }) {
   return (
-    <div className="inline-flex items-center gap-1 rounded-xl bg-neutral-50 shadow-sm p-1">
+    <div className="inline-flex items-center gap-1 rounded-sm bg-neutral-50 shadow-sm p-1">
       <button
         type="button"
         onClick={() => onChange(Math.max(1, value - 1))}
         disabled={value <= 1}
         className={cn(
-          'flex items-center justify-center w-10 h-10 rounded-lg',
-          'cursor-pointer select-none active:scale-[0.93] transition-transform duration-150',
+          'flex items-center justify-center w-10 h-10 rounded-sm',
+          'cursor-pointer select-none active:scale-[0.98] transition-transform duration-150',
           value <= 1
             ? 'text-neutral-200 cursor-not-allowed'
             : 'text-neutral-600 hover:bg-neutral-100',
@@ -222,8 +222,8 @@ function QuantityStepper({
         onClick={() => onChange(max ? Math.min(max, value + 1) : value + 1)}
         disabled={max !== undefined && value >= max}
         className={cn(
-          'flex items-center justify-center w-10 h-10 rounded-lg',
-          'cursor-pointer select-none active:scale-[0.93] transition-transform duration-150',
+          'flex items-center justify-center w-10 h-10 rounded-sm',
+          'cursor-pointer select-none active:scale-[0.98] transition-transform duration-150',
           max !== undefined && value >= max
             ? 'text-neutral-200 cursor-not-allowed'
             : 'text-neutral-600 hover:bg-neutral-100',
@@ -256,7 +256,7 @@ function ProductDetailSkeleton() {
   return (
     <Page swipeBack header={<Header title="" back />}>
       <div className="-mx-4 lg:mx-0">
-        <Skeleton variant="image" className="rounded-none lg:rounded-2xl aspect-[4/5] sm:aspect-square" />
+        <Skeleton variant="image" className="rounded-none lg:rounded-md aspect-[4/5] sm:aspect-square" />
       </div>
       <div className="py-6 space-y-5">
         <div className="space-y-3">
@@ -265,7 +265,7 @@ function ProductDetailSkeleton() {
         </div>
         <div className="flex gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} variant="text" className="w-16 h-11 rounded-xl" />
+            <Skeleton key={i} variant="text" className="w-16 h-11 rounded-sm" />
           ))}
         </div>
         <Skeleton variant="text" count={3} />
@@ -296,7 +296,7 @@ function AddedToCartModal({
         <h2 className="font-heading text-lg font-semibold text-neutral-900">Added to cart!</h2>
         <button
           onClick={onClose}
-          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-100 active:scale-[0.93] transition-[colors,transform] duration-150 cursor-pointer"
+          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-100 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
           aria-label="Close"
         >
           <X size={20} />
@@ -320,7 +320,7 @@ function AddedToCartModal({
                   }}
                   className="shrink-0 w-32 cursor-pointer select-none active:scale-[0.97] transition-transform duration-150 text-left"
                 >
-                  <div className="rounded-xl overflow-hidden bg-neutral-50 shadow-sm">
+                  <div className="rounded-sm overflow-hidden bg-neutral-50 shadow-sm">
                     <img
                       src={p.images[0] ?? '/img/placeholder-merch.jpg'}
                       alt={p.name}
@@ -556,7 +556,7 @@ export default function ProductDetailPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-error-50"
+                className="flex items-center gap-2 px-3 py-2 rounded-sm bg-error-50"
               >
                 <div className="w-2 h-2 rounded-full bg-error-400" />
                 <span className="text-sm font-medium text-error-700">Out of stock</span>
@@ -568,7 +568,7 @@ export default function ProductDetailPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-warning-50"
+                className="flex items-center gap-2 px-3 py-2 rounded-sm bg-warning-50"
               >
                 <div className="w-2 h-2 rounded-full bg-warning-400 animate-pulse" />
                 <span className="text-sm font-medium text-warning-700">
@@ -622,7 +622,7 @@ export default function ProductDetailPage() {
                         disabled={!available}
                         whileTap={available ? { scale: 0.93 } : undefined}
                         className={cn(
-                          'relative px-5 py-2.5 min-h-11 min-w-[3.5rem] rounded-xl text-sm font-semibold',
+                          'relative px-5 py-2.5 min-h-11 min-w-[3.5rem] rounded-sm text-sm font-semibold',
                           'transition-transform duration-200 cursor-pointer select-none',
                           isSelected
                             ? 'bg-neutral-900 text-white shadow-sm'
@@ -665,7 +665,7 @@ export default function ProductDetailPage() {
                         disabled={!available}
                         whileTap={available ? { scale: 0.93 } : undefined}
                         className={cn(
-                          'relative px-5 py-2.5 min-h-11 rounded-xl text-sm font-semibold',
+                          'relative px-5 py-2.5 min-h-11 rounded-sm text-sm font-semibold',
                           'transition-transform duration-200 cursor-pointer select-none',
                           isSelected
                             ? 'bg-neutral-900 text-white shadow-sm'

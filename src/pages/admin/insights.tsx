@@ -16,13 +16,14 @@
  */
 import { useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import type { Database } from '@/types/database.types'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import {
   CalendarDays, Users, UserCheck, Repeat, Clock, Leaf, TreePine, Trash2,
   Waves, Eye, Ruler, Sprout, Sparkles, Droplets, Mountain, Flower2, Bug,
   Flame, Fish, Wind, ExternalLink, Copy, Check, Download, Table as TableIcon,
-  X,
+  X, TrendingUp,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAdminHeader } from '@/components/admin-layout'
@@ -39,7 +40,8 @@ import {
 } from '@/hooks/use-admin-impact-observations'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import type { ImpactMetricDef } from '@/lib/impact-metrics'
-import { dateRangeOptions, getDateRangeStart, type DateRange } from '@/hooks/use-admin-dashboard'
+import { dateRangeOptions, getDateRangeStart, useTrendData, type DateRange } from '@/hooks/use-admin-dashboard'
+import { TrendChart } from '@/components/trend-chart'
 import { ACTIVITY_TYPE_FILTER_OPTIONS, ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
 import { useCollectives } from '@/hooks/use-collective'
 import type { AttendanceMetrics } from '@/lib/attendance-metrics'
@@ -131,7 +133,7 @@ function Selectable({ k, sel, onToggle, children }: { k: string; sel: Set<string
       onClick={() => onToggle(k)}
       role="button"
       aria-pressed={on}
-      className={cn('group relative cursor-pointer rounded-2xl transition-all', on && 'ring-2 ring-primary-500 ring-offset-2')}
+      className={cn('group relative cursor-pointer rounded-md transition-all', on && 'ring-2 ring-primary-500 ring-offset-2')}
     >
       <span className={cn(
         'absolute top-2 right-2 z-10 w-5 h-5 rounded-full flex items-center justify-center transition-all',
@@ -147,7 +149,7 @@ function Selectable({ k, sel, onToggle, children }: { k: string; sel: Set<string
 function CopyTableButton({ onCopy, copied, label = 'Copy table' }: { onCopy: () => void; copied: boolean; label?: string }) {
   return (
     <button type="button" onClick={onCopy}
-      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-700 hover:text-primary-800 px-2.5 py-1 rounded-lg hover:bg-primary-50 transition-colors cursor-pointer">
+      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-700 hover:text-primary-800 px-2.5 py-1 rounded-sm hover:bg-primary-50 transition-colors cursor-pointer">
       {copied ? <Check size={12} /> : <TableIcon size={12} />} {copied ? 'Copied' : label}
     </button>
   )
@@ -158,8 +160,8 @@ function CohortBar({ label, count, total, rm }: { label: string; count: number; 
   return (
     <div className="flex items-center gap-3 py-1.5">
       <span className="w-14 shrink-0 text-sm text-neutral-600">{label}</span>
-      <div className="flex-1 h-7 rounded-lg bg-neutral-100 overflow-hidden">
-        <motion.div className="h-full bg-primary-400 rounded-lg"
+      <div className="flex-1 h-7 rounded-sm bg-neutral-100 overflow-hidden">
+        <motion.div className="h-full bg-primary-400 rounded-sm"
           initial={rm ? { width: `${Math.max(p, count > 0 ? 3 : 0)}%` } : { width: 0 }}
           animate={{ width: `${Math.max(p, count > 0 ? 3 : 0)}%` }} transition={{ duration: 0.6 }} />
       </div>
@@ -195,6 +197,7 @@ export default function AdminInsightsPage() {
 
   const { data: obs, isLoading: obsLoading } = useImpactObservations(filters, activeDefs)
   const { data: yoy } = useYearOverYear(activeDefs)
+  const { data: trends } = useTrendData()
 
   const fromDate = useMemo(() => {
     const s = getDateRangeStart(dateRange)
@@ -204,10 +207,12 @@ export default function AdminInsightsPage() {
     queryKey: ['insights-attendance', dateRange, collectiveId, activityType],
     queryFn: async (): Promise<AttendanceMetrics> => {
       const { data, error } = await supabase.rpc('coexist_attendance_metrics', {
-        p_collective_ids: collectiveId ? [collectiveId] : null,
+        p_collective_ids: collectiveId ? [collectiveId] : undefined,
         p_from: fromDate,
         p_to: todayIso(),
-        p_activity_types: activityType ? [activityType] : null,
+        p_activity_types: activityType
+          ? [activityType as Database['public']['Enums']['activity_type']]
+          : undefined,
       })
       if (error) throw error
       return data as unknown as AttendanceMetrics
@@ -336,7 +341,8 @@ export default function AdminInsightsPage() {
   }
 
   const jump = [
-    { id: 'overview', label: 'Overview' }, { id: 'impact', label: 'Impact' },
+    { id: 'overview', label: 'Overview' }, { id: 'growth', label: 'Growth' },
+    { id: 'impact', label: 'Impact' },
     { id: 'attendance', label: 'Attendance' }, { id: 'collectives', label: 'By collective' },
     { id: 'years', label: 'Years' }, { id: 'data', label: 'Raw data' },
   ]
@@ -382,6 +388,31 @@ export default function AdminInsightsPage() {
           </motion.div>
         </div>
 
+        {/* ── Growth over time ── */}
+        {trends && trends.length > 0 && (
+          <div>
+            <Section id="growth" title="Growth over time" hint="New members and events per month, last 6 months." />
+            <motion.div variants={v.fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <TrendChart
+                data={trends}
+                dataKey="members"
+                label="Member Growth"
+                icon={<TrendingUp size={17} className="text-primary-600" />}
+                accentFrom="var(--color-primary-600)"
+                accentTo="var(--color-primary-400)"
+              />
+              <TrendChart
+                data={trends}
+                dataKey="events"
+                label="Event Frequency"
+                icon={<CalendarDays size={17} className="text-moss-600" />}
+                accentFrom="var(--color-moss-600)"
+                accentTo="var(--color-moss-400)"
+              />
+            </motion.div>
+          </div>
+        )}
+
         {/* ── Impact ── */}
         <div>
           <Section id="impact" title="Impact" hint="What our events put back into the land, in this window."
@@ -418,7 +449,7 @@ export default function AdminInsightsPage() {
                   const on = selected.has(s.k)
                   return (
                     <button key={s.k} type="button" onClick={() => toggle(s.k)}
-                      className={cn('relative text-left rounded-xl border p-3.5 transition-all cursor-pointer', on ? 'border-primary-500 ring-1 ring-primary-500 bg-primary-50/40' : 'border-neutral-200 bg-white hover:border-neutral-300')}>
+                      className={cn('relative text-left rounded-sm border p-3.5 transition-all cursor-pointer', on ? 'border-primary-500 ring-1 ring-primary-500 bg-primary-50/40' : 'border-neutral-200 bg-white hover:border-neutral-300')}>
                       <span className={cn('absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center', on ? 'bg-primary-600 text-white' : 'text-neutral-300')}>
                         {on ? <Check size={10} strokeWidth={3} /> : <span className="w-3 h-3 rounded-full ring-1 ring-neutral-200" />}
                       </span>
@@ -429,7 +460,7 @@ export default function AdminInsightsPage() {
                 })}
               </div>
               {/* recurrence table */}
-              <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 p-5">
+              <div className="rounded-md bg-white shadow-sm border border-neutral-100 p-5">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-semibold text-neutral-900">Attendee recurrence</p>
                   <CopyTableButton onCopy={() => copyTableSpec(retentionTableSpec, 'ret')} copied={copied === 'ret'} />
@@ -450,7 +481,7 @@ export default function AdminInsightsPage() {
           <div>
             <Section id="collectives" title="By collective"
               action={<CopyTableButton onCopy={() => copyTableSpec(collectiveTableSpec, 'coll')} copied={copied === 'coll'} />} />
-            <motion.div variants={v.fadeUp} className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+            <motion.div variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -482,11 +513,11 @@ export default function AdminInsightsPage() {
         {/* ── Event impact log ── */}
         <div>
           <Section id="events" title="Event impact log" hint={sortedEvents.length ? `${sortedEvents.length} event${sortedEvents.length !== 1 ? 's' : ''} in scope` : undefined}
-            action={<button type="button" onClick={() => downloadCsv('coexist-events.csv', eventCsvSpec())} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-700 hover:text-primary-800 px-2.5 py-1 rounded-lg hover:bg-primary-50 cursor-pointer"><Download size={12} /> CSV</button>} />
+            action={<button type="button" onClick={() => downloadCsv('coexist-events.csv', eventCsvSpec())} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-700 hover:text-primary-800 px-2.5 py-1 rounded-sm hover:bg-primary-50 cursor-pointer"><Download size={12} /> CSV</button>} />
           <motion.div variants={v.fadeUp} className="mb-3">
             <SearchBar value={search} onChange={setSearch} placeholder="Search events..." compact className="max-w-sm" />
           </motion.div>
-          <motion.div variants={v.fadeUp} className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+          <motion.div variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -535,7 +566,7 @@ export default function AdminInsightsPage() {
           <div>
             <Section id="years" title="Year on year" hint="Growth across years - useful for funding narratives."
               action={<CopyTableButton onCopy={() => copyTableSpec(yearTableSpec, 'yr')} copied={copied === 'yr'} />} />
-            <motion.div variants={v.fadeUp} className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+            <motion.div variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -560,10 +591,10 @@ export default function AdminInsightsPage() {
         <div>
           <Section id="data" title="Raw data" hint="The data behind the numbers, for spreadsheets." />
           <motion.div variants={v.fadeUp} className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => downloadCsv('coexist-events.csv', eventCsvSpec())} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> Event impact log</button>
-            <button type="button" onClick={() => downloadCsv('coexist-by-collective.csv', collectiveTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> By collective</button>
-            {retentionTableSpec && <button type="button" onClick={() => downloadCsv('coexist-recurrence.csv', retentionTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> Attendee recurrence</button>}
-            {yearTableSpec && <button type="button" onClick={() => downloadCsv('coexist-year-on-year.csv', yearTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> Year on year</button>}
+            <button type="button" onClick={() => downloadCsv('coexist-events.csv', eventCsvSpec())} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> Event impact log</button>
+            <button type="button" onClick={() => downloadCsv('coexist-by-collective.csv', collectiveTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> By collective</button>
+            {retentionTableSpec && <button type="button" onClick={() => downloadCsv('coexist-recurrence.csv', retentionTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> Attendee recurrence</button>}
+            {yearTableSpec && <button type="button" onClick={() => downloadCsv('coexist-year-on-year.csv', yearTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> Year on year</button>}
           </motion.div>
         </div>
       </div>
@@ -575,16 +606,16 @@ export default function AdminInsightsPage() {
           Extra safe-area padding clears the home indicator. */}
       {selected.size > 0 && (
         <div
-          className="fixed bottom-[88px] md:bottom-6 left-3 right-3 md:left-1/2 md:right-auto md:-translate-x-1/2 z-40 flex items-center justify-between md:justify-start gap-2 px-3 py-2.5 rounded-2xl bg-white text-neutral-900 ring-1 ring-neutral-200 shadow-2xl shadow-neutral-900/25"
+          className="fixed bottom-[88px] md:bottom-6 left-3 right-3 md:left-1/2 md:right-auto md:-translate-x-1/2 z-40 flex items-center justify-between md:justify-start gap-2 px-3 py-2.5 rounded-md bg-white text-neutral-900 ring-1 ring-neutral-200 shadow-sm"
           style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
           <span className="text-sm font-semibold tabular-nums text-neutral-900 whitespace-nowrap shrink-0 pl-1">{selected.size} selected</span>
           <div className="flex items-center gap-1.5 shrink-0">
-            <button type="button" onClick={copySelected} className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-semibold px-3 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all cursor-pointer">
+            <button type="button" onClick={copySelected} className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-semibold px-3 py-2 rounded-sm bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all cursor-pointer">
               {copied === 'sel' ? <Check size={15} /> : <Copy size={15} />}<span>{copied === 'sel' ? 'Copied' : 'Copy table'}</span>
             </button>
-            <button type="button" onClick={csvSelected} aria-label="Download CSV" className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium px-3 py-2 rounded-xl bg-neutral-100 text-neutral-700 hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer"><Download size={15} />CSV</button>
-            <button type="button" onClick={clearSel} aria-label="Clear selection" className="p-2 rounded-xl text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 active:scale-[0.98] transition-all cursor-pointer shrink-0"><X size={16} /></button>
+            <button type="button" onClick={csvSelected} aria-label="Download CSV" className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium px-3 py-2 rounded-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer"><Download size={15} />CSV</button>
+            <button type="button" onClick={clearSel} aria-label="Clear selection" className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 active:scale-[0.98] transition-all cursor-pointer shrink-0"><X size={16} /></button>
           </div>
         </div>
       )}
@@ -598,7 +629,7 @@ function SelectAll({ keys, sel, onSet }: { keys: string[]; sel: Set<string>; onS
   const allOn = keys.every((k) => sel.has(k))
   return (
     <button type="button" onClick={() => onSet(keys, !allOn)}
-      className="text-[11px] font-semibold text-neutral-500 hover:text-primary-700 px-2 py-1 rounded-lg hover:bg-primary-50 transition-colors cursor-pointer">
+      className="text-[11px] font-semibold text-neutral-500 hover:text-primary-700 px-2 py-1 rounded-sm hover:bg-primary-50 transition-colors cursor-pointer">
       {allOn ? 'Deselect all' : 'Select all'}
     </button>
   )

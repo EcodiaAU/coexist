@@ -164,7 +164,7 @@ export default function AdminAuditLogPage() {
                 return (
                   <StaggeredItem
                     key={log.id}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-white shadow-sm"
+                    className="flex items-start gap-3 p-3 rounded-sm bg-white shadow-sm"
                   >
                     <Avatar
                       src={profile?.avatar_url}
@@ -218,7 +218,7 @@ export default function AdminAuditLogPage() {
                   disabled={page === 0}
                   onClick={() => setPage((p) => p - 1)}
                   className={cn(
-                    'px-4 min-h-11 rounded-lg text-sm font-medium cursor-pointer',
+                    'px-4 min-h-11 rounded-sm text-sm font-medium cursor-pointer',
                     page === 0
                       ? 'text-neutral-300 cursor-not-allowed'
                       : 'text-neutral-400 hover:bg-neutral-50',
@@ -234,7 +234,7 @@ export default function AdminAuditLogPage() {
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => p + 1)}
                   className={cn(
-                    'px-4 min-h-11 rounded-lg text-sm font-medium cursor-pointer',
+                    'px-4 min-h-11 rounded-sm text-sm font-medium cursor-pointer',
                     page >= totalPages - 1
                       ? 'text-neutral-300 cursor-not-allowed'
                       : 'text-neutral-400 hover:bg-neutral-50',

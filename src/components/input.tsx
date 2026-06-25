@@ -208,7 +208,7 @@ export const Input = forwardRef<
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type
 
   const sharedClasses = cn(
-    'peer w-full rounded-lg px-4 box-border',
+    'peer w-full rounded-sm px-4 box-border',
     // Native date/time inputs on iOS+Android render their picker button at
     // intrinsic width, which can push the field past its container.
     // appearance-none strips the platform chrome so the field obeys w-full
@@ -352,7 +352,7 @@ export const Input = forwardRef<
             className={cn(
               'absolute right-1 top-1/2 -translate-y-1/2',
               'min-w-11 min-h-11 flex items-center justify-center',
-              'rounded-xl text-neutral-400 hover:text-neutral-700',
+              'rounded-sm text-neutral-400 hover:text-neutral-700',
               'cursor-pointer select-none',
               'active:scale-[0.97] transition-transform duration-150',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',

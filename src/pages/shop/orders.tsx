@@ -78,7 +78,7 @@ export default function OrdersPage() {
                   type="button"
                   onClick={() => navigate(`/shop/orders/${order.id}`)}
                   className={cn(
-                    'w-full text-left p-4 rounded-2xl bg-white',
+                    'w-full text-left p-4 rounded-md bg-white',
                     'shadow-sm border border-neutral-100',
                     'transition-colors duration-150 cursor-pointer',
                   )}
@@ -105,11 +105,11 @@ export default function OrdersPage() {
                           key={item.id}
                           src={item.image_url ?? '/img/placeholder-merch.jpg'}
                           alt={item.product_name}
-                          className="w-8 h-8 rounded-lg object-cover border-2 border-white"
+                          className="w-8 h-8 rounded-sm object-cover border-2 border-white"
                         />
                       ))}
                       {order.items.length > 3 && (
-                        <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-white border-2 border-white text-xs font-medium text-neutral-500">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-sm bg-white border-2 border-white text-xs font-medium text-neutral-500">
                           +{order.items.length - 3}
                         </span>
                       )}

@@ -56,7 +56,7 @@ function MenuRow({ icon, label, subtitle, onClick, danger = false }: MenuRowProp
       aria-label={label}
     >
       <span
-        className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mr-3 ${danger ? 'bg-error-100 text-error-600' : 'bg-neutral-100 text-neutral-500'}`}
+        className={`flex items-center justify-center w-8 h-8 rounded-sm shrink-0 mr-3 ${danger ? 'bg-error-100 text-error-600' : 'bg-neutral-100 text-neutral-500'}`}
         aria-hidden="true"
       >
         {icon}
@@ -298,7 +298,7 @@ export default function SettingsAccountPage() {
         deleted_at: new Date().toISOString(),
         deletion_status: 'pending_deletion',
         deletion_requested_at: new Date().toISOString(),
-      } as unknown as Record<string, unknown>)
+      })
       .eq('id', user.id)
 
     if (error) {
@@ -343,14 +343,14 @@ export default function SettingsAccountPage() {
           {/* Pending deletion banner */}
           {isPendingDeletion && (
             <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
-              <div className="mt-2 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 space-y-3">
+              <div className="mt-2 rounded-md border border-bark-200 bg-bark-50/90 p-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                    <AlertTriangle size={18} className="text-amber-600" />
+                  <div className="w-9 h-9 rounded-sm bg-bark-100 flex items-center justify-center shrink-0">
+                    <AlertTriangle size={18} className="text-bark-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-heading font-semibold text-amber-800 text-sm">Account scheduled for deletion</p>
-                    <p className="text-xs text-amber-600 mt-0.5">
+                    <p className="font-heading font-semibold text-bark-800 text-sm">Account scheduled for deletion</p>
+                    <p className="text-xs text-bark-600 mt-0.5">
                       {deletionDaysLeft != null && deletionDaysLeft > 0
                         ? `Your data will be permanently removed in ${deletionDaysLeft} day${deletionDaysLeft === 1 ? '' : 's'}.`
                         : 'Your data will be permanently removed soon.'}
@@ -374,7 +374,7 @@ export default function SettingsAccountPage() {
           {/* ---- Security ---- */}
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <SectionHeader label="Security" />
-            <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
+            <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden">
               <MenuRow
                 icon={<Lock size={18} />}
                 label="Change Password"
@@ -392,7 +392,7 @@ export default function SettingsAccountPage() {
           {/* ---- Data ---- */}
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <SectionHeader label="Data & Privacy" />
-            <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
+            <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden">
               <MenuRow
                 icon={<Shield size={18} />}
                 label="Your Data & Privacy"
@@ -406,7 +406,7 @@ export default function SettingsAccountPage() {
           {!isPendingDeletion && (
             <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
               <SectionHeader label="Danger Zone" />
-              <div className="bg-white/90 rounded-2xl shadow-sm border border-error-100 overflow-hidden">
+              <div className="bg-white/90 rounded-md shadow-sm border border-error-100 overflow-hidden">
                 <MenuRow
                   icon={<Trash2 size={18} />}
                   label="Delete Account"

@@ -20,7 +20,7 @@ function TicketCard({ ticket }: { ticket: EventTicket }) {
   return (
     <StaggeredItem
       className={cn(
-        'rounded-2xl overflow-hidden transition-all',
+        'rounded-md overflow-hidden transition-all',
         isPast ? 'bg-neutral-50 opacity-70' : 'bg-white shadow-sm',
       )}
     >
@@ -40,7 +40,7 @@ function TicketCard({ ticket }: { ticket: EventTicket }) {
             />
           </div>
         ) : (
-          <div className="w-20 shrink-0 bg-gradient-to-br from-primary-400 to-sprout-500 flex items-center justify-center">
+          <div className="w-20 shrink-0 bg-sprout-500 flex items-center justify-center">
             <Ticket size={24} className="text-white/60" />
           </div>
         )}
@@ -107,9 +107,9 @@ export default function MyTicketsPage() {
       <div className="p-4 space-y-6 pb-12">
         {showLoading ? (
           <div className="space-y-3">
-            <Skeleton className="h-24 rounded-2xl" />
-            <Skeleton className="h-24 rounded-2xl" />
-            <Skeleton className="h-24 rounded-2xl" />
+            <Skeleton className="h-24 rounded-md" />
+            <Skeleton className="h-24 rounded-md" />
+            <Skeleton className="h-24 rounded-md" />
           </div>
         ) : !tickets?.length ? (
           <EmptyState

@@ -128,7 +128,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardRootProps>(function CardRoot(
         }
         transition={{ type: 'spring', stiffness: 400, damping: 26, mass: 0.7 }}
         className={cn(
-          'relative rounded-2xl shadow-sm overflow-hidden',
+          'relative rounded-md shadow-sm overflow-hidden',
           isInteractive && 'cursor-pointer select-none',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
           variantWrapper[variant],
@@ -353,7 +353,7 @@ function CardSkeleton({
       role="status"
       aria-label="Loading card"
       className={cn(
-        'rounded-2xl shadow-sm overflow-hidden bg-white animate-pulse',
+        'rounded-md shadow-sm overflow-hidden bg-white animate-pulse',
         className,
       )}
     >

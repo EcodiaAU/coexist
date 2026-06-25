@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import type { Database } from '@/types/database.types'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
@@ -108,25 +109,25 @@ const STATUS_CONFIG: Record<string, {
   pending: {
     label: 'Pending Review', color: 'text-warning-800', bg: 'bg-warning-100',
     border: 'border-warning-200', icon: <Clock size={12} />,
-    strip: 'bg-gradient-to-r from-warning-400 to-warning-500',
+    strip: 'bg-warning-500',
     glow: 'ring-1 ring-warning-100',
   },
   reviewed: {
     label: 'Under Review', color: 'text-moss-800', bg: 'bg-moss-100',
     border: 'border-moss-200', icon: <Eye size={12} />,
-    strip: 'bg-gradient-to-r from-moss-400 to-moss-500',
+    strip: 'bg-moss-500',
     glow: 'ring-1 ring-moss-100',
   },
   accepted: {
     label: 'Accepted', color: 'text-success-800', bg: 'bg-success-100',
     border: 'border-success-200', icon: <CheckCircle2 size={12} />,
-    strip: 'bg-gradient-to-r from-success-500 to-sprout-500',
+    strip: 'bg-success-500',
     glow: 'ring-1 ring-success-100',
   },
   rejected: {
     label: 'Not Accepted', color: 'text-error-800', bg: 'bg-error-100',
     border: 'border-error-200', icon: <XCircle size={12} />,
-    strip: 'bg-gradient-to-r from-error-400 to-error-500',
+    strip: 'bg-error-500',
     glow: 'ring-1 ring-error-100',
   },
 }
@@ -232,7 +233,7 @@ function ApplicationCard({
 
   return (
     <div className={cn(
-      'rounded-2xl bg-white border border-neutral-100 overflow-hidden transition-shadow duration-200',
+      'rounded-md bg-white border border-neutral-100 overflow-hidden transition-shadow duration-200',
       'shadow-sm',
       statusCfg.glow,
     )}>
@@ -250,7 +251,7 @@ function ApplicationCard({
       >
         {/* Avatar with initials */}
         <div className={cn(
-          'flex items-center justify-center w-11 h-11 rounded-xl shrink-0',
+          'flex items-center justify-center w-11 h-11 rounded-sm shrink-0',
           'font-heading text-[14px] font-bold tracking-wide',
           app.status === 'accepted' ? 'bg-success-100 text-success-700' :
           app.status === 'rejected' ? 'bg-error-100 text-error-600' :
@@ -309,7 +310,7 @@ function ApplicationCard({
           >
             <div className="px-4 pb-5 space-y-5">
               {/* ── Contact & Details ── */}
-              <div className="rounded-xl bg-neutral-50 p-4">
+              <div className="rounded-sm bg-neutral-50 p-4">
                 <SectionHeader icon={<Mail size={13} />} label="Contact & Details" color="text-info-500" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <DetailRow icon={<Mail size={14} />} label="Email" value={app.email} iconColor="text-info-400" />
@@ -323,7 +324,7 @@ function ApplicationCard({
               </div>
 
               {/* ── Roles & Skills ── */}
-              <div className="rounded-xl bg-neutral-50 p-4">
+              <div className="rounded-sm bg-neutral-50 p-4">
                 <SectionHeader icon={<Briefcase size={13} />} label="Roles & Skills" color="text-neutral-500" />
                 <div className="space-y-3">
                   {/* Roles */}
@@ -358,7 +359,7 @@ function ApplicationCard({
               </div>
 
               {/* ── Motivation ── */}
-              <div className="rounded-xl bg-neutral-50 p-4">
+              <div className="rounded-sm bg-neutral-50 p-4">
                 <SectionHeader icon={<Heart size={13} />} label="Why They Want to Volunteer" color="text-success-500" />
                 <p className="text-[14px] text-neutral-900 leading-relaxed">
                   {app.why_volunteer}
@@ -367,7 +368,7 @@ function ApplicationCard({
 
               {/* ── Resume & Additional ── */}
               {(app.resume_url || app.additional_info) && (
-                <div className="rounded-xl bg-neutral-50 p-4 space-y-3">
+                <div className="rounded-sm bg-neutral-50 p-4 space-y-3">
                   <SectionHeader icon={<FileText size={13} />} label="Attachments & Notes" color="text-bark-400" />
                   {app.resume_url && (
                     <a
@@ -377,7 +378,7 @@ function ApplicationCard({
                       className={cn(
                         'inline-flex items-center gap-2 text-[13px] font-semibold',
                         'text-neutral-600 hover:text-neutral-900 transition-colors',
-                        'bg-white rounded-lg px-3.5 py-2.5 shadow-sm',
+                        'bg-white rounded-sm px-3.5 py-2.5 shadow-sm',
                         'border border-neutral-100',
                       )}
                     >
@@ -395,7 +396,7 @@ function ApplicationCard({
               )}
 
               {/* ── Staff Notes ── */}
-              <div className="rounded-xl bg-warning-50 border border-warning-100 p-4">
+              <div className="rounded-sm bg-warning-50 border border-warning-100 p-4">
                 <SectionHeader icon={<MessageSquare size={13} />} label="Staff Notes (Internal)" color="text-warning-600" />
                 <Input
                   type="textarea"
@@ -512,7 +513,7 @@ function NotificationSettingsTab() {
     mutationFn: async ({ id, field, value }: { id: string; field: 'notify_email' | 'notify_push'; value: boolean }) => {
       const { error } = await supabase
         .from('notification_recipients')
-        .update({ [field]: value })
+        .update({ [field]: value } as Database['public']['Tables']['notification_recipients']['Update'])
         .eq('id', id)
       if (error) throw error
     },
@@ -538,11 +539,11 @@ function NotificationSettingsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden">
+      <div className="rounded-md bg-white border border-neutral-100 shadow-sm overflow-hidden">
         {/* Header band */}
         <div className="bg-white px-5 py-4 border-b border-neutral-100">
           <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-info-100 text-info-600">
+            <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-info-100 text-info-600">
               <Bell size={16} />
             </div>
             <div>
@@ -560,11 +561,11 @@ function NotificationSettingsTab() {
           {/* Current recipients */}
           {isLoading ? (
             <div className="space-y-3">
-              <Skeleton className="h-14 w-full rounded-xl" />
-              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-sm" />
+              <Skeleton className="h-14 w-full rounded-sm" />
             </div>
           ) : (recipients ?? []).length === 0 ? (
-            <div className="rounded-xl bg-warning-50 border border-warning-100 px-4 py-3.5 flex items-center gap-2.5">
+            <div className="rounded-sm bg-warning-50 border border-warning-100 px-4 py-3.5 flex items-center gap-2.5">
               <Bell size={16} className="text-warning-500 shrink-0" />
               <p className="text-[13px] text-warning-700">
                 No staff members configured. Add someone below to receive notifications.
@@ -573,8 +574,8 @@ function NotificationSettingsTab() {
           ) : (
             <div className="space-y-2">
               {(recipients ?? []).map(r => (
-                <div key={r.id} className="flex items-center gap-3 rounded-xl bg-neutral-50 border border-neutral-100 px-4 py-3 hover:bg-neutral-100 transition-colors">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-neutral-100 text-neutral-600 shrink-0">
+                <div key={r.id} className="flex items-center gap-3 rounded-sm bg-neutral-50 border border-neutral-100 px-4 py-3 hover:bg-neutral-100 transition-colors">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-sm bg-neutral-100 text-neutral-600 shrink-0">
                     <Users size={14} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -596,7 +597,7 @@ function NotificationSettingsTab() {
                   />
                   <button
                     onClick={() => removeRecipient.mutate(r.id)}
-                    className="text-neutral-300 hover:text-error transition-[colors,transform] duration-150 cursor-pointer p-1 rounded-lg hover:bg-error-50 active:scale-[0.93]"
+                    className="text-neutral-300 hover:text-error transition-[colors,transform] duration-150 cursor-pointer p-1 rounded-sm hover:bg-error-50 active:scale-[0.98]"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -786,7 +787,7 @@ export default function AdminApplicationsPage() {
                     onClick={() => setStatusFilter(f.value)}
                     className={cn(
                       'inline-flex items-center gap-1.5 text-sm font-semibold px-3.5 min-h-11 rounded-full',
-                      'transition-transform duration-150 cursor-pointer shrink-0 border active:scale-[0.95]',
+                      'transition-transform duration-150 cursor-pointer shrink-0 border active:scale-[0.98]',
                       isActive
                         ? cfg
                           ? `${cfg.bg} ${cfg.color} ${cfg.border}`
@@ -815,7 +816,7 @@ export default function AdminApplicationsPage() {
           {showLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-2xl" />
+                <Skeleton key={i} className="h-16 w-full rounded-md" />
               ))}
             </div>
           ) : filtered.length === 0 ? (

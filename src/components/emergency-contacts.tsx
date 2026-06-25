@@ -34,9 +34,9 @@ const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
   emergency: {
     title: 'Emergency Services',
     icon: <Siren size={18} />,
-    gradient: 'from-red-500 to-red-600',
-    ringColor: 'ring-red-200',
-    phoneColor: 'text-red-500',
+    gradient: 'from-error-500 to-error-600',
+    ringColor: 'ring-error-200',
+    phoneColor: 'text-error-500',
   },
   wildlife: {
     title: 'Wildlife Rescue',
@@ -55,9 +55,9 @@ const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
   poison: {
     title: 'Poisoning & Snakebite',
     icon: <Bug size={18} />,
-    gradient: 'from-amber-500 to-amber-600',
-    ringColor: 'ring-amber-200',
-    phoneColor: 'text-amber-500',
+    gradient: 'from-bark-500 to-bark-600',
+    ringColor: 'ring-bark-200',
+    phoneColor: 'text-bark-500',
   },
   ses: {
     title: 'SES & National Parks',
@@ -133,7 +133,7 @@ function ContactAccordion({
   const visual = section.visual
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden">
+    <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
       {/* Accordion header */}
       <button
         onClick={onToggle}
@@ -146,7 +146,7 @@ function ContactAccordion({
       >
         <span
           className={cn(
-            'flex items-center justify-center w-9 h-9 rounded-xl text-white shadow-sm',
+            'flex items-center justify-center w-9 h-9 rounded-sm text-white shadow-sm',
             `bg-gradient-to-br ${visual.gradient}`,
           )}
         >
@@ -185,7 +185,7 @@ function ContactAccordion({
                   key={contact.id}
                   href={`tel:${contact.phone}`}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-3 rounded-xl',
+                    'flex items-center gap-3 px-3 py-3 rounded-sm',
                     'bg-neutral-50 active:bg-neutral-100',
                     'transition-colors duration-150',
                     'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
@@ -297,7 +297,7 @@ export function EmergencyContacts({ eventState }: EmergencyContactsProps) {
     <div className="space-y-4">
       {/* Section header */}
       <div className="flex items-center gap-3">
-        <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-100 text-red-600">
+        <span className="flex items-center justify-center w-8 h-8 rounded-sm bg-error-100 text-error-600">
           <Phone size={16} />
         </span>
         <div>
@@ -319,8 +319,8 @@ export function EmergencyContacts({ eventState }: EmergencyContactsProps) {
       <a
         href="tel:000"
         className={cn(
-          'flex items-center gap-3 px-4 py-3.5 rounded-2xl',
-          'bg-gradient-to-r from-red-500 to-red-600',
+          'flex items-center gap-3 px-4 py-3.5 rounded-md',
+          'bg-error-600',
           'shadow-sm',
           'active:scale-[0.98] transition-transform duration-150',
           'min-h-[56px]',

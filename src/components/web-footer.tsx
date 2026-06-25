@@ -7,6 +7,7 @@ import {
   FACEBOOK_URL,
 } from '@/lib/constants'
 import { EcodiaAttribution } from '@/components/ecodia-attribution'
+import { getDevicePlatform, APP_STORE_URL, PLAY_STORE_URL } from '@/lib/device-platform'
 
 const footerLinks: Array<
   | { label: string; to: string }
@@ -34,6 +35,8 @@ interface WebFooterProps {
 
 export function WebFooter({ className }: WebFooterProps) {
   const year = new Date().getFullYear()
+  // Show only the relevant store on a phone; both on desktop.
+  const platform = getDevicePlatform()
 
   return (
     <footer
@@ -127,53 +130,57 @@ export function WebFooter({ className }: WebFooterProps) {
               Download the app
             </h3>
             <div className="flex flex-col gap-3">
-              {/* App Store badge */}
-              <a
-                href="https://apps.apple.com/au/app/co-exist/id6760897574"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  'inline-flex items-center gap-3 px-4 py-2.5',
-                  'rounded-lg bg-primary-900',
-                  'hover:bg-primary-800 transition-colors duration-150',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
-                )}
-                aria-label="Download on the App Store"
-              >
-                <AppleIcon />
-                <div>
-                  <p className="text-[11px] text-white/50 leading-tight">
-                    Download on the
-                  </p>
-                  <p className="text-sm font-semibold text-white leading-tight">
-                    App Store
-                  </p>
-                </div>
-              </a>
+              {/* App Store badge - hidden on Android */}
+              {platform !== 'android' && (
+                <a
+                  href={APP_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    'inline-flex items-center gap-3 px-4 py-2.5',
+                    'rounded-sm bg-primary-900',
+                    'hover:bg-primary-800 transition-colors duration-150',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
+                  )}
+                  aria-label="Download on the App Store"
+                >
+                  <AppleIcon />
+                  <div>
+                    <p className="text-[11px] text-white/50 leading-tight">
+                      Download on the
+                    </p>
+                    <p className="text-sm font-semibold text-white leading-tight">
+                      App Store
+                    </p>
+                  </div>
+                </a>
+              )}
 
-              {/* Play Store badge */}
-              <a
-                href="https://play.google.com/store/apps/details?id=org.coexistaus.app&hl=en"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  'inline-flex items-center gap-3 px-4 py-2.5',
-                  'rounded-lg bg-primary-900',
-                  'hover:bg-primary-800 transition-colors duration-150',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
-                )}
-                aria-label="Get it on Google Play"
-              >
-                <PlayStoreIcon />
-                <div>
-                  <p className="text-[11px] text-white/50 leading-tight">
-                    Get it on
-                  </p>
-                  <p className="text-sm font-semibold text-white leading-tight">
-                    Google Play
-                  </p>
-                </div>
-              </a>
+              {/* Play Store badge - hidden on iOS */}
+              {platform !== 'ios' && (
+                <a
+                  href={PLAY_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    'inline-flex items-center gap-3 px-4 py-2.5',
+                    'rounded-sm bg-primary-900',
+                    'hover:bg-primary-800 transition-colors duration-150',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
+                  )}
+                  aria-label="Get it on Google Play"
+                >
+                  <PlayStoreIcon />
+                  <div>
+                    <p className="text-[11px] text-white/50 leading-tight">
+                      Get it on
+                    </p>
+                    <p className="text-sm font-semibold text-white leading-tight">
+                      Google Play
+                    </p>
+                  </div>
+                </a>
+              )}
             </div>
           </div>
         </div>

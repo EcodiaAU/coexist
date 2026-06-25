@@ -168,7 +168,7 @@ export default function AdminChallengesPage() {
                   <StaggeredItem
                     key={challenge.id}
                     className={cn(
-                      'p-4 rounded-xl bg-white shadow-sm',
+                      'p-4 rounded-sm bg-white shadow-sm',
                       !isActive && 'opacity-60',
                     )}
                   >
@@ -176,7 +176,7 @@ export default function AdminChallengesPage() {
                       <div className="flex items-start gap-3 min-w-0">
                         <div
                           className={cn(
-                            'flex items-center justify-center w-10 h-10 rounded-lg shrink-0',
+                            'flex items-center justify-center w-10 h-10 rounded-sm shrink-0',
                             isActive ? 'bg-neutral-100' : 'bg-neutral-50',
                           )}
                         >
@@ -239,7 +239,7 @@ export default function AdminChallengesPage() {
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(challenge.id)}
-                          className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-lg text-neutral-400 hover:bg-error-50 hover:text-error-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.93]"
+                          className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.98]"
                           aria-label="Delete challenge"
                         >
                           <Trash2 size={16} />
@@ -260,7 +260,7 @@ export default function AdminChallengesPage() {
               <h2 className="font-heading text-lg font-semibold text-neutral-900">Create National Challenge</h2>
               <button
                 onClick={() => setShowCreate(false)}
-                className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.93] transition-[colors,transform] duration-150 cursor-pointer"
+                className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
                 aria-label="Close"
               >
                 <X size={20} />

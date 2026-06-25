@@ -50,6 +50,14 @@ export interface NotificationPreferences {
   chat_poll: boolean
   chat_announcement: boolean
   survey_request: boolean
+  /**
+   * Master switch for transactional notification emails (event confirmations,
+   * reminders, cancellations, invites, waitlist promotions). When false the
+   * send-email edge function skips those types. Receipts, password resets and
+   * payment-failure emails are operational and always send; marketing emails
+   * are governed separately by profiles.marketing_opt_in.
+   */
+  email_enabled: boolean
   quiet_hours_enabled: boolean
   quiet_hours_start: string // "22:00"
   quiet_hours_end: string   // "07:00"
@@ -74,6 +82,7 @@ export const DEFAULT_PREFERENCES: NotificationPreferences = {
   chat_poll: true,
   chat_announcement: true,
   survey_request: true,
+  email_enabled: true,
   quiet_hours_enabled: false,
   quiet_hours_start: '22:00',
   quiet_hours_end: '07:00',

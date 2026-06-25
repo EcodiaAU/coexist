@@ -482,7 +482,7 @@ async function fetchPerEventReport(
       .from('event_impact')
       .select(IMPACT_SELECT_COLUMNS)
       .in('event_id', eventIds)
-    for (const r of (impactRows ?? []) as Record<string, unknown>[]) {
+    for (const r of (impactRows ?? []) as unknown as Record<string, unknown>[]) {
       impactByEvent.set(r.event_id as string, r)
     }
   }
@@ -1115,7 +1115,7 @@ export default function AdminReportsPage({ embedded = false }: { embedded?: bool
         </motion.div>
 
         {/* Shared filter bar */}
-        <motion.div variants={fadeUp} className="flex flex-col gap-3 p-4 bg-white rounded-xl shadow-sm">
+        <motion.div variants={fadeUp} className="flex flex-col gap-3 p-4 bg-white rounded-sm shadow-sm">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex items-center gap-2 text-sm text-neutral-400 shrink-0">
               <Calendar size={16} />
@@ -1156,7 +1156,7 @@ export default function AdminReportsPage({ embedded = false }: { embedded?: bool
         {truncationWarning && tab === 'quick' && (
           <motion.div
             variants={fadeUp}
-            className="flex items-start gap-3 p-4 bg-warning-50 border border-warning-200 rounded-xl text-sm text-warning-800"
+            className="flex items-start gap-3 p-4 bg-warning-50 border border-warning-200 rounded-sm text-sm text-warning-800"
           >
             <AlertTriangle size={18} className="shrink-0 mt-0.5 text-warning-500" />
             <span>{truncationWarning}</span>
@@ -1171,14 +1171,14 @@ export default function AdminReportsPage({ embedded = false }: { embedded?: bool
                   <StaggeredItem
                     key={exp.id}
                     className={cn(
-                      'p-4 rounded-xl shadow-sm',
+                      'p-4 rounded-sm shadow-sm',
                       exp.color.split(' ')[0],
                     )}
                   >
                     <div className="flex items-start gap-3">
                       <div
                         className={cn(
-                          'flex items-center justify-center w-10 h-10 rounded-lg shrink-0',
+                          'flex items-center justify-center w-10 h-10 rounded-sm shrink-0',
                           exp.color.split(' ')[0],
                           exp.color.split(' ')[1],
                         )}
@@ -1228,7 +1228,7 @@ export default function AdminReportsPage({ embedded = false }: { embedded?: bool
                       type="button"
                       onClick={() => setReportType(rt.value)}
                       className={cn(
-                        'w-full flex items-start gap-3 p-3 rounded-xl text-left min-h-11',
+                        'w-full flex items-start gap-3 p-3 rounded-sm text-left min-h-11',
                         'active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none',
                         reportType === rt.value
                           ? 'bg-white ring-1 ring-primary-300 shadow-sm'
@@ -1298,7 +1298,7 @@ export default function AdminReportsPage({ embedded = false }: { embedded?: bool
 
               {/* Generating state */}
               {customGenerating && (
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-neutral-50 border border-neutral-200">
+                <div className="flex items-center gap-3 p-4 rounded-sm bg-neutral-50 border border-neutral-200">
                   <Loader2 size={18} className="text-primary-600 animate-spin" />
                   <div>
                     <p className="text-sm font-medium text-primary-900">Generating report&hellip;</p>
@@ -1309,7 +1309,7 @@ export default function AdminReportsPage({ embedded = false }: { embedded?: bool
 
               {/* Error */}
               {customError && !customGenerating && (
-                <div className="p-4 rounded-xl bg-red-50 border border-red-200">
+                <div className="p-4 rounded-sm bg-red-50 border border-red-200">
                   <p className="text-sm font-medium text-red-900">Report generation failed</p>
                   <p className="text-xs text-red-600 mt-0.5">{customError}</p>
                 </div>

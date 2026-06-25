@@ -111,7 +111,7 @@ export function SidebarNavList({
                           onClick={() => onNavigate(item.path)}
                           className={cn(
                             'relative flex items-center gap-2.5 w-full',
-                            'rounded-xl text-[13px]',
+                            'rounded-sm text-[13px]',
                             'transition-[colors,transform] duration-150 active:scale-[0.97]',
                             'cursor-pointer select-none text-left',
                             'focus-visible:outline-none focus-visible:ring-2',
@@ -155,7 +155,7 @@ export function SidebarNavList({
                           tabIndex={isCurrent ? 0 : -1}
                           className={cn(
                             'relative flex items-center gap-2.5',
-                            'rounded-xl text-[13px]',
+                            'rounded-sm text-[13px]',
                             'transition-[colors,transform] duration-150 active:scale-[0.97]',
                             'cursor-pointer select-none',
                             'focus-visible:outline-none focus-visible:ring-2',

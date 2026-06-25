@@ -62,15 +62,15 @@ const fadeUp: Variants = {
 function ImpactSkeleton() {
   return (
     <div className="space-y-10 pt-8 pb-10 px-5">
-      <div className="h-52 rounded-3xl bg-neutral-100 animate-pulse" />
+      <div className="h-52 rounded-md bg-neutral-100 animate-pulse" />
       <div className="grid grid-cols-2 gap-5">
-        <div className="col-span-2 h-28 rounded-3xl bg-neutral-100 animate-pulse" />
-        <div className="h-32 rounded-3xl bg-neutral-50 animate-pulse" />
-        <div className="h-32 rounded-3xl bg-neutral-50 animate-pulse" />
-        <div className="h-32 rounded-3xl bg-neutral-50 animate-pulse" />
-        <div className="h-32 rounded-3xl bg-neutral-50 animate-pulse" />
+        <div className="col-span-2 h-28 rounded-md bg-neutral-100 animate-pulse" />
+        <div className="h-32 rounded-md bg-neutral-50 animate-pulse" />
+        <div className="h-32 rounded-md bg-neutral-50 animate-pulse" />
+        <div className="h-32 rounded-md bg-neutral-50 animate-pulse" />
+        <div className="h-32 rounded-md bg-neutral-50 animate-pulse" />
       </div>
-      <div className="h-48 rounded-3xl bg-neutral-50" />
+      <div className="h-48 rounded-md bg-neutral-50" />
     </div>
   )
 }
@@ -109,10 +109,10 @@ function BigStat({
     return (
       <motion.div
         variants={fadeUp}
-        className="col-span-2 flex items-center gap-5 rounded-3xl bg-white border border-neutral-100 p-6 shadow-sm"
+        className="col-span-2 flex items-center gap-5 rounded-md bg-white border border-neutral-100 p-6 shadow-sm"
       >
         <div className={cn(
-          'flex items-center justify-center w-12 h-12 rounded-2xl shrink-0',
+          'flex items-center justify-center w-12 h-12 rounded-md shrink-0',
           style.iconBg,
         )} aria-hidden="true">
           <span className={style.iconColor}>{icon}</span>
@@ -135,10 +135,10 @@ function BigStat({
   return (
     <motion.div
       variants={fadeUp}
-      className="flex flex-col items-center justify-center text-center rounded-3xl bg-white border border-neutral-100 p-5 min-h-[150px] shadow-sm"
+      className="flex flex-col items-center justify-center text-center rounded-md bg-white border border-neutral-100 p-5 min-h-[150px] shadow-sm"
     >
       <div className={cn(
-        'mb-3 flex items-center justify-center w-10 h-10 rounded-xl',
+        'mb-3 flex items-center justify-center w-10 h-10 rounded-sm',
         style.iconBg,
       )} aria-hidden="true">
         <span className={style.iconColor}>{icon}</span>
@@ -179,7 +179,7 @@ const ActivitySparkline = memo(function ActivitySparkline({ data }: { data: { mo
                   ? { duration: 0 }
                   : { type: 'spring', stiffness: 100, damping: 16, delay: i * 0.04 }
               }
-              className="w-full rounded-xl bg-gradient-to-t from-primary-700 via-primary-500 to-primary-300 min-h-[6px] shadow-sm"
+              className="w-full rounded-sm bg-primary-300 min-h-[6px] shadow-sm"
             />
             <span className="text-[11px] text-primary-500 font-bold">{label}</span>
           </div>
@@ -407,11 +407,11 @@ export default function ImpactDashboardPage() {
             >
               <motion.div
                 variants={fadeUp}
-                className="relative rounded-3xl bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 p-7 shadow-2xl overflow-hidden"
+                className="relative rounded-md bg-primary-800 p-7 shadow-sm overflow-hidden"
               >
                 <div className="relative">
                   <div className="flex items-center gap-2 mb-5">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-white/20">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-md bg-white/20">
                       <TreePine size={20} strokeWidth={2.5} className="text-white" />
                     </div>
                     <p className="text-[11px] uppercase tracking-[0.2em] text-white/60 font-bold">
@@ -490,9 +490,9 @@ export default function ImpactDashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, height: 0, marginTop: 0, overflow: 'hidden' }}
                   transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 22 }}
-                  className="flex items-center gap-5 rounded-3xl bg-white shadow-sm border border-neutral-100 p-6"
+                  className="flex items-center gap-5 rounded-md bg-white shadow-sm border border-neutral-100 p-6"
                 >
-                  <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-warning-500 shadow-sm">
+                  <div className="flex items-center justify-center w-14 h-14 rounded-md bg-warning-500 shadow-sm">
                     <Flame size={26} strokeWidth={2.5} className="text-white" />
                   </div>
                   <div className="flex-1">
@@ -526,7 +526,7 @@ export default function ImpactDashboardPage() {
                   transition={{ delay: 0.25, type: 'spring', stiffness: 200, damping: 22 }}
                 >
                   <SectionHeading>Monthly Activity</SectionHeading>
-                  <div className="rounded-3xl bg-white shadow-sm border border-neutral-100 p-6">
+                  <div className="rounded-md bg-white shadow-sm border border-neutral-100 p-6">
                     <ActivitySparkline data={monthly} />
                   </div>
                 </motion.section>
@@ -544,7 +544,7 @@ export default function ImpactDashboardPage() {
                   transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 22 }}
                 >
                   <SectionHeading>Impact Breakdown</SectionHeading>
-                  <div className="rounded-3xl bg-white shadow-sm border border-neutral-100 p-6">
+                  <div className="rounded-md bg-white shadow-sm border border-neutral-100 p-6">
                     <ImpactRing data={byCategory} />
                   </div>
                 </motion.section>
@@ -558,9 +558,9 @@ export default function ImpactDashboardPage() {
               transition={{ delay: 0.35, type: 'spring', stiffness: 200, damping: 22 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate('/impact/national')}
-              className="w-full flex items-center gap-5 rounded-3xl bg-gradient-to-r from-primary-600 to-primary-700 shadow-sm p-6 min-h-11 text-left active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none overflow-hidden relative"
+              className="w-full flex items-center gap-5 rounded-md bg-primary-700 shadow-sm p-6 min-h-11 text-left active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none overflow-hidden relative"
             >
-              <div className="relative flex items-center justify-center w-13 h-13 rounded-2xl bg-white/20">
+              <div className="relative flex items-center justify-center w-13 h-13 rounded-md bg-white/20">
                 <Globe size={24} strokeWidth={2.5} className="text-white" />
               </div>
               <div className="relative flex-1 min-w-0">
@@ -577,7 +577,7 @@ export default function ImpactDashboardPage() {
               initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 22 }}
-              className="rounded-3xl bg-white shadow-sm border border-neutral-100 p-6"
+              className="rounded-md bg-white shadow-sm border border-neutral-100 p-6"
             >
               <p className="text-sm text-neutral-700 font-semibold leading-relaxed">
                 {stats.treesPlanted > 10

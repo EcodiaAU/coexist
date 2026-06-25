@@ -165,7 +165,7 @@ export default function SignUpPage() {
           {refValid && (
             <motion.div
               variants={childVariants}
-              className="mx-5 mt-3 flex items-center justify-center gap-2.5 rounded-xl bg-white border border-neutral-100 px-4 py-2.5"
+              className="mx-5 mt-3 flex items-center justify-center gap-2.5 rounded-sm bg-white border border-neutral-100 px-4 py-2.5"
             >
               <UserPlus size={16} className="text-neutral-500 shrink-0" />
               <p className="text-sm text-neutral-900">
@@ -193,7 +193,7 @@ export default function SignUpPage() {
                 onClick={() => handleSocial('google')}
                 className={cn(
                   'flex-1 flex items-center justify-center gap-2.5',
-                  'h-[50px] rounded-2xl',
+                  'h-[50px] rounded-md',
                   'bg-white border border-neutral-100',
                   'text-sm text-neutral-900 font-semibold',
                   'active:scale-[0.97] transition-transform duration-150',
@@ -214,7 +214,7 @@ export default function SignUpPage() {
                 onClick={() => handleSocial('apple')}
                 className={cn(
                   'flex-1 flex items-center justify-center gap-2.5',
-                  'h-[50px] rounded-2xl',
+                  'h-[50px] rounded-md',
                   'bg-white border border-neutral-100',
                   'text-sm text-neutral-900 font-semibold',
                   'active:scale-[0.97] transition-transform duration-150',
@@ -238,7 +238,7 @@ export default function SignUpPage() {
             {/* Form card */}
             <motion.div
               variants={childVariants}
-              className="bg-white rounded-2xl border border-neutral-100 p-5 space-y-4"
+              className="bg-white rounded-md border border-neutral-100 p-5 space-y-4"
             >
               <Input
                 label="Display name"
@@ -333,7 +333,7 @@ export default function SignUpPage() {
               <motion.div
                 initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 px-4 py-3 bg-error-50 border border-error-100 rounded-xl text-sm text-error-600 text-center font-medium"
+                className="mt-4 px-4 py-3 bg-error-50 border border-error-100 rounded-sm text-sm text-error-600 text-center font-medium"
                 role="alert"
               >
                 {error}

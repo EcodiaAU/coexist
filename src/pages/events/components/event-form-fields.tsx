@@ -166,7 +166,7 @@ export function LocationFields({ fields, onChange }: FieldProps) {
         draggable
         onDragEnd={(pos: MapCenter) => sync.onPinDragged(pos)}
         aria-label="Drag the pin to set event location"
-        className="aspect-[16/10] rounded-xl shadow-sm"
+        className="aspect-[16/10] rounded-sm shadow-sm"
       />
 
       <PendingReverseAddressPrompt
@@ -202,7 +202,7 @@ function LocationSyncStatusBar({
   }
   if (status === 'no-result') {
     return (
-      <p className="-mt-2 text-xs text-amber-600 flex items-center gap-1.5">
+      <p className="-mt-2 text-xs text-bark-600 flex items-center gap-1.5">
         <AlertCircle size={12} className="shrink-0" />
         Couldn't find this address - drag the pin to set the exact spot.
       </p>
@@ -232,7 +232,7 @@ function PendingReverseAddressPrompt({
 }) {
   if (!pending) return null
   return (
-    <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 flex items-start gap-2.5">
+    <div className="rounded-sm border border-neutral-200 bg-neutral-50 px-3 py-2.5 flex items-start gap-2.5">
       <MapPin size={14} className="text-neutral-500 mt-0.5 shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs text-neutral-600">
@@ -401,7 +401,7 @@ export function CoverImageFields({
     <>
       {coverImageUrl ? (
         <div className="space-y-3">
-          <div className="relative rounded-xl overflow-hidden">
+          <div className="relative rounded-sm overflow-hidden">
             <img
               src={coverImageUrl}
               alt="Cover preview"
@@ -438,7 +438,7 @@ export function CoverImageFields({
           onClick={onUpload}
           disabled={disabled || cameraLoading || uploading}
           className={cn(
-            'w-full min-h-11 py-12 rounded-xl border-2 border-dashed border-primary-200 hover:border-primary-400',
+            'w-full min-h-11 py-12 rounded-sm border-2 border-dashed border-primary-200 hover:border-primary-400',
             'cursor-pointer select-none',
             'active:scale-[0.97] transition-transform duration-150',
             'flex flex-col items-center justify-center',

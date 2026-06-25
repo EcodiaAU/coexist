@@ -387,7 +387,7 @@ export default function ReportsPage() {
                   type="button"
                   onClick={() => setReportType(rt.value)}
                   className={cn(
-                    'w-full flex items-start gap-3 p-3 rounded-xl text-left min-h-11',
+                    'w-full flex items-start gap-3 p-3 rounded-sm text-left min-h-11',
                     'active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none',
                     reportType === rt.value
                       ? 'bg-white ring-1 ring-primary-300 shadow-sm'
@@ -493,7 +493,7 @@ export default function ReportsPage() {
               description="Email this report monthly to the board"
             />
             {scheduleRecurring && (
-              <div className="mt-3 p-3 rounded-lg bg-white">
+              <div className="mt-3 p-3 rounded-sm bg-white">
                 <p className="text-xs text-neutral-500 flex items-center gap-1">
                   <Mail size={12} />
                   Monthly email will be sent to registered board members
@@ -506,7 +506,7 @@ export default function ReportsPage() {
           {generating && (
             <motion.div
               variants={fadeUp}
-              className="flex items-center gap-3 p-4 rounded-xl bg-neutral-50 border border-neutral-200"
+              className="flex items-center gap-3 p-4 rounded-sm bg-neutral-50 border border-neutral-200"
             >
               <Loader2 size={18} className="text-primary-600 animate-spin" />
               <div>
@@ -520,10 +520,10 @@ export default function ReportsPage() {
           {generateError && !generating && (
             <motion.div
               variants={fadeUp}
-              className="p-4 rounded-xl bg-red-50 border border-red-200"
+              className="p-4 rounded-sm bg-error-50 border border-error-200"
             >
-              <p className="text-sm font-medium text-red-900">Report generation failed</p>
-              <p className="text-xs text-red-600 mt-0.5">{generateError}</p>
+              <p className="text-sm font-medium text-error-900">Report generation failed</p>
+              <p className="text-xs text-error-600 mt-0.5">{generateError}</p>
             </motion.div>
           )}
 

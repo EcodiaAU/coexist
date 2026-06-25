@@ -58,7 +58,7 @@ function ToolbarBtn({
         onClick()
       }}
       className={cn(
-        'flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-150 cursor-pointer',
+        'flex items-center justify-center w-8 h-8 rounded-sm transition-colors duration-150 cursor-pointer',
         active
           ? 'bg-primary-100 text-primary-800'
           : 'text-neutral-400 hover:bg-neutral-50 hover:text-neutral-700',
@@ -126,7 +126,7 @@ function RichEditor({
   }, [doCommand])
 
   return (
-    <div className="rounded-2xl border border-neutral-100 overflow-hidden bg-white">
+    <div className="rounded-md border border-neutral-100 overflow-hidden bg-white">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-neutral-100 bg-neutral-50/30">
         <ToolbarBtn icon={<Undo2 size={15} />} label="Undo" onClick={() => doCommand('undo')} />
@@ -178,10 +178,10 @@ function PageCard({
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left rounded-2xl bg-white p-5 shadow-sm transition-colors duration-200 cursor-pointer group"
+      className="w-full text-left rounded-md bg-white p-5 shadow-sm transition-colors duration-200 cursor-pointer group"
     >
       <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 group-hover:bg-primary-100 transition-colors">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-primary-50 group-hover:bg-primary-100 transition-colors">
           <FileText size={18} className="text-neutral-600" />
         </div>
         <div className="flex-1 min-w-0">
@@ -339,7 +339,7 @@ export default function AdminLegalPagesPage() {
             <span className="text-[11px] font-semibold uppercase tracking-wide text-neutral-300">
               Slug
             </span>
-            <code className="text-xs text-neutral-500 bg-neutral-50 px-2 py-0.5 rounded-lg">
+            <code className="text-xs text-neutral-500 bg-neutral-50 px-2 py-0.5 rounded-sm">
               /{editing.slug}
             </code>
           </div>
@@ -364,7 +364,7 @@ export default function AdminLegalPagesPage() {
           </div>
 
           {/* Publish toggle */}
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
+          <div className="rounded-md bg-white p-5 shadow-sm">
             <Toggle
               checked={form.is_published}
               onChange={(v) => setForm((p) => ({ ...p, is_published: v }))}
@@ -384,7 +384,7 @@ export default function AdminLegalPagesPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
-                className="rounded-2xl bg-white p-6 shadow-sm"
+                className="rounded-md bg-white p-6 shadow-sm"
               >
                 <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
                   <Eye size={14} className="text-neutral-400" />
@@ -432,10 +432,10 @@ export default function AdminLegalPagesPage() {
         {/* Info banner */}
         <motion.div
           variants={fadeUp}
-          className="rounded-2xl bg-white border border-neutral-100 p-5 shadow-sm"
+          className="rounded-md bg-white border border-neutral-100 p-5 shadow-sm"
         >
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-white shadow-sm">
               <FileText size={20} className="text-neutral-600" />
             </div>
             <div>

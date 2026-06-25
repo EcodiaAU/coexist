@@ -128,7 +128,7 @@ export default function ViewProfilePage() {
   if (!profile) {
     // Defensive belt-and-braces: if isFetched is false but profile is also
     // falsy and we are not loading or erroring, show the page chrome only.
-    return <Page swipeBack header={<Header title="Profile" back />} />
+    return <Page swipeBack header={<Header title="Profile" back />}><></></Page>
   }
 
   const stagger = {
@@ -203,7 +203,7 @@ export default function ViewProfilePage() {
         {mutualData && (mutualData.sharedCollectives.length > 0 || mutualData.sharedEventCount > 0) && (
           <motion.div
             variants={fadeUp}
-            className="mt-2 rounded-xl bg-surface-0 shadow-sm px-4 py-3"
+            className="mt-2 rounded-sm bg-surface-0 shadow-sm px-4 py-3"
           >
             <div className="flex items-center gap-2 text-sm text-neutral-500">
               <Users size={16} />
@@ -285,8 +285,8 @@ export default function ViewProfilePage() {
         {/* Privacy notice for non-staff viewers (replaces sensitive sections) */}
         {!isOwnProfile && !canSeeSensitive && (
           <motion.section variants={fadeUp} className="mt-6">
-            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 flex items-start gap-3">
-              <div className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0 bg-neutral-200 text-neutral-600">
+            <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3 flex items-start gap-3">
+              <div className="flex items-center justify-center w-7 h-7 rounded-sm shrink-0 bg-neutral-200 text-neutral-600">
                 <ShieldOff size={14} />
               </div>
               <div className="flex-1">
@@ -316,7 +316,7 @@ export default function ViewProfilePage() {
               </div>
               Emergency Contact
             </h3>
-            <div className="rounded-2xl overflow-hidden bg-white border border-neutral-100 shadow-sm">
+            <div className="rounded-md overflow-hidden bg-white border border-neutral-100 shadow-sm">
               <div className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="shrink-0 w-10 h-10 rounded-full bg-warning-50 flex items-center justify-center">
@@ -363,7 +363,7 @@ export default function ViewProfilePage() {
                 markers={[{ id: userId ?? 'user', position: pos, variant: 'default', label: profile.location ?? undefined }]}
                 interactive={false}
                 aria-label={`${profile.display_name ?? 'User'} location`}
-                className="h-40 rounded-2xl"
+                className="h-40 rounded-md"
               />
             </motion.section>
           )
@@ -378,7 +378,7 @@ export default function ViewProfilePage() {
             <button
               type="button"
               onClick={() => setShowReportSheet(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-warning-700 bg-warning-50 hover:bg-warning-100 active:scale-[0.97] transition-all duration-150 cursor-pointer select-none"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm text-warning-700 bg-warning-50 hover:bg-warning-100 active:scale-[0.97] transition-all duration-150 cursor-pointer select-none"
             >
               <Flag size={16} />
               Report
@@ -386,7 +386,7 @@ export default function ViewProfilePage() {
             <button
               type="button"
               onClick={() => setShowBlockSheet(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-error-600 bg-error-50 hover:bg-error-100 active:scale-[0.97] transition-all duration-150 cursor-pointer select-none"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm text-error-600 bg-error-50 hover:bg-error-100 active:scale-[0.97] transition-all duration-150 cursor-pointer select-none"
             >
               <ShieldOff size={16} />
               {isBlocked ? 'Blocked' : 'Block'}

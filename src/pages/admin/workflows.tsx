@@ -218,7 +218,7 @@ function DynamicTimelineBuilder({
   return (
     <div className="space-y-3">
       {/* Natural language preview */}
-      <div className="rounded-xl bg-white border border-neutral-100 px-4 py-3">
+      <div className="rounded-sm bg-white border border-neutral-100 px-4 py-3">
         <div className="flex items-start gap-2.5">
           <Sparkles size={15} className="text-primary-500 mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
@@ -241,7 +241,7 @@ function DynamicTimelineBuilder({
               type="button"
               onClick={() => setAnchor(opt.value)}
               className={cn(
-                'w-full text-left px-3 py-2.5 rounded-xl transition-colors cursor-pointer',
+                'w-full text-left px-3 py-2.5 rounded-sm transition-colors cursor-pointer',
                 anchor === opt.value
                   ? 'bg-primary-100 border border-neutral-200'
                   : 'bg-white border border-neutral-100 hover:bg-neutral-50',
@@ -480,7 +480,7 @@ function TemplateModal({
         <h2 className="font-heading text-lg font-semibold text-neutral-900">{isEdit ? 'Edit Template' : 'Create Task Template'}</h2>
         <button
           onClick={onClose}
-          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.93] transition-[colors,transform] duration-150 cursor-pointer"
+          className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
           aria-label="Close"
         >
           <X size={20} />
@@ -509,7 +509,7 @@ function TemplateModal({
               type="button"
               onClick={() => setAssignmentMode('collective')}
               className={cn(
-                'flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-colors text-left',
+                'flex-1 flex items-center gap-2 px-3 py-2.5 rounded-sm cursor-pointer transition-colors text-left',
                 assignmentMode === 'collective'
                   ? 'bg-primary-100 border border-neutral-200'
                   : 'bg-white border border-neutral-100 hover:bg-neutral-50',
@@ -527,7 +527,7 @@ function TemplateModal({
               type="button"
               onClick={() => setAssignmentMode('individual')}
               className={cn(
-                'flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-colors text-left',
+                'flex-1 flex items-center gap-2 px-3 py-2.5 rounded-sm cursor-pointer transition-colors text-left',
                 assignmentMode === 'individual'
                   ? 'bg-primary-100 border border-neutral-200'
                   : 'bg-white border border-neutral-100 hover:bg-neutral-50',
@@ -545,7 +545,7 @@ function TemplateModal({
               type="button"
               onClick={() => setAssignmentMode('assigned')}
               className={cn(
-                'flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-colors text-left',
+                'flex-1 flex items-center gap-2 px-3 py-2.5 rounded-sm cursor-pointer transition-colors text-left',
                 assignmentMode === 'assigned'
                   ? 'bg-primary-100 border border-neutral-200'
                   : 'bg-white border border-neutral-100 hover:bg-neutral-50',
@@ -622,7 +622,7 @@ function TemplateModal({
                   type="button"
                   onClick={() => setScheduleType(type)}
                   className={cn(
-                    'flex items-center gap-1.5 px-3.5 min-h-11 rounded-lg text-sm cursor-pointer',
+                    'flex items-center gap-1.5 px-3.5 min-h-11 rounded-sm text-sm cursor-pointer',
                     'transition-colors duration-150',
                     scheduleType === type
                       ? 'bg-primary-100 text-primary-700 font-medium'
@@ -644,7 +644,7 @@ function TemplateModal({
           {scheduleType === 'event_relative' && (
             <div className="space-y-3">
               {/* Dynamic timeline toggle */}
-              <div className="flex items-center justify-between rounded-xl bg-white border border-neutral-100 px-3 py-2.5">
+              <div className="flex items-center justify-between rounded-sm bg-white border border-neutral-100 px-3 py-2.5">
                 <div className="flex items-center gap-2">
                   <Zap size={15} className="text-moss-600" />
                   <div>
@@ -690,7 +690,7 @@ function TemplateModal({
         />
 
         {scheduleType === 'once' && (
-          <div className="rounded-xl bg-info-50 px-3 py-2.5">
+          <div className="rounded-sm bg-info-50 px-3 py-2.5">
             <p className="text-xs text-info-700 leading-relaxed">
               One-time tasks are created once per user when they load the tasks page. Once completed or skipped, they never reappear.
             </p>
@@ -727,7 +727,7 @@ function TemplateModal({
           </p>
 
           {attachmentUrl ? (
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-neutral-50 border border-neutral-100">
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-sm bg-neutral-50 border border-neutral-100">
               <FileText size={18} className="text-neutral-500 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-neutral-700 truncate">{attachmentLabel || 'Attachment'}</p>
@@ -736,7 +736,7 @@ function TemplateModal({
               <button
                 type="button"
                 onClick={() => { setAttachmentUrl(''); setAttachmentLabel('') }}
-                className="shrink-0 p-1 rounded-lg text-neutral-400 hover:text-error-600 hover:bg-error-50 cursor-pointer transition-colors"
+                className="shrink-0 p-1 rounded-sm text-neutral-400 hover:text-error-600 hover:bg-error-50 cursor-pointer transition-colors"
                 aria-label="Remove attachment"
               >
                 <X size={14} />
@@ -756,7 +756,7 @@ function TemplateModal({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={fileUpload.uploading}
                 className={cn(
-                  'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed',
+                  'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-sm border-2 border-dashed',
                   'text-sm font-medium cursor-pointer transition-colors',
                   fileUpload.uploading
                     ? 'border-neutral-200 text-neutral-300 bg-neutral-50'
@@ -833,28 +833,28 @@ function KpiDashboard() {
         <>
           {/* Overview stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-4 rounded-xl bg-white shadow-sm">
+            <div className="p-4 rounded-sm bg-white shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <Target size={14} className="text-neutral-400" />
                 <p className="text-xs text-neutral-500">Total Tasks</p>
               </div>
               <p className="text-2xl font-bold text-neutral-900">{data.totals.total}</p>
             </div>
-            <div className="p-4 rounded-xl bg-white shadow-sm">
+            <div className="p-4 rounded-sm bg-white shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <CheckCircle size={14} className="text-success-500" />
                 <p className="text-xs text-neutral-500">Completed</p>
               </div>
               <p className="text-2xl font-bold text-success-600">{data.totals.completed}</p>
             </div>
-            <div className="p-4 rounded-xl bg-white shadow-sm">
+            <div className="p-4 rounded-sm bg-white shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <AlertTriangle size={14} className="text-error-500" />
                 <p className="text-xs text-neutral-500">Overdue</p>
               </div>
               <p className="text-2xl font-bold text-error-600">{data.totals.overdue}</p>
             </div>
-            <div className="p-4 rounded-xl bg-white shadow-sm">
+            <div className="p-4 rounded-sm bg-white shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <BarChart3 size={14} className="text-neutral-400" />
                 <p className="text-xs text-neutral-500">Completion Rate</p>
@@ -1000,7 +1000,7 @@ export default function AdminWorkflowsPage() {
 
           {/* Tip: handbook onboarding setup */}
           {!tipDismissed && (
-            <motion.div variants={fadeUp} className="mb-4 rounded-xl bg-info-50/80 border border-info-200/40 px-4 py-3">
+            <motion.div variants={fadeUp} className="mb-4 rounded-sm bg-info-50/80 border border-info-200/40 px-4 py-3">
               <div className="flex items-start gap-3">
                 <Info size={16} className="text-info-500 mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0 space-y-1.5">
@@ -1019,7 +1019,7 @@ export default function AdminWorkflowsPage() {
                     setTipDismissed(true)
                     try { localStorage.setItem('workflows-tip-dismissed', '1') } catch { /* ignore storage errors */ }
                   }}
-                  className="shrink-0 p-1 rounded-lg text-info-400 hover:text-info-600 hover:bg-info-100 cursor-pointer transition-colors"
+                  className="shrink-0 p-1 rounded-sm text-info-400 hover:text-info-600 hover:bg-info-100 cursor-pointer transition-colors"
                   aria-label="Dismiss tip"
                 >
                   <X size={14} />
@@ -1047,7 +1047,7 @@ export default function AdminWorkflowsPage() {
                     <StaggeredItem
                       key={template.id}
                       className={cn(
-                        'p-4 rounded-xl bg-white shadow-sm',
+                        'p-4 rounded-sm bg-white shadow-sm',
                         !template.is_active && 'opacity-50',
                       )}
                     >
@@ -1126,7 +1126,7 @@ export default function AdminWorkflowsPage() {
                           <button
                             type="button"
                             onClick={() => setEditTemplate(template)}
-                            className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-lg text-neutral-400 hover:bg-neutral-50 cursor-pointer"
+                            className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer"
                             title="Edit"
                           >
                             <Pencil size={14} />
@@ -1134,7 +1134,7 @@ export default function AdminWorkflowsPage() {
                           <button
                             type="button"
                             onClick={() => setDeleteTarget(template.id)}
-                            className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-lg text-neutral-400 hover:bg-error-50 hover:text-error-600 cursor-pointer"
+                            className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 cursor-pointer"
                             title="Delete"
                           >
                             <Trash2 size={14} />

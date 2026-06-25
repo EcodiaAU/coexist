@@ -119,7 +119,7 @@ function OrderTimeline({ status, updatedAt }: { status: OrderStatus; createdAt: 
 
   if (isFinal) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-error-50/60">
+      <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-error-50/60">
         <RefreshCw size={14} className="text-error-500" />
         <span className="text-xs font-medium text-error-700 capitalize">{status}</span>
         <span className="text-xs text-error-400 ml-auto">{formatDateTime(updatedAt)}</span>
@@ -190,8 +190,8 @@ function OrderCounts({ orders }: { orders: OrderWithProfile[] }) {
       {cards.map((c) => {
         const Icon = c.icon
         return (
-          <div key={c.label} className="p-4 rounded-2xl bg-white border border-neutral-100 shadow-sm text-center">
-            <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center mx-auto mb-1', c.iconBg)}>
+          <div key={c.label} className="p-4 rounded-md bg-white border border-neutral-100 shadow-sm text-center">
+            <div className={cn('w-7 h-7 rounded-sm flex items-center justify-center mx-auto mb-1', c.iconBg)}>
               <Icon size={14} />
             </div>
             <p className="font-heading text-xl font-bold tabular-nums text-neutral-900">{c.count}</p>
@@ -246,7 +246,7 @@ function ReturnsBanner({ orderId }: { orderId: string }) {
           {returns.map((ret) => (
             <div
               key={ret.id}
-              className="p-3 rounded-xl bg-white border border-neutral-100 shadow-sm"
+              className="p-3 rounded-sm bg-white border border-neutral-100 shadow-sm"
             >
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
@@ -332,7 +332,7 @@ function AllReturnsList() {
   return (
     <div className="mb-5">
       <div className="flex items-center gap-2 mb-3">
-        <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-warning-50 text-warning-600">
+        <div className="flex items-center justify-center w-8 h-8 rounded-sm bg-warning-50 text-warning-600">
           <RotateCcw size={14} />
         </div>
         <div>
@@ -344,7 +344,7 @@ function AllReturnsList() {
         {pending.map((ret) => (
           <div
             key={ret.id}
-            className="p-4 rounded-2xl bg-white border border-neutral-100 shadow-sm"
+            className="p-4 rounded-md bg-white border border-neutral-100 shadow-sm"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -568,7 +568,7 @@ export default function OrdersTab() {
                 type="button"
                 onClick={() => openOrder(order)}
                 className={cn(
-                  'w-full text-left p-5 bg-white border rounded-2xl shadow-sm cursor-pointer transition-[color,background-color,transform] duration-200 active:scale-[0.98]',
+                  'w-full text-left p-5 bg-white border rounded-md shadow-sm cursor-pointer transition-[color,background-color,transform] duration-200 active:scale-[0.98]',
                   CARD_STATUS_GRADIENTS[order.status] ?? 'border-neutral-100',
                 )}
               >
@@ -636,7 +636,7 @@ export default function OrdersTab() {
               <button
                 type="button"
                 onClick={() => handleCopyId(selectedOrder.id)}
-                className="flex items-center gap-1.5 px-3 min-h-11 rounded-lg text-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer"
+                className="flex items-center gap-1.5 px-3 min-h-11 rounded-sm text-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer"
               >
                 <Copy size={12} />
                 Copy ID
@@ -675,12 +675,12 @@ export default function OrdersTab() {
               </h4>
               <div className="space-y-2">
                 {selectedOrder.items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 p-2 rounded-xl bg-neutral-50">
+                  <div key={item.id} className="flex items-center gap-3 p-2 rounded-sm bg-neutral-50">
                     {item.image_url && (
                       <img
                         src={item.image_url}
                         alt={item.product_name}
-                        className="w-10 h-10 rounded-lg object-cover shrink-0"
+                        className="w-10 h-10 rounded-sm object-cover shrink-0"
                       />
                     )}
                     <div className="flex-1 min-w-0">
@@ -714,7 +714,7 @@ export default function OrdersTab() {
               <h4 className="text-xs font-semibold text-neutral-900 uppercase tracking-wider mb-2">
                 Shipping
               </h4>
-              <div className="flex items-start gap-2 p-3 rounded-xl bg-neutral-50">
+              <div className="flex items-start gap-2 p-3 rounded-sm bg-neutral-50">
                 <MapPin size={14} className="text-neutral-400 shrink-0 mt-0.5" />
                 <div className="text-sm text-neutral-600">
                   <p className="font-medium">{selectedOrder.shipping_address?.full_name}</p>
@@ -734,7 +734,7 @@ export default function OrdersTab() {
 
               {/* Tracking */}
               {selectedOrder.tracking_number && (
-                <div className="flex items-center gap-2 mt-2 p-2.5 rounded-xl bg-plum-50">
+                <div className="flex items-center gap-2 mt-2 p-2.5 rounded-sm bg-plum-50">
                   <Truck size={14} className="text-plum-600 shrink-0" />
                   <span className="text-sm font-medium text-plum-800 font-mono">
                     {selectedOrder.tracking_number}

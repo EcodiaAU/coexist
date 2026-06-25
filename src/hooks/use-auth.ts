@@ -385,6 +385,11 @@ export function useAuthProvider(): AuthContextValue {
     // screen (status_board 1b1e718d symptom d: late session-restore failure
     // bounces to the Welcome-back login).
     let hadRestoredSession = false
+    // Holds the manually-cached session for (a) optimistic first paint and
+    // (b) a ONE-TIME migration into the durable supabase store for users
+    // upgrading from a build that kept the session only in this manual cache.
+    let legacyCached: Session | null = null
+    let migrated = false
 
     // Immediately seed cached profile so the route guard never flashes
     // onboarding while we wait for Supabase auth to resolve.
@@ -403,21 +408,22 @@ export function useAuthProvider(): AuthContextValue {
     // reconciles with the server in the background; onAuthStateChange remains
     // the single source of truth once it resolves.
     if (Capacitor.isNativePlatform()) {
-      restoreSession().then(async (restored) => {
+      restoreSession().then((restored) => {
         if (!mounted) return
         if (restored) {
           hadRestoredSession = true
+          legacyCached = restored
+          // Optimistic DISPLAY-ONLY seed for instant first paint. We do NOT
+          // call supabase.auth.setSession here: the durable storage adapter
+          // (lib/supabase.ts) restores the real session itself and
+          // onAuthStateChange(INITIAL_SESSION) reconciles / refreshes it.
+          // Calling setSession alongside that durable restore is what raced
+          // two refreshes on the rotating refresh token and logged the user
+          // out on every reopen. Migration for upgrading users is handled in
+          // the null branch below.
           setSession(restored)
           setUser(restored.user ?? null)
-          // Session is known (from cache) - unblock the UI now.
           setIsLoading(false)
-          try {
-            await supabase.auth.setSession(restored)
-          } catch {
-            // Offline / refresh failure: keep the cached session on screen.
-            // autoRefreshToken recovers and emits TOKEN_REFRESHED when
-            // connectivity returns, which reloads profile data below.
-          }
         }
         // If no restored session, onAuthStateChange INITIAL_SESSION
         // will fire with null - handled below.
@@ -463,6 +469,37 @@ export function useAuthProvider(): AuthContextValue {
             }
           }, 0)
         } else {
+          // One-time migration for users upgrading from a build that stored the
+          // session only in the manual Preferences cache: the durable supabase
+          // store is empty, so the client fires INITIAL_SESSION with null even
+          // though we hold a valid cached session. Seed it into the client ONCE.
+          // There is no competing session here (the client has none), so this
+          // cannot trigger the double-refresh race. After this the durable
+          // adapter owns the lifecycle on every subsequent cold start.
+          if (
+            Capacitor.isNativePlatform() &&
+            event === 'INITIAL_SESSION' &&
+            legacyCached &&
+            !migrated
+          ) {
+            migrated = true
+            const toMigrate = legacyCached
+            // Defer out of the auth-state-change callback: calling setSession
+            // synchronously here can deadlock on the client's internal auth lock
+            // (same reason loadUserData is deferred below).
+            setTimeout(() => {
+              if (!mounted) return
+              supabase.auth.setSession(toMigrate).catch(() => {
+                // Refresh token genuinely expired - the user must re-auth. The
+                // next null event (with migrated=true) falls through to the
+                // real sign-out path below.
+              })
+            }, 0)
+            // Keep the user in the authed shell; the migration setSession emits
+            // SIGNED_IN / TOKEN_REFRESHED shortly, which loads their data.
+            setIsLoading(false)
+            return
+          }
           // No session in this event. Distinguish a REAL sign-out from a
           // transient offline failure to restore a still-valid cached session.
           // An explicit SIGNED_OUT, or any null while online, or a cold start

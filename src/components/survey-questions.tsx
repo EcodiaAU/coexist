@@ -93,7 +93,7 @@ export function SurveyQuestionRenderer({
                   type="button"
                   onClick={() => setAnswer(q.id, n)}
                   className={cn(
-                    'flex items-center justify-center w-10 h-10 rounded-lg cursor-pointer transition-colors',
+                    'flex items-center justify-center w-10 h-10 rounded-sm cursor-pointer transition-colors',
                     (answers[q.id] as number) >= n
                       ? 'bg-warning-100 text-warning-600'
                       : 'bg-neutral-50 text-neutral-400 hover:bg-neutral-100',
@@ -122,7 +122,7 @@ export function SurveyQuestionRenderer({
                       type="button"
                       onClick={() => setAnswer(q.id, n)}
                       className={cn(
-                        'flex items-center justify-center min-w-[36px] h-9 rounded-lg text-sm font-medium cursor-pointer transition-colors',
+                        'flex items-center justify-center min-w-[36px] h-9 rounded-sm text-sm font-medium cursor-pointer transition-colors',
                         answers[q.id] === n
                           ? 'bg-primary-600 text-white'
                           : 'bg-primary-50 text-primary-600 hover:bg-primary-100',
@@ -266,7 +266,7 @@ export function SurveyQuestionRenderer({
                   type="button"
                   onClick={() => setAnswer(q.id, opt)}
                   className={cn(
-                    'flex-1 px-3 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors',
+                    'flex-1 px-3 py-2 rounded-sm text-sm font-medium cursor-pointer transition-colors',
                     answers[q.id] === opt
                       ? 'bg-primary-600 text-white'
                       : 'bg-primary-50 text-primary-600 hover:bg-primary-100',
@@ -354,7 +354,7 @@ export function SurveyQuestionRenderer({
           {/* Profile Autofill */}
           {q.type === 'profile_autofill' && (
             <div className="space-y-1.5">
-              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-plum-50/60 border border-plum-100">
+              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-sm bg-plum-50/60 border border-plum-100">
                 <UserCircle size={16} className="text-plum-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-plum-400">

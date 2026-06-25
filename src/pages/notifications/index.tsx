@@ -82,7 +82,7 @@ function NotificationRow({
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-2xl"
+      className="relative overflow-hidden rounded-md"
       initial={shouldReduceMotion ? false : { opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, height: 0 }}
@@ -90,7 +90,7 @@ function NotificationRow({
     >
       {/* Swipe background */}
       <div
-        className="absolute inset-y-0 right-0 flex items-center justify-end pr-4 rounded-r-2xl bg-primary-500"
+        className="absolute inset-y-0 right-0 flex items-center justify-end pr-4 rounded-r-md bg-primary-500"
         aria-hidden="true"
         style={{ width: '120px' }}
       >
@@ -110,7 +110,7 @@ function NotificationRow({
           setTimeout(() => { dragRef.current = false }, 50)
         }}
         className={cn(
-          'relative flex items-start gap-3.5 w-full px-4 py-4 text-left rounded-2xl',
+          'relative flex items-start gap-3.5 w-full px-4 py-4 text-left rounded-md',
           'cursor-pointer select-none',
           'transition-colors duration-200',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-inset',
@@ -123,7 +123,7 @@ function NotificationRow({
         {/* Icon with tinted circle */}
         <div
           className={cn(
-            'flex items-center justify-center shrink-0 w-11 h-11 rounded-xl text-lg shadow-sm',
+            'flex items-center justify-center shrink-0 w-11 h-11 rounded-sm text-lg shadow-sm',
             isUnread ? 'bg-neutral-100' : 'bg-neutral-100',
             meta.color,
           )}
@@ -338,7 +338,7 @@ export default function NotificationsPage() {
                 className={cn(
                   'flex items-center justify-center w-11 h-11 rounded-full',
                   'text-neutral-500 hover:bg-neutral-50',
-                  'transition-[colors,transform] duration-150 active:scale-[0.93] cursor-pointer select-none',
+                  'transition-[colors,transform] duration-150 active:scale-[0.98] cursor-pointer select-none',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                 )}
                 aria-label="Mark all as read"
@@ -370,8 +370,8 @@ export default function NotificationsPage() {
           ) : showLoading ? (
             <div className="space-y-4 py-6">
               {Array.from({ length: 5 }, (_, i) => (
-                <div key={i} className="flex items-start gap-3.5 px-4 py-4 rounded-2xl bg-white border border-neutral-100 animate-pulse">
-                  <div className="w-11 h-11 rounded-xl bg-neutral-100 shrink-0" />
+                <div key={i} className="flex items-start gap-3.5 px-4 py-4 rounded-md bg-white border border-neutral-100 animate-pulse">
+                  <div className="w-11 h-11 rounded-sm bg-neutral-100 shrink-0" />
                   <div className="flex-1 space-y-2">
                     <div className="h-3.5 bg-neutral-100 rounded w-3/4" />
                     <div className="h-3 bg-neutral-100 rounded w-full" />
@@ -392,8 +392,8 @@ export default function NotificationsPage() {
                 {/* Unread count banner */}
                 {unreadCount > 0 && (
                   <motion.div variants={fadeUp}>
-                    <div className="flex items-center gap-3 rounded-2xl bg-white p-3.5 shadow-sm border border-neutral-100">
-                      <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary-50">
+                    <div className="flex items-center gap-3 rounded-md bg-white p-3.5 shadow-sm border border-neutral-100">
+                      <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-50">
                         <Bell size={16} className="text-neutral-400" />
                       </div>
                       <p className="text-sm font-semibold text-neutral-800">

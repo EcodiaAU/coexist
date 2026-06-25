@@ -73,7 +73,7 @@ export function ChatSearch({ collectiveId, onClose }: ChatSearchProps) {
         ) : (
           <div className="space-y-2">
             {results.map((msg) => (
-              <div key={msg.id} className="rounded-2xl bg-white p-4 shadow-sm border border-neutral-100">
+              <div key={msg.id} className="rounded-md bg-white p-4 shadow-sm border border-neutral-100">
                 <div className="flex items-center gap-2.5 mb-1.5">
                   <Avatar
                     src={msg.profiles?.avatar_url}

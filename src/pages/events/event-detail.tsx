@@ -38,7 +38,9 @@ import {
     WifiOff,
     RefreshCw,
     UserCheck,
+    UserPlus,
     Share2,
+    Tent,
 } from 'lucide-react'
 import { EventShareSheet } from '@/components/event-share-sheet'
 import { EventPhotosSection } from '@/components/event-photos-section'
@@ -81,11 +83,16 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { attendeeName } from '@/lib/attendee-name'
 import { parseLocationPoint } from '@/lib/geo'
+import { isEventSoldOut } from '@/lib/event-sold-out'
+import { useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { IssueTicketSheet } from '@/components/issue-ticket-sheet'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useGeocodeAddress } from '@/hooks/use-geocode-address'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { useEventTicketTypes, useMyEventTicket, useCreateTicketCheckout, useCancelPendingTicket, useTicketSalesSummary, useEventTickets } from '@/hooks/use-event-tickets'
 import { useEventCarpools } from '@/hooks/use-event-carpools'
+import { useEventCampoutChannel } from '@/hooks/use-staff-channels'
 import { MapView } from '@/components'
 import { activityAccent, defaultAccent } from '@/lib/activity-types'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
@@ -118,23 +125,23 @@ function EventDetailSkeleton() {
         </div>
         <div className="pt-5 space-y-4">
           {/* Info card shimmer */}
-          <div className="rounded-2xl bg-white border border-neutral-100 p-5 space-y-4 animate-pulse">
+          <div className="rounded-md bg-white border border-neutral-100 p-5 space-y-4 animate-pulse">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-neutral-100" />
+              <div className="w-10 h-10 rounded-sm bg-neutral-100" />
               <div className="flex-1 space-y-2">
                 <div className="h-3.5 bg-neutral-100 rounded w-2/3" />
                 <div className="h-3 bg-neutral-50 rounded w-1/3" />
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-neutral-100" />
+              <div className="w-10 h-10 rounded-sm bg-neutral-100" />
               <div className="flex-1 space-y-2">
                 <div className="h-3.5 bg-neutral-100 rounded w-3/4" />
                 <div className="h-3 bg-neutral-50 rounded w-1/2" />
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-neutral-100" />
+              <div className="w-10 h-10 rounded-sm bg-neutral-100" />
               <div className="flex-1 space-y-2">
                 <div className="h-3.5 bg-neutral-100 rounded w-1/2" />
                 <div className="h-3 bg-neutral-50 rounded w-3/5" />
@@ -142,7 +149,7 @@ function EventDetailSkeleton() {
             </div>
           </div>
           {/* Capacity shimmer */}
-          <div className="rounded-2xl bg-white border border-neutral-100 p-4 space-y-3 animate-pulse">
+          <div className="rounded-md bg-white border border-neutral-100 p-4 space-y-3 animate-pulse">
             <div className="h-4 bg-neutral-100 rounded w-1/3" />
             <div className="h-3 bg-neutral-50 rounded-full w-full" />
             <div className="flex -space-x-2">
@@ -152,7 +159,7 @@ function EventDetailSkeleton() {
             </div>
           </div>
           {/* Description shimmer */}
-          <div className="rounded-2xl bg-white border border-neutral-100 p-4 space-y-2 animate-pulse">
+          <div className="rounded-md bg-white border border-neutral-100 p-4 space-y-2 animate-pulse">
             <div className="h-4 bg-neutral-100 rounded w-1/4" />
             <div className="h-3 bg-neutral-50 rounded w-full" />
             <div className="h-3 bg-neutral-50 rounded w-5/6" />
@@ -185,7 +192,7 @@ function InfoChip({
     <div className="flex items-start gap-3 py-3.5 group">
       <span
         className={cn(
-          'flex items-center justify-center w-10 h-10 rounded-xl shrink-0',
+          'flex items-center justify-center w-10 h-10 rounded-sm shrink-0',
           'shadow-sm transition-colors duration-200',
           accent.bg, accent.text, accent.border, 'border',
         )}
@@ -207,7 +214,7 @@ function InfoChip({
               type="button"
               onClick={action.onClick}
               className={cn(
-                'min-h-11 flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-[13px] font-bold shrink-0',
+                'min-h-11 flex items-center justify-center gap-1 px-3 py-1.5 rounded-sm text-[13px] font-bold shrink-0',
                 'cursor-pointer select-none active:scale-[0.97] transition-transform duration-150',
                 'bg-neutral-100 text-neutral-600 border-neutral-200 border',
                 'hover:shadow-sm',
@@ -232,6 +239,8 @@ function InfoChip({
 /*  Ticket Sales Section (leaders/admins only)                         */
 /* ------------------------------------------------------------------ */
 
+const LIVE_TICKET_STATUSES = ['pending', 'confirmed', 'checked_in']
+
 function TicketSalesSection({
   eventId,
   accent,
@@ -243,6 +252,50 @@ function TicketSalesSection({
 }) {
   const { data: summary } = useTicketSalesSummary(eventId)
   const { data: tickets } = useEventTickets(eventId)
+  const { isManager, isAdmin } = useAuth()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const canManageTickets = isManager || isAdmin
+
+  const [issueOpen, setIssueOpen] = useState(false)
+  const [revokingId, setRevokingId] = useState<string | null>(null)
+
+  // Count live tickets per user so duplicates (same person, >1 active ticket)
+  // can be flagged for cleanup. Tate hit this: two live tickets to one event.
+  const liveCountByUser = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const t of tickets ?? []) {
+      if (LIVE_TICKET_STATUSES.includes(t.status as string)) {
+        m.set(t.user_id as string, (m.get(t.user_id as string) ?? 0) + 1)
+      }
+    }
+    return m
+  }, [tickets])
+
+  function refreshTickets() {
+    queryClient.invalidateQueries({ queryKey: ['admin-event-tickets', eventId] })
+    queryClient.invalidateQueries({ queryKey: ['ticket-sales-summary', eventId] })
+    queryClient.invalidateQueries({ queryKey: ['event-ticket-types', eventId] })
+  }
+
+  async function handleRevoke(ticketId: string, isPaid: boolean, label: string) {
+    const verb = isPaid ? 'Refund and remove' : 'Remove'
+    if (!window.confirm(`${verb} ${label}'s ticket?${isPaid ? ' This refunds their payment in Stripe.' : ''}`)) return
+    setRevokingId(ticketId)
+    try {
+      const { data, error } = await supabase.functions.invoke('revoke-event-ticket', {
+        body: { ticket_id: ticketId },
+      })
+      const result = (data ?? {}) as { ok?: boolean; action?: string; error?: string }
+      if (error || result.error) throw new Error(result.error || error?.message || 'Could not remove the ticket')
+      toast.success(result.action === 'refunded' ? 'Ticket refunded and removed' : 'Ticket removed')
+      refreshTickets()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not remove the ticket')
+    } finally {
+      setRevokingId(null)
+    }
+  }
 
   if (!summary) return null
 
@@ -251,42 +304,59 @@ function TicketSalesSection({
   return (
     <motion.div
       variants={rm ? undefined : { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
-      className="rounded-2xl p-4.5 space-y-3 bg-white border border-neutral-100 shadow-sm"
+      className="rounded-md p-4.5 space-y-3 bg-white border border-neutral-100 shadow-sm"
     >
       <div className="flex items-center gap-2">
-        <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center', accent.bg)}>
+        <div className={cn('w-7 h-7 rounded-sm flex items-center justify-center', accent.bg)}>
           <Ticket size={14} className={accent.text} />
         </div>
         <h3 className="text-sm font-bold text-neutral-900">Ticket Sales</h3>
+        {canManageTickets && (
+          <button
+            type="button"
+            onClick={() => setIssueOpen(true)}
+            className={cn('ml-auto flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-sm', accent.bg, accent.text)}
+          >
+            <UserPlus size={13} />
+            Issue ticket
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl bg-success-50 p-3 text-center">
+        <div className="rounded-sm bg-success-50 p-3 text-center">
           <p className="font-heading text-lg font-bold text-success-700">${revenueAud}</p>
           <p className="text-[10px] text-success-500 font-semibold uppercase">Revenue</p>
         </div>
-        <div className="rounded-xl bg-primary-50 p-3 text-center">
+        <div className="rounded-sm bg-primary-50 p-3 text-center">
           <p className="font-heading text-lg font-bold text-primary-700">{summary.totalSold}</p>
           <p className="text-[10px] text-primary-400 font-semibold uppercase">Sold</p>
         </div>
-        <div className="rounded-xl bg-moss-50 p-3 text-center">
+        <div className="rounded-sm bg-moss-50 p-3 text-center">
           <p className="font-heading text-lg font-bold text-moss-700">{summary.totalCheckedIn}</p>
           <p className="text-[10px] text-moss-500 font-semibold uppercase">Checked In</p>
         </div>
       </div>
 
-      {/* Recent ticket holders */}
+      {/* Ticket holders */}
       {tickets && tickets.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Ticket Holders</p>
-          <div className="max-h-[180px] overflow-y-auto space-y-1">
-            {tickets.slice(0, 20).map((t) => {
+          <div className="max-h-[260px] overflow-y-auto space-y-1">
+            {tickets.map((t) => {
               const profile = t.profiles as unknown as { display_name: string; first_name: string | null; last_name: string | null; email: string } | null
+              const label = attendeeName(profile, profile?.email ?? 'Unknown')
+              const isLive = LIVE_TICKET_STATUSES.includes(t.status as string)
+              const isDuplicate = isLive && (liveCountByUser.get(t.user_id as string) ?? 0) > 1
+              const isPaid = !!(t as { stripe_payment_intent_id?: string | null }).stripe_payment_intent_id && (t.price_cents ?? 0) > 0
               return (
-                <div key={t.id} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-neutral-50">
+                <div key={t.id} className="flex items-center gap-2.5 py-1.5 px-2 rounded-sm hover:bg-neutral-50">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-neutral-800 truncate">
-                      {attendeeName(profile, profile?.email ?? 'Unknown')}
+                    <p className="text-xs font-medium text-neutral-800 truncate flex items-center gap-1.5">
+                      {label}
+                      {isDuplicate && (
+                        <span className="text-[8px] font-bold px-1 py-0.5 rounded-full bg-warning-100 text-warning-700 uppercase">Dupe</span>
+                      )}
                     </p>
                     <p className="text-[10px] text-neutral-400">
                       {(t.event_ticket_types as unknown as { name: string } | null)?.name ?? ''} · ${((t.price_cents ?? 0) / 100).toFixed(2)}
@@ -301,14 +371,31 @@ function TicketSalesSection({
                   )}>
                     {t.status === 'checked_in' ? 'In' : t.status}
                   </span>
-                  {t.ticket_code && (
-                    <span className="font-mono text-[9px] text-neutral-300">{t.ticket_code}</span>
+                  {canManageTickets && isLive && (
+                    <button
+                      type="button"
+                      disabled={revokingId === t.id}
+                      onClick={() => handleRevoke(t.id, isPaid, label)}
+                      title={isPaid ? 'Refund and remove ticket' : 'Remove ticket'}
+                      className="text-neutral-300 hover:text-error-500 disabled:opacity-40 transition-colors p-1"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   )}
                 </div>
               )
             })}
           </div>
         </div>
+      )}
+
+      {canManageTickets && (
+        <IssueTicketSheet
+          eventId={eventId}
+          open={issueOpen}
+          onClose={() => setIssueOpen(false)}
+          onSuccess={refreshTickets}
+        />
       )}
     </motion.div>
   )
@@ -371,6 +458,9 @@ export default function EventDetailPage() {
 
   // Ticketed events
   const isTicketed = event?.is_ticketed ?? false
+  // Sold out on an external platform (e.g. Eventbrite): native in-app sales are
+  // closed, but the per-event claim link still works (it bypasses capacity).
+  const soldOut = isEventSoldOut(event)
   const { data: ticketTypes } = useEventTicketTypes(isTicketed ? id : undefined)
   const { data: myTicket } = useMyEventTicket(isTicketed ? id : undefined)
   const ticketCheckout = useCreateTicketCheckout()
@@ -378,6 +468,8 @@ export default function EventDetailPage() {
 
   // Coordination - carpool breakout chats for this event (Worker 3)
   const { data: eventCarpools } = useEventCarpools(id)
+  // Campout group chat - RLS exposes it only to confirmed ticket holders + staff
+  const { data: campoutChannel } = useEventCampoutChannel(id)
   const [selectedTicketType, setSelectedTicketType] = useState<string | null>(null)
 
   const [showCancelSheet, setShowCancelSheet] = useState(false)
@@ -658,7 +750,7 @@ export default function EventDetailPage() {
     if (!event) return null
     if (event.status === 'cancelled') {
       return (
-        <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl bg-error-50 text-error-700 text-sm font-semibold border border-error-200/40">
+        <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-md bg-error-50 text-error-700 text-sm font-semibold border border-error-200/40">
           <XCircle size={18} />
           This event has been cancelled
         </div>
@@ -683,7 +775,7 @@ export default function EventDetailPage() {
 
     if (userStatus === 'attended') {
       return (
-        <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl bg-success-50 text-success-700 text-sm font-bold border border-success-200/40">
+        <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-md bg-success-50 text-success-700 text-sm font-bold border border-success-200/40">
           <CheckCircle2 size={18} />
           You're checked in!
         </div>
@@ -745,7 +837,7 @@ export default function EventDetailPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-primary-400"
+                  className="pointer-events-none absolute inset-0 rounded-md ring-2 ring-primary-400"
                   style={{ animation: 'registerBurst 600ms ease-out forwards' }}
                   aria-hidden="true"
                 />
@@ -781,7 +873,7 @@ export default function EventDetailPage() {
     if (userStatus === 'waitlisted') {
       return (
         <div className="space-y-2">
-          <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl bg-warning-50 text-warning-700 text-sm font-bold border border-warning-200/40">
+          <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-md bg-warning-50 text-warning-700 text-sm font-bold border border-warning-200/40">
             <AlertCircle size={18} />
             You're on the waitlist
           </div>
@@ -799,7 +891,7 @@ export default function EventDetailPage() {
     if (userStatus === 'invited') {
       return (
         <div className="space-y-2">
-          <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl bg-info-50 text-info-700 text-sm font-bold border border-info-200/40">
+          <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-md bg-info-50 text-info-700 text-sm font-bold border border-info-200/40">
             <Mail size={18} />
             You've been invited
           </div>
@@ -823,7 +915,7 @@ export default function EventDetailPage() {
         return (
           <div className="space-y-2">
             <div className={cn(
-              'flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-bold border',
+              'flex items-center gap-2.5 px-5 py-3.5 rounded-md text-sm font-bold border',
               accent.bg, accent.text, accent.border,
             )}>
               <CheckCircle2 size={18} />
@@ -853,7 +945,7 @@ export default function EventDetailPage() {
 
         return (
           <div className="space-y-2">
-            <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl bg-warning-50 text-warning-700 text-sm font-bold border border-warning-200/40">
+            <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-md bg-warning-50 text-warning-700 text-sm font-bold border border-warning-200/40">
               <Clock size={18} />
               {isStale ? 'Your checkout session has expired' : 'Payment pending - complete your checkout'}
             </div>
@@ -897,6 +989,24 @@ export default function EventDetailPage() {
         )
       }
 
+      // Sold out (e.g. on Eventbrite): close native sales. Eventbrite buyers
+      // still get in via their claim link (it bypasses this entirely), and any
+      // already-confirmed/pending holder is handled by the branches above.
+      if (soldOut) {
+        return (
+          <div className="flex items-start gap-2.5 px-5 py-4 rounded-md bg-neutral-50 text-neutral-700 text-sm border border-neutral-200">
+            <Ticket size={18} className="mt-0.5 shrink-0 text-neutral-400" />
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-neutral-900">Sold out</p>
+              <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                Tickets for this campout have sold out. If the organisers sent you a claim
+                link, open it to grab your free app ticket and join the group chat.
+              </p>
+            </div>
+          </div>
+        )
+      }
+
       // No ticket - show ticket type selector
       return (
         <div className="space-y-3">
@@ -912,7 +1022,7 @@ export default function EventDetailPage() {
                 disabled={soldOut || !!notOnSale}
                 onClick={() => setSelectedTicketType(selected ? null : tt.id)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border text-left transition-all cursor-pointer',
+                  'w-full flex items-center gap-3 px-4 py-3.5 rounded-md border text-left transition-all cursor-pointer',
                   selected
                     ? `${accent.border} ${accent.bg}`
                     : 'border-neutral-100 bg-white hover:bg-neutral-50',
@@ -1052,7 +1162,7 @@ export default function EventDetailPage() {
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <div
               className={cn(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm',
+                'flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm',
                 isOffline
                   ? 'bg-warning-50 text-warning-800 ring-1 ring-warning-200/60'
                   : 'bg-primary-50 text-primary-800 ring-1 ring-primary-200/60',
@@ -1099,7 +1209,7 @@ export default function EventDetailPage() {
             Reads from cached event-attendees so it survives flaky network. */}
         {isEventTodayForLive && liveAttendees && liveAttendees.length > 0 && (
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
-            <div className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm border border-success-100">
+            <div className="flex items-center gap-3 rounded-sm bg-white p-3 shadow-sm border border-success-100">
               <div className="flex items-center justify-center w-9 h-9 rounded-full bg-success-50">
                 <UserCheck size={16} className="text-success-600" />
               </div>
@@ -1116,7 +1226,7 @@ export default function EventDetailPage() {
               </div>
               <div className="h-2 w-20 rounded-full bg-neutral-100 overflow-hidden">
                 <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-success-400 to-success-500"
+                  className="h-full rounded-full bg-success-500"
                   initial={{ width: 0 }}
                   animate={{ width: liveRegistered > 0 ? `${(liveCheckedIn / liveRegistered) * 100}%` : '0%' }}
                   transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, ease: 'easeOut' }}
@@ -1130,14 +1240,14 @@ export default function EventDetailPage() {
         {isStaff && !collectiveRole.isLoading && (
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <div className="flex items-center gap-2 mb-2.5">
-              <div className="w-6 h-6 rounded-lg bg-moss-50 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-sm bg-moss-50 flex items-center justify-center">
                 <Sparkles size={11} className="text-moss-600" />
               </div>
               <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Leader Actions</span>
             </div>
             {/* Leader override: force-open check-in before the window */}
             {!past && !checkInForcedOpen && !isEventActive && event.status !== 'cancelled' && (
-              <div className="mb-2.5 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-warning-50 border border-warning-200/40">
+              <div className="mb-2.5 flex items-center gap-2 px-3.5 py-2.5 rounded-sm bg-warning-50 border border-warning-200/40">
                 <Clock size={14} className="text-warning-600 shrink-0" />
                 <p className="text-xs text-warning-700 flex-1">
                   Check-in opens at {checkInOpensAt?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }) ?? '-'}
@@ -1152,7 +1262,7 @@ export default function EventDetailPage() {
               </div>
             )}
             {checkInForcedOpen && (
-              <div className="mb-2.5 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-success-50 border border-success-200/40">
+              <div className="mb-2.5 flex items-center gap-2 px-3.5 py-2.5 rounded-sm bg-success-50 border border-success-200/40">
                 <CheckCircle2 size={14} className="text-success-600 shrink-0" />
                 <p className="text-xs text-success-700">Check-in is open (manual override)</p>
               </div>
@@ -1161,9 +1271,9 @@ export default function EventDetailPage() {
               <button
                 type="button"
                 onClick={() => navigate(`/events/${event.id}/day`)}
-                className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                className="group flex flex-col items-center gap-1.5 rounded-sm bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
               >
-                <div className="w-9 h-9 rounded-lg bg-moss-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="w-9 h-9 rounded-sm bg-moss-50 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <ClipboardList size={16} className="text-moss-600" />
                 </div>
                 <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Event Day</span>
@@ -1171,9 +1281,9 @@ export default function EventDetailPage() {
               <button
                 type="button"
                 onClick={() => setShowQrSheet(true)}
-                className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                className="group flex flex-col items-center gap-1.5 rounded-sm bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
               >
-                <div className="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="w-9 h-9 rounded-sm bg-primary-50 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <Hash size={16} className="text-primary-600" />
                 </div>
                 <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Check-in Code</span>
@@ -1186,9 +1296,9 @@ export default function EventDetailPage() {
                 <button
                   type="button"
                   onClick={() => navigate(`/events/${event.id}/impact`)}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                  className="group flex flex-col items-center gap-1.5 rounded-sm bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-sprout-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-sm bg-sprout-50 flex items-center justify-center group-hover:scale-105 transition-transform">
                     <Leaf size={16} className="text-sprout-600" />
                   </div>
                   <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Log Impact</span>
@@ -1198,9 +1308,9 @@ export default function EventDetailPage() {
                 <button
                   type="button"
                   onClick={() => navigate(`/events/${event.id}/edit`)}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                  className="group flex flex-col items-center gap-1.5 rounded-sm bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-sky-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-sm bg-sky-50 flex items-center justify-center group-hover:scale-105 transition-transform">
                     <Pencil size={16} className="text-sky-600" />
                   </div>
                   <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Edit</span>
@@ -1210,9 +1320,9 @@ export default function EventDetailPage() {
                 <button
                   type="button"
                   onClick={handleDuplicate}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                  className="group flex flex-col items-center gap-1.5 rounded-sm bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-sm bg-violet-50 flex items-center justify-center group-hover:scale-105 transition-transform">
                     <Copy size={16} className="text-violet-600" />
                   </div>
                   <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Duplicate</span>
@@ -1222,13 +1332,13 @@ export default function EventDetailPage() {
                 <button
                   type="button"
                   onClick={handleOpenInviteSheet}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                  className="group flex flex-col items-center gap-1.5 rounded-sm bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                 >
                   <div className={cn(
-                    'w-9 h-9 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform',
-                    alreadyInvited ? 'bg-sky-50' : 'bg-amber-50',
+                    'w-9 h-9 rounded-sm flex items-center justify-center group-hover:scale-105 transition-transform',
+                    alreadyInvited ? 'bg-sky-50' : 'bg-bark-50',
                   )}>
-                    {alreadyInvited ? <Bell size={16} className="text-sky-600" /> : <Send size={16} className="text-amber-600" />}
+                    {alreadyInvited ? <Bell size={16} className="text-sky-600" /> : <Send size={16} className="text-bark-600" />}
                   </div>
                   <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">{alreadyInvited ? 'Remind' : 'Invite'}</span>
                 </button>
@@ -1237,9 +1347,9 @@ export default function EventDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowCancelEventSheet(true)}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl bg-white shadow-sm border border-error-100/60 p-3 active:scale-[0.96] transition-transform duration-150 cursor-pointer select-none"
+                  className="group flex flex-col items-center gap-1.5 rounded-sm bg-white shadow-sm border border-error-100/60 p-3 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-error-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-sm bg-error-50 flex items-center justify-center group-hover:scale-105 transition-transform">
                     <Ban size={16} className="text-error-600" />
                   </div>
                   <span className="text-[10px] font-semibold text-error-600 leading-tight text-center">Cancel</span>
@@ -1252,7 +1362,7 @@ export default function EventDetailPage() {
         {/* ── Key info card ── */}
         <motion.div
           variants={shouldReduceMotion ? undefined : fadeUp}
-          className="rounded-2xl p-4.5 space-y-0.5 bg-white border border-neutral-100 shadow-sm"
+          className="rounded-md p-4.5 space-y-0.5 bg-white border border-neutral-100 shadow-sm"
         >
           <InfoChip
             icon={<Calendar size={17} />}
@@ -1295,7 +1405,7 @@ export default function EventDetailPage() {
                 markers={[{ id: event.id, position: mapPos, variant: 'event', label: event.title }]}
                 interactive
                 aria-label={`${event.title} location`}
-                className="aspect-[4/3] sm:aspect-video rounded-2xl shadow-sm border border-neutral-100"
+                className="aspect-[4/3] sm:aspect-video rounded-md shadow-sm border border-neutral-100"
               />
             )}
             <button
@@ -1304,7 +1414,7 @@ export default function EventDetailPage() {
               disabled={!hasDirectionsDestination}
               className={cn(
                 mapPos ? 'absolute bottom-3 right-3 z-[1000]' : 'mt-1',
-                'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-bold',
+                'flex items-center gap-1.5 px-3.5 py-2 rounded-sm text-[13px] font-bold',
                 'bg-white text-neutral-700 shadow-md border border-neutral-200',
                 hasDirectionsDestination
                   ? 'cursor-pointer select-none active:scale-[0.97] transition-transform duration-150'
@@ -1323,7 +1433,7 @@ export default function EventDetailPage() {
         {event.description && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
-            className="rounded-2xl p-4.5 bg-white border border-neutral-100 shadow-sm"
+            className="rounded-md p-4.5 bg-white border border-neutral-100 shadow-sm"
           >
             <h3 className="text-sm font-bold mb-3 text-neutral-900">About this event</h3>
             <div className="relative">
@@ -1363,7 +1473,7 @@ export default function EventDetailPage() {
           return (
             <motion.div
               variants={shouldReduceMotion ? undefined : fadeUp}
-              className="rounded-2xl p-4.5 bg-white border border-neutral-100 shadow-sm"
+              className="rounded-md p-4.5 bg-white border border-neutral-100 shadow-sm"
             >
               <h3 className="text-sm font-bold mb-3 text-neutral-900">Good to know</h3>
               <div className="space-y-3">
@@ -1461,10 +1571,10 @@ export default function EventDetailPage() {
         {past && event.impact && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
-            className="rounded-2xl p-4.5 space-y-3.5 bg-white border border-neutral-100 shadow-sm"
+            className="rounded-md p-4.5 space-y-3.5 bg-white border border-neutral-100 shadow-sm"
           >
             <div className="flex items-center gap-2">
-              <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center', accent.bg)}>
+              <div className={cn('w-7 h-7 rounded-sm flex items-center justify-center', accent.bg)}>
                 <Leaf size={14} className={accent.text} />
               </div>
               <h3 className="text-sm font-bold text-neutral-900">Impact Summary</h3>
@@ -1523,10 +1633,10 @@ export default function EventDetailPage() {
         {eventCarpools && eventCarpools.length > 0 && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
-            className="rounded-2xl p-4 bg-white border border-neutral-100 shadow-sm"
+            className="rounded-md p-4 bg-white border border-neutral-100 shadow-sm"
           >
             <div className="flex items-center gap-2 mb-2.5">
-              <div className="w-6 h-6 rounded-lg bg-primary-50 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-sm bg-primary-50 flex items-center justify-center">
                 <Car size={11} className="text-primary-600" />
               </div>
               <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
@@ -1549,9 +1659,9 @@ export default function EventDetailPage() {
                     key={cp.carpool_id}
                     type="button"
                     onClick={() => navigate(`/chat/channel/${cp.channel_id}`)}
-                    className="w-full flex items-center gap-3 min-h-11 p-2 rounded-lg hover:bg-neutral-50 active:scale-[0.98] transition-[opacity,transform] duration-150 text-left cursor-pointer"
+                    className="w-full flex items-center gap-3 min-h-11 p-2 rounded-sm hover:bg-neutral-50 active:scale-[0.98] transition-[opacity,transform] duration-150 text-left cursor-pointer"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-sm bg-primary-50 flex items-center justify-center shrink-0">
                       <Car size={15} className="text-primary-600" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1570,11 +1680,46 @@ export default function EventDetailPage() {
           </motion.div>
         )}
 
+        {/* ── Campout group chat (confirmed ticket holders + staff) ── */}
+        {campoutChannel && (
+          <motion.div
+            variants={shouldReduceMotion ? undefined : fadeUp}
+            className="rounded-md p-4 bg-white border border-neutral-100 shadow-sm"
+          >
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-6 h-6 rounded-sm bg-primary-50 flex items-center justify-center">
+                <Tent size={11} className="text-primary-600" />
+              </div>
+              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
+                Group chat
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(`/chat/channel/${campoutChannel.id}`)}
+              className="w-full flex items-center gap-3 min-h-11 p-2 rounded-sm hover:bg-neutral-50 active:scale-[0.98] transition-[opacity,transform] duration-150 text-left cursor-pointer"
+            >
+              <div className="w-9 h-9 rounded-sm bg-primary-50 flex items-center justify-center shrink-0">
+                <Tent size={15} className="text-primary-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-neutral-900 truncate">
+                  {campoutChannel.name}
+                </p>
+                <p className="text-[11px] text-neutral-500 truncate">
+                  Chat with everyone coming to this campout
+                </p>
+              </div>
+              <ChevronRight size={14} className="ml-auto shrink-0 text-neutral-400" />
+            </button>
+          </motion.div>
+        )}
+
         {/* ── Collaborating collectives ── */}
         {event.collaborators && event.collaborators.length > 0 && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
-            className="rounded-2xl p-4 bg-white border border-neutral-100 shadow-sm"
+            className="rounded-md p-4 bg-white border border-neutral-100 shadow-sm"
           >
             <p className="text-[11px] uppercase tracking-wider font-semibold text-neutral-400 mb-2.5">
               Co-hosted with
@@ -1587,9 +1732,9 @@ export default function EventDetailPage() {
                   className="flex items-center gap-3 min-h-11 hover:opacity-80 active:scale-[0.98] transition-[opacity,transform] duration-150"
                 >
                   {collab.cover_image_url ? (
-                    <img src={collab.cover_image_url} alt={collab.name} loading="lazy" className="w-9 h-9 rounded-lg object-cover shrink-0 shadow-sm" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                    <img src={collab.cover_image_url} alt={collab.name} loading="lazy" className="w-9 h-9 rounded-sm object-cover shrink-0 shadow-sm" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                   ) : (
-                    <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm', accent.bg)}>
+                    <div className={cn('w-9 h-9 rounded-sm flex items-center justify-center shrink-0 shadow-sm', accent.bg)}>
                       <Users size={15} className={accent.text} />
                     </div>
                   )}
@@ -1605,7 +1750,7 @@ export default function EventDetailPage() {
         {past && userStatus === 'attended' && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
-            className="rounded-2xl p-5 bg-white border border-neutral-100 shadow-sm"
+            className="rounded-md p-5 bg-white border border-neutral-100 shadow-sm"
           >
             <p className="text-sm font-bold text-neutral-900">How was the event?</p>
             <p className="text-caption text-neutral-500 mt-1">
@@ -1687,7 +1832,7 @@ export default function EventDetailPage() {
               downloadIcsFile(event)
               setShowCalendarSheet(false)
             }}
-            className="flex items-center gap-3 w-full min-h-11 px-4 py-3 rounded-xl hover:bg-neutral-50 cursor-pointer select-none text-left active:scale-[0.97] transition-transform duration-150"
+            className="flex items-center gap-3 w-full min-h-11 px-4 py-3 rounded-sm hover:bg-neutral-50 cursor-pointer select-none text-left active:scale-[0.97] transition-transform duration-150"
           >
             <CalendarPlus size={20} className="text-neutral-400 shrink-0" />
             <div>
@@ -1701,7 +1846,7 @@ export default function EventDetailPage() {
               window.open(getGoogleCalendarUrl(event), '_blank')
               setShowCalendarSheet(false)
             }}
-            className="flex items-center gap-3 w-full min-h-11 px-4 py-3 rounded-xl hover:bg-neutral-50 cursor-pointer select-none text-left active:scale-[0.97] transition-transform duration-150"
+            className="flex items-center gap-3 w-full min-h-11 px-4 py-3 rounded-sm hover:bg-neutral-50 cursor-pointer select-none text-left active:scale-[0.97] transition-transform duration-150"
           >
             <Calendar size={20} className="text-neutral-400 shrink-0" />
             <div>
@@ -1765,7 +1910,7 @@ export default function EventDetailPage() {
           <div>
             <div className="flex items-center gap-2.5 mb-1">
               <div className={cn(
-                'w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br',
+                'w-8 h-8 rounded-sm flex items-center justify-center shadow-sm bg-gradient-to-br',
                 alreadyInvited ? 'from-moss-500 to-moss-600' : 'from-sprout-500 to-sprout-600',
               )}>
                 {alreadyInvited ? <Bell size={15} className="text-white" /> : <Send size={15} className="text-white" />}
@@ -1782,12 +1927,12 @@ export default function EventDetailPage() {
           </div>
 
           {/* Event preview */}
-          <div className="rounded-xl p-3.5 border border-neutral-100">
+          <div className="rounded-sm p-3.5 border border-neutral-100">
             <div className="flex items-center gap-3">
               {event?.cover_image_url ? (
-                <img src={event.cover_image_url} alt={event.title} loading="lazy" className="w-12 h-12 rounded-lg object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                <img src={event.cover_image_url} alt={event.title} loading="lazy" className="w-12 h-12 rounded-sm object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
               ) : (
-                <div className={cn('w-12 h-12 rounded-lg flex items-center justify-center shrink-0', accent.bg)}>
+                <div className={cn('w-12 h-12 rounded-sm flex items-center justify-center shrink-0', accent.bg)}>
                   <Calendar size={18} className={accent.text} />
                 </div>
               )}

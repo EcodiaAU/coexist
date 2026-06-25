@@ -268,10 +268,10 @@ export default function DonateThankYouPage() {
             >
               {/* ── Impact card ── */}
               <motion.div variants={fadeUp}>
-                <div className="bg-white border border-neutral-100 shadow-sm rounded-2xl overflow-hidden">
+                <div className="bg-white border border-neutral-100 shadow-sm rounded-md overflow-hidden">
                   <div className="p-5">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-sm bg-primary-500 flex items-center justify-center shrink-0">
                         <Leaf size={18} className="text-white" />
                       </div>
                       <div>
@@ -287,7 +287,7 @@ export default function DonateThankYouPage() {
                     {isRecurring && (
                       <>
                         <div className="h-px bg-gradient-to-r from-transparent via-neutral-100 to-transparent my-3" />
-                        <div className="px-4 py-3 rounded-2xl bg-neutral-50 border border-neutral-100">
+                        <div className="px-4 py-3 rounded-md bg-neutral-50 border border-neutral-100">
                           <p className="text-xs text-primary-600 font-medium">
                             <span className="font-bold text-primary-700 tabular-nums">${amount * 12}/year</span> of sustained conservation impact
                           </p>
@@ -308,12 +308,12 @@ export default function DonateThankYouPage() {
                   onClick={handleShare}
                   className={cn(
                     'flex items-center gap-3 w-full p-4',
-                    'bg-white border border-neutral-100 shadow-sm rounded-2xl',
+                    'bg-white border border-neutral-100 shadow-sm rounded-md',
                     'transition-all active:scale-[0.98] duration-200',
                     'min-h-[44px]',
                   )}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-sm bg-primary-500 flex items-center justify-center shrink-0">
                     <Share2 size={18} className="text-white" />
                   </div>
                   <div className="flex-1 min-w-0 text-left">

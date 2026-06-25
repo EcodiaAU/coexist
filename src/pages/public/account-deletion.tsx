@@ -39,7 +39,7 @@ async function softDeleteUser(userId: string): Promise<{ error: string | null; a
       deleted_at: new Date().toISOString(),
       deletion_status: 'pending_deletion',
       deletion_requested_at: new Date().toISOString(),
-    } as unknown as Record<string, unknown>)
+    })
     .eq('id', userId)
 
   if (error) return { error: 'Failed to process deletion request. Please contact support.', alreadyPending: false }
@@ -199,7 +199,7 @@ export default function AccountDeletionPage() {
             {step === 'info' && (
               <>
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="text-center space-y-3">
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-error/10 flex items-center justify-center">
+                  <div className="mx-auto w-14 h-14 rounded-md bg-error/10 flex items-center justify-center">
                     <Trash2 size={28} className="text-error" />
                   </div>
                   <h2 className="font-heading text-2xl font-bold text-neutral-900">Delete Your Account</h2>
@@ -208,7 +208,7 @@ export default function AccountDeletionPage() {
                   </p>
                 </motion.div>
 
-                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 p-5 space-y-4">
+                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-md shadow-sm border border-neutral-100 p-5 space-y-4">
                   <h3 className="font-heading font-semibold text-neutral-900">What happens when you delete your account</h3>
                   <ul className="space-y-3 text-sm text-neutral-600">
                     <li className="flex gap-3">
@@ -216,7 +216,7 @@ export default function AccountDeletionPage() {
                       <span>Your account will be marked for deletion with a <strong className="text-primary-700">30-day grace period</strong>. During this time, you can recover your account by simply logging back in.</span>
                     </li>
                     <li className="flex gap-3">
-                      <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                      <AlertTriangle size={18} className="text-bark-500 shrink-0 mt-0.5" />
                       <span>After 30 days, all your personal data will be <strong className="text-primary-700">permanently removed</strong>, including your profile, event history, chat messages, points, and badges.</span>
                     </li>
                     <li className="flex gap-3">
@@ -251,7 +251,7 @@ export default function AccountDeletionPage() {
             {step === 'login' && (
               <>
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="text-center space-y-3">
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center">
+                  <div className="mx-auto w-14 h-14 rounded-md bg-primary-100 flex items-center justify-center">
                     <Lock size={28} className="text-primary-700" />
                   </div>
                   <h2 className="font-heading text-2xl font-bold text-neutral-900">Confirm Your Identity</h2>
@@ -264,7 +264,7 @@ export default function AccountDeletionPage() {
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="space-y-3">
                   <button
                     type="button"
-                    className="w-full h-12 rounded-xl border border-neutral-200 bg-white flex items-center justify-center gap-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50"
+                    className="w-full h-12 rounded-sm border border-neutral-200 bg-white flex items-center justify-center gap-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50"
                     onClick={() => handleOAuthDelete('google')}
                     disabled={loading}
                   >
@@ -279,7 +279,7 @@ export default function AccountDeletionPage() {
 
                   <button
                     type="button"
-                    className="w-full h-12 rounded-xl border border-neutral-200 bg-black flex items-center justify-center gap-3 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                    className="w-full h-12 rounded-sm border border-neutral-200 bg-black flex items-center justify-center gap-3 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
                     onClick={() => handleOAuthDelete('apple')}
                     disabled={loading}
                   >
@@ -360,7 +360,7 @@ export default function AccountDeletionPage() {
             {step === 'done' && (
               <>
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="text-center space-y-3">
-                  <div className="mx-auto w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center">
+                  <div className="mx-auto w-14 h-14 rounded-md bg-primary-100 flex items-center justify-center">
                     <CheckCircle size={28} className="text-primary-700" />
                   </div>
                   <h2 className="font-heading text-2xl font-bold text-neutral-900">Account Deletion Requested</h2>
@@ -369,7 +369,7 @@ export default function AccountDeletionPage() {
                   </p>
                 </motion.div>
 
-                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 p-5 space-y-3">
+                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-md shadow-sm border border-neutral-100 p-5 space-y-3">
                   <h3 className="font-heading font-semibold text-neutral-900">What happens next</h3>
                   <ul className="space-y-2 text-sm text-neutral-600">
                     <li className="flex gap-2">

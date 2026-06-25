@@ -174,7 +174,7 @@ export default function EditEventPage() {
         // Floating local time: tz column kept on table but always NULL.
         timezone: null,
         event_extras: form.fields.extras,
-      } as Parameters<typeof updateEvent.mutateAsync>[0])
+      } as unknown as Parameters<typeof updateEvent.mutateAsync>[0])
 
       // Save ticket types
       await saveTickets.mutateAsync({
@@ -318,7 +318,7 @@ export default function EditEventPage() {
       >
         {/* Basics */}
         <motion.div variants={fadeUp} className={cn(
-          'space-y-4 rounded-2xl p-4 border',
+          'space-y-4 rounded-md p-4 border',
           isDayOfMode
             ? 'bg-neutral-50 border-neutral-200 opacity-60 pointer-events-none'
             : 'bg-white border-neutral-100',
@@ -342,7 +342,7 @@ export default function EditEventPage() {
 
         {/* Date & Time  editable in day-of mode */}
         <motion.div variants={fadeUp} className={cn(
-          'space-y-4 rounded-2xl p-4 border',
+          'space-y-4 rounded-md p-4 border',
           isDayOfMode
             ? 'bg-moss-50 border-moss-300 ring-2 ring-moss-200'
             : 'bg-white border-neutral-100',
@@ -365,7 +365,7 @@ export default function EditEventPage() {
 
         {/* Location  editable in day-of mode */}
         <motion.div variants={fadeUp} className={cn(
-          'space-y-4 rounded-2xl p-4 border',
+          'space-y-4 rounded-md p-4 border',
           isDayOfMode
             ? 'bg-moss-50 border-moss-300 ring-2 ring-moss-200'
             : 'bg-white border-neutral-100',
@@ -388,7 +388,7 @@ export default function EditEventPage() {
 
         {/* Details */}
         <motion.div variants={fadeUp} className={cn(
-          'space-y-4 rounded-2xl p-4 border',
+          'space-y-4 rounded-md p-4 border',
           isDayOfMode
             ? 'bg-neutral-50 border-neutral-200 opacity-60 pointer-events-none'
             : 'bg-white border-neutral-100',
@@ -423,7 +423,7 @@ export default function EditEventPage() {
 
         {/* Extras - meeting point / what to bring / accessibility / partner */}
         <motion.div variants={fadeUp} className={cn(
-          'space-y-4 rounded-2xl p-4 border',
+          'space-y-4 rounded-md p-4 border',
           isDayOfMode
             ? 'bg-neutral-50 border-neutral-200 opacity-60 pointer-events-none'
             : 'bg-white border-neutral-100',
@@ -447,7 +447,7 @@ export default function EditEventPage() {
 
         {/* Cover Image */}
         <motion.div variants={fadeUp} className={cn(
-          'space-y-3 rounded-2xl p-4 border',
+          'space-y-3 rounded-md p-4 border',
           isDayOfMode
             ? 'bg-neutral-50 border-neutral-200 opacity-60 pointer-events-none'
             : 'bg-white border-neutral-100',
@@ -479,7 +479,7 @@ export default function EditEventPage() {
 
         {/* Ticketing */}
         <motion.div variants={fadeUp} className={cn(
-          'space-y-4 rounded-2xl p-4 border',
+          'space-y-4 rounded-md p-4 border',
           isDayOfMode
             ? 'bg-neutral-50 border-neutral-200 opacity-60 pointer-events-none'
             : 'bg-white border-neutral-100',
@@ -536,10 +536,10 @@ export default function EditEventPage() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -16 }}
-                    className="rounded-xl bg-surface-1 border border-neutral-100 p-3.5 space-y-2.5"
+                    className="rounded-sm bg-surface-1 border border-neutral-100 p-3.5 space-y-2.5"
                   >
                     <div className="flex items-center gap-2">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-amber-100 text-amber-600 text-xs font-bold shrink-0">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-sm bg-bark-100 text-bark-600 text-xs font-bold shrink-0">
                         {idx + 1}
                       </span>
                       <Input
@@ -559,7 +559,7 @@ export default function EditEventPage() {
                           if (tier._persisted) setRemovedTierIds((prev) => [...prev, tier.id])
                           setTicketTiers((prev) => prev.filter((t) => t.id !== tier.id))
                         }}
-                        className="flex items-center justify-center min-w-9 min-h-9 rounded-lg text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer"
+                        className="flex items-center justify-center min-w-9 min-h-9 rounded-sm text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer"
                         aria-label="Remove tier"
                       >
                         <Trash2 size={14} />
@@ -594,7 +594,7 @@ export default function EditEventPage() {
                               )
                             }
                             placeholder="0.00"
-                            className="w-full h-10 pl-7 pr-3 rounded-lg bg-surface-3 text-[16px] text-neutral-900 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400"
+                            className="w-full h-10 pl-7 pr-3 rounded-sm bg-surface-3 text-[16px] text-neutral-900 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400"
                           />
                         </div>
                       </div>
@@ -611,7 +611,7 @@ export default function EditEventPage() {
                             )
                           }
                           placeholder="∞"
-                          className="w-full h-10 px-3 rounded-lg bg-surface-3 text-[16px] text-neutral-900 text-center focus:outline-none focus:ring-2 focus:ring-primary-400"
+                          className="w-full h-10 px-3 rounded-sm bg-surface-3 text-[16px] text-neutral-900 text-center focus:outline-none focus:ring-2 focus:ring-primary-400"
                         />
                       </div>
                     </div>
@@ -641,7 +641,7 @@ export default function EditEventPage() {
                 Add another tier
               </Button>
 
-              <div className="px-3 py-2 rounded-lg bg-amber-50/60 text-amber-700 text-xs">
+              <div className="px-3 py-2 rounded-sm bg-bark-50/60 text-bark-700 text-xs">
                 Attendees pay via Stripe. Revenue and sales are visible in the admin dashboard.
               </div>
             </>
@@ -650,7 +650,7 @@ export default function EditEventPage() {
 
         {/* External Collaboration */}
         {!isDayOfMode && (
-          <motion.div variants={fadeUp} className="space-y-4 rounded-2xl p-4 border bg-white border-neutral-100">
+          <motion.div variants={fadeUp} className="space-y-4 rounded-md p-4 border bg-white border-neutral-100">
             <h3 className="text-sm font-semibold text-neutral-900">External Collaboration</h3>
             <Toggle
               label="External Collaboration"

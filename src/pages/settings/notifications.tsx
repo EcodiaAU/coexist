@@ -67,7 +67,7 @@ function QuietHoursSheet({
               type="time"
               value={prefs.quiet_hours_start}
               onChange={(e) => onUpdate('quiet_hours_start', e.target.value)}
-              className="w-full rounded-lg bg-surface-3 px-3 py-2 text-sm text-neutral-900 focus:ring-2 focus:ring-primary-500 outline-none"
+              className="w-full rounded-sm bg-surface-3 px-3 py-2 text-sm text-neutral-900 focus:ring-2 focus:ring-primary-500 outline-none"
             />
           </div>
           <div className="flex-1">
@@ -76,7 +76,7 @@ function QuietHoursSheet({
               type="time"
               value={prefs.quiet_hours_end}
               onChange={(e) => onUpdate('quiet_hours_end', e.target.value)}
-              className="w-full rounded-lg bg-surface-3 px-3 py-2 text-sm text-neutral-900 focus:ring-2 focus:ring-primary-500 outline-none"
+              className="w-full rounded-sm bg-surface-3 px-3 py-2 text-sm text-neutral-900 focus:ring-2 focus:ring-primary-500 outline-none"
             />
           </div>
         </div>
@@ -193,7 +193,7 @@ export default function SettingsNotificationsPage() {
           {/* ---- Notification Preferences ---- */}
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <SectionHeader label="Event & App Notifications" />
-            <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden p-4 space-y-1">
+            <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden p-4 space-y-1">
               {notifToggles.map(({ key, label, description }) => (
                 <Toggle
                   key={key}
@@ -210,7 +210,7 @@ export default function SettingsNotificationsPage() {
           {/* ---- Chat Preferences ---- */}
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <SectionHeader label="Chat Notifications" />
-            <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden p-4 space-y-1">
+            <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden p-4 space-y-1">
               {chatToggles.map(({ key, label, description }) => (
                 <Toggle
                   key={key}
@@ -224,10 +224,24 @@ export default function SettingsNotificationsPage() {
             </div>
           </motion.div>
 
+          {/* ---- Email ---- */}
+          <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+            <SectionHeader label="Email" />
+            <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden p-4 space-y-1">
+              <Toggle
+                checked={prefs.email_enabled}
+                onChange={(val) => updatePref('email_enabled', val)}
+                label="Email Notifications"
+                description="Event confirmations, reminders, cancellations and invites by email. Turn off to stop registration and other event emails. Receipts and account emails still send."
+                className="py-2.5"
+              />
+            </div>
+          </motion.div>
+
           {/* ---- Sound & Quiet Hours ---- */}
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <SectionHeader label="Sound & Schedule" />
-            <div className="bg-white/90 rounded-2xl shadow-sm border border-neutral-100 overflow-hidden">
+            <div className="bg-white/90 rounded-md shadow-sm border border-neutral-100 overflow-hidden">
               {/* Outer is a div, not a button - can't nest <button> inside <button>
                   (the Toggle is itself a button). Row remains tappable via its own
                   onClick; the Toggle's click is stopped from bubbling so a tap on
@@ -244,7 +258,7 @@ export default function SettingsNotificationsPage() {
                 }}
                 className="flex items-center w-full min-h-[52px] px-4 py-3 text-left hover:bg-surface-3 active:bg-surface-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-400"
               >
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mr-3 bg-neutral-100 text-neutral-500">
+                <span className="flex items-center justify-center w-8 h-8 rounded-sm shrink-0 mr-3 bg-neutral-100 text-neutral-500">
                   <Volume2 size={18} />
                 </span>
                 <span className="flex-1 min-w-0">
@@ -259,7 +273,7 @@ export default function SettingsNotificationsPage() {
                 onClick={() => setShowQuietHours(true)}
                 className="flex items-center w-full min-h-[52px] px-4 py-3 text-left hover:bg-surface-3 active:bg-surface-3 cursor-pointer"
               >
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mr-3 bg-neutral-100 text-neutral-500">
+                <span className="flex items-center justify-center w-8 h-8 rounded-sm shrink-0 mr-3 bg-neutral-100 text-neutral-500">
                   <Moon size={18} />
                 </span>
                 <span className="flex-1 min-w-0">

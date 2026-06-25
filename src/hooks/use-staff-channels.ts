@@ -13,9 +13,10 @@ type Profile = Tables<'profiles'>
 
 export interface StaffChannel {
   id: string
-  type: 'staff_collective' | 'staff_state' | 'staff_national'
+  type: 'staff_collective' | 'staff_state' | 'staff_national' | 'carpool_breakout' | 'campout'
   collective_id: string | null
   state: string | null
+  event_id: string | null
   name: string
   created_at: string
 }
@@ -58,7 +59,7 @@ export function useMyStaffChannels() {
 
       const { data, error } = await supabase
         .from('chat_channel_members')
-        .select('channel_id, chat_channels(id, type, collective_id, state, name, created_at)')
+        .select('channel_id, chat_channels(id, type, collective_id, state, event_id, name, created_at)')
         .eq('user_id', user.id)
 
       if (error) throw error
@@ -67,15 +68,46 @@ export function useMyStaffChannels() {
         .map((row: Record<string, unknown>) => row.chat_channels as StaffChannel)
         .filter(Boolean)
         .sort((a: StaffChannel, b: StaffChannel) => {
-          // National first, then state, then collective staff, then carpool
-          // breakouts at the bottom. Breakouts are short-lived per-event chats
-          // and surfacing them in the main list means users can reach them
-          // without scrolling back up to the original widget.
-          const typeOrder = { staff_national: 0, staff_state: 1, staff_collective: 2, carpool_breakout: 3 }
-          return (typeOrder[a.type as keyof typeof typeOrder] ?? 4) - (typeOrder[b.type as keyof typeof typeOrder] ?? 4)
+          // National first, then state, then collective staff, then campout
+          // group chats, then carpool breakouts at the bottom. Both campout and
+          // carpool are per-event chats surfaced here so members can reach them
+          // without scrolling back up to the original event.
+          const typeOrder = { staff_national: 0, staff_state: 1, staff_collective: 2, campout: 3, carpool_breakout: 4 }
+          return (typeOrder[a.type as keyof typeof typeOrder] ?? 5) - (typeOrder[b.type as keyof typeof typeOrder] ?? 5)
         })
     },
     enabled: !!user,
+    staleTime: 60 * 1000,
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/*  useEventCampoutChannel - the campout group chat for an event        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Returns the campout group-chat channel for an event, or null. RLS only
+ * exposes the channel to its members (confirmed ticket holders, added by the
+ * sync_campout_chat_membership trigger) and staff/admins, so a non-null result
+ * also means "the current user may enter this chat".
+ */
+export function useEventCampoutChannel(eventId: string | undefined) {
+  const { user } = useAuth()
+
+  return useQuery({
+    queryKey: ['event-campout-channel', eventId, user?.id],
+    queryFn: async () => {
+      if (!eventId) return null
+      const { data, error } = await supabase
+        .from('chat_channels')
+        .select('id, name')
+        .eq('event_id', eventId)
+        .eq('type', 'campout')
+        .maybeSingle()
+      if (error) throw error
+      return (data as { id: string; name: string } | null) ?? null
+    },
+    enabled: !!eventId && !!user,
     staleTime: 60 * 1000,
   })
 }

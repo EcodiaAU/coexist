@@ -31,8 +31,8 @@ export function ProximityCheckInBanner() {
           exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -20 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className={cn(
-            'mx-4 mt-2 rounded-2xl overflow-hidden',
-            'bg-gradient-to-r from-primary-600 to-primary-500',
+            'mx-4 mt-2 rounded-md overflow-hidden',
+            'bg-primary-500',
             'shadow-sm',
           )}
         >
@@ -62,7 +62,7 @@ export function ProximityCheckInBanner() {
               <button
                 type="button"
                 onClick={() => setDismissed((prev) => new Set([...prev, nearbyEvent.id]))}
-                className="flex items-center justify-center w-11 h-11 rounded-full hover:bg-white/10 active:scale-[0.93] transition-[colors,transform] duration-150 cursor-pointer"
+                className="flex items-center justify-center w-11 h-11 rounded-full hover:bg-white/10 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
                 aria-label="Dismiss"
               >
                 <X size={16} className="text-white/70" />

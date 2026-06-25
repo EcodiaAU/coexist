@@ -89,7 +89,7 @@ export function MentionPicker({
           role="listbox"
           aria-label="Mention suggestions"
         >
-          <div className="rounded-2xl bg-white shadow-lg ring-1 ring-neutral-200 overflow-hidden">
+          <div className="rounded-md bg-white shadow-sm ring-1 ring-neutral-200 overflow-hidden">
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 border-b border-primary-100">
               <AtSign size={12} className="text-primary-500" />
               <p className="text-[11px] font-bold text-primary-700">

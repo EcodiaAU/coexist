@@ -35,7 +35,7 @@ export function VideoPlayer({ url, provider, className }: VideoPlayerProps) {
   // Direct upload  use native <video>
   if (provider === 'upload' || (!embedUrl && !url.includes('youtu') && !url.includes('vimeo'))) {
     return (
-      <div className={cn('rounded-xl overflow-hidden bg-primary-900', className)}>
+      <div className={cn('rounded-sm overflow-hidden bg-primary-900', className)}>
         <video
           src={url}
           controls
@@ -52,7 +52,7 @@ export function VideoPlayer({ url, provider, className }: VideoPlayerProps) {
   // Embed (YouTube / Vimeo)
   if (embedUrl) {
     return (
-      <div className={cn('rounded-xl overflow-hidden bg-primary-900', className)}>
+      <div className={cn('rounded-sm overflow-hidden bg-primary-900', className)}>
         <div className="relative w-full aspect-video">
           <iframe
             src={embedUrl}
@@ -68,7 +68,7 @@ export function VideoPlayer({ url, provider, className }: VideoPlayerProps) {
 
   // Fallback
   return (
-    <div className={cn('rounded-xl bg-primary-100 p-4 text-center text-sm text-primary-500', className)}>
+    <div className={cn('rounded-sm bg-primary-100 p-4 text-center text-sm text-primary-500', className)}>
       Unable to load video
     </div>
   )
