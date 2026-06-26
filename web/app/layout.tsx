@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Montserrat } from 'next/font/google'
+import localFont from 'next/font/local'
 import { SITE_URL } from '@/lib/env'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
@@ -9,6 +10,18 @@ const montserrat = Montserrat({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-montserrat',
+  display: 'swap',
+})
+
+// Aileron - the Co-Exist title font (bundled, OFL). Drives every heading site-wide.
+const aileron = localFont({
+  src: [
+    { path: './fonts/aileron-400.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/aileron-600.woff2', weight: '600', style: 'normal' },
+    { path: './fonts/aileron-700.woff2', weight: '700', style: 'normal' },
+    { path: './fonts/aileron-800.woff2', weight: '800', style: 'normal' },
+  ],
+  variable: '--font-aileron',
   display: 'swap',
 })
 
@@ -45,7 +58,7 @@ const ORG_JSONLD = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-AU" className={montserrat.variable}>
+    <html lang="en-AU" className={`${montserrat.variable} ${aileron.variable}`}>
       <body className="flex min-h-screen flex-col">
         <script
           type="application/ld+json"

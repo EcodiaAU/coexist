@@ -63,10 +63,10 @@
   --color-success-500: #3aac5c;
   --color-error-500: #c0492f;
 
-  /* Fonts - Avenir is the Co-Exist brand font (posts). It is licensed, but
-     ships on Apple devices as "Avenir Next", so most of the audience sees the
-     real thing; Montserrat is the close geometric fallback elsewhere. */
-  --font-heading: 'Avenir Next', 'Avenir', var(--font-montserrat), system-ui, sans-serif;
+  /* Fonts - Aileron (bundled, OFL) is the Co-Exist title font and drives every
+     heading site-wide. Montserrat stays the body face; Avenir/system are the
+     fallbacks if Aileron has not painted yet. */
+  --font-heading: var(--font-aileron), 'Avenir Next', 'Avenir', var(--font-montserrat), system-ui, sans-serif;
   --font-body: 'Avenir Next', 'Avenir', var(--font-montserrat), system-ui, sans-serif;
 }
 
@@ -90,19 +90,19 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Display headings - Avenir, thin-geometric, cinematic very-tight tracking. */
+/* Display headings - Aileron title face, a touch looser than the old Avenir tracking. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 400;
-  letter-spacing: -0.085em;
+  letter-spacing: -0.04em;
   line-height: 1.0;
   text-wrap: balance;
 }
-/* Big display titles (hero, page covers) sit even tighter - letters almost kiss */
-.display-tight { letter-spacing: -0.105em; }
+/* Big display titles (hero, page covers) sit a little tighter than the rest */
+.display-tight { letter-spacing: -0.055em; }
 
-/* Utility class (legacy name) - now resolves to the Avenir heading stack */
-.font-serif { font-family: var(--font-heading); letter-spacing: -0.05em; }
+/* Utility class (legacy name) - resolves to the Aileron heading stack */
+.font-serif { font-family: var(--font-heading); letter-spacing: -0.025em; }
 /* Decorative eyebrow labels removed site-wide (Tate: less is more). Kept as a
    no-op so the class still resolves; nothing renders. */
 .eyebrow {
