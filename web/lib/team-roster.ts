@@ -50,6 +50,7 @@ export const TEAM_ROSTER: RosterGroup[] = [
       { name: 'Emilie Corkeron', role: 'Assistant Leader' },
       { name: 'Star Bright', role: 'Assistant Leader' },
       { name: 'Madisen Coelho', role: 'Assistant Leader' },
+      { name: 'Aadya Pandit', role: 'Assistant Leader' },
     ],
   },
   {

@@ -43,6 +43,7 @@ const MAP: Record<string, string> = {
   'emilie corkeron': '/images/team/emilie-corkeron.png',
   'star bright': '/images/team/star-bright.jpg',
   'madisen coelho': '/images/team/madisen-coelho.jpg',
+  'aadya pandit': '/images/team/aadya-pandit.jpg',
   'ryan eadie': '/images/team/ryan-eadie.jpg',
   'genevieve deaconos': '/images/team/genevieve-deaconos.png',
   'david mackenzie': '/images/team/david-mackenzie.jpg',
