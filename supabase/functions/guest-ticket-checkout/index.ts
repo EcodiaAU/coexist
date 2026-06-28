@@ -40,6 +40,11 @@ const corsHeaders = {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+/** event_extras.sold_out === true closes native sales (claim link still works). */
+function isSoldOut(extras: unknown): boolean {
+  return !!extras && typeof extras === 'object' && (extras as Record<string, unknown>).sold_out === true
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -72,13 +77,21 @@ Deno.serve(async (req: Request) => {
     // ---- Verify event ----
     const { data: evt, error: evtErr } = await supabase
       .from('events')
-      .select('id, title, is_ticketed, is_public, status, cover_image_url')
+      .select('id, title, is_ticketed, is_public, status, cover_image_url, event_extras')
       .eq('id', body.event_id)
       .single()
     if (evtErr || !evt) return json({ error: 'Event not found' }, 404)
     if (!evt.is_ticketed) return json({ error: 'This event does not require tickets' }, 400)
     if (!evt.is_public) return json({ error: 'This event is not open to the public' }, 400)
     if (evt.status !== 'published') return json({ error: 'Event is not open for registration' }, 400)
+    // Sold out on an external platform (e.g. Eventbrite): native sales are
+    // closed. The per-event claim link bypasses checkout entirely, so blocking
+    // here cannot lock out a legitimate invitee. This is the server-side choke
+    // point that stops EVERY buy surface (campout pages, public event page),
+    // not just the ones with a UI gate.
+    if (isSoldOut(evt.event_extras)) {
+      return json({ error: 'This campout is sold out. If the organisers sent you a claim link, open it to grab your ticket.' }, 409)
+    }
 
     // ---- Verify ticket type + sale window ----
     const { data: tt, error: ttErr } = await supabase

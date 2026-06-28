@@ -416,13 +416,21 @@ Deno.serve(async (req: Request) => {
         // Verify event exists and is ticketed
         const { data: evt, error: evtDbErr } = await supabase
           .from('events')
-          .select('id, title, is_ticketed, status, date_start, cover_image_url')
+          .select('id, title, is_ticketed, status, date_start, cover_image_url, event_extras')
           .eq('id', body.event_id)
           .single()
 
         if (evtDbErr || !evt) return json({ error: 'Event not found' }, 404)
         if (!evt.is_ticketed) return json({ error: 'This event does not require tickets' }, 400)
         if (evt.status !== 'published') return json({ error: 'Event is not open for registration' }, 400)
+        // Sold out on an external platform (e.g. Eventbrite): close native sales.
+        // The per-event claim link bypasses checkout so invitees are unaffected.
+        {
+          const ex = evt.event_extras as Record<string, unknown> | null
+          if (ex && typeof ex === 'object' && ex.sold_out === true) {
+            return json({ error: 'This campout is sold out. Use your claim link to grab your ticket.' }, 409)
+          }
+        }
 
         // Verify ticket type and get price
         const { data: ticketType, error: ttDbErr } = await supabase

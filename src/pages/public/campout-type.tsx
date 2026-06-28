@@ -51,6 +51,7 @@ interface DateRow {
   cover_image_url: string | null
   price_cents: number | null
   ticket_type_id: string | null
+  sold_out: boolean
 }
 
 function formatDate(date: string): string {
@@ -67,7 +68,7 @@ export default function CampoutTypePage() {
     queryFn: async () => {
       const { data: events, error } = await supabase
         .from('events')
-        .select('id, title, address, date_start, date_end, cover_image_url')
+        .select('id, title, address, date_start, date_end, cover_image_url, event_extras')
         .eq('is_public', true)
         .eq('status', 'published')
         .eq('activity_type', 'camp_out')
@@ -84,11 +85,15 @@ export default function CampoutTypePage() {
         const cur = ttByEvent[t.event_id as string]
         if (!cur || (t.price_cents as number) < cur.price_cents) ttByEvent[t.event_id as string] = { id: t.id as string, price_cents: t.price_cents as number }
       }
-      return mine.map((e) => ({
-        ...e,
-        price_cents: ttByEvent[e.id as string]?.price_cents ?? null,
-        ticket_type_id: ttByEvent[e.id as string]?.id ?? null,
-      })) as DateRow[]
+      return mine.map((e) => {
+        const ex = e.event_extras as Record<string, unknown> | null
+        return {
+          ...e,
+          price_cents: ttByEvent[e.id as string]?.price_cents ?? null,
+          ticket_type_id: ttByEvent[e.id as string]?.id ?? null,
+          sold_out: !!(ex && typeof ex === 'object' && ex.sold_out === true),
+        }
+      }) as DateRow[]
     },
     enabled: !!cfg,
   })
@@ -104,7 +109,7 @@ export default function CampoutTypePage() {
   const cover = rows.find((r) => r.cover_image_url)?.cover_image_url ?? null
 
   async function book() {
-    if (!selected?.ticket_type_id) return
+    if (!selected?.ticket_type_id || selected.sold_out) return
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setErr('Please enter a valid email address'); return }
     setBusy(true); setErr(null)
     try {
@@ -215,7 +220,8 @@ export default function CampoutTypePage() {
               ) : (
                 <div className="mt-4 space-y-2.5">
                   {rows.map((r) => {
-                    const active = selectedId === r.id
+                    const soldOut = r.sold_out
+                    const active = selectedId === r.id && !soldOut
                     const d = new Date(r.date_start)
                     const wd = d.toLocaleDateString('en-AU', { weekday: 'short', timeZone: 'UTC' })
                     const day = d.toLocaleDateString('en-AU', { day: 'numeric', timeZone: 'UTC' })
@@ -225,26 +231,38 @@ export default function CampoutTypePage() {
                       <button
                         key={r.id}
                         type="button"
-                        onClick={() => { setSelectedId(active ? null : r.id); setErr(null) }}
+                        disabled={soldOut}
+                        aria-disabled={soldOut}
+                        onClick={() => { if (soldOut) return; setSelectedId(active ? null : r.id); setErr(null) }}
                         className={cn(
                           'flex w-full items-center gap-3.5 rounded-md border px-3 py-3 text-left transition-all duration-150',
-                          active ? 'border-primary-600 bg-primary-50 ring-1 ring-primary-600' : 'border-neutral-200 bg-white hover:border-primary-300 hover:bg-primary-50/40',
+                          soldOut
+                            ? 'border-neutral-200 bg-neutral-50 cursor-not-allowed'
+                            : active
+                              ? 'border-primary-600 bg-primary-50 ring-1 ring-primary-600'
+                              : 'border-neutral-200 bg-white hover:border-primary-300 hover:bg-primary-50/40',
                         )}
                       >
-                        <div className={cn('flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-md leading-none', active ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700')}>
+                        <div className={cn('flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-md leading-none', soldOut ? 'bg-neutral-100 text-neutral-400' : active ? 'bg-primary-600 text-white' : 'bg-primary-50 text-primary-700')}>
                           <span className="text-[10px] font-bold uppercase tracking-wide opacity-80">{wd}</span>
                           <span className="font-heading text-xl font-bold">{day}</span>
                           <span className="text-[10px] font-semibold uppercase opacity-70">{mon}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="block text-sm font-semibold text-neutral-900">{formatDate(r.date_start)}</span>
+                          <span className={cn('block text-sm font-semibold', soldOut ? 'text-neutral-400' : 'text-neutral-900')}>{formatDate(r.date_start)}</span>
                           <span className="block text-[12px] text-neutral-500">{formatTime(r.date_start)}{ends ? ` to ${ends}` : ''}</span>
                         </div>
                         <div className="flex shrink-0 items-center gap-2.5">
-                          {r.price_cents !== null && <span className="font-heading text-base font-bold text-neutral-900">${(r.price_cents / 100).toFixed(0)}</span>}
-                          <span className={cn('flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors', active ? 'border-primary-600 bg-primary-600 text-white' : 'border-neutral-200')}>
-                            {active && <Check size={12} strokeWidth={3} />}
-                          </span>
+                          {soldOut ? (
+                            <span className="rounded-full bg-neutral-200 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-neutral-600">Sold out</span>
+                          ) : (
+                            <>
+                              {r.price_cents !== null && <span className="font-heading text-base font-bold text-neutral-900">${(r.price_cents / 100).toFixed(0)}</span>}
+                              <span className={cn('flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors', active ? 'border-primary-600 bg-primary-600 text-white' : 'border-neutral-200')}>
+                                {active && <Check size={12} strokeWidth={3} />}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </button>
                     )
