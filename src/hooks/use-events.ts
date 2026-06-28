@@ -494,6 +494,137 @@ export function useEventAttendees(eventId: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Ticket-aware deduped roster (leader event-day screen)              */
+/* ------------------------------------------------------------------ */
+
+export type RosterScenario = 'checkedIn' | 'expected' | 'waitlist' | 'notAttending'
+
+export interface RosterPerson extends AttendeeWithStatus {
+  /** confirmed + checked_in tickets this person holds (dupes counted) */
+  validTicketCount: number
+  scenario: RosterScenario
+  /** why they are not attending (only set when scenario === 'notAttending') */
+  reason?: 'refunded' | 'cancelled' | 'no ticket'
+}
+
+export interface EventRoster {
+  groups: {
+    checkedIn: RosterPerson[]
+    expected: RosterPerson[]
+    waitlist: RosterPerson[]
+    notAttending: RosterPerson[]
+  }
+  counts: {
+    /** distinct people coming (checked in + expected) */
+    going: number
+    checkedIn: number
+    waitlist: number
+    notAttending: number
+    /** total valid tickets across everyone, dupes included */
+    ticketsSold: number
+    /** extra tickets beyond one-per-person */
+    dupes: number
+  }
+  isTicketed: boolean
+}
+
+/**
+ * Builds the leader event-day roster from registrations enriched with per-user
+ * ticket aggregation. One row per person (dupes collapse, surfaced as
+ * validTicketCount). For ticketed events a registrant with no valid ticket
+ * (refunded / cancelled / never bought) is moved to the "not attending" group
+ * with a reason; for non-ticketed events behaviour matches the registration
+ * roster (cancelled rows are hidden). Counts keep dupes in ticketsSold so the
+ * money tally stays right while people-counts stay deduped.
+ */
+export function useEventRoster(eventId: string | undefined, isTicketed: boolean) {
+  return useQuery({
+    queryKey: ['event-roster', eventId, isTicketed],
+    queryFn: async (): Promise<EventRoster> => {
+      const empty: EventRoster = {
+        groups: { checkedIn: [], expected: [], waitlist: [], notAttending: [] },
+        counts: { going: 0, checkedIn: 0, waitlist: 0, notAttending: 0, ticketsSold: 0, dupes: 0 },
+        isTicketed,
+      }
+      if (!eventId) return empty
+
+      const [{ data: regs, error: regErr }, { data: tix, error: tixErr }] = await Promise.all([
+        supabase
+          .from('event_registrations')
+          .select('user_id, status, checked_in_at, registered_at, profiles!event_registrations_user_id_fkey(id, display_name, first_name, last_name, avatar_url, phone, age, gender, accessibility_requirements, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship)')
+          .eq('event_id', eventId)
+          .in('status', ['registered', 'attended', 'waitlisted', 'cancelled'])
+          .order('registered_at', { ascending: true }),
+        isTicketed
+          ? supabase.from('event_tickets').select('user_id, status').eq('event_id', eventId)
+          : Promise.resolve({ data: [] as { user_id: string; status: string }[], error: null }),
+      ])
+      if (regErr) throw regErr
+      if (tixErr) throw tixErr
+
+      // Aggregate tickets per user.
+      const agg = new Map<string, { valid: number; checkedIn: boolean; refunded: boolean; cancelled: boolean; any: boolean }>()
+      for (const t of (tix ?? []) as { user_id: string; status: string }[]) {
+        const a = agg.get(t.user_id) ?? { valid: 0, checkedIn: false, refunded: false, cancelled: false, any: false }
+        a.any = true
+        if (t.status === 'confirmed' || t.status === 'checked_in') a.valid += 1
+        if (t.status === 'checked_in') a.checkedIn = true
+        if (t.status === 'refunded') a.refunded = true
+        if (t.status === 'cancelled') a.cancelled = true
+        agg.set(t.user_id, a)
+      }
+
+      const groups: EventRoster['groups'] = { checkedIn: [], expected: [], waitlist: [], notAttending: [] }
+      let ticketsSold = 0
+      let peopleWithValid = 0
+
+      for (const r of (regs ?? []) as AttendeeWithStatus[]) {
+        const a = agg.get(r.user_id) ?? { valid: 0, checkedIn: false, refunded: false, cancelled: false, any: false }
+        ticketsSold += a.valid
+        if (a.valid > 0) peopleWithValid += 1
+
+        const checkedIn = r.status === 'attended' || a.checkedIn
+        let scenario: RosterScenario
+        let reason: RosterPerson['reason']
+
+        if (checkedIn) {
+          scenario = 'checkedIn'
+        } else if (r.status === 'waitlisted') {
+          scenario = 'waitlist'
+        } else if (!isTicketed) {
+          if (r.status === 'cancelled') continue // hide cancelled on non-ticketed events (prior behaviour)
+          scenario = 'expected'
+        } else if (a.valid > 0) {
+          scenario = 'expected'
+        } else {
+          scenario = 'notAttending'
+          reason = a.refunded ? 'refunded' : a.cancelled ? 'cancelled' : 'no ticket'
+        }
+
+        const person: RosterPerson = { ...r, validTicketCount: a.valid, scenario, reason }
+        groups[scenario].push(person)
+      }
+
+      const dupes = Math.max(0, ticketsSold - peopleWithValid)
+      return {
+        groups,
+        counts: {
+          going: groups.checkedIn.length + groups.expected.length,
+          checkedIn: groups.checkedIn.length,
+          waitlist: groups.waitlist.length,
+          notAttending: groups.notAttending.length,
+          ticketsSold,
+          dupes,
+        },
+        isTicketed,
+      }
+    },
+    enabled: !!eventId,
+    staleTime: 30 * 1000,
+  })
+}
+
+/* ------------------------------------------------------------------ */
 /*  Queries - Event Waitlist                                           */
 /* ------------------------------------------------------------------ */
 
@@ -760,6 +891,7 @@ export function useRegisterForEvent() {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
       queryClient.invalidateQueries({ queryKey: ['discover-events'] })
@@ -841,6 +973,7 @@ export function useCancelRegistration() {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
       queryClient.invalidateQueries({ queryKey: ['discover-events'] })
@@ -944,6 +1077,7 @@ export function useCheckIn() {
     },
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
@@ -997,6 +1131,7 @@ export function useUncheckIn() {
     },
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
@@ -1077,6 +1212,7 @@ export function useDeleteWalkIn() {
       queryClient.invalidateQueries({ queryKey: ['event-walk-ins', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
     },
   })
 }
@@ -1120,6 +1256,7 @@ export function useBulkCheckIn() {
     },
     onSettled: (_, __, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
@@ -1820,6 +1957,7 @@ export function useInviteCollective() {
     onSettled: (_, __, { eventId, collectiveId }) => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
       queryClient.invalidateQueries({ queryKey: ['chat-messages', collectiveId] })
       // Invited users' my-events (invited tab) should update
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
@@ -1892,6 +2030,7 @@ export function usePromoteFromWaitlist() {
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       // The promoted user's my-events and home feed should update
       queryClient.invalidateQueries({ queryKey: ['my-events'] })

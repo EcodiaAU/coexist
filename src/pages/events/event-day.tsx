@@ -13,7 +13,6 @@ import {
   AlertTriangle,
   Accessibility,
   BookOpen,
-  ClipboardList,
   Clock,
   Sparkles,
   RotateCcw,
@@ -24,11 +23,14 @@ import {
   ToggleRight,
   Trash2,
   Mail,
+  Ticket,
+  ChevronDown,
+  Ban,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import {
   useEventDetail,
-  useEventAttendees,
+  useEventRoster,
   useEventImpact,
   useEventWalkIns,
   useDeleteWalkIn,
@@ -37,6 +39,7 @@ import {
   usePromoteFromWaitlist,
   formatEventDate,
   type EventWalkIn,
+  type RosterPerson,
 } from '@/hooks/use-events'
 import { useOffline } from '@/hooks/use-offline'
 import { usePendingSync } from '@/hooks/use-pending-sync'
@@ -95,7 +98,7 @@ function CheckInCodeDisplay({ checkInCode, title }: { checkInCode: string | null
 /* ------------------------------------------------------------------ */
 
 function AttendeeRow({
-  attendee,
+  person,
   onCheckIn,
   onUncheck,
   onPromote,
@@ -105,7 +108,7 @@ function AttendeeRow({
   isPromoting,
   checkInOpen,
 }: {
-  attendee: AttendeeWithStatus
+  person: RosterPerson
   onCheckIn: () => void
   onUncheck: () => void
   onPromote?: () => void
@@ -115,9 +118,19 @@ function AttendeeRow({
   isPromoting?: boolean
   checkInOpen: boolean
 }) {
-  const isCheckedIn = attendee.status === 'attended'
-  const isWaitlisted = attendee.status === 'waitlisted'
-  const hasEmergencyInfo = !!(attendee.profiles?.emergency_contact_name || attendee.profiles?.accessibility_requirements)
+  const isCheckedIn = person.scenario === 'checkedIn'
+  const isWaitlisted = person.scenario === 'waitlist'
+  const isNotAttending = person.scenario === 'notAttending'
+  const dupe = person.validTicketCount > 1
+  const hasEmergencyInfo = !!(person.profiles?.emergency_contact_name || person.profiles?.accessibility_requirements)
+
+  const subtitle = isCheckedIn
+    ? `Checked in ${person.checked_in_at ? new Intl.DateTimeFormat('en-AU', { hour: 'numeric', minute: '2-digit' }).format(new Date(person.checked_in_at)) : ''}`
+    : isWaitlisted
+      ? 'Waitlisted'
+      : isNotAttending
+        ? (person.reason === 'refunded' ? 'Refunded' : person.reason === 'cancelled' ? 'Cancelled' : 'No ticket')
+        : 'Expected'
 
   return (
     <motion.div
@@ -125,22 +138,25 @@ function AttendeeRow({
       className={cn(
         'flex items-center gap-3 px-4 py-3.5 cursor-pointer rounded-sm mb-2',
         'transition-colors duration-200',
-        isCheckedIn
-          ? 'bg-white ring-1 ring-success-300/60 shadow-sm border-l-4 border-l-success-400'
-          : isWaitlisted
-            ? 'bg-white ring-1 ring-bark-300/60 shadow-sm border-l-4 border-l-warning-400'
-            : 'bg-white ring-1 ring-neutral-200/60 shadow-sm',
+        isNotAttending
+          ? 'bg-neutral-50 ring-1 ring-neutral-200/60 opacity-70'
+          : isCheckedIn
+            ? 'bg-white ring-1 ring-success-300/60 shadow-sm border-l-4 border-l-success-400'
+            : isWaitlisted
+              ? 'bg-white ring-1 ring-bark-300/60 shadow-sm border-l-4 border-l-warning-400'
+              : 'bg-white ring-1 ring-neutral-200/60 shadow-sm',
         'active:scale-[0.98] active:shadow-none',
       )}
       onClick={onViewDetails}
       role="button"
       tabIndex={0}
-      aria-label={`View details for ${attendeeName(attendee.profiles, 'attendee')}`}
+      aria-label={`View details for ${attendeeName(person.profiles, 'attendee')}`}
     >
       <Avatar
-        src={attendee.profiles?.avatar_url ?? undefined}
-        name={attendeeName(attendee.profiles)}
+        src={person.profiles?.avatar_url ?? undefined}
+        name={attendeeName(person.profiles)}
         size="md"
+        className={isNotAttending ? 'grayscale' : undefined}
       />
 
       <div className="flex-1 min-w-0">
@@ -148,27 +164,33 @@ function AttendeeRow({
           {/* First + Last, shrunk to fit (never truncated) so leaders can tell
               apart people who share a first name. */}
           <span className="flex-1 min-w-0">
-            <FitText className="font-medium text-neutral-900" max={14} min={10}>
-              {attendeeName(attendee.profiles, 'Unknown User')}
+            <FitText className={cn('font-medium', isNotAttending ? 'text-neutral-500' : 'text-neutral-900')} max={14} min={10}>
+              {attendeeName(person.profiles, 'Unknown User')}
             </FitText>
           </span>
-          {hasEmergencyInfo && (
+          {dupe && (
+            <span
+              className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 leading-none"
+              title={`${person.validTicketCount} tickets held by this person (counted as sold; one attendee)`}
+            >
+              ×{person.validTicketCount}
+            </span>
+          )}
+          {hasEmergencyInfo && !isNotAttending && (
             <AlertTriangle size={12} className="text-warning-500 shrink-0" aria-label="Has safety info" />
           )}
         </div>
         <p className={cn(
           'text-caption font-medium',
-          isCheckedIn ? 'text-success-600' : isWaitlisted ? 'text-bark-600' : 'text-neutral-500',
+          isCheckedIn ? 'text-success-600' : isWaitlisted ? 'text-bark-600' : isNotAttending ? 'text-neutral-400' : 'text-neutral-500',
         )}>
-          {isCheckedIn
-            ? `Checked in ${attendee.checked_in_at ? new Intl.DateTimeFormat('en-AU', { hour: 'numeric', minute: '2-digit' }).format(new Date(attendee.checked_in_at)) : ''}`
-            : isWaitlisted
-              ? 'Waitlisted'
-              : 'Registered'}
+          {subtitle}
         </p>
       </div>
 
-      {isCheckedIn ? (
+      {isNotAttending ? (
+        <Ban size={16} className="text-neutral-300 shrink-0" aria-hidden />
+      ) : isCheckedIn ? (
         <div className="flex items-center gap-2">
           <span
             className="flex items-center justify-center w-9 h-9 rounded-full bg-success-500 text-white shadow-sm"
@@ -187,7 +209,7 @@ function AttendeeRow({
                 'transition-colors duration-150',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
               )}
-              aria-label={`Uncheck ${attendeeName(attendee.profiles, 'attendee')}`}
+              aria-label={`Uncheck ${attendeeName(person.profiles, 'attendee')}`}
               title="Uncheck (mark as not attended)"
             >
               <RotateCcw size={14} strokeWidth={2.5} />
@@ -331,7 +353,8 @@ export default function EventDayPage() {
   const { toast } = useToast()
 
   const { data: event, isLoading: eventLoading } = useEventDetail(eventId)
-  const { data: attendees, isLoading: attendeesLoading } = useEventAttendees(eventId)
+  const isTicketed = (event as { is_ticketed?: boolean } | undefined)?.is_ticketed ?? false
+  const { data: roster, isLoading: rosterLoading } = useEventRoster(eventId, isTicketed)
   // Existence of an event_impact row is the canonical "impact logged" signal -
   // it closes the post-event check-in backfill window (matches the BE triggers
   // in 20260520000000_post_event_checkin_backfill.sql).
@@ -408,6 +431,7 @@ export default function EventDayPage() {
   const [promotingUserId, setPromotingUserId] = useState<string | null>(null)
   const [selectedAttendee, setSelectedAttendee] = useState<AttendeeWithStatus | null>(null)
   const [activeTab, setActiveTab] = useState<'attendees' | 'contacts'>('attendees')
+  const [showNotAttending, setShowNotAttending] = useState(false)
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
 
   // --- Walk-in sheet (Item 11) ---
@@ -426,33 +450,29 @@ export default function EventDayPage() {
     }
   }, [event])
 
-  const filteredAttendees = useMemo(() => {
-    if (!attendees) return []
-    if (!searchQuery.trim()) return attendees
-    const q = searchQuery.toLowerCase()
-    return attendees.filter((a) =>
-      // match on full name (first + last) + display_name so leaders can search
-      // by surname to disambiguate shared first names.
-      `${attendeeName(a.profiles, '')} ${a.profiles?.display_name ?? ''}`.toLowerCase().includes(q),
-    )
-  }, [attendees, searchQuery])
-
-  const stats = useMemo(() => {
-    const walkInCount = walkIns.length
-    if (!attendees) return { registered: 0, checkedIn: walkInCount, attendedRegistered: 0, waitlisted: 0 }
-    const attendedRegistered = attendees.filter((a) => a.status === 'attended').length
+  // Search filters across every group by full name + display_name so leaders
+  // can search by surname to disambiguate shared first names.
+  const filteredGroups = useMemo(() => {
+    const empty = { checkedIn: [] as RosterPerson[], expected: [] as RosterPerson[], waitlist: [] as RosterPerson[], notAttending: [] as RosterPerson[] }
+    if (!roster) return empty
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return roster.groups
+    const match = (p: RosterPerson) =>
+      `${attendeeName(p.profiles, '')} ${p.profiles?.display_name ?? ''}`.toLowerCase().includes(q)
     return {
-      registered: attendees.filter((a) => a.status === 'registered' || a.status === 'attended').length,
-      // attendedRegistered = registered list who showed; checkedIn = total
-      // through the gate (registered-attended + walk-ins) matching the
-      // canonical attendance definition in coexist_attendance_metrics.
-      // The progress bar uses attendedRegistered/registered (registered-list
-      // completion); the headline tile uses checkedIn (real attendance).
-      attendedRegistered,
-      checkedIn: attendedRegistered + walkInCount,
-      waitlisted: attendees.filter((a) => a.status === 'waitlisted').length,
+      checkedIn: roster.groups.checkedIn.filter(match),
+      expected: roster.groups.expected.filter(match),
+      waitlist: roster.groups.waitlist.filter(match),
+      notAttending: roster.groups.notAttending.filter(match),
     }
-  }, [attendees, walkIns])
+  }, [roster, searchQuery])
+
+  // Walk-ins are recorded outside event_registrations, so fold them into the
+  // headline attendance tallies (they came through the gate).
+  const walkInCount = walkIns.length
+  const c = roster?.counts ?? { going: 0, checkedIn: 0, waitlist: 0, notAttending: 0, ticketsSold: 0, dupes: 0 }
+  const goingCount = c.going + walkInCount
+  const checkedInCount = c.checkedIn + walkInCount
 
   const handleCheckIn = useCallback(
     (userId: string) => {
@@ -546,6 +566,7 @@ export default function EventDayPage() {
           toast.success(`Checked in ${displayName ?? 'user'}`)
           // Invalidate attendees query so the new row appears
           queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+          queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
         }
       } finally {
         setAddingMemberId(null)
@@ -580,7 +601,22 @@ export default function EventDayPage() {
     }
   }, [eventId, publicCheckInEnabled, queryClient, toast])
 
-  const isLoading = eventLoading || attendeesLoading || roleLoading
+  const renderRosterRow = (p: RosterPerson) => (
+    <AttendeeRow
+      key={p.user_id}
+      person={p}
+      onCheckIn={() => handleCheckIn(p.user_id)}
+      onUncheck={() => handleUncheckRequest(p)}
+      onPromote={p.scenario === 'waitlist' ? () => handlePromote(p.user_id) : undefined}
+      onViewDetails={() => setSelectedAttendee(p)}
+      isPending={checkingInUserId === p.user_id}
+      isUnchecking={uncheckingUserId === p.user_id}
+      isPromoting={promotingUserId === p.user_id}
+      checkInOpen={checkInOpen}
+    />
+  )
+
+  const isLoading = eventLoading || rosterLoading || roleLoading
   const showLoading = useDelayedLoading(isLoading)
 
   if (showLoading) {
@@ -760,33 +796,45 @@ export default function EventDayPage() {
           </motion.div>
         )}
 
-        {/* Stats row */}
+        {/* Stats row - People going / Checked in / Tickets sold (ticketed) or Waitlist */}
         <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3 mb-5">
           <div className="rounded-sm bg-white border border-neutral-100 p-3 text-center shadow-sm">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-sky-500/15 mx-auto mb-1.5">
-              <ClipboardList size={16} className="text-sky-600" />
+              <Users size={16} className="text-sky-600" />
             </div>
-            <p className="text-xl font-bold text-sky-700">{stats.registered}</p>
-            <p className="text-caption font-medium text-sky-600">Registered</p>
+            <p className="text-xl font-bold text-sky-700">{goingCount}</p>
+            <p className="text-caption font-medium text-sky-600">Going</p>
           </div>
           <div className="rounded-sm bg-white border border-neutral-100 p-3 text-center shadow-sm">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success-500/15 mx-auto mb-1.5">
               <UserCheck size={16} className="text-success-600" />
             </div>
-            <p className="text-xl font-bold text-success-700">{stats.checkedIn}</p>
+            <p className="text-xl font-bold text-success-700">{checkedInCount}</p>
             <p className="text-caption font-medium text-success-600">Checked In</p>
           </div>
-          <div className="rounded-sm bg-white border border-neutral-100 p-3 text-center shadow-sm">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-bark-500/15 mx-auto mb-1.5">
-              <Clock size={16} className="text-bark-600" />
+          {isTicketed ? (
+            <div className="rounded-sm bg-white border border-neutral-100 p-3 text-center shadow-sm">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-500/15 mx-auto mb-1.5">
+                <Ticket size={16} className="text-primary-600" />
+              </div>
+              <p className="text-xl font-bold text-primary-700">{c.ticketsSold}</p>
+              <p className="text-caption font-medium text-primary-600">
+                {c.dupes > 0 ? `Sold · ${c.dupes} dupe${c.dupes === 1 ? '' : 's'}` : 'Tickets sold'}
+              </p>
             </div>
-            <p className="text-xl font-bold text-bark-700">{stats.waitlisted}</p>
-            <p className="text-caption font-medium text-bark-600">Waitlisted</p>
-          </div>
+          ) : (
+            <div className="rounded-sm bg-white border border-neutral-100 p-3 text-center shadow-sm">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-bark-500/15 mx-auto mb-1.5">
+                <Clock size={16} className="text-bark-600" />
+              </div>
+              <p className="text-xl font-bold text-bark-700">{c.waitlist}</p>
+              <p className="text-caption font-medium text-bark-600">Waitlisted</p>
+            </div>
+          )}
         </motion.div>
 
-        {/* Live count bar */}
-        {stats.registered > 0 && (
+        {/* Live count bar - checked in / going */}
+        {goingCount > 0 && (
           <motion.div variants={fadeUp} className="mb-5 rounded-sm bg-white ring-1 ring-primary-100 p-3 shadow-sm">
             <div className="flex items-center justify-between text-caption mb-2">
               <span className="text-neutral-500 font-medium flex items-center gap-1.5">
@@ -794,19 +842,19 @@ export default function EventDayPage() {
                 Check-in progress
               </span>
               <span className="font-bold text-neutral-900">
-                {stats.attendedRegistered}/{stats.registered}
+                {checkedInCount}/{goingCount}
               </span>
             </div>
             <div className="h-3 rounded-full bg-neutral-100 overflow-hidden">
               <motion.div
                 className="h-full rounded-full bg-success-500"
                 initial={{ width: 0 }}
-                animate={{ width: `${stats.registered > 0 ? (stats.attendedRegistered / stats.registered) * 100 : 0}%` }}
+                animate={{ width: `${goingCount > 0 ? (checkedInCount / goingCount) * 100 : 0}%` }}
                 transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, ease: 'easeOut' }}
               />
             </div>
-            {stats.attendedRegistered === stats.registered && stats.registered > 0 && (
-              <p className="text-caption font-semibold text-success-600 mt-1.5 text-center">All attendees checked in!</p>
+            {checkedInCount === goingCount && goingCount > 0 && (
+              <p className="text-caption font-semibold text-success-600 mt-1.5 text-center">Everyone checked in!</p>
             )}
           </motion.div>
         )}
@@ -831,33 +879,36 @@ export default function EventDayPage() {
               <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search attendees..." compact />
             </motion.div>
 
-            {/* Registered attendee list */}
-            <motion.div variants={fadeUp}>
-              {filteredAttendees.length === 0 ? (
+            {/* Grouped roster: Expected / Checked in / Waitlist. Each section
+                only renders when it has people, with a count in its header so
+                the scenarios stay visually separated. */}
+            {(filteredGroups.expected.length + filteredGroups.checkedIn.length + filteredGroups.waitlist.length + filteredGroups.notAttending.length) === 0 ? (
+              <motion.div variants={fadeUp}>
                 <EmptyState
                   illustration="search"
                   title="No attendees found"
                   description={searchQuery ? 'Try a different search' : 'No one has registered yet'}
                 />
-              ) : (
-                <div className="space-y-0">
-                  {filteredAttendees.map((attendee) => (
-                    <AttendeeRow
-                      key={attendee.user_id}
-                      attendee={attendee}
-                      onCheckIn={() => handleCheckIn(attendee.user_id)}
-                      onUncheck={() => handleUncheckRequest(attendee)}
-                      onPromote={attendee.status === 'waitlisted' ? () => handlePromote(attendee.user_id) : undefined}
-                      onViewDetails={() => setSelectedAttendee(attendee)}
-                      isPending={checkingInUserId === attendee.user_id}
-                      isUnchecking={uncheckingUserId === attendee.user_id}
-                      isPromoting={promotingUserId === attendee.user_id}
-                      checkInOpen={checkInOpen}
-                    />
+              </motion.div>
+            ) : (
+              <motion.div variants={fadeUp}>
+                {([
+                  { key: 'expected', title: 'Expected', tone: 'text-sky-700', people: filteredGroups.expected },
+                  { key: 'checkedIn', title: 'Checked in', tone: 'text-success-700', people: filteredGroups.checkedIn },
+                  { key: 'waitlist', title: 'Waitlist', tone: 'text-bark-700', people: filteredGroups.waitlist },
+                ] as const)
+                  .filter((s) => s.people.length > 0)
+                  .map((s) => (
+                    <div key={s.key} className="mb-5">
+                      <div className="flex items-center justify-between mb-2 px-1">
+                        <h3 className={cn('text-sm font-bold', s.tone)}>{s.title}</h3>
+                        <span className="text-xs font-semibold text-neutral-400">{s.people.length}</span>
+                      </div>
+                      <div className="space-y-0">{s.people.map(renderRosterRow)}</div>
+                    </div>
                   ))}
-                </div>
-              )}
-            </motion.div>
+              </motion.div>
+            )}
 
             {/* Walk-ins section - leader-recorded attendees that aren't in
                 event_registrations. Tate P0 2026-06-01: leaders need to
@@ -916,6 +967,31 @@ export default function EventDayPage() {
                     )
                   })}
                 </div>
+              </motion.div>
+            )}
+
+            {/* Not attending - refunds / cancellations / no-ticket. Kept on
+                the screen (dimmed, collapsed) so a leader can still find someone
+                who turns up disputing, but clearly NOT counted as attending. */}
+            {filteredGroups.notAttending.length > 0 && (
+              <motion.div variants={fadeUp} className="mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowNotAttending((v) => !v)}
+                  className="w-full flex items-center justify-between mb-2 px-1"
+                  aria-expanded={showNotAttending}
+                >
+                  <h3 className="text-sm font-semibold text-neutral-500 flex items-center gap-1.5">
+                    <Ban size={14} className="text-neutral-400" /> Not attending
+                  </h3>
+                  <span className="flex items-center gap-1 text-xs font-semibold text-neutral-400">
+                    {filteredGroups.notAttending.length}
+                    <ChevronDown size={14} className={cn('transition-transform duration-200', showNotAttending && 'rotate-180')} />
+                  </span>
+                </button>
+                {showNotAttending && (
+                  <div className="space-y-0">{filteredGroups.notAttending.map(renderRosterRow)}</div>
+                )}
               </motion.div>
             )}
 
@@ -1071,7 +1147,7 @@ export default function EventDayPage() {
           open={showWalkIn}
           onClose={() => setShowWalkIn(false)}
           onSuccess={() => {
-            // Attendee list re-queries via useEventAttendees invalidation
+            // Attendee list re-queries via event-roster invalidation
           }}
           onAddExistingUser={handleAddAndCheckIn}
         />

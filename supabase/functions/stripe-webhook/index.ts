@@ -557,12 +557,12 @@ Deno.serve(async (req: Request) => {
             .update({ status: 'refunded', updated_at: new Date().toISOString() })
             .eq('id', refundTicket.id)
 
-          // Cancel the event registration
-          await supabase
-            .from('event_registrations')
-            .update({ status: 'cancelled' })
-            .eq('event_id', refundTicket.event_id)
-            .eq('user_id', refundTicket.user_id)
+          // Registration + campout chat membership are reconciled by the
+          // reconcile_ticket_membership DB trigger on event_tickets (dupe-aware:
+          // it only cancels the registration / removes from chat when NO valid
+          // ticket remains). Doing it here as well caused the dupe bug where
+          // refunding one of a buyer's duplicate tickets evicted them entirely.
+          // Migration 20260628000000_ticket_membership_enforcement.
 
           const refundAmount = (charge.amount_refunded ?? 0) / 100
           await sendTemplateEmail(supabase, 'refund_confirmation', refundTicket.user_id, {
