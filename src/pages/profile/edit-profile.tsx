@@ -219,6 +219,11 @@ export default function EditProfilePage() {
   }
 
   const handleSave = async () => {
+    // Mobile number is required for every member - leaders read it on event day.
+    if (!phone.trim()) {
+      toast.error('Mobile number is required')
+      return
+    }
     try {
       await updateProfile.mutateAsync({
         display_name: displayName || null,
@@ -440,12 +445,16 @@ export default function EditProfilePage() {
                 className={inputStyle}
               />
               <Input
-                label="Phone"
+                label="Mobile number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="0400 000 000"
                 type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 maxLength={20}
+                required
+                helperText="For safety, so event leaders can reach you on the day"
                 className={inputStyle}
               />
             </SectionCard>

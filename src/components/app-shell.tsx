@@ -7,6 +7,7 @@ import { BottomTabBar } from '@/components/bottom-tab-bar'
 import { UnifiedSidebar } from '@/components/unified-sidebar'
 import { WebFooter } from '@/components/web-footer'
 import { OfflineBanner } from '@/components/offline-banner'
+import { PhoneGate } from '@/components/phone-gate'
 import { SyncStatusBanner } from '@/components/sync-status-banner'
 import { KeyboardOpenContext, useKeyboardOpen } from '@/components/app-shell-context'
 import { MenuSheetProvider, useMenuSheet } from '@/hooks/use-menu-sheet'
@@ -198,6 +199,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Mobile sidebar overlay (opened via "More" tab in bottom bar) */}
       {showBottomTabs && <MobileSidebar />}
+
+      {/* Required mobile-number gate - blocks onboarded users with no phone
+          on file until they add one (event leaders need it for event day). */}
+      <PhoneGate />
     </div>
   )
 }
