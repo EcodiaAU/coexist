@@ -10,7 +10,7 @@ import { wallClockNow } from '@/lib/date-format'
 
 /* ── Date range helpers ── */
 
-export type DateRange = 'week' | 'month' | 'quarter' | 'year' | 'all'
+export type DateRange = 'week' | 'month' | 'quarter' | 'year' | 'all' | 'custom'
 
 export function getDateRangeStart(range: DateRange): string | null {
   const now = new Date()
@@ -20,7 +20,41 @@ export function getDateRangeStart(range: DateRange): string | null {
     case 'quarter': return new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString()
     case 'year':    return new Date(now.getFullYear(), 0, 1).toISOString()
     case 'all':     return null
+    // 'custom' has no fixed start - the explicit window is resolved by
+    // getDateRangeBounds from the caller's customStart/customEnd. Returning
+    // null here keeps this helper exhaustive (and means a stray
+    // getDateRangeStart('custom') call degrades to all-time rather than NaN).
+    case 'custom':  return null
   }
+}
+
+export interface DateRangeBounds {
+  /** Inclusive start ISO. null = no lower bound (all-time). */
+  start: string | null
+  /** Inclusive end ISO covering the WHOLE end-day. null = "now" (open end). */
+  end: string | null
+}
+
+/**
+ * Resolve start AND end bounds for a range.
+ *
+ * Non-custom ranges preserve the legacy start-only behaviour: end=null means
+ * "up to now", exactly as before. 'custom' carries an explicit inclusive
+ * window; customEnd is widened to end-of-day (23:59:59.999Z) so the whole
+ * selected end date is included against the wall-clock-as-UTC date_start column.
+ */
+export function getDateRangeBounds(
+  range: DateRange,
+  customStart?: string,
+  customEnd?: string,
+): DateRangeBounds {
+  if (range === 'custom') {
+    return {
+      start: customStart ? `${customStart}T00:00:00.000Z` : null,
+      end: customEnd ? `${customEnd}T23:59:59.999Z` : null,
+    }
+  }
+  return { start: getDateRangeStart(range), end: null }
 }
 
 export const dateRangeOptions = [

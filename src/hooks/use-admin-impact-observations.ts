@@ -2,7 +2,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { IMPACT_SELECT_COLUMNS, sumMetric, isBuiltinMetric } from '@/lib/impact-metrics'
 import type { ImpactMetricDef } from '@/lib/impact-metrics'
-import { getDateRangeStart, type DateRange } from '@/hooks/use-admin-dashboard'
+import { getDateRangeBounds, type DateRange } from '@/hooks/use-admin-dashboard'
 import { wallClockNow } from '@/lib/date-format'
 import {
   IMPACT_BASELINE_DATE,
@@ -26,6 +26,10 @@ export interface ObservationFilters {
   collectiveId?: string
   activityType?: ActivityType
   search?: string
+  /** yyyy-mm-dd, inclusive. Only read when dateRange === 'custom'. */
+  customStart?: string
+  /** yyyy-mm-dd, inclusive (widened to end-of-day). Only read when dateRange === 'custom'. */
+  customEnd?: string
 }
 
 export interface EventImpactRow {
@@ -154,7 +158,23 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
   return useQuery({
     queryKey: ['admin-impact-observations', filters, metricDefs.map((d) => d.key)],
     queryFn: async () => {
-      const rangeStart = getDateRangeStart(filters.dateRange)
+      const isCustom = filters.dateRange === 'custom'
+      // Guard: a custom range with missing or inverted dates must NOT fire a
+      // query - without an end bound it would silently widen to all events
+      // since the baseline and report misleading numbers. Return an empty
+      // result until both ends are valid (start <= end).
+      if (isCustom && (!filters.customStart || !filters.customEnd || filters.customStart > filters.customEnd)) {
+        return {
+          rows: [] as EventImpactRow[],
+          summary: { totalEvents: 0, totalAttendees: 0, totalEstimatedHours: 0, metrics: {} } as ImpactSummary,
+          collectiveBreakdown: [] as CollectiveBreakdown[],
+        }
+      }
+      const bounds = getDateRangeBounds(filters.dateRange, filters.customStart, filters.customEnd)
+      const rangeStart = bounds.start
+      // Inclusive end-of-day ISO for a custom window; null (open end = "now")
+      // for every other range, preserving the legacy start-only behaviour.
+      const customEndIso = bounds.end
       const isAllTime = filters.dateRange === 'all'
 
       // Always include legacy rows on any all-time view, regardless of
@@ -205,6 +225,10 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
         .in('status', ['published', 'completed'])
         .lt('date_start', nowIso)
       if (effectiveStart) eventsQuery = eventsQuery.gte('date_start', effectiveStart)
+      // Custom range upper bound: cap at the selected end-of-day. The .lt(now)
+      // bound above still holds (events "held" are past events); for a custom
+      // window ending in the past this is the tighter, decisive bound.
+      if (customEndIso) eventsQuery = eventsQuery.lte('date_start', customEndIso)
       if (filters.collectiveId) eventsQuery = eventsQuery.eq('collective_id', filters.collectiveId)
       if (filters.activityType) eventsQuery = eventsQuery.eq('activity_type', filters.activityType)
 

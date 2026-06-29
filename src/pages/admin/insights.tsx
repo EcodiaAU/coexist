@@ -184,6 +184,30 @@ export default function AdminInsightsPage() {
   const [collectiveId, setCollectiveId] = useState('')
   const [activityType, setActivityType] = useState('')
   const [search, setSearch] = useState('')
+  // Custom window (yyyy-mm-dd). Seeded to first-of-this-month -> today the
+  // first time 'custom' is picked so a board report for "this month so far"
+  // is one click; the user then narrows to a discrete past month.
+  const [customStart, setCustomStart] = useState('')
+  const [customEnd, setCustomEnd] = useState('')
+
+  const handleDateRangeChange = (next: DateRange) => {
+    if (next === 'custom' && (!customStart || !customEnd)) {
+      const now = new Date()
+      const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+      setCustomStart((s) => s || firstOfMonth)
+      setCustomEnd((e) => e || todayIso())
+    }
+    setDateRange(next)
+  }
+  // Custom range is only "active" once both ends are present and ordered;
+  // an in-progress edit (one field cleared, or start after end) holds the
+  // queries rather than firing a bad window.
+  const customValid = dateRange !== 'custom' || (!!customStart && !!customEnd && customStart <= customEnd)
+
+  const dateRangeOptionsWithCustom = useMemo(
+    () => [...dateRangeOptions, { value: 'custom', label: 'Custom range' }],
+    [],
+  )
 
   const { data: collectives } = useCollectives({ includeNational: true })
   const { activeDefs } = useImpactMetricDefs()
@@ -193,23 +217,33 @@ export default function AdminInsightsPage() {
     collectiveId: collectiveId || undefined,
     activityType: (activityType || undefined) as ObservationFilters['activityType'],
     search: search || undefined,
-  }), [dateRange, collectiveId, activityType, search])
+    customStart: dateRange === 'custom' ? customStart : undefined,
+    customEnd: dateRange === 'custom' ? customEnd : undefined,
+  }), [dateRange, collectiveId, activityType, search, customStart, customEnd])
 
   const { data: obs, isLoading: obsLoading } = useImpactObservations(filters, activeDefs)
   const { data: yoy } = useYearOverYear(activeDefs)
   const { data: trends } = useTrendData()
 
   const fromDate = useMemo(() => {
+    if (dateRange === 'custom') return customStart || '2018-01-01'
     const s = getDateRangeStart(dateRange)
     return s ? s.slice(0, 10) : '2018-01-01'
-  }, [dateRange])
+  }, [dateRange, customStart])
+  // p_to is inclusive of the day in coexist_attendance_metrics
+  // ((date_start AT TIME ZONE 'UTC')::date <= v_to), so a yyyy-mm-dd end date
+  // counts events on that whole day.
+  const toDate = useMemo(
+    () => (dateRange === 'custom' ? (customEnd || todayIso()) : todayIso()),
+    [dateRange, customEnd],
+  )
   const { data: att } = useQuery({
-    queryKey: ['insights-attendance', dateRange, collectiveId, activityType],
+    queryKey: ['insights-attendance', dateRange, collectiveId, activityType, customStart, customEnd],
     queryFn: async (): Promise<AttendanceMetrics> => {
       const { data, error } = await supabase.rpc('coexist_attendance_metrics', {
         p_collective_ids: collectiveId ? [collectiveId] : undefined,
         p_from: fromDate,
-        p_to: todayIso(),
+        p_to: toDate,
         p_activity_types: activityType
           ? [activityType as Database['public']['Enums']['activity_type']]
           : undefined,
@@ -217,6 +251,7 @@ export default function AdminInsightsPage() {
       if (error) throw error
       return data as unknown as AttendanceMetrics
     },
+    enabled: customValid,
   })
 
   const collectiveOptions = useMemo(
@@ -228,7 +263,21 @@ export default function AdminInsightsPage() {
     [],
   )
   const collectiveLabel = collectiveId ? (collectives?.find((c) => c.id === collectiveId)?.name ?? 'Collective') : 'All collectives'
-  const dateLabel = dateRangeOptions.find((o) => o.value === dateRange)?.label ?? 'All time'
+  // For a custom window show the actual dates ("1 Jun - 30 Jun 2026") so the
+  // scope line, copied tables and CSV titles all read the selected range. The
+  // start year is dropped when it matches the end year to keep it tight.
+  const customWindowLabel = useMemo(() => {
+    if (!customStart || !customEnd) return 'Custom range'
+    const s = new Date(`${customStart}T00:00:00Z`)
+    const e = new Date(`${customEnd}T00:00:00Z`)
+    const sameYear = s.getUTCFullYear() === e.getUTCFullYear()
+    const sOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', timeZone: 'UTC', ...(sameYear ? {} : { year: 'numeric' }) }
+    const eOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }
+    return `${s.toLocaleDateString('en-AU', sOpts)} - ${e.toLocaleDateString('en-AU', eOpts)}`
+  }, [customStart, customEnd])
+  const dateLabel = dateRange === 'custom'
+    ? customWindowLabel
+    : (dateRangeOptions.find((o) => o.value === dateRange)?.label ?? 'All time')
   const activityLabel = activityType ? (ACTIVITY_TYPE_LABELS[activityType] ?? activityType) : null
   const scopeLine = `Co-Exist · ${collectiveLabel} · ${dateLabel}${activityLabel ? ` · ${activityLabel}` : ''}`
 
@@ -360,7 +409,29 @@ export default function AdminInsightsPage() {
       {/* ── Sticky filter bar + jump nav ── */}
       <div className="sticky top-0 z-20 -mx-4 -mt-4 px-4 pb-3 bg-white/90 backdrop-blur border-b border-neutral-100 mb-6" style={{ paddingTop: 'calc(var(--safe-top, 0px) + 0.75rem)' }}>
         <div className="flex flex-wrap items-center gap-2">
-          <Dropdown options={dateRangeOptions} value={dateRange} onChange={(x) => setDateRange(x as DateRange)} className="w-36" />
+          <Dropdown options={dateRangeOptionsWithCustom} value={dateRange} onChange={(x) => handleDateRangeChange(x as DateRange)} className="w-36" />
+          {dateRange === 'custom' && (
+            <div className="flex items-center gap-1.5">
+              <input
+                type="date"
+                aria-label="From date"
+                value={customStart}
+                max={customEnd || todayIso()}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="h-11 rounded-full bg-surface-3 px-4 text-[16px] sm:text-sm text-neutral-900 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              />
+              <span className="text-sm text-neutral-400">to</span>
+              <input
+                type="date"
+                aria-label="To date"
+                value={customEnd}
+                min={customStart || undefined}
+                max={todayIso()}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="h-11 rounded-full bg-surface-3 px-4 text-[16px] sm:text-sm text-neutral-900 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              />
+            </div>
+          )}
           <Dropdown options={collectiveOptions} value={collectiveId} onChange={setCollectiveId} className="w-44" />
           <Dropdown options={activityOptions} value={activityType} onChange={setActivityType} className="w-40" />
           <div className="hidden md:flex items-center gap-0.5 ml-auto text-[11px] font-medium text-neutral-400">
