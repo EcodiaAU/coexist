@@ -90,27 +90,35 @@ function getDeviceInfo(): Record<string, string> {
   }
 }
 
+/** Preferences key holding this device's currently-claimed push token, so we can
+ *  identify and remove exactly this device's row on sign-out even after an app
+ *  restart wiped the module-level `currentDeviceToken`. */
+const CURRENT_PUSH_TOKEN_KEY = 'currentPushToken'
+
 async function storeToken(userId: string, token: string, platform: string) {
-  console.info('[push] storing token for user', userId.slice(0, 8), '…', 'platform:', platform, 'token:', token.slice(0, 12) + '…')
-  const { error } = await supabase
-    .from('push_tokens')
-    .upsert(
-      {
-        user_id: userId,
-        token,
-        platform,
-        device_info: getDeviceInfo(),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id,token' },
-    )
+  console.info('[push] claiming token for user', userId.slice(0, 8), '…', 'platform:', platform, 'token:', token.slice(0, 12) + '…')
+  // claim_push_token enforces the invariant "one device token = one user". It
+  // evicts any OTHER user's claim on this token (RLS-bypassing SECURITY DEFINER)
+  // and upserts ours. A device token is device-bound, not user-bound: the account
+  // previously signed in on this device must lose the token the instant we
+  // register, otherwise send-push (which targets by user_id) keeps delivering the
+  // previous account's notifications to a device they are no longer signed into.
+  const { error } = await supabase.rpc('claim_push_token', {
+    p_token: token,
+    p_platform: platform,
+    p_device_info: getDeviceInfo(),
+  })
 
   if (error) {
-    console.error('[push] Failed to store token:', error)
+    console.error('[push] Failed to claim token:', error)
     return false
   }
-  console.info('[push] token stored successfully')
+  console.info('[push] token claimed successfully')
   currentDeviceToken = token
+  // Persist for restart-proof sign-out cleanup (best-effort).
+  try {
+    await Preferences.set({ key: CURRENT_PUSH_TOKEN_KEY, value: token })
+  } catch { /* best-effort */ }
   return true
 }
 
@@ -129,6 +137,37 @@ async function removeAllTokensForUser(userId: string) {
     .delete()
     .eq('user_id', userId)
   if (error) console.error('[push] Failed to remove all tokens for user:', error)
+}
+
+/**
+ * Remove THIS device's push token row on sign-out. Resolves the token from the
+ * in-memory ref first, then falls back to Preferences (survives app restarts).
+ * MUST be called while the user is still authenticated - the RLS delete policy
+ * requires auth.uid() = user_id. Without this, a signed-out device keeps its
+ * row and send-push keeps delivering until another account claims the token.
+ */
+export async function removeCurrentDeviceToken(userId: string): Promise<void> {
+  let token = currentDeviceToken
+  if (!token) {
+    try {
+      const got = await Preferences.get({ key: CURRENT_PUSH_TOKEN_KEY })
+      token = got?.value ?? null
+    } catch { /* best-effort */ }
+  }
+  if (token) {
+    await removeToken(userId, token)
+  } else {
+    // We cannot identify this device's token (registration never completed this
+    // session, or this is a redundant second call after the token was already
+    // cleared). Do NOT fall back to removeAllTokensForUser - that would nuke the
+    // user's OTHER devices. A stray row self-heals: the next user to register on
+    // this device claims the token and evicts the prior owner (claim_push_token).
+    console.info('[push] removeCurrentDeviceToken: no token to remove - skipping')
+  }
+  currentDeviceToken = null
+  try {
+    await Preferences.remove({ key: CURRENT_PUSH_TOKEN_KEY })
+  } catch { /* best-effort */ }
 }
 
 async function clearBadgeCount() {
@@ -593,15 +632,7 @@ export function usePush() {
   /** Remove this device's token on logout (preserves other devices) */
   const unregister = useCallback(async () => {
     if (!user) return
-    if (currentDeviceToken) {
-      // Only remove this device's token - other devices keep theirs
-      await removeToken(user.id, currentDeviceToken)
-      currentDeviceToken = null
-    } else {
-      // Fallback: if we don't know the current token, remove all
-      // (shouldn't happen in normal flow, but safer than leaving stale tokens)
-      await removeAllTokensForUser(user.id)
-    }
+    await removeCurrentDeviceToken(user.id)
   }, [user])
 
   /** Clear badge/notification tray */

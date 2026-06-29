@@ -6482,6 +6482,10 @@ export type Database = {
     }
     Functions: {
       _is_national_role: { Args: { p_role: string }; Returns: boolean }
+      claim_push_token: {
+        Args: { p_token: string; p_platform: string; p_device_info?: Json }
+        Returns: undefined
+      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined

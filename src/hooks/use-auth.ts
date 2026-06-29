@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
 import { SocialLogin } from '@capgo/capacitor-social-login'
 import { supabase } from '@/lib/supabase'
+import { removeCurrentDeviceToken } from '@/hooks/use-push'
 import { resolveCapabilities } from '@/lib/capabilities'
 import { CURRENT_TOS_VERSION, GLOBAL_ROLE_RANK, COLLECTIVE_ROLE_RANK } from '@/lib/constants'
 import type { Database } from '@/types/database.types'
@@ -754,6 +755,16 @@ export function useAuthProvider(): AuthContextValue {
   }, [])
 
   const signOut = useCallback(async () => {
+    // Remove THIS device's push token BEFORE auth.signOut() - the RLS delete
+    // policy needs auth.uid() = user_id, so it must run while still signed in.
+    // This is the single backstop for every sign-out path (settings button,
+    // account deletion, future call sites), so a signed-out device never keeps
+    // receiving push. Best-effort: never block sign-out on it.
+    try {
+      const { data } = await supabase.auth.getSession()
+      const uid = data.session?.user?.id
+      if (uid) await removeCurrentDeviceToken(uid)
+    } catch { /* best-effort */ }
     await supabase.auth.signOut()
     await persistSession(null)
     await persistProfile(null)
