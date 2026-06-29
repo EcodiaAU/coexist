@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
     Settings,
     Shield,
@@ -234,43 +234,45 @@ function MobileSidebarOverlay({
     ? instantTransition
     : { duration: 0.22, ease: [0.25, 0.1, 0.25, 1] as const }
 
+  // The sheet stays mounted across open/close so the nav tree (up to ~30 items
+  // for admin/manager users) builds ONCE, not on every open. Opening is then a
+  // pure GPU transform with zero mount/layout cost, which removes the frame
+  // drops on the slide-in that scaled with nav-list size. Closed state is inert
+  // + pointer-events-none so it is fully out of the tap and accessibility tree.
   return createPortal(
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-50">
-          <motion.div
-            className="fixed inset-0 bg-black/50 gpu-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: backdropTransition }}
-            exit={{ opacity: 0, transition: shouldReduceMotion ? instantTransition : { duration: 0.18, ease: [0.4, 0, 0.2, 1] } }}
-            onClick={onClose}
-            aria-hidden="true"
-          />
+    <div
+      className="fixed inset-0 z-50"
+      style={{ pointerEvents: open ? 'auto' : 'none' }}
+    >
+      <motion.div
+        className="fixed inset-0 bg-black/50 gpu-backdrop"
+        initial={false}
+        animate={{ opacity: open ? 1 : 0 }}
+        transition={open ? backdropTransition : shouldReduceMotion ? instantTransition : { duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-          <motion.div
-            ref={sheetRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation"
-            tabIndex={-1}
-            className={cn(
-              'fixed top-0 right-0 bottom-0',
-              'w-[min(84vw,360px)]',
-              'bg-white gpu-panel',
-              'shadow-sm',
-              'flex flex-col',
-              'outline-none',
-            )}
-            initial={{ x: '100%' }}
-            animate={{ x: 0, transition: slideTransition }}
-            exit={{
-              x: '100%',
-              transition: shouldReduceMotion
-                ? instantTransition
-                : { type: 'spring', stiffness: 380, damping: 34 },
-            }}
-            onKeyDown={handleKeyDown}
-          >
+      <motion.div
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation"
+        tabIndex={-1}
+        inert={open ? undefined : true}
+        className={cn(
+          'fixed top-0 right-0 bottom-0',
+          'w-[min(84vw,360px)]',
+          'bg-white gpu-panel',
+          'shadow-sm',
+          'flex flex-col',
+          'outline-none',
+        )}
+        initial={false}
+        animate={{ x: open ? 0 : '100%' }}
+        transition={open ? slideTransition : shouldReduceMotion ? instantTransition : { type: 'spring', stiffness: 380, damping: 34 }}
+        onKeyDown={handleKeyDown}
+      >
             <div
               className="px-5 pb-4"
               style={{ paddingTop: 'calc(var(--safe-top, 0px) + 0.75rem)' }}
@@ -343,10 +345,8 @@ function MobileSidebarOverlay({
                 <span>Settings</span>
               </button>
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>,
+      </motion.div>
+    </div>,
     document.body,
   )
 }
