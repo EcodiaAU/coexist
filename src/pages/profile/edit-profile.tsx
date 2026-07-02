@@ -8,7 +8,8 @@ import {
     Heart,
     Sparkles,
     Compass,
-    Accessibility
+    Accessibility,
+    Utensils
 } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
@@ -137,6 +138,7 @@ export default function EditProfilePage() {
   const [email, setEmail] = useState('')
   const [collectiveDiscovery, setCollectiveDiscovery] = useState('')
   const [accessibilityRequirements, setAccessibilityRequirements] = useState('')
+  const [dietaryRequirements, setDietaryRequirements] = useState('')
   const [emergencyContactName, setEmergencyContactName] = useState('')
   const [emergencyContactPhone, setEmergencyContactPhone] = useState('')
   const [emergencyContactRelationship, setEmergencyContactRelationship] = useState('')
@@ -161,6 +163,7 @@ export default function EditProfilePage() {
     setEmail(profile.email ?? '')
     setCollectiveDiscovery(profile.collective_discovery ?? '')
     setAccessibilityRequirements(profile.accessibility_requirements ?? '')
+    setDietaryRequirements(profile.dietary_requirements ?? '')
     setEmergencyContactName(profile.emergency_contact_name ?? '')
     setEmergencyContactPhone(profile.emergency_contact_phone ?? '')
     setEmergencyContactRelationship(profile.emergency_contact_relationship ?? '')
@@ -241,6 +244,7 @@ export default function EditProfilePage() {
         email: email || null,
         collective_discovery: collectiveDiscovery || null,
         accessibility_requirements: accessibilityRequirements || null,
+        dietary_requirements: dietaryRequirements || null,
         emergency_contact_name: emergencyContactName || null,
         emergency_contact_phone: emergencyContactPhone || null,
         emergency_contact_relationship: emergencyContactRelationship || null,
@@ -517,6 +521,28 @@ export default function EditProfilePage() {
                 value={accessibilityRequirements}
                 onChange={(e) => setAccessibilityRequirements(e.target.value)}
                 placeholder="e.g. Wheelchair access, hearing loop, visual impairment assistance..."
+                type="textarea"
+                rows={3}
+                maxLength={500}
+                className={inputStyle}
+              />
+            </SectionCard>
+          </motion.div>
+
+          {/* ---- Dietary Requirements ---- */}
+          <motion.div variants={fadeUp}>
+            <SectionCard
+              icon={<Utensils size={17} className="text-sprout-600" />}
+              iconBg="bg-sprout-200/80"
+              headerBg="bg-sprout-50/60"
+              title="Dietary Requirements"
+              description="So campout catering works for you, no separate form"
+            >
+              <Input
+                label="Dietary requirements (allergies, vegan, etc.)"
+                value={dietaryRequirements}
+                onChange={(e) => setDietaryRequirements(e.target.value)}
+                placeholder="e.g. Vegetarian, gluten free, nut allergy..."
                 type="textarea"
                 rows={3}
                 maxLength={500}

@@ -8,6 +8,7 @@ export interface AttendeeExportRow {
   last_name: string | null
   email: string | null
   postcode: string | null
+  dietary_requirements: string | null
   checked_in_at: string | null
 }
 
@@ -42,7 +43,8 @@ export function useEventAttendeesExport(eventId: string | undefined, enabled = t
             first_name,
             last_name,
             email,
-            postcode
+            postcode,
+            dietary_requirements
           )
         `)
         .eq('event_id', eventId)
@@ -60,6 +62,7 @@ export function useEventAttendeesExport(eventId: string | undefined, enabled = t
           last_name: p.last_name ?? null,
           email: p.email ?? null,
           postcode: p.postcode ?? null,
+          dietary_requirements: p.dietary_requirements ?? null,
           checked_in_at: (row as { checked_in_at: string | null }).checked_in_at ?? null,
         }
       })
@@ -85,7 +88,7 @@ function nameOf(r: AttendeeExportRow): string {
 }
 
 export function buildAttendeesCsv(rows: AttendeeExportRow[], details: EventDetailsForExport): string {
-  const header = ['Name', 'Email', 'Postcode']
+  const header = ['Name', 'Email', 'Postcode', 'Dietary']
   const meta = [
     `Event: ${details.title}`,
     details.collective_name ? `Collective: ${details.collective_name}` : '',
@@ -97,7 +100,7 @@ export function buildAttendeesCsv(rows: AttendeeExportRow[], details: EventDetai
 
   const csvRows: string[][] = [
     header,
-    ...rows.map((r) => [nameOf(r), r.email ?? '', r.postcode ?? '']),
+    ...rows.map((r) => [nameOf(r), r.email ?? '', r.postcode ?? '', r.dietary_requirements ?? '']),
   ]
 
   const csvBody = csvRows
@@ -119,6 +122,7 @@ export function buildAttendeesPlainText(rows: AttendeeExportRow[], details: Even
     const parts = [name]
     if (r.email) parts.push(`<${r.email}>`)
     if (r.postcode) parts.push(`postcode ${r.postcode}`)
+    if (r.dietary_requirements) parts.push(`dietary: ${r.dietary_requirements}`)
     lines.push(`- ${parts.join(' · ')}`)
   }
   return lines.join('\n')

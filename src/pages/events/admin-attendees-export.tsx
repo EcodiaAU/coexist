@@ -64,7 +64,7 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-neutral-900">Checked-in attendees export</p>
-          <p className="text-xs text-neutral-500">Name, email, postcode - for partner post-event surveys</p>
+          <p className="text-xs text-neutral-500">Name, email, postcode, dietary - for catering and partner surveys</p>
         </div>
         <ChevronDown
           size={16}

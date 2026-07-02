@@ -50,7 +50,7 @@ export interface AttendeeWithStatus {
   status: RegistrationStatus
   checked_in_at: string | null
   registered_at: string
-  profiles: Pick<Profile, 'id' | 'display_name' | 'first_name' | 'last_name' | 'avatar_url' | 'phone' | 'age' | 'gender' | 'accessibility_requirements' | 'emergency_contact_name' | 'emergency_contact_phone' | 'emergency_contact_relationship'> | null
+  profiles: Pick<Profile, 'id' | 'display_name' | 'first_name' | 'last_name' | 'avatar_url' | 'phone' | 'age' | 'gender' | 'accessibility_requirements' | 'dietary_requirements' | 'emergency_contact_name' | 'emergency_contact_phone' | 'emergency_contact_relationship'> | null
 }
 
 export interface WaitlistEntry {
@@ -480,7 +480,7 @@ export function useEventAttendees(eventId: string | undefined) {
 
       const { data, error } = await supabase
         .from('event_registrations')
-        .select('user_id, status, checked_in_at, registered_at, profiles!event_registrations_user_id_fkey(id, display_name, first_name, last_name, avatar_url, phone, age, gender, accessibility_requirements, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship)')
+        .select('user_id, status, checked_in_at, registered_at, profiles!event_registrations_user_id_fkey(id, display_name, first_name, last_name, avatar_url, phone, age, gender, accessibility_requirements, dietary_requirements, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship)')
         .eq('event_id', eventId)
         .in('status', ['registered', 'attended', 'waitlisted'])
         .order('registered_at', { ascending: true })
@@ -551,7 +551,7 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
       const [{ data: regs, error: regErr }, { data: tix, error: tixErr }] = await Promise.all([
         supabase
           .from('event_registrations')
-          .select('user_id, status, checked_in_at, registered_at, profiles!event_registrations_user_id_fkey(id, display_name, first_name, last_name, avatar_url, phone, age, gender, accessibility_requirements, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship)')
+          .select('user_id, status, checked_in_at, registered_at, profiles!event_registrations_user_id_fkey(id, display_name, first_name, last_name, avatar_url, phone, age, gender, accessibility_requirements, dietary_requirements, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship)')
           .eq('event_id', eventId)
           .in('status', ['registered', 'attended', 'waitlisted', 'cancelled'])
           .order('registered_at', { ascending: true }),
