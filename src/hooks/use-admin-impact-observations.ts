@@ -23,7 +23,14 @@ type ActivityType = Database['public']['Enums']['activity_type']
 
 export interface ObservationFilters {
   dateRange: DateRange
+  /** Single-collective scope (legacy; still honoured by the dashboard tab). */
   collectiveId?: string
+  /**
+   * Multi-collective scope. When non-empty this takes precedence over
+   * `collectiveId` and the query returns the combined stats of every listed
+   * collective. Empty/absent means "all collectives" (national view).
+   */
+  collectiveIds?: string[]
   activityType?: ActivityType
   search?: string
   /** yyyy-mm-dd, inclusive. Only read when dateRange === 'custom'. */
@@ -170,6 +177,14 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
           collectiveBreakdown: [] as CollectiveBreakdown[],
         }
       }
+      // Resolve the effective collective scope. `collectiveIds` (multi-select)
+      // wins when present; otherwise fall back to the single `collectiveId`.
+      // An empty result means the national ("all collectives") view.
+      const collectiveIds = filters.collectiveIds?.length
+        ? filters.collectiveIds
+        : (filters.collectiveId ? [filters.collectiveId] : [])
+      const hasCollectiveScope = collectiveIds.length > 0
+
       const bounds = getDateRangeBounds(filters.dateRange, filters.customStart, filters.customEnd)
       const rangeStart = bounds.start
       // Inclusive end-of-day ISO for a custom window; null (open end = "now")
@@ -197,13 +212,13 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       // For scoped date ranges (week / month / quarter / year), we still
       // skip legacy - those rows are pre-2026 and don't belong in a "this
       // week" view.
-      const isNationalAllTime = isAllTime && !filters.collectiveId && !filters.activityType
+      const isNationalAllTime = isAllTime && !hasCollectiveScope && !filters.activityType
       const includeLegacy = isAllTime
       // When the user narrows to one activity_type on an all-time view we
       // still want the baseline-remainder share to flow into this scope,
       // proportional to the legacy distribution - otherwise sum-of-parts
       // doesn't equal All Types (Tate 2026-06-12 common-sense matrix probe).
-      const isActivityScopedAllTime = isAllTime && !filters.collectiveId && !!filters.activityType
+      const isActivityScopedAllTime = isAllTime && !hasCollectiveScope && !!filters.activityType
       const effectiveStart = rangeStart
         ?? (includeLegacy ? null : new Date(IMPACT_BASELINE_DATE).toISOString())
       const nowIso = new Date().toISOString()
@@ -229,7 +244,11 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       // bound above still holds (events "held" are past events); for a custom
       // window ending in the past this is the tighter, decisive bound.
       if (customEndIso) eventsQuery = eventsQuery.lte('date_start', customEndIso)
-      if (filters.collectiveId) eventsQuery = eventsQuery.eq('collective_id', filters.collectiveId)
+      if (hasCollectiveScope) {
+        eventsQuery = collectiveIds.length === 1
+          ? eventsQuery.eq('collective_id', collectiveIds[0])
+          : eventsQuery.in('collective_id', collectiveIds)
+      }
       if (filters.activityType) eventsQuery = eventsQuery.eq('activity_type', filters.activityType)
 
       // Fetch events and (when national all-time OR activity-scoped all-time)
@@ -378,7 +397,7 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       //   For per-collective: just sum(live + legacy) for that collective. No
       //   baseline addition - baselines are national, not per-collective.
       //   For time-scoped: just sum(live), no legacy, no baseline.
-      const showNationalBaseline = isAllTime && !filters.collectiveId && !filters.activityType
+      const showNationalBaseline = isAllTime && !hasCollectiveScope && !filters.activityType
       const baselineDateIso = new Date(IMPACT_BASELINE_DATE).toISOString()
 
       // For the national-all-time SUMMARY we exclude live rows on pre-2026

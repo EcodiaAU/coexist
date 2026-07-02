@@ -29,6 +29,7 @@ import { supabase } from '@/lib/supabase'
 import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow, type HeroStatColor } from '@/components/admin-hero-stat'
 import { Dropdown } from '@/components/dropdown'
+import { MultiSelect } from '@/components/multi-select'
 import { SearchBar } from '@/components/search-bar'
 import { Badge } from '@/components/badge'
 import { useToast } from '@/components/toast'
@@ -181,7 +182,9 @@ export default function AdminInsightsPage() {
   const { toast } = useToast()
 
   const [dateRange, setDateRange] = useState<DateRange>('all')
-  const [collectiveId, setCollectiveId] = useState('')
+  // Multi-select collective scope. Empty = all collectives (national view);
+  // 2+ selected returns their combined stats.
+  const [collectiveIds, setCollectiveIds] = useState<string[]>([])
   const [activityType, setActivityType] = useState('')
   const [search, setSearch] = useState('')
   // Custom window (yyyy-mm-dd). Seeded to first-of-this-month -> today the
@@ -214,12 +217,12 @@ export default function AdminInsightsPage() {
 
   const filters: ObservationFilters = useMemo(() => ({
     dateRange,
-    collectiveId: collectiveId || undefined,
+    collectiveIds: collectiveIds.length ? collectiveIds : undefined,
     activityType: (activityType || undefined) as ObservationFilters['activityType'],
     search: search || undefined,
     customStart: dateRange === 'custom' ? customStart : undefined,
     customEnd: dateRange === 'custom' ? customEnd : undefined,
-  }), [dateRange, collectiveId, activityType, search, customStart, customEnd])
+  }), [dateRange, collectiveIds, activityType, search, customStart, customEnd])
 
   const { data: obs, isLoading: obsLoading } = useImpactObservations(filters, activeDefs)
   const { data: yoy } = useYearOverYear(activeDefs)
@@ -238,10 +241,10 @@ export default function AdminInsightsPage() {
     [dateRange, customEnd],
   )
   const { data: att } = useQuery({
-    queryKey: ['insights-attendance', dateRange, collectiveId, activityType, customStart, customEnd],
+    queryKey: ['insights-attendance', dateRange, collectiveIds, activityType, customStart, customEnd],
     queryFn: async (): Promise<AttendanceMetrics> => {
       const { data, error } = await supabase.rpc('coexist_attendance_metrics', {
-        p_collective_ids: collectiveId ? [collectiveId] : undefined,
+        p_collective_ids: collectiveIds.length ? collectiveIds : undefined,
         p_from: fromDate,
         p_to: toDate,
         p_activity_types: activityType
@@ -255,14 +258,24 @@ export default function AdminInsightsPage() {
   })
 
   const collectiveOptions = useMemo(
-    () => [{ value: '', label: 'All Collectives' }, ...[...(collectives ?? [])].sort((a, b) => a.name.localeCompare(b.name)).map((c) => ({ value: c.id, label: c.name }))],
+    () => [...(collectives ?? [])].sort((a, b) => a.name.localeCompare(b.name)).map((c) => ({ value: c.id, label: c.name })),
     [collectives],
   )
   const activityOptions = useMemo(
     () => [{ value: '', label: 'All Types' }, ...ACTIVITY_TYPE_FILTER_OPTIONS.map((o) => ({ value: o.value, label: o.label }))],
     [],
   )
-  const collectiveLabel = collectiveId ? (collectives?.find((c) => c.id === collectiveId)?.name ?? 'Collective') : 'All collectives'
+  // Scope-line label: none -> "All collectives"; up to two -> their names joined;
+  // three or more -> "N collectives" so the copied-table title stays tight.
+  const collectiveLabel = useMemo(() => {
+    if (collectiveIds.length === 0) return 'All collectives'
+    const names = collectiveIds
+      .map((id) => collectives?.find((c) => c.id === id)?.name)
+      .filter((n): n is string => !!n)
+    if (names.length === 0) return `${collectiveIds.length} collectives`
+    if (names.length <= 2) return names.join(' + ')
+    return `${names.length} collectives`
+  }, [collectiveIds, collectives])
   // For a custom window show the actual dates ("1 Jun - 30 Jun 2026") so the
   // scope line, copied tables and CSV titles all read the selected range. The
   // start year is dropped when it matches the end year to keep it tight.
@@ -432,7 +445,14 @@ export default function AdminInsightsPage() {
               />
             </div>
           )}
-          <Dropdown options={collectiveOptions} value={collectiveId} onChange={setCollectiveId} className="w-44" />
+          <MultiSelect
+            options={collectiveOptions}
+            value={collectiveIds}
+            onChange={setCollectiveIds}
+            allLabel="All Collectives"
+            countLabel={(n) => `${n} collectives`}
+            className="w-44"
+          />
           <Dropdown options={activityOptions} value={activityType} onChange={setActivityType} className="w-40" />
           <div className="hidden md:flex items-center gap-0.5 ml-auto text-[11px] font-medium text-neutral-400">
             {jump.map((j) => (
@@ -565,15 +585,26 @@ export default function AdminInsightsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedCollectives.map((c) => (
-                      <tr key={c.collectiveId} className="border-b border-neutral-50 last:border-0 hover:bg-neutral-50 transition-colors cursor-pointer" onClick={() => setCollectiveId(c.collectiveId)}>
+                    {sortedCollectives.map((c) => {
+                      const isSelected = collectiveIds.includes(c.collectiveId)
+                      return (
+                      <tr
+                        key={c.collectiveId}
+                        title={isSelected ? 'Remove from selection' : 'Add to selection'}
+                        className={cn(
+                          'border-b border-neutral-50 last:border-0 transition-colors cursor-pointer',
+                          isSelected ? 'bg-primary-50 hover:bg-primary-100' : 'hover:bg-neutral-50',
+                        )}
+                        onClick={() => setCollectiveIds((prev) => prev.includes(c.collectiveId) ? prev.filter((id) => id !== c.collectiveId) : [...prev, c.collectiveId])}
+                      >
                         <td className="px-4 py-3 font-semibold text-neutral-900">{c.name}</td>
                         <td className="px-3 py-3 text-right tabular-nums text-neutral-700">{c.eventCount}</td>
                         <td className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtNum(c.attendees)}</td>
                         {visibleDefs.slice(0, 4).map((def) => <td key={def.key} className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtMetricVal(c.metrics[def.key] ?? 0, def)}</td>)}
                         <td className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtNum(c.estimatedHours)}</td>
                       </tr>
-                    ))}
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
