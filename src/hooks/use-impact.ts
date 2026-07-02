@@ -1,13 +1,32 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { sumMetric } from '@/lib/impact-metrics'
 import {
   fetchImpactRows,
   fetchBaselineSettings,
-  applyBaselineRemainder,
-  type ImpactTimeRange,
+  fetchCanonicalImpactRows,
+  composeSummaryMetrics,
+  BASELINE_TREES,
+  BASELINE_RUBBISH_KG,
+  BASELINE_EVENTS,
+  BASELINE_ATTENDEES,
+  BASELINE_HOURS,
 } from '@/lib/impact-query'
 import { useAuth } from '@/hooks/use-auth'
+
+/**
+ * The metric keys THE RULE aggregates for the canonical-impact shape. Passed to
+ * composeSummaryMetrics so the shared path (same as /admin/insights) produces
+ * every field these surfaces render.
+ */
+const CANONICAL_METRIC_KEYS = [
+  'trees_planted', 'rubbish_kg', 'invasive_weeds_pulled', 'coastline_cleaned_m',
+]
+
+/** Window start for a coarse time range (all-time = open; current-year = Jan 1). */
+function rangeStartIso(timeRange: 'all-time' | 'current-year'): string | null {
+  if (timeRange === 'all-time') return null
+  return new Date(new Date().getFullYear(), 0, 1).toISOString()
+}
 
 /* ------------------------------------------------------------------ */
 /*  Canonical impact shape                                             */
@@ -41,18 +60,17 @@ export function useNationalImpact(timeRange: TimeRange = 'all-time') {
     queryKey: ['national-impact', timeRange],
     queryFn: async (): Promise<NationalImpact> => {
       const isAllTime = timeRange === 'all-time'
+      const effectiveStartIso = rangeStartIso(timeRange)
+      const windowEndIso = new Date().toISOString()
 
-      // Pull legacy import rows on all-time so the national rollup matches
-      // /admin/impact and /collectives/[slug] (all surfaces aggregate the
-      // same row set + baseline-remainder math). Without includeLegacy, the
-      // homepage sums sum(live) + BASELINE while admin/impact post-v54 sums
-      // sum(live + legacy) + max(0, BASELINE - sum_legacy) - they diverge
-      // whenever sum_legacy > BASELINE (trees: 43,769 legacy vs 36,637
-      // baseline = 7,000 tree gap between homepage and admin).
-      const [{ rows, legacyRows, eventIds, eventCount }, baseline, membersRes, collectivesRes, leadersCountRes] =
+      // ONE shared path: fetch canonical rows + compose via the SAME max-rule
+      // function /admin/insights uses, so the homepage / national numbers match
+      // insights exactly for the same scope (this replaces the old
+      // applyBaselineRemainder total-vs-total math that diverged).
+      const [canonical, baseline, membersRes, collectivesRes, leadersCountRes] =
         await Promise.all([
-          fetchImpactRows({ timeRange: timeRange as ImpactTimeRange, includeLegacy: isAllTime }),
-          isAllTime ? fetchBaselineSettings() : Promise.resolve(null),
+          fetchCanonicalImpactRows({ effectiveStartIso, windowEndIso }),
+          fetchBaselineSettings(),
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
           supabase.from('collectives').select('id', { count: 'exact', head: true }).eq('is_active', true).neq('is_national', true),
           supabase.from('app_settings').select('value').eq('key', 'leaders_empowered_total').single(),
@@ -61,13 +79,32 @@ export function useNationalImpact(timeRange: TimeRange = 'all-time') {
       if (membersRes.error) throw membersRes.error
       if (collectivesRes.error) throw collectivesRes.error
 
-      // Cleanup sites: unique addresses from cleanup/marine events in scope
+      const lump = {
+        trees: baseline?.trees ?? BASELINE_TREES,
+        rubbish_kg: baseline?.rubbishKg ?? BASELINE_RUBBISH_KG,
+        events: baseline?.events ?? BASELINE_EVENTS,
+        attendees: baseline?.attendees ?? BASELINE_ATTENDEES,
+        hours: baseline?.hours ?? BASELINE_HOURS,
+      }
+
+      const composed = composeSummaryMetrics(canonical.rows, {
+        metricKeys: CANONICAL_METRIC_KEYS,
+        // National view: apply the baseline floor only on all-time (a
+        // current-year window contains no fully-contained baseline year, so it
+        // resolves to recorded-only anyway; passing the flag keeps it explicit).
+        applyNationalBaseline: true,
+        effectiveStartIso,
+        windowEndIso,
+        lump: isAllTime ? lump : null,
+      })
+
+      // Cleanup sites: unique addresses from cleanup events in scope.
       const cleanupAddresses = new Set<string>()
-      if (eventIds.length > 0) {
+      if (canonical.eventIds.length > 0) {
         const { data: cleanupEvents } = await supabase
           .from('events')
           .select('address')
-          .in('id', eventIds)
+          .in('id', canonical.eventIds)
           .in('activity_type', ['clean_up'])
         for (const e of cleanupEvents ?? []) {
           const addr = (e.address ?? '').trim().toLowerCase()
@@ -75,70 +112,15 @@ export function useNationalImpact(timeRange: TimeRange = 'all-time') {
         }
       }
 
-      const b = baseline ?? { attendees: 0, events: 0, trees: 0, rubbishKg: 0, hours: 0 }
-
-      // Event count mirrors /admin/impact (post-v54) exactly: distinct event
-      // IDs that have at least one impact row (live OR legacy) + remainder.
-      // An event with both a live row and a legacy row counts ONCE. The
-      // remainder covers pre-2026 events that weren't imported as rows.
-      //
-      //   total = |{event ids with any impact}| + max(0, baseline - |legacy event ids|)
-      //
-      // This is the canonical national rollup. /admin/impact uses the same
-      // shape; /admin and homepage now do too. eventCount from fetchImpactRows
-      // (events in scope regardless of impact) is intentionally NOT used here
-      // because when includeLegacy=true it already covers pre-2026 backfill
-      // events - adding baseline on top of it would double-count them.
-      const liveEventIdsWithImpact = new Set(
-        rows
-          .map((r) => (r as { event_id?: string }).event_id)
-          .filter((id): id is string => typeof id === 'string'),
-      )
-      const legacyEventIdSet = new Set(
-        legacyRows
-          .map((r) => (r as { event_id?: string }).event_id)
-          .filter((id): id is string => typeof id === 'string'),
-      )
-      const uniqueEventCount = new Set([
-        ...liveEventIdsWithImpact,
-        ...legacyEventIdSet,
-      ]).size
-
       return {
-        eventsAttended: Math.round(
-          applyBaselineRemainder(
-            sumMetric(rows, 'attendees'),
-            sumMetric(legacyRows, 'attendees'),
-            b.attendees,
-            isAllTime,
-          ),
-        ),
-        volunteerHours: Math.round(
-          applyBaselineRemainder(
-            sumMetric(rows, 'hours_total'),
-            sumMetric(legacyRows, 'hours_total'),
-            b.hours,
-            isAllTime,
-          ),
-        ),
-        eventsHeld: uniqueEventCount + (isAllTime ? Math.max(0, b.events - legacyEventIdSet.size) : 0),
-        treesPlanted: applyBaselineRemainder(
-          sumMetric(rows, 'trees_planted'),
-          sumMetric(legacyRows, 'trees_planted'),
-          b.trees,
-          isAllTime,
-        ),
-        invasiveWeedsPulled: sumMetric(rows, 'invasive_weeds_pulled') + sumMetric(legacyRows, 'invasive_weeds_pulled'),
-        rubbishCollectedKg: Math.round(
-          applyBaselineRemainder(
-            sumMetric(rows, 'rubbish_kg'),
-            sumMetric(legacyRows, 'rubbish_kg'),
-            b.rubbishKg,
-            isAllTime,
-          ),
-        ),
+        eventsAttended:      composed.totalAttendees,
+        volunteerHours:      composed.totalEstimatedHours,
+        eventsHeld:          composed.totalEvents,
+        treesPlanted:        composed.metrics['trees_planted'] ?? 0,
+        invasiveWeedsPulled: composed.metrics['invasive_weeds_pulled'] ?? 0,
+        rubbishCollectedKg:  composed.metrics['rubbish_kg'] ?? 0,
         cleanupSites:        cleanupAddresses.size,
-        coastlineCleanedM:   Math.round(sumMetric(rows, 'coastline_cleaned_m') + sumMetric(legacyRows, 'coastline_cleaned_m')),
+        coastlineCleanedM:   Math.round(composed.metrics['coastline_cleaned_m'] ?? 0),
         collectivesCount:    collectivesRes.count ?? 0,
         leadersEmpowered:    (leadersCountRes.data?.value as { count?: number })?.count ?? 0,
         totalMembers:        membersRes.count ?? 0,
@@ -159,38 +141,44 @@ export function useCollectiveImpact(collectiveId: string | undefined, timeRange:
     queryFn: async (): Promise<CanonicalImpact | null> => {
       if (!collectiveId) return null
 
-      const isAllTime = timeRange === 'all-time'
+      const effectiveStartIso = rangeStartIso(timeRange)
+      const windowEndIso = new Date().toISOString()
 
-      const [{ rows, legacyRows, eventIds, eventCount }, rpcRes] = await Promise.all([
-        fetchImpactRows({
-          collectiveId,
-          timeRange: timeRange as ImpactTimeRange,
-          // Include pre-baseline legacy rows for all-time collective view
-          includeLegacy: isAllTime,
-        }),
-        // leaders_lifetime from canonical RPC replaces stale app_settings counter
-        // (migration 20260511000000 adds leaders_current + leaders_lifetime).
+      // Collective scope: recorded-only via the SAME shared path (NO national
+      // baseline floor - baselines are national and cannot be sliced to a
+      // collective), so this collective's totals match its row in the insights
+      // By-collective table for the same window. leaders_lifetime still comes
+      // from the RPC (a leadership counter, not an impact rollup).
+      const [canonical, rpcRes] = await Promise.all([
+        fetchCanonicalImpactRows({ collectiveId, effectiveStartIso, windowEndIso }),
         supabase.rpc('get_collective_stats', { p_collective_id: collectiveId }),
       ])
 
-      if (eventCount === 0) {
+      const leadersEmpowered = (rpcRes.data as Record<string, number> | null)?.leaders_lifetime ?? 0
+
+      if (canonical.rows.length === 0) {
         return {
           eventsAttended: 0, volunteerHours: 0, eventsHeld: 0,
           treesPlanted: 0, invasiveWeedsPulled: 0, rubbishCollectedKg: 0,
           cleanupSites: 0, coastlineCleanedM: 0, collectivesCount: 1,
-          leadersEmpowered: (rpcRes.data as Record<string, number> | null)?.leaders_lifetime ?? 0,
+          leadersEmpowered,
         }
       }
 
-      const allRows = [...rows, ...legacyRows]
+      const composed = composeSummaryMetrics(canonical.rows, {
+        metricKeys: CANONICAL_METRIC_KEYS,
+        applyNationalBaseline: false,
+        effectiveStartIso,
+        windowEndIso,
+      })
 
-      // Cleanup sites: unique addresses from cleanup/marine events
+      // Cleanup sites: unique addresses from cleanup events in scope.
       const cleanupAddresses = new Set<string>()
-      if (eventIds.length > 0) {
+      if (canonical.eventIds.length > 0) {
         const { data: cleanupEvents } = await supabase
           .from('events')
           .select('address')
-          .in('id', eventIds)
+          .in('id', canonical.eventIds)
           .in('activity_type', ['clean_up'])
         for (const e of cleanupEvents ?? []) {
           const addr = (e.address ?? '').trim().toLowerCase()
@@ -199,16 +187,16 @@ export function useCollectiveImpact(collectiveId: string | undefined, timeRange:
       }
 
       return {
-        eventsAttended:      Math.round(sumMetric(allRows, 'attendees')),
-        volunteerHours:      Math.round(sumMetric(allRows, 'hours_total')),
-        eventsHeld:          eventCount,
-        treesPlanted:        sumMetric(allRows, 'trees_planted'),
-        invasiveWeedsPulled: sumMetric(allRows, 'invasive_weeds_pulled'),
-        rubbishCollectedKg:  Math.round(sumMetric(allRows, 'rubbish_kg')),
+        eventsAttended:      composed.totalAttendees,
+        volunteerHours:      composed.totalEstimatedHours,
+        eventsHeld:          composed.totalEvents,
+        treesPlanted:        composed.metrics['trees_planted'] ?? 0,
+        invasiveWeedsPulled: composed.metrics['invasive_weeds_pulled'] ?? 0,
+        rubbishCollectedKg:  composed.metrics['rubbish_kg'] ?? 0,
         cleanupSites:        cleanupAddresses.size,
-        coastlineCleanedM:   Math.round(sumMetric(allRows, 'coastline_cleaned_m')),
+        coastlineCleanedM:   Math.round(composed.metrics['coastline_cleaned_m'] ?? 0),
         collectivesCount:    1,
-        leadersEmpowered:    (rpcRes.data as Record<string, number> | null)?.leaders_lifetime ?? 0,
+        leadersEmpowered,
       }
     },
     enabled: !!collectiveId,

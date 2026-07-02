@@ -1,7 +1,6 @@
 import { useQuery, keepPreviousData, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { sumMetricWeighted } from '@/lib/impact-metrics'
-import { fetchImpactRows } from '@/lib/impact-query'
+import { fetchCanonicalImpactRows, composeSummaryMetrics } from '@/lib/impact-query'
 import { wallClockNow } from '@/lib/date-format'
 
 /* ------------------------------------------------------------------ */
@@ -183,20 +182,33 @@ async function fetchCollectiveFullStats(collectiveId: string): Promise<Collectiv
   // see fetchLeaderDashboard for the rationale.
   const now = wallClockNow().toISOString()
 
-  const [{ rows, legacyRows, eventIds, eventCount, shareByEventId }, membersRes, rpcRes] =
+  const windowEndIso = now
+  const [canonical, membersRes, rpcRes] =
     await Promise.all([
-      // All-time: include legacy rows for full historical picture. fetchImpactRows
-      // already resolves via event_hosts internally.
-      fetchImpactRows({ collectiveId, timeRange: 'all-time', includeLegacy: true }),
+      // ONE shared path: canonical rows for this collective (recorded-only,
+      // cancelled-excluded, INCLUDING legacy/estimate rows), scoped by the
+      // event's primary collective_id - the SAME attribution the insights
+      // By-collective table uses. This replaces the old event_hosts +
+      // sumMetricWeighted path so the leader-home "Collective Impact" card
+      // matches this collective's insights row exactly (Tate's callout).
+      fetchCanonicalImpactRows({ collectiveId, effectiveStartIso: null, windowEndIso }),
       supabase.from('collective_members').select('id', { count: 'exact', head: true })
         .eq('collective_id', collectiveId).eq('status', 'active'),
-      // leaders_lifetime from canonical RPC replaces the stale app_settings counter
-      // (migration 20260511000000 adds leaders_current + leaders_lifetime to the RPC).
+      // leaders_lifetime from the canonical RPC (a leadership counter, not an
+      // impact rollup).
       supabase.rpc('get_collective_stats', { p_collective_id: collectiveId }),
     ])
 
-  // Cleanup-site count uses the same event id set as the impact rollup so it
-  // includes co-hosted events. eventIds is already host-scoped.
+  const eventIds = canonical.eventIds
+
+  const composed = composeSummaryMetrics(canonical.rows, {
+    metricKeys: ['trees_planted', 'invasive_weeds_pulled', 'rubbish_kg', 'coastline_cleaned_m'],
+    applyNationalBaseline: false,
+    effectiveStartIso: null,
+    windowEndIso,
+  })
+
+  // Cleanup-site count over the in-scope events.
   let cleanupCount = 0
   if (eventIds.length > 0) {
     const { count } = await supabase
@@ -207,12 +219,6 @@ async function fetchCollectiveFullStats(collectiveId: string): Promise<Collectiv
       .lt('date_start', now)
     cleanupCount = count ?? 0
   }
-
-  const allRows = [...rows, ...legacyRows] as Record<string, unknown>[]
-
-  // Multi-host aware sum: each row contributes only this collective's share so
-  // co-hosted events don't double-count when summed across collectives.
-  const sumW = (key: string) => sumMetricWeighted(allRows, key, shareByEventId)
 
   let attendanceCount = 0
   let attendanceRate = 0
@@ -230,17 +236,22 @@ async function fetchCollectiveFullStats(collectiveId: string): Promise<Collectiv
   }
 
   return {
-    eventsAttended:      attendanceCount,
-    volunteerHours:      Math.round(sumW('hours_total')),
-    treesPlanted:        sumW('trees_planted'),
-    invasiveWeedsPulled: sumW('invasive_weeds_pulled'),
-    rubbishKg:           Math.round(sumW('rubbish_kg') * 10) / 10,
+    // Canonical "Attendances" = composeSummaryMetrics totalAttendees (from
+    // event_impact.attendees), matching insights / home / collective for the
+    // same collective. attendanceCount (event_registrations status='attended',
+    // app check-ins) is a DIFFERENT figure and is used ONLY for attendanceRate
+    // (the sign-in rate %), not for this card.
+    eventsAttended:      composed.totalAttendees,
+    volunteerHours:      composed.totalEstimatedHours,
+    treesPlanted:        composed.metrics['trees_planted']        ?? 0,
+    invasiveWeedsPulled: composed.metrics['invasive_weeds_pulled'] ?? 0,
+    rubbishKg:           Math.round((composed.metrics['rubbish_kg'] ?? 0) * 10) / 10,
     cleanupSites:        cleanupCount,
-    coastlineCleanedM:   Math.round(sumW('coastline_cleaned_m')),
+    coastlineCleanedM:   Math.round(composed.metrics['coastline_cleaned_m'] ?? 0),
     leadersEmpowered:    (rpcRes.data as Record<string, number> | null)?.leaders_lifetime ?? 0,
-    eventsLogged:        eventCount,
+    eventsLogged:        composed.totalEvents,
     totalMembers:        membersRes.count ?? 0,
-    totalEvents:         eventCount,
+    totalEvents:         composed.totalEvents,
     attendanceRate,
   }
 }

@@ -264,8 +264,11 @@ function YoYChart({ data, defs, rm }: { data: YearSummary[]; defs: ImpactMetricD
 
   const topMetrics = metricTotals.slice(0, 3)
 
+  // A null cell is "no data recorded" for that year; it contributes 0 to the
+  // bar and renders as a dash (via the val > 0 label branch below), never a
+  // misleading zero bar with a "0" number.
   const bars: { key: string; label: string; color: string; unit: string; getValue: (y: YearSummary) => number }[] = [
-    { key: '_attendees', label: 'Attendees', color: 'bg-warning-500', unit: '', getValue: (y) => y.attendees },
+    { key: '_attendees', label: 'Attendees', color: 'bg-warning-500', unit: '', getValue: (y) => y.attendees ?? 0 },
     ...topMetrics.map((m) => ({
       key: m.def.key,
       label: m.def.label,
@@ -273,7 +276,7 @@ function YoYChart({ data, defs, rm }: { data: YearSummary[]; defs: ImpactMetricD
       unit: m.def.unit,
       getValue: (y: YearSummary) => y.metrics[m.def.key] ?? 0,
     })),
-    { key: '_hours', label: 'Est. Vol Hours', color: 'bg-bark-500', unit: '', getValue: (y) => y.estimatedHours },
+    { key: '_hours', label: 'Est. Vol Hours', color: 'bg-bark-500', unit: '', getValue: (y) => y.estimatedHours ?? 0 },
   ]
 
   return (
@@ -285,7 +288,7 @@ function YoYChart({ data, defs, rm }: { data: YearSummary[]; defs: ImpactMetricD
         {data.map((d) => (
           <div key={d.year}>
             <span className="text-xs font-bold text-neutral-600 tabular-nums">{d.year}</span>
-            <span className="text-[10px] text-neutral-400 ml-2">{d.events} events</span>
+            <span className="text-[10px] text-neutral-400 ml-2">{d.events ?? 0} events</span>
             <div className="mt-1.5 space-y-1">
               {bars.map((bar) => {
                 const val = bar.getValue(d)

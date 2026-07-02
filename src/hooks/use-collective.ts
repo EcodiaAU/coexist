@@ -3,6 +3,7 @@ import { supabase, escapeIlike } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { COLLECTIVE_ROLE_RANK } from '@/lib/constants'
 import { wallClockNow } from '@/lib/date-format'
+import { fetchCanonicalImpactRows, composeSummaryMetrics } from '@/lib/impact-query'
 import type {
   Database,
   Tables,
@@ -219,23 +220,38 @@ export function useCollectiveStats(collectiveId: string | undefined) {
     queryFn: async () => {
       if (!collectiveId) throw new Error('No collective ID')
 
-      // Delegate entirely to the canonical multi-host-aware RPC. It applies per-host
-      // share weighting so co-hosted events don't inflate national totals, and it
-      // now also returns leaders_current + leaders_lifetime (migration 20260511000000).
-      const { data, error } = await supabase.rpc('get_collective_stats', {
-        p_collective_id: collectiveId,
-      })
-      if (error) throw error
+      // Impact totals come from the ONE shared max-rule composition (recorded-
+      // only, scoped, cancelled-excluded, INCLUDING legacy/estimate rows), so a
+      // collective's numbers here match its row in the insights By-collective
+      // table. The RPC get_collective_stats DIVERGED: it excluded legacy rows
+      // (dropping the 2024 estimate lumps) and applied a different multi-host
+      // share weighting, so its per-collective totals disagreed with insights.
+      // We keep the RPC ONLY for member_count + attendance_rate (membership
+      // metrics, not an impact rollup, computed correctly there). DB change is
+      // out of scope pre-cutover, so this is a code-only switch.
+      const windowEndIso = new Date().toISOString()
+      const [canonical, rpcRes] = await Promise.all([
+        fetchCanonicalImpactRows({ collectiveId, effectiveStartIso: null, windowEndIso }),
+        supabase.rpc('get_collective_stats', { p_collective_id: collectiveId }),
+      ])
+      if (rpcRes.error) throw rpcRes.error
 
-      const d = (data ?? {}) as Record<string, number>
+      const composed = composeSummaryMetrics(canonical.rows, {
+        metricKeys: ['trees_planted', 'rubbish_kg', 'area_restored_sqm', 'native_plants', 'wildlife_sightings'],
+        applyNationalBaseline: false,
+        effectiveStartIso: null,
+        windowEndIso,
+      })
+
+      const d = (rpcRes.data ?? {}) as Record<string, number>
       return {
-        totalEvents:            d.event_count        ?? 0,
-        totalTreesPlanted:      d.trees_planted       ?? 0,
-        totalRubbishKg:         d.rubbish_kg          ?? 0,
-        totalHours:             d.hours_total         ?? 0,
-        totalAreaRestored:      d.area_restored_sqm   ?? 0,
-        totalNativePlants:      d.native_plants       ?? 0,
-        totalWildlifeSightings: d.wildlife_sightings  ?? 0,
+        totalEvents:            composed.totalEvents,
+        totalTreesPlanted:      composed.metrics['trees_planted']     ?? 0,
+        totalRubbishKg:         composed.metrics['rubbish_kg']        ?? 0,
+        totalHours:             composed.totalEstimatedHours,
+        totalAreaRestored:      composed.metrics['area_restored_sqm'] ?? 0,
+        totalNativePlants:      composed.metrics['native_plants']     ?? 0,
+        totalWildlifeSightings: composed.metrics['wildlife_sightings'] ?? 0,
         activeMembers:          d.member_count        ?? 0,
         attendanceRate:         d.attendance_rate     ?? 0,
       } satisfies CollectiveStats

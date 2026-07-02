@@ -21,6 +21,15 @@ export {
   BASELINE_ATTENDEES,
   BASELINE_HOURS,
   applyBaselineRemainder,
+  // THE RULE (max vs baseline) machinery
+  PER_YEAR_NATIONAL_BASELINES,
+  GRANULAR_ERA_START,
+  baselineAxisForMetric,
+  fullyContainedBaselineYears,
+  composeMaxRuleTotal,
+  yearCellValue,
+  nationalHistoricalRemainder,
+  composeSummaryMetrics,
 } from '../../shared/impact-core'
 
 export type {
@@ -28,6 +37,14 @@ export type {
   ImpactScope,
   ImpactRow,
   FetchImpactResult,
+  YearNationalBaseline,
+  BaselineMetricAxis,
+  WholeHistoryBaseline,
+  CanonicalImpactRow,
+  ComposeSummaryScope,
+  ComposedSummary,
+  CanonicalFetchScope,
+  CanonicalFetchResult,
 } from '../../shared/impact-core'
 
 // Client-bound wrappers preserve the app's existing call signatures exactly.
@@ -35,6 +52,13 @@ export function fetchImpactRows(
   scope: core.ImpactScope = {},
 ): Promise<core.FetchImpactResult> {
   return core.fetchImpactRows(supabase, scope)
+}
+
+/** App-bound canonical fetch+normalise for the ONE shared composition. */
+export function fetchCanonicalImpactRows(
+  scope: core.CanonicalFetchScope = {},
+): Promise<core.CanonicalFetchResult> {
+  return core.fetchCanonicalImpactRows(supabase, scope)
 }
 
 export function fetchBaselineSettings(): ReturnType<typeof core.fetchBaselineSettings> {

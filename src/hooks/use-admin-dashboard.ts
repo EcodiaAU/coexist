@@ -1,7 +1,15 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { sumMetric } from '@/lib/impact-metrics'
-import { fetchImpactRows, fetchBaselineSettings, applyBaselineRemainder } from '@/lib/impact-query'
+import {
+  fetchBaselineSettings,
+  fetchCanonicalImpactRows,
+  composeSummaryMetrics,
+  BASELINE_TREES,
+  BASELINE_RUBBISH_KG,
+  BASELINE_EVENTS,
+  BASELINE_ATTENDEES,
+  BASELINE_HOURS,
+} from '@/lib/impact-query'
 import { wallClockNow } from '@/lib/date-format'
 
 /* ------------------------------------------------------------------ */
@@ -10,7 +18,24 @@ import { wallClockNow } from '@/lib/date-format'
 
 /* ── Date range helpers ── */
 
-export type DateRange = 'week' | 'month' | 'quarter' | 'year' | 'all' | 'custom'
+export type DateRange =
+  | 'week' | 'month' | 'quarter' | 'year' | 'all' | 'custom'
+  | 'current-financial-year' | 'past-financial-year'
+
+/**
+ * Australian financial year runs 1 Jul to 30 Jun. Returns the [start, end]
+ * (both ISO) of the FY that CONTAINS `ref` when offset=0, or the FY that
+ * many years earlier when offset<0. offset=-1 => the previous (past) FY.
+ * The end bound is 30 Jun 23:59:59.999 so the whole final day is inside.
+ */
+export function financialYearBounds(ref: Date, offset = 0): { start: string; end: string } {
+  // FY starting July: if we're in Jan-Jun the current FY started LAST July.
+  const startYear = (ref.getMonth() >= 6 ? ref.getFullYear() : ref.getFullYear() - 1) + offset
+  return {
+    start: new Date(startYear, 6, 1, 0, 0, 0, 0).toISOString(),
+    end:   new Date(startYear + 1, 5, 30, 23, 59, 59, 999).toISOString(),
+  }
+}
 
 export function getDateRangeStart(range: DateRange): string | null {
   const now = new Date()
@@ -19,6 +44,8 @@ export function getDateRangeStart(range: DateRange): string | null {
     case 'month':   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     case 'quarter': return new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString()
     case 'year':    return new Date(now.getFullYear(), 0, 1).toISOString()
+    case 'current-financial-year': return financialYearBounds(now, 0).start
+    case 'past-financial-year':    return financialYearBounds(now, -1).start
     case 'all':     return null
     // 'custom' has no fixed start - the explicit window is resolved by
     // getDateRangeBounds from the caller's customStart/customEnd. Returning
@@ -54,6 +81,13 @@ export function getDateRangeBounds(
       end: customEnd ? `${customEnd}T23:59:59.999Z` : null,
     }
   }
+  // Financial-year ranges carry a concrete upper bound (30 Jun), unlike the
+  // rolling ranges whose end is "now". Without the explicit end, a past-FY
+  // window would silently widen to today.
+  if (range === 'current-financial-year' || range === 'past-financial-year') {
+    const fy = financialYearBounds(new Date(), range === 'past-financial-year' ? -1 : 0)
+    return { start: fy.start, end: fy.end }
+  }
   return { start: getDateRangeStart(range), end: null }
 }
 
@@ -62,6 +96,8 @@ export const dateRangeOptions = [
   { value: 'month',   label: 'This Month' },
   { value: 'quarter', label: 'This Quarter' },
   { value: 'year',    label: 'This Year' },
+  { value: 'current-financial-year', label: 'This Financial Year' },
+  { value: 'past-financial-year',    label: 'Past Financial Year' },
   { value: 'all',     label: 'All Time' },
 ]
 
@@ -112,22 +148,24 @@ async function fetchAdminOverview(dateRange: DateRange, collectiveId?: string): 
     ? eventsCountQueryBase.eq('collective_id', collectiveId)
     : eventsCountQueryBase
 
-  const [{ rows, legacyRows, eventCount }, baseline, membersRes, collectivesRes, leadersRes, periodMembersRes, periodEventsRes] =
+  // Window bounds for the shared composition. End is "now" for a rolling range,
+  // or the concrete FY/custom end from getDateRangeBounds.
+  const bounds = getDateRangeBounds(dateRange)
+  const effectiveStartIso = bounds.start
+  const windowEndIso = bounds.end ?? now
+  // The national baseline floor applies only on the national (un-scoped) view;
+  // a collective-scoped dashboard shows that collective's recorded-only data.
+  const applyNationalBaseline = !scopedToCollective
+
+  const [canonical, baseline, membersRes, collectivesRes, leadersRes, periodMembersRes, periodEventsRes] =
     await Promise.all([
-      fetchImpactRows({
+      // ONE shared path (same as /admin/insights): canonical rows for the scope.
+      fetchCanonicalImpactRows({
         collectiveId,
-        timeRange: isAllTime ? 'all-time' : 'custom',
-        rangeStart: rangeStart ?? undefined,
-        // Pull legacy rows on any all-time view (national or collective-scoped)
-        // so /admin's per-scope numbers match /admin/impact and the homepage.
-        // Cross-surface aggregate invariant: same scope -> same row set.
-        includeLegacy: isAllTime,
+        effectiveStartIso,
+        windowEndIso,
       }),
-      // Baselines are national all-time constants - only apply when we're ACTUALLY
-      // asking for the national all-time view. Never add them to a single-collective
-      // view (they're not that collective's history) and never when a date range
-      // cuts off pre-2026 data.
-      isAllTime && !scopedToCollective ? fetchBaselineSettings() : Promise.resolve(null),
+      fetchBaselineSettings(),
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('collectives').select('id', { count: 'exact', head: true }).eq('is_active', true).neq('is_national', true),
       // BUG FIX: when scoped to a collective, read leaders_lifetime from the canonical
@@ -159,56 +197,33 @@ async function fetchAdminOverview(dateRange: DateRange, collectiveId?: string): 
   if (membersRes.error) throw membersRes.error
   if (collectivesRes.error) throw collectivesRes.error
 
-  const b = baseline ?? { attendees: 0, events: 0, trees: 0, rubbishKg: 0, hours: 0 }
-  const addBaseline = isAllTime && !scopedToCollective
-
-  // Event count by distinct event_id that has any impact row (live or legacy),
-  // matching /admin/impact and useNationalImpact. Adding `eventCount + baseline`
-  // would double-count pre-2026 backfill events that are already in `eventCount`
-  // when includeLegacy=true.
-  const liveEventIdsWithImpact = new Set(
-    rows.map((r) => (r as { event_id?: string }).event_id).filter((id): id is string => typeof id === 'string'),
-  )
-  const legacyEventIdSet = new Set(
-    legacyRows.map((r) => (r as { event_id?: string }).event_id).filter((id): id is string => typeof id === 'string'),
-  )
-  const uniqueEventCount = new Set([...liveEventIdsWithImpact, ...legacyEventIdSet]).size
-  const eventsRemainder = addBaseline ? Math.max(0, b.events - legacyEventIdSet.size) : 0
+  // Impact totals via the ONE shared composition (same as /admin/insights).
+  const lump = {
+    trees: baseline?.trees ?? BASELINE_TREES,
+    rubbish_kg: baseline?.rubbishKg ?? BASELINE_RUBBISH_KG,
+    events: baseline?.events ?? BASELINE_EVENTS,
+    attendees: baseline?.attendees ?? BASELINE_ATTENDEES,
+    hours: baseline?.hours ?? BASELINE_HOURS,
+  }
+  const composed = composeSummaryMetrics(canonical.rows, {
+    metricKeys: ['trees_planted', 'rubbish_kg'],
+    applyNationalBaseline,
+    effectiveStartIso,
+    windowEndIso,
+    // The whole-history lump only floors an all-time national window; a scoped
+    // or dated range resolves via the per-year path, so pass it only when it
+    // can legitimately apply (national + all-time).
+    lump: applyNationalBaseline && isAllTime ? lump : null,
+  })
 
   return {
     totalMembers:      membersRes.count ?? 0,
     totalCollectives:  collectivesRes.count ?? 0,
-    totalEvents:       uniqueEventCount + eventsRemainder,
-    totalAttendees:    Math.round(
-      applyBaselineRemainder(
-        sumMetric(rows, 'attendees'),
-        sumMetric(legacyRows, 'attendees'),
-        b.attendees,
-        addBaseline,
-      ),
-    ),
-    totalTrees:        applyBaselineRemainder(
-      sumMetric(rows, 'trees_planted'),
-      sumMetric(legacyRows, 'trees_planted'),
-      b.trees,
-      addBaseline,
-    ),
-    totalHours:        Math.round(
-      applyBaselineRemainder(
-        sumMetric(rows, 'hours_total'),
-        sumMetric(legacyRows, 'hours_total'),
-        b.hours,
-        addBaseline,
-      ),
-    ),
-    totalRubbish:      Math.round(
-      applyBaselineRemainder(
-        sumMetric(rows, 'rubbish_kg'),
-        sumMetric(legacyRows, 'rubbish_kg'),
-        b.rubbishKg,
-        addBaseline,
-      ),
-    ),
+    totalEvents:       composed.totalEvents,
+    totalAttendees:    composed.totalAttendees,
+    totalTrees:        composed.metrics['trees_planted'] ?? 0,
+    totalHours:        composed.totalEstimatedHours,
+    totalRubbish:      composed.metrics['rubbish_kg'] ?? 0,
     totalLeadersEmpowered: (leadersRes.data?.value as { count?: number })?.count ?? 0,
     periodMembers:     periodMembersRes.count ?? 0,
     periodEvents:      periodEventsRes.count ?? 0,

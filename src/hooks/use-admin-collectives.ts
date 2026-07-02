@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, escapeIlike } from '@/lib/supabase'
-import { sumMetricWeighted } from '@/lib/impact-metrics'
-import { fetchImpactRows } from '@/lib/impact-query'
+import { fetchCanonicalImpactRows, composeSummaryMetrics } from '@/lib/impact-query'
 import { logAudit } from '@/lib/audit'
 import { countByField, STATUS_FILTERS } from '@/lib/query-builders'
 import type {
@@ -239,36 +238,42 @@ export function useAdminCollectiveStats(collectiveId: string | undefined) {
     queryFn: async () => {
       if (!collectiveId) throw new Error('No collective ID')
 
-      // RPC uses COALESCE(SUM(...), 0) so unmeasured metrics aggregate to 0,
-      // which is the correct semantic for dashboard totals (vs null in raw rows).
-      // The RPC is multi-host aware: it resolves via event_hosts and applies
-      // share weighting so co-hosted events don't double-count.
-      const [rpcRes, impactResult] = await Promise.all([
+      // Impact totals via the ONE shared max-rule composition (recorded-only,
+      // scoped, cancelled-excluded, INCLUDING legacy/estimate rows), so the
+      // admin collective-detail page matches this collective's row in the
+      // insights By-collective table. The RPC get_collective_stats diverged
+      // (excluded legacy, multi-host weighting), so we keep it ONLY for
+      // member_count. DB change is out of scope; this is a code-only switch.
+      const windowEndIso = new Date().toISOString()
+      const [rpcRes, canonical] = await Promise.all([
         supabase.rpc('get_collective_stats', { p_collective_id: collectiveId }),
-        fetchImpactRows({ collectiveId, timeRange: 'all-time', includeLegacy: true }),
+        fetchCanonicalImpactRows({ collectiveId, effectiveStartIso: null, windowEndIso }),
       ])
       if (rpcRes.error) throw rpcRes.error
-      const { rows: impactRows, shareByEventId } = impactResult
 
-      const rpcData = rpcRes.data as {
-        member_count: number
-        event_count: number
-        trees_planted: number
-        rubbish_kg: number
-        coastline_cleaned_m: number
-        hours_total: number
-        area_restored_sqm: number
-        native_plants: number
-        wildlife_sightings: number
-        invasive_weeds_pulled: number
-      }
+      const composed = composeSummaryMetrics(canonical.rows, {
+        metricKeys: [
+          'trees_planted', 'rubbish_kg', 'coastline_cleaned_m', 'area_restored_sqm',
+          'native_plants', 'wildlife_sightings', 'invasive_weeds_pulled',
+        ],
+        applyNationalBaseline: false,
+        effectiveStartIso: null,
+        windowEndIso,
+      })
 
-      // hours_total is overridden client-side because the legacy estimate
-      // (attendees × duration) lives in TS, not the RPC. Weight by share so
-      // co-hosted events split hours across hosts.
+      const member_count = (rpcRes.data as { member_count?: number } | null)?.member_count ?? 0
+
       return {
-        ...rpcData,
-        hours_total: Math.round(sumMetricWeighted(impactRows, 'hours_total', shareByEventId)),
+        member_count,
+        event_count:           composed.totalEvents,
+        trees_planted:         composed.metrics['trees_planted']        ?? 0,
+        rubbish_kg:            composed.metrics['rubbish_kg']           ?? 0,
+        coastline_cleaned_m:   composed.metrics['coastline_cleaned_m']  ?? 0,
+        hours_total:           composed.totalEstimatedHours,
+        area_restored_sqm:     composed.metrics['area_restored_sqm']    ?? 0,
+        native_plants:         composed.metrics['native_plants']        ?? 0,
+        wildlife_sightings:    composed.metrics['wildlife_sightings']   ?? 0,
+        invasive_weeds_pulled: composed.metrics['invasive_weeds_pulled'] ?? 0,
       }
     },
     enabled: !!collectiveId,

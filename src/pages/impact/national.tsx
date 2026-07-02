@@ -277,16 +277,26 @@ export default function NationalImpactPage() {
   const { data: customMetrics } = useNationalCustomMetrics(5)
   const { metricLabels, metricByKey } = useImpactMetricDefs()
 
-  if (showLoading) {
+  // Guard on isLoading, NOT on showLoading. useDelayedLoading returns false
+  // during the first ~1s of EVERY load (before its delay timer fires), so
+  // gating the skeleton on `showLoading` alone let the render fall through to
+  // the content branch while `data` was still undefined - making every hero
+  // stat card render `data?.x ?? 0` = 0 (the /impact/national "all heroes 0"
+  // bug; the page's other sections use separate queries that had resolved, so
+  // they populated). The documented-correct pattern (see use-delayed-loading.ts)
+  // is: while isLoading, return the skeleton (animated once showLoading, a
+  // quiet placeholder during the pre-delay window) - never fall through to
+  // content until the query has settled.
+  if (isLoading) {
     const skeleton = (
         <div className="p-5 space-y-5">
           <div className="grid grid-cols-2 gap-4">
-            <div className="h-36 rounded-md bg-neutral-100 animate-pulse" />
-            <div className="h-36 rounded-md bg-neutral-100 animate-pulse" />
-            <div className="h-36 rounded-md bg-neutral-100 animate-pulse" />
-            <div className="h-36 rounded-md bg-neutral-100 animate-pulse" />
+            <div className={cn('h-36 rounded-md bg-neutral-100', showLoading && 'animate-pulse')} />
+            <div className={cn('h-36 rounded-md bg-neutral-100', showLoading && 'animate-pulse')} />
+            <div className={cn('h-36 rounded-md bg-neutral-100', showLoading && 'animate-pulse')} />
+            <div className={cn('h-36 rounded-md bg-neutral-100', showLoading && 'animate-pulse')} />
           </div>
-          <div className="h-64 rounded-md bg-neutral-100 animate-pulse" />
+          <div className={cn('h-64 rounded-md bg-neutral-100', showLoading && 'animate-pulse')} />
         </div>
     )
     if (isAdmin) return skeleton

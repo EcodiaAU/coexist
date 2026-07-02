@@ -106,7 +106,7 @@ export function MultiSelect({
           position: 'fixed',
           top: rect.bottom + 4,
           left: rect.left,
-          width: rect.width,
+          minWidth: rect.width, width: 'max-content', maxWidth: 'calc(100vw - ' + (rect.left + 8) + 'px)',
         })
       })
     }
@@ -117,7 +117,7 @@ export function MultiSelect({
         position: 'fixed',
         top: rect.bottom + 4,
         left: rect.left,
-        width: rect.width,
+        minWidth: rect.width, width: 'max-content', maxWidth: 'calc(100vw - ' + (rect.left + 8) + 'px)',
       })
     }
 
@@ -275,7 +275,7 @@ export function MultiSelect({
                   {option.icon}
                 </span>
               )}
-              <span className="truncate">{option.label}</span>
+              <span className="whitespace-normal sm:whitespace-nowrap">{option.label}</span>
             </span>
           </li>
         )

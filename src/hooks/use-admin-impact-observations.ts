@@ -6,13 +6,20 @@ import { getDateRangeBounds, type DateRange } from '@/hooks/use-admin-dashboard'
 import { wallClockNow } from '@/lib/date-format'
 import {
   IMPACT_BASELINE_DATE,
+  GRANULAR_ERA_START,
+  PER_YEAR_NATIONAL_BASELINES,
   BASELINE_TREES,
   BASELINE_RUBBISH_KG,
   BASELINE_EVENTS,
   BASELINE_ATTENDEES,
   BASELINE_HOURS,
+  baselineAxisForMetric,
+  fullyContainedBaselineYears,
+  yearCellValue,
+  composeSummaryMetrics,
   fetchBaselineSettings,
 } from '@/lib/impact-query'
+import type { CanonicalImpactRow } from '@/lib/impact-query'
 import type { Database } from '@/types/database.types'
 
 type ActivityType = Database['public']['Enums']['activity_type']
@@ -62,16 +69,43 @@ export interface CollectiveBreakdown {
   /** Aggregated metric totals keyed by metric def key */
   metrics: Record<string, number>
   estimatedHours: number
+  /**
+   * True when this collective's figures for the window are pre-2025
+   * leader-reported estimates (the 11 synthetic 2024 "Historical Data
+   * Backfill" lumps), NOT real per-event recorded data. The UI must label
+   * these clearly as low-confidence estimates.
+   */
+  isEstimate?: boolean
 }
 
 export interface YearSummary {
   year: number
-  events: number
-  attendees: number
-  estimatedHours: number
-  /** Aggregated metric totals keyed by metric def key */
-  metrics: Record<string, number>
+  /** null = no data recorded (untracked, no baseline) - render as a dash, not 0. */
+  events: number | null
+  attendees: number | null
+  estimatedHours: number | null
+  /**
+   * Aggregated metric totals keyed by metric def key. A `null` cell means the
+   * metric was genuinely NOT tracked that year (no baseline, no recorded rows)
+   * and must render as "no data recorded", never 0. A numeric 0 is a real
+   * tracked zero.
+   */
+  metrics: Record<string, number | null>
 }
+
+/**
+ * How much to trust the figures for the selected window, driven by the era it
+ * spans (DESIGN.md s6):
+ *  - 'granular'  : window sits entirely on/after 2025-01-01 -> real per-event,
+ *                  per-collective, per-date data. Full fidelity.
+ *  - 'mixed'     : window overlaps both the granular era and a pre-2025 era.
+ *  - 'national'  : window is entirely pre-2025 -> national annual lumps only,
+ *                  cannot be sliced by collective or by date within the year.
+ */
+export type WindowConfidence = 'granular' | 'mixed' | 'national'
+
+/** Per-figure provenance so the UI can honestly label estimates. */
+export type FigureProvenance = 'recorded' | 'baseline' | 'estimate' | 'no-data'
 
 export interface ImpactSummary {
   totalEvents: number
@@ -79,29 +113,28 @@ export interface ImpactSummary {
   totalEstimatedHours: number
   /** Aggregated metric totals keyed by metric def key */
   metrics: Record<string, number>
+  /**
+   * Per-figure provenance. Keys: 'events','attendees','hours' + each metric
+   * def key. 'baseline' means THE RULE floored the figure at the org's stated
+   * baseline (recorded was lower or absent); 'recorded' means our data met or
+   * exceeded it; 'no-data' means the source is genuinely blank for the window
+   * (render as no-data, never zero); 'estimate' is reserved for leader-reported
+   * pre-2025 collective figures surfaced in the drill-down.
+   */
+  provenance: Record<string, FigureProvenance>
 }
 
-/**
- * Per-activity legacy event_impact distribution (the coexist_impact_legacy_by_activity
- * RPC return shape). Used to attribute the pre-2026 baseline_remainder
- * proportionally across activity types so the per-activity-scoped views
- * reconcile with the All Types view's totals.
- */
-export interface LegacyDistribution {
-  totals: {
-    event_count: number
-    attendees: number
-    hours: number
-    trees: number
-    rubbish: number
-  }
-  by_activity: Record<string, {
-    event_count: number
-    attendees: number
-    hours: number
-    trees: number
-    rubbish: number
-  }>
+export interface ObservationsMeta {
+  /** Confidence band for the whole window (drives the UI chip). */
+  confidence: WindowConfidence
+  /**
+   * True when the per-collective drill-down for this window is trustworthy
+   * real per-event data (window on/after the granular era). When false, any
+   * per-collective figures are pre-2025 leader-reported ESTIMATES.
+   */
+  collectiveBreakdownTrustworthy: boolean
+  /** Pre-2025 calendar years fully inside the window (national-lump only). */
+  nationalOnlyYears: number[]
 }
 
 export interface DataQuality {
@@ -125,6 +158,18 @@ function parseAttendance(notes: string | null): number | null {
   if (!notes) return null
   const m = notes.match(/Legacy import:\s*(\d+)\s*attendees/)
   return m ? parseInt(m[1]) : null
+}
+
+/**
+ * Year-table row filter: keep only rows whose event is NOT cancelled. Keeps the
+ * year-over-year aggregation aligned with the headline (which counts only
+ * published/completed events). A missing status is treated as included (the DB
+ * query already scopes status; this is a defensive in-memory guard).
+ */
+export function excludeCancelledYoY(
+  row: { events: { status?: string } | null },
+): boolean {
+  return row.events?.status !== 'cancelled'
 }
 
 /** Extract a single metric value from a raw impact row */
@@ -173,8 +218,9 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       if (isCustom && (!filters.customStart || !filters.customEnd || filters.customStart > filters.customEnd)) {
         return {
           rows: [] as EventImpactRow[],
-          summary: { totalEvents: 0, totalAttendees: 0, totalEstimatedHours: 0, metrics: {} } as ImpactSummary,
+          summary: { totalEvents: 0, totalAttendees: 0, totalEstimatedHours: 0, metrics: {}, provenance: {} } as ImpactSummary,
           collectiveBreakdown: [] as CollectiveBreakdown[],
+          meta: { confidence: 'granular', collectiveBreakdownTrustworthy: true, nationalOnlyYears: [] } as ObservationsMeta,
         }
       }
       // Resolve the effective collective scope. `collectiveIds` (multi-select)
@@ -220,16 +266,21 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       // window, so there is no risk of pre-window pollution. Baseline is only
       // ever added on the all-time national view, so counting legacy on a
       // scoped range never double-counts against a baseline.
-      const isNationalAllTime = isAllTime && !hasCollectiveScope && !filters.activityType
+      // THE RULE (Tate 2026-07-02): displayed = GREATEST(baseline, recorded),
+      // per metric, per window, never below baseline. The baseline floor
+      // applies whenever the window has NO collective / activity narrowing
+      // (baselines are national figures that cannot be sliced by collective or
+      // activity - DESIGN.md s6). It is a MAX over recorded, computed once, so
+      // it can never double-count. This replaces the old baseline-REMAINDER +
+      // proportional-share machinery, whose sum-based shape carried the
+      // double-count risk flagged in insights.patch.
+      const applyNationalBaseline = !hasCollectiveScope && !filters.activityType
       const includeLegacy = true
-      // When the user narrows to one activity_type on an all-time view we
-      // still want the baseline-remainder share to flow into this scope,
-      // proportional to the legacy distribution - otherwise sum-of-parts
-      // doesn't equal All Types (Tate 2026-06-12 common-sense matrix probe).
-      const isActivityScopedAllTime = isAllTime && !hasCollectiveScope && !!filters.activityType
       const effectiveStart = rangeStart
         ?? (includeLegacy ? null : new Date(IMPACT_BASELINE_DATE).toISOString())
       const nowIso = new Date().toISOString()
+      // Window upper bound for the baseline-floor year-containment test.
+      const windowEndIso = customEndIso ?? nowIso
 
       // ── Step 1: resolve event IDs matching filters ──
       //
@@ -259,23 +310,29 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       }
       if (filters.activityType) eventsQuery = eventsQuery.eq('activity_type', filters.activityType)
 
-      // Fetch events and (when national all-time OR activity-scoped all-time)
-      // baseline settings in parallel. Baseline values come from app_settings
-      // rather than the hardcoded constants so admin updates are reflected
-      // without a code deploy. The activity-scoped-all-time case also pulls
-      // the per-activity legacy distribution so we can attribute the
-      // baseline_remainder proportionally and keep sum-of-parts == All Types.
-      const needsBaseline = isNationalAllTime || isActivityScopedAllTime
-      const [eventsResult, baselineSettings, legacyDist] = await Promise.all([
+      // The per-year national baselines THE RULE floors against are the
+      // canonical OVERALL-tab figures in PER_YEAR_NATIONAL_BASELINES (the
+      // app_settings per-year keys are unreliable for non-trees axes - see
+      // DESIGN.md s0). We ALSO read the whole-history app_settings lumps
+      // (2022-2025 totals) as the SECOND floor so a per-year composition can
+      // never drop a headline metric below Kurt's stated figure (dual floor).
+      const [eventsResult, baselineSettings] = await Promise.all([
         eventsQuery,
-        needsBaseline ? fetchBaselineSettings() : Promise.resolve(null),
-        isActivityScopedAllTime
-          ? supabase.rpc('coexist_impact_legacy_by_activity').then((r) => r.data as unknown as LegacyDistribution | null)
-          : Promise.resolve(null),
+        applyNationalBaseline ? fetchBaselineSettings() : Promise.resolve(null),
       ])
       const { data: eventsData, error: eventsErr } = eventsResult
       if (eventsErr) throw eventsErr
 
+      // Whole-history lump per metric axis (app_settings, with constant
+      // fallbacks). Only used when the window fully contains the whole 2022-2025
+      // baseline era (composeMaxRuleTotal enforces that).
+      const lump = {
+        trees:      baselineSettings?.trees     ?? BASELINE_TREES,
+        rubbish_kg: baselineSettings?.rubbishKg ?? BASELINE_RUBBISH_KG,
+        events:     baselineSettings?.events    ?? BASELINE_EVENTS,
+        attendees:  baselineSettings?.attendees ?? BASELINE_ATTENDEES,
+        hours:      baselineSettings?.hours     ?? BASELINE_HOURS,
+      }
       const eventById = new Map<string, RawRow['events']>()
       for (const e of eventsData ?? []) {
         eventById.set(e.id, e as unknown as RawRow['events'])
@@ -392,137 +449,43 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
         ...(!isAllTime ? filteredLegacy.map(toRow) : []),
       ]
 
-      // Summary - sum from the returned rows (live + legacy when included).
+      // ── Summary under THE RULE via the ONE shared composition ──
       //
-      // Baseline handling (revised 2026-05-19 after CDP-verified double-count):
-      //   - BASELINE_* constants are Tate's pre-2026 sheet total (the canonical
-      //     pre-2026 truth: 2022 + 2024 + 2025 figures). Hardcoded fact.
-      //   - Legacy import rows in the DB are a SUBSET of pre-2026 history that
-      //     was imported per-collective. Some collectives have it, some don't.
-      //   - LIVE rows on pre-2026 events (5,627 trees on 2024 events, 1,505 on
-      //     2025 events as of the verify probe) double-count: they're already
-      //     inside the BASELINE constant. Excluding them from the SUMMARY (not
-      //     the row list - users still want to see 2024/2025 events listed)
-      //     is the fix.
-      //
-      //   Formula for national all-time:
-      //     summary = sum(live rows on POST-2026 events)
-      //             + sum(legacy rows)
-      //             + max(0, BASELINE - sum(legacy))
-      //
-      //     When sum(legacy) <= BASELINE: collapses to sum(2026_live) + BASELINE
-      //     which is the canonical pre-2026-as-constant model.
-      //
-      //   For per-collective: just sum(live + legacy) for that collective. No
-      //   baseline addition - baselines are national, not per-collective.
-      //   For time-scoped: just sum(live), no legacy, no baseline.
-      const showNationalBaseline = isAllTime && !hasCollectiveScope && !filters.activityType
-      const baselineDateIso = new Date(IMPACT_BASELINE_DATE).toISOString()
-
-      // For the national-all-time SUMMARY we exclude live rows on pre-2026
-      // events (double-counting against BASELINE). The row list below still
-      // shows the full `rows` array so users see 2024/2025 events. The same
-      // exclusion applies to the activity-scoped all-time view - the
-      // proportional baseline_remainder share covers pre-2026 history, so
-      // including pre-2026 live rows would double-count exactly the same way
-      // the All Types view's exclusion guards against.
-      const summableLive: typeof filtered = (showNationalBaseline || isActivityScopedAllTime)
-        ? filtered.filter((r) => (r.events.date_start ?? '') >= baselineDateIso)
-        : filtered
-
-      const summableRows: Record<string, unknown>[] = [
-        ...(summableLive as unknown as Record<string, unknown>[]),
-        ...(filteredLegacy as unknown as Record<string, unknown>[]),
+      // Build normalised in-window rows (live + legacy - both are real dated
+      // events; cancelled already excluded by the events query) and hand them
+      // to composeSummaryMetrics in shared/impact-core.ts. This is the single
+      // code path every impact surface consumes, so /admin/insights and every
+      // other surface report identical numbers for the same scope.
+      const eventYear = (dateStart: string | null | undefined): number =>
+        new Date(dateStart ?? '').getFullYear()
+      const toCanonical = (r: RawRow, legacy: boolean): CanonicalImpactRow => ({
+        year: eventYear(r.events.date_start),
+        eventId: (legacy ? (r.event_id as string) : r.events.id),
+        attendees: r.attendees != null
+          ? Number(r.attendees) || 0
+          : (legacy ? (parseAttendance(r.notes as string | null) ?? 0) : 0),
+        hours: Number(r.hours_total) || 0,
+        metric: (key: string) => getMetricValue(r, key) ?? 0,
+      })
+      const canonicalRows: CanonicalImpactRow[] = [
+        ...filtered.map((r) => toCanonical(r, false)),
+        ...filteredLegacy.map((r) => toCanonical(r, true)),
       ]
 
-      const summaryMetrics: Record<string, number> = {}
-      for (const key of metricKeys) {
-        summaryMetrics[key] = sumMetric(summableRows, key)
-      }
-
-      // Proportional baseline_remainder share when the user has narrowed to a
-      // single activity_type on an all-time view. share = this activity's
-      // legacy contribution / global legacy total. The full baseline_remainder
-      // mass equals the activity's All Types share once summed across types,
-      // so sum-of-parts == All Types view (Tate 2026-06-12 common-sense probe).
-      // Activities with zero legacy contribution for a metric receive zero share -
-      // we have no signal that the unimported pre-2026 history covered them.
-      function proportionalShare(metricLegacyKey: 'trees' | 'rubbish' | 'event_count' | 'attendees' | 'hours'): number {
-        if (!isActivityScopedAllTime || !legacyDist || !filters.activityType) return 0
-        const total = legacyDist.totals?.[metricLegacyKey] ?? 0
-        if (total <= 0) return 0
-        const slice = legacyDist.by_activity?.[filters.activityType]?.[metricLegacyKey] ?? 0
-        return slice / total
-      }
-
-      if (showNationalBaseline || isActivityScopedAllTime) {
-        const bTrees   = baselineSettings?.trees     ?? BASELINE_TREES
-        const bRubbish = baselineSettings?.rubbishKg ?? BASELINE_RUBBISH_KG
-        if (metricKeys.includes('trees_planted')) {
-          const legacyTrees = sumMetric(filteredLegacy as unknown as Record<string, unknown>[], 'trees_planted')
-          const fullRemainder = Math.max(0, bTrees - (legacyDist?.totals?.trees ?? legacyTrees))
-          const share = showNationalBaseline ? 1 : proportionalShare('trees')
-          summaryMetrics['trees_planted'] = (summaryMetrics['trees_planted'] ?? 0) + fullRemainder * share
-        }
-        if (metricKeys.includes('rubbish_kg')) {
-          const legacyRubbish = sumMetric(filteredLegacy as unknown as Record<string, unknown>[], 'rubbish_kg')
-          const fullRemainder = Math.max(0, bRubbish - (legacyDist?.totals?.rubbish ?? legacyRubbish))
-          const share = showNationalBaseline ? 1 : proportionalShare('rubbish')
-          summaryMetrics['rubbish_kg'] = (summaryMetrics['rubbish_kg'] ?? 0) + fullRemainder * share
-        }
-      }
-
-      // Attendees: prefer the numeric `attendees` column; legacy rows often
-      // carry their count in the notes field ("Legacy import: 123 attendees").
-      // summableLive is the live-row subset that goes into the summary (excludes
-      // pre-2026 live rows for national-all-time to avoid double-counting baseline).
-      const liveAttendeeSum = Math.round(sumMetric(summableLive as unknown as Record<string, unknown>[], 'attendees'))
-      let legacyAttendeeSum = 0
-      for (const r of filteredLegacy) {
-        const att = r.attendees != null
-          ? Number(r.attendees) || 0
-          : (parseAttendance(r.notes as string | null) ?? 0)
-        legacyAttendeeSum += att
-      }
-      const totalAttendees = liveAttendeeSum + legacyAttendeeSum
-      const totalEstimatedHours = Math.round(sumMetric(summableRows, 'hours_total'))
-      const uniqueEventIds = new Set([
-        ...summableLive.map((r) => r.events.id),
-        ...filteredLegacy.map((r) => r.event_id),
-      ])
-
-      const bEvents    = baselineSettings?.events    ?? BASELINE_EVENTS
-      const bAttendees = baselineSettings?.attendees ?? BASELINE_ATTENDEES
-      const bHours     = baselineSettings?.hours     ?? BASELINE_HOURS
-
-      // Baseline remainder for the count-shaped metrics. For each: subtract
-      // the legacy-contribution from the national baseline and add the
-      // leftover. Cap at zero so over-coverage doesn't make the total drop.
-      // For activity-scoped all-time, scale the remainder by the activity's
-      // proportional share of the legacy distribution (Tate 2026-06-12).
-      const hoursLegacySum = Math.round(sumMetric(filteredLegacy as unknown as Record<string, unknown>[], 'hours_total'))
-
-      const eventsRemainderFull    = Math.max(0, bEvents    - (legacyDist?.totals?.event_count ?? new Set(filteredLegacy.map((r) => r.event_id)).size))
-      const attendeesRemainderFull = Math.max(0, bAttendees - (legacyDist?.totals?.attendees ?? legacyAttendeeSum))
-      const hoursRemainderFull     = Math.max(0, bHours     - (legacyDist?.totals?.hours ?? hoursLegacySum))
-
-      const eventsRemainder    = showNationalBaseline ? eventsRemainderFull
-                                : isActivityScopedAllTime ? eventsRemainderFull    * proportionalShare('event_count')
-                                : 0
-      const attendeesRemainder = showNationalBaseline ? attendeesRemainderFull
-                                : isActivityScopedAllTime ? attendeesRemainderFull * proportionalShare('attendees')
-                                : 0
-      const hoursRemainder     = showNationalBaseline ? hoursRemainderFull
-                                : isActivityScopedAllTime ? hoursRemainderFull     * proportionalShare('hours')
-                                : 0
+      const composed = composeSummaryMetrics(canonicalRows, {
+        metricKeys,
+        applyNationalBaseline,
+        effectiveStartIso: effectiveStart,
+        windowEndIso,
+        lump: applyNationalBaseline ? lump : null,
+      })
 
       const summary: ImpactSummary = {
-        // Counts must stay whole numbers - the proportional share can produce
-        // fractional remainders. Round to nearest int for events/attendees/hours.
-        totalEvents:         Math.round(uniqueEventIds.size + eventsRemainder),
-        totalAttendees:      Math.round(totalAttendees      + attendeesRemainder),
-        totalEstimatedHours: Math.round(totalEstimatedHours + hoursRemainder),
-        metrics: summaryMetrics,
+        totalEvents:         composed.totalEvents,
+        totalAttendees:      composed.totalAttendees,
+        totalEstimatedHours: composed.totalEstimatedHours,
+        metrics:             composed.metrics,
+        provenance:          composed.provenance as Record<string, FigureProvenance>,
       }
 
       // Collective breakdown - fold both live event rows and legacy imports.
@@ -619,11 +582,59 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
           })
         }
       }
+      // Flag pre-2025 collectives as ESTIMATES. Real per-collective data only
+      // exists from 2025-01-01 (the synthetic 2024 "Historical Data Backfill"
+      // lumps are Charlie's manual leader-reported estimates, low confidence -
+      // kept per Tate 2026-07-02 but never presented as exact recorded data).
+      // A collective whose events are ALL pre-granular-era is an estimate; a
+      // collective with any real 2025+ event is trustworthy for that portion.
+      const collectiveHasGranular = new Map<string, boolean>()
+      for (const r of rows) {
+        const isGranular = (r.date ?? '') >= new Date(GRANULAR_ERA_START).toISOString()
+        collectiveHasGranular.set(
+          r.collectiveId,
+          (collectiveHasGranular.get(r.collectiveId) ?? false) || isGranular,
+        )
+      }
+      for (const c of byCollective.values()) {
+        // Only pre-2025 collectives (no granular event at all) are estimates.
+        if (c.eventCount > 0 && collectiveHasGranular.get(c.collectiveId) === false) {
+          c.isEstimate = true
+        }
+      }
+
       const collectiveBreakdown = [...byCollective.values()].sort(
         (a, b) => b.eventCount - a.eventCount,
       )
 
-      return { rows, summary, collectiveBreakdown }
+      // ── Window confidence (drives the UI chip) ──
+      // granular: window entirely on/after 2025-01-01. national: entirely
+      // before. mixed: straddles. All-time is 'mixed' (it reaches pre-2025).
+      const granularStartMs = new Date(GRANULAR_ERA_START).getTime()
+      const fromMs = effectiveStart ? new Date(effectiveStart).getTime() : -Infinity
+      const toMs = new Date(windowEndIso).getTime()
+      let confidence: WindowConfidence
+      if (fromMs >= granularStartMs) confidence = 'granular'
+      else if (toMs < granularStartMs) confidence = 'national'
+      else confidence = 'mixed'
+
+      // Pre-2025 calendar years fully inside the window that are national-lump
+      // ONLY (no real per-collective / per-date rows exist for them). 2025 has
+      // a national baseline too, but it is the granular era with real per-event
+      // data, so it is NOT a national-only year - exclude it from the banner.
+      const nationalOnlyYears = fullyContainedBaselineYears(effectiveStart, windowEndIso)
+        .filter((yr) => new Date(GRANULAR_ERA_START).getFullYear() > yr)
+
+      const meta: ObservationsMeta = {
+        confidence,
+        // The drill-down is trustworthy real data only when the window sits
+        // entirely in the granular era; otherwise any per-collective figure is
+        // (at least partly) a pre-2025 estimate.
+        collectiveBreakdownTrustworthy: confidence === 'granular',
+        nationalOnlyYears,
+      }
+
+      return { rows, summary, collectiveBreakdown, meta }
     },
     staleTime: 2 * 60 * 1000,
     placeholderData: keepPreviousData,
@@ -638,21 +649,34 @@ export function useYearOverYear(metricDefs: ImpactMetricDef[]) {
   return useQuery({
     queryKey: ['admin-impact-yoy', metricDefs.map((d) => d.key)],
     queryFn: async () => {
+      // Pull BOTH live and legacy rows across ALL years (no 2026 floor) so the
+      // year-on-year table can show every year including the pre-2025 estimate
+      // lumps. THE RULE is then applied per year: each figure is
+      // MAX(national baseline for the year, recorded for the year), and
+      // baseline-only years (2022/2023 with no event rows) are injected so they
+      // are never dropped - the same per-year composition as the headline.
       const { data, error } = await supabase
         .from('event_impact')
-        .select(`${IMPACT_SELECT_COLUMNS}, logged_at, events!inner(date_start, date_end)`)
-        .or('notes.is.null,notes.not.like.Legacy import:%')
-        .gte('events.date_start', new Date(IMPACT_BASELINE_DATE).toISOString())
+        .select(`${IMPACT_SELECT_COLUMNS}, logged_at, events!inner(date_start, date_end, status)`)
         .lt('events.date_start', wallClockNow().toISOString())
+        // Exclude cancelled events so the year table matches the headline (the
+        // headline query already filters to published/completed). Without this,
+        // a cancelled 2026 event with impact inflated the 2026 row (18,154 vs
+        // the correct 18,074).
+        .in('events.status', ['published', 'completed'])
 
       if (error) throw error
 
       const metricKeys = metricDefs.map((d) => d.key)
 
       type Row = Record<string, unknown> & {
-        events: { date_start: string; date_end: string | null } | null
+        events: { date_start: string; date_end: string | null; status?: string } | null
       }
-      const rows = (data ?? []) as unknown as Row[]
+      // Exclude cancelled events so the year table matches the headline. The DB
+      // query already filters status, but an in-memory guard keeps the year
+      // aggregation correct even if a cancelled row ever slips through (a
+      // cancelled 2026 event with 80 trees was inflating 2026 to 18,154).
+      const rows = ((data ?? []) as unknown as Row[]).filter(excludeCancelledYoY)
       const byYear = new Map<number, Row[]>()
 
       for (const r of rows) {
@@ -663,23 +687,69 @@ export function useYearOverYear(metricDefs: ImpactMetricDef[]) {
         byYear.set(year, arr)
       }
 
-      const summaries: YearSummary[] = [...byYear.entries()]
-        .map(([year, yearRows]) => {
-          let attendees = 0
-          for (const r of yearRows) {
-            const att = parseAttendance(r.notes as string | null) ?? 0
-            attendees += att
-          }
+      // Every year we must emit: years with recorded rows PLUS every baseline
+      // year (so 2022/2023 appear even with zero event rows).
+      const allYears = new Set<number>([
+        ...byYear.keys(),
+        ...Object.keys(PER_YEAR_NATIONAL_BASELINES).map(Number),
+      ])
 
-          const metrics: Record<string, number> = {}
+      // Per-year attendee count from the numeric column (fallback to the notes
+      // parse for legacy rows that carry the count in text).
+      const recordedAttendees = (yearRows: Row[]): number => {
+        let a = 0
+        for (const r of yearRows) {
+          a += r.attendees != null
+            ? Number(r.attendees) || 0
+            : (parseAttendance(r.notes as string | null) ?? 0)
+        }
+        return a
+      }
+
+      // Per-year cell under THE RULE, with a NO-DATA sentinel. Returns:
+      //  - MAX(baseline, recorded) when a per-year baseline exists;
+      //  - recorded when recorded > 0 and there is no baseline (tracked);
+      //  - null (NO DATA) when there is NO baseline AND recorded is 0 -> the
+      //    metric was genuinely not tracked that year (e.g. 2023 trees/rubbish),
+      //    so the table must render "no data recorded", NOT 0. A real tracked
+      //    zero (recorded 0 with a baseline, or a metric with a 0 baseline)
+      //    still renders 0, matching the headline cards' no-data semantics.
+      const cell = (axis: 'trees' | 'rubbish_kg' | 'attendees' | 'events' | 'hours', year: number, recorded: number): number | null =>
+        yearCellValue(PER_YEAR_NATIONAL_BASELINES[year]?.[axis], recorded)
+
+      const summaries: YearSummary[] = [...allYears]
+        .map((year) => {
+          const yearRows = byYear.get(year) ?? []
+          const recAtt = recordedAttendees(yearRows)
+          const attendees = cell('attendees', year, recAtt)
+
+          const metrics: Record<string, number | null> = {}
           for (const key of metricKeys) {
-            metrics[key] = sumMetric(yearRows as Record<string, unknown>[], key)
+            const recorded = sumMetric(yearRows as Record<string, unknown>[], key)
+            const axis = baselineAxisForMetric(key)
+            // Metrics with no baseline axis at all pass baseline=null, so
+            // yearCellValue yields recorded (>0) or no-data (0).
+            metrics[key] = axis ? cell(axis, year, recorded) : yearCellValue(null, recorded)
           }
 
-          const hours = Math.round(sumMetric(yearRows as Record<string, unknown>[], 'hours_total'))
+          const recHours = Math.round(sumMetric(yearRows as Record<string, unknown>[], 'hours_total'))
+          const hours = cell('hours', year, recHours)
+          // Distinct events in-year; floored at the national event baseline.
+          const recEvents = new Set(
+            yearRows.map((r) => (r as { event_id?: string }).event_id).filter((id): id is string => !!id),
+          ).size
+          const events = cell('events', year, recEvents)
 
-          return { year, events: yearRows.length, attendees, estimatedHours: hours, metrics }
+          return { year, events, attendees, estimatedHours: hours, metrics }
         })
+        // Drop a fabricated all-no-data / all-zero row (e.g. a future baseline
+        // year with nothing at all) so the table stays honest. A null cell is
+        // treated as "not a positive value" here.
+        .filter((s) =>
+          (s.events ?? 0) > 0 ||
+          (s.attendees ?? 0) > 0 ||
+          Object.values(s.metrics).some((v) => (v ?? 0) > 0),
+        )
         .sort((a, b) => a.year - b.year)
 
       return summaries

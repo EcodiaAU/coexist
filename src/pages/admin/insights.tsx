@@ -23,7 +23,7 @@ import {
   CalendarDays, Users, UserCheck, Repeat, Clock, Leaf, TreePine, Trash2,
   Waves, Eye, Ruler, Sprout, Sparkles, Droplets, Mountain, Flower2, Bug,
   Flame, Fish, Wind, ExternalLink, Copy, Check, Download, Table as TableIcon,
-  X, TrendingUp,
+  X, TrendingUp, Info, ShieldCheck,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAdminHeader } from '@/components/admin-layout'
@@ -42,6 +42,7 @@ import {
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import type { ImpactMetricDef } from '@/lib/impact-metrics'
 import { dateRangeOptions, getDateRangeStart, useTrendData, type DateRange } from '@/hooks/use-admin-dashboard'
+import { nationalHistoricalRemainder } from '@/lib/impact-query'
 import { TrendChart } from '@/components/trend-chart'
 import { ACTIVITY_TYPE_FILTER_OPTIONS, ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
 import { useCollectives } from '@/hooks/use-collective'
@@ -74,6 +75,9 @@ function metricIcon(def: ImpactMetricDef, size = 18): ReactNode {
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
+
+/** Label for a genuinely-untracked figure (no baseline, no recorded data). */
+const NO_DATA_LABEL = 'No data recorded'
 
 function todayIso(): string {
   const d = new Date()
@@ -228,6 +232,25 @@ export default function AdminInsightsPage() {
   const { data: yoy } = useYearOverYear(activeDefs)
   const { data: trends } = useTrendData()
 
+  // THE RULE surfaces (max vs baseline + honesty labelling). `meta` carries the
+  // window confidence band, whether the per-collective drill-down is real
+  // recorded data or pre-2025 estimate, and which pre-2025 years are
+  // national-lump only. `provenance` is per figure.
+  const meta = obs?.meta
+  const provenance = obs?.summary.provenance ?? {}
+  /**
+   * Sub-label that surfaces THE RULE's provenance on a stat card. 'baseline'
+   * = floored at the org's stated figure (our records were lower or absent);
+   * 'estimate' = pre-2025 leader-reported estimate; else no sub (recorded).
+   */
+  const provSub = (provKey: string): string | undefined => {
+    const p = provenance[provKey]
+    if (p === 'baseline') return 'stated baseline'
+    if (p === 'estimate') return 'estimate'
+    if (p === 'no-data') return 'no data recorded'
+    return undefined
+  }
+
   const fromDate = useMemo(() => {
     if (dateRange === 'custom') return customStart || '2018-01-01'
     const s = getDateRangeStart(dateRange)
@@ -306,6 +329,29 @@ export default function AdminInsightsPage() {
   }, [visibleDefs, obs])
 
   const sortedCollectives = useMemo(() => obs ? [...obs.collectiveBreakdown].sort((a, b) => b.attendees - a.attendees) : [], [obs])
+
+  // National-historical reconciliation row. The headline totals include the
+  // pre-2025 NATIONAL baselines (mainly 2022) that have NO per-collective
+  // breakdown, so the By-collective rows sum BELOW the headline. Without this
+  // row a funder can add the columns and see they do not reach the headline.
+  // We compute, PER METRIC, remainder = headline_total - sum(collective rows),
+  // and surface it as one explicit final row so collectives + this row == the
+  // headline exactly, by construction. Shown only when a remainder is positive.
+  const nationalHistorical = useMemo(() => {
+    if (!obs) return null
+    const o = obs
+    const sumCol = (pick: (c: (typeof o.collectiveBreakdown)[number]) => number) =>
+      o.collectiveBreakdown.reduce((s, c) => s + pick(c), 0)
+    const eventsRem    = nationalHistoricalRemainder(o.summary.totalEvents,         sumCol((c) => c.eventCount))
+    const attendeesRem = nationalHistoricalRemainder(o.summary.totalAttendees,      sumCol((c) => c.attendees))
+    const hoursRem     = nationalHistoricalRemainder(o.summary.totalEstimatedHours, sumCol((c) => c.estimatedHours))
+    const metricsRem: Record<string, number> = {}
+    for (const def of activeDefs) {
+      metricsRem[def.key] = nationalHistoricalRemainder(o.summary.metrics[def.key] ?? 0, sumCol((c) => c.metrics[def.key] ?? 0))
+    }
+    const hasAny = eventsRem > 0 || attendeesRem > 0 || hoursRem > 0 || Object.values(metricsRem).some((v) => v > 0)
+    return hasAny ? { eventsRem, attendeesRem, hoursRem, metricsRem } : null
+  }, [obs, activeDefs])
   const sortedEvents = useMemo(() => obs ? [...obs.rows].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : [], [obs])
   const [showAllEvents, setShowAllEvents] = useState(false)
   const displayEvents = showAllEvents ? sortedEvents : sortedEvents.slice(0, 25)
@@ -371,11 +417,27 @@ export default function AdminInsightsPage() {
   }
 
   /* ── whole-table specs (selectable group + copy) ── */
-  const collectiveTableSpec: TableSpec = useMemo(() => ({
-    title: scopeLine,
-    headers: ['Collective', 'Events', 'Attendees', ...visibleDefs.slice(0, 4).map((d) => `${d.label}${d.unit ? ` (${d.unit})` : ''}`), 'Est. hours'],
-    rows: sortedCollectives.map((c) => [c.name, c.eventCount, c.attendees, ...visibleDefs.slice(0, 4).map((d) => c.metrics[d.key] ?? 0), c.estimatedHours]),
-  }), [sortedCollectives, visibleDefs, scopeLine])
+  // Export includes the national-historical reconciliation row so a downloaded
+  // CSV / pasted table ties out to the headline exactly (collectives + this
+  // row == headline, per column).
+  const collectiveTableSpec: TableSpec = useMemo(() => {
+    const cols = visibleDefs.slice(0, 4)
+    const rows: (string | number)[][] = sortedCollectives.map((c) => [c.name, c.eventCount, c.attendees, ...cols.map((d) => c.metrics[d.key] ?? 0), c.estimatedHours])
+    if (nationalHistorical) {
+      rows.push([
+        'National historical (pre-2025, no collective breakdown)',
+        nationalHistorical.eventsRem,
+        nationalHistorical.attendeesRem,
+        ...cols.map((d) => nationalHistorical.metricsRem[d.key] ?? 0),
+        nationalHistorical.hoursRem,
+      ])
+    }
+    return {
+      title: scopeLine,
+      headers: ['Collective', 'Events', 'Attendees', ...cols.map((d) => `${d.label}${d.unit ? ` (${d.unit})` : ''}`), 'Est. hours'],
+      rows,
+    }
+  }, [sortedCollectives, visibleDefs, scopeLine, nationalHistorical])
 
   const retentionTableSpec: TableSpec | null = useMemo(() => att ? ({
     title: `Attendee recurrence · ${scopeLine}`,
@@ -389,10 +451,20 @@ export default function AdminInsightsPage() {
     ],
   }) : null, [att, scopeLine])
 
+  // A null year-cell is genuinely untracked -> "No data recorded" (never 0),
+  // matching the headline cards. Real tracked zeros render as 0. Used for both
+  // the on-page table and the CSV/copy export so they stay consistent.
+  const yearCell = (v: number | null): string | number => (v == null ? NO_DATA_LABEL : v)
   const yearTableSpec: TableSpec | null = useMemo(() => (yoy && yoy.length) ? ({
     title: `Year on year · Co-Exist`,
     headers: ['Year', 'Events', 'Attendees', 'Est. hours', ...topMetrics.map((m) => m.def.label)],
-    rows: [...yoy].sort((a, b) => a.year - b.year).map((y) => [y.year, y.events, y.attendees, y.estimatedHours, ...topMetrics.map((m) => y.metrics[m.def.key] ?? 0)]),
+    rows: [...yoy].sort((a, b) => a.year - b.year).map((y) => [
+      y.year,
+      yearCell(y.events),
+      yearCell(y.attendees),
+      yearCell(y.estimatedHours),
+      ...topMetrics.map((m) => yearCell(y.metrics[m.def.key] ?? null)),
+    ]),
   }) : null, [yoy, topMetrics])
 
   async function copyTableSpec(spec: TableSpec | null, id: string) {
@@ -460,7 +532,21 @@ export default function AdminInsightsPage() {
             ))}
           </div>
         </div>
-        <p className="text-[11px] text-neutral-400 mt-2">Tap any number to select it, then copy your selection as a table. {scopeLine}</p>
+        <div className="flex flex-wrap items-center gap-2 mt-2">
+          <p className="text-[11px] text-neutral-400">Tap any number to select it, then copy your selection as a table. {scopeLine}</p>
+          {meta && <ConfidenceChip meta={meta} />}
+        </div>
+        {meta && meta.nationalOnlyYears.length > 0 && (
+          <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-sm bg-warning-50 border border-warning-200 text-warning-800 text-[11px] w-fit max-w-full">
+            <Info size={13} className="shrink-0 mt-0.5 text-warning-500" />
+            <span>
+              {meta.nationalOnlyYears.sort().join(', ')} {meta.nationalOnlyYears.length > 1 ? 'are' : 'is'} shown as
+              national annual figures (no per-collective or per-date breakdown existed before 2025). Figures for these
+              years cannot be sliced by collective. Where a year has no figure for a metric it shows "no data recorded",
+              never zero.
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="space-y-10">
@@ -470,11 +556,11 @@ export default function AdminInsightsPage() {
             action={<SelectAll keys={['hl_events', 'hl_attendees', 'hl_hours', 'at_unique', 'at_repeat']} sel={selected} onSet={selectMany} />} />
           <motion.div variants={v.fadeUp}>
             <AdminHeroStatRow className="!max-w-none grid-cols-2 sm:!grid-cols-3 lg:!grid-cols-5">
-              <Selectable k="hl_events" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalEvents ?? 0} label="Events" icon={<CalendarDays size={18} />} color="primary" reducedMotion delay={0} /></Selectable>
-              <Selectable k="hl_attendees" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalAttendees ?? 0} label="Attendances" icon={<Users size={18} />} color="warning" reducedMotion delay={0} /></Selectable>
+              <Selectable k="hl_events" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalEvents ?? 0} label="Events" icon={<CalendarDays size={18} />} color="primary" reducedMotion delay={0} sub={provSub('events')} /></Selectable>
+              <Selectable k="hl_attendees" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalAttendees ?? 0} label="Attendances" icon={<Users size={18} />} color="warning" reducedMotion delay={0} sub={provSub('attendees')} /></Selectable>
               <Selectable k="at_unique" sel={selected} onToggle={toggle}><AdminHeroStat value={att?.unique_attendees ?? 0} label="Unique people" icon={<UserCheck size={18} />} color="moss" reducedMotion delay={0} sub={att ? `${att.new_attendees} new` : undefined} /></Selectable>
               <Selectable k="at_repeat" sel={selected} onToggle={toggle}><AdminHeroStat value={att ? att.unique_attendees - att.retention.attended_1 : 0} label="Came back" icon={<Repeat size={18} />} color="sprout" reducedMotion delay={0} sub={att ? `${pct(att.unique_attendees - att.retention.attended_1, att.unique_attendees)}% 2+ events` : undefined} /></Selectable>
-              <Selectable k="hl_hours" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalEstimatedHours ?? 0} label="Est. vol hours" icon={<Clock size={18} />} color="bark" reducedMotion delay={0} /></Selectable>
+              <Selectable k="hl_hours" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalEstimatedHours ?? 0} label="Est. vol hours" icon={<Clock size={18} />} color="bark" reducedMotion delay={0} sub={provSub('hours')} /></Selectable>
             </AdminHeroStatRow>
           </motion.div>
         </div>
@@ -513,7 +599,7 @@ export default function AdminInsightsPage() {
               {visibleDefs.map((def) => (
                 <Selectable key={def.key} k={`im_${def.key}`} sel={selected} onToggle={toggle}>
                   <AdminHeroStat value={Math.round((obs?.summary.metrics[def.key] ?? 0) * (def.decimal ? 10 : 1)) / (def.decimal ? 10 : 1)}
-                    label={`${def.label}${def.unit ? ` (${def.unit})` : ''}`} icon={metricIcon(def)} color={ICON_TO_COLOR[def.icon] ?? 'glass'} reducedMotion delay={0} />
+                    label={`${def.label}${def.unit ? ` (${def.unit})` : ''}`} icon={metricIcon(def)} color={ICON_TO_COLOR[def.icon] ?? 'glass'} reducedMotion delay={0} sub={provSub(def.key)} />
                 </Selectable>
               ))}
               {visibleDefs.length === 0 && !obsLoading && <p className="col-span-full text-sm text-neutral-400 py-4">No impact logged in this window.</p>}
@@ -571,6 +657,7 @@ export default function AdminInsightsPage() {
         {sortedCollectives.length > 0 && (
           <div>
             <Section id="collectives" title="By collective"
+              hint={meta && !meta.collectiveBreakdownTrustworthy ? 'Pre-2025 rows are leader-reported estimates, not exact recorded data. Real per-collective data starts in 2025.' : undefined}
               action={<CopyTableButton onCopy={() => copyTableSpec(collectiveTableSpec, 'coll')} copied={copied === 'coll'} />} />
             <motion.div variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
               <div className="overflow-x-auto">
@@ -597,7 +684,16 @@ export default function AdminInsightsPage() {
                         )}
                         onClick={() => setCollectiveIds((prev) => prev.includes(c.collectiveId) ? prev.filter((id) => id !== c.collectiveId) : [...prev, c.collectiveId])}
                       >
-                        <td className="px-4 py-3 font-semibold text-neutral-900">{c.name}</td>
+                        <td className="px-4 py-3 font-semibold text-neutral-900">
+                          <span className="inline-flex items-center gap-1.5">
+                            {c.name}
+                            {c.isEstimate && (
+                              <span title="Pre-2025 leader-reported estimate, not exact recorded data" className="inline-flex items-center gap-1 rounded-sm bg-warning-50 text-warning-700 text-[10px] font-semibold px-1.5 py-0.5">
+                                <Info size={10} /> Estimate
+                              </span>
+                            )}
+                          </span>
+                        </td>
                         <td className="px-3 py-3 text-right tabular-nums text-neutral-700">{c.eventCount}</td>
                         <td className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtNum(c.attendees)}</td>
                         {visibleDefs.slice(0, 4).map((def) => <td key={def.key} className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtMetricVal(c.metrics[def.key] ?? 0, def)}</td>)}
@@ -605,9 +701,31 @@ export default function AdminInsightsPage() {
                       </tr>
                       )
                     })}
+                    {nationalHistorical && (
+                      <tr
+                        className="border-t-2 border-neutral-200 bg-neutral-50/70"
+                        title="Stated national historical figures for years before per-collective tracking (mainly 2022). These cannot be attributed to any collective, so they appear only here. Collectives + this row = the headline total."
+                      >
+                        <td className="px-4 py-3 font-medium text-neutral-500 italic">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Info size={11} className="text-neutral-400" />
+                            National historical (pre-2025, no collective breakdown)
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{nationalHistorical.eventsRem > 0 ? fmtNum(nationalHistorical.eventsRem) : '-'}</td>
+                        <td className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{nationalHistorical.attendeesRem > 0 ? fmtNum(nationalHistorical.attendeesRem) : '-'}</td>
+                        {visibleDefs.slice(0, 4).map((def) => <td key={def.key} className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{(nationalHistorical.metricsRem[def.key] ?? 0) > 0 ? fmtMetricVal(nationalHistorical.metricsRem[def.key], def) : '-'}</td>)}
+                        <td className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{nationalHistorical.hoursRem > 0 ? fmtNum(nationalHistorical.hoursRem) : '-'}</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
+              {nationalHistorical && (
+                <p className="px-4 py-2.5 text-[11px] text-neutral-400 border-t border-neutral-100">
+                  The final row is Co-Exist's stated national historical figure for years before per-collective tracking began (mainly 2022). It cannot be attributed to a collective, so it sits outside the breakdown. Collectives plus this row equal the headline total.
+                </p>
+              )}
             </motion.div>
           </div>
         )}
@@ -722,6 +840,27 @@ export default function AdminInsightsPage() {
         </div>
       )}
     </motion.div>
+  )
+}
+
+/**
+ * Window confidence chip. Communicates how much to trust the numbers for the
+ * selected range (THE RULE honesty labelling):
+ *  - granular: real per-event, per-collective, per-date data (2025-forward).
+ *  - mixed: overlaps the granular era and a pre-2025 national-only era.
+ *  - national: entirely pre-2025 - national annual figures only.
+ */
+function ConfidenceChip({ meta }: { meta: import('@/hooks/use-admin-impact-observations').ObservationsMeta }) {
+  const map = {
+    granular: { label: 'Verified per-event data', cls: 'bg-success-50 text-success-700 border-success-200', icon: <ShieldCheck size={11} /> },
+    mixed:    { label: 'Recent verified + pre-2025 estimates', cls: 'bg-warning-50 text-warning-700 border-warning-200', icon: <Info size={11} /> },
+    national: { label: 'National estimates (pre-2025)', cls: 'bg-warning-50 text-warning-700 border-warning-200', icon: <Info size={11} /> },
+  } as const
+  const c = map[meta.confidence]
+  return (
+    <span className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold', c.cls)}>
+      {c.icon} {c.label}
+    </span>
   )
 }
 
