@@ -21,6 +21,7 @@ import {
     Shield,
     ChevronRight,
     Accessibility,
+    Utensils,
     Leaf,
     Waves,
     Ticket,
@@ -384,6 +385,9 @@ export default function ProfilePage() {
                 )}
                 {profile.accessibility_requirements && (
                   <DetailRow icon={<Accessibility size={14} />} label="Accessibility" value={profile.accessibility_requirements} tint="moss" />
+                )}
+                {profile.dietary_requirements && (
+                  <DetailRow icon={<Utensils size={14} />} label="Dietary" value={profile.dietary_requirements} tint="sprout" />
                 )}
               </>
             ) : (

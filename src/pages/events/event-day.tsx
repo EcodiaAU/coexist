@@ -12,6 +12,7 @@ import {
   Phone,
   AlertTriangle,
   Accessibility,
+  Utensils,
   BookOpen,
   Clock,
   Sparkles,
@@ -302,6 +303,17 @@ function AttendeeSafetySheet({
             <div>
               <p className="text-xs font-semibold text-sky-600 uppercase tracking-wider">Accessibility Needs</p>
               <p className="text-sm text-neutral-900 mt-0.5">{p.accessibility_requirements}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Dietary */}
+        {p.dietary_requirements && (
+          <div className="flex items-start gap-3 p-3 rounded-sm bg-sprout-50">
+            <Utensils size={16} className="text-sprout-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-sprout-600 uppercase tracking-wider">Dietary</p>
+              <p className="text-sm text-neutral-900 mt-0.5">{p.dietary_requirements}</p>
             </div>
           </div>
         )}

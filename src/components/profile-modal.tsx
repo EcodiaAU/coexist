@@ -16,6 +16,7 @@ import {
   Shield,
   Heart,
   Accessibility,
+  Utensils,
 } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { BottomSheet } from '@/components/bottom-sheet'
@@ -258,6 +259,9 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
                 )}
                 {profile.accessibility_requirements && (
                   <DetailRow icon={<Accessibility size={14} />} label="Accessibility" value={profile.accessibility_requirements} tint="moss" />
+                )}
+                {profile.dietary_requirements && (
+                  <DetailRow icon={<Utensils size={14} />} label="Dietary" value={profile.dietary_requirements} tint="sprout" />
                 )}
               </div>
             </motion.section>

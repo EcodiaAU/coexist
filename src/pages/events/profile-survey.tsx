@@ -71,6 +71,7 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
   const [pronouns, setPronouns] = useState(profile?.pronouns ?? '')
   const [collectiveDiscovery, setCollectiveDiscovery] = useState(profile?.collective_discovery ?? '')
   const [accessibilityRequirements, setAccessibilityRequirements] = useState(profile?.accessibility_requirements ?? '')
+  const [dietaryRequirements, setDietaryRequirements] = useState(profile?.dietary_requirements ?? '')
   const [emergencyContactName, setEmergencyContactName] = useState(profile?.emergency_contact_name ?? '')
   const [emergencyContactPhone, setEmergencyContactPhone] = useState(profile?.emergency_contact_phone ?? '')
   const [emergencyContactRelationship, setEmergencyContactRelationship] = useState(profile?.emergency_contact_relationship ?? '')
@@ -97,6 +98,7 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
         pronouns: pronouns || null,
         collective_discovery: collectiveDiscovery || null,
         accessibility_requirements: accessibilityRequirements || null,
+        dietary_requirements: dietaryRequirements || null,
         emergency_contact_name: emergencyContactName || null,
         emergency_contact_phone: emergencyContactPhone || null,
         emergency_contact_relationship: emergencyContactRelationship || null,
@@ -265,6 +267,23 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
             value={accessibilityRequirements}
             onChange={(e) => setAccessibilityRequirements(e.target.value)}
             placeholder="e.g. Wheelchair access, hearing assistance..."
+            type="textarea"
+            rows={2}
+            maxLength={500}
+            className="[&_textarea]:bg-neutral-50 [&_textarea]:border [&_textarea]:border-neutral-200"
+          />
+        </motion.div>
+
+        {/* Dietary */}
+        <motion.div variants={fadeUp}>
+          <h3 className="font-heading text-sm font-semibold text-primary-800 mb-3 uppercase tracking-wider">
+            Dietary Requirements
+          </h3>
+          <Input
+            label="Dietary requirements (allergies, vegan, etc.)"
+            value={dietaryRequirements}
+            onChange={(e) => setDietaryRequirements(e.target.value)}
+            placeholder="e.g. Vegetarian, gluten free, nut allergy..."
             type="textarea"
             rows={2}
             maxLength={500}
