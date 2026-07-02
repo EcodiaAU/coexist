@@ -209,11 +209,19 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       // toward zero and the national total = sum(live + legacy) +
       // remainder = sum(live + legacy) + leftover_unimported_history.
       //
-      // For scoped date ranges (week / month / quarter / year), we still
-      // skip legacy - those rows are pre-2026 and don't belong in a "this
-      // week" view.
+      // Legacy (Forms-imported) rows are NOT necessarily pre-2026: the
+      // migration imported real events dated all through 2025 (e.g. Melbourne's
+      // Aug-Nov 2025 tree plantings) as "Legacy import" rows. A scoped/custom
+      // window that overlaps those dates (a financial year, "this year", a
+      // custom range reaching back into 2025) MUST count them - they are real
+      // events inside the window. We always fetch legacy for the in-window
+      // events; because the events query is already date-bounded, a legacy row
+      // only ever comes back for an event whose date_start is inside the
+      // window, so there is no risk of pre-window pollution. Baseline is only
+      // ever added on the all-time national view, so counting legacy on a
+      // scoped range never double-counts against a baseline.
       const isNationalAllTime = isAllTime && !hasCollectiveScope && !filters.activityType
-      const includeLegacy = isAllTime
+      const includeLegacy = true
       // When the user narrows to one activity_type on an all-time view we
       // still want the baseline-remainder share to flow into this scope,
       // proportional to the legacy distribution - otherwise sum-of-parts
@@ -339,8 +347,8 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
 
       const metricKeys = metricDefs.map((d) => d.key)
 
-      // Transform rows
-      const rows: EventImpactRow[] = filtered.map((r) => {
+      // Transform a raw impact row into an EventImpactRow.
+      const toRow = (r: RawRow): EventImpactRow => {
         const parsed = parseAttendance(r.notes as string | null)
         const estimatedVolHours = Number(r.hours_total) || null
 
@@ -371,7 +379,18 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
           attendance: attendanceFinal,
           estimatedVolHours,
         }
-      })
+      }
+
+      // Live rows always list. On a scoped/custom range, legacy (Forms-imported)
+      // events inside the window are real events the user expects to see, so
+      // list them too - otherwise the summary counts them but the raw-data table
+      // omits them, and the two disagree. On the all-time view we keep the
+      // established behaviour (legacy folds into the summary + breakdown via the
+      // baseline model, but is not enumerated per-event in the row list).
+      const rows: EventImpactRow[] = [
+        ...filtered.map(toRow),
+        ...(!isAllTime ? filteredLegacy.map(toRow) : []),
+      ]
 
       // Summary - sum from the returned rows (live + legacy when included).
       //
@@ -543,8 +562,14 @@ export function useImpactObservations(filters: ObservationFilters, metricDefs: I
       // ids). Without it, selecting a collective produced one number in the
       // summary (e.g. Brisbane = 36 events) and a different number in the
       // breakdown table (Brisbane = 11 events) for the same query.
+      //
+      // ONLY on the all-time view: there `rows` holds live rows only, so legacy
+      // needs a separate fold. On a scoped/custom range `rows` already includes
+      // the in-window legacy events (see the toRow concat above), so the loop
+      // over `rows` already folded them - folding filteredLegacy again would
+      // double-count attendees/metrics for those collectives.
       const legacyEventIdsByCollective = new Map<string, Set<string>>()
-      for (const r of filteredLegacy) {
+      if (isAllTime) for (const r of filteredLegacy) {
         const ev = r.events as unknown as RawRow['events'] | undefined
         if (!ev) continue
         const collectiveId = ev.collective_id
