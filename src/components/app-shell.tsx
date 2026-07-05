@@ -8,6 +8,7 @@ import { UnifiedSidebar } from '@/components/unified-sidebar'
 import { WebFooter } from '@/components/web-footer'
 import { OfflineBanner } from '@/components/offline-banner'
 import { PhoneGate } from '@/components/phone-gate'
+import { SentryErrorBoundary } from '@/lib/sentry'
 import { SyncStatusBanner } from '@/components/sync-status-banner'
 import { KeyboardOpenContext, useKeyboardOpen } from '@/components/app-shell-context'
 import { MenuSheetProvider, useMenuSheet } from '@/hooks/use-menu-sheet'
@@ -201,8 +202,16 @@ function AppShellInner({ children }: { children: ReactNode }) {
       {showBottomTabs && <MobileSidebar />}
 
       {/* Required mobile-number gate - blocks onboarded users with no phone
-          on file until they add one (event leaders need it for event day). */}
-      <PhoneGate />
+          on file until they add one (event leaders need it for event day).
+          Wrapped in its own error boundary (fallback={null}) so that if the
+          gate subtree ever throws it degrades to "no gate" instead of taking
+          the whole app down - defense in depth after the 2026-07-05 old-Android
+          crash where every phone-less member (780 of 1321) was funnelled
+          through this one screen. The primary fix is the build-target floor +
+          runtime polyfills (see vite.config.ts + src/lib/polyfills.ts). */}
+      <SentryErrorBoundary fallback={null}>
+        <PhoneGate />
+      </SentryErrorBoundary>
     </div>
   )
 }

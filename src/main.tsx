@@ -1,3 +1,8 @@
+// Runtime built-in polyfills for old Android System WebViews. MUST be first -
+// installs Object.hasOwn / structuredClone / replaceAll / at / findLast before
+// any vendor code (framer-motion etc.) runs. See src/lib/polyfills.ts.
+import '@/lib/polyfills'
+
 // Pre-mount render-failure overlay. The GLOBAL window 'error' /
 // 'unhandledrejection' listeners that used to live here were REMOVED 2026-06-08:
 // being a second, ungated copy of the index.html boot overlay, they painted a
