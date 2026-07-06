@@ -41,28 +41,26 @@ export function EventHero({ event, past, userStatus, accent, onShare }: EventHer
           live in the safe area. */}
       {event.cover_image_url && (
         <div className="relative -mx-4 lg:-mx-6">
+          {/* ref on the hero BOX: pull-to-stretch grows its height and the
+              object-cover image fills the extra space (no gap). */}
           <div
+            ref={stretchRef}
             className="relative w-full overflow-hidden"
             // Compact hero: smaller floor + tighter ceiling so the title
             // and content beneath always fit on first paint without scroll.
             style={{ height: 'min(44vh, 360px)', minHeight: '260px' }}
           >
-            {/* Stretchy layer: image + gradient scale to fill the pull on
-                over-scroll (native iOS bounce). Title overlay is a sibling
-                below so its text never distorts. */}
-            <div ref={stretchRef} className="absolute inset-0">
-              <OptimizedImage
-                src={event.cover_image_url}
-                alt={event.title}
-                priority
-                sizes="100vw"
-                wrapperClassName="absolute inset-0"
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10"
-                aria-hidden="true"
-              />
-            </div>
+            <OptimizedImage
+              src={event.cover_image_url}
+              alt={event.title}
+              priority
+              sizes="100vw"
+              wrapperClassName="absolute inset-0"
+            />
+            <div
+              className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10"
+              aria-hidden="true"
+            />
 
             {/* Title + activity pill grouped at the bottom of the hero,
                 clear of the camera notch and any system overlays. pb-14

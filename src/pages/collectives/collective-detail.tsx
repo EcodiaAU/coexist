@@ -230,17 +230,17 @@ export default function CollectiveDetailPage() {
         </div>
       }
     >
-      {/* ── Hero: tall, cinematic, full-bleed ── */}
+      {/* ── Hero: tall, cinematic, full-bleed ──
+          ref on the hero BOX: pull-to-stretch grows its height and the
+          object-cover image fills the extra space. */}
       <motion.div
+        ref={stretchRef}
         initial={shouldReduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="relative aspect-[3/4] sm:aspect-[2/1] w-[calc(100%+2rem)] -mx-4 lg:w-[calc(100%+3rem)] lg:-mx-6 overflow-hidden bg-primary-950"
       >
-        {/* Stretchy layer: image + gradient scale to fill the over-scroll
-            pull (native iOS bounce); the editorial title below is a sibling
-            so its text never distorts. */}
-        <div ref={stretchRef} className="absolute inset-0">
+        <div className="absolute inset-0">
           {collective.cover_image_url ? (
             <OptimizedImage
               src={collective.cover_image_url}
