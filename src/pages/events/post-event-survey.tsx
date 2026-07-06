@@ -11,7 +11,7 @@ import { useEventDetail, ACTIVITY_TYPE_LABELS, isPastEvent } from '@/hooks/use-e
 import { wallClockNow } from '@/lib/date-format'
 import { useEventSurvey } from '@/hooks/use-event-survey'
 import { SurveyQuestionRenderer } from '@/components/survey-questions'
-import { isQuestionVisible, stripHiddenAnswers } from '@/components/survey-questions-utils'
+import { canSubmitSurvey, stripHiddenAnswers } from '@/components/survey-questions-utils'
 import {
     Page,
     Header,
@@ -150,28 +150,27 @@ export default function PostEventSurveyPage() {
     return (resp?.answers as Record<string, unknown>) ?? {}
   }, [existingResponse])
 
-  const answers: Record<string, unknown> = Object.keys(userAnswers).length > 0 ? userAnswers : existingAnswers
+  // Merge, don't swap. The prior code used
+  //   Object.keys(userAnswers).length > 0 ? userAnswers : existingAnswers
+  // which meant that as soon as the attendee touched ONE field on a
+  // previously-saved response, `answers` collapsed to just that key and every
+  // other saved answer vanished from both the renderer and the required-check,
+  // so a fully-filled survey reported "required sections incomplete". Merging
+  // existing under the user's edits preserves the untouched answers.
+  const answers: Record<string, unknown> = useMemo(
+    () => ({ ...existingAnswers, ...userAnswers }),
+    [existingAnswers, userAnswers],
+  )
 
   const setAnswer = useCallback((key: string, value: unknown) => {
     setUserAnswers((prev) => ({ ...prev, [key]: value }))
   }, [])
 
-  // Visible-required gate: a hidden conditional question doesn't block
-  // submission. Mirrors log-impact's surveyMissingRequired logic so the
-  // two surfaces behave consistently.
-  const requiredKeys = useMemo(
-    () =>
-      questions
-        .filter((q) => q.required)
-        .filter((q) => isQuestionVisible(q, answers))
-        .map((q) => q.id),
-    [questions, answers],
-  )
-
-  const canSubmit = requiredKeys.every((key) => {
-    const val = answers[key]
-    return val !== undefined && val !== null && val !== ''
-  })
+  // Canonical gate: every visible required question must be filled. Shared
+  // with log-impact so both survey surfaces recognise 0 ratings, "No"
+  // answers, "0" number entries and multi-selects identically, and skip
+  // hidden conditional follow-ups.
+  const canSubmit = canSubmitSurvey(questions, answers)
 
   const { toast } = useToast()
 

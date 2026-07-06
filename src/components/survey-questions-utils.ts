@@ -61,6 +61,60 @@ export function isQuestionVisible(
   return answers[q.show_if.question_id] === q.show_if.equals
 }
 
+// Returns true when a raw answer value counts as "filled" for a required
+// question. This is the single source of truth for required-completion and
+// deliberately treats several non-string, non-truthy values as valid answers:
+//
+//   - number 0            a rating star of 0 or a linear scale whose min_value
+//                         is 0 is a real answer, not a blank.
+//   - boolean false       a yes/no answer stored as false is answered.
+//   - '0' (number input)  the number renderer stores e.target.value as a
+//                         string, so "0" is a filled numeric answer.
+//   - non-empty array     a multi-select with at least one option chosen.
+//
+// and treats these as NOT filled:
+//
+//   - null / undefined    never answered.
+//   - '' or whitespace    an empty text/email/phone/date/dropdown field. We
+//                         trim so a spaces-only string does not pass.
+//   - [] empty array      a required multi-select with nothing selected.
+//
+// The historic post-event-survey check used `val !== '' ` which let an empty
+// array through (false positive) and, combined with the answers-swap on the
+// page, dropped previously-saved answers (false negative). Both surfaces now
+// route through this one helper.
+export function isAnswerFilled(value: unknown): boolean {
+  if (value === null || value === undefined) return false
+  if (typeof value === 'string') return value.trim() !== ''
+  if (Array.isArray(value)) return value.length > 0
+  // number (incl. 0), boolean (incl. false), and any other populated object
+  // are legitimate answers.
+  return true
+}
+
+// Ids of every VISIBLE required question that is not yet filled. A hidden
+// conditional question (its show_if parent is No/unanswered) is excluded, so
+// branching follow-ups never block submission while they are off-screen.
+export function surveyMissingRequired(
+  questions: SurveyQuestion[],
+  answers: Record<string, unknown>,
+): string[] {
+  return questions
+    .filter((q) => q.required)
+    .filter((q) => isQuestionVisible(q, answers))
+    .filter((q) => !isAnswerFilled(answers[q.id]))
+    .map((q) => q.id)
+}
+
+// True when every visible required question has a filled answer. Canonical
+// gate for both the attendee post-event survey and the leader log-impact form.
+export function canSubmitSurvey(
+  questions: SurveyQuestion[],
+  answers: Record<string, unknown>,
+): boolean {
+  return surveyMissingRequired(questions, answers).length === 0
+}
+
 // Strip hidden-conditional answers before persisting. When a leader fills q7
 // "What and how much?" after picking q6=Yes, then flips q6 back to No, the
 // renderer correctly hides q7, but the surveyAnswers state still carries
