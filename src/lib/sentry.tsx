@@ -26,8 +26,13 @@ let Sentry: {
   addBreadcrumb: (breadcrumb: Record<string, unknown>) => void
 } | null = null
 
+// Public Sentry client DSN (send-only key, safe to embed - it is baked into
+// the shipped client bundle either way). Hardcoded as a fallback so a build
+// that lacks VITE_SENTRY_DSN in the gitignored .env.production still reports.
+const FALLBACK_SENTRY_DSN = 'https://32866cc8070a5ea80672ed8df6c9bfe4@o4511685869305856.ingest.us.sentry.io/4511685879201792'
+
 export async function initSentry() {
-  const dsn = import.meta.env.VITE_SENTRY_DSN
+  const dsn = import.meta.env.VITE_SENTRY_DSN || FALLBACK_SENTRY_DSN
   if (!dsn) {
     console.warn('[sentry] No DSN configured - error reporting disabled')
     return
