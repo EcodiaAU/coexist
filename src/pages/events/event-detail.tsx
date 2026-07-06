@@ -1543,9 +1543,11 @@ export default function EventDetailPage() {
           fadeUpVariants={shouldReduceMotion ? undefined : fadeUp}
         />
 
-        {/* Admin-only attendees export (Jess: copy/download names + emergency
-            contacts to forward externally). Gated to staff+ since it exposes
-            PII from every registration. */}
+        {/* Attendees export (Jess: pre-event dietaries + phone list, plus the
+            original post-event survey export). isStaff here = assist-leader+
+            of THIS event's collective OR global staff - the same gate as the
+            event-day dashboard, which already shows leaders per-attendee
+            phone/dietary/emergency contact. */}
         {isStaff && (
           <AdminAttendeesExport
             eventId={event.id}
