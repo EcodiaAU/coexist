@@ -1460,8 +1460,12 @@ export default function EventDetailPage() {
 
         {/* ── Event details pills (what_to_bring, terrain, difficulty, etc.) ── */}
         {(() => {
-          // Extended event fields not yet in generated DB types
-          const ext = event as unknown as {
+          // The wizard's "preparation & access" fields live in the
+          // events.event_extras jsonb column (the canonical store - there are
+          // no top-level columns for these; see create-event.tsx baseInsert).
+          // Not yet in generated DB types, hence the cast.
+          const raw = (event as unknown as { event_extras?: unknown }).event_extras
+          const ext = (raw && typeof raw === 'object' ? raw : {}) as {
             what_to_bring?: string
             what_to_wear?: string
             meeting_point?: string
@@ -1469,7 +1473,14 @@ export default function EventDetailPage() {
             difficulty?: keyof typeof difficultyConfig
             wheelchair_access?: boolean
           }
-          if (!ext.what_to_bring && !ext.what_to_wear && !ext.meeting_point && !ext.terrain && !ext.difficulty && !ext.wheelchair_access) return null
+          // Writers store '' for untouched text fields and default-fill
+          // difficulty: 'easy' on every save, so 'easy' alone must not summon
+          // the section (it would render an empty shell on every event). An
+          // explicit moderate/challenging pick does count. When the section
+          // renders for other reasons, the difficulty pill shows regardless.
+          const hasText = !!(ext.what_to_bring || ext.what_to_wear || ext.meeting_point || ext.terrain)
+          const explicitDifficulty = !!ext.difficulty && ext.difficulty !== 'easy' && !!difficultyConfig[ext.difficulty]
+          if (!hasText && !explicitDifficulty && !ext.wheelchair_access) return null
           return (
             <motion.div
               variants={shouldReduceMotion ? undefined : fadeUp}
