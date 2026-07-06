@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { useToast } from '@/components/toast'
+import { isValidPhone } from '@/lib/validation'
 
 /* ------------------------------------------------------------------ */
 /*  Phone gate                                                         */
@@ -18,15 +19,21 @@ import { useToast } from '@/components/toast'
 /*  event-day attendee sheet, so it cannot be skipped.                 */
 /* ------------------------------------------------------------------ */
 
-// Same shape as `phoneField` in lib/validation.ts, but required (no empty).
-const PHONE_RE = /^[\d\s+\-().]{6,20}$/
-
 export function PhoneGate() {
   const { user, profile, isLoading, refreshProfile } = useAuth()
   const { toast } = useToast()
   const [phone, setPhone] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  // Visual-viewport metrics so the sheet always sits ABOVE the on-screen
+  // keyboard. iOS/WebKit does not reliably scroll a position:fixed field above
+  // the keyboard, so on a small screen (or older Safari) the input AND the
+  // Save button end up hidden behind the keyboard and the user cannot type
+  // their number or submit - the "phone field will not accept typing" report.
+  // We size the gate to the visual viewport (which shrinks to the space above
+  // the keyboard) instead of the layout viewport, removing the dependency on
+  // WebKit's flaky auto-scroll. See the container style below.
+  const [viewport, setViewport] = useState<{ height: number; offsetTop: number } | null>(null)
 
   // Show only for a fully-loaded, onboarded user who has no phone on file.
   // Gating on onboarding_completed keeps it off the onboarding/auth flow
@@ -47,10 +54,28 @@ export function PhoneGate() {
     return () => { document.body.style.overflow = prev }
   }, [show])
 
+  // Track the visual viewport so the gate follows the keyboard. When the
+  // keyboard opens, visualViewport.height shrinks to the visible area above it
+  // and offsetTop reflects any keyboard-driven page shift; we anchor the fixed
+  // container to those values so the field + button are never occluded.
+  useEffect(() => {
+    if (!show) return
+    const vv = window.visualViewport
+    if (!vv) return
+    const sync = () => setViewport({ height: vv.height, offsetTop: vv.offsetTop })
+    sync()
+    vv.addEventListener('resize', sync)
+    vv.addEventListener('scroll', sync)
+    return () => {
+      vv.removeEventListener('resize', sync)
+      vv.removeEventListener('scroll', sync)
+    }
+  }, [show])
+
   const handleSave = useCallback(async () => {
     if (!user) return
     const trimmed = phone.trim()
-    if (!PHONE_RE.test(trimmed)) {
+    if (!isValidPhone(trimmed)) {
       setError('Please enter a valid mobile number')
       return
     }
@@ -76,16 +101,26 @@ export function PhoneGate() {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center"
+      className="fixed left-0 right-0 z-[200] flex items-end sm:items-center justify-center"
+      // Anchor to the VISUAL viewport, not the layout viewport, so the sheet
+      // sits directly above the keyboard on every device / iOS version. When
+      // visualViewport is unavailable (older engines / SSR) we fall back to
+      // 100dvh, which already tracks the keyboard on modern mobile browsers.
+      style={
+        viewport
+          ? { top: viewport.offsetTop, height: viewport.height }
+          : { top: 0, height: '100dvh' }
+      }
       role="dialog"
       aria-modal="true"
       aria-labelledby="phone-gate-title"
     >
-      {/* Non-dismissable backdrop - no onClick, no Escape handler. */}
+      {/* Non-dismissable backdrop - no onClick, no Escape handler. Covers the
+          whole layout viewport (including behind the keyboard). */}
       <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
 
       <div
-        className="relative w-full sm:max-w-md bg-surface-0 rounded-t-md sm:rounded-md shadow-sm flex flex-col"
+        className="relative w-full sm:max-w-md max-h-full overflow-y-auto bg-surface-0 rounded-t-md sm:rounded-md shadow-sm flex flex-col"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.5rem)' }}
       >
         <div className="px-6 pt-7 pb-6 space-y-5">
@@ -107,7 +142,8 @@ export function PhoneGate() {
             label="Mobile number"
             value={phone}
             onChange={(e) => { setPhone(e.target.value); if (error) setError(null) }}
-            placeholder="0400 000 000"
+            placeholder="0400 000 000 or +44 7911 123456"
+            helperText="Any country's number works. Include the country code (like +44) if you're outside Australia."
             inputMode="tel"
             autoComplete="tel"
             enterKeyHint="done"

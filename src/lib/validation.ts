@@ -13,8 +13,18 @@ const optionalTrimmedString = (max: number, label: string) =>
 
 const emailField = z.string().trim().email('Invalid email address').max(254, 'Email too long')
 
+// Canonical phone format: 6-20 chars of digits, spaces and + - ( ) .
+// Deliberately permissive so any country's number passes without a
+// libphonenumber dependency or a country dropdown: +44 7911 123456,
+// +1 (415) 555-0100, +81 90-1234-5678 all validate. Backpackers and other
+// non-Australian members must not be blocked by the (non-dismissable) phone
+// gate, so do NOT tighten this to an AU-only pattern. Shared by
+// profileUpdateSchema.phone, the PhoneGate and edit-profile so all three agree.
+export const PHONE_REGEX = /^[\d\s+\-().]{6,20}$/
+export const isValidPhone = (value: string): boolean => PHONE_REGEX.test(value.trim())
+
 const phoneField = z.string().trim().regex(
-  /^[\d\s+\-().]{6,20}$/,
+  PHONE_REGEX,
   'Invalid phone number',
 ).optional().or(z.literal(''))
 

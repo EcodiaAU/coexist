@@ -452,13 +452,13 @@ export default function EditProfilePage() {
                 label="Mobile number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="0400 000 000"
+                placeholder="0400 000 000 or +44 7911 123456"
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
                 maxLength={20}
                 required
-                helperText="For safety, so event leaders can reach you on the day"
+                helperText="Any country's number works (include the country code, like +44, if outside Australia). Event leaders reach you on the day."
                 className={inputStyle}
               />
             </SectionCard>
