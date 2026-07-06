@@ -787,6 +787,7 @@ export function useEventImpact(eventId: string | undefined) {
 export function useRegisterForEvent() {
   const { user, profile } = useAuth()
   const queryClient = useQueryClient()
+  const { toast } = useToast()
 
   return useMutation({
     mutationFn: async ({ eventId, asWaitlist = false }: { eventId: string; asWaitlist?: boolean }) => {
@@ -883,9 +884,18 @@ export function useRegisterForEvent() {
 
       return { previousEvent, previousUpcoming }
     },
-    onError: (_err, { eventId }, context) => {
+    onError: (err, { eventId }, context) => {
       if (context?.previousEvent) queryClient.setQueryData(['event', eventId, user?.id], context.previousEvent)
       if (context?.previousUpcoming !== undefined) queryClient.setQueryData(['home', 'my-upcoming-events', user?.id], context.previousUpcoming)
+      // Surface the failure. Previously this reverted the optimistic UI
+      // with zero feedback, so a failed RSVP looked like "the button did
+      // nothing" and user reports carried no diagnostic signal
+      // (2026-07-06 invited-RSVP investigation).
+      toast.error(
+        err instanceof Error && err.message
+          ? `Couldn't complete your RSVP: ${err.message}`
+          : "Couldn't complete your RSVP. Please try again.",
+      )
     },
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })

@@ -149,7 +149,7 @@ describe('native auth session persistence (cold-start logout regression)', () =>
     await flush() // migration setSession is deferred via setTimeout(0)
 
     expect(setSession).toHaveBeenCalledTimes(1)
-    const arg = setSession.mock.calls[0][0] as Session
+    const arg = (setSession.mock.calls[0] as unknown[])[0] as Session
     expect(arg.user.id).toBe('user-123')
   })
 

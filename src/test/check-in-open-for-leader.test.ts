@@ -83,9 +83,9 @@ describe('isCheckInOpenForLeader', () => {
     expect(isCheckInOpenForLeader(EVENT_START, TZ, false)).toBe(true)
   })
 
-  it('returns false the day after the event once impact is logged (closed)', () => {
+  it('stays open the day after the event even once impact is logged (2026-06-01: impact no longer closes leader check-in)', () => {
     vi.setSystemTime(T_NEXT_DAY)
-    expect(isCheckInOpenForLeader(EVENT_START, TZ, true)).toBe(false)
+    expect(isCheckInOpenForLeader(EVENT_START, TZ, true)).toBe(true)
   })
 
   it('returns true days later while impact is still not logged', () => {
@@ -93,8 +93,8 @@ describe('isCheckInOpenForLeader', () => {
     expect(isCheckInOpenForLeader(EVENT_START, TZ, false)).toBe(true)
   })
 
-  it('returns false days later once impact is logged', () => {
+  it('stays open days later even once impact is logged (2026-06-01: impact no longer closes leader check-in)', () => {
     vi.setSystemTime(T_FIVE_DAYS_LATER)
-    expect(isCheckInOpenForLeader(EVENT_START, TZ, true)).toBe(false)
+    expect(isCheckInOpenForLeader(EVENT_START, TZ, true)).toBe(true)
   })
 })

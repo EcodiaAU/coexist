@@ -71,10 +71,22 @@ export default function EditEventPage() {
   const [checkinWindowMinutes, setCheckinWindowMinutes] = useState(30)
   const ticketsInitialised = useRef(false)
 
+  // Pin-drop guard (Merri Mornings class, 2026-07-06): if the stored
+  // location_point exists but parseLocationPoint cannot read it, the form
+  // hydrates with lat/lng = null and any save would then write
+  // location_point = null, silently destroying the pin on an unrelated
+  // edit. That is exactly how pins created via the duplicate/edit prefill
+  // before the WKB parser landed (a512ceb, 2026-05-01) were lost. When
+  // this shape is detected we OMIT location_point from the update payload
+  // so the stored value stays untouched; a user who actively sets a new
+  // pin still saves it (locationPoint is then non-null).
+  const unparseableStoredPointRef = useRef(false)
+
   // Pre-populate from event data
   useEffect(() => {
     if (!event) return
     const pos = parseLocationPoint(event.location_point)
+    unparseableStoredPointRef.current = event.location_point != null && pos == null
     startTransition(() => {
       form.resetFields({
         title: event.title,
@@ -129,6 +141,12 @@ export default function EditEventPage() {
     if (!eventId) return
 
     const locationPoint = form.buildLocationPoint()
+    // Omit location_point entirely (useUpdateEvent keys off key presence)
+    // when we would only be nulling a stored pin we failed to parse.
+    const locationPatch =
+      unparseableStoredPointRef.current && locationPoint === null
+        ? {}
+        : { location_point: locationPoint }
 
     if (isDayOfMode) {
       // Day-of mode: only update time and address
@@ -138,7 +156,7 @@ export default function EditEventPage() {
         date_start: form.fields.date_start.toISOString(),
         date_end: form.fields.date_end?.toISOString() ?? null,
         address: form.fields.address || null,
-        location_point: locationPoint,
+        ...locationPatch,
       })
     } else {
       if (!form.isBasicsValid || !form.isDateValid) return
@@ -162,7 +180,7 @@ export default function EditEventPage() {
         date_start: form.fields.date_start!.toISOString(),
         date_end: form.fields.date_end?.toISOString() ?? null,
         address: form.fields.address || null,
-        location_point: locationPoint,
+        ...locationPatch,
         capacity: form.parsedCapacity(),
         cover_image_url: resolvedCover,
         cover_image_position_x: resolvedPosX,
@@ -193,6 +211,10 @@ export default function EditEventPage() {
     if (!eventId || !form.isBasicsValid || !form.isDateValid) return
 
     const locationPoint = form.buildLocationPoint()
+    const locationPatch =
+      unparseableStoredPointRef.current && locationPoint === null
+        ? {}
+        : { location_point: locationPoint }
 
     await updateEvent.mutateAsync({
       eventId,
@@ -202,7 +224,7 @@ export default function EditEventPage() {
       date_start: form.fields.date_start!.toISOString(),
       date_end: form.fields.date_end?.toISOString() ?? null,
       address: form.fields.address || null,
-      location_point: locationPoint,
+      ...locationPatch,
       capacity: form.parsedCapacity(),
       cover_image_url: form.fields.cover_image_url || null,
       cover_image_position_x: form.fields.cover_image_position_x,
