@@ -1,5 +1,8 @@
+import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
+import { DIETARY_GATE_QUERY_KEY } from '@/lib/dietary'
 import {
   CheckCircle2,
   Calendar,
@@ -26,6 +29,17 @@ export default function TicketConfirmationPage() {
 
   const { data: event, isLoading: eventLoading } = useEventDetail(eventId)
   const { data: ticket, isLoading: ticketLoading } = useMyEventTicket(eventId)
+  const queryClient = useQueryClient()
+
+  // Landing here means a ticket purchase or claim just completed (Stripe
+  // redirect return or free claim). Re-run the dietary-gate eligibility
+  // check so the gate fires immediately for buyers with no dietary answer
+  // on file, instead of waiting for the next app open.
+  useEffect(() => {
+    if (ticket) {
+      queryClient.invalidateQueries({ queryKey: DIETARY_GATE_QUERY_KEY })
+    }
+  }, [ticket, queryClient])
 
   const isLoading = eventLoading || ticketLoading
   const showLoading = useDelayedLoading(isLoading)

@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { queueOfflineAction } from '@/lib/offline-sync'
+import { DIETARY_GATE_QUERY_KEY } from '@/lib/dietary'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -196,6 +197,8 @@ export function useCreateTicketCheckout() {
       queryClient.invalidateQueries({ queryKey: ['event-ticket-types', variables.eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-event-ticket', variables.eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-tickets'] })
+      // A new ticket (even pending) can make the dietary gate eligible.
+      queryClient.invalidateQueries({ queryKey: DIETARY_GATE_QUERY_KEY })
     },
   })
 }

@@ -8,6 +8,7 @@ import { UnifiedSidebar } from '@/components/unified-sidebar'
 import { WebFooter } from '@/components/web-footer'
 import { OfflineBanner } from '@/components/offline-banner'
 import { PhoneGate } from '@/components/phone-gate'
+import { DietaryGate } from '@/components/dietary-gate'
 import { SentryErrorBoundary } from '@/lib/sentry'
 import { SyncStatusBanner } from '@/components/sync-status-banner'
 import { KeyboardOpenContext, useKeyboardOpen } from '@/components/app-shell-context'
@@ -211,6 +212,16 @@ function AppShellInner({ children }: { children: ReactNode }) {
           runtime polyfills (see vite.config.ts + src/lib/polyfills.ts). */}
       <SentryErrorBoundary fallback={null}>
         <PhoneGate />
+      </SentryErrorBoundary>
+
+      {/* Dietary-requirements gate - blocks users who hold a ticket or
+          registration to an upcoming ticketed event but have no dietary
+          answer on file (catering is ordered off this field). PhoneGate
+          takes precedence: DietaryGate only renders once a phone is on
+          file, so the two blocking portals never stack. Same error-
+          boundary defence as PhoneGate. */}
+      <SentryErrorBoundary fallback={null}>
+        <DietaryGate />
       </SentryErrorBoundary>
     </div>
   )
