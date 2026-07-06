@@ -1920,74 +1920,78 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON global_announcements FOR EACH ROW
 -- (Cannot create via SQL - document as reference for Supabase dashboard setup)
 -- ---------------------------------------------------------------------------
 
-/*
-STORAGE BUCKET CONFIGURATION - Create these in the Supabase Dashboard > Storage
-
-1. avatars
-   - Public: YES
-   - File size limit: 2MB
-   - Allowed MIME types: image/*
-   - RLS: Users can upload to their own folder (user_id/*)
-
-2. event-images
-   - Public: YES
-   - File size limit: 5MB
-   - Allowed MIME types: image/*
-   - RLS: Leaders can upload for their collective's events
-
-3. post-images
-   - Public: YES
-   - File size limit: 5MB
-   - Allowed MIME types: image/*
-   - RLS: Authenticated users can upload to their own folder
-
-4. collective-images
-   - Public: YES
-   - File size limit: 5MB
-   - Allowed MIME types: image/*
-   - RLS: Collective leaders can upload
-
-5. badges
-   - Public: YES
-   - File size limit: 1MB
-   - Allowed MIME types: image/*
-   - RLS: Admin only upload
-
-6. chat-images
-   - Public: NO (authenticated access)
-   - File size limit: 5MB
-   - Allowed MIME types: image/*
-   - RLS: Collective members only
-
-7. merch-images
-   - Public: YES
-   - File size limit: 5MB
-   - Allowed MIME types: image/*
-   - RLS: Admin only upload
-
-8. chat-voice
-   - Public: NO (authenticated access)
-   - File size limit: 5MB
-   - Allowed MIME types: audio/*
-   - RLS: Collective members only
-
-9. chat-video
-   - Public: NO (authenticated access)
-   - File size limit: 20MB
-   - Allowed MIME types: video/*
-   - RLS: Collective members only
-
-10. impact-evidence
-    - Public: NO (authenticated access)
-    - File size limit: 5MB
-    - Allowed MIME types: image/*
-    - RLS: Leaders/assist-leaders for their collective's events
-
-IMAGE TRANSFORMS (enable in Supabase Dashboard > Storage > Settings):
-  - Thumbnail: 200x200, cover
-  - Medium: 600x600, cover
-  - Large: 1200x1200, inside
-*/
+-- STORAGE BUCKET CONFIGURATION (see migration 0031_storage_buckets.sql, which
+-- actually creates these buckets). Documentation retained below as line
+-- comments; a C-style block comment here broke fresh migration replay because
+-- the "image/*" / "(user_id/*)" sequences open nested block comments that
+-- Postgres never closes, swallowing the ALTER PUBLICATION statements that
+-- follow.
+-- STORAGE BUCKET CONFIGURATION - Create these in the Supabase Dashboard > Storage
+-- 
+-- 1. avatars
+--    - Public: YES
+--    - File size limit: 2MB
+--    - Allowed MIME types: image/*
+--    - RLS: Users can upload to their own folder (user_id/*)
+-- 
+-- 2. event-images
+--    - Public: YES
+--    - File size limit: 5MB
+--    - Allowed MIME types: image/*
+--    - RLS: Leaders can upload for their collective's events
+-- 
+-- 3. post-images
+--    - Public: YES
+--    - File size limit: 5MB
+--    - Allowed MIME types: image/*
+--    - RLS: Authenticated users can upload to their own folder
+-- 
+-- 4. collective-images
+--    - Public: YES
+--    - File size limit: 5MB
+--    - Allowed MIME types: image/*
+--    - RLS: Collective leaders can upload
+-- 
+-- 5. badges
+--    - Public: YES
+--    - File size limit: 1MB
+--    - Allowed MIME types: image/*
+--    - RLS: Admin only upload
+-- 
+-- 6. chat-images
+--    - Public: NO (authenticated access)
+--    - File size limit: 5MB
+--    - Allowed MIME types: image/*
+--    - RLS: Collective members only
+-- 
+-- 7. merch-images
+--    - Public: YES
+--    - File size limit: 5MB
+--    - Allowed MIME types: image/*
+--    - RLS: Admin only upload
+-- 
+-- 8. chat-voice
+--    - Public: NO (authenticated access)
+--    - File size limit: 5MB
+--    - Allowed MIME types: audio/*
+--    - RLS: Collective members only
+-- 
+-- 9. chat-video
+--    - Public: NO (authenticated access)
+--    - File size limit: 20MB
+--    - Allowed MIME types: video/*
+--    - RLS: Collective members only
+-- 
+-- 10. impact-evidence
+--     - Public: NO (authenticated access)
+--     - File size limit: 5MB
+--     - Allowed MIME types: image/*
+--     - RLS: Leaders/assist-leaders for their collective's events
+-- 
+-- IMAGE TRANSFORMS (enable in Supabase Dashboard > Storage > Settings):
+--   - Thumbnail: 200x200, cover
+--   - Medium: 600x600, cover
+--   - Large: 1200x1200, inside
 
 -- ---------------------------------------------------------------------------
 -- 8. Realtime Configuration (3.7)
