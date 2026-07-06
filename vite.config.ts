@@ -15,7 +15,7 @@ import path from 'path'
 // `/admin/assets/index-X.js` (404 in the bundle), surfacing as a Capacitor
 // error overlay whose URL ends in `/admin/assets`. Absolute paths sidestep
 // the document-baseURI dependence. Vercel deep routes already require this
-// for the same reason — symmetric config is intentional.
+// for the same reason; symmetric config is intentional.
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -34,6 +34,21 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    // Browser-compatibility floor. Vite's implicit default target is a modern
+    // baseline (~Chrome 107 / Safari 16), which leaves Chrome 85-106-era JS
+    // *syntax* (logical assignment ??=/||=, class static blocks, private
+    // methods) untranspiled. Co-Exist ships to old Android System WebViews
+    // (the phone-gate old-Android crash, 2026-07-05) that hard-crash the moment
+    // they execute a newer-syntax chunk: the app-test-gate old-WebView run
+    // caught exactly this here ("Uncaught SyntaxError: Unexpected token '='" in
+    // the admin chunk on Chrome 83). An ES2019 floor transpiles that syntax
+    // down. Runtime *APIs* ES2019 lacks (Object.hasOwn, structuredClone,
+    // replaceAll, Array.at, findLast - pulled in by framer-motion and other
+    // deps) are polyfilled separately in src/lib/polyfills.ts, imported first in
+    // main.tsx; build.target only lowers syntax, not missing built-in methods.
+    // Do NOT remove without re-verifying on an old Android WebView (Chrome
+    // < 100). Origin: 2026-07-06 app-test-gate Phase 3, ported as a class fix.
+    target: 'es2019',
     rollupOptions: {
       external: ['@capacitor-mlkit/barcode-scanning', 'posthog-js'],
       output: {

@@ -29,6 +29,11 @@ function showBootError(label: string, payload: unknown) {
   }
 }
 
+// Runtime built-in polyfills for old Android System WebViews. MUST be first -
+// installs Object.hasOwn / structuredClone / replaceAll / at / findLast before
+// any vendor code (framer-motion etc.) runs. See src/lib/polyfills.ts.
+import '@/lib/polyfills'
+import { isEngineSupported, renderUnsupportedGate } from '@/lib/webview-gate'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -205,27 +210,38 @@ if (Capacitor.isNativePlatform()) {
 // Initialize Sentry error reporting (no-op if VITE_SENTRY_DSN is not set)
 initSentry()
 
-try {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <HelmetProvider>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <AuthProvider>
-              <ToastProvider>
-                <SentryErrorBoundary>
-                  <App />
-                </SentryErrorBoundary>
-                <CookieConsentBanner />
-              </ToastProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </HelmetProvider>
-    </StrictMode>,
-  )
-} catch (err) {
-  showBootError('render', err)
+// WebView capability gate. The es2019 build.target + polyfills fix removed the
+// JS *crash* class on old Android WebViews, but the app's TRUE floor is its CSS
+// framework: Tailwind v4 hard-requires color-mix()/@property (Chrome 111+,
+// Safari 16.4+, Firefox 128+), which cannot be transpiled. Below that floor the
+// layout silently collapses. So we probe the exact missing feature and, on an
+// under-floor engine, paint a plain update screen and skip the React mount
+// entirely. Runs BEFORE createRoot. See src/lib/webview-gate.ts.
+if (!isEngineSupported()) {
+  renderUnsupportedGate()
+} else {
+  try {
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <HelmetProvider>
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <AuthProvider>
+                <ToastProvider>
+                  <SentryErrorBoundary>
+                    <App />
+                  </SentryErrorBoundary>
+                  <CookieConsentBanner />
+                </ToastProvider>
+              </AuthProvider>
+            </BrowserRouter>
+          </QueryClientProvider>
+        </HelmetProvider>
+      </StrictMode>,
+    )
+  } catch (err) {
+    showBootError('render', err)
+  }
 }
 
 // Service worker registration is WEB-ONLY.
