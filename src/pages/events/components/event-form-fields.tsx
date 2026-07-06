@@ -169,6 +169,12 @@ export function LocationFields({ fields, onChange }: FieldProps) {
         className="aspect-[16/10] rounded-sm shadow-sm"
       />
 
+      <p className="-mt-2 text-xs text-neutral-500 flex items-start gap-1.5">
+        <MapPin size={12} className="mt-0.5 shrink-0 text-neutral-400" />
+        Drag the pin to the exact meeting point. It stays where you place it -
+        editing the address text won't move it.
+      </p>
+
       <PendingReverseAddressPrompt
         pending={sync.pendingReverseAddress}
         onAccept={sync.acceptPendingReverse}

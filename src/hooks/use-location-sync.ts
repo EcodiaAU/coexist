@@ -227,6 +227,15 @@ export function useLocationSync({
     'user-typed',
   )
 
+  // True once the user has DELIBERATELY placed the pin - either by picking an
+  // autocomplete result or by dragging the marker. Once set, free-typed
+  // address text must NOT relocate the pin: forward-geocode only auto-positions
+  // the pin WHILE the user has not yet committed to an exact spot. This is what
+  // makes the pin "stay exactly where they put it" instead of snapping back to
+  // a suburb centroid when the address text later resolves to a locality. The
+  // lock is released when the address field is cleared (a fresh search).
+  const pinPlacedRef = useRef(false)
+
   // Cancel everything on unmount.
   useEffect(() => {
     return () => {
@@ -250,6 +259,14 @@ export function useLocationSync({
           if (controller.signal.aborted) return
           if (!result) {
             setStatus('no-result')
+            return
+          }
+          // Guard: never move a deliberately-placed pin. If the user has
+          // already picked a result or dragged the marker, a forward-geocode
+          // that resolves afterwards (late in-flight result, or a label edit)
+          // must leave the exact pin untouched.
+          if (pinPlacedRef.current) {
+            setStatus('synced')
             return
           }
           // Only push the pin update; do not overwrite the address text the
@@ -281,7 +298,18 @@ export function useLocationSync({
       setPendingReverseAddress(null)
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
       if (value.trim().length < 3) {
+        // Field cleared / near-empty: the user is starting a fresh search, so
+        // release the pin lock and let the next forward-geocode reposition it.
+        pinPlacedRef.current = false
         setStatus('idle')
+        return
+      }
+      // A deliberately-placed pin stays put while the user edits the address
+      // label (adding a landmark note, tidying the venue name). Skip the
+      // forward-geocode entirely so we neither move the pin nor waste a
+      // Nominatim call - clear the field to start a new location search.
+      if (pinPlacedRef.current) {
+        setStatus('synced')
         return
       }
       setStatus('searching')
@@ -296,6 +324,9 @@ export function useLocationSync({
     (value: string, place: { lat: number; lng: number }) => {
       addressOwnerRef.current = 'autocomplete'
       lastSyncedAddressRef.current = value
+      // Picking a result is a deliberate placement: lock the pin so later
+      // label edits or a stale forward-geocode can't move it off the result.
+      pinPlacedRef.current = true
       setPendingReverseAddress(null)
       setStatus('synced')
       // Cancel any pending forward-geocode triggered by mid-typing.
@@ -310,6 +341,14 @@ export function useLocationSync({
 
   const onPinDragged = useCallback(
     (pos: MapCenter) => {
+      // A deliberate drag wins over any address geocode. Cancel the debounce
+      // and abort any in-flight forward-geocode so a late result can't snap
+      // the pin back to a suburb centroid after the user fine-tuned the exact
+      // spot, and lock the pin against subsequent label-edit geocodes.
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+      forwardAbortRef.current?.abort()
+      pinPlacedRef.current = true
+
       // Always commit the new lat/lng first (cheap, local).
       onChange({ lat: pos.lat, lng: pos.lng })
 
@@ -377,8 +416,14 @@ export function useLocationSync({
   // immediately fire a "pending overwrite" prompt against an unrelated
   // historical address.
   useEffect(() => {
-    if (lat != null && lng != null && address && !lastSyncedAddressRef.current) {
-      lastSyncedAddressRef.current = address
+    if (lat != null && lng != null) {
+      if (address && !lastSyncedAddressRef.current) {
+        lastSyncedAddressRef.current = address
+      }
+      // An event that loads with an existing precise point (edit page) is
+      // treated as a deliberately-placed pin: editing the label text must not
+      // relocate the saved meeting point.
+      pinPlacedRef.current = true
     }
     // We deliberately depend on lat/lng presence, not the values themselves;
     // the goal is one-time baseline capture on first hydration.
