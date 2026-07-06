@@ -48,10 +48,23 @@ function MenuRow({
 }) {
   const shouldReduceMotion = useReducedMotion()
 
+  // QA P3-6: this row carries a Toggle (itself a <button>) in rightContent,
+  // and a <button> cannot be a descendant of a <button> - React logged a
+  // DOM-nesting error on every render of /settings/privacy. Same fix shape
+  // as the Sound row in settings/notifications.tsx: the outer element is a
+  // div with role="button" + keyboard handling, so the inner Toggle stays
+  // the only real <button>.
   return (
-    <motion.button
-      type="button"
+    <motion.div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick?.()
+        }
+      }}
       whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       className="flex items-center w-full min-h-[52px] px-4 py-3 text-left transition-colors duration-100 cursor-pointer hover:bg-surface-3 active:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-400"
@@ -67,7 +80,7 @@ function MenuRow({
       <span className="flex items-center shrink-0 ml-3 text-neutral-400">
         {rightContent}
       </span>
-    </motion.button>
+    </motion.div>
   )
 }
 

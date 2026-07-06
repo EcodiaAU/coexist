@@ -128,7 +128,10 @@ export function DateInput({
       error={localError}
       maxLength={10}
       inputMode="numeric"
-      pattern="[0-9/]*"
+      // The HTML pattern attribute compiles with the RegExp 'v' flag, where an
+      // unescaped '/' inside a character class is a syntax error (the browser
+      // logs a console error and silently ignores the pattern). Escape it.
+      pattern="[0-9\/]*"
       enterKeyHint="next"
       className={className}
     />

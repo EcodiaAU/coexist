@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import DOMPurify from 'dompurify'
 import { Page } from '@/components/page'
@@ -24,6 +25,23 @@ export default function LegalPageShell({ slug, fallbackTitle, fallbackDescriptio
   const showLoading = useDelayedLoading(isLoading)
   const shouldReduceMotion = useReducedMotion()
 
+  // QA P3-3: with networkMode 'offlineFirst' a failed fetch can leave the
+  // query paused (isLoading forever) and an unpublished page never resolves
+  // to content - both showed an infinite skeleton. Escape after 8s of
+  // loading, and treat "settled with no page" as a failure state too.
+  const [timedOut, setTimedOut] = useState(false)
+  useEffect(() => {
+    if (!isLoading) {
+      setTimedOut(false)
+      return
+    }
+    const t = setTimeout(() => setTimedOut(true), 8000)
+    return () => clearTimeout(t)
+  }, [isLoading])
+
+  const loadFailed =
+    !page && (!!error || (isLoading && timedOut) || !isLoading)
+
   const title = page?.title ?? fallbackTitle
   const description = page?.summary ?? fallbackDescription
 
@@ -48,7 +66,7 @@ export default function LegalPageShell({ slug, fallbackTitle, fallbackDescriptio
           {title}
         </h1>
 
-        {showLoading && (
+        {showLoading && !loadFailed && (
           <div className="space-y-4">
             <Skeleton variant="text" count={3} />
             <Skeleton variant="text" count={4} />
@@ -56,7 +74,7 @@ export default function LegalPageShell({ slug, fallbackTitle, fallbackDescriptio
           </div>
         )}
 
-        {error && (
+        {loadFailed && (
           <p className="text-sm text-neutral-500 leading-relaxed text-center">
             {fallbackDescription} For questions contact{' '}
             <a

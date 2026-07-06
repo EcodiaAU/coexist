@@ -27,6 +27,8 @@ interface DropdownProps {
   label?: string
   error?: string
   disabled?: boolean
+  /** Renders the red asterisk next to the label (same convention as Input) */
+  required?: boolean
   className?: string
   triggerClassName?: string
   /** Use 'dark' when rendered on a dark/hero background */
@@ -56,6 +58,7 @@ export function Dropdown({
   label,
   error,
   disabled = false,
+  required = false,
   className,
   triggerClassName,
   tone = 'default',
@@ -296,6 +299,7 @@ export function Dropdown({
           className="block mb-1.5 text-sm font-medium text-neutral-900"
         >
           {label}
+          {required && <span className="text-error ml-0.5">*</span>}
         </label>
       )}
 

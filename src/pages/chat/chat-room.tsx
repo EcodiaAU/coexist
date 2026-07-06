@@ -407,9 +407,9 @@ export default function ChatRoomPage() {
   /**
    * When the keyboard opens (user taps the input), the input bar rises above
    * the soft keyboard via the --kb-height CSS var, but the message list
-   * doesn't re-scroll — so the newest messages that were visible just above
+   * doesn't re-scroll - so the newest messages that were visible just above
    * the input bar are now hidden behind the lifted input. Fix: when the
-   * keyboard transitions to open, scroll to the bottom — but only if the
+   * keyboard transitions to open, scroll to the bottom - but only if the
    * user was already at the bottom (showScrollDown=false). If they were
    * scrolled up reading old messages, leave their position alone; the
    * existing "↓ new messages" pill handles that case.

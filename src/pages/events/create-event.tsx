@@ -34,6 +34,7 @@ import {
     Trash2
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { GLOBAL_ROLE_RANK } from '@/lib/constants'
 import { useQuery } from '@tanstack/react-query'
 import {
     useCreateEvent,
@@ -1634,7 +1635,7 @@ function SummaryRow({
 export default function CreateEventPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   const shouldReduceMotion = useReducedMotion()
 
   const [extra, setExtra] = useState<CreateExtraFields>(INITIAL_EXTRA)
@@ -2080,7 +2081,18 @@ export default function CreateEventPage() {
         // (the cached frozen URL still carries the ?from= we already used).
         resetWizard()
 
-        navigate('/admin/events', { replace: true })
+        // Role-aware destination: /admin/events is gated to manager+ (leaders
+        // hit "Access restricted" there - QA P2-1). Leaders land on the event
+        // they just published, or their events list for drafts.
+        const isManagerPlus =
+          (GLOBAL_ROLE_RANK[role] ?? 0) >= GLOBAL_ROLE_RANK.manager
+        if (isManagerPlus) {
+          navigate('/admin/events', { replace: true })
+        } else if (isDraft) {
+          navigate('/leader/events', { replace: true })
+        } else {
+          navigate(`/events/${event.id}`, { replace: true })
+        }
       } catch (err) {
         console.error('[create-event] publish failed:', err)
         const msg = formatCreateEventError(err)
@@ -2089,7 +2101,7 @@ export default function CreateEventPage() {
         )
       }
     },
-    [user, form, extra, saveAsDraft, createEvent, inviteCollective, navigate, toastApi, resetWizard, activityDefaults],
+    [user, role, form, extra, saveAsDraft, createEvent, inviteCollective, navigate, toastApi, resetWizard, activityDefaults],
   )
 
   const handleBack = useCallback(() => navigate(-1), [navigate])
@@ -2115,7 +2127,7 @@ export default function CreateEventPage() {
     handlePublish()
   }, [canPublish, revealMissing, toastApi, handlePublish])
 
-  // Section config — drives both the accordion render and the meta lookup.
+  // Section config - drives both the accordion render and the meta lookup.
   // Each entry maps a section key to one of the original STEPS configs and
   // a short summary string so the user can see at-a-glance what's set.
   const sectionDefs = useMemo(() => {
@@ -2291,7 +2303,7 @@ export default function CreateEventPage() {
               <h2 className="text-lg font-bold text-primary-900">New Event</h2>
               <p className="text-caption text-primary-500 mt-0.5">
                 {canPublish
-                  ? 'Looks good — publish whenever you are ready'
+                  ? 'Looks good - publish whenever you are ready'
                   : 'Fill out the highlighted sections to publish'}
               </p>
             </div>
@@ -2383,7 +2395,7 @@ export default function CreateEventPage() {
         })}
 
         {/* Review summary always rendered at the bottom so the user can scan
-            the final event before publishing — no separate step needed. */}
+            the final event before publishing - no separate step needed. */}
         <div className="pt-2">
           <StepColorCtx.Provider
             value={{ cardBorder: STEPS[10].cardBorder, cardGlow: STEPS[10].cardGlow }}

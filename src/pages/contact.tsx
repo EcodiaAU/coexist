@@ -97,7 +97,9 @@ export default function ContactPage() {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
 
-  const canSubmit = name.trim() && email.trim() && message.trim() && !sending
+  // Subject is required by contactFormSchema; include it here so the CTA
+  // stays disabled (instead of failing validation on submit) until chosen.
+  const canSubmit = name.trim() && email.trim() && subject.trim() && message.trim() && !sending
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -239,6 +241,7 @@ export default function ContactPage() {
             value={subject}
             onChange={setSubject}
             placeholder="What's this about?"
+            required
           />
 
           <Input

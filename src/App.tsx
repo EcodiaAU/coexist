@@ -10,6 +10,7 @@ import { LeaderLayout as LeaderLayoutRoute } from '@/components/leader-layout'
 import { MaintenanceMode } from '@/components/maintenance-mode'
 import { UpdateRequired } from '@/components/update-required'
 import { useAppUpdate } from '@/hooks/use-app-update'
+import { useAuth } from '@/hooks/use-auth'
 import { useDeepLink } from '@/hooks/use-deep-link'
 import SplashPage from '@/pages/splash'
 
@@ -46,6 +47,7 @@ const DisclaimerPage = lazy(() => import('@/pages/legal/disclaimer'))
 
 // Public / Auth
 const WelcomePage = lazy(() => import('@/pages/auth/welcome'))
+const NotFoundPage = lazy(() => import('@/pages/not-found'))
 const SignUpPage = lazy(() => import('@/pages/auth/sign-up'))
 const LoginPage = lazy(() => import('@/pages/auth/login'))
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/forgot-password'))
@@ -212,6 +214,23 @@ function PageFallback() {
 /* ------------------------------------------------------------------ */
 /*  Bare routes (no app shell chrome)                                  */
 /* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/*  Catch-all (unknown routes)                                         */
+/*  Authed members get a real 404; logged-out visitors get Welcome.    */
+/*  QA P3-4: the old catch-all always rendered Welcome, which looked   */
+/*  like being signed out to authed users on any typo'd URL.           */
+/* ------------------------------------------------------------------ */
+
+function CatchAllRoute() {
+  const { user, isLoading } = useAuth()
+  if (isLoading) return null
+  return (
+    <AppShell bare>
+      {user ? <NotFoundPage /> : <WelcomePage />}
+    </AppShell>
+  )
+}
 
 /* ------------------------------------------------------------------ */
 /*  App                                                                */
@@ -647,15 +666,10 @@ function App() {
         {/* Design showcase (dev only) */}
         <Route path="/design/events" element={<EventEditorialShowcase />} />
 
-        {/* Catch-all: redirect to welcome */}
-        <Route
-          path="*"
-          element={
-            <AppShell bare>
-              <WelcomePage />
-            </AppShell>
-          }
-        />
+        {/* Catch-all: authed users get a friendly 404 (QA P3-4 - they used
+            to see the logged-out Welcome screen); visitors get Welcome. */}
+        <Route path="*" element={<CatchAllRoute />} />
+
       </Routes>
     </Suspense>
     </ErrorBoundary>

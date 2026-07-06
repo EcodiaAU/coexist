@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { resolvePriceCents } from '@/types/merch'
 import type { CartItem, Product, ProductVariant, PromoCode, ShippingConfig } from '@/types/merch'
 
 /* ------------------------------------------------------------------ */
@@ -41,6 +42,12 @@ interface CartState {
 
   // Computed
   itemCount: () => number
+  /** Effective unit price for a line (variant price_cents with
+   *  base_price_cents fallback), or null when it cannot be resolved. */
+  linePriceCents: (item: CartItem) => number | null
+  /** True when any line in the cart has no resolvable price. Checkout CTAs
+   *  must disable while this is true (QA P2-3: legacy variants -> $NaN). */
+  hasUnpricedItems: () => boolean
   subtotalCents: () => number
   memberDiscountCents: () => number
   discountCents: () => number
@@ -97,8 +104,18 @@ export const useCart = create<CartState>()(
 
       itemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 
+      linePriceCents: (item) => resolvePriceCents(item.variant, item.product),
+
+      hasUnpricedItems: () =>
+        get().items.some((i) => resolvePriceCents(i.variant, i.product) === null),
+
+      // Unpriced lines contribute 0 here (never NaN); hasUnpricedItems()
+      // gates the checkout CTAs so a 0-priced legacy line can't be bought.
       subtotalCents: () =>
-        get().items.reduce((sum, i) => sum + i.variant.price_cents * i.quantity, 0),
+        get().items.reduce(
+          (sum, i) => sum + (resolvePriceCents(i.variant, i.product) ?? 0) * i.quantity,
+          0,
+        ),
 
       memberDiscountCents: () => {
         const md = get().memberDiscount

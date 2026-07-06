@@ -78,6 +78,8 @@ export default function CartPage() {
   const discountCents = useCart((s) => s.discountCents())
   const shippingCents = useCart((s) => s.shippingCents())
   const totalCents = useCart((s) => s.totalCents())
+  const linePriceCents = useCart((s) => s.linePriceCents)
+  const hasUnpricedItems = useCart((s) => s.hasUnpricedItems())
 
   const { release, reserve } = useReserveStock()
   const { getReservation } = useMyReservations()
@@ -216,11 +218,18 @@ export default function CartPage() {
               {formatPrice(totalCents)}
             </span>
           </div>
+          {hasUnpricedItems && (
+            <p className="text-xs text-error text-center">
+              Some items in your cart are missing a price. Remove them to
+              continue, or contact us for help.
+            </p>
+          )}
           <Button
             variant="primary"
             size="lg"
             fullWidth
             icon={<ArrowRight size={18} />}
+            disabled={hasUnpricedItems}
             onClick={() => navigate('/shop/checkout')}
           >
             Checkout
@@ -310,7 +319,12 @@ export default function CartPage() {
                     {/* Price + Quantity */}
                     <div className="flex items-center justify-between mt-auto pt-2">
                       <p className="font-heading font-bold text-[15px] text-neutral-900 tabular-nums">
-                        {formatPrice(item.variant.price_cents * item.quantity)}
+                        {(() => {
+                          const unit = linePriceCents(item)
+                          return unit === null
+                            ? 'Price unavailable'
+                            : formatPrice(unit * item.quantity)
+                        })()}
                       </p>
 
                       <div className="inline-flex items-center gap-0 bg-neutral-50 rounded-sm border border-neutral-100">

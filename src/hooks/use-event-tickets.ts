@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { captureException } from '@/lib/sentry'
 import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { queueOfflineAction } from '@/lib/offline-sync'
@@ -186,9 +187,22 @@ export function useCreateTicketCheckout() {
         },
       })
 
-      if (error) throw error
+      if (error) {
+        // QA P3-5: surfacing the raw FunctionsHttpError ("Edge Function
+        // returned a non-2xx status code") to the toast is meaningless to
+        // members. Log the raw error for diagnosis, throw a human message.
+        // No charge has occurred at this point - the Stripe session was
+        // never created/returned.
+        console.error('[create-ticket-checkout] edge function error:', error)
+        captureException(error, { extra: { eventId, ticketTypeId, quantity } })
+        throw new Error(
+          'Payment could not start. Nothing was charged - try again or contact us.',
+        )
+      }
 
       const result = data as { session_id: string; url: string; error?: string }
+      // result.error carries app-authored messages from the edge function
+      // (e.g. "Sold out") - those are already human-readable.
       if (result.error) throw new Error(result.error)
 
       return result

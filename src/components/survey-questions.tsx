@@ -92,6 +92,10 @@ export function SurveyQuestionRenderer({
                   key={n}
                   type="button"
                   onClick={() => setAnswer(q.id, n)}
+                  // QA P3-9: the star buttons had no accessible name - a
+                  // screen reader announced each as just "button".
+                  aria-label={`${n} star${n === 1 ? '' : 's'}`}
+                  aria-pressed={answers[q.id] === n}
                   className={cn(
                     'flex items-center justify-center w-10 h-10 rounded-sm cursor-pointer transition-colors',
                     (answers[q.id] as number) >= n
@@ -305,8 +309,14 @@ export function SurveyQuestionRenderer({
             <div className="space-y-1">
               <Input
                 type="number"
-                value={(answers[q.id] as string) ?? ''}
-                onChange={(e) => setAnswer(q.id, e.target.value)}
+                value={(answers[q.id] as string | number | undefined) ?? ''}
+                // QA P3-8: e.target.value is a string, so numeric answers
+                // persisted to the answers jsonb as "42" instead of 42 and
+                // broke downstream aggregation. Store a real number; keep ''
+                // for an empty field so required-validation still catches it.
+                onChange={(e) =>
+                  setAnswer(q.id, e.target.value === '' ? '' : Number(e.target.value))
+                }
                 placeholder={q.placeholder || 'Enter a number...'}
                 min={q.number_min != null ? String(q.number_min) : undefined}
                 max={q.number_max != null ? String(q.number_max) : undefined}

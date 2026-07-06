@@ -56,6 +56,8 @@ export default function CheckoutPage() {
   const discountCents = useCart((s) => s.discountCents())
   const shippingCents = useCart((s) => s.shippingCents())
   const totalCents = useCart((s) => s.totalCents())
+  const linePriceCents = useCart((s) => s.linePriceCents)
+  const hasUnpricedItems = useCart((s) => s.hasUnpricedItems())
    
   const _clearCart = useCart((s) => s.clear)
 
@@ -110,6 +112,10 @@ export default function CheckoutPage() {
 
   const handleCheckout = useCallback(async () => {
     if (!validate()) return
+    if (hasUnpricedItems) {
+      toast.error('Some items in your cart are missing a price. Please remove them or contact us.')
+      return
+    }
     if (reservationExpired) {
       toast.error('Your reservations have expired. Please go back to your cart and try again.')
       return
@@ -124,7 +130,7 @@ export default function CheckoutPage() {
     } catch {
       toast.error('Checkout failed. Please try again.')
     }
-  }, [validate, checkout, address, toast, reservationExpired])
+  }, [validate, checkout, address, toast, reservationExpired, hasUnpricedItems])
 
   useEffect(() => {
     if (items.length === 0) {
@@ -152,16 +158,26 @@ export default function CheckoutPage() {
               {formatPrice(totalCents)}
             </span>
           </div>
+          {hasUnpricedItems && (
+            <p className="text-xs text-error text-center">
+              Some items in your cart are missing a price. Remove them to
+              continue, or contact us for help.
+            </p>
+          )}
           <Button
             variant="primary"
             size="lg"
             fullWidth
             icon={<CreditCard size={18} />}
             loading={checkout.isPending}
-            disabled={reservationExpired}
+            disabled={reservationExpired || hasUnpricedItems}
             onClick={handleCheckout}
           >
-            {reservationExpired ? 'Reservations Expired' : `Pay ${formatPrice(totalCents)}`}
+            {reservationExpired
+              ? 'Reservations Expired'
+              : hasUnpricedItems
+                ? 'Price unavailable'
+                : `Pay ${formatPrice(totalCents)}`}
           </Button>
         </div>
       }
@@ -360,7 +376,12 @@ export default function CheckoutPage() {
                       <p className="text-xs text-neutral-500">x{item.quantity}</p>
                     </div>
                     <span className="text-sm font-semibold text-neutral-900 tabular-nums">
-                      {formatPrice(item.variant.price_cents * item.quantity)}
+                      {(() => {
+                        const unit = linePriceCents(item)
+                        return unit === null
+                          ? 'Price unavailable'
+                          : formatPrice(unit * item.quantity)
+                      })()}
                     </span>
                   </div>
                 ))}

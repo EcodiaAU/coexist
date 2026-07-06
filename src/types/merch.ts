@@ -139,9 +139,30 @@ export interface ShippingConfig {
   free_shipping_threshold_cents: number | null
 }
 
-/** Format cents to AUD display string */
+/** Format cents to AUD display string. Non-finite input (a price that could
+ *  not be resolved) renders as '--', never '$NaN'. */
 export function formatPrice(cents: number): string {
+  if (!Number.isFinite(cents)) return '--'
   return `$${(cents / 100).toFixed(2)}`
+}
+
+/**
+ * Resolve the effective unit price for a variant, falling back to the
+ * product's base_price_cents. Legacy variant rows (the {key,label} shape
+ * still present on prod) have no price_cents, which used to propagate NaN
+ * into cart subtotals and an enabled "Pay $NaN" button (QA P2-3).
+ * Returns null when no finite price can be resolved - callers must treat
+ * null as "cannot price" (disable the CTA), never render it.
+ */
+export function resolvePriceCents(
+  variant: { price_cents?: unknown } | null | undefined,
+  product?: { base_price_cents?: unknown } | null,
+): number | null {
+  const v = variant?.price_cents
+  if (typeof v === 'number' && Number.isFinite(v)) return v
+  const b = product?.base_price_cents
+  if (typeof b === 'number' && Number.isFinite(b)) return b
+  return null
 }
 
 /** Build a human-readable variant label */
