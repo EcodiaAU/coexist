@@ -240,6 +240,12 @@ export function AdminLayout() {
   const [header, setHeaderState] = useState<AdminHeaderState>({ title: '', fullBleed: isFullBleedRoute })
   const scrollRef = useRef<HTMLDivElement>(null)
   const scopeCtx = useAdminCollectiveScopeProvider()
+  // Paint the scroller the SAME hue as the current hero bar, so the native
+  // overscroll gap reveals the hero colour continuing (seamless) rather than
+  // white. No-hero pages (Dashboard / fullBleed) keep the surface bg.
+  const heroHue = (!header.fullBleed && header.title && header.title !== 'Dashboard')
+    ? (PAGE_HERO_CONFIG[header.title] ?? DEFAULT_HERO).hue
+    : 'bg-surface-1'
 
   // Reset fullBleed on route change so the new layout is correct before the
   // child page's useAdminHeader effect fires (prevents the p-6 → p-0 flash on
@@ -276,7 +282,8 @@ export function AdminLayout() {
             unscrollable admin pages. overscroll-none stays; hide-scrollbar is
             tab-only so desktop keeps a visible scrollbar. (2026-06-08) */}
         <div ref={scrollRef} data-parallax-scroll className={cn(
-          'flex-1 flex flex-col min-w-0 min-h-0 bg-gradient-to-b from-olive-800 to-white',
+          'flex-1 flex flex-col min-w-0 min-h-0 transition-colors duration-700 ease-in-out',
+          heroHue,
           // Mobile/tab mode: app-shell is overflow-hidden (viewport-pinned), so THIS
           // container owns the scroll -> overflow-y-auto. Desktop sidebar mode:
           // app-shell is min-h-dvh (the page grows and the DOCUMENT scrolls), so

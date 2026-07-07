@@ -188,6 +188,11 @@ export function LeaderLayout() {
   const showBottomTabs = navMode === 'bottom-tabs'
   const [header, setHeaderState] = useState<LeaderHeaderState>({ title: '' })
   const scrollRef = useRef<HTMLDivElement>(null)
+  // Match the scroller to the current hero hue so the overscroll gap reveals
+  // the hero colour continuing, not white.
+  const heroHue = (!header.fullBleed && header.title)
+    ? (PAGE_HERO_CONFIG[header.title] ?? DEFAULT_HERO).hue
+    : 'bg-surface-1'
 
   // Collective scope - managers see managed collectives, admins see all, leaders see own
   const scopeCtx = useLeaderCollectiveScopeProvider()
@@ -231,7 +236,8 @@ export function LeaderLayout() {
 
         {/* ── Main content ── */}
         <div ref={scrollRef} className={cn(
-          'flex-1 flex flex-col min-w-0 min-h-0 bg-gradient-to-b from-olive-800 to-white',
+          'flex-1 flex flex-col min-w-0 min-h-0 transition-colors duration-700 ease-in-out',
+          heroHue,
           showBottomTabs && 'overflow-y-auto overscroll-contain hide-scrollbar',
         )}>
           {/* Shared hero bar - only for non-fullBleed pages */}
