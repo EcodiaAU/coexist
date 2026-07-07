@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 
 /**
  * Stretchy hero (touch-driven, iOS App-Store-style pull-to-stretch).
@@ -116,19 +116,36 @@ export function attachStretchyPull(scroller: HTMLElement, hero: HTMLElement): ()
   }
 }
 
-export function useStretchyHero<T extends HTMLElement = HTMLDivElement>() {
-  const heroRef = useRef<T>(null)
+// Nearest scrollable ancestor of `el`, so a hero works in ANY layout scroller
+// (Page's #main-content, admin-layout, leader-layout) without hardcoding an id.
+export function findScrollParent(el: HTMLElement): HTMLElement | null {
+  let node = el.parentElement
+  while (node) {
+    const oy = getComputedStyle(node).overflowY
+    if (oy === 'auto' || oy === 'scroll') return node
+    node = node.parentElement
+  }
+  return document.getElementById('main-content')
+}
 
-  useEffect(() => {
-    const hero = heroRef.current
-    if (!hero) return
-    const scroller = document.getElementById('main-content')
+export function useStretchyHero<T extends HTMLElement = HTMLDivElement>() {
+  const cleanupRef = useRef<(() => void) | null>(null)
+
+  // Callback ref so heroes that mount LATE (admin/leader set their header via
+  // context after the layout mounts) or REMOUNT on navigation still attach,
+  // and detach cleanly when the hero leaves. Stable identity (useCallback [])
+  // so React only fires it on actual mount/unmount, not every render.
+  return useCallback((node: T | null) => {
+    if (cleanupRef.current) {
+      cleanupRef.current()
+      cleanupRef.current = null
+    }
+    if (!node) return
+    const scroller = findScrollParent(node)
     if (!scroller) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     // Touch-only feature; pointer/desktop leaves the hero untouched.
     if (!('ontouchstart' in window) && navigator.maxTouchPoints === 0) return
-    return attachStretchyPull(scroller, hero)
+    cleanupRef.current = attachStretchyPull(scroller, node)
   }, [])
-
-  return heroRef
 }

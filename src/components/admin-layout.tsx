@@ -29,6 +29,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
+import { useStretchyHero } from '@/hooks/use-stretchy-hero'
+import { useScrollBounce } from '@/hooks/use-scroll-bounce'
 import { BottomTabBar, type Tab } from '@/components/bottom-tab-bar'
 import { useMenuSheet } from '@/hooks/use-menu-sheet'
 import type { NavItem, NavCategory } from '@/components/sidebar/types'
@@ -239,6 +241,10 @@ export function AdminLayout() {
     /^\/admin\/collectives\/[^/]+/.test(location.pathname)
   const [header, setHeaderState] = useState<AdminHeaderState>({ title: '', fullBleed: isFullBleedRoute })
   const scrollRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const heroStretchRef = useStretchyHero<HTMLDivElement>()
+  // Bottom overscroll bounce on the admin scroller (top is the hero fill-grow).
+  useScrollBounce(scrollRef, contentRef, { top: false, bottom: true })
   const scopeCtx = useAdminCollectiveScopeProvider()
 
   // Reset fullBleed on route change so the new layout is correct before the
@@ -287,6 +293,8 @@ export function AdminLayout() {
           // overflow-x-clip (not overflow-clip) so Y still reaches the doc scroller.
           showBottomTabs && 'overflow-y-auto overscroll-none hide-scrollbar',
         )}>
+          {/* Scroll-content wrapper for the bottom overscroll bounce. */}
+          <div ref={contentRef}>
           {/* ── Shared hero bar ──────────────────────────────────────────────
               ONE persistent element across every non-fullBleed admin page. It
               never remounts on navigation: the background-colour GLIDES to the
@@ -297,6 +305,7 @@ export function AdminLayout() {
               - was remounting bg + wave on every nav and jumping height.) */}
           {!header.fullBleed && header.title && header.title !== 'Dashboard' ? (
             <div
+              ref={heroStretchRef}
               className={cn(
                 'relative overflow-hidden shrink-0',
                 'min-h-[15rem] sm:min-h-[16rem]',
@@ -393,6 +402,7 @@ export function AdminLayout() {
           )}>
 
             <AnimatedOutlet />
+          </div>
           </div>
         </div>
 
