@@ -1,5 +1,6 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 /**
  * event-day-notify - Scheduled Supabase Edge Function
@@ -61,7 +62,7 @@ function minutesBetween(a: Date, b: Date): number {
   return (b.getTime() - a.getTime()) / (60 * 1000)
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('event-day-notify', async (req: Request) => {
   try {
     // Verify caller is using the service-role key (cron invocations)
     const authHeader = req.headers.get('Authorization')
@@ -159,7 +160,7 @@ Deno.serve(async (req: Request) => {
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     )
   }
-})
+}))
 
 // ── Notify all registered attendees for a single event ──
 

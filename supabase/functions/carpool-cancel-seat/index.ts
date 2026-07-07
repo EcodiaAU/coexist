@@ -1,5 +1,6 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 /**
  * carpool-cancel-seat
@@ -36,7 +37,7 @@ function bad(status: number, message: string) {
   )
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('carpool-cancel-seat', async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
   }
@@ -150,4 +151,4 @@ Deno.serve(async (req: Request) => {
     }),
     { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
   )
-})
+}))

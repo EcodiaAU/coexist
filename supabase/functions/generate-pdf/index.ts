@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -764,7 +765,7 @@ async function fetchExportData(
 /*  Main handler                                                       */
 /* ------------------------------------------------------------------ */
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('generate-pdf', async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -841,4 +842,4 @@ Deno.serve(async (req: Request) => {
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   }
-})
+}))

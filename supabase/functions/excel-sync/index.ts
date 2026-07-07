@@ -61,6 +61,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { generate as uuidv5 } from 'https://deno.land/std@0.224.0/uuid/v5.ts'
+import { withSentry } from '../_shared/sentry.ts'
 
 // ---- Config ----
 const GRAPH_TENANT_ID = Deno.env.get('GRAPH_TENANT_ID') ?? ''
@@ -1730,7 +1731,7 @@ async function deleteFromExcel(
 
 // ---- Main handler ----
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('excel-sync', async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -1828,4 +1829,4 @@ Deno.serve(async (req: Request) => {
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   }
-})
+}))

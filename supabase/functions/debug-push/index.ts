@@ -7,6 +7,7 @@
 // passphrase so we can call it from outside the app.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 interface DebugPushPayload {
   /** Optional: send to a stored user's tokens instead of a raw token */
@@ -165,7 +166,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('debug-push', async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
   }
@@ -276,4 +277,4 @@ Deno.serve(async (req: Request) => {
       { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
     )
   }
-})
+}))

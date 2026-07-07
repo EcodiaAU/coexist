@@ -15,6 +15,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -33,7 +34,7 @@ function code(): string {
   return Array.from(bytes, (b) => alpha[b % alpha.length]).join('')
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('claim-event-ticket', async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   const json = (data: unknown, status = 200) =>
     new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -126,4 +127,4 @@ Deno.serve(async (req: Request) => {
     console.error('[claim] error:', (err as Error).message)
     return json({ error: 'Something went wrong' }, 500)
   }
-})
+}))

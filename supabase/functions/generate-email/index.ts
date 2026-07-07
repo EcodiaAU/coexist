@@ -1,5 +1,6 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 /* ------------------------------------------------------------------ */
 /*  AI Email Template Generator for Co-Exist                           */
@@ -241,7 +242,7 @@ interface GeneratePayload {
   mode?: 'template' | 'content'
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('generate-email', async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
   }
@@ -423,4 +424,4 @@ If the user wants to "hype up the next event for everyone" or similar, USE these
       { status: 500, headers: JSON_HEADERS },
     )
   }
-})
+}))
