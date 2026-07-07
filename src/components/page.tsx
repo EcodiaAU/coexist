@@ -41,10 +41,13 @@ export function Page({
   const { navMode } = useLayout()
   const keyboardOpen = useKeyboardOpen()
 
-  // Universal touch-driven overscroll bounce (top + bottom) on every page.
-  // On hero pages attachStretchyPull flags the scroller so this leaves the top
-  // edge to the hero and only owns the bottom.
-  useScrollBounce(scrollRef, contentRef)
+  // Universal touch-driven overscroll bounce. BOTTOM only: a top translate
+  // reveals the page background above the first element, which looks broken on
+  // any coloured or full-bleed image hero (and stacks white above the stretch
+  // on hero pages). The good top overshoot is the hero height-grow
+  // (useStretchyHero) which fills instead of revealing; pages without a hero
+  // simply get no top overshoot rather than a background reveal.
+  useScrollBounce(scrollRef, contentRef, { top: false, bottom: true })
 
   const isDesktopNav = navMode === 'sidebar'
 
