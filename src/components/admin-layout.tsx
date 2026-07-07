@@ -276,7 +276,7 @@ export function AdminLayout() {
             unscrollable admin pages. overscroll-none stays; hide-scrollbar is
             tab-only so desktop keeps a visible scrollbar. (2026-06-08) */}
         <div ref={scrollRef} data-parallax-scroll className={cn(
-          'flex-1 flex flex-col min-w-0 min-h-0 bg-surface-1',
+          'flex-1 flex flex-col min-w-0 min-h-0 bg-gradient-to-b from-olive-800 to-white',
           // Mobile/tab mode: app-shell is overflow-hidden (viewport-pinned), so THIS
           // container owns the scroll -> overflow-y-auto. Desktop sidebar mode:
           // app-shell is min-h-dvh (the page grows and the DOCUMENT scrolls), so

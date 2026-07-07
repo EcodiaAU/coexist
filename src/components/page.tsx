@@ -21,6 +21,11 @@ interface PageProps {
   className?: string
   /** Hide the default atmospheric background (when the page provides its own) */
   noBackground?: boolean
+  /** CSS `background` value painted on the scroll container itself. Content is
+   *  opaque, so it only shows in the native overscroll gap at the top/bottom -
+   *  set it to the hero (colour or `url(cover) top/cover`) so pulling past the
+   *  top reveals the hero continuing (full-bleed continuity) instead of white. */
+  overscrollBackdrop?: string
   /** @deprecated Swipe-back is now handled globally by useSwipeBack in AppShell */
   swipeBack?: boolean
 }
@@ -34,6 +39,7 @@ export function Page({
   children,
   className,
   noBackground = false,
+  overscrollBackdrop,
 }: PageProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const { navMode } = useLayout()
@@ -83,6 +89,10 @@ export function Page({
             : hasBottomTabs
               ? 'calc(3.5rem + var(--safe-bottom))'
               : 'var(--safe-bottom)',
+          // Hero-matched overscroll backdrop: shows only in the native
+          // rubber-band gap (content is opaque), so pulling the top reveals the
+          // hero continuing rather than white.
+          ...(overscrollBackdrop ? { background: overscrollBackdrop } : {}),
         }}
       >
         {/* Atmospheric background - sticky so it stays viewport-pinned while

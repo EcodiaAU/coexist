@@ -1242,7 +1242,7 @@ export default function HomePage() {
   const firstName = profile?.display_name?.split(' ')[0]
 
   return (
-    <Page noBackground className="!px-0 bg-white">
+    <Page noBackground className="!px-0 bg-white" overscrollBackdrop="#1f3d2b">
       <div className={cn('relative', 'min-h-full')}>
         <div className="pointer-events-none sticky top-0 h-[100dvh] -mb-[100dvh] overflow-hidden">
           <div className="absolute inset-0 bg-white" />

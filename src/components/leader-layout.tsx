@@ -231,7 +231,7 @@ export function LeaderLayout() {
 
         {/* ── Main content ── */}
         <div ref={scrollRef} className={cn(
-          'flex-1 flex flex-col min-w-0 min-h-0 bg-surface-1',
+          'flex-1 flex flex-col min-w-0 min-h-0 bg-gradient-to-b from-olive-800 to-white',
           showBottomTabs && 'overflow-y-auto overscroll-contain hide-scrollbar',
         )}>
           {/* Shared hero bar - only for non-fullBleed pages */}
