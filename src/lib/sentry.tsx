@@ -11,43 +11,48 @@
 
 import { type ReactNode, Component, type ErrorInfo } from 'react'
 import { Capacitor } from '@capacitor/core'
+// @sentry/capacitor wraps the JS SDK and drives the NATIVE crash reporters
+// (sentry-cocoa on iOS, sentry-android on Android) so signal-level / plugin /
+// unhandled-native crashes are captured, not only JS-in-WebView. Sentry.init's
+// SECOND arg is the sibling web init (@sentry/react) - Capacitor initialises the
+// native layer and delegates the JS layer to it, both reporting into the ONE
+// Co-Exist project, separated by dist:native vs dist:web. The @sentry/react
+// peer is pinned EXACTLY to @sentry/capacitor's core version (10.60.0) so both
+// layers share a single @sentry/core hub (a version split breaks reporting).
+import * as Sentry from '@sentry/capacitor'
+import * as SentryReact from '@sentry/react'
 import { Button } from '@/components/button'
 
 /* ------------------------------------------------------------------ */
 /*  Sentry initialisation                                              */
 /* ------------------------------------------------------------------ */
 
-let Sentry: {
-  init: (opts: Record<string, unknown>) => void
-  captureException: (error: unknown, context?: Record<string, unknown>) => void
-  captureMessage: (message: string, level?: unknown) => void
-  setUser: (user: { id: string; email?: string } | null) => void
-  setTag: (key: string, value: string) => void
-  addBreadcrumb: (breadcrumb: Record<string, unknown>) => void
-} | null = null
-
 // Public Sentry client DSN (send-only key, safe to embed - it is baked into
 // the shipped client bundle either way). Hardcoded as a fallback so a build
 // that lacks VITE_SENTRY_DSN in the gitignored .env.production still reports.
 const FALLBACK_SENTRY_DSN = 'https://32866cc8070a5ea80672ed8df6c9bfe4@o4511685869305856.ingest.us.sentry.io/4511685879201792'
 
-export async function initSentry() {
+let initialised = false
+
+export function initSentry() {
+  if (initialised) return
   const dsn = import.meta.env.VITE_SENTRY_DSN || FALLBACK_SENTRY_DSN
   if (!dsn) {
     console.warn('[sentry] No DSN configured - error reporting disabled')
     return
   }
 
-  try {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - optional dependency, may not be installed
-    const mod = await import('@sentry/react')
-    Sentry = mod as typeof Sentry
+  const isNative = Capacitor.isNativePlatform()
 
-    mod.init({
+  Sentry.init(
+    {
       dsn,
       environment: import.meta.env.MODE,
       release: `coexist@${import.meta.env.VITE_APP_VERSION || '1.0.0'}`,
+      // dist distinguishes the native binary crash surface (dist:native) from
+      // the web bundle (dist:web) so native crashes are filterable in the one
+      // project. On native, @sentry/capacitor stamps this on native events too.
+      dist: isNative ? 'native' : 'web',
       tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: import.meta.env.PROD ? 0.5 : 0,
@@ -56,13 +61,29 @@ export async function initSentry() {
         // Strip PII from breadcrumbs if needed
         return event
       },
-    })
+    },
+    // Sibling JS init - Capacitor wires the native SDK around it.
+    SentryReact.init,
+  )
 
-    // Tag platform
-    mod.setTag('platform', Capacitor.getPlatform())
-    mod.setTag('is_native', String(Capacitor.isNativePlatform()))
-  } catch {
-    console.warn('[sentry] @sentry/react not installed - error reporting disabled')
+  // Tag platform (applies to JS events; native events already carry dist).
+  Sentry.setTag('platform', Capacitor.getPlatform())
+  Sentry.setTag('is_native', String(isNative))
+  initialised = true
+
+  // NATIVE-crash trigger for the native-capture verify gate and the standing
+  // Sentry silent-death canary (worker 6). Native only, and gated OFF unless
+  // either the dev server is running (import.meta.env.DEV) or the build was
+  // stamped with VITE_SENTRY_CANARY=1. A normal production `vite build` omits
+  // it entirely, so it never ships to end users.
+  if (isNative && (import.meta.env.DEV || import.meta.env.VITE_SENTRY_CANARY === '1')) {
+    ;(window as unknown as { __eosNativeCrash?: () => void }).__eosNativeCrash =
+      () => {
+        Sentry.setTag('canary', 'native')
+        // Synchronous hard native crash (SIGABRT). The crash is persisted by
+        // the native reporter and uploaded on the NEXT app launch.
+        Sentry.nativeCrash()
+      }
   }
 }
 
@@ -72,15 +93,15 @@ export async function initSentry() {
 
 export function captureException(error: unknown, context?: Record<string, unknown>) {
   console.error('[error]', error)
-  Sentry?.captureException(error, context)
+  Sentry.captureException(error, context)
 }
 
 export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info') {
-  Sentry?.captureMessage(message, level)
+  Sentry.captureMessage(message, level)
 }
 
 export function setUser(user: { id: string; email?: string } | null) {
-  Sentry?.setUser(user)
+  Sentry.setUser(user)
 }
 
 export function addBreadcrumb(breadcrumb: {
@@ -89,7 +110,7 @@ export function addBreadcrumb(breadcrumb: {
   level?: 'info' | 'warning' | 'error'
   data?: Record<string, unknown>
 }) {
-  Sentry?.addBreadcrumb(breadcrumb)
+  Sentry.addBreadcrumb(breadcrumb)
 }
 
 /* ------------------------------------------------------------------ */
