@@ -1,19 +1,22 @@
 import { useEffect, type RefObject } from 'react'
 
 /**
- * Universal overscroll bounce (touch-driven, top + bottom).
+ * Universal overscroll bounce (touch-driven, bottom by default).
  *
  * Same reason as the stretchy hero: the mobile shell is overflow-hidden at fixed
- * 100dvh and the real scroller is an inner `#main-content` div, which WKWebView
- * never rubber-bands natively. This synthesises the bounce for EVERY page: when
- * the scroller is at a bound and the finger drags past it, we translate the
- * scroll-content wrapper with a damped rubber-band curve and spring it back on
- * release. Pinned background + sticky footer live outside the wrapper, so they
- * stay put and the bounce reveals the page's own background, never white.
+ * 100dvh and the real scroller is an inner overflow:auto div, which WKWebView
+ * never rubber-bands. We synthesise the bounce from touch events.
  *
- * Coordination with the stretchy hero: on hero pages `attachStretchyPull` sets
- * `scroller.dataset.stretchyHero`, and this hook then leaves the TOP edge to the
- * hero (height-grow) and only owns the BOTTOM. Non-hero pages get both edges.
+ * SEAMLESS ENGAGEMENT: the bounce engages the moment the content reaches the
+ * bound DURING a continuous drag (not only if the finger started at the bound),
+ * anchored at the finger position at that instant so it starts from 0 with no
+ * jump. That is what makes it feel bouncy from the first pull instead of hitting
+ * a hard ceiling first.
+ *
+ * The pinned background + sticky footer live outside the translated wrapper, so
+ * the bounce reveals the page's own background, never white. On hero pages
+ * `attachStretchyPull` sets `dataset.stretchyHero`, so this leaves the TOP to
+ * the hero height-grow and only owns the bottom.
  */
 
 const RUBBER_COEFF = 0.55
@@ -29,58 +32,68 @@ export function attachOverscrollBounce(
   content: HTMLElement,
   opts: { top: boolean; bottom: boolean },
 ): () => void {
-  let startY = 0
-  let armed = false
-  let active = false
-  let dir: 0 | 1 | -1 = 0 // 1 = pulling top down, -1 = pulling bottom up
+  let lastY = 0
+  let engaged: 'top' | 'bottom' | null = null
+  let anchorY = 0
 
-  const atTop = () => scroller.scrollTop <= 0
-  const atBottom = () =>
-    scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1
-
-  // Top is deferred to the stretchy hero when one is mounted on this scroller.
   const topEnabled = () => opts.top && !scroller.dataset.stretchyHero
-
-  const setY = (y: number) => {
-    content.style.transform = y === 0 ? '' : `translateY(${y}px)`
-  }
 
   const onStart = (e: TouchEvent) => {
     if (e.touches.length !== 1) return
-    startY = e.touches[0].clientY
-    armed = true
-    active = false
-    dir = 0
+    lastY = e.touches[0].clientY
+    engaged = null
     content.style.transition = 'none'
   }
 
   const onMove = (e: TouchEvent) => {
-    if (!armed) return
-    const dy = e.touches[0].clientY - startY
-    if (!active) {
-      if (dy > 0 && atTop() && topEnabled()) dir = 1
-      else if (dy < 0 && atBottom() && opts.bottom) dir = -1
-      else return // normal scroll: leave it to the browser
-      active = true
+    if (e.touches.length !== 1) return
+    const y = e.touches[0].clientY
+    const max = scroller.scrollHeight - scroller.clientHeight
+
+    if (!engaged) {
+      const movingUp = y < lastY
+      const movingDown = y > lastY
+      lastY = y
+      if (opts.bottom && movingUp && scroller.scrollTop >= max - 1) {
+        engaged = 'bottom'
+        anchorY = y
+      } else if (topEnabled() && movingDown && scroller.scrollTop <= 0) {
+        engaged = 'top'
+        anchorY = y
+      } else {
+        return // let the browser scroll normally
+      }
     }
-    if (dir === 1) {
-      if (dy <= 0) { setY(0); active = false; return }
+
+    if (engaged === 'bottom') {
+      const raw = anchorY - y
+      if (raw < 0) {
+        content.style.transform = ''
+        engaged = null
+        lastY = y
+        return
+      }
       e.preventDefault()
-      setY(rubberBand(dy))
-    } else if (dir === -1) {
-      if (dy >= 0) { setY(0); active = false; return }
+      content.style.transform = `translateY(${-rubberBand(raw)}px)`
+    } else {
+      const raw = y - anchorY
+      if (raw < 0) {
+        content.style.transform = ''
+        engaged = null
+        lastY = y
+        return
+      }
       e.preventDefault()
-      setY(-rubberBand(-dy))
+      content.style.transform = `translateY(${rubberBand(raw)}px)`
     }
+    lastY = y
   }
 
   const onEnd = () => {
-    if (!armed) return
-    armed = false
-    if (!active) return
-    active = false
+    if (!engaged) return
+    engaged = null
     content.style.transition = 'transform 450ms cubic-bezier(0.16, 1, 0.3, 1)'
-    setY(0)
+    content.style.transform = ''
   }
 
   scroller.addEventListener('touchstart', onStart, { passive: true })

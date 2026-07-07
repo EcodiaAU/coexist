@@ -4,19 +4,21 @@ import { useCallback, useRef } from 'react'
  * Stretchy hero (touch-driven, iOS App-Store-style pull-to-stretch).
  *
  * WHY TOUCH-DRIVEN, NOT NATIVE BOUNCE: on mobile the app shell is
- * `overflow-hidden` at a fixed 100dvh and the real scroller is the inner
- * `#main-content` div. Modern iOS WKWebView only rubber-bands its own
- * top-level scroll view, never an inner `overflow:auto` container, so there is
- * no native bounce to lean on. We synthesise the pull ourselves: while the
- * scroller is at the top and the finger drags down, we grow the hero box's
- * height with a damped rubber-band curve (so content below rides down with it)
- * and spring it back on release. Because it is plain touch + layout, it is
- * verifiable in Chrome touch-emulation, not only on-device.
+ * `overflow-hidden` at a fixed 100dvh and the real scroller is an inner
+ * `overflow:auto` div. Modern iOS WKWebView only rubber-bands its own top-level
+ * scroll view, never an inner container, so there is no native bounce to lean
+ * on. We synthesise the pull from touch events.
+ *
+ * SEAMLESS ENGAGEMENT: the pull engages the moment the content reaches the top
+ * DURING a continuous drag (not only if the finger already started at the top),
+ * and the stretch is measured from the finger position AT that moment (dynamic
+ * anchor) so there is no jump. That is what makes it bounce from the first pull
+ * instead of "hit the ceiling, lift, pull again".
  *
  * Attach the returned ref to the HERO BOX (the element whose height defines the
- * hero and that contains the object-cover image). The image + gradient fill it
- * (`absolute inset-0`), so they cover the extra height with no gap. A
- * bottom-anchored title rides down with the box, which is the intended feel.
+ * hero and contains the object-cover image). The image + gradient fill the
+ * extra height, so growing it reveals nothing; a bottom-anchored title rides
+ * down with the box.
  */
 
 const RUBBER_COEFF = 0.6 // small-pull slope + asymptote fraction of hero height
@@ -32,86 +34,79 @@ function rubberBand(delta: number, dim: number): number {
  * headless touch harness. Returns a cleanup function.
  */
 export function attachStretchyPull(scroller: HTMLElement, hero: HTMLElement): () => void {
-  let baseH = 0 // measured hero height at gesture start (px)
-  let startY = 0
-  let armed = false
-  let pulling = false
+  let lastY = 0
+  let engaged = false
+  let anchorY = 0 // finger Y at the moment overscroll engaged
+  let baseH = 0 // hero height at engagement
 
   // Tell the universal overscroll bounce (useScrollBounce) to leave the TOP
   // edge to us; it keeps the bottom.
   scroller.dataset.stretchyHero = '1'
 
-  const setHeight = (h: number | null) => {
-    if (h == null) {
-      hero.style.height = ''
-      hero.style.transition = ''
-    } else {
-      hero.style.height = `${h}px`
-    }
-  }
-
-  const onTouchStart = (e: TouchEvent) => {
+  const onStart = (e: TouchEvent) => {
     if (e.touches.length !== 1) return
-    if (scroller.scrollTop > 0) return
-    baseH = hero.getBoundingClientRect().height
-    if (baseH <= 0) return
-    startY = e.touches[0].clientY
-    armed = true
-    pulling = false
+    lastY = e.touches[0].clientY
+    engaged = false
     hero.style.transition = 'none'
   }
 
-  const onTouchMove = (e: TouchEvent) => {
-    if (!armed) return
-    // If the user has scrolled into content, hand back to native scroll.
-    if (scroller.scrollTop > 1) {
-      if (pulling) release()
-      armed = false
+  const onMove = (e: TouchEvent) => {
+    if (e.touches.length !== 1) return
+    const y = e.touches[0].clientY
+
+    if (!engaged) {
+      const movingDown = y > lastY
+      lastY = y
+      // Engage the instant the scroller is at the top and the finger is still
+      // pulling down, wherever the drag began. Anchor here so pull starts at 0.
+      if (scroller.scrollTop <= 0 && movingDown) {
+        engaged = true
+        anchorY = y
+        baseH = hero.getBoundingClientRect().height || 1
+      } else {
+        return // let the browser scroll normally
+      }
+    }
+
+    const raw = y - anchorY
+    if (raw < 0) {
+      // Finger returned above the anchor: collapse, hand back to scroll.
+      hero.style.height = ''
+      engaged = false
+      lastY = y
       return
     }
-    const dy = e.touches[0].clientY - startY
-    if (dy > 0) {
-      // Actively pulling the top down: take over so the scroller does nothing.
-      e.preventDefault()
-      pulling = true
-      const pull = rubberBand(dy, baseH * RUBBER_COEFF)
-      setHeight(baseH + pull)
-    } else if (pulling) {
-      // Reversed back to the top: collapse the stretch, release to native.
-      setHeight(baseH)
-      pulling = false
-    }
+    // raw === 0 on the engagement event: stay engaged, grow by 0 (no jump).
+    e.preventDefault()
+    hero.style.height = `${baseH + rubberBand(raw, baseH * RUBBER_COEFF)}px`
+    lastY = y
   }
 
-  const release = () => {
-    // Spring the hero back to its natural height, then let CSS reclaim it.
+  const onEnd = () => {
+    if (!engaged) return
+    engaged = false
     hero.style.transition = 'height 480ms cubic-bezier(0.16, 1, 0.3, 1)'
-    setHeight(baseH)
+    hero.style.height = `${baseH}px`
     const done = () => {
       hero.removeEventListener('transitionend', done)
-      setHeight(null) // clear inline height + transition so CSS/aspect-ratio owns it again
+      hero.style.height = ''
+      hero.style.transition = ''
     }
     hero.addEventListener('transitionend', done)
-    pulling = false
   }
 
-  const onTouchEnd = () => {
-    if (!armed) return
-    armed = false
-    if (pulling) release()
-  }
-
-  scroller.addEventListener('touchstart', onTouchStart, { passive: true })
-  scroller.addEventListener('touchmove', onTouchMove, { passive: false })
-  scroller.addEventListener('touchend', onTouchEnd, { passive: true })
-  scroller.addEventListener('touchcancel', onTouchEnd, { passive: true })
+  scroller.addEventListener('touchstart', onStart, { passive: true })
+  scroller.addEventListener('touchmove', onMove, { passive: false })
+  scroller.addEventListener('touchend', onEnd, { passive: true })
+  scroller.addEventListener('touchcancel', onEnd, { passive: true })
 
   return () => {
-    scroller.removeEventListener('touchstart', onTouchStart)
-    scroller.removeEventListener('touchmove', onTouchMove)
-    scroller.removeEventListener('touchend', onTouchEnd)
-    scroller.removeEventListener('touchcancel', onTouchEnd)
-    setHeight(null)
+    scroller.removeEventListener('touchstart', onStart)
+    scroller.removeEventListener('touchmove', onMove)
+    scroller.removeEventListener('touchend', onEnd)
+    scroller.removeEventListener('touchcancel', onEnd)
+    hero.style.height = ''
+    hero.style.transition = ''
     delete scroller.dataset.stretchyHero
   }
 }
