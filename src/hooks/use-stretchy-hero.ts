@@ -37,6 +37,10 @@ export function attachStretchyPull(scroller: HTMLElement, hero: HTMLElement): ()
   let armed = false
   let pulling = false
 
+  // Tell the universal overscroll bounce (useScrollBounce) to leave the TOP
+  // edge to us; it keeps the bottom.
+  scroller.dataset.stretchyHero = '1'
+
   const setHeight = (h: number | null) => {
     if (h == null) {
       hero.style.height = ''
@@ -108,6 +112,7 @@ export function attachStretchyPull(scroller: HTMLElement, hero: HTMLElement): ()
     scroller.removeEventListener('touchend', onTouchEnd)
     scroller.removeEventListener('touchcancel', onTouchEnd)
     setHeight(null)
+    delete scroller.dataset.stretchyHero
   }
 }
 

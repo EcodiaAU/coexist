@@ -2,6 +2,7 @@ import { type ReactNode, useRef } from 'react'
 import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
 import { useKeyboardOpen } from '@/components/app-shell-context'
+import { useScrollBounce } from '@/hooks/use-scroll-bounce'
 
 interface PageProps {
   /** Optional header component (e.g. <Header />) */
@@ -36,8 +37,14 @@ export function Page({
   noBackground = false,
 }: PageProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const { navMode } = useLayout()
   const keyboardOpen = useKeyboardOpen()
+
+  // Universal touch-driven overscroll bounce (top + bottom) on every page.
+  // On hero pages attachStretchyPull flags the scroller so this leaves the top
+  // edge to the hero and only owns the bottom.
+  useScrollBounce(scrollRef, contentRef)
 
   const isDesktopNav = navMode === 'sidebar'
 
@@ -93,14 +100,19 @@ export function Page({
           </div>
         )}
 
-        {/* stickyOverlay: hero pages supply their own header (usually transparent + collapse-header).
-            hasInlineHeader: standard pages render Header directly here  it takes natural space
-            and sticks at the top of the scroll container. */}
-        {stickyOverlay}
-        {hasInlineHeader && header}
+        {/* Scroll-content wrapper: the overscroll bounce translates THIS on
+            over-pull (pinned bg above + sticky footer below stay put). stickyOverlay
+            + inline header ride inside so a top bounce moves them together. */}
+        <div ref={contentRef}>
+          {/* stickyOverlay: hero pages supply their own header (usually transparent + collapse-header).
+              hasInlineHeader: standard pages render Header directly here  it takes natural space
+              and sticks at the top of the scroll container. */}
+          {stickyOverlay}
+          {hasInlineHeader && header}
 
-        <div className="relative">
-          {children}
+          <div className="relative">
+            {children}
+          </div>
         </div>
       </main>
 
