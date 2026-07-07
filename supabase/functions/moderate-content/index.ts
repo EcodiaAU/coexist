@@ -1,4 +1,5 @@
 // Deno Edge Function
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 /* ------------------------------------------------------------------ */
@@ -113,7 +114,7 @@ async function moderateImage(imageUrl: string): Promise<ModerationResult> {
   }
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry("moderate-content", async (req: Request) => {
   try {
     // Validate auth - extract user from JWT
     const authHeader = req.headers.get('Authorization')
@@ -236,7 +237,7 @@ Deno.serve(async (req: Request) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } },
     )
   }
-})
+}))
 
 async function getAdminUserIds(
   supabase: ReturnType<typeof createClient>,

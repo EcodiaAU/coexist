@@ -14,6 +14,7 @@
  * Returns: { url: string }  (Stripe Checkout URL to redirect to)
  */
 
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 
@@ -27,7 +28,7 @@ const corsHeaders = {
 }
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry("public-checkout", async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   const json = (data: unknown, status = 200) =>
     new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -132,4 +133,4 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     return json({ error: (err as Error).message }, 500)
   }
-})
+}))

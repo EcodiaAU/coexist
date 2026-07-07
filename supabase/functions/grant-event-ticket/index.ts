@@ -15,6 +15,7 @@
  * Returns:{ ticket_id, already, user_id, created_account }
  */
 
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -36,7 +37,7 @@ function ticketCode(): string {
   return Array.from(bytes, (b) => alpha[b % alpha.length]).join('')
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry("grant-event-ticket", async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   const json = (data: unknown, status = 200) =>
     new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -226,4 +227,4 @@ Deno.serve(async (req: Request) => {
     console.error('[grant] error:', (err as Error).message)
     return json({ error: 'Something went wrong' }, 500)
   }
-})
+}))

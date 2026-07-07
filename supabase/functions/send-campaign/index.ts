@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Deno Edge Function
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 /* ------------------------------------------------------------------ */
@@ -105,7 +106,7 @@ async function sendBatch(
   return { success: true }
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry("send-campaign", async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
   }
@@ -406,4 +407,4 @@ Deno.serve(async (req: Request) => {
       { status: 500, headers: JSON_HEADERS },
     )
   }
-})
+}))

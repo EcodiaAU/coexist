@@ -12,6 +12,7 @@
  *   - charge.refunded (update status, restore inventory, cancel ticket)
  */
 
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 
@@ -40,7 +41,7 @@ async function sendTemplateEmail(
 
 // ── Main handler ──
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry("stripe-webhook-test", async (req: Request) => {
   const signature = req.headers.get('stripe-signature')
   if (!signature) {
     return new Response('Missing stripe-signature header', { status: 400 })
@@ -629,4 +630,4 @@ Deno.serve(async (req: Request) => {
   return new Response(JSON.stringify({ received: true }), {
     headers: { 'Content-Type': 'application/json' },
   })
-})
+}))

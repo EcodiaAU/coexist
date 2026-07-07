@@ -6,6 +6,7 @@
 // error body). Auth-gated via service-role key OR a hardcoded debug
 // passphrase so we can call it from outside the app.
 
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 interface DebugPushPayload {
@@ -165,7 +166,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry("debug-push", async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
   }
@@ -276,4 +277,4 @@ Deno.serve(async (req: Request) => {
       { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
     )
   }
-})
+}))

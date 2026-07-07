@@ -1,4 +1,5 @@
 // Deno Edge Function
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 /* ------------------------------------------------------------------ */
@@ -190,7 +191,7 @@ async function sendFcmMessage(
 /*  Main handler                                                       */
 /* ------------------------------------------------------------------ */
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry("send-push", async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
   }
@@ -474,4 +475,4 @@ Deno.serve(async (req: Request) => {
       { status: 200, headers: JSON_HEADERS },
     )
   }
-})
+}))

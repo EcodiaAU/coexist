@@ -16,6 +16,7 @@
  * Returns:{ ok, action: 'refunded'|'cancelled'|'already', ticket_id }
  */
 
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 
@@ -29,7 +30,7 @@ const corsHeaders = {
 }
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry("revoke-event-ticket", async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   const json = (data: unknown, status = 200) =>
     new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -115,4 +116,4 @@ Deno.serve(async (req: Request) => {
     console.error('[revoke] error:', (err as Error).message)
     return json({ error: 'Something went wrong' }, 500)
   }
-})
+}))
