@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, useReducedMotion, useInView } from 'framer-motion'
 import { useParallaxLayers } from '@/hooks/use-parallax-scroll'
-import { useStretchyHero } from '@/hooks/use-stretchy-hero'
 import {
     ChevronRight,
     ChevronDown,
@@ -222,7 +221,6 @@ function HomeHero({ rm }: { rm: boolean }) {
   const isTouchDevice = useIsCoarsePointer()
   const disableParallax = rm || isTouchDevice
   const { bgRef, fgRef, textRef } = useParallaxLayers({ withScale: !disableParallax })
-  const stretchRef = useStretchyHero<HTMLDivElement>()
 
   // Only apply will-change during active scroll to reduce GPU memory on low-end devices
   const [isScrolling, setIsScrolling] = useState(false)
@@ -261,7 +259,7 @@ function HomeHero({ rm }: { rm: boolean }) {
 
   return (
     <div className="relative">
-      <div ref={stretchRef} className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
+      <div className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
         {/* Layer 0: Background landscape - slowest parallax. Each pair gets a
             stacked <img>; opacity crossfades the active one in. */}
         <div

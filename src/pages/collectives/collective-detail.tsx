@@ -24,7 +24,6 @@ import { MapView } from '@/components/map/map-view'
 import { ConfirmationSheet } from '@/components/confirmation-sheet'
 import { WhatsNext } from '@/components/whats-next'
 import { OptimizedImage } from '@/components/optimized-image'
-import { useStretchyHero } from '@/hooks/use-stretchy-hero'
 import { useToast } from '@/components/toast'
 import { resolveCollectiveCoords } from '@/lib/geo'
 
@@ -72,7 +71,6 @@ export default function CollectiveDetailPage() {
   const { toast } = useToast()
 
   const shouldReduceMotion = useReducedMotion()
-  const stretchRef = useStretchyHero<HTMLDivElement>()
 
   // Fetch collective by slug (or UUID for backwards compat)
   const { data: collective, isLoading, isError } = useCollective(slug)
@@ -230,33 +228,28 @@ export default function CollectiveDetailPage() {
         </div>
       }
     >
-      {/* ── Hero: tall, cinematic, full-bleed ──
-          ref on the hero BOX: pull-to-stretch grows its height and the
-          object-cover image fills the extra space. */}
+      {/* ── Hero: tall, cinematic, full-bleed ── */}
       <motion.div
-        ref={stretchRef}
         initial={shouldReduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="relative aspect-[3/4] sm:aspect-[2/1] w-[calc(100%+2rem)] -mx-4 lg:w-[calc(100%+3rem)] lg:-mx-6 overflow-hidden bg-primary-950"
       >
-        <div className="absolute inset-0">
-          {collective.cover_image_url ? (
-            <OptimizedImage
-              src={collective.cover_image_url}
-              alt={collective.name}
-              priority
-              sizes="100vw"
-              wrapperClassName="h-full w-full"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-primary-950">
-              <TreePine size={80} className="text-primary-600/30" />
-            </div>
-          )}
-          {/* Cinematic gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10" />
-        </div>
+        {collective.cover_image_url ? (
+          <OptimizedImage
+            src={collective.cover_image_url}
+            alt={collective.name}
+            priority
+            sizes="100vw"
+            wrapperClassName="h-full w-full"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-primary-950">
+            <TreePine size={80} className="text-primary-600/30" />
+          </div>
+        )}
+        {/* Cinematic gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10" />
 
         {/* Editorial hero text - bottom-aligned, large wordmark */}
         <div className="absolute bottom-0 left-0 right-0 p-5 pb-6">

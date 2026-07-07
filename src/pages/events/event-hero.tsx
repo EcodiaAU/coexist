@@ -2,7 +2,6 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Share2 } from 'lucide-react'
 import { Header, Badge, WaveTransition } from '@/components'
 import { OptimizedImage } from '@/components/optimized-image'
-import { useStretchyHero } from '@/hooks/use-stretchy-hero'
 import { ACTIVITY_TYPE_LABELS, getCountdown } from '@/hooks/use-events'
 import { cn } from '@/lib/cn'
 import type { EventDetailData } from '@/hooks/use-events'
@@ -29,7 +28,6 @@ export interface EventHeroProps {
 
 export function EventHero({ event, past, userStatus, accent, onShare }: EventHeroProps) {
   const shouldReduceMotion = useReducedMotion()
-  const stretchRef = useStretchyHero<HTMLDivElement>()
 
   return (
     <>
@@ -41,10 +39,7 @@ export function EventHero({ event, past, userStatus, accent, onShare }: EventHer
           live in the safe area. */}
       {event.cover_image_url && (
         <div className="relative -mx-4 lg:-mx-6">
-          {/* ref on the hero BOX: pull-to-stretch grows its height and the
-              object-cover image fills the extra space (no gap). */}
           <div
-            ref={stretchRef}
             className="relative w-full overflow-hidden"
             // Compact hero: smaller floor + tighter ceiling so the title
             // and content beneath always fit on first paint without scroll.

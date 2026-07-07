@@ -581,7 +581,7 @@ select:focus-visible {
 
 /* Prevent rubber-band bounce on the whole page (native apps don't bounce) */
 html, body {
-  overscroll-behavior: none;
+  overscroll-behavior: contain;
 }
 
 /* ===== 60fps Scroll Performance ===== */

@@ -12,8 +12,6 @@ import { cn } from '@/lib/cn'
 import { WAVE_PATHS } from '@/components/wave-paths'
 import { useCollective } from '@/hooks/use-collective'
 import { useLayout } from '@/hooks/use-layout'
-import { useStretchyHero } from '@/hooks/use-stretchy-hero'
-import { useScrollBounce } from '@/hooks/use-scroll-bounce'
 import { BottomTabBar, type Tab } from '@/components/bottom-tab-bar'
 import { useMenuSheet } from '@/hooks/use-menu-sheet'
 import {
@@ -190,10 +188,6 @@ export function LeaderLayout() {
   const showBottomTabs = navMode === 'bottom-tabs'
   const [header, setHeaderState] = useState<LeaderHeaderState>({ title: '' })
   const scrollRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
-  const heroStretchRef = useStretchyHero<HTMLDivElement>()
-  // Bottom overscroll bounce on the leader scroller (top is the hero fill-grow).
-  useScrollBounce(scrollRef, contentRef, { top: false, bottom: true })
 
   // Collective scope - managers see managed collectives, admins see all, leaders see own
   const scopeCtx = useLeaderCollectiveScopeProvider()
@@ -238,17 +232,14 @@ export function LeaderLayout() {
         {/* ── Main content ── */}
         <div ref={scrollRef} className={cn(
           'flex-1 flex flex-col min-w-0 min-h-0 bg-surface-1',
-          showBottomTabs && 'overflow-y-auto overscroll-none hide-scrollbar',
+          showBottomTabs && 'overflow-y-auto overscroll-contain hide-scrollbar',
         )}>
-          {/* Scroll-content wrapper for the bottom overscroll bounce. */}
-          <div ref={contentRef}>
           {/* Shared hero bar - only for non-fullBleed pages */}
           {!header.fullBleed && header.title ? (() => {
             const cfg = PAGE_HERO_CONFIG[header.title] ?? DEFAULT_HERO
             const subtitle = header.subtitle ?? cfg.defaultSubtitle
             return (
               <div
-                ref={heroStretchRef}
                 className={cn(
                   'relative overflow-hidden',
                   'transition-colors duration-700 ease-in-out',
@@ -301,7 +292,6 @@ export function LeaderLayout() {
           )}>
 
             <AnimatedOutlet />
-          </div>
           </div>
         </div>
 

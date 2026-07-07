@@ -2,7 +2,6 @@ import { type ReactNode, useRef } from 'react'
 import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
 import { useKeyboardOpen } from '@/components/app-shell-context'
-import { useScrollBounce } from '@/hooks/use-scroll-bounce'
 
 interface PageProps {
   /** Optional header component (e.g. <Header />) */
@@ -37,17 +36,8 @@ export function Page({
   noBackground = false,
 }: PageProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
   const { navMode } = useLayout()
   const keyboardOpen = useKeyboardOpen()
-
-  // Universal touch-driven overscroll bounce. BOTTOM only: a top translate
-  // reveals the page background above the first element, which looks broken on
-  // any coloured or full-bleed image hero (and stacks white above the stretch
-  // on hero pages). The good top overshoot is the hero height-grow
-  // (useStretchyHero) which fills instead of revealing; pages without a hero
-  // simply get no top overshoot rather than a background reveal.
-  useScrollBounce(scrollRef, contentRef, { top: false, bottom: true })
 
   const isDesktopNav = navMode === 'sidebar'
 
@@ -78,7 +68,7 @@ export function Page({
           'relative flex-1',
           // On mobile/native, use inner scroll container for tab-bar offset + scroll restore
           // On desktop, clip overflow so sticky bg doesn't paint over the web footer
-          isDesktopNav ? 'overflow-clip' : 'overflow-y-auto overflow-x-hidden overscroll-none hide-scrollbar',
+          isDesktopNav ? 'overflow-clip' : 'overflow-y-auto overflow-x-hidden overscroll-contain hide-scrollbar',
           // Base gradient painted on element itself so first paint has colour (no flash)
           !noBackground && 'bg-gradient-to-b from-primary-50/40 via-white to-white',
           // Side padding for all page content (skip when fullBleed)
@@ -103,19 +93,14 @@ export function Page({
           </div>
         )}
 
-        {/* Scroll-content wrapper: the overscroll bounce translates THIS on
-            over-pull (pinned bg above + sticky footer below stay put). stickyOverlay
-            + inline header ride inside so a top bounce moves them together. */}
-        <div ref={contentRef}>
-          {/* stickyOverlay: hero pages supply their own header (usually transparent + collapse-header).
-              hasInlineHeader: standard pages render Header directly here  it takes natural space
-              and sticks at the top of the scroll container. */}
-          {stickyOverlay}
-          {hasInlineHeader && header}
+        {/* stickyOverlay: hero pages supply their own header (usually transparent + collapse-header).
+            hasInlineHeader: standard pages render Header directly here  it takes natural space
+            and sticks at the top of the scroll container. */}
+        {stickyOverlay}
+        {hasInlineHeader && header}
 
-          <div className="relative">
-            {children}
-          </div>
+        <div className="relative">
+          {children}
         </div>
       </main>
 
