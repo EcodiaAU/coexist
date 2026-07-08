@@ -91,6 +91,8 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useGeocodeAddress } from '@/hooks/use-geocode-address'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { useEventTicketTypes, useMyEventTicket, useCreateTicketCheckout, useCancelPendingTicket, useTicketSalesSummary, useEventTickets } from '@/hooks/use-event-tickets'
+import { CampoutRequirementsModal } from '@/components/campout-requirements-modal'
+import { isCampoutActivity } from '@/lib/dietary'
 import { useEventCarpools } from '@/hooks/use-event-carpools'
 import { useEventCampoutChannel } from '@/hooks/use-staff-channels'
 import { MapView } from '@/components'
@@ -405,7 +407,7 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { isStaff: isGlobalStaff } = useAuth()
+  const { isStaff: isGlobalStaff, user, profile } = useAuth()
   const { toast } = useToast()
   const shouldReduceMotion = useReducedMotion()
 
@@ -471,6 +473,51 @@ export default function EventDetailPage() {
   // Campout group chat - RLS exposes it only to confirmed ticket holders + staff
   const { data: campoutChannel } = useEventCampoutChannel(id)
   const [selectedTicketType, setSelectedTicketType] = useState<string | null>(null)
+
+  // Camp-out purchase gate: buyers of a camp-out ticket must have dietary +
+  // medical info on file BEFORE checkout (Angelica, Co-Exist, 2026-07-08 -
+  // catering + safety). If either is missing we open a blocking modal that
+  // captures them, persists to the profile, then continues to checkout. Non
+  // camp-out ticketed events are unaffected here (dietary is still enforced
+  // post-purchase by the DietaryGate backstop, unchanged).
+  const isCampoutEvent = isCampoutActivity(event?.activity_type ?? null)
+  const dietaryMissing = !(profile?.dietary_requirements ?? '').trim()
+  const medicalMissing = !(profile?.medical_requirements ?? '').trim()
+  const campoutNeedsDietary = isCampoutEvent && dietaryMissing
+  const campoutNeedsMedical = isCampoutEvent && medicalMissing
+  const [showCampoutReqs, setShowCampoutReqs] = useState(false)
+  const [pendingTicketTypeId, setPendingTicketTypeId] = useState<string | null>(null)
+
+  // Actually start Stripe checkout for a ticket type and redirect.
+  const doTicketCheckout = useCallback(async (ticketTypeId: string) => {
+    if (!event) return
+    try {
+      const result = await ticketCheckout.mutateAsync({
+        eventId: event.id,
+        ticketTypeId,
+      })
+      if (result.url) {
+        window.location.href = result.url
+      } else if (result.session_id) {
+        const { redirectToCheckout: redir } = await import('@/lib/stripe')
+        await redir(result.session_id)
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to start checkout')
+    }
+  }, [event, ticketCheckout, toast])
+
+  // Entry point for every "buy ticket" action. For camp-outs missing dietary
+  // or medical, capture them first (blocks checkout); otherwise go straight
+  // to Stripe.
+  const beginTicketCheckout = useCallback((ticketTypeId: string) => {
+    if (user && (campoutNeedsDietary || campoutNeedsMedical)) {
+      setPendingTicketTypeId(ticketTypeId)
+      setShowCampoutReqs(true)
+      return
+    }
+    void doTicketCheckout(ticketTypeId)
+  }, [user, campoutNeedsDietary, campoutNeedsMedical, doTicketCheckout])
 
   const [showCancelSheet, setShowCancelSheet] = useState(false)
   const [showCalendarSheet, setShowCalendarSheet] = useState(false)
@@ -955,18 +1002,7 @@ export default function EventDetailPage() {
                   variant="primary"
                   size="md"
                   fullWidth
-                  onClick={async () => {
-                    // Try to resume - create a new checkout since Stripe sessions expire
-                    try {
-                      const result = await ticketCheckout.mutateAsync({
-                        eventId: event.id,
-                        ticketTypeId: myTicket.ticket_type_id,
-                      })
-                      if (result.url) window.location.href = result.url
-                    } catch (err) {
-                      toast.error(err instanceof Error ? err.message : 'Failed to resume checkout')
-                    }
-                  }}
+                  onClick={() => beginTicketCheckout(myTicket.ticket_type_id)}
                   loading={ticketCheckout.isPending}
                   className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
                 >
@@ -1059,23 +1095,9 @@ export default function EventDetailPage() {
             fullWidth
             disabled={!selectedTicketType}
             loading={ticketCheckout.isPending}
-            onClick={async () => {
+            onClick={() => {
               if (!selectedTicketType) return
-              try {
-                const result = await ticketCheckout.mutateAsync({
-                  eventId: event.id,
-                  ticketTypeId: selectedTicketType,
-                })
-                // Redirect to Stripe Checkout
-                if (result.url) {
-                  window.location.href = result.url
-                } else if (result.session_id) {
-                  const { redirectToCheckout: redir } = await import('@/lib/stripe')
-                  await redir(result.session_id)
-                }
-              } catch (err) {
-                toast.error(err instanceof Error ? err.message : 'Failed to start checkout')
-              }
+              beginTicketCheckout(selectedTicketType)
             }}
             className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
           >
@@ -2015,6 +2037,21 @@ export default function EventDetailPage() {
           coverImageUrl={event.cover_image_url ?? null}
         />
       )}
+
+      {/* Camp-out dietary + medical capture, shown before checkout when the
+          buyer is missing either field. Blocks the purchase until answered. */}
+      <CampoutRequirementsModal
+        open={showCampoutReqs}
+        needDietary={campoutNeedsDietary}
+        needMedical={campoutNeedsMedical}
+        onClose={() => { setShowCampoutReqs(false); setPendingTicketTypeId(null) }}
+        onSaved={() => {
+          setShowCampoutReqs(false)
+          const tt = pendingTicketTypeId
+          setPendingTicketTypeId(null)
+          if (tt) void doTicketCheckout(tt)
+        }}
+      />
     </Page>
   )
 }

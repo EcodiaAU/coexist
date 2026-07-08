@@ -106,7 +106,7 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-neutral-900">Attendees export</p>
           <p className="text-xs text-neutral-500">
-            Name, email, phone, postcode, dietary - registered (pre-event) or checked-in
+            Name, email, phone, postcode, dietary, medical - registered (pre-event) or checked-in
           </p>
         </div>
         <ChevronDown

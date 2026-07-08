@@ -10,6 +10,7 @@ export interface AttendeeExportRow {
   phone: string | null
   postcode: string | null
   dietary_requirements: string | null
+  medical_requirements: string | null
   checked_in_at: string | null
   registered_at: string | null
 }
@@ -46,7 +47,8 @@ const PROFILE_FIELDS = `
           email,
           phone,
           postcode,
-          dietary_requirements
+          dietary_requirements,
+          medical_requirements
 ` as const
 
 /**
@@ -96,6 +98,7 @@ export function useEventAttendeesExport(
           phone: p.phone ?? null,
           postcode: p.postcode ?? null,
           dietary_requirements: p.dietary_requirements ?? null,
+          medical_requirements: p.medical_requirements ?? null,
           checked_in_at: (row as { checked_in_at: string | null }).checked_in_at ?? null,
           registered_at: (row as { registered_at: string | null }).registered_at ?? null,
         }
@@ -130,7 +133,7 @@ export function buildAttendeesCsv(
   details: EventDetailsForExport,
   scope: AttendeeExportScope,
 ): string {
-  const header = ['Name', 'Email', 'Phone', 'Postcode', 'Dietary']
+  const header = ['Name', 'Email', 'Phone', 'Postcode', 'Dietary', 'Medical']
   const meta = [
     `Event: ${details.title}`,
     details.collective_name ? `Collective: ${details.collective_name}` : '',
@@ -148,6 +151,7 @@ export function buildAttendeesCsv(
       r.phone ?? '',
       r.postcode ?? '',
       r.dietary_requirements ?? '',
+      r.medical_requirements ?? '',
     ]),
   ]
 
@@ -176,6 +180,7 @@ export function buildAttendeesPlainText(
     if (r.phone) parts.push(r.phone)
     if (r.postcode) parts.push(`postcode ${r.postcode}`)
     if (r.dietary_requirements) parts.push(`dietary: ${r.dietary_requirements}`)
+    if (r.medical_requirements) parts.push(`medical: ${r.medical_requirements}`)
     lines.push(`- ${parts.join(' · ')}`)
   }
   return lines.join('\n')

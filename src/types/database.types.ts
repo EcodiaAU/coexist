@@ -5033,6 +5033,7 @@ export type Database = {
         Row: {
           accessibility_requirements: string | null
           dietary_requirements: string | null
+          medical_requirements: string | null
           age: number | null
           avatar_url: string | null
           bio: string | null
@@ -5077,6 +5078,7 @@ export type Database = {
         Insert: {
           accessibility_requirements?: string | null
           dietary_requirements?: string | null
+          medical_requirements?: string | null
           age?: number | null
           avatar_url?: string | null
           bio?: string | null
@@ -5121,6 +5123,7 @@ export type Database = {
         Update: {
           accessibility_requirements?: string | null
           dietary_requirements?: string | null
+          medical_requirements?: string | null
           age?: number | null
           avatar_url?: string | null
           bio?: string | null

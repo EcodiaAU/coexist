@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { User, AlertTriangle, Heart } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { User, AlertTriangle, Heart, HeartPulse } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { Button } from '@/components/button'
@@ -10,6 +11,8 @@ import { Chip } from '@/components/chip'
 import { useToast } from '@/components/toast'
 import { useAuth } from '@/hooks/use-auth'
 import { useProfile, useUpdateProfile } from '@/hooks/use-profile'
+import { supabase } from '@/lib/supabase'
+import { isCampoutActivity } from '@/lib/dietary'
 import type { Tables } from '@/types/database.types'
 
 type Profile = Tables<'profiles'>
@@ -72,9 +75,31 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
   const [collectiveDiscovery, setCollectiveDiscovery] = useState(profile?.collective_discovery ?? '')
   const [accessibilityRequirements, setAccessibilityRequirements] = useState(profile?.accessibility_requirements ?? '')
   const [dietaryRequirements, setDietaryRequirements] = useState(profile?.dietary_requirements ?? '')
+  const [medicalRequirements, setMedicalRequirements] = useState(profile?.medical_requirements ?? '')
+  const [reqError, setReqError] = useState<string | null>(null)
   const [emergencyContactName, setEmergencyContactName] = useState(profile?.emergency_contact_name ?? '')
   const [emergencyContactPhone, setEmergencyContactPhone] = useState(profile?.emergency_contact_phone ?? '')
   const [emergencyContactRelationship, setEmergencyContactRelationship] = useState(profile?.emergency_contact_relationship ?? '')
+
+  // Is the event that triggered this survey a camp-out? Camp-outs need
+  // dietary + medical on file for catering and safety, so for those the two
+  // fields are required here (empty answers must be an explicit "None"/"Nil",
+  // never silently blank). For every other event the fields stay optional so
+  // a first-time beach-cleanup attendee is not force-gated.
+  const { data: isCampout = false } = useQuery({
+    queryKey: ['profile-survey-event-activity', eventId],
+    queryFn: async () => {
+      if (!eventId) return false
+      const { data } = await supabase
+        .from('events')
+        .select('activity_type')
+        .eq('id', eventId)
+        .maybeSingle()
+      return isCampoutActivity(data?.activity_type ?? null)
+    },
+    enabled: !!eventId,
+    staleTime: 5 * 60 * 1000,
+  })
 
   const fadeUp = {
     hidden: { opacity: 0, y: 12 },
@@ -87,6 +112,13 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
   }
 
   const handleSubmit = async () => {
+    // Camp-out safety gate: both fields must be answered. An explicit
+    // "None"/"Nil" is fine; a blank is not.
+    if (isCampout && (!dietaryRequirements.trim() || !medicalRequirements.trim())) {
+      setReqError('Camp-outs need your dietary and medical/allergy info. Enter "None" if you have none.')
+      return
+    }
+    setReqError(null)
     try {
       await updateProfile.mutateAsync({
         first_name: firstName || null,
@@ -99,6 +131,7 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
         collective_discovery: collectiveDiscovery || null,
         accessibility_requirements: accessibilityRequirements || null,
         dietary_requirements: dietaryRequirements || null,
+        medical_requirements: medicalRequirements || null,
         emergency_contact_name: emergencyContactName || null,
         emergency_contact_phone: emergencyContactPhone || null,
         emergency_contact_relationship: emergencyContactRelationship || null,
@@ -136,14 +169,16 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
           >
             Save Details
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            fullWidth
-            onClick={handleSkip}
-          >
-            Skip for now
-          </Button>
+          {!isCampout && (
+            <Button
+              variant="ghost"
+              size="sm"
+              fullWidth
+              onClick={handleSkip}
+            >
+              Skip for now
+            </Button>
+          )}
         </div>
       }
     >
@@ -277,18 +312,47 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
         {/* Dietary */}
         <motion.div variants={fadeUp}>
           <h3 className="font-heading text-sm font-semibold text-primary-800 mb-3 uppercase tracking-wider">
-            Dietary Requirements
+            Dietary Requirements{isCampout && <span className="text-error-500"> *</span>}
           </h3>
           <Input
-            label="Dietary requirements (allergies, vegan, etc.)"
+            label="Dietary requirements (vegetarian, vegan, etc.)"
             value={dietaryRequirements}
-            onChange={(e) => setDietaryRequirements(e.target.value)}
-            placeholder="e.g. Vegetarian, gluten free, nut allergy..."
+            onChange={(e) => { setDietaryRequirements(e.target.value); if (reqError) setReqError(null) }}
+            placeholder='e.g. Vegetarian, gluten free - or "None"'
             type="textarea"
             rows={2}
             maxLength={500}
             className="[&_textarea]:bg-neutral-50 [&_textarea]:border [&_textarea]:border-neutral-200"
           />
+        </motion.div>
+
+        {/* Medical / allergies */}
+        <motion.div variants={fadeUp}>
+          <div className="flex items-center gap-2 mb-3">
+            <HeartPulse size={16} className="text-rose-600" />
+            <h3 className="font-heading text-sm font-semibold text-primary-800 uppercase tracking-wider">
+              Medical &amp; Allergies{isCampout && <span className="text-error-500"> *</span>}
+            </h3>
+          </div>
+          <p className="text-xs text-neutral-500 mb-3">
+            Allergies, conditions or medication our leaders should know about. Only visible to event leaders.
+          </p>
+          <Input
+            label="Medical / allergy info"
+            value={medicalRequirements}
+            onChange={(e) => { setMedicalRequirements(e.target.value); if (reqError) setReqError(null) }}
+            placeholder='e.g. Asthma, EpiPen for nut allergy - or "None"'
+            type="textarea"
+            rows={2}
+            maxLength={500}
+            className="[&_textarea]:bg-neutral-50 [&_textarea]:border [&_textarea]:border-neutral-200"
+          />
+          {isCampout && (
+            <p className="text-xs text-neutral-500 mt-2">
+              Dietary and medical info are required for camp-outs. Enter &quot;None&quot; if you have none.
+            </p>
+          )}
+          {reqError && <p className="text-xs text-error-500 mt-2">{reqError}</p>}
         </motion.div>
 
         {/* Emergency contact */}

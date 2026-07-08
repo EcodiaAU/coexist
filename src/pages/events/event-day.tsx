@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Accessibility,
   Utensils,
+  HeartPulse,
   BookOpen,
   Clock,
   Sparkles,
@@ -123,7 +124,7 @@ function AttendeeRow({
   const isWaitlisted = person.scenario === 'waitlist'
   const isNotAttending = person.scenario === 'notAttending'
   const dupe = person.validTicketCount > 1
-  const hasEmergencyInfo = !!(person.profiles?.emergency_contact_name || person.profiles?.accessibility_requirements)
+  const hasEmergencyInfo = !!(person.profiles?.emergency_contact_name || person.profiles?.accessibility_requirements || person.profiles?.medical_requirements)
 
   const subtitle = isCheckedIn
     ? `Checked in ${person.checked_in_at ? new Intl.DateTimeFormat('en-AU', { hour: 'numeric', minute: '2-digit' }).format(new Date(person.checked_in_at)) : ''}`
@@ -314,6 +315,17 @@ function AttendeeSafetySheet({
             <div>
               <p className="text-xs font-semibold text-sprout-600 uppercase tracking-wider">Dietary</p>
               <p className="text-sm text-neutral-900 mt-0.5">{p.dietary_requirements}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Medical / allergies */}
+        {p.medical_requirements && (
+          <div className="flex items-start gap-3 p-3 rounded-sm bg-rose-50">
+            <HeartPulse size={16} className="text-rose-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-rose-600 uppercase tracking-wider">Medical / Allergies</p>
+              <p className="text-sm text-neutral-900 mt-0.5">{p.medical_requirements}</p>
             </div>
           </div>
         )}
