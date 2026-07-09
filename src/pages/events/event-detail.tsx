@@ -92,6 +92,8 @@ import { useGeocodeAddress } from '@/hooks/use-geocode-address'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { useEventTicketTypes, useMyEventTicket, useCreateTicketCheckout, useCancelPendingTicket, useTicketSalesSummary, useEventTickets } from '@/hooks/use-event-tickets'
 import { CampoutRequirementsModal } from '@/components/campout-requirements-modal'
+import { TicketQuestionsModal } from '@/components/ticket-questions-modal'
+import { useEventTicketQuestions, type TicketAnswers } from '@/hooks/use-event-ticket-questions'
 import { isCampoutActivity } from '@/lib/dietary'
 import { useEventCarpools } from '@/hooks/use-event-carpools'
 import { useEventCampoutChannel } from '@/hooks/use-staff-channels'
@@ -486,15 +488,18 @@ export default function EventDetailPage() {
   const campoutNeedsDietary = isCampoutEvent && dietaryMissing
   const campoutNeedsMedical = isCampoutEvent && medicalMissing
   const [showCampoutReqs, setShowCampoutReqs] = useState(false)
+  const [showQuestionsModal, setShowQuestionsModal] = useState(false)
   const [pendingTicketTypeId, setPendingTicketTypeId] = useState<string | null>(null)
+  const { data: ticketQuestions = [] } = useEventTicketQuestions(isTicketed ? id : undefined)
 
   // Actually start Stripe checkout for a ticket type and redirect.
-  const doTicketCheckout = useCallback(async (ticketTypeId: string) => {
+  const doTicketCheckout = useCallback(async (ticketTypeId: string, answers?: TicketAnswers) => {
     if (!event) return
     try {
       const result = await ticketCheckout.mutateAsync({
         eventId: event.id,
         ticketTypeId,
+        answers,
       })
       if (result.url) {
         window.location.href = result.url
@@ -510,14 +515,25 @@ export default function EventDetailPage() {
   // Entry point for every "buy ticket" action. For camp-outs missing dietary
   // or medical, capture them first (blocks checkout); otherwise go straight
   // to Stripe.
+  // After any pre-checkout gates, go to the questions modal if the event has
+  // custom questions, otherwise straight to Stripe.
+  const proceedToCheckout = useCallback((ticketTypeId: string) => {
+    if (ticketQuestions.length > 0) {
+      setPendingTicketTypeId(ticketTypeId)
+      setShowQuestionsModal(true)
+      return
+    }
+    void doTicketCheckout(ticketTypeId)
+  }, [ticketQuestions, doTicketCheckout])
+
   const beginTicketCheckout = useCallback((ticketTypeId: string) => {
     if (user && (campoutNeedsDietary || campoutNeedsMedical)) {
       setPendingTicketTypeId(ticketTypeId)
       setShowCampoutReqs(true)
       return
     }
-    void doTicketCheckout(ticketTypeId)
-  }, [user, campoutNeedsDietary, campoutNeedsMedical, doTicketCheckout])
+    proceedToCheckout(ticketTypeId)
+  }, [user, campoutNeedsDietary, campoutNeedsMedical, proceedToCheckout])
 
   const [showCancelSheet, setShowCancelSheet] = useState(false)
   const [showCalendarSheet, setShowCalendarSheet] = useState(false)
@@ -2049,7 +2065,20 @@ export default function EventDetailPage() {
           setShowCampoutReqs(false)
           const tt = pendingTicketTypeId
           setPendingTicketTypeId(null)
-          if (tt) void doTicketCheckout(tt)
+          if (tt) proceedToCheckout(tt)
+        }}
+      />
+
+      <TicketQuestionsModal
+        open={showQuestionsModal}
+        questions={ticketQuestions}
+        submitting={ticketCheckout.isPending}
+        onClose={() => { setShowQuestionsModal(false); setPendingTicketTypeId(null) }}
+        onSubmit={(answers) => {
+          const tt = pendingTicketTypeId
+          setShowQuestionsModal(false)
+          setPendingTicketTypeId(null)
+          if (tt) void doTicketCheckout(tt, answers)
         }}
       />
     </Page>

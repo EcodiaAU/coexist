@@ -14,6 +14,8 @@ import { isEventSoldOut } from '@/lib/event-sold-out'
 import { formatTime } from '@/lib/date-format'
 import { WebFooter } from '@/components/web-footer'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
+import { TicketQuestionsModal } from '@/components/ticket-questions-modal'
+import { useEventTicketQuestions, type TicketAnswers } from '@/hooks/use-event-ticket-questions'
 
 function formatDate(date: string, _legacyTz?: string) {
   // Floating local time (Tate 2026-05-25): stored wall-clock is the
@@ -81,16 +83,14 @@ export default function PublicEventPage() {
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [buying, setBuying] = useState(false)
   const [buyError, setBuyError] = useState<string | null>(null)
+  const [showGuestQuestions, setShowGuestQuestions] = useState(false)
+  const { data: ticketQuestions = [] } = useEventTicketQuestions(id)
 
   const activeTypeId = selectedType ?? ticketTypes?.[0]?.id ?? null
   const activeType = ticketTypes?.find((t) => t.id === activeTypeId) ?? null
 
-  async function handleBuy() {
+  async function doGuestCheckout(answers?: TicketAnswers) {
     if (!activeTypeId) return
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyEmail.trim())) {
-      setBuyError('Please enter a valid email address')
-      return
-    }
     setBuying(true)
     setBuyError(null)
     try {
@@ -107,6 +107,7 @@ export default function PublicEventPage() {
           email: buyEmail.trim(),
           name: buyName.trim(),
           quantity: 1,
+          answers: answers ?? null,
         }),
       })
       const out = await res.json()
@@ -116,6 +117,20 @@ export default function PublicEventPage() {
       setBuyError(e instanceof Error ? e.message : 'Could not start checkout')
       setBuying(false)
     }
+  }
+
+  function handleBuy() {
+    if (!activeTypeId) return
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyEmail.trim())) {
+      setBuyError('Please enter a valid email address')
+      return
+    }
+    // Collect custom question answers first if the event has any.
+    if (ticketQuestions.length > 0) {
+      setShowGuestQuestions(true)
+      return
+    }
+    void doGuestCheckout()
   }
 
   if (showLoading) {
@@ -424,6 +439,17 @@ export default function PublicEventPage() {
       </motion.div>
 
       <WebFooter />
+
+      <TicketQuestionsModal
+        open={showGuestQuestions}
+        questions={ticketQuestions}
+        submitting={buying}
+        onClose={() => setShowGuestQuestions(false)}
+        onSubmit={(answers) => {
+          setShowGuestQuestions(false)
+          void doGuestCheckout(answers)
+        }}
+      />
     </div>
   )
 }

@@ -173,10 +173,12 @@ export function useCreateTicketCheckout() {
       eventId,
       ticketTypeId,
       quantity = 1,
+      answers,
     }: {
       eventId: string
       ticketTypeId: string
       quantity?: number
+      answers?: Record<string, string | string[] | boolean | number>
     }) => {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
@@ -184,6 +186,7 @@ export function useCreateTicketCheckout() {
           event_id: eventId,
           ticket_type_id: ticketTypeId,
           quantity,
+          answers: answers ?? null,
         },
       })
 
