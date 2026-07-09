@@ -20,7 +20,7 @@ export function EcodiaAttribution({ className }: EcodiaAttributionProps) {
       aria-label="built by Ecodia"
       style={{ fontFamily: "'Spectral', 'Iowan Old Style', Garamond, 'Times New Roman', serif" }}
       className={cn(
-        'inline-block italic text-[15px] leading-none no-underline opacity-100',
+        'inline-block text-[15px] leading-none no-underline opacity-100',
         className,
       )}
     >
