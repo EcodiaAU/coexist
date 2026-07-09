@@ -59,6 +59,13 @@ const ORG_JSONLD = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-AU" className={`${montserrat.variable} ${aileron.variable}`}>
+      {/* Spectral - Ecodia's own serif, used only for the "built by Ecodia" attribution mark. */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600&display=swap"
+      />
       <body className="flex min-h-screen flex-col">
         <script
           type="application/ld+json"
