@@ -110,6 +110,25 @@ interface TicketTierDraft {
   capacity: string
 }
 
+type TicketQuestionType = 'short_text' | 'long_text' | 'boolean' | 'single_select' | 'multi_select'
+
+interface TicketQuestionDraft {
+  id: string
+  prompt: string
+  question_type: TicketQuestionType
+  options: string[]
+  required: boolean
+}
+
+const QUESTION_TYPE_LABELS: { value: TicketQuestionType; label: string }[] = [
+  { value: 'short_text', label: 'Short text' },
+  { value: 'long_text', label: 'Long text' },
+  { value: 'boolean', label: 'Yes / No' },
+  { value: 'single_select', label: 'Pick one' },
+  { value: 'multi_select', label: 'Pick many' },
+]
+const QUESTION_SELECT_TYPES: TicketQuestionType[] = ['single_select', 'multi_select']
+
 interface CreateExtraFields {
   selected_collective_ids: string[]
   is_recurring: boolean
@@ -125,6 +144,7 @@ interface CreateExtraFields {
   partner_name: string
   is_ticketed: boolean
   ticket_tiers: TicketTierDraft[]
+  ticket_questions: TicketQuestionDraft[]
   checkin_window_minutes: number
 }
 
@@ -143,6 +163,7 @@ const INITIAL_EXTRA: CreateExtraFields = {
   partner_name: '',
   is_ticketed: false,
   ticket_tiers: [],
+  ticket_questions: [],
   checkin_window_minutes: 30,
 }
 
@@ -1124,6 +1145,23 @@ function StepTicketing({
     onExtraChange({ ticket_tiers: extra.ticket_tiers.filter((t) => t.id !== id) })
   }
 
+  const addQuestion = () => {
+    onExtraChange({
+      ticket_questions: [
+        ...extra.ticket_questions,
+        { id: crypto.randomUUID(), prompt: '', question_type: 'short_text', options: [], required: false },
+      ],
+    })
+  }
+  const updateQuestion = (id: string, patch: Partial<TicketQuestionDraft>) => {
+    onExtraChange({
+      ticket_questions: extra.ticket_questions.map((q) => (q.id === id ? { ...q, ...patch } : q)),
+    })
+  }
+  const removeQuestion = (id: string) => {
+    onExtraChange({ ticket_questions: extra.ticket_questions.filter((q) => q.id !== id) })
+  }
+
   return (
     <div className="space-y-4">
       <StepCard>
@@ -1232,6 +1270,82 @@ function StepTicketing({
               className="mt-3 w-full"
             >
               Add another tier
+            </Button>
+          </StepCard>
+
+          <StepCard>
+            <SectionLabel>Attendee questions</SectionLabel>
+            <p className="text-xs text-neutral-500 mb-3">
+              Ask each buyer a question at checkout (e.g. "Arriving by 4WD?"). Answers appear in the attendee export.
+            </p>
+
+            <div className="space-y-3">
+              {extra.ticket_questions.map((q, idx) => (
+                <motion.div
+                  key={q.id}
+                  layout
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -16 }}
+                  className="rounded-sm bg-white border border-neutral-100 p-3.5 space-y-2.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-sm bg-bark-100 text-bark-600 text-xs font-bold shrink-0">
+                      {idx + 1}
+                    </span>
+                    <Input
+                      value={q.prompt}
+                      onChange={(e) => updateQuestion(q.id, { prompt: e.target.value })}
+                      placeholder="Question (e.g. Arriving by 4WD?)"
+                      compact
+                      className="flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(q.id)}
+                      className="flex items-center justify-center min-w-9 min-h-9 rounded-sm text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer"
+                      aria-label="Remove question"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={q.question_type}
+                      onChange={(e) => updateQuestion(q.id, { question_type: e.target.value as TicketQuestionType })}
+                      className="h-10 px-3 rounded-sm bg-surface-3 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                    >
+                      {QUESTION_TYPE_LABELS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                    <label className="flex items-center gap-2 text-xs font-medium text-neutral-500 ml-auto">
+                      Required
+                      <Toggle checked={q.required} onChange={(checked) => updateQuestion(q.id, { required: checked })} />
+                    </label>
+                  </div>
+
+                  {QUESTION_SELECT_TYPES.includes(q.question_type) && (
+                    <Input
+                      value={q.options.join(', ')}
+                      onChange={(e) => updateQuestion(q.id, { options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean) })}
+                      placeholder="Options, comma separated (e.g. Tent, Swag, Cabin)"
+                      compact
+                    />
+                  )}
+                </motion.div>
+              ))}
+            </div>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Plus size={14} />}
+              onClick={addQuestion}
+              className="mt-3 w-full"
+            >
+              Add a question
             </Button>
           </StepCard>
 
@@ -1977,6 +2091,25 @@ export default function CreateEventPage() {
               .from('event_ticket_types')
               .insert(ticketTypeRows)
             if (ttErr) console.error('[create-event] ticket type insert error:', ttErr)
+          }
+
+          // Custom attendee questions (optional): answered at checkout, exported.
+          const questionRows = extra.ticket_questions
+            .filter((q) => q.prompt.trim())
+            .map((q, idx) => ({
+              event_id: event.id,
+              prompt: q.prompt.trim(),
+              question_type: q.question_type,
+              options: QUESTION_SELECT_TYPES.includes(q.question_type)
+                ? q.options.map((o) => o.trim()).filter(Boolean)
+                : [],
+              required: q.required,
+              sort_order: idx,
+              is_active: true,
+            }))
+          if (questionRows.length > 0) {
+            const { error: qErr } = await supabase.from('event_ticket_questions').insert(questionRows)
+            if (qErr) console.error('[create-event] ticket question insert error:', qErr)
           }
         }
 
