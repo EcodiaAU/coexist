@@ -12,6 +12,12 @@ export default defineConfig([
     'android/app/build/**',
     'ios/App/build/**',
     'ios/App/DerivedData/**',
+    // web/ is the standalone Next.js marketing site (its own package.json and
+    // toolchain). Its sources carry inline `eslint-disable @next/next/*`
+    // comments, and this root flat config has no Next plugin, so every one of
+    // them raised "Definition for rule ... was not found" and failed CI with 36
+    // errors. Lint web/ with its own Next tooling, not the Vite app's config.
+    'web/**',
   ]),
   {
     files: ['**/*.{ts,tsx}'],
