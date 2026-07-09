@@ -1174,6 +1174,7 @@ export default function EventDetailPage() {
       swipeBack
       footer={renderCta()}
       noBackground={!!event.cover_image_url}
+      overscrollBackdrop={event.cover_image_url ? `center top / 100% auto no-repeat url("${event.cover_image_url}")` : undefined}
       stickyOverlay={
         <EventHeroOverlay hasCoverImage={!!event.cover_image_url} onShare={handleShare} />
       }
