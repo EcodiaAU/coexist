@@ -165,21 +165,52 @@ async function getGraphToken(): Promise<string> {
   return data.access_token
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+// Workbook write endpoints throttle aggressively. The per-event trigger path
+// and the hourly batch overlap and burst Graph PATCHes against the same
+// workbook, which returns 429 EditModeCannotAcquireLockTooManyRequests (and
+// occasionally 503/504). Before this guard those writes were dropped on the
+// floor (`Failed to update row N (429)` in excel_sync_runs), so impact updates
+// silently never reached the sheet. Retry with backoff that honours the
+// Retry-After header. Origin: 2026-06-29 sheet/app reconciliation - live
+// telemetry showed recurring 429s on to-excel update writes.
+const GRAPH_MAX_RETRIES = 6
+const GRAPH_RETRYABLE = new Set([429, 503, 504])
+
 async function graphRequest(token: string, path: string, method = 'GET', body?: unknown) {
   const url = `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${ITEM_ID}/workbook/worksheets/${encodeURIComponent(SHEET_NAME)}${path}`
-  const res = await fetch(url, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  if (!res.ok) {
-    const errText = await res.text()
-    throw new Error(`Graph API ${method} ${path} failed (${res.status}): ${errText}`)
+  let lastErrText = ''
+  let lastStatus = 0
+  for (let attempt = 0; attempt <= GRAPH_MAX_RETRIES; attempt++) {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    if (res.ok) return res.json()
+
+    lastStatus = res.status
+    lastErrText = await res.text()
+
+    if (GRAPH_RETRYABLE.has(res.status) && attempt < GRAPH_MAX_RETRIES) {
+      // Prefer the server's Retry-After (seconds); fall back to capped
+      // exponential backoff with jitter. Graph workbook throttles can ask for
+      // 15-30s, so cap generously at 30s.
+      const retryAfter = Number(res.headers.get('retry-after'))
+      const backoff = Number.isFinite(retryAfter) && retryAfter > 0
+        ? retryAfter * 1000
+        : Math.min(30000, 1000 * 2 ** attempt) + Math.floor(Math.random() * 500)
+      console.log(`[excel-sync] Graph ${method} ${path} ${res.status}; retry ${attempt + 1}/${GRAPH_MAX_RETRIES} after ${backoff}ms`)
+      await sleep(backoff)
+      continue
+    }
+    break
   }
-  return res.json()
+  throw new Error(`Graph API ${method} ${path} failed (${lastStatus}) after retries: ${lastErrText}`)
 }
 
 // ---- Date helpers ----
@@ -1232,8 +1263,12 @@ async function syncToExcel(
     }
   }
 
-  // Update existing rows
-  for (const { rowIndex, row } of updateRows) {
+  // Update existing rows. Pace each PATCH to avoid bursting the workbook write
+  // lock (the cause of the 429 EditModeCannotAcquireLock storms). graphRequest
+  // already retries with backoff; the inter-row delay keeps a healthy run from
+  // tripping the throttle in the first place.
+  for (let u = 0; u < updateRows.length; u++) {
+    const { rowIndex, row } = updateRows[u]
     try {
       await graphRequest(
         graphToken,
@@ -1244,6 +1279,7 @@ async function syncToExcel(
     } catch (err) {
       errors.push(`Failed to update row ${rowIndex}: ${(err as Error).message}`)
     }
+    if (u < updateRows.length - 1) await sleep(250)
   }
 
   return { appended, updated, skipped, skippedDuplicates, skippedNoImpact, weakDedupWarnings, errors }
@@ -1771,13 +1807,41 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    // KILL SWITCH for to-excel (sheet writes). app_settings key
+    // `excel_sync_to_excel_paused` (jsonb {"paused":true} or boolean true)
+    // short-circuits ALL sheet-write paths: hourly batch, per-event trigger,
+    // and manual calls. from-excel (DB-only, never writes the sheet) is
+    // unaffected. Purpose: to-excel does row-INDEX-based PATCHes; when multiple
+    // writers (per-event trigger + hourly batch) run concurrently, or a human
+    // edits the workbook, an index computed from a stale snapshot lands on a
+    // shifted row and clobbers it (observed 2026-06-29: duplicate app rows +
+    // overwritten Forms rows). Flip this flag true to freeze sheet writes
+    // during any manual reconciliation, then clear it. Default (no row / false)
+    // = normal operation.
+    let toExcelPaused = false
+    try {
+      const { data: pauseRow } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'excel_sync_to_excel_paused')
+        .maybeSingle()
+      const v = (pauseRow as { value?: unknown } | null)?.value
+      toExcelPaused = v === true || v === 'true'
+        || (typeof v === 'object' && v !== null && (v as { paused?: unknown }).paused === true)
+    } catch { /* fail open: a missing flag must not break normal sync */ }
+
     // For 'full' sync: from-excel FIRST (Excel is truth), then to-excel
     if (direction === 'from-excel' || direction === 'full') {
       results.fromExcel = await syncFromExcel(supabase, graphToken)
     }
 
     if (direction === 'to-excel' || direction === 'full') {
-      results.toExcel = await syncToExcel(supabase, graphToken, eventId)
+      if (toExcelPaused) {
+        results.toExcel = { paused: true, reason: 'excel_sync_to_excel_paused flag set; sheet writes frozen' }
+        console.log('[excel-sync] to-excel SKIPPED: excel_sync_to_excel_paused flag is set')
+      } else {
+        results.toExcel = await syncToExcel(supabase, graphToken, eventId)
+      }
     }
 
     // ---- Monitoring heartbeat: write a summary row to excel_sync_runs ----
