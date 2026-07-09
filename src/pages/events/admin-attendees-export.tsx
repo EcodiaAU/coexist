@@ -6,12 +6,14 @@ import {
   buildAttendeesCsv,
   buildAttendeesPlainText,
   buildPhoneList,
+  filterByStatus,
   downloadCsv,
-  type AttendeeExportScope,
+  STATUS_FILTERS,
+  type AttendeeStatusFilter,
   type EventDetailsForExport,
 } from '@/hooks/use-event-attendees-export'
+import { useEventTicketQuestions } from '@/hooks/use-event-ticket-questions'
 import { useToast } from '@/components/toast'
-import { wallClockNow } from '@/lib/date-format'
 import { cn } from '@/lib/cn'
 
 interface Props {
@@ -19,55 +21,37 @@ interface Props {
   details: EventDetailsForExport
 }
 
-const SCOPES: { value: AttendeeExportScope; label: string }[] = [
-  { value: 'registered', label: 'Registered' },
-  { value: 'checked_in', label: 'Checked in' },
-]
-
 /**
- * Leader/staff attendee export panel. Lives on the event detail page below
- * the existing attendee summary (gated by the page's isStaff = collective
- * assist-leader+ OR global staff, same gate as the event-day dashboard).
- * Renders a collapsible card; opening it fetches the attendee list for the
- * selected scope:
- *   - Registered: everyone with an active registration - the PRE-event view
- *     (dietaries for grocery shopping, phone numbers for the WhatsApp chat).
- *     Default for upcoming events.
- *   - Checked in: the original post-event scope for partner survey lists.
- *     Default once the event has started.
- * Buttons:
- *   - Download .csv (full table, opens in Excel / Sheets)
- *   - Copy as text (clipboard, ready to paste into an email)
- *   - Copy phone list (numbers only, one per line - WhatsApp add)
- *   - Preview shows the plain-text version inline.
+ * Leader/staff attendee export panel. Lives on the event detail page below the
+ * attendee summary (same isStaff gate as the event-day dashboard). One
+ * comprehensive export sourced from get_event_attendee_export: everyone with a
+ * registration or ticket, across all states, with full contact + dietary +
+ * medical + emergency contact + a column per custom question. The status
+ * filter (All / Going / Waitlisted / Cancelled) scopes the same fetched set.
+ * Buttons: Download .csv, Copy as text, Copy phone list, Preview.
  */
 export function AdminAttendeesExport({ eventId, details }: Props) {
   const [open, setOpen] = useState(false)
-  // Upcoming events default to the Registered scope (nobody is checked in
-  // yet, so the old checked-in-only view was empty and useless pre-event);
-  // events that have started default to Checked in, the post-event report.
-  // date_start is wall-clock-as-UTC, so compare against wallClockNow().
-  const [scope, setScope] = useState<AttendeeExportScope>(() =>
-    new Date(details.date_start).getTime() > wallClockNow().getTime() ? 'registered' : 'checked_in',
-  )
-  const { data, isLoading } = useEventAttendeesExport(eventId, scope, open)
+  const [statusFilter, setStatusFilter] = useState<AttendeeStatusFilter>('all')
+  const { data, isLoading } = useEventAttendeesExport(eventId, open)
+  const { data: questions = [] } = useEventTicketQuestions(eventId, open)
   const { toast } = useToast()
   const [showPreview, setShowPreview] = useState(false)
 
   const filenameBase =
     details.title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'event'
-  const scopeNoun = scope === 'checked_in' ? 'checked-in attendees' : 'registered attendees'
+  const rows = filterByStatus(data ?? [], statusFilter)
 
   function handleDownload() {
-    if (!data) return
-    const csv = buildAttendeesCsv(data, details, scope)
-    downloadCsv(csv, `coexist-${filenameBase}-${scope === 'checked_in' ? 'checked-in' : 'registered'}.csv`)
-    toast.success(`Downloaded ${data.length} ${scopeNoun}`)
+    if (!rows.length) return
+    const csv = buildAttendeesCsv(rows, details, questions)
+    downloadCsv(csv, `coexist-${filenameBase}-${statusFilter}.csv`)
+    toast.success(`Downloaded ${rows.length} attendee${rows.length !== 1 ? 's' : ''}`)
   }
 
   async function handleCopy() {
-    if (!data) return
-    const text = buildAttendeesPlainText(data, details, scope)
+    if (!rows.length) return
+    const text = buildAttendeesPlainText(rows, details, questions)
     try {
       await navigator.clipboard.writeText(text)
       toast.success('Copied attendee list')
@@ -77,10 +61,10 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
   }
 
   async function handleCopyPhones() {
-    if (!data) return
-    const list = buildPhoneList(data)
+    if (!rows.length) return
+    const list = buildPhoneList(rows)
     if (!list) {
-      toast.error('No phone numbers on these registrations')
+      toast.error('No phone numbers on these attendees')
       return
     }
     const count = list.split('\n').length
@@ -106,7 +90,7 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-neutral-900">Attendees export</p>
           <p className="text-xs text-neutral-500">
-            Name, email, phone, postcode, dietary, medical - registered (pre-event) or checked-in
+            Name, status, contact, dietary, medical, emergency contact + your questions, every ticket state
           </p>
         </div>
         <ChevronDown
@@ -125,20 +109,20 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
             className="border-t border-neutral-100"
           >
             <div className="px-4 pt-3 pb-4 space-y-3">
-              <div className="inline-flex items-center rounded-full bg-neutral-100 p-0.5" role="tablist" aria-label="Export scope">
-                {SCOPES.map((s) => (
+              <div className="inline-flex items-center rounded-full bg-neutral-100 p-0.5" role="tablist" aria-label="Status filter">
+                {STATUS_FILTERS.map((s) => (
                   <button
                     key={s.value}
                     type="button"
                     role="tab"
-                    aria-selected={scope === s.value}
+                    aria-selected={statusFilter === s.value}
                     onClick={() => {
-                      setScope(s.value)
+                      setStatusFilter(s.value)
                       setShowPreview(false)
                     }}
                     className={cn(
                       'px-3 py-1 rounded-full text-xs font-semibold transition-colors',
-                      scope === s.value
+                      statusFilter === s.value
                         ? 'bg-white text-neutral-900 shadow-sm'
                         : 'text-neutral-500 hover:text-neutral-800',
                     )}
@@ -153,17 +137,17 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
                   <Loader2 size={12} className="animate-spin" />
                   Loading attendees…
                 </div>
-              ) : !data || data.length === 0 ? (
+              ) : rows.length === 0 ? (
                 <p className="text-xs text-neutral-500">
-                  {scope === 'checked_in'
-                    ? 'No-one has checked in to this event yet. Switch to Registered to see everyone signed up.'
-                    : 'No active registrations for this event yet.'}
+                  {statusFilter === 'all'
+                    ? 'No registrations or tickets for this event yet.'
+                    : `No ${statusFilter} attendees. Switch to All to see everyone.`}
                 </p>
               ) : (
                 <>
                   <p className="text-xs text-neutral-500">
-                    {data.length} attendee{data.length !== 1 ? 's' : ''}{' '}
-                    {scope === 'checked_in' ? 'checked in' : 'registered'}.
+                    {rows.length} attendee{rows.length !== 1 ? 's' : ''}
+                    {statusFilter !== 'all' ? ` (${statusFilter})` : ''}.
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
@@ -208,7 +192,7 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
                         <X size={12} />
                       </button>
                       <pre className="text-[11px] leading-relaxed text-neutral-700 bg-neutral-50 rounded-xl p-3 max-h-72 overflow-auto whitespace-pre-wrap font-mono">
-                        {buildAttendeesPlainText(data, details, scope)}
+                        {buildAttendeesPlainText(rows, details, questions)}
                       </pre>
                     </div>
                   )}

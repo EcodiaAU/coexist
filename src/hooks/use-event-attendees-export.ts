@@ -1,18 +1,37 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import type { EventTicketQuestion, TicketAnswers } from './use-event-ticket-questions'
+
+/**
+ * Comprehensive attendee export. Sourced from the get_event_attendee_export
+ * SECURITY DEFINER RPC, which unions everyone with a registration OR a ticket
+ * for the event across ALL states, and returns full contact + dietary +
+ * medical + emergency-contact fields plus the custom-question answers on the
+ * ticket. One export replaces the old registered/checked-in split.
+ *
+ * "Going" means the person holds a confirmed (or checked-in) ticket, which is
+ * the app's own attendance definition; someone who registered interest but
+ * never completed a ticket reads as "Registered (no ticket)", not Going.
+ */
 
 export interface AttendeeExportRow {
   user_id: string
-  display_name: string | null
   first_name: string | null
   last_name: string | null
+  display_name: string | null
   email: string | null
   phone: string | null
   postcode: string | null
   dietary_requirements: string | null
   medical_requirements: string | null
-  checked_in_at: string | null
+  emergency_contact_name: string | null
+  emergency_contact_phone: string | null
+  emergency_contact_relationship: string | null
+  registration_status: string | null
   registered_at: string | null
+  ticket_status: string | null
+  checked_in_at: string | null
+  custom_answers: TicketAnswers | null
 }
 
 export interface EventDetailsForExport {
@@ -24,85 +43,51 @@ export interface EventDetailsForExport {
   collective_name: string | null
 }
 
-/**
- * Which registrations the export covers:
- *  - 'registered'  - everyone with an active registration ('registered' or
- *    'attended' status), usable BEFORE the event. Use case (Jess via Tate,
- *    2026-07-06): dietaries report for grocery shopping ahead of a camp-out,
- *    and phone numbers for adding newcomers to the WhatsApp chat.
- *  - 'checked_in'  - only attendees with a check-in timestamp, the original
- *    post-event scope (per Jess 2026-05-18) for partner-org survey lists.
- *
- * Statuses come from the live registration_status enum (probed via pg_enum
- * 2026-07-06): registered | waitlisted | cancelled | attended | invited.
- * 'registered' + 'attended' matches the app's own "going" count on the
- * event page; waitlisted/invited/cancelled are excluded.
- */
-export type AttendeeExportScope = 'registered' | 'checked_in'
+export type AttendeeStatusFilter = 'all' | 'going' | 'waitlisted' | 'cancelled'
 
-const PROFILE_FIELDS = `
-          display_name,
-          first_name,
-          last_name,
-          email,
-          phone,
-          postcode,
-          dietary_requirements,
-          medical_requirements
-` as const
+export const STATUS_FILTERS: { value: AttendeeStatusFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'going', label: 'Going' },
+  { value: 'waitlisted', label: 'Waitlisted' },
+  { value: 'cancelled', label: 'Cancelled' },
+]
+
+type StatusCategory = 'going' | 'waitlisted' | 'cancelled' | 'registered' | 'other'
 
 /**
- * Leader/staff attendee export. The select pulls only the fields that need
- * to leave the platform (name, email, phone, postcode, dietary), nothing
- * more. Leaders already see phone + dietary per attendee on the event-day
- * roster, so this exposes no new PII class to them.
+ * Collapse the registration + ticket state into one human status label + a
+ * filter category. Confirmed/checked-in ticket wins ("Going"); this is the
+ * distinction that caused the Charli/Max "no ticket" confusion.
  */
-export function useEventAttendeesExport(
-  eventId: string | undefined,
-  scope: AttendeeExportScope,
-  enabled = true,
-) {
+export function deriveStatus(r: AttendeeExportRow): { label: string; category: StatusCategory } {
+  const t = r.ticket_status
+  const reg = r.registration_status
+  if (t === 'confirmed' || t === 'checked_in') {
+    return { label: r.checked_in_at ? 'Checked in' : 'Going', category: 'going' }
+  }
+  if (reg === 'waitlisted') return { label: 'Waitlisted', category: 'waitlisted' }
+  if (t === 'cancelled' || t === 'refunded' || reg === 'cancelled') {
+    return { label: 'Cancelled', category: 'cancelled' }
+  }
+  if (reg === 'registered' || reg === 'attended') {
+    return { label: 'Registered (no ticket)', category: 'registered' }
+  }
+  return { label: reg ?? t ?? 'Unknown', category: 'other' }
+}
+
+export function filterByStatus(rows: AttendeeExportRow[], filter: AttendeeStatusFilter): AttendeeExportRow[] {
+  if (filter === 'all') return rows
+  return rows.filter((r) => deriveStatus(r).category === filter)
+}
+
+export function useEventAttendeesExport(eventId: string | undefined, enabled = true) {
   return useQuery({
-    queryKey: ['event-attendees-export', eventId, scope],
+    queryKey: ['event-attendees-export', eventId],
     queryFn: async (): Promise<AttendeeExportRow[]> => {
       if (!eventId) return []
-      let query = supabase
-        .from('event_registrations')
-        .select(`
-          checked_in_at,
-          registered_at,
-          user_id,
-          profiles!event_registrations_user_id_fkey(${PROFILE_FIELDS})
-        `)
-        .eq('event_id', eventId)
-
-      if (scope === 'checked_in') {
-        query = query.not('checked_in_at', 'is', null).order('checked_in_at', { ascending: true })
-      } else {
-        query = query
-          .in('status', ['registered', 'attended'])
-          .order('registered_at', { ascending: true })
-      }
-
-      const { data, error } = await query
+      const { data, error } = await supabase.rpc('get_event_attendee_export', { p_event_id: eventId })
       if (error) throw error
-
-      return (data ?? []).map((row) => {
-        const p = (row as { profiles?: Record<string, string | null> | null }).profiles ?? {}
-        return {
-          user_id: (row as { user_id: string }).user_id,
-          display_name: p.display_name ?? null,
-          first_name: p.first_name ?? null,
-          last_name: p.last_name ?? null,
-          email: p.email ?? null,
-          phone: p.phone ?? null,
-          postcode: p.postcode ?? null,
-          dietary_requirements: p.dietary_requirements ?? null,
-          medical_requirements: p.medical_requirements ?? null,
-          checked_in_at: (row as { checked_in_at: string | null }).checked_in_at ?? null,
-          registered_at: (row as { registered_at: string | null }).registered_at ?? null,
-        }
-      })
+      return (Array.isArray(data) ? data : []) as AttendeeExportRow[]
     },
     enabled: enabled && !!eventId,
     staleTime: 60 * 1000,
@@ -117,42 +102,64 @@ function escapeCsv(value: string): string {
 }
 
 function nameOf(r: AttendeeExportRow): string {
-  // Full name first (Tate 2026-06-08): exports must carry First + Last so
-  // leaders/execs can disambiguate people who share a first name; the
-  // self-chosen display_name is only a fallback.
+  // Full name first (Tate 2026-06-08): exports carry First + Last so leaders
+  // can disambiguate people who share a first name; display_name is a fallback.
   const full = [r.first_name, r.last_name].map((s) => (s ?? '').trim()).filter(Boolean).join(' ')
   return full || (r.display_name ?? '')
 }
 
-function scopeCountLabel(scope: AttendeeExportScope, count: number): string {
-  return scope === 'checked_in' ? `Checked in: ${count}` : `Registered: ${count}`
+/** Render one custom-answer value into a cell: bool -> Yes/No, array joined. */
+export function answerCell(v: unknown): string {
+  if (v === null || v === undefined) return ''
+  if (typeof v === 'boolean') return v ? 'Yes' : 'No'
+  if (Array.isArray(v)) return v.map((x) => String(x)).join('; ')
+  return String(v)
 }
+
+const BASE_HEADER = [
+  'Name',
+  'Status',
+  'Email',
+  'Phone',
+  'Postcode',
+  'Dietary',
+  'Medical',
+  'Emergency contact',
+  'Emergency phone',
+] as const
 
 export function buildAttendeesCsv(
   rows: AttendeeExportRow[],
   details: EventDetailsForExport,
-  scope: AttendeeExportScope,
+  questions: EventTicketQuestion[] = [],
 ): string {
-  const header = ['Name', 'Email', 'Phone', 'Postcode', 'Dietary', 'Medical']
+  const header = [...BASE_HEADER, ...questions.map((q) => q.prompt)]
   const meta = [
     `Event: ${details.title}`,
     details.collective_name ? `Collective: ${details.collective_name}` : '',
     `Date: ${new Date(details.date_start).toLocaleString('en-AU', { timeZone: 'UTC' })}`,
     details.activity_type ? `Activity: ${details.activity_type}` : '',
     details.address ? `Address: ${details.address}` : '',
-    scopeCountLabel(scope, rows.length),
+    `Count: ${rows.length}`,
   ].filter(Boolean)
 
   const csvRows: string[][] = [
     header,
-    ...rows.map((r) => [
-      nameOf(r),
-      r.email ?? '',
-      r.phone ?? '',
-      r.postcode ?? '',
-      r.dietary_requirements ?? '',
-      r.medical_requirements ?? '',
-    ]),
+    ...rows.map((r) => {
+      const ans = r.custom_answers ?? {}
+      return [
+        nameOf(r),
+        deriveStatus(r).label,
+        r.email ?? '',
+        r.phone ?? '',
+        r.postcode ?? '',
+        r.dietary_requirements ?? '',
+        r.medical_requirements ?? '',
+        r.emergency_contact_name ?? '',
+        r.emergency_contact_phone ?? '',
+        ...questions.map((q) => answerCell(ans[q.id])),
+      ]
+    }),
   ]
 
   const csvBody = csvRows
@@ -164,32 +171,39 @@ export function buildAttendeesCsv(
 export function buildAttendeesPlainText(
   rows: AttendeeExportRow[],
   details: EventDetailsForExport,
-  scope: AttendeeExportScope,
+  questions: EventTicketQuestion[] = [],
 ): string {
   const lines: string[] = []
   lines.push(details.title)
   lines.push(new Date(details.date_start).toLocaleString('en-AU', { timeZone: 'UTC' }))
   if (details.address) lines.push(details.address)
   if (details.collective_name) lines.push(details.collective_name)
-  lines.push(scopeCountLabel(scope, rows.length))
+  lines.push(`Count: ${rows.length}`)
   lines.push('')
   for (const r of rows) {
     const name = nameOf(r) || 'Unknown'
-    const parts = [name]
+    const ans = r.custom_answers ?? {}
+    const parts = [`${name} [${deriveStatus(r).label}]`]
     if (r.email) parts.push(`<${r.email}>`)
     if (r.phone) parts.push(r.phone)
     if (r.postcode) parts.push(`postcode ${r.postcode}`)
     if (r.dietary_requirements) parts.push(`dietary: ${r.dietary_requirements}`)
     if (r.medical_requirements) parts.push(`medical: ${r.medical_requirements}`)
+    if (r.emergency_contact_name) {
+      parts.push(`emergency: ${r.emergency_contact_name}${r.emergency_contact_phone ? ` ${r.emergency_contact_phone}` : ''}`)
+    }
+    for (const q of questions) {
+      const cell = answerCell(ans[q.id])
+      if (cell) parts.push(`${q.prompt} ${cell}`)
+    }
     lines.push(`- ${parts.join(' · ')}`)
   }
   return lines.join('\n')
 }
 
 /**
- * Numbers-only list for the WhatsApp-add use case: one phone number per
- * line, deduped, rows without a phone skipped. Paste straight into a
- * contacts import or a WhatsApp participant add.
+ * Numbers-only list for the WhatsApp-add use case: one phone number per line,
+ * deduped, rows without a phone skipped.
  */
 export function buildPhoneList(rows: AttendeeExportRow[]): string {
   const seen = new Set<string>()
