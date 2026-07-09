@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 /**
  * event-reminders - Scheduled Supabase Edge Function
@@ -90,7 +91,7 @@ function hoursBetween(a: Date, b: Date): number {
   return (b.getTime() - a.getTime()) / (3600 * 1000)
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('event-reminders', async (req: Request) => {
   try {
     // Verify caller is using the service-role key (cron invocations)
     const authHeader = req.headers.get('Authorization')
@@ -186,7 +187,7 @@ Deno.serve(async (req: Request) => {
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     )
   }
-})
+}))
 
 // ── Send reminders for a single event ──
 

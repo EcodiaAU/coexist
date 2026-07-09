@@ -1,5 +1,6 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 /**
  * carpool-archive-sweep
@@ -30,7 +31,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  *   path - the caller is always the cron, which wants to apply the sweep.
  */
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('carpool-archive-sweep', async (req: Request) => {
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -314,4 +315,4 @@ Deno.serve(async (req: Request) => {
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     )
   }
-})
+}))

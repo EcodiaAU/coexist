@@ -23,6 +23,7 @@ import { encode as _base64Encode } from 'https://deno.land/std@0.177.0/encoding/
 import { decode as base64Decode } from 'https://deno.land/std@0.177.0/encoding/base64.ts'
 import { crypto } from 'https://deno.land/std@0.177.0/crypto/mod.ts'
 import { Buffer as _Buffer } from 'https://deno.land/std@0.177.0/io/buffer.ts'
+import { withSentry } from '../_shared/sentry.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -46,7 +47,7 @@ const tierLabels: Record<string, string> = {
   dedicated: 'Dedicated', lifetime: 'Founding',
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('generate-wallet-pass', async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -139,7 +140,7 @@ Deno.serve(async (req: Request) => {
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   }
-})
+}))
 
 /* ================================================================== */
 /*  Apple Wallet (.pkpass)                                              */

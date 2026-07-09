@@ -1,5 +1,6 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -166,7 +167,7 @@ function sanitizeHtml(str: string): string {
     .replace(/'/g, '&#39;')
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('notify-application', async (req: Request) => {
   try {
     // ── Auth: require authenticated user ──
     const authHeader = req.headers.get('Authorization')
@@ -269,4 +270,4 @@ Deno.serve(async (req: Request) => {
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     )
   }
-})
+}))

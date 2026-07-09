@@ -21,6 +21,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
+import { withSentry } from '../_shared/sentry.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   apiVersion: '2024-04-10',
@@ -45,7 +46,7 @@ function isSoldOut(extras: unknown): boolean {
   return !!extras && typeof extras === 'object' && (extras as Record<string, unknown>).sold_out === true
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('guest-ticket-checkout', async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -233,4 +234,4 @@ Deno.serve(async (req: Request) => {
     console.error('[guest-checkout] error:', (err as Error).message)
     return json({ error: 'Checkout failed' }, 500)
   }
-})
+}))

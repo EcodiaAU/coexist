@@ -1,5 +1,6 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 /**
  * event-post-survey-invite
@@ -20,7 +21,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * Auth: service-role bearer. Cron passes it via the plpgsql wrapper.
  */
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('event-post-survey-invite', async (req: Request) => {
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -158,4 +159,4 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     return new Response(JSON.stringify({ success: false, error: (err as Error).message }), { status: 500 })
   }
-})
+}))

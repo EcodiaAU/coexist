@@ -1,5 +1,6 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 /**
  * public-event-check-in  -  Public QR check-in endpoint for Co-Exist events.
@@ -84,7 +85,7 @@ function todayInTz(tz: string): string {
 /*  Main handler                                                       */
 /* ------------------------------------------------------------------ */
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('public-event-check-in', async (req: Request) => {
   // OPTIONS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders })
@@ -246,4 +247,4 @@ Deno.serve(async (req: Request) => {
   })
 
   return json({ ok: true, message: "You're checked in!" })
-})
+}))

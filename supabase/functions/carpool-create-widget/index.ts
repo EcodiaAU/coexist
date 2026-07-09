@@ -1,5 +1,6 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { withSentry } from '../_shared/sentry.ts'
 
 /**
  * carpool-create-widget
@@ -190,7 +191,7 @@ async function resolveCoords(
   return { lat, lng, display_name, source: 'nominatim' }
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry('carpool-create-widget', async (req: Request) => {
   // CORS preflight - must respond with CORS headers BEFORE the method-check
   // 405 path, otherwise browsers see "CORS error" instead of any useful info.
   if (req.method === 'OPTIONS') {
@@ -353,4 +354,4 @@ Deno.serve(async (req: Request) => {
     }),
     { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
   )
-})
+}))
