@@ -101,7 +101,7 @@ export function SiteFooter() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="built by Ecodia"
-              style={{ fontFamily: "'EB Garamond', Georgia, 'Times New Roman', serif" }}
+              style={{ fontFamily: "'Spectral', Georgia, 'Times New Roman', serif" }}
               className="inline-block w-fit italic text-[15px] leading-none no-underline text-oncream"
             >
               built by Ecodia
