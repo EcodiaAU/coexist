@@ -470,6 +470,7 @@ Deno.serve(async (req: Request) => {
           p_ticket_type_id: body.ticket_type_id,
           p_user_id: body.user_id,
           p_quantity: qty,
+          p_answers: (body.answers && typeof body.answers === 'object') ? body.answers : null,
         })
 
         if (reserveErr) {

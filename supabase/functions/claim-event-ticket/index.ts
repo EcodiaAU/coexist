@@ -106,6 +106,7 @@ Deno.serve(async (req: Request) => {
           price_cents: 0,
           quantity: 1,
           ticket_code: code(),
+          custom_answers: (body.answers && typeof body.answers === 'object') ? body.answers : {},
         })
         .select('id')
         .single()
