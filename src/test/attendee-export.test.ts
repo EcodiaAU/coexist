@@ -49,6 +49,13 @@ describe('deriveStatus', () => {
   it('waitlisted without confirmed ticket is Waitlisted', () => {
     expect(deriveStatus(row({ registration_status: 'waitlisted', ticket_status: 'cancelled' }))).toEqual({ label: 'Waitlisted', category: 'waitlisted' })
   })
+  it('waitlisted registration + confirmed ticket is Going (the Kieren case)', () => {
+    // Someone who paid must never read as waitlisted: the ticket is the source
+    // of truth for attendance, so the confirmed-ticket branch has to win over
+    // the waitlisted registration. Reordering those checks silently reinstates
+    // the bug Angelica reported on 2026-07-09.
+    expect(deriveStatus(row({ registration_status: 'waitlisted', ticket_status: 'confirmed' }))).toEqual({ label: 'Going', category: 'going' })
+  })
   it('cancelled/refunded ticket is Cancelled', () => {
     expect(deriveStatus(row({ ticket_status: 'refunded', registration_status: 'cancelled' })).category).toBe('cancelled')
   })
