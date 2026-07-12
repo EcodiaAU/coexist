@@ -32,6 +32,13 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
         .from('events')
         .select('*')
         .eq('status', 'published')
+        // Ticketed events need a real checkout, not a one-tap RSVP. Including
+        // them here let new users "register" a paid campout without buying a
+        // ticket, leaving them in the "registered, no ticket" grey zone that
+        // muddled the roster (Charli/Max, Angelica 2026-07-09). Onboarding
+        // one-tap RSVP is for free events only; ticketed events are found and
+        // bought on the event page.
+        .eq('is_ticketed', false)
         .gte('date_start', wallClockNow().toISOString())
         .order('date_start', { ascending: true })
         .limit(5)

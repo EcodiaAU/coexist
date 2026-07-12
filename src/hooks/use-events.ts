@@ -589,12 +589,18 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
 
         if (checkedIn) {
           scenario = 'checkedIn'
+        } else if (a.valid > 0) {
+          // A confirmed/paid ticket seats the person as going, even if their
+          // registration row still says waitlisted. Someone who paid must never
+          // sit on the waitlist below capacity (the Kieren case, Angelica
+          // 2026-07-09): the ticket is the source of truth for attendance.
+          // On non-ticketed events a.valid is always 0, so this branch is inert
+          // there and the prior register/waitlist behaviour is preserved.
+          scenario = 'expected'
         } else if (r.status === 'waitlisted') {
           scenario = 'waitlist'
         } else if (!isTicketed) {
           if (r.status === 'cancelled') continue // hide cancelled on non-ticketed events (prior behaviour)
-          scenario = 'expected'
-        } else if (a.valid > 0) {
           scenario = 'expected'
         } else {
           scenario = 'notAttending'
@@ -792,6 +798,21 @@ export function useRegisterForEvent() {
   return useMutation({
     mutationFn: async ({ eventId, asWaitlist = false }: { eventId: string; asWaitlist?: boolean }) => {
       if (!user) throw new Error('Must be signed in')
+
+      // A ticketed event is joined by buying a ticket, never a bare
+      // registration. event-detail already routes ticketed events to checkout
+      // and never calls this, but guard here so no other entry point
+      // (onboarding, a deep link, a future button) can create a
+      // "registered, no ticket" grey-zone row on a ticketed event
+      // (Angelica 2026-07-09).
+      const { data: evt } = await supabase
+        .from('events')
+        .select('is_ticketed')
+        .eq('id', eventId)
+        .maybeSingle()
+      if (evt?.is_ticketed) {
+        throw new Error('This event needs a ticket. Open the event to get one.')
+      }
 
       // Check capacity before registering (prevents race condition when
       // multiple users register simultaneously for the last spot)
