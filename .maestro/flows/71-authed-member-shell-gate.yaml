@@ -1,0 +1,64 @@
+# Native-gate authed-member core journey (Phase 5 app-test-gate flagship).
+#
+# WHY A SEPARATE FLOW FROM 01-signin-authed-feed:
+#   01 is the STRICT authed flow and asserts the personalised "YOUR NEXT EVENT"
+#   card, which only renders when the test user has a REGISTERED upcoming event.
+#   That card is fixture state, not journey integrity, so 01 correctly reds when
+#   the fixture drifts (the coexist prehook exists to catch exactly that). The
+#   native-journey gate needs a robust authed-member canary that proves the real
+#   journey - a member signs in and lands on a rendered authed home shell -
+#   INDEPENDENT of whether the event fixture currently has data. This flow is
+#   that canary: it authenticates with a real member and asserts only the
+#   always-present authed-shell anchors (personalised greeting, the UPCOMING
+#   EVENTS section heading, and the Home/Chat/Profile/More bottom nav), all
+#   verified from the 2026-07-06 post-login screenshot.
+#
+# Creds via MAESTRO_CX_* env (values from the kv-mirror, never literals).
+# Capacitor WebView inputs are reachable because androidWebViewHierarchy:devtools
+# exposes the DOM to Maestro (maestro-mobile-stably-web canonical doctrine).
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: true
+    stopApp: true
+# Cold-clear lands on the signed-out auth shell.
+- extendedWaitUntil:
+    visible: ".*(Welcome back|Log In|Email).*"
+    timeout: 15000
+# Conditional login: a prior flow may have left the session signed in.
+- runFlow:
+    when:
+      visible: "Welcome back"
+    commands:
+      - tapOn: "Email.*"
+      - inputText: ${MAESTRO_CX_EMAIL}
+      - tapOn: "Password.*"
+      - inputText: ${MAESTRO_CX_PASSWORD}
+      # Do NOT hideKeyboard (Android Capacitor maps it to BACK, which on the
+      # cold-clear router-root login screen exits the app). Scroll the button
+      # above the keyboard then tap.
+      - scrollUntilVisible:
+          element:
+            text: "Log In"
+          direction: DOWN
+      - tapOn: "Log In"
+      # Login succeeded == the signed-out shell is gone.
+      - extendedWaitUntil:
+          notVisible: "Welcome back"
+          timeout: 25000
+# Authed home shell, fixture-INDEPENDENT anchors (present with zero events too).
+- extendedWaitUntil:
+    visible: ".*Ecodia"
+    timeout: 20000
+# "UPCOMING EVENTS" was the fixture-independent anchor here until 44e83d5 (2026-05-28)
+# removed that section. It shipped gone in 2.0.9, so this flow had been asserting on copy
+# that no longer exists and failing every run since. "Your Next Event" is NOT a valid
+# replacement: it renders only when the member actually has an upcoming event, which is
+# exactly the fixture dependence this gate avoids. The tab bar below is the real
+# always-present anchor for "the authed shell rendered".
+- assertVisible: "Home"
+- assertVisible: "Chat"
+- assertVisible: "Profile"
+- assertVisible: "More"
+- takeScreenshot: /tmp/maestro-cx-nativegate-authed-shell

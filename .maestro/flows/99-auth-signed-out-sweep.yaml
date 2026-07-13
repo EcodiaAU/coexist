@@ -18,9 +18,16 @@ androidWebViewHierarchy: devtools
 - launchApp:
     clearState: true
     stopApp: true
+# 30000 sat under the observed cold-start floor, so this flow went red on a blank frame while
+# the app was still painting. clearState wipes the WebView cache, so THIS flow pays the full
+# cold-start cost that flows running on a warm cache never see (71 does the identical
+# clearState launch, renders in <15s, and passed in the very run this one failed). Verified
+# 2026-07-13 by `pm clear` + cold launch on the modern AVD: the sign-in screen renders in
+# full (Welcome back / Google / Apple / Email / Password / Log In / Create account). It is
+# simply slower than 30s on a software-GPU emulator. Size the timeout to the floor.
 - extendedWaitUntil:
     visible: ".*(Welcome back|Welcome|Log In|Sign In|Create account).*"
-    timeout: 30000
+    timeout: 90000
 - takeScreenshot: /tmp/maestro-cx-auth-fresh-launch
 # /login is the cleared-state landing; assert here first.
 - openLink: "coexist://login"
