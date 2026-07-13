@@ -41,6 +41,7 @@ import {
     UserPlus,
     Share2,
     Tent,
+    Navigation,
 } from 'lucide-react'
 import { EventShareSheet } from '@/components/event-share-sheet'
 import { EventPhotosSection } from '@/components/event-photos-section'
@@ -83,6 +84,7 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { attendeeName } from '@/lib/attendee-name'
 import { parseLocationPoint } from '@/lib/geo'
+import { gloveboxLink } from '@/lib/glovebox'
 import { isEventSoldOut } from '@/lib/event-sold-out'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
@@ -713,6 +715,27 @@ export default function EventDetailPage() {
 
     window.open(url, Capacitor.isNativePlatform() ? '_system' : '_blank')
   }, [event, mapPos])
+
+  // Hand the venue to Glovebox as a light trip: one destination, nothing else.
+  // Only exact coords qualify (saved location_point, or the geocoded fallback);
+  // an address string alone is not a destination, so the action stays hidden
+  // rather than emitting a link Glovebox cannot resolve.
+  const gloveboxHref = useMemo(() => {
+    if (!event || !mapPos) return null
+    return gloveboxLink({
+      toLat: mapPos.lat,
+      toLng: mapPos.lng,
+      toName: event.address || event.title,
+    })
+  }, [event, mapPos])
+
+  // The universal link opens Glovebox on a phone that has it, and the Glovebox
+  // web app on one that does not, so there is nothing to probe and no fallback
+  // to build. On native, hand it to the system browser rather than the webview.
+  const handleOpenInGlovebox = useCallback(() => {
+    if (!gloveboxHref) return
+    window.open(gloveboxHref, Capacitor.isNativePlatform() ? '_system' : '_blank')
+  }, [gloveboxHref])
 
   const handleCancelEvent = useCallback(() => {
     if (!event) return
@@ -1447,24 +1470,45 @@ export default function EventDetailPage() {
                 className="aspect-[4/3] sm:aspect-video rounded-md shadow-sm border border-neutral-100"
               />
             )}
-            <button
-              type="button"
-              onClick={handleGetDirections}
-              disabled={!hasDirectionsDestination}
+            <div
               className={cn(
                 mapPos ? 'absolute bottom-3 right-3 z-[1000]' : 'mt-1',
-                'flex items-center gap-1.5 px-3.5 py-2 rounded-sm text-[13px] font-bold',
-                'bg-white text-neutral-700 shadow-md border border-neutral-200',
-                hasDirectionsDestination
-                  ? 'cursor-pointer select-none active:scale-[0.97] transition-transform duration-150'
-                  : 'opacity-50 cursor-not-allowed',
+                'flex items-center gap-2',
               )}
-              aria-label="Get directions"
-              aria-disabled={!hasDirectionsDestination}
             >
-              <Compass size={14} />
-              Directions
-            </button>
+              {gloveboxHref && (
+                <button
+                  type="button"
+                  onClick={handleOpenInGlovebox}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3.5 py-2 rounded-sm text-[13px] font-bold',
+                    'bg-white text-neutral-700 shadow-md border border-neutral-200',
+                    'cursor-pointer select-none active:scale-[0.97] transition-transform duration-150',
+                  )}
+                  aria-label="Open in Glovebox"
+                >
+                  <Navigation size={14} />
+                  Open in Glovebox
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleGetDirections}
+                disabled={!hasDirectionsDestination}
+                className={cn(
+                  'flex items-center gap-1.5 px-3.5 py-2 rounded-sm text-[13px] font-bold',
+                  'bg-white text-neutral-700 shadow-md border border-neutral-200',
+                  hasDirectionsDestination
+                    ? 'cursor-pointer select-none active:scale-[0.97] transition-transform duration-150'
+                    : 'opacity-50 cursor-not-allowed',
+                )}
+                aria-label="Get directions"
+                aria-disabled={!hasDirectionsDestination}
+              >
+                <Compass size={14} />
+                Directions
+              </button>
+            </div>
           </motion.div>
         )}
 
