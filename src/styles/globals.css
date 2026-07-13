@@ -579,10 +579,9 @@ select:focus-visible {
   overscroll-behavior-y: contain;
 }
 
-/* Contain rubber-band bounce to the scroll container so Page overscrollBackdrop
-   can reveal the hero in the native gap instead of the white page background. */
+/* Prevent rubber-band bounce on the whole page (native apps don't bounce) */
 html, body {
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
 }
 
 /* ===== 60fps Scroll Performance ===== */

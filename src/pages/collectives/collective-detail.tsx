@@ -171,7 +171,6 @@ export default function CollectiveDetailPage() {
     <Page
       swipeBack
       noBackground
-      overscrollBackdrop={collective.cover_image_url ? `center top / 100% auto no-repeat url("${collective.cover_image_url}")` : undefined}
       stickyOverlay={
         <Header
           title=""
