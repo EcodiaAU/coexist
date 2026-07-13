@@ -55,6 +55,25 @@ html {
   src: url('../assets/fonts/eau_sans_black.woff2') format('woff2');
 }
 
+/* Spectral - the Ecodia house serif, used only by the "built by Ecodia"
+   attribution mark. Bundled rather than named in a font stack: the mark
+   renders inside native webviews with no network, so a hosted-font link
+   would silently fall back to Times there. Regular + italic is the whole need. */
+@font-face {
+  font-family: 'Spectral';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/Spectral-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spectral';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/Spectral-Italic.woff2') format('woff2');
+}
+
 @theme {
   /* Brand - Co-Exist olive green */
   --color-brand: #869e62;

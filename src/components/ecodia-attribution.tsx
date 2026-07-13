@@ -6,9 +6,11 @@ interface EcodiaAttributionProps {
 
 /**
  * Ecodia attribution mark. "built by Ecodia" -> ecodia.au.
- * Spectral italic signature, lowercase, opacity-recede. Inherits the
+ * Spectral upright (roman), lowercase, opacity-recede. Inherits the
  * surrounding text colour, so it works on light and dark footers with no
  * colour prop. The phrase always renders whole, never abbreviated.
+ * Spectral is bundled via @font-face in styles/globals.css; naming it in a
+ * stack alone silently falls back to Times in the native webviews.
  * Canonical spec: patterns/ecodia-attribution-mark-the-world-we-build-next-2026-06-23.md
  */
 export function EcodiaAttribution({ className }: EcodiaAttributionProps) {
