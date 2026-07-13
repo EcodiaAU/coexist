@@ -46,10 +46,17 @@ androidWebViewHierarchy: devtools
     visible: "Checked In"
     timeout: 10000
 # The discriminating probe: the Checked In stat card must read 53, not the
-# pre-fix 30 (registered-attended only); post-fix is 53 (+ 23 walk-ins). The
-# day page now renders separate Registered / Checked In / Waitlisted cards.
+# pre-fix 30 (registered-attended only); post-fix is 53 (30 attended + 23 walk-ins).
+#
+# The day page renders Going / Checked In / Waitlisted. The first card was
+# "Registered" (61 = registrations only) and is now "Going" (84 = the 61
+# registrations PLUS the 23 walk-ins), so a walk-in counts toward the
+# attendance tally and the Going >= Checked In invariant holds. Asserting the
+# old "Registered"/61 pair fails against a correct app. Verified against the DB
+# 2026-07-13: registrations(registered|attended)=61, walk_ins=23, attended=30,
+# waitlisted=0, so 61+23=84 Going and 30+23=53 Checked In.
 - assertVisible: "53"
 - assertVisible: "Checked In"
-- assertVisible: "Registered"
-- assertVisible: "61"
+- assertVisible: "Going"
+- assertVisible: "84"
 - takeScreenshot: /tmp/maestro-cx-eventday-walkin-verify

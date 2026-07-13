@@ -22,7 +22,13 @@ androidWebViewHierarchy: devtools
     visible: "YOUR NEXT EVENT"
     timeout: 30000
 - openLink: "coexist://notifications"
+# The screen has two healthy shapes and the assertion must cover BOTH. When the
+# list is EMPTY it renders an empty-state line; when it is POPULATED it renders
+# date-grouped cards whose swipe action reads "Mark read" and NO summary banner.
+# The old alternation only knew the empty-state copy, so a correctly-populated
+# notifications screen failed the flow (observed 2026-07-13: 3 notifications
+# rendered fine, flow red). "Mark read" is the populated-state anchor.
 - extendedWaitUntil:
-    visible: ".*(unread notification|All caught up|No notifications).*"
+    visible: ".*(unread notification|All caught up|No notifications|Mark read).*"
     timeout: 15000
 - takeScreenshot: /tmp/maestro-cx-notifications
