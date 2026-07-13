@@ -44,3 +44,6 @@ ios/App/App/GoogleService-Info.plist
 # Playwright artifacts
 test-results/
 playwright-report/
+
+# Detached git worktrees checked out inside the repo (full tree copies).
+_worktrees/

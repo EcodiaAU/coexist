@@ -12,6 +12,11 @@ export default defineConfig([
     'android/app/build/**',
     'ios/App/build/**',
     'ios/App/DerivedData/**',
+    // Detached git worktrees checked out inside the repo. They are full copies
+    // of the tree, so `eslint .` walked all ~20 of them and reported ~691
+    // phantom errors locally while CI (a clean checkout) saw zero. That cost the
+    // 2.0.19 regression pass real time chasing a red gate that did not exist.
+    '_worktrees/**',
     // web/ is the standalone Next.js marketing site (its own package.json and
     // toolchain). Its sources carry inline `eslint-disable @next/next/*`
     // comments, and this root flat config has no Next plugin, so every one of
