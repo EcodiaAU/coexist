@@ -41,6 +41,7 @@ import {
     UserPlus,
     Share2,
     Tent,
+    ArrowRightLeft,
 } from 'lucide-react'
 import { EventShareSheet } from '@/components/event-share-sheet'
 import { EventPhotosSection } from '@/components/event-photos-section'
@@ -87,6 +88,7 @@ import { isEventSoldOut } from '@/lib/event-sold-out'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { IssueTicketSheet } from '@/components/issue-ticket-sheet'
+import { TransferTicketSheet } from '@/components/transfer-ticket-sheet'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useGeocodeAddress } from '@/hooks/use-geocode-address'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
@@ -263,6 +265,12 @@ function TicketSalesSection({
 
   const [issueOpen, setIssueOpen] = useState(false)
   const [revokingId, setRevokingId] = useState<string | null>(null)
+  // Move a ticket (or the whole roster) to another event. No refund, no re-buy:
+  // the ticket itself travels. Origin: Angelica 2026-07-13, moving attendees
+  // off the 7 Aug Outback campout onto a Wild Mountains campout.
+  const [transfer, setTransfer] = useState<
+    { mode: 'single'; ticketId: string; label: string } | { mode: 'bulk' } | null
+  >(null)
 
   // Count live tickets per user so duplicates (same person, >1 active ticket)
   // can be flagged for cleanup. Tate hit this: two live tickets to one event.
@@ -276,10 +284,19 @@ function TicketSalesSection({
     return m
   }, [tickets])
 
+  // Tickets the bulk move would actually pick up. Matches the server: only
+  // confirmed / checked_in travel, never a pending (unpaid) hold.
+  const movableCount = useMemo(
+    () => (tickets ?? []).filter((t) => t.status === 'confirmed' || t.status === 'checked_in').length,
+    [tickets],
+  )
+
   function refreshTickets() {
     queryClient.invalidateQueries({ queryKey: ['admin-event-tickets', eventId] })
     queryClient.invalidateQueries({ queryKey: ['ticket-sales-summary', eventId] })
     queryClient.invalidateQueries({ queryKey: ['event-ticket-types', eventId] })
+    queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+    queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
   }
 
   async function handleRevoke(ticketId: string, isPaid: boolean, label: string) {
@@ -316,14 +333,27 @@ function TicketSalesSection({
         </div>
         <h3 className="text-sm font-bold text-neutral-900">Ticket Sales</h3>
         {canManageTickets && (
-          <button
-            type="button"
-            onClick={() => setIssueOpen(true)}
-            className={cn('ml-auto flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-sm', accent.bg, accent.text)}
-          >
-            <UserPlus size={13} />
-            Issue ticket
-          </button>
+          <div className="ml-auto flex items-center gap-1.5">
+            {movableCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setTransfer({ mode: 'bulk' })}
+                title="Move every ticket holder to another event"
+                className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-sm bg-neutral-100 text-neutral-600"
+              >
+                <ArrowRightLeft size={13} />
+                Move all
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setIssueOpen(true)}
+              className={cn('flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-sm', accent.bg, accent.text)}
+            >
+              <UserPlus size={13} />
+              Issue ticket
+            </button>
+          </div>
         )}
       </div>
 
@@ -375,6 +405,16 @@ function TicketSalesSection({
                   )}>
                     {t.status === 'checked_in' ? 'In' : t.status}
                   </span>
+                  {canManageTickets && (t.status === 'confirmed' || t.status === 'checked_in') && (
+                    <button
+                      type="button"
+                      onClick={() => setTransfer({ mode: 'single', ticketId: t.id as string, label })}
+                      title="Move to another event (no refund, they keep this ticket)"
+                      className="text-neutral-300 hover:text-primary-500 transition-colors p-1"
+                    >
+                      <ArrowRightLeft size={14} />
+                    </button>
+                  )}
                   {canManageTickets && isLive && (
                     <button
                       type="button"
@@ -399,6 +439,19 @@ function TicketSalesSection({
           open={issueOpen}
           onClose={() => setIssueOpen(false)}
           onSuccess={refreshTickets}
+        />
+      )}
+
+      {canManageTickets && transfer && (
+        <TransferTicketSheet
+          eventId={eventId}
+          open
+          onClose={() => setTransfer(null)}
+          onSuccess={refreshTickets}
+          mode={transfer.mode}
+          ticketId={transfer.mode === 'single' ? transfer.ticketId : undefined}
+          attendeeLabel={transfer.mode === 'single' ? transfer.label : undefined}
+          liveTicketCount={movableCount}
         />
       )}
     </motion.div>

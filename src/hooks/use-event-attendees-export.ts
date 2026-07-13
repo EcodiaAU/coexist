@@ -87,7 +87,8 @@ export function useEventAttendeesExport(eventId: string | undefined, enabled = t
       if (!eventId) return []
       const { data, error } = await supabase.rpc('get_event_attendee_export', { p_event_id: eventId })
       if (error) throw error
-      return (Array.isArray(data) ? data : []) as AttendeeExportRow[]
+      // The RPC is typed as jsonb (Json), so narrow through unknown.
+      return (Array.isArray(data) ? data : []) as unknown as AttendeeExportRow[]
     },
     enabled: enabled && !!eventId,
     staleTime: 60 * 1000,

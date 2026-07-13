@@ -309,7 +309,7 @@ export function SurveyQuestionRenderer({
             <div className="space-y-1">
               <Input
                 type="number"
-                value={(answers[q.id] as string | number | undefined) ?? ''}
+                value={String(answers[q.id] ?? '')}
                 // QA P3-8: e.target.value is a string, so numeric answers
                 // persisted to the answers jsonb as "42" instead of 42 and
                 // broke downstream aggregation. Store a real number; keep ''

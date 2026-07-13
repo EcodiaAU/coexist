@@ -10,10 +10,25 @@ import sys
 from pathlib import Path
 
 
+CRED_PATHS = (
+    "/Users/ecodia/PRIVATE/ecodia-creds/supabase.env",  # Mac (canonical host since 2026-06-08)
+    "D:/PRIVATE/ecodia-creds/supabase.env",             # legacy Corazon
+)
+
+
 def pat() -> str:
-    for line in Path("D:/PRIVATE/ecodia-creds/supabase.env").read_text().splitlines():
-        if line.startswith("SUPABASE_ACCESS_TOKEN="):
-            return line.split("=", 1)[1].strip().strip('"').strip("'")
+    import os
+
+    env = os.environ.get("SUPABASE_ACCESS_TOKEN")
+    if env:
+        return env.strip()
+    for candidate in CRED_PATHS:
+        p = Path(candidate)
+        if not p.exists():
+            continue
+        for line in p.read_text().splitlines():
+            if line.startswith("SUPABASE_ACCESS_TOKEN="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
     sys.exit("no PAT")
 
 

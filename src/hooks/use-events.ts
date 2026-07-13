@@ -548,7 +548,16 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
       }
       if (!eventId) return empty
 
-      const [{ data: regs, error: regErr }, { data: tix, error: tixErr }] = await Promise.all([
+      // Ticket states come from get_event_ticket_states (SECURITY DEFINER), NOT
+      // from a client select on event_tickets. RLS on that table admits only the
+      // ticket's owner plus admin/national_leader, so the old direct select
+      // silently returned [] for a manager or a collective leader and every
+      // registrant on a ticketed event fell into "no ticket / not attending".
+      // The roster read is now entitlement-shaped server-side: staff get every
+      // state (they need refunded / cancelled to explain a no-show), everyone
+      // else gets only the valid tickets, and nobody gets ticket PII through
+      // this path. Origin: Angelica "attendees are not showing", 2026-07-13.
+      const [{ data: regs, error: regErr }, { data: states, error: tixErr }] = await Promise.all([
         supabase
           .from('event_registrations')
           .select('user_id, status, checked_in_at, registered_at, profiles!event_registrations_user_id_fkey(id, display_name, first_name, last_name, avatar_url, phone, age, gender, accessibility_requirements, dietary_requirements, medical_requirements, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship)')
@@ -556,11 +565,14 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
           .in('status', ['registered', 'attended', 'waitlisted', 'cancelled'])
           .order('registered_at', { ascending: true }),
         isTicketed
-          ? supabase.from('event_tickets').select('user_id, status').eq('event_id', eventId)
-          : Promise.resolve({ data: [] as { user_id: string; status: string }[], error: null }),
+          ? supabase.rpc('get_event_ticket_states', { p_event_id: eventId })
+          : Promise.resolve({ data: null, error: null }),
       ])
       if (regErr) throw regErr
       if (tixErr) throw tixErr
+
+      const tix = ((states as { tickets?: { user_id: string; status: string }[] } | null)?.tickets
+        ?? []) as { user_id: string; status: string }[]
 
       // Aggregate tickets per user.
       const agg = new Map<string, { valid: number; checkedIn: boolean; refunded: boolean; cancelled: boolean; any: boolean }>()

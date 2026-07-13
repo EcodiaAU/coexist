@@ -116,6 +116,11 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     description: 'Order refund processed. Data: { name, order_id, refund_amount, currency }',
     subject: (d) => `Refund processed for order #${d.order_id}`,
   },
+  ticket_transferred: {
+    category: 'transactional',
+    description: 'Ticket moved to another event by a leader (no refund, same ticket). Data: { name, event_title, event_date, event_location, previous_event_title, ticket_code, event_url }',
+    subject: (d) => `Your ticket has moved to ${d.event_title}`,
+  },
 
   collective_application: {
     category: 'transactional',
@@ -404,6 +409,28 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
       ]) +
       ctaButton('View your ticket', (d.ticket_url as string) || APP_URL),
     footerCta: { label: 'Open the App', url: APP_URL },
+  }),
+
+  // A leader moved this person's ticket to another event. No refund happened
+  // and they did not have to re-buy: the same ticket travelled with them, so
+  // the email must not read like a receipt or a cancellation.
+  ticket_transferred: (d) => emailShell({
+    heroTitle: 'Your ticket has moved',
+    heroSubtitle: d.event_title as string,
+    heroEmoji: '\u{1F3D5}\u{FE0F}',
+    body: greeting(d.name) +
+      p(d.previous_event_title
+        ? `Your ticket for <strong>${d.previous_event_title}</strong> has been moved across to <strong>${d.event_title}</strong>. You keep the same ticket, nothing was refunded, and there is nothing to pay.`
+        : `Your ticket has been moved across to <strong>${d.event_title}</strong>. You keep the same ticket, nothing was refunded, and there is nothing to pay.`) +
+      p('Here is where you are now headed:') +
+      infoCard([
+        ['Event', d.event_title],
+        ['Date', d.event_date],
+        ['Location', d.event_location],
+        ...(d.ticket_code ? [['Ticket code', d.ticket_code] as [string, unknown]] : []),
+      ]) +
+      p('You have been added to the group chat for this one, and taken out of the old one. If this new date does not work for you, reply to this email and we will sort it out.'),
+    footerCta: { label: 'View Event', url: d.event_url as string || APP_URL },
   }),
 
   event_reminder: (d) => emailShell({

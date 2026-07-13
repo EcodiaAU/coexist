@@ -881,6 +881,20 @@ export type Database = {
             foreignKeyName: "chat_channels_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "chat_channels_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "chat_channels_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -3023,6 +3037,66 @@ export type Database = {
           },
         ]
       }
+      event_impact_log_invites_sent: {
+        Row: {
+          event_id: string
+          follow_up_number: number
+          id: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          follow_up_number: number
+          id?: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          follow_up_number?: number
+          id?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_impact_log_invites_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_impact_log_invites_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_impact_log_invites_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_impact_log_invites_sent_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_impact_log_invites_sent_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_invites: {
         Row: {
           collective_id: string
@@ -3402,6 +3476,70 @@ export type Database = {
           },
         ]
       }
+      event_ticket_questions: {
+        Row: {
+          created_at: string
+          event_id: string
+          help_text: string | null
+          id: string
+          is_active: boolean
+          options: Json
+          prompt: string
+          question_type: string
+          required: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          help_text?: string | null
+          id?: string
+          is_active?: boolean
+          options?: Json
+          prompt: string
+          question_type?: string
+          required?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          help_text?: string | null
+          id?: string
+          is_active?: boolean
+          options?: Json
+          prompt?: string
+          question_type?: string
+          required?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_ticket_questions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_ticket_questions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_ticket_questions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_ticket_types: {
         Row: {
           capacity: number | null
@@ -3470,6 +3608,7 @@ export type Database = {
         Row: {
           checked_in_at: string | null
           created_at: string | null
+          custom_answers: Json
           event_id: string
           id: string
           price_cents: number
@@ -3485,6 +3624,7 @@ export type Database = {
         Insert: {
           checked_in_at?: string | null
           created_at?: string | null
+          custom_answers?: Json
           event_id: string
           id?: string
           price_cents: number
@@ -3500,6 +3640,7 @@ export type Database = {
         Update: {
           checked_in_at?: string | null
           created_at?: string | null
+          custom_answers?: Json
           event_id?: string
           id?: string
           price_cents?: number
@@ -4756,6 +4897,39 @@ export type Database = {
           },
         ]
       }
+      partners: {
+        Row: {
+          created_at: string
+          id: string
+          is_published: boolean
+          logo_url: string | null
+          name: string
+          sort_order: number
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          logo_url?: string | null
+          name: string
+          sort_order?: number
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          logo_url?: string | null
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount_cents: number
@@ -5032,8 +5206,6 @@ export type Database = {
       profiles: {
         Row: {
           accessibility_requirements: string | null
-          dietary_requirements: string | null
-          medical_requirements: string | null
           age: number | null
           avatar_url: string | null
           bio: string | null
@@ -5043,6 +5215,7 @@ export type Database = {
           deleted_at: string | null
           deletion_requested_at: string | null
           deletion_status: string | null
+          dietary_requirements: string | null
           display_name: string | null
           email: string | null
           emergency_contact_name: string | null
@@ -5058,6 +5231,7 @@ export type Database = {
           location: string | null
           location_point: unknown
           marketing_opt_in: boolean | null
+          medical_requirements: string | null
           membership_level: string | null
           notification_preferences: Json | null
           onboarding_completed: boolean | null
@@ -5077,8 +5251,6 @@ export type Database = {
         }
         Insert: {
           accessibility_requirements?: string | null
-          dietary_requirements?: string | null
-          medical_requirements?: string | null
           age?: number | null
           avatar_url?: string | null
           bio?: string | null
@@ -5088,6 +5260,7 @@ export type Database = {
           deleted_at?: string | null
           deletion_requested_at?: string | null
           deletion_status?: string | null
+          dietary_requirements?: string | null
           display_name?: string | null
           email?: string | null
           emergency_contact_name?: string | null
@@ -5103,6 +5276,7 @@ export type Database = {
           location?: string | null
           location_point?: unknown
           marketing_opt_in?: boolean | null
+          medical_requirements?: string | null
           membership_level?: string | null
           notification_preferences?: Json | null
           onboarding_completed?: boolean | null
@@ -5122,8 +5296,6 @@ export type Database = {
         }
         Update: {
           accessibility_requirements?: string | null
-          dietary_requirements?: string | null
-          medical_requirements?: string | null
           age?: number | null
           avatar_url?: string | null
           bio?: string | null
@@ -5133,6 +5305,7 @@ export type Database = {
           deleted_at?: string | null
           deletion_requested_at?: string | null
           deletion_status?: string | null
+          dietary_requirements?: string | null
           display_name?: string | null
           email?: string | null
           emergency_contact_name?: string | null
@@ -5148,6 +5321,7 @@ export type Database = {
           location?: string | null
           location_point?: unknown
           marketing_opt_in?: boolean | null
+          medical_requirements?: string | null
           membership_level?: string | null
           notification_preferences?: Json | null
           onboarding_completed?: boolean | null
@@ -5482,6 +5656,42 @@ export type Database = {
           value?: string
         }
         Relationships: []
+      }
+      site_content: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_content_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_content_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       spatial_ref_sys: {
         Row: {
@@ -5992,6 +6202,45 @@ export type Database = {
           },
         ]
       }
+      team_members: {
+        Row: {
+          bio: string | null
+          created_at: string
+          id: string
+          is_published: boolean
+          name: string
+          photo_url: string | null
+          role_title: string | null
+          sort_order: number
+          team_group: string
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          name: string
+          photo_url?: string | null
+          role_title?: string | null
+          sort_order?: number
+          team_group?: string
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          name?: string
+          photo_url?: string | null
+          role_title?: string | null
+          sort_order?: number
+          team_group?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       timeline_rules: {
         Row: {
           activity_type_filter:
@@ -6488,10 +6737,6 @@ export type Database = {
     }
     Functions: {
       _is_national_role: { Args: { p_role: string }; Returns: boolean }
-      claim_push_token: {
-        Args: { p_token: string; p_platform: string; p_device_info?: Json }
-        Returns: undefined
-      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined
@@ -6688,11 +6933,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      check_channel_rate_limit: {
+        Args: { p_channel_id: string; p_user_id: string }
+        Returns: boolean
+      }
       check_chat_rate_limit: {
         Args: { p_collective_id: string; p_user_id: string }
         Returns: boolean
       }
       check_user_suspended: { Args: { uid: string }; Returns: Json }
+      claim_push_token: {
+        Args: { p_device_info?: Json; p_platform: string; p_token: string }
+        Returns: undefined
+      }
       cleanup_deleted_accounts: { Args: never; Returns: number }
       cleanup_expired_reservations: { Args: never; Returns: number }
       coexist_attendance_metrics: {
@@ -6707,6 +6960,7 @@ export type Database = {
       coexist_impact_legacy_by_activity: { Args: never; Returns: Json }
       cron_carpool_archive_sweep: { Args: never; Returns: undefined }
       cron_event_day_notify: { Args: never; Returns: undefined }
+      cron_event_post_impact_log_invite: { Args: never; Returns: undefined }
       cron_event_post_photo_invite: { Args: never; Returns: undefined }
       cron_event_post_survey_invite: { Args: never; Returns: undefined }
       cron_excel_from_sync: { Args: never; Returns: undefined }
@@ -6870,6 +7124,7 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       get_admin_system_stats: { Args: never; Returns: Json }
+      get_auth_user_id_by_email: { Args: { p_email: string }; Returns: string }
       get_available_stock: {
         Args: {
           p_exclude_user_id?: string
@@ -6896,6 +7151,8 @@ export type Database = {
         }[]
       }
       get_collective_stats: { Args: { p_collective_id: string }; Returns: Json }
+      get_event_attendee_export: { Args: { p_event_id: string }; Returns: Json }
+      get_event_ticket_states: { Args: { p_event_id: string }; Returns: Json }
       get_events_within_radius: {
         Args: {
           p_lat: number
@@ -7013,6 +7270,10 @@ export type Database = {
         Returns: boolean
       }
       is_collective_staff_or_above: { Args: { uid: string }; Returns: boolean }
+      is_event_registrant_of_led_collective: {
+        Args: { target: string; viewer: string }
+        Returns: boolean
+      }
       is_fellow_collective_member: {
         Args: { caller_uid: string; target_collective_id: string }
         Returns: boolean
@@ -7078,6 +7339,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      reconcile_ticket_membership: {
+        Args: { p_event: string; p_user: string }
+        Returns: undefined
+      }
       recover_pending_deletion: { Args: { uid: string }; Returns: undefined }
       release_all_reservations: {
         Args: { p_user_id: string }
@@ -7089,6 +7354,7 @@ export type Database = {
       }
       reserve_event_ticket: {
         Args: {
+          p_answers?: Json
           p_event_id: string
           p_quantity?: number
           p_stripe_session_id?: string
@@ -7729,6 +7995,15 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: undefined
       }
+      transfer_event_ticket: {
+        Args: {
+          p_override_capacity?: boolean
+          p_target_event_id: string
+          p_target_ticket_type_id?: string
+          p_ticket_id: string
+        }
+        Returns: Json
+      }
       unlockrows: { Args: { "": string }; Returns: number }
       unsubscribe_by_email: { Args: { p_email: string }; Returns: undefined }
       update_event_location: {
@@ -7744,6 +8019,10 @@ export type Database = {
           table_name: string
         }
         Returns: string
+      }
+      validate_ticket_answers: {
+        Args: { p_answers: Json; p_event_id: string }
+        Returns: undefined
       }
     }
     Enums: {

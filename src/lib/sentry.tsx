@@ -54,8 +54,10 @@ export function initSentry() {
       // project. On native, @sentry/capacitor stamps this on native events too.
       dist: isNative ? 'native' : 'web',
       tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
-      replaysSessionSampleRate: 0,
-      replaysOnErrorSampleRate: import.meta.env.PROD ? 0.5 : 0,
+      // Session Replay is not wired (no replayIntegration in integrations), so
+      // the replay*SampleRate options were dead config and are not part of
+      // @sentry/capacitor's option type. Removed to keep tsc clean; add them
+      // back alongside Sentry.replayIntegration() if replay is ever enabled.
       integrations: [],
       beforeSend(event) {
         // Strip PII from breadcrumbs if needed

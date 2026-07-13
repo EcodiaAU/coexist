@@ -9,7 +9,16 @@
  *     ticket), and emails a refund confirmation.
  *   - Free/comp ticket (no payment intent): set status='cancelled' directly;
  *     the same chat-membership trigger removes them if no other live ticket
- *     remains, and we cancel the registration.
+ *     remains, and the reconciler cancels the registration.
+ *
+ * NOTE (2026-07-13): this function used to blind-write
+ * event_registrations.status = 'cancelled' after the ticket update. That ran
+ * AFTER trg_reconcile_event_ticket_state had already reconciled, so on a person
+ * holding a second live ticket for the same event (a re-buy, a dupe) it
+ * clobbered a correct 'registered' row back to 'cancelled' and stranded them:
+ * confirmed ticket, cancelled registration, invisible in the roster. Both blind
+ * writes are now calls to reconcile_ticket_membership(), which DERIVES the
+ * registration + chat state from the count of still-valid tickets.
  *
  * Input:  { ticket_id }
  * Auth:   caller JWT; caller's role must be manager|admin.
@@ -91,26 +100,21 @@ Deno.serve(withSentry('revoke-event-ticket', async (req: Request) => {
         }
       }
       // Defensive local finalise (idempotent with the webhook): mark refunded
-      // and cancel the registration now so the UI updates immediately.
+      // so the UI updates immediately. Registration + chat state is then
+      // DERIVED by reconcile_ticket_membership, never set blindly here.
       await supabase.from('event_tickets')
         .update({ status: 'refunded', updated_at: new Date().toISOString() })
         .eq('id', ticket.id)
         .in('status', ['confirmed', 'checked_in', 'pending'])
-      await supabase.from('event_registrations')
-        .update({ status: 'cancelled' })
-        .eq('event_id', ticket.event_id)
-        .eq('user_id', ticket.user_id)
+      await supabase.rpc('reconcile_ticket_membership', { p_event: ticket.event_id, p_user: ticket.user_id })
       return json({ ok: true, action: 'refunded', ticket_id: ticket.id })
     }
 
-    // ---- Free/comp ticket: cancel directly (trigger handles chat removal) ----
+    // ---- Free/comp ticket: cancel directly (reconciler handles chat removal) ----
     await supabase.from('event_tickets')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', ticket.id)
-    await supabase.from('event_registrations')
-      .update({ status: 'cancelled' })
-      .eq('event_id', ticket.event_id)
-      .eq('user_id', ticket.user_id)
+    await supabase.rpc('reconcile_ticket_membership', { p_event: ticket.event_id, p_user: ticket.user_id })
     return json({ ok: true, action: 'cancelled', ticket_id: ticket.id })
   } catch (err) {
     console.error('[revoke] error:', (err as Error).message)
