@@ -9,22 +9,24 @@ import { useCollectiveMapData, type MapCollective } from '@/hooks/use-collective
 
 /* ------------------------------------------------------------------ */
 /*  Hardcoded fallback (used when DB returns no data)                  */
+/*  member_count is null on purpose: these are offline placeholders, and  */
+/*  inventing a member number here would contradict the real counts.     */
 /* ------------------------------------------------------------------ */
 
 const FALLBACK_COLLECTIVES: MapCollective[] = [
-  { id: 'perth', slug: 'perth', name: 'Perth Collective', cover_image_url: null, region: 'Perth', state: 'WA', member_count: 124, description: 'Protecting the stunning coastline and bushlands of Western Australia.', lat: -31.9505, lng: 115.8605, nextEvent: null },
-  { id: 'adelaide', slug: 'adelaide', name: 'Adelaide Collective', cover_image_url: null, region: 'Adelaide', state: 'SA', member_count: 89, description: "Restoring native habitats along the Torrens and across Adelaide's parks.", lat: -34.9285, lng: 138.6007, nextEvent: null },
-  { id: 'geelong', slug: 'geelong', name: 'Geelong Collective', cover_image_url: null, region: 'Geelong', state: 'VIC', member_count: 67, description: 'Caring for the Bellarine coast and Barwon River corridors.', lat: -38.1499, lng: 144.3617, nextEvent: null },
-  { id: 'mornington', slug: 'mornington-peninsula', name: 'Mornington Peninsula Collective', cover_image_url: null, region: 'Mornington Peninsula', state: 'VIC', member_count: 53, description: "Protecting the unique ecosystems of the Peninsula's coastline.", lat: -38.2833, lng: 145.1667, nextEvent: null },
-  { id: 'melbourne', slug: 'melbourne-city', name: 'Melbourne City Collective', cover_image_url: null, region: 'Melbourne City', state: 'VIC', member_count: 312, description: "Greening Melbourne's inner city through planting, litter removal and advocacy.", lat: -37.8136, lng: 144.9631, nextEvent: null },
-  { id: 'hobart', slug: 'hobart', name: 'Hobart Collective', cover_image_url: null, region: 'Hobart', state: 'TAS', member_count: 48, description: "Conserving Tasmania's unique wilderness and waterways.", lat: -42.8821, lng: 147.3272, nextEvent: null },
-  { id: 'sydney', slug: 'sydney', name: 'Sydney Collective', cover_image_url: null, region: 'Sydney', state: 'NSW', member_count: 287, description: "From the harbour to the Blue Mountains - protecting Sydney's natural heritage.", lat: -33.8688, lng: 151.2093, nextEvent: null },
-  { id: 'northern-rivers', slug: 'northern-rivers', name: 'Northern Rivers Collective', cover_image_url: null, region: 'Northern Rivers', state: 'NSW', member_count: 95, description: 'Restoring the lush subtropical rainforests and river systems of the Northern Rivers.', lat: -28.8131, lng: 153.2760, nextEvent: null },
-  { id: 'gold-coast', slug: 'gold-coast', name: 'Gold Coast Collective', cover_image_url: null, region: 'Gold Coast', state: 'QLD', member_count: 143, description: "Protecting the Gold Coast's beaches, hinterland and waterways.", lat: -28.0167, lng: 153.4000, nextEvent: null },
-  { id: 'brisbane', slug: 'brisbane', name: 'Brisbane Collective', cover_image_url: null, region: 'Brisbane', state: 'QLD', member_count: 198, description: "Revitalising Brisbane's creeks, parks and urban bushland.", lat: -27.4698, lng: 153.0251, nextEvent: null },
-  { id: 'sunshine-coast', slug: 'sunshine-coast', name: 'Sunshine Coast Collective', cover_image_url: null, region: 'Sunshine Coast', state: 'QLD', member_count: 76, description: "Guardians of the Sunshine Coast's beaches, reefs and hinterland.", lat: -26.6500, lng: 153.0667, nextEvent: null },
-  { id: 'townsville', slug: 'townsville', name: 'Townsville Collective', cover_image_url: null, region: 'Townsville', state: 'QLD', member_count: 42, description: 'Protecting tropical ecosystems from reef to rainforest in North Queensland.', lat: -19.2590, lng: 146.8169, nextEvent: null },
-  { id: 'cairns', slug: 'cairns', name: 'Cairns Collective', cover_image_url: null, region: 'Cairns', state: 'QLD', member_count: 61, description: 'Where the rainforest meets the reef - conservation in tropical Far North Queensland.', lat: -16.9186, lng: 145.7781, nextEvent: null },
+  { id: 'perth', slug: 'perth', name: 'Perth Collective', cover_image_url: null, region: 'Perth', state: 'WA', member_count: null, description: 'Protecting the stunning coastline and bushlands of Western Australia.', lat: -31.9505, lng: 115.8605, nextEvent: null },
+  { id: 'adelaide', slug: 'adelaide', name: 'Adelaide Collective', cover_image_url: null, region: 'Adelaide', state: 'SA', member_count: null, description: "Restoring native habitats along the Torrens and across Adelaide's parks.", lat: -34.9285, lng: 138.6007, nextEvent: null },
+  { id: 'geelong', slug: 'geelong', name: 'Geelong Collective', cover_image_url: null, region: 'Geelong', state: 'VIC', member_count: null, description: 'Caring for the Bellarine coast and Barwon River corridors.', lat: -38.1499, lng: 144.3617, nextEvent: null },
+  { id: 'mornington', slug: 'mornington-peninsula', name: 'Mornington Peninsula Collective', cover_image_url: null, region: 'Mornington Peninsula', state: 'VIC', member_count: null, description: "Protecting the unique ecosystems of the Peninsula's coastline.", lat: -38.2833, lng: 145.1667, nextEvent: null },
+  { id: 'melbourne', slug: 'melbourne-city', name: 'Melbourne City Collective', cover_image_url: null, region: 'Melbourne City', state: 'VIC', member_count: null, description: "Greening Melbourne's inner city through planting, litter removal and advocacy.", lat: -37.8136, lng: 144.9631, nextEvent: null },
+  { id: 'hobart', slug: 'hobart', name: 'Hobart Collective', cover_image_url: null, region: 'Hobart', state: 'TAS', member_count: null, description: "Conserving Tasmania's unique wilderness and waterways.", lat: -42.8821, lng: 147.3272, nextEvent: null },
+  { id: 'sydney', slug: 'sydney', name: 'Sydney Collective', cover_image_url: null, region: 'Sydney', state: 'NSW', member_count: null, description: "From the harbour to the Blue Mountains - protecting Sydney's natural heritage.", lat: -33.8688, lng: 151.2093, nextEvent: null },
+  { id: 'northern-rivers', slug: 'northern-rivers', name: 'Northern Rivers Collective', cover_image_url: null, region: 'Northern Rivers', state: 'NSW', member_count: null, description: 'Restoring the lush subtropical rainforests and river systems of the Northern Rivers.', lat: -28.8131, lng: 153.2760, nextEvent: null },
+  { id: 'gold-coast', slug: 'gold-coast', name: 'Gold Coast Collective', cover_image_url: null, region: 'Gold Coast', state: 'QLD', member_count: null, description: "Protecting the Gold Coast's beaches, hinterland and waterways.", lat: -28.0167, lng: 153.4000, nextEvent: null },
+  { id: 'brisbane', slug: 'brisbane', name: 'Brisbane Collective', cover_image_url: null, region: 'Brisbane', state: 'QLD', member_count: null, description: "Revitalising Brisbane's creeks, parks and urban bushland.", lat: -27.4698, lng: 153.0251, nextEvent: null },
+  { id: 'sunshine-coast', slug: 'sunshine-coast', name: 'Sunshine Coast Collective', cover_image_url: null, region: 'Sunshine Coast', state: 'QLD', member_count: null, description: "Guardians of the Sunshine Coast's beaches, reefs and hinterland.", lat: -26.6500, lng: 153.0667, nextEvent: null },
+  { id: 'townsville', slug: 'townsville', name: 'Townsville Collective', cover_image_url: null, region: 'Townsville', state: 'QLD', member_count: null, description: 'Protecting tropical ecosystems from reef to rainforest in North Queensland.', lat: -19.2590, lng: 146.8169, nextEvent: null },
+  { id: 'cairns', slug: 'cairns', name: 'Cairns Collective', cover_image_url: null, region: 'Cairns', state: 'QLD', member_count: null, description: 'Where the rainforest meets the reef - conservation in tropical Far North Queensland.', lat: -16.9186, lng: 145.7781, nextEvent: null },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -581,10 +583,12 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
 
                 <div className="mt-2.5 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex items-center gap-1 text-xs shrink-0">
-                      <Users size={13} className="text-primary-500" />
-                      <span className="font-semibold text-secondary-700">{selected.member_count ?? 0}</span>
-                    </div>
+                    {selected.member_count != null && (
+                      <div className="flex items-center gap-1 text-xs shrink-0">
+                        <Users size={13} className="text-primary-500" />
+                        <span className="font-semibold text-secondary-700">{selected.member_count}</span>
+                      </div>
+                    )}
                     {selected.nextEvent && (
                       <div className="flex items-center gap-1 text-xs text-secondary-400 min-w-0">
                         <Calendar size={12} className="text-primary-500 shrink-0" />
