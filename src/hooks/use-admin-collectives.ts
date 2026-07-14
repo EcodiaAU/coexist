@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { supabase, escapeIlike } from '@/lib/supabase'
 import { fetchCanonicalImpactRows, composeSummaryMetrics } from '@/lib/impact-query'
 import { logAudit } from '@/lib/audit'
-import { countByField, STATUS_FILTERS } from '@/lib/query-builders'
+import { STATUS_FILTERS } from '@/lib/query-builders'
 import type {
   Database,
   Tables,
@@ -83,29 +83,22 @@ export function useAdminCollectives(filters: {
       const collectives = data ?? []
       if (collectives.length === 0) return []
 
-      const ids = collectives.map((c) => c.id)
+      // Counts come from get_collective_counts(), which aggregates server-side
+      // and reads the trigger-maintained collectives.member_count column. This
+      // is the same number the profile and map surfaces render, so they agree.
+      //
+      // Do NOT go back to fetching collective_members rows and bucketing them
+      // client-side: PostgREST caps a response at 1000 rows, and there are more
+      // active memberships than that, so every collective silently undercounts.
+      const { data: countRows, error: countsError } = await supabase.rpc('get_collective_counts')
+      if (countsError) throw countsError
 
-      // Batch-fetch member and event counts in two queries instead of 2N
-      const [membersRes, eventsRes] = await Promise.all([
-        supabase
-          .from('collective_members')
-          .select('collective_id')
-          .in('collective_id', ids)
-          .eq('status', 'active'),
-        supabase
-          .from('events')
-          .select('collective_id')
-          .in('collective_id', ids),
-      ])
-
-      const memberCounts = countByField(
-        (membersRes.data ?? []) as { collective_id: string }[],
-        'collective_id',
-      )
-      const eventCounts = countByField(
-        (eventsRes.data ?? []) as { collective_id: string }[],
-        'collective_id',
-      )
+      const memberCounts = new Map<string, number>()
+      const eventCounts = new Map<string, number>()
+      for (const row of countRows ?? []) {
+        memberCounts.set(row.collective_id, row.member_count)
+        eventCounts.set(row.collective_id, row.event_count)
+      }
 
       return collectives.map((c) => {
         const memberCount = memberCounts.get(c.id) ?? 0
