@@ -32,6 +32,32 @@ import { Button } from '@/components/button'
 // that lacks VITE_SENTRY_DSN in the gitignored .env.production still reports.
 const FALLBACK_SENTRY_DSN = 'https://32866cc8070a5ea80672ed8df6c9bfe4@o4511685869305856.ingest.us.sentry.io/4511685879201792'
 
+// Function names belonging to the native bridge script that Meta injects into
+// its in-app browser (Instagram / Facebook iOS WKWebView). The injected script
+// reaches for window.webkit.messageHandlers without feature-detecting it, so it
+// throws on every page it wraps, and our global onerror handler reports it as a
+// Co-Exist production error. Confirmed 2026-07-14: zero occurrences of these
+// symbols in Co-Exist source or in any bundle app.coexistaus.org actually
+// serves, so an event whose frames carry these names did not come from our code.
+// Matching on FRAME NAME rather than on the message keeps real Capacitor bridge
+// failures inside our own native shell (where messageHandlers must exist)
+// visible, since those never carry these frames.
+const INJECTED_BRIDGE_FRAMES = new Set([
+  'sendDataToNative',
+  'sendPageHideMessage',
+  '_AutofillCallbackHandler',
+])
+
+export function isInjectedThirdPartyBridgeError(event: Sentry.Event): boolean {
+  const frames = event.exception?.values?.flatMap(
+    (value) => value.stacktrace?.frames ?? [],
+  )
+  if (!frames?.length) return false
+  return frames.some(
+    (frame) => frame.function && INJECTED_BRIDGE_FRAMES.has(frame.function),
+  )
+}
+
 let initialised = false
 
 export function initSentry() {
@@ -60,6 +86,10 @@ export function initSentry() {
       // back alongside Sentry.replayIntegration() if replay is ever enabled.
       integrations: [],
       beforeSend(event) {
+        // Drop errors thrown by scripts a third-party in-app browser injected
+        // into our page. They are not Co-Exist defects and they degrade the
+        // alerting channel by burying real regressions in recurring noise.
+        if (isInjectedThirdPartyBridgeError(event)) return null
         // Strip PII from breadcrumbs if needed
         return event
       },
