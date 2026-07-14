@@ -7262,6 +7262,9 @@ export type Database = {
         Args: { p_collective_id: string; p_event_id: string }
         Returns: undefined
       }
+      coexist_role_caps: { Args: { p_role: string }; Returns: string[] }
+      has_cap: { Args: { p_cap: string }; Returns: boolean }
+      my_capabilities: { Args: Record<PropertyKey, never>; Returns: string[] }
       is_admin: { Args: { uid: string }; Returns: boolean }
       is_admin_or_staff: { Args: { uid: string }; Returns: boolean }
       is_admin_tier: { Args: { uid: string }; Returns: boolean }

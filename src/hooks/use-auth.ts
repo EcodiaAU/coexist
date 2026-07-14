@@ -225,6 +225,9 @@ export function useAuthProvider(): AuthContextValue {
   const [session, setSession] = useState<Session | null>(null)
   const [collectiveRoles, setCollectiveRoles] = useState<CollectiveMembership[]>([])
   const [permissionOverrides, setPermissionOverrides] = useState<Record<string, boolean> | null>(null)
+  // Resolved BY THE DATABASE (my_capabilities rpc). Source of truth. Null only until it loads,
+  // or if the rpc failed, in which case we fall back to the local resolve.
+  const [dbCapabilities, setDbCapabilities] = useState<string[] | null>(null)
   const [managedCollectiveIds, setManagedCollectiveIds] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [authError, setAuthError] = useState<string | null>(null)
@@ -250,20 +253,39 @@ export function useAuthProvider(): AuthContextValue {
   }, [])
 
   /* ---- fetch staff permission overrides + managed collectives ---- */
+  /**
+   * The capability set comes from the DATABASE (my_capabilities() rpc), which resolves
+   * role defaults through the per-user overrides using the same function the RLS policies
+   * call. That is what makes the two layers unable to drift: there is one answer and both
+   * read it. See 20260714030000_capabilities_enforced_in_db.sql.
+   *
+   * The direct staff_roles read stays as a fallback only. It cannot be the source of truth:
+   * staff_roles SELECT is is_super_admin() only, so a manager reading their own row gets
+   * zero rows back (RLS filters, it does not error), permissionOverrides lands null, and
+   * resolveCapabilities silently hands back the full role defaults. That is precisely how
+   * six revoked capabilities went unenforced in BOTH layers.
+   */
   const fetchStaffData = useCallback(async (userId: string) => {
+    const empty = { permissions: null as Record<string, boolean> | null, managedCollectives: [] as string[], dbCapabilities: null as string[] | null }
     try {
-      const { data, error } = await supabase
-        .from('staff_roles')
-        .select('permissions, managed_collectives')
-        .eq('user_id', userId)
-        .maybeSingle()
-      if (error) return { permissions: null, managedCollectives: [] as string[] }
+      const [staffRes, capsRes] = await Promise.all([
+        supabase.from('staff_roles').select('permissions, managed_collectives').eq('user_id', userId).maybeSingle(),
+        supabase.rpc('my_capabilities'),
+      ])
+      const dbCapabilities = (!capsRes.error && Array.isArray(capsRes.data))
+        ? (capsRes.data as string[])
+        : null
+      if (capsRes.error) {
+        console.error('[auth] my_capabilities rpc failed, falling back to local resolve:', capsRes.error.message)
+      }
+      if (staffRes.error) return { ...empty, dbCapabilities }
       return {
-        permissions: (data?.permissions ?? null) as Record<string, boolean> | null,
-        managedCollectives: ((data as Record<string, unknown>)?.managed_collectives ?? []) as string[],
+        permissions: (staffRes.data?.permissions ?? null) as Record<string, boolean> | null,
+        managedCollectives: ((staffRes.data as Record<string, unknown>)?.managed_collectives ?? []) as string[],
+        dbCapabilities,
       }
     } catch {
-      return { permissions: null, managedCollectives: [] as string[] }
+      return empty
     }
   }, [])
 
@@ -295,11 +317,13 @@ export function useAuthProvider(): AuthContextValue {
     ])
     const permOverrides = staffData.permissions
     const managedCols = staffData.managedCollectives
+    const dbCaps = staffData.dbCapabilities
     // Helper to apply all fetched state
     const applyState = (p: Profile) => {
       setProfile(p)
       setCollectiveRoles(roles as CollectiveMembership[])
       setPermissionOverrides(permOverrides)
+      setDbCapabilities(dbCaps)
       setManagedCollectiveIds(managedCols)
       persistProfile(p)
       if (p.onboarding_completed) { markOnboardingDone(); setOnboardingDone(true) }
@@ -364,6 +388,7 @@ export function useAuthProvider(): AuthContextValue {
     setProfile(profileData)
     setCollectiveRoles(roles as CollectiveMembership[])
     setPermissionOverrides(permOverrides)
+    setDbCapabilities(dbCaps)
     setManagedCollectiveIds(managedCols)
     persistProfile(profileData)
     if (profileData?.onboarding_completed) { markOnboardingDone(); setOnboardingDone(true) }
@@ -516,6 +541,7 @@ export function useAuthProvider(): AuthContextValue {
             setProfile(null)
             setCollectiveRoles([])
             setPermissionOverrides(null)
+            setDbCapabilities(null)
             setManagedCollectiveIds([])
             persistProfile(null)
           }
@@ -620,10 +646,15 @@ export function useAuthProvider(): AuthContextValue {
   const isManager = roleRank >= GLOBAL_ROLE_RANK.manager
   const isSuperAdmin = isAdmin // kept for backwards compat, same as isAdmin
 
-  /* ---- capabilities (frontend-only gating) ---- */
+  /* ---- capabilities ----
+   * Answered by the DATABASE. RLS calls has_cap() on the same role-defaults-plus-overrides
+   * resolution that my_capabilities() returns, so what the UI renders and what Postgres
+   * permits cannot diverge. resolveCapabilities() is the offline fallback for the window
+   * before the rpc lands (and if it fails); it is no longer the gate, and it never was one:
+   * the gate is RLS. */
   const capabilities = useMemo(
-    () => resolveCapabilities(role, permissionOverrides),
-    [role, permissionOverrides],
+    () => dbCapabilities ? new Set(dbCapabilities) : resolveCapabilities(role, permissionOverrides),
+    [dbCapabilities, role, permissionOverrides],
   )
 
   const hasCapability = useCallback(

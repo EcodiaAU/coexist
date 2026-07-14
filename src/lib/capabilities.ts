@@ -16,6 +16,10 @@ export const CAPABILITIES: CapabilityDef[] = [
   // Users & Collectives
   { key: 'manage_users', label: 'Manage Users', description: 'View/edit/deactivate user profiles and roles', category: 'users' },
   { key: 'manage_collectives', label: 'Manage Collectives', description: 'Create/archive/reassign collectives', category: 'users' },
+  // The one capability the DATABASE has always checked (034_membership_tables.sql) and the UI could
+  // never grant, because it was missing from this catalog. Admin-default only; a manager needs an
+  // explicit grant. See 20260714030000_capabilities_enforced_in_db.sql.
+  { key: 'manage_membership', label: 'Manage Membership', description: 'Edit membership plans and pricing', category: 'users' },
 
   // Content & Moderation
   { key: 'manage_content', label: 'Manage Content', description: 'Moderate photos, chat messages', category: 'content' },
