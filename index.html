@@ -27,6 +27,56 @@
     <meta property="og:type" content="website" />
   </head>
   <body style="background-color:#f8f9f5">
+    <!--
+      Pre-React boot cover. The system splash (Android 12+ Theme.SplashScreen /
+      iOS LaunchScreen) is torn down as soon as the WebView is ready, and
+      SplashScreen.hide() runs at module scope in main.tsx - but the in-app
+      SplashPage cannot render until React has mounted and painted. Nothing
+      covered the window between those two moments, so the WebView showed an
+      empty near-white body. On a fast device that gap is a blink; on a loaded
+      or low-end device it is a long blank screen, and it is the frame that got
+      read as a "white screen crash" on 2026-07-14 (the signed-out Android
+      cold start was reported as an infinite auth loop; the app was simply
+      still painting). This markup ships in the initial document, so it paints
+      as soon as the WebView parses HTML - no bundle parse, no JS execution,
+      no network. App.tsx removes it on mount.
+
+      DELIBERATELY TEXT-FREE. The Maestro auth flows assert on visible text
+      ("Welcome", "Co-Exist", "Sign in"...). A boot cover carrying any of those
+      words could satisfy an assertion while the app was still booting and turn
+      a real regression into a false GREEN. The mark is an image; aria-hidden
+      keeps it out of the accessibility tree Maestro reads.
+    -->
+    <div id="boot-splash" aria-hidden="true">
+      <img src="/logos/black-logo-transparent.png" alt="" width="96" height="96" />
+    </div>
+    <style>
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fafaf8;
+        /* Below the boot-error overlay (99999) so a real boot error still
+           paints over this, never under it. */
+        z-index: 9998;
+      }
+      #boot-splash img {
+        width: 96px;
+        height: 96px;
+        object-fit: contain;
+        opacity: 0.9;
+        animation: boot-splash-pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes boot-splash-pulse {
+        0%, 100% { opacity: 0.35; }
+        50% { opacity: 0.9; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash img { animation: none; opacity: 0.9; }
+      }
+    </style>
     <div id="root"></div>
     <!--
       Synchronous boot-error overlay. Diagnostic for the 1.8.13-1.8.16

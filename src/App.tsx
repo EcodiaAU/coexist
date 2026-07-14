@@ -252,6 +252,9 @@ function App() {
     // comment; mounted = working app, so a transient error shouldn't
     // blank the screen.
     ;(window as unknown as { __APP_MOUNTED?: boolean }).__APP_MOUNTED = true
+    // Drop the index.html boot cover now that React is painting. Until this
+    // runs the user sees the branded cover instead of an empty white body.
+    document.getElementById('boot-splash')?.remove()
   }, [])
 
   const handleSplashReady = useCallback(() => {
