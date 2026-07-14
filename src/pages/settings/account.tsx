@@ -256,7 +256,7 @@ function DataPrivacySheet({ open, onClose }: { open: boolean; onClose: () => voi
           Request Data Export
         </Button>
         <p className="text-xs text-neutral-500 text-center">
-          Your data will be emailed to you as a JSON file within 48 hours.
+          Your complete data downloads to this device as a JSON file straight away.
         </p>
       </div>
     </BottomSheet>

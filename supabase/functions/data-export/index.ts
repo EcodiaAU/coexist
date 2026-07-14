@@ -88,6 +88,62 @@ Deno.serve(withSentry('data-export', async (req: Request) => {
       supabase.from('challenge_participants').select('*, challenges(title)').eq('user_id', userId).limit(10000),
     ])
 
+    // ---- Additional user-keyed tables (Phase 1 export completion, 2026-07-14) ----
+    // Every table + column below was verified to exist and be user-keyed via a
+    // live pg_constraint / information_schema probe on project tjutlbzekfouwsiaplbr.
+    // `col` is the column that owns the row to this user. Goal: the export is
+    // genuinely ALL of the user's data, so the in-app "export ALL your data (GDPR)"
+    // claim is true. Missing one is a compliance failure. Add to this list (not a
+    // silent gap) whenever a new user-keyed table lands.
+    const extraTables: { key: string; table: string; col: string }[] = [
+      // Tickets, payments, memberships, applications
+      { key: 'event_tickets', table: 'event_tickets', col: 'user_id' },
+      { key: 'payments', table: 'payments', col: 'user_id' },
+      { key: 'memberships', table: 'memberships', col: 'user_id' },
+      { key: 'collective_members', table: 'collective_members', col: 'user_id' },
+      { key: 'collective_applications', table: 'collective_applications', col: 'user_id' },
+      { key: 'referral_codes', table: 'referral_codes', col: 'user_id' },
+      { key: 'return_requests', table: 'return_requests', col: 'user_id' },
+      // Carpool
+      { key: 'carpool_widgets', table: 'carpool_widgets', col: 'driver_id' },
+      { key: 'carpool_seats', table: 'carpool_seats', col: 'passenger_id' },
+      // Chat / social activity
+      { key: 'chat_channel_members', table: 'chat_channel_members', col: 'user_id' },
+      { key: 'chat_read_receipts', table: 'chat_read_receipts', col: 'user_id' },
+      { key: 'chat_poll_votes', table: 'chat_poll_votes', col: 'user_id' },
+      { key: 'message_reactions', table: 'message_reactions', col: 'user_id' },
+      { key: 'chat_announcement_responses', table: 'chat_announcement_responses', col: 'user_id' },
+      { key: 'user_blocks', table: 'user_blocks', col: 'blocker_id' },
+      { key: 'update_reads', table: 'update_reads', col: 'user_id' },
+      // Events / photos / todos / surveys / contact
+      { key: 'event_photos', table: 'event_photos', col: 'uploaded_by' },
+      { key: 'leader_todos', table: 'leader_todos', col: 'user_id' },
+      { key: 'post_event_survey_responses', table: 'post_event_survey_responses', col: 'user_id' },
+      { key: 'contact_submissions', table: 'contact_submissions', col: 'user_id' },
+      // Learning / development modules progress
+      { key: 'dev_assignments', table: 'dev_assignments', col: 'user_id' },
+      { key: 'dev_quiz_attempts', table: 'dev_quiz_attempts', col: 'user_id' },
+      { key: 'dev_user_module_progress', table: 'dev_user_module_progress', col: 'user_id' },
+      { key: 'dev_user_section_progress', table: 'dev_user_section_progress', col: 'user_id' },
+      // Profile / account state / comms delivered
+      { key: 'profile_tags', table: 'profile_tags', col: 'profile_id' },
+      { key: 'staff_roles', table: 'staff_roles', col: 'user_id' },
+      { key: 'push_tokens', table: 'push_tokens', col: 'user_id' },
+      { key: 'cart_reservations', table: 'cart_reservations', col: 'user_id' },
+      { key: 'campaign_recipients', table: 'campaign_recipients', col: 'profile_id' },
+      { key: 'notification_recipients', table: 'notification_recipients', col: 'user_id' },
+    ]
+
+    const extraResults = await Promise.all(
+      extraTables.map(({ table, col }) =>
+        supabase.from(table).select('*').eq(col, userId).limit(10000),
+      ),
+    )
+    const extra: Record<string, unknown[]> = {}
+    extraTables.forEach(({ key }, i) => {
+      extra[key] = extraResults[i].data ?? []
+    })
+
     // Strip sensitive fields from profile
     const profile = profileRes.data
     if (profile) {
@@ -115,6 +171,7 @@ Deno.serve(withSentry('data-export', async (req: Request) => {
       invites: invitesRes.data ?? [],
       offer_redemptions: offerRedemptionsRes.data ?? [],
       challenge_participation: challengeParticipationRes.data ?? [],
+      ...extra,
     }
 
     // Record the export request
