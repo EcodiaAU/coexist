@@ -5,6 +5,7 @@ import { MapPin, ArrowRight, Tent } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { OGMeta } from '@/components/og-meta'
 import { WebFooter } from '@/components/web-footer'
+import { OptimizedImage } from '@/components/optimized-image'
 
 type CampoutType = 'outback' | 'rainforest'
 
@@ -73,7 +74,16 @@ export default function PublicCampoutsPage() {
               className="group relative flex aspect-square lg:aspect-auto lg:h-full flex-col justify-end overflow-hidden"
             >
               {c.cover ? (
-                <img src={c.cover} alt={c.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]" />
+                <OptimizedImage
+                  src={c.cover}
+                  alt={c.name}
+                  priority
+                  quality={70}
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  srcSetWidths={[640, 960, 1280, 1600]}
+                  wrapperClassName="absolute inset-0"
+                  className="transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]"
+                />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-primary-800"><Tent size={64} className="text-primary-300" /></div>
               )}
