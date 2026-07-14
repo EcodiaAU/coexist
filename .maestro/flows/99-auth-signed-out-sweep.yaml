@@ -25,8 +25,19 @@ androidWebViewHierarchy: devtools
 # 2026-07-13 by `pm clear` + cold launch on the modern AVD: the sign-in screen renders in
 # full (Welcome back / Google / Apple / Email / Password / Log In / Create account). It is
 # simply slower than 30s on a software-GPU emulator. Size the timeout to the floor.
+#
+# 2026-07-14: raising the timeout was NOT enough - this flow was still flaky (1 red in 3 back
+# to back runs) and the red run died in ~1s, nowhere near its 90s budget. So it was never a
+# timeout problem. With androidWebViewHierarchy=devtools, the FIRST hierarchy poll fires
+# before the WebView's devtools target has attached after clearState; maestro reads an empty
+# tree and fails the assert outright instead of polling out its window. Proven: `pm clear` +
+# cold launch paints in 4-15s, and an identical clearState launch that SETTLES before the
+# first poll renders the sign-in screen every time. So settle first, THEN assert. Do not
+# "fix" a future red here by inflating the timeout again - check whether it died early.
+- waitForAnimationToEnd:
+    timeout: 15000
 - extendedWaitUntil:
-    visible: ".*(Welcome back|Welcome|Log In|Sign In|Create account).*"
+    visible: ".*(Welcome back|Welcome|Log In|Sign In|Create account|Get Started|I have an account).*"
     timeout: 90000
 - takeScreenshot: /tmp/maestro-cx-auth-fresh-launch
 # /login is the cleared-state landing; assert here first.
