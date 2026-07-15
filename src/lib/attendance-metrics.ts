@@ -41,6 +41,8 @@ export interface AttendanceMetrics {
   avg_attendance_per_active_event: number
   new_attendees: number
   returning_attendees: number
+  /** Share of unique people who came to 2+ events in-window (whole %). */
+  return_rate_pct: number
   retention: {
     attended_1: number
     attended_2: number
@@ -91,8 +93,9 @@ export function formatAttendanceMetricsMd(m: AttendanceMetrics): string {
   lines.push(`| Events with attendance | ${m.events_with_attendance} |`)
   lines.push(`| Total attendances | ${m.total_attendances} |`)
   lines.push(`| Unique attendees | ${m.unique_attendees} |`)
-  lines.push(`| New attendees | ${m.new_attendees} (${pct(m.new_attendees, m.unique_attendees)}) |`)
-  lines.push(`| Returning attendees | ${m.returning_attendees} (${pct(m.returning_attendees, m.unique_attendees)}) |`)
+  lines.push(`| New attendees (came once) | ${m.new_attendees} (${pct(m.new_attendees, m.unique_attendees)}) |`)
+  lines.push(`| Returning attendees (came 2+) | ${m.returning_attendees} (${pct(m.returning_attendees, m.unique_attendees)}) |`)
+  lines.push(`| Return rate | ${m.return_rate_pct}% |`)
   lines.push(`| Avg attendance per event held | ${m.avg_attendance_per_event} |`)
   lines.push(`| Avg attendance per active event | ${m.avg_attendance_per_active_event} |`)
   lines.push(`| Registered vs walk-in | ${m.registered_attendances} / ${m.walkin_attendances} |`)

@@ -1,0 +1,10 @@
+# Build output - Vercel rebuilds from source, no need to upload it
+dist
+# Local scratch / drafts - never part of the deploy
+drafts
+*.cjs
+_imgtest.cjs
+COEXIST_TICKETING_PARITY_PLAN.md
+# Native shells - not part of the web deploy
+ios
+android

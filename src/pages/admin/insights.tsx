@@ -369,8 +369,9 @@ export default function AdminInsightsPage() {
     }
     if (att) {
       out.push({ key: 'at_unique', group: 'Attendance', label: 'Unique people', value: fmtNum(att.unique_attendees) })
-      out.push({ key: 'at_new', group: 'Attendance', label: 'New people', value: fmtNum(att.new_attendees) })
-      out.push({ key: 'at_returning', group: 'Attendance', label: 'Returning people', value: fmtNum(att.returning_attendees) })
+      out.push({ key: 'at_new', group: 'Attendance', label: 'New people (came once)', value: fmtNum(att.new_attendees) })
+      out.push({ key: 'at_returning', group: 'Attendance', label: 'Returning people (2+ events)', value: fmtNum(att.returning_attendees) })
+      out.push({ key: 'at_returnrate', group: 'Attendance', label: 'Return rate', value: `${att.return_rate_pct}%` })
       out.push({ key: 'at_registrations', group: 'Attendance', label: 'Registrations', value: fmtNum(att.registrations) })
       out.push({ key: 'at_signins', group: 'Attendance', label: 'Sign-ins', value: fmtNum(att.signins) })
       out.push({ key: 'at_followthrough', group: 'Attendance', label: 'Sign-in rate', value: `${att.followthrough_pct}%` })
@@ -380,8 +381,6 @@ export default function AdminInsightsPage() {
       out.push({ key: 'ret_3', group: 'Recurrence', label: 'Attended 3 events', value: fmtNum(att.retention.attended_3) })
       out.push({ key: 'ret_45', group: 'Recurrence', label: 'Attended 4-5 events', value: fmtNum(att.retention.attended_4_to_5) })
       out.push({ key: 'ret_6', group: 'Recurrence', label: 'Attended 6+ events', value: fmtNum(att.retention.attended_6_plus) })
-      const repeat = att.unique_attendees - att.retention.attended_1
-      out.push({ key: 'at_repeat', group: 'Attendance', label: 'Came back (2+ events)', value: `${fmtNum(repeat)} (${pct(repeat, att.unique_attendees)}%)` })
     }
     return out
   }, [obs, att, visibleDefs])
@@ -553,13 +552,13 @@ export default function AdminInsightsPage() {
         {/* ── Overview ── */}
         <div>
           <Section id="overview" title="Overview"
-            action={<SelectAll keys={['hl_events', 'hl_attendees', 'hl_hours', 'at_unique', 'at_repeat']} sel={selected} onSet={selectMany} />} />
+            action={<SelectAll keys={['hl_events', 'hl_attendees', 'hl_hours', 'at_unique', 'at_returning']} sel={selected} onSet={selectMany} />} />
           <motion.div variants={v.fadeUp}>
             <AdminHeroStatRow className="!max-w-none grid-cols-2 sm:!grid-cols-3 lg:!grid-cols-5">
               <Selectable k="hl_events" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalEvents ?? 0} label="Events" icon={<CalendarDays size={18} />} color="primary" reducedMotion delay={0} sub={provSub('events')} /></Selectable>
               <Selectable k="hl_attendees" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalAttendees ?? 0} label="Attendances" icon={<Users size={18} />} color="warning" reducedMotion delay={0} sub={provSub('attendees')} /></Selectable>
               <Selectable k="at_unique" sel={selected} onToggle={toggle}><AdminHeroStat value={att?.unique_attendees ?? 0} label="Unique people" icon={<UserCheck size={18} />} color="moss" reducedMotion delay={0} sub={att ? `${att.new_attendees} new` : undefined} /></Selectable>
-              <Selectable k="at_repeat" sel={selected} onToggle={toggle}><AdminHeroStat value={att ? att.unique_attendees - att.retention.attended_1 : 0} label="Came back" icon={<Repeat size={18} />} color="sprout" reducedMotion delay={0} sub={att ? `${pct(att.unique_attendees - att.retention.attended_1, att.unique_attendees)}% 2+ events` : undefined} /></Selectable>
+              <Selectable k="at_returning" sel={selected} onToggle={toggle}><AdminHeroStat value={att?.returning_attendees ?? 0} label="Came back" icon={<Repeat size={18} />} color="sprout" reducedMotion delay={0} sub={att ? `${att.return_rate_pct}% return rate` : undefined} /></Selectable>
               <Selectable k="hl_hours" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalEstimatedHours ?? 0} label="Est. vol hours" icon={<Clock size={18} />} color="bark" reducedMotion delay={0} sub={provSub('hours')} /></Selectable>
             </AdminHeroStatRow>
           </motion.div>
@@ -611,15 +610,17 @@ export default function AdminInsightsPage() {
         {att && (
           <div>
             <Section id="attendance" title="Attendance & recurrence" hint="Who came, who came back, and how registrations convert to sign-ins."
-              action={<SelectAll keys={['at_unique', 'at_new', 'at_returning', 'at_registrations', 'at_signins', 'at_followthrough', 'at_avgevents', 'ret_1', 'ret_2', 'ret_3', 'ret_45', 'ret_6']} sel={selected} onSet={selectMany} />} />
+              action={<SelectAll keys={['at_unique', 'at_returnrate', 'at_new', 'at_returning', 'at_registrations', 'at_signins', 'at_followthrough', 'at_avgevents', 'ret_1', 'ret_2', 'ret_3', 'ret_45', 'ret_6']} sel={selected} onSet={selectMany} />} />
             <motion.div variants={v.fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* selectable mini stats */}
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { k: 'at_unique', label: 'Unique people', val: fmtNum(att.unique_attendees) },
+                  { k: 'at_returnrate', label: 'Return rate', val: `${att.return_rate_pct}%` },
+                  { k: 'at_new', label: 'New people (came once)', val: fmtNum(att.new_attendees) },
+                  { k: 'at_returning', label: 'Returning (2+ events)', val: fmtNum(att.returning_attendees) },
                   { k: 'at_followthrough', label: 'Sign-in rate', val: `${att.followthrough_pct}%` },
-                  { k: 'at_new', label: 'New people', val: fmtNum(att.new_attendees) },
-                  { k: 'at_returning', label: 'Returning people', val: fmtNum(att.returning_attendees) },
+                  { k: 'at_avgevents', label: 'Avg per person', val: String(att.retention.avg_events_per_attendee) },
                   { k: 'at_registrations', label: 'Registrations', val: fmtNum(att.registrations) },
                   { k: 'at_signins', label: 'Sign-ins', val: fmtNum(att.signins) },
                 ].map((s) => {
@@ -643,6 +644,10 @@ export default function AdminInsightsPage() {
                   <CopyTableButton onCopy={() => copyTableSpec(retentionTableSpec, 'ret')} copied={copied === 'ret'} />
                 </div>
                 <p className="text-xs text-neutral-500 mb-3">How many unique people came to N events.</p>
+                <div className="mb-3 rounded-sm bg-sprout-50/60 border border-sprout-100 px-3 py-2">
+                  <p className="text-2xl font-bold text-sprout-700 tabular-nums leading-none">{att.return_rate_pct}%</p>
+                  <p className="text-[11px] text-neutral-600 mt-1">return rate · {fmtNum(att.returning_attendees)} of {fmtNum(att.unique_attendees)} people came to 2+ events</p>
+                </div>
                 <CohortBar label="1 event" count={att.retention.attended_1} total={att.unique_attendees} rm={rm} />
                 <CohortBar label="2 events" count={att.retention.attended_2} total={att.unique_attendees} rm={rm} />
                 <CohortBar label="3 events" count={att.retention.attended_3} total={att.unique_attendees} rm={rm} />
