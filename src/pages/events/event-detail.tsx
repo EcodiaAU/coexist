@@ -528,6 +528,10 @@ export default function EventDetailPage() {
   // Campout group chat - RLS exposes it only to confirmed ticket holders + staff
   const { data: campoutChannel } = useEventCampoutChannel(id)
   const [selectedTicketType, setSelectedTicketType] = useState<string | null>(null)
+  // Discount / free-ticket code (native Stripe promotion code). One code system:
+  // a 100% code comps the ticket server-side, a partial code discounts the Stripe
+  // session. Entered here because Stripe's hosted page cannot settle a $0 total.
+  const [promoCode, setPromoCode] = useState('')
 
   // Camp-out purchase gate: buyers of a camp-out ticket must have dietary +
   // medical info on file BEFORE checkout (Angelica, Co-Exist, 2026-07-08 -
@@ -553,7 +557,15 @@ export default function EventDetailPage() {
         eventId: event.id,
         ticketTypeId,
         answers,
+        promoCode: promoCode.trim() || undefined,
       })
+      // Full comp (100% code): the ticket is already confirmed server-side, no
+      // payment. Go straight to the confirmation page.
+      if (result.comped && result.ticket_id) {
+        toast.success('Your free ticket is confirmed')
+        navigate(`/events/${event.id}/ticket-confirmation?ticket_id=${result.ticket_id}`)
+        return
+      }
       if (result.url) {
         window.location.href = result.url
       } else if (result.session_id) {
@@ -563,7 +575,7 @@ export default function EventDetailPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to start checkout')
     }
-  }, [event, ticketCheckout, toast])
+  }, [event, ticketCheckout, toast, promoCode, navigate])
 
   // Entry point for every "buy ticket" action. For camp-outs missing dietary
   // or medical, capture them first (blocks checkout); otherwise go straight
@@ -1157,6 +1169,19 @@ export default function EventDetailPage() {
               </button>
             )
           })}
+
+          <input
+            type="text"
+            inputMode="text"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
+            value={promoCode}
+            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+            placeholder="Discount or free-ticket code (optional)"
+            aria-label="Discount or free-ticket code"
+            className="w-full px-4 py-3 rounded-md border border-neutral-100 bg-white text-sm text-neutral-900 placeholder:text-neutral-400 tracking-wide focus:outline-none focus:ring-2 focus:ring-neutral-200"
+          />
 
           <Button
             variant="primary"

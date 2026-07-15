@@ -174,11 +174,13 @@ export function useCreateTicketCheckout() {
       ticketTypeId,
       quantity = 1,
       answers,
+      promoCode,
     }: {
       eventId: string
       ticketTypeId: string
       quantity?: number
       answers?: Record<string, string | string[] | boolean | number>
+      promoCode?: string
     }) => {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
@@ -187,6 +189,7 @@ export function useCreateTicketCheckout() {
           ticket_type_id: ticketTypeId,
           quantity,
           answers: answers ?? null,
+          promo_code: promoCode?.trim() || undefined,
         },
       })
 
@@ -203,9 +206,9 @@ export function useCreateTicketCheckout() {
         )
       }
 
-      const result = data as { session_id: string; url: string; error?: string }
+      const result = data as { session_id?: string; url?: string; error?: string; comped?: boolean; ticket_id?: string; event_id?: string }
       // result.error carries app-authored messages from the edge function
-      // (e.g. "Sold out") - those are already human-readable.
+      // (e.g. "Sold out", "That code is invalid") - those are already human-readable.
       if (result.error) throw new Error(result.error)
 
       return result

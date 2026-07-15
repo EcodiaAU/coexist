@@ -465,6 +465,31 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
           .maybeSingle()
         if (dupTicket) return json({ error: 'You already have a ticket for this event' }, 409)
 
+        // ---- Optional promo code (ONE code system for every discount) ----
+        // Codes are native Stripe promotion codes, entered in-app and validated +
+        // applied server-side. A code that zeroes the total COMPS the ticket here,
+        // because Stripe payment-mode Checkout cannot settle a $0 total - a 100%
+        // code can never work on the hosted page, so it must be handled server-side.
+        const rawCode = typeof body.promo_code === 'string' ? body.promo_code.trim() : ''
+        let promo: Stripe.PromotionCode | null = null
+        let discountCents = 0
+        const unitPriceCents = ticketType.price_cents
+        const grossCents = unitPriceCents * qty
+        if (rawCode) {
+          const found = await stripe.promotionCodes.list({ code: rawCode, active: true, limit: 1 })
+          promo = found.data[0] ?? null
+          const coupon = promo?.coupon
+          const nowSec = Math.floor(Date.now() / 1000)
+          const expired = promo?.expires_at ? promo.expires_at < nowSec : false
+          const maxed = promo?.max_redemptions != null && (promo.times_redeemed ?? 0) >= promo.max_redemptions
+          if (!promo || !coupon || coupon.valid === false || expired || maxed) {
+            return json({ error: 'That code is invalid or has expired.' }, 400)
+          }
+          if (coupon.percent_off) discountCents = Math.round(grossCents * (coupon.percent_off / 100))
+          else if (coupon.amount_off) discountCents = Math.min(grossCents, coupon.amount_off)
+        }
+        const netCents = Math.max(0, grossCents - discountCents)
+
         // Reserve ticket atomically via RPC (checks capacity with FOR UPDATE)
         const { data: ticketId, error: reserveErr } = await supabase.rpc('reserve_event_ticket', {
           p_event_id: body.event_id,
@@ -481,16 +506,73 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
           return json({ error: 'Failed to reserve ticket' }, 500)
         }
 
-        const customerEmail = await getUserEmail(body.user_id)
-        const unitPriceCents = ticketType.price_cents
+        // ---- Full comp (100% code, or amount_off covers the whole ticket) ----
+        // Confirm the reserved ticket at $0 in-app, mirroring the webhook's paid
+        // confirm (status + registration + confirmation email). No Stripe session:
+        // payment-mode Checkout refuses a $0 total. Capacity is still enforced by
+        // the reserve RPC above, so a comped attendee takes a real spot.
+        if (rawCode && netCents === 0) {
+          await supabase
+            .from('event_tickets')
+            .update({ status: 'confirmed', price_cents: 0, updated_at: new Date().toISOString() })
+            .eq('id', ticketId)
+            .eq('status', 'pending')
 
-        // Create Stripe checkout session. Promo codes (e.g. SUPERSTAR 100%,
-        // LEGEND 50%) are enabled ONLY on event-ticket sessions, so they can be
-        // entered against tickets but never against donations or merch.
+          await supabase
+            .from('event_registrations')
+            .upsert(
+              { event_id: body.event_id, user_id: body.user_id, status: 'registered' },
+              { onConflict: 'event_id,user_id' },
+            )
+
+          try {
+            const { data: tk } = await supabase
+              .from('event_tickets')
+              .select('ticket_code, quantity')
+              .eq('id', ticketId)
+              .single()
+            await supabase.functions.invoke('send-email', {
+              body: {
+                type: 'ticket_confirmation',
+                userId: body.user_id,
+                data: {
+                  name: '',
+                  event_title: evt.title ?? 'Event',
+                  event_date: evt.date_start
+                    ? new Date(evt.date_start).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                    : '',
+                  event_location: '',
+                  ticket_code: tk?.ticket_code ?? '',
+                  quantity: tk?.quantity ?? qty,
+                  amount: '0.00',
+                  currency: 'AUD',
+                  ticket_url: `${origin}/events/${body.event_id}/ticket-confirmation?ticket_id=${ticketId}`,
+                },
+              },
+            })
+          } catch (err) {
+            console.error('[create-checkout] comp confirmation email failed:', (err as Error).message)
+          }
+
+          return json({
+            comped: true,
+            ticket_id: String(ticketId),
+            event_id: body.event_id,
+            url: `${origin}/events/${body.event_id}/ticket-confirmation?ticket_id=${ticketId}`,
+          })
+        }
+
+        const customerEmail = await getUserEmail(body.user_id)
+
+        // Create Stripe checkout session for a paid ticket. If a partial code was
+        // given it is applied server-side (locked in); otherwise the buyer may
+        // enter one on the Stripe page. Promo codes work on ticket sessions only.
         const ticketSession = await stripe.checkout.sessions.create({
           mode: 'payment',
           customer_email: customerEmail,
-          allow_promotion_codes: true,
+          ...(promo
+            ? { discounts: [{ promotion_code: promo.id }] }
+            : { allow_promotion_codes: true }),
           line_items: [
             {
               price_data: {
