@@ -97,10 +97,11 @@ BEGIN
       IF svc_key IS NULL THEN
         SELECT decrypted_secret INTO svc_key FROM vault.decrypted_secrets WHERE name = 'service_role_key' LIMIT 1;
       END IF;
-      -- send-email payload field is `type` (NOT `template`).
+      -- send-email marketing sends REQUIRE userId (for the marketing_opt_in
+      -- gate); `to` is also passed to skip the auth lookup. Field is `type`.
       PERFORM net.http_post(url := email_url,
         headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || svc_key),
-        body := jsonb_build_object('type','upcoming_in_collective','to', r.email,
+        body := jsonb_build_object('type','upcoming_in_collective','to', r.email, 'userId', r.user_id::text,
           'data', jsonb_build_object('name', r.name, 'collective_name', r.collective_name,
             'event_title', r.event_title, 'event_date', v_datestr,
             'event_location', COALESCE(r.event_address,''), 'event_url', v_url)));
