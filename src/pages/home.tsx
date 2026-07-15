@@ -45,7 +45,8 @@ import {
 } from '@/components'
 import { Card } from '@/components/card'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
-import { prefetchEventDetail } from '@/hooks/use-events'
+import { prefetchEventDetail, useRegisterForEvent } from '@/hooks/use-events'
+import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { isSignInButtonVisible, wallClockNow } from '@/lib/date-format'
 import { ProximityCheckInBanner } from '@/components/proximity-check-in-banner'
@@ -75,7 +76,7 @@ function Section({
             Tracking-widest with text-sm was the prior cause of truncation -
             uppercase + heavy letter spacing pushed the heading past the
             right-aligned "See All" link. Tate verbatim 2026-05-28. */}
-        <h2 className="font-heading text-[11px] sm:text-sm font-bold text-neutral-500 uppercase tracking-wider min-w-0 truncate">
+        <h2 className="font-heading text-[10px] sm:text-xs font-bold text-neutral-500 uppercase tracking-wide min-w-0 truncate">
           {title}
         </h2>
         {action && (
@@ -380,6 +381,8 @@ function NextEventCard({
   fallbackEvent?: NonNullable<ReturnType<typeof useCollectiveUpcomingEvents>['data']>[number]
 }) {
   const navigate = useNavigate()
+  const { toast } = useToast()
+  const registerMutation = useRegisterForEvent()
   const [checkIn, setCheckIn] = useState<{
     eventId: string
     eventTitle: string
@@ -440,13 +443,28 @@ function NextEventCard({
               variant="primary"
               size="lg"
               fullWidth
-              className="relative bg-white text-primary-700 hover:bg-white/90 font-bold text-base shadow-sm"
+              disabled={registerMutation.isPending}
+              className="relative bg-white text-primary-700 hover:bg-white/90 font-bold text-base shadow-sm disabled:opacity-70"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation()
-                navigate(`/events/${fallbackEvent.id}`)
+                // Ticketed events are joined via Stripe checkout on the detail
+                // page; a bare registration is rejected server-side. Free events
+                // register in one tap, and the home feed updates optimistically
+                // so this card becomes the registered "Your Next Event" card.
+                if ((fallbackEvent as { is_ticketed?: boolean | null }).is_ticketed) {
+                  navigate(`/events/${fallbackEvent.id}`)
+                  return
+                }
+                registerMutation.mutate(
+                  { eventId: fallbackEvent.id },
+                  {
+                    onSuccess: () => toast.success("You're registered!"),
+                    onError: () => navigate(`/events/${fallbackEvent.id}`),
+                  },
+                )
               }}
             >
-              Register
+              {registerMutation.isPending ? 'Registering...' : 'Register'}
             </Button>
           </div>
         </>
