@@ -13,12 +13,10 @@ FUNCTIONS=(
   delete-user-data
   data-export
   generate-pdf
-  generate-wallet-pass
   send-push
   send-email
   send-campaign
   generate-email
-  moderate-content
   event-day-notify
   event-reminders
   event-post-photo-invite

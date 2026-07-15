@@ -1,6 +1,6 @@
 @echo off
 SET PROJECT_REF=tjutlbzekfouwsiaplbr
-SET FUNCTIONS=create-checkout stripe-webhook delete-user delete-user-data data-export generate-pdf generate-wallet-pass send-push send-email send-campaign generate-email moderate-content event-day-notify event-reminders notify-application notify-report
+SET FUNCTIONS=create-checkout stripe-webhook delete-user delete-user-data data-export generate-pdf send-push send-email send-campaign generate-email event-day-notify event-reminders notify-application notify-report
 
 echo Deploying %FUNCTIONS: =, % to %PROJECT_REF%
 echo.
