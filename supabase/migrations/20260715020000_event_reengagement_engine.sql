@@ -97,9 +97,13 @@ AS $$
   cand AS (
     -- one kind per user; post_event wins if somehow both (min() = 'post_event')
     SELECT user_id, MIN(k) AS kind FROM (
+      -- post_event fires only AFTER the post-event content series has run
+      -- (photos +50-80m, wellbeing survey +3-4h, impact-log escalating to
+      -- +96h) so it never stacks on them. 4-10 days keeps it inside the
+      -- 14-day return median.
       SELECT DISTINCT user_id, 'post_event'::text AS k
       FROM checkins
-      WHERE ended BETWEEN now() - interval '36 hours' AND now() - interval '2 hours'
+      WHERE ended BETWEEN now() - interval '10 days' AND now() - interval '4 days'
       UNION ALL
       SELECT user_id, 'winback'::text
       FROM last_seen
@@ -118,6 +122,22 @@ AS $$
       AND NOT EXISTS (
         SELECT 1 FROM reengagement_nudges_sent s
         WHERE s.user_id = c.user_id AND s.sent_at > now() - interval '10 days'
+      )
+      -- Anti-spam coordination. The notifications table is NOT a reliable
+      -- push log (event-reminders + the three post-event invites push
+      -- without writing a row), so we coordinate structurally: registered
+      -- users are excluded above (they get the reminder flow), post_event
+      -- waits out the +96h series, and winback users are outside any event
+      -- cycle. On top of that, suppress anyone active or pinged in the last
+      -- 48h (a chat message or any in-app notification) so an engaged member
+      -- never receives a re-engagement nudge.
+      AND NOT EXISTS (
+        SELECT 1 FROM chat_messages cm
+        WHERE cm.user_id = c.user_id AND cm.created_at > now() - interval '48 hours'
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM notifications n
+        WHERE n.user_id = c.user_id AND n.created_at > now() - interval '48 hours'
       )
   )
   SELECT e.user_id, e.kind, ne.event_id, ne.title, ne.date_start, ne.address, ne.collective_name
@@ -169,15 +189,10 @@ BEGIN
     -- intended local time is preserved without a shift. e.g. "Sun 20 Jul".
     v_datestr := to_char(r.event_date AT TIME ZONE 'UTC', 'FMDy FMDD FMMon');
 
-    -- Copy: "Short & plain" direction (Tate 2026-07-15). "outing" is the
-    -- generic across walks / clean-ups / plantings / spotlighting.
-    IF r.kind = 'winback' THEN
-      v_title := 'Your next outing with ' || r.collective_name || ' 🌱';
-      v_body  := r.event_title || ', ' || v_datestr || '. Keen to join?';
-    ELSE
-      v_title := 'Your next outing with ' || r.collective_name || ' 🌱';
-      v_body  := r.event_title || ', ' || v_datestr || '. Keen for another?';
-    END IF;
+    -- Copy: "Short & plain" (Tate 2026-07-15). "meetup" is the generic
+    -- across walks / clean-ups / plantings / spotlighting.
+    v_title := 'Your next meetup with ' || r.collective_name || ' 🌱';
+    v_body  := r.event_title || ', ' || v_datestr || '. Are you free?';
 
     v_plan := v_plan || jsonb_build_object(
       'kind', r.kind, 'event_id', r.event_id, 'event_title', r.event_title,
@@ -243,14 +258,17 @@ REVOKE ALL ON FUNCTION public.event_reengagement_run(boolean)   FROM public;
 GRANT EXECUTE ON FUNCTION public.reengagement_targets()          TO service_role;
 GRANT EXECUTE ON FUNCTION public.event_reengagement_run(boolean) TO service_role;
 
--- --- Cron wrapper (NOT scheduled here) -----------------------------
--- The schedule is intentionally left to a separate go-live step so applying
--- this migration is inert. Enable with:
+-- --- Cron wrapper --------------------------------------------------
+-- SCHEDULED LIVE 2026-07-15 (Tate go-live) as cron.job 'event-reengagement'
+-- (jobid 23), '47 22 * * *' = 08:47 AEST daily. Scheduled via a separate
+-- statement (below) rather than inside the migration body so re-applying the
+-- migration never double-schedules:
 --   SELECT cron.schedule('event-reengagement','47 22 * * *',
 --     $$SELECT public.event_reengagement_run(false)$$);
 -- 22:47 UTC = 08:47 AEST, a morning slot; send-push suppresses per-user
 -- quiet hours for other AU timezones. Minute 47 spreads cron load (others
--- land on 00/07/09/22/23/41).
+-- land on 00/07/09/22/23/41). First manual run 2026-07-15 sent to 199
+-- (135 winback + 64 post_event), 16 send-push 200s, 0 failures.
 CREATE OR REPLACE FUNCTION public.cron_event_reengagement()
 RETURNS void
 LANGUAGE plpgsql
