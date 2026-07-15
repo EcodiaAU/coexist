@@ -169,14 +169,14 @@ BEGIN
     -- intended local time is preserved without a shift. e.g. "Sun 20 Jul".
     v_datestr := to_char(r.event_date AT TIME ZONE 'UTC', 'FMDy FMDD FMMon');
 
+    -- Copy: "Short & plain" direction (Tate 2026-07-15). "outing" is the
+    -- generic across walks / clean-ups / plantings / spotlighting.
     IF r.kind = 'winback' THEN
-      v_title := 'Come back to ' || r.collective_name || ' 🌱';
-      v_body  := 'It''s been a little while. ' || r.event_title ||
-                 ' is on ' || v_datestr || '. We''d love to see you there.';
+      v_title := 'Your next outing with ' || r.collective_name || ' 🌱';
+      v_body  := r.event_title || ', ' || v_datestr || '. Keen to join?';
     ELSE
-      v_title := 'Keep it going 🌱';
-      v_body  := r.collective_name || ' has ' || r.event_title ||
-                 ' coming up ' || v_datestr || '. Save your spot.';
+      v_title := 'Your next outing with ' || r.collective_name || ' 🌱';
+      v_body  := r.event_title || ', ' || v_datestr || '. Keen for another?';
     END IF;
 
     v_plan := v_plan || jsonb_build_object(
