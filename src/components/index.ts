@@ -63,7 +63,6 @@ export { Icon } from './icon'
 // Layout & Navigation
 export { AppShell } from './app-shell'
 export { BottomTabBar } from './bottom-tab-bar'
-export { TopNav } from './top-nav'
 export { SidebarShell } from './sidebar/sidebar-shell'
 export { WebFooter } from './web-footer'
 export { ShareableCard } from './shareable-card'

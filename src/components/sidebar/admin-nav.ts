@@ -15,7 +15,6 @@ import {
   Phone,
   Leaf,
   Image as ImageIcon,
-  Globe,
 } from 'lucide-react'
 import { createElement } from 'react'
 import type { NavCategory, NavItem } from './types'
@@ -68,7 +67,6 @@ export const adminNavCategories: NavCategory[] = [
     dotColor: 'bg-secondary-600',
     items: [
       { label: 'Organisational Policies', path: '/admin/legal-pages', icon: icon(FileText), capability: 'manage_system' },
-      { label: 'Marketing Site', path: '/admin/site', icon: icon(Globe), capability: 'manage_marketing' },
       { label: 'Applications', path: '/admin/applications', icon: icon(ClipboardList), capability: 'manage_users' },
       // Partners admin config hidden until the public partners page is back.
       { label: 'Contacts', path: '/admin/contacts', icon: icon(Phone), capability: 'manage_users' },

@@ -66,7 +66,6 @@ export default defineConfig({
           if (id.includes('leaflet')) return 'leaflet'
           if (id.includes('react-markdown') || id.includes('remark-gfm') || id.includes('dompurify')) return 'markdown'
           if (id.includes('@dnd-kit')) return 'dnd-kit'
-          if (id.includes('i18next')) return 'i18n'
           if (id.includes('html2canvas')) return 'html2canvas'
         },
       },
