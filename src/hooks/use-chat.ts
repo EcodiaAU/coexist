@@ -448,7 +448,6 @@ export function useSendMessage() {
         // Determine notification type and body
         let pushType = 'chat_messages'
         let pushBody = input.content?.slice(0, 200) ?? ''
-        const pushTitle = senderName
 
         if (input.replyToId) {
           pushType = 'chat_reply'
@@ -467,6 +466,20 @@ export function useSendMessage() {
           pushType = 'chat_announcement'
           pushBody = 'Posted an announcement'
         }
+
+        // Resolve the collective's region so the push title reads
+        // "<sender> - <region>" (e.g. "Tate - Sunshine Coast"). Regional
+        // collectives carry the region on the collective row (it usually equals
+        // the collective name). Fall back to the collective name when region is
+        // unset (e.g. Byron Bay), then to a bare sender name so we never leave a
+        // dangling " - " in the title.
+        const { data: collective } = await supabase
+          .from('collectives')
+          .select('region, name')
+          .eq('id', input.collectiveId)
+          .maybeSingle()
+        const regionLabel = collective?.region ?? collective?.name ?? null
+        const pushTitle = regionLabel ? `${senderName} - ${regionLabel}` : senderName
 
         // Fetch members and send push (background, non-blocking).
         // CANONICAL SINGLE PATH for chat-message push. Do NOT add a server-side
