@@ -47,8 +47,15 @@
       a real regression into a false GREEN. The mark is an image; aria-hidden
       keeps it out of the accessibility tree Maestro reads.
     -->
+    <!--
+      The mark MUST match src/pages/splash.tsx exactly (same image, same size,
+      same bg, static) so the native splash -> this boot cover -> the React
+      SplashPage read as ONE continuous splash. Do NOT swap in the circled
+      logomark here: it is a different, retired brand mark, and it made the boot
+      cover look like a distinct second splash (Tate 2026-07-15).
+    -->
     <div id="boot-splash" aria-hidden="true">
-      <img src="/logos/black-logo-transparent.png" alt="" width="96" height="96" />
+      <img src="/logos/black-wordmark.png" alt="" />
     </div>
     <style>
       #boot-splash {
@@ -63,18 +70,11 @@
         z-index: 9998;
       }
       #boot-splash img {
-        width: 96px;
-        height: 96px;
+        /* Identical to SplashPage: w-[60vw] max-w-[280px] h-auto */
+        width: 60vw;
+        max-width: 280px;
+        height: auto;
         object-fit: contain;
-        opacity: 0.9;
-        animation: boot-splash-pulse 1.6s ease-in-out infinite;
-      }
-      @keyframes boot-splash-pulse {
-        0%, 100% { opacity: 0.35; }
-        50% { opacity: 0.9; }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        #boot-splash img { animation: none; opacity: 0.9; }
       }
     </style>
     <div id="root"></div>
