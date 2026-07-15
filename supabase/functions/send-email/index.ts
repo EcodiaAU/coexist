@@ -149,6 +149,11 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     description: 'Weekly announcement digest. Data: { name, announcements[] }',
     subject: () => 'This week at Co-Exist',
   },
+  upcoming_in_collective: {
+    category: 'marketing',
+    description: 'Re-engagement digest: the next event in a lapsed member\'s collective. Data: { name, collective_name, event_title, event_date, event_location, event_url }',
+    subject: (d) => `What's on with ${d.collective_name}`,
+  },
 }
 
 /* ------------------------------------------------------------------ */
@@ -173,6 +178,9 @@ const TYPE_TO_PREF_KEY: Record<string, string> = {
   event_cancelled: 'event_cancelled',
   event_invite: 'event_invite',
   waitlist_promoted: 'waitlist_promotion',
+  // Marketing digest, but honour the same toggle as the push nudge so a
+  // member who turned off "New Events" gets neither channel.
+  upcoming_in_collective: 'new_event_in_collective',
 }
 
 /* ------------------------------------------------------------------ */
@@ -643,6 +651,22 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
       footerCta: { label: 'Open App', url: APP_URL },
     })
   },
+
+  upcoming_in_collective: (d) => emailShell({
+    heroTitle: 'Your next meetup',
+    heroSubtitle: d.collective_name as string,
+    heroEmoji: '\u{1F331}',
+    body: greeting(d.name) +
+      p(`Your ${d.collective_name} collective has something coming up.`) +
+      infoCard([
+        ['Event', d.event_title],
+        ['When', d.event_date],
+        ['Where', d.event_location || 'See event details'],
+      ]) +
+      p('A few hours outdoors with good people. If you are free, come along.'),
+    footerCta: { label: 'View and RSVP', url: (d.event_url as string) || APP_URL },
+    recipientEmail: d.__recipientEmail as string | undefined,
+  }),
 }
 
 /** Substitute {{variable}} placeholders against the template data dict. */
