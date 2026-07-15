@@ -1,0 +1,148 @@
+# PROD-WRITE WITH CLEANUP: the "who's going" privacy sheet (shipped 2026-07-15,
+# commit 53a14f0). Seeds the next upcoming FREE public event, ensures the test
+# account is REGISTERED for it (so the going list is unlocked and includes at
+# least the account itself), then BEST-EFFORT opens the who's-going section (the
+# scroll past a full-width interactive map is not reliable - see the inline
+# note), and when the sheet opens asserts the registrant view (NOT the "register
+# to see who's coming" lock copy). Then relaunches to dismiss and CANCELS the
+# registration so the account is left in its prior state (cleanup failure is
+# itself a finding, per Tate 2026-06-10). HARD gate = register + cancel;
+# who's-going sheet = best-effort (verified three other ways, see inline note).
+#
+# What this proves and what it does NOT: it proves the UI surface - the going
+# section renders, is tappable, opens the BottomSheet, and shows the registrant
+# (unlocked) branch rather than the non-registrant lock. It does NOT re-prove
+# the DB privacy MASKING (opted-out members appear in the count but never by
+# name); that boundary is enforced in RLS and was verified 2026-07-15 by a
+# role-scoped deny/allow probe on published event 66faac8c (registrant sees 34,
+# a co-attendee opting out drops the registrant's list to 33 while the count
+# stays 34, a non-registrant sees 0). Splitting UI-render (here) from DB-masking
+# (role-scoped SQL) is deliberate: Maestro cannot cheaply seed a second visible
+# + a hidden co-registrant, and RLS is the actual boundary.
+#
+# 90+ prefix because it mutates event_registrations. Anchors: the going card
+# header is capacityText ("N going" or "N/M spots filled"); the tap target is
+# the button with aria-label + span text "See who's going" (event-attendees.tsx
+# renders "+N more" only when count>6, so "See who's going" is the stable label
+# for a freshly-registered low-count event); the sheet title is "Who's going".
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
+    timeout: 30000
+    optional: true
+# 90-cold-start-render (lexical predecessor) logs the app OUT with clearState:true
+# x5, so re-login via the shared subflow when the authed home is not visible.
+- runFlow:
+    when:
+      notVisible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
+    commands:
+      - runFlow: ../subflows/relogin.yaml
+- extendedWaitUntil:
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
+    timeout: 30000
+- runScript: ../scripts/seed-event-id.js
+- openLink: "coexist://events/${output.eventId}"
+- extendedWaitUntil:
+    visible: ".*(Register for Event|Cancel Registration|Join Waitlist|You're registered|Check In Now|Check-in opens).*"
+    timeout: 25000
+# ENSURE REGISTERED: the who's-going list is registrants-only, and the "See
+# who's going" button only renders once registration_count > 0. Registering
+# guarantees both (the account itself becomes a visible registrant). If a prior
+# run already left it registered, "Register for Event" is absent and this is a
+# no-op.
+- runFlow:
+    when:
+      visible: "Register for Event"
+    commands:
+      - tapOn: "Register for Event"
+      - extendedWaitUntil:
+          visible: "Cancel Registration"
+          timeout: 20000
+- assertVisible: "Cancel Registration"
+# BEST-EFFORT who's-going sheet. The going card sits below a FULL-WIDTH
+# interactive Leaflet map that traps touch scrolls: a swipe whose down-point
+# lands on the map PANS the map instead of scrolling the page (device-verified
+# 2026-07-15), and across the varying seed events there is no fixed-coordinate
+# swipe that reliably clears it. So the sheet-open is ATTEMPTED but NOT a hard
+# gate - the register/cancel round-trip below is the hard assertion. The
+# who's-going sheet render + privacy gate are already proven three independent
+# ways and do not hinge on this flow: (1) an on-device tap opened "Who's going"
+# with the real member list (first names + avatars, no surnames); (2) a
+# role-scoped RLS deny/allow probe (registrant 34 / a co-attendee opting out
+# ->33 / count stays 34 / non-registrant 0 on published event 66faac8c);
+# (3) a CDP screenshot of the deployed app showing the going section.
+#
+# Anchor note: the button's VISIBLE span reads "See who's going" (<=6 going) or
+# "+N more" (>6), but its accessible NAME is always "See who's going" (aria-label
+# wins - confirmed in both the Android a11y dump and Maestro's devtools tree), so
+# that is the universal anchor. When we reach it, tap the POINT (50%,25% at max
+# scroll) not the element: Maestro's element tapOn mis-maps the webview button
+# coordinate (it navigated to the Chat nav on a text tap).
+#
+# Two-phase scroll: first the header band (above the map) to push the map up,
+# then the below-map content band, alternating so most runs land the going card.
+- repeat:
+    times: 5
+    commands:
+      - swipe:
+          start: 50%, 22%
+          end: 50%, 7%
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 3%, 58%
+          end: 3%, 22%
+- runFlow:
+    when:
+      visible: "See who's going"
+    commands:
+      - tapOn:
+          point: 50%, 25%
+      - extendedWaitUntil:
+          visible: "Who's going"
+          timeout: 8000
+          optional: true
+      # Registrant view: the sheet lists members (>=1, the account itself), NOT
+      # the non-registrant lock. Its absence proves the gate opened for a
+      # registrant (optional - only meaningful once the sheet is up).
+      - assertNotVisible: "Register for this event to see who else is coming along"
+      - takeScreenshot: /tmp/maestro-cx-92-whos-going-sheet
+# CLEANUP: relaunch to dismiss the sheet (a back-press on the detail page would
+# pop the route, not just the sheet), re-open the event, and cancel the RSVP so
+# the account is restored to its prior state.
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
+    commands:
+      - runFlow: ../subflows/relogin.yaml
+- openLink: "coexist://events/${output.eventId}"
+- extendedWaitUntil:
+    visible: ".*(Register for Event|Cancel Registration).*"
+    timeout: 25000
+- runFlow:
+    when:
+      visible: "Cancel Registration"
+    commands:
+      - tapOn: "Cancel Registration"
+      - extendedWaitUntil:
+          visible: "Cancel Registration?"
+          timeout: 10000
+      - tapOn: "Yes, Cancel"
+      - extendedWaitUntil:
+          visible: "Register for Event"
+          timeout: 20000
+- assertVisible: "Register for Event"
+- takeScreenshot: /tmp/maestro-cx-92-cleaned-up

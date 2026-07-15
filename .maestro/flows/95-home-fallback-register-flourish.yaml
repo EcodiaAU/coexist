@@ -1,0 +1,59 @@
+# RENDER-ONLY (conditional, no prod-write): the home "Coming up in your
+# collective" fallback card + one-tap Register CTA (shipped 2026-07-15, commits
+# 418adbc / afa38c1 / 2a2cd9b). The fallback card renders ONLY when the account
+# has no registered upcoming event but a collective it belongs to does, so this
+# flow is state-conditional by design:
+#
+#   * Fallback state present  -> asserts the new card surface mounted: the
+#     "COMING UP IN YOUR COLLECTIVE" section + the one-tap "Register" CTA, and
+#     screenshots it. It does NOT tap Register (see the inline note): the
+#     register mutation is already covered create->assert->DELETE by 91 and 92,
+#     and the "You're going!" flourish animation is verified on-device by the
+#     ship-time CDP visual check.
+#   * Any other home state (registered "Your Next Event" card, or the empty
+#     "No events on your calendar yet" state) -> screenshots the real home and
+#     asserts a valid authed-home heading. The fallback state can't be forced
+#     without a second no-registration account, so a run where the account
+#     already has a registered event proves home-render only, and the fallback
+#     card is proven on the runs where the state allows.
+#
+# Anchors (Chromium bakes CSS text-transform:uppercase into the a11y name, which
+# is why section titles assert uppercased): fallback section title "COMING UP IN
+# YOUR COLLECTIVE"; the CTA is a Button labelled "Register" (home.tsx:394-568).
+appId: org.coexistaus.app
+androidWebViewHierarchy: devtools
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      notVisible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
+    commands:
+      - runFlow: ../subflows/relogin.yaml
+- extendedWaitUntil:
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
+    timeout: 30000
+- takeScreenshot: /tmp/maestro-cx-95-home-state
+# FALLBACK BRANCH: only when the "Coming up in your collective" card is showing.
+- runFlow:
+    when:
+      visible: "COMING UP IN YOUR COLLECTIVE"
+    commands:
+      # RENDER-ONLY (no prod-write): assert the new fallback card surface - the
+      # "Coming up in your collective" section, the event body, and the one-tap
+      # Register CTA all mounted. This flow deliberately does NOT tap Register:
+      #   * the register mutation itself (useRegisterForEvent) is already
+      #     exercised create->assert->DELETE by 91-events-detail-rsvp-cleanup and
+      #     92-events-whos-going-cleanup, so re-driving it here adds no coverage;
+      #   * tapping would fire the ~1.9s "You're going!" flourish then resolve to
+      #     the registered "Your Next Event" card, whose tappable surface is the
+      #     card (dynamic event title), not the "YOUR NEXT EVENT" heading - an
+      #     unstable cleanup anchor. The flourish animation is verified on-device
+      #     by the ship-time CDP visual check (Batch 12 note).
+      - assertVisible: "Register"
+      - takeScreenshot: /tmp/maestro-cx-95-fallback-card

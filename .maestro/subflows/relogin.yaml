@@ -40,13 +40,18 @@ androidWebViewHierarchy: devtools
 ---
 - openLink: "coexist://login"
 - extendedWaitUntil:
-    visible: ".*(Welcome back|Sign in to continue|Log In|Email|YOUR NEXT EVENT).*"
+    visible: ".*(Welcome back|Sign in to continue|Log In|Email|YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     timeout: 20000
-# Already authed? /login redirected to home (YOUR NEXT EVENT visible) - no-op.
-# Otherwise sign in.
+# Already authed? /login redirected to home - there is no login form, so the
+# guard below (visible "Log In") is false and the login block is a no-op.
+# The guard keys on the login FORM ("Log In"), NOT "notVisible YOUR NEXT EVENT":
+# since the 2026-07-15 fallback-card change, an authed account with no
+# registered upcoming event lands on the "Coming up in your collective"
+# fallback (no "YOUR NEXT EVENT" heading), and the old guard would then have
+# tried to type into a login form that is not on screen.
 - runFlow:
     when:
-      notVisible: "YOUR NEXT EVENT"
+      visible: "Log In"
     commands:
       # Field-anchored taps: tapOn by placeholder text focuses the actual
       # <input>; a 50%,55% point-tap lands between fields on a Capacitor webview
@@ -61,7 +66,7 @@ androidWebViewHierarchy: devtools
           timeout: 3000
       - tapOn: "Log In"
       - extendedWaitUntil:
-          visible: "YOUR NEXT EVENT"
+          visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
           timeout: 25000
           optional: true
       # The submit intermittently bounces back to the login form on the
@@ -74,7 +79,7 @@ androidWebViewHierarchy: devtools
           commands:
             - tapOn: "Log In"
             - extendedWaitUntil:
-                visible: "YOUR NEXT EVENT"
+                visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
                 timeout: 25000
                 optional: true
       - runFlow:
@@ -83,9 +88,9 @@ androidWebViewHierarchy: devtools
           commands:
             - tapOn: "Log In"
             - extendedWaitUntil:
-                visible: "YOUR NEXT EVENT"
+                visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
                 timeout: 30000
                 optional: true
       - extendedWaitUntil:
-          visible: "YOUR NEXT EVENT"
+          visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
           timeout: 30000

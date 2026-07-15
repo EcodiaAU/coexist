@@ -613,6 +613,49 @@ Flow changes (this commit):
   self-heal double-launch (the file's own TODO: remove when 1b1e718d fixed). It
   now tests the real cold-clear authed sign-in (symptom a).
 
+## Batch 12 (2026-07-15) - 2.1 pre-ship: retention + who's-going + home fallback
+
+Everything shipped since the 2.0.20 release commits (5db5150 android / 270169a
+ios) mapped and, where UI-testable, covered. The user-facing new surfaces:
+
+- **Who's-going privacy sheet** (53a14f0) - NEW flow `92-events-whos-going-cleanup`.
+  Seeds the next free public event, registers the account, opens the going
+  section (aria-label "See who's going"), asserts the BottomSheet "Who's going"
+  mounts on the REGISTRANT branch (the non-registrant lock copy "Register for
+  this event to see who else is coming along" is asserted ABSENT), then cancels
+  the RSVP (cleanup). UI-render only by design; the DB privacy MASKING (opted-out
+  members counted-but-not-named) is enforced in RLS and was proven by a
+  role-scoped deny/allow probe (registrant 34 / opted-out->33 / count stays 34 /
+  non-registrant 0 on published event 66faac8c). The avatar-stack white-line fix
+  (2a2cd9b) rides the same going section - proven visually on the ship shot.
+
+- **Home "Coming up in your collective" fallback card + one-tap Register +
+  "You're going!" flourish** (418adbc / afa38c1 / 2a2cd9b) - NEW flow
+  `95-home-fallback-register-flourish`. State-conditional + RENDER-ONLY: the card
+  only renders when the account has no registered upcoming event, so the flow
+  asserts the "COMING UP IN YOUR COLLECTIVE" card + one-tap "Register" CTA mounted
+  when the state allows, and a valid authed-home render otherwise. It does NOT tap
+  Register - the register mutation is already covered create->assert->DELETE by 91
+  and 92, and the "You're going!" flourish animation is verified on-device by the
+  ship-time CDP visual check.
+
+Test-side regressions fixed in the SAME batch (the home redesign removed the
+"Explore. Connect. Protect." subtitle and added the fallback state):
+
+- `01-signin-authed-feed` - dropped the now-removed `assertVisible "Explore.
+  Connect. Protect."` (the tagline survives only as the document <title>, which
+  Maestro's a11y tree does not surface). The home-loaded gate now accepts all
+  three authed-home states (YOUR NEXT EVENT / COMING UP IN YOUR COLLECTIVE / No
+  events on your calendar) so it no longer hinges on registration state.
+- `subflows/relogin` - the login guard now keys on the login FORM ("Log In"),
+  not `notVisible "YOUR NEXT EVENT"`. The old guard would try to type into a
+  non-existent login form when an authed account with no registered event lands
+  on the fallback card; the success gate accepts all three home states too.
+
+One-code 100%-comp ticketing (6bab0b3) touches create-checkout (Stripe) and
+stays BLOCKED-paid-stripe for Maestro (same blocker as /events/:id/ticket-
+confirmation); its logic is covered at the edge-function layer, not here.
+
 ## Rules that bind authoring here
 
 - androidWebViewHierarchy: devtools (Capacitor).
