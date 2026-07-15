@@ -322,12 +322,11 @@ export function useEventDetail(eventId: string | undefined) {
 
       // Parallelize all independent queries
       const [regCountRes, userRegRes, attendeeRes, impactRes, collabRes, inviteRes] = await Promise.all([
-        // Registration count
-        supabase
-          .from('event_registrations')
-          .select('id', { count: 'exact', head: true })
-          .eq('event_id', eventId)
-          .in('status', ['registered', 'attended']),
+        // Total going count via SECURITY DEFINER RPC (RLS-independent), so it
+        // stays accurate for non-registrants and still counts profile-hidden
+        // members, even though the row-select policy now hides both from the
+        // per-row reads below.
+        supabase.rpc('event_going_count', { p_event_id: eventId }),
         // User's registration
         user
           ? supabase
@@ -371,7 +370,7 @@ export function useEventDetail(eventId: string | undefined) {
 
       return {
         ...event,
-        registration_count: regCountRes.count ?? 0,
+        registration_count: (regCountRes.data as number | null) ?? 0,
         user_registration: userRegRes.data as EventRegistration | null,
         attendees,
         impact: impactRes.data,
@@ -489,6 +488,43 @@ export function useEventAttendees(eventId: string | undefined) {
       return (data ?? []) as AttendeeWithStatus[]
     },
     enabled: !!eventId,
+    staleTime: 30 * 1000,
+  })
+}
+
+export interface GoingMember {
+  id: string
+  first_name: string | null
+  display_name: string | null
+  avatar_url: string | null
+}
+
+/**
+ * The public "who's going" list for the event-detail going sheet. Reads
+ * event_registrations under RLS, so the rows returned are already gated to
+ * fellow registrants and masked by profile_visible (see migration
+ * 20260715060000). Non-registrants get an empty list; the UI prompts them to
+ * register. First name + avatar only. `enabled` defers the fetch until the
+ * sheet opens.
+ */
+export function useEventGoing(eventId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ['event-going', eventId],
+    queryFn: async (): Promise<GoingMember[]> => {
+      if (!eventId) return []
+      const { data, error } = await supabase
+        .from('event_registrations')
+        .select('profiles!event_registrations_user_id_fkey(id, first_name, display_name, avatar_url)')
+        .eq('event_id', eventId)
+        .in('status', ['registered', 'attended'])
+        .order('registered_at', { ascending: true })
+        .limit(200)
+      if (error) throw error
+      return (data ?? [])
+        .map((r) => r.profiles as unknown as GoingMember)
+        .filter(Boolean)
+    },
+    enabled: enabled && !!eventId,
     staleTime: 30 * 1000,
   })
 }
