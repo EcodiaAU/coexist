@@ -46,7 +46,6 @@ import {
 import { Card } from '@/components/card'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { prefetchEventDetail, useRegisterForEvent } from '@/hooks/use-events'
-import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { isSignInButtonVisible, wallClockNow } from '@/lib/date-format'
 import { ProximityCheckInBanner } from '@/components/proximity-check-in-banner'
@@ -76,7 +75,7 @@ function Section({
             Tracking-widest with text-sm was the prior cause of truncation -
             uppercase + heavy letter spacing pushed the heading past the
             right-aligned "See All" link. Tate verbatim 2026-05-28. */}
-        <h2 className="font-heading text-[10px] sm:text-xs font-bold text-neutral-500 uppercase tracking-wide min-w-0 truncate">
+        <h2 className="font-heading text-[9px] sm:text-[10px] font-bold text-neutral-400 uppercase tracking-wide min-w-0 truncate">
           {title}
         </h2>
         {action && (
@@ -381,13 +380,63 @@ function NextEventCard({
   fallbackEvent?: NonNullable<ReturnType<typeof useCollectiveUpcomingEvents>['data']>[number]
 }) {
   const navigate = useNavigate()
-  const { toast } = useToast()
   const registerMutation = useRegisterForEvent()
+  // Holds the title of the event just registered from the fallback card. While
+  // set, a success flourish plays; the optimistic feed update then swaps in the
+  // real registered card underneath, revealed when the flourish clears.
+  const [justRegistered, setJustRegistered] = useState<string | null>(null)
   const [checkIn, setCheckIn] = useState<{
     eventId: string
     eventTitle: string
     collectiveName: string
   } | null>(null)
+
+  // Register success flourish (takes priority over every other card state).
+  if (justRegistered) {
+    return (
+      <motion.div variants={rm ? undefined : fadeUp}>
+        <Section title="You're going">
+          <div className="sm:max-w-lg">
+            <div className="relative rounded-md overflow-hidden bg-primary-700 shadow-sm px-6 py-12 flex flex-col items-center text-center">
+              {!rm && (
+                <motion.span
+                  className="absolute w-24 h-24 rounded-full bg-white/15"
+                  initial={{ scale: 0.5, opacity: 0.7 }}
+                  animate={{ scale: 2, opacity: 0 }}
+                  transition={{ duration: 1.2, ease: 'easeOut', repeat: 1 }}
+                  aria-hidden="true"
+                />
+              )}
+              <motion.div
+                initial={rm ? {} : { scale: 0, rotate: -25 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 360, damping: 15 }}
+                className="relative"
+              >
+                <CheckCircle2 size={60} className="text-white" strokeWidth={2.2} aria-hidden="true" />
+              </motion.div>
+              <motion.h3
+                initial={rm ? {} : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.16, duration: 0.35 }}
+                className="relative mt-4 font-heading text-2xl font-bold text-white"
+              >
+                You're going!
+              </motion.h3>
+              <motion.p
+                initial={rm ? {} : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.35 }}
+                className="relative mt-1 text-sm text-white/85"
+              >
+                See you at {justRegistered}
+              </motion.p>
+            </div>
+          </div>
+        </Section>
+      </motion.div>
+    )
+  }
 
   if (isLoading && showLoading) {
     return (
@@ -455,13 +504,20 @@ function NextEventCard({
                   navigate(`/events/${fallbackEvent.id}`)
                   return
                 }
+                // Play the success flourish immediately; the feed updates
+                // optimistically underneath so the registered card is revealed
+                // when it clears. Revert to the event page only if it fails.
+                setJustRegistered(fallbackEvent.title)
                 registerMutation.mutate(
                   { eventId: fallbackEvent.id },
                   {
-                    onSuccess: () => toast.success("You're registered!"),
-                    onError: () => navigate(`/events/${fallbackEvent.id}`),
+                    onError: () => {
+                      setJustRegistered(null)
+                      navigate(`/events/${fallbackEvent.id}`)
+                    },
                   },
                 )
+                window.setTimeout(() => setJustRegistered(null), 1900)
               }}
             >
               {registerMutation.isPending ? 'Registering...' : 'Register'}
@@ -473,7 +529,7 @@ function NextEventCard({
       return (
         <motion.div variants={rm ? undefined : fadeUp}>
           <div className="px-1 pt-1 pb-4">
-            <p className="font-heading text-3xl sm:text-4xl font-normal display-tight text-neutral-900">
+            <p className="font-heading text-4xl sm:text-5xl font-normal display-tight text-neutral-900">
               {getGreeting(firstName)}
             </p>
           </div>
@@ -518,7 +574,7 @@ function NextEventCard({
     return (
       <motion.div variants={rm ? undefined : fadeUp}>
         <div className="px-1 pt-1 pb-1">
-          <p className="font-heading text-3xl sm:text-4xl font-normal display-tight text-neutral-900">
+          <p className="font-heading text-4xl sm:text-5xl font-normal display-tight text-neutral-900">
             {getGreeting(firstName)}
           </p>
           <p className="text-sm text-neutral-500 mt-2 mb-5">
@@ -1380,17 +1436,9 @@ export default function HomePage() {
                 initial={rm ? {} : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="font-heading text-3xl sm:text-4xl font-normal display-tight text-neutral-900"
+                className="font-heading text-4xl sm:text-5xl font-normal display-tight text-neutral-900"
               >
                 {getGreeting(firstName)}
-              </motion.p>
-              <motion.p
-                initial={rm ? {} : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="text-sm text-neutral-500 mt-2"
-              >
-                Explore. Connect. Protect.
               </motion.p>
             </div>
           )}

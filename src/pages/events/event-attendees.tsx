@@ -69,15 +69,20 @@ export function EventAttendees({ event, accent, capacityText, capacityPercent, f
       {/* Attendee avatars */}
       {event.attendees.length > 0 && (
         <div className="relative flex items-center gap-2.5 pt-1">
-          <div className="flex -space-x-2.5">
-            {event.attendees.slice(0, 6).map((a) => (
-              <Avatar
-                key={a.id}
-                src={a.avatar_url ?? undefined}
-                name={a.display_name ?? 'User'}
-                size="xs"
-                className="ring-[2.5px] ring-white shadow-sm"
-              />
+          {/* Descending z-index (first on top) so each white ring reads as a
+              clean separator at the overlap edge. Without it the browser paints
+              later siblings on top, so every front avatar's ring bled a white
+              line across the one behind it (all but the last). */}
+          <div className="flex -space-x-2">
+            {event.attendees.slice(0, 6).map((a, i, arr) => (
+              <div key={a.id} className="relative" style={{ zIndex: arr.length - i }}>
+                <Avatar
+                  src={a.avatar_url ?? undefined}
+                  name={a.display_name ?? 'User'}
+                  size="xs"
+                  className="ring-2 ring-white shadow-sm"
+                />
+              </div>
             ))}
           </div>
           {event.registration_count > 6 && (
