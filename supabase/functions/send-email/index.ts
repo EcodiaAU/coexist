@@ -190,8 +190,8 @@ const TYPE_TO_PREF_KEY: Record<string, string> = {
 interface SendEmailPayload {
   /** Email type - must match a key in EMAIL_TEMPLATES */
   type: string
-  /** Recipient email address */
-  to: string
+  /** Recipient email address (single-send). Omitted for a batch send. */
+  to?: string
   /** Dynamic template data (Handlebars variables) */
   data?: Record<string, unknown>
   /** Optional: override the subject (for non-template sends) */
@@ -201,6 +201,13 @@ interface SendEmailPayload {
   /** For internal requests (e.g. data export) */
   userId?: string
   email?: string
+  /**
+   * Batch send: many personalised emails of the same `type` in ONE call.
+   * Sent via Resend's /emails/batch endpoint (up to 100 per request), so N
+   * recipients cost ceil(N/100) API calls, staying under Resend's 10 req/s
+   * rate limit. Marketing types are opt-in gated per recipient by userId.
+   */
+  recipients?: Array<{ userId?: string; to: string; data?: Record<string, unknown> }>
 }
 
 /* ------------------------------------------------------------------ */
@@ -854,6 +861,83 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
 
     const payload = (await req.json()) as SendEmailPayload
     const { type, data = {} } = payload
+
+    // ── Batch send ──
+    // Many personalised emails of the same type in ONE Resend /emails/batch
+    // request (up to 100 per call). A digest of N recipients costs ceil(N/100)
+    // API calls, so it stays under Resend's 10 req/s limit that a per-recipient
+    // fan-out blows through.
+    if (Array.isArray(payload.recipients) && payload.recipients.length > 0) {
+      const templateDef = EMAIL_TEMPLATES[type]
+      if (!templateDef) {
+        return new Response(JSON.stringify({ success: false, error: `Unknown email type: ${type}` }), {
+          status: 400, headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      )
+
+      // Per-recipient opt-out gate for marketing types: marketing_opt_in AND the
+      // mapped notification-preference key (mirrors the single-send gate).
+      const optedOut = new Set<string>()
+      if (templateDef.category === 'marketing') {
+        const ids = payload.recipients.map((r) => r.userId).filter((x): x is string => !!x)
+        if (ids.length > 0) {
+          const { data: profs } = await supabaseAdmin
+            .from('profiles')
+            .select('id, marketing_opt_in, notification_preferences')
+            .in('id', ids)
+          const prefKey = TYPE_TO_PREF_KEY[type]
+          for (const p of profs ?? []) {
+            const prefs = (p.notification_preferences ?? {}) as Record<string, unknown>
+            if (p.marketing_opt_in === false) optedOut.add(p.id as string)
+            else if (prefKey && prefs[prefKey] === false) optedOut.add(p.id as string)
+          }
+        }
+      }
+
+      const emails = payload.recipients
+        .filter((r) => r.to && !(r.userId && optedOut.has(r.userId)))
+        .map((r) => {
+          const d = { ...(r.data ?? {}), __recipientEmail: r.to }
+          const subject = payload.subject ?? templateDef.subject(d)
+          return {
+            from: `${FROM_NAME} <${FROM_EMAIL}>`,
+            to: [r.to],
+            subject,
+            html: buildEmailHtml(type, d),
+            headers: {
+              'List-Unsubscribe': `<mailto:unsubscribe@coexistaus.org?subject=Unsubscribe>, <https://app.coexistaus.org/unsubscribe?email=${encodeURIComponent(r.to)}>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
+          }
+        })
+
+      let sent = 0
+      let batchError: string | undefined
+      for (let i = 0; i < emails.length; i += 100) {
+        const chunk = emails.slice(i, i + 100)
+        const resp = await fetch('https://api.resend.com/emails/batch', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(chunk),
+        })
+        if (resp.ok) {
+          sent += chunk.length
+        } else {
+          batchError = await resp.text()
+          console.error('[send-email] batch send failed:', batchError)
+        }
+        if (i + 100 < emails.length) await new Promise((res) => setTimeout(res, 600))
+      }
+
+      return new Response(
+        JSON.stringify({ success: !batchError, sent, skipped: payload.recipients.length - emails.length, error: batchError }),
+        { status: batchError ? 502 : 200, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
 
     // Resolve recipient
     let toEmail = payload.to || payload.email || ''

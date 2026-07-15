@@ -83,33 +83,40 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE
   svc_key text; email_url text := 'https://tjutlbzekfouwsiaplbr.supabase.co/functions/v1/send-email';
-  r record; v_datestr text; v_url text; v_sent int := 0; v_n int := 0; v_sample jsonb := '[]'::jsonb;
+  r record; v_datestr text; v_n int := 0; v_sample jsonb := '[]'::jsonb; v_recipients jsonb := '[]'::jsonb;
 BEGIN
+  -- Build ALL recipients into one payload and make a SINGLE send-email call
+  -- with a `recipients[]` array. send-email sends them via Resend's
+  -- /emails/batch endpoint (up to 100 per request), so the whole digest costs
+  -- ceil(N/100) Resend requests. A per-recipient fan-out (91 net.http_post ->
+  -- 91 Resend calls) blows straight through Resend's 10 req/s limit (verified:
+  -- 80 of 91 returned 429). pg_net enqueue pacing does NOT help because pg_net
+  -- drains its queue in bursts independent of enqueue timing.
   FOR r IN SELECT * FROM public.email_digest_targets() LOOP
     v_n := v_n + 1;
     v_datestr := to_char(r.event_date AT TIME ZONE 'UTC', 'FMDay FMDD FMMonth');
-    v_url := 'https://app.coexistaus.org/events/' || r.event_id::text;
     IF v_n <= 5 THEN
       v_sample := v_sample || jsonb_build_object('email', r.email, 'name', r.name,
         'collective', r.collective_name, 'event', r.event_title, 'date', v_datestr);
     END IF;
+    v_recipients := v_recipients || jsonb_build_object(
+      'userId', r.user_id::text, 'to', r.email,
+      'data', jsonb_build_object('name', r.name, 'collective_name', r.collective_name,
+        'event_title', r.event_title, 'event_date', v_datestr,
+        'event_location', COALESCE(r.event_address,''),
+        'event_url', 'https://app.coexistaus.org/events/' || r.event_id::text));
     IF NOT p_dry_run THEN
-      IF svc_key IS NULL THEN
-        SELECT decrypted_secret INTO svc_key FROM vault.decrypted_secrets WHERE name = 'service_role_key' LIMIT 1;
-      END IF;
-      -- send-email marketing sends REQUIRE userId (for the marketing_opt_in
-      -- gate); `to` is also passed to skip the auth lookup. Field is `type`.
-      PERFORM net.http_post(url := email_url,
-        headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || svc_key),
-        body := jsonb_build_object('type','upcoming_in_collective','to', r.email, 'userId', r.user_id::text,
-          'data', jsonb_build_object('name', r.name, 'collective_name', r.collective_name,
-            'event_title', r.event_title, 'event_date', v_datestr,
-            'event_location', COALESCE(r.event_address,''), 'event_url', v_url)));
       INSERT INTO public.email_digest_sent (user_id, event_id) VALUES (r.user_id, r.event_id);
-      v_sent := v_sent + 1;
     END IF;
   END LOOP;
-  RETURN jsonb_build_object('dry_run', p_dry_run, 'targets', v_n, 'sent', v_sent, 'sample', v_sample);
+  IF NOT p_dry_run AND v_n > 0 THEN
+    SELECT decrypted_secret INTO svc_key FROM vault.decrypted_secrets WHERE name = 'service_role_key' LIMIT 1;
+    PERFORM net.http_post(url := email_url,
+      headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || svc_key),
+      body := jsonb_build_object('type','upcoming_in_collective','recipients', v_recipients));
+  END IF;
+  RETURN jsonb_build_object('dry_run', p_dry_run, 'targets', v_n,
+    'sent', CASE WHEN p_dry_run THEN 0 ELSE v_n END, 'sample', v_sample);
 END;
 $$;
 
