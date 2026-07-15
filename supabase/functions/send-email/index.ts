@@ -655,7 +655,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   upcoming_in_collective: (d) => emailShell({
     heroTitle: 'Your next meetup',
     heroSubtitle: d.collective_name as string,
-    heroEmoji: '\u{1F331}',
     body: greeting(d.name) +
       p(`Your ${d.collective_name} collective has something coming up.`) +
       infoCard([

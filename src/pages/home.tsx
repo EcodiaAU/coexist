@@ -368,12 +368,16 @@ function NextEventCard({
   showLoading,
   rm,
   firstName,
+  fallbackEvent,
 }: {
   events: ReturnType<typeof useMyUpcomingEvents>['data']
   isLoading: boolean
   showLoading: boolean
   rm: boolean
   firstName?: string
+  /** Soonest upcoming event across the user's collectives, shown when they
+      have no registered event so the slot always invites them to join. */
+  fallbackEvent?: NonNullable<ReturnType<typeof useCollectiveUpcomingEvents>['data']>[number]
 }) {
   const navigate = useNavigate()
   const [checkIn, setCheckIn] = useState<{
@@ -395,9 +399,104 @@ function NextEventCard({
   const nextEvent = events?.[0]
 
   if (!nextEvent) {
-    // No upcoming event: the greeting becomes the page lead here (instead of a
-    // separate bold greeting clashing with a "Your Next Event" card above), with
-    // a single CTA. Prose cut. (Tate 2026-06-23.)
+    // No event the user is REGISTERED for. If any collective they belong to
+    // has an upcoming event, surface the soonest one here with a big Register
+    // CTA, so the "Your Next Event" slot is never empty and always invites them
+    // to join. Multi-collective: fallbackEvent is useCollectiveUpcomingEvents()
+    // [0], already ordered by date_start across every collective they belong
+    // to, so it is the soonest event they could attend next. (Tate 2026-07-15.)
+    if (fallbackEvent) {
+      const fbTz =
+        (fallbackEvent as { timezone?: string | null }).timezone ??
+        (fallbackEvent as { collectives?: { timezone?: string | null } | null }).collectives?.timezone ??
+        'Australia/Sydney'
+      const fbDays = daysUntil(fallbackEvent.date_start)
+      const fbToday = fbDays === 0
+      const fbTomorrow = fbDays === 1
+
+      const fbContent = (
+        <>
+          <h3 className="font-heading text-xl sm:text-2xl font-bold text-white">
+            {fallbackEvent.title}
+          </h3>
+          <div className="flex items-center gap-4 mt-3 text-sm text-white">
+            <span className="flex items-center gap-1.5">
+              <Calendar size={14} aria-hidden="true" />
+              {fbToday ? 'Today' : fbTomorrow ? 'Tomorrow' : formatEventDate(fallbackEvent.date_start, fbTz)}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Clock size={14} aria-hidden="true" />
+              {formatEventTime(fallbackEvent.date_start, fbTz)}
+            </span>
+          </div>
+          {fallbackEvent.collectives && (
+            <p className="mt-2 text-xs text-white flex items-center gap-1.5">
+              <MapPin size={12} aria-hidden="true" />
+              {fallbackEvent.collectives.name}
+            </p>
+          )}
+          <div className="mt-5">
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              className="relative bg-white text-primary-700 hover:bg-white/90 font-bold text-base shadow-sm"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation()
+                navigate(`/events/${fallbackEvent.id}`)
+              }}
+            >
+              Register
+            </Button>
+          </div>
+        </>
+      )
+
+      return (
+        <motion.div variants={rm ? undefined : fadeUp}>
+          <div className="px-1 pt-1 pb-4">
+            <p className="font-heading text-3xl sm:text-4xl font-normal display-tight text-neutral-900">
+              {getGreeting(firstName)}
+            </p>
+          </div>
+          <Section title="Coming up in your collective">
+            <div className="sm:max-w-lg">
+              {fallbackEvent.cover_image_url ? (
+                <Card
+                  variant="event"
+                  watermark={fallbackEvent.activity_type}
+                  className="shadow-sm"
+                  onClick={() => navigate(`/events/${fallbackEvent.id}`)}
+                  aria-label={fallbackEvent.title}
+                >
+                  <Card.Overlay
+                    src={fallbackEvent.cover_image_url}
+                    alt=""
+                    aspectRatio="4/3"
+                    positionX={fallbackEvent.cover_image_position_x}
+                    positionY={fallbackEvent.cover_image_position_y}
+                  >
+                    {fbContent}
+                  </Card.Overlay>
+                </Card>
+              ) : (
+                <div
+                  className="relative rounded-md overflow-hidden active:scale-[0.98] transition-transform duration-150 cursor-pointer bg-primary-800 shadow-sm p-6"
+                  onClick={() => navigate(`/events/${fallbackEvent.id}`)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={fallbackEvent.title}
+                >
+                  {fbContent}
+                </div>
+              )}
+            </div>
+          </Section>
+        </motion.div>
+      )
+    }
+
+    // No registered event AND no collective event to surface: greeting lead + CTA.
     return (
       <motion.div variants={rm ? undefined : fadeUp}>
         <div className="px-1 pt-1 pb-1">
@@ -1225,6 +1324,7 @@ export default function HomePage() {
   const myCollective = useMyCollective()
   const myCollectives = useMyCollectives()
   const myEvents = useMyUpcomingEvents()
+  const collectiveEvents = useCollectiveUpcomingEvents()
   const impact = useProfileStats()
   const pendingSurveys = usePendingSurveys()
   const initialLoading = myCollective.isLoading || myEvents.isLoading || impact.isLoading
@@ -1334,6 +1434,7 @@ export default function HomePage() {
               showLoading={showLoading}
               rm={rm}
               firstName={firstName}
+              fallbackEvent={collectiveEvents.data?.[0]}
             />
 
             {/* 3. Upcoming Events carousel */}
