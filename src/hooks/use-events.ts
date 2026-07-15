@@ -500,29 +500,24 @@ export interface GoingMember {
 }
 
 /**
- * The public "who's going" list for the event-detail going sheet. Reads
- * event_registrations under RLS, so the rows returned are already gated to
- * fellow registrants and masked by profile_visible (see migration
- * 20260715060000). Non-registrants get an empty list; the UI prompts them to
- * register. First name + avatar only. `enabled` defers the fetch until the
- * sheet opens.
+ * The "who's going" list for the event-detail going sheet, via the
+ * event_going_members RPC (SECURITY DEFINER). The RPC gates the list to fellow
+ * registrants and masks it by profile_visible itself, so it does NOT depend on
+ * event_registrations RLS - which is intentionally kept public-count-friendly
+ * so the bare "going" count works for every client (see migration
+ * 20260715120000, which reverted the over-tight RLS that broke the count on the
+ * 2.0.20 native app). Non-registrants get an empty list; the UI prompts them to
+ * register. First name + avatar only. `enabled` defers the fetch until the sheet
+ * opens.
  */
 export function useEventGoing(eventId: string | undefined, enabled: boolean) {
   return useQuery({
     queryKey: ['event-going', eventId],
     queryFn: async (): Promise<GoingMember[]> => {
       if (!eventId) return []
-      const { data, error } = await supabase
-        .from('event_registrations')
-        .select('profiles!event_registrations_user_id_fkey(id, first_name, display_name, avatar_url)')
-        .eq('event_id', eventId)
-        .in('status', ['registered', 'attended'])
-        .order('registered_at', { ascending: true })
-        .limit(200)
+      const { data, error } = await supabase.rpc('event_going_members', { p_event_id: eventId })
       if (error) throw error
-      return (data ?? [])
-        .map((r) => r.profiles as unknown as GoingMember)
-        .filter(Boolean)
+      return (data ?? []) as GoingMember[]
     },
     enabled: enabled && !!eventId,
     staleTime: 30 * 1000,
@@ -647,12 +642,26 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
           scenario = 'expected'
         } else if (r.status === 'waitlisted') {
           scenario = 'waitlist'
-        } else if (!isTicketed) {
-          if (r.status === 'cancelled') continue // hide cancelled on non-ticketed events (prior behaviour)
-          scenario = 'expected'
-        } else {
+        } else if (r.status === 'cancelled') {
+          // Cancelled registration = not attending. Non-ticketed events hid these
+          // entirely (prior behaviour) - keep that. On a ticketed event surface
+          // the cancellation (with a refund reason if the ticket was refunded) so
+          // the leader can see who dropped.
+          if (!isTicketed) continue
           scenario = 'notAttending'
-          reason = a.refunded ? 'refunded' : a.cancelled ? 'cancelled' : 'no ticket'
+          reason = a.refunded ? 'refunded' : 'cancelled'
+        } else {
+          // Active registration (registered/attended) with no valid ticket. On a
+          // ticketed event this is a grandfathered / legacy attendee (e.g. the
+          // Eventbrite import for the Myall Park campout) or a registration whose
+          // ticket lapsed but who is still expected. The registration is the
+          // attendance record of truth, so they are GOING - which keeps the
+          // event-day "going" count consistent with the event-detail count (both
+          // registration-based) instead of dropping grandfathered attendees into
+          // a confusing "not attending / no ticket" bucket. ticketsSold still
+          // counts only valid tickets, so a leader still sees the payment gap
+          // (e.g. 17 going vs 13 tickets) without a false "8 not attending".
+          scenario = 'expected'
         }
 
         const person: RosterPerson = { ...r, validTicketCount: a.valid, scenario, reason }
