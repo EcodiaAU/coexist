@@ -38,7 +38,7 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item._key })
   const style = { transform: CSS.Transform.toString(transform), transition }
   return (
-    <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#0"
+    <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#0" data-eos-v="2"
       ref={setNodeRef}
       style={style}
       layout
