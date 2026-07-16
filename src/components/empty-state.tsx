@@ -20,7 +20,7 @@ interface EmptyStateProps {
 
 const presetIllustrations: Record<string, ReactNode> = {
   search: (
-    <svg data-eos-id="src/components/empty-state.tsx#0"
+    <svg data-eos-id="src/components/empty-state.tsx#0" data-eos-v="2"
       width="120"
       height="120"
       viewBox="0 0 120 120"
