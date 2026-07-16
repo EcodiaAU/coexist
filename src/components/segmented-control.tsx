@@ -58,7 +58,7 @@ export function SegmentedControl<T extends string = string>({
   const styles = VARIANT_STYLES[variant]
 
   return (
-    <div data-eos-id="src/components/segmented-control.tsx#0"
+    <div data-eos-id="src/components/segmented-control.tsx#0" data-eos-v="2"
       role="tablist"
       aria-label={ariaLabel}
       className={cn('flex', styles.track, className)}
