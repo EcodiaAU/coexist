@@ -74,7 +74,7 @@ function VariantOptionRow({
   }, [inputValue, addValue])
 
   return (
-    <div data-eos-id="src/pages/admin/merch/products-tab.tsx#0" className="p-3 bg-white/70 rounded-sm border border-neutral-100 space-y-2">
+    <div data-eos-id="src/pages/admin/merch/products-tab.tsx#0" data-eos-v="2" className="p-3 bg-white/70 rounded-sm border border-neutral-100 space-y-2">
       <div data-eos-id="src/pages/admin/merch/products-tab.tsx#1" className="flex items-center gap-2">
         <input data-eos-id="src/pages/admin/merch/products-tab.tsx#2"
           type="text"
@@ -371,7 +371,7 @@ function ProductFormSheet({
                 }}
                 onDragEnd={() => setDragIdx(null)}
               >
-                <img data-eos-id="src/pages/admin/merch/products-tab.tsx#18" src={url} alt={`Product image ${idx + 1}`} loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                <img data-eos-src="dynamic" data-eos-src-label="Url" data-eos-id="src/pages/admin/merch/products-tab.tsx#18" src={url} alt={`Product image ${idx + 1}`} loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                 {idx === 0 && (
                   <span data-eos-id="src/pages/admin/merch/products-tab.tsx#19" className="absolute top-0.5 left-0.5 px-1 py-px bg-primary-500/90 text-white text-[8px] font-bold rounded">
                     Main
@@ -876,7 +876,7 @@ export default function ProductsTab() {
                 {/* Main row - tappable to edit */}
                 <div data-eos-id="src/pages/admin/merch/products-tab.tsx#109" className="flex items-center gap-2.5 p-2.5 sm:p-3">
                   {/* Thumbnail */}
-                  <img data-eos-id="src/pages/admin/merch/products-tab.tsx#110"
+                  <img data-eos-src="dynamic" data-eos-src-label="Value" data-eos-id="src/pages/admin/merch/products-tab.tsx#110"
                     src={product.images[0] ?? '/img/placeholder-merch.jpg'}
                     alt={product.name}
                     className="w-12 h-12 sm:w-14 sm:h-14 rounded-sm object-cover shrink-0"
