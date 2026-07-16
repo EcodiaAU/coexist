@@ -144,10 +144,10 @@ export function ToastProvider({ children, className }: ToastProviderProps) {
   }
 
   return (
-    <ToastContext.Provider value={{ toast }}>
+    <ToastContext.Provider data-eos-id="src/components/toast.tsx#0" value={{ toast }}>
       {children}
       {createPortal(
-        <div
+        <div data-eos-id="src/components/toast.tsx#1"
           className={cn(
             'fixed top-0 inset-x-0 z-[100] flex flex-col items-center gap-2',
             'pointer-events-none px-4',
@@ -157,9 +157,9 @@ export function ToastProvider({ children, className }: ToastProviderProps) {
           aria-live="polite"
           aria-label="Notifications"
         >
-          <AnimatePresence initial={false}>
+          <AnimatePresence data-eos-id="src/components/toast.tsx#2" initial={false}>
             {toasts.map((t) => (
-              <ToastCard key={t.id} item={t} dismiss={dismiss} />
+              <ToastCard data-eos-id="src/components/toast.tsx#3" key={t.id} item={t} dismiss={dismiss} />
             ))}
           </AnimatePresence>
         </div>,
@@ -195,7 +195,7 @@ const ToastCard = memo(function ToastCard({
   }, [action, dismiss, item.id])
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/toast.tsx#4"
       layout
       role="alert"
       initial={{ opacity: 0, y: -32, scale: 0.96 }}
@@ -212,22 +212,22 @@ const ToastCard = memo(function ToastCard({
         config.bgClass,
       )}
     >
-      <Icon size={20} className={cn('shrink-0', config.iconClass)} aria-hidden="true" />
-      <p className="flex-1 text-sm font-medium text-neutral-900">{message}</p>
+      <Icon data-eos-id="src/components/toast.tsx#5" size={20} className={cn('shrink-0', config.iconClass)} aria-hidden="true" />
+      <p data-eos-id="src/components/toast.tsx#6" className="flex-1 text-sm font-medium text-neutral-900">{message}</p>
       {action && (
-        <button
+        <button data-eos-id="src/components/toast.tsx#7" data-eos-var="action.label" data-eos-var-label="Label" data-eos-var-scope="prop"
           onClick={handleAction}
           className="shrink-0 rounded-sm px-3 py-1.5 text-sm font-semibold text-primary-700 hover:bg-primary-50 active:scale-[0.97] transition-[colors,transform] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
         >
           {action.label}
         </button>
       )}
-      <button
+      <button data-eos-id="src/components/toast.tsx#8"
         onClick={handleDismiss}
         className="shrink-0 rounded-full p-0.5 text-neutral-400 transition-[colors,transform] duration-150 hover:bg-black/5 hover:text-neutral-500 active:scale-[0.98] cursor-pointer"
         aria-label="Dismiss notification"
       >
-        <X size={16} />
+        <X data-eos-id="src/components/toast.tsx#9" size={16} />
       </button>
     </motion.div>
   )
