@@ -32,7 +32,7 @@ export function OGMeta({
   const ogImage = image || DEFAULT_OG_IMAGE
 
   return (
-    <Helmet data-eos-id="src/components/og-meta.tsx#0">
+    <Helmet data-eos-id="src/components/og-meta.tsx#0" data-eos-v="2">
       <title data-eos-id="src/components/og-meta.tsx#1">{fullTitle}</title>
       <meta data-eos-id="src/components/og-meta.tsx#2" name="description" content={description} />
 
