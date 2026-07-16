@@ -32,8 +32,8 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   if (reduce) {
     return (
-      <Suspense fallback={<div className="flex-1 min-h-0 bg-surface-1" />}>
-        <div key={location.pathname} className="flex-1 flex flex-col min-h-0">
+      <Suspense data-eos-id="src/components/page-transition.tsx#0" fallback={<div data-eos-id="src/components/page-transition.tsx#1" className="flex-1 min-h-0 bg-surface-1" />}>
+        <div data-eos-id="src/components/page-transition.tsx#2" key={location.pathname} className="flex-1 flex flex-col min-h-0">
           {children}
         </div>
       </Suspense>
@@ -41,8 +41,8 @@ export function PageTransition({ children }: PageTransitionProps) {
   }
 
   return (
-    <Suspense fallback={<div className="flex-1 min-h-0 bg-surface-1" />}>
-      <motion.div
+    <Suspense data-eos-id="src/components/page-transition.tsx#3" fallback={<div data-eos-id="src/components/page-transition.tsx#4" className="flex-1 min-h-0 bg-surface-1" />}>
+      <motion.div data-eos-id="src/components/page-transition.tsx#5"
         key={location.pathname}
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
