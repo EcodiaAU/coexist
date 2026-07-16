@@ -130,7 +130,7 @@ export default function SignUpPage() {
   const childVariants = shouldReduceMotion ? undefined : fadeOnly
 
   return (
-    <div data-eos-id="src/pages/auth/sign-up.tsx#0"
+    <div data-eos-id="src/pages/auth/sign-up.tsx#0" data-eos-v="2"
       className="flex flex-col bg-white overflow-hidden"
       style={{
         paddingTop: 'var(--safe-top)',
