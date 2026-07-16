@@ -35,7 +35,7 @@ export function Icon({
   }
 
   return (
-    <LucideIcon
+    <LucideIcon data-eos-id="src/components/icon.tsx#0"
       size={sizeMap[size]}
       color={color}
       className={cn('shrink-0', className)}
