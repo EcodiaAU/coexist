@@ -133,7 +133,7 @@ export function HtmlChatBubble({
   /* ─── Fullscreen overlay ────────────────────────────────────────── */
   if (isExpanded) {
     return (
-      <motion.div data-eos-id="src/components/html-chat-bubble.tsx#0"
+      <motion.div data-eos-id="src/components/html-chat-bubble.tsx#0" data-eos-v="2"
         className="fixed inset-0 z-50 flex flex-col bg-white"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -222,7 +222,7 @@ export function HtmlChatBubble({
             aria-label={senderName ? `View ${senderName}'s profile` : 'View profile'}
           >
             {senderAvatar ? (
-              <img data-eos-id="src/components/html-chat-bubble.tsx#14"
+              <img data-eos-src="dynamic" data-eos-src-label="Sender avatar" data-eos-id="src/components/html-chat-bubble.tsx#14"
                 src={senderAvatar}
                 alt=""
                 loading="lazy"
