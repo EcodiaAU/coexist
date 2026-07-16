@@ -31,7 +31,7 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
   const dAccent = getAccentClasses('main')
 
   return (
-    <aside
+    <aside data-eos-id="src/components/sidebar/sidebar-shell.tsx#0"
       className={cn(
         'hidden md:flex flex-col',
         'sticky top-0 self-start min-h-dvh max-h-dvh z-50',
@@ -45,13 +45,13 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
       aria-label="Sidebar navigation"
     >
       {/* ── Wordmark ── */}
-      <div className="flex items-center justify-center px-4 py-4">
-        <Link
+      <div data-eos-id="src/components/sidebar/sidebar-shell.tsx#1" className="flex items-center justify-center px-4 py-4">
+        <Link data-eos-id="src/components/sidebar/sidebar-shell.tsx#2"
           to="/"
           className={cn('focus-visible:outline-none focus-visible:ring-2 rounded-md', dAccent.focusRing)}
           aria-label={`${APP_NAME} home`}
         >
-          <img
+          <img data-eos-id="src/components/sidebar/sidebar-shell.tsx#3"
             src="/logos/black-wordmark.png"
             alt={APP_NAME}
             className={cn(
@@ -59,7 +59,7 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
               collapsed ? 'hidden' : 'block',
             )}
           />
-          <img
+          <img data-eos-id="src/components/sidebar/sidebar-shell.tsx#4"
             src="/logos/black-logo-transparent.png"
             alt={APP_NAME}
             className={cn(
@@ -71,15 +71,15 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
       </div>
 
       {/* ── Nav content (injected) ── */}
-      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
+      <div data-eos-id="src/components/sidebar/sidebar-shell.tsx#5" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
         {children}
       </div>
 
       {/* ── Sticky footer: profile + settings + collapse ── */}
-      <div className={cn('border-t transition-colors duration-250 px-2.5 py-2', dAccent.borderColor)}>
-        <div className={cn('flex items-center gap-2 min-w-0', collapsed && 'flex-col')}>
+      <div data-eos-id="src/components/sidebar/sidebar-shell.tsx#6" className={cn('border-t transition-colors duration-250 px-2.5 py-2', dAccent.borderColor)}>
+        <div data-eos-id="src/components/sidebar/sidebar-shell.tsx#7" className={cn('flex items-center gap-2 min-w-0', collapsed && 'flex-col')}>
           {/* Profile link */}
-          <Link
+          <Link data-eos-id="src/components/sidebar/sidebar-shell.tsx#8"
             to="/profile"
             className={cn(
               'flex items-center gap-2 min-w-0 rounded-sm p-1',
@@ -93,20 +93,20 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
             aria-label="View profile"
             title={collapsed ? profile?.display_name || 'Profile' : undefined}
           >
-            <Avatar
+            <Avatar data-eos-id="src/components/sidebar/sidebar-shell.tsx#9"
               src={profile?.avatar_url}
               name={profile?.display_name || ''}
               size="sm"
             />
             {!collapsed && (
-              <span className="font-heading text-[13px] font-semibold text-neutral-900 truncate">
+              <span data-eos-id="src/components/sidebar/sidebar-shell.tsx#10" data-eos-var="profile.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="font-heading text-[13px] font-semibold text-neutral-900 truncate">
                 {profile?.display_name}
               </span>
             )}
           </Link>
 
           {/* Settings icon */}
-          <Link
+          <Link data-eos-id="src/components/sidebar/sidebar-shell.tsx#11"
             to="/settings"
             className={cn(
               'flex items-center justify-center shrink-0',
@@ -120,11 +120,11 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
             )}
             title="Settings"
           >
-            <Settings size={16} strokeWidth={1.5} />
+            <Settings data-eos-id="src/components/sidebar/sidebar-shell.tsx#12" size={16} strokeWidth={1.5} />
           </Link>
 
           {/* Collapse toggle */}
-          <button
+          <button data-eos-id="src/components/sidebar/sidebar-shell.tsx#13"
             type="button"
             onClick={onToggleCollapse}
             className={cn(
@@ -140,12 +140,12 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             title={collapsed ? 'Expand' : 'Collapse'}
           >
-            <motion.span
+            <motion.span data-eos-id="src/components/sidebar/sidebar-shell.tsx#14"
               animate={{ rotate: collapsed ? 180 : 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               className="flex items-center justify-center"
             >
-              <PanelLeftClose size={15} strokeWidth={1.5} />
+              <PanelLeftClose data-eos-id="src/components/sidebar/sidebar-shell.tsx#15" size={15} strokeWidth={1.5} />
             </motion.span>
           </button>
         </div>
