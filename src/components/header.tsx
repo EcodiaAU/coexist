@@ -43,7 +43,7 @@ export function Header({
   if (!back && !rightActions) return null
 
   return (
-    <div data-eos-id="src/components/header.tsx#0"
+    <div data-eos-id="src/components/header.tsx#0" data-eos-v="2"
       className={cn(
         'sticky z-40',
         'px-4',
