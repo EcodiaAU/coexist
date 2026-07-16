@@ -82,7 +82,7 @@ export function MessageActionsSheet({
   const canDelete = isOwnMessage || isModerator
 
   return (
-    <BottomSheet data-eos-id="src/components/message-actions-sheet.tsx#0" open={!!message} onClose={onClose}>
+    <BottomSheet data-eos-id="src/components/message-actions-sheet.tsx#0" data-eos-v="2" open={!!message} onClose={onClose}>
       {/* Fixed min-height so the sheet never shrinks/flickers between states */}
       <div data-eos-id="src/components/message-actions-sheet.tsx#1" className="min-h-[296px] flex flex-col">
         {confirmingDelete ? (
