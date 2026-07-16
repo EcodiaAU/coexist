@@ -55,20 +55,20 @@ function LinearProgress({
   const clamped = Math.max(0, Math.min(100, value))
 
   return (
-    <div className={cn('w-full', className)}>
+    <div data-eos-id="src/components/progress-bar.tsx#0" className={cn('w-full', className)}>
       {(showLabel || label) && (
-        <div className="flex items-center justify-between mb-1.5">
+        <div data-eos-id="src/components/progress-bar.tsx#1" className="flex items-center justify-between mb-1.5">
           {label && (
-            <span className="text-sm font-medium text-neutral-900">{label}</span>
+            <span data-eos-id="src/components/progress-bar.tsx#2" className="text-sm font-medium text-neutral-900">{label}</span>
           )}
           {showLabel && (
-            <span className="text-sm tabular-nums text-neutral-500">
+            <span data-eos-id="src/components/progress-bar.tsx#3" data-eos-var="Math.round" data-eos-var-label="Round" data-eos-var-scope="prop" className="text-sm tabular-nums text-neutral-500">
               {Math.round(clamped)}%
             </span>
           )}
         </div>
       )}
-      <div
+      <div data-eos-id="src/components/progress-bar.tsx#4"
         role="progressbar"
         aria-valuenow={Math.round(clamped)}
         aria-valuemin={0}
@@ -76,7 +76,7 @@ function LinearProgress({
         aria-label={ariaLabel ?? label ?? 'Progress'}
         className={cn('relative w-full rounded-full bg-white overflow-hidden', linearSizes[size])}
       >
-        <motion.div
+        <motion.div data-eos-id="src/components/progress-bar.tsx#5"
           className={cn('h-full rounded-full', color)}
           initial={shouldReduceMotion ? { width: `${clamped}%` } : { width: '0%' }}
           animate={{ width: `${clamped}%` }}
@@ -89,7 +89,7 @@ function LinearProgress({
         {milestones?.map((milestone) => {
           const clampedMilestone = Math.max(0, Math.min(100, milestone))
           return (
-            <span
+            <span data-eos-id="src/components/progress-bar.tsx#6"
               key={milestone}
               aria-hidden="true"
               className={cn(
@@ -139,7 +139,7 @@ function CircularProgress({
     : color
 
   return (
-    <div
+    <div data-eos-id="src/components/progress-bar.tsx#7"
       className={cn('inline-flex flex-col items-center gap-1', className)}
       role="progressbar"
       aria-valuenow={Math.round(clamped)}
@@ -147,13 +147,13 @@ function CircularProgress({
       aria-valuemax={100}
       aria-label={ariaLabel ?? label ?? 'Progress'}
     >
-      <svg
+      <svg data-eos-id="src/components/progress-bar.tsx#8"
         width={dims.size}
         height={dims.size}
         viewBox={`0 0 ${dims.size} ${dims.size}`}
         className="-rotate-90"
       >
-        <circle
+        <circle data-eos-id="src/components/progress-bar.tsx#9"
           cx={dims.size / 2}
           cy={dims.size / 2}
           r={radius}
@@ -162,7 +162,7 @@ function CircularProgress({
           strokeWidth={dims.stroke}
           className="text-primary-200"
         />
-        <motion.circle
+        <motion.circle data-eos-id="src/components/progress-bar.tsx#10"
           cx={dims.size / 2}
           cy={dims.size / 2}
           r={radius}
@@ -186,12 +186,12 @@ function CircularProgress({
         />
       </svg>
       {showLabel && (
-        <span className={cn('tabular-nums font-semibold text-neutral-900', circularFontSizes[size])}>
+        <span data-eos-id="src/components/progress-bar.tsx#11" data-eos-var="Math.round" data-eos-var-label="Round" data-eos-var-scope="prop" className={cn('tabular-nums font-semibold text-neutral-900', circularFontSizes[size])}>
           {Math.round(clamped)}%
         </span>
       )}
       {label && (
-        <span className="text-xs text-neutral-500">{label}</span>
+        <span data-eos-id="src/components/progress-bar.tsx#12" className="text-xs text-neutral-500">{label}</span>
       )}
     </div>
   )
@@ -212,7 +212,7 @@ export function ProgressBar({
 
   if (variant === 'circular') {
     return (
-      <CircularProgress
+      <CircularProgress data-eos-id="src/components/progress-bar.tsx#13"
         value={value}
         size={size}
         color={color}
@@ -226,7 +226,7 @@ export function ProgressBar({
   }
 
   return (
-    <LinearProgress
+    <LinearProgress data-eos-id="src/components/progress-bar.tsx#14"
       value={value}
       size={size}
       color={color}
