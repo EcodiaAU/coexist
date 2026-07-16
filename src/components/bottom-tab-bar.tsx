@@ -28,22 +28,22 @@ const baseTabs: Tab[] = [
     label: 'Home',
     path: '/',
     exact: true,
-    icon: <Home size={21} strokeWidth={1.5} />,
-    activeIcon: <Home size={21} strokeWidth={2.2} />,
+    icon: <Home data-eos-id="src/components/bottom-tab-bar.tsx#0" size={21} strokeWidth={1.5} />,
+    activeIcon: <Home data-eos-id="src/components/bottom-tab-bar.tsx#1" size={21} strokeWidth={2.2} />,
   },
   {
     key: 'chat',
     label: 'Chat',
     path: '/chat',
-    icon: <MessageCircle size={21} strokeWidth={1.5} />,
-    activeIcon: <MessageCircle size={21} strokeWidth={2.2} />,
+    icon: <MessageCircle data-eos-id="src/components/bottom-tab-bar.tsx#2" size={21} strokeWidth={1.5} />,
+    activeIcon: <MessageCircle data-eos-id="src/components/bottom-tab-bar.tsx#3" size={21} strokeWidth={2.2} />,
   },
   {
     key: 'profile',
     label: 'Profile',
     path: '/profile',
-    icon: <User size={21} strokeWidth={1.5} />,
-    activeIcon: <User size={21} strokeWidth={2.2} />,
+    icon: <User data-eos-id="src/components/bottom-tab-bar.tsx#4" size={21} strokeWidth={1.5} />,
+    activeIcon: <User data-eos-id="src/components/bottom-tab-bar.tsx#5" size={21} strokeWidth={2.2} />,
   },
   {
     key: 'more',
@@ -51,8 +51,8 @@ const baseTabs: Tab[] = [
     path: '/more',
     exact: true,
     isMore: true,
-    icon: <MoreHorizontal size={21} strokeWidth={1.5} />,
-    activeIcon: <MoreHorizontal size={21} strokeWidth={2.2} />,
+    icon: <MoreHorizontal data-eos-id="src/components/bottom-tab-bar.tsx#6" size={21} strokeWidth={1.5} />,
+    activeIcon: <MoreHorizontal data-eos-id="src/components/bottom-tab-bar.tsx#7" size={21} strokeWidth={2.2} />,
   },
 ]
 
@@ -63,8 +63,8 @@ export const MORE_TAB: Tab = {
   path: '/more',
   exact: true,
   isMore: true,
-  icon: <MoreHorizontal size={21} strokeWidth={1.5} />,
-  activeIcon: <MoreHorizontal size={21} strokeWidth={2.2} />,
+  icon: <MoreHorizontal data-eos-id="src/components/bottom-tab-bar.tsx#8" size={21} strokeWidth={1.5} />,
+  activeIcon: <MoreHorizontal data-eos-id="src/components/bottom-tab-bar.tsx#9" size={21} strokeWidth={2.2} />,
 }
 
 interface BottomTabBarProps {
@@ -125,14 +125,14 @@ export function BottomTabBar({
     : undefined
 
   return (
-    <div
+    <div data-eos-id="src/components/bottom-tab-bar.tsx#10"
       className={cn(
         'fixed bottom-0 left-0 right-0 z-50',
         'pointer-events-none',
         className,
       )}
     >
-      <nav
+      <nav data-eos-id="src/components/bottom-tab-bar.tsx#11"
         className={cn(
           'pointer-events-auto',
           'mx-4 mb-[var(--safe-bottom,0px)] rounded-[20px]',
@@ -142,12 +142,12 @@ export function BottomTabBar({
         aria-label="Navigation"
         role="tablist"
       >
-        <div className="flex items-center justify-around h-[56px] px-1">
+        <div data-eos-id="src/components/bottom-tab-bar.tsx#12" className="flex items-center justify-around h-[56px] px-1">
           {tabs.map((tab) => {
             const active = isActive(tab)
 
             return (
-              <button
+              <button data-eos-id="src/components/bottom-tab-bar.tsx#13"
                 key={tab.key}
                 type="button"
                 role="tab"
@@ -165,7 +165,7 @@ export function BottomTabBar({
               >
                 {/* Active pill background */}
                 {active && (
-                  <motion.span
+                  <motion.span data-eos-id="src/components/bottom-tab-bar.tsx#14"
                     layoutId={shouldReduceMotion ? undefined : `${layoutPrefix}-pill`}
                     className={cn('absolute inset-x-1.5 inset-y-1 rounded-md', activePill)}
                     transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.7 }}
@@ -173,12 +173,12 @@ export function BottomTabBar({
                 )}
 
                 {/* Icon */}
-                <span className="relative flex items-center justify-center z-10">
+                <span data-eos-id="src/components/bottom-tab-bar.tsx#15" data-eos-var="tab.activeIcon" data-eos-var-label="Active icon" data-eos-var-scope="item" className="relative flex items-center justify-center z-10">
                   {active ? tab.activeIcon : tab.icon}
 
                   {/* Sync warning dot on Home tab */}
                   {tab.key === 'home' && syncWarning && (
-                    <span
+                    <span data-eos-id="src/components/bottom-tab-bar.tsx#16"
                       className="absolute -top-0.5 -right-1.5 w-2.5 h-2.5 rounded-full bg-warning-500 ring-2 ring-white/90"
                       aria-label="Sync paused"
                     />
@@ -186,7 +186,7 @@ export function BottomTabBar({
 
                   {/* Chat badge */}
                   {tab.key === 'chat' && chatBadge > 0 && (
-                    <span
+                    <span data-eos-id="src/components/bottom-tab-bar.tsx#17"
                       className={cn(
                         'absolute -top-1.5 -right-2.5',
                         'flex items-center justify-center',
@@ -203,7 +203,7 @@ export function BottomTabBar({
                 </span>
 
                 {/* Label */}
-                <span
+                <span data-eos-id="src/components/bottom-tab-bar.tsx#18" data-eos-var="tab.label" data-eos-var-label="Label" data-eos-var-scope="item"
                   className={cn(
                     'relative z-10 text-[10px] mt-0.5 leading-none',
                     active ? 'font-bold' : 'font-medium',
