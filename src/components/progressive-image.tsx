@@ -48,13 +48,13 @@ export function ProgressiveImage({
     : src
 
   return (
-    <div data-eos-id="src/components/progressive-image.tsx#0"
+    <div data-eos-id="src/components/progressive-image.tsx#0" data-eos-v="2"
       className={cn('relative overflow-hidden bg-white', className)}
       style={{ aspectRatio }}
     >
       {/* Placeholder / blur layer */}
       {autoPlaceholder && !loaded && !error && (
-        <img data-eos-id="src/components/progressive-image.tsx#1"
+        <img data-eos-src="dynamic" data-eos-src-label="Auto placeholder" data-eos-id="src/components/progressive-image.tsx#1"
           src={autoPlaceholder}
           alt=""
           aria-hidden="true"
