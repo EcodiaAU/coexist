@@ -472,7 +472,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
   }, [shouldReduceMotion, showVicIndividual, vicIds])
 
   return (
-    <div data-eos-id="src/components/collective-map.tsx#0" className={cn('relative overflow-hidden rounded-md', className)}>
+    <div data-eos-id="src/components/collective-map.tsx#0" data-eos-v="2" className={cn('relative overflow-hidden rounded-md', className)}>
       {/* Map container */}
       <div data-eos-id="src/components/collective-map.tsx#1"
         ref={containerRef}
@@ -521,7 +521,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
               {/* Hero image - full bleed, shrinks to fit container */}
               {selected.cover_image_url ? (
                 <div data-eos-id="src/components/collective-map.tsx#13" className="relative w-full overflow-hidden shrink min-h-0" style={{ aspectRatio: '16 / 8' }}>
-                  <img data-eos-id="src/components/collective-map.tsx#14"
+                  <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/components/collective-map.tsx#14"
                     src={selected.cover_image_url}
                     alt={selected.name}
                     className="absolute inset-0 h-full w-full object-cover"
@@ -641,7 +641,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
                   )}
                 >
                   {c.cover_image_url ? (
-                    <img data-eos-id="src/components/collective-map.tsx#48"
+                    <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/components/collective-map.tsx#48"
                       src={c.cover_image_url}
                       alt=""
                       className="block h-16 w-full object-cover"
