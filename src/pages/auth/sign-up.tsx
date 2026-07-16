@@ -130,7 +130,7 @@ export default function SignUpPage() {
   const childVariants = shouldReduceMotion ? undefined : fadeOnly
 
   return (
-    <div
+    <div data-eos-id="src/pages/auth/sign-up.tsx#0"
       className="flex flex-col bg-white overflow-hidden"
       style={{
         paddingTop: 'var(--safe-top)',
@@ -142,7 +142,7 @@ export default function SignUpPage() {
         height: 'calc(100dvh - var(--kb-height, 0px))',
       }}
     >
-      <OGMeta
+      <OGMeta data-eos-id="src/pages/auth/sign-up.tsx#1"
         title="Sign Up"
         description="Create your free Co-Exist account. Join thousands of young Australians volunteering for conservation - tree planting, beach cleanups, habitat restoration, and more."
         canonicalPath="/signup"
@@ -153,8 +153,8 @@ export default function SignUpPage() {
           shrink + scroll instead of growing the form past the height-locked
           root (which, with overflow-hidden, clipped the Create Account / Log in
           CTA off-screen when an error appeared - 2026-05-28 Android/iOS report). */}
-      <div className="flex-1 min-h-0 flex flex-col w-full max-w-[440px] mx-auto">
-        <motion.form
+      <div data-eos-id="src/pages/auth/sign-up.tsx#2" className="flex-1 min-h-0 flex flex-col w-full max-w-[440px] mx-auto">
+        <motion.form data-eos-id="src/pages/auth/sign-up.tsx#3"
           onSubmit={handleSubmit}
           variants={shouldReduceMotion ? undefined : stagger}
           initial="hidden"
@@ -163,32 +163,32 @@ export default function SignUpPage() {
         >
           {/* Referral banner */}
           {refValid && (
-            <motion.div
+            <motion.div data-eos-id="src/pages/auth/sign-up.tsx#4"
               variants={childVariants}
               className="mx-5 mt-3 flex items-center justify-center gap-2.5 rounded-sm bg-white border border-neutral-100 px-4 py-2.5"
             >
-              <UserPlus size={16} className="text-neutral-500 shrink-0" />
-              <p className="text-sm text-neutral-900">
+              <UserPlus data-eos-id="src/pages/auth/sign-up.tsx#5" size={16} className="text-neutral-500 shrink-0" />
+              <p data-eos-id="src/pages/auth/sign-up.tsx#6" className="text-sm text-neutral-900">
                 You've been invited to join the movement!
               </p>
             </motion.div>
           )}
 
           {/* Hero */}
-          <motion.div variants={childVariants} className="px-4 sm:px-6 pt-6 pb-1 text-center">
-            <h1 className="text-[28px] font-bold text-neutral-900 tracking-tight leading-tight">
+          <motion.div data-eos-id="src/pages/auth/sign-up.tsx#7" variants={childVariants} className="px-4 sm:px-6 pt-6 pb-1 text-center">
+            <h1 data-eos-id="src/pages/auth/sign-up.tsx#8" className="text-[28px] font-bold text-neutral-900 tracking-tight leading-tight">
               Join the movement
             </h1>
-            <p className="mt-1 text-[15px] text-neutral-500">
+            <p data-eos-id="src/pages/auth/sign-up.tsx#9" className="mt-1 text-[15px] text-neutral-500">
               Create your account to get started
             </p>
           </motion.div>
 
           {/* Scrollable form body */}
-          <div className="flex-1 min-h-0 px-6 pt-5 overflow-y-auto">
+          <div data-eos-id="src/pages/auth/sign-up.tsx#10" className="flex-1 min-h-0 px-6 pt-5 overflow-y-auto">
             {/* Social sign-up */}
-            <motion.div variants={childVariants} className="flex gap-3">
-              <button
+            <motion.div data-eos-id="src/pages/auth/sign-up.tsx#11" variants={childVariants} className="flex gap-3">
+              <button data-eos-id="src/pages/auth/sign-up.tsx#12"
                 type="button"
                 onClick={() => handleSocial('google')}
                 className={cn(
@@ -200,16 +200,16 @@ export default function SignUpPage() {
                   'cursor-pointer hover:bg-neutral-50',
                 )}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                <svg data-eos-id="src/pages/auth/sign-up.tsx#13" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                  <path data-eos-id="src/pages/auth/sign-up.tsx#14" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                  <path data-eos-id="src/pages/auth/sign-up.tsx#15" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path data-eos-id="src/pages/auth/sign-up.tsx#16" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                  <path data-eos-id="src/pages/auth/sign-up.tsx#17" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                 </svg>
                 Google
               </button>
 
-              <button
+              <button data-eos-id="src/pages/auth/sign-up.tsx#18"
                 type="button"
                 onClick={() => handleSocial('apple')}
                 className={cn(
@@ -221,26 +221,26 @@ export default function SignUpPage() {
                   'cursor-pointer hover:bg-neutral-50',
                 )}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-1.55 4.3-3.74 4.25z" />
+                <svg data-eos-id="src/pages/auth/sign-up.tsx#19" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path data-eos-id="src/pages/auth/sign-up.tsx#20" d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-1.55 4.3-3.74 4.25z" />
                 </svg>
                 Apple
               </button>
             </motion.div>
 
             {/* Divider */}
-            <motion.div variants={childVariants} className="flex items-center gap-4 my-5">
-              <div className="flex-1 h-px bg-neutral-100" />
-              <span className="text-[11px] text-neutral-400 font-semibold uppercase tracking-[0.15em]">or</span>
-              <div className="flex-1 h-px bg-neutral-100" />
+            <motion.div data-eos-id="src/pages/auth/sign-up.tsx#21" variants={childVariants} className="flex items-center gap-4 my-5">
+              <div data-eos-id="src/pages/auth/sign-up.tsx#22" className="flex-1 h-px bg-neutral-100" />
+              <span data-eos-id="src/pages/auth/sign-up.tsx#23" className="text-[11px] text-neutral-400 font-semibold uppercase tracking-[0.15em]">or</span>
+              <div data-eos-id="src/pages/auth/sign-up.tsx#24" className="flex-1 h-px bg-neutral-100" />
             </motion.div>
 
             {/* Form card */}
-            <motion.div
+            <motion.div data-eos-id="src/pages/auth/sign-up.tsx#25"
               variants={childVariants}
               className="bg-white rounded-md border border-neutral-100 p-5 space-y-4"
             >
-              <Input
+              <Input data-eos-id="src/pages/auth/sign-up.tsx#26"
                 label="Display name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -251,7 +251,7 @@ export default function SignUpPage() {
                 maxLength={50}
               />
 
-              <Input
+              <Input data-eos-id="src/pages/auth/sign-up.tsx#27"
                 type="email"
                 label="Email"
                 value={email}
@@ -261,8 +261,8 @@ export default function SignUpPage() {
                 required
               />
 
-              <div>
-                <Input
+              <div data-eos-id="src/pages/auth/sign-up.tsx#28">
+                <Input data-eos-id="src/pages/auth/sign-up.tsx#29"
                   type="password"
                   label="Password"
                   value={password}
@@ -272,10 +272,10 @@ export default function SignUpPage() {
                   required
                 />
                 {password.length > 0 && (
-                  <div className="mt-2.5 flex items-center gap-2.5 px-0.5">
-                    <div className="flex-1 flex gap-1">
+                  <div data-eos-id="src/pages/auth/sign-up.tsx#30" className="mt-2.5 flex items-center gap-2.5 px-0.5">
+                    <div data-eos-id="src/pages/auth/sign-up.tsx#31" className="flex-1 flex gap-1">
                       {Array.from({ length: 4 }).map((_, i) => (
-                        <motion.div
+                        <motion.div data-eos-id="src/pages/auth/sign-up.tsx#32"
                           key={i}
                           initial={{ scaleX: 0 }}
                           animate={{ scaleX: 1 }}
@@ -289,14 +289,14 @@ export default function SignUpPage() {
                         />
                       ))}
                     </div>
-                    <span className="text-[11px] font-semibold text-neutral-500 min-w-[3rem]">
+                    <span data-eos-id="src/pages/auth/sign-up.tsx#33" data-eos-var="passwordStrength.label" data-eos-var-label="Label" data-eos-var-scope="prop" className="text-[11px] font-semibold text-neutral-500 min-w-[3rem]">
                       {passwordStrength.label}
                     </span>
                   </div>
                 )}
               </div>
 
-              <DateInput
+              <DateInput data-eos-id="src/pages/auth/sign-up.tsx#34"
                 label="Date of Birth"
                 value={dateOfBirth}
                 onChange={setDateOfBirth}
@@ -309,18 +309,18 @@ export default function SignUpPage() {
             </motion.div>
 
             {/* Terms checkbox */}
-            <motion.div variants={childVariants} className="mt-5 px-1">
-              <Checkbox
+            <motion.div data-eos-id="src/pages/auth/sign-up.tsx#35" variants={childVariants} className="mt-5 px-1">
+              <Checkbox data-eos-id="src/pages/auth/sign-up.tsx#36"
                 checked={agreedToTerms}
                 onChange={setAgreedToTerms}
                 label={
                   <>
                     I agree to the{' '}
-                    <Link to="/terms" className="text-neutral-900 font-bold hover:underline">
+                    <Link data-eos-id="src/pages/auth/sign-up.tsx#37" to="/terms" className="text-neutral-900 font-bold hover:underline">
                       Terms of Service
                     </Link>{' '}
                     and{' '}
-                    <Link to="/privacy" className="text-neutral-900 font-bold hover:underline">
+                    <Link data-eos-id="src/pages/auth/sign-up.tsx#38" to="/privacy" className="text-neutral-900 font-bold hover:underline">
                       Privacy Policy
                     </Link>
                   </>
@@ -330,7 +330,7 @@ export default function SignUpPage() {
 
             {/* Error */}
             {error && (
-              <motion.div
+              <motion.div data-eos-id="src/pages/auth/sign-up.tsx#39"
                 initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-4 px-4 py-3 bg-error-50 border border-error-100 rounded-sm text-sm text-error-600 text-center font-medium"
@@ -342,12 +342,12 @@ export default function SignUpPage() {
           </div>
 
           {/* Bottom CTA */}
-          <motion.div
+          <motion.div data-eos-id="src/pages/auth/sign-up.tsx#40"
             variants={childVariants}
             className="px-4 sm:px-6 pt-4 pb-5"
             style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
           >
-            <Button
+            <Button data-eos-id="src/pages/auth/sign-up.tsx#41"
               type="submit"
               variant="auth"
               size="lg"
@@ -358,9 +358,9 @@ export default function SignUpPage() {
               Create Account
             </Button>
 
-            <p className="mt-4 text-center text-sm text-neutral-500">
+            <p data-eos-id="src/pages/auth/sign-up.tsx#42" className="mt-4 text-center text-sm text-neutral-500">
               Already have an account?{' '}
-              <Link to="/login" className="text-neutral-900 font-bold hover:underline">
+              <Link data-eos-id="src/pages/auth/sign-up.tsx#43" to="/login" className="text-neutral-900 font-bold hover:underline">
                 Log in
               </Link>
             </p>
