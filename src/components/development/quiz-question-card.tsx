@@ -73,14 +73,14 @@ export function QuizQuestionCard({
   const canSubmit = isText ? textInput.trim().length > 0 : selectedIds.size > 0
 
   return (
-    <div data-eos-id="src/components/development/quiz-question-card.tsx#0" className={cn('space-y-4', className)}>
+    <div data-eos-id="src/components/development/quiz-question-card.tsx#0" data-eos-v="2" className={cn('space-y-4', className)}>
       {/* Question text */}
       <div data-eos-id="src/components/development/quiz-question-card.tsx#1">
         <p data-eos-id="src/components/development/quiz-question-card.tsx#2" data-eos-var="question.question_text" data-eos-var-label="Question text" data-eos-var-scope="prop" className="text-base font-semibold text-neutral-900 leading-relaxed">
           {question.question_text}
         </p>
         {question.image_url && (
-          <img data-eos-id="src/components/development/quiz-question-card.tsx#3"
+          <img data-eos-src="dynamic" data-eos-src-label="Image url" data-eos-id="src/components/development/quiz-question-card.tsx#3"
             src={question.image_url}
             alt="Question illustration"
             className="mt-3 rounded-sm max-h-48 object-contain"
