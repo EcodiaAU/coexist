@@ -51,7 +51,7 @@ export default function AdminCreateQuizPage() {
 
   if (saved) {
     return (
-      <motion.div data-eos-id="src/pages/admin/development/create-quiz.tsx#0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto py-8">
+      <motion.div data-eos-id="src/pages/admin/development/create-quiz.tsx#0" data-eos-v="2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto py-8">
         <SaveSuccessBanner data-eos-id="src/pages/admin/development/create-quiz.tsx#1" show message="Quiz created!" subtitle={`"${title}" is ready. You can now attach it to a module content block.`} editPath={`/admin/development/quizzes/${saved.id}/edit`} onDismiss={resetForm} />
       </motion.div>
     )
