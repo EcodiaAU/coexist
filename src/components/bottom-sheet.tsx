@@ -217,7 +217,7 @@ function MobileSheet({
   if (!mounted) return null
 
   return createPortal(
-    <div data-eos-id="src/components/bottom-sheet.tsx#0" className="fixed inset-0 z-50" style={!visible ? { pointerEvents: 'none' } : undefined}>
+    <div data-eos-id="src/components/bottom-sheet.tsx#0" data-eos-v="2" className="fixed inset-0 z-50" style={!visible ? { pointerEvents: 'none' } : undefined}>
       {/* Backdrop */}
       <div data-eos-id="src/components/bottom-sheet.tsx#1"
         ref={backdropRef}
