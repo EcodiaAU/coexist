@@ -62,7 +62,7 @@ export function Avatar({
   /* Skeleton */
   if (loading) {
     return (
-      <div
+      <div data-eos-id="src/components/avatar.tsx#0"
         role="status"
         aria-label="Loading avatar"
         className={cn('rounded-full bg-white animate-pulse shrink-0', className)}
@@ -72,11 +72,11 @@ export function Avatar({
   }
 
   return (
-    <div
+    <div data-eos-id="src/components/avatar.tsx#1"
       className={cn('relative inline-flex shrink-0', className)}
       style={{ width: s.px, height: s.px }}
     >
-      <div
+      <div data-eos-id="src/components/avatar.tsx#2"
         aria-label={ariaLabel ?? name ?? undefined}
         role="img"
         className={cn(
@@ -85,7 +85,7 @@ export function Avatar({
         )}
       >
         {showImage ? (
-          <img
+          <img data-eos-id="src/components/avatar.tsx#3"
             src={isSupabaseStorageUrl(src!) ? getTransformUrl(src!, { width: s.px * 2, height: s.px * 2 }) : src!}
             alt={name ?? undefined}
             loading="lazy"
@@ -96,7 +96,7 @@ export function Avatar({
             className="w-full h-full object-cover"
           />
         ) : (
-          <span
+          <span data-eos-id="src/components/avatar.tsx#4"
             className={cn(
               'flex items-center justify-center w-full h-full',
               'font-heading font-semibold text-neutral-500 select-none',
@@ -111,7 +111,7 @@ export function Avatar({
 
       {/* Online indicator */}
       {online !== undefined && online && (
-        <span
+        <span data-eos-id="src/components/avatar.tsx#5"
           aria-label="Online"
           className={cn(
             'absolute bottom-0 right-0 rounded-full bg-success ring-white',
