@@ -129,7 +129,7 @@ const leaderBottomTabs: Tab[] = [
     label: 'App',
     path: '/',
     exact: true,
-    icon: <Home data-eos-id="src/components/leader-layout.tsx#0" size={22} strokeWidth={1.5} />,
+    icon: <Home data-eos-id="src/components/leader-layout.tsx#0" data-eos-v="2" size={22} strokeWidth={1.5} />,
     activeIcon: <Home data-eos-id="src/components/leader-layout.tsx#1" size={22} strokeWidth={2} fill="currentColor" />,
   },
   {
