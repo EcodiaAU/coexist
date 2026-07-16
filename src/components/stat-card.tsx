@@ -81,7 +81,7 @@ export function StatCard({
   const TrendIcon = tc?.icon
 
   return (
-    <motion.div data-eos-id="src/components/stat-card.tsx#0"
+    <motion.div data-eos-id="src/components/stat-card.tsx#0" data-eos-v="2"
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={
