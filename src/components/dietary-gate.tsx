@@ -177,7 +177,7 @@ export function DietaryGate() {
   if (!show) return null
 
   return createPortal(
-    <div
+    <div data-eos-id="src/components/dietary-gate.tsx#0"
       className="fixed left-0 right-0 z-[200] flex items-end sm:items-center justify-center"
       style={
         viewport
@@ -189,25 +189,25 @@ export function DietaryGate() {
       aria-labelledby="dietary-gate-title"
     >
       {/* Non-dismissable backdrop - no onClick, no Escape handler. */}
-      <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+      <div data-eos-id="src/components/dietary-gate.tsx#1" className="fixed inset-0 bg-black/60" aria-hidden="true" />
 
-      <div
+      <div data-eos-id="src/components/dietary-gate.tsx#2"
         className="relative w-full sm:max-w-md max-h-full overflow-y-auto bg-surface-0 rounded-t-md sm:rounded-md shadow-sm flex flex-col"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.5rem)' }}
       >
-        <div className="px-6 pt-7 pb-6 space-y-5">
-          <div className="flex flex-col items-center text-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
-              <UtensilsCrossed size={22} className="text-primary-800" />
+        <div data-eos-id="src/components/dietary-gate.tsx#3" className="px-6 pt-7 pb-6 space-y-5">
+          <div data-eos-id="src/components/dietary-gate.tsx#4" className="flex flex-col items-center text-center gap-3">
+            <div data-eos-id="src/components/dietary-gate.tsx#5" className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
+              <UtensilsCrossed data-eos-id="src/components/dietary-gate.tsx#6" size={22} className="text-primary-800" />
             </div>
-            <h2 id="dietary-gate-title" className="font-heading text-xl font-bold text-neutral-900">
+            <h2 data-eos-id="src/components/dietary-gate.tsx#7" id="dietary-gate-title" className="font-heading text-xl font-bold text-neutral-900">
               {needDietary && needMedical
                 ? 'A couple of details for your event'
                 : needMedical
                   ? 'Any medical needs or allergies?'
                   : 'Any dietary requirements?'}
             </h2>
-            <p className="text-sm text-neutral-500 leading-relaxed">
+            <p data-eos-id="src/components/dietary-gate.tsx#8" className="text-sm text-neutral-500 leading-relaxed">
               You have a ticket to an upcoming event. We cater for camp-outs and
               ticketed events, and our leaders need to know about allergies,
               medical needs and dietary requirements to keep everyone safe.
@@ -215,8 +215,8 @@ export function DietaryGate() {
           </div>
 
           {needDietary && (
-            <div className="space-y-1.5">
-              <Input
+            <div data-eos-id="src/components/dietary-gate.tsx#9" className="space-y-1.5">
+              <Input data-eos-id="src/components/dietary-gate.tsx#10"
                 type="textarea"
                 label="Dietary requirements"
                 value={dietary}
@@ -225,7 +225,7 @@ export function DietaryGate() {
                 rows={2}
                 maxLength={500}
               />
-              <button
+              <button data-eos-id="src/components/dietary-gate.tsx#11"
                 type="button"
                 disabled={saving}
                 onClick={() => { setDietary(NO_DIETARY_SENTINEL); if (error) setError(null) }}
@@ -237,8 +237,8 @@ export function DietaryGate() {
           )}
 
           {needMedical && (
-            <div className="space-y-1.5">
-              <Input
+            <div data-eos-id="src/components/dietary-gate.tsx#12" className="space-y-1.5">
+              <Input data-eos-id="src/components/dietary-gate.tsx#13"
                 type="textarea"
                 label="Medical / allergy info"
                 value={medical}
@@ -247,7 +247,7 @@ export function DietaryGate() {
                 rows={2}
                 maxLength={500}
               />
-              <button
+              <button data-eos-id="src/components/dietary-gate.tsx#14"
                 type="button"
                 disabled={saving}
                 onClick={() => { setMedical(NO_MEDICAL_SENTINEL); if (error) setError(null) }}
@@ -258,9 +258,9 @@ export function DietaryGate() {
             </div>
           )}
 
-          {error && <p className="text-xs text-error-500">{error}</p>}
+          {error && <p data-eos-id="src/components/dietary-gate.tsx#15" className="text-xs text-error-500">{error}</p>}
 
-          <Button
+          <Button data-eos-id="src/components/dietary-gate.tsx#16"
             variant="primary"
             fullWidth
             loading={saving}
