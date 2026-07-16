@@ -25,7 +25,7 @@ export default async function EventsPage() {
   const spans = bentoSpans(events.length)
 
   return (
-    <main data-eos-id="web/app/events/page.tsx#0">
+    <main data-eos-id="web/app/events/page.tsx#0" data-eos-v="2">
       <PageHeader data-eos-id="web/app/events/page.tsx#1"
         eyebrow="Get involved"
         title="Upcoming events"
@@ -61,7 +61,7 @@ export default async function EventsPage() {
                     {e.title}
                   </h2>
                   {e.collective && (
-                    <p data-eos-id="web/app/events/page.tsx#12" className="mt-2 flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] text-oncream/80">
+                    <p data-eos-id="web/app/events/page.tsx#12" data-eos-var="e.collective.name" data-eos-var-label="Name" data-eos-var-scope="item" className="mt-2 flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] text-oncream/80">
                       <span data-eos-id="web/app/events/page.tsx#13" className="inline-block h-px w-3 bg-sage/60" />
                       Co-Exist {e.collective.name}
                     </p>

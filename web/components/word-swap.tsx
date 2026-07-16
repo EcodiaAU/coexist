@@ -39,7 +39,7 @@ export function WordSwap({ words, interval = 2400 }: { words: string[]; interval
   }, [])
 
   return (
-    <span data-eos-id="web/components/word-swap.tsx#0" className="wordroll" style={{ width }} aria-label={words[0]}>
+    <span data-eos-id="web/components/word-swap.tsx#0" data-eos-v="2" className="wordroll" style={{ width }} aria-label={words[0]}>
       <span data-eos-id="web/components/word-swap.tsx#1" className="wordroll-track" style={{ transform: `translateY(-${i * 1.5}em)` }}>
         {words.map((w, idx) => (
           <span data-eos-id="web/components/word-swap.tsx#2"

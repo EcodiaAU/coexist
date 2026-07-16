@@ -30,7 +30,7 @@ export default async function ProductPage({ params }: Params) {
   const [heroImg, ...restImgs] = p.images.length ? p.images : ['']
 
   return (
-    <main data-eos-id="web/app/shop/[slug]/page.tsx#0" className="mx-auto max-w-6xl px-6 pt-32 pb-20">
+    <main data-eos-id="web/app/shop/[slug]/page.tsx#0" data-eos-v="2" className="mx-auto max-w-6xl px-6 pt-32 pb-20">
       <Link data-eos-href="static" data-eos-id="web/app/shop/[slug]/page.tsx#1" href="/shop" className="inline-flex items-center gap-1.5 text-xs font-normal uppercase tracking-[0.18em] text-primary-700 hover:text-primary-900">
         <svg data-eos-id="web/app/shop/[slug]/page.tsx#2" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path data-eos-id="web/app/shop/[slug]/page.tsx#3" d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -44,7 +44,7 @@ export default async function ProductPage({ params }: Params) {
           {heroImg ? (
             <div data-eos-id="web/app/shop/[slug]/page.tsx#6" className="relative isolate aspect-[4/5] overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img data-eos-id="web/app/shop/[slug]/page.tsx#7" src={heroImg} alt={`${p.name} 1`} className="absolute inset-0 h-full w-full object-cover" />
+              <img data-eos-src="dynamic" data-eos-src-label="Hero img" data-eos-id="web/app/shop/[slug]/page.tsx#7" src={heroImg} alt={`${p.name} 1`} className="absolute inset-0 h-full w-full object-cover" />
               {/* olive film tint */}
               <div data-eos-id="web/app/shop/[slug]/page.tsx#8" className="absolute inset-0 bg-olive-900/30 mix-blend-multiply" />
               {/* grain */}
@@ -62,7 +62,7 @@ export default async function ProductPage({ params }: Params) {
                 img ? (
                   <div data-eos-id="web/app/shop/[slug]/page.tsx#13" key={i} className="relative isolate aspect-square overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img data-eos-id="web/app/shop/[slug]/page.tsx#14" src={img} alt={`${p.name} ${i + 2}`} className="absolute inset-0 h-full w-full object-cover" />
+                    <img data-eos-src="dynamic" data-eos-src-label="Img" data-eos-id="web/app/shop/[slug]/page.tsx#14" src={img} alt={`${p.name} ${i + 2}`} className="absolute inset-0 h-full w-full object-cover" />
                     <div data-eos-id="web/app/shop/[slug]/page.tsx#15" className="absolute inset-0 bg-olive-900/30 mix-blend-multiply" />
                     <div data-eos-id="web/app/shop/[slug]/page.tsx#16" className="grain-layer" />
                   </div>

@@ -19,7 +19,7 @@ export function PageHeader({
 }) {
   if (image) {
     return (
-      <section data-eos-id="web/components/page-header.tsx#0" className="film-cover relative isolate flex min-h-[72vh] items-center justify-center overflow-hidden lg:min-h-[82vh]">
+      <section data-eos-id="web/components/page-header.tsx#0" data-eos-v="2" className="film-cover relative isolate flex min-h-[72vh] items-center justify-center overflow-hidden lg:min-h-[82vh]">
         <ParallaxImage data-eos-id="web/components/page-header.tsx#1" src={image} priority blurDataURL={BLUR[image]} />
         <div data-eos-id="web/components/page-header.tsx#2" className="grain-layer absolute inset-0 z-0" />
         <div data-eos-id="web/components/page-header.tsx#3" className="relative z-10 mx-auto w-full max-w-3xl px-6 py-32 text-center translate-x-[4px] translate-y-[0px]">

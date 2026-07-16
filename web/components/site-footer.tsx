@@ -31,7 +31,7 @@ const COEXIST = [
 
 function Col({ title, links }: { title: string; links: { label: string; href: string; external?: boolean }[] }) {
   return (
-    <div data-eos-id="web/components/site-footer.tsx#0">
+    <div data-eos-id="web/components/site-footer.tsx#0" data-eos-v="2">
       <p data-eos-id="web/components/site-footer.tsx#1" className="text-[11px] font-bold uppercase tracking-[0.15em] text-oncream/50">{title}</p>
       <ul data-eos-id="web/components/site-footer.tsx#2" className="mt-4 space-y-2.5">
         {links.map((l) => (
@@ -72,7 +72,7 @@ export function SiteFooter() {
         <div data-eos-id="web/components/site-footer.tsx#16" className="grid gap-10 pt-12 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
           <div data-eos-id="web/components/site-footer.tsx#17">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img data-eos-id="web/components/site-footer.tsx#18" src="/images/logo-white.png" alt="Co-Exist Australia" className="h-9 w-auto" />
+            <img data-eos-src="static" data-eos-id="web/components/site-footer.tsx#18" src="/images/logo-white.png" alt="Co-Exist Australia" className="h-9 w-auto" />
             <p data-eos-id="web/components/site-footer.tsx#19" className="mt-5 max-w-sm text-sm leading-relaxed text-oncream/70">
               We respectfully acknowledge the Traditional Custodians of the lands and waters on which
               we live, work and gather, and pay our respects to Elders past and present. Always was,

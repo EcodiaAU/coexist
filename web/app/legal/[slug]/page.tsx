@@ -30,7 +30,7 @@ export default async function LegalPage({ params }: Params) {
   if (!page) notFound()
 
   return (
-    <main data-eos-id="web/app/legal/[slug]/page.tsx#0">
+    <main data-eos-id="web/app/legal/[slug]/page.tsx#0" data-eos-v="2">
       <PageHeader data-eos-id="web/app/legal/[slug]/page.tsx#1" title={page.title} />
       <section data-eos-id="web/app/legal/[slug]/page.tsx#2" className="mx-auto max-w-2xl px-6 pt-12 pb-24">
         {page.updated_at && (

@@ -40,7 +40,7 @@ export default async function CollectivesPage() {
   for (const idx of small) placed[idx] = byMembers[si++]
 
   return (
-    <main data-eos-id="web/app/collectives/page.tsx#0">
+    <main data-eos-id="web/app/collectives/page.tsx#0" data-eos-v="2">
       <PageHeader data-eos-id="web/app/collectives/page.tsx#1"
         eyebrow="Get involved"
         title="Find your collective"

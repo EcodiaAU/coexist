@@ -39,7 +39,7 @@ const ROLES = [
 
 export default function TeamPage() {
   return (
-    <main data-eos-id="web/app/get-involved/team/page.tsx#0">
+    <main data-eos-id="web/app/get-involved/team/page.tsx#0" data-eos-v="2">
       <PageHeader data-eos-id="web/app/get-involved/team/page.tsx#1"
         eyebrow="Join the movement"
         title="Join the team"
@@ -92,10 +92,10 @@ export default function TeamPage() {
                         0{i + 1}
                       </span>
                       <div data-eos-id="web/app/get-involved/team/page.tsx#23">
-                        <h3 data-eos-id="web/app/get-involved/team/page.tsx#24" data-eos-var="r.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-2xl text-neutral-900 transition-colors duration-300 group-hover/role:text-primary-800">{r.title}</h3>
-                        <p data-eos-id="web/app/get-involved/team/page.tsx#25" data-eos-var="r.body" data-eos-var-label="Body" data-eos-var-scope="item" className="mt-2 max-w-xl text-[15px] leading-relaxed text-neutral-500">{r.body}</p>
+                        <h3 data-eos-id="web/app/get-involved/team/page.tsx#24" data-eos-var="r.title" data-eos-var-label="Title" data-eos-var-scope="item" data-eos-var-src="literal" className="text-2xl text-neutral-900 transition-colors duration-300 group-hover/role:text-primary-800">{r.title}</h3>
+                        <p data-eos-id="web/app/get-involved/team/page.tsx#25" data-eos-var="r.body" data-eos-var-label="Body" data-eos-var-scope="item" data-eos-var-src="literal" className="mt-2 max-w-xl text-[15px] leading-relaxed text-neutral-500">{r.body}</p>
                       </div>
-                      <span data-eos-id="web/app/get-involved/team/page.tsx#26" className="flex shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">
+                      <span data-eos-id="web/app/get-involved/team/page.tsx#26" data-eos-var="r.cta" data-eos-var-label="Cta" data-eos-var-scope="item" data-eos-var-src="literal" className="flex shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">
                         {r.cta}
                         <span data-eos-id="web/app/get-involved/team/page.tsx#27" className="transition-transform duration-300 group-hover/role:translate-x-1">→</span>
                       </span>

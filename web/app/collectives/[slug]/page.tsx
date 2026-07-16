@@ -34,12 +34,12 @@ export default async function CollectiveDetailPage({ params }: Params) {
     .join(' · ')
 
   return (
-    <main data-eos-id="web/app/collectives/[slug]/page.tsx#0">
+    <main data-eos-id="web/app/collectives/[slug]/page.tsx#0" data-eos-v="2">
       {/* Cinematic cover: olive film tint + grain + flat-black bottom gradient */}
       {c.cover_image_url && (
         <div data-eos-id="web/app/collectives/[slug]/page.tsx#1" className="relative isolate min-h-[60vh] w-full overflow-hidden bg-neutral-900">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img data-eos-id="web/app/collectives/[slug]/page.tsx#2"
+          <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="web/app/collectives/[slug]/page.tsx#2"
             src={c.cover_image_url}
             alt={c.name}
             className="absolute inset-0 h-full w-full object-cover"

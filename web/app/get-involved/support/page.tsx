@@ -48,7 +48,7 @@ export default async function SupportPage() {
   ]
 
   return (
-    <main data-eos-id="web/app/get-involved/support/page.tsx#0">
+    <main data-eos-id="web/app/get-involved/support/page.tsx#0" data-eos-v="2">
       <PageHeader data-eos-id="web/app/get-involved/support/page.tsx#1"
         eyebrow="Support us"
         title="Back young people in nature"
@@ -61,11 +61,11 @@ export default async function SupportPage() {
         <div data-eos-id="web/app/get-involved/support/page.tsx#3" className="mx-auto grid max-w-6xl grid-cols-2 px-6 py-16 sm:grid-cols-4 sm:py-20">
           {tiles.map((t, i) => (
             <div data-eos-id="web/app/get-involved/support/page.tsx#4" key={t.label} className={i > 0 ? 'border-l border-neutral-200 pl-8' : ''}>
-              <p data-eos-id="web/app/get-involved/support/page.tsx#5" className="display-tight text-4xl font-light text-neutral-900 sm:text-5xl" style={{ letterSpacing: '-0.04em' }}>
+              <p data-eos-id="web/app/get-involved/support/page.tsx#5" data-eos-var="t.value" data-eos-var-label="Value" data-eos-var-scope="item" className="display-tight text-4xl font-light text-neutral-900 sm:text-5xl" style={{ letterSpacing: '-0.04em' }}>
                 {t.value}
-                {t.unit && <span data-eos-id="web/app/get-involved/support/page.tsx#6" data-eos-var="t.unit" data-eos-var-label="Unit" data-eos-var-scope="item" className="ml-1 text-xl font-light text-neutral-400">{t.unit}</span>}
+                {t.unit && <span data-eos-id="web/app/get-involved/support/page.tsx#6" data-eos-var="t.unit" data-eos-var-label="Unit" data-eos-var-scope="item" data-eos-var-src="literal" className="ml-1 text-xl font-light text-neutral-400">{t.unit}</span>}
               </p>
-              <p data-eos-id="web/app/get-involved/support/page.tsx#7" data-eos-var="t.label" data-eos-var-label="Label" data-eos-var-scope="item" className="mt-2 text-[11px] uppercase tracking-[0.16em] text-neutral-400">{t.label}</p>
+              <p data-eos-id="web/app/get-involved/support/page.tsx#7" data-eos-var="t.label" data-eos-var-label="Label" data-eos-var-scope="item" data-eos-var-src="literal" className="mt-2 text-[11px] uppercase tracking-[0.16em] text-neutral-400">{t.label}</p>
             </div>
           ))}
         </div>
@@ -104,8 +104,8 @@ export default async function SupportPage() {
           <div data-eos-id="web/app/get-involved/support/page.tsx#23" className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-3">
             {ENABLES.map((e, i) => (
               <Reveal data-eos-id="web/app/get-involved/support/page.tsx#24" key={e.k} delay={i * 80} className="border-t border-neutral-200 pt-6">
-                <h3 data-eos-id="web/app/get-involved/support/page.tsx#25" data-eos-var="e.k" data-eos-var-label="K" data-eos-var-scope="item" className="text-xl text-neutral-900">{e.k}</h3>
-                <p data-eos-id="web/app/get-involved/support/page.tsx#26" data-eos-var="e.v" data-eos-var-label="V" data-eos-var-scope="item" className="mt-3 text-[15px] leading-relaxed text-neutral-500">{e.v}</p>
+                <h3 data-eos-id="web/app/get-involved/support/page.tsx#25" data-eos-var="e.k" data-eos-var-label="K" data-eos-var-scope="item" data-eos-var-src="literal" className="text-xl text-neutral-900">{e.k}</h3>
+                <p data-eos-id="web/app/get-involved/support/page.tsx#26" data-eos-var="e.v" data-eos-var-label="V" data-eos-var-scope="item" data-eos-var-src="literal" className="mt-3 text-[15px] leading-relaxed text-neutral-500">{e.v}</p>
               </Reveal>
             ))}
           </div>
@@ -118,13 +118,13 @@ export default async function SupportPage() {
           <h2 data-eos-id="web/app/get-involved/support/page.tsx#29" className="display-tight text-3xl text-neutral-900 sm:text-4xl">Collaborations &amp; sponsorships</h2>
           <div data-eos-id="web/app/get-involved/support/page.tsx#30" className="mt-10 flex justify-center border-t border-neutral-200 pt-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img data-eos-id="web/app/get-involved/support/page.tsx#31" src="/images/brands/sunslayer.jpg" alt="Sunslayer" className="h-14 w-auto object-contain grayscale opacity-60 transition-all duration-300 hover:grayscale-0 hover:opacity-100" />
+            <img data-eos-src="static" data-eos-id="web/app/get-involved/support/page.tsx#31" src="/images/brands/sunslayer.jpg" alt="Sunslayer" className="h-14 w-auto object-contain grayscale opacity-60 transition-all duration-300 hover:grayscale-0 hover:opacity-100" />
           </div>
           <p data-eos-id="web/app/get-involved/support/page.tsx#32" className="label mt-12 text-neutral-400">Supporters &amp; corporate donors</p>
           <div data-eos-id="web/app/get-involved/support/page.tsx#33" className="mt-8 flex flex-wrap items-center justify-center gap-x-14 gap-y-10 border-t border-neutral-200 pt-8">
             {BRANDS.map((bd) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img data-eos-id="web/app/get-involved/support/page.tsx#34" key={bd.name} src={bd.src} alt={bd.name} className="h-10 w-auto max-w-[120px] object-contain grayscale opacity-60 transition-all duration-300 hover:grayscale-0 hover:opacity-100" />
+              <img data-eos-src="literal" data-eos-src-label="Src" data-eos-src-binding="src" data-eos-id="web/app/get-involved/support/page.tsx#34" key={bd.name} src={bd.src} alt={bd.name} className="h-10 w-auto max-w-[120px] object-contain grayscale opacity-60 transition-all duration-300 hover:grayscale-0 hover:opacity-100" />
             ))}
           </div>
         </div>
@@ -138,9 +138,9 @@ export default async function SupportPage() {
           <div data-eos-id="web/app/get-involved/support/page.tsx#39" className="mt-10 grid gap-x-8 gap-y-10 md:grid-cols-3">
             {WAYS.map((w) => (
               <div data-eos-id="web/app/get-involved/support/page.tsx#40" key={w.title} className="flex flex-col border-t border-neutral-200 pt-6">
-                <h3 data-eos-id="web/app/get-involved/support/page.tsx#41" data-eos-var="w.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-2xl text-neutral-900">{w.title}</h3>
-                <p data-eos-id="web/app/get-involved/support/page.tsx#42" data-eos-var="w.body" data-eos-var-label="Body" data-eos-var-scope="item" className="mt-3 flex-1 text-[15px] leading-relaxed text-neutral-500">{w.body}</p>
-                <Link data-eos-href="dynamic" data-eos-href-label="Href" data-eos-href-scope="item" data-eos-id="web/app/get-involved/support/page.tsx#43" data-eos-var="w.cta" data-eos-var-label="Cta" data-eos-var-scope="item" href={w.href} className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 hover:text-primary-900">
+                <h3 data-eos-id="web/app/get-involved/support/page.tsx#41" data-eos-var="w.title" data-eos-var-label="Title" data-eos-var-scope="item" data-eos-var-src="literal" className="text-2xl text-neutral-900">{w.title}</h3>
+                <p data-eos-id="web/app/get-involved/support/page.tsx#42" data-eos-var="w.body" data-eos-var-label="Body" data-eos-var-scope="item" data-eos-var-src="literal" className="mt-3 flex-1 text-[15px] leading-relaxed text-neutral-500">{w.body}</p>
+                <Link data-eos-href="literal" data-eos-href-label="Href" data-eos-href-scope="item" data-eos-href-binding="href" data-eos-id="web/app/get-involved/support/page.tsx#43" data-eos-var="w.cta" data-eos-var-label="Cta" data-eos-var-scope="item" data-eos-var-src="literal" href={w.href} className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 hover:text-primary-900">
                   {w.cta} →
                 </Link>
               </div>

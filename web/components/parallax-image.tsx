@@ -57,7 +57,7 @@ export function ParallaxImage({
   }, [])
 
   return (
-    <div data-eos-id="web/components/parallax-image.tsx#0" ref={ref} className="absolute inset-x-0 -top-[20%] -z-10 h-[140%] will-change-transform">
+    <div data-eos-id="web/components/parallax-image.tsx#0" data-eos-v="2" ref={ref} className="absolute inset-x-0 -top-[20%] -z-10 h-[140%] will-change-transform">
       <Image data-eos-id="web/components/parallax-image.tsx#1"
         src={src}
         alt=""

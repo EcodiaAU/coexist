@@ -17,7 +17,7 @@ const IMPACT = [
 
 export default function DonatePage() {
   return (
-    <main data-eos-id="web/app/donate/page.tsx#0">
+    <main data-eos-id="web/app/donate/page.tsx#0" data-eos-v="2">
       <PageHeader data-eos-id="web/app/donate/page.tsx#1"
         eyebrow="Donate"
         title="Put young people back into nature"
@@ -32,8 +32,8 @@ export default function DonatePage() {
           <div data-eos-id="web/app/donate/page.tsx#5" className="mt-8 divide-y divide-neutral-200 border-t border-neutral-200">
             {IMPACT.map((i) => (
               <div data-eos-id="web/app/donate/page.tsx#6" key={i.amount} className="flex items-center gap-5 bg-white py-5">
-                <span data-eos-id="web/app/donate/page.tsx#7" data-eos-var="i.amount" data-eos-var-label="Amount" data-eos-var-scope="item" className="w-16 shrink-0 font-normal tabular-nums text-2xl text-olive-700">{i.amount}</span>
-                <span data-eos-id="web/app/donate/page.tsx#8" data-eos-var="i.blurb" data-eos-var-label="Blurb" data-eos-var-scope="item" className="text-[15px] leading-relaxed text-neutral-600">{i.blurb}</span>
+                <span data-eos-id="web/app/donate/page.tsx#7" data-eos-var="i.amount" data-eos-var-label="Amount" data-eos-var-scope="item" data-eos-var-src="literal" className="w-16 shrink-0 font-normal tabular-nums text-2xl text-olive-700">{i.amount}</span>
+                <span data-eos-id="web/app/donate/page.tsx#8" data-eos-var="i.blurb" data-eos-var-label="Blurb" data-eos-var-scope="item" data-eos-var-src="literal" className="text-[15px] leading-relaxed text-neutral-600">{i.blurb}</span>
               </div>
             ))}
           </div>
@@ -94,7 +94,7 @@ export default function DonatePage() {
                 <div data-eos-id="web/app/donate/page.tsx#37" className="relative aspect-[4/5] w-full overflow-hidden">
                   <div data-eos-id="web/app/donate/page.tsx#38" className="absolute inset-0 z-10 bg-olive-800/30" />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img data-eos-id="web/app/donate/page.tsx#39" src={t.photo} alt="" className="h-full w-full object-cover" />
+                  <img data-eos-src="dynamic" data-eos-src-label="Photo" data-eos-id="web/app/donate/page.tsx#39" src={t.photo} alt="" className="h-full w-full object-cover" />
                 </div>
                 <blockquote data-eos-id="web/app/donate/page.tsx#40" data-eos-var="t.quote" data-eos-var-label="Quote" data-eos-var-scope="item" className="mt-5 text-xl font-light leading-snug text-oncream">
                   &ldquo;{t.quote}&rdquo;

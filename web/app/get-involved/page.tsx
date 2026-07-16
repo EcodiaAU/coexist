@@ -46,7 +46,7 @@ const WAYS = [
 
 function ChevronRight() {
   return (
-    <svg data-eos-id="web/app/get-involved/page.tsx#0"
+    <svg data-eos-id="web/app/get-involved/page.tsx#0" data-eos-v="2"
       aria-hidden
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 16 16"
@@ -75,7 +75,7 @@ export default function GetInvolvedPage() {
       {/* 2-col bento grid, flush, no gap */}
       <section data-eos-id="web/app/get-involved/page.tsx#4" className="grid grid-cols-1 sm:grid-cols-2 gap-0">
         {WAYS.map((w) => (
-          <BentoTile data-eos-href="dynamic" data-eos-href-label="Href" data-eos-href-scope="item" data-eos-id="web/app/get-involved/page.tsx#5"
+          <BentoTile data-eos-href="literal" data-eos-href-label="Href" data-eos-href-scope="item" data-eos-href-binding="href" data-eos-id="web/app/get-involved/page.tsx#5"
             key={w.href}
             href={w.href}
             image={w.image}
@@ -83,11 +83,11 @@ export default function GetInvolvedPage() {
             tint
           >
             <div data-eos-id="web/app/get-involved/page.tsx#6" className="relative flex flex-col justify-end h-72 sm:h-80 p-7">
-              <h2 data-eos-id="web/app/get-involved/page.tsx#7" data-eos-var="w.title" data-eos-var-label="Title" data-eos-var-scope="item" className="display-tight text-xl font-normal text-white leading-tight">
+              <h2 data-eos-id="web/app/get-involved/page.tsx#7" data-eos-var="w.title" data-eos-var-label="Title" data-eos-var-scope="item" data-eos-var-src="literal" className="display-tight text-xl font-normal text-white leading-tight">
                 {w.title}
               </h2>
-              <p data-eos-id="web/app/get-involved/page.tsx#8" data-eos-var="w.body" data-eos-var-label="Body" data-eos-var-scope="item" className="mt-2 text-sm leading-relaxed text-white/75">{w.body}</p>
-              <span data-eos-id="web/app/get-involved/page.tsx#9" className="mt-4 inline-flex items-center gap-1.5 text-sm font-normal text-sage tracking-wide">
+              <p data-eos-id="web/app/get-involved/page.tsx#8" data-eos-var="w.body" data-eos-var-label="Body" data-eos-var-scope="item" data-eos-var-src="literal" className="mt-2 text-sm leading-relaxed text-white/75">{w.body}</p>
+              <span data-eos-id="web/app/get-involved/page.tsx#9" data-eos-var="w.cta" data-eos-var-label="Cta" data-eos-var-scope="item" data-eos-var-src="literal" className="mt-4 inline-flex items-center gap-1.5 text-sm font-normal text-sage tracking-wide">
                 {w.cta}
                 <ChevronRight data-eos-id="web/app/get-involved/page.tsx#10" />
               </span>

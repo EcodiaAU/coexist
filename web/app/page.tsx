@@ -52,7 +52,7 @@ export default async function HomePage() {
     : visiblePartners
 
   return (
-    <main data-eos-id="web/app/page.tsx#0">
+    <main data-eos-id="web/app/page.tsx#0" data-eos-v="2">
       {/* Hero - parallax retained, content mirrors coexistaus.org (clean: title + subtitle + CTAs) */}
       <section data-eos-id="web/app/page.tsx#1" className="relative isolate flex min-h-[90vh] flex-col items-center justify-center overflow-hidden">
         <ParallaxImage data-eos-id="web/app/page.tsx#2" src="/images/hero.webp" priority blurDataURL={BLUR['/images/hero.webp']} />
@@ -125,11 +125,11 @@ export default async function HomePage() {
           <div data-eos-id="web/app/page.tsx#29" className="mt-12 grid grid-cols-2 gap-y-10 sm:grid-cols-5">
             {tiles.map((t, i) => (
               <Reveal data-eos-id="web/app/page.tsx#30" key={t.label} delay={i * 80} className={`text-center ${i > 0 ? 'sm:border-l sm:border-oncream/15' : ''}`}>
-                <div data-eos-id="web/app/page.tsx#31" className="text-[3.25rem] font-semibold leading-none tracking-[-0.06em] text-oncream tabular-nums">
+                <div data-eos-id="web/app/page.tsx#31" data-eos-var="t.value" data-eos-var-label="Value" data-eos-var-scope="item" className="text-[3.25rem] font-semibold leading-none tracking-[-0.06em] text-oncream tabular-nums">
                   {t.value}
-                  {t.unit && <span data-eos-id="web/app/page.tsx#32" data-eos-var="t.unit" data-eos-var-label="Unit" data-eos-var-scope="item" className="text-2xl">{t.unit}</span>}
+                  {t.unit && <span data-eos-id="web/app/page.tsx#32" data-eos-var="t.unit" data-eos-var-label="Unit" data-eos-var-scope="item" data-eos-var-src="literal" className="text-2xl">{t.unit}</span>}
                 </div>
-                <div data-eos-id="web/app/page.tsx#33" data-eos-var="t.label" data-eos-var-label="Label" data-eos-var-scope="item" className="mx-auto mt-2 max-w-[12ch] text-[11px] font-semibold uppercase tracking-[0.18em] text-oncream/70">{t.label}</div>
+                <div data-eos-id="web/app/page.tsx#33" data-eos-var="t.label" data-eos-var-label="Label" data-eos-var-scope="item" data-eos-var-src="literal" className="mx-auto mt-2 max-w-[12ch] text-[11px] font-semibold uppercase tracking-[0.18em] text-oncream/70">{t.label}</div>
               </Reveal>
             ))}
           </div>
@@ -200,7 +200,7 @@ export default async function HomePage() {
                 const isVfff = vfff && p === vfff
                 return p.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img data-eos-id="web/app/page.tsx#61" key={p.id} src={p.logo_url} alt={p.name} className={`w-auto object-contain opacity-100 ${isVfff ? 'h-16 sm:h-20' : 'h-11'}`} />
+                  <img data-eos-src="dynamic" data-eos-src-label="Logo url" data-eos-id="web/app/page.tsx#61" key={p.id} src={p.logo_url} alt={p.name} className={`w-auto object-contain opacity-100 ${isVfff ? 'h-16 sm:h-20' : 'h-11'}`} />
                 ) : (
                   <span data-eos-id="web/app/page.tsx#62" data-eos-var="p.name" data-eos-var-label="Name" data-eos-var-scope="item" key={p.id} className="text-[13px] font-semibold uppercase tracking-wider text-neutral-500">{p.name}</span>
                 )

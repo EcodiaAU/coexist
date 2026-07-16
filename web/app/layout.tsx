@@ -59,7 +59,7 @@ const ORG_JSONLD = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html data-eos-id="web/app/layout.tsx#0" lang="en-AU" className={`${montserrat.variable} ${aileron.variable}`}>
+    <html data-eos-id="web/app/layout.tsx#0" data-eos-v="2" lang="en-AU" className={`${montserrat.variable} ${aileron.variable}`}>
       {/* Spectral - Ecodia's own serif, used only for the "built by Ecodia" attribution mark. */}
       <link data-eos-href="static" data-eos-id="web/app/layout.tsx#1" rel="preconnect" href="https://fonts.googleapis.com" />
       <link data-eos-href="static" data-eos-id="web/app/layout.tsx#2" rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -75,7 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteHeader data-eos-id="web/app/layout.tsx#6" />
         <div data-eos-id="web/app/layout.tsx#7" className="flex-1">{children}</div>
         <SiteFooter data-eos-id="web/app/layout.tsx#8" />
-              <Script src="https://ecosphere.ecodia.au/preview-editor.js" strategy="afterInteractive" />
+              <Script data-eos-id="web/app/layout.tsx#9" src="https://ecosphere.ecodia.au/preview-editor.js" strategy="afterInteractive" />
       </body>
     </html>
   )

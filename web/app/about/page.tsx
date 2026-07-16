@@ -10,12 +10,12 @@ import { BLUR } from '@/lib/blur'
 
 function PersonCard({ name, sub, photo }: { name: string; sub?: string | null; photo?: string | null }) {
   return (
-    <div data-eos-id="web/app/about/page.tsx#0">
+    <div data-eos-id="web/app/about/page.tsx#0" data-eos-v="2">
       <div data-eos-id="web/app/about/page.tsx#1" className="relative aspect-square overflow-hidden rounded-none bg-olive-800">
         {photo ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img data-eos-id="web/app/about/page.tsx#2" src={photo} alt={name} loading="lazy" className="h-full w-full object-cover" />
+            <img data-eos-src="dynamic" data-eos-src-label="Photo" data-eos-id="web/app/about/page.tsx#2" src={photo} alt={name} loading="lazy" className="h-full w-full object-cover" />
             {/* olive film tint */}
             <div data-eos-id="web/app/about/page.tsx#3" className="absolute inset-0 bg-olive-900/15 mix-blend-multiply" />
             {/* grain overlay */}

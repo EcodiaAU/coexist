@@ -6,7 +6,7 @@
  */
 export function BillingBlock({ text, className = '' }: { text: string; className?: string }) {
   return (
-    <p data-eos-id="web/components/billing-block.tsx#0" aria-hidden className={`billing-block ${className}`}>
+    <p data-eos-id="web/components/billing-block.tsx#0" data-eos-v="2" aria-hidden className={`billing-block ${className}`}>
       {text}
     </p>
   )

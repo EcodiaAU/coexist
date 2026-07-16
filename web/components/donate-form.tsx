@@ -47,7 +47,7 @@ export function DonateForm() {
     'w-full border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors duration-200 focus:border-primary-400'
 
   return (
-    <form data-eos-id="web/components/donate-form.tsx#0" onSubmit={onSubmit} className="border border-neutral-200 bg-white p-6 sm:p-8">
+    <form data-eos-id="web/components/donate-form.tsx#0" data-eos-v="2" onSubmit={onSubmit} className="border border-neutral-200 bg-white p-6 sm:p-8">
       {/* Frequency toggle */}
       <div data-eos-id="web/components/donate-form.tsx#1" className="flex border border-neutral-200">
         {(['one_time', 'monthly'] as const).map((f) => (

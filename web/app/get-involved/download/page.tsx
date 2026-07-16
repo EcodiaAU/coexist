@@ -39,7 +39,7 @@ const DO = [
 
 export default function DownloadPage() {
   return (
-    <main data-eos-id="web/app/get-involved/download/page.tsx#0">
+    <main data-eos-id="web/app/get-involved/download/page.tsx#0" data-eos-v="2">
       <PageHeader data-eos-id="web/app/get-involved/download/page.tsx#1"
         eyebrow="Get involved"
         title="Get the app"
@@ -64,8 +64,8 @@ export default function DownloadPage() {
           {SHOTS.map((s) => (
             <Reveal data-eos-id="web/app/get-involved/download/page.tsx#9" key={s.caption} className="w-56">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img data-eos-id="web/app/get-involved/download/page.tsx#10" src={s.src} alt={s.caption} loading="lazy" className="w-full rounded-3xl border border-neutral-200 shadow-[0_18px_42px_rgba(71,79,47,0.18)]" />
-              <p data-eos-id="web/app/get-involved/download/page.tsx#11" data-eos-var="s.caption" data-eos-var-label="Caption" data-eos-var-scope="item" className="mt-4 text-center text-sm font-medium text-neutral-600">{s.caption}</p>
+              <img data-eos-src="literal" data-eos-src-label="Src" data-eos-src-binding="src" data-eos-id="web/app/get-involved/download/page.tsx#10" src={s.src} alt={s.caption} loading="lazy" className="w-full rounded-3xl border border-neutral-200 shadow-[0_18px_42px_rgba(71,79,47,0.18)]" />
+              <p data-eos-id="web/app/get-involved/download/page.tsx#11" data-eos-var="s.caption" data-eos-var-label="Caption" data-eos-var-scope="item" data-eos-var-src="literal" className="mt-4 text-center text-sm font-medium text-neutral-600">{s.caption}</p>
             </Reveal>
           ))}
         </div>
@@ -79,8 +79,8 @@ export default function DownloadPage() {
           <div data-eos-id="web/app/get-involved/download/page.tsx#16" className="mt-12 grid gap-6 text-left sm:grid-cols-3">
             {DO.map((d) => (
               <Reveal data-eos-id="web/app/get-involved/download/page.tsx#17" key={d.title} className="rounded-2xl border border-neutral-200 bg-white p-7 shadow-[0_8px_26px_rgba(71,79,47,0.06)]">
-                <h3 data-eos-id="web/app/get-involved/download/page.tsx#18" data-eos-var="d.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-lg font-semibold text-neutral-900">{d.title}</h3>
-                <p data-eos-id="web/app/get-involved/download/page.tsx#19" data-eos-var="d.body" data-eos-var-label="Body" data-eos-var-scope="item" className="mt-3 text-[15px] leading-relaxed text-neutral-600">{d.body}</p>
+                <h3 data-eos-id="web/app/get-involved/download/page.tsx#18" data-eos-var="d.title" data-eos-var-label="Title" data-eos-var-scope="item" data-eos-var-src="literal" className="text-lg font-semibold text-neutral-900">{d.title}</h3>
+                <p data-eos-id="web/app/get-involved/download/page.tsx#19" data-eos-var="d.body" data-eos-var-label="Body" data-eos-var-scope="item" data-eos-var-src="literal" className="mt-3 text-[15px] leading-relaxed text-neutral-600">{d.body}</p>
               </Reveal>
             ))}
           </div>

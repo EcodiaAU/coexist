@@ -32,7 +32,7 @@ export function BentoTile({
       {image ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img data-eos-id="web/components/bento-tile.tsx#0"
+          <img data-eos-src="dynamic" data-eos-src-label="Image" data-eos-id="web/components/bento-tile.tsx#0" data-eos-v="2"
             src={image}
             alt={alt}
             loading="lazy"
@@ -44,7 +44,7 @@ export function BentoTile({
           />
           {hoverImage ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img data-eos-id="web/components/bento-tile.tsx#1"
+            <img data-eos-src="dynamic" data-eos-src-label="Hover image" data-eos-id="web/components/bento-tile.tsx#1"
               src={hoverImage}
               alt=""
               aria-hidden

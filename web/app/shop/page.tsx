@@ -29,7 +29,7 @@ export default async function ShopPage() {
   const spans = bentoSpans(products.length)
 
   return (
-    <main data-eos-id="web/app/shop/page.tsx#0">
+    <main data-eos-id="web/app/shop/page.tsx#0" data-eos-v="2">
       {/* Hero: centred title over the image (matches PageHeader) */}
       <section data-eos-id="web/app/shop/page.tsx#1" className="film-cover relative isolate flex min-h-[72vh] items-center justify-center overflow-hidden lg:min-h-[82vh]">
         <ParallaxImage data-eos-id="web/app/shop/page.tsx#2"

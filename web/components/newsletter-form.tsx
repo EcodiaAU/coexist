@@ -32,7 +32,7 @@ export function NewsletterForm({
 
   if (state === 'done') {
     return (
-      <p data-eos-id="web/components/newsletter-form.tsx#0" className={`text-sm ${tone === 'light' ? 'text-oncream' : 'text-primary-700'} ${className}`}>
+      <p data-eos-id="web/components/newsletter-form.tsx#0" data-eos-v="2" className={`text-sm ${tone === 'light' ? 'text-oncream' : 'text-primary-700'} ${className}`}>
         You are in. Look out for our next update.
       </p>
     )

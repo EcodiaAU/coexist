@@ -11,10 +11,10 @@ const CERTS = [
 
 export function Certifications({ className = '' }: { className?: string }) {
   return (
-    <div data-eos-id="web/components/certifications.tsx#0" className={`inline-flex flex-wrap items-center gap-x-6 gap-y-4 ${className}`}>
+    <div data-eos-id="web/components/certifications.tsx#0" data-eos-v="2" className={`inline-flex flex-wrap items-center gap-x-6 gap-y-4 ${className}`}>
       {CERTS.map((c) => (
         // eslint-disable-next-line @next/next/no-img-element
-        <img data-eos-id="web/components/certifications.tsx#1" key={c.src} src={c.src} alt={c.alt} className="h-10 w-auto object-contain" />
+        <img data-eos-src="literal" data-eos-src-label="Src" data-eos-src-binding="src" data-eos-id="web/components/certifications.tsx#1" key={c.src} src={c.src} alt={c.alt} className="h-10 w-auto object-contain" />
       ))}
     </div>
   )

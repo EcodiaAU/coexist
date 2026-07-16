@@ -90,7 +90,7 @@ export function BuyButton({
   }
 
   return (
-    <div data-eos-id="web/components/buy-button.tsx#0">
+    <div data-eos-id="web/components/buy-button.tsx#0" data-eos-v="2">
       {hasAxes ? (
         <div data-eos-id="web/components/buy-button.tsx#1" className="mt-6 space-y-5">
           {colours.length > 0 && (

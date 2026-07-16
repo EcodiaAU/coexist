@@ -109,7 +109,7 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
   }, [])
 
   return (
-    <div data-eos-id="web/components/collective-map.tsx#0" className={`relative isolate overflow-hidden ${className}`}>
+    <div data-eos-id="web/components/collective-map.tsx#0" data-eos-v="2" className={`relative isolate overflow-hidden ${className}`}>
       <div data-eos-id="web/components/collective-map.tsx#1" ref={ref} className="cx-cmap h-full w-full" style={{ zIndex: 0 }} />
 
       {/* Grain overlay over the map container */}
@@ -126,7 +126,7 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
           <div data-eos-id="web/components/collective-map.tsx#5" className="flex items-stretch">
             {selected.cover_image_url && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img data-eos-id="web/components/collective-map.tsx#6" src={selected.cover_image_url} alt={selected.name} className="hidden h-auto w-40 shrink-0 object-cover sm:block" />
+              <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="web/components/collective-map.tsx#6" src={selected.cover_image_url} alt={selected.name} className="hidden h-auto w-40 shrink-0 object-cover sm:block" />
             )}
             <div data-eos-id="web/components/collective-map.tsx#7" className="flex-1 p-5">
               <div data-eos-id="web/components/collective-map.tsx#8" className="flex items-start justify-between">

@@ -31,7 +31,7 @@ export function ContactForm() {
 
   if (state === 'done') {
     return (
-      <div data-eos-id="web/components/contact-form.tsx#0" className="border-t border-neutral-200 py-8 text-center">
+      <div data-eos-id="web/components/contact-form.tsx#0" data-eos-v="2" className="border-t border-neutral-200 py-8 text-center">
         <p data-eos-id="web/components/contact-form.tsx#1" className="text-lg font-normal text-neutral-900">Thanks for reaching out</p>
         <p data-eos-id="web/components/contact-form.tsx#2" className="mt-2 text-neutral-600">We have got your message and will be in touch soon.</p>
       </div>

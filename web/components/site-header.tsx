@@ -9,7 +9,7 @@ function TopLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
   const base = 'text-sm font-semibold text-neutral-700 hover:text-primary-700 transition-colors'
   if (item.external) {
     return (
-      <a data-eos-href="dynamic" data-eos-href-label="Href" data-eos-href-scope="prop" data-eos-id="web/components/site-header.tsx#0" data-eos-var="item.label" data-eos-var-label="Label" data-eos-var-scope="prop" href={item.href} className={base} onClick={onNavigate}>
+      <a data-eos-href="dynamic" data-eos-href-label="Href" data-eos-href-scope="prop" data-eos-id="web/components/site-header.tsx#0" data-eos-v="2" data-eos-var="item.label" data-eos-var-label="Label" data-eos-var-scope="prop" href={item.href} className={base} onClick={onNavigate}>
         {item.label}
       </a>
     )
@@ -38,7 +38,7 @@ export function SiteHeader() {
       <div data-eos-id="web/components/site-header.tsx#3" className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 sm:h-24 sm:px-6">
         <Link data-eos-href="static" data-eos-id="web/components/site-header.tsx#4" href="/" className="flex items-center" aria-label="Co-Exist Australia home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img data-eos-id="web/components/site-header.tsx#5" src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-10 w-auto sm:h-11" />
+          <img data-eos-src="static" data-eos-id="web/components/site-header.tsx#5" src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-10 w-auto sm:h-11" />
         </Link>
 
         {/* Desktop nav */}
@@ -113,7 +113,7 @@ export function SiteHeader() {
         >
           <div data-eos-id="web/components/site-header.tsx#22" className="flex h-20 shrink-0 items-center justify-between border-b border-neutral-200 px-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img data-eos-id="web/components/site-header.tsx#23" src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-9 w-auto" />
+            <img data-eos-src="static" data-eos-id="web/components/site-header.tsx#23" src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-9 w-auto" />
             <button data-eos-id="web/components/site-header.tsx#24" className="-mr-1 p-1 text-neutral-800" aria-label="Close menu" onClick={() => setOpen(false)}>
               <svg data-eos-id="web/components/site-header.tsx#25" width="28" height="28" viewBox="0 0 24 24" fill="none">
                 <path data-eos-id="web/components/site-header.tsx#26" d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -127,7 +127,7 @@ export function SiteHeader() {
                 <li data-eos-id="web/components/site-header.tsx#29" key={item.label} className="border-b border-neutral-100">
                   {item.children ? (
                     <>
-                      <button data-eos-id="web/components/site-header.tsx#30"
+                      <button data-eos-id="web/components/site-header.tsx#30" data-eos-var="item.label" data-eos-var-label="Label" data-eos-var-scope="item"
                         className="flex w-full items-center justify-between py-4 text-left text-lg text-neutral-900"
                         onClick={() => setExpanded((e) => (e === item.label ? null : item.label))}
                         aria-expanded={expanded === item.label}

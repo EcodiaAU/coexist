@@ -3,7 +3,7 @@ import { SOCIALS, type Social } from '@/lib/site-nav'
 function Glyph({ icon }: { icon: Social['icon'] }) {
   if (icon === 'instagram') {
     return (
-      <svg className="w-[18px] h-[18px]" data-eos-id="web/components/social-icons.tsx#0" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <svg data-eos-id="web/components/social-icons.tsx#0" data-eos-v="2" className="w-[18px] h-[18px]" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <rect data-eos-id="web/components/social-icons.tsx#1" x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7" />
         <circle data-eos-id="web/components/social-icons.tsx#2" cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" />
         <circle data-eos-id="web/components/social-icons.tsx#3" cx="17.2" cy="6.8" r="1.1" fill="currentColor" />

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <main data-eos-id="web/app/contact/page.tsx#0">
+    <main data-eos-id="web/app/contact/page.tsx#0" data-eos-v="2">
       <PageHeader data-eos-id="web/app/contact/page.tsx#1"
         eyebrow="Contact us"
         title="Say hello"

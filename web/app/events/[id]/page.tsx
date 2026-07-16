@@ -45,14 +45,14 @@ export default async function EventDetailPage({ params }: Params) {
   }
 
   return (
-    <main data-eos-id="web/app/events/[id]/page.tsx#0">
+    <main data-eos-id="web/app/events/[id]/page.tsx#0" data-eos-v="2">
       <script data-eos-id="web/app/events/[id]/page.tsx#1" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Cinematic hero: full-bleed cover + olive film tint + grain + bottom flat-black gradient */}
       {event.cover_image_url ? (
         <section data-eos-id="web/app/events/[id]/page.tsx#2" className="relative isolate flex min-h-[58vh] items-end overflow-hidden bg-neutral-900 sm:min-h-[68vh]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img data-eos-id="web/app/events/[id]/page.tsx#3"
+          <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="web/app/events/[id]/page.tsx#3"
             src={event.cover_image_url}
             alt={event.title}
             className="absolute inset-0 h-full w-full object-cover"
@@ -117,7 +117,7 @@ export default async function EventDetailPage({ params }: Params) {
             <div data-eos-id="web/app/events/[id]/page.tsx#25" className="flex gap-6 py-3">
               <dt data-eos-id="web/app/events/[id]/page.tsx#26" className="label w-24 shrink-0 text-neutral-400">Hosted by</dt>
               <dd data-eos-id="web/app/events/[id]/page.tsx#27" className="text-[15px] text-neutral-900">
-                <Link data-eos-href="dynamic" data-eos-href-label="Slug" data-eos-href-scope="prop" data-eos-id="web/app/events/[id]/page.tsx#28"
+                <Link data-eos-href="dynamic" data-eos-href-label="Slug" data-eos-href-scope="prop" data-eos-id="web/app/events/[id]/page.tsx#28" data-eos-var="event.collective.name" data-eos-var-label="Name" data-eos-var-scope="prop"
                   href={`/collectives/${event.collective.slug}`}
                   className="label inline-flex items-center gap-1 text-neutral-700 hover:text-olive-700 transition-colors"
                 >

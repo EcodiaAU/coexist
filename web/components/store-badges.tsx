@@ -3,7 +3,7 @@ import { APP_STORE_URL, PLAY_STORE_URL } from '@/lib/env'
 /** App Store + Google Play badges linking to the Co-Exist app listings. */
 export function StoreBadges({ className = '' }: { className?: string }) {
   return (
-    <div data-eos-id="web/components/store-badges.tsx#0" className={`flex flex-wrap items-center gap-3 ${className}`}>
+    <div data-eos-id="web/components/store-badges.tsx#0" data-eos-v="2" className={`flex flex-wrap items-center gap-3 ${className}`}>
       <a data-eos-href="dynamic" data-eos-href-label="App store url" data-eos-href-scope="prop" data-eos-id="web/components/store-badges.tsx#1"
         href={APP_STORE_URL}
         target="_blank"
