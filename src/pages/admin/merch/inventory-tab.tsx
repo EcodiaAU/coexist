@@ -58,7 +58,7 @@ function SummaryCards({ items }: { items: FlatVariant[] }) {
   ]
 
   return (
-    <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#0" className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+    <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#0" data-eos-v="2" className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
       {cards.map((c) => {
         const Icon = c.icon
         return (
@@ -320,7 +320,7 @@ function ProductGroup({
             <Square data-eos-id="src/pages/admin/merch/inventory-tab.tsx#36" size={18} />
           )}
         </div>
-        <img data-eos-id="src/pages/admin/merch/inventory-tab.tsx#37"
+        <img data-eos-src="dynamic" data-eos-src-label="Value" data-eos-id="src/pages/admin/merch/inventory-tab.tsx#37"
           src={product.images[0] ?? '/img/placeholder-merch.jpg'}
           alt={product.name}
           className="w-10 h-10 rounded-sm object-cover shrink-0"
