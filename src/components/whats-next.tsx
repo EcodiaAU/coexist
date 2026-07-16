@@ -33,17 +33,17 @@ export function WhatsNext({
   if (suggestions.length === 0) return null
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/whats-next.tsx#0"
       className={cn('space-y-2', className)}
       initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3, duration: 0.3 }}
     >
-      <p className="text-overline text-neutral-400 px-1">{title}</p>
+      <p data-eos-id="src/components/whats-next.tsx#1" className="text-overline text-neutral-400 px-1">{title}</p>
 
-      <div className="space-y-1.5">
+      <div data-eos-id="src/components/whats-next.tsx#2" className="space-y-1.5">
         {suggestions.map((s, i) => (
-          <motion.button
+          <motion.button data-eos-id="src/components/whats-next.tsx#3"
             key={i}
             type="button"
             onClick={() => {
@@ -63,17 +63,17 @@ export function WhatsNext({
             transition={{ delay: 0.4 + i * 0.1, duration: 0.2 }}
           >
             {s.icon && (
-              <span className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-100 text-primary-400 shrink-0">
+              <span data-eos-id="src/components/whats-next.tsx#4" data-eos-var="s.icon" data-eos-var-label="Icon" data-eos-var-scope="item" className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-100 text-primary-400 shrink-0">
                 {s.icon}
               </span>
             )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-neutral-900">{s.label}</p>
+            <div data-eos-id="src/components/whats-next.tsx#5" className="flex-1 min-w-0">
+              <p data-eos-id="src/components/whats-next.tsx#6" data-eos-var="s.label" data-eos-var-label="Label" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900">{s.label}</p>
               {s.description && (
-                <p className="text-xs text-neutral-500 mt-0.5">{s.description}</p>
+                <p data-eos-id="src/components/whats-next.tsx#7" data-eos-var="s.description" data-eos-var-label="Description" data-eos-var-scope="item" className="text-xs text-neutral-500 mt-0.5">{s.description}</p>
               )}
             </div>
-            <ChevronRight size={16} className="text-neutral-400 shrink-0" />
+            <ChevronRight data-eos-id="src/components/whats-next.tsx#8" size={16} className="text-neutral-400 shrink-0" />
           </motion.button>
         ))}
       </div>
