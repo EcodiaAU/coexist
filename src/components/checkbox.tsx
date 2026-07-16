@@ -37,7 +37,7 @@ export function Checkbox({
   const isCheckedOrIndeterminate = checked || indeterminate
 
   return (
-    <label data-eos-id="src/components/checkbox.tsx#0"
+    <label data-eos-id="src/components/checkbox.tsx#0" data-eos-v="2"
       className={cn(
         'relative flex items-start gap-3 min-h-11 cursor-pointer select-none active:scale-[0.98] transition-transform duration-150',
         disabled && 'opacity-50 cursor-not-allowed',
