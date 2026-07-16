@@ -477,28 +477,28 @@ function SystemTemplateEditor({
   })
 
   return (
-    <div className="space-y-4">
-      <Header title="" back onBack={onClose} />
+    <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#0" className="space-y-4">
+      <Header data-eos-id="src/pages/admin/email/system-templates-tab.tsx#1" title="" back onBack={onClose} />
 
       {/* Template info header */}
-      <div className="rounded-sm bg-white border border-neutral-100 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-neutral-900">{template.label}</h3>
-            <p className="text-xs text-neutral-400 mt-0.5">{template.description}</p>
-            <span className={cn(
+      <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#2" className="rounded-sm bg-white border border-neutral-100 p-4">
+        <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#3" className="flex items-center justify-between gap-3">
+          <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#4">
+            <h3 data-eos-id="src/pages/admin/email/system-templates-tab.tsx#5" data-eos-var="template.label" data-eos-var-label="Label" data-eos-var-scope="prop" className="text-sm font-semibold text-neutral-900">{template.label}</h3>
+            <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#6" data-eos-var="template.description" data-eos-var-label="Description" data-eos-var-scope="prop" className="text-xs text-neutral-400 mt-0.5">{template.description}</p>
+            <span data-eos-id="src/pages/admin/email/system-templates-tab.tsx#7" data-eos-var="template.category" data-eos-var-label="Category" data-eos-var-scope="prop" className={cn(
               'inline-block mt-2 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
               template.category === 'transactional' ? 'bg-info-100 text-info-700' : 'bg-secondary-100 text-secondary-700',
             )}>
               {template.category}
             </span>
           </div>
-          <Toggle checked={enabled} onChange={setEnabled} label="Active" />
+          <Toggle data-eos-id="src/pages/admin/email/system-templates-tab.tsx#8" checked={enabled} onChange={setEnabled} label="Active" />
         </div>
       </div>
 
       {/* Subject */}
-      <Input
+      <Input data-eos-id="src/pages/admin/email/system-templates-tab.tsx#9"
         label="Subject Line"
         placeholder={template.defaultSubject}
         value={subject}
@@ -507,23 +507,23 @@ function SystemTemplateEditor({
       />
 
       {/* Hero section */}
-      <div className="space-y-3">
-        <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Hero Banner</p>
-        <div className="grid gap-3 sm:grid-cols-[80px_1fr]">
-          <Input
+      <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#10" className="space-y-3">
+        <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#11" className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Hero Banner</p>
+        <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#12" className="grid gap-3 sm:grid-cols-[80px_1fr]">
+          <Input data-eos-id="src/pages/admin/email/system-templates-tab.tsx#13"
             label="Emoji"
             value={heroEmoji}
             onChange={(e) => setHeroEmoji(e.target.value)}
             placeholder={template.defaultEmoji}
           />
-          <Input
+          <Input data-eos-id="src/pages/admin/email/system-templates-tab.tsx#14"
             label="Title"
             value={heroTitle}
             onChange={(e) => setHeroTitle(e.target.value)}
             placeholder={template.defaultHeroTitle}
           />
         </div>
-        <Input
+        <Input data-eos-id="src/pages/admin/email/system-templates-tab.tsx#15"
           label="Subtitle"
           value={heroSubtitle}
           onChange={(e) => setHeroSubtitle(e.target.value)}
@@ -532,16 +532,16 @@ function SystemTemplateEditor({
       </div>
 
       {/* CTA */}
-      <div className="space-y-3">
-        <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Call to Action</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Input
+      <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#16" className="space-y-3">
+        <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#17" className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Call to Action</p>
+        <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#18" className="grid gap-3 sm:grid-cols-2">
+          <Input data-eos-id="src/pages/admin/email/system-templates-tab.tsx#19"
             label="Button Text"
             value={ctaLabel}
             onChange={(e) => setCtaLabel(e.target.value)}
             placeholder={template.defaultCtaLabel || 'No CTA'}
           />
-          <Input
+          <Input data-eos-id="src/pages/admin/email/system-templates-tab.tsx#20"
             label="Button URL"
             value={ctaUrl}
             onChange={(e) => setCtaUrl(e.target.value)}
@@ -551,42 +551,42 @@ function SystemTemplateEditor({
       </div>
 
       {/* Custom body HTML */}
-      <div className="space-y-3">
-        <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Body Content</p>
-        <p className="text-xs text-neutral-400 leading-relaxed">
+      <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#21" className="space-y-3">
+        <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#22" className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Body Content</p>
+        <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#23" className="text-xs text-neutral-400 leading-relaxed">
           Leave blank to use the default built-in body. Add custom HTML to fully override the email body.
           Use {'{{variable}}'} placeholders for dynamic data.
         </p>
 
         {/* Preview / HTML toggle */}
-        <div className="flex gap-1 bg-neutral-50 rounded-sm p-1">
-          <button
+        <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#24" className="flex gap-1 bg-neutral-50 rounded-sm p-1">
+          <button data-eos-id="src/pages/admin/email/system-templates-tab.tsx#25"
             onClick={() => setActiveView('preview')}
             className={cn(
               'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-sm transition-colors duration-150 cursor-pointer',
               activeView === 'preview' ? 'bg-white shadow-sm text-neutral-900' : 'text-neutral-400 hover:text-neutral-600',
             )}
           >
-            <Eye size={14} /> Preview
+            <Eye data-eos-id="src/pages/admin/email/system-templates-tab.tsx#26" size={14} /> Preview
           </button>
-          <button
+          <button data-eos-id="src/pages/admin/email/system-templates-tab.tsx#27"
             onClick={() => setActiveView('html')}
             className={cn(
               'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-sm transition-colors duration-150 cursor-pointer',
               activeView === 'html' ? 'bg-white shadow-sm text-neutral-900' : 'text-neutral-400 hover:text-neutral-600',
             )}
           >
-            <Code2 size={14} /> Body HTML
+            <Code2 data-eos-id="src/pages/admin/email/system-templates-tab.tsx#28" size={14} /> Body HTML
           </button>
         </div>
 
         {activeView === 'preview' ? (
-          <div
+          <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#29"
             className="rounded-sm bg-[#f5f7f0] border border-neutral-100 shadow-sm max-h-[600px] overflow-y-auto"
             dangerouslySetInnerHTML={{ __html: sanitizedPreview }}
           />
         ) : (
-          <Input
+          <Input data-eos-id="src/pages/admin/email/system-templates-tab.tsx#30"
             type="textarea"
             value={bodyHtml}
             onChange={(e) => setBodyHtml(e.target.value)}
@@ -598,11 +598,11 @@ function SystemTemplateEditor({
       </div>
 
       {/* Available variables */}
-      <div className="rounded-sm bg-neutral-50 border border-neutral-100 p-3">
-        <p className="text-[11px] font-semibold text-neutral-500 mb-2">Available Variables</p>
-        <div className="flex flex-wrap gap-1.5">
+      <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#31" className="rounded-sm bg-neutral-50 border border-neutral-100 p-3">
+        <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#32" className="text-[11px] font-semibold text-neutral-500 mb-2">Available Variables</p>
+        <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#33" className="flex flex-wrap gap-1.5">
           {Object.keys(template.sampleData).map((key) => (
-            <span key={key} className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-white border border-neutral-100 text-neutral-600">
+            <span data-eos-id="src/pages/admin/email/system-templates-tab.tsx#34" key={key} className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-white border border-neutral-100 text-neutral-600">
               {`{{${key}}}`}
             </span>
           ))}
@@ -610,12 +610,12 @@ function SystemTemplateEditor({
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#35" className="flex flex-col gap-2 sm:flex-row">
         {override && (
-          <Button
+          <Button data-eos-id="src/pages/admin/email/system-templates-tab.tsx#36"
             variant="ghost"
             size="sm"
-            icon={<RotateCcw size={14} />}
+            icon={<RotateCcw data-eos-id="src/pages/admin/email/system-templates-tab.tsx#37" size={14} />}
             onClick={() => resetMutation.mutate()}
             loading={resetMutation.isPending}
             className="text-warning-600"
@@ -623,20 +623,20 @@ function SystemTemplateEditor({
             Reset to Default
           </Button>
         )}
-        <div className="flex-1" />
-        <Button
+        <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#38" className="flex-1" />
+        <Button data-eos-id="src/pages/admin/email/system-templates-tab.tsx#39"
           variant="secondary"
           size="sm"
-          icon={<Mail size={14} />}
+          icon={<Mail data-eos-id="src/pages/admin/email/system-templates-tab.tsx#40" size={14} />}
           onClick={() => sendTestMutation.mutate()}
           loading={sendTestMutation.isPending}
         >
           Send Test
         </Button>
-        <Button
+        <Button data-eos-id="src/pages/admin/email/system-templates-tab.tsx#41"
           variant="primary"
           size="sm"
-          icon={<Save size={14} />}
+          icon={<Save data-eos-id="src/pages/admin/email/system-templates-tab.tsx#42" size={14} />}
           onClick={() => saveMutation.mutate()}
           loading={saveMutation.isPending}
         >
@@ -664,7 +664,7 @@ export function SystemTemplatesTab() {
 
   if (editing) {
     return (
-      <SystemTemplateEditor
+      <SystemTemplateEditor data-eos-id="src/pages/admin/email/system-templates-tab.tsx#43"
         template={editing}
         override={overrideMap.get(editing.type)}
         onClose={() => setEditing(null)}
@@ -676,27 +676,27 @@ export function SystemTemplatesTab() {
   const marketing = SYSTEM_TEMPLATES.filter((t) => t.category === 'marketing')
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-sm bg-white border border-neutral-100 p-4">
-        <h4 className="text-sm font-semibold text-neutral-900">System Email Templates</h4>
-        <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
+    <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#44" className="space-y-6">
+      <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#45" className="rounded-sm bg-white border border-neutral-100 p-4">
+        <h4 data-eos-id="src/pages/admin/email/system-templates-tab.tsx#46" className="text-sm font-semibold text-neutral-900">System Email Templates</h4>
+        <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#47" className="text-xs text-neutral-400 mt-1 leading-relaxed">
           Customise the hero banner, subject line, body content, and CTA for every automated email Co-Exist sends.
           Changes take effect immediately. Unmodified templates use the built-in defaults.
         </p>
       </div>
 
       {showLoading ? (
-        <Skeleton variant="list-item" count={6} />
+        <Skeleton data-eos-id="src/pages/admin/email/system-templates-tab.tsx#48" variant="list-item" count={6} />
       ) : (
         <>
-          <TemplateGroup
+          <TemplateGroup data-eos-id="src/pages/admin/email/system-templates-tab.tsx#49"
             label="Transactional"
             description="Triggered by user actions"
             templates={transactional}
             overrideMap={overrideMap}
             onEdit={setEditing}
           />
-          <TemplateGroup
+          <TemplateGroup data-eos-id="src/pages/admin/email/system-templates-tab.tsx#50"
             label="Marketing"
             description="Campaigns & digests"
             templates={marketing}
@@ -723,19 +723,19 @@ function TemplateGroup({
   onEdit: (t: TemplateInfo) => void
 }) {
   return (
-    <div className="space-y-2">
-      <div>
-        <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{label}</p>
-        <p className="text-[11px] text-neutral-400">{description}</p>
+    <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#51" className="space-y-2">
+      <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#52">
+        <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#53" className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{label}</p>
+        <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#54" className="text-[11px] text-neutral-400">{description}</p>
       </div>
-      <StaggeredList className="space-y-1.5">
+      <StaggeredList data-eos-id="src/pages/admin/email/system-templates-tab.tsx#55" className="space-y-1.5">
         {templates.map((tpl) => {
           const override = overrideMap.get(tpl.type)
           const isCustomised = !!override
           const isDisabled = override?.enabled === false
           return (
-            <StaggeredItem key={tpl.type}>
-              <button
+            <StaggeredItem data-eos-id="src/pages/admin/email/system-templates-tab.tsx#56" key={tpl.type}>
+              <button data-eos-id="src/pages/admin/email/system-templates-tab.tsx#57"
                 type="button"
                 onClick={() => onEdit(tpl)}
                 className={cn(
@@ -743,12 +743,12 @@ function TemplateGroup({
                   isDisabled ? 'border-error-200 opacity-60' : isCustomised ? 'border-success-200 shadow-sm' : 'border-neutral-100 hover:shadow-sm',
                 )}
               >
-                <span className="text-xl shrink-0">{override?.hero_emoji || tpl.defaultEmoji}</span>
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-neutral-900 truncate">{tpl.label}</p>
+                <span data-eos-id="src/pages/admin/email/system-templates-tab.tsx#58" data-eos-var="override.hero_emoji" data-eos-var-label="Hero emoji" data-eos-var-scope="prop" className="text-xl shrink-0">{override?.hero_emoji || tpl.defaultEmoji}</span>
+                <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#59" className="flex-1 min-w-0 text-left">
+                  <div data-eos-id="src/pages/admin/email/system-templates-tab.tsx#60" className="flex items-center gap-2">
+                    <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#61" data-eos-var="tpl.label" data-eos-var-label="Label" data-eos-var-scope="item" className="text-sm font-medium text-neutral-900 truncate">{tpl.label}</p>
                     {isCustomised && (
-                      <span className={cn(
+                      <span data-eos-id="src/pages/admin/email/system-templates-tab.tsx#62" className={cn(
                         'text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full shrink-0',
                         isDisabled ? 'bg-error-100 text-error-600' : 'bg-success-100 text-success-700',
                       )}>
@@ -756,9 +756,9 @@ function TemplateGroup({
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-neutral-400 truncate mt-0.5">{override?.subject || tpl.defaultSubject}</p>
+                  <p data-eos-id="src/pages/admin/email/system-templates-tab.tsx#63" data-eos-var="override.subject" data-eos-var-label="Subject" data-eos-var-scope="prop" className="text-xs text-neutral-400 truncate mt-0.5">{override?.subject || tpl.defaultSubject}</p>
                 </div>
-                <ChevronRight size={16} className="text-neutral-300 shrink-0" />
+                <ChevronRight data-eos-id="src/pages/admin/email/system-templates-tab.tsx#64" size={16} className="text-neutral-300 shrink-0" />
               </button>
             </StaggeredItem>
           )
