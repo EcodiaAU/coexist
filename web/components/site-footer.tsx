@@ -61,14 +61,11 @@ export function SiteFooter() {
         <div data-eos-id="web/components/site-footer.tsx#9" className="grid gap-8 border-b border-oncream/15 pb-12 md:grid-cols-[1.6fr_1fr] md:items-end">
           <div data-eos-id="web/components/site-footer.tsx#10">
             <h2 data-eos-id="web/components/site-footer.tsx#11" className="display-tight max-w-xl text-4xl text-oncream sm:text-5xl">News &amp; events, worth opening</h2>
-            <p data-eos-id="web/components/site-footer.tsx#12" className="mt-4 max-w-md text-[15px] leading-relaxed text-oncream/70">
-              Upcoming events, what collectives are up to, and ways to get outside. Only when there is
-              something good to share.
-            </p>
+            <p data-eos-id="web/components/site-footer.tsx#12" className="mt-4 max-w-md text-[15px] leading-relaxed text-oncream/70">Upcoming events, what collectives are up to, and ways to get outside. Only good stuff.</p>
           </div>
           <div data-eos-id="web/components/site-footer.tsx#13">
             <NewsletterForm data-eos-id="web/components/site-footer.tsx#14" tone="light" />
-            <p data-eos-id="web/components/site-footer.tsx#15" className="mt-3 text-xs text-oncream/55">No spam. Unsubscribe any time.</p>
+            <p data-eos-id="web/components/site-footer.tsx#15" className="mt-3 text-xs text-oncream/55">Unsubscribe any time.</p>
           </div>
         </div>
 
