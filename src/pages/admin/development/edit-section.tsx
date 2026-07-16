@@ -27,7 +27,7 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item._key })
   const style = { transform: CSS.Transform.toString(transform), transition }
   return (
-    <div data-eos-id="src/pages/admin/development/edit-section.tsx#0" ref={setNodeRef} style={style} className={cn('group flex items-center gap-3 rounded-md bg-white p-3.5 shadow-sm transition-shadow', isDragging && 'shadow-sm ring-2 ring-neutral-300/50 z-10')}>
+    <div data-eos-id="src/pages/admin/development/edit-section.tsx#0" data-eos-v="2" ref={setNodeRef} style={style} className={cn('group flex items-center gap-3 rounded-md bg-white p-3.5 shadow-sm transition-shadow', isDragging && 'shadow-sm ring-2 ring-neutral-300/50 z-10')}>
       <button data-eos-id="src/pages/admin/development/edit-section.tsx#1" type="button" className="cursor-grab touch-none text-neutral-300 hover:text-neutral-500 active:cursor-grabbing" {...attributes} {...listeners}><GripVertical data-eos-id="src/pages/admin/development/edit-section.tsx#2" size={18} /></button>
       <div data-eos-id="src/pages/admin/development/edit-section.tsx#3" className="flex-1 min-w-0">
         <p data-eos-id="src/pages/admin/development/edit-section.tsx#4" data-eos-var="item.module.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="text-[13px] font-bold text-neutral-900 truncate">{item.module.title}</p>
