@@ -108,7 +108,7 @@ const STATUS_CONFIG: Record<string, {
 }> = {
   pending: {
     label: 'Pending Review', color: 'text-warning-800', bg: 'bg-warning-100',
-    border: 'border-warning-200', icon: <Clock data-eos-id="src/pages/admin/applications.tsx#0" size={12} />,
+    border: 'border-warning-200', icon: <Clock data-eos-id="src/pages/admin/applications.tsx#0" data-eos-v="2" size={12} />,
     strip: 'bg-warning-500',
     glow: 'ring-1 ring-warning-100',
   },
