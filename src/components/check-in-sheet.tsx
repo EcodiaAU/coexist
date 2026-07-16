@@ -151,7 +151,7 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
 
   return (
     <>
-      <BottomSheet data-eos-id="src/components/check-in-sheet.tsx#0" open={open} onClose={handleClose} snapPoints={snapPoints}>
+      <BottomSheet data-eos-id="src/components/check-in-sheet.tsx#0" data-eos-v="2" open={open} onClose={handleClose} snapPoints={snapPoints}>
         <div data-eos-id="src/components/check-in-sheet.tsx#1" className="h-[70vh] overflow-y-auto relative">
         <AnimatePresence data-eos-id="src/components/check-in-sheet.tsx#2" mode="wait">
           {/* Profile details (blocks check-in) */}
