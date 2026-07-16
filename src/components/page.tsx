@@ -60,8 +60,8 @@ export function Page({
   const hasInlineHeader = !!header && !stickyOverlay
 
   return (
-    <div className={cn('flex flex-col flex-1', !isDesktopNav && 'min-h-0')}>
-      <main
+    <div data-eos-id="src/components/page.tsx#0" className={cn('flex flex-col flex-1', !isDesktopNav && 'min-h-0')}>
+      <main data-eos-id="src/components/page.tsx#1"
         id="main-content"
         ref={scrollRef}
         className={cn(
@@ -88,8 +88,8 @@ export function Page({
         {/* Atmospheric background - sticky so it stays viewport-pinned while
             content scrolls over it. Negative margin collapses it out of flow. */}
         {!noBackground && (
-          <div className={cn("pointer-events-none sticky top-0 h-[100dvh] -mb-[100dvh] -z-10 overflow-hidden", fullBleed ? 'mx-0' : '-mx-4 lg:-mx-6')} aria-hidden="true">
-            <div className="absolute inset-0 bg-gradient-to-b from-primary-50/40 via-white to-white" />
+          <div data-eos-id="src/components/page.tsx#2" className={cn("pointer-events-none sticky top-0 h-[100dvh] -mb-[100dvh] -z-10 overflow-hidden", fullBleed ? 'mx-0' : '-mx-4 lg:-mx-6')} aria-hidden="true">
+            <div data-eos-id="src/components/page.tsx#3" className="absolute inset-0 bg-gradient-to-b from-primary-50/40 via-white to-white" />
           </div>
         )}
 
@@ -99,13 +99,13 @@ export function Page({
         {stickyOverlay}
         {hasInlineHeader && header}
 
-        <div className="relative">
+        <div data-eos-id="src/components/page.tsx#4" className="relative">
           {children}
         </div>
       </main>
 
       {footer && (
-        <div
+        <div data-eos-id="src/components/page.tsx#5"
           className={cn(
             'sticky bottom-0 z-30',
             fullBleed
