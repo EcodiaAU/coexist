@@ -172,7 +172,7 @@ export function Dropdown({
   }, [open, isMobile])
 
   const trigger = (
-    <button
+    <button data-eos-id="src/components/dropdown.tsx#0"
       ref={triggerRef}
       type="button"
       id={id}
@@ -201,7 +201,7 @@ export function Dropdown({
         triggerClassName,
       )}
     >
-      <span
+      <span data-eos-id="src/components/dropdown.tsx#1"
         className={cn(
           'truncate min-w-0',
           tone === 'dark'
@@ -211,11 +211,11 @@ export function Dropdown({
       >
         {selectedOption ? (
           selectedOption.icon ? (
-            <span className="flex items-center gap-2 min-w-0">
-              <span className="shrink-0" aria-hidden="true">
+            <span data-eos-id="src/components/dropdown.tsx#2" className="flex items-center gap-2 min-w-0">
+              <span data-eos-id="src/components/dropdown.tsx#3" data-eos-var="selectedOption.icon" data-eos-var-label="Icon" data-eos-var-scope="prop" className="shrink-0" aria-hidden="true">
                 {selectedOption.icon}
               </span>
-              <span className="truncate">{selectedOption.label}</span>
+              <span data-eos-id="src/components/dropdown.tsx#4" data-eos-var="selectedOption.label" data-eos-var-label="Label" data-eos-var-scope="prop" className="truncate">{selectedOption.label}</span>
             </span>
           ) : (
             selectedOption.label
@@ -224,7 +224,7 @@ export function Dropdown({
           placeholder
         )}
       </span>
-      <ChevronDown
+      <ChevronDown data-eos-id="src/components/dropdown.tsx#5"
         size={18}
         className={cn(
           'shrink-0 ml-2 transition-transform duration-150',
@@ -237,7 +237,7 @@ export function Dropdown({
   )
 
   const optionsList = (
-    <ul
+    <ul data-eos-id="src/components/dropdown.tsx#6"
       id={listboxId}
       role="listbox"
       aria-labelledby={label ? labelId : undefined}
@@ -247,7 +247,7 @@ export function Dropdown({
         const isSelected = option.value === value
 
         return (
-          <li
+          <li data-eos-id="src/components/dropdown.tsx#7"
             key={option.value}
             role="option"
             aria-selected={isSelected}
@@ -269,16 +269,16 @@ export function Dropdown({
                 : 'text-neutral-900 hover:bg-neutral-50 active:bg-neutral-50',
             )}
           >
-            <span className="flex items-center gap-3 min-w-0">
+            <span data-eos-id="src/components/dropdown.tsx#8" className="flex items-center gap-3 min-w-0">
               {option.icon && (
-                <span className="shrink-0" aria-hidden="true">
+                <span data-eos-id="src/components/dropdown.tsx#9" data-eos-var="option.icon" data-eos-var-label="Icon" data-eos-var-scope="item" className="shrink-0" aria-hidden="true">
                   {option.icon}
                 </span>
               )}
-              <span className="whitespace-normal sm:whitespace-nowrap">{option.label}</span>
+              <span data-eos-id="src/components/dropdown.tsx#10" data-eos-var="option.label" data-eos-var-label="Label" data-eos-var-scope="item" className="whitespace-normal sm:whitespace-nowrap">{option.label}</span>
             </span>
             {isSelected && (
-              <Check
+              <Check data-eos-id="src/components/dropdown.tsx#11"
                 size={18}
                 className="shrink-0 text-primary-400"
                 aria-hidden="true"
@@ -291,27 +291,27 @@ export function Dropdown({
   )
 
   return (
-    <div className={cn('w-full', className)}>
+    <div data-eos-id="src/components/dropdown.tsx#12" className={cn('w-full', className)}>
       {label && (
-        <label
+        <label data-eos-id="src/components/dropdown.tsx#13"
           id={labelId}
           htmlFor={id}
           className="block mb-1.5 text-sm font-medium text-neutral-900"
         >
           {label}
-          {required && <span className="text-error ml-0.5">*</span>}
+          {required && <span data-eos-id="src/components/dropdown.tsx#14" className="text-error ml-0.5">*</span>}
         </label>
       )}
 
-      <div className="relative">
+      <div data-eos-id="src/components/dropdown.tsx#15" className="relative">
         {trigger}
 
         {/* Desktop popover  portalled with fixed position to escape overflow clipping */}
         {!isMobile &&
           createPortal(
-            <AnimatePresence>
+            <AnimatePresence data-eos-id="src/components/dropdown.tsx#16">
               {open && (
-                <motion.div
+                <motion.div data-eos-id="src/components/dropdown.tsx#17"
                   initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -4, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.98 }}
@@ -320,7 +320,7 @@ export function Dropdown({
                   className="z-[60] relative gpu-panel"
                 >
                   {/* Scrollable list */}
-                  <div
+                  <div data-eos-id="src/components/dropdown.tsx#18"
                     ref={(node) => {
                       (popoverRef as React.MutableRefObject<HTMLDivElement | null>).current = node
                       if (node) {
@@ -345,7 +345,7 @@ export function Dropdown({
                   </div>
 
                   {/* Scroll hint gradient  overlays bottom of list */}
-                  <div
+                  <div data-eos-id="src/components/dropdown.tsx#19"
                     data-scroll-hint
                     className={cn(
                       'absolute bottom-0 left-0 right-0 h-10 rounded-b-md',
@@ -363,12 +363,12 @@ export function Dropdown({
 
       {/* Mobile bottom sheet */}
       {isMobile && (
-        <BottomSheet
+        <BottomSheet data-eos-id="src/components/dropdown.tsx#20"
           open={open}
           onClose={() => setOpen(false)}
           snapPoints={[0.4]}
         >
-          <h3 className="font-heading text-base font-semibold text-neutral-900 mb-3">
+          <h3 data-eos-id="src/components/dropdown.tsx#21" className="font-heading text-base font-semibold text-neutral-900 mb-3">
             {label ?? placeholder}
           </h3>
           {optionsList}
@@ -377,7 +377,7 @@ export function Dropdown({
 
       {/* Error text */}
       {error && (
-        <p id={errorId} role="alert" className="mt-1.5 text-caption text-error">
+        <p data-eos-id="src/components/dropdown.tsx#22" id={errorId} role="alert" className="mt-1.5 text-caption text-error">
           {error}
         </p>
       )}
