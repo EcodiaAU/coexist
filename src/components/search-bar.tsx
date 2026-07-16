@@ -100,9 +100,9 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
     const h = compact ? 'h-11' : 'h-12'
 
     return (
-      <div className={cn('relative group', className)}>
+      <div data-eos-id="src/components/search-bar.tsx#0" className={cn('relative group', className)}>
         {/* Animated gradient glow behind - visible on focus */}
-        <motion.div
+        <motion.div data-eos-id="src/components/search-bar.tsx#1"
           className="absolute -inset-[1px] rounded-full opacity-0 pointer-events-none"
           style={{
             background:
@@ -129,7 +129,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
         />
 
         {/* Main input container */}
-        <motion.div
+        <motion.div data-eos-id="src/components/search-bar.tsx#2"
           className={cn(
             'relative flex items-center gap-2',
             h,
@@ -149,7 +149,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           }
         >
           {/* Search icon - morphs on focus */}
-          <motion.div
+          <motion.div data-eos-id="src/components/search-bar.tsx#3"
             className={cn(
               'flex items-center justify-center shrink-0',
               compact ? 'ml-3' : 'ml-3.5',
@@ -164,7 +164,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
                 : { type: 'spring', stiffness: 400, damping: 20 }
             }
           >
-            <Search
+            <Search data-eos-id="src/components/search-bar.tsx#4"
               size={compact ? 16 : 18}
               className={cn(
                 'transition-colors duration-200',
@@ -174,7 +174,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           </motion.div>
 
           {/* Input */}
-          <input
+          <input data-eos-id="src/components/search-bar.tsx#5"
             ref={setRef}
             type="text"
             value={value}
@@ -197,9 +197,9 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           />
 
           {/* Right side: sparkle hint or clear button */}
-          <AnimatePresence mode="wait">
+          <AnimatePresence data-eos-id="src/components/search-bar.tsx#6" mode="wait">
             {value ? (
-              <motion.button
+              <motion.button data-eos-id="src/components/search-bar.tsx#7"
                 key="clear"
                 type="button"
                 onClick={handleClear}
@@ -220,10 +220,10 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
                     : { type: 'spring', stiffness: 500, damping: 25 }
                 }
               >
-                <X size={compact ? 14 : 16} />
+                <X data-eos-id="src/components/search-bar.tsx#8" size={compact ? 14 : 16} />
               </motion.button>
             ) : showSparkle && !focused ? (
-              <motion.div
+              <motion.div data-eos-id="src/components/search-bar.tsx#9"
                 key="sparkle"
                 className={cn(
                   'flex items-center justify-center shrink-0',
@@ -238,11 +238,11 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
                     : { type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }
                 }
               >
-                <Sparkles size={compact ? 14 : 16} className="text-neutral-400/50" />
+                <Sparkles data-eos-id="src/components/search-bar.tsx#10" size={compact ? 14 : 16} className="text-neutral-400/50" />
               </motion.div>
             ) : (
               /* Spacer so input padding stays consistent */
-              <div className={compact ? 'w-2.5 shrink-0' : 'w-3 shrink-0'} />
+              <div data-eos-id="src/components/search-bar.tsx#11" className={compact ? 'w-2.5 shrink-0' : 'w-3 shrink-0'} />
             )}
           </AnimatePresence>
         </motion.div>
