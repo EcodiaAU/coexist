@@ -53,7 +53,7 @@ export default function AdminEditQuizPage() {
     } catch { toast.error('Failed to update quiz') }
   }, [quizId, title, description, passScore, randomize, timeLimit, maxAttempts, questions, updateQuiz, saveQuestions, toast])
 
-  if (quizLoading || questionsLoading) return <div data-eos-id="src/pages/admin/development/edit-quiz.tsx#0" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#1" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#2" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#3" className="h-32 rounded-md" /></div>
+  if (quizLoading || questionsLoading) return <div data-eos-id="src/pages/admin/development/edit-quiz.tsx#0" data-eos-v="2" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#1" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#2" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#3" className="h-32 rounded-md" /></div>
 
   if (saved) {
     return (
