@@ -87,7 +87,7 @@ export function OptimizedImage({
 
   if (error) {
     return (
-      <div data-eos-id="src/components/optimized-image.tsx#0"
+      <div data-eos-id="src/components/optimized-image.tsx#0" data-eos-v="2"
         className={cn(
           'flex items-center justify-center bg-primary-50',
           wrapperClassName,
@@ -106,7 +106,7 @@ export function OptimizedImage({
     >
       {/* Tiny blur placeholder */}
       {showPlaceholder && (
-        <img data-eos-id="src/components/optimized-image.tsx#3"
+        <img data-eos-src="dynamic" data-eos-src-label="Placeholder src" data-eos-id="src/components/optimized-image.tsx#3"
           src={placeholderSrc}
           alt=""
           aria-hidden="true"
@@ -114,7 +114,7 @@ export function OptimizedImage({
         />
       )}
 
-      <img data-eos-id="src/components/optimized-image.tsx#4"
+      <img data-eos-src="dynamic" data-eos-src-label="Img src" data-eos-id="src/components/optimized-image.tsx#4"
         ref={imgRef}
         src={imgSrc}
         srcSet={srcSet || undefined}
