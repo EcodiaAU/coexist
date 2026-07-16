@@ -31,7 +31,7 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
   const dAccent = getAccentClasses('main')
 
   return (
-    <aside data-eos-id="src/components/sidebar/sidebar-shell.tsx#0"
+    <aside data-eos-id="src/components/sidebar/sidebar-shell.tsx#0" data-eos-v="2"
       className={cn(
         'hidden md:flex flex-col',
         'sticky top-0 self-start min-h-dvh max-h-dvh z-50',
@@ -51,7 +51,7 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
           className={cn('focus-visible:outline-none focus-visible:ring-2 rounded-md', dAccent.focusRing)}
           aria-label={`${APP_NAME} home`}
         >
-          <img data-eos-id="src/components/sidebar/sidebar-shell.tsx#3"
+          <img data-eos-src="static" data-eos-id="src/components/sidebar/sidebar-shell.tsx#3"
             src="/logos/black-wordmark.png"
             alt={APP_NAME}
             className={cn(
@@ -59,7 +59,7 @@ export function SidebarShell({ collapsed, onToggleCollapse, children }: SidebarS
               collapsed ? 'hidden' : 'block',
             )}
           />
-          <img data-eos-id="src/components/sidebar/sidebar-shell.tsx#4"
+          <img data-eos-src="static" data-eos-id="src/components/sidebar/sidebar-shell.tsx#4"
             src="/logos/black-logo-transparent.png"
             alt={APP_NAME}
             className={cn(
