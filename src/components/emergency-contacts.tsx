@@ -33,7 +33,7 @@ interface CategoryVisual {
 const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
   emergency: {
     title: 'Emergency Services',
-    icon: <Siren data-eos-id="src/components/emergency-contacts.tsx#0" size={18} />,
+    icon: <Siren data-eos-id="src/components/emergency-contacts.tsx#0" data-eos-v="2" size={18} />,
     gradient: 'from-error-500 to-error-600',
     ringColor: 'ring-error-200',
     phoneColor: 'text-error-500',
