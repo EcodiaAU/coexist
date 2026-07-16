@@ -14,7 +14,7 @@ export function OfflineBanner({ className }: OfflineBannerProps) {
   const show = isOffline || justReconnected
 
   return (
-    <AnimatePresence data-eos-id="src/components/offline-banner.tsx#0">
+    <AnimatePresence data-eos-id="src/components/offline-banner.tsx#0" data-eos-v="2">
       {show && (
         <motion.div data-eos-id="src/components/offline-banner.tsx#1"
           initial={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
