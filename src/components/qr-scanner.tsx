@@ -76,7 +76,7 @@ function WebQrScanner({ onScan, onError }: { onScan: (value: string) => void; on
   }, [cameraReady, onScan])
 
   return (
-    <div data-eos-id="src/components/qr-scanner.tsx#0" className="relative w-full aspect-square max-w-[280px] mx-auto rounded-md overflow-hidden bg-black">
+    <div data-eos-id="src/components/qr-scanner.tsx#0" data-eos-v="2" className="relative w-full aspect-square max-w-[280px] mx-auto rounded-md overflow-hidden bg-black">
       <video data-eos-id="src/components/qr-scanner.tsx#1" ref={videoRef} className="absolute inset-0 w-full h-full object-cover" muted playsInline />
       <canvas data-eos-id="src/components/qr-scanner.tsx#2" ref={canvasRef} className="hidden" />
       {/* Scan overlay */}
