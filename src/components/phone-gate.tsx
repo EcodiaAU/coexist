@@ -137,7 +137,7 @@ export function PhoneGate() {
   if (!show) return null
 
   return createPortal(
-    <div
+    <div data-eos-id="src/components/phone-gate.tsx#0"
       className="fixed left-0 right-0 top-0 z-[200] flex items-end sm:items-center justify-center"
       // Lift the container's bottom edge above the keyboard. keyboardHeight
       // comes from the Capacitor Keyboard plugin on native (the only signal
@@ -154,9 +154,9 @@ export function PhoneGate() {
     >
       {/* Non-dismissable backdrop - no onClick, no Escape handler. Covers the
           whole layout viewport (including behind the keyboard). */}
-      <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+      <div data-eos-id="src/components/phone-gate.tsx#1" className="fixed inset-0 bg-black/60" aria-hidden="true" />
 
-      <div
+      <div data-eos-id="src/components/phone-gate.tsx#2"
         ref={cardRef}
         className="relative w-full sm:max-w-md max-h-full overflow-y-auto bg-surface-0 rounded-t-md sm:rounded-md shadow-sm flex flex-col"
         style={{
@@ -164,21 +164,21 @@ export function PhoneGate() {
             keyboardHeight > 0 ? '0.75rem' : 'max(env(safe-area-inset-bottom, 0px), 1.5rem)',
         }}
       >
-        <div className="px-6 pt-7 pb-6 space-y-5">
-          <div className="flex flex-col items-center text-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
-              <Phone size={22} className="text-primary-800" />
+        <div data-eos-id="src/components/phone-gate.tsx#3" className="px-6 pt-7 pb-6 space-y-5">
+          <div data-eos-id="src/components/phone-gate.tsx#4" className="flex flex-col items-center text-center gap-3">
+            <div data-eos-id="src/components/phone-gate.tsx#5" className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
+              <Phone data-eos-id="src/components/phone-gate.tsx#6" size={22} className="text-primary-800" />
             </div>
-            <h2 id="phone-gate-title" className="font-heading text-xl font-bold text-neutral-900">
+            <h2 data-eos-id="src/components/phone-gate.tsx#7" id="phone-gate-title" className="font-heading text-xl font-bold text-neutral-900">
               Add your mobile number
             </h2>
-            <p className="text-sm text-neutral-500 leading-relaxed">
+            <p data-eos-id="src/components/phone-gate.tsx#8" className="text-sm text-neutral-500 leading-relaxed">
               We ask everyone for a mobile number for safety, so event leaders can
               reach you on the day of events you are attending.
             </p>
           </div>
 
-          <Input
+          <Input data-eos-id="src/components/phone-gate.tsx#9"
             type="tel"
             label="Mobile number"
             value={phone}
@@ -202,7 +202,7 @@ export function PhoneGate() {
             error={error ?? undefined}
           />
 
-          <Button
+          <Button data-eos-id="src/components/phone-gate.tsx#10"
             variant="primary"
             fullWidth
             loading={saving}
