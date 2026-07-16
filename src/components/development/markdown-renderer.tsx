@@ -9,7 +9,7 @@ interface MarkdownRendererProps {
 
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   return (
-    <div data-eos-id="src/components/development/markdown-renderer.tsx#0"
+    <div data-eos-id="src/components/development/markdown-renderer.tsx#0" data-eos-v="2"
       className={cn(
         // Tailwind prose styling for markdown content
         'prose prose-sm max-w-none',
