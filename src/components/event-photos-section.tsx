@@ -96,7 +96,7 @@ export function EventPhotosSection({
   const totalPhotos = photos.length
 
   return (
-    <section data-eos-id="src/components/event-photos-section.tsx#0" id="event-photos-section" className="w-full scroll-mt-20">
+    <section data-eos-id="src/components/event-photos-section.tsx#0" data-eos-v="2" id="event-photos-section" className="w-full scroll-mt-20">
       {/* Header */}
       <div data-eos-id="src/components/event-photos-section.tsx#1" className="flex items-end justify-between mb-3">
         <div data-eos-id="src/components/event-photos-section.tsx#2" className="min-w-0">
@@ -188,7 +188,7 @@ export function EventPhotosSection({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <img data-eos-id="src/components/event-photos-section.tsx#25"
+                    <img data-eos-src="dynamic" data-eos-src-label="Url" data-eos-id="src/components/event-photos-section.tsx#25"
                       src={p.url}
                       alt={p.caption ?? ''}
                       loading="lazy"
@@ -451,7 +451,7 @@ export function PhotoCarouselLightbox({
                     className="max-w-full max-h-full rounded-sm pointer-events-auto"
                   />
                 ) : (
-                  <img data-eos-id="src/components/event-photos-section.tsx#52"
+                  <img data-eos-src="dynamic" data-eos-src-label="Url" data-eos-id="src/components/event-photos-section.tsx#52"
                     src={p.url}
                     alt={p.caption ?? ''}
                     draggable={false}
