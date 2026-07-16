@@ -45,7 +45,7 @@ const PhotoItem = memo(function PhotoItem({
   const handleLoad = useCallback(() => onLoad(image.id), [onLoad, image.id])
 
   return (
-    <motion.button
+    <motion.button data-eos-id="src/components/photo-grid.tsx#0"
       key={image.id}
       type="button"
       role="gridcell"
@@ -60,7 +60,7 @@ const PhotoItem = memo(function PhotoItem({
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
       )}
     >
-      <img
+      <img data-eos-id="src/components/photo-grid.tsx#1"
         src={isSupabaseStorageUrl(image.src) ? getTransformUrl(image.src, { width: 640, quality: 80 }) : image.src}
         srcSet={getSrcSet(image.src, [200, 400, 640]) || undefined}
         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
@@ -75,18 +75,18 @@ const PhotoItem = memo(function PhotoItem({
       />
 
       {!isLoaded && (
-        <div
+        <div data-eos-id="src/components/photo-grid.tsx#2"
           className="absolute inset-0 animate-pulse bg-white"
           aria-hidden="true"
         />
       )}
 
       {isLastVisible && (
-        <div
+        <div data-eos-id="src/components/photo-grid.tsx#3"
           className="absolute inset-0 flex items-center justify-center bg-black/60"
           aria-hidden="true"
         >
-          <span className="text-lg font-heading font-semibold text-white">
+          <span data-eos-id="src/components/photo-grid.tsx#4" className="text-lg font-heading font-semibold text-white">
             +{overflowCount} more
           </span>
         </div>
@@ -112,7 +112,7 @@ export function PhotoGrid({
 
   if (loading) {
     return (
-      <div
+      <div data-eos-id="src/components/photo-grid.tsx#5"
         role="status"
         aria-label="Loading photos"
         className={cn(
@@ -121,12 +121,12 @@ export function PhotoGrid({
         )}
       >
         {Array.from({ length: maxVisible }).map((_, i) => (
-          <div
+          <div data-eos-id="src/components/photo-grid.tsx#6"
             key={i}
             className="aspect-square animate-pulse rounded-sm bg-white"
           />
         ))}
-        <span className="sr-only">Loading photos</span>
+        <span data-eos-id="src/components/photo-grid.tsx#7" className="sr-only">Loading photos</span>
       </div>
     )
   }
@@ -138,7 +138,7 @@ export function PhotoGrid({
   const overflowCount = images.length - maxVisible
 
   return (
-    <div
+    <div data-eos-id="src/components/photo-grid.tsx#8"
       role="grid"
       aria-label={ariaLabel}
       className={cn(
@@ -147,7 +147,7 @@ export function PhotoGrid({
       )}
     >
       {visibleImages.map((image, index) => (
-        <PhotoItem
+        <PhotoItem data-eos-id="src/components/photo-grid.tsx#9"
           key={image.id}
           image={image}
           index={index}
