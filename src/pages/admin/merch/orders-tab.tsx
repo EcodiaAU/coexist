@@ -119,7 +119,7 @@ function OrderTimeline({ status, updatedAt }: { status: OrderStatus; createdAt: 
 
   if (isFinal) {
     return (
-      <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#0" className="flex items-center gap-2 px-3 py-2 rounded-sm bg-error-50/60">
+      <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#0" data-eos-v="2" className="flex items-center gap-2 px-3 py-2 rounded-sm bg-error-50/60">
         <RefreshCw data-eos-id="src/pages/admin/merch/orders-tab.tsx#1" size={14} className="text-error-500" />
         <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#2" className="text-xs font-medium text-error-700 capitalize">{status}</span>
         <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#3" className="text-xs text-error-400 ml-auto">{formatDateTime(updatedAt)}</span>
@@ -677,7 +677,7 @@ export default function OrdersTab() {
                 {selectedOrder.items.map((item) => (
                   <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#102" key={item.id} className="flex items-center gap-3 p-2 rounded-sm bg-neutral-50">
                     {item.image_url && (
-                      <img data-eos-id="src/pages/admin/merch/orders-tab.tsx#103"
+                      <img data-eos-src="dynamic" data-eos-src-label="Image url" data-eos-id="src/pages/admin/merch/orders-tab.tsx#103"
                         src={item.image_url}
                         alt={item.product_name}
                         className="w-10 h-10 rounded-sm object-cover shrink-0"
