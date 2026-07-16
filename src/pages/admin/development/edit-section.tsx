@@ -27,17 +27,17 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item._key })
   const style = { transform: CSS.Transform.toString(transform), transition }
   return (
-    <div ref={setNodeRef} style={style} className={cn('group flex items-center gap-3 rounded-md bg-white p-3.5 shadow-sm transition-shadow', isDragging && 'shadow-sm ring-2 ring-neutral-300/50 z-10')}>
-      <button type="button" className="cursor-grab touch-none text-neutral-300 hover:text-neutral-500 active:cursor-grabbing" {...attributes} {...listeners}><GripVertical size={18} /></button>
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-bold text-neutral-900 truncate">{item.module.title}</p>
-        <span className="flex items-center gap-0.5 text-[11px] text-neutral-400"><Clock size={10} />{item.module.estimated_minutes}m</span>
+    <div data-eos-id="src/pages/admin/development/edit-section.tsx#0" ref={setNodeRef} style={style} className={cn('group flex items-center gap-3 rounded-md bg-white p-3.5 shadow-sm transition-shadow', isDragging && 'shadow-sm ring-2 ring-neutral-300/50 z-10')}>
+      <button data-eos-id="src/pages/admin/development/edit-section.tsx#1" type="button" className="cursor-grab touch-none text-neutral-300 hover:text-neutral-500 active:cursor-grabbing" {...attributes} {...listeners}><GripVertical data-eos-id="src/pages/admin/development/edit-section.tsx#2" size={18} /></button>
+      <div data-eos-id="src/pages/admin/development/edit-section.tsx#3" className="flex-1 min-w-0">
+        <p data-eos-id="src/pages/admin/development/edit-section.tsx#4" data-eos-var="item.module.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="text-[13px] font-bold text-neutral-900 truncate">{item.module.title}</p>
+        <span data-eos-id="src/pages/admin/development/edit-section.tsx#5" data-eos-var="item.module.estimated_minutes" data-eos-var-label="Estimated minutes" data-eos-var-scope="prop" className="flex items-center gap-0.5 text-[11px] text-neutral-400"><Clock data-eos-id="src/pages/admin/development/edit-section.tsx#6" size={10} />{item.module.estimated_minutes}m</span>
       </div>
-      <button type="button" onClick={onToggleRequired} className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-bold transition-colors', item.is_required ? 'bg-moss-100 text-moss-700' : 'bg-neutral-50 text-neutral-400')}>
-        {item.is_required && <Check size={10} />}
+      <button data-eos-id="src/pages/admin/development/edit-section.tsx#7" data-eos-var="item.is_required" data-eos-var-label="Is required" data-eos-var-scope="prop" type="button" onClick={onToggleRequired} className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-bold transition-colors', item.is_required ? 'bg-moss-100 text-moss-700' : 'bg-neutral-50 text-neutral-400')}>
+        {item.is_required && <Check data-eos-id="src/pages/admin/development/edit-section.tsx#8" size={10} />}
         {item.is_required ? 'Required' : 'Optional'}
       </button>
-      <button type="button" onClick={onRemove} className="flex items-center justify-center w-9 h-9 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-[transform,opacity] sm:opacity-0 sm:group-hover:opacity-100"><Trash2 size={16} /></button>
+      <button data-eos-id="src/pages/admin/development/edit-section.tsx#9" type="button" onClick={onRemove} className="flex items-center justify-center w-9 h-9 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-[transform,opacity] sm:opacity-0 sm:group-hover:opacity-100"><Trash2 data-eos-id="src/pages/admin/development/edit-section.tsx#10" size={16} /></button>
     </div>
   )
 }
@@ -87,51 +87,51 @@ export default function AdminEditSectionPage() {
     } catch { toast.error('Failed to update section') }
   }, [sectionId, title, description, category, thumbnailUrl, prerequisiteId, moduleItems, updateSection, saveSectionModules, toast, navigate])
 
-  if (sectionLoading || smLoading) return <div className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton className="h-10 w-32 rounded-sm" /><Skeleton className="h-48 rounded-md" /><Skeleton className="h-32 rounded-md" /></div>
+  if (sectionLoading || smLoading) return <div data-eos-id="src/pages/admin/development/edit-section.tsx#11" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-section.tsx#12" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-section.tsx#13" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-section.tsx#14" className="h-32 rounded-md" /></div>
 
   return (
-    <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">
-      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5 mb-1">
-          <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-secondary-700 shadow-sm"><Layers size={16} className="text-white" /></div>
-          <h2 className="font-heading text-base font-bold text-neutral-900">Section Details</h2>
+    <motion.div data-eos-id="src/pages/admin/development/edit-section.tsx#15" variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">
+      <motion.div data-eos-id="src/pages/admin/development/edit-section.tsx#16" variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6 space-y-4">
+        <div data-eos-id="src/pages/admin/development/edit-section.tsx#17" className="flex items-center gap-2.5 mb-1">
+          <div data-eos-id="src/pages/admin/development/edit-section.tsx#18" className="flex items-center justify-center w-9 h-9 rounded-sm bg-secondary-700 shadow-sm"><Layers data-eos-id="src/pages/admin/development/edit-section.tsx#19" size={16} className="text-white" /></div>
+          <h2 data-eos-id="src/pages/admin/development/edit-section.tsx#20" className="font-heading text-base font-bold text-neutral-900">Section Details</h2>
         </div>
-        <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        <Input type="textarea" label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Dropdown label="Category" options={CATEGORY_OPTIONS} value={category} onChange={(v) => setCategory(v as DevCategory)} />
-          <Dropdown label="Prerequisite" options={prerequisiteOptions} value={prerequisiteId} onChange={setPrerequisiteId} />
+        <Input data-eos-id="src/pages/admin/development/edit-section.tsx#21" label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <Input data-eos-id="src/pages/admin/development/edit-section.tsx#22" type="textarea" label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+        <div data-eos-id="src/pages/admin/development/edit-section.tsx#23" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Dropdown data-eos-id="src/pages/admin/development/edit-section.tsx#24" label="Category" options={CATEGORY_OPTIONS} value={category} onChange={(v) => setCategory(v as DevCategory)} />
+          <Dropdown data-eos-id="src/pages/admin/development/edit-section.tsx#25" label="Prerequisite" options={prerequisiteOptions} value={prerequisiteId} onChange={setPrerequisiteId} />
         </div>
-        <Input label="Thumbnail URL" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} />
+        <Input data-eos-id="src/pages/admin/development/edit-section.tsx#26" label="Thumbnail URL" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} />
       </motion.div>
 
-      <motion.div variants={fadeUp}>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-heading text-[13px] font-bold text-neutral-700/60 uppercase tracking-widest">Modules</h2>
-          <Button variant="secondary" size="sm" icon={<Plus size={14} />} onClick={() => setShowPicker(!showPicker)}>Add</Button>
+      <motion.div data-eos-id="src/pages/admin/development/edit-section.tsx#27" variants={fadeUp}>
+        <div data-eos-id="src/pages/admin/development/edit-section.tsx#28" className="flex items-center justify-between mb-3">
+          <h2 data-eos-id="src/pages/admin/development/edit-section.tsx#29" className="font-heading text-[13px] font-bold text-neutral-700/60 uppercase tracking-widest">Modules</h2>
+          <Button data-eos-id="src/pages/admin/development/edit-section.tsx#30" variant="secondary" size="sm" icon={<Plus data-eos-id="src/pages/admin/development/edit-section.tsx#31" size={14} />} onClick={() => setShowPicker(!showPicker)}>Add</Button>
         </div>
         {showPicker && (
-          <div className="rounded-md bg-white shadow-sm p-4 mb-4 max-h-60 overflow-y-auto space-y-1.5">
+          <div data-eos-id="src/pages/admin/development/edit-section.tsx#32" className="rounded-md bg-white shadow-sm p-4 mb-4 max-h-60 overflow-y-auto space-y-1.5">
             {allModules.filter((m) => m.status === 'published' && !selectedIds.has(m.id)).map((m) => (
-              <button key={m.id} type="button" onClick={() => setModuleItems((prev) => [...prev, { _key: `sm-${Date.now()}-${m.id}`, module: m, is_required: true }])} className="w-full flex items-center gap-3 p-2.5 rounded-sm hover:bg-neutral-50 text-left transition-colors">
-                <span className="text-[13px] text-neutral-900 truncate flex-1 font-semibold">{m.title}</span><Plus size={14} className="text-neutral-400" />
+              <button data-eos-id="src/pages/admin/development/edit-section.tsx#33" key={m.id} type="button" onClick={() => setModuleItems((prev) => [...prev, { _key: `sm-${Date.now()}-${m.id}`, module: m, is_required: true }])} className="w-full flex items-center gap-3 p-2.5 rounded-sm hover:bg-neutral-50 text-left transition-colors">
+                <span data-eos-id="src/pages/admin/development/edit-section.tsx#34" data-eos-var="m.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-[13px] text-neutral-900 truncate flex-1 font-semibold">{m.title}</span><Plus data-eos-id="src/pages/admin/development/edit-section.tsx#35" size={14} className="text-neutral-400" />
               </button>
             ))}
           </div>
         )}
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={moduleItems.map((m) => m._key)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-2">{moduleItems.map((item) => <SortableModuleItem key={item._key} item={item} onToggleRequired={() => setModuleItems((prev) => prev.map((m) => m._key === item._key ? { ...m, is_required: !m.is_required } : m))} onRemove={() => setModuleItems((prev) => prev.filter((m) => m._key !== item._key))} />)}</div>
+        <DndContext data-eos-id="src/pages/admin/development/edit-section.tsx#36" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext data-eos-id="src/pages/admin/development/edit-section.tsx#37" items={moduleItems.map((m) => m._key)} strategy={verticalListSortingStrategy}>
+            <div data-eos-id="src/pages/admin/development/edit-section.tsx#38" className="space-y-2">{moduleItems.map((item) => <SortableModuleItem data-eos-id="src/pages/admin/development/edit-section.tsx#39" key={item._key} item={item} onToggleRequired={() => setModuleItems((prev) => prev.map((m) => m._key === item._key ? { ...m, is_required: !m.is_required } : m))} onRemove={() => setModuleItems((prev) => prev.filter((m) => m._key !== item._key))} />)}</div>
           </SortableContext>
         </DndContext>
       </motion.div>
 
-      <motion.div variants={fadeUp} className="sticky bottom-0 z-20 -mx-4 sm:-mx-6 lg:-mx-8 -mb-4 sm:-mb-6 lg:-mb-8 px-4 sm:px-6 lg:px-8 py-3 bg-white/95 backdrop-blur-sm border-t border-neutral-100 flex items-center justify-between gap-3">
-        <p className="text-[11px] font-semibold text-neutral-400">{moduleItems.length} module{moduleItems.length !== 1 ? 's' : ''}</p>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/admin/development')}>Cancel</Button>
-          <Button variant="secondary" size="sm" icon={<Save size={14} />} onClick={() => handleSave('draft')} loading={isSaving}>Save Draft</Button>
-          <Button variant="primary" size="sm" icon={<Send size={14} />} onClick={() => handleSave('published')} loading={isSaving} disabled={!title.trim()}>Publish</Button>
+      <motion.div data-eos-id="src/pages/admin/development/edit-section.tsx#40" variants={fadeUp} className="sticky bottom-0 z-20 -mx-4 sm:-mx-6 lg:-mx-8 -mb-4 sm:-mb-6 lg:-mb-8 px-4 sm:px-6 lg:px-8 py-3 bg-white/95 backdrop-blur-sm border-t border-neutral-100 flex items-center justify-between gap-3">
+        <p data-eos-id="src/pages/admin/development/edit-section.tsx#41" className="text-[11px] font-semibold text-neutral-400">{moduleItems.length} module{moduleItems.length !== 1 ? 's' : ''}</p>
+        <div data-eos-id="src/pages/admin/development/edit-section.tsx#42" className="flex items-center gap-2">
+          <Button data-eos-id="src/pages/admin/development/edit-section.tsx#43" variant="ghost" size="sm" onClick={() => navigate('/admin/development')}>Cancel</Button>
+          <Button data-eos-id="src/pages/admin/development/edit-section.tsx#44" variant="secondary" size="sm" icon={<Save data-eos-id="src/pages/admin/development/edit-section.tsx#45" size={14} />} onClick={() => handleSave('draft')} loading={isSaving}>Save Draft</Button>
+          <Button data-eos-id="src/pages/admin/development/edit-section.tsx#46" variant="primary" size="sm" icon={<Send data-eos-id="src/pages/admin/development/edit-section.tsx#47" size={14} />} onClick={() => handleSave('published')} loading={isSaving} disabled={!title.trim()}>Publish</Button>
         </div>
       </motion.div>
     </motion.div>
