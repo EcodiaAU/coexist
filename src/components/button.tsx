@@ -41,7 +41,7 @@ export interface ButtonProps {
 
 function Spinner({ className }: { className?: string }) {
   return (
-    <svg data-eos-id="src/components/button.tsx#0"
+    <svg data-eos-id="src/components/button.tsx#0" data-eos-v="2"
       className={cn('animate-spin', className)}
       width="16"
       height="16"
