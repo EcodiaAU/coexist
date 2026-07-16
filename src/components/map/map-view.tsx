@@ -54,7 +54,7 @@ const MapViewInner = lazyWithRetry(() => import('./map-view-inner'))
 
 function MapPlaceholder({ className, ariaLabel }: { className?: string; ariaLabel: string }) {
   return (
-    <div
+    <div data-eos-id="src/components/map/map-view.tsx#0"
       role="status"
       aria-label={`Loading ${ariaLabel}`}
       className={cn(
@@ -62,12 +62,12 @@ function MapPlaceholder({ className, ariaLabel }: { className?: string; ariaLabe
         className,
       )}
     >
-      <div className="absolute inset-0 animate-pulse">
-        <div className="h-full w-full bg-primary-200" />
+      <div data-eos-id="src/components/map/map-view.tsx#1" className="absolute inset-0 animate-pulse">
+        <div data-eos-id="src/components/map/map-view.tsx#2" className="h-full w-full bg-primary-200" />
       </div>
-      <div className="flex h-full min-h-[200px] w-full flex-col items-center justify-center gap-2 text-neutral-400">
-        <MapPinLucide size={32} strokeWidth={1.5} aria-hidden="true" />
-        <span className="text-sm font-medium">Loading map...</span>
+      <div data-eos-id="src/components/map/map-view.tsx#3" className="flex h-full min-h-[200px] w-full flex-col items-center justify-center gap-2 text-neutral-400">
+        <MapPinLucide data-eos-id="src/components/map/map-view.tsx#4" size={32} strokeWidth={1.5} aria-hidden="true" />
+        <span data-eos-id="src/components/map/map-view.tsx#5" className="text-sm font-medium">Loading map...</span>
       </div>
     </div>
   )
@@ -93,11 +93,11 @@ export function MapView({
   'aria-label': ariaLabel = 'Map view',
 }: MapViewProps) {
   if (loading) {
-    return <MapPlaceholder className={className} ariaLabel={ariaLabel} />
+    return <MapPlaceholder data-eos-id="src/components/map/map-view.tsx#6" className={className} ariaLabel={ariaLabel} />
   }
 
   return (
-    <div
+    <div data-eos-id="src/components/map/map-view.tsx#7"
       role="region"
       aria-label={ariaLabel}
       className={cn(
@@ -105,8 +105,8 @@ export function MapView({
         className,
       )}
     >
-      <Suspense fallback={<MapPlaceholder className="absolute inset-0" ariaLabel={ariaLabel} />}>
-        <MapViewInner
+      <Suspense data-eos-id="src/components/map/map-view.tsx#8" fallback={<MapPlaceholder data-eos-id="src/components/map/map-view.tsx#9" className="absolute inset-0" ariaLabel={ariaLabel} />}>
+        <MapViewInner data-eos-id="src/components/map/map-view.tsx#10"
           mode={mode}
           center={center}
           zoom={zoom}
@@ -119,8 +119,8 @@ export function MapView({
         />
       </Suspense>
       {children && (
-        <div className="absolute inset-0 z-[1000] pointer-events-none" aria-label="Map overlay">
-          <div className="pointer-events-auto">{children}</div>
+        <div data-eos-id="src/components/map/map-view.tsx#11" className="absolute inset-0 z-[1000] pointer-events-none" aria-label="Map overlay">
+          <div data-eos-id="src/components/map/map-view.tsx#12" className="pointer-events-auto">{children}</div>
         </div>
       )}
     </div>
