@@ -69,7 +69,7 @@ export function UpdateRequired({
     : 'A required update is ready with the latest fixes and improvements.'
 
   return (
-    <div data-eos-id="src/components/update-required.tsx#0"
+    <div data-eos-id="src/components/update-required.tsx#0" data-eos-v="2"
       className={cn(
         'fixed inset-0 z-[200] flex flex-col items-center justify-center',
         'bg-white px-6 text-center',
