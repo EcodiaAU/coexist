@@ -54,7 +54,7 @@ const BRAND_GREEN_DK  = '#4a5c34'   // primary-700
 function AppStoreBadge({ height = 56 }: { height?: number }) {
   const w = height * (140 / 42)
   return (
-    <svg
+    <svg data-eos-id="src/components/event-share-graphic.tsx#0"
       width={w}
       height={height}
       viewBox="0 0 140 42"
@@ -62,15 +62,15 @@ function AppStoreBadge({ height = 56 }: { height?: number }) {
       role="img"
       aria-label="Download on the App Store"
     >
-      <rect width="140" height="42" rx="8" fill="#000" />
-      <path
+      <rect data-eos-id="src/components/event-share-graphic.tsx#1" width="140" height="42" rx="8" fill="#000" />
+      <path data-eos-id="src/components/event-share-graphic.tsx#2"
         d="M30.4 22.2c0-3.4 2.8-5 2.9-5.1-1.6-2.3-4-2.6-4.9-2.6-2.1-.2-4 1.2-5.1 1.2-1.1 0-2.7-1.2-4.4-1.2-2.3.1-4.4 1.3-5.5 3.4-2.4 4.1-.6 10.1 1.7 13.4 1.1 1.6 2.5 3.4 4.2 3.3 1.7-.1 2.4-1.1 4.5-1.1 2.1 0 2.7 1.1 4.5 1.1 1.9 0 3-1.6 4.2-3.2 1.3-1.8 1.8-3.6 1.9-3.7-.1 0-3.6-1.4-3.6-5.5zM27.1 12.6c.9-1.1 1.6-2.7 1.4-4.3-1.4 0-3.1.9-4.1 2-.9 1-1.7 2.6-1.5 4.1 1.6.2 3.2-.7 4.2-1.8z"
         fill="#fff"
       />
-      <text x="46" y="17" fill="#fff" fontFamily="-apple-system, system-ui, sans-serif" fontSize="8.5" fontWeight="400">
+      <text data-eos-id="src/components/event-share-graphic.tsx#3" x="46" y="17" fill="#fff" fontFamily="-apple-system, system-ui, sans-serif" fontSize="8.5" fontWeight="400">
         Download on the
       </text>
-      <text x="46" y="32" fill="#fff" fontFamily="-apple-system, system-ui, sans-serif" fontSize="15" fontWeight="600">
+      <text data-eos-id="src/components/event-share-graphic.tsx#4" x="46" y="32" fill="#fff" fontFamily="-apple-system, system-ui, sans-serif" fontSize="15" fontWeight="600">
         App Store
       </text>
     </svg>
@@ -80,7 +80,7 @@ function AppStoreBadge({ height = 56 }: { height?: number }) {
 function GooglePlayBadge({ height = 56 }: { height?: number }) {
   const w = height * (155 / 42)
   return (
-    <svg
+    <svg data-eos-id="src/components/event-share-graphic.tsx#5"
       width={w}
       height={height}
       viewBox="0 0 155 42"
@@ -88,17 +88,17 @@ function GooglePlayBadge({ height = 56 }: { height?: number }) {
       role="img"
       aria-label="Get it on Google Play"
     >
-      <rect width="155" height="42" rx="8" fill="#000" />
-      <g transform="translate(11 8)">
-        <path d="M0 0v26l11.2-13L0 0z" fill="#00d4ff" />
-        <path d="M0 0l11.2 13L17 7.6 4.5 0H0z" fill="#00f076" />
-        <path d="M0 26l4.5-1L17 18.4 11.2 13 0 26z" fill="#ff3a44" />
-        <path d="M11.2 13l5.8 5.4 5.4-3.1c2.2-1.3 2.2-3.4 0-4.6L17 7.6 11.2 13z" fill="#ffce00" />
+      <rect data-eos-id="src/components/event-share-graphic.tsx#6" width="155" height="42" rx="8" fill="#000" />
+      <g data-eos-id="src/components/event-share-graphic.tsx#7" transform="translate(11 8)">
+        <path data-eos-id="src/components/event-share-graphic.tsx#8" d="M0 0v26l11.2-13L0 0z" fill="#00d4ff" />
+        <path data-eos-id="src/components/event-share-graphic.tsx#9" d="M0 0l11.2 13L17 7.6 4.5 0H0z" fill="#00f076" />
+        <path data-eos-id="src/components/event-share-graphic.tsx#10" d="M0 26l4.5-1L17 18.4 11.2 13 0 26z" fill="#ff3a44" />
+        <path data-eos-id="src/components/event-share-graphic.tsx#11" d="M11.2 13l5.8 5.4 5.4-3.1c2.2-1.3 2.2-3.4 0-4.6L17 7.6 11.2 13z" fill="#ffce00" />
       </g>
-      <text x="46" y="17" fill="#fff" fontFamily="Roboto, system-ui, sans-serif" fontSize="8.5" fontWeight="400">
+      <text data-eos-id="src/components/event-share-graphic.tsx#12" x="46" y="17" fill="#fff" fontFamily="Roboto, system-ui, sans-serif" fontSize="8.5" fontWeight="400">
         GET IT ON
       </text>
-      <text x="46" y="32" fill="#fff" fontFamily="Roboto, system-ui, sans-serif" fontSize="15" fontWeight="600">
+      <text data-eos-id="src/components/event-share-graphic.tsx#13" x="46" y="32" fill="#fff" fontFamily="Roboto, system-ui, sans-serif" fontSize="15" fontWeight="600">
         Google Play
       </text>
     </svg>
@@ -117,7 +117,7 @@ const WORDMARK_RATIO = 1500 / 569
 function CoExistWordmark({ height = 36 }: { height?: number }) {
   const width = Math.round(height * WORDMARK_RATIO)
   return (
-    <img
+    <img data-eos-id="src/components/event-share-graphic.tsx#14"
       src="/logos/white-wordmark.webp"
       alt="Co-Exist"
       crossOrigin="anonymous"
@@ -209,10 +209,10 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
     const titleMax  = isStory ? 120 : isPortrait ? 110 : 90
 
     return (
-      <div ref={ref} style={wrapperStyle} data-share-size={size}>
+      <div data-eos-id="src/components/event-share-graphic.tsx#15" ref={ref} style={wrapperStyle} data-share-size={size}>
 
         {/* 1. Full-bleed cover - photo fills the entire canvas */}
-        <div
+        <div data-eos-id="src/components/event-share-graphic.tsx#16"
           style={{
             position: 'absolute',
             inset: 0,
@@ -225,7 +225,7 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
         />
 
         {/* 2. Top scrim - wordmark legibility */}
-        <div
+        <div data-eos-id="src/components/event-share-graphic.tsx#17"
           style={{
             position: 'absolute',
             inset: 0,
@@ -234,7 +234,7 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
         />
 
         {/* 3. Bottom scrim - text legibility over photo */}
-        <div
+        <div data-eos-id="src/components/event-share-graphic.tsx#18"
           style={{
             position: 'absolute',
             inset: 0,
@@ -243,7 +243,7 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
         />
 
         {/* 4. Content layer */}
-        <div
+        <div data-eos-id="src/components/event-share-graphic.tsx#19"
           style={{
             position: 'relative',
             width: '100%',
@@ -255,11 +255,11 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
           }}
         >
           {/* Top: wordmark */}
-          <CoExistWordmark height={logoSize} />
+          <CoExistWordmark data-eos-id="src/components/event-share-graphic.tsx#20" height={logoSize} />
 
           {/* Bottom: event info + store badges */}
-          <div>
-            <div
+          <div data-eos-id="src/components/event-share-graphic.tsx#21">
+            <div data-eos-id="src/components/event-share-graphic.tsx#22"
               style={{
                 fontSize: joinFz,
                 fontWeight: 700,
@@ -272,7 +272,7 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
               Join us
             </div>
 
-            <h1
+            <h1 data-eos-id="src/components/event-share-graphic.tsx#23"
               style={{
                 fontSize: titleSize,
                 lineHeight: 1.05,
@@ -287,7 +287,7 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
               {clamp(title, titleMax)}
             </h1>
 
-            <div
+            <div data-eos-id="src/components/event-share-graphic.tsx#24"
               style={{
                 fontSize: dateSize,
                 fontWeight: 600,
@@ -298,7 +298,7 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
               {dateLabel}
             </div>
 
-            <div
+            <div data-eos-id="src/components/event-share-graphic.tsx#25"
               style={{
                 fontSize: dateSize - 4,
                 color: 'rgba(255,255,255,0.72)',
@@ -311,7 +311,7 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
             </div>
 
             {collectiveName && (
-              <div
+              <div data-eos-id="src/components/event-share-graphic.tsx#26"
                 style={{
                   fontSize: dateSize - 7,
                   color: 'rgba(255,255,255,0.62)',
@@ -323,12 +323,12 @@ export const EventShareGraphic = forwardRef<HTMLDivElement, EventShareGraphicPro
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: 14, marginTop: badgeMt }}>
-              <AppStoreBadge height={badgeH} />
-              <GooglePlayBadge height={badgeH} />
+            <div data-eos-id="src/components/event-share-graphic.tsx#27" style={{ display: 'flex', gap: 14, marginTop: badgeMt }}>
+              <AppStoreBadge data-eos-id="src/components/event-share-graphic.tsx#28" height={badgeH} />
+              <GooglePlayBadge data-eos-id="src/components/event-share-graphic.tsx#29" height={badgeH} />
             </div>
 
-            <div
+            <div data-eos-id="src/components/event-share-graphic.tsx#30"
               style={{
                 marginTop: 16,
                 fontSize: isStory ? 20 : 17,
