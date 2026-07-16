@@ -17,7 +17,7 @@ export function ScrollReveal({ children, delay = 0, className }: ScrollRevealPro
   const shouldReduceMotion = useReducedMotion()
 
   if (shouldReduceMotion) {
-    return <div data-eos-id="src/components/scroll-reveal.tsx#0" className={className}>{children}</div>
+    return <div data-eos-id="src/components/scroll-reveal.tsx#0" data-eos-v="2" className={className}>{children}</div>
   }
 
   return (
