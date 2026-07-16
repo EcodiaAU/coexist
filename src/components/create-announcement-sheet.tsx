@@ -70,8 +70,8 @@ function EventPicker({
   const selected = events.find((e) => e.id === selectedId)
 
   return (
-    <div className="relative">
-      <button
+    <div data-eos-id="src/components/create-announcement-sheet.tsx#0" className="relative">
+      <button data-eos-id="src/components/create-announcement-sheet.tsx#1"
         type="button"
         onClick={() => setDropdownOpen(!dropdownOpen)}
         className={cn(
@@ -83,8 +83,8 @@ function EventPicker({
           dropdownOpen && 'ring-2 ring-primary-400 bg-white',
         )}
       >
-        <Calendar size={16} className="shrink-0 text-primary-500" />
-        <span className="flex-1 truncate">
+        <Calendar data-eos-id="src/components/create-announcement-sheet.tsx#2" size={16} className="shrink-0 text-primary-500" />
+        <span data-eos-id="src/components/create-announcement-sheet.tsx#3" data-eos-var="selected.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="flex-1 truncate">
           {isLoading
             ? 'Loading events...'
             : selected
@@ -93,7 +93,7 @@ function EventPicker({
                 ? 'No upcoming events'
                 : 'Select an event...'}
         </span>
-        <ChevronDown
+        <ChevronDown data-eos-id="src/components/create-announcement-sheet.tsx#4"
           size={16}
           className={cn(
             'shrink-0 text-primary-400 transition-transform duration-150',
@@ -103,9 +103,9 @@ function EventPicker({
       </button>
 
       {dropdownOpen && events.length > 0 && (
-        <div className="absolute z-30 mt-1.5 w-full rounded-sm bg-white shadow-sm ring-1 ring-primary-200/60 max-h-52 overflow-y-auto overscroll-contain">
+        <div data-eos-id="src/components/create-announcement-sheet.tsx#5" className="absolute z-30 mt-1.5 w-full rounded-sm bg-white shadow-sm ring-1 ring-primary-200/60 max-h-52 overflow-y-auto overscroll-contain">
           {events.map((event) => (
-            <button
+            <button data-eos-id="src/components/create-announcement-sheet.tsx#6"
               key={event.id}
               type="button"
               onClick={() => {
@@ -119,23 +119,23 @@ function EventPicker({
                 'first:rounded-t-sm last:rounded-b-sm',
               )}
             >
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{event.title}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Calendar size={11} className="text-neutral-400 shrink-0" />
-                  <span className="text-[11px] text-neutral-500">
+              <div data-eos-id="src/components/create-announcement-sheet.tsx#7" className="flex-1 min-w-0">
+                <p data-eos-id="src/components/create-announcement-sheet.tsx#8" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{event.title}</p>
+                <div data-eos-id="src/components/create-announcement-sheet.tsx#9" className="flex items-center gap-1.5 mt-0.5">
+                  <Calendar data-eos-id="src/components/create-announcement-sheet.tsx#10" size={11} className="text-neutral-400 shrink-0" />
+                  <span data-eos-id="src/components/create-announcement-sheet.tsx#11" data-eos-var="event.date_start,event.date_start" data-eos-var-label="Date start, Date start" data-eos-var-scope="item" className="text-[11px] text-neutral-500">
                     {formatEventDate(event.date_start)} at {formatEventTime(event.date_start)}
                   </span>
                 </div>
                 {event.address && (
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <MapPin size={11} className="text-neutral-400 shrink-0" />
-                    <span className="text-[11px] text-neutral-400 truncate">{event.address}</span>
+                  <div data-eos-id="src/components/create-announcement-sheet.tsx#12" className="flex items-center gap-1.5 mt-0.5">
+                    <MapPin data-eos-id="src/components/create-announcement-sheet.tsx#13" size={11} className="text-neutral-400 shrink-0" />
+                    <span data-eos-id="src/components/create-announcement-sheet.tsx#14" data-eos-var="event.address" data-eos-var-label="Address" data-eos-var-scope="item" className="text-[11px] text-neutral-400 truncate">{event.address}</span>
                   </div>
                 )}
               </div>
               {event.id === selectedId && (
-                <Check size={16} className="text-primary-600 shrink-0 mt-0.5" />
+                <Check data-eos-id="src/components/create-announcement-sheet.tsx#15" size={16} className="text-primary-600 shrink-0 mt-0.5" />
               )}
             </button>
           ))}
@@ -178,32 +178,32 @@ function CollectivePicker({
   }, [otherCollectives, search])
 
   return (
-    <div>
+    <div data-eos-id="src/components/create-announcement-sheet.tsx#16">
       {/* Search */}
-      <div className="mb-2">
-        <SearchBar value={search} onChange={setSearch} placeholder="Search collectives..." compact />
+      <div data-eos-id="src/components/create-announcement-sheet.tsx#17" className="mb-2">
+        <SearchBar data-eos-id="src/components/create-announcement-sheet.tsx#18" value={search} onChange={setSearch} placeholder="Search collectives..." compact />
       </div>
 
       {/* Selected count */}
       {selectedIds.length > 0 && (
-        <p className="text-[11px] font-semibold text-primary-600 mb-1.5">
+        <p data-eos-id="src/components/create-announcement-sheet.tsx#19" className="text-[11px] font-semibold text-primary-600 mb-1.5">
           {selectedIds.length} collective{selectedIds.length !== 1 ? 's' : ''} selected
         </p>
       )}
 
       {/* List */}
-      <div className="max-h-40 overflow-y-auto overscroll-contain rounded-sm ring-1 ring-primary-200/60 bg-white">
+      <div data-eos-id="src/components/create-announcement-sheet.tsx#20" className="max-h-40 overflow-y-auto overscroll-contain rounded-sm ring-1 ring-primary-200/60 bg-white">
         {isLoading ? (
-          <div className="px-3.5 py-3 text-xs text-neutral-500">Loading collectives...</div>
+          <div data-eos-id="src/components/create-announcement-sheet.tsx#21" className="px-3.5 py-3 text-xs text-neutral-500">Loading collectives...</div>
         ) : filtered.length === 0 ? (
-          <div className="px-3.5 py-3 text-xs text-neutral-500">
+          <div data-eos-id="src/components/create-announcement-sheet.tsx#22" className="px-3.5 py-3 text-xs text-neutral-500">
             {search ? 'No collectives match your search' : 'No other collectives available'}
           </div>
         ) : (
           filtered.map((collective) => {
             const isSelected = selectedIds.includes(collective.id)
             return (
-              <button
+              <button data-eos-id="src/components/create-announcement-sheet.tsx#23"
                 key={collective.id}
                 type="button"
                 onClick={() => onToggle(collective.id)}
@@ -214,20 +214,20 @@ function CollectivePicker({
                   'first:rounded-t-sm last:rounded-b-sm',
                 )}
               >
-                <Avatar
+                <Avatar data-eos-id="src/components/create-announcement-sheet.tsx#24"
                   src={collective.cover_image_url}
                   name={collective.name}
                   size="sm"
                 />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{collective.name}</p>
+                <div data-eos-id="src/components/create-announcement-sheet.tsx#25" className="flex-1 min-w-0">
+                  <p data-eos-id="src/components/create-announcement-sheet.tsx#26" data-eos-var="collective.name" data-eos-var-label="Name" data-eos-var-scope="item" className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{collective.name}</p>
                   {(collective.region || collective.state) && (
-                    <p className="text-[11px] text-neutral-400 truncate">
+                    <p data-eos-id="src/components/create-announcement-sheet.tsx#27" data-eos-var="collective.region" data-eos-var-label="Region" data-eos-var-scope="item" className="text-[11px] text-neutral-400 truncate">
                       {[collective.region, collective.state].filter(Boolean).join(', ')}
                     </p>
                   )}
                 </div>
-                <div
+                <div data-eos-id="src/components/create-announcement-sheet.tsx#28"
                   className={cn(
                     'flex items-center justify-center h-5 w-5 rounded-md border-2 transition-colors duration-150 shrink-0',
                     isSelected
@@ -235,7 +235,7 @@ function CollectivePicker({
                       : 'border-neutral-300 bg-white',
                   )}
                 >
-                  {isSelected && <Check size={12} className="text-white" />}
+                  {isSelected && <Check data-eos-id="src/components/create-announcement-sheet.tsx#29" size={12} className="text-white" />}
                 </div>
               </button>
             )
@@ -351,25 +351,25 @@ export function CreateAnnouncementSheet({
   ]
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
-      <div className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
+    <BottomSheet data-eos-id="src/components/create-announcement-sheet.tsx#30" open={open} onClose={onClose}>
+      <div data-eos-id="src/components/create-announcement-sheet.tsx#31" className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
         {/* Header */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-accent-100 text-accent-600">
-            <Megaphone size={20} />
+        <div data-eos-id="src/components/create-announcement-sheet.tsx#32" className="flex items-center gap-2.5 mb-4">
+          <div data-eos-id="src/components/create-announcement-sheet.tsx#33" className="flex h-10 w-10 items-center justify-center rounded-sm bg-accent-100 text-accent-600">
+            <Megaphone data-eos-id="src/components/create-announcement-sheet.tsx#34" size={20} />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-neutral-900">Create Announcement</h3>
-            <p className="text-xs text-neutral-500">Share something with your collective</p>
+          <div data-eos-id="src/components/create-announcement-sheet.tsx#35">
+            <h3 data-eos-id="src/components/create-announcement-sheet.tsx#36" className="text-base font-bold text-neutral-900">Create Announcement</h3>
+            <p data-eos-id="src/components/create-announcement-sheet.tsx#37" className="text-xs text-neutral-500">Share something with your collective</p>
           </div>
         </div>
 
         {/* Type selector */}
-        <div className="mb-4">
-          <label className="text-xs font-semibold text-neutral-900 mb-1.5 block">Type</label>
-          <div className="flex gap-2">
+        <div data-eos-id="src/components/create-announcement-sheet.tsx#38" className="mb-4">
+          <label data-eos-id="src/components/create-announcement-sheet.tsx#39" className="text-xs font-semibold text-neutral-900 mb-1.5 block">Type</label>
+          <div data-eos-id="src/components/create-announcement-sheet.tsx#40" className="flex gap-2">
             {typeOptions.map((opt) => (
-              <button
+              <button data-eos-id="src/components/create-announcement-sheet.tsx#41"
                 key={opt.value}
                 type="button"
                 onClick={() => setType(opt.value)}
@@ -381,8 +381,8 @@ export function CreateAnnouncementSheet({
                     : 'bg-primary-50 text-primary-600 ring-1 ring-primary-200/60',
                 )}
               >
-                <opt.icon size={16} className="mx-auto mb-0.5" />
-                <span className="text-[11px] font-semibold block">{opt.label}</span>
+                <opt.icon data-eos-id="src/components/create-announcement-sheet.tsx#42" size={16} className="mx-auto mb-0.5" />
+                <span data-eos-id="src/components/create-announcement-sheet.tsx#43" data-eos-var="opt.label" data-eos-var-label="Label" data-eos-var-scope="item" data-eos-var-src="literal" className="text-[11px] font-semibold block">{opt.label}</span>
               </button>
             ))}
           </div>
@@ -390,18 +390,18 @@ export function CreateAnnouncementSheet({
 
         {/* Event picker (for event invites) */}
         {type === 'event_invite' && (
-          <div className="mb-3">
-            <label className="text-xs font-semibold text-neutral-900 mb-1 block">
+          <div data-eos-id="src/components/create-announcement-sheet.tsx#44" className="mb-3">
+            <label data-eos-id="src/components/create-announcement-sheet.tsx#45" className="text-xs font-semibold text-neutral-900 mb-1 block">
               Event
             </label>
-            <EventPicker
+            <EventPicker data-eos-id="src/components/create-announcement-sheet.tsx#46"
               events={upcomingEvents}
               selectedId={eventId}
               onSelect={setEventId}
               isLoading={eventsLoading}
             />
             {!eventsLoading && upcomingEvents.length === 0 && (
-              <p className="text-[11px] text-warning-600 mt-1">
+              <p data-eos-id="src/components/create-announcement-sheet.tsx#47" className="text-[11px] text-warning-600 mt-1">
                 No upcoming events found. Create an event first, then invite from here.
               </p>
             )}
@@ -409,8 +409,8 @@ export function CreateAnnouncementSheet({
         )}
 
         {/* Title */}
-        <div className="mb-3">
-          <Input
+        <div data-eos-id="src/components/create-announcement-sheet.tsx#48" className="mb-3">
+          <Input data-eos-id="src/components/create-announcement-sheet.tsx#49"
             label="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -420,8 +420,8 @@ export function CreateAnnouncementSheet({
         </div>
 
         {/* Body */}
-        <div className="mb-3">
-          <Input
+        <div data-eos-id="src/components/create-announcement-sheet.tsx#50" className="mb-3">
+          <Input data-eos-id="src/components/create-announcement-sheet.tsx#51"
             type="textarea"
             label="Details"
             value={body}
@@ -434,17 +434,17 @@ export function CreateAnnouncementSheet({
 
         {/* Invite other collectives to collaborate (event invites only) */}
         {type === 'event_invite' && eventId && collectiveId && (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Users2 size={14} className="text-primary-500" />
-              <label className="text-xs font-semibold text-neutral-900">
+          <div data-eos-id="src/components/create-announcement-sheet.tsx#52" className="mb-4">
+            <div data-eos-id="src/components/create-announcement-sheet.tsx#53" className="flex items-center gap-2 mb-1.5">
+              <Users2 data-eos-id="src/components/create-announcement-sheet.tsx#54" size={14} className="text-primary-500" />
+              <label data-eos-id="src/components/create-announcement-sheet.tsx#55" className="text-xs font-semibold text-neutral-900">
                 Invite collectives to collaborate (optional)
               </label>
             </div>
-            <p className="text-[11px] text-neutral-500 mb-2">
+            <p data-eos-id="src/components/create-announcement-sheet.tsx#56" className="text-[11px] text-neutral-500 mb-2">
               Invite other collectives to co-host this event. Their leaders will be notified and can accept the collaboration.
             </p>
-            <CollectivePicker
+            <CollectivePicker data-eos-id="src/components/create-announcement-sheet.tsx#57"
               currentCollectiveId={collectiveId}
               selectedIds={inviteCollectiveIds}
               onToggle={handleToggleCollective}
@@ -452,8 +452,8 @@ export function CreateAnnouncementSheet({
 
             {/* Collaboration message */}
             {inviteCollectiveIds.length > 0 && (
-              <div className="mt-2.5">
-                <Input
+              <div data-eos-id="src/components/create-announcement-sheet.tsx#58" className="mt-2.5">
+                <Input data-eos-id="src/components/create-announcement-sheet.tsx#59"
                   label="Collaboration Message"
                   value={inviteMessage}
                   onChange={(e) => setInviteMessage(e.target.value)}
@@ -466,7 +466,7 @@ export function CreateAnnouncementSheet({
         )}
 
         {/* Submit */}
-        <Button
+        <Button data-eos-id="src/components/create-announcement-sheet.tsx#60"
           variant="primary"
           size="lg"
           fullWidth
