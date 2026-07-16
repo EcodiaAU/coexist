@@ -87,7 +87,7 @@ function RichContent({ text, className }: { text: string; className?: string }) 
 
     if (match[1] && match[2]) {
       parts.push(
-        <a
+        <a data-eos-href="dynamic" data-eos-href-label="Value" data-eos-href-scope="prop" data-eos-id="src/pages/admin/updates.tsx#0"
           key={key++}
           href={match[2]}
           target="_blank"
@@ -95,12 +95,12 @@ function RichContent({ text, className }: { text: string; className?: string }) 
           className="inline-flex items-center gap-1 text-neutral-600 font-semibold underline underline-offset-2 decoration-primary-300 hover:decoration-primary-500 hover:text-neutral-700 transition-colors"
         >
           {match[1]}
-          <ExternalLink size={11} className="shrink-0" />
+          <ExternalLink data-eos-id="src/pages/admin/updates.tsx#1" size={11} className="shrink-0" />
         </a>,
       )
     } else if (match[3]) {
       parts.push(
-        <a
+        <a data-eos-href="dynamic" data-eos-href-label="Value" data-eos-href-scope="prop" data-eos-id="src/pages/admin/updates.tsx#2"
           key={key++}
           href={match[3]}
           target="_blank"
@@ -108,7 +108,7 @@ function RichContent({ text, className }: { text: string; className?: string }) 
           className="inline-flex items-center gap-1 text-neutral-600 font-semibold underline underline-offset-2 decoration-primary-300 hover:decoration-primary-500 hover:text-neutral-700 transition-colors break-all"
         >
           {match[3]}
-          <ExternalLink size={11} className="shrink-0" />
+          <ExternalLink data-eos-id="src/pages/admin/updates.tsx#3" size={11} className="shrink-0" />
         </a>,
       )
     }
@@ -120,7 +120,7 @@ function RichContent({ text, className }: { text: string; className?: string }) 
     parts.push(text.slice(lastIndex))
   }
 
-  return <div className={className}>{parts}</div>
+  return <div data-eos-id="src/pages/admin/updates.tsx#4" className={className}>{parts}</div>
 }
 
 /* ------------------------------------------------------------------ */
@@ -289,21 +289,21 @@ function ComposeModal({
   const selectedCollective = allCollectives?.find((c) => c.id === selectedCollectiveId)
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
+    <BottomSheet data-eos-id="src/pages/admin/updates.tsx#5" open={open} onClose={onClose}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading text-lg font-semibold text-neutral-900">{isEdit ? 'Edit Update' : 'New Update'}</h2>
-        <button
+      <div data-eos-id="src/pages/admin/updates.tsx#6" className="flex items-center justify-between mb-4">
+        <h2 data-eos-id="src/pages/admin/updates.tsx#7" className="font-heading text-lg font-semibold text-neutral-900">{isEdit ? 'Edit Update' : 'New Update'}</h2>
+        <button data-eos-id="src/pages/admin/updates.tsx#8"
           onClick={onClose}
           className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
           aria-label="Close"
         >
-          <X size={20} />
+          <X data-eos-id="src/pages/admin/updates.tsx#9" size={20} />
         </button>
       </div>
-      <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1 -mr-1">
+      <div data-eos-id="src/pages/admin/updates.tsx#10" className="space-y-5 max-h-[70vh] overflow-y-auto pr-1 -mr-1">
         {/* Title */}
-        <Input
+        <Input data-eos-id="src/pages/admin/updates.tsx#11"
           label="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -312,10 +312,10 @@ function ComposeModal({
         />
 
         {/* Content */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-sm font-semibold text-neutral-900">Content</label>
-            <button
+        <div data-eos-id="src/pages/admin/updates.tsx#12">
+          <div data-eos-id="src/pages/admin/updates.tsx#13" className="flex items-center justify-between mb-1.5">
+            <label data-eos-id="src/pages/admin/updates.tsx#14" className="block text-sm font-semibold text-neutral-900">Content</label>
+            <button data-eos-id="src/pages/admin/updates.tsx#15"
               type="button"
               onClick={() => setShowLinkInput(!showLinkInput)}
               className={cn(
@@ -326,30 +326,30 @@ function ComposeModal({
                   : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700',
               )}
             >
-              <LinkIcon size={12} />
+              <LinkIcon data-eos-id="src/pages/admin/updates.tsx#16" size={12} />
               Insert link
             </button>
           </div>
 
           {/* Link inserter */}
-          <AnimatePresence>
+          <AnimatePresence data-eos-id="src/pages/admin/updates.tsx#17">
             {showLinkInput && (
-              <motion.div
+              <motion.div data-eos-id="src/pages/admin/updates.tsx#18"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden mb-2"
               >
-                <div className="flex items-end gap-2 p-3 rounded-sm bg-neutral-50 ring-1 ring-neutral-100">
-                  <div className="flex-1 space-y-2">
-                    <Input
+                <div data-eos-id="src/pages/admin/updates.tsx#19" className="flex items-end gap-2 p-3 rounded-sm bg-neutral-50 ring-1 ring-neutral-100">
+                  <div data-eos-id="src/pages/admin/updates.tsx#20" className="flex-1 space-y-2">
+                    <Input data-eos-id="src/pages/admin/updates.tsx#21"
                       label="URL"
                       value={linkUrl}
                       onChange={(e) => setLinkUrl(e.target.value)}
                       placeholder="https://..."
                       inputClassName="!text-xs"
                     />
-                    <Input
+                    <Input data-eos-id="src/pages/admin/updates.tsx#22"
                       label="Label (optional)"
                       value={linkLabel}
                       onChange={(e) => setLinkLabel(e.target.value)}
@@ -357,7 +357,7 @@ function ComposeModal({
                       inputClassName="!text-xs"
                     />
                   </div>
-                  <Button
+                  <Button data-eos-id="src/pages/admin/updates.tsx#23"
                     variant="primary"
                     size="sm"
                     onClick={handleInsertLink}
@@ -371,7 +371,7 @@ function ComposeModal({
             )}
           </AnimatePresence>
 
-          <textarea
+          <textarea data-eos-id="src/pages/admin/updates.tsx#24"
             ref={contentRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -385,48 +385,48 @@ function ComposeModal({
               'resize-y min-h-[120px]',
             )}
           />
-          <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-1.5">
+          <div data-eos-id="src/pages/admin/updates.tsx#25" className="flex items-center justify-between mt-1">
+            <div data-eos-id="src/pages/admin/updates.tsx#26" className="flex items-center gap-1.5">
               {content && /\[.+?\]\(https?:\/\/.+?\)/.test(content) && (
-                <span className="inline-flex items-center gap-1 text-[11px] text-neutral-400">
-                  <ExternalLink size={10} />
+                <span data-eos-id="src/pages/admin/updates.tsx#27" className="inline-flex items-center gap-1 text-[11px] text-neutral-400">
+                  <ExternalLink data-eos-id="src/pages/admin/updates.tsx#28" size={10} />
                   Links will be clickable
                 </span>
               )}
             </div>
-            <span className="text-xs text-neutral-300">{content.length}/10,000</span>
+            <span data-eos-id="src/pages/admin/updates.tsx#29" className="text-xs text-neutral-300">{content.length}/10,000</span>
           </div>
         </div>
 
         {/* Images */}
-        <div>
-          <label className="block text-sm font-semibold text-neutral-900 mb-2">
+        <div data-eos-id="src/pages/admin/updates.tsx#30">
+          <label data-eos-id="src/pages/admin/updates.tsx#31" className="block text-sm font-semibold text-neutral-900 mb-2">
             Images ({totalImages}/10)
           </label>
 
           {(existingImages.length > 0 || previews.length > 0) && (
-            <div className="grid grid-cols-4 gap-2 mb-3">
+            <div data-eos-id="src/pages/admin/updates.tsx#32" className="grid grid-cols-4 gap-2 mb-3">
               {existingImages.map((src, i) => (
-                <div key={`existing-${i}`} className="relative aspect-square rounded-sm overflow-hidden group ring-1 ring-neutral-100">
-                  <img src={src} alt="" loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
-                  <button
+                <div data-eos-id="src/pages/admin/updates.tsx#33" key={`existing-${i}`} className="relative aspect-square rounded-sm overflow-hidden group ring-1 ring-neutral-100">
+                  <img data-eos-id="src/pages/admin/updates.tsx#34" src={src} alt="" loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                  <button data-eos-id="src/pages/admin/updates.tsx#35"
                     type="button"
                     onClick={() => removeExisting(i)}
                     className="absolute top-1 right-1 flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
                   >
-                    <X size={12} />
+                    <X data-eos-id="src/pages/admin/updates.tsx#36" size={12} />
                   </button>
                 </div>
               ))}
               {previews.map((src, i) => (
-                <div key={`new-${i}`} className="relative aspect-square rounded-sm overflow-hidden group ring-1 ring-neutral-100">
-                  <img src={src} alt="" loading="lazy" className="w-full h-full object-cover" />
-                  <button
+                <div data-eos-id="src/pages/admin/updates.tsx#37" key={`new-${i}`} className="relative aspect-square rounded-sm overflow-hidden group ring-1 ring-neutral-100">
+                  <img data-eos-id="src/pages/admin/updates.tsx#38" src={src} alt="" loading="lazy" className="w-full h-full object-cover" />
+                  <button data-eos-id="src/pages/admin/updates.tsx#39"
                     type="button"
                     onClick={() => removeNew(i)}
                     className="absolute top-1 right-1 flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
                   >
-                    <X size={12} />
+                    <X data-eos-id="src/pages/admin/updates.tsx#40" size={12} />
                   </button>
                 </div>
               ))}
@@ -434,7 +434,7 @@ function ComposeModal({
           )}
 
           {totalImages < 10 && (
-            <button
+            <button data-eos-id="src/pages/admin/updates.tsx#41"
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className={cn(
@@ -445,12 +445,12 @@ function ComposeModal({
                 'transition-colors duration-150',
               )}
             >
-              <ImageIcon size={16} />
+              <ImageIcon data-eos-id="src/pages/admin/updates.tsx#42" size={16} />
               {totalImages > 0 ? 'Add more images' : 'Upload images'}
             </button>
           )}
 
-          <input
+          <input data-eos-id="src/pages/admin/updates.tsx#43"
             ref={fileInputRef}
             type="file"
             accept="image/*"
@@ -459,7 +459,7 @@ function ComposeModal({
             className="hidden"
           />
 
-          <UploadProgress
+          <UploadProgress data-eos-id="src/pages/admin/updates.tsx#44"
             progress={annUpload.progress}
             uploading={annUpload.uploading}
             error={annUpload.error}
@@ -468,12 +468,12 @@ function ComposeModal({
         </div>
 
         {/* Settings row */}
-        <div className="grid grid-cols-2 gap-3">
+        <div data-eos-id="src/pages/admin/updates.tsx#45" className="grid grid-cols-2 gap-3">
           {/* Priority */}
-          <div>
-            <label className="block text-sm font-semibold text-neutral-900 mb-2">Priority</label>
-            <div className="flex gap-2">
-              <button
+          <div data-eos-id="src/pages/admin/updates.tsx#46">
+            <label data-eos-id="src/pages/admin/updates.tsx#47" className="block text-sm font-semibold text-neutral-900 mb-2">Priority</label>
+            <div data-eos-id="src/pages/admin/updates.tsx#48" className="flex gap-2">
+              <button data-eos-id="src/pages/admin/updates.tsx#49"
                 type="button"
                 onClick={() => setPriority('normal')}
                 className={cn(
@@ -484,9 +484,9 @@ function ComposeModal({
                     : 'bg-primary-50 text-neutral-600 ring-1 ring-primary-200/60 hover:bg-primary-100',
                 )}
               >
-                <Sparkles size={12} /> Normal
+                <Sparkles data-eos-id="src/pages/admin/updates.tsx#50" size={12} /> Normal
               </button>
-              <button
+              <button data-eos-id="src/pages/admin/updates.tsx#51"
                 type="button"
                 onClick={() => setPriority('urgent')}
                 className={cn(
@@ -497,15 +497,15 @@ function ComposeModal({
                     : 'bg-warning-50 text-warning-700 ring-1 ring-warning-200/60 hover:bg-warning-100',
                 )}
               >
-                <AlertTriangle size={12} /> Urgent
+                <AlertTriangle data-eos-id="src/pages/admin/updates.tsx#52" size={12} /> Urgent
               </button>
             </div>
           </div>
 
           {/* Pin */}
-          <div>
-            <label className="block text-sm font-semibold text-neutral-900 mb-2">Pinned</label>
-            <button
+          <div data-eos-id="src/pages/admin/updates.tsx#53">
+            <label data-eos-id="src/pages/admin/updates.tsx#54" className="block text-sm font-semibold text-neutral-900 mb-2">Pinned</label>
+            <button data-eos-id="src/pages/admin/updates.tsx#55"
               type="button"
               onClick={() => setIsPinned(!isPinned)}
               className={cn(
@@ -516,19 +516,19 @@ function ComposeModal({
                   : 'bg-primary-50 text-neutral-600 ring-1 ring-primary-200/60 hover:bg-primary-100',
               )}
             >
-              <Pin size={12} />
+              <Pin data-eos-id="src/pages/admin/updates.tsx#56" size={12} />
               {isPinned ? 'Pinned' : 'Not pinned'}
             </button>
           </div>
         </div>
 
         {/* Target audience - simplified: national or specific collective */}
-        <div>
-          <label className="block text-sm font-semibold text-neutral-900 mb-2">
+        <div data-eos-id="src/pages/admin/updates.tsx#57">
+          <label data-eos-id="src/pages/admin/updates.tsx#58" className="block text-sm font-semibold text-neutral-900 mb-2">
             Who sees this?
           </label>
-          <div className="flex gap-2 mb-3">
-            <button
+          <div data-eos-id="src/pages/admin/updates.tsx#59" className="flex gap-2 mb-3">
+            <button data-eos-id="src/pages/admin/updates.tsx#60"
               type="button"
               onClick={() => { setTargetAudience('all'); setSelectedCollectiveId(null) }}
               className={cn(
@@ -539,9 +539,9 @@ function ComposeModal({
                   : 'bg-primary-50 text-neutral-600 ring-1 ring-primary-200/60 hover:bg-primary-100',
               )}
             >
-              <Globe size={14} /> All Participants
+              <Globe data-eos-id="src/pages/admin/updates.tsx#61" size={14} /> All Participants
             </button>
-            <button
+            <button data-eos-id="src/pages/admin/updates.tsx#62"
               type="button"
               onClick={() => setTargetAudience('collective_specific')}
               className={cn(
@@ -552,24 +552,24 @@ function ComposeModal({
                   : 'bg-primary-50 text-neutral-600 ring-1 ring-primary-200/60 hover:bg-primary-100',
               )}
             >
-              <Users size={14} /> Specific Collective
+              <Users data-eos-id="src/pages/admin/updates.tsx#63" size={14} /> Specific Collective
             </button>
           </div>
 
           {/* Collective picker */}
-          <AnimatePresence>
+          <AnimatePresence data-eos-id="src/pages/admin/updates.tsx#64">
             {targetAudience === 'collective_specific' && (
-              <motion.div
+              <motion.div data-eos-id="src/pages/admin/updates.tsx#65"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className="space-y-1.5 max-h-48 overflow-y-auto rounded-sm ring-1 ring-neutral-100 p-2 bg-neutral-50">
+                <div data-eos-id="src/pages/admin/updates.tsx#66" className="space-y-1.5 max-h-48 overflow-y-auto rounded-sm ring-1 ring-neutral-100 p-2 bg-neutral-50">
                   {(allCollectives ?? []).map((c) => {
                     const isSelected = selectedCollectiveId === c.id
                     return (
-                      <button
+                      <button data-eos-id="src/pages/admin/updates.tsx#67"
                         key={c.id}
                         type="button"
                         onClick={() => setSelectedCollectiveId(c.id)}
@@ -582,18 +582,18 @@ function ComposeModal({
                         )}
                       >
                         {c.cover_image_url ? (
-                          <img src={c.cover_image_url} alt="" loading="lazy" className="w-8 h-8 rounded-sm object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                          <img data-eos-id="src/pages/admin/updates.tsx#68" src={c.cover_image_url} alt="" loading="lazy" className="w-8 h-8 rounded-sm object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                         ) : (
-                          <div className="w-8 h-8 rounded-sm bg-primary-100 flex items-center justify-center shrink-0">
-                            <Users size={14} className="text-neutral-400" />
+                          <div data-eos-id="src/pages/admin/updates.tsx#69" className="w-8 h-8 rounded-sm bg-primary-100 flex items-center justify-center shrink-0">
+                            <Users data-eos-id="src/pages/admin/updates.tsx#70" size={14} className="text-neutral-400" />
                           </div>
                         )}
-                        <div className="min-w-0">
-                          <p className={cn('text-sm font-semibold truncate', isSelected ? 'text-neutral-900' : 'text-neutral-700')}>
+                        <div data-eos-id="src/pages/admin/updates.tsx#71" className="min-w-0">
+                          <p data-eos-id="src/pages/admin/updates.tsx#72" data-eos-var="c.name" data-eos-var-label="Name" data-eos-var-scope="item" className={cn('text-sm font-semibold truncate', isSelected ? 'text-neutral-900' : 'text-neutral-700')}>
                             {c.name}
                           </p>
                           {c.region && (
-                            <p className="text-[11px] text-neutral-400">{c.region}, {c.state}</p>
+                            <p data-eos-id="src/pages/admin/updates.tsx#73" data-eos-var="c.region,c.state" data-eos-var-label="Region, State" data-eos-var-scope="item" className="text-[11px] text-neutral-400">{c.region}, {c.state}</p>
                           )}
                         </div>
                       </button>
@@ -605,7 +605,7 @@ function ComposeModal({
           </AnimatePresence>
 
           {/* Targeting hint */}
-          <p className="mt-2 text-[11px] text-neutral-400 leading-relaxed">
+          <p data-eos-id="src/pages/admin/updates.tsx#74" data-eos-var="selectedCollective.name" data-eos-var-label="Name" data-eos-var-scope="prop" className="mt-2 text-[11px] text-neutral-400 leading-relaxed">
             {targetAudience === 'all'
               ? 'This will be visible to every participant in the app, nationally.'
               : selectedCollective
@@ -615,14 +615,14 @@ function ComposeModal({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-3 pt-2">
-          <Button variant="ghost" onClick={onClose} className="flex-shrink-0">
+        <div data-eos-id="src/pages/admin/updates.tsx#75" className="flex items-center gap-3 pt-2">
+          <Button data-eos-id="src/pages/admin/updates.tsx#76" variant="ghost" onClick={onClose} className="flex-shrink-0">
             Cancel
           </Button>
-          <Button
+          <Button data-eos-id="src/pages/admin/updates.tsx#77"
             variant="primary"
             fullWidth
-            icon={<Send size={16} />}
+            icon={<Send data-eos-id="src/pages/admin/updates.tsx#78" size={16} />}
             onClick={handleSubmit}
             loading={isSubmitting}
             disabled={!canSubmit || isSubmitting}
@@ -663,7 +663,7 @@ function DetailPanel({
   }, [update.content, toast])
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/pages/admin/updates.tsx#79"
       initial={reducedMotion ? false : { opacity: 0, x: 12 }}
       animate={{ opacity: 1, x: 0 }}
       exit={reducedMotion ? undefined : { opacity: 0, x: 12 }}
@@ -671,8 +671,8 @@ function DetailPanel({
       className="h-full flex flex-col bg-white rounded-md shadow-sm ring-1 ring-neutral-100 overflow-hidden"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100 shrink-0">
-        <button
+      <div data-eos-id="src/pages/admin/updates.tsx#80" className="flex items-center justify-between px-3 py-2 border-b border-neutral-100 shrink-0">
+        <button data-eos-id="src/pages/admin/updates.tsx#81"
           type="button"
           onClick={onClose}
           className={cn(
@@ -684,97 +684,97 @@ function DetailPanel({
           )}
           aria-label="Go back"
         >
-          <ArrowLeft size={22} />
+          <ArrowLeft data-eos-id="src/pages/admin/updates.tsx#82" size={22} />
         </button>
-        <div className="flex items-center gap-1">
-          <button
+        <div data-eos-id="src/pages/admin/updates.tsx#83" className="flex items-center gap-1">
+          <button data-eos-id="src/pages/admin/updates.tsx#84"
             type="button"
             onClick={handleCopyContent}
             className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer"
             title="Copy content"
           >
-            <Copy size={15} />
+            <Copy data-eos-id="src/pages/admin/updates.tsx#85" size={15} />
           </button>
-          <button
+          <button data-eos-id="src/pages/admin/updates.tsx#86"
             type="button"
             onClick={onEdit}
             className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer"
             title="Edit"
           >
-            <Pencil size={15} />
+            <Pencil data-eos-id="src/pages/admin/updates.tsx#87" size={15} />
           </button>
-          <button
+          <button data-eos-id="src/pages/admin/updates.tsx#88"
             type="button"
             onClick={onDelete}
             className="p-2 rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 transition-colors cursor-pointer"
             title="Delete"
           >
-            <Trash2 size={15} />
+            <Trash2 data-eos-id="src/pages/admin/updates.tsx#89" size={15} />
           </button>
         </div>
       </div>
 
       {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto">
+      <div data-eos-id="src/pages/admin/updates.tsx#90" className="flex-1 overflow-y-auto">
         {/* Hero image */}
         {images.length > 0 && (
-          <div className="relative">
-            <img
+          <div data-eos-id="src/pages/admin/updates.tsx#91" className="relative">
+            <img data-eos-id="src/pages/admin/updates.tsx#92"
               src={images[0]}
               alt=""
               className="w-full aspect-[16/9] object-cover"
             />
             {images.length > 1 && (
-              <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 text-[10px] font-bold text-white bg-black/50 px-2 py-1 rounded-full backdrop-blur-sm">
-                <ImageIcon size={10} /> {images.length}
+              <span data-eos-id="src/pages/admin/updates.tsx#93" className="absolute bottom-2 right-2 inline-flex items-center gap-1 text-[10px] font-bold text-white bg-black/50 px-2 py-1 rounded-full backdrop-blur-sm">
+                <ImageIcon data-eos-id="src/pages/admin/updates.tsx#94" size={10} /> {images.length}
               </span>
             )}
           </div>
         )}
 
-        <div className="p-4 space-y-4">
+        <div data-eos-id="src/pages/admin/updates.tsx#95" className="p-4 space-y-4">
           {/* Badges */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div data-eos-id="src/pages/admin/updates.tsx#96" className="flex items-center gap-2 flex-wrap">
             {update.is_pinned && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-neutral-600 bg-primary-50 px-2 py-0.5 rounded-full">
-                <Pin size={10} /> Pinned
+              <span data-eos-id="src/pages/admin/updates.tsx#97" className="inline-flex items-center gap-1 text-[10px] font-bold text-neutral-600 bg-primary-50 px-2 py-0.5 rounded-full">
+                <Pin data-eos-id="src/pages/admin/updates.tsx#98" size={10} /> Pinned
               </span>
             )}
             {isUrgent && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-warning-700 bg-warning-50 px-2 py-0.5 rounded-full">
-                <AlertTriangle size={10} /> Urgent
+              <span data-eos-id="src/pages/admin/updates.tsx#99" className="inline-flex items-center gap-1 text-[10px] font-bold text-warning-700 bg-warning-50 px-2 py-0.5 rounded-full">
+                <AlertTriangle data-eos-id="src/pages/admin/updates.tsx#100" size={10} /> Urgent
               </span>
             )}
-            <span className={cn(
+            <span data-eos-id="src/pages/admin/updates.tsx#101" className={cn(
               'inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full',
               update.target_audience === 'collective_specific'
                 ? 'bg-accent-50 text-accent-700'
                 : 'bg-sprout-50 text-sprout-700',
             )}>
-              {update.target_audience === 'collective_specific' ? <Users size={10} /> : <Globe size={10} />}
+              {update.target_audience === 'collective_specific' ? <Users data-eos-id="src/pages/admin/updates.tsx#102" size={10} /> : <Globe data-eos-id="src/pages/admin/updates.tsx#103" size={10} />}
               {audienceLabel(update)}
             </span>
           </div>
 
           {/* Title */}
-          <h2 className="font-heading text-lg font-bold text-neutral-900 leading-tight">
+          <h2 data-eos-id="src/pages/admin/updates.tsx#104" data-eos-var="update.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="font-heading text-lg font-bold text-neutral-900 leading-tight">
             {update.title}
           </h2>
 
           {/* Author + meta */}
-          <div className="flex items-center gap-3 pb-3 border-b border-neutral-100">
-            <Avatar
+          <div data-eos-id="src/pages/admin/updates.tsx#105" className="flex items-center gap-3 pb-3 border-b border-neutral-100">
+            <Avatar data-eos-id="src/pages/admin/updates.tsx#106"
               src={update.author?.avatar_url}
               name={update.author?.display_name ?? 'Staff'}
               size="sm"
             />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-neutral-900">
+            <div data-eos-id="src/pages/admin/updates.tsx#107" className="flex-1 min-w-0">
+              <p data-eos-id="src/pages/admin/updates.tsx#108" data-eos-var="update.author.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="text-sm font-semibold text-neutral-900">
                 {update.author?.display_name ?? 'Co-Exist Team'}
               </p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[11px] text-neutral-400 flex items-center gap-1">
-                  <Clock size={10} />
+              <div data-eos-id="src/pages/admin/updates.tsx#109" className="flex items-center gap-2 mt-0.5">
+                <span data-eos-id="src/pages/admin/updates.tsx#110" data-eos-var="update.created_at" data-eos-var-label="Created at" data-eos-var-scope="prop" className="text-[11px] text-neutral-400 flex items-center gap-1">
+                  <Clock data-eos-id="src/pages/admin/updates.tsx#111" size={10} />
                   {formatDateLong(update.created_at ?? '')}
                 </span>
               </div>
@@ -782,33 +782,33 @@ function DetailPanel({
           </div>
 
           {/* Stats row */}
-          <div className="flex items-center gap-4 py-2 px-3 rounded-sm bg-neutral-50">
-            <div className="flex items-center gap-1.5">
-              <Eye size={13} className="text-neutral-400" />
-              <span className="text-xs font-semibold text-neutral-700">{update.read_count}</span>
-              <span className="text-[11px] text-neutral-400">read</span>
+          <div data-eos-id="src/pages/admin/updates.tsx#112" className="flex items-center gap-4 py-2 px-3 rounded-sm bg-neutral-50">
+            <div data-eos-id="src/pages/admin/updates.tsx#113" className="flex items-center gap-1.5">
+              <Eye data-eos-id="src/pages/admin/updates.tsx#114" size={13} className="text-neutral-400" />
+              <span data-eos-id="src/pages/admin/updates.tsx#115" data-eos-var="update.read_count" data-eos-var-label="Read count" data-eos-var-scope="prop" className="text-xs font-semibold text-neutral-700">{update.read_count}</span>
+              <span data-eos-id="src/pages/admin/updates.tsx#116" className="text-[11px] text-neutral-400">read</span>
             </div>
             {images.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                <ImageIcon size={13} className="text-neutral-400" />
-                <span className="text-xs font-semibold text-neutral-700">{images.length}</span>
-                <span className="text-[11px] text-neutral-400">{images.length === 1 ? 'image' : 'images'}</span>
+              <div data-eos-id="src/pages/admin/updates.tsx#117" className="flex items-center gap-1.5">
+                <ImageIcon data-eos-id="src/pages/admin/updates.tsx#118" size={13} className="text-neutral-400" />
+                <span data-eos-id="src/pages/admin/updates.tsx#119" className="text-xs font-semibold text-neutral-700">{images.length}</span>
+                <span data-eos-id="src/pages/admin/updates.tsx#120" className="text-[11px] text-neutral-400">{images.length === 1 ? 'image' : 'images'}</span>
               </div>
             )}
           </div>
 
           {/* Content preview with clickable links */}
-          <RichContent
+          <RichContent data-eos-id="src/pages/admin/updates.tsx#121"
             text={update.content}
             className="text-sm text-neutral-700 leading-[1.8] whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
           />
 
           {/* Extra images */}
           {images.length > 1 && (
-            <div className="space-y-2">
+            <div data-eos-id="src/pages/admin/updates.tsx#122" className="space-y-2">
               {images.slice(1).map((src, i) => (
-                <div key={i} className="rounded-sm overflow-hidden ring-1 ring-black/[0.04]">
-                  <img src={src} alt="" loading="lazy" className="w-full object-cover" />
+                <div data-eos-id="src/pages/admin/updates.tsx#123" key={i} className="rounded-sm overflow-hidden ring-1 ring-black/[0.04]">
+                  <img data-eos-id="src/pages/admin/updates.tsx#124" src={src} alt="" loading="lazy" className="w-full object-cover" />
                 </div>
               ))}
             </div>
@@ -817,20 +817,20 @@ function DetailPanel({
       </div>
 
       {/* Footer actions */}
-      <div className="shrink-0 px-4 py-3 border-t border-neutral-100 flex items-center gap-2">
-        <Button
+      <div data-eos-id="src/pages/admin/updates.tsx#125" className="shrink-0 px-4 py-3 border-t border-neutral-100 flex items-center gap-2">
+        <Button data-eos-id="src/pages/admin/updates.tsx#126"
           variant="secondary"
           size="sm"
-          icon={<Pencil size={14} />}
+          icon={<Pencil data-eos-id="src/pages/admin/updates.tsx#127" size={14} />}
           onClick={onEdit}
           className="flex-1"
         >
           Edit
         </Button>
-        <Button
+        <Button data-eos-id="src/pages/admin/updates.tsx#128"
           variant="danger"
           size="sm"
-          icon={<Trash2 size={14} />}
+          icon={<Trash2 data-eos-id="src/pages/admin/updates.tsx#129" size={14} />}
           onClick={onDelete}
           className="flex-1"
         >
@@ -866,7 +866,7 @@ function UpdateRow({
   const isUrgent = update.priority === 'urgent'
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/pages/admin/updates.tsx#130"
       initial={reducedMotion ? false : { opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.025, 0.2), duration: 0.2, ease: 'easeOut' }}
@@ -882,94 +882,94 @@ function UpdateRow({
     >
       {/* Thumbnail */}
       {images.length > 0 ? (
-        <img
+        <img data-eos-id="src/pages/admin/updates.tsx#131"
           src={images[0]}
           alt=""
           className="w-14 h-14 rounded-sm object-cover shrink-0 ring-1 ring-black/[0.04]"
         />
       ) : (
-        <div className="w-14 h-14 rounded-sm bg-white border border-neutral-100 flex items-center justify-center shrink-0">
-          <Megaphone size={20} className="text-neutral-400" />
+        <div data-eos-id="src/pages/admin/updates.tsx#132" className="w-14 h-14 rounded-sm bg-white border border-neutral-100 flex items-center justify-center shrink-0">
+          <Megaphone data-eos-id="src/pages/admin/updates.tsx#133" size={20} className="text-neutral-400" />
         </div>
       )}
 
       {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-          <h3 className="text-sm font-semibold text-neutral-900 truncate max-w-[200px] sm:max-w-none">
+      <div data-eos-id="src/pages/admin/updates.tsx#134" className="flex-1 min-w-0">
+        <div data-eos-id="src/pages/admin/updates.tsx#135" className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+          <h3 data-eos-id="src/pages/admin/updates.tsx#136" data-eos-var="update.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="text-sm font-semibold text-neutral-900 truncate max-w-[200px] sm:max-w-none">
             {update.title}
           </h3>
           {update.is_pinned && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-neutral-500 bg-primary-50 px-1.5 py-0.5 rounded-full shrink-0">
-              <Pin size={8} /> Pinned
+            <span data-eos-id="src/pages/admin/updates.tsx#137" className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-neutral-500 bg-primary-50 px-1.5 py-0.5 rounded-full shrink-0">
+              <Pin data-eos-id="src/pages/admin/updates.tsx#138" size={8} /> Pinned
             </span>
           )}
           {isUrgent && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-warning-700 bg-warning-50 px-1.5 py-0.5 rounded-full shrink-0">
-              <AlertTriangle size={8} /> Urgent
+            <span data-eos-id="src/pages/admin/updates.tsx#139" className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-warning-700 bg-warning-50 px-1.5 py-0.5 rounded-full shrink-0">
+              <AlertTriangle data-eos-id="src/pages/admin/updates.tsx#140" size={8} /> Urgent
             </span>
           )}
         </div>
 
-        <p className="text-xs text-neutral-500 line-clamp-1 mb-1.5">{update.content}</p>
+        <p data-eos-id="src/pages/admin/updates.tsx#141" data-eos-var="update.content" data-eos-var-label="Content" data-eos-var-scope="prop" className="text-xs text-neutral-500 line-clamp-1 mb-1.5">{update.content}</p>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div data-eos-id="src/pages/admin/updates.tsx#142" className="flex items-center gap-2 flex-wrap">
           {/* Author */}
-          <div className="flex items-center gap-1.5">
-            <Avatar
+          <div data-eos-id="src/pages/admin/updates.tsx#143" className="flex items-center gap-1.5">
+            <Avatar data-eos-id="src/pages/admin/updates.tsx#144"
               src={update.author?.avatar_url}
               name={update.author?.display_name ?? 'Staff'}
               size="xs"
             />
-            <span className="text-[11px] font-medium text-neutral-600">
+            <span data-eos-id="src/pages/admin/updates.tsx#145" data-eos-var="update.author.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="text-[11px] font-medium text-neutral-600">
               {update.author?.display_name ?? 'Staff'}
             </span>
           </div>
-          <span className="text-[10px] text-neutral-300">{formatRelative(update.created_at ?? '')}</span>
+          <span data-eos-id="src/pages/admin/updates.tsx#146" data-eos-var="update.created_at" data-eos-var-label="Created at" data-eos-var-scope="prop" className="text-[10px] text-neutral-300">{formatRelative(update.created_at ?? '')}</span>
 
           {/* Audience badge */}
-          <span className={cn(
+          <span data-eos-id="src/pages/admin/updates.tsx#147" className={cn(
             'inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
             update.target_audience === 'collective_specific'
               ? 'bg-accent-50 text-accent-700'
               : 'bg-sprout-50 text-sprout-700',
           )}>
-            {update.target_audience === 'collective_specific' ? <Users size={9} /> : <Globe size={9} />}
+            {update.target_audience === 'collective_specific' ? <Users data-eos-id="src/pages/admin/updates.tsx#148" size={9} /> : <Globe data-eos-id="src/pages/admin/updates.tsx#149" size={9} />}
             {audienceLabel(update)}
           </span>
 
           {/* Read count */}
-          <span className="inline-flex items-center gap-0.5 text-[10px] text-neutral-400 shrink-0 ml-auto">
-            <Eye size={9} /> {update.read_count}
+          <span data-eos-id="src/pages/admin/updates.tsx#150" data-eos-var="update.read_count" data-eos-var-label="Read count" data-eos-var-scope="prop" className="inline-flex items-center gap-0.5 text-[10px] text-neutral-400 shrink-0 ml-auto">
+            <Eye data-eos-id="src/pages/admin/updates.tsx#151" size={9} /> {update.read_count}
           </span>
 
           {images.length > 0 && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-neutral-300 shrink-0">
-              <ImageIcon size={9} /> {images.length}
+            <span data-eos-id="src/pages/admin/updates.tsx#152" className="inline-flex items-center gap-0.5 text-[10px] text-neutral-300 shrink-0">
+              <ImageIcon data-eos-id="src/pages/admin/updates.tsx#153" size={9} /> {images.length}
             </span>
           )}
         </div>
       </div>
 
       {/* Quick actions */}
-      <div className="flex items-center gap-0.5 shrink-0">
-        <button
+      <div data-eos-id="src/pages/admin/updates.tsx#154" className="flex items-center gap-0.5 shrink-0">
+        <button data-eos-id="src/pages/admin/updates.tsx#155"
           type="button"
           onClick={(e) => { e.stopPropagation(); onEdit() }}
           className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer"
           title="Edit"
         >
-          <Pencil size={15} />
+          <Pencil data-eos-id="src/pages/admin/updates.tsx#156" size={15} />
         </button>
-        <button
+        <button data-eos-id="src/pages/admin/updates.tsx#157"
           type="button"
           onClick={(e) => { e.stopPropagation(); onDelete() }}
           className="p-2 rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 transition-colors cursor-pointer"
           title="Delete"
         >
-          <Trash2 size={15} />
+          <Trash2 data-eos-id="src/pages/admin/updates.tsx#158" size={15} />
         </button>
-        <ChevronRight size={14} className="text-neutral-300 ml-0.5" />
+        <ChevronRight data-eos-id="src/pages/admin/updates.tsx#159" size={14} className="text-neutral-300 ml-0.5" />
       </div>
     </motion.div>
   )
@@ -1053,10 +1053,10 @@ export default function AdminUpdatesPage() {
 
   // Hero
   const heroActions = useMemo(() => (
-    <Button
+    <Button data-eos-id="src/pages/admin/updates.tsx#160"
       variant="primary"
       size="sm"
-      icon={<Plus size={16} />}
+      icon={<Plus data-eos-id="src/pages/admin/updates.tsx#161" size={16} />}
       onClick={() => { setEditTarget(null); setShowCompose(true) }}
     >
       New Update
@@ -1064,11 +1064,11 @@ export default function AdminUpdatesPage() {
   ), [])
 
   const heroStats = useMemo(() => (
-    <AdminHeroStatRow>
-      <AdminHeroStat value={stats.total} label="Total" icon={<Megaphone size={18} />} color="primary" delay={0} reducedMotion={rm} />
-      <AdminHeroStat value={stats.pinned} label="Pinned" icon={<Pin size={18} />} color="moss" delay={1} reducedMotion={rm} />
-      <AdminHeroStat value={stats.urgent} label="Urgent" icon={<AlertTriangle size={18} />} color="warning" delay={2} reducedMotion={rm} />
-      <AdminHeroStat value={stats.collective} label="Targeted" icon={<Users size={18} />} color="sprout" delay={3} reducedMotion={rm} />
+    <AdminHeroStatRow data-eos-id="src/pages/admin/updates.tsx#162">
+      <AdminHeroStat data-eos-id="src/pages/admin/updates.tsx#163" value={stats.total} label="Total" icon={<Megaphone data-eos-id="src/pages/admin/updates.tsx#164" size={18} />} color="primary" delay={0} reducedMotion={rm} />
+      <AdminHeroStat data-eos-id="src/pages/admin/updates.tsx#165" value={stats.pinned} label="Pinned" icon={<Pin data-eos-id="src/pages/admin/updates.tsx#166" size={18} />} color="moss" delay={1} reducedMotion={rm} />
+      <AdminHeroStat data-eos-id="src/pages/admin/updates.tsx#167" value={stats.urgent} label="Urgent" icon={<AlertTriangle data-eos-id="src/pages/admin/updates.tsx#168" size={18} />} color="warning" delay={2} reducedMotion={rm} />
+      <AdminHeroStat data-eos-id="src/pages/admin/updates.tsx#169" value={stats.collective} label="Targeted" icon={<Users data-eos-id="src/pages/admin/updates.tsx#170" size={18} />} color="sprout" delay={3} reducedMotion={rm} />
     </AdminHeroStatRow>
   ), [stats, rm])
 
@@ -1077,24 +1077,24 @@ export default function AdminUpdatesPage() {
   const { stagger, fadeUp } = adminVariants(rm)
 
   return (
-    <div>
-      <motion.div variants={stagger} initial="hidden" animate="visible">
+    <div data-eos-id="src/pages/admin/updates.tsx#171">
+      <motion.div data-eos-id="src/pages/admin/updates.tsx#172" variants={stagger} initial="hidden" animate="visible">
         {/* Filters */}
-        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
-          <SearchBar
+        <motion.div data-eos-id="src/pages/admin/updates.tsx#173" variants={fadeUp} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+          <SearchBar data-eos-id="src/pages/admin/updates.tsx#174"
             value={search}
             onChange={setSearch}
             placeholder="Search updates..."
             compact
             className="flex-1"
           />
-          <div className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5">
+          <div data-eos-id="src/pages/admin/updates.tsx#175" className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5">
             {([
               { key: 'all', label: 'All' },
               { key: 'national', label: 'National' },
               { key: 'collective', label: 'Collective' },
             ] as const).map((f) => (
-              <button
+              <button data-eos-id="src/pages/admin/updates.tsx#176" data-eos-var="f.label" data-eos-var-label="Label" data-eos-var-scope="item"
                 key={f.key}
                 type="button"
                 onClick={() => setAudienceFilter(f.key)}
@@ -1113,17 +1113,17 @@ export default function AdminUpdatesPage() {
         </motion.div>
 
         {/* Content - list + optional detail panel */}
-        <motion.div variants={fadeUp}>
-          <div className="flex gap-4">
+        <motion.div data-eos-id="src/pages/admin/updates.tsx#177" variants={fadeUp}>
+          <div data-eos-id="src/pages/admin/updates.tsx#178" className="flex gap-4">
             {/* Update list */}
-            <div className={cn(
+            <div data-eos-id="src/pages/admin/updates.tsx#179" className={cn(
               'transition-all duration-200',
               activeUpdate ? 'w-full lg:w-1/2 xl:w-[45%]' : 'w-full',
             )}>
               {showLoading ? (
-                <Skeleton variant="list-item" count={5} />
+                <Skeleton data-eos-id="src/pages/admin/updates.tsx#180" variant="list-item" count={5} />
               ) : !filtered.length ? (
-                <EmptyState
+                <EmptyState data-eos-id="src/pages/admin/updates.tsx#181"
                   illustration="empty"
                   title="No updates found"
                   description={search ? 'Try a different search term' : 'Publish your first update to get started'}
@@ -1134,9 +1134,9 @@ export default function AdminUpdatesPage() {
                   }
                 />
               ) : (
-                <div className="space-y-2">
+                <div data-eos-id="src/pages/admin/updates.tsx#182" className="space-y-2">
                   {filtered.map((u, i) => (
-                    <UpdateRow
+                    <UpdateRow data-eos-id="src/pages/admin/updates.tsx#183"
                       key={u.id}
                       update={u}
                       index={i}
@@ -1152,10 +1152,10 @@ export default function AdminUpdatesPage() {
             </div>
 
             {/* Detail panel - desktop, slides in from right */}
-            <AnimatePresence mode="wait">
+            <AnimatePresence data-eos-id="src/pages/admin/updates.tsx#184" mode="wait">
               {activeUpdate && (
-                <div className="hidden lg:block lg:w-1/2 xl:w-[55%] sticky top-0 h-[calc(100vh-12rem)]">
-                  <DetailPanel
+                <div data-eos-id="src/pages/admin/updates.tsx#185" className="hidden lg:block lg:w-1/2 xl:w-[55%] sticky top-0 h-[calc(100vh-12rem)]">
+                  <DetailPanel data-eos-id="src/pages/admin/updates.tsx#186"
                     key={activeUpdate.id}
                     update={activeUpdate}
                     onClose={() => setSelectedUpdate(null)}
@@ -1174,9 +1174,9 @@ export default function AdminUpdatesPage() {
               bar (56px, same z-50, wins by DOM order). Without these, the
               back button hides under the dynamic island and the
               edit/delete footer hides behind the tab bar. */}
-          <AnimatePresence>
+          <AnimatePresence data-eos-id="src/pages/admin/updates.tsx#187">
             {activeUpdate && (
-              <motion.div
+              <motion.div data-eos-id="src/pages/admin/updates.tsx#188"
                 initial={rm ? false : { opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -1187,7 +1187,7 @@ export default function AdminUpdatesPage() {
                   paddingBottom: 'calc(56px + var(--safe-bottom, 0px) + 0.75rem)',
                 }}
               >
-                <DetailPanel
+                <DetailPanel data-eos-id="src/pages/admin/updates.tsx#189"
                   key={`mobile-${activeUpdate.id}`}
                   update={activeUpdate}
                   onClose={() => setSelectedUpdate(null)}
@@ -1203,7 +1203,7 @@ export default function AdminUpdatesPage() {
 
       {/* Compose / Edit modal */}
       {showCompose && (
-        <ComposeModal
+        <ComposeModal data-eos-id="src/pages/admin/updates.tsx#190"
           open={showCompose}
           onClose={() => { setShowCompose(false); setEditTarget(null) }}
           editTarget={editTarget}
@@ -1211,7 +1211,7 @@ export default function AdminUpdatesPage() {
       )}
 
       {/* Delete confirmation */}
-      <ConfirmationSheet
+      <ConfirmationSheet data-eos-id="src/pages/admin/updates.tsx#191"
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
