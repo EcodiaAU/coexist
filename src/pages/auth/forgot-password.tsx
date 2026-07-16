@@ -37,19 +37,19 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col bg-white">
-      <OGMeta
+    <div data-eos-id="src/pages/auth/forgot-password.tsx#0" className="min-h-dvh flex flex-col bg-white">
+      <OGMeta data-eos-id="src/pages/auth/forgot-password.tsx#1"
         title="Reset Password"
         description="Reset your Co-Exist account password. Enter your email to receive a secure password reset link."
         canonicalPath="/forgot-password"
         noindex
       />
-      <Header title="Reset Password" back />
+      <Header data-eos-id="src/pages/auth/forgot-password.tsx#2" title="Reset Password" back />
 
-      <div className="flex-1 flex flex-col px-6 pt-8">
-        <AnimatePresence mode="wait">
+      <div data-eos-id="src/pages/auth/forgot-password.tsx#3" className="flex-1 flex flex-col px-6 pt-8">
+        <AnimatePresence data-eos-id="src/pages/auth/forgot-password.tsx#4" mode="wait">
           {sent ? (
-            <motion.div
+            <motion.div data-eos-id="src/pages/auth/forgot-password.tsx#5"
               key="success"
               initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -57,21 +57,21 @@ export default function ForgotPasswordPage() {
               transition={{ duration: 0.3 }}
               className="flex-1 flex flex-col items-center justify-center text-center"
             >
-              <motion.div
+              <motion.div data-eos-id="src/pages/auth/forgot-password.tsx#6"
                 initial={shouldReduceMotion ? false : { scale: 0.5 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
               >
-                <CheckCircle className="w-16 h-16 text-success mx-auto" />
+                <CheckCircle data-eos-id="src/pages/auth/forgot-password.tsx#7" className="w-16 h-16 text-success mx-auto" />
               </motion.div>
-              <h2 className="mt-6 font-heading text-xl font-semibold text-neutral-900">
+              <h2 data-eos-id="src/pages/auth/forgot-password.tsx#8" className="mt-6 font-heading text-xl font-semibold text-neutral-900">
                 Check your inbox
               </h2>
-              <p className="mt-2 text-neutral-500 max-w-xs">
+              <p data-eos-id="src/pages/auth/forgot-password.tsx#9" className="mt-2 text-neutral-500 max-w-xs">
                 We've sent a password reset link to{' '}
-                <span className="font-medium text-neutral-900">{email}</span>
+                <span data-eos-id="src/pages/auth/forgot-password.tsx#10" className="font-medium text-neutral-900">{email}</span>
               </p>
-              <Button
+              <Button data-eos-id="src/pages/auth/forgot-password.tsx#11"
                 variant="ghost"
                 className="mt-8"
                 onClick={() => navigate('/login')}
@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
               </Button>
             </motion.div>
           ) : (
-            <motion.form
+            <motion.form data-eos-id="src/pages/auth/forgot-password.tsx#12"
               key="form"
               onSubmit={handleSubmit}
               initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
@@ -89,20 +89,20 @@ export default function ForgotPasswordPage() {
               transition={{ duration: 0.3 }}
               className="flex-1 flex flex-col"
             >
-              <div className="flex-1">
-                <div className="w-14 h-14 rounded-full bg-neutral-50 flex items-center justify-center mb-6">
-                  <Mail className="w-7 h-7 text-neutral-400" />
+              <div data-eos-id="src/pages/auth/forgot-password.tsx#13" className="flex-1">
+                <div data-eos-id="src/pages/auth/forgot-password.tsx#14" className="w-14 h-14 rounded-full bg-neutral-50 flex items-center justify-center mb-6">
+                  <Mail data-eos-id="src/pages/auth/forgot-password.tsx#15" className="w-7 h-7 text-neutral-400" />
                 </div>
 
-                <h2 className="font-heading text-xl font-semibold text-neutral-900">
+                <h2 data-eos-id="src/pages/auth/forgot-password.tsx#16" className="font-heading text-xl font-semibold text-neutral-900">
                   Forgot your password?
                 </h2>
-                <p className="mt-2 text-neutral-500 leading-relaxed">
+                <p data-eos-id="src/pages/auth/forgot-password.tsx#17" className="mt-2 text-neutral-500 leading-relaxed">
                   Enter your email and we'll send you a link to reset it.
                 </p>
 
-                <div className="mt-6">
-                  <Input
+                <div data-eos-id="src/pages/auth/forgot-password.tsx#18" className="mt-6">
+                  <Input data-eos-id="src/pages/auth/forgot-password.tsx#19"
                     type="email"
                     label="Email"
                     value={email}
@@ -113,7 +113,7 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 {error && (
-                  <motion.p
+                  <motion.p data-eos-id="src/pages/auth/forgot-password.tsx#20"
                     initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-3 text-sm text-error"
@@ -124,11 +124,11 @@ export default function ForgotPasswordPage() {
                 )}
               </div>
 
-              <div
+              <div data-eos-id="src/pages/auth/forgot-password.tsx#21"
                 className="py-6"
                 style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
               >
-                <Button
+                <Button data-eos-id="src/pages/auth/forgot-password.tsx#22"
                   type="submit"
                   variant="primary"
                   size="lg"
