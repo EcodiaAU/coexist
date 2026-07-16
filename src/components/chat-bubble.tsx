@@ -113,17 +113,17 @@ export function ChatBubble({
   const roleStyle = roleBadge ? ROLE_COLORS[roleBadge] ?? { bg: 'bg-primary-100', text: 'text-primary-600' } : null
 
   return (
-    <div className="relative">
+    <div data-eos-id="src/components/chat-bubble.tsx#0" className="relative">
       {dragEnabled && (
-        <motion.div
+        <motion.div data-eos-id="src/components/chat-bubble.tsx#1"
           aria-hidden="true"
           style={{ opacity: swipeIconOpacity, scale: swipeIconScale }}
           className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 z-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-white shadow-md"
         >
-          <Reply size={16} strokeWidth={2.5} />
+          <Reply data-eos-id="src/components/chat-bubble.tsx#2" size={16} strokeWidth={2.5} />
         </motion.div>
       )}
-    <motion.div
+    <motion.div data-eos-id="src/components/chat-bubble.tsx#3"
       role="listitem"
       aria-label={label}
       initial={shouldReduceMotion || skipAnimation ? false : { opacity: 0, y: 8, scale: 0.97 }}
@@ -156,23 +156,23 @@ export function ChatBubble({
           bubble; the avatar+touch-target only appears once per run. */}
       {!sent && (
         isContinuation ? (
-          <div className="flex-shrink-0 w-11" aria-hidden="true" />
+          <div data-eos-id="src/components/chat-bubble.tsx#4" className="flex-shrink-0 w-11" aria-hidden="true" />
         ) : (
-          <button
+          <button data-eos-id="src/components/chat-bubble.tsx#5"
             type="button"
             className="flex-shrink-0 self-end flex items-center justify-center min-h-11 min-w-11 rounded-full cursor-pointer select-none active:scale-[0.98] transition-transform duration-150"
             onClick={() => senderId && onAvatarTap?.(senderId)}
             aria-label={senderName ? `View ${senderName}'s profile` : 'View profile'}
           >
             {senderAvatar ? (
-              <img
+              <img data-eos-id="src/components/chat-bubble.tsx#6"
                 src={senderAvatar}
                 alt=""
                 loading="lazy"
                 className="h-10 w-10 rounded-full object-cover ring-[2.5px] ring-white shadow-sm"
               />
             ) : (
-              <div
+              <div data-eos-id="src/components/chat-bubble.tsx#7"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-xs font-extrabold text-white ring-[2.5px] ring-white shadow-sm"
                 aria-hidden="true"
               >
@@ -184,7 +184,7 @@ export function ChatBubble({
       )}
 
       {/* Bubble content */}
-      <div
+      <div data-eos-id="src/components/chat-bubble.tsx#8"
         className={cn(
           'flex min-w-0 max-w-[82%] flex-col gap-0',
           sent ? 'items-end' : 'items-start',
@@ -197,8 +197,8 @@ export function ChatBubble({
             single biggest contributor to the "messages are far apart"
             complaint. Tap stays functional via py-0.5 + active:scale. */}
         {!sent && senderName && !isContinuation && (
-          <div className="flex items-center gap-2 px-1 mb-0.5">
-            <button
+          <div data-eos-id="src/components/chat-bubble.tsx#9" className="flex items-center gap-2 px-1 mb-0.5">
+            <button data-eos-id="src/components/chat-bubble.tsx#10"
               type="button"
               className="text-[12px] font-semibold text-neutral-500 hover:text-neutral-700 py-0.5 cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
               onClick={() => senderId && onSenderTap?.(senderId)}
@@ -206,7 +206,7 @@ export function ChatBubble({
               {senderName}
             </button>
             {roleBadge && roleStyle && (
-              <span className={cn(
+              <span data-eos-id="src/components/chat-bubble.tsx#11" className={cn(
                 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-extrabold leading-tight shadow-sm',
                 roleStyle.bg,
                 roleStyle.text,
@@ -221,7 +221,7 @@ export function ChatBubble({
             facing the prior bubble in the run (top-left for received,
             top-right for sent), giving a clean stacked-tile feel without
             redrawing the chat tail. */}
-        <div
+        <div data-eos-id="src/components/chat-bubble.tsx#12"
           className={cn(
             'min-w-0 max-w-full rounded-md px-4 py-2.5',
             sent
@@ -234,7 +234,7 @@ export function ChatBubble({
             const tappable = !!replyTo.parentId && !!onReplyTap
             const inner = (
               <>
-                <p
+                <p data-eos-id="src/components/chat-bubble.tsx#13" data-eos-var="replyTo.senderName" data-eos-var-label="Sender name" data-eos-var-scope="prop"
                   className={cn(
                     'text-[11px] font-extrabold',
                     sent ? 'text-neutral-700' : 'text-neutral-700',
@@ -242,7 +242,7 @@ export function ChatBubble({
                 >
                   {replyTo.senderName}
                 </p>
-                <p
+                <p data-eos-id="src/components/chat-bubble.tsx#14" data-eos-var="replyTo.message" data-eos-var-label="Message" data-eos-var-scope="prop"
                   className={cn(
                     'line-clamp-2 text-xs mt-0.5',
                     sent ? 'text-neutral-500' : 'text-neutral-500',
@@ -261,7 +261,7 @@ export function ChatBubble({
             )
             if (tappable) {
               return (
-                <button
+                <button data-eos-id="src/components/chat-bubble.tsx#15"
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation()
@@ -274,12 +274,12 @@ export function ChatBubble({
                 </button>
               )
             }
-            return <div className={wrapperClass}>{inner}</div>
+            return <div data-eos-id="src/components/chat-bubble.tsx#16" className={wrapperClass}>{inner}</div>
           })()}
 
           {/* Photo */}
           {photo && (
-            <img
+            <img data-eos-id="src/components/chat-bubble.tsx#17"
               src={photo}
               alt="Shared image"
               loading="lazy"
@@ -289,19 +289,19 @@ export function ChatBubble({
 
           {/* Message text */}
           {message && (
-            <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[14px] leading-[1.45]">
+            <p data-eos-id="src/components/chat-bubble.tsx#18" className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[14px] leading-[1.45]">
               {message}
             </p>
           )}
 
           {/* Timestamp */}
-          <p
+          <p data-eos-id="src/components/chat-bubble.tsx#19"
             className={cn(
               'mt-1 text-[10px] font-medium tabular-nums text-neutral-500/80',
               sent ? 'text-right' : 'text-left',
             )}
           >
-            <time dateTime={timestamp.toISOString()}>
+            <time data-eos-id="src/components/chat-bubble.tsx#20" dateTime={timestamp.toISOString()}>
               {formatClockTime(timestamp)}
             </time>
           </p>
@@ -356,7 +356,7 @@ export function PollCard({
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/chat-bubble.tsx#21"
       initial={shouldReduceMotion ? false : { opacity: 0, y: 8, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -367,31 +367,31 @@ export function PollCard({
       )}
     >
       {/* Poll icon + question */}
-      <div className="flex items-start gap-3 mb-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-600">
-          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <rect x="1" y="8" width="3" height="6" rx="1" fill="currentColor" opacity="0.6" />
-            <rect x="6" y="4" width="3" height="10" rx="1" fill="currentColor" opacity="0.8" />
-            <rect x="11" y="2" width="3" height="12" rx="1" fill="currentColor" />
+      <div data-eos-id="src/components/chat-bubble.tsx#22" className="flex items-start gap-3 mb-4">
+        <div data-eos-id="src/components/chat-bubble.tsx#23" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-600">
+          <svg data-eos-id="src/components/chat-bubble.tsx#24" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <rect data-eos-id="src/components/chat-bubble.tsx#25" x="1" y="8" width="3" height="6" rx="1" fill="currentColor" opacity="0.6" />
+            <rect data-eos-id="src/components/chat-bubble.tsx#26" x="6" y="4" width="3" height="10" rx="1" fill="currentColor" opacity="0.8" />
+            <rect data-eos-id="src/components/chat-bubble.tsx#27" x="11" y="2" width="3" height="12" rx="1" fill="currentColor" />
           </svg>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-extrabold text-neutral-900 leading-snug">{question}</p>
+        <div data-eos-id="src/components/chat-bubble.tsx#28" className="flex-1 min-w-0">
+          <p data-eos-id="src/components/chat-bubble.tsx#29" className="text-[15px] font-extrabold text-neutral-900 leading-snug">{question}</p>
           {creatorName && (
-            <p className="text-[11px] font-medium text-neutral-500 mt-0.5">by {creatorName}</p>
+            <p data-eos-id="src/components/chat-bubble.tsx#30" className="text-[11px] font-medium text-neutral-500 mt-0.5">by {creatorName}</p>
           )}
         </div>
       </div>
 
       {/* Options */}
-      <div className="space-y-2">
+      <div data-eos-id="src/components/chat-bubble.tsx#31" className="space-y-2">
         {options.map((opt) => {
           const count = voteCounts[opt.id] ?? 0
           const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
           const isSelected = userVotes.includes(opt.id)
 
           return (
-            <button
+            <button data-eos-id="src/components/chat-bubble.tsx#32"
               key={opt.id}
               type="button"
               disabled={isClosed}
@@ -414,7 +414,7 @@ export function PollCard({
             >
               {/* Progress bar background */}
               {hasVoted && (
-                <motion.div
+                <motion.div data-eos-id="src/components/chat-bubble.tsx#33"
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -425,15 +425,15 @@ export function PollCard({
                 />
               )}
 
-              <div className="relative flex items-center justify-between gap-2">
-                <span className={cn(
+              <div data-eos-id="src/components/chat-bubble.tsx#34" className="relative flex items-center justify-between gap-2">
+                <span data-eos-id="src/components/chat-bubble.tsx#35" data-eos-var="opt.text" data-eos-var-label="Text" data-eos-var-scope="item" className={cn(
                   'text-sm',
                   isSelected ? 'font-semibold text-neutral-900' : 'text-neutral-700',
                 )}>
                   {opt.text}
                 </span>
                 {hasVoted && (
-                  <span className="text-xs font-semibold text-neutral-500 tabular-nums shrink-0">
+                  <span data-eos-id="src/components/chat-bubble.tsx#36" className="text-xs font-semibold text-neutral-500 tabular-nums shrink-0">
                     {pct}%
                   </span>
                 )}
@@ -444,15 +444,15 @@ export function PollCard({
       </div>
 
       {/* Footer */}
-      <div className="mt-3 flex items-center justify-between">
-        <p className="text-[11px] text-neutral-500">
+      <div data-eos-id="src/components/chat-bubble.tsx#37" className="mt-3 flex items-center justify-between">
+        <p data-eos-id="src/components/chat-bubble.tsx#38" className="text-[11px] text-neutral-500">
           {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
           {anonymous ? ' (anonymous)' : ''}
         </p>
         {isClosed ? (
-          <span className="text-[11px] font-semibold text-neutral-500">Poll closed</span>
+          <span data-eos-id="src/components/chat-bubble.tsx#39" className="text-[11px] font-semibold text-neutral-500">Poll closed</span>
         ) : closesAt ? (
-          <span className="text-[11px] text-neutral-500">
+          <span data-eos-id="src/components/chat-bubble.tsx#40" className="text-[11px] text-neutral-500">
             Closes {new Date(closesAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
           </span>
         ) : null}
@@ -545,7 +545,7 @@ export function AnnouncementCard({
   const hasEventImage = eventDetails?.coverImageUrl
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/chat-bubble.tsx#41"
       initial={shouldReduceMotion ? false : { opacity: 0, y: 8, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -562,65 +562,65 @@ export function AnnouncementCard({
     >
       {/* Event cover image */}
       {hasEventImage && (
-        <div className="relative w-full h-32 overflow-hidden">
-          <img
+        <div data-eos-id="src/components/chat-bubble.tsx#42" className="relative w-full h-32 overflow-hidden">
+          <img data-eos-id="src/components/chat-bubble.tsx#43"
             src={eventDetails.coverImageUrl!}
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          <div data-eos-id="src/components/chat-bubble.tsx#44" className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {eventDetails.activityType && (
-            <span className="absolute bottom-2 left-3 max-w-[calc(100%-1.5rem)] truncate text-[10px] font-bold uppercase tracking-wider text-white/90 bg-black/30 px-2 py-0.5 rounded-full">
+            <span data-eos-id="src/components/chat-bubble.tsx#45" data-eos-var="ACTIVITY_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className="absolute bottom-2 left-3 max-w-[calc(100%-1.5rem)] truncate text-[10px] font-bold uppercase tracking-wider text-white/90 bg-black/30 px-2 py-0.5 rounded-full">
               {ACTIVITY_LABELS[eventDetails.activityType] ?? eventDetails.activityType}
             </span>
           )}
         </div>
       )}
 
-      <div className="p-5 min-w-0 overflow-hidden">
+      <div data-eos-id="src/components/chat-bubble.tsx#46" className="p-5 min-w-0 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-3 min-w-0">
-          <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-md', typeInfo.iconBg, typeInfo.iconColor)}>
-            <IconComponent size={20} strokeWidth={2.5} />
+        <div data-eos-id="src/components/chat-bubble.tsx#47" className="flex items-center gap-3 mb-3 min-w-0">
+          <div data-eos-id="src/components/chat-bubble.tsx#48" className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-md', typeInfo.iconBg, typeInfo.iconColor)}>
+            <IconComponent data-eos-id="src/components/chat-bubble.tsx#49" size={20} strokeWidth={2.5} />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className={cn('text-[11px] font-extrabold uppercase tracking-wider truncate', typeInfo.labelColor)}>{typeInfo.label}</p>
+          <div data-eos-id="src/components/chat-bubble.tsx#50" className="flex-1 min-w-0">
+            <p data-eos-id="src/components/chat-bubble.tsx#51" data-eos-var="typeInfo.label" data-eos-var-label="Label" data-eos-var-scope="prop" className={cn('text-[11px] font-extrabold uppercase tracking-wider truncate', typeInfo.labelColor)}>{typeInfo.label}</p>
             {creatorName && (
-              <p className="text-[11px] font-medium text-neutral-500 truncate">from {creatorName}</p>
+              <p data-eos-id="src/components/chat-bubble.tsx#52" className="text-[11px] font-medium text-neutral-500 truncate">from {creatorName}</p>
             )}
           </div>
         </div>
 
         {/* Content */}
-        <h4 className="text-[15px] font-extrabold text-neutral-900 mb-1.5 break-words">{title}</h4>
+        <h4 data-eos-id="src/components/chat-bubble.tsx#53" className="text-[15px] font-extrabold text-neutral-900 mb-1.5 break-words">{title}</h4>
         {body && (
-          <p className="text-sm text-neutral-600 leading-relaxed mb-2 break-words">{body}</p>
+          <p data-eos-id="src/components/chat-bubble.tsx#54" className="text-sm text-neutral-600 leading-relaxed mb-2 break-words">{body}</p>
         )}
 
         {/* Event details summary */}
         {eventDetails && (
-          <div className="rounded-sm bg-neutral-50 p-3 mb-3 space-y-1.5 min-w-0 overflow-hidden">
-            <div className="flex items-center gap-2 min-w-0">
-              <Calendar size={13} className="text-neutral-400 shrink-0" />
-              <span className="text-xs font-semibold text-neutral-700 truncate">
+          <div data-eos-id="src/components/chat-bubble.tsx#55" className="rounded-sm bg-neutral-50 p-3 mb-3 space-y-1.5 min-w-0 overflow-hidden">
+            <div data-eos-id="src/components/chat-bubble.tsx#56" className="flex items-center gap-2 min-w-0">
+              <Calendar data-eos-id="src/components/chat-bubble.tsx#57" size={13} className="text-neutral-400 shrink-0" />
+              <span data-eos-id="src/components/chat-bubble.tsx#58" data-eos-var="eventDetails.dateStart" data-eos-var-label="Date start" data-eos-var-scope="prop" className="text-xs font-semibold text-neutral-700 truncate">
                 {formatCardDate(eventDetails.dateStart)}
               </span>
             </div>
-            <div className="flex items-center gap-2 min-w-0">
-              <Clock size={13} className="text-neutral-400 shrink-0" />
-              <span className="text-xs text-neutral-500 truncate">
+            <div data-eos-id="src/components/chat-bubble.tsx#59" className="flex items-center gap-2 min-w-0">
+              <Clock data-eos-id="src/components/chat-bubble.tsx#60" size={13} className="text-neutral-400 shrink-0" />
+              <span data-eos-id="src/components/chat-bubble.tsx#61" data-eos-var="eventDetails.dateStart,eventDetails.dateEnd" data-eos-var-label="Date start, Date end" data-eos-var-scope="prop" className="text-xs text-neutral-500 truncate">
                 {formatCardTime(eventDetails.dateStart)}
                 {eventDetails.dateEnd && ` - ${formatCardTime(eventDetails.dateEnd)}`}
               </span>
             </div>
             {eventDetails.address && (
-              <div className="flex items-center gap-2 min-w-0">
-                <MapPin size={13} className="text-neutral-400 shrink-0" />
-                <span className="text-xs text-neutral-500 truncate min-w-0 flex-1">{eventDetails.address}</span>
+              <div data-eos-id="src/components/chat-bubble.tsx#62" className="flex items-center gap-2 min-w-0">
+                <MapPin data-eos-id="src/components/chat-bubble.tsx#63" size={13} className="text-neutral-400 shrink-0" />
+                <span data-eos-id="src/components/chat-bubble.tsx#64" data-eos-var="eventDetails.address" data-eos-var-label="Address" data-eos-var-scope="prop" className="text-xs text-neutral-500 truncate min-w-0 flex-1">{eventDetails.address}</span>
               </div>
             )}
             {eventDetails.collectiveName && !hasEventImage && (
-              <p className="text-[11px] text-neutral-400 mt-0.5 truncate">
+              <p data-eos-id="src/components/chat-bubble.tsx#65" data-eos-var="eventDetails.collectiveName" data-eos-var-label="Collective name" data-eos-var-scope="prop" className="text-[11px] text-neutral-400 mt-0.5 truncate">
                 Hosted by {eventDetails.collectiveName}
               </p>
             )}
@@ -629,7 +629,7 @@ export function AnnouncementCard({
 
         {/* Event invite CTA */}
         {type === 'event_invite' && !!metadata?.event_id && onViewEvent && (
-          <button
+          <button data-eos-id="src/components/chat-bubble.tsx#66"
             type="button"
             onClick={() => onViewEvent(metadata.event_id as string)}
             className="w-full rounded-sm bg-primary-600 py-2.5 text-center text-sm font-semibold text-white mb-2 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11"
@@ -656,7 +656,7 @@ export function AnnouncementCard({
             const label = opt === 'going' ? 'Going' : opt === 'maybe' ? 'Maybe' : "Can't make it"
             const count = responseCounts[opt] ?? 0
             return (
-              <button
+              <button data-eos-id="src/components/chat-bubble.tsx#67"
                 key={opt}
                 type="button"
                 onClick={() => onRespond(opt)}
@@ -671,9 +671,9 @@ export function AnnouncementCard({
                     : 'bg-neutral-50 text-neutral-700 hover:bg-neutral-100',
                 )}
               >
-                <span className="whitespace-nowrap">{label}</span>
+                <span data-eos-id="src/components/chat-bubble.tsx#68" className="whitespace-nowrap">{label}</span>
                 {count > 0 && (
-                  <span className={cn(
+                  <span data-eos-id="src/components/chat-bubble.tsx#69" className={cn(
                     'ml-1 text-[11px]',
                     isSelected ? 'text-white/80' : 'text-neutral-400',
                   )}>
@@ -685,9 +685,9 @@ export function AnnouncementCard({
           }
           const opts = new Set(rsvpOptions)
           return (
-            <div className="mb-2 space-y-2">
+            <div data-eos-id="src/components/chat-bubble.tsx#70" data-eos-var="opts.has" data-eos-var-label="Has" data-eos-var-scope="prop" className="mb-2 space-y-2">
               {opts.has('going') && renderBtn('going', true)}
-              <div className="flex gap-2">
+              <div data-eos-id="src/components/chat-bubble.tsx#71" data-eos-var="opts.has,opts.has" data-eos-var-label="Has, Has" data-eos-var-scope="prop" className="flex gap-2">
                 {opts.has('maybe') && renderBtn('maybe', false)}
                 {opts.has('not_going') && renderBtn('not_going', false)}
               </div>
@@ -706,17 +706,17 @@ export function AnnouncementCard({
           const withProfiles = responses.filter((r) => r.profiles?.id)
           if (withProfiles.length === 0) {
             return (
-              <p className="text-[11px] text-neutral-500">
+              <p data-eos-id="src/components/chat-bubble.tsx#72" className="text-[11px] text-neutral-500">
                 {responses.length} response{responses.length !== 1 ? 's' : ''}
               </p>
             )
           }
           return (
-            <div className="mt-1 -mx-2 px-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 mb-1.5">
+            <div data-eos-id="src/components/chat-bubble.tsx#73" className="mt-1 -mx-2 px-2">
+              <p data-eos-id="src/components/chat-bubble.tsx#74" className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 mb-1.5">
                 {responses.length} response{responses.length !== 1 ? 's' : ''}
               </p>
-              <div
+              <div data-eos-id="src/components/chat-bubble.tsx#75"
                 className="flex gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-smooth hide-scrollbar pb-1"
                 role="list"
                 aria-label="Responses"
@@ -725,32 +725,32 @@ export function AnnouncementCard({
                   const name = r.profiles?.display_name ?? 'Member'
                   const initials = name.charAt(0).toUpperCase()
                   return (
-                    <div
+                    <div data-eos-id="src/components/chat-bubble.tsx#76"
                       key={`${r.user_id}-${r.response}`}
                       role="listitem"
                       className="snap-start shrink-0 flex flex-col items-center gap-1 min-w-[3.5rem]"
                     >
                       {r.profiles?.avatar_url ? (
-                        <img
+                        <img data-eos-id="src/components/chat-bubble.tsx#77"
                           src={r.profiles.avatar_url}
                           alt=""
                           loading="lazy"
                           className="h-9 w-9 rounded-full object-cover ring-2 ring-white shadow-sm"
                         />
                       ) : (
-                        <div className="h-9 w-9 rounded-full bg-neutral-200 ring-2 ring-white shadow-sm flex items-center justify-center text-[11px] font-extrabold text-white" aria-hidden="true">
+                        <div data-eos-id="src/components/chat-bubble.tsx#78" className="h-9 w-9 rounded-full bg-neutral-200 ring-2 ring-white shadow-sm flex items-center justify-center text-[11px] font-extrabold text-white" aria-hidden="true">
                           {initials}
                         </div>
                       )}
-                      <span className="text-[10px] font-semibold text-neutral-600 truncate max-w-[3.5rem] text-center leading-tight">
+                      <span data-eos-id="src/components/chat-bubble.tsx#79" className="text-[10px] font-semibold text-neutral-600 truncate max-w-[3.5rem] text-center leading-tight">
                         {name}
                       </span>
                     </div>
                   )
                 })}
                 {withProfiles.length > 24 && (
-                  <div className="snap-start shrink-0 flex flex-col items-center gap-1 min-w-[3.5rem]">
-                    <div className="h-9 w-9 rounded-full bg-neutral-100 flex items-center justify-center text-[10px] font-extrabold text-neutral-500">
+                  <div data-eos-id="src/components/chat-bubble.tsx#80" className="snap-start shrink-0 flex flex-col items-center gap-1 min-w-[3.5rem]">
+                    <div data-eos-id="src/components/chat-bubble.tsx#81" className="h-9 w-9 rounded-full bg-neutral-100 flex items-center justify-center text-[10px] font-extrabold text-neutral-500">
                       +{withProfiles.length - 24}
                     </div>
                   </div>
@@ -836,7 +836,7 @@ export function CarpoolCard({
   const hasEventImage = eventDetails?.coverImageUrl
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/chat-bubble.tsx#82"
       initial={shouldReduceMotion ? false : { opacity: 0, y: 8, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -849,33 +849,33 @@ export function CarpoolCard({
     >
       {/* Event cover image */}
       {hasEventImage && (
-        <div className="relative w-full h-32">
-          <img
+        <div data-eos-id="src/components/chat-bubble.tsx#83" className="relative w-full h-32">
+          <img data-eos-id="src/components/chat-bubble.tsx#84"
             src={eventDetails.coverImageUrl!}
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          <div data-eos-id="src/components/chat-bubble.tsx#85" className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {eventDetails.activityType && (
-            <span className="absolute bottom-2 left-3 text-[10px] font-bold uppercase tracking-wider text-white/90 bg-black/30 px-2 py-0.5 rounded-full">
+            <span data-eos-id="src/components/chat-bubble.tsx#86" data-eos-var="ACTIVITY_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className="absolute bottom-2 left-3 text-[10px] font-bold uppercase tracking-wider text-white/90 bg-black/30 px-2 py-0.5 rounded-full">
               {ACTIVITY_LABELS[eventDetails.activityType] ?? eventDetails.activityType}
             </span>
           )}
         </div>
       )}
 
-      <div className="p-5 min-w-0 overflow-hidden">
+      <div data-eos-id="src/components/chat-bubble.tsx#87" className="p-5 min-w-0 overflow-hidden">
         {/* Header chip */}
-        <div className="flex items-center gap-3 mb-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-success-50 text-success-600">
-            <Car size={20} strokeWidth={2.5} />
+        <div data-eos-id="src/components/chat-bubble.tsx#88" className="flex items-center gap-3 mb-3 min-w-0">
+          <div data-eos-id="src/components/chat-bubble.tsx#89" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-success-50 text-success-600">
+            <Car data-eos-id="src/components/chat-bubble.tsx#90" size={20} strokeWidth={2.5} />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-extrabold uppercase tracking-wider truncate text-success-600">
+          <div data-eos-id="src/components/chat-bubble.tsx#91" className="flex-1 min-w-0">
+            <p data-eos-id="src/components/chat-bubble.tsx#92" className="text-[11px] font-extrabold uppercase tracking-wider truncate text-success-600">
               Carpool
             </p>
             {creatorName && (
-              <p className="text-[11px] font-medium text-neutral-500 truncate">
+              <p data-eos-id="src/components/chat-bubble.tsx#93" className="text-[11px] font-medium text-neutral-500 truncate">
                 from {creatorName}
               </p>
             )}
@@ -884,29 +884,29 @@ export function CarpoolCard({
 
         {/* Linked event preview */}
         {(eventTitle || eventDetails) && (
-          <div className="rounded-sm bg-neutral-50 p-3 mb-3 space-y-1.5 min-w-0 overflow-hidden">
+          <div data-eos-id="src/components/chat-bubble.tsx#94" className="rounded-sm bg-neutral-50 p-3 mb-3 space-y-1.5 min-w-0 overflow-hidden">
             {eventTitle && (
-              <p className="text-[13px] font-bold text-neutral-900 truncate">{eventTitle}</p>
+              <p data-eos-id="src/components/chat-bubble.tsx#95" className="text-[13px] font-bold text-neutral-900 truncate">{eventTitle}</p>
             )}
             {eventDetails && (
               <>
-                <div className="flex items-center gap-2 min-w-0">
-                  <Calendar size={13} className="text-neutral-400 shrink-0" />
-                  <span className="text-xs font-semibold text-neutral-700 truncate">
+                <div data-eos-id="src/components/chat-bubble.tsx#96" className="flex items-center gap-2 min-w-0">
+                  <Calendar data-eos-id="src/components/chat-bubble.tsx#97" size={13} className="text-neutral-400 shrink-0" />
+                  <span data-eos-id="src/components/chat-bubble.tsx#98" data-eos-var="eventDetails.dateStart" data-eos-var-label="Date start" data-eos-var-scope="prop" className="text-xs font-semibold text-neutral-700 truncate">
                     {formatCardDate(eventDetails.dateStart)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 min-w-0">
-                  <Clock size={13} className="text-neutral-400 shrink-0" />
-                  <span className="text-xs text-neutral-500 truncate">
+                <div data-eos-id="src/components/chat-bubble.tsx#99" className="flex items-center gap-2 min-w-0">
+                  <Clock data-eos-id="src/components/chat-bubble.tsx#100" size={13} className="text-neutral-400 shrink-0" />
+                  <span data-eos-id="src/components/chat-bubble.tsx#101" data-eos-var="eventDetails.dateStart,eventDetails.dateEnd" data-eos-var-label="Date start, Date end" data-eos-var-scope="prop" className="text-xs text-neutral-500 truncate">
                     {formatCardTime(eventDetails.dateStart)}
                     {eventDetails.dateEnd && ` - ${formatCardTime(eventDetails.dateEnd)}`}
                   </span>
                 </div>
                 {eventDetails.address && (
-                  <div className="flex items-center gap-2 min-w-0">
-                    <MapPin size={13} className="text-neutral-400 shrink-0" />
-                    <span className="text-xs text-neutral-500 truncate min-w-0 flex-1">
+                  <div data-eos-id="src/components/chat-bubble.tsx#102" className="flex items-center gap-2 min-w-0">
+                    <MapPin data-eos-id="src/components/chat-bubble.tsx#103" size={13} className="text-neutral-400 shrink-0" />
+                    <span data-eos-id="src/components/chat-bubble.tsx#104" data-eos-var="eventDetails.address" data-eos-var-label="Address" data-eos-var-scope="prop" className="text-xs text-neutral-500 truncate min-w-0 flex-1">
                       {eventDetails.address}
                     </span>
                   </div>
@@ -914,7 +914,7 @@ export function CarpoolCard({
               </>
             )}
             {eventId && onViewEvent && (
-              <button
+              <button data-eos-id="src/components/chat-bubble.tsx#105"
                 type="button"
                 onClick={() => onViewEvent(eventId)}
                 className="text-[11px] font-semibold text-primary-600 hover:text-primary-700 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
@@ -927,28 +927,28 @@ export function CarpoolCard({
 
         {/* Trip details - structured rows in a tinted panel so the widget
             reads as a single unit rather than loose text lines. */}
-        <div className="mb-3 rounded-sm bg-success-50/60 ring-1 ring-success-100 divide-y divide-success-100/70 overflow-hidden">
-          <div className="flex items-center gap-2.5 px-3 py-2 min-w-0">
-            <MapPin size={14} className="text-success-700 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-success-700/80">Departing from</p>
-              <p className="text-[13px] font-semibold text-neutral-900 truncate">{departurePointText}</p>
+        <div data-eos-id="src/components/chat-bubble.tsx#106" className="mb-3 rounded-sm bg-success-50/60 ring-1 ring-success-100 divide-y divide-success-100/70 overflow-hidden">
+          <div data-eos-id="src/components/chat-bubble.tsx#107" className="flex items-center gap-2.5 px-3 py-2 min-w-0">
+            <MapPin data-eos-id="src/components/chat-bubble.tsx#108" size={14} className="text-success-700 shrink-0" />
+            <div data-eos-id="src/components/chat-bubble.tsx#109" className="flex-1 min-w-0">
+              <p data-eos-id="src/components/chat-bubble.tsx#110" className="text-[10px] font-extrabold uppercase tracking-wider text-success-700/80">Departing from</p>
+              <p data-eos-id="src/components/chat-bubble.tsx#111" className="text-[13px] font-semibold text-neutral-900 truncate">{departurePointText}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2.5 px-3 py-2 min-w-0">
-            <Clock size={14} className="text-success-700 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-success-700/80">Departure</p>
-              <p className="text-[13px] font-semibold text-neutral-900 truncate">
+          <div data-eos-id="src/components/chat-bubble.tsx#112" className="flex items-center gap-2.5 px-3 py-2 min-w-0">
+            <Clock data-eos-id="src/components/chat-bubble.tsx#113" size={14} className="text-success-700 shrink-0" />
+            <div data-eos-id="src/components/chat-bubble.tsx#114" className="flex-1 min-w-0">
+              <p data-eos-id="src/components/chat-bubble.tsx#115" className="text-[10px] font-extrabold uppercase tracking-wider text-success-700/80">Departure</p>
+              <p data-eos-id="src/components/chat-bubble.tsx#116" className="text-[13px] font-semibold text-neutral-900 truncate">
                 {formatCardDate(departureTime)} · {formatCardTime(departureTime)}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2.5 px-3 py-2 min-w-0">
-            <Users size={14} className="text-success-700 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-success-700/80">Seats</p>
-              <p className="text-[13px] font-semibold text-neutral-900">
+          <div data-eos-id="src/components/chat-bubble.tsx#117" className="flex items-center gap-2.5 px-3 py-2 min-w-0">
+            <Users data-eos-id="src/components/chat-bubble.tsx#118" size={14} className="text-success-700 shrink-0" />
+            <div data-eos-id="src/components/chat-bubble.tsx#119" className="flex-1 min-w-0">
+              <p data-eos-id="src/components/chat-bubble.tsx#120" className="text-[10px] font-extrabold uppercase tracking-wider text-success-700/80">Seats</p>
+              <p data-eos-id="src/components/chat-bubble.tsx#121" className="text-[13px] font-semibold text-neutral-900">
                 {seatsRemaining} of {seatsTotal} remaining
               </p>
             </div>
@@ -956,25 +956,25 @@ export function CarpoolCard({
         </div>
 
         {notes && (
-          <p className="text-xs text-neutral-600 leading-relaxed mb-3 break-words bg-neutral-50 rounded-sm px-3 py-2 ring-1 ring-neutral-100">
+          <p data-eos-id="src/components/chat-bubble.tsx#122" className="text-xs text-neutral-600 leading-relaxed mb-3 break-words bg-neutral-50 rounded-sm px-3 py-2 ring-1 ring-neutral-100">
             "{notes}"
           </p>
         )}
 
         {/* Live passenger list (display_name only - pickup addresses NEVER shown here) */}
         {confirmedPassengers.length > 0 && (
-          <div className="mb-3">
-            <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 mb-1.5">
+          <div data-eos-id="src/components/chat-bubble.tsx#123" className="mb-3">
+            <p data-eos-id="src/components/chat-bubble.tsx#124" className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 mb-1.5">
               Passengers
             </p>
-            <ul className="space-y-1">
+            <ul data-eos-id="src/components/chat-bubble.tsx#125" className="space-y-1">
               {confirmedPassengers.map((p) => (
-                <li
+                <li data-eos-id="src/components/chat-bubble.tsx#126"
                   key={p.id}
                   className="flex items-center gap-2 text-xs text-neutral-700"
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-success-500 shrink-0" aria-hidden="true" />
-                  <span className="truncate">{p.display_name ?? 'Passenger'}</span>
+                  <span data-eos-id="src/components/chat-bubble.tsx#127" className="h-1.5 w-1.5 rounded-full bg-success-500 shrink-0" aria-hidden="true" />
+                  <span data-eos-id="src/components/chat-bubble.tsx#128" data-eos-var="p.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="truncate">{p.display_name ?? 'Passenger'}</span>
                 </li>
               ))}
             </ul>
@@ -983,20 +983,20 @@ export function CarpoolCard({
 
         {/* Status / CTA */}
         {isCancelled ? (
-          <p className="text-xs font-semibold text-neutral-500 italic">
+          <p data-eos-id="src/components/chat-bubble.tsx#129" className="text-xs font-semibold text-neutral-500 italic">
             Carpool cancelled
           </p>
         ) : isArchived ? (
-          <p className="text-xs font-semibold text-neutral-500 italic">
+          <p data-eos-id="src/components/chat-bubble.tsx#130" className="text-xs font-semibold text-neutral-500 italic">
             Carpool archived
           </p>
         ) : viewerIsDriver ? (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-sm px-3 py-2 text-center">
+          <div data-eos-id="src/components/chat-bubble.tsx#131" className="space-y-2">
+            <p data-eos-id="src/components/chat-bubble.tsx#132" className="text-xs font-semibold text-success-700 bg-success-50 rounded-sm px-3 py-2 text-center">
               You're driving
             </p>
             {breakoutChannelId && onOpenChat && (
-              <button
+              <button data-eos-id="src/components/chat-bubble.tsx#133"
                 type="button"
                 onClick={onOpenChat}
                 className="w-full rounded-sm bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
@@ -1006,12 +1006,12 @@ export function CarpoolCard({
             )}
           </div>
         ) : viewerHasSeat ? (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-success-700 bg-success-50 rounded-sm px-3 py-2 text-center">
+          <div data-eos-id="src/components/chat-bubble.tsx#134" className="space-y-2">
+            <p data-eos-id="src/components/chat-bubble.tsx#135" className="text-xs font-semibold text-success-700 bg-success-50 rounded-sm px-3 py-2 text-center">
               You're on this carpool
             </p>
             {breakoutChannelId && onOpenChat && (
-              <button
+              <button data-eos-id="src/components/chat-bubble.tsx#136"
                 type="button"
                 onClick={onOpenChat}
                 className="w-full rounded-sm bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
@@ -1020,7 +1020,7 @@ export function CarpoolCard({
               </button>
             )}
             {onCancelSeat && (
-              <button
+              <button data-eos-id="src/components/chat-bubble.tsx#137"
                 type="button"
                 onClick={onCancelSeat}
                 className="w-full rounded-sm bg-neutral-50 ring-1 ring-neutral-200 py-2.5 text-center text-sm font-semibold text-neutral-700 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-neutral-100"
@@ -1030,7 +1030,7 @@ export function CarpoolCard({
             )}
           </div>
         ) : isFull ? (
-          <button
+          <button data-eos-id="src/components/chat-bubble.tsx#138"
             type="button"
             disabled
             className="w-full rounded-sm bg-neutral-100 py-2.5 text-center text-sm font-semibold text-neutral-400 cursor-not-allowed select-none min-h-11"
@@ -1039,7 +1039,7 @@ export function CarpoolCard({
           </button>
         ) : (
           onSaveSeat && (
-            <button
+            <button data-eos-id="src/components/chat-bubble.tsx#139"
               type="button"
               onClick={onSaveSeat}
               className="w-full rounded-sm bg-success-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-success-700 shadow-sm"
