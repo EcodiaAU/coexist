@@ -39,7 +39,7 @@ export function Chip({
   const styles = variantStyles[variant]
 
   return (
-    <motion.button
+    <motion.button data-eos-id="src/components/chip.tsx#0"
       type="button"
       role="option"
       aria-selected={selected}
@@ -57,13 +57,13 @@ export function Chip({
       )}
     >
       {icon && (
-        <span className="flex items-center shrink-0" aria-hidden="true">
+        <span data-eos-id="src/components/chip.tsx#1" className="flex items-center shrink-0" aria-hidden="true">
           {icon}
         </span>
       )}
-      <span>{label}</span>
+      <span data-eos-id="src/components/chip.tsx#2">{label}</span>
       {onDismiss && (
-        <span
+        <span data-eos-id="src/components/chip.tsx#3"
           role="button"
           tabIndex={0}
           aria-label={`Remove ${label}`}
@@ -84,7 +84,7 @@ export function Chip({
             'hover:bg-black/10 transition-colors duration-100',
           )}
         >
-          <X className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <X data-eos-id="src/components/chip.tsx#4" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
         </span>
       )}
     </motion.button>
