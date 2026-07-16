@@ -76,7 +76,7 @@ const orgTypeOptions = [
 ]
 
 const tabs = [
-  { id: 'organisations', label: 'Organisations', icon: <Building2 data-eos-id="src/pages/admin/partners.tsx#0" size={14} /> },
+  { id: 'organisations', label: 'Organisations', icon: <Building2 data-eos-id="src/pages/admin/partners.tsx#0" data-eos-v="2" size={14} /> },
   { id: 'offers', label: 'Partner Offers', icon: <Gift data-eos-id="src/pages/admin/partners.tsx#1" size={14} /> },
   { id: 'corporate', label: 'Corporate Programs', icon: <Handshake data-eos-id="src/pages/admin/partners.tsx#2" size={14} /> },
 ]
@@ -323,7 +323,7 @@ export default function AdminPartnersPage() {
                   )}
                 >
                   {org.logo_url ? (
-                    <img data-eos-id="src/pages/admin/partners.tsx#19"
+                    <img data-eos-src="dynamic" data-eos-src-label="Logo url" data-eos-id="src/pages/admin/partners.tsx#19"
                       src={org.logo_url}
                       alt=""
                       className="w-10 h-10 rounded-sm object-contain bg-white shrink-0"
