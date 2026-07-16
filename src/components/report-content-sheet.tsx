@@ -51,25 +51,25 @@ export function ReportContentSheet({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
-      <div className="px-1 pb-2">
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-warning-100 text-warning-600">
-            <Flag size={16} />
+    <BottomSheet data-eos-id="src/components/report-content-sheet.tsx#0" open={open} onClose={onClose}>
+      <div data-eos-id="src/components/report-content-sheet.tsx#1" className="px-1 pb-2">
+        <div data-eos-id="src/components/report-content-sheet.tsx#2" className="flex items-center gap-2.5 mb-4">
+          <div data-eos-id="src/components/report-content-sheet.tsx#3" className="flex items-center justify-center w-9 h-9 rounded-full bg-warning-100 text-warning-600">
+            <Flag data-eos-id="src/components/report-content-sheet.tsx#4" size={16} />
           </div>
-          <div>
-            <h3 className="font-heading text-base font-semibold text-neutral-900">
+          <div data-eos-id="src/components/report-content-sheet.tsx#5">
+            <h3 data-eos-id="src/components/report-content-sheet.tsx#6" className="font-heading text-base font-semibold text-neutral-900">
               Report content
             </h3>
-            <p className="text-xs text-neutral-500">
+            <p data-eos-id="src/components/report-content-sheet.tsx#7" className="text-xs text-neutral-500">
               Select a reason for reporting
             </p>
           </div>
         </div>
 
-        <div className="space-y-1.5 mb-5">
+        <div data-eos-id="src/components/report-content-sheet.tsx#8" className="space-y-1.5 mb-5">
           {REPORT_REASONS.map((reason) => (
-            <button
+            <button data-eos-id="src/components/report-content-sheet.tsx#9"
               key={reason}
               type="button"
               onClick={() => setSelectedReason(reason)}
@@ -84,7 +84,7 @@ export function ReportContentSheet({
           ))}
         </div>
 
-        <Button
+        <Button data-eos-id="src/components/report-content-sheet.tsx#10"
           variant="primary"
           size="lg"
           fullWidth
