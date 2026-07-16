@@ -76,13 +76,13 @@ function WebQrScanner({ onScan, onError }: { onScan: (value: string) => void; on
   }, [cameraReady, onScan])
 
   return (
-    <div className="relative w-full aspect-square max-w-[280px] mx-auto rounded-md overflow-hidden bg-black">
-      <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" muted playsInline />
-      <canvas ref={canvasRef} className="hidden" />
+    <div data-eos-id="src/components/qr-scanner.tsx#0" className="relative w-full aspect-square max-w-[280px] mx-auto rounded-md overflow-hidden bg-black">
+      <video data-eos-id="src/components/qr-scanner.tsx#1" ref={videoRef} className="absolute inset-0 w-full h-full object-cover" muted playsInline />
+      <canvas data-eos-id="src/components/qr-scanner.tsx#2" ref={canvasRef} className="hidden" />
       {/* Scan overlay */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-[70%] aspect-square border-2 border-white/60 rounded-sm relative">
-          <motion.div
+      <div data-eos-id="src/components/qr-scanner.tsx#3" className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div data-eos-id="src/components/qr-scanner.tsx#4" className="w-[70%] aspect-square border-2 border-white/60 rounded-sm relative">
+          <motion.div data-eos-id="src/components/qr-scanner.tsx#5"
             className="absolute left-2 right-2 h-0.5 bg-primary-400 rounded-full"
             animate={{ top: ['10%', '90%', '10%'] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
@@ -90,10 +90,10 @@ function WebQrScanner({ onScan, onError }: { onScan: (value: string) => void; on
         </div>
       </div>
       {!cameraReady && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-          <div className="text-center">
-            <Camera size={32} className="text-white/40 mx-auto mb-2" />
-            <p className="text-sm text-white/60">Opening camera...</p>
+        <div data-eos-id="src/components/qr-scanner.tsx#6" className="absolute inset-0 flex items-center justify-center bg-black/80">
+          <div data-eos-id="src/components/qr-scanner.tsx#7" className="text-center">
+            <Camera data-eos-id="src/components/qr-scanner.tsx#8" size={32} className="text-white/40 mx-auto mb-2" />
+            <p data-eos-id="src/components/qr-scanner.tsx#9" className="text-sm text-white/60">Opening camera...</p>
           </div>
         </div>
       )}
@@ -224,14 +224,14 @@ export function QrScanner({
   if (isNative) {
     // Native: Capacitor handles the camera overlay
     return (
-      <div className="relative w-52 h-52 rounded-md bg-neutral-50 shadow-sm flex items-center justify-center mb-5">
-        <Camera size={44} className="text-primary-300" />
-        <motion.div
+      <div data-eos-id="src/components/qr-scanner.tsx#10" className="relative w-52 h-52 rounded-md bg-neutral-50 shadow-sm flex items-center justify-center mb-5">
+        <Camera data-eos-id="src/components/qr-scanner.tsx#11" size={44} className="text-primary-300" />
+        <motion.div data-eos-id="src/components/qr-scanner.tsx#12"
           className="absolute left-4 right-4 h-0.5 bg-primary-500 rounded-full"
           animate={{ top: ['20%', '80%', '20%'] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         />
-        <p className="absolute bottom-3 text-[11px] text-primary-400">
+        <p data-eos-id="src/components/qr-scanner.tsx#13" className="absolute bottom-3 text-[11px] text-primary-400">
           Point camera at event QR code
         </p>
       </div>
@@ -241,10 +241,10 @@ export function QrScanner({
   // Web: live camera feed with jsQR scanning
   return (
     <>
-      <p className="text-sm font-semibold text-neutral-900 mb-3">
+      <p data-eos-id="src/components/qr-scanner.tsx#14" className="text-sm font-semibold text-neutral-900 mb-3">
         Point your camera at the QR code
       </p>
-      <WebQrScanner onScan={handleWebQrScan} onError={onCameraError} />
+      <WebQrScanner data-eos-id="src/components/qr-scanner.tsx#15" onScan={handleWebQrScan} onError={onCameraError} />
     </>
   )
 }
