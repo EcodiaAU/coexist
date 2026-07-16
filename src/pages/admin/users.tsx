@@ -421,20 +421,20 @@ function UserSettingsSheet({
 
   return (
     <>
-      <BottomSheet open={open} onClose={onClose} snapPoints={[0.92]}>
-        <div className="space-y-5 pb-6">
+      <BottomSheet data-eos-id="src/pages/admin/users.tsx#0" open={open} onClose={onClose} snapPoints={[0.92]}>
+        <div data-eos-id="src/pages/admin/users.tsx#1" className="space-y-5 pb-6">
           {/* User header */}
-          <div className="flex items-center gap-4 p-4 -mx-1 rounded-md bg-white border border-neutral-100">
-            <Avatar src={user.avatar_url} name={user.display_name ?? ''} size="lg" />
-            <div className="flex-1 min-w-0">
-              <p className="text-lg font-bold text-neutral-900 truncate">{user.display_name}</p>
-              <p className="text-sm text-neutral-500 truncate">{user.email}</p>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', roleBadgeColors[user.role])}>
+          <div data-eos-id="src/pages/admin/users.tsx#2" className="flex items-center gap-4 p-4 -mx-1 rounded-md bg-white border border-neutral-100">
+            <Avatar data-eos-id="src/pages/admin/users.tsx#3" src={user.avatar_url} name={user.display_name ?? ''} size="lg" />
+            <div data-eos-id="src/pages/admin/users.tsx#4" className="flex-1 min-w-0">
+              <p data-eos-id="src/pages/admin/users.tsx#5" data-eos-var="user.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="text-lg font-bold text-neutral-900 truncate">{user.display_name}</p>
+              <p data-eos-id="src/pages/admin/users.tsx#6" data-eos-var="user.email" data-eos-var-label="Email" data-eos-var-scope="prop" className="text-sm text-neutral-500 truncate">{user.email}</p>
+              <div data-eos-id="src/pages/admin/users.tsx#7" className="flex items-center gap-2 mt-1.5">
+                <span data-eos-id="src/pages/admin/users.tsx#8" data-eos-var="user.role" data-eos-var-label="Role" data-eos-var-scope="prop" className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', roleBadgeColors[user.role])}>
                   {formatRole(user.role ?? 'participant')}
                 </span>
                 {user.is_suspended && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-error-200 text-error-800">
+                  <span data-eos-id="src/pages/admin/users.tsx#9" className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-error-200 text-error-800">
                     Suspended
                   </span>
                 )}
@@ -443,8 +443,8 @@ function UserSettingsSheet({
           </div>
 
           {/* Quick actions - touch-optimised row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <button
+          <div data-eos-id="src/pages/admin/users.tsx#10" className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button data-eos-id="src/pages/admin/users.tsx#11"
               type="button"
               onClick={() => { setNewRole(user.role); setShowRoleChange(!showRoleChange) }}
               className={cn(
@@ -454,38 +454,38 @@ function UserSettingsSheet({
                   : 'bg-neutral-50 ring-1 ring-neutral-100',
               )}
             >
-              <div className="w-9 h-9 rounded-sm bg-primary-200 text-primary-700 flex items-center justify-center shrink-0">
-                <UserCog size={17} />
+              <div data-eos-id="src/pages/admin/users.tsx#12" className="w-9 h-9 rounded-sm bg-primary-200 text-primary-700 flex items-center justify-center shrink-0">
+                <UserCog data-eos-id="src/pages/admin/users.tsx#13" size={17} />
               </div>
-              <span className="text-sm font-semibold text-neutral-900">Change Role</span>
+              <span data-eos-id="src/pages/admin/users.tsx#14" className="text-sm font-semibold text-neutral-900">Change Role</span>
             </button>
 
-            <button
+            <button data-eos-id="src/pages/admin/users.tsx#15"
               type="button"
               onClick={() => user.email && resetPasswordMutation.mutate(user.email)}
               disabled={resetPasswordMutation.isPending}
               className="flex items-center gap-3 p-3.5 rounded-sm bg-neutral-50 ring-1 ring-neutral-100 transition-colors active:scale-[0.97]"
             >
-              <div className="w-9 h-9 rounded-sm bg-primary-200 text-primary-700 flex items-center justify-center shrink-0">
-                <KeyRound size={17} />
+              <div data-eos-id="src/pages/admin/users.tsx#16" className="w-9 h-9 rounded-sm bg-primary-200 text-primary-700 flex items-center justify-center shrink-0">
+                <KeyRound data-eos-id="src/pages/admin/users.tsx#17" size={17} />
               </div>
-              <span className="text-sm font-semibold text-neutral-900">Reset Password</span>
+              <span data-eos-id="src/pages/admin/users.tsx#18" className="text-sm font-semibold text-neutral-900">Reset Password</span>
             </button>
 
             {user.is_suspended ? (
-              <button
+              <button data-eos-id="src/pages/admin/users.tsx#19"
                 type="button"
                 onClick={() => unsuspendMutation.mutate(user.id)}
                 disabled={unsuspendMutation.isPending}
                 className="flex items-center gap-3 p-3.5 rounded-sm bg-success-50 ring-1 ring-success-200/40 transition-colors active:scale-[0.97]"
               >
-                <div className="w-9 h-9 rounded-sm bg-success-200 text-success-700 flex items-center justify-center shrink-0">
-                  <Shield size={17} />
+                <div data-eos-id="src/pages/admin/users.tsx#20" className="w-9 h-9 rounded-sm bg-success-200 text-success-700 flex items-center justify-center shrink-0">
+                  <Shield data-eos-id="src/pages/admin/users.tsx#21" size={17} />
                 </div>
-                <span className="text-sm font-semibold text-success-800">Unsuspend</span>
+                <span data-eos-id="src/pages/admin/users.tsx#22" className="text-sm font-semibold text-success-800">Unsuspend</span>
               </button>
             ) : (
-              <button
+              <button data-eos-id="src/pages/admin/users.tsx#23"
                 type="button"
                 onClick={() => setShowSuspendForm(!showSuspendForm)}
                 className={cn(
@@ -495,45 +495,45 @@ function UserSettingsSheet({
                     : 'bg-warning-50 ring-1 ring-warning-200/40',
                 )}
               >
-                <div className="w-9 h-9 rounded-sm bg-warning-200 text-warning-700 flex items-center justify-center shrink-0">
-                  <Ban size={17} />
+                <div data-eos-id="src/pages/admin/users.tsx#24" className="w-9 h-9 rounded-sm bg-warning-200 text-warning-700 flex items-center justify-center shrink-0">
+                  <Ban data-eos-id="src/pages/admin/users.tsx#25" size={17} />
                 </div>
-                <span className="text-sm font-semibold text-warning-800">Suspend</span>
+                <span data-eos-id="src/pages/admin/users.tsx#26" className="text-sm font-semibold text-warning-800">Suspend</span>
               </button>
             )}
 
             {isSuperAdmin && (
-              <button
+              <button data-eos-id="src/pages/admin/users.tsx#27"
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
                 className="flex items-center gap-3 p-3.5 rounded-sm bg-error-50 ring-1 ring-error-200/40 transition-colors active:scale-[0.97]"
               >
-                <div className="w-9 h-9 rounded-sm bg-error-200 text-error-700 flex items-center justify-center shrink-0">
-                  <Trash2 size={17} />
+                <div data-eos-id="src/pages/admin/users.tsx#28" className="w-9 h-9 rounded-sm bg-error-200 text-error-700 flex items-center justify-center shrink-0">
+                  <Trash2 data-eos-id="src/pages/admin/users.tsx#29" size={17} />
                 </div>
-                <span className="text-sm font-semibold text-error-800">Delete User</span>
+                <span data-eos-id="src/pages/admin/users.tsx#30" className="text-sm font-semibold text-error-800">Delete User</span>
               </button>
             )}
           </div>
 
           {/* Inline role change form */}
-          <AnimatePresence>
+          <AnimatePresence data-eos-id="src/pages/admin/users.tsx#31">
             {showRoleChange && (
-              <motion.div
+              <motion.div data-eos-id="src/pages/admin/users.tsx#32"
                 variants={expandCollapseVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
                 className="overflow-hidden"
               >
-                <div className="p-3.5 bg-neutral-50 rounded-sm ring-1 ring-neutral-100 space-y-3">
-                  <Dropdown
+                <div data-eos-id="src/pages/admin/users.tsx#33" className="p-3.5 bg-neutral-50 rounded-sm ring-1 ring-neutral-100 space-y-3">
+                  <Dropdown data-eos-id="src/pages/admin/users.tsx#34"
                     options={roleOptions.filter((o) => o.value !== 'all')}
                     value={newRole}
                     onChange={setNewRole}
                     label="New Role"
                   />
-                  <Button
+                  <Button data-eos-id="src/pages/admin/users.tsx#35"
                     variant="primary"
                     fullWidth
                     className="h-12 text-base"
@@ -548,18 +548,18 @@ function UserSettingsSheet({
           </AnimatePresence>
 
           {/* Inline suspend form */}
-          <AnimatePresence>
+          <AnimatePresence data-eos-id="src/pages/admin/users.tsx#36">
             {showSuspendForm && !user.is_suspended && (
-              <motion.div
+              <motion.div data-eos-id="src/pages/admin/users.tsx#37"
                 variants={expandCollapseVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
                 className="overflow-hidden"
               >
-                <div className="p-3.5 bg-error-50 rounded-sm ring-1 ring-error-200/40 space-y-3">
-                  <p className="text-xs text-error-600">User will see the reason and can submit an appeal</p>
-                  <Input
+                <div data-eos-id="src/pages/admin/users.tsx#38" className="p-3.5 bg-error-50 rounded-sm ring-1 ring-error-200/40 space-y-3">
+                  <p data-eos-id="src/pages/admin/users.tsx#39" className="text-xs text-error-600">User will see the reason and can submit an appeal</p>
+                  <Input data-eos-id="src/pages/admin/users.tsx#40"
                     type="textarea"
                     label="Reason for suspension"
                     value={suspendReason}
@@ -567,7 +567,7 @@ function UserSettingsSheet({
                     required
                     placeholder="Explain why this account is being suspended..."
                   />
-                  <Button
+                  <Button data-eos-id="src/pages/admin/users.tsx#41"
                     variant="danger"
                     fullWidth
                     className="h-12 text-base"
@@ -583,17 +583,17 @@ function UserSettingsSheet({
           </AnimatePresence>
 
           {/* Collective Roles Section */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-neutral-900">Collective Roles</h3>
+          <div data-eos-id="src/pages/admin/users.tsx#42">
+            <div data-eos-id="src/pages/admin/users.tsx#43" className="flex items-center justify-between mb-3">
+              <div data-eos-id="src/pages/admin/users.tsx#44" className="flex items-center gap-2">
+                <h3 data-eos-id="src/pages/admin/users.tsx#45" className="text-sm font-bold text-neutral-900">Collective Roles</h3>
                 {activeRoles.length > 0 && (
-                  <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-primary-200 text-primary-700">
+                  <span data-eos-id="src/pages/admin/users.tsx#46" className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-primary-200 text-primary-700">
                     {activeRoles.length}
                   </span>
                 )}
               </div>
-              <button
+              <button data-eos-id="src/pages/admin/users.tsx#47"
                 type="button"
                 onClick={() => setShowAddCollective(!showAddCollective)}
                 className={cn(
@@ -603,35 +603,35 @@ function UserSettingsSheet({
                     : 'bg-neutral-100 text-neutral-600',
                 )}
               >
-                {showAddCollective ? <X size={13} /> : <Plus size={13} />}
+                {showAddCollective ? <X data-eos-id="src/pages/admin/users.tsx#48" size={13} /> : <Plus data-eos-id="src/pages/admin/users.tsx#49" size={13} />}
                 {showAddCollective ? 'Cancel' : 'Add'}
               </button>
             </div>
 
             {/* Add to collective form */}
-            <AnimatePresence>
+            <AnimatePresence data-eos-id="src/pages/admin/users.tsx#50">
               {showAddCollective && (
-                <motion.div
+                <motion.div data-eos-id="src/pages/admin/users.tsx#51"
                   variants={expandCollapseVariants}
                   initial="hidden"
                   animate="visible"
                   exit="exit"
                   className="overflow-hidden"
                 >
-                  <div className="mb-3 p-3.5 bg-neutral-50 rounded-sm ring-1 ring-neutral-100 space-y-2.5">
-                    <Dropdown
+                  <div data-eos-id="src/pages/admin/users.tsx#52" className="mb-3 p-3.5 bg-neutral-50 rounded-sm ring-1 ring-neutral-100 space-y-2.5">
+                    <Dropdown data-eos-id="src/pages/admin/users.tsx#53"
                       options={availableCollectives.map((c) => ({ value: c.id, label: `${c.name}${c.state ? ` (${c.state})` : ''}` }))}
                       value={addCollectiveId}
                       onChange={setAddCollectiveId}
                       placeholder="Select collective..."
                     />
-                    <Dropdown
+                    <Dropdown data-eos-id="src/pages/admin/users.tsx#54"
                       options={collectiveRoleOptions}
                       value={addCollectiveRole}
                       onChange={(v) => setAddCollectiveRole(v as CollectiveRole)}
                       label="Role"
                     />
-                    <Button
+                    <Button data-eos-id="src/pages/admin/users.tsx#55"
                       variant="primary"
                       fullWidth
                       className="h-12 text-base"
@@ -661,18 +661,18 @@ function UserSettingsSheet({
             </AnimatePresence>
 
             {rolesLoading ? (
-              <Skeleton variant="list-item" count={2} />
+              <Skeleton data-eos-id="src/pages/admin/users.tsx#56" variant="list-item" count={2} />
             ) : !activeRoles.length ? (
-              <div className="py-4 px-3 rounded-sm bg-neutral-50 ring-1 ring-neutral-200/40 text-center">
-                <Users size={20} className="text-neutral-400 mx-auto mb-1" />
-                <p className="text-xs text-neutral-500">Not a member of any collective</p>
+              <div data-eos-id="src/pages/admin/users.tsx#57" className="py-4 px-3 rounded-sm bg-neutral-50 ring-1 ring-neutral-200/40 text-center">
+                <Users data-eos-id="src/pages/admin/users.tsx#58" size={20} className="text-neutral-400 mx-auto mb-1" />
+                <p data-eos-id="src/pages/admin/users.tsx#59" className="text-xs text-neutral-500">Not a member of any collective</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div data-eos-id="src/pages/admin/users.tsx#60" className="space-y-2">
                 {activeRoles.map((membership) => {
                   const Icon = COLLECTIVE_ROLE_ICONS[membership.role]
                   return (
-                    <motion.div
+                    <motion.div data-eos-id="src/pages/admin/users.tsx#61"
                       key={membership.id}
                       layout
                       className={cn(
@@ -680,20 +680,20 @@ function UserSettingsSheet({
                         COLLECTIVE_ROLE_SURFACE[membership.role],
                       )}
                     >
-                      <div className={cn(
+                      <div data-eos-id="src/pages/admin/users.tsx#62" className={cn(
                         'w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
                         COLLECTIVE_ROLE_COLORS[membership.role],
                       )}>
-                        <Icon size={15} />
+                        <Icon data-eos-id="src/pages/admin/users.tsx#63" size={15} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-neutral-900 truncate">{membership.collective.name}</p>
-                        <p className="text-[11px] text-neutral-500">
+                      <div data-eos-id="src/pages/admin/users.tsx#64" className="flex-1 min-w-0">
+                        <p data-eos-id="src/pages/admin/users.tsx#65" data-eos-var="membership.collective.name" data-eos-var-label="Name" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 truncate">{membership.collective.name}</p>
+                        <p data-eos-id="src/pages/admin/users.tsx#66" data-eos-var="membership.role,membership.collective.state" data-eos-var-label="Role, State" data-eos-var-scope="item" className="text-[11px] text-neutral-500">
                           {membership.role.replace(/_/g, ' ')}
                           {membership.collective.state && ` · ${membership.collective.state}`}
                         </p>
                       </div>
-                      <Dropdown
+                      <Dropdown data-eos-id="src/pages/admin/users.tsx#67"
                         options={collectiveRoleOptions}
                         value={membership.role}
                         onChange={(newCollectiveRole) => {
@@ -707,7 +707,7 @@ function UserSettingsSheet({
                         }}
                         className="w-[7.5rem] shrink-0"
                       />
-                      <button
+                      <button data-eos-id="src/pages/admin/users.tsx#68"
                         type="button"
                         onClick={() =>
                           removeFromCollective.mutate(
@@ -721,7 +721,7 @@ function UserSettingsSheet({
                         className="p-2.5 rounded-sm text-neutral-400 active:bg-error-100 active:text-error-600 shrink-0 transition-colors"
                         title="Remove from collective"
                       >
-                        <X size={14} />
+                        <X data-eos-id="src/pages/admin/users.tsx#69" size={14} />
                       </button>
                     </motion.div>
                   )
@@ -732,23 +732,23 @@ function UserSettingsSheet({
 
           {/* Managed Collectives - shown for managers, editable by admin */}
           {user.role === 'manager' && isSuperAdmin && allCollectives && (
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-9 h-9 rounded-sm bg-plum-200 text-plum-700 flex items-center justify-center shrink-0">
-                  <Settings size={15} />
+            <div data-eos-id="src/pages/admin/users.tsx#70">
+              <div data-eos-id="src/pages/admin/users.tsx#71" className="flex items-center gap-2 mb-3">
+                <div data-eos-id="src/pages/admin/users.tsx#72" className="w-9 h-9 rounded-sm bg-plum-200 text-plum-700 flex items-center justify-center shrink-0">
+                  <Settings data-eos-id="src/pages/admin/users.tsx#73" size={15} />
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-plum-900">Managed Collectives</h3>
-                  <p className="text-[11px] text-plum-600">
+                <div data-eos-id="src/pages/admin/users.tsx#74">
+                  <h3 data-eos-id="src/pages/admin/users.tsx#75" className="text-sm font-bold text-plum-900">Managed Collectives</h3>
+                  <p data-eos-id="src/pages/admin/users.tsx#76" className="text-[11px] text-plum-600">
                     Which collectives this manager oversees
                   </p>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div data-eos-id="src/pages/admin/users.tsx#77" className="space-y-2">
                 {allCollectives.map((collective) => {
                   const isManaged = managedCollectives?.includes(collective.id) ?? false
                   return (
-                    <label
+                    <label data-eos-id="src/pages/admin/users.tsx#78"
                       key={collective.id}
                       className={cn(
                         'flex items-center gap-3 p-3 rounded-sm cursor-pointer transition-colors',
@@ -757,7 +757,7 @@ function UserSettingsSheet({
                           : 'bg-white ring-1 ring-neutral-100 hover:bg-neutral-50',
                       )}
                     >
-                      <input
+                      <input data-eos-id="src/pages/admin/users.tsx#79"
                         type="checkbox"
                         checked={isManaged}
                         onChange={() => {
@@ -775,10 +775,10 @@ function UserSettingsSheet({
                         }}
                         className="w-5 h-5 rounded border-plum-300 text-plum-600 focus:ring-plum-500"
                       />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-neutral-900 truncate">{collective.name}</p>
+                      <div data-eos-id="src/pages/admin/users.tsx#80" className="flex-1 min-w-0">
+                        <p data-eos-id="src/pages/admin/users.tsx#81" data-eos-var="collective.name" data-eos-var-label="Name" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 truncate">{collective.name}</p>
                         {collective.state && (
-                          <p className="text-[11px] text-neutral-500">{collective.state}{collective.region ? ` · ${collective.region}` : ''}</p>
+                          <p data-eos-id="src/pages/admin/users.tsx#82" data-eos-var="collective.state,collective.region" data-eos-var-label="State, Region" data-eos-var-scope="item" className="text-[11px] text-neutral-500">{collective.state}{collective.region ? ` · ${collective.region}` : ''}</p>
                         )}
                       </div>
                     </label>
@@ -790,8 +790,8 @@ function UserSettingsSheet({
 
           {/* Capabilities / Permissions Section - admin only */}
           {isSuperAdmin && isStaffRole && (
-            <div>
-              <button
+            <div data-eos-id="src/pages/admin/users.tsx#83">
+              <button data-eos-id="src/pages/admin/users.tsx#84"
                 type="button"
                 onClick={() => setCapsExpanded(!capsExpanded)}
                 className={cn(
@@ -801,26 +801,26 @@ function UserSettingsSheet({
                     : 'bg-plum-50 ring-1 ring-plum-200/40',
                 )}
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-sm bg-plum-200 text-plum-700 flex items-center justify-center">
-                    <Sparkles size={15} />
+                <div data-eos-id="src/pages/admin/users.tsx#85" className="flex items-center gap-2.5">
+                  <div data-eos-id="src/pages/admin/users.tsx#86" className="w-9 h-9 rounded-sm bg-plum-200 text-plum-700 flex items-center justify-center">
+                    <Sparkles data-eos-id="src/pages/admin/users.tsx#87" size={15} />
                   </div>
-                  <div className="text-left">
-                    <h3 className="text-sm font-bold text-plum-900">Permissions</h3>
-                    <p className="text-[11px] text-plum-600">
+                  <div data-eos-id="src/pages/admin/users.tsx#88" className="text-left">
+                    <h3 data-eos-id="src/pages/admin/users.tsx#89" className="text-sm font-bold text-plum-900">Permissions</h3>
+                    <p data-eos-id="src/pages/admin/users.tsx#90" className="text-[11px] text-plum-600">
                       {enabledCapsCount} capabilities active
                     </p>
                   </div>
                 </div>
                 {capsExpanded
-                  ? <ChevronUp size={16} className="text-plum-500" />
-                  : <ChevronDown size={16} className="text-plum-500" />
+                  ? <ChevronUp data-eos-id="src/pages/admin/users.tsx#91" size={16} className="text-plum-500" />
+                  : <ChevronDown data-eos-id="src/pages/admin/users.tsx#92" size={16} className="text-plum-500" />
                 }
               </button>
 
-              <AnimatePresence>
+              <AnimatePresence data-eos-id="src/pages/admin/users.tsx#93">
                 {capsExpanded && (
-                  <motion.div
+                  <motion.div data-eos-id="src/pages/admin/users.tsx#94"
                     variants={expandCollapseVariants}
                     initial="hidden"
                     animate="visible"
@@ -828,27 +828,27 @@ function UserSettingsSheet({
                     className="overflow-hidden"
                   >
                     {capsLoading ? (
-                      <div className="mt-3">
-                        <Skeleton variant="list-item" count={4} />
+                      <div data-eos-id="src/pages/admin/users.tsx#95" className="mt-3">
+                        <Skeleton data-eos-id="src/pages/admin/users.tsx#96" variant="list-item" count={4} />
                       </div>
                     ) : (
-                      <div className="mt-3 space-y-4">
-                        <p className="text-[11px] text-neutral-500 px-1">
-                          Defaults from <strong className="text-neutral-700">{userRole.replace(/_/g, ' ')}</strong> role.
+                      <div data-eos-id="src/pages/admin/users.tsx#97" className="mt-3 space-y-4">
+                        <p data-eos-id="src/pages/admin/users.tsx#98" className="text-[11px] text-neutral-500 px-1">
+                          Defaults from <strong data-eos-id="src/pages/admin/users.tsx#99" className="text-neutral-700">{userRole.replace(/_/g, ' ')}</strong> role.
                           Toggle to override.
                         </p>
                         {Object.entries(capsByCategory).map(([category, caps]) => (
-                          <div key={category}>
-                            <p className="text-[11px] uppercase tracking-wider font-bold text-neutral-400 mb-2 px-1">
+                          <div data-eos-id="src/pages/admin/users.tsx#100" key={category}>
+                            <p data-eos-id="src/pages/admin/users.tsx#101" data-eos-var="CATEGORY_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className="text-[11px] uppercase tracking-wider font-bold text-neutral-400 mb-2 px-1">
                               {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS]}
                             </p>
-                            <div className="rounded-sm overflow-hidden ring-1 ring-neutral-100">
+                            <div data-eos-id="src/pages/admin/users.tsx#102" className="rounded-sm overflow-hidden ring-1 ring-neutral-100">
                               {caps.map((cap, i) => {
                                 const isEnabled = capsData?.capabilities.has(cap.key) ?? false
                                 const isDefault = ROLE_DEFAULT_CAPS[userRole].includes(cap.key)
                                 const isOverridden = capsData?.overrides?.[cap.key] !== undefined
                                 return (
-                                  <div
+                                  <div data-eos-id="src/pages/admin/users.tsx#103"
                                     key={cap.key}
                                     className={cn(
                                       'flex items-center justify-between px-3.5 py-3',
@@ -858,18 +858,18 @@ function UserSettingsSheet({
                                         : 'bg-white',
                                     )}
                                   >
-                                    <div className="flex-1 min-w-0 mr-3">
-                                      <div className="flex items-center gap-1.5">
+                                    <div data-eos-id="src/pages/admin/users.tsx#104" className="flex-1 min-w-0 mr-3">
+                                      <div data-eos-id="src/pages/admin/users.tsx#105" className="flex items-center gap-1.5">
                                         {isEnabled ? (
-                                          <CheckCircle size={13} className="text-success-500 shrink-0" />
+                                          <CheckCircle data-eos-id="src/pages/admin/users.tsx#106" size={13} className="text-success-500 shrink-0" />
                                         ) : (
-                                          <XCircle size={13} className="text-neutral-300 shrink-0" />
+                                          <XCircle data-eos-id="src/pages/admin/users.tsx#107" size={13} className="text-neutral-300 shrink-0" />
                                         )}
-                                        <p className={cn('text-sm', isEnabled ? 'text-neutral-900 font-medium' : 'text-neutral-500')}>
+                                        <p data-eos-id="src/pages/admin/users.tsx#108" data-eos-var="cap.label" data-eos-var-label="Label" data-eos-var-scope="item" className={cn('text-sm', isEnabled ? 'text-neutral-900 font-medium' : 'text-neutral-500')}>
                                           {cap.label}
                                         </p>
                                         {isOverridden && (
-                                          <span className={cn(
+                                          <span data-eos-id="src/pages/admin/users.tsx#109" className={cn(
                                             'text-[9px] font-bold px-1.5 py-0.5 rounded-full',
                                             isEnabled ? 'bg-success-200 text-success-800' : 'bg-error-200 text-error-700',
                                           )}>
@@ -877,14 +877,14 @@ function UserSettingsSheet({
                                           </span>
                                         )}
                                         {!isOverridden && isDefault && (
-                                          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
+                                          <span data-eos-id="src/pages/admin/users.tsx#110" className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
                                             default
                                           </span>
                                         )}
                                       </div>
-                                      <p className="text-[11px] text-neutral-400 ml-[21px]">{cap.description}</p>
+                                      <p data-eos-id="src/pages/admin/users.tsx#111" data-eos-var="cap.description" data-eos-var-label="Description" data-eos-var-scope="item" className="text-[11px] text-neutral-400 ml-[21px]">{cap.description}</p>
                                     </div>
-                                    <Toggle
+                                    <Toggle data-eos-id="src/pages/admin/users.tsx#112"
                                       checked={isEnabled}
                                       onChange={() => handleToggleCap(cap.key)}
                                     />
@@ -905,7 +905,7 @@ function UserSettingsSheet({
       </BottomSheet>
 
       {/* Delete confirmation */}
-      <ConfirmationSheet
+      <ConfirmationSheet data-eos-id="src/pages/admin/users.tsx#113"
         open={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={() => deleteMutation.mutate(user.id)}
@@ -952,17 +952,17 @@ export default function AdminUsersPage() {
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
   return (
-    <motion.div variants={stagger} initial="hidden" animate="visible">
+    <motion.div data-eos-id="src/pages/admin/users.tsx#114" variants={stagger} initial="hidden" animate="visible">
       {/* Filters */}
-      <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 mb-4">
-        <SearchBar
+      <motion.div data-eos-id="src/pages/admin/users.tsx#115" variants={fadeUp} className="flex flex-col sm:flex-row gap-3 mb-4">
+        <SearchBar data-eos-id="src/pages/admin/users.tsx#116"
           value={search}
           onChange={setSearch}
           placeholder="Search by name or email..."
           compact
           className="flex-1"
         />
-        <Dropdown
+        <Dropdown data-eos-id="src/pages/admin/users.tsx#117"
           options={roleOptions}
           value={roleFilter}
           onChange={setRoleFilter}
@@ -973,14 +973,14 @@ export default function AdminUsersPage() {
 
       {/* Bulk actions */}
       {selectedUsers.size > 0 && (
-        <motion.div variants={fadeUp} className="flex items-center gap-2 mb-4 p-3 bg-neutral-50 rounded-sm ring-1 ring-neutral-100">
-          <span className="text-sm text-neutral-700 font-semibold">
+        <motion.div data-eos-id="src/pages/admin/users.tsx#118" variants={fadeUp} className="flex items-center gap-2 mb-4 p-3 bg-neutral-50 rounded-sm ring-1 ring-neutral-100">
+          <span data-eos-id="src/pages/admin/users.tsx#119" data-eos-var="selectedUsers.size" data-eos-var-label="Size" data-eos-var-scope="prop" className="text-sm text-neutral-700 font-semibold">
             {selectedUsers.size} selected
           </span>
-          <Button
+          <Button data-eos-id="src/pages/admin/users.tsx#120"
             variant="ghost"
             size="sm"
-            icon={<Ban size={14} />}
+            icon={<Ban data-eos-id="src/pages/admin/users.tsx#121" size={14} />}
             onClick={async () => {
               const uids = Array.from(selectedUsers)
               const { error } = await supabase.from('profiles').update({ is_suspended: true, suspended_reason: 'Bulk suspension by admin' }).in('id', uids)
@@ -999,25 +999,25 @@ export default function AdminUsersPage() {
           >
             Suspend All
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedUsers(new Set())}>Clear</Button>
+          <Button data-eos-id="src/pages/admin/users.tsx#122" variant="ghost" size="sm" onClick={() => setSelectedUsers(new Set())}>Clear</Button>
         </motion.div>
       )}
 
       {/* User list */}
-      <motion.div variants={fadeUp}>
+      <motion.div data-eos-id="src/pages/admin/users.tsx#123" variants={fadeUp}>
       {showLoading ? (
-        <Skeleton variant="list-item" count={8} />
+        <Skeleton data-eos-id="src/pages/admin/users.tsx#124" variant="list-item" count={8} />
       ) : !users?.length ? (
-        <EmptyState
+        <EmptyState data-eos-id="src/pages/admin/users.tsx#125"
           illustration="search"
           title="No users found"
           description={search ? 'Try a different search term' : 'No users match the filter'}
         />
       ) : (
         <>
-        <StaggeredList className="space-y-1.5">
+        <StaggeredList data-eos-id="src/pages/admin/users.tsx#126" className="space-y-1.5">
           {users.map((user) => (
-            <StaggeredItem
+            <StaggeredItem data-eos-id="src/pages/admin/users.tsx#127"
               key={user.id}
               className={cn(
                 'flex items-center gap-3 p-3.5 rounded-sm',
@@ -1029,7 +1029,7 @@ export default function AdminUsersPage() {
               )}
             >
               {/* Checkbox */}
-              <input
+              <input data-eos-id="src/pages/admin/users.tsx#128"
                 type="checkbox"
                 checked={selectedUsers.has(user.id)}
                 onChange={() => toggleUserSelection(user.id)}
@@ -1038,46 +1038,46 @@ export default function AdminUsersPage() {
               />
 
               {/* Avatar + info  tappable to open profile */}
-              <button
+              <button data-eos-id="src/pages/admin/users.tsx#129"
                 type="button"
                 onClick={() => setProfileUserId(user.id)}
                 className="flex items-center gap-3 flex-1 min-w-0 text-left active:opacity-70 transition-opacity cursor-pointer"
               >
-                <Avatar src={user.avatar_url} name={user.display_name ?? ''} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-neutral-900 truncate">
+                <Avatar data-eos-id="src/pages/admin/users.tsx#130" src={user.avatar_url} name={user.display_name ?? ''} size="sm" />
+                <div data-eos-id="src/pages/admin/users.tsx#131" className="flex-1 min-w-0">
+                  <div data-eos-id="src/pages/admin/users.tsx#132" className="flex items-center gap-2">
+                    <p data-eos-id="src/pages/admin/users.tsx#133" data-eos-var="user.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 truncate">
                       {user.display_name ?? 'Unknown'}
                     </p>
-                    <span className={cn('text-[11px] font-semibold px-1.5 py-0.5 rounded-full shrink-0', roleBadgeColors[user.role] ?? roleBadgeColors.participant)}>
+                    <span data-eos-id="src/pages/admin/users.tsx#134" data-eos-var="user.role" data-eos-var-label="Role" data-eos-var-scope="item" className={cn('text-[11px] font-semibold px-1.5 py-0.5 rounded-full shrink-0', roleBadgeColors[user.role] ?? roleBadgeColors.participant)}>
                       {formatRole(user.role ?? 'participant')}
                     </span>
                     {user.is_suspended && (
-                      <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-error-200 text-error-800 shrink-0">
+                      <span data-eos-id="src/pages/admin/users.tsx#135" className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-error-200 text-error-800 shrink-0">
                         Suspended
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                  <p data-eos-id="src/pages/admin/users.tsx#136" data-eos-var="user.email" data-eos-var-label="Email" data-eos-var-scope="item" className="text-xs text-neutral-500 truncate">{user.email}</p>
                 </div>
               </button>
 
               {/* Single settings button */}
-              <button
+              <button data-eos-id="src/pages/admin/users.tsx#137"
                 type="button"
                 onClick={() => setSettingsUser(user)}
                 className="p-2.5 rounded-sm bg-neutral-50 text-neutral-500 active:bg-neutral-200 active:text-neutral-700 transition-colors shrink-0"
                 title="User settings"
               >
-                <Settings size={18} />
+                <Settings data-eos-id="src/pages/admin/users.tsx#138" size={18} />
               </button>
             </StaggeredItem>
           ))}
         </StaggeredList>
 
         {hasNextPage && (
-          <div className="flex justify-center mt-4">
-            <Button
+          <div data-eos-id="src/pages/admin/users.tsx#139" className="flex justify-center mt-4">
+            <Button data-eos-id="src/pages/admin/users.tsx#140"
               variant="ghost"
               size="sm"
               onClick={() => fetchNextPage()}
@@ -1092,10 +1092,10 @@ export default function AdminUsersPage() {
       </motion.div>
 
       {/* Unified user settings sheet */}
-      {settingsUser && <UserSettingsSheet user={settingsUser} open onClose={() => setSettingsUser(null)} />}
+      {settingsUser && <UserSettingsSheet data-eos-id="src/pages/admin/users.tsx#141" user={settingsUser} open onClose={() => setSettingsUser(null)} />}
 
       {/* Profile detail modal */}
-      <ProfileModal userId={profileUserId} open={!!profileUserId} onClose={() => setProfileUserId(null)} />
+      <ProfileModal data-eos-id="src/pages/admin/users.tsx#142" userId={profileUserId} open={!!profileUserId} onClose={() => setProfileUserId(null)} />
     </motion.div>
   )
 }
