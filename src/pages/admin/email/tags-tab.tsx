@@ -68,7 +68,7 @@ function MergeDuplicatesSheet({ open, onClose }: { open: boolean; onClose: () =>
   }
 
   return (
-    <BottomSheet data-eos-id="src/pages/admin/email/tags-tab.tsx#0" open={open} onClose={onClose} snapPoints={[0.7]}>
+    <BottomSheet data-eos-id="src/pages/admin/email/tags-tab.tsx#0" data-eos-v="2" open={open} onClose={onClose} snapPoints={[0.7]}>
       <h2 data-eos-id="src/pages/admin/email/tags-tab.tsx#1" className="font-heading text-lg font-semibold text-neutral-900 mb-1">Merge duplicate tags</h2>
       <p data-eos-id="src/pages/admin/email/tags-tab.tsx#2" className="text-xs text-neutral-500 mb-4">
         We group tags that look like the same thing (e.g. "Brisbane" and "Brisbane Collective").
