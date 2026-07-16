@@ -47,7 +47,7 @@ export default function ShippingTab() {
   }, [flatRate, freeThreshold, updateConfig, toast])
 
   if (showLoading) {
-    return <Skeleton data-eos-id="src/pages/admin/merch/shipping-tab.tsx#0" variant="text" count={3} />
+    return <Skeleton data-eos-id="src/pages/admin/merch/shipping-tab.tsx#0" data-eos-v="2" variant="text" count={3} />
   }
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
