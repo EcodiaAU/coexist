@@ -61,7 +61,7 @@ export default function AdminCreateModulePage() {
 
   if (saved) {
     return (
-      <motion.div data-eos-id="src/pages/admin/development/create-module.tsx#0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto py-8">
+      <motion.div data-eos-id="src/pages/admin/development/create-module.tsx#0" data-eos-v="2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto py-8">
         <SaveSuccessBanner data-eos-id="src/pages/admin/development/create-module.tsx#1" show message={saved.status === 'published' ? 'Module published!' : 'Draft saved!'} subtitle={saved.status === 'published' ? `"${title}" is now live` : `"${title}" saved as draft.`} editPath={`/admin/development/modules/${saved.id}/edit`} onDismiss={resetForm} />
       </motion.div>
     )
