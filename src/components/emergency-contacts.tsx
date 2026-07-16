@@ -33,42 +33,42 @@ interface CategoryVisual {
 const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
   emergency: {
     title: 'Emergency Services',
-    icon: <Siren size={18} />,
+    icon: <Siren data-eos-id="src/components/emergency-contacts.tsx#0" size={18} />,
     gradient: 'from-error-500 to-error-600',
     ringColor: 'ring-error-200',
     phoneColor: 'text-error-500',
   },
   wildlife: {
     title: 'Wildlife Rescue',
-    icon: <TreePine size={18} />,
+    icon: <TreePine data-eos-id="src/components/emergency-contacts.tsx#1" size={18} />,
     gradient: 'from-moss-500 to-moss-600',
     ringColor: 'ring-moss-200',
     phoneColor: 'text-moss-500',
   },
   marine: {
     title: 'Marine Wildlife',
-    icon: <Waves size={18} />,
+    icon: <Waves data-eos-id="src/components/emergency-contacts.tsx#2" size={18} />,
     gradient: 'from-primary-600 to-moss-700',
     ringColor: 'ring-primary-200',
     phoneColor: 'text-primary-600',
   },
   poison: {
     title: 'Poisoning & Snakebite',
-    icon: <Bug size={18} />,
+    icon: <Bug data-eos-id="src/components/emergency-contacts.tsx#3" size={18} />,
     gradient: 'from-bark-500 to-bark-600',
     ringColor: 'ring-bark-200',
     phoneColor: 'text-bark-500',
   },
   ses: {
     title: 'SES & National Parks',
-    icon: <Shield size={18} />,
+    icon: <Shield data-eos-id="src/components/emergency-contacts.tsx#4" size={18} />,
     gradient: 'from-primary-500 to-primary-600',
     ringColor: 'ring-primary-200',
     phoneColor: 'text-primary-500',
   },
   internal: {
     title: 'Co-Exist Internal',
-    icon: <Users size={18} />,
+    icon: <Users data-eos-id="src/components/emergency-contacts.tsx#5" size={18} />,
     gradient: 'from-plum-500 to-plum-600',
     ringColor: 'ring-plum-200',
     phoneColor: 'text-plum-500',
@@ -133,9 +133,9 @@ function ContactAccordion({
   const visual = section.visual
 
   return (
-    <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
+    <div data-eos-id="src/components/emergency-contacts.tsx#6" className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
       {/* Accordion header */}
-      <button
+      <button data-eos-id="src/components/emergency-contacts.tsx#7"
         onClick={onToggle}
         className={cn(
           'w-full flex items-center gap-3 px-4 py-3.5',
@@ -144,7 +144,7 @@ function ContactAccordion({
         )}
         aria-expanded={isOpen}
       >
-        <span
+        <span data-eos-id="src/components/emergency-contacts.tsx#8" data-eos-var="visual.icon" data-eos-var-label="Icon" data-eos-var-scope="prop"
           className={cn(
             'flex items-center justify-center w-9 h-9 rounded-sm text-white shadow-sm',
             `bg-gradient-to-br ${visual.gradient}`,
@@ -152,36 +152,36 @@ function ContactAccordion({
         >
           {visual.icon}
         </span>
-        <span className="flex-1 text-left">
-          <span className="text-sm font-semibold text-neutral-900">{visual.title}</span>
+        <span data-eos-id="src/components/emergency-contacts.tsx#9" className="flex-1 text-left">
+          <span data-eos-id="src/components/emergency-contacts.tsx#10" data-eos-var="visual.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="text-sm font-semibold text-neutral-900">{visual.title}</span>
           {matchCount !== null && (
-            <span className="ml-2 text-xs text-neutral-500">
+            <span data-eos-id="src/components/emergency-contacts.tsx#11" className="ml-2 text-xs text-neutral-500">
               {matchCount} result{matchCount !== 1 ? 's' : ''}
             </span>
           )}
         </span>
-        <motion.span
+        <motion.span data-eos-id="src/components/emergency-contacts.tsx#12"
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={rm ? { duration: 0 } : { duration: 0.2 }}
           className="text-neutral-300"
         >
-          <ChevronDown size={18} />
+          <ChevronDown data-eos-id="src/components/emergency-contacts.tsx#13" size={18} />
         </motion.span>
       </button>
 
       {/* Accordion body */}
-      <AnimatePresence initial={false}>
+      <AnimatePresence data-eos-id="src/components/emergency-contacts.tsx#14" initial={false}>
         {isOpen && (
-          <motion.div
+          <motion.div data-eos-id="src/components/emergency-contacts.tsx#15"
             initial={rm ? false : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={rm ? { duration: 0 } : { duration: 0.25, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-3 space-y-1.5">
+            <div data-eos-id="src/components/emergency-contacts.tsx#16" className="px-3 pb-3 space-y-1.5">
               {filteredContacts.map((contact) => (
-                <a
+                <a data-eos-href="dynamic" data-eos-href-label="Phone" data-eos-href-scope="item" data-eos-id="src/components/emergency-contacts.tsx#17"
                   key={contact.id}
                   href={`tel:${contact.phone}`}
                   className={cn(
@@ -192,7 +192,7 @@ function ContactAccordion({
                     'min-h-[52px]',
                   )}
                 >
-                  <span
+                  <span data-eos-id="src/components/emergency-contacts.tsx#18"
                     className={cn(
                       'flex items-center justify-center w-10 h-10 rounded-full',
                       'bg-white ring-1',
@@ -200,19 +200,19 @@ function ContactAccordion({
                       'shadow-sm shrink-0',
                     )}
                   >
-                    <Phone size={16} className={visual.phoneColor} />
+                    <Phone data-eos-id="src/components/emergency-contacts.tsx#19" size={16} className={visual.phoneColor} />
                   </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-neutral-900 leading-snug truncate">
+                  <div data-eos-id="src/components/emergency-contacts.tsx#20" className="flex-1 min-w-0">
+                    <p data-eos-id="src/components/emergency-contacts.tsx#21" data-eos-var="contact.name" data-eos-var-label="Name" data-eos-var-scope="item" className="text-sm font-medium text-neutral-900 leading-snug truncate">
                       {contact.name}
                     </p>
                     {contact.note && (
-                      <p className="text-[11px] text-neutral-500 leading-snug mt-0.5 truncate">
+                      <p data-eos-id="src/components/emergency-contacts.tsx#22" data-eos-var="contact.note" data-eos-var-label="Note" data-eos-var-scope="item" className="text-[11px] text-neutral-500 leading-snug mt-0.5 truncate">
                         {contact.note}
                       </p>
                     )}
                   </div>
-                  <span className="text-sm font-semibold text-primary-600 tabular-nums whitespace-nowrap shrink-0">
+                  <span data-eos-id="src/components/emergency-contacts.tsx#23" data-eos-var="contact.phone" data-eos-var-label="Phone" data-eos-var-scope="item" className="text-sm font-semibold text-primary-600 tabular-nums whitespace-nowrap shrink-0">
                     {formatPhone(contact.phone)}
                   </span>
                 </a>
@@ -294,17 +294,17 @@ export function EmergencyContacts({ eventState }: EmergencyContactsProps) {
     : true
 
   return (
-    <div className="space-y-4">
+    <div data-eos-id="src/components/emergency-contacts.tsx#24" className="space-y-4">
       {/* Section header */}
-      <div className="flex items-center gap-3">
-        <span className="flex items-center justify-center w-8 h-8 rounded-sm bg-error-100 text-error-600">
-          <Phone size={16} />
+      <div data-eos-id="src/components/emergency-contacts.tsx#25" className="flex items-center gap-3">
+        <span data-eos-id="src/components/emergency-contacts.tsx#26" className="flex items-center justify-center w-8 h-8 rounded-sm bg-error-100 text-error-600">
+          <Phone data-eos-id="src/components/emergency-contacts.tsx#27" size={16} />
         </span>
-        <div>
-          <h3 className="font-heading text-base font-bold text-neutral-900">
+        <div data-eos-id="src/components/emergency-contacts.tsx#28">
+          <h3 data-eos-id="src/components/emergency-contacts.tsx#29" className="font-heading text-base font-bold text-neutral-900">
             Emergency Contacts
           </h3>
-          <p className="text-[11px] text-neutral-500">
+          <p data-eos-id="src/components/emergency-contacts.tsx#30" className="text-[11px] text-neutral-500">
             {eventState
               ? `Showing contacts for ${eventState}  tap any number to call`
               : 'Tap any number to call instantly'}
@@ -313,10 +313,10 @@ export function EmergencyContacts({ eventState }: EmergencyContactsProps) {
       </div>
 
       {/* Search */}
-      <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search contacts..." compact />
+      <SearchBar data-eos-id="src/components/emergency-contacts.tsx#31" value={searchQuery} onChange={setSearchQuery} placeholder="Search contacts..." compact />
 
       {/* Emergency banner  always visible, quick access to 000 */}
-      <a
+      <a data-eos-href="static" data-eos-id="src/components/emergency-contacts.tsx#32"
         href="tel:000"
         className={cn(
           'flex items-center gap-3 px-4 py-3.5 rounded-md',
@@ -326,28 +326,28 @@ export function EmergencyContacts({ eventState }: EmergencyContactsProps) {
           'min-h-[56px]',
         )}
       >
-        <span className="flex items-center justify-center w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm">
-          <Siren size={22} className="text-white" />
+        <span data-eos-id="src/components/emergency-contacts.tsx#33" className="flex items-center justify-center w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm">
+          <Siren data-eos-id="src/components/emergency-contacts.tsx#34" size={22} className="text-white" />
         </span>
-        <div className="flex-1">
-          <p className="text-sm font-bold text-white">Triple Zero (000)</p>
-          <p className="text-[11px] text-white/70">Police, Fire, Ambulance</p>
+        <div data-eos-id="src/components/emergency-contacts.tsx#35" className="flex-1">
+          <p data-eos-id="src/components/emergency-contacts.tsx#36" className="text-sm font-bold text-white">Triple Zero (000)</p>
+          <p data-eos-id="src/components/emergency-contacts.tsx#37" className="text-[11px] text-white/70">Police, Fire, Ambulance</p>
         </div>
-        <span className="text-xl font-bold text-white tracking-wider">000</span>
+        <span data-eos-id="src/components/emergency-contacts.tsx#38" className="text-xl font-bold text-white tracking-wider">000</span>
       </a>
 
       {/* Loading */}
       {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 size={24} className="text-neutral-400 animate-spin" />
+        <div data-eos-id="src/components/emergency-contacts.tsx#39" className="flex items-center justify-center py-8">
+          <Loader2 data-eos-id="src/components/emergency-contacts.tsx#40" size={24} className="text-neutral-400 animate-spin" />
         </div>
       )}
 
       {/* Accordion sections */}
       {!isLoading && (
-        <div className="space-y-2.5">
+        <div data-eos-id="src/components/emergency-contacts.tsx#41" className="space-y-2.5">
           {sections.map((section) => (
-            <ContactAccordion
+            <ContactAccordion data-eos-id="src/components/emergency-contacts.tsx#42"
               key={section.category}
               section={section}
               isOpen={effectiveOpen.has(section.category)}
@@ -360,8 +360,8 @@ export function EmergencyContacts({ eventState }: EmergencyContactsProps) {
 
       {/* No results */}
       {!isLoading && !hasResults && (
-        <div className="text-center py-6">
-          <p className="text-sm text-neutral-500">No contacts matching &ldquo;{searchQuery}&rdquo;</p>
+        <div data-eos-id="src/components/emergency-contacts.tsx#43" className="text-center py-6">
+          <p data-eos-id="src/components/emergency-contacts.tsx#44" className="text-sm text-neutral-500">No contacts matching &ldquo;{searchQuery}&rdquo;</p>
         </div>
       )}
     </div>
