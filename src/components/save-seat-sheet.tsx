@@ -50,16 +50,16 @@ export function SaveSeatSheet({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
-      <div className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
+    <BottomSheet data-eos-id="src/components/save-seat-sheet.tsx#0" open={open} onClose={onClose}>
+      <div data-eos-id="src/components/save-seat-sheet.tsx#1" className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
         {/* Header */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-success-50 text-success-600">
-            <Car size={20} />
+        <div data-eos-id="src/components/save-seat-sheet.tsx#2" className="flex items-center gap-2.5 mb-4">
+          <div data-eos-id="src/components/save-seat-sheet.tsx#3" className="flex h-10 w-10 items-center justify-center rounded-sm bg-success-50 text-success-600">
+            <Car data-eos-id="src/components/save-seat-sheet.tsx#4" size={20} />
           </div>
-          <div className="min-w-0">
-            <h3 className="text-base font-bold text-neutral-900 truncate">Save me a seat</h3>
-            <p className="text-xs text-neutral-500 truncate">
+          <div data-eos-id="src/components/save-seat-sheet.tsx#5" className="min-w-0">
+            <h3 data-eos-id="src/components/save-seat-sheet.tsx#6" className="text-base font-bold text-neutral-900 truncate">Save me a seat</h3>
+            <p data-eos-id="src/components/save-seat-sheet.tsx#7" className="text-xs text-neutral-500 truncate">
               {driverName
                 ? `Riding with ${driverName}`
                 : eventTitle
@@ -70,18 +70,18 @@ export function SaveSeatSheet({
         </div>
 
         {/* Privacy reminder */}
-        <div className="mb-3 rounded-sm bg-neutral-50 px-3.5 py-2.5 ring-1 ring-neutral-100">
-          <div className="flex items-start gap-2">
-            <MapPin size={14} className="text-neutral-400 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-neutral-500 leading-relaxed">
+        <div data-eos-id="src/components/save-seat-sheet.tsx#8" className="mb-3 rounded-sm bg-neutral-50 px-3.5 py-2.5 ring-1 ring-neutral-100">
+          <div data-eos-id="src/components/save-seat-sheet.tsx#9" className="flex items-start gap-2">
+            <MapPin data-eos-id="src/components/save-seat-sheet.tsx#10" size={14} className="text-neutral-400 shrink-0 mt-0.5" />
+            <p data-eos-id="src/components/save-seat-sheet.tsx#11" className="text-[11px] text-neutral-500 leading-relaxed">
               Your pickup address is only visible to you and the driver. Other collective members can&apos;t see it.
             </p>
           </div>
         </div>
 
         {/* Pickup address */}
-        <div className="mb-4">
-          <Input
+        <div data-eos-id="src/components/save-seat-sheet.tsx#12" className="mb-4">
+          <Input data-eos-id="src/components/save-seat-sheet.tsx#13"
             label="Pickup address"
             value={pickupAddress}
             onChange={(e) => setPickupAddress(e.target.value)}
@@ -92,7 +92,7 @@ export function SaveSeatSheet({
         </div>
 
         {/* Submit */}
-        <Button
+        <Button data-eos-id="src/components/save-seat-sheet.tsx#14"
           variant="primary"
           size="lg"
           fullWidth
