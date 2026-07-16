@@ -72,7 +72,7 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, onClo
   if (!open) return null
 
   return createPortal(
-    <div data-eos-id="src/components/campout-requirements-modal.tsx#0"
+    <div data-eos-id="src/components/campout-requirements-modal.tsx#0" data-eos-v="2"
       className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center"
       role="dialog"
       aria-modal="true"
