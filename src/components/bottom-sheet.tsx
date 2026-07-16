@@ -217,9 +217,9 @@ function MobileSheet({
   if (!mounted) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50" style={!visible ? { pointerEvents: 'none' } : undefined}>
+    <div data-eos-id="src/components/bottom-sheet.tsx#0" className="fixed inset-0 z-50" style={!visible ? { pointerEvents: 'none' } : undefined}>
       {/* Backdrop */}
-      <div
+      <div data-eos-id="src/components/bottom-sheet.tsx#1"
         ref={backdropRef}
         className="fixed inset-0 bg-black/50"
         style={{
@@ -231,7 +231,7 @@ function MobileSheet({
       />
 
       {/* Sheet */}
-      <div
+      <div data-eos-id="src/components/bottom-sheet.tsx#2"
         ref={sheetRef}
         role="dialog"
         aria-modal="true"
@@ -250,7 +250,7 @@ function MobileSheet({
         onTransitionEnd={onTransitionEnd}
       >
         {/* Grab handle  touch target for dragging */}
-        <div
+        <div data-eos-id="src/components/bottom-sheet.tsx#3"
           className="flex justify-center py-3 cursor-grab active:cursor-grabbing select-none shrink-0"
           style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0.75rem)', touchAction: 'none' }}
           onTouchStart={onTouchStart}
@@ -258,11 +258,11 @@ function MobileSheet({
           onTouchEnd={onTouchEnd}
           onTouchCancel={onTouchEnd}
         >
-          <div className="h-1 w-10 rounded-full bg-primary-200" aria-hidden="true" />
+          <div data-eos-id="src/components/bottom-sheet.tsx#4" className="h-1 w-10 rounded-full bg-primary-200" aria-hidden="true" />
         </div>
 
         {/* Scrollable content */}
-        <div
+        <div data-eos-id="src/components/bottom-sheet.tsx#5"
           ref={scrollRef}
           className="overflow-y-auto overscroll-contain px-5 flex-1 min-h-0 hide-scrollbar"
           style={{
@@ -276,7 +276,7 @@ function MobileSheet({
 
         {/* Scroll hint gradient */}
         {canScrollDown && (
-          <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-surface-0 to-transparent rounded-b-md pointer-events-none" />
+          <div data-eos-id="src/components/bottom-sheet.tsx#6" className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-surface-0 to-transparent rounded-b-md pointer-events-none" />
         )}
       </div>
     </div>,
@@ -306,7 +306,7 @@ export function BottomSheet({
   /* ---- If mobile, delegate entirely to MobileSheet ---- */
   if (!isDesktop) {
     return (
-      <MobileSheet open={open} onClose={onClose} maxHeight={maxHeight} keyboardHeight={keyboardHeight} className={className}>
+      <MobileSheet data-eos-id="src/components/bottom-sheet.tsx#7" open={open} onClose={onClose} maxHeight={maxHeight} keyboardHeight={keyboardHeight} className={className}>
         {children}
       </MobileSheet>
     )
@@ -315,7 +315,7 @@ export function BottomSheet({
   /* ==================================================================== */
   /*  Desktop: centred modal (unchanged from original)                     */
   /* ==================================================================== */
-  return <DesktopModal
+  return <DesktopModal data-eos-id="src/components/bottom-sheet.tsx#8"
     open={open}
     onClose={onClose}
     className={className}
@@ -432,10 +432,10 @@ function DesktopModal({
   }
 
   return createPortal(
-    <AnimatePresence>
+    <AnimatePresence data-eos-id="src/components/bottom-sheet.tsx#9">
       {open && (
-        <div className="fixed inset-0 z-50" aria-label="Dialog">
-          <motion.div
+        <div data-eos-id="src/components/bottom-sheet.tsx#10" className="fixed inset-0 z-50" aria-label="Dialog">
+          <motion.div data-eos-id="src/components/bottom-sheet.tsx#11"
             className="fixed inset-0 bg-black/50 gpu-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: backdropTransition }}
@@ -443,8 +443,8 @@ function DesktopModal({
             onClick={onClose}
             aria-hidden="true"
           />
-          <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
+          <div data-eos-id="src/components/bottom-sheet.tsx#12" className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div data-eos-id="src/components/bottom-sheet.tsx#13"
               ref={sheetRef}
               role="dialog"
               aria-modal="true"
@@ -459,7 +459,7 @@ function DesktopModal({
               transition={shouldReduceMotion ? instantTransition : { type: 'spring', stiffness: 260, damping: 28, mass: 0.6 }}
               onKeyDown={handleKeyDown}
             >
-              <motion.div
+              <motion.div data-eos-id="src/components/bottom-sheet.tsx#14"
                 ref={scrollRef}
                 className="overflow-y-auto overscroll-contain px-5 py-6 hide-scrollbar"
                 style={{ maxHeight: '80vh' }}
@@ -469,9 +469,9 @@ function DesktopModal({
               >
                 {children}
               </motion.div>
-              <AnimatePresence>
+              <AnimatePresence data-eos-id="src/components/bottom-sheet.tsx#15">
                 {canScrollDown && (
-                  <motion.div
+                  <motion.div data-eos-id="src/components/bottom-sheet.tsx#16"
                     className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-surface-0 to-transparent rounded-b-md pointer-events-none"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
