@@ -61,7 +61,7 @@ export function CreatePollSheet({ open, onClose, onSubmit, loading }: CreatePoll
   }
 
   return (
-    <BottomSheet data-eos-id="src/components/create-poll-sheet.tsx#0" open={open} onClose={onClose}>
+    <BottomSheet data-eos-id="src/components/create-poll-sheet.tsx#0" data-eos-v="2" open={open} onClose={onClose}>
       <div data-eos-id="src/components/create-poll-sheet.tsx#1" className="pb-4">
         {/* Header */}
         <div data-eos-id="src/components/create-poll-sheet.tsx#2" className="flex items-center gap-2.5 mb-4">
