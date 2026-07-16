@@ -48,39 +48,39 @@ export function ConfirmationSheet({
   const Icon = config.icon
 
   return (
-    <BottomSheet
+    <BottomSheet data-eos-id="src/components/confirmation-sheet.tsx#0"
       open={open}
       onClose={onClose}
       className={className}
     >
-      <div
+      <div data-eos-id="src/components/confirmation-sheet.tsx#1"
         aria-label={ariaLabel ?? `Confirm: ${title}`}
         className="flex flex-col items-center px-5 pb-4 pt-2 text-center"
       >
         {/* Icon */}
-        <div
+        <div data-eos-id="src/components/confirmation-sheet.tsx#2"
           className={cn(
             'mb-4 flex h-12 w-12 items-center justify-center rounded-full',
             config.iconBg,
           )}
           aria-hidden="true"
         >
-          <Icon size={24} className={config.iconColor} />
+          <Icon data-eos-id="src/components/confirmation-sheet.tsx#3" size={24} className={config.iconColor} />
         </div>
 
         {/* Title */}
-        <h3 className="font-heading text-lg font-semibold text-neutral-900">
+        <h3 data-eos-id="src/components/confirmation-sheet.tsx#4" className="font-heading text-lg font-semibold text-neutral-900">
           {title}
         </h3>
 
         {/* Description */}
-        <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+        <p data-eos-id="src/components/confirmation-sheet.tsx#5" className="mt-2 text-sm leading-relaxed text-neutral-500">
           {description}
         </p>
 
         {/* Actions */}
-        <div className="mt-6 flex w-full flex-col gap-2">
-          <Button
+        <div data-eos-id="src/components/confirmation-sheet.tsx#6" className="mt-6 flex w-full flex-col gap-2">
+          <Button data-eos-id="src/components/confirmation-sheet.tsx#7"
             variant="danger"
             fullWidth
             onClick={() => {
@@ -91,7 +91,7 @@ export function ConfirmationSheet({
           >
             {confirmLabel}
           </Button>
-          <Button
+          <Button data-eos-id="src/components/confirmation-sheet.tsx#8"
             variant="ghost"
             fullWidth
             onClick={onClose}
