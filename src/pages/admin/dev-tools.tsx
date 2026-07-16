@@ -690,45 +690,45 @@ function PushTestSuite() {
   const filterResults = results.filter((r) => r.category === 'filtering')
 
   return (
-    <div className="space-y-4">
+    <div data-eos-id="src/pages/admin/dev-tools.tsx#0" className="space-y-4">
       {/* ── Device Status ── */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-neutral-500 flex items-center gap-1.5">
-            <Smartphone size={13} />
+      <div data-eos-id="src/pages/admin/dev-tools.tsx#1" className="space-y-2">
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#2" className="flex items-center justify-between">
+          <p data-eos-id="src/pages/admin/dev-tools.tsx#3" className="text-xs font-medium text-neutral-500 flex items-center gap-1.5">
+            <Smartphone data-eos-id="src/pages/admin/dev-tools.tsx#4" size={13} />
             Registered Devices
           </p>
-          <button
+          <button data-eos-id="src/pages/admin/dev-tools.tsx#5"
             type="button"
             onClick={() => refetchTokens()}
             className="text-[11px] text-neutral-400 hover:text-neutral-600 flex items-center gap-1"
           >
-            <RefreshCw size={10} /> Refresh
+            <RefreshCw data-eos-id="src/pages/admin/dev-tools.tsx#6" size={10} /> Refresh
           </button>
         </div>
 
         {showTokensLoading ? (
-          <Skeleton className="h-10 rounded-sm" />
+          <Skeleton data-eos-id="src/pages/admin/dev-tools.tsx#7" className="h-10 rounded-sm" />
         ) : tokensLoading ? null : !tokens?.length ? (
-          <div className="flex items-center gap-2 p-2.5 rounded-sm bg-warning-50 border border-warning-200">
-            <AlertCircle size={14} className="text-warning-600 shrink-0" />
-            <p className="text-[11px] text-warning-700">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#8" className="flex items-center gap-2 p-2.5 rounded-sm bg-warning-50 border border-warning-200">
+            <AlertCircle data-eos-id="src/pages/admin/dev-tools.tsx#9" size={14} className="text-warning-600 shrink-0" />
+            <p data-eos-id="src/pages/admin/dev-tools.tsx#10" className="text-[11px] text-warning-700">
               No tokens registered. Push won't work until the app runs on a real device.
             </p>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-1.5">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#11" className="flex flex-wrap gap-1.5">
             {tokens.map((t, i: number) => {
               const ageMins = Math.round((tokenNow - new Date(t.updated_at).getTime()) / 60_000)
               const stale = ageMins > 60 * 24 * 7
               return (
-                <span key={i} className={cn(
+                <span data-eos-id="src/pages/admin/dev-tools.tsx#12" key={i} className={cn(
                   'inline-flex items-center gap-1.5 px-2 py-1 rounded-sm text-[11px] font-medium border',
                   stale ? 'bg-warning-50 border-warning-200 text-warning-700' : 'bg-success-50/50 border-success-200 text-success-700',
                 )}>
-                  <span className="uppercase font-bold">{t.platform}</span>
-                  <span className="text-neutral-400 font-mono">{t.token.slice(0, 12)}...</span>
-                  <span className={stale ? 'text-warning-500' : 'text-neutral-400'}>
+                  <span data-eos-id="src/pages/admin/dev-tools.tsx#13" data-eos-var="t.platform" data-eos-var-label="Platform" data-eos-var-scope="item" className="uppercase font-bold">{t.platform}</span>
+                  <span data-eos-id="src/pages/admin/dev-tools.tsx#14" data-eos-var="t.token" data-eos-var-label="Token" data-eos-var-scope="item" className="text-neutral-400 font-mono">{t.token.slice(0, 12)}...</span>
+                  <span data-eos-id="src/pages/admin/dev-tools.tsx#15" data-eos-var="Math.round" data-eos-var-label="Round" data-eos-var-scope="prop" className={stale ? 'text-warning-500' : 'text-neutral-400'}>
                     {ageMins < 60 ? `${ageMins}m` : ageMins < 1440 ? `${Math.round(ageMins / 60)}h` : `${Math.round(ageMins / 1440)}d`}
                     {stale ? ' stale' : ''}
                   </span>
@@ -741,14 +741,14 @@ function PushTestSuite() {
 
       {/* ── Preferences snapshot ── */}
       {prefs && (
-        <div className="space-y-1.5">
-          <p className="text-xs font-medium text-neutral-500 flex items-center gap-1.5">
-            <Bell size={13} />
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#16" className="space-y-1.5">
+          <p data-eos-id="src/pages/admin/dev-tools.tsx#17" className="text-xs font-medium text-neutral-500 flex items-center gap-1.5">
+            <Bell data-eos-id="src/pages/admin/dev-tools.tsx#18" size={13} />
             Current Preferences
           </p>
-          <div className="flex flex-wrap gap-1">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#19" className="flex flex-wrap gap-1">
             {ALL_TYPES.map((type) => (
-              <span key={type} className={cn(
+              <span data-eos-id="src/pages/admin/dev-tools.tsx#20" data-eos-var="TYPE_META.[..]" data-eos-var-label="]" data-eos-var-scope="prop" key={type} className={cn(
                 'px-1.5 py-0.5 rounded text-[9px] font-medium',
                 prefs[type] !== false ? 'bg-success-100 text-success-700' : 'bg-error-100 text-error-600',
               )}>
@@ -756,13 +756,13 @@ function PushTestSuite() {
               </span>
             ))}
           </div>
-          <div className="flex gap-3 text-[11px] text-neutral-400">
-            <span className="flex items-center gap-1">
-              <Moon size={10} />
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#21" className="flex gap-3 text-[11px] text-neutral-400">
+            <span data-eos-id="src/pages/admin/dev-tools.tsx#22" data-eos-var="prefs.quiet_hours_enabled" data-eos-var-label="Quiet hours enabled" data-eos-var-scope="prop" className="flex items-center gap-1">
+              <Moon data-eos-id="src/pages/admin/dev-tools.tsx#23" size={10} />
               Quiet: {prefs.quiet_hours_enabled ? `${prefs.quiet_hours_start}-${prefs.quiet_hours_end}` : 'Off'}
             </span>
-            <span className="flex items-center gap-1">
-              <Globe size={10} />
+            <span data-eos-id="src/pages/admin/dev-tools.tsx#24" data-eos-var="prefs.timezone" data-eos-var-label="Timezone" data-eos-var-scope="prop" className="flex items-center gap-1">
+              <Globe data-eos-id="src/pages/admin/dev-tools.tsx#25" size={10} />
               {prefs.timezone || 'no tz'}
             </span>
           </div>
@@ -770,11 +770,11 @@ function PushTestSuite() {
       )}
 
       {/* ── Test config ── */}
-      <div className="space-y-3 pt-1 border-t border-neutral-100">
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-neutral-500">Push Types to Send</p>
-            <button
+      <div data-eos-id="src/pages/admin/dev-tools.tsx#26" className="space-y-3 pt-1 border-t border-neutral-100">
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#27" className="space-y-1.5">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#28" className="flex items-center justify-between">
+            <p data-eos-id="src/pages/admin/dev-tools.tsx#29" className="text-xs font-medium text-neutral-500">Push Types to Send</p>
+            <button data-eos-id="src/pages/admin/dev-tools.tsx#30"
               type="button"
               className="text-[11px] text-neutral-400 hover:text-neutral-600"
               onClick={() => setSelectedTypes(selectedTypes.length === ALL_TYPES.length ? [] : [...ALL_TYPES])}
@@ -782,9 +782,9 @@ function PushTestSuite() {
               {selectedTypes.length === ALL_TYPES.length ? 'None' : 'All'}
             </button>
           </div>
-          <div className="flex flex-wrap gap-1">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#31" className="flex flex-wrap gap-1">
             {ALL_TYPES.map((type) => (
-              <button
+              <button data-eos-id="src/pages/admin/dev-tools.tsx#32" data-eos-var="TYPE_META.[..]" data-eos-var-label="]" data-eos-var-scope="prop"
                 key={type}
                 type="button"
                 onClick={() => toggleType(type)}
@@ -800,7 +800,7 @@ function PushTestSuite() {
         </div>
 
         {collectives && collectives.length > 0 && (
-          <Dropdown
+          <Dropdown data-eos-id="src/pages/admin/dev-tools.tsx#33"
             label="Collective Broadcast"
             placeholder="Skip"
             options={collectives.map((c) => ({ value: c.id, label: `${c.name} (${c.role})` }))}
@@ -809,18 +809,18 @@ function PushTestSuite() {
           />
         )}
 
-        <div className="flex gap-4">
-          <Toggle checked={testOptOut} onChange={setTestOptOut} label="Test opt-out" size="sm" />
-          <Toggle checked={testQuietHours} onChange={setTestQuietHours} label="Test quiet hours" size="sm" />
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#34" className="flex gap-4">
+          <Toggle data-eos-id="src/pages/admin/dev-tools.tsx#35" checked={testOptOut} onChange={setTestOptOut} label="Test opt-out" size="sm" />
+          <Toggle data-eos-id="src/pages/admin/dev-tools.tsx#36" checked={testQuietHours} onChange={setTestQuietHours} label="Test quiet hours" size="sm" />
         </div>
       </div>
 
       {/* ── Run ── */}
-      <Button
+      <Button data-eos-id="src/pages/admin/dev-tools.tsx#37"
         variant="primary"
         size="md"
         fullWidth
-        icon={<Play size={16} />}
+        icon={<Play data-eos-id="src/pages/admin/dev-tools.tsx#38" size={16} />}
         loading={running}
         onClick={() => runAll({ selectedTypes, collectiveId, testQuietHours, testOptOut })}
         disabled={selectedTypes.length === 0 && !collectiveId}
@@ -830,29 +830,29 @@ function PushTestSuite() {
 
       {/* ── Results ── */}
       {results.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-neutral-900">
-              Results: <span className="text-success-600">{passed} pass</span>
-              {failed > 0 && <> / <span className="text-error-600">{failed} fail</span></>}
-              <span className="text-neutral-400 font-normal"> / {results.length}</span>
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#39" className="space-y-3">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#40" className="flex items-center justify-between">
+            <p data-eos-id="src/pages/admin/dev-tools.tsx#41" className="text-xs font-semibold text-neutral-900">
+              Results: <span data-eos-id="src/pages/admin/dev-tools.tsx#42" className="text-success-600">{passed} pass</span>
+              {failed > 0 && <> / <span data-eos-id="src/pages/admin/dev-tools.tsx#43" className="text-error-600">{failed} fail</span></>}
+              <span data-eos-id="src/pages/admin/dev-tools.tsx#44" className="text-neutral-400 font-normal"> / {results.length}</span>
             </p>
-            {!running && <button type="button" onClick={clear} className="text-[11px] text-neutral-400 hover:text-neutral-600">Clear</button>}
+            {!running && <button data-eos-id="src/pages/admin/dev-tools.tsx#45" type="button" onClick={clear} className="text-[11px] text-neutral-400 hover:text-neutral-600">Clear</button>}
           </div>
 
           {/* Group: Infrastructure */}
           {infraResults.length > 0 && (
-            <ResultGroup label="Infrastructure" results={infraResults} />
+            <ResultGroup data-eos-id="src/pages/admin/dev-tools.tsx#46" label="Infrastructure" results={infraResults} />
           )}
 
           {/* Group: Delivery */}
           {deliveryResults.length > 0 && (
-            <ResultGroup label="Delivery" results={deliveryResults} />
+            <ResultGroup data-eos-id="src/pages/admin/dev-tools.tsx#47" label="Delivery" results={deliveryResults} />
           )}
 
           {/* Group: Filtering */}
           {filterResults.length > 0 && (
-            <ResultGroup label="Filtering & Preferences" results={filterResults} />
+            <ResultGroup data-eos-id="src/pages/admin/dev-tools.tsx#48" label="Filtering & Preferences" results={filterResults} />
           )}
         </div>
       )}
@@ -862,10 +862,10 @@ function PushTestSuite() {
 
 function ResultGroup({ label, results }: { label: string; results: PushTestResult[] }) {
   return (
-    <div className="space-y-1">
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-neutral-400">{label}</p>
+    <div data-eos-id="src/pages/admin/dev-tools.tsx#49" className="space-y-1">
+      <p data-eos-id="src/pages/admin/dev-tools.tsx#50" className="text-[11px] font-semibold uppercase tracking-widest text-neutral-400">{label}</p>
       {results.map((r) => (
-        <div
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#51"
           key={r.id}
           className={cn(
             'flex items-start gap-2 px-2.5 py-2 rounded-sm text-xs',
@@ -874,20 +874,20 @@ function ResultGroup({ label, results }: { label: string; results: PushTestResul
             'bg-neutral-50',
           )}
         >
-          <span className="shrink-0 mt-0.5">
-            {r.status === 'pass' && <CheckCircle2 size={13} className="text-success-600" />}
-            {r.status === 'fail' && <XCircle size={13} className="text-error-600" />}
-            {r.status === 'running' && <RefreshCw size={13} className="text-info-500 animate-spin" />}
+          <span data-eos-id="src/pages/admin/dev-tools.tsx#52" className="shrink-0 mt-0.5">
+            {r.status === 'pass' && <CheckCircle2 data-eos-id="src/pages/admin/dev-tools.tsx#53" size={13} className="text-success-600" />}
+            {r.status === 'fail' && <XCircle data-eos-id="src/pages/admin/dev-tools.tsx#54" size={13} className="text-error-600" />}
+            {r.status === 'running' && <RefreshCw data-eos-id="src/pages/admin/dev-tools.tsx#55" size={13} className="text-info-500 animate-spin" />}
           </span>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-neutral-700">{r.label}</span>
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#56" className="flex-1 min-w-0">
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#57" className="flex items-center justify-between">
+              <span data-eos-id="src/pages/admin/dev-tools.tsx#58" data-eos-var="r.label" data-eos-var-label="Label" data-eos-var-scope="item" className="font-medium text-neutral-700">{r.label}</span>
               {r.durationMs !== undefined && (
-                <span className="text-[9px] text-neutral-400 shrink-0 ml-2">{r.durationMs}ms</span>
+                <span data-eos-id="src/pages/admin/dev-tools.tsx#59" data-eos-var="r.durationMs" data-eos-var-label="Duration ms" data-eos-var-scope="item" className="text-[9px] text-neutral-400 shrink-0 ml-2">{r.durationMs}ms</span>
               )}
             </div>
             {r.detail && (
-              <p className={cn('text-[11px] mt-0.5', r.status === 'fail' ? 'text-error-600' : 'text-neutral-500')}>
+              <p data-eos-id="src/pages/admin/dev-tools.tsx#60" data-eos-var="r.detail" data-eos-var-label="Detail" data-eos-var-scope="item" className={cn('text-[11px] mt-0.5', r.status === 'fail' ? 'text-error-600' : 'text-neutral-500')}>
                 {r.detail}
               </p>
             )}
@@ -947,13 +947,13 @@ function EmailTestSection() {
   })
 
   return (
-    <div className="space-y-4">
+    <div data-eos-id="src/pages/admin/dev-tools.tsx#61" className="space-y-4">
       {/* Template picker */}
-      <div className="space-y-1.5">
-        <p className="text-xs font-medium text-neutral-500">Email Template</p>
-        <div className="flex flex-wrap gap-1.5">
+      <div data-eos-id="src/pages/admin/dev-tools.tsx#62" className="space-y-1.5">
+        <p data-eos-id="src/pages/admin/dev-tools.tsx#63" className="text-xs font-medium text-neutral-500">Email Template</p>
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#64" className="flex flex-wrap gap-1.5">
           {EMAIL_TYPES.map((t) => (
-            <button
+            <button data-eos-id="src/pages/admin/dev-tools.tsx#65" data-eos-var="t.label" data-eos-var-label="Label" data-eos-var-scope="item"
               key={t.value}
               type="button"
               onClick={() => setSelectedType(t.value)}
@@ -969,36 +969,36 @@ function EmailTestSection() {
       </div>
 
       {/* Recipient */}
-      <div className="space-y-1.5">
-        <p className="text-xs font-medium text-neutral-500">Recipient</p>
-        <input
+      <div data-eos-id="src/pages/admin/dev-tools.tsx#66" className="space-y-1.5">
+        <p data-eos-id="src/pages/admin/dev-tools.tsx#67" className="text-xs font-medium text-neutral-500">Recipient</p>
+        <input data-eos-id="src/pages/admin/dev-tools.tsx#68"
           type="email"
           value={recipientEmail}
           onChange={(e) => setRecipientEmail(e.target.value)}
           placeholder={user?.email ?? 'your@email.com'}
           className="w-full h-11 px-3 rounded-sm border border-neutral-100 bg-white text-sm text-neutral-900 placeholder:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-300"
         />
-        <p className="text-[11px] text-neutral-400">
+        <p data-eos-id="src/pages/admin/dev-tools.tsx#69" data-eos-var="user.email" data-eos-var-label="Email" data-eos-var-scope="prop" className="text-[11px] text-neutral-400">
           Leave blank to send to your account email ({user?.email}).
         </p>
       </div>
 
       {/* Sample data preview */}
-      <div className="space-y-1.5">
-        <p className="text-xs font-medium text-neutral-500">Sample Data</p>
-        <div className="rounded-sm bg-neutral-50 p-2.5 overflow-x-auto">
-          <pre className="text-[11px] text-neutral-600 font-mono whitespace-pre-wrap break-all">
+      <div data-eos-id="src/pages/admin/dev-tools.tsx#70" className="space-y-1.5">
+        <p data-eos-id="src/pages/admin/dev-tools.tsx#71" className="text-xs font-medium text-neutral-500">Sample Data</p>
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#72" className="rounded-sm bg-neutral-50 p-2.5 overflow-x-auto">
+          <pre data-eos-id="src/pages/admin/dev-tools.tsx#73" data-eos-var="selectedTemplate.sampleData" data-eos-var-label="Sample data" data-eos-var-scope="prop" className="text-[11px] text-neutral-600 font-mono whitespace-pre-wrap break-all">
             {JSON.stringify(selectedTemplate.sampleData, null, 2)}
           </pre>
         </div>
       </div>
 
       {/* Send */}
-      <Button
+      <Button data-eos-id="src/pages/admin/dev-tools.tsx#74" data-eos-var="sendTest.isPending" data-eos-var-label="Is pending" data-eos-var-scope="prop"
         variant="primary"
         size="md"
         fullWidth
-        icon={<Send size={16} />}
+        icon={<Send data-eos-id="src/pages/admin/dev-tools.tsx#75" size={16} />}
         loading={sendTest.isPending}
         onClick={() => sendTest.mutate()}
       >
@@ -1006,18 +1006,18 @@ function EmailTestSection() {
       </Button>
 
       {sendTest.isSuccess && (
-        <div className="flex items-center gap-2 p-2.5 rounded-sm bg-success-50 border border-success-200">
-          <CheckCircle2 size={14} className="text-success-600 shrink-0" />
-          <p className="text-[11px] text-success-700">
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#76" className="flex items-center gap-2 p-2.5 rounded-sm bg-success-50 border border-success-200">
+          <CheckCircle2 data-eos-id="src/pages/admin/dev-tools.tsx#77" size={14} className="text-success-600 shrink-0" />
+          <p data-eos-id="src/pages/admin/dev-tools.tsx#78" className="text-[11px] text-success-700">
             Sent via Resend. Check your inbox (and spam folder).
           </p>
         </div>
       )}
 
       {sendTest.isError && (
-        <div className="flex items-center gap-2 p-2.5 rounded-sm bg-error-50 border border-error-200">
-          <XCircle size={14} className="text-error-600 shrink-0" />
-          <p className="text-[11px] text-error-700">
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#79" className="flex items-center gap-2 p-2.5 rounded-sm bg-error-50 border border-error-200">
+          <XCircle data-eos-id="src/pages/admin/dev-tools.tsx#80" size={14} className="text-error-600 shrink-0" />
+          <p data-eos-id="src/pages/admin/dev-tools.tsx#81" data-eos-var="sendTest.error" data-eos-var-label="Error" data-eos-var-scope="prop" className="text-[11px] text-error-700">
             {(sendTest.error as Error).message}
           </p>
         </div>
@@ -1050,54 +1050,54 @@ export default function DevToolsPage() {
 
   if (!isDevUser) {
     return (
-      <div className="p-6 text-center">
-        <AlertCircle className="mx-auto mb-3 text-error-400" size={32} />
-        <p className="text-sm text-neutral-500">Dev tools are only available in development mode for authorised developers.</p>
+      <div data-eos-id="src/pages/admin/dev-tools.tsx#82" className="p-6 text-center">
+        <AlertCircle data-eos-id="src/pages/admin/dev-tools.tsx#83" className="mx-auto mb-3 text-error-400" size={32} />
+        <p data-eos-id="src/pages/admin/dev-tools.tsx#84" className="text-sm text-neutral-500">Dev tools are only available in development mode for authorised developers.</p>
       </div>
     )
   }
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/pages/admin/dev-tools.tsx#85"
       className="p-4 space-y-6 pb-24"
       variants={stagger}
       initial="hidden"
       animate="visible"
     >
       {/* ---- User Context ---- */}
-      <motion.div variants={fadeUp}>
-        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-info-100 text-info-600">
-              <Bug size={18} />
+      <motion.div data-eos-id="src/pages/admin/dev-tools.tsx#86" variants={fadeUp}>
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#87" className="rounded-md bg-white p-4 shadow-sm border border-neutral-100">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#88" className="flex items-center gap-3 mb-3">
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#89" className="flex items-center justify-center w-9 h-9 rounded-full bg-info-100 text-info-600">
+              <Bug data-eos-id="src/pages/admin/dev-tools.tsx#90" size={18} />
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-neutral-900">Dev Testing Panel</h3>
-              <p className="text-caption text-neutral-400">
-                Signed in as <span className="font-medium text-neutral-600">{profile?.display_name ?? user?.email}</span>
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#91">
+              <h3 data-eos-id="src/pages/admin/dev-tools.tsx#92" className="text-sm font-semibold text-neutral-900">Dev Testing Panel</h3>
+              <p data-eos-id="src/pages/admin/dev-tools.tsx#93" data-eos-var="profile.role" data-eos-var-label="Role" data-eos-var-scope="prop" className="text-caption text-neutral-400">
+                Signed in as <span data-eos-id="src/pages/admin/dev-tools.tsx#94" data-eos-var="profile.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="font-medium text-neutral-600">{profile?.display_name ?? user?.email}</span>
                 {' '}({profile?.role ?? 'unknown'})
               </p>
             </div>
           </div>
-          <p className="text-xs text-neutral-400">
+          <p data-eos-id="src/pages/admin/dev-tools.tsx#95" className="text-xs text-neutral-400">
             Create test events happening right now, then jump into any day-of flow to test check-in codes, impact logging, and surveys.
           </p>
         </div>
       </motion.div>
 
       {/* ---- Seed Event Creator ---- */}
-      <motion.div variants={fadeUp}>
-        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
-          <h3 className="text-sm font-semibold text-neutral-900 flex items-center gap-2">
-            <Calendar size={16} className="text-neutral-400" />
+      <motion.div data-eos-id="src/pages/admin/dev-tools.tsx#96" variants={fadeUp}>
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#97" className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
+          <h3 data-eos-id="src/pages/admin/dev-tools.tsx#98" className="text-sm font-semibold text-neutral-900 flex items-center gap-2">
+            <Calendar data-eos-id="src/pages/admin/dev-tools.tsx#99" size={16} className="text-neutral-400" />
             Create Test Event (Happening Now)
           </h3>
 
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-neutral-500">Activity Type</label>
-            <div className="flex flex-wrap gap-2">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#100" className="space-y-2">
+            <label data-eos-id="src/pages/admin/dev-tools.tsx#101" className="text-xs font-medium text-neutral-500">Activity Type</label>
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#102" className="flex flex-wrap gap-2">
               {ACTIVITY_TYPE_OPTIONS.map((opt) => (
-                <button
+                <button data-eos-id="src/pages/admin/dev-tools.tsx#103" data-eos-var="opt.label" data-eos-var-label="Label" data-eos-var-scope="item"
                   key={opt.value}
                   type="button"
                   onClick={() => setSelectedActivity(opt.value)}
@@ -1115,35 +1115,35 @@ export default function DevToolsPage() {
             </div>
           </div>
 
-          <Button
+          <Button data-eos-id="src/pages/admin/dev-tools.tsx#104" data-eos-var="ACTIVITY_TYPE_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop"
             variant="primary"
             size="md"
             fullWidth
-            icon={<Play size={16} />}
+            icon={<Play data-eos-id="src/pages/admin/dev-tools.tsx#105" size={16} />}
             loading={seedEvent.isPending}
             onClick={() => seedEvent.mutate(selectedActivity)}
           >
             Seed "{ACTIVITY_TYPE_LABELS[selectedActivity]}" Event
           </Button>
 
-          <p className="text-[11px] text-neutral-400">
+          <p data-eos-id="src/pages/admin/dev-tools.tsx#106" className="text-[11px] text-neutral-400">
             Creates a published event (started 30m ago, ends in 2.5h) with you as leader + 8 fake attendees.
           </p>
         </div>
       </motion.div>
 
       {/* ---- Active Test Events ---- */}
-      <motion.div variants={fadeUp}>
-        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-neutral-900 flex items-center gap-2">
-              <Users size={16} className="text-neutral-400" />
+      <motion.div data-eos-id="src/pages/admin/dev-tools.tsx#107" variants={fadeUp}>
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#108" className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#109" className="flex items-center justify-between">
+            <h3 data-eos-id="src/pages/admin/dev-tools.tsx#110" className="text-sm font-semibold text-neutral-900 flex items-center gap-2">
+              <Users data-eos-id="src/pages/admin/dev-tools.tsx#111" size={16} className="text-neutral-400" />
               Your Test Events (Today)
             </h3>
-            <Button
+            <Button data-eos-id="src/pages/admin/dev-tools.tsx#112"
               variant="ghost"
               size="sm"
-              icon={<Trash2 size={14} />}
+              icon={<Trash2 data-eos-id="src/pages/admin/dev-tools.tsx#113" size={14} />}
               loading={cleanup.isPending}
               onClick={() => cleanup.mutate()}
             >
@@ -1152,19 +1152,19 @@ export default function DevToolsPage() {
           </div>
 
           {showLoading ? (
-            <div className="space-y-3">
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#114" className="space-y-3">
               {[1, 2].map((i) => (
-                <Skeleton key={i} className="h-28 rounded-sm" />
+                <Skeleton data-eos-id="src/pages/admin/dev-tools.tsx#115" key={i} className="h-28 rounded-sm" />
               ))}
             </div>
           ) : !testEvents?.length ? (
-            <div className="text-center py-6">
-              <p className="text-sm text-neutral-400">No test events today. Create one above.</p>
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#116" className="text-center py-6">
+              <p data-eos-id="src/pages/admin/dev-tools.tsx#117" className="text-sm text-neutral-400">No test events today. Create one above.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#118" className="space-y-3">
               {testEvents.map((evt) => (
-                <TestEventCard key={evt.id} event={evt} navigate={navigate} />
+                <TestEventCard data-eos-id="src/pages/admin/dev-tools.tsx#119" key={evt.id} event={evt} navigate={navigate} />
               ))}
             </div>
           )}
@@ -1172,66 +1172,66 @@ export default function DevToolsPage() {
       </motion.div>
 
       {/* ---- Push Notification Test Suite ---- */}
-      <motion.div variants={fadeUp}>
-        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent-100 text-accent-600">
-              <Bell size={18} />
+      <motion.div data-eos-id="src/pages/admin/dev-tools.tsx#120" variants={fadeUp}>
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#121" className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#122" className="flex items-center gap-3">
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#123" className="flex items-center justify-center w-9 h-9 rounded-full bg-accent-100 text-accent-600">
+              <Bell data-eos-id="src/pages/admin/dev-tools.tsx#124" size={18} />
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-neutral-900">Push Notification Tests</h3>
-              <p className="text-[11px] text-neutral-400">
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#125">
+              <h3 data-eos-id="src/pages/admin/dev-tools.tsx#126" className="text-sm font-semibold text-neutral-900">Push Notification Tests</h3>
+              <p data-eos-id="src/pages/admin/dev-tools.tsx#127" className="text-[11px] text-neutral-400">
                 Registration, delivery, preferences, quiet hours, batching, latency.
               </p>
             </div>
           </div>
-          <PushTestSuite />
+          <PushTestSuite data-eos-id="src/pages/admin/dev-tools.tsx#128" />
         </div>
       </motion.div>
 
       {/* ---- Email (Resend) Test ---- */}
-      <motion.div variants={fadeUp}>
-        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-success-100 text-success-600">
-              <Mail size={18} />
+      <motion.div data-eos-id="src/pages/admin/dev-tools.tsx#129" variants={fadeUp}>
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#130" className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-4">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#131" className="flex items-center gap-3">
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#132" className="flex items-center justify-center w-9 h-9 rounded-full bg-success-100 text-success-600">
+              <Mail data-eos-id="src/pages/admin/dev-tools.tsx#133" size={18} />
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-neutral-900">Email Test (Resend)</h3>
-              <p className="text-[11px] text-neutral-400">
+            <div data-eos-id="src/pages/admin/dev-tools.tsx#134">
+              <h3 data-eos-id="src/pages/admin/dev-tools.tsx#135" className="text-sm font-semibold text-neutral-900">Email Test (Resend)</h3>
+              <p data-eos-id="src/pages/admin/dev-tools.tsx#136" className="text-[11px] text-neutral-400">
                 Send a test email to verify Resend is configured and delivering.
               </p>
             </div>
           </div>
-          <EmailTestSection />
+          <EmailTestSection data-eos-id="src/pages/admin/dev-tools.tsx#137" />
         </div>
       </motion.div>
 
       {/* ---- Quick-Nav to Flows ---- */}
-      <motion.div variants={fadeUp}>
-        <div className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-3">
-          <h3 className="text-sm font-semibold text-neutral-900">Quick Navigation</h3>
-          <p className="text-xs text-neutral-400 mb-2">
+      <motion.div data-eos-id="src/pages/admin/dev-tools.tsx#138" variants={fadeUp}>
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#139" className="rounded-md bg-white p-4 shadow-sm border border-neutral-100 space-y-3">
+          <h3 data-eos-id="src/pages/admin/dev-tools.tsx#140" className="text-sm font-semibold text-neutral-900">Quick Navigation</h3>
+          <p data-eos-id="src/pages/admin/dev-tools.tsx#141" className="text-xs text-neutral-400 mb-2">
             Jump directly to any day-of page. Use a test event ID from above.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Button variant="secondary" size="sm" icon={<Hash size={14} />}
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#142" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Button data-eos-id="src/pages/admin/dev-tools.tsx#143" variant="secondary" size="sm" icon={<Hash data-eos-id="src/pages/admin/dev-tools.tsx#144" size={14} />}
               onClick={() => { const first = testEvents?.[0]; if (first) navigate(`/events/${first.id}/check-in`); else alert('Create a test event first') }}>
               Check-In (Code)
             </Button>
-            <Button variant="secondary" size="sm" icon={<ClipboardCheck size={14} />}
+            <Button data-eos-id="src/pages/admin/dev-tools.tsx#145" variant="secondary" size="sm" icon={<ClipboardCheck data-eos-id="src/pages/admin/dev-tools.tsx#146" size={14} />}
               onClick={() => { const first = testEvents?.[0]; if (first) navigate(`/events/${first.id}/day`); else alert('Create a test event first') }}>
               Event Day
             </Button>
-            <Button variant="secondary" size="sm" icon={<TreePine size={14} />}
+            <Button data-eos-id="src/pages/admin/dev-tools.tsx#147" variant="secondary" size="sm" icon={<TreePine data-eos-id="src/pages/admin/dev-tools.tsx#148" size={14} />}
               onClick={() => { const first = testEvents?.[0]; if (first) navigate(`/events/${first.id}/impact`); else alert('Create a test event first') }}>
               Log Impact
             </Button>
-            <Button variant="secondary" size="sm" icon={<MapPin size={14} />}
+            <Button data-eos-id="src/pages/admin/dev-tools.tsx#149" variant="secondary" size="sm" icon={<MapPin data-eos-id="src/pages/admin/dev-tools.tsx#150" size={14} />}
               onClick={() => { const first = testEvents?.[0]; if (first) navigate(`/events/${first.id}`); else alert('Create a test event first') }}>
               Event Detail
             </Button>
-            <Button variant="secondary" size="sm" icon={<ClipboardCheck size={14} />}
+            <Button data-eos-id="src/pages/admin/dev-tools.tsx#151" variant="secondary" size="sm" icon={<ClipboardCheck data-eos-id="src/pages/admin/dev-tools.tsx#152" size={14} />}
               onClick={() => { const first = testEvents?.[0]; if (first) navigate(`/events/${first.id}/survey`); else alert('Create a test event first') }}>
               Post-Event Survey
             </Button>
@@ -1260,59 +1260,59 @@ function TestEventCard({
   const isPast = end ? end < now : start < now
 
   return (
-    <div className={cn(
+    <div data-eos-id="src/pages/admin/dev-tools.tsx#153" className={cn(
       'rounded-sm border p-3 space-y-3',
       isActive ? 'border-success-200 bg-success-50/30' : isPast ? 'border-neutral-100 bg-neutral-50' : 'border-neutral-100',
     )}>
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={cn(
+      <div data-eos-id="src/pages/admin/dev-tools.tsx#154" className="flex items-start justify-between">
+        <div data-eos-id="src/pages/admin/dev-tools.tsx#155" className="flex-1 min-w-0">
+          <div data-eos-id="src/pages/admin/dev-tools.tsx#156" className="flex items-center gap-2">
+            <span data-eos-id="src/pages/admin/dev-tools.tsx#157" className={cn(
               'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider',
               isActive ? 'bg-success-100 text-success-700' : isPast ? 'bg-neutral-100 text-neutral-500' : 'bg-info-100 text-info-600',
             )}>
               {isActive ? 'LIVE' : isPast ? 'ENDED' : 'UPCOMING'}
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-neutral-100 text-neutral-600">
+            <span data-eos-id="src/pages/admin/dev-tools.tsx#158" data-eos-var="ACTIVITY_TYPE_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-neutral-100 text-neutral-600">
               {ACTIVITY_TYPE_LABELS[event.activity_type] ?? event.activity_type}
             </span>
           </div>
-          <p className="text-sm font-medium text-neutral-900 mt-1 truncate">{event.title}</p>
-          <p className="text-caption text-neutral-400">
+          <p data-eos-id="src/pages/admin/dev-tools.tsx#159" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="text-sm font-medium text-neutral-900 mt-1 truncate">{event.title}</p>
+          <p data-eos-id="src/pages/admin/dev-tools.tsx#160" data-eos-var="event.collective_name,event.registration_count" data-eos-var-label="Collective name, Registration count" data-eos-var-scope="prop" className="text-caption text-neutral-400">
             {event.collective_name} - {event.registration_count} registered
           </p>
-          <p className="text-[11px] text-neutral-400 mt-0.5">
-            Your role: <span className="font-medium text-neutral-600">{event.user_role ?? 'none'}</span>
-            {' '} | Status: <span className="font-medium text-neutral-600">{event.user_status ?? 'not registered'}</span>
+          <p data-eos-id="src/pages/admin/dev-tools.tsx#161" className="text-[11px] text-neutral-400 mt-0.5">
+            Your role: <span data-eos-id="src/pages/admin/dev-tools.tsx#162" data-eos-var="event.user_role" data-eos-var-label="User role" data-eos-var-scope="prop" className="font-medium text-neutral-600">{event.user_role ?? 'none'}</span>
+            {' '} | Status: <span data-eos-id="src/pages/admin/dev-tools.tsx#163" data-eos-var="event.user_status" data-eos-var-label="User status" data-eos-var-scope="prop" className="font-medium text-neutral-600">{event.user_status ?? 'not registered'}</span>
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
-        <button type="button" onClick={() => navigate(`/events/${event.id}/day`)}
+      <div data-eos-id="src/pages/admin/dev-tools.tsx#164" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+        <button data-eos-id="src/pages/admin/dev-tools.tsx#165" type="button" onClick={() => navigate(`/events/${event.id}/day`)}
           className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-sm bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
-          <ClipboardCheck size={16} className="text-neutral-500" />
-          <span className="text-[11px] font-medium text-neutral-600">Day</span>
+          <ClipboardCheck data-eos-id="src/pages/admin/dev-tools.tsx#166" size={16} className="text-neutral-500" />
+          <span data-eos-id="src/pages/admin/dev-tools.tsx#167" className="text-[11px] font-medium text-neutral-600">Day</span>
         </button>
-        <button type="button" onClick={() => navigate(`/events/${event.id}/check-in`)}
+        <button data-eos-id="src/pages/admin/dev-tools.tsx#168" type="button" onClick={() => navigate(`/events/${event.id}/check-in`)}
           className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-sm bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
-          <Hash size={16} className="text-success-500" />
-          <span className="text-[11px] font-medium text-neutral-600">Check-In</span>
+          <Hash data-eos-id="src/pages/admin/dev-tools.tsx#169" size={16} className="text-success-500" />
+          <span data-eos-id="src/pages/admin/dev-tools.tsx#170" className="text-[11px] font-medium text-neutral-600">Check-In</span>
         </button>
-        <button type="button" onClick={() => navigate(`/events/${event.id}/impact`)}
+        <button data-eos-id="src/pages/admin/dev-tools.tsx#171" type="button" onClick={() => navigate(`/events/${event.id}/impact`)}
           className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-sm bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
-          <TreePine size={16} className="text-success-600" />
-          <span className="text-[11px] font-medium text-neutral-600">Impact</span>
+          <TreePine data-eos-id="src/pages/admin/dev-tools.tsx#172" size={16} className="text-success-600" />
+          <span data-eos-id="src/pages/admin/dev-tools.tsx#173" className="text-[11px] font-medium text-neutral-600">Impact</span>
         </button>
-        <button type="button" onClick={() => navigate(`/events/${event.id}/survey`)}
+        <button data-eos-id="src/pages/admin/dev-tools.tsx#174" type="button" onClick={() => navigate(`/events/${event.id}/survey`)}
           className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-sm bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
-          <Star size={16} className="text-warning-500" />
-          <span className="text-[11px] font-medium text-neutral-600">Survey</span>
+          <Star data-eos-id="src/pages/admin/dev-tools.tsx#175" size={16} className="text-warning-500" />
+          <span data-eos-id="src/pages/admin/dev-tools.tsx#176" className="text-[11px] font-medium text-neutral-600">Survey</span>
         </button>
-        <button type="button" onClick={() => navigate(`/events/${event.id}`)}
+        <button data-eos-id="src/pages/admin/dev-tools.tsx#177" type="button" onClick={() => navigate(`/events/${event.id}`)}
           className="flex flex-col items-center justify-center gap-1 p-3 min-h-14 rounded-sm bg-white hover:bg-neutral-50 transition-colors cursor-pointer">
-          <MapPin size={16} className="text-info-500" />
-          <span className="text-[11px] font-medium text-neutral-600">Detail</span>
+          <MapPin data-eos-id="src/pages/admin/dev-tools.tsx#178" size={16} className="text-info-500" />
+          <span data-eos-id="src/pages/admin/dev-tools.tsx#179" className="text-[11px] font-medium text-neutral-600">Detail</span>
         </button>
       </div>
     </div>
