@@ -36,7 +36,7 @@ export function ListItem({
   const content = (
     <>
       {(icon || avatar) && (
-        <span data-eos-id="src/components/list-item.tsx#0"
+        <span data-eos-id="src/components/list-item.tsx#0" data-eos-v="2"
           className="flex items-center justify-center shrink-0 mr-3 text-neutral-400"
           aria-hidden="true"
         >
