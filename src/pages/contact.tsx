@@ -41,25 +41,25 @@ const fadeUp: Variants = {
 
 const CONTACT_INFO = [
   {
-    icon: <Mail size={18} />,
+    icon: <Mail data-eos-id="src/pages/contact.tsx#0" size={18} />,
     label: 'Email',
     value: 'hello@coexistaus.org',
     href: 'mailto:hello@coexistaus.org',
   },
   {
-    icon: <Globe size={18} />,
+    icon: <Globe data-eos-id="src/pages/contact.tsx#1" size={18} />,
     label: 'Website',
     value: 'coexistaus.org',
     href: 'https://coexistaus.org',
   },
   {
-    icon: <Instagram size={18} />,
+    icon: <Instagram data-eos-id="src/pages/contact.tsx#2" size={18} />,
     label: 'Instagram',
     value: '@coexistaus',
     href: 'https://instagram.com/coexistaus',
   },
   {
-    icon: <Facebook size={18} />,
+    icon: <Facebook data-eos-id="src/pages/contact.tsx#3" size={18} />,
     label: 'Facebook',
     value: '@coexistaus',
     href: 'https://facebook.com/coexistaus',
@@ -136,21 +136,21 @@ export default function ContactPage() {
   }
 
   return (
-    <Page
+    <Page data-eos-id="src/pages/contact.tsx#4"
       swipeBack
       noBackground
       className="!px-0 bg-white"
-      stickyOverlay={<Header title="" back transparent className="collapse-header" />}
+      stickyOverlay={<Header data-eos-id="src/pages/contact.tsx#5" title="" back transparent className="collapse-header" />}
     >
       {/* Hero - layered image parallax */}
-      <div className="relative -mt-px">
-        <div className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
+      <div data-eos-id="src/pages/contact.tsx#6" className="relative -mt-px">
+        <div data-eos-id="src/pages/contact.tsx#7" className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
           {/* Background layer */}
-          <div
+          <div data-eos-id="src/pages/contact.tsx#8"
             ref={rm ? undefined : bgRef}
             className="h-full"
           >
-            <img
+            <img data-eos-id="src/pages/contact.tsx#9"
               src="/img/contact-hero-bg.webp"
               alt="Contact Co-Exist"
               width={1920}
@@ -163,11 +163,11 @@ export default function ContactPage() {
           </div>
 
           {/* Foreground cutout */}
-          <div
+          <div data-eos-id="src/pages/contact.tsx#10"
             ref={rm ? undefined : fgRef}
             className="absolute inset-0 z-[3]"
           >
-            <img
+            <img data-eos-id="src/pages/contact.tsx#11"
               src="/img/contact-hero-fg.webp"
               alt=""
               width={1920}
@@ -180,43 +180,43 @@ export default function ContactPage() {
           </div>
 
           {/* Scrim for text legibility */}
-          <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/40 via-black/20 to-transparent" />
+          <div data-eos-id="src/pages/contact.tsx#12" className="absolute inset-0 z-[1] bg-gradient-to-b from-black/40 via-black/20 to-transparent" />
 
           {/* Hero text */}
-          <div
+          <div data-eos-id="src/pages/contact.tsx#13"
             ref={rm ? undefined : textRef}
             className="absolute inset-x-0 top-[13%] sm:top-[10%] z-[2] flex flex-col items-center px-6 will-change-transform"
           >
-            <span role="heading" aria-level={1} className="font-heading text-[2.5rem] sm:text-[3.5rem] lg:text-[5rem] font-bold uppercase text-white drop-shadow-[0_4px_20px_rgba(0,0,0,0.6)] leading-[0.85] block text-center" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5), 0 0 40px rgba(0,0,0,0.3)' }}>
+            <span data-eos-id="src/pages/contact.tsx#14" role="heading" aria-level={1} className="font-heading text-[2.5rem] sm:text-[3.5rem] lg:text-[5rem] font-bold uppercase text-white drop-shadow-[0_4px_20px_rgba(0,0,0,0.6)] leading-[0.85] block text-center" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5), 0 0 40px rgba(0,0,0,0.3)' }}>
               Contact
             </span>
           </div>
         </div>
 
         {/* Wave transition */}
-        <WaveTransition size="lg" />
+        <WaveTransition data-eos-id="src/pages/contact.tsx#15" size="lg" />
       </div>
 
-      <motion.div
+      <motion.div data-eos-id="src/pages/contact.tsx#16"
         className="px-3 space-y-6 pb-10 pt-6"
         initial="hidden"
         animate="visible"
         variants={shouldReduceMotion ? undefined : stagger}
       >
-        <p className="text-sm text-neutral-500 text-center">
+        <p data-eos-id="src/pages/contact.tsx#17" className="text-sm text-neutral-500 text-center">
           We'd love to hear from you - questions, ideas, or just to say hi.
         </p>
         {/* Contact form */}
-        <motion.form
+        <motion.form data-eos-id="src/pages/contact.tsx#18"
           variants={shouldReduceMotion ? undefined : fadeUp}
           onSubmit={handleSubmit}
           className="rounded-md bg-surface-0 shadow-sm p-5 space-y-4"
         >
-          <h2 className="font-heading text-[15px] font-semibold text-neutral-900">
+          <h2 data-eos-id="src/pages/contact.tsx#19" className="font-heading text-[15px] font-semibold text-neutral-900">
             Send us a message
           </h2>
 
-          <Input
+          <Input data-eos-id="src/pages/contact.tsx#20"
             label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -225,7 +225,7 @@ export default function ContactPage() {
             required
           />
 
-          <Input
+          <Input data-eos-id="src/pages/contact.tsx#21"
             label="Email"
             type="email"
             value={email}
@@ -235,7 +235,7 @@ export default function ContactPage() {
             required
           />
 
-          <Dropdown
+          <Dropdown data-eos-id="src/pages/contact.tsx#22"
             label="Subject"
             options={SUBJECT_OPTIONS}
             value={subject}
@@ -244,7 +244,7 @@ export default function ContactPage() {
             required
           />
 
-          <Input
+          <Input data-eos-id="src/pages/contact.tsx#23"
             type="textarea"
             label="Message"
             value={message}
@@ -254,27 +254,27 @@ export default function ContactPage() {
             rows={5}
           />
 
-          <Button
+          <Button data-eos-id="src/pages/contact.tsx#24"
             type="submit"
             variant="primary"
             size="lg"
             fullWidth
             loading={sending}
             disabled={!canSubmit}
-            icon={<Send size={16} />}
+            icon={<Send data-eos-id="src/pages/contact.tsx#25" size={16} />}
           >
             Send Message
           </Button>
         </motion.form>
 
         {/* Contact details */}
-        <motion.section variants={shouldReduceMotion ? undefined : fadeUp}>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400/70 mb-1.5 px-1">
+        <motion.section data-eos-id="src/pages/contact.tsx#26" variants={shouldReduceMotion ? undefined : fadeUp}>
+          <h3 data-eos-id="src/pages/contact.tsx#27" className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400/70 mb-1.5 px-1">
             Get in touch
           </h3>
-          <div className="rounded-md bg-surface-0 shadow-sm overflow-hidden">
+          <div data-eos-id="src/pages/contact.tsx#28" className="rounded-md bg-surface-0 shadow-sm overflow-hidden">
             {CONTACT_INFO.map(({ icon, label, value, href }, idx) => (
-              <a
+              <a data-eos-href="dynamic" data-eos-href-label="Href" data-eos-href-scope="prop" data-eos-id="src/pages/contact.tsx#29"
                 key={label}
                 href={href}
                 target="_blank"
@@ -286,12 +286,12 @@ export default function ContactPage() {
                   idx > 0 && 'border-t border-neutral-100',
                 )}
               >
-                <span className="flex items-center justify-center w-8 h-8 rounded-sm shrink-0 bg-primary-50 text-primary-600">
+                <span data-eos-id="src/pages/contact.tsx#30" className="flex items-center justify-center w-8 h-8 rounded-sm shrink-0 bg-primary-50 text-primary-600">
                   {icon}
                 </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-medium text-neutral-500 leading-tight">{label}</p>
-                  <p className="text-[15px] font-medium text-neutral-900 truncate">{value}</p>
+                <div data-eos-id="src/pages/contact.tsx#31" className="flex-1 min-w-0">
+                  <p data-eos-id="src/pages/contact.tsx#32" className="text-[11px] font-medium text-neutral-500 leading-tight">{label}</p>
+                  <p data-eos-id="src/pages/contact.tsx#33" className="text-[15px] font-medium text-neutral-900 truncate">{value}</p>
                 </div>
               </a>
             ))}
@@ -299,16 +299,16 @@ export default function ContactPage() {
         </motion.section>
 
         {/* Location note */}
-        <motion.div
+        <motion.div data-eos-id="src/pages/contact.tsx#34"
           variants={shouldReduceMotion ? undefined : fadeUp}
           className="flex items-start gap-3 px-4 py-3.5 rounded-md bg-neutral-50"
         >
-          <MapPin size={18} className="text-primary-500 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-[13px] font-medium text-neutral-700">
+          <MapPin data-eos-id="src/pages/contact.tsx#35" size={18} className="text-primary-500 mt-0.5 shrink-0" />
+          <div data-eos-id="src/pages/contact.tsx#36">
+            <p data-eos-id="src/pages/contact.tsx#37" className="text-[13px] font-medium text-neutral-700">
               Based in Australia
             </p>
-            <p className="text-[12px] text-neutral-400 mt-0.5">
+            <p data-eos-id="src/pages/contact.tsx#38" className="text-[12px] text-neutral-400 mt-0.5">
               Co-Exist Australia is a registered charity operating nationwide with collectives across the country.
             </p>
           </div>
