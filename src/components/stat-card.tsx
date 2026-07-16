@@ -81,7 +81,7 @@ export function StatCard({
   const TrendIcon = tc?.icon
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/stat-card.tsx#0"
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={
@@ -96,21 +96,21 @@ export function StatCard({
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <p className={cn(
+      <div data-eos-id="src/components/stat-card.tsx#1" className="flex items-start justify-between gap-2">
+        <div data-eos-id="src/components/stat-card.tsx#2" className="flex-1 min-w-0">
+          <p data-eos-id="src/components/stat-card.tsx#3" data-eos-var="displayValue.toLocaleString" data-eos-var-label="To locale string" data-eos-var-scope="prop" className={cn(
             'font-heading font-bold text-neutral-900 tabular-nums leading-tight truncate',
             compact ? 'text-xl' : 'text-3xl',
           )}>
             {isNumeric ? displayValue.toLocaleString() : value}
           </p>
-          <p className={cn(
+          <p data-eos-id="src/components/stat-card.tsx#4" className={cn(
             'mt-1 font-medium text-neutral-500 uppercase tracking-wider leading-tight line-clamp-2',
             compact ? 'text-[10px]' : 'text-xs mt-1.5',
           )}>{label}</p>
         </div>
         {icon && (
-          <span
+          <span data-eos-id="src/components/stat-card.tsx#5"
             className={cn(
               'flex items-center justify-center shrink-0 rounded-sm',
               compact ? 'w-7 h-7' : 'w-10 h-10 ml-3',
@@ -123,15 +123,15 @@ export function StatCard({
         )}
       </div>
       {trend && tc && TrendIcon && (
-        <div
+        <div data-eos-id="src/components/stat-card.tsx#6"
           className={cn(
             'mt-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold',
             tc.color,
           )}
           aria-label={`Trend: ${trend.direction} ${trend.value}%`}
         >
-          <TrendIcon className="w-3.5 h-3.5" aria-hidden="true" />
-          <span className="tabular-nums">{trend.direction === 'flat' ? '-' : `${trend.value}%`}</span>
+          <TrendIcon data-eos-id="src/components/stat-card.tsx#7" className="w-3.5 h-3.5" aria-hidden="true" />
+          <span data-eos-id="src/components/stat-card.tsx#8" data-eos-var="trend.direction" data-eos-var-label="Direction" data-eos-var-scope="prop" className="tabular-nums">{trend.direction === 'flat' ? '-' : `${trend.value}%`}</span>
         </div>
       )}
     </motion.div>
