@@ -61,22 +61,22 @@ export function CreatePollSheet({ open, onClose, onSubmit, loading }: CreatePoll
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
-      <div className="pb-4">
+    <BottomSheet data-eos-id="src/components/create-poll-sheet.tsx#0" open={open} onClose={onClose}>
+      <div data-eos-id="src/components/create-poll-sheet.tsx#1" className="pb-4">
         {/* Header */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-primary-100 text-primary-600">
-            <BarChart3 size={20} />
+        <div data-eos-id="src/components/create-poll-sheet.tsx#2" className="flex items-center gap-2.5 mb-4">
+          <div data-eos-id="src/components/create-poll-sheet.tsx#3" className="flex h-10 w-10 items-center justify-center rounded-sm bg-primary-100 text-primary-600">
+            <BarChart3 data-eos-id="src/components/create-poll-sheet.tsx#4" size={20} />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-neutral-900">Create Poll</h3>
-            <p className="text-xs text-neutral-500">Ask your collective a question</p>
+          <div data-eos-id="src/components/create-poll-sheet.tsx#5">
+            <h3 data-eos-id="src/components/create-poll-sheet.tsx#6" className="text-base font-bold text-neutral-900">Create Poll</h3>
+            <p data-eos-id="src/components/create-poll-sheet.tsx#7" className="text-xs text-neutral-500">Ask your collective a question</p>
           </div>
         </div>
 
         {/* Question */}
-        <div className="mb-4">
-          <Input
+        <div data-eos-id="src/components/create-poll-sheet.tsx#8" className="mb-4">
+          <Input data-eos-id="src/components/create-poll-sheet.tsx#9"
             label="Question"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -86,14 +86,14 @@ export function CreatePollSheet({ open, onClose, onSubmit, loading }: CreatePoll
         </div>
 
         {/* Options */}
-        <div className="mb-4">
-          <p className="text-xs font-semibold text-neutral-900 mb-1.5">
+        <div data-eos-id="src/components/create-poll-sheet.tsx#10" className="mb-4">
+          <p data-eos-id="src/components/create-poll-sheet.tsx#11" className="text-xs font-semibold text-neutral-900 mb-1.5">
             Options (min 2, max 8)
           </p>
-          <div className="space-y-2">
+          <div data-eos-id="src/components/create-poll-sheet.tsx#12" className="space-y-2">
             {options.map((opt, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <Input
+              <div data-eos-id="src/components/create-poll-sheet.tsx#13" key={i} className="flex items-center gap-2">
+                <Input data-eos-id="src/components/create-poll-sheet.tsx#14"
                   value={opt}
                   onChange={(e) => {
                     const newOpts = [...options]
@@ -105,13 +105,13 @@ export function CreatePollSheet({ open, onClose, onSubmit, loading }: CreatePoll
                   className="flex-1"
                 />
                 {options.length > 2 && (
-                  <button
+                  <button data-eos-id="src/components/create-poll-sheet.tsx#15"
                     type="button"
                     onClick={() => removeOption(i)}
                     className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-error-400 hover:bg-error-50 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                     aria-label={`Remove option ${i + 1}`}
                   >
-                    <Trash2 size={16} />
+                    <Trash2 data-eos-id="src/components/create-poll-sheet.tsx#16" size={16} />
                   </button>
                 )}
               </div>
@@ -119,25 +119,25 @@ export function CreatePollSheet({ open, onClose, onSubmit, loading }: CreatePoll
           </div>
 
           {options.length < 8 && (
-            <button
+            <button data-eos-id="src/components/create-poll-sheet.tsx#17"
               type="button"
               onClick={addOption}
               className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-primary-500 hover:text-primary-700 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 px-1"
             >
-              <Plus size={14} />
+              <Plus data-eos-id="src/components/create-poll-sheet.tsx#18" size={14} />
               Add option
             </button>
           )}
         </div>
 
         {/* Toggles */}
-        <div className="space-y-3 mb-5">
-          <Checkbox checked={allowMultiple} onChange={setAllowMultiple} label="Allow multiple votes" />
-          <Checkbox checked={anonymous} onChange={setAnonymous} label="Anonymous voting" />
+        <div data-eos-id="src/components/create-poll-sheet.tsx#19" className="space-y-3 mb-5">
+          <Checkbox data-eos-id="src/components/create-poll-sheet.tsx#20" checked={allowMultiple} onChange={setAllowMultiple} label="Allow multiple votes" />
+          <Checkbox data-eos-id="src/components/create-poll-sheet.tsx#21" checked={anonymous} onChange={setAnonymous} label="Anonymous voting" />
         </div>
 
         {/* Submit */}
-        <Button
+        <Button data-eos-id="src/components/create-poll-sheet.tsx#22"
           variant="primary"
           size="lg"
           fullWidth
