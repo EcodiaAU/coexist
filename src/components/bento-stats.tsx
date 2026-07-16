@@ -57,7 +57,7 @@ export function BentoStatCard({
     : value
 
   return (
-    <motion.div data-eos-id="src/components/bento-stats.tsx#0"
+    <motion.div data-eos-id="src/components/bento-stats.tsx#0" data-eos-v="2"
       initial={rm ? { opacity: 1 } : { opacity: 0, y: 16, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={
