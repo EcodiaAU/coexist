@@ -17,7 +17,7 @@ export default function AcceptTermsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Suspended users should not be on this page
-  if (isSuspended) return <Navigate data-eos-id="src/pages/auth/accept-terms.tsx#0" to="/suspended" replace />
+  if (isSuspended) return <Navigate data-eos-id="src/pages/auth/accept-terms.tsx#0" data-eos-v="2" to="/suspended" replace />
   // If not authenticated, redirect to login
   if (!user) return <Navigate data-eos-id="src/pages/auth/accept-terms.tsx#1" to="/login" replace />
   // If TOS is already accepted, go home
