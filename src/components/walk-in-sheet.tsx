@@ -57,10 +57,10 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <div className="space-y-1">
-      <label className="block text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+    <div data-eos-id="src/components/walk-in-sheet.tsx#0" className="space-y-1">
+      <label data-eos-id="src/components/walk-in-sheet.tsx#1" className="block text-xs font-semibold text-neutral-600 uppercase tracking-wider">
         {label}
-        {required && <span className="ml-1 text-error-500">*</span>}
+        {required && <span data-eos-id="src/components/walk-in-sheet.tsx#2" className="ml-1 text-error-500">*</span>}
       </label>
       {children}
     </div>
@@ -238,24 +238,24 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
   const showResultsArea = searchQuery.trim().length >= 2
 
   return (
-    <BottomSheet open={open} onClose={handleClose} snapPoints={[0.92]}>
-      <div className="px-5 pb-6 space-y-4">
+    <BottomSheet data-eos-id="src/components/walk-in-sheet.tsx#3" open={open} onClose={handleClose} snapPoints={[0.92]}>
+      <div data-eos-id="src/components/walk-in-sheet.tsx#4" className="px-5 pb-6 space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-2 pt-1 pb-1">
-          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100">
-            <UserPlus size={18} className="text-primary-600" />
+        <div data-eos-id="src/components/walk-in-sheet.tsx#5" className="flex items-center gap-2 pt-1 pb-1">
+          <div data-eos-id="src/components/walk-in-sheet.tsx#6" className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100">
+            <UserPlus data-eos-id="src/components/walk-in-sheet.tsx#7" size={18} className="text-primary-600" />
           </div>
-          <div>
-            <p className="font-heading text-base font-bold text-neutral-900">Add Walk-In</p>
-            <p className="text-xs text-neutral-500">Search by name or email - or fill out the form below.</p>
+          <div data-eos-id="src/components/walk-in-sheet.tsx#8">
+            <p data-eos-id="src/components/walk-in-sheet.tsx#9" className="font-heading text-base font-bold text-neutral-900">Add Walk-In</p>
+            <p data-eos-id="src/components/walk-in-sheet.tsx#10" className="text-xs text-neutral-500">Search by name or email - or fill out the form below.</p>
           </div>
         </div>
 
         {/* === Existing-user search === */}
-        <div className="space-y-2">
-          <div className="relative">
-            <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
-            <input
+        <div data-eos-id="src/components/walk-in-sheet.tsx#11" className="space-y-2">
+          <div data-eos-id="src/components/walk-in-sheet.tsx#12" className="relative">
+            <SearchIcon data-eos-id="src/components/walk-in-sheet.tsx#13" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+            <input data-eos-id="src/components/walk-in-sheet.tsx#14"
               type="text"
               className={cn(inputCls, 'pl-9')}
               placeholder="Search existing app users (name or email)..."
@@ -266,37 +266,37 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
           </div>
 
           {showResultsArea && (
-            <div>
+            <div data-eos-id="src/components/walk-in-sheet.tsx#15">
               {searchLoading ? (
-                <div className="space-y-2">
+                <div data-eos-id="src/components/walk-in-sheet.tsx#16" className="space-y-2">
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} variant="list-item" />
+                    <Skeleton data-eos-id="src/components/walk-in-sheet.tsx#17" key={i} variant="list-item" />
                   ))}
                 </div>
               ) : searchResults.length === 0 ? (
-                <p className="text-xs text-neutral-500 px-1 py-2">
+                <p data-eos-id="src/components/walk-in-sheet.tsx#18" className="text-xs text-neutral-500 px-1 py-2">
                   No app users matched - fill out the form below to record them as a new walk-in.
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div data-eos-id="src/components/walk-in-sheet.tsx#19" className="space-y-2">
                   {searchResults.map((u) => (
-                    <div
+                    <div data-eos-id="src/components/walk-in-sheet.tsx#20"
                       key={u.id}
                       className="flex items-center gap-3 px-3 py-2 bg-white rounded-sm ring-1 ring-neutral-200/60"
                     >
-                      <Avatar src={u.avatar_url ?? undefined} name={u.display_name ?? 'User'} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-neutral-900 truncate">
+                      <Avatar data-eos-id="src/components/walk-in-sheet.tsx#21" src={u.avatar_url ?? undefined} name={u.display_name ?? 'User'} size="sm" />
+                      <div data-eos-id="src/components/walk-in-sheet.tsx#22" className="flex-1 min-w-0">
+                        <p data-eos-id="src/components/walk-in-sheet.tsx#23" data-eos-var="u.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-sm font-medium text-neutral-900 truncate">
                           {u.display_name ?? 'Unknown'}
                         </p>
                         {u.email && (
-                          <p className="text-[11px] text-neutral-500 truncate">{u.email}</p>
+                          <p data-eos-id="src/components/walk-in-sheet.tsx#24" data-eos-var="u.email" data-eos-var-label="Email" data-eos-var-scope="item" className="text-[11px] text-neutral-500 truncate">{u.email}</p>
                         )}
                       </div>
-                      <Button
+                      <Button data-eos-id="src/components/walk-in-sheet.tsx#25"
                         variant="secondary"
                         size="sm"
-                        icon={<UserCheck size={13} />}
+                        icon={<UserCheck data-eos-id="src/components/walk-in-sheet.tsx#26" size={13} />}
                         loading={addingId === u.id}
                         onClick={() => handleAddExisting(u)}
                       >
@@ -311,17 +311,17 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
         </div>
 
         {/* Divider between modes */}
-        <div className="flex items-center gap-3 py-1">
-          <div className="flex-1 h-px bg-neutral-200" />
-          <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-widest">Or new walk-in</p>
-          <div className="flex-1 h-px bg-neutral-200" />
+        <div data-eos-id="src/components/walk-in-sheet.tsx#27" className="flex items-center gap-3 py-1">
+          <div data-eos-id="src/components/walk-in-sheet.tsx#28" className="flex-1 h-px bg-neutral-200" />
+          <p data-eos-id="src/components/walk-in-sheet.tsx#29" className="text-[11px] font-semibold text-neutral-400 uppercase tracking-widest">Or new walk-in</p>
+          <div data-eos-id="src/components/walk-in-sheet.tsx#30" className="flex-1 h-px bg-neutral-200" />
         </div>
 
         {/* === Manual form === */}
-        <form onSubmit={handleSubmit} noValidate className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="First name" required>
-              <input
+        <form data-eos-id="src/components/walk-in-sheet.tsx#31" onSubmit={handleSubmit} noValidate className="space-y-4">
+          <div data-eos-id="src/components/walk-in-sheet.tsx#32" className="grid grid-cols-2 gap-3">
+            <Field data-eos-id="src/components/walk-in-sheet.tsx#33" label="First name" required>
+              <input data-eos-id="src/components/walk-in-sheet.tsx#34"
                 className={inputCls}
                 type="text"
                 placeholder="Jane"
@@ -330,8 +330,8 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 autoComplete="given-name"
               />
             </Field>
-            <Field label="Last name">
-              <input
+            <Field data-eos-id="src/components/walk-in-sheet.tsx#35" label="Last name">
+              <input data-eos-id="src/components/walk-in-sheet.tsx#36"
                 className={inputCls}
                 type="text"
                 placeholder="Smith"
@@ -342,8 +342,8 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
             </Field>
           </div>
 
-          <Field label="Email" required={!phone}>
-            <input
+          <Field data-eos-id="src/components/walk-in-sheet.tsx#37" label="Email" required={!phone}>
+            <input data-eos-id="src/components/walk-in-sheet.tsx#38"
               className={inputCls}
               type="email"
               placeholder="jane@example.com"
@@ -354,8 +354,8 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
             />
           </Field>
 
-          <Field label="Phone" required={!email}>
-            <input
+          <Field data-eos-id="src/components/walk-in-sheet.tsx#39" label="Phone" required={!email}>
+            <input data-eos-id="src/components/walk-in-sheet.tsx#40"
               className={inputCls}
               type="tel"
               placeholder="0412 345 678"
@@ -366,9 +366,9 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Age">
-              <input
+          <div data-eos-id="src/components/walk-in-sheet.tsx#41" className="grid grid-cols-2 gap-3">
+            <Field data-eos-id="src/components/walk-in-sheet.tsx#42" label="Age">
+              <input data-eos-id="src/components/walk-in-sheet.tsx#43"
                 className={inputCls}
                 type="number"
                 placeholder="e.g. 28"
@@ -379,8 +379,8 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 inputMode="numeric"
               />
             </Field>
-            <Field label="Postcode">
-              <input
+            <Field data-eos-id="src/components/walk-in-sheet.tsx#44" label="Postcode">
+              <input data-eos-id="src/components/walk-in-sheet.tsx#45"
                 className={inputCls}
                 type="text"
                 placeholder="4000"
@@ -392,9 +392,9 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Gender">
-              <input
+          <div data-eos-id="src/components/walk-in-sheet.tsx#46" className="grid grid-cols-2 gap-3">
+            <Field data-eos-id="src/components/walk-in-sheet.tsx#47" label="Gender">
+              <input data-eos-id="src/components/walk-in-sheet.tsx#48"
                 className={inputCls}
                 type="text"
                 placeholder="e.g. Female"
@@ -402,8 +402,8 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 {...genderProps}
               />
             </Field>
-            <Field label="Pronouns">
-              <input
+            <Field data-eos-id="src/components/walk-in-sheet.tsx#49" label="Pronouns">
+              <input data-eos-id="src/components/walk-in-sheet.tsx#50"
                 className={inputCls}
                 type="text"
                 placeholder="e.g. she/her"
@@ -413,8 +413,8 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
             </Field>
           </div>
 
-          <Field label="How did you hear about us?">
-            <input
+          <Field data-eos-id="src/components/walk-in-sheet.tsx#51" label="How did you hear about us?">
+            <input data-eos-id="src/components/walk-in-sheet.tsx#52"
               className={inputCls}
               type="text"
               placeholder="e.g. Instagram, friend, Facebook"
@@ -423,8 +423,8 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
             />
           </Field>
 
-          <Field label="Accessibility needs">
-            <input
+          <Field data-eos-id="src/components/walk-in-sheet.tsx#53" label="Accessibility needs">
+            <input data-eos-id="src/components/walk-in-sheet.tsx#54"
               className={inputCls}
               type="text"
               placeholder="Any requirements we should know about?"
@@ -433,15 +433,15 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
             />
           </Field>
 
-          <div className="rounded-sm border border-warning-200 bg-warning-50 p-3 space-y-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={14} className="text-warning-600 shrink-0" />
-              <p className="text-xs font-semibold text-warning-700 uppercase tracking-wider">
+          <div data-eos-id="src/components/walk-in-sheet.tsx#55" className="rounded-sm border border-warning-200 bg-warning-50 p-3 space-y-3">
+            <div data-eos-id="src/components/walk-in-sheet.tsx#56" className="flex items-center gap-2">
+              <AlertTriangle data-eos-id="src/components/walk-in-sheet.tsx#57" size={14} className="text-warning-600 shrink-0" />
+              <p data-eos-id="src/components/walk-in-sheet.tsx#58" className="text-xs font-semibold text-warning-700 uppercase tracking-wider">
                 Emergency Contact
               </p>
             </div>
-            <Field label="Name">
-              <input
+            <Field data-eos-id="src/components/walk-in-sheet.tsx#59" label="Name">
+              <input data-eos-id="src/components/walk-in-sheet.tsx#60"
                 className={inputCls}
                 type="text"
                 placeholder="Contact name"
@@ -449,8 +449,8 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 {...emergencyNameProps}
               />
             </Field>
-            <Field label="Phone">
-              <input
+            <Field data-eos-id="src/components/walk-in-sheet.tsx#61" label="Phone">
+              <input data-eos-id="src/components/walk-in-sheet.tsx#62"
                 className={inputCls}
                 type="tel"
                 placeholder="0400 000 000"
@@ -459,8 +459,8 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                 inputMode="tel"
               />
             </Field>
-            <Field label="Relationship">
-              <input
+            <Field data-eos-id="src/components/walk-in-sheet.tsx#63" label="Relationship">
+              <input data-eos-id="src/components/walk-in-sheet.tsx#64"
                 className={inputCls}
                 type="text"
                 placeholder="e.g. Parent, Partner"
@@ -470,12 +470,12 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
             </Field>
           </div>
 
-          <Button
+          <Button data-eos-id="src/components/walk-in-sheet.tsx#65"
             type="submit"
             variant="primary"
             fullWidth
             loading={submitting}
-            icon={<UserPlus size={16} />}
+            icon={<UserPlus data-eos-id="src/components/walk-in-sheet.tsx#66" size={16} />}
           >
             Record Walk-In
           </Button>
