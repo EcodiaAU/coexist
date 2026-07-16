@@ -31,7 +31,7 @@ export function MapPin({
   const fillColor = color ?? variantColors[variant]
 
   return (
-    <div data-eos-id="src/components/map-pin.tsx#0"
+    <div data-eos-id="src/components/map-pin.tsx#0" data-eos-v="2"
       role="img"
       aria-label={ariaLabel}
       className={cn('relative inline-flex items-center justify-center', className)}
