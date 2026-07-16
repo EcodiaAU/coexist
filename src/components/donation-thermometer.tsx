@@ -22,7 +22,7 @@ export function DonationThermometer({
   const percentage = Math.min((current / goal) * 100, 100)
 
   return (
-    <div data-eos-id="src/components/donation-thermometer.tsx#0"
+    <div data-eos-id="src/components/donation-thermometer.tsx#0" data-eos-v="2"
       className={cn('flex flex-col items-center gap-3', className)}
       role="progressbar"
       aria-valuenow={current}
