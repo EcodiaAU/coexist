@@ -35,7 +35,7 @@ export function TrendChart({
   const placeholders = [35, 55, 42, 70, 48, 62]
 
   return (
-    <motion.div data-eos-id="src/components/trend-chart.tsx#0"
+    <motion.div data-eos-id="src/components/trend-chart.tsx#0" data-eos-v="2"
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
