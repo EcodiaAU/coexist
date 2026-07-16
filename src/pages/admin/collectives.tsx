@@ -78,7 +78,7 @@ function CreateCollectiveModal({
   }
 
   return (
-    <BottomSheet data-eos-id="src/pages/admin/collectives.tsx#0" open={open} onClose={onClose}>
+    <BottomSheet data-eos-id="src/pages/admin/collectives.tsx#0" data-eos-v="2" open={open} onClose={onClose}>
       {/* Header */}
       <div data-eos-id="src/pages/admin/collectives.tsx#1" className="flex items-center justify-between mb-4">
         <h2 data-eos-id="src/pages/admin/collectives.tsx#2" className="font-heading text-lg font-semibold text-neutral-900">Create Collective</h2>
@@ -264,7 +264,7 @@ export default function AdminCollectivesPage() {
                     >
                       {/* Cover image */}
                       {c.cover_image_url ? (
-                        <img data-eos-id="src/pages/admin/collectives.tsx#25"
+                        <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/admin/collectives.tsx#25"
                           src={c.cover_image_url}
                           alt=""
                           className="w-12 h-12 sm:w-14 sm:h-14 rounded-sm object-cover shrink-0"
