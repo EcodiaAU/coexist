@@ -79,7 +79,7 @@ export function AdminHeroStat({
   const isNegative = sub?.startsWith('-')
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/admin-hero-stat.tsx#0"
       initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -97,24 +97,24 @@ export function AdminHeroStat({
     >
       {/* Icon badge */}
       {icon && (
-        <span
+        <span data-eos-id="src/components/admin-hero-stat.tsx#1"
           className={cn('flex items-center justify-center w-9 h-9 rounded-sm mb-2.5', c.icon)}
           aria-hidden="true"
         >
           {icon}
         </span>
       )}
-      <p
+      <p data-eos-id="src/components/admin-hero-stat.tsx#2" data-eos-var="display.toLocaleString" data-eos-var-label="To locale string" data-eos-var-scope="prop"
         style={{ fontFamily: 'var(--font-heading)' }}
         className={cn('text-2xl sm:text-3xl font-bold tracking-tight tabular-nums leading-none', c.value)}
       >
         {display.toLocaleString()}
       </p>
-      <p className="mt-1.5 text-[11px] font-semibold text-neutral-500 tracking-wider uppercase truncate max-w-full">
+      <p data-eos-id="src/components/admin-hero-stat.tsx#3" className="mt-1.5 text-[11px] font-semibold text-neutral-500 tracking-wider uppercase truncate max-w-full">
         {label}
       </p>
       {sub && (
-        <span className={cn(
+        <span data-eos-id="src/components/admin-hero-stat.tsx#4" className={cn(
           'inline-flex items-center gap-0.5 text-[10px] font-semibold mt-2 px-2 py-0.5 rounded-full',
           isPositive ? 'text-success-600 bg-success-50' :
           isNegative ? 'text-error-600 bg-error-50' :
@@ -122,8 +122,8 @@ export function AdminHeroStat({
         )}>
           {(isPositive || isNegative) && (
             isPositive
-              ? <TrendingUp className="w-3 h-3" />
-              : <TrendingDown className="w-3 h-3" />
+              ? <TrendingUp data-eos-id="src/components/admin-hero-stat.tsx#5" className="w-3 h-3" />
+              : <TrendingDown data-eos-id="src/components/admin-hero-stat.tsx#6" className="w-3 h-3" />
           )}
           {sub}
         </span>
@@ -146,7 +146,7 @@ export function AdminHeroStatRow({
   const count = Children.toArray(children).filter(Boolean).length
 
   return (
-    <div className={cn(
+    <div data-eos-id="src/components/admin-hero-stat.tsx#7" className={cn(
       'grid gap-2.5 sm:gap-3',
       // 2-col on mobile, then expand columns based on count
       count <= 2
