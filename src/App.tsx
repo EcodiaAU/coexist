@@ -201,7 +201,7 @@ function PageFallback() {
   // jarring blank flashes while lazy chunks download.
   // The opacity animation is CSS-only (no JS) for zero overhead.
   return (
-    <div data-eos-id="src/App.tsx#0"
+    <div data-eos-id="src/App.tsx#0" data-eos-v="2"
       className="flex-1 flex flex-col min-h-0 bg-surface-1 animate-pulse"
       style={{ opacity: 0.4 }}
     />
