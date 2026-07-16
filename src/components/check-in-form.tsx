@@ -69,7 +69,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
   }, [firstName, lastName, age, gender, email, emergencyName, emergencyPhone, emergencyRelationship, updateProfile, onComplete])
 
   return (
-    <motion.div data-eos-id="src/components/check-in-form.tsx#0"
+    <motion.div data-eos-id="src/components/check-in-form.tsx#0" data-eos-v="2"
       key="details"
       initial={rm ? undefined : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
