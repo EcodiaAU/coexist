@@ -56,7 +56,7 @@ function ManageMembersSheet({
 
   return (
     <>
-      <BottomSheet data-eos-id="src/pages/chat/chat-leader-panel.tsx#0" open={open} onClose={onClose}>
+      <BottomSheet data-eos-id="src/pages/chat/chat-leader-panel.tsx#0" data-eos-v="2" open={open} onClose={onClose}>
         <div data-eos-id="src/pages/chat/chat-leader-panel.tsx#1" className="pb-2">
           <div data-eos-id="src/pages/chat/chat-leader-panel.tsx#2" className="flex items-center gap-2.5 px-4 pb-3">
             <Users data-eos-id="src/pages/chat/chat-leader-panel.tsx#3" size={18} className="text-neutral-500" />
