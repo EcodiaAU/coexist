@@ -188,7 +188,7 @@ export class SentryErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoun
       if (this.props.fallback) return this.props.fallback
 
       return (
-        <div data-eos-id="src/lib/sentry.tsx#0" className="flex flex-col items-center justify-center min-h-dvh p-6 text-center bg-white">
+        <div data-eos-id="src/lib/sentry.tsx#0" data-eos-v="2" className="flex flex-col items-center justify-center min-h-dvh p-6 text-center bg-white">
           <div data-eos-id="src/lib/sentry.tsx#1" className="w-16 h-16 mb-4 rounded-md bg-error-100 flex items-center justify-center">
             <svg data-eos-id="src/lib/sentry.tsx#2"
               width="28"
