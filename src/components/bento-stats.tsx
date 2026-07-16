@@ -57,7 +57,7 @@ export function BentoStatCard({
     : value
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/bento-stats.tsx#0"
       initial={rm ? { opacity: 1 } : { opacity: 0, y: 16, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={
@@ -86,8 +86,8 @@ export function BentoStatCard({
       aria-label={`${label}: ${value}${unit ? ` ${unit}` : ''}`}
     >
       {/* Top row: icon badge + optional comparison badge */}
-      <div className={cn('flex items-start justify-between', compact ? 'mb-1.5' : 'mb-3')}>
-        <span
+      <div data-eos-id="src/components/bento-stats.tsx#1" className={cn('flex items-start justify-between', compact ? 'mb-1.5' : 'mb-3')}>
+        <span data-eos-id="src/components/bento-stats.tsx#2"
           className={cn(
             'inline-flex items-center justify-center rounded-sm',
             compact
@@ -99,7 +99,7 @@ export function BentoStatCard({
           )}
           aria-hidden="true"
         >
-          <span
+          <span data-eos-id="src/components/bento-stats.tsx#3"
             className={
               hero
                 ? compact ? '[&>svg]:w-4 [&>svg]:h-4' : '[&>svg]:w-6 [&>svg]:h-6'
@@ -111,14 +111,14 @@ export function BentoStatCard({
         </span>
 
         {badge && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700 text-[10px] font-bold uppercase tracking-wide">
+          <span data-eos-id="src/components/bento-stats.tsx#4" className="inline-flex items-center px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700 text-[10px] font-bold uppercase tracking-wide">
             {badge}
           </span>
         )}
       </div>
 
       {/* Value */}
-      <p
+      <p data-eos-id="src/components/bento-stats.tsx#5"
         className={cn(
           'font-heading font-extrabold tabular-nums leading-none tracking-tight text-neutral-900',
           hero
@@ -128,14 +128,14 @@ export function BentoStatCard({
       >
         {formatted}
         {unit && (
-          <span className={cn('font-bold ml-1 text-neutral-500', compact ? 'text-xs' : 'text-base')}>
+          <span data-eos-id="src/components/bento-stats.tsx#6" className={cn('font-bold ml-1 text-neutral-500', compact ? 'text-xs' : 'text-base')}>
             {unit}
           </span>
         )}
       </p>
 
       {/* Label */}
-      <p
+      <p data-eos-id="src/components/bento-stats.tsx#7"
         className={cn(
           'font-semibold uppercase tracking-wider',
           compact ? 'text-primary-700/80 mt-1 text-[10px]' : 'text-neutral-600 mt-1.5',
@@ -147,7 +147,7 @@ export function BentoStatCard({
 
       {/* Description - hero cards only */}
       {hero && description && (
-        <p className="mt-3 text-[13px] leading-relaxed text-neutral-500 max-w-[280px]">
+        <p data-eos-id="src/components/bento-stats.tsx#8" className="mt-3 text-[13px] leading-relaxed text-neutral-500 max-w-[280px]">
           {description}
         </p>
       )}
@@ -258,7 +258,7 @@ export function BentoStatGrid({
   const layout = getLayout(items.length)
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/bento-stats.tsx#9"
       ref={ref}
       layout
       className={cn(
@@ -271,7 +271,7 @@ export function BentoStatGrid({
         const [smCol, mobCol, isHero] = layout[i] ?? [1, 1, false]
 
         return (
-          <motion.div
+          <motion.div data-eos-id="src/components/bento-stats.tsx#10" data-eos-var="child.props.hero" data-eos-var-label="Hero" data-eos-var-scope="item"
             key={i}
             layout
             className={cn(
