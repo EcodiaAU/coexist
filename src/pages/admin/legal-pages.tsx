@@ -51,7 +51,7 @@ function ToolbarBtn({
   onClick: () => void
 }) {
   return (
-    <button data-eos-id="src/pages/admin/legal-pages.tsx#0"
+    <button data-eos-id="src/pages/admin/legal-pages.tsx#0" data-eos-v="2"
       type="button"
       onMouseDown={(e) => {
         e.preventDefault()
