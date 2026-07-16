@@ -41,7 +41,7 @@ export function SidebarNavList({
     .filter((cat) => cat.items.length > 0)
 
   return (
-    <div data-eos-id="src/components/sidebar/nav-list.tsx#0"
+    <div data-eos-id="src/components/sidebar/nav-list.tsx#0" data-eos-v="2"
       className="grid transition-[grid-template-rows,opacity] duration-300 ease-in-out"
       style={{ gridTemplateRows: isCurrent ? '1fr' : '0fr' }}
       aria-hidden={!isCurrent}
