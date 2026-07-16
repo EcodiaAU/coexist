@@ -51,14 +51,14 @@ export function MessageReactions({
   if (groups.length === 0) return null
 
   return (
-    <div
+    <div data-eos-id="src/components/message-reactions.tsx#0"
       className={cn(
         'mt-1 flex flex-wrap items-center gap-1.5',
         sent ? 'justify-end pr-1' : 'justify-start pl-10',
       )}
     >
       {groups.map((g) => (
-        <button
+        <button data-eos-id="src/components/message-reactions.tsx#1"
           key={g.emoji}
           type="button"
           onClick={() => handleToggle(g.emoji as ReactionEmoji)}
@@ -73,8 +73,8 @@ export function MessageReactions({
               : 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-50',
           )}
         >
-          <span className="text-sm leading-none">{g.emoji}</span>
-          <span>{g.count}</span>
+          <span data-eos-id="src/components/message-reactions.tsx#2" data-eos-var="g.emoji" data-eos-var-label="Emoji" data-eos-var-scope="item" className="text-sm leading-none">{g.emoji}</span>
+          <span data-eos-id="src/components/message-reactions.tsx#3" data-eos-var="g.count" data-eos-var-label="Count" data-eos-var-scope="item">{g.count}</span>
         </button>
       ))}
     </div>
