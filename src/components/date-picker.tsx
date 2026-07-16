@@ -145,7 +145,7 @@ export function DatePicker({
   const IconComponent = mode === 'time' ? Clock : Calendar
 
   return (
-    <div data-eos-id="src/components/date-picker.tsx#0" className={cn('w-full', className)}>
+    <div data-eos-id="src/components/date-picker.tsx#0" data-eos-v="2" className={cn('w-full', className)}>
       {label && (
         <label data-eos-id="src/components/date-picker.tsx#1"
           htmlFor={id}
