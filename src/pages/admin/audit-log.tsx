@@ -108,8 +108,8 @@ export default function AdminAuditLogPage() {
 
   const rm = !!shouldReduceMotion
   const heroStats = useMemo(() => (
-    <AdminHeroStatRow>
-      <AdminHeroStat value={data?.total ?? 0} label="Total Entries" icon={<FileSearch size={18} />} color="plum" delay={0} reducedMotion={rm} />
+    <AdminHeroStatRow data-eos-id="src/pages/admin/audit-log.tsx#0">
+      <AdminHeroStat data-eos-id="src/pages/admin/audit-log.tsx#1" value={data?.total ?? 0} label="Total Entries" icon={<FileSearch data-eos-id="src/pages/admin/audit-log.tsx#2" size={18} />} color="plum" delay={0} reducedMotion={rm} />
     </AdminHeroStatRow>
   ), [data?.total, rm])
 
@@ -118,11 +118,11 @@ export default function AdminAuditLogPage() {
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
   return (
-    <div>
-      <motion.div variants={stagger} initial="hidden" animate="visible">
+    <div data-eos-id="src/pages/admin/audit-log.tsx#3">
+      <motion.div data-eos-id="src/pages/admin/audit-log.tsx#4" variants={stagger} initial="hidden" animate="visible">
         {/* Filters */}
-        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 mb-4">
-          <SearchBar
+        <motion.div data-eos-id="src/pages/admin/audit-log.tsx#5" variants={fadeUp} className="flex flex-col sm:flex-row gap-3 mb-4">
+          <SearchBar data-eos-id="src/pages/admin/audit-log.tsx#6"
             value={search}
             onChange={(v) => {
               setSearch(v)
@@ -132,7 +132,7 @@ export default function AdminAuditLogPage() {
             compact
             className="flex-1"
           />
-          <Dropdown
+          <Dropdown data-eos-id="src/pages/admin/audit-log.tsx#7"
             options={actionTypeOptions}
             value={actionFilter}
             onChange={(v) => {
@@ -144,39 +144,39 @@ export default function AdminAuditLogPage() {
         </motion.div>
 
         {/* Log list */}
-        <motion.div variants={fadeUp}>
+        <motion.div data-eos-id="src/pages/admin/audit-log.tsx#8" variants={fadeUp}>
         {showLoading ? (
-          <Skeleton variant="list-item" count={8} />
+          <Skeleton data-eos-id="src/pages/admin/audit-log.tsx#9" variant="list-item" count={8} />
         ) : !data?.logs.length ? (
-          <EmptyState
+          <EmptyState data-eos-id="src/pages/admin/audit-log.tsx#10"
             illustration="empty"
             title="No audit logs"
             description={search || actionFilter !== 'all' ? 'Try different filters' : 'Admin actions will appear here'}
           />
         ) : (
           <>
-            <StaggeredList className="space-y-1">
+            <StaggeredList data-eos-id="src/pages/admin/audit-log.tsx#11" className="space-y-1">
               {data.logs.map((log) => {
                 const profile = log.profiles
                 const colorClass =
                   actionColors[log.action] ?? actionColors.default
 
                 return (
-                  <StaggeredItem
+                  <StaggeredItem data-eos-id="src/pages/admin/audit-log.tsx#12"
                     key={log.id}
                     className="flex items-start gap-3 p-3 rounded-sm bg-white shadow-sm"
                   >
-                    <Avatar
+                    <Avatar data-eos-id="src/pages/admin/audit-log.tsx#13"
                       src={profile?.avatar_url}
                       name={profile?.display_name ?? 'System'}
                       size="sm"
                     />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-neutral-900">
+                    <div data-eos-id="src/pages/admin/audit-log.tsx#14" className="flex-1 min-w-0">
+                      <div data-eos-id="src/pages/admin/audit-log.tsx#15" className="flex items-center gap-2 flex-wrap">
+                        <span data-eos-id="src/pages/admin/audit-log.tsx#16" data-eos-var="profile.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="text-sm font-medium text-neutral-900">
                           {profile?.display_name ?? 'System'}
                         </span>
-                        <span
+                        <span data-eos-id="src/pages/admin/audit-log.tsx#17" data-eos-var="log.action" data-eos-var-label="Action" data-eos-var-scope="item"
                           className={cn(
                             'text-[11px] font-medium px-1.5 py-0.5 rounded-full',
                             colorClass,
@@ -186,18 +186,18 @@ export default function AdminAuditLogPage() {
                         </span>
                       </div>
                       {log.details && (
-                        <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2">
+                        <p data-eos-id="src/pages/admin/audit-log.tsx#18" data-eos-var="log.details" data-eos-var-label="Details" data-eos-var-scope="item" className="text-xs text-neutral-500 mt-0.5 line-clamp-2">
                           {typeof log.details === 'string' ? log.details : log.details?.message ?? JSON.stringify(log.details)}
                         </p>
                       )}
                       {log.target_type && log.target_id && (
-                        <p className="text-[11px] text-neutral-400 mt-0.5">
+                        <p data-eos-id="src/pages/admin/audit-log.tsx#19" data-eos-var="log.target_type,log.target_id" data-eos-var-label="Target type, Target id" data-eos-var-scope="item" className="text-[11px] text-neutral-400 mt-0.5">
                           {log.target_type}: {log.target_id}
                         </p>
                       )}
                     </div>
-                    <span className="text-[11px] text-neutral-400 shrink-0 flex items-center gap-1">
-                      <Clock size={12} />
+                    <span data-eos-id="src/pages/admin/audit-log.tsx#20" data-eos-var="log.created_at" data-eos-var-label="Created at" data-eos-var-scope="item" className="text-[11px] text-neutral-400 shrink-0 flex items-center gap-1">
+                      <Clock data-eos-id="src/pages/admin/audit-log.tsx#21" size={12} />
                       {new Date(log.created_at).toLocaleDateString('en-AU', {
                         day: 'numeric',
                         month: 'short',
@@ -212,8 +212,8 @@ export default function AdminAuditLogPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-4">
-                <button
+              <div data-eos-id="src/pages/admin/audit-log.tsx#22" className="flex items-center justify-center gap-2 mt-4">
+                <button data-eos-id="src/pages/admin/audit-log.tsx#23"
                   type="button"
                   disabled={page === 0}
                   onClick={() => setPage((p) => p - 1)}
@@ -226,10 +226,10 @@ export default function AdminAuditLogPage() {
                 >
                   Previous
                 </button>
-                <span className="text-sm text-neutral-400">
+                <span data-eos-id="src/pages/admin/audit-log.tsx#24" className="text-sm text-neutral-400">
                   {page + 1} / {totalPages}
                 </span>
-                <button
+                <button data-eos-id="src/pages/admin/audit-log.tsx#25"
                   type="button"
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => p + 1)}
