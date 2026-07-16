@@ -46,7 +46,7 @@ export function SharedElement({
   const Component = motion[as] as typeof motion.div
 
   return (
-    <Component
+    <Component data-eos-id="src/components/shared-element.tsx#0"
       layoutId={shouldReduceMotion ? undefined : layoutId}
       className={className}
       onClick={onClick}
