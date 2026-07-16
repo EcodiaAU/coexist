@@ -690,7 +690,7 @@ function PushTestSuite() {
   const filterResults = results.filter((r) => r.category === 'filtering')
 
   return (
-    <div data-eos-id="src/pages/admin/dev-tools.tsx#0" className="space-y-4">
+    <div data-eos-id="src/pages/admin/dev-tools.tsx#0" data-eos-v="2" className="space-y-4">
       {/* ── Device Status ── */}
       <div data-eos-id="src/pages/admin/dev-tools.tsx#1" className="space-y-2">
         <div data-eos-id="src/pages/admin/dev-tools.tsx#2" className="flex items-center justify-between">
