@@ -53,14 +53,14 @@ import type { AttendanceMetrics } from '@/lib/attendance-metrics'
 /* ------------------------------------------------------------------ */
 
 const METRIC_ICONS: Record<string, (s: number) => ReactNode> = {
-  tree: (s) => <TreePine size={s} />, leaf: (s) => <Leaf size={s} />,
-  weed: (s) => <Sprout size={s} />, trash: (s) => <Trash2 size={s} />,
-  wave: (s) => <Waves size={s} />, eye: (s) => <Eye size={s} />,
-  area: (s) => <Ruler size={s} />, clock: (s) => <Clock size={s} />,
-  sparkle: (s) => <Sparkles size={s} />, droplet: (s) => <Droplets size={s} />,
-  mountain: (s) => <Mountain size={s} />, flower: (s) => <Flower2 size={s} />,
-  bug: (s) => <Bug size={s} />, flame: (s) => <Flame size={s} />,
-  fish: (s) => <Fish size={s} />, wind: (s) => <Wind size={s} />,
+  tree: (s) => <TreePine data-eos-id="src/pages/admin/insights.tsx#0" size={s} />, leaf: (s) => <Leaf data-eos-id="src/pages/admin/insights.tsx#1" size={s} />,
+  weed: (s) => <Sprout data-eos-id="src/pages/admin/insights.tsx#2" size={s} />, trash: (s) => <Trash2 data-eos-id="src/pages/admin/insights.tsx#3" size={s} />,
+  wave: (s) => <Waves data-eos-id="src/pages/admin/insights.tsx#4" size={s} />, eye: (s) => <Eye data-eos-id="src/pages/admin/insights.tsx#5" size={s} />,
+  area: (s) => <Ruler data-eos-id="src/pages/admin/insights.tsx#6" size={s} />, clock: (s) => <Clock data-eos-id="src/pages/admin/insights.tsx#7" size={s} />,
+  sparkle: (s) => <Sparkles data-eos-id="src/pages/admin/insights.tsx#8" size={s} />, droplet: (s) => <Droplets data-eos-id="src/pages/admin/insights.tsx#9" size={s} />,
+  mountain: (s) => <Mountain data-eos-id="src/pages/admin/insights.tsx#10" size={s} />, flower: (s) => <Flower2 data-eos-id="src/pages/admin/insights.tsx#11" size={s} />,
+  bug: (s) => <Bug data-eos-id="src/pages/admin/insights.tsx#12" size={s} />, flame: (s) => <Flame data-eos-id="src/pages/admin/insights.tsx#13" size={s} />,
+  fish: (s) => <Fish data-eos-id="src/pages/admin/insights.tsx#14" size={s} />, wind: (s) => <Wind data-eos-id="src/pages/admin/insights.tsx#15" size={s} />,
 }
 const ICON_TO_COLOR: Record<string, HeroStatColor> = {
   tree: 'moss', leaf: 'sprout', weed: 'sprout', trash: 'sky', wave: 'info',
@@ -120,10 +120,10 @@ interface StatItem {
 
 function Section({ id, title, hint, action }: { id: string; title: string; hint?: string; action?: ReactNode }) {
   return (
-    <div id={id} className="scroll-mt-24 flex items-end justify-between gap-3 mb-3">
-      <div>
-        <h2 className="font-heading text-[13px] font-bold uppercase tracking-widest text-neutral-700/70">{title}</h2>
-        {hint && <p className="text-xs text-neutral-400 mt-0.5">{hint}</p>}
+    <div data-eos-id="src/pages/admin/insights.tsx#16" id={id} className="scroll-mt-24 flex items-end justify-between gap-3 mb-3">
+      <div data-eos-id="src/pages/admin/insights.tsx#17">
+        <h2 data-eos-id="src/pages/admin/insights.tsx#18" className="font-heading text-[13px] font-bold uppercase tracking-widest text-neutral-700/70">{title}</h2>
+        {hint && <p data-eos-id="src/pages/admin/insights.tsx#19" className="text-xs text-neutral-400 mt-0.5">{hint}</p>}
       </div>
       {action}
     </div>
@@ -134,17 +134,17 @@ function Section({ id, title, hint, action }: { id: string; title: string; hint?
 function Selectable({ k, sel, onToggle, children }: { k: string; sel: Set<string>; onToggle: (k: string) => void; children: ReactNode }) {
   const on = sel.has(k)
   return (
-    <div
+    <div data-eos-id="src/pages/admin/insights.tsx#20"
       onClick={() => onToggle(k)}
       role="button"
       aria-pressed={on}
       className={cn('group relative cursor-pointer rounded-md transition-all', on && 'ring-2 ring-primary-500 ring-offset-2')}
     >
-      <span className={cn(
+      <span data-eos-id="src/pages/admin/insights.tsx#21" className={cn(
         'absolute top-2 right-2 z-10 w-5 h-5 rounded-full flex items-center justify-center transition-all',
         on ? 'bg-primary-600 text-white' : 'bg-white/70 text-neutral-300 ring-1 ring-neutral-200 opacity-0 group-hover:opacity-100',
       )}>
-        <Check size={12} strokeWidth={3} />
+        <Check data-eos-id="src/pages/admin/insights.tsx#22" size={12} strokeWidth={3} />
       </span>
       {children}
     </div>
@@ -153,9 +153,9 @@ function Selectable({ k, sel, onToggle, children }: { k: string; sel: Set<string
 
 function CopyTableButton({ onCopy, copied, label = 'Copy table' }: { onCopy: () => void; copied: boolean; label?: string }) {
   return (
-    <button type="button" onClick={onCopy}
+    <button data-eos-id="src/pages/admin/insights.tsx#23" type="button" onClick={onCopy}
       className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-700 hover:text-primary-800 px-2.5 py-1 rounded-sm hover:bg-primary-50 transition-colors cursor-pointer">
-      {copied ? <Check size={12} /> : <TableIcon size={12} />} {copied ? 'Copied' : label}
+      {copied ? <Check data-eos-id="src/pages/admin/insights.tsx#24" size={12} /> : <TableIcon data-eos-id="src/pages/admin/insights.tsx#25" size={12} />} {copied ? 'Copied' : label}
     </button>
   )
 }
@@ -163,14 +163,14 @@ function CopyTableButton({ onCopy, copied, label = 'Copy table' }: { onCopy: () 
 function CohortBar({ label, count, total, rm }: { label: string; count: number; total: number; rm: boolean }) {
   const p = pct(count, total)
   return (
-    <div className="flex items-center gap-3 py-1.5">
-      <span className="w-14 shrink-0 text-sm text-neutral-600">{label}</span>
-      <div className="flex-1 h-7 rounded-sm bg-neutral-100 overflow-hidden">
-        <motion.div className="h-full bg-primary-400 rounded-sm"
+    <div data-eos-id="src/pages/admin/insights.tsx#26" className="flex items-center gap-3 py-1.5">
+      <span data-eos-id="src/pages/admin/insights.tsx#27" className="w-14 shrink-0 text-sm text-neutral-600">{label}</span>
+      <div data-eos-id="src/pages/admin/insights.tsx#28" className="flex-1 h-7 rounded-sm bg-neutral-100 overflow-hidden">
+        <motion.div data-eos-id="src/pages/admin/insights.tsx#29" className="h-full bg-primary-400 rounded-sm"
           initial={rm ? { width: `${Math.max(p, count > 0 ? 3 : 0)}%` } : { width: 0 }}
           animate={{ width: `${Math.max(p, count > 0 ? 3 : 0)}%` }} transition={{ duration: 0.6 }} />
       </div>
-      <span className="w-24 shrink-0 text-right text-sm tabular-nums text-neutral-700">{count} <span className="text-neutral-400">({p}%)</span></span>
+      <span data-eos-id="src/pages/admin/insights.tsx#30" className="w-24 shrink-0 text-right text-sm tabular-nums text-neutral-700">{count} <span data-eos-id="src/pages/admin/insights.tsx#31" className="text-neutral-400">({p}%)</span></span>
     </div>
   )
 }
@@ -489,14 +489,14 @@ export default function AdminInsightsPage() {
   })
 
   return (
-    <motion.div className="pb-28" variants={v.stagger} initial="hidden" animate="visible">
+    <motion.div data-eos-id="src/pages/admin/insights.tsx#32" className="pb-28" variants={v.stagger} initial="hidden" animate="visible">
       {/* ── Sticky filter bar + jump nav ── */}
-      <div className="sticky top-0 z-20 -mx-4 -mt-4 px-4 pb-3 bg-white/90 backdrop-blur border-b border-neutral-100 mb-6" style={{ paddingTop: 'calc(var(--safe-top, 0px) + 0.75rem)' }}>
-        <div className="flex flex-wrap items-center gap-2">
-          <Dropdown options={dateRangeOptionsWithCustom} value={dateRange} onChange={(x) => handleDateRangeChange(x as DateRange)} className="w-36" />
+      <div data-eos-id="src/pages/admin/insights.tsx#33" className="sticky top-0 z-20 -mx-4 -mt-4 px-4 pb-3 bg-white/90 backdrop-blur border-b border-neutral-100 mb-6" style={{ paddingTop: 'calc(var(--safe-top, 0px) + 0.75rem)' }}>
+        <div data-eos-id="src/pages/admin/insights.tsx#34" className="flex flex-wrap items-center gap-2">
+          <Dropdown data-eos-id="src/pages/admin/insights.tsx#35" options={dateRangeOptionsWithCustom} value={dateRange} onChange={(x) => handleDateRangeChange(x as DateRange)} className="w-36" />
           {dateRange === 'custom' && (
-            <div className="flex items-center gap-1.5">
-              <input
+            <div data-eos-id="src/pages/admin/insights.tsx#36" className="flex items-center gap-1.5">
+              <input data-eos-id="src/pages/admin/insights.tsx#37"
                 type="date"
                 aria-label="From date"
                 value={customStart}
@@ -504,8 +504,8 @@ export default function AdminInsightsPage() {
                 onChange={(e) => setCustomStart(e.target.value)}
                 className="h-11 rounded-full bg-surface-3 px-4 text-[16px] sm:text-sm text-neutral-900 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
               />
-              <span className="text-sm text-neutral-400">to</span>
-              <input
+              <span data-eos-id="src/pages/admin/insights.tsx#38" className="text-sm text-neutral-400">to</span>
+              <input data-eos-id="src/pages/admin/insights.tsx#39"
                 type="date"
                 aria-label="To date"
                 value={customEnd}
@@ -516,7 +516,7 @@ export default function AdminInsightsPage() {
               />
             </div>
           )}
-          <MultiSelect
+          <MultiSelect data-eos-id="src/pages/admin/insights.tsx#40"
             options={collectiveOptions}
             value={collectiveIds}
             onChange={setCollectiveIds}
@@ -524,21 +524,21 @@ export default function AdminInsightsPage() {
             countLabel={(n) => `${n} collectives`}
             className="w-44"
           />
-          <Dropdown options={activityOptions} value={activityType} onChange={setActivityType} className="w-40" />
-          <div className="hidden md:flex items-center gap-0.5 ml-auto text-[11px] font-medium text-neutral-400">
+          <Dropdown data-eos-id="src/pages/admin/insights.tsx#41" options={activityOptions} value={activityType} onChange={setActivityType} className="w-40" />
+          <div data-eos-id="src/pages/admin/insights.tsx#42" className="hidden md:flex items-center gap-0.5 ml-auto text-[11px] font-medium text-neutral-400">
             {jump.map((j) => (
-              <a key={j.id} href={`#${j.id}`} className="px-2 py-1 rounded-md hover:bg-neutral-100 hover:text-neutral-700 transition-colors">{j.label}</a>
+              <a data-eos-href="dynamic" data-eos-href-label="Id" data-eos-href-scope="item" data-eos-id="src/pages/admin/insights.tsx#43" data-eos-var="j.label" data-eos-var-label="Label" data-eos-var-scope="item" data-eos-var-src="literal" key={j.id} href={`#${j.id}`} className="px-2 py-1 rounded-md hover:bg-neutral-100 hover:text-neutral-700 transition-colors">{j.label}</a>
             ))}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 mt-2">
-          <p className="text-[11px] text-neutral-400">Tap any number to select it, then copy your selection as a table. {scopeLine}</p>
-          {meta && <ConfidenceChip meta={meta} />}
+        <div data-eos-id="src/pages/admin/insights.tsx#44" className="flex flex-wrap items-center gap-2 mt-2">
+          <p data-eos-id="src/pages/admin/insights.tsx#45" className="text-[11px] text-neutral-400">Tap any number to select it, then copy your selection as a table. {scopeLine}</p>
+          {meta && <ConfidenceChip data-eos-id="src/pages/admin/insights.tsx#46" meta={meta} />}
         </div>
         {meta && meta.nationalOnlyYears.length > 0 && (
-          <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-sm bg-warning-50 border border-warning-200 text-warning-800 text-[11px] w-fit max-w-full">
-            <Info size={13} className="shrink-0 mt-0.5 text-warning-500" />
-            <span>
+          <div data-eos-id="src/pages/admin/insights.tsx#47" className="mt-2 flex items-start gap-2 px-3 py-2 rounded-sm bg-warning-50 border border-warning-200 text-warning-800 text-[11px] w-fit max-w-full">
+            <Info data-eos-id="src/pages/admin/insights.tsx#48" size={13} className="shrink-0 mt-0.5 text-warning-500" />
+            <span data-eos-id="src/pages/admin/insights.tsx#49" data-eos-var="meta.nationalOnlyYears" data-eos-var-label="National only years" data-eos-var-scope="prop">
               {meta.nationalOnlyYears.sort().join(', ')} {meta.nationalOnlyYears.length > 1 ? 'are' : 'is'} shown as
               national annual figures (no per-collective or per-date breakdown existed before 2025). Figures for these
               years cannot be sliced by collective. Where a year has no figure for a metric it shows "no data recorded",
@@ -548,40 +548,40 @@ export default function AdminInsightsPage() {
         )}
       </div>
 
-      <div className="space-y-10">
+      <div data-eos-id="src/pages/admin/insights.tsx#50" className="space-y-10">
         {/* ── Overview ── */}
-        <div>
-          <Section id="overview" title="Overview"
-            action={<SelectAll keys={['hl_events', 'hl_attendees', 'hl_hours', 'at_unique', 'at_returning']} sel={selected} onSet={selectMany} />} />
-          <motion.div variants={v.fadeUp}>
-            <AdminHeroStatRow className="!max-w-none grid-cols-2 sm:!grid-cols-3 lg:!grid-cols-5">
-              <Selectable k="hl_events" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalEvents ?? 0} label="Events" icon={<CalendarDays size={18} />} color="primary" reducedMotion delay={0} sub={provSub('events')} /></Selectable>
-              <Selectable k="hl_attendees" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalAttendees ?? 0} label="Attendances" icon={<Users size={18} />} color="warning" reducedMotion delay={0} sub={provSub('attendees')} /></Selectable>
-              <Selectable k="at_unique" sel={selected} onToggle={toggle}><AdminHeroStat value={att?.unique_attendees ?? 0} label="Unique people" icon={<UserCheck size={18} />} color="moss" reducedMotion delay={0} sub={att ? `${att.new_attendees} new` : undefined} /></Selectable>
-              <Selectable k="at_returning" sel={selected} onToggle={toggle}><AdminHeroStat value={att?.returning_attendees ?? 0} label="Came back" icon={<Repeat size={18} />} color="sprout" reducedMotion delay={0} sub={att ? `${att.return_rate_pct}% return rate` : undefined} /></Selectable>
-              <Selectable k="hl_hours" sel={selected} onToggle={toggle}><AdminHeroStat value={obs?.summary.totalEstimatedHours ?? 0} label="Est. vol hours" icon={<Clock size={18} />} color="bark" reducedMotion delay={0} sub={provSub('hours')} /></Selectable>
+        <div data-eos-id="src/pages/admin/insights.tsx#51">
+          <Section data-eos-id="src/pages/admin/insights.tsx#52" id="overview" title="Overview"
+            action={<SelectAll data-eos-id="src/pages/admin/insights.tsx#53" keys={['hl_events', 'hl_attendees', 'hl_hours', 'at_unique', 'at_returning']} sel={selected} onSet={selectMany} />} />
+          <motion.div data-eos-id="src/pages/admin/insights.tsx#54" variants={v.fadeUp}>
+            <AdminHeroStatRow data-eos-id="src/pages/admin/insights.tsx#55" className="!max-w-none grid-cols-2 sm:!grid-cols-3 lg:!grid-cols-5">
+              <Selectable data-eos-id="src/pages/admin/insights.tsx#56" k="hl_events" sel={selected} onToggle={toggle}><AdminHeroStat data-eos-id="src/pages/admin/insights.tsx#57" value={obs?.summary.totalEvents ?? 0} label="Events" icon={<CalendarDays data-eos-id="src/pages/admin/insights.tsx#58" size={18} />} color="primary" reducedMotion delay={0} sub={provSub('events')} /></Selectable>
+              <Selectable data-eos-id="src/pages/admin/insights.tsx#59" k="hl_attendees" sel={selected} onToggle={toggle}><AdminHeroStat data-eos-id="src/pages/admin/insights.tsx#60" value={obs?.summary.totalAttendees ?? 0} label="Attendances" icon={<Users data-eos-id="src/pages/admin/insights.tsx#61" size={18} />} color="warning" reducedMotion delay={0} sub={provSub('attendees')} /></Selectable>
+              <Selectable data-eos-id="src/pages/admin/insights.tsx#62" k="at_unique" sel={selected} onToggle={toggle}><AdminHeroStat data-eos-id="src/pages/admin/insights.tsx#63" value={att?.unique_attendees ?? 0} label="Unique people" icon={<UserCheck data-eos-id="src/pages/admin/insights.tsx#64" size={18} />} color="moss" reducedMotion delay={0} sub={att ? `${att.new_attendees} new` : undefined} /></Selectable>
+              <Selectable data-eos-id="src/pages/admin/insights.tsx#65" k="at_returning" sel={selected} onToggle={toggle}><AdminHeroStat data-eos-id="src/pages/admin/insights.tsx#66" value={att?.returning_attendees ?? 0} label="Came back" icon={<Repeat data-eos-id="src/pages/admin/insights.tsx#67" size={18} />} color="sprout" reducedMotion delay={0} sub={att ? `${att.return_rate_pct}% return rate` : undefined} /></Selectable>
+              <Selectable data-eos-id="src/pages/admin/insights.tsx#68" k="hl_hours" sel={selected} onToggle={toggle}><AdminHeroStat data-eos-id="src/pages/admin/insights.tsx#69" value={obs?.summary.totalEstimatedHours ?? 0} label="Est. vol hours" icon={<Clock data-eos-id="src/pages/admin/insights.tsx#70" size={18} />} color="bark" reducedMotion delay={0} sub={provSub('hours')} /></Selectable>
             </AdminHeroStatRow>
           </motion.div>
         </div>
 
         {/* ── Growth over time ── */}
         {trends && trends.length > 0 && (
-          <div>
-            <Section id="growth" title="Growth over time" hint="New members and events per month, last 6 months." />
-            <motion.div variants={v.fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <TrendChart
+          <div data-eos-id="src/pages/admin/insights.tsx#71">
+            <Section data-eos-id="src/pages/admin/insights.tsx#72" id="growth" title="Growth over time" hint="New members and events per month, last 6 months." />
+            <motion.div data-eos-id="src/pages/admin/insights.tsx#73" variants={v.fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <TrendChart data-eos-id="src/pages/admin/insights.tsx#74"
                 data={trends}
                 dataKey="members"
                 label="Member Growth"
-                icon={<TrendingUp size={17} className="text-primary-600" />}
+                icon={<TrendingUp data-eos-id="src/pages/admin/insights.tsx#75" size={17} className="text-primary-600" />}
                 accentFrom="var(--color-primary-600)"
                 accentTo="var(--color-primary-400)"
               />
-              <TrendChart
+              <TrendChart data-eos-id="src/pages/admin/insights.tsx#76"
                 data={trends}
                 dataKey="events"
                 label="Event Frequency"
-                icon={<CalendarDays size={17} className="text-moss-600" />}
+                icon={<CalendarDays data-eos-id="src/pages/admin/insights.tsx#77" size={17} className="text-moss-600" />}
                 accentFrom="var(--color-moss-600)"
                 accentTo="var(--color-moss-400)"
               />
@@ -590,30 +590,30 @@ export default function AdminInsightsPage() {
         )}
 
         {/* ── Impact ── */}
-        <div>
-          <Section id="impact" title="Impact" hint="What our events put back into the land, in this window."
-            action={<SelectAll keys={visibleDefs.map((d) => `im_${d.key}`)} sel={selected} onSet={selectMany} />} />
-          <motion.div variants={v.fadeUp}>
-            <AdminHeroStatRow className="!max-w-none grid-cols-2 sm:!grid-cols-3 lg:!grid-cols-5">
+        <div data-eos-id="src/pages/admin/insights.tsx#78">
+          <Section data-eos-id="src/pages/admin/insights.tsx#79" id="impact" title="Impact" hint="What our events put back into the land, in this window."
+            action={<SelectAll data-eos-id="src/pages/admin/insights.tsx#80" keys={visibleDefs.map((d) => `im_${d.key}`)} sel={selected} onSet={selectMany} />} />
+          <motion.div data-eos-id="src/pages/admin/insights.tsx#81" variants={v.fadeUp}>
+            <AdminHeroStatRow data-eos-id="src/pages/admin/insights.tsx#82" className="!max-w-none grid-cols-2 sm:!grid-cols-3 lg:!grid-cols-5">
               {visibleDefs.map((def) => (
-                <Selectable key={def.key} k={`im_${def.key}`} sel={selected} onToggle={toggle}>
-                  <AdminHeroStat value={Math.round((obs?.summary.metrics[def.key] ?? 0) * (def.decimal ? 10 : 1)) / (def.decimal ? 10 : 1)}
+                <Selectable data-eos-id="src/pages/admin/insights.tsx#83" key={def.key} k={`im_${def.key}`} sel={selected} onToggle={toggle}>
+                  <AdminHeroStat data-eos-id="src/pages/admin/insights.tsx#84" value={Math.round((obs?.summary.metrics[def.key] ?? 0) * (def.decimal ? 10 : 1)) / (def.decimal ? 10 : 1)}
                     label={`${def.label}${def.unit ? ` (${def.unit})` : ''}`} icon={metricIcon(def)} color={ICON_TO_COLOR[def.icon] ?? 'glass'} reducedMotion delay={0} sub={provSub(def.key)} />
                 </Selectable>
               ))}
-              {visibleDefs.length === 0 && !obsLoading && <p className="col-span-full text-sm text-neutral-400 py-4">No impact logged in this window.</p>}
+              {visibleDefs.length === 0 && !obsLoading && <p data-eos-id="src/pages/admin/insights.tsx#85" className="col-span-full text-sm text-neutral-400 py-4">No impact logged in this window.</p>}
             </AdminHeroStatRow>
           </motion.div>
         </div>
 
         {/* ── Attendance & recurrence ── */}
         {att && (
-          <div>
-            <Section id="attendance" title="Attendance & recurrence" hint="Who came, who came back, and how registrations convert to sign-ins."
-              action={<SelectAll keys={['at_unique', 'at_returnrate', 'at_new', 'at_returning', 'at_registrations', 'at_signins', 'at_followthrough', 'at_avgevents', 'ret_1', 'ret_2', 'ret_3', 'ret_45', 'ret_6']} sel={selected} onSet={selectMany} />} />
-            <motion.div variants={v.fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div data-eos-id="src/pages/admin/insights.tsx#86">
+            <Section data-eos-id="src/pages/admin/insights.tsx#87" id="attendance" title="Attendance & recurrence" hint="Who came, who came back, and how registrations convert to sign-ins."
+              action={<SelectAll data-eos-id="src/pages/admin/insights.tsx#88" keys={['at_unique', 'at_returnrate', 'at_new', 'at_returning', 'at_registrations', 'at_signins', 'at_followthrough', 'at_avgevents', 'ret_1', 'ret_2', 'ret_3', 'ret_45', 'ret_6']} sel={selected} onSet={selectMany} />} />
+            <motion.div data-eos-id="src/pages/admin/insights.tsx#89" variants={v.fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* selectable mini stats */}
-              <div className="grid grid-cols-2 gap-3">
+              <div data-eos-id="src/pages/admin/insights.tsx#90" className="grid grid-cols-2 gap-3">
                 {[
                   { k: 'at_unique', label: 'Unique people', val: fmtNum(att.unique_attendees) },
                   { k: 'at_returnrate', label: 'Return rate', val: `${att.return_rate_pct}%` },
@@ -626,33 +626,33 @@ export default function AdminInsightsPage() {
                 ].map((s) => {
                   const on = selected.has(s.k)
                   return (
-                    <button key={s.k} type="button" onClick={() => toggle(s.k)}
+                    <button data-eos-id="src/pages/admin/insights.tsx#91" key={s.k} type="button" onClick={() => toggle(s.k)}
                       className={cn('relative text-left rounded-sm border p-3.5 transition-all cursor-pointer', on ? 'border-primary-500 ring-1 ring-primary-500 bg-primary-50/40' : 'border-neutral-200 bg-white hover:border-neutral-300')}>
-                      <span className={cn('absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center', on ? 'bg-primary-600 text-white' : 'text-neutral-300')}>
-                        {on ? <Check size={10} strokeWidth={3} /> : <span className="w-3 h-3 rounded-full ring-1 ring-neutral-200" />}
+                      <span data-eos-id="src/pages/admin/insights.tsx#92" className={cn('absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center', on ? 'bg-primary-600 text-white' : 'text-neutral-300')}>
+                        {on ? <Check data-eos-id="src/pages/admin/insights.tsx#93" size={10} strokeWidth={3} /> : <span data-eos-id="src/pages/admin/insights.tsx#94" className="w-3 h-3 rounded-full ring-1 ring-neutral-200" />}
                       </span>
-                      <p className="text-xl font-bold text-neutral-900 tabular-nums">{s.val}</p>
-                      <p className="text-[11px] text-neutral-500 mt-0.5">{s.label}</p>
+                      <p data-eos-id="src/pages/admin/insights.tsx#95" data-eos-var="s.val" data-eos-var-label="Val" data-eos-var-scope="item" className="text-xl font-bold text-neutral-900 tabular-nums">{s.val}</p>
+                      <p data-eos-id="src/pages/admin/insights.tsx#96" data-eos-var="s.label" data-eos-var-label="Label" data-eos-var-scope="item" className="text-[11px] text-neutral-500 mt-0.5">{s.label}</p>
                     </button>
                   )
                 })}
               </div>
               {/* recurrence table */}
-              <div className="rounded-md bg-white shadow-sm border border-neutral-100 p-5">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-semibold text-neutral-900">Attendee recurrence</p>
-                  <CopyTableButton onCopy={() => copyTableSpec(retentionTableSpec, 'ret')} copied={copied === 'ret'} />
+              <div data-eos-id="src/pages/admin/insights.tsx#97" className="rounded-md bg-white shadow-sm border border-neutral-100 p-5">
+                <div data-eos-id="src/pages/admin/insights.tsx#98" className="flex items-center justify-between mb-1">
+                  <p data-eos-id="src/pages/admin/insights.tsx#99" className="text-sm font-semibold text-neutral-900">Attendee recurrence</p>
+                  <CopyTableButton data-eos-id="src/pages/admin/insights.tsx#100" onCopy={() => copyTableSpec(retentionTableSpec, 'ret')} copied={copied === 'ret'} />
                 </div>
-                <p className="text-xs text-neutral-500 mb-3">How many unique people came to N events.</p>
-                <div className="mb-3 rounded-sm bg-sprout-50/60 border border-sprout-100 px-3 py-2">
-                  <p className="text-2xl font-bold text-sprout-700 tabular-nums leading-none">{att.return_rate_pct}%</p>
-                  <p className="text-[11px] text-neutral-600 mt-1">return rate · {fmtNum(att.returning_attendees)} of {fmtNum(att.unique_attendees)} people came to 2+ events</p>
+                <p data-eos-id="src/pages/admin/insights.tsx#101" className="text-xs text-neutral-500 mb-3">How many unique people came to N events.</p>
+                <div data-eos-id="src/pages/admin/insights.tsx#102" className="mb-3 rounded-sm bg-sprout-50/60 border border-sprout-100 px-3 py-2">
+                  <p data-eos-id="src/pages/admin/insights.tsx#103" data-eos-var="att.return_rate_pct" data-eos-var-label="Return rate pct" data-eos-var-scope="prop" className="text-2xl font-bold text-sprout-700 tabular-nums leading-none">{att.return_rate_pct}%</p>
+                  <p data-eos-id="src/pages/admin/insights.tsx#104" data-eos-var="att.returning_attendees,att.unique_attendees" data-eos-var-label="Returning attendees, Unique attendees" data-eos-var-scope="prop" className="text-[11px] text-neutral-600 mt-1">return rate · {fmtNum(att.returning_attendees)} of {fmtNum(att.unique_attendees)} people came to 2+ events</p>
                 </div>
-                <CohortBar label="1 event" count={att.retention.attended_1} total={att.unique_attendees} rm={rm} />
-                <CohortBar label="2 events" count={att.retention.attended_2} total={att.unique_attendees} rm={rm} />
-                <CohortBar label="3 events" count={att.retention.attended_3} total={att.unique_attendees} rm={rm} />
-                <CohortBar label="4-5" count={att.retention.attended_4_to_5} total={att.unique_attendees} rm={rm} />
-                <CohortBar label="6+" count={att.retention.attended_6_plus} total={att.unique_attendees} rm={rm} />
+                <CohortBar data-eos-id="src/pages/admin/insights.tsx#105" label="1 event" count={att.retention.attended_1} total={att.unique_attendees} rm={rm} />
+                <CohortBar data-eos-id="src/pages/admin/insights.tsx#106" label="2 events" count={att.retention.attended_2} total={att.unique_attendees} rm={rm} />
+                <CohortBar data-eos-id="src/pages/admin/insights.tsx#107" label="3 events" count={att.retention.attended_3} total={att.unique_attendees} rm={rm} />
+                <CohortBar data-eos-id="src/pages/admin/insights.tsx#108" label="4-5" count={att.retention.attended_4_to_5} total={att.unique_attendees} rm={rm} />
+                <CohortBar data-eos-id="src/pages/admin/insights.tsx#109" label="6+" count={att.retention.attended_6_plus} total={att.unique_attendees} rm={rm} />
               </div>
             </motion.div>
           </div>
@@ -660,27 +660,27 @@ export default function AdminInsightsPage() {
 
         {/* ── By collective ── */}
         {sortedCollectives.length > 0 && (
-          <div>
-            <Section id="collectives" title="By collective"
+          <div data-eos-id="src/pages/admin/insights.tsx#110">
+            <Section data-eos-id="src/pages/admin/insights.tsx#111" id="collectives" title="By collective"
               hint={meta && !meta.collectiveBreakdownTrustworthy ? 'Pre-2025 rows are leader-reported estimates, not exact recorded data. Real per-collective data starts in 2025.' : undefined}
-              action={<CopyTableButton onCopy={() => copyTableSpec(collectiveTableSpec, 'coll')} copied={copied === 'coll'} />} />
-            <motion.div variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-neutral-100 text-left text-[11px] uppercase tracking-wider text-neutral-400">
-                      <th className="px-4 py-3 font-semibold">Collective</th>
-                      <th className="px-3 py-3 font-semibold text-right">Events</th>
-                      <th className="px-3 py-3 font-semibold text-right">Attendees</th>
-                      {visibleDefs.slice(0, 4).map((def) => <th key={def.key} className="px-3 py-3 font-semibold text-right">{def.label}{def.unit ? ` (${def.unit})` : ''}</th>)}
-                      <th className="px-3 py-3 font-semibold text-right">Est. hrs</th>
+              action={<CopyTableButton data-eos-id="src/pages/admin/insights.tsx#112" onCopy={() => copyTableSpec(collectiveTableSpec, 'coll')} copied={copied === 'coll'} />} />
+            <motion.div data-eos-id="src/pages/admin/insights.tsx#113" variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
+              <div data-eos-id="src/pages/admin/insights.tsx#114" className="overflow-x-auto">
+                <table data-eos-id="src/pages/admin/insights.tsx#115" className="w-full text-sm">
+                  <thead data-eos-id="src/pages/admin/insights.tsx#116">
+                    <tr data-eos-id="src/pages/admin/insights.tsx#117" className="border-b border-neutral-100 text-left text-[11px] uppercase tracking-wider text-neutral-400">
+                      <th data-eos-id="src/pages/admin/insights.tsx#118" className="px-4 py-3 font-semibold">Collective</th>
+                      <th data-eos-id="src/pages/admin/insights.tsx#119" className="px-3 py-3 font-semibold text-right">Events</th>
+                      <th data-eos-id="src/pages/admin/insights.tsx#120" className="px-3 py-3 font-semibold text-right">Attendees</th>
+                      {visibleDefs.slice(0, 4).map((def) => <th data-eos-id="src/pages/admin/insights.tsx#121" data-eos-var="def.label,def.unit" data-eos-var-label="Label, Unit" data-eos-var-scope="item" key={def.key} className="px-3 py-3 font-semibold text-right">{def.label}{def.unit ? ` (${def.unit})` : ''}</th>)}
+                      <th data-eos-id="src/pages/admin/insights.tsx#122" className="px-3 py-3 font-semibold text-right">Est. hrs</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody data-eos-id="src/pages/admin/insights.tsx#123">
                     {sortedCollectives.map((c) => {
                       const isSelected = collectiveIds.includes(c.collectiveId)
                       return (
-                      <tr
+                      <tr data-eos-id="src/pages/admin/insights.tsx#124"
                         key={c.collectiveId}
                         title={isSelected ? 'Remove from selection' : 'Add to selection'}
                         className={cn(
@@ -689,45 +689,45 @@ export default function AdminInsightsPage() {
                         )}
                         onClick={() => setCollectiveIds((prev) => prev.includes(c.collectiveId) ? prev.filter((id) => id !== c.collectiveId) : [...prev, c.collectiveId])}
                       >
-                        <td className="px-4 py-3 font-semibold text-neutral-900">
-                          <span className="inline-flex items-center gap-1.5">
+                        <td data-eos-id="src/pages/admin/insights.tsx#125" className="px-4 py-3 font-semibold text-neutral-900">
+                          <span data-eos-id="src/pages/admin/insights.tsx#126" data-eos-var="c.name" data-eos-var-label="Name" data-eos-var-scope="item" className="inline-flex items-center gap-1.5">
                             {c.name}
                             {c.isEstimate && (
-                              <span title="Pre-2025 leader-reported estimate, not exact recorded data" className="inline-flex items-center gap-1 rounded-sm bg-warning-50 text-warning-700 text-[10px] font-semibold px-1.5 py-0.5">
-                                <Info size={10} /> Estimate
+                              <span data-eos-id="src/pages/admin/insights.tsx#127" title="Pre-2025 leader-reported estimate, not exact recorded data" className="inline-flex items-center gap-1 rounded-sm bg-warning-50 text-warning-700 text-[10px] font-semibold px-1.5 py-0.5">
+                                <Info data-eos-id="src/pages/admin/insights.tsx#128" size={10} /> Estimate
                               </span>
                             )}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-right tabular-nums text-neutral-700">{c.eventCount}</td>
-                        <td className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtNum(c.attendees)}</td>
-                        {visibleDefs.slice(0, 4).map((def) => <td key={def.key} className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtMetricVal(c.metrics[def.key] ?? 0, def)}</td>)}
-                        <td className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtNum(c.estimatedHours)}</td>
+                        <td data-eos-id="src/pages/admin/insights.tsx#129" data-eos-var="c.eventCount" data-eos-var-label="Event count" data-eos-var-scope="item" className="px-3 py-3 text-right tabular-nums text-neutral-700">{c.eventCount}</td>
+                        <td data-eos-id="src/pages/admin/insights.tsx#130" data-eos-var="c.attendees" data-eos-var-label="Attendees" data-eos-var-scope="item" className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtNum(c.attendees)}</td>
+                        {visibleDefs.slice(0, 4).map((def) => <td data-eos-id="src/pages/admin/insights.tsx#131" data-eos-var="c.metrics.[..]" data-eos-var-label="]" data-eos-var-scope="item" key={def.key} className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtMetricVal(c.metrics[def.key] ?? 0, def)}</td>)}
+                        <td data-eos-id="src/pages/admin/insights.tsx#132" data-eos-var="c.estimatedHours" data-eos-var-label="Estimated hours" data-eos-var-scope="item" className="px-3 py-3 text-right tabular-nums text-neutral-700">{fmtNum(c.estimatedHours)}</td>
                       </tr>
                       )
                     })}
                     {nationalHistorical && (
-                      <tr
+                      <tr data-eos-id="src/pages/admin/insights.tsx#133"
                         className="border-t-2 border-neutral-200 bg-neutral-50/70"
                         title="Stated national historical figures for years before per-collective tracking (mainly 2022). These cannot be attributed to any collective, so they appear only here. Collectives + this row = the headline total."
                       >
-                        <td className="px-4 py-3 font-medium text-neutral-500 italic">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Info size={11} className="text-neutral-400" />
+                        <td data-eos-id="src/pages/admin/insights.tsx#134" className="px-4 py-3 font-medium text-neutral-500 italic">
+                          <span data-eos-id="src/pages/admin/insights.tsx#135" className="inline-flex items-center gap-1.5">
+                            <Info data-eos-id="src/pages/admin/insights.tsx#136" size={11} className="text-neutral-400" />
                             National historical (pre-2025, no collective breakdown)
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{nationalHistorical.eventsRem > 0 ? fmtNum(nationalHistorical.eventsRem) : '-'}</td>
-                        <td className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{nationalHistorical.attendeesRem > 0 ? fmtNum(nationalHistorical.attendeesRem) : '-'}</td>
-                        {visibleDefs.slice(0, 4).map((def) => <td key={def.key} className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{(nationalHistorical.metricsRem[def.key] ?? 0) > 0 ? fmtMetricVal(nationalHistorical.metricsRem[def.key], def) : '-'}</td>)}
-                        <td className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{nationalHistorical.hoursRem > 0 ? fmtNum(nationalHistorical.hoursRem) : '-'}</td>
+                        <td data-eos-id="src/pages/admin/insights.tsx#137" data-eos-var="nationalHistorical.eventsRem" data-eos-var-label="Events rem" data-eos-var-scope="prop" className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{nationalHistorical.eventsRem > 0 ? fmtNum(nationalHistorical.eventsRem) : '-'}</td>
+                        <td data-eos-id="src/pages/admin/insights.tsx#138" data-eos-var="nationalHistorical.attendeesRem" data-eos-var-label="Attendees rem" data-eos-var-scope="prop" className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{nationalHistorical.attendeesRem > 0 ? fmtNum(nationalHistorical.attendeesRem) : '-'}</td>
+                        {visibleDefs.slice(0, 4).map((def) => <td data-eos-id="src/pages/admin/insights.tsx#139" data-eos-var="nationalHistorical.metricsRem.[..]" data-eos-var-label="]" data-eos-var-scope="prop" key={def.key} className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{(nationalHistorical.metricsRem[def.key] ?? 0) > 0 ? fmtMetricVal(nationalHistorical.metricsRem[def.key], def) : '-'}</td>)}
+                        <td data-eos-id="src/pages/admin/insights.tsx#140" data-eos-var="nationalHistorical.hoursRem" data-eos-var-label="Hours rem" data-eos-var-scope="prop" className="px-3 py-3 text-right tabular-nums text-neutral-500 italic">{nationalHistorical.hoursRem > 0 ? fmtNum(nationalHistorical.hoursRem) : '-'}</td>
                       </tr>
                     )}
                   </tbody>
                 </table>
               </div>
               {nationalHistorical && (
-                <p className="px-4 py-2.5 text-[11px] text-neutral-400 border-t border-neutral-100">
+                <p data-eos-id="src/pages/admin/insights.tsx#141" className="px-4 py-2.5 text-[11px] text-neutral-400 border-t border-neutral-100">
                   The final row is Co-Exist's stated national historical figure for years before per-collective tracking began (mainly 2022). It cannot be attributed to a collective, so it sits outside the breakdown. Collectives plus this row equal the headline total.
                 </p>
               )}
@@ -736,51 +736,51 @@ export default function AdminInsightsPage() {
         )}
 
         {/* ── Event impact log ── */}
-        <div>
-          <Section id="events" title="Event impact log" hint={sortedEvents.length ? `${sortedEvents.length} event${sortedEvents.length !== 1 ? 's' : ''} in scope` : undefined}
-            action={<button type="button" onClick={() => downloadCsv('coexist-events.csv', eventCsvSpec())} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-700 hover:text-primary-800 px-2.5 py-1 rounded-sm hover:bg-primary-50 cursor-pointer"><Download size={12} /> CSV</button>} />
-          <motion.div variants={v.fadeUp} className="mb-3">
-            <SearchBar value={search} onChange={setSearch} placeholder="Search events..." compact className="max-w-sm" />
+        <div data-eos-id="src/pages/admin/insights.tsx#142">
+          <Section data-eos-id="src/pages/admin/insights.tsx#143" id="events" title="Event impact log" hint={sortedEvents.length ? `${sortedEvents.length} event${sortedEvents.length !== 1 ? 's' : ''} in scope` : undefined}
+            action={<button data-eos-id="src/pages/admin/insights.tsx#144" type="button" onClick={() => downloadCsv('coexist-events.csv', eventCsvSpec())} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-700 hover:text-primary-800 px-2.5 py-1 rounded-sm hover:bg-primary-50 cursor-pointer"><Download data-eos-id="src/pages/admin/insights.tsx#145" size={12} /> CSV</button>} />
+          <motion.div data-eos-id="src/pages/admin/insights.tsx#146" variants={v.fadeUp} className="mb-3">
+            <SearchBar data-eos-id="src/pages/admin/insights.tsx#147" value={search} onChange={setSearch} placeholder="Search events..." compact className="max-w-sm" />
           </motion.div>
-          <motion.div variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-neutral-100 text-left text-[11px] uppercase tracking-wider text-neutral-400">
-                    <th className="px-4 py-3 font-semibold">Date</th>
-                    <th className="px-3 py-3 font-semibold min-w-[180px]">Event</th>
-                    <th className="px-3 py-3 font-semibold">Collective</th>
-                    <th className="px-3 py-3 font-semibold text-center">Type</th>
-                    {visibleDefs.map((def) => <th key={def.key} className="px-3 py-3 font-semibold text-right">{def.label}{def.unit ? ` (${def.unit})` : ''}</th>)}
-                    <th className="px-3 py-3 font-semibold text-right">Est. hrs</th>
+          <motion.div data-eos-id="src/pages/admin/insights.tsx#148" variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
+            <div data-eos-id="src/pages/admin/insights.tsx#149" className="overflow-x-auto">
+              <table data-eos-id="src/pages/admin/insights.tsx#150" className="w-full text-sm">
+                <thead data-eos-id="src/pages/admin/insights.tsx#151">
+                  <tr data-eos-id="src/pages/admin/insights.tsx#152" className="border-b border-neutral-100 text-left text-[11px] uppercase tracking-wider text-neutral-400">
+                    <th data-eos-id="src/pages/admin/insights.tsx#153" className="px-4 py-3 font-semibold">Date</th>
+                    <th data-eos-id="src/pages/admin/insights.tsx#154" className="px-3 py-3 font-semibold min-w-[180px]">Event</th>
+                    <th data-eos-id="src/pages/admin/insights.tsx#155" className="px-3 py-3 font-semibold">Collective</th>
+                    <th data-eos-id="src/pages/admin/insights.tsx#156" className="px-3 py-3 font-semibold text-center">Type</th>
+                    {visibleDefs.map((def) => <th data-eos-id="src/pages/admin/insights.tsx#157" data-eos-var="def.label,def.unit" data-eos-var-label="Label, Unit" data-eos-var-scope="item" key={def.key} className="px-3 py-3 font-semibold text-right">{def.label}{def.unit ? ` (${def.unit})` : ''}</th>)}
+                    <th data-eos-id="src/pages/admin/insights.tsx#158" className="px-3 py-3 font-semibold text-right">Est. hrs</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody data-eos-id="src/pages/admin/insights.tsx#159">
                   {displayEvents.length === 0 ? (
-                    <tr><td colSpan={5 + visibleDefs.length} className="px-4 py-12 text-center text-sm text-neutral-500">No impact data matches your filters</td></tr>
+                    <tr data-eos-id="src/pages/admin/insights.tsx#160"><td data-eos-id="src/pages/admin/insights.tsx#161" colSpan={5 + visibleDefs.length} className="px-4 py-12 text-center text-sm text-neutral-500">No impact data matches your filters</td></tr>
                   ) : displayEvents.map((row) => (
-                    <tr key={row.eventId} className="border-b border-neutral-50 last:border-0 hover:bg-neutral-50 transition-colors group">
-                      <td className="px-4 py-3 text-xs text-neutral-500 tabular-nums whitespace-nowrap">{fmtDate(row.date)}</td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-2">
-                          <Link to={`/events/${row.eventId}`} className="text-sm font-medium text-neutral-900 hover:text-neutral-700 line-clamp-1">{row.title}</Link>
-                          <ExternalLink size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                          {row.isLegacy && <Badge variant="default" size="sm">Legacy</Badge>}
+                    <tr data-eos-id="src/pages/admin/insights.tsx#162" key={row.eventId} className="border-b border-neutral-50 last:border-0 hover:bg-neutral-50 transition-colors group">
+                      <td data-eos-id="src/pages/admin/insights.tsx#163" data-eos-var="row.date" data-eos-var-label="Date" data-eos-var-scope="item" className="px-4 py-3 text-xs text-neutral-500 tabular-nums whitespace-nowrap">{fmtDate(row.date)}</td>
+                      <td data-eos-id="src/pages/admin/insights.tsx#164" className="px-3 py-3">
+                        <div data-eos-id="src/pages/admin/insights.tsx#165" className="flex items-center gap-2">
+                          <Link data-eos-id="src/pages/admin/insights.tsx#166" data-eos-var="row.title" data-eos-var-label="Title" data-eos-var-scope="item" to={`/events/${row.eventId}`} className="text-sm font-medium text-neutral-900 hover:text-neutral-700 line-clamp-1">{row.title}</Link>
+                          <ExternalLink data-eos-id="src/pages/admin/insights.tsx#167" size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          {row.isLegacy && <Badge data-eos-id="src/pages/admin/insights.tsx#168" variant="default" size="sm">Legacy</Badge>}
                         </div>
-                        {row.attendance != null && <span className="text-[11px] text-neutral-500">{row.attendance} attendees</span>}
+                        {row.attendance != null && <span data-eos-id="src/pages/admin/insights.tsx#169" data-eos-var="row.attendance" data-eos-var-label="Attendance" data-eos-var-scope="item" className="text-[11px] text-neutral-500">{row.attendance} attendees</span>}
                       </td>
-                      <td className="px-3 py-3 text-xs text-neutral-500 whitespace-nowrap">{row.collectiveName}</td>
-                      <td className="px-3 py-3 text-center"><Badge variant="activity" activity={activityToBadge(row.activityType)} size="sm">{ACTIVITY_TYPE_LABELS[row.activityType] ?? row.activityType}</Badge></td>
-                      {visibleDefs.map((def) => <td key={def.key} className="px-3 py-3 text-right tabular-nums text-neutral-900">{fmtMetricVal(row.metrics[def.key] ?? null, def)}</td>)}
-                      <td className="px-3 py-3 text-right tabular-nums text-neutral-900">{row.estimatedVolHours != null ? row.estimatedVolHours.toLocaleString() : '-'}</td>
+                      <td data-eos-id="src/pages/admin/insights.tsx#170" data-eos-var="row.collectiveName" data-eos-var-label="Collective name" data-eos-var-scope="item" className="px-3 py-3 text-xs text-neutral-500 whitespace-nowrap">{row.collectiveName}</td>
+                      <td data-eos-id="src/pages/admin/insights.tsx#171" className="px-3 py-3 text-center"><Badge data-eos-id="src/pages/admin/insights.tsx#172" data-eos-var="ACTIVITY_TYPE_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop" variant="activity" activity={activityToBadge(row.activityType)} size="sm">{ACTIVITY_TYPE_LABELS[row.activityType] ?? row.activityType}</Badge></td>
+                      {visibleDefs.map((def) => <td data-eos-id="src/pages/admin/insights.tsx#173" data-eos-var="row.metrics.[..]" data-eos-var-label="]" data-eos-var-scope="item" key={def.key} className="px-3 py-3 text-right tabular-nums text-neutral-900">{fmtMetricVal(row.metrics[def.key] ?? null, def)}</td>)}
+                      <td data-eos-id="src/pages/admin/insights.tsx#174" data-eos-var="row.estimatedVolHours" data-eos-var-label="Estimated vol hours" data-eos-var-scope="item" className="px-3 py-3 text-right tabular-nums text-neutral-900">{row.estimatedVolHours != null ? row.estimatedVolHours.toLocaleString() : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             {!showAllEvents && sortedEvents.length > 25 && (
-              <div className="border-t border-neutral-100 px-4 py-3 text-center">
-                <button type="button" onClick={() => setShowAllEvents(true)} className="text-xs font-semibold text-primary-600 hover:text-primary-700 cursor-pointer">Show all {sortedEvents.length} events</button>
+              <div data-eos-id="src/pages/admin/insights.tsx#175" className="border-t border-neutral-100 px-4 py-3 text-center">
+                <button data-eos-id="src/pages/admin/insights.tsx#176" type="button" onClick={() => setShowAllEvents(true)} className="text-xs font-semibold text-primary-600 hover:text-primary-700 cursor-pointer">Show all {sortedEvents.length} events</button>
               </div>
             )}
           </motion.div>
@@ -788,21 +788,21 @@ export default function AdminInsightsPage() {
 
         {/* ── Year on year (comparison table for grant narratives) ── */}
         {yearTableSpec && yearTableSpec.rows.length > 1 && (
-          <div>
-            <Section id="years" title="Year on year" hint="Growth across years - useful for funding narratives."
-              action={<CopyTableButton onCopy={() => copyTableSpec(yearTableSpec, 'yr')} copied={copied === 'yr'} />} />
-            <motion.div variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-neutral-100 text-left text-[11px] uppercase tracking-wider text-neutral-400">
-                      {yearTableSpec.headers.map((h, i) => <th key={h} className={cn('px-3 py-3 font-semibold', i === 0 ? 'pl-4 text-left' : 'text-right')}>{h}</th>)}
+          <div data-eos-id="src/pages/admin/insights.tsx#177">
+            <Section data-eos-id="src/pages/admin/insights.tsx#178" id="years" title="Year on year" hint="Growth across years - useful for funding narratives."
+              action={<CopyTableButton data-eos-id="src/pages/admin/insights.tsx#179" onCopy={() => copyTableSpec(yearTableSpec, 'yr')} copied={copied === 'yr'} />} />
+            <motion.div data-eos-id="src/pages/admin/insights.tsx#180" variants={v.fadeUp} className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
+              <div data-eos-id="src/pages/admin/insights.tsx#181" className="overflow-x-auto">
+                <table data-eos-id="src/pages/admin/insights.tsx#182" className="w-full text-sm">
+                  <thead data-eos-id="src/pages/admin/insights.tsx#183">
+                    <tr data-eos-id="src/pages/admin/insights.tsx#184" className="border-b border-neutral-100 text-left text-[11px] uppercase tracking-wider text-neutral-400">
+                      {yearTableSpec.headers.map((h, i) => <th data-eos-id="src/pages/admin/insights.tsx#185" key={h} className={cn('px-3 py-3 font-semibold', i === 0 ? 'pl-4 text-left' : 'text-right')}>{h}</th>)}
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody data-eos-id="src/pages/admin/insights.tsx#186">
                     {yearTableSpec.rows.map((r, ri) => (
-                      <tr key={ri} className="border-b border-neutral-50 last:border-0">
-                        {r.map((c, ci) => <td key={ci} className={cn('px-3 py-3 tabular-nums', ci === 0 ? 'pl-4 font-semibold text-neutral-900' : 'text-right text-neutral-700')}>{typeof c === 'number' ? c.toLocaleString() : c}</td>)}
+                      <tr data-eos-id="src/pages/admin/insights.tsx#187" key={ri} className="border-b border-neutral-50 last:border-0">
+                        {r.map((c, ci) => <td data-eos-id="src/pages/admin/insights.tsx#188" data-eos-var="c.toLocaleString" data-eos-var-label="To locale string" data-eos-var-scope="item" key={ci} className={cn('px-3 py-3 tabular-nums', ci === 0 ? 'pl-4 font-semibold text-neutral-900' : 'text-right text-neutral-700')}>{typeof c === 'number' ? c.toLocaleString() : c}</td>)}
                       </tr>
                     ))}
                   </tbody>
@@ -813,13 +813,13 @@ export default function AdminInsightsPage() {
         )}
 
         {/* ── Raw data (CSV) ── */}
-        <div>
-          <Section id="data" title="Raw data" hint="The data behind the numbers, for spreadsheets." />
-          <motion.div variants={v.fadeUp} className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => downloadCsv('coexist-events.csv', eventCsvSpec())} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> Event impact log</button>
-            <button type="button" onClick={() => downloadCsv('coexist-by-collective.csv', collectiveTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> By collective</button>
-            {retentionTableSpec && <button type="button" onClick={() => downloadCsv('coexist-recurrence.csv', retentionTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> Attendee recurrence</button>}
-            {yearTableSpec && <button type="button" onClick={() => downloadCsv('coexist-year-on-year.csv', yearTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download size={14} /> Year on year</button>}
+        <div data-eos-id="src/pages/admin/insights.tsx#189">
+          <Section data-eos-id="src/pages/admin/insights.tsx#190" id="data" title="Raw data" hint="The data behind the numbers, for spreadsheets." />
+          <motion.div data-eos-id="src/pages/admin/insights.tsx#191" variants={v.fadeUp} className="flex flex-wrap gap-2">
+            <button data-eos-id="src/pages/admin/insights.tsx#192" type="button" onClick={() => downloadCsv('coexist-events.csv', eventCsvSpec())} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download data-eos-id="src/pages/admin/insights.tsx#193" size={14} /> Event impact log</button>
+            <button data-eos-id="src/pages/admin/insights.tsx#194" type="button" onClick={() => downloadCsv('coexist-by-collective.csv', collectiveTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download data-eos-id="src/pages/admin/insights.tsx#195" size={14} /> By collective</button>
+            {retentionTableSpec && <button data-eos-id="src/pages/admin/insights.tsx#196" type="button" onClick={() => downloadCsv('coexist-recurrence.csv', retentionTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download data-eos-id="src/pages/admin/insights.tsx#197" size={14} /> Attendee recurrence</button>}
+            {yearTableSpec && <button data-eos-id="src/pages/admin/insights.tsx#198" type="button" onClick={() => downloadCsv('coexist-year-on-year.csv', yearTableSpec)} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-white border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-300 cursor-pointer"><Download data-eos-id="src/pages/admin/insights.tsx#199" size={14} /> Year on year</button>}
           </motion.div>
         </div>
       </div>
@@ -830,17 +830,17 @@ export default function AdminInsightsPage() {
           where the layout uses the sidebar and there is no tab bar.
           Extra safe-area padding clears the home indicator. */}
       {selected.size > 0 && (
-        <div
+        <div data-eos-id="src/pages/admin/insights.tsx#200"
           className="fixed bottom-[88px] md:bottom-6 left-3 right-3 md:left-1/2 md:right-auto md:-translate-x-1/2 z-40 flex items-center justify-between md:justify-start gap-2 px-3 py-2.5 rounded-md bg-white text-neutral-900 ring-1 ring-neutral-200 shadow-sm"
           style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
-          <span className="text-sm font-semibold tabular-nums text-neutral-900 whitespace-nowrap shrink-0 pl-1">{selected.size} selected</span>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button type="button" onClick={copySelected} className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-semibold px-3 py-2 rounded-sm bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all cursor-pointer">
-              {copied === 'sel' ? <Check size={15} /> : <Copy size={15} />}<span>{copied === 'sel' ? 'Copied' : 'Copy table'}</span>
+          <span data-eos-id="src/pages/admin/insights.tsx#201" data-eos-var="selected.size" data-eos-var-label="Size" data-eos-var-scope="prop" className="text-sm font-semibold tabular-nums text-neutral-900 whitespace-nowrap shrink-0 pl-1">{selected.size} selected</span>
+          <div data-eos-id="src/pages/admin/insights.tsx#202" className="flex items-center gap-1.5 shrink-0">
+            <button data-eos-id="src/pages/admin/insights.tsx#203" type="button" onClick={copySelected} className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-semibold px-3 py-2 rounded-sm bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all cursor-pointer">
+              {copied === 'sel' ? <Check data-eos-id="src/pages/admin/insights.tsx#204" size={15} /> : <Copy data-eos-id="src/pages/admin/insights.tsx#205" size={15} />}<span data-eos-id="src/pages/admin/insights.tsx#206">{copied === 'sel' ? 'Copied' : 'Copy table'}</span>
             </button>
-            <button type="button" onClick={csvSelected} aria-label="Download CSV" className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium px-3 py-2 rounded-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer"><Download size={15} />CSV</button>
-            <button type="button" onClick={clearSel} aria-label="Clear selection" className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 active:scale-[0.98] transition-all cursor-pointer shrink-0"><X size={16} /></button>
+            <button data-eos-id="src/pages/admin/insights.tsx#207" type="button" onClick={csvSelected} aria-label="Download CSV" className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium px-3 py-2 rounded-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer"><Download data-eos-id="src/pages/admin/insights.tsx#208" size={15} />CSV</button>
+            <button data-eos-id="src/pages/admin/insights.tsx#209" type="button" onClick={clearSel} aria-label="Clear selection" className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 active:scale-[0.98] transition-all cursor-pointer shrink-0"><X data-eos-id="src/pages/admin/insights.tsx#210" size={16} /></button>
           </div>
         </div>
       )}
@@ -857,13 +857,13 @@ export default function AdminInsightsPage() {
  */
 function ConfidenceChip({ meta }: { meta: import('@/hooks/use-admin-impact-observations').ObservationsMeta }) {
   const map = {
-    granular: { label: 'Verified per-event data', cls: 'bg-success-50 text-success-700 border-success-200', icon: <ShieldCheck size={11} /> },
-    mixed:    { label: 'Recent verified + pre-2025 estimates', cls: 'bg-warning-50 text-warning-700 border-warning-200', icon: <Info size={11} /> },
-    national: { label: 'National estimates (pre-2025)', cls: 'bg-warning-50 text-warning-700 border-warning-200', icon: <Info size={11} /> },
+    granular: { label: 'Verified per-event data', cls: 'bg-success-50 text-success-700 border-success-200', icon: <ShieldCheck data-eos-id="src/pages/admin/insights.tsx#211" size={11} /> },
+    mixed:    { label: 'Recent verified + pre-2025 estimates', cls: 'bg-warning-50 text-warning-700 border-warning-200', icon: <Info data-eos-id="src/pages/admin/insights.tsx#212" size={11} /> },
+    national: { label: 'National estimates (pre-2025)', cls: 'bg-warning-50 text-warning-700 border-warning-200', icon: <Info data-eos-id="src/pages/admin/insights.tsx#213" size={11} /> },
   } as const
   const c = map[meta.confidence]
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold', c.cls)}>
+    <span data-eos-id="src/pages/admin/insights.tsx#214" data-eos-var="c.icon,c.label" data-eos-var-label="Icon, Label" data-eos-var-scope="prop" className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold', c.cls)}>
       {c.icon} {c.label}
     </span>
   )
@@ -874,7 +874,7 @@ function SelectAll({ keys, sel, onSet }: { keys: string[]; sel: Set<string>; onS
   if (keys.length === 0) return null
   const allOn = keys.every((k) => sel.has(k))
   return (
-    <button type="button" onClick={() => onSet(keys, !allOn)}
+    <button data-eos-id="src/pages/admin/insights.tsx#215" type="button" onClick={() => onSet(keys, !allOn)}
       className="text-[11px] font-semibold text-neutral-500 hover:text-primary-700 px-2 py-1 rounded-sm hover:bg-primary-50 transition-colors cursor-pointer">
       {allOn ? 'Deselect all' : 'Select all'}
     </button>
