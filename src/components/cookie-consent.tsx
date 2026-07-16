@@ -84,7 +84,7 @@ export function CookieConsentBanner({ className }: { className?: string }) {
   if (!isWeb) return null
 
   return (
-    <AnimatePresence data-eos-id="src/components/cookie-consent.tsx#0">
+    <AnimatePresence data-eos-id="src/components/cookie-consent.tsx#0" data-eos-v="2">
       {visible && (
         <motion.div data-eos-id="src/components/cookie-consent.tsx#1"
           initial={shouldReduceMotion ? { opacity: 1 } : { y: 80, opacity: 0 }}
