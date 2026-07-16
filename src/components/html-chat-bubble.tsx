@@ -133,7 +133,7 @@ export function HtmlChatBubble({
   /* ─── Fullscreen overlay ────────────────────────────────────────── */
   if (isExpanded) {
     return (
-      <motion.div
+      <motion.div data-eos-id="src/components/html-chat-bubble.tsx#0"
         className="fixed inset-0 z-50 flex flex-col bg-white"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -141,25 +141,25 @@ export function HtmlChatBubble({
         transition={{ duration: 0.2 }}
       >
         {/* Toolbar */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 bg-white/95 backdrop-blur-sm safe-top">
-          <div className="flex items-center gap-2">
+        <div data-eos-id="src/components/html-chat-bubble.tsx#1" className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 bg-white/95 backdrop-blur-sm safe-top">
+          <div data-eos-id="src/components/html-chat-bubble.tsx#2" className="flex items-center gap-2">
             {senderName && (
-              <span className="text-sm font-bold text-neutral-700">{senderName}</span>
+              <span data-eos-id="src/components/html-chat-bubble.tsx#3" className="text-sm font-bold text-neutral-700">{senderName}</span>
             )}
-            <span className="text-xs text-neutral-400">HTML Content</span>
+            <span data-eos-id="src/components/html-chat-bubble.tsx#4" className="text-xs text-neutral-400">HTML Content</span>
           </div>
-          <button
+          <button data-eos-id="src/components/html-chat-bubble.tsx#5"
             type="button"
             onClick={toggleExpand}
             className="flex h-10 w-10 items-center justify-center rounded-sm bg-neutral-100 text-neutral-600 active:bg-neutral-200 transition-colors"
             aria-label="Exit fullscreen"
           >
-            <Minimize2 size={20} />
+            <Minimize2 data-eos-id="src/components/html-chat-bubble.tsx#6" size={20} />
           </button>
         </div>
 
         {/* Full-viewport iframe  user can pinch-zoom natively */}
-        <iframe
+        <iframe data-eos-id="src/components/html-chat-bubble.tsx#7"
           srcDoc={safeHtml}
           sandbox="allow-same-origin"
           title="HTML content (fullscreen)"
@@ -172,17 +172,17 @@ export function HtmlChatBubble({
 
   /* ─── Inline bubble ────────────────────────────────────────────── */
   return (
-    <div className="relative">
+    <div data-eos-id="src/components/html-chat-bubble.tsx#8" className="relative">
       {dragEnabled && (
-        <motion.div
+        <motion.div data-eos-id="src/components/html-chat-bubble.tsx#9"
           aria-hidden="true"
           style={{ opacity: swipeIconOpacity, scale: swipeIconScale }}
           className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 z-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-white shadow-md"
         >
-          <Reply size={16} strokeWidth={2.5} />
+          <Reply data-eos-id="src/components/html-chat-bubble.tsx#10" size={16} strokeWidth={2.5} />
         </motion.div>
       )}
-    <motion.div
+    <motion.div data-eos-id="src/components/html-chat-bubble.tsx#11"
       role="listitem"
       aria-label={label}
       initial={shouldReduceMotion || skipAnimation ? false : { opacity: 0, y: 8, scale: 0.97 }}
@@ -213,23 +213,23 @@ export function HtmlChatBubble({
           a 44px spacer in place of the avatar so the card stays aligned. */}
       {!sent && (
         isContinuation ? (
-          <div className="flex-shrink-0 w-11" aria-hidden="true" />
+          <div data-eos-id="src/components/html-chat-bubble.tsx#12" className="flex-shrink-0 w-11" aria-hidden="true" />
         ) : (
-          <button
+          <button data-eos-id="src/components/html-chat-bubble.tsx#13"
             type="button"
             className="flex-shrink-0 self-end flex items-center justify-center min-h-11 min-w-11 rounded-full cursor-pointer select-none active:scale-[0.98] transition-transform duration-150"
             onClick={() => senderId && onAvatarTap?.(senderId)}
             aria-label={senderName ? `View ${senderName}'s profile` : 'View profile'}
           >
             {senderAvatar ? (
-              <img
+              <img data-eos-id="src/components/html-chat-bubble.tsx#14"
                 src={senderAvatar}
                 alt=""
                 loading="lazy"
                 className="h-10 w-10 rounded-full object-cover ring-[2.5px] ring-white shadow-sm"
               />
             ) : (
-              <div
+              <div data-eos-id="src/components/html-chat-bubble.tsx#15"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-xs font-extrabold text-white ring-[2.5px] ring-white shadow-sm"
                 aria-hidden="true"
               >
@@ -241,7 +241,7 @@ export function HtmlChatBubble({
       )}
 
       {/* Bubble content */}
-      <div
+      <div data-eos-id="src/components/html-chat-bubble.tsx#16"
         className={cn(
           'flex min-w-0 flex-col gap-0',
           'w-full max-w-[92%] sm:max-w-[85%]',
@@ -253,8 +253,8 @@ export function HtmlChatBubble({
             avatar above already meets the touch target) and hide entire row
             on continuation messages. */}
         {!sent && senderName && !isContinuation && (
-          <div className="flex items-center gap-2 px-1 mb-1">
-            <button
+          <div data-eos-id="src/components/html-chat-bubble.tsx#17" className="flex items-center gap-2 px-1 mb-1">
+            <button data-eos-id="src/components/html-chat-bubble.tsx#18"
               type="button"
               className="text-[13px] font-bold text-neutral-700 hover:text-neutral-900 py-0.5 cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
               onClick={() => senderId && onSenderTap?.(senderId)}
@@ -262,7 +262,7 @@ export function HtmlChatBubble({
               {senderName}
             </button>
             {roleBadge && roleStyle && (
-              <span className={cn(
+              <span data-eos-id="src/components/html-chat-bubble.tsx#19" className={cn(
                 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-extrabold leading-tight shadow-sm',
                 roleStyle.bg,
                 roleStyle.text,
@@ -274,7 +274,7 @@ export function HtmlChatBubble({
         )}
 
         {/* HTML bubble */}
-        <div
+        <div data-eos-id="src/components/html-chat-bubble.tsx#20"
           className={cn(
             'w-full rounded-md overflow-hidden transition-colors duration-150',
             sent
@@ -283,25 +283,25 @@ export function HtmlChatBubble({
           )}
         >
           {/* Expand button bar */}
-          <div className={cn(
+          <div data-eos-id="src/components/html-chat-bubble.tsx#21" className={cn(
             'flex items-center justify-between px-3 py-2 border-b border-neutral-100',
             'bg-neutral-50',
           )}>
-            <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+            <span data-eos-id="src/components/html-chat-bubble.tsx#22" className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
               Rich Content
             </span>
-            <button
+            <button data-eos-id="src/components/html-chat-bubble.tsx#23"
               type="button"
               onClick={toggleExpand}
               className="flex h-8 w-8 items-center justify-center rounded-sm text-neutral-400 active:bg-neutral-100 transition-colors cursor-pointer"
               aria-label="Expand to fullscreen"
             >
-              <Maximize2 size={15} />
+              <Maximize2 data-eos-id="src/components/html-chat-bubble.tsx#24" size={15} />
             </button>
           </div>
 
           {/* Sandboxed iframe  renders the full HTML document faithfully */}
-          <iframe
+          <iframe data-eos-id="src/components/html-chat-bubble.tsx#25"
             ref={inlineIframeRef}
             srcDoc={safeHtml}
             sandbox="allow-same-origin"
@@ -315,11 +315,11 @@ export function HtmlChatBubble({
           />
 
           {/* Timestamp */}
-          <div className={cn(
+          <div data-eos-id="src/components/html-chat-bubble.tsx#26" className={cn(
             'px-3 pb-2 pt-1',
             sent ? 'text-right' : 'text-left',
           )}>
-            <time
+            <time data-eos-id="src/components/html-chat-bubble.tsx#27"
               dateTime={timestamp.toISOString()}
               className="text-[11px] font-medium tabular-nums text-neutral-400"
             >
