@@ -16,7 +16,7 @@ export function DeliveryTab() {
 
   return (
     <>
-      <div data-eos-id="src/pages/admin/email/delivery-tab.tsx#0" className="flex gap-1 bg-white rounded-sm p-1 mb-4">
+      <div data-eos-id="src/pages/admin/email/delivery-tab.tsx#0" data-eos-v="2" className="flex gap-1 bg-white rounded-sm p-1 mb-4">
         <button data-eos-id="src/pages/admin/email/delivery-tab.tsx#1"
           onClick={() => setSubTab('bounces')}
           className={cn(
