@@ -42,30 +42,30 @@ export function TicketQuestionsModal({ open, questions, submitting, onClose, onS
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="fixed inset-0 bg-black/60" aria-hidden="true" onClick={submitting ? undefined : onClose} />
-      <div
+    <div data-eos-id="src/components/ticket-questions-modal.tsx#0" className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div data-eos-id="src/components/ticket-questions-modal.tsx#1" className="fixed inset-0 bg-black/60" aria-hidden="true" onClick={submitting ? undefined : onClose} />
+      <div data-eos-id="src/components/ticket-questions-modal.tsx#2"
         role="dialog"
         aria-modal="true"
         aria-label="A few questions before you book"
         className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[85vh] overflow-y-auto"
       >
-        <div className="px-5 pt-5 pb-3">
-          <h2 className="text-base font-semibold text-neutral-900">A few questions before you book</h2>
-          <p className="text-xs text-neutral-500 mt-0.5">The organiser needs these for this event.</p>
+        <div data-eos-id="src/components/ticket-questions-modal.tsx#3" className="px-5 pt-5 pb-3">
+          <h2 data-eos-id="src/components/ticket-questions-modal.tsx#4" className="text-base font-semibold text-neutral-900">A few questions before you book</h2>
+          <p data-eos-id="src/components/ticket-questions-modal.tsx#5" className="text-xs text-neutral-500 mt-0.5">The organiser needs these for this event.</p>
         </div>
 
-        <div className="px-5 pb-4 space-y-4">
+        <div data-eos-id="src/components/ticket-questions-modal.tsx#6" className="px-5 pb-4 space-y-4">
           {questions.map((q) => (
-            <div key={q.id} className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-800">
+            <div data-eos-id="src/components/ticket-questions-modal.tsx#7" key={q.id} className="space-y-1.5">
+              <label data-eos-id="src/components/ticket-questions-modal.tsx#8" data-eos-var="q.prompt" data-eos-var-label="Prompt" data-eos-var-scope="item" className="block text-sm font-medium text-neutral-800">
                 {q.prompt}
-                {q.required && <span className="text-error-600 ml-0.5">*</span>}
+                {q.required && <span data-eos-id="src/components/ticket-questions-modal.tsx#9" className="text-error-600 ml-0.5">*</span>}
               </label>
-              {q.help_text && <p className="text-xs text-neutral-500">{q.help_text}</p>}
+              {q.help_text && <p data-eos-id="src/components/ticket-questions-modal.tsx#10" data-eos-var="q.help_text" data-eos-var-label="Help text" data-eos-var-scope="item" className="text-xs text-neutral-500">{q.help_text}</p>}
 
               {q.question_type === 'short_text' && (
-                <input
+                <input data-eos-id="src/components/ticket-questions-modal.tsx#11"
                   type="text"
                   value={(answers[q.id] as string) ?? ''}
                   onChange={(e) => set(q.id, e.target.value)}
@@ -73,7 +73,7 @@ export function TicketQuestionsModal({ open, questions, submitting, onClose, onS
                 />
               )}
               {q.question_type === 'long_text' && (
-                <textarea
+                <textarea data-eos-id="src/components/ticket-questions-modal.tsx#12"
                   rows={3}
                   value={(answers[q.id] as string) ?? ''}
                   onChange={(e) => set(q.id, e.target.value)}
@@ -81,12 +81,12 @@ export function TicketQuestionsModal({ open, questions, submitting, onClose, onS
                 />
               )}
               {q.question_type === 'boolean' && (
-                <div className="flex gap-2">
+                <div data-eos-id="src/components/ticket-questions-modal.tsx#13" className="flex gap-2">
                   {['Yes', 'No'].map((opt) => {
                     const val = opt === 'Yes'
                     const active = answers[q.id] === val
                     return (
-                      <button
+                      <button data-eos-id="src/components/ticket-questions-modal.tsx#14"
                         key={opt}
                         type="button"
                         onClick={() => set(q.id, val)}
@@ -99,11 +99,11 @@ export function TicketQuestionsModal({ open, questions, submitting, onClose, onS
                 </div>
               )}
               {q.question_type === 'single_select' && (
-                <div className="flex flex-wrap gap-2">
+                <div data-eos-id="src/components/ticket-questions-modal.tsx#15" className="flex flex-wrap gap-2">
                   {q.options.map((opt) => {
                     const active = answers[q.id] === opt
                     return (
-                      <button
+                      <button data-eos-id="src/components/ticket-questions-modal.tsx#16"
                         key={opt}
                         type="button"
                         onClick={() => set(q.id, opt)}
@@ -116,11 +116,11 @@ export function TicketQuestionsModal({ open, questions, submitting, onClose, onS
                 </div>
               )}
               {q.question_type === 'multi_select' && (
-                <div className="flex flex-wrap gap-2">
+                <div data-eos-id="src/components/ticket-questions-modal.tsx#17" className="flex flex-wrap gap-2">
                   {q.options.map((opt) => {
                     const active = Array.isArray(answers[q.id]) && (answers[q.id] as string[]).includes(opt)
                     return (
-                      <button
+                      <button data-eos-id="src/components/ticket-questions-modal.tsx#18"
                         key={opt}
                         type="button"
                         onClick={() => toggleMulti(q.id, opt)}
@@ -136,8 +136,8 @@ export function TicketQuestionsModal({ open, questions, submitting, onClose, onS
           ))}
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-neutral-100 px-5 py-3 flex gap-2">
-          <button
+        <div data-eos-id="src/components/ticket-questions-modal.tsx#19" className="sticky bottom-0 bg-white border-t border-neutral-100 px-5 py-3 flex gap-2">
+          <button data-eos-id="src/components/ticket-questions-modal.tsx#20"
             type="button"
             onClick={onClose}
             disabled={submitting}
@@ -145,13 +145,13 @@ export function TicketQuestionsModal({ open, questions, submitting, onClose, onS
           >
             Cancel
           </button>
-          <button
+          <button data-eos-id="src/components/ticket-questions-modal.tsx#21"
             type="button"
             onClick={() => onSubmit(answers)}
             disabled={missingRequired || submitting}
             className="flex-1 h-11 rounded-full text-sm font-semibold text-white bg-primary-600 disabled:opacity-50 inline-flex items-center justify-center gap-2"
           >
-            {submitting && <Loader2 size={15} className="animate-spin" />}
+            {submitting && <Loader2 data-eos-id="src/components/ticket-questions-modal.tsx#22" size={15} className="animate-spin" />}
             Continue to payment
           </button>
         </div>
