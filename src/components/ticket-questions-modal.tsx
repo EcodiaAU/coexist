@@ -42,7 +42,7 @@ export function TicketQuestionsModal({ open, questions, submitting, onClose, onS
   }
 
   return createPortal(
-    <div data-eos-id="src/components/ticket-questions-modal.tsx#0" className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div data-eos-id="src/components/ticket-questions-modal.tsx#0" data-eos-v="2" className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div data-eos-id="src/components/ticket-questions-modal.tsx#1" className="fixed inset-0 bg-black/60" aria-hidden="true" onClick={submitting ? undefined : onClose} />
       <div data-eos-id="src/components/ticket-questions-modal.tsx#2"
         role="dialog"
