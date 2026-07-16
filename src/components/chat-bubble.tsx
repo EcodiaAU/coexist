@@ -113,7 +113,7 @@ export function ChatBubble({
   const roleStyle = roleBadge ? ROLE_COLORS[roleBadge] ?? { bg: 'bg-primary-100', text: 'text-primary-600' } : null
 
   return (
-    <div data-eos-id="src/components/chat-bubble.tsx#0" className="relative">
+    <div data-eos-id="src/components/chat-bubble.tsx#0" data-eos-v="2" className="relative">
       {dragEnabled && (
         <motion.div data-eos-id="src/components/chat-bubble.tsx#1"
           aria-hidden="true"
@@ -165,7 +165,7 @@ export function ChatBubble({
             aria-label={senderName ? `View ${senderName}'s profile` : 'View profile'}
           >
             {senderAvatar ? (
-              <img data-eos-id="src/components/chat-bubble.tsx#6"
+              <img data-eos-src="dynamic" data-eos-src-label="Sender avatar" data-eos-id="src/components/chat-bubble.tsx#6"
                 src={senderAvatar}
                 alt=""
                 loading="lazy"
@@ -279,7 +279,7 @@ export function ChatBubble({
 
           {/* Photo */}
           {photo && (
-            <img data-eos-id="src/components/chat-bubble.tsx#17"
+            <img data-eos-src="dynamic" data-eos-src-label="Photo" data-eos-id="src/components/chat-bubble.tsx#17"
               src={photo}
               alt="Shared image"
               loading="lazy"
@@ -563,7 +563,7 @@ export function AnnouncementCard({
       {/* Event cover image */}
       {hasEventImage && (
         <div data-eos-id="src/components/chat-bubble.tsx#42" className="relative w-full h-32 overflow-hidden">
-          <img data-eos-id="src/components/chat-bubble.tsx#43"
+          <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/components/chat-bubble.tsx#43"
             src={eventDetails.coverImageUrl!}
             alt=""
             className="w-full h-full object-cover"
@@ -731,7 +731,7 @@ export function AnnouncementCard({
                       className="snap-start shrink-0 flex flex-col items-center gap-1 min-w-[3.5rem]"
                     >
                       {r.profiles?.avatar_url ? (
-                        <img data-eos-id="src/components/chat-bubble.tsx#77"
+                        <img data-eos-src="dynamic" data-eos-src-label="Avatar url" data-eos-id="src/components/chat-bubble.tsx#77"
                           src={r.profiles.avatar_url}
                           alt=""
                           loading="lazy"
@@ -850,7 +850,7 @@ export function CarpoolCard({
       {/* Event cover image */}
       {hasEventImage && (
         <div data-eos-id="src/components/chat-bubble.tsx#83" className="relative w-full h-32">
-          <img data-eos-id="src/components/chat-bubble.tsx#84"
+          <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/components/chat-bubble.tsx#84"
             src={eventDetails.coverImageUrl!}
             alt=""
             className="w-full h-full object-cover"
