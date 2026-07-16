@@ -137,7 +137,7 @@ function RichStatCard({
   const display = useCountUp(value, 1200, !reducedMotion)
 
   return (
-    <motion.div data-eos-id="src/pages/admin/collective-detail.tsx#0"
+    <motion.div data-eos-id="src/pages/admin/collective-detail.tsx#0" data-eos-v="2"
       initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: 14, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.35, delay: reducedMotion ? 0 : delay, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -1128,7 +1128,7 @@ function SettingsTab({ collectiveId }: { collectiveId: string }) {
         <div data-eos-id="src/pages/admin/collective-detail.tsx#159" className="p-5">
           <div data-eos-id="src/pages/admin/collective-detail.tsx#160" className="relative rounded-sm overflow-hidden bg-neutral-50" style={{ aspectRatio: '16/9' }}>
             {coverPreview ? (
-              <img data-eos-id="src/pages/admin/collective-detail.tsx#161" src={coverPreview} alt="Cover" loading="lazy" className="w-full h-full object-cover" />
+              <img data-eos-src="dynamic" data-eos-src-label="Cover preview" data-eos-id="src/pages/admin/collective-detail.tsx#161" src={coverPreview} alt="Cover" loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <div data-eos-id="src/pages/admin/collective-detail.tsx#162" className="flex flex-col items-center justify-center h-full text-neutral-300 gap-2">
                 <ImagePlus data-eos-id="src/pages/admin/collective-detail.tsx#163" size={32} />
@@ -1440,7 +1440,7 @@ export default function AdminCollectiveDetailPage() {
           transition={{ duration: 0.35 }}
           className="relative"
         >
-          <img data-eos-id="src/pages/admin/collective-detail.tsx#227"
+          <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/admin/collective-detail.tsx#227"
             src={detail.cover_image_url}
             alt={detail.name}
             className="w-full block"
