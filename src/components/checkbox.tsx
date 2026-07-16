@@ -37,7 +37,7 @@ export function Checkbox({
   const isCheckedOrIndeterminate = checked || indeterminate
 
   return (
-    <label
+    <label data-eos-id="src/components/checkbox.tsx#0"
       className={cn(
         'relative flex items-start gap-3 min-h-11 cursor-pointer select-none active:scale-[0.98] transition-transform duration-150',
         disabled && 'opacity-50 cursor-not-allowed',
@@ -45,7 +45,7 @@ export function Checkbox({
       )}
     >
       {/* Hidden native input */}
-      <input
+      <input data-eos-id="src/components/checkbox.tsx#1"
         ref={inputRef}
         type="checkbox"
         checked={checked}
@@ -57,7 +57,7 @@ export function Checkbox({
       />
 
       {/* Visual checkbox */}
-      <span
+      <span data-eos-id="src/components/checkbox.tsx#2"
         aria-hidden="true"
         className={cn(
           'relative flex items-center justify-center shrink-0',
@@ -69,26 +69,26 @@ export function Checkbox({
             : 'bg-white border-neutral-300',
         )}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence data-eos-id="src/components/checkbox.tsx#3" mode="wait">
           {indeterminate ? (
-            <motion.span
+            <motion.span data-eos-id="src/components/checkbox.tsx#4"
               key="indeterminate"
               initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.5 }}
               transition={{ duration: 0.1 }}
             >
-              <Minus size={14} className="text-white" strokeWidth={3} />
+              <Minus data-eos-id="src/components/checkbox.tsx#5" size={14} className="text-white" strokeWidth={3} />
             </motion.span>
           ) : checked ? (
-            <motion.span
+            <motion.span data-eos-id="src/components/checkbox.tsx#6"
               key="checked"
               initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.5 }}
               transition={{ duration: 0.1 }}
             >
-              <Check size={14} className="text-white" strokeWidth={3} />
+              <Check data-eos-id="src/components/checkbox.tsx#7" size={14} className="text-white" strokeWidth={3} />
             </motion.span>
           ) : null}
         </AnimatePresence>
@@ -96,14 +96,14 @@ export function Checkbox({
 
       {/* Label + description */}
       {(label || description) && (
-        <div className="min-w-0">
+        <div data-eos-id="src/components/checkbox.tsx#8" className="min-w-0">
           {label && (
-            <span className="block text-sm font-medium text-primary-800">
+            <span data-eos-id="src/components/checkbox.tsx#9" className="block text-sm font-medium text-primary-800">
               {label}
             </span>
           )}
           {description && (
-            <span
+            <span data-eos-id="src/components/checkbox.tsx#10"
               id={descriptionId}
               className="block text-caption text-primary-400 mt-0.5"
             >
