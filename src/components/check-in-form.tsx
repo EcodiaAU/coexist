@@ -69,7 +69,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
   }, [firstName, lastName, age, gender, email, emergencyName, emergencyPhone, emergencyRelationship, updateProfile, onComplete])
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/check-in-form.tsx#0"
       key="details"
       initial={rm ? undefined : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -77,28 +77,28 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
       transition={rm ? { duration: 0 } : { duration: 0.25, ease: 'easeInOut' }}
       className="pb-4"
     >
-      <div className="text-center mb-5">
-        <div className="w-12 h-12 rounded-full bg-warning-100 flex items-center justify-center mx-auto mb-3">
-          <AlertTriangle size={22} className="text-warning-600" />
+      <div data-eos-id="src/components/check-in-form.tsx#1" className="text-center mb-5">
+        <div data-eos-id="src/components/check-in-form.tsx#2" className="w-12 h-12 rounded-full bg-warning-100 flex items-center justify-center mx-auto mb-3">
+          <AlertTriangle data-eos-id="src/components/check-in-form.tsx#3" size={22} className="text-warning-600" />
         </div>
-        <h3 className="font-heading text-lg font-bold text-neutral-900">
+        <h3 data-eos-id="src/components/check-in-form.tsx#4" className="font-heading text-lg font-bold text-neutral-900">
           Safety details required
         </h3>
-        <p className="text-sm text-neutral-500 mt-1 max-w-xs mx-auto">
+        <p data-eos-id="src/components/check-in-form.tsx#5" className="text-sm text-neutral-500 mt-1 max-w-xs mx-auto">
           We need a few details before you can check in. Your emergency info is only visible to event leaders.
         </p>
       </div>
 
-      <div className="space-y-4 overflow-y-auto px-0.5 -mx-0.5" style={{ maxHeight: 'calc(55vh - var(--kb-height, 0px))' }}>
+      <div data-eos-id="src/components/check-in-form.tsx#6" className="space-y-4 overflow-y-auto px-0.5 -mx-0.5" style={{ maxHeight: 'calc(55vh - var(--kb-height, 0px))' }}>
         {/* Personal */}
-        <div>
-          <div className="flex items-center gap-2 mb-2.5">
-            <User size={14} className="text-neutral-500" />
-            <h4 className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Your Details</h4>
+        <div data-eos-id="src/components/check-in-form.tsx#7">
+          <div data-eos-id="src/components/check-in-form.tsx#8" className="flex items-center gap-2 mb-2.5">
+            <User data-eos-id="src/components/check-in-form.tsx#9" size={14} className="text-neutral-500" />
+            <h4 data-eos-id="src/components/check-in-form.tsx#10" className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Your Details</h4>
           </div>
-          <div className="space-y-2.5">
-            <div className="grid grid-cols-2 gap-2.5">
-              <Input
+          <div data-eos-id="src/components/check-in-form.tsx#11" className="space-y-2.5">
+            <div data-eos-id="src/components/check-in-form.tsx#12" className="grid grid-cols-2 gap-2.5">
+              <Input data-eos-id="src/components/check-in-form.tsx#13"
                 label="First Name *"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -106,7 +106,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
                 maxLength={50}
                 className="[&_input]:bg-surface-3"
               />
-              <Input
+              <Input data-eos-id="src/components/check-in-form.tsx#14"
                 label="Last Name *"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
@@ -115,8 +115,8 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
                 className="[&_input]:bg-surface-3"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              <Input
+            <div data-eos-id="src/components/check-in-form.tsx#15" className="grid grid-cols-2 gap-2.5">
+              <Input data-eos-id="src/components/check-in-form.tsx#16"
                 label="Age"
                 value={age}
                 onChange={(e) => setAge(e.target.value.replace(/\D/g, ''))}
@@ -125,7 +125,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
                 maxLength={3}
                 className="[&_input]:bg-surface-3"
               />
-              <Input
+              <Input data-eos-id="src/components/check-in-form.tsx#17"
                 label="Gender"
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
@@ -134,7 +134,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
                 className="[&_input]:bg-surface-3"
               />
             </div>
-            <Input
+            <Input data-eos-id="src/components/check-in-form.tsx#18"
               label="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -147,14 +147,14 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
         </div>
 
         {/* Emergency */}
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <AlertTriangle size={14} className="text-warning-600" />
-            <h4 className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Emergency Contact *</h4>
+        <div data-eos-id="src/components/check-in-form.tsx#19">
+          <div data-eos-id="src/components/check-in-form.tsx#20" className="flex items-center gap-2 mb-1.5">
+            <AlertTriangle data-eos-id="src/components/check-in-form.tsx#21" size={14} className="text-warning-600" />
+            <h4 data-eos-id="src/components/check-in-form.tsx#22" className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Emergency Contact *</h4>
           </div>
-          <p className="text-[11px] text-neutral-500 mb-2.5">Only visible to event leaders for safety.</p>
-          <div className="space-y-2.5">
-            <Input
+          <p data-eos-id="src/components/check-in-form.tsx#23" className="text-[11px] text-neutral-500 mb-2.5">Only visible to event leaders for safety.</p>
+          <div data-eos-id="src/components/check-in-form.tsx#24" className="space-y-2.5">
+            <Input data-eos-id="src/components/check-in-form.tsx#25"
               label="Contact Name *"
               value={emergencyName}
               onChange={(e) => setEmergencyName(e.target.value)}
@@ -162,7 +162,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
               maxLength={100}
               className="[&_input]:bg-surface-3"
             />
-            <Input
+            <Input data-eos-id="src/components/check-in-form.tsx#26"
               label="Contact Phone *"
               value={emergencyPhone}
               onChange={(e) => setEmergencyPhone(e.target.value)}
@@ -171,7 +171,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
               maxLength={20}
               className="[&_input]:bg-surface-3"
             />
-            <Input
+            <Input data-eos-id="src/components/check-in-form.tsx#27"
               label="Relationship"
               value={emergencyRelationship}
               onChange={(e) => setEmergencyRelationship(e.target.value)}
@@ -183,8 +183,8 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
         </div>
       </div>
 
-      <div className="mt-5 space-y-2">
-        <Button
+      <div data-eos-id="src/components/check-in-form.tsx#28" className="mt-5 space-y-2">
+        <Button data-eos-id="src/components/check-in-form.tsx#29"
           variant="primary"
           size="lg"
           fullWidth
@@ -195,7 +195,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
           Save & Continue to Check In
         </Button>
         {!detailsValid && (
-          <p className="text-[11px] text-center text-neutral-500">
+          <p data-eos-id="src/components/check-in-form.tsx#30" className="text-[11px] text-center text-neutral-500">
             Fill in starred (*) fields to continue
           </p>
         )}
@@ -282,7 +282,7 @@ export function CheckInModeView({
   }, [code, isComplete, digits, onManualSubmit])
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/check-in-form.tsx#31"
       key="checkin"
       initial={rm ? undefined : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -290,8 +290,8 @@ export function CheckInModeView({
       transition={rm ? { duration: 0 } : { duration: 0.25, ease: 'easeInOut' }}
       className="pb-2"
     >
-      <AnimatePresenceInner mode="wait" initial={false}>
-        <motion.div
+      <AnimatePresenceInner data-eos-id="src/components/check-in-form.tsx#32" mode="wait" initial={false}>
+        <motion.div data-eos-id="src/components/check-in-form.tsx#33"
           key="code-entry"
           initial={rm ? undefined : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -299,35 +299,35 @@ export function CheckInModeView({
           transition={rm ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
           className="py-2"
         >
-          <div className="text-center mb-6">
-            <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-3">
-              <Hash size={26} className="text-primary-500" />
+          <div data-eos-id="src/components/check-in-form.tsx#34" className="text-center mb-6">
+            <div data-eos-id="src/components/check-in-form.tsx#35" className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-3">
+              <Hash data-eos-id="src/components/check-in-form.tsx#36" size={26} className="text-primary-500" />
             </div>
-            <h3 className="font-heading text-lg font-bold text-neutral-900">
+            <h3 data-eos-id="src/components/check-in-form.tsx#37" className="font-heading text-lg font-bold text-neutral-900">
               Enter Check-In Code
             </h3>
-            <p className="text-sm text-neutral-500 mt-1">
+            <p data-eos-id="src/components/check-in-form.tsx#38" className="text-sm text-neutral-500 mt-1">
               {eventTitle}
             </p>
             {collectiveName && (
-              <p className="text-caption text-neutral-400 mt-0.5">{collectiveName}</p>
+              <p data-eos-id="src/components/check-in-form.tsx#39" className="text-caption text-neutral-400 mt-0.5">{collectiveName}</p>
             )}
-            <p className="text-caption text-neutral-400 mt-2">
+            <p data-eos-id="src/components/check-in-form.tsx#40" className="text-caption text-neutral-400 mt-2">
               Ask your leader for the 3-character code
             </p>
           </div>
 
           {isOffline && (
-            <div className="flex items-center gap-2 p-3 rounded-sm bg-warning-50 text-warning-700 text-sm font-medium mb-4">
-              <WifiOff size={16} />
+            <div data-eos-id="src/components/check-in-form.tsx#41" className="flex items-center gap-2 p-3 rounded-sm bg-warning-50 text-warning-700 text-sm font-medium mb-4">
+              <WifiOff data-eos-id="src/components/check-in-form.tsx#42" size={16} />
               You're offline. Check-in will be queued and synced later.
             </div>
           )}
 
           {/* 3-digit PIN entry */}
-          <div className="flex justify-center gap-3 mb-6" onPaste={handlePaste}>
+          <div data-eos-id="src/components/check-in-form.tsx#43" className="flex justify-center gap-3 mb-6" onPaste={handlePaste}>
             {[0, 1, 2].map((i) => (
-              <input
+              <input data-eos-id="src/components/check-in-form.tsx#44"
                 key={i}
                 ref={inputRefs[i]}
                 type="text"
@@ -343,7 +343,7 @@ export function CheckInModeView({
             ))}
           </div>
 
-          <Button
+          <Button data-eos-id="src/components/check-in-form.tsx#45"
             variant="primary"
             size="lg"
             fullWidth
