@@ -115,7 +115,7 @@ export function DateInput({
       : undefined)
 
   return (
-    <Input data-eos-id="src/components/date-input.tsx#0"
+    <Input data-eos-id="src/components/date-input.tsx#0" data-eos-v="2"
       type="text"
       label={label}
       value={display}
