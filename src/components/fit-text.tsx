@@ -56,7 +56,7 @@ export function FitText({
   }, [children, max, min])
 
   return (
-    <span
+    <span data-eos-id="src/components/fit-text.tsx#0"
       ref={ref}
       title={title ?? children}
       className={cn('inline-block max-w-full whitespace-nowrap align-bottom', className)}
