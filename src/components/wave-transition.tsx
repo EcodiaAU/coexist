@@ -38,7 +38,7 @@ export function WaveTransition({
   const cfg = SIZE_CONFIG[size]
 
   return (
-    <div
+    <div data-eos-id="src/components/wave-transition.tsx#0"
       className={cn(
         position === 'bottom'
           ? 'absolute bottom-0 left-0 right-0 z-20'
@@ -46,13 +46,13 @@ export function WaveTransition({
         className,
       )}
     >
-      <svg
+      <svg data-eos-id="src/components/wave-transition.tsx#1"
         viewBox={cfg.viewBox}
         preserveAspectRatio="none"
         className={cfg.className}
         xmlns="http://www.w3.org/2000/svg"
       >
-        <path d={path} className={fill} />
+        <path data-eos-id="src/components/wave-transition.tsx#2" d={path} className={fill} />
       </svg>
     </div>
   )
