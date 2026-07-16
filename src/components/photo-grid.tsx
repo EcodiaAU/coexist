@@ -45,7 +45,7 @@ const PhotoItem = memo(function PhotoItem({
   const handleLoad = useCallback(() => onLoad(image.id), [onLoad, image.id])
 
   return (
-    <motion.button data-eos-id="src/components/photo-grid.tsx#0"
+    <motion.button data-eos-id="src/components/photo-grid.tsx#0" data-eos-v="2"
       key={image.id}
       type="button"
       role="gridcell"
@@ -60,7 +60,7 @@ const PhotoItem = memo(function PhotoItem({
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
       )}
     >
-      <img data-eos-id="src/components/photo-grid.tsx#1"
+      <img data-eos-src="dynamic" data-eos-src-label="Src" data-eos-id="src/components/photo-grid.tsx#1"
         src={isSupabaseStorageUrl(image.src) ? getTransformUrl(image.src, { width: 640, quality: 80 }) : image.src}
         srcSet={getSrcSet(image.src, [200, 400, 640]) || undefined}
         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
