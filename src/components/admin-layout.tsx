@@ -157,22 +157,22 @@ const adminBottomTabs: Tab[] = [
     label: 'App',
     path: '/',
     exact: true,
-    icon: <Home size={21} strokeWidth={1.5} />,
-    activeIcon: <Home size={21} strokeWidth={2.2} />,
+    icon: <Home data-eos-id="src/components/admin-layout.tsx#0" size={21} strokeWidth={1.5} />,
+    activeIcon: <Home data-eos-id="src/components/admin-layout.tsx#1" size={21} strokeWidth={2.2} />,
   },
   {
     key: 'chat',
     label: 'Chat',
     path: '/chat',
-    icon: <MessageCircle size={21} strokeWidth={1.5} />,
-    activeIcon: <MessageCircle size={21} strokeWidth={2.2} />,
+    icon: <MessageCircle data-eos-id="src/components/admin-layout.tsx#2" size={21} strokeWidth={1.5} />,
+    activeIcon: <MessageCircle data-eos-id="src/components/admin-layout.tsx#3" size={21} strokeWidth={2.2} />,
   },
   {
     key: 'admin-collectives',
     label: 'Collectives',
     path: '/admin/collectives',
-    icon: <MapPin size={21} strokeWidth={1.5} />,
-    activeIcon: <MapPin size={21} strokeWidth={2.2} />,
+    icon: <MapPin data-eos-id="src/components/admin-layout.tsx#4" size={21} strokeWidth={1.5} />,
+    activeIcon: <MapPin data-eos-id="src/components/admin-layout.tsx#5" size={21} strokeWidth={2.2} />,
   },
   {
     key: 'more',
@@ -180,8 +180,8 @@ const adminBottomTabs: Tab[] = [
     path: '/more',
     exact: true,
     isMore: true,
-    icon: <MoreHorizontal size={21} strokeWidth={1.5} />,
-    activeIcon: <MoreHorizontal size={21} strokeWidth={2.2} />,
+    icon: <MoreHorizontal data-eos-id="src/components/admin-layout.tsx#6" size={21} strokeWidth={1.5} />,
+    activeIcon: <MoreHorizontal data-eos-id="src/components/admin-layout.tsx#7" size={21} strokeWidth={2.2} />,
   },
 ]
 
@@ -192,7 +192,7 @@ const adminBottomTabs: Tab[] = [
 function AdminBottomTabs() {
   const { openMenu } = useMenuSheet()
   return (
-    <BottomTabBar
+    <BottomTabBar data-eos-id="src/components/admin-layout.tsx#8"
       tabs={adminBottomTabs}
       layoutPrefix="admin-tab"
       accent="primary"
@@ -261,9 +261,9 @@ export function AdminLayout() {
   const headerCtx = useMemo(() => ({ setHeader }), [setHeader])
 
   return (
-    <AdminCollectiveScopeContext.Provider value={scopeCtx}>
-    <AdminHeaderContext.Provider value={headerCtx}>
-      <div className="admin-shell flex flex-1 min-h-0">
+    <AdminCollectiveScopeContext.Provider data-eos-id="src/components/admin-layout.tsx#9" value={scopeCtx}>
+    <AdminHeaderContext.Provider data-eos-id="src/components/admin-layout.tsx#10" value={headerCtx}>
+      <div data-eos-id="src/components/admin-layout.tsx#11" className="admin-shell flex flex-1 min-h-0">
         {/* Desktop sidebar is handled by UnifiedSidebar in AppShell */}
 
         {/* Mobile drawer + hamburger removed - handled by UnifiedSidebar in AppShell */}
@@ -275,7 +275,7 @@ export function AdminLayout() {
             scroller while the inner content uses overflow-clip -> frozen,
             unscrollable admin pages. overscroll-none stays; hide-scrollbar is
             tab-only so desktop keeps a visible scrollbar. (2026-06-08) */}
-        <div ref={scrollRef} data-parallax-scroll className={cn(
+        <div data-eos-id="src/components/admin-layout.tsx#12" ref={scrollRef} data-parallax-scroll className={cn(
           'flex-1 flex flex-col min-w-0 min-h-0 bg-surface-1',
           // Mobile/tab mode: app-shell is overflow-hidden (viewport-pinned), so THIS
           // container owns the scroll -> overflow-y-auto. Desktop sidebar mode:
@@ -296,7 +296,7 @@ export function AdminLayout() {
               actions + stats) cross-fades when the page changes. (Tate 2026-06-23
               - was remounting bg + wave on every nav and jumping height.) */}
           {!header.fullBleed && header.title && header.title !== 'Dashboard' ? (
-            <div
+            <div data-eos-id="src/components/admin-layout.tsx#13"
               className={cn(
                 'relative overflow-hidden shrink-0',
                 'min-h-[15rem] sm:min-h-[16rem]',
@@ -307,8 +307,8 @@ export function AdminLayout() {
                 'before:absolute before:inset-x-0 before:bottom-full before:h-[200px] before:bg-inherit',
               )}
             >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
+              <AnimatePresence data-eos-id="src/components/admin-layout.tsx#14" mode="wait" initial={false}>
+                <motion.div data-eos-id="src/components/admin-layout.tsx#15"
                   key={header.title}
                   className="relative z-10"
                   initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
@@ -318,7 +318,7 @@ export function AdminLayout() {
                 >
                   {/* Back button - dark circle, consistent across all sub-pages */}
                   {showBackButton && (
-                    <motion.button
+                    <motion.button data-eos-id="src/components/admin-layout.tsx#16"
                       type="button"
                       onClick={() => navigate(-1)}
                       whileTap={shouldReduceMotion ? undefined : { scale: 0.9 }}
@@ -333,35 +333,35 @@ export function AdminLayout() {
                       )}
                       aria-label="Go back"
                     >
-                      <ArrowLeft size={22} />
+                      <ArrowLeft data-eos-id="src/components/admin-layout.tsx#17" size={22} />
                     </motion.button>
                   )}
 
-                  <h1 className="font-heading text-3xl sm:text-4xl font-normal display-tight text-white text-center">
+                  <h1 data-eos-id="src/components/admin-layout.tsx#18" data-eos-var="header.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="font-heading text-3xl sm:text-4xl font-normal display-tight text-white text-center">
                     {header.title}
                   </h1>
                   {header.actions && (
-                    <div className="flex items-center justify-center gap-2 mt-3">
+                    <div data-eos-id="src/components/admin-layout.tsx#19" data-eos-var="header.actions" data-eos-var-label="Actions" data-eos-var-scope="prop" className="flex items-center justify-center gap-2 mt-3">
                       {header.actions}
                     </div>
                   )}
 
                   {/* Per-page hero content (stats, etc.) */}
                   {header.heroContent && (
-                    <div className="mt-5">{header.heroContent}</div>
+                    <div data-eos-id="src/components/admin-layout.tsx#20" data-eos-var="header.heroContent" data-eos-var-label="Hero content" data-eos-var-scope="prop" className="mt-5">{header.heroContent}</div>
                   )}
                 </motion.div>
               </AnimatePresence>
 
               {/* Wave divider - one fixed shape, never reloads between pages */}
-              <div className="absolute bottom-0 left-0 right-0 z-20">
-                <svg
+              <div data-eos-id="src/components/admin-layout.tsx#21" className="absolute bottom-0 left-0 right-0 z-20">
+                <svg data-eos-id="src/components/admin-layout.tsx#22"
                   viewBox="0 0 1440 70"
                   preserveAspectRatio="none"
                   className="w-full h-7 sm:h-10 block"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path d={WAVE_PATHS[0]} className="fill-white" />
+                  <path data-eos-id="src/components/admin-layout.tsx#23" d={WAVE_PATHS[0]} className="fill-white" />
                 </svg>
               </div>
             </div>
@@ -384,7 +384,7 @@ export function AdminLayout() {
               native app (Kurt's report). Member/leader layouts use this same flex
               chain WITHOUT a Y clip, which is why they scroll. Clip X only so any
               horizontal bleed is still contained while vertical scroll works. (2026-06-08) */}
-          <div className={cn(
+          <div data-eos-id="src/components/admin-layout.tsx#24" className={cn(
             'relative flex-1',
             !header.fullBleed && 'overflow-x-clip',
             header.fullBleed ? 'p-0 bg-white' : 'p-4 sm:p-6 lg:p-8',
@@ -392,13 +392,13 @@ export function AdminLayout() {
             showBottomTabs && 'pb-[calc(5rem+var(--safe-bottom))]',
           )}>
 
-            <AnimatedOutlet />
+            <AnimatedOutlet data-eos-id="src/components/admin-layout.tsx#25" />
           </div>
         </div>
 
         {/* Admin bottom tab bar - mobile only */}
         {showBottomTabs && (
-          <AdminBottomTabs />
+          <AdminBottomTabs data-eos-id="src/components/admin-layout.tsx#26" />
         )}
       </div>
     </AdminHeaderContext.Provider>
