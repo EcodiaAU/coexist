@@ -31,8 +31,8 @@ export function MiniBar({ value, max, color = 'bg-primary-500', className }: Min
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
 
   return (
-    <div className={cn('h-1.5 w-full rounded-full bg-neutral-100 overflow-hidden', className)}>
-      <motion.div
+    <div data-eos-id="src/components/micro-viz.tsx#0" className={cn('h-1.5 w-full rounded-full bg-neutral-100 overflow-hidden', className)}>
+      <motion.div data-eos-id="src/components/micro-viz.tsx#1"
         className={cn('h-full rounded-full', color)}
         initial={rm ? { width: `${pct}%` } : { width: 0 }}
         animate={{ width: `${pct}%` }}
@@ -63,13 +63,13 @@ export function MiniRing({ value, size = 32, color = 'var(--color-primary-500)',
   const dashLen = (Math.min(value, 100) / 100) * circumference
 
   return (
-    <svg
+    <svg data-eos-id="src/components/micro-viz.tsx#2"
       width={size}
       height={size}
       viewBox={`0 0 ${size} ${size}`}
       className={cn('-rotate-90', className)}
     >
-      <circle
+      <circle data-eos-id="src/components/micro-viz.tsx#3"
         cx={size / 2}
         cy={size / 2}
         r={radius}
@@ -77,7 +77,7 @@ export function MiniRing({ value, size = 32, color = 'var(--color-primary-500)',
         strokeWidth={3}
         className="stroke-neutral-100"
       />
-      <motion.circle
+      <motion.circle data-eos-id="src/components/micro-viz.tsx#4"
         cx={size / 2}
         cy={size / 2}
         r={radius}
@@ -134,13 +134,13 @@ export function MiniSparkline({
   const pathD = `M${points.join(' L')}`
 
   return (
-    <svg
+    <svg data-eos-id="src/components/micro-viz.tsx#5"
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
       className={className}
     >
-      <motion.path
+      <motion.path data-eos-id="src/components/micro-viz.tsx#6"
         d={pathD}
         fill="none"
         stroke={color}
@@ -175,7 +175,7 @@ export function DeltaMark({ value, suffix = '%', className }: DeltaMarkProps) {
   const Icon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus
 
   return (
-    <span
+    <span data-eos-id="src/components/micro-viz.tsx#7"
       className={cn(
         'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums',
         isPositive && 'bg-success-50 text-success-600',
@@ -184,7 +184,7 @@ export function DeltaMark({ value, suffix = '%', className }: DeltaMarkProps) {
         className,
       )}
     >
-      <Icon className="w-3 h-3" />
+      <Icon data-eos-id="src/components/micro-viz.tsx#8" className="w-3 h-3" />
       {isPositive ? '+' : ''}{value}{suffix}
     </span>
   )
