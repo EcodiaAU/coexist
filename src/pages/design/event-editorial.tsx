@@ -116,7 +116,7 @@ function EditorialEventCard({
   const tag = activityTagStyle[event.activity_type] ?? defaultTag
 
   return (
-    <motion.button data-eos-id="src/pages/design/event-editorial.tsx#0"
+    <motion.button data-eos-id="src/pages/design/event-editorial.tsx#0" data-eos-v="2"
       type="button"
       onClick={onTap}
       variants={shouldReduceMotion ? undefined : fadeUp}
@@ -127,7 +127,7 @@ function EditorialEventCard({
     >
       {/* Full-bleed photo */}
       <div data-eos-id="src/pages/design/event-editorial.tsx#1" className="relative w-full" style={{ aspectRatio: '3/2' }}>
-        <img data-eos-id="src/pages/design/event-editorial.tsx#2"
+        <img data-eos-src="dynamic" data-eos-src-label="Image" data-eos-id="src/pages/design/event-editorial.tsx#2"
           src={event.image}
           alt={event.title}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
@@ -252,7 +252,7 @@ function EditorialEventDetail({
     <div data-eos-id="src/pages/design/event-editorial.tsx#17" className="relative bg-white min-h-full">
       {/* ── Hero image ── */}
       <div data-eos-id="src/pages/design/event-editorial.tsx#18" className="relative w-full" style={{ height: '45vh', minHeight: 280 }}>
-        <img data-eos-id="src/pages/design/event-editorial.tsx#19"
+        <img data-eos-src="dynamic" data-eos-src-label="Image" data-eos-id="src/pages/design/event-editorial.tsx#19"
           src={event.image}
           alt={event.title}
           className="absolute inset-0 w-full h-full object-cover"
