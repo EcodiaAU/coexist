@@ -15,7 +15,7 @@ export function Slideshow({ images, captions = [], className }: SlideshowProps) 
 
   if (images.length === 0) {
     return (
-      <div data-eos-id="src/components/development/slideshow.tsx#0" className={cn('rounded-sm bg-primary-100 p-8 text-center text-sm text-primary-500', className)}>
+      <div data-eos-id="src/components/development/slideshow.tsx#0" data-eos-v="2" className={cn('rounded-sm bg-primary-100 p-8 text-center text-sm text-primary-500', className)}>
         No images in this slideshow
       </div>
     )
