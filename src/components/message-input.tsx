@@ -207,7 +207,7 @@ export function MessageInput({
   const canUseActions = isLeader || !!onCreateCarpool
 
   return (
-    <div data-eos-id="src/components/message-input.tsx#0"
+    <div data-eos-id="src/components/message-input.tsx#0" data-eos-v="2"
       className={cn(
         'z-10 bg-white shadow-none border-t border-neutral-100',
         className,
