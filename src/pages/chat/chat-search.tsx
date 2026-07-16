@@ -44,7 +44,7 @@ export function ChatSearch({ collectiveId, onClose }: ChatSearchProps) {
   const [query, setQuery] = useState('')
 
   return (
-    <div data-eos-id="src/pages/chat/chat-search.tsx#0" className="fixed inset-0 z-50 bg-white flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <div data-eos-id="src/pages/chat/chat-search.tsx#0" data-eos-v="2" className="fixed inset-0 z-50 bg-white flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div data-eos-id="src/pages/chat/chat-search.tsx#1" className="flex items-center gap-2 px-3 py-2 shadow-sm">
         <SearchBar data-eos-id="src/pages/chat/chat-search.tsx#2"
           value={query}
