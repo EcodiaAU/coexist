@@ -145,9 +145,9 @@ export function DatePicker({
   const IconComponent = mode === 'time' ? Clock : Calendar
 
   return (
-    <div className={cn('w-full', className)}>
+    <div data-eos-id="src/components/date-picker.tsx#0" className={cn('w-full', className)}>
       {label && (
-        <label
+        <label data-eos-id="src/components/date-picker.tsx#1"
           htmlFor={id}
           className="block mb-1.5 text-sm font-medium text-neutral-900"
         >
@@ -155,9 +155,9 @@ export function DatePicker({
         </label>
       )}
 
-      <div className="relative">
+      <div data-eos-id="src/components/date-picker.tsx#2" className="relative">
         {/* Visible trigger button */}
-        <button
+        <button data-eos-id="src/components/date-picker.tsx#3"
           type="button"
           onClick={handleTriggerClick}
           aria-label={label ?? defaultPlaceholder}
@@ -173,12 +173,12 @@ export function DatePicker({
               : 'hover:bg-neutral-100 hover:shadow-sm',
           )}
         >
-          <IconComponent
+          <IconComponent data-eos-id="src/components/date-picker.tsx#4"
             size={18}
             className="shrink-0 mr-3 text-neutral-400"
             aria-hidden="true"
           />
-          <span
+          <span data-eos-id="src/components/date-picker.tsx#5"
             className={cn(
               'flex-1 truncate',
               value ? 'text-neutral-900' : 'text-neutral-400',
@@ -189,7 +189,7 @@ export function DatePicker({
         </button>
 
         {/* Hidden native input */}
-        <input
+        <input data-eos-id="src/components/date-picker.tsx#6"
           ref={inputRef}
           id={id}
           type={inputType}
@@ -205,9 +205,9 @@ export function DatePicker({
       </div>
 
       {/* Error text */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence data-eos-id="src/components/date-picker.tsx#7" mode="wait">
         {error && (
-          <motion.p
+          <motion.p data-eos-id="src/components/date-picker.tsx#8"
             key="error"
             id={errorId}
             role="alert"
