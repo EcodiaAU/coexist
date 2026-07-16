@@ -26,7 +26,7 @@ export function SaveSuccessBanner({
   className,
 }: SaveSuccessBannerProps) {
   return (
-    <AnimatePresence data-eos-id="src/components/development/save-success-banner.tsx#0">
+    <AnimatePresence data-eos-id="src/components/development/save-success-banner.tsx#0" data-eos-v="2">
       {show && (
         <motion.div data-eos-id="src/components/development/save-success-banner.tsx#1"
           initial={{ opacity: 0, y: 12 }}
