@@ -62,7 +62,7 @@ function Confetti() {
   if (shouldReduceMotion) return null
 
   return (
-    <div data-eos-id="src/pages/events/check-in.tsx#0" className="fixed inset-0 pointer-events-none z-50" aria-hidden="true">
+    <div data-eos-id="src/pages/events/check-in.tsx#0" data-eos-v="2" className="fixed inset-0 pointer-events-none z-50" aria-hidden="true">
       {particles.map((p, i) => (
         <motion.div data-eos-id="src/pages/events/check-in.tsx#1"
           key={i}
