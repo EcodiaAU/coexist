@@ -35,28 +35,28 @@ export function TrendChart({
   const placeholders = [35, 55, 42, 70, 48, 62]
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/trend-chart.tsx#0"
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
       className="group relative overflow-hidden rounded-md bg-white border border-neutral-100 shadow-sm transition-colors duration-200 p-5 sm:p-6"
     >
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center w-10 h-10 rounded-sm bg-neutral-50 group-hover:bg-neutral-100 transition-colors duration-200">
+      <div data-eos-id="src/components/trend-chart.tsx#1" className="relative z-10">
+        <div data-eos-id="src/components/trend-chart.tsx#2" className="flex items-center justify-between mb-6">
+          <div data-eos-id="src/components/trend-chart.tsx#3" className="flex items-center gap-3">
+            <span data-eos-id="src/components/trend-chart.tsx#4" className="flex items-center justify-center w-10 h-10 rounded-sm bg-neutral-50 group-hover:bg-neutral-100 transition-colors duration-200">
               {icon}
             </span>
-            <div>
-              <h3 className="font-heading text-sm font-bold text-neutral-900 tracking-tight">{label}</h3>
-              <p className="text-xs text-neutral-400 font-medium mt-0.5">
+            <div data-eos-id="src/components/trend-chart.tsx#5">
+              <h3 data-eos-id="src/components/trend-chart.tsx#6" className="font-heading text-sm font-bold text-neutral-900 tracking-tight">{label}</h3>
+              <p data-eos-id="src/components/trend-chart.tsx#7" data-eos-var="total.toLocaleString" data-eos-var-label="To locale string" data-eos-var-scope="prop" className="text-xs text-neutral-400 font-medium mt-0.5">
                 {allZero ? 'No data yet' : `${total.toLocaleString()} total`}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2 sm:gap-3 h-36 sm:h-44">
+        <div data-eos-id="src/components/trend-chart.tsx#8" className="flex gap-2 sm:gap-3 h-36 sm:h-44">
           {data.map((d, i) => {
             const val = (d[dataKey as keyof TrendMonth] as number) ?? 0
             const pct = allZero
@@ -64,9 +64,9 @@ export function TrendChart({
               : Math.round(Math.max((val / max) * 100, val > 0 ? 12 : 4))
             const isMax = !allZero && val === max && val > 0
             return (
-              <div key={d.month} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+              <div data-eos-id="src/components/trend-chart.tsx#9" key={d.month} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
                 {/* Value label */}
-                <span className={cn(
+                <span data-eos-id="src/components/trend-chart.tsx#10" className={cn(
                   'text-[11px] sm:text-xs font-semibold tabular-nums',
                   allZero ? 'text-transparent' : isMax ? 'text-neutral-800' : 'text-neutral-400',
                 )}>
@@ -74,8 +74,8 @@ export function TrendChart({
                 </span>
 
                 {/* Bar track - relative with defined flex-1 height so % children work */}
-                <div className="relative w-full flex-1">
-                  <motion.div
+                <div data-eos-id="src/components/trend-chart.tsx#11" className="relative w-full flex-1">
+                  <motion.div data-eos-id="src/components/trend-chart.tsx#12"
                     className="absolute bottom-0 left-[15%] right-[15%] rounded-sm"
                     style={{
                       background: allZero
@@ -89,7 +89,7 @@ export function TrendChart({
                 </div>
 
                 {/* Month label */}
-                <span className={cn(
+                <span data-eos-id="src/components/trend-chart.tsx#13" data-eos-var="d.month" data-eos-var-label="Month" data-eos-var-scope="item" className={cn(
                   'text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide',
                   isMax ? 'text-neutral-600' : 'text-neutral-300',
                 )}>{d.month}</span>
