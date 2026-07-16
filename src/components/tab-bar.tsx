@@ -45,8 +45,8 @@ export function TabBar({
   }, [activeTab, shouldReduceMotion])
 
   return (
-    <LayoutGroup id={groupId}>
-      <div
+    <LayoutGroup data-eos-id="src/components/tab-bar.tsx#0" id={groupId}>
+      <div data-eos-id="src/components/tab-bar.tsx#1"
         ref={scrollRef}
         role="tablist"
         aria-label={ariaLabel}
@@ -60,7 +60,7 @@ export function TabBar({
           const isActive = tab.id === activeTab
 
           return (
-            <button
+            <button data-eos-id="src/components/tab-bar.tsx#2"
               key={tab.id}
               ref={isActive ? activeRef : undefined}
               role="tab"
@@ -80,7 +80,7 @@ export function TabBar({
             >
               {/* Animated underline indicator */}
               {isActive && (
-                <motion.span
+                <motion.span data-eos-id="src/components/tab-bar.tsx#3"
                   layoutId="tab-indicator"
                   className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-primary-700"
                   transition={
@@ -90,9 +90,9 @@ export function TabBar({
                   }
                 />
               )}
-              <span className="relative flex items-center gap-1.5">
+              <span data-eos-id="src/components/tab-bar.tsx#4" data-eos-var="tab.label" data-eos-var-label="Label" data-eos-var-scope="item" className="relative flex items-center gap-1.5">
                 {tab.icon && (
-                  <span className="flex items-center shrink-0" aria-hidden="true">
+                  <span data-eos-id="src/components/tab-bar.tsx#5" data-eos-var="tab.icon" data-eos-var-label="Icon" data-eos-var-scope="item" className="flex items-center shrink-0" aria-hidden="true">
                     {tab.icon}
                   </span>
                 )}
