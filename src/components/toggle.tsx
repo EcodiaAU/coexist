@@ -44,7 +44,7 @@ export function Toggle({
   const config = sizeConfig[size]
 
   return (
-    <div data-eos-id="src/components/toggle.tsx#0" className={cn('flex items-start gap-3 min-h-11', className)}>
+    <div data-eos-id="src/components/toggle.tsx#0" data-eos-v="2" className={cn('flex items-start gap-3 min-h-11', className)}>
       {/* Label area (left side) */}
       {(label || description) && (
         <div data-eos-id="src/components/toggle.tsx#1" className="flex-1 min-w-0 select-none">
