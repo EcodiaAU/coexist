@@ -33,8 +33,8 @@ export function AnimatedOutlet() {
 
   if (reduce) {
     return (
-      <Suspense fallback={<div className="flex-1 min-h-0 bg-surface-1" />}>
-        <div key={location.pathname} className="flex-1 flex flex-col min-h-0">
+      <Suspense data-eos-id="src/components/animated-outlet.tsx#0" fallback={<div data-eos-id="src/components/animated-outlet.tsx#1" className="flex-1 min-h-0 bg-surface-1" />}>
+        <div data-eos-id="src/components/animated-outlet.tsx#2" key={location.pathname} className="flex-1 flex flex-col min-h-0">
           {outlet}
         </div>
       </Suspense>
@@ -42,8 +42,8 @@ export function AnimatedOutlet() {
   }
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
+    <AnimatePresence data-eos-id="src/components/animated-outlet.tsx#3" mode="wait" initial={false}>
+      <motion.div data-eos-id="src/components/animated-outlet.tsx#4"
         key={location.pathname}
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -51,7 +51,7 @@ export function AnimatedOutlet() {
         transition={MOTION.routeTransition}
         className="flex-1 flex flex-col min-h-0"
       >
-        <Suspense fallback={<div className="flex-1 min-h-0 bg-surface-1" />}>
+        <Suspense data-eos-id="src/components/animated-outlet.tsx#5" fallback={<div data-eos-id="src/components/animated-outlet.tsx#6" className="flex-1 min-h-0 bg-surface-1" />}>
           {outlet}
         </Suspense>
       </motion.div>
