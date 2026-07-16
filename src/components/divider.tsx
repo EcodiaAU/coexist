@@ -8,7 +8,7 @@ interface DividerProps {
 export function Divider({ label, className }: DividerProps) {
   if (label) {
     return (
-      <div data-eos-id="src/components/divider.tsx#0"
+      <div data-eos-id="src/components/divider.tsx#0" data-eos-v="2"
         role="separator"
         className={cn('flex items-center gap-3 py-2', className)}
       >
