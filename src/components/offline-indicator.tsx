@@ -31,7 +31,7 @@ export function OfflineIndicator({
 
   if (isFetching && !isOffline) {
     return (
-      <span data-eos-id="src/components/offline-indicator.tsx#0" className={cn('inline-flex items-center gap-1 text-xs text-neutral-500', className)}>
+      <span data-eos-id="src/components/offline-indicator.tsx#0" data-eos-v="2" className={cn('inline-flex items-center gap-1 text-xs text-neutral-500', className)}>
         <RefreshCw data-eos-id="src/components/offline-indicator.tsx#1" size={12} className="animate-spin" />
         {!compact && <span data-eos-id="src/components/offline-indicator.tsx#2">Updating…</span>}
       </span>
