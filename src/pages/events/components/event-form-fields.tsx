@@ -43,7 +43,7 @@ interface FieldProps {
 export function BasicsFields({ fields, onChange, disabled }: FieldProps) {
   return (
     <>
-      <Input data-eos-id="src/pages/events/components/event-form-fields.tsx#0"
+      <Input data-eos-id="src/pages/events/components/event-form-fields.tsx#0" data-eos-v="2"
         label="Event Title"
         placeholder="e.g. Byron Bay Dune Planting Day"
         value={fields.title}
@@ -402,7 +402,7 @@ export function CoverImageFields({
       {coverImageUrl ? (
         <div data-eos-id="src/pages/events/components/event-form-fields.tsx#35" className="space-y-3">
           <div data-eos-id="src/pages/events/components/event-form-fields.tsx#36" className="relative rounded-sm overflow-hidden">
-            <img data-eos-id="src/pages/events/components/event-form-fields.tsx#37"
+            <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/events/components/event-form-fields.tsx#37"
               src={coverImageUrl}
               alt="Cover preview"
               className="w-full object-cover"
