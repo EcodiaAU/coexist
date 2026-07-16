@@ -53,7 +53,7 @@ import type { AttendanceMetrics } from '@/lib/attendance-metrics'
 /* ------------------------------------------------------------------ */
 
 const METRIC_ICONS: Record<string, (s: number) => ReactNode> = {
-  tree: (s) => <TreePine data-eos-id="src/pages/admin/insights.tsx#0" size={s} />, leaf: (s) => <Leaf data-eos-id="src/pages/admin/insights.tsx#1" size={s} />,
+  tree: (s) => <TreePine data-eos-id="src/pages/admin/insights.tsx#0" data-eos-v="2" size={s} />, leaf: (s) => <Leaf data-eos-id="src/pages/admin/insights.tsx#1" size={s} />,
   weed: (s) => <Sprout data-eos-id="src/pages/admin/insights.tsx#2" size={s} />, trash: (s) => <Trash2 data-eos-id="src/pages/admin/insights.tsx#3" size={s} />,
   wave: (s) => <Waves data-eos-id="src/pages/admin/insights.tsx#4" size={s} />, eye: (s) => <Eye data-eos-id="src/pages/admin/insights.tsx#5" size={s} />,
   area: (s) => <Ruler data-eos-id="src/pages/admin/insights.tsx#6" size={s} />, clock: (s) => <Clock data-eos-id="src/pages/admin/insights.tsx#7" size={s} />,
