@@ -45,7 +45,7 @@ export function TabBar({
   }, [activeTab, shouldReduceMotion])
 
   return (
-    <LayoutGroup data-eos-id="src/components/tab-bar.tsx#0" id={groupId}>
+    <LayoutGroup data-eos-id="src/components/tab-bar.tsx#0" data-eos-v="2" id={groupId}>
       <div data-eos-id="src/components/tab-bar.tsx#1"
         ref={scrollRef}
         role="tablist"
