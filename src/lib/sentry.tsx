@@ -188,9 +188,9 @@ export class SentryErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoun
       if (this.props.fallback) return this.props.fallback
 
       return (
-        <div className="flex flex-col items-center justify-center min-h-dvh p-6 text-center bg-white">
-          <div className="w-16 h-16 mb-4 rounded-md bg-error-100 flex items-center justify-center">
-            <svg
+        <div data-eos-id="src/lib/sentry.tsx#0" className="flex flex-col items-center justify-center min-h-dvh p-6 text-center bg-white">
+          <div data-eos-id="src/lib/sentry.tsx#1" className="w-16 h-16 mb-4 rounded-md bg-error-100 flex items-center justify-center">
+            <svg data-eos-id="src/lib/sentry.tsx#2"
               width="28"
               height="28"
               viewBox="0 0 24 24"
@@ -201,28 +201,28 @@ export class SentryErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoun
               strokeLinejoin="round"
               className="text-error-600"
             >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
+              <circle data-eos-id="src/lib/sentry.tsx#3" cx="12" cy="12" r="10" />
+              <line data-eos-id="src/lib/sentry.tsx#4" x1="12" y1="8" x2="12" y2="12" />
+              <line data-eos-id="src/lib/sentry.tsx#5" x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
-          <h2 className="font-heading text-xl font-bold text-neutral-900 mb-2">
+          <h2 data-eos-id="src/lib/sentry.tsx#6" className="font-heading text-xl font-bold text-neutral-900 mb-2">
             Something went wrong
           </h2>
-          <p className="text-sm text-neutral-500 mb-6 max-w-xs leading-relaxed">
+          <p data-eos-id="src/lib/sentry.tsx#7" className="text-sm text-neutral-500 mb-6 max-w-xs leading-relaxed">
             We&apos;ve been notified and are looking into it.
             Try refreshing or going back.
           </p>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={this.handleRetry}>
+          <div data-eos-id="src/lib/sentry.tsx#8" className="flex gap-2">
+            <Button data-eos-id="src/lib/sentry.tsx#9" variant="secondary" onClick={this.handleRetry}>
               Try Again
             </Button>
-            <Button variant="primary" onClick={this.handleReload}>
+            <Button data-eos-id="src/lib/sentry.tsx#10" variant="primary" onClick={this.handleReload}>
               Refresh App
             </Button>
           </div>
           {import.meta.env.DEV && this.state.error && (
-            <pre className="mt-6 text-left text-xs text-error-600 bg-error-50 p-3 rounded-sm max-w-sm overflow-auto max-h-40">
+            <pre data-eos-id="src/lib/sentry.tsx#11" className="mt-6 text-left text-xs text-error-600 bg-error-50 p-3 rounded-sm max-w-sm overflow-auto max-h-40">
               {this.state.error.message}
               {'\n'}
               {this.state.error.stack}
