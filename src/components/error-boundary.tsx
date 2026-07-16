@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback
       return (
-        <EmptyState
+        <EmptyState data-eos-id="src/components/error-boundary.tsx#0"
           illustration="error"
           title="Something went wrong"
           description="This page ran into an issue. Reload to try again."
