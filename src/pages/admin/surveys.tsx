@@ -130,7 +130,7 @@ function useSurveyResults(surveyId: string | null) {
 /* ------------------------------------------------------------------ */
 
 const tabs = [
-  { id: 'surveys', label: 'Surveys', icon: <ClipboardList data-eos-id="src/pages/admin/surveys.tsx#0" size={14} /> },
+  { id: 'surveys', label: 'Surveys', icon: <ClipboardList data-eos-id="src/pages/admin/surveys.tsx#0" data-eos-v="2" size={14} /> },
   { id: 'templates', label: 'Templates', icon: <Copy data-eos-id="src/pages/admin/surveys.tsx#1" size={14} /> },
   { id: 'results', label: 'Results', icon: <BarChart3 data-eos-id="src/pages/admin/surveys.tsx#2" size={14} /> },
   { id: 'settings', label: 'Auto-Survey', icon: <Settings data-eos-id="src/pages/admin/surveys.tsx#3" size={14} /> },
