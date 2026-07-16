@@ -96,27 +96,27 @@ export function EventPhotosSection({
   const totalPhotos = photos.length
 
   return (
-    <section id="event-photos-section" className="w-full scroll-mt-20">
+    <section data-eos-id="src/components/event-photos-section.tsx#0" id="event-photos-section" className="w-full scroll-mt-20">
       {/* Header */}
-      <div className="flex items-end justify-between mb-3">
-        <div className="min-w-0">
-          <h2 className="font-heading text-lg font-bold text-neutral-900 leading-tight">
+      <div data-eos-id="src/components/event-photos-section.tsx#1" className="flex items-end justify-between mb-3">
+        <div data-eos-id="src/components/event-photos-section.tsx#2" className="min-w-0">
+          <h2 data-eos-id="src/components/event-photos-section.tsx#3" className="font-heading text-lg font-bold text-neutral-900 leading-tight">
             Photos
           </h2>
           {totalPhotos > 0 && (
-            <p className="text-[12px] text-neutral-500 mt-0.5">
+            <p data-eos-id="src/components/event-photos-section.tsx#4" className="text-[12px] text-neutral-500 mt-0.5">
               {totalPhotos} from {uploaderCount} {uploaderCount === 1 ? 'person' : 'people'}
             </p>
           )}
         </div>
         {canUpload && totalPhotos > 0 && (
-          <div className="flex items-center gap-2">
-            <button
+          <div data-eos-id="src/components/event-photos-section.tsx#5" className="flex items-center gap-2">
+            <button data-eos-id="src/components/event-photos-section.tsx#6"
               type="button"
               onClick={handlePickMultiple}
               className="flex items-center gap-1.5 text-xs font-semibold text-primary-700 bg-primary-50 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform duration-150"
             >
-              <ImagePlus size={14} /> Add
+              <ImagePlus data-eos-id="src/components/event-photos-section.tsx#7" size={14} /> Add
             </button>
           </div>
         )}
@@ -124,25 +124,25 @@ export function EventPhotosSection({
 
       {/* Empty state -> inviting upload CTA */}
       {!isLoading && totalPhotos === 0 && canUpload && (
-        <motion.div
+        <motion.div data-eos-id="src/components/event-photos-section.tsx#8"
           initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="rounded-md bg-success-50 p-6 text-center ring-1 ring-primary-100/60"
         >
-          <div className="mx-auto w-14 h-14 rounded-md bg-white shadow-sm flex items-center justify-center mb-3">
-            <Camera size={26} className="text-primary-600" />
+          <div data-eos-id="src/components/event-photos-section.tsx#9" className="mx-auto w-14 h-14 rounded-md bg-white shadow-sm flex items-center justify-center mb-3">
+            <Camera data-eos-id="src/components/event-photos-section.tsx#10" size={26} className="text-primary-600" />
           </div>
-          <p className="font-heading text-base font-bold text-neutral-900">
+          <p data-eos-id="src/components/event-photos-section.tsx#11" className="font-heading text-base font-bold text-neutral-900">
             {isRecent ? 'Share your photos from this event' : 'Add to the photo album'}
           </p>
-          <p className="text-[13px] text-neutral-600 mt-1 max-w-xs mx-auto">
+          <p data-eos-id="src/components/event-photos-section.tsx#12" className="text-[13px] text-neutral-600 mt-1 max-w-xs mx-auto">
             Pictures live here forever so the memory stays with the collective.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-4">
-            <Button onClick={handleCapture} variant="primary" icon={<Camera size={16} />} disabled={camera.loading || upload.isPending}>
+          <div data-eos-id="src/components/event-photos-section.tsx#13" className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-4">
+            <Button data-eos-id="src/components/event-photos-section.tsx#14" onClick={handleCapture} variant="primary" icon={<Camera data-eos-id="src/components/event-photos-section.tsx#15" size={16} />} disabled={camera.loading || upload.isPending}>
               Take a photo
             </Button>
-            <Button onClick={handlePickMultiple} variant="secondary" icon={<ImagePlus size={16} />} disabled={upload.isPending}>
+            <Button data-eos-id="src/components/event-photos-section.tsx#16" onClick={handlePickMultiple} variant="secondary" icon={<ImagePlus data-eos-id="src/components/event-photos-section.tsx#17" size={16} />} disabled={upload.isPending}>
               Choose from gallery
             </Button>
           </div>
@@ -151,27 +151,27 @@ export function EventPhotosSection({
 
       {/* Empty state - no upload permission */}
       {!isLoading && totalPhotos === 0 && !canUpload && (
-        <div className="rounded-md bg-neutral-50 p-5 text-center">
-          <p className="text-sm text-neutral-500">No photos yet for this event.</p>
+        <div data-eos-id="src/components/event-photos-section.tsx#18" className="rounded-md bg-neutral-50 p-5 text-center">
+          <p data-eos-id="src/components/event-photos-section.tsx#19" className="text-sm text-neutral-500">No photos yet for this event.</p>
         </div>
       )}
 
       {/* Loading skeleton */}
       {isLoading && (
-        <div className="grid grid-cols-3 gap-1.5">
+        <div data-eos-id="src/components/event-photos-section.tsx#20" className="grid grid-cols-3 gap-1.5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-square rounded-sm bg-neutral-100 animate-pulse" style={{ animationDelay: `${i * 50}ms` }} />
+            <div data-eos-id="src/components/event-photos-section.tsx#21" key={i} className="aspect-square rounded-sm bg-neutral-100 animate-pulse" style={{ animationDelay: `${i * 50}ms` }} />
           ))}
         </div>
       )}
 
       {/* Photo / video grid */}
       {!isLoading && totalPhotos > 0 && (
-        <div className="grid grid-cols-3 gap-1.5">
+        <div data-eos-id="src/components/event-photos-section.tsx#22" className="grid grid-cols-3 gap-1.5">
           {photos.map((p, i) => {
             const isVid = isVideoPath(p.storage_path)
             return (
-              <button
+              <button data-eos-id="src/components/event-photos-section.tsx#23"
                 key={p.id}
                 type="button"
                 onClick={() => setLightboxIndex(i)}
@@ -180,7 +180,7 @@ export function EventPhotosSection({
               >
                 {p.url && (
                   isVid ? (
-                    <video
+                    <video data-eos-id="src/components/event-photos-section.tsx#24"
                       src={p.url}
                       muted
                       playsInline
@@ -188,7 +188,7 @@ export function EventPhotosSection({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <img
+                    <img data-eos-id="src/components/event-photos-section.tsx#25"
                       src={p.url}
                       alt={p.caption ?? ''}
                       loading="lazy"
@@ -198,8 +198,8 @@ export function EventPhotosSection({
                   )
                 )}
                 {isVid && (
-                  <span className="absolute bottom-1 right-1 flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white">
-                    <VideoIcon size={11} />
+                  <span data-eos-id="src/components/event-photos-section.tsx#26" className="absolute bottom-1 right-1 flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white">
+                    <VideoIcon data-eos-id="src/components/event-photos-section.tsx#27" size={11} />
                   </span>
                 )}
               </button>
@@ -210,16 +210,16 @@ export function EventPhotosSection({
 
       {/* Upload progress overlay */}
       {uploadCount.total > 0 && (
-        <div className="mt-3 flex items-center gap-2 rounded-sm bg-primary-50 ring-1 ring-primary-100 p-3 text-xs font-semibold text-primary-700">
-          <Loader2 size={14} className="animate-spin" />
+        <div data-eos-id="src/components/event-photos-section.tsx#28" data-eos-var="uploadCount.done,uploadCount.total" data-eos-var-label="Done, Total" data-eos-var-scope="prop" className="mt-3 flex items-center gap-2 rounded-sm bg-primary-50 ring-1 ring-primary-100 p-3 text-xs font-semibold text-primary-700">
+          <Loader2 data-eos-id="src/components/event-photos-section.tsx#29" size={14} className="animate-spin" />
           Uploading {uploadCount.done} of {uploadCount.total}…
         </div>
       )}
 
       {/* Carousel lightbox */}
-      <AnimatePresence>
+      <AnimatePresence data-eos-id="src/components/event-photos-section.tsx#30">
         {lightboxIndex !== null && photos[lightboxIndex] && (
-          <PhotoCarouselLightbox
+          <PhotoCarouselLightbox data-eos-id="src/components/event-photos-section.tsx#31"
             photos={photos}
             initialIndex={lightboxIndex}
             eventTitle={eventTitle}
@@ -348,7 +348,7 @@ export function PhotoCarouselLightbox({
   handleSaveRef.current = handleSave
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/event-photos-section.tsx#32"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -358,59 +358,59 @@ export function PhotoCarouselLightbox({
       aria-modal="true"
     >
       {/* Top bar */}
-      <div
+      <div data-eos-id="src/components/event-photos-section.tsx#33"
         className="flex items-center justify-between px-4 py-3 text-white relative z-10"
         style={{ paddingTop: 'calc(var(--safe-top, 0px) + 0.75rem)' }}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <Avatar src={current.uploader?.avatar_url ?? null} name={current.uploader?.display_name ?? 'Member'} size="xs" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold truncate">{current.uploader?.display_name ?? 'Member'}</p>
-            <p className="text-[11px] text-white/60">{index + 1} of {photos.length}</p>
+        <div data-eos-id="src/components/event-photos-section.tsx#34" className="flex items-center gap-2 min-w-0">
+          <Avatar data-eos-id="src/components/event-photos-section.tsx#35" src={current.uploader?.avatar_url ?? null} name={current.uploader?.display_name ?? 'Member'} size="xs" />
+          <div data-eos-id="src/components/event-photos-section.tsx#36" className="min-w-0">
+            <p data-eos-id="src/components/event-photos-section.tsx#37" data-eos-var="current.uploader.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="text-sm font-semibold truncate">{current.uploader?.display_name ?? 'Member'}</p>
+            <p data-eos-id="src/components/event-photos-section.tsx#38" className="text-[11px] text-white/60">{index + 1} of {photos.length}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <button
+        <div data-eos-id="src/components/event-photos-section.tsx#39" className="flex items-center gap-1">
+          <button data-eos-id="src/components/event-photos-section.tsx#40"
             type="button"
             onClick={handleSave}
             className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.98] transition-transform duration-150"
             aria-label="Save to photos"
           >
-            <Download size={18} />
+            <Download data-eos-id="src/components/event-photos-section.tsx#41" size={18} />
           </button>
-          <button
+          <button data-eos-id="src/components/event-photos-section.tsx#42"
             type="button"
             onClick={handleShare}
             className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.98] transition-transform duration-150"
             aria-label="Share"
           >
-            <Share2 size={18} />
+            <Share2 data-eos-id="src/components/event-photos-section.tsx#43" size={18} />
           </button>
           {canDelete && (
-            <button
+            <button data-eos-id="src/components/event-photos-section.tsx#44"
               type="button"
               onClick={() => onDelete && onDelete(current)}
               className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.98] transition-transform duration-150"
               aria-label="Delete"
             >
-              <Trash2 size={18} />
+              <Trash2 data-eos-id="src/components/event-photos-section.tsx#45" size={18} />
             </button>
           )}
-          <button
+          <button data-eos-id="src/components/event-photos-section.tsx#46"
             type="button"
             onClick={onClose}
             className="flex items-center justify-center w-10 h-10 rounded-full text-white/90 hover:bg-white/10 active:scale-[0.98] transition-transform duration-150"
             aria-label="Close"
           >
-            <X size={20} />
+            <X data-eos-id="src/components/event-photos-section.tsx#47" size={20} />
           </button>
         </div>
       </div>
 
       {/* Slides */}
-      <div ref={containerRef} className="flex-1 relative overflow-hidden">
+      <div data-eos-id="src/components/event-photos-section.tsx#48" ref={containerRef} className="flex-1 relative overflow-hidden">
         {width > 0 && (
-          <motion.div
+          <motion.div data-eos-id="src/components/event-photos-section.tsx#49"
             className="absolute inset-0 flex"
             style={{ x, width: width * photos.length }}
             drag="x"
@@ -434,7 +434,7 @@ export function PhotoCarouselLightbox({
             }}
           >
             {photos.map((p) => (
-              <div
+              <div data-eos-id="src/components/event-photos-section.tsx#50"
                 key={p.id}
                 className="shrink-0 flex items-center justify-center p-3"
                 style={{ width }}
@@ -444,14 +444,14 @@ export function PhotoCarouselLightbox({
                 onTouchMove={onTouchCancel}
               >
                 {p.url && (isVideoPath(p.storage_path) ? (
-                  <video
+                  <video data-eos-id="src/components/event-photos-section.tsx#51"
                     src={p.url}
                     controls
                     playsInline
                     className="max-w-full max-h-full rounded-sm pointer-events-auto"
                   />
                 ) : (
-                  <img
+                  <img data-eos-id="src/components/event-photos-section.tsx#52"
                     src={p.url}
                     alt={p.caption ?? ''}
                     draggable={false}
@@ -466,7 +466,7 @@ export function PhotoCarouselLightbox({
         {/* Prev/Next overlay buttons (desktop nicety; mobile users swipe) */}
         {photos.length > 1 && (
           <>
-            <button
+            <button data-eos-id="src/components/event-photos-section.tsx#53"
               type="button"
               onClick={() => snap(-1)}
               disabled={index === 0}
@@ -476,9 +476,9 @@ export function PhotoCarouselLightbox({
               )}
               aria-label="Previous"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft data-eos-id="src/components/event-photos-section.tsx#54" size={20} />
             </button>
-            <button
+            <button data-eos-id="src/components/event-photos-section.tsx#55"
               type="button"
               onClick={() => snap(1)}
               disabled={index === photos.length - 1}
@@ -488,21 +488,21 @@ export function PhotoCarouselLightbox({
               )}
               aria-label="Next"
             >
-              <ChevronRight size={20} />
+              <ChevronRight data-eos-id="src/components/event-photos-section.tsx#56" size={20} />
             </button>
           </>
         )}
       </div>
 
       {/* Footer: caption + dots */}
-      <div className="px-4 pb-6 pt-3 text-white relative z-10" style={{ paddingBottom: 'calc(var(--safe-bottom, 0px) + 1.25rem)' }}>
+      <div data-eos-id="src/components/event-photos-section.tsx#57" className="px-4 pb-6 pt-3 text-white relative z-10" style={{ paddingBottom: 'calc(var(--safe-bottom, 0px) + 1.25rem)' }}>
         {current.caption && (
-          <p className="text-sm text-white/85 mb-3 text-center leading-relaxed">{current.caption}</p>
+          <p data-eos-id="src/components/event-photos-section.tsx#58" data-eos-var="current.caption" data-eos-var-label="Caption" data-eos-var-scope="prop" className="text-sm text-white/85 mb-3 text-center leading-relaxed">{current.caption}</p>
         )}
         {photos.length > 1 && (
-          <div className="flex items-center justify-center gap-1.5">
+          <div data-eos-id="src/components/event-photos-section.tsx#59" className="flex items-center justify-center gap-1.5">
             {photos.map((_, i) => (
-              <span
+              <span data-eos-id="src/components/event-photos-section.tsx#60"
                 key={i}
                 className={cn(
                   'rounded-full transition-all duration-200',
