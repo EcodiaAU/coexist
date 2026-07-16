@@ -4,7 +4,7 @@ import { type EmailTag, statusConfig } from './shared'
 export function StatusBadge({ status }: { status: string }) {
   const config = statusConfig[status] ?? statusConfig.draft
   return (
-    <span data-eos-id="src/pages/admin/email/shared-ui.tsx#0" data-eos-var="config.label" data-eos-var-label="Label" data-eos-var-scope="prop"
+    <span data-eos-id="src/pages/admin/email/shared-ui.tsx#0" data-eos-v="2" data-eos-var="config.label" data-eos-var-label="Label" data-eos-var-scope="prop"
       className={cn(
         'inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full',
         config.bg,
