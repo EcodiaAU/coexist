@@ -225,7 +225,7 @@ function CampaignComposer({
   const sanitizedCampaignBodyHtml = sanitizeHtml(resolvedHtml)
 
   return (
-    <div data-eos-id="src/pages/admin/email/campaigns-tab.tsx#0" className="space-y-5">
+    <div data-eos-id="src/pages/admin/email/campaigns-tab.tsx#0" data-eos-v="2" className="space-y-5">
       <Header data-eos-id="src/pages/admin/email/campaigns-tab.tsx#1" title="" back onBack={onClose} />
 
       {/* Step tabs */}
