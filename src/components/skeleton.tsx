@@ -36,7 +36,7 @@ const variantStyles: Record<SkeletonVariant, string> = {
 
 function ShimmerBlock({ className }: { className?: string }) {
   return (
-    <div
+    <div data-eos-id="src/components/skeleton.tsx#0"
       className={cn(shimmerClass, className)}
       aria-hidden="true"
     />
@@ -45,11 +45,11 @@ function ShimmerBlock({ className }: { className?: string }) {
 
 function ListItemSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('flex items-center gap-3', className)}>
-      <ShimmerBlock className="h-10 w-10 shrink-0 rounded-full" />
-      <div className="flex-1 space-y-2">
-        <ShimmerBlock className="h-4 rounded w-3/4" />
-        <ShimmerBlock className="h-3 rounded w-1/2" />
+    <div data-eos-id="src/components/skeleton.tsx#1" className={cn('flex items-center gap-3', className)}>
+      <ShimmerBlock data-eos-id="src/components/skeleton.tsx#2" className="h-10 w-10 shrink-0 rounded-full" />
+      <div data-eos-id="src/components/skeleton.tsx#3" className="flex-1 space-y-2">
+        <ShimmerBlock data-eos-id="src/components/skeleton.tsx#4" className="h-4 rounded w-3/4" />
+        <ShimmerBlock data-eos-id="src/components/skeleton.tsx#5" className="h-3 rounded w-1/2" />
       </div>
     </div>
   )
@@ -65,29 +65,29 @@ export function Skeleton({
 
   if (variant === 'list-item') {
     return (
-      <div className={cn('space-y-4', className)} role="status" aria-label="Loading">
+      <div data-eos-id="src/components/skeleton.tsx#6" className={cn('space-y-4', className)} role="status" aria-label="Loading">
         {Array.from({ length: times }, (_, i) => (
-          <ListItemSkeleton key={i} />
+          <ListItemSkeleton data-eos-id="src/components/skeleton.tsx#7" key={i} />
         ))}
-        <span className="sr-only">Loading content</span>
+        <span data-eos-id="src/components/skeleton.tsx#8" className="sr-only">Loading content</span>
       </div>
     )
   }
 
   if (variant === 'avatar') {
     return (
-      <div role="status" aria-label="Loading" className={cn('inline-block', className)}>
-        <ShimmerBlock className={cn(variantStyles.avatar, 'h-10 w-10', className)} />
-        <span className="sr-only">Loading content</span>
+      <div data-eos-id="src/components/skeleton.tsx#9" role="status" aria-label="Loading" className={cn('inline-block', className)}>
+        <ShimmerBlock data-eos-id="src/components/skeleton.tsx#10" className={cn(variantStyles.avatar, 'h-10 w-10', className)} />
+        <span data-eos-id="src/components/skeleton.tsx#11" className="sr-only">Loading content</span>
       </div>
     )
   }
 
   if (times > 1) {
     return (
-      <div className={cn('space-y-3', className)} role="status" aria-label="Loading">
+      <div data-eos-id="src/components/skeleton.tsx#12" className={cn('space-y-3', className)} role="status" aria-label="Loading">
         {Array.from({ length: times }, (_, i) => (
-          <ShimmerBlock
+          <ShimmerBlock data-eos-id="src/components/skeleton.tsx#13"
             key={i}
             className={cn(
               variantStyles[variant],
@@ -96,15 +96,15 @@ export function Skeleton({
             )}
           />
         ))}
-        <span className="sr-only">Loading content</span>
+        <span data-eos-id="src/components/skeleton.tsx#14" className="sr-only">Loading content</span>
       </div>
     )
   }
 
   return (
-    <div role="status" aria-label="Loading">
-      <ShimmerBlock className={cn(variantStyles[variant], className)} />
-      <span className="sr-only">Loading content</span>
+    <div data-eos-id="src/components/skeleton.tsx#15" role="status" aria-label="Loading">
+      <ShimmerBlock data-eos-id="src/components/skeleton.tsx#16" className={cn(variantStyles[variant], className)} />
+      <span data-eos-id="src/components/skeleton.tsx#17" className="sr-only">Loading content</span>
     </div>
   )
 }
