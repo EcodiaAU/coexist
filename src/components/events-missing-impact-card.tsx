@@ -35,7 +35,7 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
     // Positive empty state - reassures staff the queue is clear, and that the
     // surface exists even when there's nothing outstanding.
     return (
-      <motion.div data-eos-id="src/components/events-missing-impact-card.tsx#0"
+      <motion.div data-eos-id="src/components/events-missing-impact-card.tsx#0" data-eos-v="2"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
