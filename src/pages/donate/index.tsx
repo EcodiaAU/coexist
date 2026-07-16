@@ -53,10 +53,10 @@ function DonateHero({ rm }: { rm: boolean }) {
   const { bgRef, fgRef, textRef } = useParallaxLayers({ textRange: 180, withScale: false })
 
   return (
-    <div data-eos-id="src/pages/donate/index.tsx#0" className="relative">
+    <div data-eos-id="src/pages/donate/index.tsx#0" data-eos-v="2" className="relative">
       <div data-eos-id="src/pages/donate/index.tsx#1" className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
         <div data-eos-id="src/pages/donate/index.tsx#2" ref={rm ? undefined : bgRef} className="h-full will-change-transform">
-          <img data-eos-id="src/pages/donate/index.tsx#3"
+          <img data-eos-src="static" data-eos-id="src/pages/donate/index.tsx#3"
             src="/img/donate-hero-bg.webp"
             alt="Conservation landscape"
             className="w-full h-full object-cover object-center sm:h-auto sm:object-fill block"
@@ -64,7 +64,7 @@ function DonateHero({ rm }: { rm: boolean }) {
         </div>
 
         <div data-eos-id="src/pages/donate/index.tsx#4" ref={rm ? undefined : fgRef} className="absolute inset-0 z-[3] will-change-transform">
-          <img data-eos-id="src/pages/donate/index.tsx#5"
+          <img data-eos-src="static" data-eos-id="src/pages/donate/index.tsx#5"
             src="/img/donate-hero-fg.webp"
             alt=""
             className="w-full h-full object-cover object-center sm:h-auto sm:object-fill block"
