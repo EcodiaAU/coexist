@@ -48,9 +48,9 @@ export function Celebration({
   }, [open])
 
   return createPortal(
-    <AnimatePresence>
+    <AnimatePresence data-eos-id="src/components/celebration.tsx#0">
       {open && (
-        <motion.div
+        <motion.div data-eos-id="src/components/celebration.tsx#1"
           className={cn(
             'fixed inset-0 z-[100] flex flex-col items-center justify-center',
             'bg-primary-900',
@@ -66,11 +66,11 @@ export function Celebration({
           aria-modal="true"
           aria-label={title}
         >
-          <Confetti active={showConfetti} count={50} duration={3000} />
+          <Confetti data-eos-id="src/components/celebration.tsx#2" active={showConfetti} count={50} duration={3000} />
 
           {/* Glow ring - GPU-promoted */}
           {!shouldReduceMotion && (
-            <motion.div
+            <motion.div data-eos-id="src/components/celebration.tsx#3"
               className="absolute w-64 h-64 rounded-full bg-primary-400/10 gpu-panel"
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: [0, 1.4, 1.15], opacity: [0, 0.5, 0.25] }}
@@ -81,7 +81,7 @@ export function Celebration({
 
           {/* Icon */}
           {icon && (
-            <motion.div
+            <motion.div data-eos-id="src/components/celebration.tsx#4"
               className="relative mb-6"
               initial={shouldReduceMotion ? false : { scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -91,14 +91,14 @@ export function Celebration({
                   : { type: 'spring', stiffness: 220, damping: 14, mass: 0.8, delay: 0.2 }
               }
             >
-              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-white/20">
+              <div data-eos-id="src/components/celebration.tsx#5" className="flex items-center justify-center w-20 h-20 rounded-full bg-white/20">
                 {icon}
               </div>
             </motion.div>
           )}
 
           {/* Title */}
-          <motion.h2
+          <motion.h2 data-eos-id="src/components/celebration.tsx#6"
             className="font-heading text-3xl font-bold text-center px-6 max-w-sm"
             initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -109,7 +109,7 @@ export function Celebration({
 
           {/* Subtitle */}
           {subtitle && (
-            <motion.p
+            <motion.p data-eos-id="src/components/celebration.tsx#7"
               className="mt-3 text-base text-white/80 text-center px-6 max-w-xs"
               initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -120,7 +120,7 @@ export function Celebration({
           )}
 
           {/* Tap to dismiss */}
-          <motion.p
+          <motion.p data-eos-id="src/components/celebration.tsx#8"
             className="absolute text-sm text-white/40"
             style={{ bottom: 'max(env(safe-area-inset-bottom, 0px), 3rem)' }}
             initial={{ opacity: 0 }}
