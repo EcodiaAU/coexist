@@ -67,7 +67,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div data-eos-id="src/pages/auth/login.tsx#0"
+    <div data-eos-id="src/pages/auth/login.tsx#0" data-eos-v="2"
       className="min-h-dvh flex flex-col bg-surface-warm"
       style={{ paddingTop: 'var(--safe-top)' }}
     >
