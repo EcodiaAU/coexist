@@ -33,7 +33,7 @@ export function AnimatedOutlet() {
 
   if (reduce) {
     return (
-      <Suspense data-eos-id="src/components/animated-outlet.tsx#0" fallback={<div data-eos-id="src/components/animated-outlet.tsx#1" className="flex-1 min-h-0 bg-surface-1" />}>
+      <Suspense data-eos-id="src/components/animated-outlet.tsx#0" data-eos-v="2" fallback={<div data-eos-id="src/components/animated-outlet.tsx#1" className="flex-1 min-h-0 bg-surface-1" />}>
         <div data-eos-id="src/components/animated-outlet.tsx#2" key={location.pathname} className="flex-1 flex flex-col min-h-0">
           {outlet}
         </div>
