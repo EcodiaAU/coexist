@@ -56,16 +56,16 @@ export function BroadcastNotificationSheet({
   )
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
-      <div className="pb-4">
+    <BottomSheet data-eos-id="src/components/broadcast-notification-sheet.tsx#0" open={open} onClose={onClose}>
+      <div data-eos-id="src/components/broadcast-notification-sheet.tsx#1" className="pb-4">
         {/* Header */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-warning-100 text-warning-600">
-            <Bell size={20} />
+        <div data-eos-id="src/components/broadcast-notification-sheet.tsx#2" className="flex items-center gap-2.5 mb-4">
+          <div data-eos-id="src/components/broadcast-notification-sheet.tsx#3" className="flex h-10 w-10 items-center justify-center rounded-sm bg-warning-100 text-warning-600">
+            <Bell data-eos-id="src/components/broadcast-notification-sheet.tsx#4" size={20} />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-primary-900">Push Notification</h3>
-            <p className="text-xs text-neutral-500">
+          <div data-eos-id="src/components/broadcast-notification-sheet.tsx#5">
+            <h3 data-eos-id="src/components/broadcast-notification-sheet.tsx#6" className="text-base font-bold text-primary-900">Push Notification</h3>
+            <p data-eos-id="src/components/broadcast-notification-sheet.tsx#7" className="text-xs text-neutral-500">
               Send to all {collectiveName ? `${collectiveName} ` : ''}members
             </p>
           </div>
@@ -73,39 +73,39 @@ export function BroadcastNotificationSheet({
 
         {/* Recent broadcasts warning (dedup) */}
         {recentBroadcasts24h.length > 0 && (
-          <div className="mb-4 rounded-sm bg-warning-50 p-3 ring-1 ring-warning-200/60">
-            <p className="text-xs font-semibold text-warning-700 mb-2 flex items-center gap-1.5">
-              <Clock size={12} />
+          <div data-eos-id="src/components/broadcast-notification-sheet.tsx#8" className="mb-4 rounded-sm bg-warning-50 p-3 ring-1 ring-warning-200/60">
+            <p data-eos-id="src/components/broadcast-notification-sheet.tsx#9" className="text-xs font-semibold text-warning-700 mb-2 flex items-center gap-1.5">
+              <Clock data-eos-id="src/components/broadcast-notification-sheet.tsx#10" size={12} />
               Recent notifications (last 24h)
             </p>
-            <div className="space-y-2">
+            <div data-eos-id="src/components/broadcast-notification-sheet.tsx#11" className="space-y-2">
               {recentBroadcasts24h.slice(0, 3).map((b) => (
-                <div key={b.id} className="flex items-start gap-2">
-                  <Avatar
+                <div data-eos-id="src/components/broadcast-notification-sheet.tsx#12" key={b.id} className="flex items-start gap-2">
+                  <Avatar data-eos-id="src/components/broadcast-notification-sheet.tsx#13"
                     src={b.profiles?.avatar_url}
                     name={b.profiles?.display_name}
                     size="xs"
                   />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-semibold text-warning-800 truncate">
+                  <div data-eos-id="src/components/broadcast-notification-sheet.tsx#14" className="flex-1 min-w-0">
+                    <p data-eos-id="src/components/broadcast-notification-sheet.tsx#15" data-eos-var="b.profiles.display_name,b.title" data-eos-var-label="Display name, Title" data-eos-var-scope="item" className="text-[11px] font-semibold text-warning-800 truncate">
                       {b.profiles?.display_name ?? 'Staff'}: {b.title}
                     </p>
-                    <p className="text-[11px] text-warning-500">
+                    <p data-eos-id="src/components/broadcast-notification-sheet.tsx#16" data-eos-var="b.created_at,b.recipient_count,b.recipient_count" data-eos-var-label="Created at, Recipient count, Recipient count" data-eos-var-scope="item" className="text-[11px] text-warning-500">
                       {relativeTime(b.created_at)} &middot; sent to {b.recipient_count} member{b.recipient_count !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-[11px] text-warning-500 mt-2 italic">
+            <p data-eos-id="src/components/broadcast-notification-sheet.tsx#17" className="text-[11px] text-warning-500 mt-2 italic">
               Check above to avoid sending duplicate notifications
             </p>
           </div>
         )}
 
         {/* Title */}
-        <div className="mb-3">
-          <Input
+        <div data-eos-id="src/components/broadcast-notification-sheet.tsx#18" className="mb-3">
+          <Input data-eos-id="src/components/broadcast-notification-sheet.tsx#19"
             label="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -115,8 +115,8 @@ export function BroadcastNotificationSheet({
         </div>
 
         {/* Body */}
-        <div className="mb-4">
-          <Input
+        <div data-eos-id="src/components/broadcast-notification-sheet.tsx#20" className="mb-4">
+          <Input data-eos-id="src/components/broadcast-notification-sheet.tsx#21"
             type="textarea"
             label="Message"
             value={body}
@@ -125,25 +125,25 @@ export function BroadcastNotificationSheet({
             rows={3}
             maxLength={300}
           />
-          <p className="text-[11px] text-neutral-500 mt-1 text-right">
+          <p data-eos-id="src/components/broadcast-notification-sheet.tsx#22" className="text-[11px] text-neutral-500 mt-1 text-right">
             {body.length}/300
           </p>
         </div>
 
         {/* Warning */}
-        <p className="text-[11px] text-neutral-500 mb-3 bg-primary-50 rounded-sm px-3 py-2">
-          This will send a push notification to <strong>all registered members</strong> of this collective who have notifications enabled. Use sparingly.
+        <p data-eos-id="src/components/broadcast-notification-sheet.tsx#23" className="text-[11px] text-neutral-500 mb-3 bg-primary-50 rounded-sm px-3 py-2">
+          This will send a push notification to <strong data-eos-id="src/components/broadcast-notification-sheet.tsx#24">all registered members</strong> of this collective who have notifications enabled. Use sparingly.
         </p>
 
         {/* Send */}
-        <Button
+        <Button data-eos-id="src/components/broadcast-notification-sheet.tsx#25"
           variant="primary"
           size="lg"
           fullWidth
           onClick={handleSend}
           disabled={!canSend || loading}
           loading={loading}
-          icon={<Bell size={16} />}
+          icon={<Bell data-eos-id="src/components/broadcast-notification-sheet.tsx#26" size={16} />}
         >
           Send Push Notification
         </Button>
