@@ -119,24 +119,24 @@ function OrderTimeline({ status, updatedAt }: { status: OrderStatus; createdAt: 
 
   if (isFinal) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-sm bg-error-50/60">
-        <RefreshCw size={14} className="text-error-500" />
-        <span className="text-xs font-medium text-error-700 capitalize">{status}</span>
-        <span className="text-xs text-error-400 ml-auto">{formatDateTime(updatedAt)}</span>
+      <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#0" className="flex items-center gap-2 px-3 py-2 rounded-sm bg-error-50/60">
+        <RefreshCw data-eos-id="src/pages/admin/merch/orders-tab.tsx#1" size={14} className="text-error-500" />
+        <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#2" className="text-xs font-medium text-error-700 capitalize">{status}</span>
+        <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#3" className="text-xs text-error-400 ml-auto">{formatDateTime(updatedAt)}</span>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#4" className="flex items-center gap-1">
       {STATUS_FLOW.map((s, i) => {
         const Icon = STATUS_ICONS[s]
         const isActive = i <= currentIdx
         const isCurrent = i === currentIdx
 
         return (
-          <div key={s} className="flex items-center gap-1 flex-1">
-            <div
+          <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#5" key={s} className="flex items-center gap-1 flex-1">
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#6"
               className={cn(
                 'flex items-center justify-center w-7 h-7 rounded-full shrink-0 transition-colors',
                 isCurrent
@@ -146,10 +146,10 @@ function OrderTimeline({ status, updatedAt }: { status: OrderStatus; createdAt: 
                     : 'bg-neutral-50 text-neutral-300',
               )}
             >
-              <Icon size={12} />
+              <Icon data-eos-id="src/pages/admin/merch/orders-tab.tsx#7" size={12} />
             </div>
             {i < STATUS_FLOW.length - 1 && (
-              <div
+              <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#8"
                 className={cn(
                   'h-0.5 flex-1 rounded-full transition-colors',
                   i < currentIdx ? 'bg-primary-300' : 'bg-neutral-100',
@@ -186,16 +186,16 @@ function OrderCounts({ orders }: { orders: OrderWithProfile[] }) {
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+    <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#9" className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
       {cards.map((c) => {
         const Icon = c.icon
         return (
-          <div key={c.label} className="p-4 rounded-md bg-white border border-neutral-100 shadow-sm text-center">
-            <div className={cn('w-7 h-7 rounded-sm flex items-center justify-center mx-auto mb-1', c.iconBg)}>
-              <Icon size={14} />
+          <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#10" key={c.label} className="p-4 rounded-md bg-white border border-neutral-100 shadow-sm text-center">
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#11" className={cn('w-7 h-7 rounded-sm flex items-center justify-center mx-auto mb-1', c.iconBg)}>
+              <Icon data-eos-id="src/pages/admin/merch/orders-tab.tsx#12" size={14} />
             </div>
-            <p className="font-heading text-xl font-bold tabular-nums text-neutral-900">{c.count}</p>
-            <p className="text-[11px] font-semibold mt-0.5 text-neutral-500">{c.label}</p>
+            <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#13" data-eos-var="c.count" data-eos-var-label="Count" data-eos-var-scope="item" className="font-heading text-xl font-bold tabular-nums text-neutral-900">{c.count}</p>
+            <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#14" data-eos-var="c.label" data-eos-var-label="Label" data-eos-var-scope="item" data-eos-var-src="literal" className="text-[11px] font-semibold mt-0.5 text-neutral-500">{c.label}</p>
           </div>
         )
       })}
@@ -236,30 +236,30 @@ function ReturnsBanner({ orderId }: { orderId: string }) {
 
   return (
     <>
-      <Divider />
-      <div>
-        <h4 className="text-xs font-semibold text-neutral-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-          <RotateCcw size={12} />
+      <Divider data-eos-id="src/pages/admin/merch/orders-tab.tsx#15" />
+      <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#16">
+        <h4 data-eos-id="src/pages/admin/merch/orders-tab.tsx#17" className="text-xs font-semibold text-neutral-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <RotateCcw data-eos-id="src/pages/admin/merch/orders-tab.tsx#18" size={12} />
           Return Requests
         </h4>
-        <div className="space-y-2">
+        <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#19" className="space-y-2">
           {returns.map((ret) => (
-            <div
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#20"
               key={ret.id}
               className="p-3 rounded-sm bg-white border border-neutral-100 shadow-sm"
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <Avatar
+              <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#21" className="flex items-center justify-between mb-1.5">
+                <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#22" className="flex items-center gap-2">
+                  <Avatar data-eos-id="src/pages/admin/merch/orders-tab.tsx#23"
                     src={ret.profiles?.avatar_url}
                     name={ret.profiles?.display_name ?? 'User'}
                     size="xs"
                   />
-                  <span className="text-sm font-medium text-neutral-900">
+                  <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#24" data-eos-var="ret.profiles.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-sm font-medium text-neutral-900">
                     {ret.profiles?.display_name ?? 'Unknown'}
                   </span>
                 </div>
-                <span
+                <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#25" data-eos-var="ret.status" data-eos-var-label="Status" data-eos-var-scope="item"
                   className={cn(
                     'px-2 py-0.5 rounded-full text-[11px] font-semibold capitalize',
                     RETURN_STATUS_COLORS[ret.status],
@@ -268,24 +268,24 @@ function ReturnsBanner({ orderId }: { orderId: string }) {
                   {ret.status}
                 </span>
               </div>
-              <p className="text-sm text-neutral-400 mb-1">
-                <span className="font-medium">Reason:</span> {ret.reason}
+              <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#26" data-eos-var="ret.reason" data-eos-var-label="Reason" data-eos-var-scope="item" className="text-sm text-neutral-400 mb-1">
+                <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#27" className="font-medium">Reason:</span> {ret.reason}
               </p>
               {ret.status === 'requested' && (
-                <div className="flex gap-2 mt-2">
-                  <Button
+                <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#28" className="flex gap-2 mt-2">
+                  <Button data-eos-id="src/pages/admin/merch/orders-tab.tsx#29"
                     variant="primary"
                     size="sm"
-                    icon={<Check size={14} />}
+                    icon={<Check data-eos-id="src/pages/admin/merch/orders-tab.tsx#30" size={14} />}
                     loading={updateReturn.isPending}
                     onClick={() => handleUpdate(ret.id, 'approved')}
                   >
                     Approve
                   </Button>
-                  <Button
+                  <Button data-eos-id="src/pages/admin/merch/orders-tab.tsx#31"
                     variant="danger"
                     size="sm"
-                    icon={<X size={14} />}
+                    icon={<X data-eos-id="src/pages/admin/merch/orders-tab.tsx#32" size={14} />}
                     loading={updateReturn.isPending}
                     onClick={() => handleUpdate(ret.id, 'denied')}
                   >
@@ -323,67 +323,67 @@ function AllReturnsList() {
     [updateReturn, toast],
   )
 
-  if (showLoading) return <Skeleton variant="text" count={3} />
+  if (showLoading) return <Skeleton data-eos-id="src/pages/admin/merch/orders-tab.tsx#33" variant="text" count={3} />
   if (!returns || returns.length === 0) return null
 
   const pending = returns.filter((r) => r.status === 'requested')
   if (pending.length === 0) return null
 
   return (
-    <div className="mb-5">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex items-center justify-center w-8 h-8 rounded-sm bg-warning-50 text-warning-600">
-          <RotateCcw size={14} />
+    <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#34" className="mb-5">
+      <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#35" className="flex items-center gap-2 mb-3">
+        <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#36" className="flex items-center justify-center w-8 h-8 rounded-sm bg-warning-50 text-warning-600">
+          <RotateCcw data-eos-id="src/pages/admin/merch/orders-tab.tsx#37" size={14} />
         </div>
-        <div>
-          <h3 className="text-sm font-bold text-neutral-900">Pending Returns</h3>
-          <p className="text-[11px] text-neutral-400">{pending.length} awaiting review</p>
+        <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#38">
+          <h3 data-eos-id="src/pages/admin/merch/orders-tab.tsx#39" className="text-sm font-bold text-neutral-900">Pending Returns</h3>
+          <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#40" className="text-[11px] text-neutral-400">{pending.length} awaiting review</p>
         </div>
       </div>
-      <div className="space-y-2">
+      <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#41" className="space-y-2">
         {pending.map((ret) => (
-          <div
+          <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#42"
             key={ret.id}
             className="p-4 rounded-md bg-white border border-neutral-100 shadow-sm"
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Avatar
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#43" className="flex items-center justify-between mb-2">
+              <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#44" className="flex items-center gap-2">
+                <Avatar data-eos-id="src/pages/admin/merch/orders-tab.tsx#45"
                   src={ret.profiles?.avatar_url}
                   name={ret.profiles?.display_name ?? 'User'}
                   size="xs"
                 />
-                <span className="text-sm font-medium text-neutral-900">
+                <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#46" data-eos-var="ret.profiles.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-sm font-medium text-neutral-900">
                   {ret.profiles?.display_name ?? 'Unknown'}
                 </span>
               </div>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold capitalize bg-warning-100 text-warning-800">
+              <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#47" data-eos-var="ret.status" data-eos-var-label="Status" data-eos-var-scope="item" className="px-2 py-0.5 rounded-full text-[11px] font-semibold capitalize bg-warning-100 text-warning-800">
                 {ret.status}
               </span>
             </div>
-            <p className="text-sm text-neutral-400 mb-1">
-              <span className="font-medium">Reason:</span> {ret.reason}
+            <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#48" data-eos-var="ret.reason" data-eos-var-label="Reason" data-eos-var-scope="item" className="text-sm text-neutral-400 mb-1">
+              <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#49" className="font-medium">Reason:</span> {ret.reason}
             </p>
             {ret.order && (
-              <p className="text-xs text-neutral-400 mb-2">
+              <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#50" data-eos-var="ret.order,ret.order" data-eos-var-label="Order, Order" data-eos-var-scope="item" className="text-xs text-neutral-400 mb-2">
                 Order #{(ret.order as { id: string }).id.slice(0, 8)} ·{' '}
                 {formatPrice((ret.order as { total_cents: number }).total_cents)}
               </p>
             )}
-            <div className="flex gap-2">
-              <Button
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#51" className="flex gap-2">
+              <Button data-eos-id="src/pages/admin/merch/orders-tab.tsx#52"
                 variant="primary"
                 size="sm"
-                icon={<Check size={14} />}
+                icon={<Check data-eos-id="src/pages/admin/merch/orders-tab.tsx#53" size={14} />}
                 loading={updateReturn.isPending}
                 onClick={() => handleUpdate(ret.id, 'approved')}
               >
                 Approve
               </Button>
-              <Button
+              <Button data-eos-id="src/pages/admin/merch/orders-tab.tsx#54"
                 variant="danger"
                 size="sm"
-                icon={<X size={14} />}
+                icon={<X data-eos-id="src/pages/admin/merch/orders-tab.tsx#55" size={14} />}
                 loading={updateReturn.isPending}
                 onClick={() => handleUpdate(ret.id, 'denied')}
               >
@@ -498,14 +498,14 @@ export default function OrdersTab() {
   // Only show skeleton on first ever load, not on tab/filter switches
   if (showLoading && !orders) {
     return (
-      <div className="space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+      <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#56" className="space-y-3">
+        <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#57" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} variant="stat-card" />
+            <Skeleton data-eos-id="src/pages/admin/merch/orders-tab.tsx#58" key={i} variant="stat-card" />
           ))}
         </div>
         {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} variant="card" />
+          <Skeleton data-eos-id="src/pages/admin/merch/orders-tab.tsx#59" key={i} variant="card" />
         ))}
       </div>
     )
@@ -515,22 +515,22 @@ export default function OrdersTab() {
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
   return (
-    <motion.div variants={stagger} initial="hidden" animate="visible">
+    <motion.div data-eos-id="src/pages/admin/merch/orders-tab.tsx#60" variants={stagger} initial="hidden" animate="visible">
       {/* Pending returns banner */}
-      <motion.div variants={fadeUp}>
-        <AllReturnsList />
+      <motion.div data-eos-id="src/pages/admin/merch/orders-tab.tsx#61" variants={fadeUp}>
+        <AllReturnsList data-eos-id="src/pages/admin/merch/orders-tab.tsx#62" />
       </motion.div>
 
       {/* Summary counts */}
       {orders && orders.length > 0 && (
-        <motion.div variants={fadeUp}>
-          <OrderCounts orders={orders} />
+        <motion.div data-eos-id="src/pages/admin/merch/orders-tab.tsx#63" variants={fadeUp}>
+          <OrderCounts data-eos-id="src/pages/admin/merch/orders-tab.tsx#64" orders={orders} />
         </motion.div>
       )}
 
       {/* Filters */}
-      <motion.div variants={fadeUp} className="mb-3">
-        <TabBar
+      <motion.div data-eos-id="src/pages/admin/merch/orders-tab.tsx#65" variants={fadeUp} className="mb-3">
+        <TabBar data-eos-id="src/pages/admin/merch/orders-tab.tsx#66"
           tabs={STATUS_OPTIONS.map((opt) => ({ id: opt.value, label: opt.label }))}
           activeTab={statusFilter}
           onChange={(id) => setStatusFilter(id as OrderStatus | 'all')}
@@ -539,31 +539,31 @@ export default function OrdersTab() {
       </motion.div>
 
       {/* Search + export */}
-      <motion.div variants={fadeUp} className="flex gap-2 mb-5">
-        <SearchBar
+      <motion.div data-eos-id="src/pages/admin/merch/orders-tab.tsx#67" variants={fadeUp} className="flex gap-2 mb-5">
+        <SearchBar data-eos-id="src/pages/admin/merch/orders-tab.tsx#68"
           value={search}
           onChange={setSearch}
           placeholder="Search orders..."
           compact
           className="flex-1 [&>*+*]:!bg-white"
         />
-        <Button variant="ghost" size="sm" icon={<Download size={14} />} onClick={handleExport}>
+        <Button data-eos-id="src/pages/admin/merch/orders-tab.tsx#69" variant="ghost" size="sm" icon={<Download data-eos-id="src/pages/admin/merch/orders-tab.tsx#70" size={14} />} onClick={handleExport}>
           CSV
         </Button>
       </motion.div>
 
       {/* Order list */}
-      <motion.div variants={fadeUp}>
+      <motion.div data-eos-id="src/pages/admin/merch/orders-tab.tsx#71" variants={fadeUp}>
         {filteredOrders.length === 0 ? (
-          <EmptyState
+          <EmptyState data-eos-id="src/pages/admin/merch/orders-tab.tsx#72"
             illustration="empty"
             title="No orders"
             description={search ? 'Try a different search' : 'Orders will appear here'}
           />
         ) : (
-          <div className="space-y-4">
+          <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#73" className="space-y-4">
             {filteredOrders.map((order) => (
-              <button
+              <button data-eos-id="src/pages/admin/merch/orders-tab.tsx#74"
                 key={order.id}
                 type="button"
                 onClick={() => openOrder(order)}
@@ -572,18 +572,18 @@ export default function OrdersTab() {
                   CARD_STATUS_GRADIENTS[order.status] ?? 'border-neutral-100',
                 )}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Avatar
+                <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#75" className="flex items-center justify-between mb-2">
+                  <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#76" className="flex items-center gap-2">
+                    <Avatar data-eos-id="src/pages/admin/merch/orders-tab.tsx#77"
                       src={order.profiles?.avatar_url}
                       name={order.profiles?.display_name ?? 'Unknown'}
                       size="xs"
                     />
-                    <span className="text-sm font-semibold text-neutral-900">
+                    <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#78" data-eos-var="order.profiles.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900">
                       {order.profiles?.display_name ?? 'Unknown'}
                     </span>
                   </div>
-                  <span
+                  <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#79" data-eos-var="order.status" data-eos-var-label="Status" data-eos-var-scope="item"
                     className={cn(
                       'px-2 py-0.5 rounded-full text-[11px] font-semibold capitalize',
                       STATUS_COLORS[order.status],
@@ -594,18 +594,18 @@ export default function OrdersTab() {
                 </div>
 
                 {/* Mini timeline */}
-                <OrderTimeline
+                <OrderTimeline data-eos-id="src/pages/admin/merch/orders-tab.tsx#80"
                   status={order.status}
                   createdAt={order.created_at}
                   updatedAt={order.updated_at}
                 />
 
-                <div className="flex items-center justify-between mt-2.5">
-                  <span className="text-xs text-neutral-400">
+                <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#81" className="flex items-center justify-between mt-2.5">
+                  <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#82" data-eos-var="order.id,order.created_at" data-eos-var-label="Id, Created at" data-eos-var-scope="item" className="text-xs text-neutral-400">
                     #{order.id.slice(0, 8)} · {order.items.length} item
                     {order.items.length !== 1 ? 's' : ''} · {formatDate(order.created_at)}
                   </span>
-                  <span className="font-heading font-bold text-sm text-neutral-900 tabular-nums">
+                  <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#83" data-eos-var="order.total_cents" data-eos-var-label="Total cents" data-eos-var-scope="item" className="font-heading font-bold text-sm text-neutral-900 tabular-nums">
                     {formatPrice(order.total_cents)}
                   </span>
                 </div>
@@ -616,82 +616,82 @@ export default function OrdersTab() {
       </motion.div>
 
       {/* ---- Order detail sheet ---- */}
-      <BottomSheet
+      <BottomSheet data-eos-id="src/pages/admin/merch/orders-tab.tsx#84"
         open={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
         snapPoints={[0.9]}
       >
         {selectedOrder && (
-          <div className="space-y-4">
+          <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#85" className="space-y-4">
             {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-heading font-semibold text-lg text-neutral-900">
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#86" className="flex items-center justify-between">
+              <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#87">
+                <h3 data-eos-id="src/pages/admin/merch/orders-tab.tsx#88" data-eos-var="selectedOrder.id" data-eos-var-label="Id" data-eos-var-scope="prop" className="font-heading font-semibold text-lg text-neutral-900">
                   Order #{selectedOrder.id.slice(0, 8)}
                 </h3>
-                <p className="text-xs text-neutral-400 mt-0.5">
+                <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#89" data-eos-var="selectedOrder.created_at" data-eos-var-label="Created at" data-eos-var-scope="prop" className="text-xs text-neutral-400 mt-0.5">
                   {formatDateTime(selectedOrder.created_at)}
                 </p>
               </div>
-              <button
+              <button data-eos-id="src/pages/admin/merch/orders-tab.tsx#90"
                 type="button"
                 onClick={() => handleCopyId(selectedOrder.id)}
                 className="flex items-center gap-1.5 px-3 min-h-11 rounded-sm text-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer"
               >
-                <Copy size={12} />
+                <Copy data-eos-id="src/pages/admin/merch/orders-tab.tsx#91" size={12} />
                 Copy ID
               </button>
             </div>
 
             {/* Timeline */}
-            <OrderTimeline
+            <OrderTimeline data-eos-id="src/pages/admin/merch/orders-tab.tsx#92"
               status={selectedOrder.status}
               createdAt={selectedOrder.created_at}
               updatedAt={selectedOrder.updated_at}
             />
 
-            <Divider />
+            <Divider data-eos-id="src/pages/admin/merch/orders-tab.tsx#93" />
 
             {/* Customer */}
-            <div className="flex items-center gap-3">
-              <Avatar
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#94" className="flex items-center gap-3">
+              <Avatar data-eos-id="src/pages/admin/merch/orders-tab.tsx#95"
                 src={selectedOrder.profiles?.avatar_url}
                 name={selectedOrder.profiles?.display_name ?? 'Unknown'}
                 size="sm"
               />
-              <div>
-                <p className="text-sm font-semibold text-neutral-900">
+              <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#96">
+                <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#97" data-eos-var="selectedOrder.profiles.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="text-sm font-semibold text-neutral-900">
                   {selectedOrder.profiles?.display_name ?? 'Unknown'}
                 </p>
               </div>
             </div>
 
-            <Divider />
+            <Divider data-eos-id="src/pages/admin/merch/orders-tab.tsx#98" />
 
             {/* Items */}
-            <div>
-              <h4 className="text-xs font-semibold text-neutral-900 uppercase tracking-wider mb-2">
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#99">
+              <h4 data-eos-id="src/pages/admin/merch/orders-tab.tsx#100" className="text-xs font-semibold text-neutral-900 uppercase tracking-wider mb-2">
                 Items
               </h4>
-              <div className="space-y-2">
+              <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#101" className="space-y-2">
                 {selectedOrder.items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 p-2 rounded-sm bg-neutral-50">
+                  <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#102" key={item.id} className="flex items-center gap-3 p-2 rounded-sm bg-neutral-50">
                     {item.image_url && (
-                      <img
+                      <img data-eos-id="src/pages/admin/merch/orders-tab.tsx#103"
                         src={item.image_url}
                         alt={item.product_name}
                         className="w-10 h-10 rounded-sm object-cover shrink-0"
                       />
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-900 truncate">
+                    <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#104" className="flex-1 min-w-0">
+                      <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#105" data-eos-var="item.product_name" data-eos-var-label="Product name" data-eos-var-scope="item" className="text-sm font-medium text-neutral-900 truncate">
                         {item.product_name}
                       </p>
-                      <p className="text-xs text-neutral-400">
+                      <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#106" data-eos-var="item.variant_label,item.quantity" data-eos-var-label="Variant label, Quantity" data-eos-var-scope="item" className="text-xs text-neutral-400">
                         {item.variant_label} x{item.quantity}
                       </p>
                     </div>
-                    <span className="text-sm font-semibold text-neutral-900 tabular-nums shrink-0">
+                    <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#107" data-eos-var="item.price_cents" data-eos-var-label="Price cents" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 tabular-nums shrink-0">
                       {formatPrice(item.price_cents * item.quantity)}
                     </span>
                   </div>
@@ -700,69 +700,69 @@ export default function OrdersTab() {
             </div>
 
             {/* Total */}
-            <div className="px-1">
-              <div className="flex justify-between text-sm font-bold text-neutral-900">
-                <span>Total</span>
-                <span className="tabular-nums">{formatPrice(selectedOrder.total_cents ?? Math.round((selectedOrder.total ?? 0) * 100))}</span>
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#108" className="px-1">
+              <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#109" className="flex justify-between text-sm font-bold text-neutral-900">
+                <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#110">Total</span>
+                <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#111" data-eos-var="selectedOrder.total_cents" data-eos-var-label="Total cents" data-eos-var-scope="prop" className="tabular-nums">{formatPrice(selectedOrder.total_cents ?? Math.round((selectedOrder.total ?? 0) * 100))}</span>
               </div>
             </div>
 
-            <Divider />
+            <Divider data-eos-id="src/pages/admin/merch/orders-tab.tsx#112" />
 
             {/* Shipping address */}
-            <div>
-              <h4 className="text-xs font-semibold text-neutral-900 uppercase tracking-wider mb-2">
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#113">
+              <h4 data-eos-id="src/pages/admin/merch/orders-tab.tsx#114" className="text-xs font-semibold text-neutral-900 uppercase tracking-wider mb-2">
                 Shipping
               </h4>
-              <div className="flex items-start gap-2 p-3 rounded-sm bg-neutral-50">
-                <MapPin size={14} className="text-neutral-400 shrink-0 mt-0.5" />
-                <div className="text-sm text-neutral-600">
-                  <p className="font-medium">{selectedOrder.shipping_address?.full_name}</p>
-                  <p>{selectedOrder.shipping_address?.line1}</p>
+              <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#115" className="flex items-start gap-2 p-3 rounded-sm bg-neutral-50">
+                <MapPin data-eos-id="src/pages/admin/merch/orders-tab.tsx#116" size={14} className="text-neutral-400 shrink-0 mt-0.5" />
+                <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#117" className="text-sm text-neutral-600">
+                  <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#118" data-eos-var="selectedOrder.shipping_address.full_name" data-eos-var-label="Full name" data-eos-var-scope="prop" className="font-medium">{selectedOrder.shipping_address?.full_name}</p>
+                  <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#119" data-eos-var="selectedOrder.shipping_address.line1" data-eos-var-label="Line1" data-eos-var-scope="prop">{selectedOrder.shipping_address?.line1}</p>
                   {selectedOrder.shipping_address?.line2 && (
-                    <p>{selectedOrder.shipping_address.line2}</p>
+                    <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#120" data-eos-var="selectedOrder.shipping_address.line2" data-eos-var-label="Line2" data-eos-var-scope="prop">{selectedOrder.shipping_address.line2}</p>
                   )}
-                  <p>
+                  <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#121" data-eos-var="selectedOrder.shipping_address.city,selectedOrder.shipping_address.state,selectedOrder.shipping_address.postcode" data-eos-var-label="City, State, Postcode" data-eos-var-scope="prop">
                     {selectedOrder.shipping_address?.city} {selectedOrder.shipping_address?.state}{' '}
                     {selectedOrder.shipping_address?.postcode}
                   </p>
                   {selectedOrder.shipping_address?.phone && (
-                    <p className="mt-1 text-neutral-400">{selectedOrder.shipping_address.phone}</p>
+                    <p data-eos-id="src/pages/admin/merch/orders-tab.tsx#122" data-eos-var="selectedOrder.shipping_address.phone" data-eos-var-label="Phone" data-eos-var-scope="prop" className="mt-1 text-neutral-400">{selectedOrder.shipping_address.phone}</p>
                   )}
                 </div>
               </div>
 
               {/* Tracking */}
               {selectedOrder.tracking_number && (
-                <div className="flex items-center gap-2 mt-2 p-2.5 rounded-sm bg-plum-50">
-                  <Truck size={14} className="text-plum-600 shrink-0" />
-                  <span className="text-sm font-medium text-plum-800 font-mono">
+                <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#123" className="flex items-center gap-2 mt-2 p-2.5 rounded-sm bg-plum-50">
+                  <Truck data-eos-id="src/pages/admin/merch/orders-tab.tsx#124" size={14} className="text-plum-600 shrink-0" />
+                  <span data-eos-id="src/pages/admin/merch/orders-tab.tsx#125" data-eos-var="selectedOrder.tracking_number" data-eos-var-label="Tracking number" data-eos-var-scope="prop" className="text-sm font-medium text-plum-800 font-mono">
                     {selectedOrder.tracking_number}
                   </span>
-                  <a
+                  <a data-eos-href="dynamic" data-eos-href-label="Tracking number" data-eos-href-scope="prop" data-eos-id="src/pages/admin/merch/orders-tab.tsx#126"
                     href={`https://auspost.com.au/mypost/track/#/details/${selectedOrder.tracking_number}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ml-auto text-plum-600 hover:text-plum-800"
                   >
-                    <ExternalLink size={14} />
+                    <ExternalLink data-eos-id="src/pages/admin/merch/orders-tab.tsx#127" size={14} />
                   </a>
                 </div>
               )}
             </div>
 
             {/* Returns for this order */}
-            <ReturnsBanner orderId={selectedOrder.id} />
+            <ReturnsBanner data-eos-id="src/pages/admin/merch/orders-tab.tsx#128" orderId={selectedOrder.id} />
 
-            <Divider />
+            <Divider data-eos-id="src/pages/admin/merch/orders-tab.tsx#129" />
 
             {/* Admin notes */}
-            <div>
-              <h4 className="text-xs font-semibold text-neutral-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <StickyNote size={12} />
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#130">
+              <h4 data-eos-id="src/pages/admin/merch/orders-tab.tsx#131" className="text-xs font-semibold text-neutral-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <StickyNote data-eos-id="src/pages/admin/merch/orders-tab.tsx#132" size={12} />
                 Admin Notes
               </h4>
-              <Input
+              <Input data-eos-id="src/pages/admin/merch/orders-tab.tsx#133"
                 type="textarea"
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
@@ -770,7 +770,7 @@ export default function OrdersTab() {
                 rows={2}
               />
               {adminNotes !== ((selectedOrder as OrderWithProfile & { admin_notes?: string }).admin_notes ?? '') && (
-                <Button
+                <Button data-eos-id="src/pages/admin/merch/orders-tab.tsx#134"
                   variant="ghost"
                   size="sm"
                   className="mt-2"
@@ -782,15 +782,15 @@ export default function OrdersTab() {
               )}
             </div>
 
-            <Divider />
+            <Divider data-eos-id="src/pages/admin/merch/orders-tab.tsx#135" />
 
             {/* ---- Fulfilment actions ---- */}
-            <div className="space-y-2">
+            <div data-eos-id="src/pages/admin/merch/orders-tab.tsx#136" className="space-y-2">
               {selectedOrder.status === 'pending' && (
-                <Button
+                <Button data-eos-id="src/pages/admin/merch/orders-tab.tsx#137"
                   variant="primary"
                   fullWidth
-                  icon={<Package size={16} />}
+                  icon={<Package data-eos-id="src/pages/admin/merch/orders-tab.tsx#138" size={16} />}
                   loading={updateStatus.isPending}
                   onClick={() => handleStatusUpdate(selectedOrder.id, 'processing')}
                 >
@@ -800,16 +800,16 @@ export default function OrdersTab() {
 
               {selectedOrder.status === 'processing' && (
                 <>
-                  <Input
+                  <Input data-eos-id="src/pages/admin/merch/orders-tab.tsx#139"
                     label="Tracking number"
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
                     placeholder="e.g. AP123456789AU"
                   />
-                  <Button
+                  <Button data-eos-id="src/pages/admin/merch/orders-tab.tsx#140"
                     variant="primary"
                     fullWidth
-                    icon={<Truck size={16} />}
+                    icon={<Truck data-eos-id="src/pages/admin/merch/orders-tab.tsx#141" size={16} />}
                     loading={updateStatus.isPending}
                     onClick={() => handleStatusUpdate(selectedOrder.id, 'shipped')}
                   >
@@ -819,10 +819,10 @@ export default function OrdersTab() {
               )}
 
               {selectedOrder.status === 'shipped' && (
-                <Button
+                <Button data-eos-id="src/pages/admin/merch/orders-tab.tsx#142"
                   variant="primary"
                   fullWidth
-                  icon={<CheckCircle2 size={16} />}
+                  icon={<CheckCircle2 data-eos-id="src/pages/admin/merch/orders-tab.tsx#143" size={16} />}
                   loading={updateStatus.isPending}
                   onClick={() => handleStatusUpdate(selectedOrder.id, 'delivered')}
                 >
@@ -831,10 +831,10 @@ export default function OrdersTab() {
               )}
 
               {['pending', 'processing'].includes(selectedOrder.status) && (
-                <Button
+                <Button data-eos-id="src/pages/admin/merch/orders-tab.tsx#144"
                   variant="danger"
                   fullWidth
-                  icon={<RefreshCw size={16} />}
+                  icon={<RefreshCw data-eos-id="src/pages/admin/merch/orders-tab.tsx#145" size={16} />}
                   onClick={() => setRefundTarget(selectedOrder)}
                 >
                   Refund Order
@@ -846,7 +846,7 @@ export default function OrdersTab() {
       </BottomSheet>
 
       {/* Refund confirmation */}
-      <ConfirmationSheet
+      <ConfirmationSheet data-eos-id="src/pages/admin/merch/orders-tab.tsx#146"
         open={!!refundTarget}
         onClose={() => setRefundTarget(null)}
         onConfirm={handleRefund}
