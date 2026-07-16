@@ -26,7 +26,7 @@ import { TagsTab } from './tags-tab'
 import { DeliveryTab } from './delivery-tab'
 
 const tabs = [
-  { id: 'quick-send', label: 'Quick Send', icon: <Sparkles data-eos-id="src/pages/admin/email/index.tsx#0" size={14} /> },
+  { id: 'quick-send', label: 'Quick Send', icon: <Sparkles data-eos-id="src/pages/admin/email/index.tsx#0" data-eos-v="2" size={14} /> },
   { id: 'campaigns', label: 'History', icon: <Send data-eos-id="src/pages/admin/email/index.tsx#1" size={14} /> },
   { id: 'templates', label: 'Templates', icon: <FileText data-eos-id="src/pages/admin/email/index.tsx#2" size={14} /> },
   { id: 'system', label: 'System', icon: <Mail data-eos-id="src/pages/admin/email/index.tsx#3" size={14} /> },
