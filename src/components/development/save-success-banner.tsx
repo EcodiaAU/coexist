@@ -26,9 +26,9 @@ export function SaveSuccessBanner({
   className,
 }: SaveSuccessBannerProps) {
   return (
-    <AnimatePresence>
+    <AnimatePresence data-eos-id="src/components/development/save-success-banner.tsx#0">
       {show && (
-        <motion.div
+        <motion.div data-eos-id="src/components/development/save-success-banner.tsx#1"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -12 }}
@@ -38,35 +38,35 @@ export function SaveSuccessBanner({
             className,
           )}
         >
-          <div className="flex items-start gap-3">
-            <motion.div
+          <div data-eos-id="src/components/development/save-success-banner.tsx#2" className="flex items-start gap-3">
+            <motion.div data-eos-id="src/components/development/save-success-banner.tsx#3"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.1, type: 'spring', stiffness: 400, damping: 15 }}
               className="flex items-center justify-center w-10 h-10 rounded-full bg-moss-100 shrink-0"
             >
-              <CheckCircle2 size={22} className="text-moss-600" />
+              <CheckCircle2 data-eos-id="src/components/development/save-success-banner.tsx#4" size={22} className="text-moss-600" />
             </motion.div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-moss-800">{message}</p>
+            <div data-eos-id="src/components/development/save-success-banner.tsx#5" className="flex-1 min-w-0">
+              <p data-eos-id="src/components/development/save-success-banner.tsx#6" className="text-sm font-bold text-moss-800">{message}</p>
               {subtitle && (
-                <p className="text-xs text-moss-600 mt-0.5">{subtitle}</p>
+                <p data-eos-id="src/components/development/save-success-banner.tsx#7" className="text-xs text-moss-600 mt-0.5">{subtitle}</p>
               )}
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <Link to={listPath}>
-                  <Button variant="primary" size="sm" icon={<ArrowRight size={14} />}>
+              <div data-eos-id="src/components/development/save-success-banner.tsx#8" className="flex items-center gap-2 mt-3 flex-wrap">
+                <Link data-eos-id="src/components/development/save-success-banner.tsx#9" to={listPath}>
+                  <Button data-eos-id="src/components/development/save-success-banner.tsx#10" variant="primary" size="sm" icon={<ArrowRight data-eos-id="src/components/development/save-success-banner.tsx#11" size={14} />}>
                     {listLabel}
                   </Button>
                 </Link>
                 {editPath && (
-                  <Link to={editPath}>
-                    <Button variant="ghost" size="sm">
+                  <Link data-eos-id="src/components/development/save-success-banner.tsx#12" to={editPath}>
+                    <Button data-eos-id="src/components/development/save-success-banner.tsx#13" variant="ghost" size="sm">
                       Continue Editing
                     </Button>
                   </Link>
                 )}
                 {onDismiss && (
-                  <Button variant="ghost" size="sm" onClick={onDismiss}>
+                  <Button data-eos-id="src/components/development/save-success-banner.tsx#14" variant="ghost" size="sm" onClick={onDismiss}>
                     Create Another
                   </Button>
                 )}
