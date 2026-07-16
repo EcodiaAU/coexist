@@ -60,10 +60,10 @@ export default function AdminChallengesPage() {
   const showLoading = useDelayedLoading(isLoading)
 
   const heroActions = useMemo(() => (
-    <Button
+    <Button data-eos-id="src/pages/admin/challenges.tsx#0"
       variant="primary"
       size="sm"
-      icon={<Plus size={16} />}
+      icon={<Plus data-eos-id="src/pages/admin/challenges.tsx#1" size={16} />}
       onClick={() => setShowCreate(true)}
     >
       Create Challenge
@@ -71,9 +71,9 @@ export default function AdminChallengesPage() {
   ), [])
 
   const heroStats = useMemo(() => (
-    <AdminHeroStatRow>
-      <AdminHeroStat value={challenges?.length ?? 0} label="Total" icon={<Trophy size={18} />} color="warning" delay={0} reducedMotion={false} />
-      <AdminHeroStat value={challenges?.filter((c) => (c as unknown as Record<string, unknown>).status === 'active').length ?? 0} label="Active" icon={<Zap size={18} />} color="success" delay={1} reducedMotion={false} />
+    <AdminHeroStatRow data-eos-id="src/pages/admin/challenges.tsx#2">
+      <AdminHeroStat data-eos-id="src/pages/admin/challenges.tsx#3" value={challenges?.length ?? 0} label="Total" icon={<Trophy data-eos-id="src/pages/admin/challenges.tsx#4" size={18} />} color="warning" delay={0} reducedMotion={false} />
+      <AdminHeroStat data-eos-id="src/pages/admin/challenges.tsx#5" value={challenges?.filter((c) => (c as unknown as Record<string, unknown>).status === 'active').length ?? 0} label="Active" icon={<Zap data-eos-id="src/pages/admin/challenges.tsx#6" size={18} />} color="success" delay={1} reducedMotion={false} />
     </AdminHeroStatRow>
   ), [challenges])
 
@@ -147,50 +147,50 @@ export default function AdminChallengesPage() {
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
   return (
-    <div>
-        <motion.div variants={stagger} initial="hidden" animate="visible">
-          <motion.div variants={fadeUp}>
+    <div data-eos-id="src/pages/admin/challenges.tsx#7">
+        <motion.div data-eos-id="src/pages/admin/challenges.tsx#8" variants={stagger} initial="hidden" animate="visible">
+          <motion.div data-eos-id="src/pages/admin/challenges.tsx#9" variants={fadeUp}>
           {showLoading ? (
-            <Skeleton variant="list-item" count={4} />
+            <Skeleton data-eos-id="src/pages/admin/challenges.tsx#10" variant="list-item" count={4} />
           ) : !challenges?.length ? (
-            <EmptyState
+            <EmptyState data-eos-id="src/pages/admin/challenges.tsx#11"
               illustration="empty"
               title="No challenges yet"
               description="Create your first national challenge to motivate collectives"
               action={{ label: 'Create Challenge', onClick: () => setShowCreate(true) }}
             />
           ) : (
-            <StaggeredList className="space-y-3">
+            <StaggeredList data-eos-id="src/pages/admin/challenges.tsx#12" className="space-y-3">
               {challenges.map((challenge) => {
                 const isActive = (challenge as unknown as Record<string, unknown>).status === 'active'
 
                 return (
-                  <StaggeredItem
+                  <StaggeredItem data-eos-id="src/pages/admin/challenges.tsx#13"
                     key={challenge.id}
                     className={cn(
                       'p-4 rounded-sm bg-white shadow-sm',
                       !isActive && 'opacity-60',
                     )}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div
+                    <div data-eos-id="src/pages/admin/challenges.tsx#14" className="flex items-start justify-between gap-3">
+                      <div data-eos-id="src/pages/admin/challenges.tsx#15" className="flex items-start gap-3 min-w-0">
+                        <div data-eos-id="src/pages/admin/challenges.tsx#16"
                           className={cn(
                             'flex items-center justify-center w-10 h-10 rounded-sm shrink-0',
                             isActive ? 'bg-neutral-100' : 'bg-neutral-50',
                           )}
                         >
-                          <Trophy
+                          <Trophy data-eos-id="src/pages/admin/challenges.tsx#17"
                             size={20}
                             className={isActive ? 'text-neutral-400' : 'text-neutral-400'}
                           />
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-heading text-sm font-semibold text-neutral-900 truncate">
+                        <div data-eos-id="src/pages/admin/challenges.tsx#18" className="min-w-0">
+                          <div data-eos-id="src/pages/admin/challenges.tsx#19" className="flex items-center gap-2">
+                            <h3 data-eos-id="src/pages/admin/challenges.tsx#20" data-eos-var="challenge.title" data-eos-var-label="Title" data-eos-var-scope="item" className="font-heading text-sm font-semibold text-neutral-900 truncate">
                               {challenge.title}
                             </h3>
-                            <span
+                            <span data-eos-id="src/pages/admin/challenges.tsx#21"
                               className={cn(
                                 'text-[11px] font-medium px-1.5 py-0.5 rounded-full shrink-0',
                                 isActive
@@ -202,18 +202,18 @@ export default function AdminChallengesPage() {
                             </span>
                           </div>
                           {challenge.description && (
-                            <p className="text-xs text-neutral-400 mt-0.5 line-clamp-2">
+                            <p data-eos-id="src/pages/admin/challenges.tsx#22" data-eos-var="challenge.description" data-eos-var-label="Description" data-eos-var-scope="item" className="text-xs text-neutral-400 mt-0.5 line-clamp-2">
                               {challenge.description}
                             </p>
                           )}
-                          <div className="flex items-center gap-3 mt-2 text-xs text-neutral-400">
-                            <span className="flex items-center gap-1">
-                              <Target size={12} />
+                          <div data-eos-id="src/pages/admin/challenges.tsx#23" className="flex items-center gap-3 mt-2 text-xs text-neutral-400">
+                            <span data-eos-id="src/pages/admin/challenges.tsx#24" data-eos-var="challenge.goal_value,challenge.goal_type" data-eos-var-label="Goal value, Goal type" data-eos-var-scope="item" className="flex items-center gap-1">
+                              <Target data-eos-id="src/pages/admin/challenges.tsx#25" size={12} />
                               {challenge.goal_value} {challenge.goal_type}
                             </span>
                             {challenge.start_date && (
-                              <span className="flex items-center gap-1">
-                                <Calendar size={12} />
+                              <span data-eos-id="src/pages/admin/challenges.tsx#26" data-eos-var="challenge.start_date,challenge.end_date" data-eos-var-label="Start date, End date" data-eos-var-scope="item" className="flex items-center gap-1">
+                                <Calendar data-eos-id="src/pages/admin/challenges.tsx#27" size={12} />
                                 {new Date(challenge.start_date).toLocaleDateString('en-AU', {
                                   day: 'numeric',
                                   month: 'short',
@@ -226,9 +226,9 @@ export default function AdminChallengesPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div data-eos-id="src/pages/admin/challenges.tsx#28" className="flex items-center gap-1 shrink-0">
                         {isActive && (
-                          <Button
+                          <Button data-eos-id="src/pages/admin/challenges.tsx#29"
                             variant="ghost"
                             size="sm"
                             onClick={() => endMutation.mutate(challenge.id)}
@@ -236,13 +236,13 @@ export default function AdminChallengesPage() {
                             End
                           </Button>
                         )}
-                        <button
+                        <button data-eos-id="src/pages/admin/challenges.tsx#30"
                           type="button"
                           onClick={() => setDeleteTarget(challenge.id)}
                           className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.98]"
                           aria-label="Delete challenge"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 data-eos-id="src/pages/admin/challenges.tsx#31" size={16} />
                         </button>
                       </div>
                     </div>
@@ -254,35 +254,35 @@ export default function AdminChallengesPage() {
           </motion.div>
 
           {/* Create modal */}
-          <BottomSheet open={showCreate} onClose={() => setShowCreate(false)}>
+          <BottomSheet data-eos-id="src/pages/admin/challenges.tsx#32" open={showCreate} onClose={() => setShowCreate(false)}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-heading text-lg font-semibold text-neutral-900">Create National Challenge</h2>
-              <button
+            <div data-eos-id="src/pages/admin/challenges.tsx#33" className="flex items-center justify-between mb-4">
+              <h2 data-eos-id="src/pages/admin/challenges.tsx#34" className="font-heading text-lg font-semibold text-neutral-900">Create National Challenge</h2>
+              <button data-eos-id="src/pages/admin/challenges.tsx#35"
                 onClick={() => setShowCreate(false)}
                 className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
                 aria-label="Close"
               >
-                <X size={20} />
+                <X data-eos-id="src/pages/admin/challenges.tsx#36" size={20} />
               </button>
             </div>
-            <div className="space-y-4">
-              <Input
+            <div data-eos-id="src/pages/admin/challenges.tsx#37" className="space-y-4">
+              <Input data-eos-id="src/pages/admin/challenges.tsx#38"
                 label="Challenge Title"
                 value={form.title}
                 onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
                 required
                 placeholder="e.g. Plant 10,000 Trees"
               />
-              <Input
+              <Input data-eos-id="src/pages/admin/challenges.tsx#39"
                 type="textarea"
                 label="Description"
                 value={form.description}
                 onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                 placeholder="Describe the challenge..."
               />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Dropdown
+              <div data-eos-id="src/pages/admin/challenges.tsx#40" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Dropdown data-eos-id="src/pages/admin/challenges.tsx#41"
                   options={[
                     { value: 'events', label: 'Events' },
                     { value: 'trees', label: 'Trees Planted' },
@@ -294,7 +294,7 @@ export default function AdminChallengesPage() {
                   onChange={(v) => setForm((p) => ({ ...p, goal_type: v }))}
                   label="Goal Type"
                 />
-                <Input
+                <Input data-eos-id="src/pages/admin/challenges.tsx#42"
                   label="Goal Value"
                   value={form.goal_value}
                   onChange={(e) =>
@@ -303,8 +303,8 @@ export default function AdminChallengesPage() {
                   placeholder="e.g. 100"
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input
+              <div data-eos-id="src/pages/admin/challenges.tsx#43" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input data-eos-id="src/pages/admin/challenges.tsx#44"
                   label="Start Date"
                   value={form.start_date}
                   onChange={(e) =>
@@ -312,7 +312,7 @@ export default function AdminChallengesPage() {
                   }
                   placeholder="YYYY-MM-DD"
                 />
-                <Input
+                <Input data-eos-id="src/pages/admin/challenges.tsx#45"
                   label="End Date"
                   value={form.end_date}
                   onChange={(e) =>
@@ -321,7 +321,7 @@ export default function AdminChallengesPage() {
                   placeholder="YYYY-MM-DD"
                 />
               </div>
-              <Button
+              <Button data-eos-id="src/pages/admin/challenges.tsx#46"
                 variant="primary"
                 fullWidth
                 onClick={() => createMutation.mutate()}
@@ -333,7 +333,7 @@ export default function AdminChallengesPage() {
             </div>
           </BottomSheet>
 
-          <ConfirmationSheet
+          <ConfirmationSheet data-eos-id="src/pages/admin/challenges.tsx#47"
             open={!!deleteTarget}
             onClose={() => setDeleteTarget(null)}
             onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
