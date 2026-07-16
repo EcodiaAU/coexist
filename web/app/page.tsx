@@ -77,7 +77,7 @@ export default async function HomePage() {
       {/* About Co-Exist - copy mirrors coexistaus.org; Australia map on the LEFT for laptops */}
       <section data-eos-id="web/app/page.tsx#12" className="grid items-center md:grid-cols-2 bg-[#ffffff]">
         <Reveal data-eos-id="web/app/page.tsx#13" className="order-1 flex items-center justify-center px-6 py-14 md:order-1 md:py-24">
-          <Image data-eos-id="web/app/page.tsx#14" src="/images/map.webp" alt="Map of Co-Exist collectives across Australia" width={520} height={620} className="h-auto w-full max-w-md object-contain border-4 border-[#16170f]" />
+          <Image data-eos-id="web/app/page.tsx#14" src="/images/map.webp" alt="Map of Co-Exist collectives across Australia" width={520} height={620} className="h-auto max-w-md object-contain border-4 border-[#16170f] w-[448px]" />
         </Reveal>
         <div data-eos-id="web/app/page.tsx#15" className="order-2 flex items-center px-6 py-16 md:order-2 md:px-16 md:py-24">
           <Reveal data-eos-id="web/app/page.tsx#16" className="max-w-xl">
