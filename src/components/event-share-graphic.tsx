@@ -54,7 +54,7 @@ const BRAND_GREEN_DK  = '#4a5c34'   // primary-700
 function AppStoreBadge({ height = 56 }: { height?: number }) {
   const w = height * (140 / 42)
   return (
-    <svg data-eos-id="src/components/event-share-graphic.tsx#0"
+    <svg data-eos-id="src/components/event-share-graphic.tsx#0" data-eos-v="2"
       width={w}
       height={height}
       viewBox="0 0 140 42"
@@ -117,7 +117,7 @@ const WORDMARK_RATIO = 1500 / 569
 function CoExistWordmark({ height = 36 }: { height?: number }) {
   const width = Math.round(height * WORDMARK_RATIO)
   return (
-    <img data-eos-id="src/components/event-share-graphic.tsx#14"
+    <img data-eos-src="static" data-eos-id="src/components/event-share-graphic.tsx#14"
       src="/logos/white-wordmark.webp"
       alt="Co-Exist"
       crossOrigin="anonymous"
