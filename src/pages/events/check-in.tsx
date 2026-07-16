@@ -62,9 +62,9 @@ function Confetti() {
   if (shouldReduceMotion) return null
 
   return (
-    <div data-eos-id="src/pages/events/check-in.tsx#0" data-eos-v="2" className="fixed inset-0 pointer-events-none z-50" aria-hidden="true">
+    <div className="fixed inset-0 pointer-events-none z-50" aria-hidden="true">
       {particles.map((p, i) => (
-        <motion.div data-eos-id="src/pages/events/check-in.tsx#1"
+        <motion.div
           key={i}
           className={cn('absolute rounded-sm', p.color)}
           style={{
@@ -293,18 +293,18 @@ export default function CheckInPage() {
 
   if (showLoading) {
     return (
-      <Page data-eos-id="src/pages/events/check-in.tsx#2" swipeBack header={<Header data-eos-id="src/pages/events/check-in.tsx#3" title="Check In" back />}>
-        <div data-eos-id="src/pages/events/check-in.tsx#4" className="pt-8 space-y-4">
-          <Skeleton data-eos-id="src/pages/events/check-in.tsx#5" variant="title" />
-          <Skeleton data-eos-id="src/pages/events/check-in.tsx#6" variant="card" />
+      <Page swipeBack header={<Header title="Check In" back />}>
+        <div className="pt-8 space-y-4">
+          <Skeleton variant="title" />
+          <Skeleton variant="card" />
         </div>
       </Page>
     )
   }
   if (!event) {
     return (
-      <Page data-eos-id="src/pages/events/check-in.tsx#7" swipeBack header={<Header data-eos-id="src/pages/events/check-in.tsx#8" title="Check In" back />}>
-        <EmptyState data-eos-id="src/pages/events/check-in.tsx#9"
+      <Page swipeBack header={<Header title="Check In" back />}>
+        <EmptyState
           illustration="error"
           title="Event not found"
           description="We couldn't find this event."
@@ -315,28 +315,28 @@ export default function CheckInPage() {
   }
 
   return (
-    <Page data-eos-id="src/pages/events/check-in.tsx#10" swipeBack header={<Header data-eos-id="src/pages/events/check-in.tsx#11" title="Check In" back />}>
-      <AnimatePresence data-eos-id="src/pages/events/check-in.tsx#12" mode="wait">
+    <Page swipeBack header={<Header title="Check In" back />}>
+      <AnimatePresence mode="wait">
         {state === 'success' ? (
-          <motion.div data-eos-id="src/pages/events/check-in.tsx#13"
+          <motion.div
             key="success"
             initial={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, type: 'spring', stiffness: 300 }}
             className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center"
           >
-            <Confetti data-eos-id="src/pages/events/check-in.tsx#14" />
+            <Confetti />
 
-            <motion.div data-eos-id="src/pages/events/check-in.tsx#15"
+            <motion.div
               initial={shouldReduceMotion ? undefined : { scale: 0 }}
               animate={{ scale: 1 }}
               transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.2, type: 'spring', stiffness: 200 }}
               className="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center mb-6"
             >
-              <CheckCircle2 data-eos-id="src/pages/events/check-in.tsx#16" size={40} className="text-primary-400" />
+              <CheckCircle2 size={40} className="text-primary-400" />
             </motion.div>
 
-            <motion.h2 data-eos-id="src/pages/events/check-in.tsx#17"
+            <motion.h2
               initial={shouldReduceMotion ? undefined : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.3 }}
@@ -345,7 +345,7 @@ export default function CheckInPage() {
               You're checked in!
             </motion.h2>
 
-            <motion.p data-eos-id="src/pages/events/check-in.tsx#18" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="prop"
+            <motion.p
               initial={shouldReduceMotion ? undefined : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.4 }}
@@ -356,33 +356,33 @@ export default function CheckInPage() {
 
             {/* Offline notice */}
             {checkedInOffline && (
-              <motion.div data-eos-id="src/pages/events/check-in.tsx#19"
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
                 className="flex items-center gap-2 mt-3 px-3 py-2 rounded-sm bg-warning-50 text-warning-700 text-caption"
               >
-                <WifiOff data-eos-id="src/pages/events/check-in.tsx#20" size={14} />
+                <WifiOff size={14} />
                 Queued offline - will sync when you reconnect
               </motion.div>
             )}
 
             {/* Profile survey prompt for first-time check-ins */}
             {profileData && !profileData.profile_details_completed && (
-              <motion.div data-eos-id="src/pages/events/check-in.tsx#21"
+              <motion.div
                 initial={shouldReduceMotion ? undefined : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.6 }}
                 className="mt-6 w-full max-w-xs"
               >
-                <div data-eos-id="src/pages/events/check-in.tsx#22" className="rounded-sm bg-primary-50 border border-neutral-200 p-4 text-center">
-                  <p data-eos-id="src/pages/events/check-in.tsx#23" className="text-sm font-semibold text-neutral-900">
+                <div className="rounded-sm bg-primary-50 border border-neutral-200 p-4 text-center">
+                  <p className="text-sm font-semibold text-neutral-900">
                     Quick profile setup
                   </p>
-                  <p data-eos-id="src/pages/events/check-in.tsx#24" className="text-xs text-neutral-500 mt-1">
+                  <p className="text-xs text-neutral-500 mt-1">
                     Help us keep you safe - takes 1 minute
                   </p>
-                  <Button data-eos-id="src/pages/events/check-in.tsx#25"
+                  <Button
                     variant="primary"
                     size="sm"
                     fullWidth
@@ -396,24 +396,24 @@ export default function CheckInPage() {
             )}
 
             {/* What's next? */}
-            <motion.div data-eos-id="src/pages/events/check-in.tsx#26"
+            <motion.div
               initial={shouldReduceMotion ? undefined : { opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.8 }}
               className="mt-8 w-full max-w-xs"
             >
-              <WhatsNext data-eos-id="src/pages/events/check-in.tsx#27"
+              <WhatsNext
                 suggestions={[
                   {
                     label: 'View Event Details',
                     description: 'See the schedule and other attendees',
-                    icon: <CheckCircle2 data-eos-id="src/pages/events/check-in.tsx#28" size={18} />,
+                    icon: <CheckCircle2 size={18} />,
                     to: `/events/${event.id}`,
                   },
                   {
                     label: 'Share a Photo',
                     description: 'Capture the moment with your group',
-                    icon: <Camera data-eos-id="src/pages/events/check-in.tsx#29" size={18} />,
+                    icon: <Camera size={18} />,
                     to: `/events/${event.id}?tab=photos`,
                   },
                 ]}
@@ -421,111 +421,111 @@ export default function CheckInPage() {
             </motion.div>
           </motion.div>
         ) : state === 'waitlisted' ? (
-          <motion.div data-eos-id="src/pages/events/check-in.tsx#30"
+          <motion.div
             key="waitlisted"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center"
           >
-            <div data-eos-id="src/pages/events/check-in.tsx#31" className="w-16 h-16 rounded-full bg-warning-100 flex items-center justify-center mb-4">
-              <Clock data-eos-id="src/pages/events/check-in.tsx#32" size={32} className="text-warning-600" />
+            <div className="w-16 h-16 rounded-full bg-warning-100 flex items-center justify-center mb-4">
+              <Clock size={32} className="text-warning-600" />
             </div>
-            <h2 data-eos-id="src/pages/events/check-in.tsx#33" className="font-heading text-xl font-bold text-neutral-900">
+            <h2 className="font-heading text-xl font-bold text-neutral-900">
               You're on the Waitlist
             </h2>
-            <p data-eos-id="src/pages/events/check-in.tsx#34" className="text-neutral-500 mt-2 max-w-xs">
+            <p className="text-neutral-500 mt-2 max-w-xs">
               {isLeaderOrAbove
                 ? 'This person is waitlisted. You can confirm their spot and check them in.'
                 : "You're on the waitlist \u2014 the coordinator can confirm your spot."}
             </p>
-            <div data-eos-id="src/pages/events/check-in.tsx#35" className="mt-6 w-full max-w-xs space-y-2">
+            <div className="mt-6 w-full max-w-xs space-y-2">
               {isLeaderOrAbove && (
-                <Button data-eos-id="src/pages/events/check-in.tsx#36"
+                <Button
                   variant="primary"
                   fullWidth
-                  icon={<UserCheck data-eos-id="src/pages/events/check-in.tsx#37" size={18} />}
+                  icon={<UserCheck size={18} />}
                   loading={promotingFromWaitlist}
                   onClick={handlePromoteFromWaitlist}
                 >
                   Move from Waitlist & Check In
                 </Button>
               )}
-              <Button data-eos-id="src/pages/events/check-in.tsx#38" variant="ghost" fullWidth onClick={() => navigate(`/events/${event.id}`)}>
+              <Button variant="ghost" fullWidth onClick={() => navigate(`/events/${event.id}`)}>
                 View Event
               </Button>
             </div>
           </motion.div>
         ) : state === 'error' ? (
-          <motion.div data-eos-id="src/pages/events/check-in.tsx#39"
+          <motion.div
             key="error"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center"
           >
-            <div data-eos-id="src/pages/events/check-in.tsx#40" className="w-16 h-16 rounded-full bg-error-100 flex items-center justify-center mb-4">
-              <XCircle data-eos-id="src/pages/events/check-in.tsx#41" size={32} className="text-error-600" />
+            <div className="w-16 h-16 rounded-full bg-error-100 flex items-center justify-center mb-4">
+              <XCircle size={32} className="text-error-600" />
             </div>
-            <h2 data-eos-id="src/pages/events/check-in.tsx#42" className="font-heading text-xl font-bold text-neutral-900">
+            <h2 className="font-heading text-xl font-bold text-neutral-900">
               {errorKind === 'already_checked_in' ? 'Already Checked In' : 'Check-in Failed'}
             </h2>
-            <p data-eos-id="src/pages/events/check-in.tsx#43" data-eos-var="CHECK_IN_ERROR_MESSAGES.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className="text-neutral-500 mt-2 max-w-xs">
+            <p className="text-neutral-500 mt-2 max-w-xs">
               {CHECK_IN_ERROR_MESSAGES[errorKind]}
             </p>
-            <div data-eos-id="src/pages/events/check-in.tsx#44" className="mt-6 w-full max-w-xs space-y-2">
+            <div className="mt-6 w-full max-w-xs space-y-2">
               {errorKind === 'already_checked_in' || errorKind === 'event_cancelled' || errorKind === 'event_not_active' ? (
-                <Button data-eos-id="src/pages/events/check-in.tsx#45" variant="primary" fullWidth onClick={() => navigate(`/events/${event.id}`)}>
+                <Button variant="primary" fullWidth onClick={() => navigate(`/events/${event.id}`)}>
                   View Event
                 </Button>
               ) : (
-                <Button data-eos-id="src/pages/events/check-in.tsx#46" variant="primary" fullWidth onClick={() => { setState('idle'); setDigits(['', '', '']) }}>
+                <Button variant="primary" fullWidth onClick={() => { setState('idle'); setDigits(['', '', '']) }}>
                   Try Again
                 </Button>
               )}
-              <Button data-eos-id="src/pages/events/check-in.tsx#47" variant="ghost" fullWidth onClick={() => navigate(-1)}>
+              <Button variant="ghost" fullWidth onClick={() => navigate(-1)}>
                 Go Back
               </Button>
             </div>
           </motion.div>
         ) : (
           /* ---- Idle: 3-digit code entry ---- */
-          <motion.div data-eos-id="src/pages/events/check-in.tsx#48"
+          <motion.div
             key="idle"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="pt-6 pb-8"
           >
-            <div data-eos-id="src/pages/events/check-in.tsx#49" className="text-center mb-8">
-              <div data-eos-id="src/pages/events/check-in.tsx#50" className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
-                <Hash data-eos-id="src/pages/events/check-in.tsx#51" size={28} className="text-primary-500" />
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
+                <Hash size={28} className="text-primary-500" />
               </div>
-              <h2 data-eos-id="src/pages/events/check-in.tsx#52" className="font-heading text-xl font-bold text-neutral-900">
+              <h2 className="font-heading text-xl font-bold text-neutral-900">
                 Enter Check-In Code
               </h2>
-              <p data-eos-id="src/pages/events/check-in.tsx#53" className="text-sm text-neutral-500 mt-1 max-w-xs mx-auto">
+              <p className="text-sm text-neutral-500 mt-1 max-w-xs mx-auto">
                 Ask your leader for the 3-character code
               </p>
             </div>
 
             {/* Event card preview */}
-            <div data-eos-id="src/pages/events/check-in.tsx#54" className="rounded-sm bg-white p-4 mb-6">
-              <p data-eos-id="src/pages/events/check-in.tsx#55" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="text-sm font-semibold text-neutral-900">{event.title}</p>
-              <p data-eos-id="src/pages/events/check-in.tsx#56" data-eos-var="event.collectives.name" data-eos-var-label="Name" data-eos-var-scope="prop" className="text-caption text-neutral-500 mt-0.5">
+            <div className="rounded-sm bg-white p-4 mb-6">
+              <p className="text-sm font-semibold text-neutral-900">{event.title}</p>
+              <p className="text-caption text-neutral-500 mt-0.5">
                 {event.collectives?.name}
               </p>
             </div>
 
             {/* Offline banner */}
             {isOffline && (
-              <div data-eos-id="src/pages/events/check-in.tsx#57" className="flex items-center gap-2 p-3 rounded-sm bg-warning-50 text-warning-700 text-sm font-medium mb-4">
-                <WifiOff data-eos-id="src/pages/events/check-in.tsx#58" size={16} />
+              <div className="flex items-center gap-2 p-3 rounded-sm bg-warning-50 text-warning-700 text-sm font-medium mb-4">
+                <WifiOff size={16} />
                 You're offline. Check-in will be queued and synced later.
               </div>
             )}
 
             {/* 3-digit PIN entry */}
-            <div data-eos-id="src/pages/events/check-in.tsx#59" className="flex justify-center gap-3 mb-6" onPaste={handlePaste}>
+            <div className="flex justify-center gap-3 mb-6" onPaste={handlePaste}>
               {[0, 1, 2].map((i) => (
-                <input data-eos-id="src/pages/events/check-in.tsx#60"
+                <input
                   key={i}
                   ref={inputRefs[i]}
                   type="text"
@@ -542,7 +542,7 @@ export default function CheckInPage() {
               ))}
             </div>
 
-            <Button data-eos-id="src/pages/events/check-in.tsx#61"
+            <Button
               variant="primary"
               size="lg"
               fullWidth
@@ -555,9 +555,9 @@ export default function CheckInPage() {
 
             {/* Offline notice */}
             {!isOffline && (
-              <div data-eos-id="src/pages/events/check-in.tsx#62" className="mt-6 flex items-start gap-2 p-3 rounded-sm bg-warning-50 text-warning-700 text-caption">
-                <AlertCircle data-eos-id="src/pages/events/check-in.tsx#63" size={16} className="shrink-0 mt-0.5" />
-                <span data-eos-id="src/pages/events/check-in.tsx#64">
+              <div className="mt-6 flex items-start gap-2 p-3 rounded-sm bg-warning-50 text-warning-700 text-caption">
+                <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <span>
                   No signal? Check-in will be queued and synced when you're back online.
                 </span>
               </div>
@@ -567,12 +567,12 @@ export default function CheckInPage() {
       </AnimatePresence>
 
       {/* Celebration overlay */}
-      <Celebration data-eos-id="src/pages/events/check-in.tsx#65"
+      <Celebration
         open={showCelebration}
         onClose={() => setShowCelebration(false)}
         title="Amazing work!"
         subtitle="Thanks for checking in - enjoy making an impact!"
-        icon={<Sparkles data-eos-id="src/pages/events/check-in.tsx#66" size={36} className="text-white" />}
+        icon={<Sparkles size={36} className="text-white" />}
         autoDismiss={4000}
       />
     </Page>

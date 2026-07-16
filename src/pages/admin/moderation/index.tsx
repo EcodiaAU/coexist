@@ -136,28 +136,28 @@ function ReportCard({
 
   return (
     <>
-      <motion.div data-eos-id="src/pages/admin/moderation/index.tsx#0" data-eos-v="2"
+      <motion.div
         initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-md shadow-sm overflow-hidden"
       >
         {/* Header */}
-        <div data-eos-id="src/pages/admin/moderation/index.tsx#1" className="flex items-center gap-3 px-4 pt-4 pb-2">
-          <div data-eos-id="src/pages/admin/moderation/index.tsx#2"
+        <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+          <div
             className={cn(
               'flex items-center justify-center w-9 h-9 rounded-full',
               config.color,
             )}
           >
-            <TypeIcon data-eos-id="src/pages/admin/moderation/index.tsx#3" size={16} aria-hidden="true" />
+            <TypeIcon size={16} aria-hidden="true" />
           </div>
 
-          <div data-eos-id="src/pages/admin/moderation/index.tsx#4" className="flex-1 min-w-0">
-            <div data-eos-id="src/pages/admin/moderation/index.tsx#5" className="flex items-center gap-2">
-              <span data-eos-id="src/pages/admin/moderation/index.tsx#6" data-eos-var="config.label" data-eos-var-label="Label" data-eos-var-scope="prop" className="text-sm font-semibold text-neutral-900">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-neutral-900">
                 {config.label} Report
               </span>
-              <span data-eos-id="src/pages/admin/moderation/index.tsx#7" data-eos-var="report.status" data-eos-var-label="Status" data-eos-var-scope="prop" className={cn(
+              <span className={cn(
                 'text-xs px-2 py-0.5 rounded-full font-medium',
                 report.status === 'pending'
                   ? 'bg-warning-100 text-warning-700'
@@ -170,24 +170,24 @@ function ReportCard({
                 {report.status}
               </span>
             </div>
-            <span data-eos-id="src/pages/admin/moderation/index.tsx#8" data-eos-var="report.created_at" data-eos-var-label="Created at" data-eos-var-scope="prop" className="text-xs text-neutral-400">
+            <span className="text-xs text-neutral-400">
               {formatDate(report.created_at!)}
             </span>
           </div>
         </div>
 
         {/* Reporter + reason */}
-        <div data-eos-id="src/pages/admin/moderation/index.tsx#9" className="flex items-center gap-2 px-4 py-2">
-          <Avatar data-eos-id="src/pages/admin/moderation/index.tsx#10"
+        <div className="flex items-center gap-2 px-4 py-2">
+          <Avatar
             src={report.reporter?.avatar_url}
             name={report.reporter?.display_name ?? 'Reporter'}
             size="xs"
           />
-          <div data-eos-id="src/pages/admin/moderation/index.tsx#11" className="flex-1 min-w-0">
-            <span data-eos-id="src/pages/admin/moderation/index.tsx#12" data-eos-var="report.reporter.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="text-xs text-neutral-400">
+          <div className="flex-1 min-w-0">
+            <span className="text-xs text-neutral-400">
               {report.reporter?.display_name ?? 'Unknown'}
             </span>
-            <p data-eos-id="src/pages/admin/moderation/index.tsx#13" data-eos-var="report.reason" data-eos-var-label="Reason" data-eos-var-scope="prop" className="text-xs text-neutral-400 truncate" title={report.reason}>
+            <p className="text-xs text-neutral-400 truncate" title={report.reason}>
               {report.reason}
             </p>
           </div>
@@ -195,8 +195,8 @@ function ReportCard({
 
         {/* Quick link for profile reports (user blocks / user reports) */}
         {report.content_type === 'profile' && (
-          <div data-eos-id="src/pages/admin/moderation/index.tsx#14" className="px-4 pb-2">
-            <Link data-eos-id="src/pages/admin/moderation/index.tsx#15"
+          <div className="px-4 pb-2">
+            <Link
               to={`/profile/${report.content_id}`}
               className="text-xs font-medium text-neutral-500 hover:text-neutral-700 hover:underline"
             >
@@ -207,26 +207,26 @@ function ReportCard({
 
         {/* Actions */}
         {report.status === 'pending' && (
-          <div data-eos-id="src/pages/admin/moderation/index.tsx#16" className="flex gap-2 px-4 py-3 border-t border-neutral-100">
-            <Button data-eos-id="src/pages/admin/moderation/index.tsx#17"
+          <div className="flex gap-2 px-4 py-3 border-t border-neutral-100">
+            <Button
               variant="ghost"
               size="sm"
-              icon={<Check data-eos-id="src/pages/admin/moderation/index.tsx#18" size={14} />}
+              icon={<Check size={14} />}
               onClick={onApprove}
               className="flex-1 !text-success-600 hover:!bg-success-50"
             >
               Approve
             </Button>
-            <Button data-eos-id="src/pages/admin/moderation/index.tsx#19"
+            <Button
               variant="ghost"
               size="sm"
-              icon={<Trash2 data-eos-id="src/pages/admin/moderation/index.tsx#20" size={14} />}
+              icon={<Trash2 size={14} />}
               onClick={() => setShowRemoveConfirm(true)}
               className="flex-1 !text-error-600 hover:!bg-error-50"
             >
               Remove
             </Button>
-            <Button data-eos-id="src/pages/admin/moderation/index.tsx#21"
+            <Button
               variant="ghost"
               size="sm"
               onClick={onDismiss}
@@ -238,7 +238,7 @@ function ReportCard({
         )}
       </motion.div>
 
-      <ConfirmationSheet data-eos-id="src/pages/admin/moderation/index.tsx#22"
+      <ConfirmationSheet
         open={showRemoveConfirm}
         onClose={() => setShowRemoveConfirm(false)}
         onConfirm={onRemove}
@@ -297,9 +297,9 @@ export default function ModerationQueuePage() {
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
   return (
-    <motion.div data-eos-id="src/pages/admin/moderation/index.tsx#23" variants={stagger} initial="hidden" animate="visible">
-      <motion.div data-eos-id="src/pages/admin/moderation/index.tsx#24" variants={fadeUp}>
-        <TabBar data-eos-id="src/pages/admin/moderation/index.tsx#25"
+    <motion.div variants={stagger} initial="hidden" animate="visible">
+      <motion.div variants={fadeUp}>
+        <TabBar
           tabs={statusTabs}
           activeTab={activeStatus}
           onChange={(id) => setActiveStatus(id as Enums<'report_status'>)}
@@ -308,15 +308,15 @@ export default function ModerationQueuePage() {
         />
       </motion.div>
 
-      <motion.div data-eos-id="src/pages/admin/moderation/index.tsx#26" variants={fadeUp}>
+      <motion.div variants={fadeUp}>
       {showLoading ? (
-        <div data-eos-id="src/pages/admin/moderation/index.tsx#27" className="space-y-4">
-          <Skeleton data-eos-id="src/pages/admin/moderation/index.tsx#28" variant="card" />
-          <Skeleton data-eos-id="src/pages/admin/moderation/index.tsx#29" variant="card" />
-          <Skeleton data-eos-id="src/pages/admin/moderation/index.tsx#30" variant="card" />
+        <div className="space-y-4">
+          <Skeleton variant="card" />
+          <Skeleton variant="card" />
+          <Skeleton variant="card" />
         </div>
       ) : isEmpty ? (
-        <EmptyState data-eos-id="src/pages/admin/moderation/index.tsx#31"
+        <EmptyState
           illustration="empty"
           title={activeStatus === 'pending' ? 'No pending reports' : `No ${activeStatus} reports`}
           description={
@@ -326,19 +326,19 @@ export default function ModerationQueuePage() {
           }
         />
       ) : (
-          <div data-eos-id="src/pages/admin/moderation/index.tsx#32" className="space-y-4">
+          <div className="space-y-4">
             {/* Stats header for pending */}
             {activeStatus === 'pending' && (
-              <div data-eos-id="src/pages/admin/moderation/index.tsx#33" className="flex items-center gap-2 px-1">
-                <AlertTriangle data-eos-id="src/pages/admin/moderation/index.tsx#34" size={14} className="text-warning-500" aria-hidden="true" />
-                <span data-eos-id="src/pages/admin/moderation/index.tsx#35" className="text-sm font-medium text-neutral-900">
+              <div className="flex items-center gap-2 px-1">
+                <AlertTriangle size={14} className="text-warning-500" aria-hidden="true" />
+                <span className="text-sm font-medium text-neutral-900">
                   {reports?.length ?? 0} report{(reports?.length ?? 0) !== 1 ? 's' : ''} pending review
                 </span>
               </div>
             )}
 
             {(reports ?? []).map((report) => (
-              <ReportCard data-eos-id="src/pages/admin/moderation/index.tsx#36"
+              <ReportCard
                 key={report.id}
                 report={report}
                 onApprove={() => handleAction(report.id, 'approved')}

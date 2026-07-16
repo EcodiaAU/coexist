@@ -64,51 +64,51 @@ export default function AuthCallbackPage() {
   }, [state, authLoading, authError, navigate])
 
   return (
-    <div data-eos-id="src/pages/auth/auth-callback.tsx#0" data-eos-v="2" className="min-h-dvh flex flex-col items-center justify-center px-6 bg-white">
-      <OGMeta data-eos-id="src/pages/auth/auth-callback.tsx#1" title="Verifying..." description="Verifying your Co-Exist account." noindex />
+    <div className="min-h-dvh flex flex-col items-center justify-center px-6 bg-white">
+      <OGMeta title="Verifying..." description="Verifying your Co-Exist account." noindex />
 
       {state === 'processing' && (
-        <motion.div data-eos-id="src/pages/auth/auth-callback.tsx#2"
+        <motion.div
           initial={shouldReduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex flex-col items-center text-center"
         >
-          <Loader2 data-eos-id="src/pages/auth/auth-callback.tsx#3" className="w-12 h-12 text-neutral-400 animate-spin" />
-          <p data-eos-id="src/pages/auth/auth-callback.tsx#4" className="mt-4 text-neutral-500 font-medium">Verifying your account...</p>
+          <Loader2 className="w-12 h-12 text-neutral-400 animate-spin" />
+          <p className="mt-4 text-neutral-500 font-medium">Verifying your account...</p>
         </motion.div>
       )}
 
       {state === 'success' && (
-        <motion.div data-eos-id="src/pages/auth/auth-callback.tsx#5"
+        <motion.div
           initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           className="flex flex-col items-center text-center max-w-sm"
         >
-          <div data-eos-id="src/pages/auth/auth-callback.tsx#6" className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center">
-            <CheckCircle data-eos-id="src/pages/auth/auth-callback.tsx#7" className="w-10 h-10 text-success" />
+          <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center">
+            <CheckCircle className="w-10 h-10 text-success" />
           </div>
-          <h1 data-eos-id="src/pages/auth/auth-callback.tsx#8" className="mt-6 font-heading text-2xl font-bold text-neutral-900">
+          <h1 className="mt-6 font-heading text-2xl font-bold text-neutral-900">
             You're verified!
           </h1>
-          <p data-eos-id="src/pages/auth/auth-callback.tsx#9" className="mt-2 text-neutral-500">
+          <p className="mt-2 text-neutral-500">
             Your account has been confirmed.
           </p>
 
           {isMobileBrowser() ? (
-            <div data-eos-id="src/pages/auth/auth-callback.tsx#10" className="mt-8 w-full space-y-3">
-              <Button data-eos-id="src/pages/auth/auth-callback.tsx#11"
+            <div className="mt-8 w-full space-y-3">
+              <Button
                 variant="primary"
                 size="lg"
                 fullWidth
-                icon={<Smartphone data-eos-id="src/pages/auth/auth-callback.tsx#12" size={18} />}
+                icon={<Smartphone size={18} />}
                 onClick={() => {
                   window.location.href = 'coexist://home'
                 }}
               >
                 Open Co-Exist App
               </Button>
-              <Button data-eos-id="src/pages/auth/auth-callback.tsx#13"
+              <Button
                 variant="ghost"
                 size="lg"
                 fullWidth
@@ -118,26 +118,26 @@ export default function AuthCallbackPage() {
               </Button>
             </div>
           ) : (
-            <p data-eos-id="src/pages/auth/auth-callback.tsx#14" className="mt-4 text-sm text-neutral-400">Redirecting...</p>
+            <p className="mt-4 text-sm text-neutral-400">Redirecting...</p>
           )}
         </motion.div>
       )}
 
       {state === 'error' && (
-        <motion.div data-eos-id="src/pages/auth/auth-callback.tsx#15"
+        <motion.div
           initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center text-center max-w-sm"
         >
-          <div data-eos-id="src/pages/auth/auth-callback.tsx#16" className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center">
-            <AlertCircle data-eos-id="src/pages/auth/auth-callback.tsx#17" className="w-10 h-10 text-error" />
+          <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center">
+            <AlertCircle className="w-10 h-10 text-error" />
           </div>
-          <h1 data-eos-id="src/pages/auth/auth-callback.tsx#18" className="mt-6 font-heading text-2xl font-bold text-neutral-900">
+          <h1 className="mt-6 font-heading text-2xl font-bold text-neutral-900">
             Something went wrong
           </h1>
-          <p data-eos-id="src/pages/auth/auth-callback.tsx#19" className="mt-2 text-neutral-500">{errorMsg}</p>
-          <div data-eos-id="src/pages/auth/auth-callback.tsx#20" className="mt-8 w-full space-y-3">
-            <Button data-eos-id="src/pages/auth/auth-callback.tsx#21"
+          <p className="mt-2 text-neutral-500">{errorMsg}</p>
+          <div className="mt-8 w-full space-y-3">
+            <Button
               variant="primary"
               size="lg"
               fullWidth

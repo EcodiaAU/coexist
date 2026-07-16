@@ -52,53 +52,53 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div data-eos-id="src/pages/auth/reset-password.tsx#0" data-eos-v="2" className="min-h-dvh flex flex-col bg-white">
-      <OGMeta data-eos-id="src/pages/auth/reset-password.tsx#1" title="Set New Password" description="Set a new password for your Co-Exist account." noindex />
-      <Header data-eos-id="src/pages/auth/reset-password.tsx#2" title="New Password" />
+    <div className="min-h-dvh flex flex-col bg-white">
+      <OGMeta title="Set New Password" description="Set a new password for your Co-Exist account." noindex />
+      <Header title="New Password" />
 
-      <div data-eos-id="src/pages/auth/reset-password.tsx#3" className="flex-1 flex flex-col px-6 pt-8">
-        <AnimatePresence data-eos-id="src/pages/auth/reset-password.tsx#4" mode="wait">
+      <div className="flex-1 flex flex-col px-6 pt-8">
+        <AnimatePresence mode="wait">
           {done ? (
-            <motion.div data-eos-id="src/pages/auth/reset-password.tsx#5"
+            <motion.div
               key="success"
               initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex-1 flex flex-col items-center justify-center text-center"
             >
-              <motion.div data-eos-id="src/pages/auth/reset-password.tsx#6"
+              <motion.div
                 initial={shouldReduceMotion ? false : { scale: 0.5 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
               >
-                <CheckCircle data-eos-id="src/pages/auth/reset-password.tsx#7" className="w-16 h-16 text-success mx-auto" />
+                <CheckCircle className="w-16 h-16 text-success mx-auto" />
               </motion.div>
-              <h2 data-eos-id="src/pages/auth/reset-password.tsx#8" className="mt-6 font-heading text-xl font-semibold text-neutral-900">
+              <h2 className="mt-6 font-heading text-xl font-semibold text-neutral-900">
                 Password updated
               </h2>
-              <p data-eos-id="src/pages/auth/reset-password.tsx#9" className="mt-2 text-neutral-500">Redirecting you now...</p>
+              <p className="mt-2 text-neutral-500">Redirecting you now...</p>
             </motion.div>
           ) : (
-            <motion.form data-eos-id="src/pages/auth/reset-password.tsx#10"
+            <motion.form
               key="form"
               onSubmit={handleSubmit}
               initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex-1 flex flex-col"
             >
-              <div data-eos-id="src/pages/auth/reset-password.tsx#11" className="flex-1">
-                <div data-eos-id="src/pages/auth/reset-password.tsx#12" className="w-14 h-14 rounded-full bg-neutral-50 flex items-center justify-center mb-6">
-                  <Lock data-eos-id="src/pages/auth/reset-password.tsx#13" className="w-7 h-7 text-neutral-400" />
+              <div className="flex-1">
+                <div className="w-14 h-14 rounded-full bg-neutral-50 flex items-center justify-center mb-6">
+                  <Lock className="w-7 h-7 text-neutral-400" />
                 </div>
 
-                <h2 data-eos-id="src/pages/auth/reset-password.tsx#14" className="font-heading text-xl font-semibold text-neutral-900">
+                <h2 className="font-heading text-xl font-semibold text-neutral-900">
                   Set a new password
                 </h2>
-                <p data-eos-id="src/pages/auth/reset-password.tsx#15" className="mt-2 text-neutral-500 leading-relaxed">
+                <p className="mt-2 text-neutral-500 leading-relaxed">
                   Choose a strong password for your account.
                 </p>
 
-                <div data-eos-id="src/pages/auth/reset-password.tsx#16" className="mt-6 space-y-4">
-                  <Input data-eos-id="src/pages/auth/reset-password.tsx#17"
+                <div className="mt-6 space-y-4">
+                  <Input
                     type="password"
                     label="New password"
                     value={password}
@@ -106,7 +106,7 @@ export default function ResetPasswordPage() {
                     autoComplete="new-password"
                     required
                   />
-                  <Input data-eos-id="src/pages/auth/reset-password.tsx#18"
+                  <Input
                     type="password"
                     label="Confirm password"
                     value={confirm}
@@ -117,7 +117,7 @@ export default function ResetPasswordPage() {
                 </div>
 
                 {error && (
-                  <motion.p data-eos-id="src/pages/auth/reset-password.tsx#19"
+                  <motion.p
                     initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-3 text-sm text-error"
@@ -128,11 +128,11 @@ export default function ResetPasswordPage() {
                 )}
               </div>
 
-              <div data-eos-id="src/pages/auth/reset-password.tsx#20"
+              <div
                 className="py-6"
                 style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
               >
-                <Button data-eos-id="src/pages/auth/reset-password.tsx#21"
+                <Button
                   type="submit"
                   variant="primary"
                   size="lg"

@@ -76,7 +76,7 @@ function ChatTextOrImageBubble({
   const signed = useSignedChatImage(imagePath ?? null)
   const photo = imagePath ? signed.url : (msg.image_url ?? undefined)
   return (
-    <ChatBubble data-eos-id="src/pages/chat/chat-message-list.tsx#0" data-eos-v="2"
+    <ChatBubble
       message={msg.content ?? ''}
       sent={sent}
       timestamp={new Date(msg.created_at!)}
@@ -132,7 +132,7 @@ function InlinePoll({
   if (!poll) return null
 
   return (
-    <PollCard data-eos-id="src/pages/chat/chat-message-list.tsx#1"
+    <PollCard
       question={poll.question}
       options={poll.options}
       voteCounts={poll._vote_counts ?? {}}
@@ -268,7 +268,7 @@ function InlineAnnouncement({
     : null
 
   return (
-    <AnnouncementCard data-eos-id="src/pages/chat/chat-message-list.tsx#2"
+    <AnnouncementCard
       type={announcement.type}
       title={announcement.title}
       body={announcement.body}
@@ -304,7 +304,7 @@ function InlineEventPhotos({
   const more = Math.max(0, photos.length - previewCount)
   const uploaderCount = new Set(photos.map((p) => p.uploaded_by)).size
   return (
-    <motion.div data-eos-id="src/pages/chat/chat-message-list.tsx#3"
+    <motion.div
       initial={{ opacity: 0, y: 8, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -313,31 +313,31 @@ function InlineEventPhotos({
         sent ? 'ml-auto' : 'mr-auto',
       )}
     >
-      <div data-eos-id="src/pages/chat/chat-message-list.tsx#4" className="p-4">
-        <div data-eos-id="src/pages/chat/chat-message-list.tsx#5" className="flex items-center gap-2 mb-2">
-          <div data-eos-id="src/pages/chat/chat-message-list.tsx#6" className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-50 text-primary-600">
-            <Camera data-eos-id="src/pages/chat/chat-message-list.tsx#7" size={16} strokeWidth={2.4} />
+      <div className="p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-50 text-primary-600">
+            <Camera size={16} strokeWidth={2.4} />
           </div>
-          <div data-eos-id="src/pages/chat/chat-message-list.tsx#8" className="flex-1 min-w-0">
-            <p data-eos-id="src/pages/chat/chat-message-list.tsx#9" className="text-[10px] font-extrabold uppercase tracking-wider text-primary-600">Photo album</p>
-            <p data-eos-id="src/pages/chat/chat-message-list.tsx#10" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="text-[13px] font-bold text-neutral-900 leading-tight line-clamp-1">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-primary-600">Photo album</p>
+            <p className="text-[13px] font-bold text-neutral-900 leading-tight line-clamp-1">
               {event?.title ?? 'Event'}
             </p>
           </div>
         </div>
         {photos.length === 0 ? (
-          <p data-eos-id="src/pages/chat/chat-message-list.tsx#11" className="text-xs text-neutral-500 mb-3">No photos yet - be the first to share.</p>
+          <p className="text-xs text-neutral-500 mb-3">No photos yet - be the first to share.</p>
         ) : (
-          <p data-eos-id="src/pages/chat/chat-message-list.tsx#12" className="text-xs text-neutral-500 mb-3">
+          <p className="text-xs text-neutral-500 mb-3">
             {photos.length} {photos.length === 1 ? 'photo' : 'photos'} from {uploaderCount} {uploaderCount === 1 ? 'person' : 'people'}
           </p>
         )}
         {preview.length > 0 && (
-          <div data-eos-id="src/pages/chat/chat-message-list.tsx#13" className="grid grid-cols-4 gap-0.5 rounded-sm overflow-hidden mb-3">
+          <div className="grid grid-cols-4 gap-0.5 rounded-sm overflow-hidden mb-3">
             {preview.map((p, i) => (
-              <div data-eos-id="src/pages/chat/chat-message-list.tsx#14" key={p.id} className="relative aspect-square bg-neutral-100">
+              <div key={p.id} className="relative aspect-square bg-neutral-100">
                 {p.url && (
-                  <img data-eos-src="dynamic" data-eos-src-label="Url" data-eos-id="src/pages/chat/chat-message-list.tsx#15"
+                  <img
                     src={p.url}
                     alt=""
                     loading="lazy"
@@ -346,15 +346,15 @@ function InlineEventPhotos({
                   />
                 )}
                 {i === preview.length - 1 && more > 0 && (
-                  <div data-eos-id="src/pages/chat/chat-message-list.tsx#16" className="absolute inset-0 bg-black/55 flex items-center justify-center">
-                    <span data-eos-id="src/pages/chat/chat-message-list.tsx#17" className="text-white font-heading font-bold text-base">+{more}</span>
+                  <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                    <span className="text-white font-heading font-bold text-base">+{more}</span>
                   </div>
                 )}
               </div>
             ))}
           </div>
         )}
-        <button data-eos-id="src/pages/chat/chat-message-list.tsx#18"
+        <button
           type="button"
           onClick={() => navigate(`/events/${eventId}?tab=photos`)}
           className="w-full rounded-sm bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
@@ -380,7 +380,7 @@ function InlineEventSurvey({
   const navigate = useNavigate()
   const { data: event } = useEventDetail(eventId)
   return (
-    <motion.div data-eos-id="src/pages/chat/chat-message-list.tsx#19"
+    <motion.div
       initial={{ opacity: 0, y: 8, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -389,22 +389,22 @@ function InlineEventSurvey({
         sent ? 'ml-auto' : 'mr-auto',
       )}
     >
-      <div data-eos-id="src/pages/chat/chat-message-list.tsx#20" className="p-4">
-        <div data-eos-id="src/pages/chat/chat-message-list.tsx#21" className="flex items-center gap-2 mb-2">
-          <div data-eos-id="src/pages/chat/chat-message-list.tsx#22" className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-50 text-primary-600">
-            <MessageSquareHeart data-eos-id="src/pages/chat/chat-message-list.tsx#23" size={16} strokeWidth={2.4} />
+      <div className="p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-50 text-primary-600">
+            <MessageSquareHeart size={16} strokeWidth={2.4} />
           </div>
-          <div data-eos-id="src/pages/chat/chat-message-list.tsx#24" className="flex-1 min-w-0">
-            <p data-eos-id="src/pages/chat/chat-message-list.tsx#25" className="text-[10px] font-extrabold uppercase tracking-wider text-primary-600">Feedback</p>
-            <p data-eos-id="src/pages/chat/chat-message-list.tsx#26" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="text-[13px] font-bold text-neutral-900 leading-tight line-clamp-1">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-primary-600">Feedback</p>
+            <p className="text-[13px] font-bold text-neutral-900 leading-tight line-clamp-1">
               {event?.title ?? 'Event'}
             </p>
           </div>
         </div>
-        <p data-eos-id="src/pages/chat/chat-message-list.tsx#27" className="text-xs text-neutral-500 mb-3">
+        <p className="text-xs text-neutral-500 mb-3">
           How was it? Quick check-in helps the leaders learn what worked - takes 30 seconds.
         </p>
-        <button data-eos-id="src/pages/chat/chat-message-list.tsx#28"
+        <button
           type="button"
           onClick={() => navigate(`/events/${eventId}/survey`)}
           className="w-full rounded-sm bg-primary-600 py-2.5 text-center text-sm font-semibold text-white active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-primary-700 shadow-sm"
@@ -483,7 +483,7 @@ function InlineCarpool({
 
   return (
     <>
-      <CarpoolCard data-eos-id="src/pages/chat/chat-message-list.tsx#29"
+      <CarpoolCard
         status={carpool.status}
         creatorName={carpool.driver?.display_name ?? undefined}
         departurePointText={carpool.departure_point_text}
@@ -503,7 +503,7 @@ function InlineCarpool({
         breakoutChannelId={breakout?.channel_id ?? null}
         onOpenChat={breakout?.channel_id ? () => navigate(`/chat/channel/${breakout.channel_id}`) : undefined}
       />
-      <SaveSeatSheet data-eos-id="src/pages/chat/chat-message-list.tsx#30"
+      <SaveSeatSheet
         open={saveSheetOpen}
         onClose={() => setSaveSheetOpen(false)}
         onSubmit={handleSaveSeatSubmit}
@@ -810,11 +810,11 @@ export function ChatMessageList({
     }
 
     if (messageType === 'poll' && msg.poll_id) {
-      return <InlinePoll data-eos-id="src/pages/chat/chat-message-list.tsx#31" pollId={msg.poll_id} collectiveId={msgCollectiveId} sent={isSent} />
+      return <InlinePoll pollId={msg.poll_id} collectiveId={msgCollectiveId} sent={isSent} />
     }
 
     if (messageType === 'announcement' && msg.announcement_id) {
-      return <InlineAnnouncement data-eos-id="src/pages/chat/chat-message-list.tsx#32" announcementId={msg.announcement_id} sent={isSent} />
+      return <InlineAnnouncement announcementId={msg.announcement_id} sent={isSent} />
     }
 
     // TODO: regen types after migration applied - `carpool` message_type
@@ -822,25 +822,25 @@ export function ChatMessageList({
     const carpoolMessageType = (msg as unknown as { message_type?: string }).message_type
     const carpoolId = (msg as unknown as { carpool_id?: string | null }).carpool_id
     if (carpoolMessageType === 'carpool' && carpoolId) {
-      return <InlineCarpool data-eos-id="src/pages/chat/chat-message-list.tsx#33" carpoolId={carpoolId} sent={isSent} />
+      return <InlineCarpool carpoolId={carpoolId} sent={isSent} />
     }
 
     // event_photos widget: renders the album preview + Open album CTA.
     const eventPhotosEventId = (msg as unknown as { event_photos_event_id?: string | null }).event_photos_event_id
     if (messageType === 'event_photos' && eventPhotosEventId) {
-      return <InlineEventPhotos data-eos-id="src/pages/chat/chat-message-list.tsx#34" eventId={eventPhotosEventId} sent={isSent} />
+      return <InlineEventPhotos eventId={eventPhotosEventId} sent={isSent} />
     }
 
     // event_survey widget: post-event feedback prompt, deep-links to /survey.
     const eventSurveyEventId = (msg as unknown as { event_survey_event_id?: string | null }).event_survey_event_id
     if (messageType === 'event_survey' && eventSurveyEventId) {
-      return <InlineEventSurvey data-eos-id="src/pages/chat/chat-message-list.tsx#35" eventId={eventSurveyEventId} sent={isSent} />
+      return <InlineEventSurvey eventId={eventSurveyEventId} sent={isSent} />
     }
 
     if (messageType === 'system') {
       return (
-        <div data-eos-id="src/pages/chat/chat-message-list.tsx#36" className="flex justify-center py-3">
-          <p data-eos-id="src/pages/chat/chat-message-list.tsx#37" data-eos-var="msg.content" data-eos-var-label="Content" data-eos-var-scope="prop" className="text-xs text-neutral-500 italic font-medium bg-neutral-50 px-4 py-2 rounded-full ring-1 ring-neutral-100">
+        <div className="flex justify-center py-3">
+          <p className="text-xs text-neutral-500 italic font-medium bg-neutral-50 px-4 py-2 rounded-full ring-1 ring-neutral-100">
             {msg.content}
           </p>
         </div>
@@ -863,7 +863,7 @@ export function ChatMessageList({
     if (messageType === 'html') {
       return (
         <>
-          <HtmlChatBubble data-eos-id="src/pages/chat/chat-message-list.tsx#38"
+          <HtmlChatBubble
             htmlContent={msg.content ?? ''}
             sent={isSent}
             timestamp={new Date(msg.created_at!)}
@@ -879,7 +879,7 @@ export function ChatMessageList({
             onSwipeReply={swipeReplyEnabled ? () => onMessageSwipeReply(msg) : undefined}
           />
           {reactionsEnabled && (
-            <MessageReactions data-eos-id="src/pages/chat/chat-message-list.tsx#39"
+            <MessageReactions
               messageId={msg.id}
               collectiveId={msgCollectiveId!}
               sent={isSent}
@@ -898,7 +898,7 @@ export function ChatMessageList({
         }
       : undefined
     const bubble = (
-      <ChatTextOrImageBubble data-eos-id="src/pages/chat/chat-message-list.tsx#40"
+      <ChatTextOrImageBubble
         msg={msg}
         sent={isSent}
         roleBadge={roleBadge}
@@ -914,7 +914,7 @@ export function ChatMessageList({
 
     if (isCollective) {
       return (
-        <div data-eos-id="src/pages/chat/chat-message-list.tsx#41"
+        <div
           role="button"
           tabIndex={0}
           aria-label={`Message options for ${msg.profiles?.display_name}`}
@@ -924,7 +924,7 @@ export function ChatMessageList({
         >
           {bubble}
           {(msg as unknown as { updated_at?: string }).updated_at && (msg as unknown as { updated_at?: string }).updated_at !== msg.created_at && (
-            <p data-eos-id="src/pages/chat/chat-message-list.tsx#42" className={cn(
+            <p className={cn(
               'text-[11px] text-neutral-400 mt-0.5',
               isSent ? 'text-right pr-2' : 'pl-10',
             )}>
@@ -932,7 +932,7 @@ export function ChatMessageList({
             </p>
           )}
           {reactionsEnabled && (
-            <MessageReactions data-eos-id="src/pages/chat/chat-message-list.tsx#43"
+            <MessageReactions
               messageId={msg.id}
               collectiveId={msgCollectiveId!}
               sent={isSent}
@@ -947,7 +947,7 @@ export function ChatMessageList({
 
   return (
     <>
-      <div data-eos-id="src/pages/chat/chat-message-list.tsx#44"
+      <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
         // 1.8.5 item 9: py-2 → py-1 trims top/bottom slack inside the
@@ -959,38 +959,38 @@ export function ChatMessageList({
         aria-live="polite"
       >
         {showLoading ? (
-          <div data-eos-id="src/pages/chat/chat-message-list.tsx#45" className="space-y-4 py-4">
-            <Skeleton data-eos-id="src/pages/chat/chat-message-list.tsx#46" variant="list-item" count={8} />
+          <div className="space-y-4 py-4">
+            <Skeleton variant="list-item" count={8} />
           </div>
         ) : allMessages.length === 0 ? (
           isChannel ? (
             channelType === 'campout' ? (
-              <div data-eos-id="src/pages/chat/chat-message-list.tsx#47" className="flex items-center justify-center h-full">
-                <div data-eos-id="src/pages/chat/chat-message-list.tsx#48" className="text-center py-12">
-                  <div data-eos-id="src/pages/chat/chat-message-list.tsx#49" className="w-14 h-14 rounded-md bg-primary-50 flex items-center justify-center mx-auto mb-4">
-                    <Tent data-eos-id="src/pages/chat/chat-message-list.tsx#50" size={24} strokeWidth={2.5} className="text-primary-500" />
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center py-12">
+                  <div className="w-14 h-14 rounded-md bg-primary-50 flex items-center justify-center mx-auto mb-4">
+                    <Tent size={24} strokeWidth={2.5} className="text-primary-500" />
                   </div>
-                  <p data-eos-id="src/pages/chat/chat-message-list.tsx#51" className="text-base font-bold text-neutral-900">Campout group chat</p>
-                  <p data-eos-id="src/pages/chat/chat-message-list.tsx#52" className="text-sm text-neutral-500 mt-1.5">
+                  <p className="text-base font-bold text-neutral-900">Campout group chat</p>
+                  <p className="text-sm text-neutral-500 mt-1.5">
                     Say hi to everyone coming to this campout
                   </p>
                 </div>
               </div>
             ) : (
-              <div data-eos-id="src/pages/chat/chat-message-list.tsx#53" className="flex items-center justify-center h-full">
-                <div data-eos-id="src/pages/chat/chat-message-list.tsx#54" className="text-center py-12">
-                  <div data-eos-id="src/pages/chat/chat-message-list.tsx#55" className="w-14 h-14 rounded-md bg-primary-50 flex items-center justify-center mx-auto mb-4">
-                    <Lock data-eos-id="src/pages/chat/chat-message-list.tsx#56" size={24} strokeWidth={2.5} className="text-primary-500" />
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center py-12">
+                  <div className="w-14 h-14 rounded-md bg-primary-50 flex items-center justify-center mx-auto mb-4">
+                    <Lock size={24} strokeWidth={2.5} className="text-primary-500" />
                   </div>
-                  <p data-eos-id="src/pages/chat/chat-message-list.tsx#57" className="text-base font-bold text-neutral-900">Staff-only chat</p>
-                  <p data-eos-id="src/pages/chat/chat-message-list.tsx#58" className="text-sm text-neutral-500 mt-1.5">
+                  <p className="text-base font-bold text-neutral-900">Staff-only chat</p>
+                  <p className="text-sm text-neutral-500 mt-1.5">
                     Messages here are only visible to staff members
                   </p>
                 </div>
               </div>
             )
           ) : (
-            <EmptyState data-eos-id="src/pages/chat/chat-message-list.tsx#59"
+            <EmptyState
               illustration="empty"
               title="Start the conversation"
               description="Be the first to say hello to your collective!"
@@ -1000,8 +1000,8 @@ export function ChatMessageList({
           <>
             {/* Load more indicator */}
             {isFetchingNextPage && (
-              <div data-eos-id="src/pages/chat/chat-message-list.tsx#60" className="flex justify-center py-3">
-                <div data-eos-id="src/pages/chat/chat-message-list.tsx#61" className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-600" />
+              <div className="flex justify-center py-3">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-600" />
               </div>
             )}
 
@@ -1013,12 +1013,12 @@ export function ChatMessageList({
               const visibleMessages = group.messages.filter((msg) => !msg.is_deleted)
 
               return (
-                <Fragment data-eos-id="src/pages/chat/chat-message-list.tsx#62" key={group.date}>
+                <Fragment key={group.date}>
                   {/* Date separator. 1.8.5 item 9: py-5 -> py-3 (40 -> 24px
                       total). Still clearly demarcates the day without
                       eating a third of a phone screen. */}
-                  <div data-eos-id="src/pages/chat/chat-message-list.tsx#63" className="flex items-center justify-center py-3">
-                    <motion.span data-eos-id="src/pages/chat/chat-message-list.tsx#64" data-eos-var="group.date" data-eos-var-label="Date" data-eos-var-scope="item"
+                  <div className="flex items-center justify-center py-3">
+                    <motion.span
                       initial={isCollective && !shouldReduceMotion ? { opacity: 0, scale: 0.9 } : false}
                       animate={{ opacity: 1, scale: 1 }}
                       className="rounded-full bg-white px-4 py-1.5 text-[11px] font-bold text-neutral-500 shadow-sm ring-1 ring-neutral-100"
@@ -1048,7 +1048,7 @@ export function ChatMessageList({
                         CONTINUATION_WINDOW_MS
 
                     return (
-                      <div data-eos-id="src/pages/chat/chat-message-list.tsx#65"
+                      <div
                         key={msg.id}
                         data-message-id={msg.id}
                         className={cn(
@@ -1078,33 +1078,33 @@ export function ChatMessageList({
               )
             })}
 
-            <div data-eos-id="src/pages/chat/chat-message-list.tsx#66" ref={messagesEndRef} />
+            <div ref={messagesEndRef} />
           </>
         )}
       </div>
 
       {/* Typing indicator (collective only) */}
       {isCollective && (
-        <AnimatePresence data-eos-id="src/pages/chat/chat-message-list.tsx#67">
+        <AnimatePresence>
           {typingText && (
-            <motion.div data-eos-id="src/pages/chat/chat-message-list.tsx#68"
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.15 }}
               className="shrink-0 px-4 pb-1.5 bg-white"
             >
-              <div data-eos-id="src/pages/chat/chat-message-list.tsx#69" className="flex items-center gap-2">
-                <div data-eos-id="src/pages/chat/chat-message-list.tsx#70" className="flex gap-1">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
                   {[0, 1, 2].map((i) => (
-                    <div data-eos-id="src/pages/chat/chat-message-list.tsx#71"
+                    <div
                       key={i}
                       className="h-2 w-2 rounded-full bg-neutral-400 animate-bounce"
                       style={{ animationDelay: `${i * 0.15}s`, animationDuration: '0.6s' }}
                     />
                   ))}
                 </div>
-                <p data-eos-id="src/pages/chat/chat-message-list.tsx#72" className="text-xs text-neutral-500 italic font-medium">{typingText}</p>
+                <p className="text-xs text-neutral-500 italic font-medium">{typingText}</p>
               </div>
             </motion.div>
           )}

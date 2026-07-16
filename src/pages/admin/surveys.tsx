@@ -130,10 +130,10 @@ function useSurveyResults(surveyId: string | null) {
 /* ------------------------------------------------------------------ */
 
 const tabs = [
-  { id: 'surveys', label: 'Surveys', icon: <ClipboardList data-eos-id="src/pages/admin/surveys.tsx#0" data-eos-v="2" size={14} /> },
-  { id: 'templates', label: 'Templates', icon: <Copy data-eos-id="src/pages/admin/surveys.tsx#1" size={14} /> },
-  { id: 'results', label: 'Results', icon: <BarChart3 data-eos-id="src/pages/admin/surveys.tsx#2" size={14} /> },
-  { id: 'settings', label: 'Auto-Survey', icon: <Settings data-eos-id="src/pages/admin/surveys.tsx#3" size={14} /> },
+  { id: 'surveys', label: 'Surveys', icon: <ClipboardList size={14} /> },
+  { id: 'templates', label: 'Templates', icon: <Copy size={14} /> },
+  { id: 'results', label: 'Results', icon: <BarChart3 size={14} /> },
+  { id: 'settings', label: 'Auto-Survey', icon: <Settings size={14} /> },
 ]
 
 export default function AdminSurveysPage() {
@@ -200,9 +200,9 @@ export default function AdminSurveysPage() {
   }, [])
 
   const heroStats = useMemo(() => (
-    <AdminHeroStatRow data-eos-id="src/pages/admin/surveys.tsx#4">
-      <AdminHeroStat data-eos-id="src/pages/admin/surveys.tsx#5" value={surveys?.length ?? 0} label="Surveys" icon={<ClipboardList data-eos-id="src/pages/admin/surveys.tsx#6" size={18} />} color="moss" delay={0} reducedMotion={false} />
-      <AdminHeroStat data-eos-id="src/pages/admin/surveys.tsx#7" value={TEMPLATES.length} label="Templates" icon={<Copy data-eos-id="src/pages/admin/surveys.tsx#8" size={18} />} color="plum" delay={1} reducedMotion={false} />
+    <AdminHeroStatRow>
+      <AdminHeroStat value={surveys?.length ?? 0} label="Surveys" icon={<ClipboardList size={18} />} color="moss" delay={0} reducedMotion={false} />
+      <AdminHeroStat value={TEMPLATES.length} label="Templates" icon={<Copy size={18} />} color="plum" delay={1} reducedMotion={false} />
     </AdminHeroStatRow>
   ), [surveys?.length])
 
@@ -283,20 +283,20 @@ export default function AdminSurveysPage() {
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
   return (
-    <div data-eos-id="src/pages/admin/surveys.tsx#9">
-        <motion.div data-eos-id="src/pages/admin/surveys.tsx#10" variants={stagger} initial="hidden" animate="visible">
-          <motion.div data-eos-id="src/pages/admin/surveys.tsx#11" variants={fadeUp}>
-            <TabBar data-eos-id="src/pages/admin/surveys.tsx#12" tabs={tabs} activeTab={activeTab} onChange={setActiveTab} className="mb-4" />
+    <div>
+        <motion.div variants={stagger} initial="hidden" animate="visible">
+          <motion.div variants={fadeUp}>
+            <TabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} className="mb-4" />
           </motion.div>
 
       {/* Surveys list */}
       {activeTab === 'surveys' && (
-        <motion.div data-eos-id="src/pages/admin/surveys.tsx#13" variants={fadeUp}>
-          <div data-eos-id="src/pages/admin/surveys.tsx#14" className="flex justify-end mb-4">
-            <Button data-eos-id="src/pages/admin/surveys.tsx#15"
+        <motion.div variants={fadeUp}>
+          <div className="flex justify-end mb-4">
+            <Button
               variant="primary"
               size="sm"
-              icon={<Plus data-eos-id="src/pages/admin/surveys.tsx#16" size={16} />}
+              icon={<Plus size={16} />}
               onClick={() => navigate('/admin/surveys/create')}
               className="w-full sm:w-auto"
             >
@@ -305,16 +305,16 @@ export default function AdminSurveysPage() {
           </div>
 
           {showLoading ? (
-            <Skeleton data-eos-id="src/pages/admin/surveys.tsx#17" variant="list-item" count={4} />
+            <Skeleton variant="list-item" count={4} />
           ) : !surveys?.length ? (
-            <EmptyState data-eos-id="src/pages/admin/surveys.tsx#18"
+            <EmptyState
               illustration="empty"
               title="No surveys yet"
               description="Create a survey or start from a template"
               action={{ label: 'Create Survey', onClick: () => navigate('/admin/surveys/create') }}
             />
           ) : (
-            <StaggeredList data-eos-id="src/pages/admin/surveys.tsx#19" className="space-y-2">
+            <StaggeredList className="space-y-2">
               {surveys.map((survey) => {
                 const surveyRecord = survey as unknown as Record<string, unknown>
                 const status = (surveyRecord.status as string) ?? (survey.is_active ? 'active' : 'inactive')
@@ -329,26 +329,26 @@ export default function AdminSurveysPage() {
                 })()
 
                 return (
-                  <StaggeredItem data-eos-id="src/pages/admin/surveys.tsx#20"
+                  <StaggeredItem
                     key={survey.id}
                     className="rounded-sm bg-white shadow-sm overflow-hidden"
                   >
                     {/* Tappable main area - navigates to edit */}
-                    <button data-eos-id="src/pages/admin/surveys.tsx#21"
+                    <button
                       type="button"
                       onClick={() => navigate(`/admin/surveys/${survey.id}/edit`)}
                       className="w-full text-left p-4 pb-3 cursor-pointer active:bg-neutral-50 transition-colors"
                     >
-                      <div data-eos-id="src/pages/admin/surveys.tsx#22" className="flex items-start gap-3">
-                        <div data-eos-id="src/pages/admin/surveys.tsx#23" className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary-100 shrink-0">
-                          <ClipboardList data-eos-id="src/pages/admin/surveys.tsx#24" size={18} className="text-primary-500" />
+                      <div className="flex items-start gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary-100 shrink-0">
+                          <ClipboardList size={18} className="text-primary-500" />
                         </div>
-                        <div data-eos-id="src/pages/admin/surveys.tsx#25" className="flex-1 min-w-0">
-                          <p data-eos-id="src/pages/admin/surveys.tsx#26" data-eos-var="survey.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 leading-snug line-clamp-2 break-words">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-neutral-900 leading-snug line-clamp-2 break-words">
                             {survey.title}
                           </p>
-                          <div data-eos-id="src/pages/admin/surveys.tsx#27" className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                            <span data-eos-id="src/pages/admin/surveys.tsx#28"
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                            <span
                               className={cn(
                                 'text-[11px] font-medium px-1.5 py-0.5 rounded-full shrink-0',
                                 isActive
@@ -359,18 +359,18 @@ export default function AdminSurveysPage() {
                               {status}
                             </span>
                             {survey.is_impact_form && (
-                              <span data-eos-id="src/pages/admin/surveys.tsx#29" data-eos-var="ACTIVITY_TYPE_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-moss-100 text-moss-700 truncate max-w-[180px]">
+                              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-moss-100 text-moss-700 truncate max-w-[180px]">
                                 Impact · {ACTIVITY_TYPE_LABELS[survey.activity_type ?? ''] ?? survey.activity_type ?? 'Any'}
                               </span>
                             )}
                             {!survey.is_impact_form && survey.activity_type && (
-                              <span data-eos-id="src/pages/admin/surveys.tsx#30" data-eos-var="ACTIVITY_TYPE_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 truncate max-w-[180px]">
+                              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 truncate max-w-[180px]">
                                 Feedback · {ACTIVITY_TYPE_LABELS[survey.activity_type] ?? survey.activity_type}
                               </span>
                             )}
                           </div>
-                          <div data-eos-id="src/pages/admin/surveys.tsx#31" className="flex items-center gap-2 mt-1 text-xs text-neutral-400">
-                            <span data-eos-id="src/pages/admin/surveys.tsx#32" data-eos-var="survey.created_at" data-eos-var-label="Created at" data-eos-var-scope="item">
+                          <div className="flex items-center gap-2 mt-1 text-xs text-neutral-400">
+                            <span>
                               {new Date(survey.created_at!).toLocaleDateString('en-AU', {
                                 day: 'numeric',
                                 month: 'short',
@@ -379,8 +379,8 @@ export default function AdminSurveysPage() {
                             </span>
                             {questionCount > 0 && (
                               <>
-                                <span data-eos-id="src/pages/admin/surveys.tsx#33" className="text-neutral-200">·</span>
-                                <span data-eos-id="src/pages/admin/surveys.tsx#34">{questionCount} question{questionCount !== 1 ? 's' : ''}</span>
+                                <span className="text-neutral-200">·</span>
+                                <span>{questionCount} question{questionCount !== 1 ? 's' : ''}</span>
                               </>
                             )}
                           </div>
@@ -389,8 +389,8 @@ export default function AdminSurveysPage() {
                     </button>
 
                     {/* Action bar - always visible, horizontal scroll on small screens */}
-                    <div data-eos-id="src/pages/admin/surveys.tsx#35" className="flex items-center gap-1 px-3 pb-3 -mt-0.5">
-                      <button data-eos-id="src/pages/admin/surveys.tsx#36"
+                    <div className="flex items-center gap-1 px-3 pb-3 -mt-0.5">
+                      <button
                         type="button"
                         onClick={() => {
                           setSelectedSurvey(survey.id)
@@ -398,25 +398,25 @@ export default function AdminSurveysPage() {
                         }}
                         className="flex items-center gap-1.5 min-h-11 px-3 rounded-sm text-xs font-medium text-neutral-500 hover:bg-neutral-50 active:bg-neutral-100 transition-colors cursor-pointer select-none active:scale-[0.97] whitespace-nowrap"
                       >
-                        <BarChart3 data-eos-id="src/pages/admin/surveys.tsx#37" size={14} />
+                        <BarChart3 size={14} />
                         Results
                       </button>
-                      <button data-eos-id="src/pages/admin/surveys.tsx#38"
+                      <button
                         type="button"
                         onClick={() => navigate(`/admin/surveys/${survey.id}/edit`)}
                         className="flex items-center gap-1.5 min-h-11 px-3 rounded-sm text-xs font-medium text-neutral-500 hover:bg-neutral-50 active:bg-neutral-100 transition-colors cursor-pointer select-none active:scale-[0.97] whitespace-nowrap"
                       >
-                        <Pencil data-eos-id="src/pages/admin/surveys.tsx#39" size={14} />
+                        <Pencil size={14} />
                         Edit
                       </button>
-                      <div data-eos-id="src/pages/admin/surveys.tsx#40" className="flex-1" />
-                      <button data-eos-id="src/pages/admin/surveys.tsx#41"
+                      <div className="flex-1" />
+                      <button
                         type="button"
                         onClick={() => setDeleteTarget(survey.id)}
                         className="flex items-center justify-center min-h-11 min-w-11 rounded-sm text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer select-none active:scale-[0.98]"
                         aria-label="Delete survey"
                       >
-                        <Trash2 data-eos-id="src/pages/admin/surveys.tsx#42" size={15} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </StaggeredItem>
@@ -429,39 +429,39 @@ export default function AdminSurveysPage() {
 
       {/* Templates */}
       {activeTab === 'templates' && (
-        <StaggeredList data-eos-id="src/pages/admin/surveys.tsx#43" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <StaggeredList className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {TEMPLATES.map((template, index) => (
-            <StaggeredItem data-eos-id="src/pages/admin/surveys.tsx#44"
+            <StaggeredItem
               key={template.name}
               className="rounded-sm bg-white shadow-sm overflow-hidden"
             >
-              <button data-eos-id="src/pages/admin/surveys.tsx#45"
+              <button
                 type="button"
                 onClick={() => navigate(`/admin/surveys/create?template=${index}`)}
                 className="w-full text-left p-4 cursor-pointer active:bg-neutral-50 transition-colors"
               >
-                <div data-eos-id="src/pages/admin/surveys.tsx#46" className="flex items-start gap-3">
-                  <div data-eos-id="src/pages/admin/surveys.tsx#47" className="flex items-center justify-center w-10 h-10 rounded-sm bg-plum-50 shrink-0">
-                    <Copy data-eos-id="src/pages/admin/surveys.tsx#48" size={16} className="text-plum-500" />
+                <div className="flex items-start gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-plum-50 shrink-0">
+                    <Copy size={16} className="text-plum-500" />
                   </div>
-                  <div data-eos-id="src/pages/admin/surveys.tsx#49" className="flex-1 min-w-0">
-                    <h3 data-eos-id="src/pages/admin/surveys.tsx#50" data-eos-var="template.name" data-eos-var-label="Name" data-eos-var-scope="item" data-eos-var-src="literal" className="font-heading text-sm font-semibold text-neutral-900">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-heading text-sm font-semibold text-neutral-900">
                       {template.name}
                     </h3>
-                    <p data-eos-id="src/pages/admin/surveys.tsx#51" data-eos-var="template.description" data-eos-var-label="Description" data-eos-var-scope="item" data-eos-var-src="literal" className="text-xs text-neutral-400 mt-0.5">{template.description}</p>
-                    <p data-eos-id="src/pages/admin/surveys.tsx#52" data-eos-var="template.questionCount" data-eos-var-label="Question count" data-eos-var-scope="item" data-eos-var-src="literal" className="text-xs text-neutral-400 mt-1.5">
+                    <p className="text-xs text-neutral-400 mt-0.5">{template.description}</p>
+                    <p className="text-xs text-neutral-400 mt-1.5">
                       {template.questionCount} questions
                     </p>
                   </div>
                 </div>
               </button>
-              <div data-eos-id="src/pages/admin/surveys.tsx#53" className="px-4 pb-3">
-                <Button data-eos-id="src/pages/admin/surveys.tsx#54"
+              <div className="px-4 pb-3">
+                <Button
                   variant="secondary"
                   size="sm"
                   className="w-full sm:w-auto"
                   onClick={() => navigate(`/admin/surveys/create?template=${index}`)}
-                  icon={<Copy data-eos-id="src/pages/admin/surveys.tsx#55" size={14} />}
+                  icon={<Copy size={14} />}
                 >
                   Use Template
                 </Button>
@@ -473,9 +473,9 @@ export default function AdminSurveysPage() {
 
       {/* Results */}
       {activeTab === 'results' && (
-        <motion.div data-eos-id="src/pages/admin/surveys.tsx#56" variants={fadeUp} className="space-y-4">
+        <motion.div variants={fadeUp} className="space-y-4">
           {/* Survey selector */}
-          <Dropdown data-eos-id="src/pages/admin/surveys.tsx#57"
+          <Dropdown
             options={surveyOptions}
             value={selectedSurvey ?? undefined}
             onChange={(v) => setSelectedSurvey(v)}
@@ -483,22 +483,22 @@ export default function AdminSurveysPage() {
           />
 
           {!selectedSurvey ? (
-            <EmptyState data-eos-id="src/pages/admin/surveys.tsx#58"
+            <EmptyState
               illustration="search"
               title="Select a survey"
               description="Choose a survey above to view its responses"
             />
           ) : (
-            <div data-eos-id="src/pages/admin/surveys.tsx#59" className="space-y-3">
+            <div className="space-y-3">
               {/* Header row */}
-              <div data-eos-id="src/pages/admin/surveys.tsx#60" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <p data-eos-id="src/pages/admin/surveys.tsx#61" className="text-sm font-medium text-neutral-600">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <p className="text-sm font-medium text-neutral-600">
                   {results?.length ?? 0} response{(results?.length ?? 0) !== 1 ? 's' : ''}
                 </p>
-                <Button data-eos-id="src/pages/admin/surveys.tsx#62"
+                <Button
                   variant="secondary"
                   size="sm"
-                  icon={<Download data-eos-id="src/pages/admin/surveys.tsx#63" size={14} />}
+                  icon={<Download size={14} />}
                   onClick={exportResultsCSV}
                   disabled={!results?.length}
                   className="w-full sm:w-auto"
@@ -508,44 +508,44 @@ export default function AdminSurveysPage() {
               </div>
 
               {!results?.length ? (
-                <EmptyState data-eos-id="src/pages/admin/surveys.tsx#64"
+                <EmptyState
                   illustration="empty"
                   title="No responses yet"
                   description="Responses will appear here once attendees or leaders submit the survey"
                 />
               ) : (
-                <StaggeredList data-eos-id="src/pages/admin/surveys.tsx#65" className="space-y-2">
+                <StaggeredList className="space-y-2">
                   {results.map((response) => {
                     const isExpanded = expandedResponses.has(response.id)
                     return (
-                      <StaggeredItem data-eos-id="src/pages/admin/surveys.tsx#66"
+                      <StaggeredItem
                         key={response.id}
                         className="rounded-sm bg-white shadow-sm overflow-hidden"
                       >
                         {/* Response header - tappable to expand */}
-                        <button data-eos-id="src/pages/admin/surveys.tsx#67"
+                        <button
                           type="button"
                           onClick={() => toggleResponseExpanded(response.id)}
                           className="w-full text-left p-4 cursor-pointer active:bg-neutral-50 transition-colors"
                         >
-                          <div data-eos-id="src/pages/admin/surveys.tsx#68" className="flex items-center gap-3">
-                            <div data-eos-id="src/pages/admin/surveys.tsx#69" className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100 shrink-0">
-                              <User data-eos-id="src/pages/admin/surveys.tsx#70" size={16} className="text-primary-500" />
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100 shrink-0">
+                              <User size={16} className="text-primary-500" />
                             </div>
-                            <div data-eos-id="src/pages/admin/surveys.tsx#71" className="flex-1 min-w-0">
-                              <p data-eos-id="src/pages/admin/surveys.tsx#72" data-eos-var="response.user_name" data-eos-var-label="User name" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 truncate">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-neutral-900 truncate">
                                 {response.user_name ?? 'Unknown User'}
                               </p>
-                              <div data-eos-id="src/pages/admin/surveys.tsx#73" className="flex items-center gap-2 mt-0.5 text-xs text-neutral-400">
+                              <div className="flex items-center gap-2 mt-0.5 text-xs text-neutral-400">
                                 {response.event_title && (
                                   <>
-                                    <span data-eos-id="src/pages/admin/surveys.tsx#74" data-eos-var="response.event_title" data-eos-var-label="Event title" data-eos-var-scope="item" className="truncate max-w-[180px]">{response.event_title}</span>
-                                    <span data-eos-id="src/pages/admin/surveys.tsx#75" className="text-neutral-200">·</span>
+                                    <span className="truncate max-w-[180px]">{response.event_title}</span>
+                                    <span className="text-neutral-200">·</span>
                                   </>
                                 )}
                                 {response.submitted_at && (
-                                  <span data-eos-id="src/pages/admin/surveys.tsx#76" data-eos-var="response.submitted_at" data-eos-var-label="Submitted at" data-eos-var-scope="item" className="flex items-center gap-1 shrink-0">
-                                    <Calendar data-eos-id="src/pages/admin/surveys.tsx#77" size={11} />
+                                  <span className="flex items-center gap-1 shrink-0">
+                                    <Calendar size={11} />
                                     {new Date(response.submitted_at).toLocaleDateString('en-AU', {
                                       day: 'numeric',
                                       month: 'short',
@@ -556,15 +556,15 @@ export default function AdminSurveysPage() {
                               </div>
                             </div>
                             {isExpanded
-                              ? <ChevronUp data-eos-id="src/pages/admin/surveys.tsx#78" size={16} className="text-neutral-300 shrink-0" />
-                              : <ChevronDown data-eos-id="src/pages/admin/surveys.tsx#79" size={16} className="text-neutral-300 shrink-0" />
+                              ? <ChevronUp size={16} className="text-neutral-300 shrink-0" />
+                              : <ChevronDown size={16} className="text-neutral-300 shrink-0" />
                             }
                           </div>
                         </button>
 
                         {/* Expanded answers */}
                         {isExpanded && (
-                          <div data-eos-id="src/pages/admin/surveys.tsx#80" className="px-4 pb-4 space-y-3 border-t border-neutral-100">
+                          <div className="px-4 pb-4 space-y-3 border-t border-neutral-100">
                             {surveyQuestions.length > 0 ? (
                               surveyQuestions.map((q) => {
                                 const answer = response.answers[q.id]
@@ -574,18 +574,18 @@ export default function AdminSurveysPage() {
                                     ? answer.join(', ')
                                     : String(answer)
                                 return (
-                                  <div data-eos-id="src/pages/admin/surveys.tsx#81" key={q.id} className="pt-3">
-                                    <p data-eos-id="src/pages/admin/surveys.tsx#82" data-eos-var="q.text" data-eos-var-label="Text" data-eos-var-scope="item" className="text-xs font-medium text-neutral-500">{q.text}</p>
-                                    <p data-eos-id="src/pages/admin/surveys.tsx#83" className="text-sm text-neutral-900 mt-0.5">{display}</p>
+                                  <div key={q.id} className="pt-3">
+                                    <p className="text-xs font-medium text-neutral-500">{q.text}</p>
+                                    <p className="text-sm text-neutral-900 mt-0.5">{display}</p>
                                   </div>
                                 )
                               })
                             ) : (
                               // Fallback: render raw answers if questions aren't available
                               Object.entries(response.answers).map(([key, val]) => (
-                                <div data-eos-id="src/pages/admin/surveys.tsx#84" key={key} className="pt-3">
-                                  <p data-eos-id="src/pages/admin/surveys.tsx#85" className="text-xs font-medium text-neutral-500">{key}</p>
-                                  <p data-eos-id="src/pages/admin/surveys.tsx#86" className="text-sm text-neutral-900 mt-0.5">
+                                <div key={key} className="pt-3">
+                                  <p className="text-xs font-medium text-neutral-500">{key}</p>
+                                  <p className="text-sm text-neutral-900 mt-0.5">
                                     {val == null ? '-' : String(val)}
                                   </p>
                                 </div>
@@ -593,23 +593,23 @@ export default function AdminSurveysPage() {
                             )}
 
                             {/* Edit / Delete actions */}
-                            <div data-eos-id="src/pages/admin/surveys.tsx#87" className="flex items-center gap-1 pt-2">
-                              <button data-eos-id="src/pages/admin/surveys.tsx#88"
+                            <div className="flex items-center gap-1 pt-2">
+                              <button
                                 type="button"
                                 onClick={() => openEditSheet(response)}
                                 className="flex items-center gap-1.5 min-h-11 px-3 rounded-sm text-xs font-medium text-neutral-500 hover:bg-neutral-50 active:bg-neutral-100 transition-colors cursor-pointer select-none active:scale-[0.97]"
                               >
-                                <Pencil data-eos-id="src/pages/admin/surveys.tsx#89" size={14} />
+                                <Pencil size={14} />
                                 Edit
                               </button>
-                              <div data-eos-id="src/pages/admin/surveys.tsx#90" className="flex-1" />
-                              <button data-eos-id="src/pages/admin/surveys.tsx#91"
+                              <div className="flex-1" />
+                              <button
                                 type="button"
                                 onClick={() => setDeleteResponseTarget(response.id)}
                                 className="flex items-center justify-center min-h-11 min-w-11 rounded-sm text-neutral-300 hover:bg-error-50 hover:text-error-600 active:bg-error-100 transition-colors cursor-pointer select-none active:scale-[0.98]"
                                 aria-label="Delete response"
                               >
-                                <Trash2 data-eos-id="src/pages/admin/surveys.tsx#92" size={15} />
+                                <Trash2 size={15} />
                               </button>
                             </div>
                           </div>
@@ -623,24 +623,24 @@ export default function AdminSurveysPage() {
           )}
 
           {/* Edit response bottom sheet */}
-          <BottomSheet data-eos-id="src/pages/admin/surveys.tsx#93"
+          <BottomSheet
             open={!!editingResponse}
             onClose={() => setEditingResponse(null)}
           >
-            <div data-eos-id="src/pages/admin/surveys.tsx#94" className="p-5 space-y-4">
-              <div data-eos-id="src/pages/admin/surveys.tsx#95">
-                <h3 data-eos-id="src/pages/admin/surveys.tsx#96" className="font-heading text-base font-bold text-neutral-900">
+            <div className="p-5 space-y-4">
+              <div>
+                <h3 className="font-heading text-base font-bold text-neutral-900">
                   Edit Response
                 </h3>
-                <p data-eos-id="src/pages/admin/surveys.tsx#97" data-eos-var="editingResponse.user_name,editingResponse.event_title" data-eos-var-label="User name, Event title" data-eos-var-scope="prop" className="text-xs text-neutral-400 mt-0.5">
+                <p className="text-xs text-neutral-400 mt-0.5">
                   {editingResponse?.user_name ?? 'Unknown User'}
                   {editingResponse?.event_title ? ` · ${editingResponse.event_title}` : ''}
                 </p>
               </div>
 
               {surveyQuestions.length > 0 && (
-                <div data-eos-id="src/pages/admin/surveys.tsx#98" className="rounded-sm bg-neutral-50 p-4">
-                  <SurveyQuestionRenderer data-eos-id="src/pages/admin/surveys.tsx#99"
+                <div className="rounded-sm bg-neutral-50 p-4">
+                  <SurveyQuestionRenderer
                     questions={surveyQuestions}
                     answers={editAnswers}
                     setAnswer={setEditAnswer}
@@ -649,8 +649,8 @@ export default function AdminSurveysPage() {
                 </div>
               )}
 
-              <div data-eos-id="src/pages/admin/surveys.tsx#100" className="flex gap-2 pt-2">
-                <Button data-eos-id="src/pages/admin/surveys.tsx#101"
+              <div className="flex gap-2 pt-2">
+                <Button
                   variant="secondary"
                   size="md"
                   fullWidth
@@ -658,11 +658,11 @@ export default function AdminSurveysPage() {
                 >
                   Cancel
                 </Button>
-                <Button data-eos-id="src/pages/admin/surveys.tsx#102"
+                <Button
                   variant="primary"
                   size="md"
                   fullWidth
-                  icon={<Save data-eos-id="src/pages/admin/surveys.tsx#103" size={16} />}
+                  icon={<Save size={16} />}
                   loading={updateResponseMutation.isPending}
                   onClick={() => {
                     if (!editingResponse) return
@@ -679,7 +679,7 @@ export default function AdminSurveysPage() {
           </BottomSheet>
 
           {/* Delete response confirmation */}
-          <ConfirmationSheet data-eos-id="src/pages/admin/surveys.tsx#104"
+          <ConfirmationSheet
             open={!!deleteResponseTarget}
             onClose={() => setDeleteResponseTarget(null)}
             onConfirm={() => deleteResponseTarget && deleteResponseMutation.mutate(deleteResponseTarget)}
@@ -693,25 +693,25 @@ export default function AdminSurveysPage() {
 
       {/* Auto-Survey Settings */}
       {activeTab === 'settings' && autoConfig && (
-        <motion.div data-eos-id="src/pages/admin/surveys.tsx#105" variants={fadeUp} className="space-y-4">
-          <div data-eos-id="src/pages/admin/surveys.tsx#106" className="p-5 rounded-sm bg-white shadow-sm space-y-5">
-            <div data-eos-id="src/pages/admin/surveys.tsx#107">
-              <h3 data-eos-id="src/pages/admin/surveys.tsx#108" className="font-heading text-sm font-semibold text-neutral-900 mb-1">
+        <motion.div variants={fadeUp} className="space-y-4">
+          <div className="p-5 rounded-sm bg-white shadow-sm space-y-5">
+            <div>
+              <h3 className="font-heading text-sm font-semibold text-neutral-900 mb-1">
                 Automated Post-Event Surveys
               </h3>
-              <p data-eos-id="src/pages/admin/surveys.tsx#109" className="text-xs text-neutral-400">
+              <p className="text-xs text-neutral-400">
                 Automatically prompt attendees to complete a feedback survey after events conclude.
               </p>
             </div>
 
-            <div data-eos-id="src/pages/admin/surveys.tsx#110" className="flex items-center justify-between py-2">
-              <div data-eos-id="src/pages/admin/surveys.tsx#111">
-                <p data-eos-id="src/pages/admin/surveys.tsx#112" className="text-sm font-medium text-neutral-900">Enable auto-surveys</p>
-                <p data-eos-id="src/pages/admin/surveys.tsx#113" className="text-xs text-neutral-400 mt-0.5">
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium text-neutral-900">Enable auto-surveys</p>
+                <p className="text-xs text-neutral-400 mt-0.5">
                   Send survey notifications to checked-in attendees when impact is logged
                 </p>
               </div>
-              <Toggle data-eos-id="src/pages/admin/surveys.tsx#114"
+              <Toggle
                 checked={autoConfig.enabled}
                 onChange={(enabled) =>
                   updateAutoConfig.mutate({ ...autoConfig, enabled })
@@ -719,14 +719,14 @@ export default function AdminSurveysPage() {
               />
             </div>
 
-            <div data-eos-id="src/pages/admin/surveys.tsx#115" className="flex items-center justify-between py-2">
-              <div data-eos-id="src/pages/admin/surveys.tsx#116">
-                <p data-eos-id="src/pages/admin/surveys.tsx#117" className="text-sm font-medium text-neutral-900">Use default questions</p>
-                <p data-eos-id="src/pages/admin/surveys.tsx#118" className="text-xs text-neutral-400 mt-0.5">
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium text-neutral-900">Use default questions</p>
+                <p className="text-xs text-neutral-400 mt-0.5">
                   Use activity-type-specific template questions for each event
                 </p>
               </div>
-              <Toggle data-eos-id="src/pages/admin/surveys.tsx#119"
+              <Toggle
                 checked={autoConfig.default_questions_enabled}
                 onChange={(default_questions_enabled) =>
                   updateAutoConfig.mutate({ ...autoConfig, default_questions_enabled })
@@ -734,14 +734,14 @@ export default function AdminSurveysPage() {
               />
             </div>
 
-            <div data-eos-id="src/pages/admin/surveys.tsx#120" className="space-y-1.5">
-              <label data-eos-id="src/pages/admin/surveys.tsx#121" className="text-sm font-medium text-neutral-900">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-neutral-900">
                 Notification delay (hours)
               </label>
-              <p data-eos-id="src/pages/admin/surveys.tsx#122" className="text-xs text-neutral-400">
+              <p className="text-xs text-neutral-400">
                 How many hours after event completion to send the survey notification. The survey itself stays available for 7 days.
               </p>
-              <Input data-eos-id="src/pages/admin/surveys.tsx#123"
+              <Input
                 type="number"
                 min="1"
                 max="168"
@@ -757,8 +757,8 @@ export default function AdminSurveysPage() {
             </div>
           </div>
 
-          <div data-eos-id="src/pages/admin/surveys.tsx#124" className="p-4 rounded-sm bg-neutral-50 border border-neutral-100">
-            <p data-eos-id="src/pages/admin/surveys.tsx#125" className="text-xs text-neutral-500">
+          <div className="p-4 rounded-sm bg-neutral-50 border border-neutral-100">
+            <p className="text-xs text-neutral-500">
               When an event leader logs impact data, checked-in attendees will receive an in-app notification
               linking to the post-event survey. A banner also appears on their home screen for up to 7 days.
             </p>
@@ -766,25 +766,25 @@ export default function AdminSurveysPage() {
 
           {/* Leader Impact Forms settings */}
           {impactFormConfig && (
-            <div data-eos-id="src/pages/admin/surveys.tsx#126" className="p-5 rounded-sm bg-white shadow-sm space-y-5">
-              <div data-eos-id="src/pages/admin/surveys.tsx#127">
-                <h3 data-eos-id="src/pages/admin/surveys.tsx#128" className="font-heading text-sm font-semibold text-neutral-900 mb-1">
+            <div className="p-5 rounded-sm bg-white shadow-sm space-y-5">
+              <div>
+                <h3 className="font-heading text-sm font-semibold text-neutral-900 mb-1">
                   Leader Impact Forms
                 </h3>
-                <p data-eos-id="src/pages/admin/surveys.tsx#129" className="text-xs text-neutral-400">
+                <p className="text-xs text-neutral-400">
                   Automatically assign impact logging tasks to collective leaders after events complete.
                   Leaders receive a shared task - any leader, co-leader, or assist-leader can fill it out.
                 </p>
               </div>
 
-              <div data-eos-id="src/pages/admin/surveys.tsx#130" className="flex items-center justify-between py-2">
-                <div data-eos-id="src/pages/admin/surveys.tsx#131">
-                  <p data-eos-id="src/pages/admin/surveys.tsx#132" className="text-sm font-medium text-neutral-900">Enable impact form tasks</p>
-                  <p data-eos-id="src/pages/admin/surveys.tsx#133" className="text-xs text-neutral-400 mt-0.5">
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-sm font-medium text-neutral-900">Enable impact form tasks</p>
+                  <p className="text-xs text-neutral-400 mt-0.5">
                     Create a shared task for collective leaders when events are completed
                   </p>
                 </div>
-                <Toggle data-eos-id="src/pages/admin/surveys.tsx#134"
+                <Toggle
                   checked={impactFormConfig.enabled}
                   onChange={(enabled) =>
                     updateImpactFormConfig.mutate({ ...impactFormConfig, enabled })
@@ -792,14 +792,14 @@ export default function AdminSurveysPage() {
                 />
               </div>
 
-              <div data-eos-id="src/pages/admin/surveys.tsx#135" className="flex items-center justify-between py-2">
-                <div data-eos-id="src/pages/admin/surveys.tsx#136">
-                  <p data-eos-id="src/pages/admin/surveys.tsx#137" className="text-sm font-medium text-neutral-900">Auto-create tasks</p>
-                  <p data-eos-id="src/pages/admin/surveys.tsx#138" className="text-xs text-neutral-400 mt-0.5">
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-sm font-medium text-neutral-900">Auto-create tasks</p>
+                  <p className="text-xs text-neutral-400 mt-0.5">
                     Automatically generate impact form tasks when events are marked completed
                   </p>
                 </div>
-                <Toggle data-eos-id="src/pages/admin/surveys.tsx#139"
+                <Toggle
                   checked={impactFormConfig.auto_task_enabled}
                   onChange={(auto_task_enabled) =>
                     updateImpactFormConfig.mutate({ ...impactFormConfig, auto_task_enabled })
@@ -807,14 +807,14 @@ export default function AdminSurveysPage() {
                 />
               </div>
 
-              <div data-eos-id="src/pages/admin/surveys.tsx#140" className="space-y-1.5">
-                <label data-eos-id="src/pages/admin/surveys.tsx#141" className="text-sm font-medium text-neutral-900">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-neutral-900">
                   Task deadline (hours)
                 </label>
-                <p data-eos-id="src/pages/admin/surveys.tsx#142" className="text-xs text-neutral-400">
+                <p className="text-xs text-neutral-400">
                   How many hours after event completion leaders have to submit the impact form
                 </p>
-                <Input data-eos-id="src/pages/admin/surveys.tsx#143"
+                <Input
                   type="number"
                   min="1"
                   max="336"
@@ -831,17 +831,17 @@ export default function AdminSurveysPage() {
             </div>
           )}
 
-          <div data-eos-id="src/pages/admin/surveys.tsx#144" className="p-4 rounded-sm bg-moss-50 border border-moss-100">
-            <p data-eos-id="src/pages/admin/surveys.tsx#145" className="text-xs text-moss-700">
-              <strong data-eos-id="src/pages/admin/surveys.tsx#146">Impact forms vs attendee surveys:</strong> Impact forms are sent to collective <em data-eos-id="src/pages/admin/surveys.tsx#147">leaders</em> as shared tasks.
-              Attendee surveys are sent to <em data-eos-id="src/pages/admin/surveys.tsx#148">all checked-in attendees</em>. You can have both active for the same activity type -
+          <div className="p-4 rounded-sm bg-moss-50 border border-moss-100">
+            <p className="text-xs text-moss-700">
+              <strong>Impact forms vs attendee surveys:</strong> Impact forms are sent to collective <em>leaders</em> as shared tasks.
+              Attendee surveys are sent to <em>all checked-in attendees</em>. You can have both active for the same activity type -
               leaders log impact data, attendees give feedback.
             </p>
           </div>
         </motion.div>
       )}
 
-      <ConfirmationSheet data-eos-id="src/pages/admin/surveys.tsx#149"
+      <ConfirmationSheet
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget)}

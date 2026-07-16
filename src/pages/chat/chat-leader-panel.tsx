@@ -56,43 +56,43 @@ function ManageMembersSheet({
 
   return (
     <>
-      <BottomSheet data-eos-id="src/pages/chat/chat-leader-panel.tsx#0" data-eos-v="2" open={open} onClose={onClose}>
-        <div data-eos-id="src/pages/chat/chat-leader-panel.tsx#1" className="pb-2">
-          <div data-eos-id="src/pages/chat/chat-leader-panel.tsx#2" className="flex items-center gap-2.5 px-4 pb-3">
-            <Users data-eos-id="src/pages/chat/chat-leader-panel.tsx#3" size={18} className="text-neutral-500" />
-            <p data-eos-id="src/pages/chat/chat-leader-panel.tsx#4" className="text-sm font-bold text-neutral-800">Manage Members</p>
+      <BottomSheet open={open} onClose={onClose}>
+        <div className="pb-2">
+          <div className="flex items-center gap-2.5 px-4 pb-3">
+            <Users size={18} className="text-neutral-500" />
+            <p className="text-sm font-bold text-neutral-800">Manage Members</p>
           </div>
 
           {removableMembers.length === 0 ? (
-            <p data-eos-id="src/pages/chat/chat-leader-panel.tsx#5" className="px-4 py-4 text-sm text-neutral-500 text-center">No removable members</p>
+            <p className="px-4 py-4 text-sm text-neutral-500 text-center">No removable members</p>
           ) : (
-            <div data-eos-id="src/pages/chat/chat-leader-panel.tsx#6" className="max-h-72 overflow-y-auto space-y-0.5">
+            <div className="max-h-72 overflow-y-auto space-y-0.5">
               {removableMembers.map((m) => (
-                <div data-eos-id="src/pages/chat/chat-leader-panel.tsx#7"
+                <div
                   key={m.user_id}
                   className="flex items-center gap-3 px-4 py-2.5"
                 >
-                  <Avatar data-eos-id="src/pages/chat/chat-leader-panel.tsx#8"
+                  <Avatar
                     src={m.profiles?.avatar_url}
                     name={m.profiles?.display_name}
                     size="sm"
                   />
-                  <div data-eos-id="src/pages/chat/chat-leader-panel.tsx#9" className="flex-1 min-w-0">
-                    <span data-eos-id="src/pages/chat/chat-leader-panel.tsx#10" data-eos-var="m.profiles.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-sm font-medium text-neutral-800 truncate block">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-neutral-800 truncate block">
                       {m.profiles?.display_name ?? 'Member'}
                     </span>
                     {m.role !== 'participant' && (
-                      <span data-eos-id="src/pages/chat/chat-leader-panel.tsx#11" data-eos-var="m.role" data-eos-var-label="Role" data-eos-var-scope="item" className="text-[11px] font-semibold text-neutral-500">
+                      <span className="text-[11px] font-semibold text-neutral-500">
                         {formatRole(m.role!)}
                       </span>
                     )}
                   </div>
-                  <button data-eos-id="src/pages/chat/chat-leader-panel.tsx#12"
+                  <button
                     type="button"
                     onClick={() => setConfirmRemove(m.user_id)}
                     className="flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-xs font-semibold text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11"
                   >
-                    <UserMinus data-eos-id="src/pages/chat/chat-leader-panel.tsx#13" size={14} />
+                    <UserMinus size={14} />
                     Remove
                   </button>
                 </div>
@@ -102,7 +102,7 @@ function ManageMembersSheet({
         </div>
       </BottomSheet>
 
-      <ConfirmationSheet data-eos-id="src/pages/chat/chat-leader-panel.tsx#14"
+      <ConfirmationSheet
         open={!!confirmRemove}
         onClose={() => setConfirmRemove(null)}
         onConfirm={() => confirmRemove && handleRemove(confirmRemove)}
@@ -210,7 +210,7 @@ export function ChatLeaderPanel({
   return (
     <>
       {/* Poll creation sheet */}
-      <CreatePollSheet data-eos-id="src/pages/chat/chat-leader-panel.tsx#15"
+      <CreatePollSheet
         open={showPollSheet}
         onClose={onClosePollSheet}
         onSubmit={onCreatePoll}
@@ -218,7 +218,7 @@ export function ChatLeaderPanel({
       />
 
       {/* Announcement creation sheet */}
-      <CreateAnnouncementSheet data-eos-id="src/pages/chat/chat-leader-panel.tsx#16"
+      <CreateAnnouncementSheet
         open={showAnnouncementSheet}
         onClose={onCloseAnnouncementSheet}
         onSubmit={onCreateAnnouncement}
@@ -229,7 +229,7 @@ export function ChatLeaderPanel({
       />
 
       {/* Broadcast notification sheet */}
-      <BroadcastNotificationSheet data-eos-id="src/pages/chat/chat-leader-panel.tsx#17"
+      <BroadcastNotificationSheet
         open={showBroadcastSheet}
         onClose={onCloseBroadcastSheet}
         onSend={onBroadcast}
@@ -240,7 +240,7 @@ export function ChatLeaderPanel({
 
       {/* Member management sheet (collective only) */}
       {isCollective && isLeaderOrAbove && (
-        <ManageMembersSheet data-eos-id="src/pages/chat/chat-leader-panel.tsx#18"
+        <ManageMembersSheet
           open={showManageMembers}
           onClose={onCloseManageMembers}
           collectiveId={collectiveId}

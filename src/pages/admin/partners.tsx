@@ -76,9 +76,9 @@ const orgTypeOptions = [
 ]
 
 const tabs = [
-  { id: 'organisations', label: 'Organisations', icon: <Building2 data-eos-id="src/pages/admin/partners.tsx#0" data-eos-v="2" size={14} /> },
-  { id: 'offers', label: 'Partner Offers', icon: <Gift data-eos-id="src/pages/admin/partners.tsx#1" size={14} /> },
-  { id: 'corporate', label: 'Corporate Programs', icon: <Handshake data-eos-id="src/pages/admin/partners.tsx#2" size={14} /> },
+  { id: 'organisations', label: 'Organisations', icon: <Building2 size={14} /> },
+  { id: 'offers', label: 'Partner Offers', icon: <Gift size={14} /> },
+  { id: 'corporate', label: 'Corporate Programs', icon: <Handshake size={14} /> },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -114,9 +114,9 @@ export default function AdminPartnersPage() {
   const showOffersLoading = useDelayedLoading(offersLoading)
 
   const heroStats = useMemo(() => (
-    <AdminHeroStatRow data-eos-id="src/pages/admin/partners.tsx#3">
-      <AdminHeroStat data-eos-id="src/pages/admin/partners.tsx#4" value={organisations?.length ?? 0} label="Organisations" icon={<Building2 data-eos-id="src/pages/admin/partners.tsx#5" size={18} />} color="bark" delay={0} reducedMotion={false} />
-      <AdminHeroStat data-eos-id="src/pages/admin/partners.tsx#6" value={offers?.length ?? 0} label="Offers" icon={<Gift data-eos-id="src/pages/admin/partners.tsx#7" size={18} />} color="sprout" delay={1} reducedMotion={false} />
+    <AdminHeroStatRow>
+      <AdminHeroStat value={organisations?.length ?? 0} label="Organisations" icon={<Building2 size={18} />} color="bark" delay={0} reducedMotion={false} />
+      <AdminHeroStat value={offers?.length ?? 0} label="Offers" icon={<Gift size={18} />} color="sprout" delay={1} reducedMotion={false} />
     </AdminHeroStatRow>
   ), [organisations?.length, offers?.length])
 
@@ -278,10 +278,10 @@ export default function AdminPartnersPage() {
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
   return (
-    <div data-eos-id="src/pages/admin/partners.tsx#8">
-        <motion.div data-eos-id="src/pages/admin/partners.tsx#9" variants={stagger} initial="hidden" animate="visible">
-          <motion.div data-eos-id="src/pages/admin/partners.tsx#10" variants={fadeUp}>
-            <TabBar data-eos-id="src/pages/admin/partners.tsx#11"
+    <div>
+        <motion.div variants={stagger} initial="hidden" animate="visible">
+          <motion.div variants={fadeUp}>
+            <TabBar
               tabs={tabs}
               activeTab={activeTab}
               onChange={setActiveTab}
@@ -292,11 +292,11 @@ export default function AdminPartnersPage() {
       {/* Organisations tab */}
       {activeTab === 'organisations' && (
         <>
-          <div data-eos-id="src/pages/admin/partners.tsx#12" className="flex justify-end mb-4">
-            <Button data-eos-id="src/pages/admin/partners.tsx#13"
+          <div className="flex justify-end mb-4">
+            <Button
               variant="primary"
               size="sm"
-              icon={<Plus data-eos-id="src/pages/admin/partners.tsx#14" size={16} />}
+              icon={<Plus size={16} />}
               onClick={() => setShowCreateOrg(true)}
             >
               Add Organisation
@@ -304,18 +304,18 @@ export default function AdminPartnersPage() {
           </div>
 
           {showOrgsLoading ? (
-            <Skeleton data-eos-id="src/pages/admin/partners.tsx#15" variant="list-item" count={4} />
+            <Skeleton variant="list-item" count={4} />
           ) : orgsLoading ? null : !organisations?.length ? (
-            <EmptyState data-eos-id="src/pages/admin/partners.tsx#16"
+            <EmptyState
               illustration="empty"
               title="No organisations"
               description="Add partner organisations that Co-Exist collaborates with"
               action={{ label: 'Add Organisation', onClick: () => setShowCreateOrg(true) }}
             />
           ) : (
-            <StaggeredList data-eos-id="src/pages/admin/partners.tsx#17" className="space-y-2">
+            <StaggeredList className="space-y-2">
               {organisations.map((org) => (
-                <StaggeredItem data-eos-id="src/pages/admin/partners.tsx#18"
+                <StaggeredItem
                   key={org.id}
                   className={cn(
                     'flex items-center gap-3 p-4 rounded-sm bg-white shadow-sm',
@@ -323,49 +323,49 @@ export default function AdminPartnersPage() {
                   )}
                 >
                   {org.logo_url ? (
-                    <img data-eos-src="dynamic" data-eos-src-label="Logo url" data-eos-id="src/pages/admin/partners.tsx#19"
+                    <img
                       src={org.logo_url}
                       alt=""
                       className="w-10 h-10 rounded-sm object-contain bg-white shrink-0"
                     />
                   ) : (
-                    <div data-eos-id="src/pages/admin/partners.tsx#20" className="w-10 h-10 rounded-sm bg-neutral-50 shadow-sm flex items-center justify-center shrink-0">
-                      <Building2 data-eos-id="src/pages/admin/partners.tsx#21" size={18} className="text-neutral-400" />
+                    <div className="w-10 h-10 rounded-sm bg-neutral-50 shadow-sm flex items-center justify-center shrink-0">
+                      <Building2 size={18} className="text-neutral-400" />
                     </div>
                   )}
 
-                  <div data-eos-id="src/pages/admin/partners.tsx#22" className="flex-1 min-w-0">
-                    <div data-eos-id="src/pages/admin/partners.tsx#23" className="flex items-center gap-2">
-                      <p data-eos-id="src/pages/admin/partners.tsx#24" data-eos-var="org.name" data-eos-var-label="Name" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 truncate">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-neutral-900 truncate">
                         {org.name}
                       </p>
-                      <span data-eos-id="src/pages/admin/partners.tsx#25" data-eos-var="org.type" data-eos-var-label="Type" data-eos-var-scope="item" className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-white text-neutral-400 shrink-0">
+                      <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-white text-neutral-400 shrink-0">
                         {org.type}
                       </span>
                     </div>
-                    <div data-eos-id="src/pages/admin/partners.tsx#26" className="flex items-center gap-3 mt-0.5 text-xs text-neutral-400">
-                      {org.contact_name && <span data-eos-id="src/pages/admin/partners.tsx#27" data-eos-var="org.contact_name" data-eos-var-label="Contact name" data-eos-var-scope="item">{org.contact_name}</span>}
+                    <div className="flex items-center gap-3 mt-0.5 text-xs text-neutral-400">
+                      {org.contact_name && <span>{org.contact_name}</span>}
                       {org.website && (
-                        <a data-eos-href="dynamic" data-eos-href-label="Website" data-eos-href-scope="item" data-eos-id="src/pages/admin/partners.tsx#28"
+                        <a
                           href={org.website}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-0.5 hover:text-neutral-400"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <Globe data-eos-id="src/pages/admin/partners.tsx#29" size={10} /> Website
+                          <Globe size={10} /> Website
                         </a>
                       )}
                     </div>
                   </div>
 
-                  <button data-eos-id="src/pages/admin/partners.tsx#30"
+                  <button
                     type="button"
                     onClick={() => setDeleteTarget({ id: org.id, type: 'org' })}
                     className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 cursor-pointer"
                     aria-label={`Delete ${org.name}`}
                   >
-                    <Trash2 data-eos-id="src/pages/admin/partners.tsx#31" size={16} />
+                    <Trash2 size={16} />
                   </button>
                 </StaggeredItem>
               ))}
@@ -377,11 +377,11 @@ export default function AdminPartnersPage() {
       {/* Partner Offers tab */}
       {activeTab === 'offers' && (
         <>
-          <div data-eos-id="src/pages/admin/partners.tsx#32" className="flex justify-end mb-4">
-            <Button data-eos-id="src/pages/admin/partners.tsx#33"
+          <div className="flex justify-end mb-4">
+            <Button
               variant="primary"
               size="sm"
-              icon={<Plus data-eos-id="src/pages/admin/partners.tsx#34" size={16} />}
+              icon={<Plus size={16} />}
               onClick={() => setShowCreateOffer(true)}
             >
               Add Offer
@@ -389,52 +389,52 @@ export default function AdminPartnersPage() {
           </div>
 
           {showOffersLoading ? (
-            <Skeleton data-eos-id="src/pages/admin/partners.tsx#35" variant="list-item" count={4} />
+            <Skeleton variant="list-item" count={4} />
           ) : offersLoading ? null : !offers?.length ? (
-            <EmptyState data-eos-id="src/pages/admin/partners.tsx#36"
+            <EmptyState
               illustration="empty"
               title="No partner offers"
               description="Create offers and discounts from partner organisations"
               action={{ label: 'Add Offer', onClick: () => setShowCreateOffer(true) }}
             />
           ) : (
-            <StaggeredList data-eos-id="src/pages/admin/partners.tsx#37" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <StaggeredList className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {offers.map((offer) => (
-                <StaggeredItem data-eos-id="src/pages/admin/partners.tsx#38"
+                <StaggeredItem
                   key={offer.id}
                   className={cn(
                     'p-4 rounded-sm bg-white shadow-sm',
                     String(offer.id).startsWith('temp-') && 'opacity-60',
                   )}
                 >
-                  <div data-eos-id="src/pages/admin/partners.tsx#39" className="flex items-start justify-between gap-2">
-                    <div data-eos-id="src/pages/admin/partners.tsx#40">
-                      <h3 data-eos-id="src/pages/admin/partners.tsx#41" data-eos-var="offer.title" data-eos-var-label="Title" data-eos-var-scope="item" className="font-heading text-sm font-semibold text-neutral-900">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-heading text-sm font-semibold text-neutral-900">
                         {offer.title}
                       </h3>
                       {offer.organisations?.name && (
-                        <p data-eos-id="src/pages/admin/partners.tsx#42" data-eos-var="offer.organisations.name" data-eos-var-label="Name" data-eos-var-scope="item" className="text-xs text-neutral-400 mt-0.5">
+                        <p className="text-xs text-neutral-400 mt-0.5">
                           by {offer.organisations.name}
                         </p>
                       )}
                     </div>
-                    <button data-eos-id="src/pages/admin/partners.tsx#43"
+                    <button
                       type="button"
                       onClick={() => setDeleteTarget({ id: offer.id, type: 'offer' })}
                       className="p-1 rounded text-neutral-400 hover:text-error-600 cursor-pointer"
                       aria-label="Delete offer"
                     >
-                      <Trash2 data-eos-id="src/pages/admin/partners.tsx#44" size={14} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                   {offer.description && (
-                    <p data-eos-id="src/pages/admin/partners.tsx#45" data-eos-var="offer.description" data-eos-var-label="Description" data-eos-var-scope="item" className="text-xs text-neutral-400 mt-2 line-clamp-2">
+                    <p className="text-xs text-neutral-400 mt-2 line-clamp-2">
                       {offer.description}
                     </p>
                   )}
                   {offer.category && (
-                    <span data-eos-id="src/pages/admin/partners.tsx#46" data-eos-var="offer.category" data-eos-var-label="Category" data-eos-var-scope="item" className="inline-flex items-center gap-1 mt-2 text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-neutral-50 shadow-sm text-neutral-900">
-                      <Tag data-eos-id="src/pages/admin/partners.tsx#47" size={10} />
+                    <span className="inline-flex items-center gap-1 mt-2 text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-neutral-50 shadow-sm text-neutral-900">
+                      <Tag size={10} />
                       {offer.category}
                     </span>
                   )}
@@ -447,34 +447,34 @@ export default function AdminPartnersPage() {
 
       {/* Corporate Programs tab */}
       {activeTab === 'corporate' && (
-        <div data-eos-id="src/pages/admin/partners.tsx#48" className="space-y-4">
-          <div data-eos-id="src/pages/admin/partners.tsx#49" className="p-6 rounded-sm bg-white border border-neutral-100 shadow-sm">
-            <h3 data-eos-id="src/pages/admin/partners.tsx#50" className="font-heading text-base font-semibold text-neutral-900 mb-2">
+        <div className="space-y-4">
+          <div className="p-6 rounded-sm bg-white border border-neutral-100 shadow-sm">
+            <h3 className="font-heading text-base font-semibold text-neutral-900 mb-2">
               Corporate Volunteer Programs
             </h3>
-            <p data-eos-id="src/pages/admin/partners.tsx#51" className="text-sm text-neutral-900 mb-4">
+            <p className="text-sm text-neutral-900 mb-4">
               Track corporate partner volunteering, generate CSR reports, and manage
               sponsored challenges.
             </p>
-            <div data-eos-id="src/pages/admin/partners.tsx#52" className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div data-eos-id="src/pages/admin/partners.tsx#53" className="p-3 rounded-sm bg-white/70">
-                <Handshake data-eos-id="src/pages/admin/partners.tsx#54" size={18} className="text-neutral-400 mb-1" />
-                <p data-eos-id="src/pages/admin/partners.tsx#55" className="text-sm font-medium text-neutral-900">Corporate Events</p>
-                <p data-eos-id="src/pages/admin/partners.tsx#56" className="text-xs text-neutral-400">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 rounded-sm bg-white/70">
+                <Handshake size={18} className="text-neutral-400 mb-1" />
+                <p className="text-sm font-medium text-neutral-900">Corporate Events</p>
+                <p className="text-xs text-neutral-400">
                   Tag events with corporate partners for separate tracking
                 </p>
               </div>
-              <div data-eos-id="src/pages/admin/partners.tsx#57" className="p-3 rounded-sm bg-white/70">
-                <Receipt data-eos-id="src/pages/admin/partners.tsx#58" size={18} className="text-neutral-400 mb-1" />
-                <p data-eos-id="src/pages/admin/partners.tsx#59" className="text-sm font-medium text-neutral-900">Invoice Generation</p>
-                <p data-eos-id="src/pages/admin/partners.tsx#60" className="text-xs text-neutral-400">
+              <div className="p-3 rounded-sm bg-white/70">
+                <Receipt size={18} className="text-neutral-400 mb-1" />
+                <p className="text-sm font-medium text-neutral-900">Invoice Generation</p>
+                <p className="text-xs text-neutral-400">
                   Generate branded invoices for corporate sponsors
                 </p>
               </div>
-              <div data-eos-id="src/pages/admin/partners.tsx#61" className="p-3 rounded-sm bg-white/70">
-                <Trophy data-eos-id="src/pages/admin/partners.tsx#62" size={18} className="text-neutral-400 mb-1" />
-                <p data-eos-id="src/pages/admin/partners.tsx#63" className="text-sm font-medium text-neutral-900">Sponsored Challenges</p>
-                <p data-eos-id="src/pages/admin/partners.tsx#64" className="text-xs text-neutral-400">
+              <div className="p-3 rounded-sm bg-white/70">
+                <Trophy size={18} className="text-neutral-400 mb-1" />
+                <p className="text-sm font-medium text-neutral-900">Sponsored Challenges</p>
+                <p className="text-xs text-neutral-400">
                   Link challenges to sponsor organisations
                 </p>
               </div>
@@ -484,46 +484,46 @@ export default function AdminPartnersPage() {
       )}
 
       {/* Create org modal */}
-      <BottomSheet data-eos-id="src/pages/admin/partners.tsx#65" open={showCreateOrg} onClose={() => setShowCreateOrg(false)}>
+      <BottomSheet open={showCreateOrg} onClose={() => setShowCreateOrg(false)}>
         {/* Header */}
-        <div data-eos-id="src/pages/admin/partners.tsx#66" className="flex items-center justify-between mb-4">
-          <h2 data-eos-id="src/pages/admin/partners.tsx#67" className="font-heading text-lg font-semibold text-neutral-900">Add Organisation</h2>
-          <button data-eos-id="src/pages/admin/partners.tsx#68"
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-heading text-lg font-semibold text-neutral-900">Add Organisation</h2>
+          <button
             onClick={() => setShowCreateOrg(false)}
             className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
             aria-label="Close"
           >
-            <X data-eos-id="src/pages/admin/partners.tsx#69" size={20} />
+            <X size={20} />
           </button>
         </div>
-        <div data-eos-id="src/pages/admin/partners.tsx#70" className="space-y-4">
-          <Input data-eos-id="src/pages/admin/partners.tsx#71"
+        <div className="space-y-4">
+          <Input
             label="Organisation Name"
             value={orgForm.name}
             onChange={(e) => setOrgForm((p) => ({ ...p, name: e.target.value }))}
             required
           />
-          <Dropdown data-eos-id="src/pages/admin/partners.tsx#72"
+          <Dropdown
             options={orgTypeOptions}
             value={orgForm.type}
             onChange={(v) => setOrgForm((p) => ({ ...p, type: v }))}
             label="Type"
           />
-          <Input data-eos-id="src/pages/admin/partners.tsx#73"
+          <Input
             label="Website"
             value={orgForm.website}
             onChange={(e) => setOrgForm((p) => ({ ...p, website: e.target.value }))}
             placeholder="https://..."
           />
-          <div data-eos-id="src/pages/admin/partners.tsx#74" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input data-eos-id="src/pages/admin/partners.tsx#75"
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input
               label="Contact Name"
               value={orgForm.contact_name}
               onChange={(e) =>
                 setOrgForm((p) => ({ ...p, contact_name: e.target.value }))
               }
             />
-            <Input data-eos-id="src/pages/admin/partners.tsx#76"
+            <Input
               label="Contact Email"
               type="email"
               value={orgForm.contact_email}
@@ -532,7 +532,7 @@ export default function AdminPartnersPage() {
               }
             />
           </div>
-          <Input data-eos-id="src/pages/admin/partners.tsx#77"
+          <Input
             type="textarea"
             label="Description"
             value={orgForm.description}
@@ -540,7 +540,7 @@ export default function AdminPartnersPage() {
               setOrgForm((p) => ({ ...p, description: e.target.value }))
             }
           />
-          <Button data-eos-id="src/pages/admin/partners.tsx#78"
+          <Button
             variant="primary"
             fullWidth
             onClick={() => createOrgMutation.mutate(orgForm)}
@@ -553,20 +553,20 @@ export default function AdminPartnersPage() {
       </BottomSheet>
 
       {/* Create offer modal */}
-      <BottomSheet data-eos-id="src/pages/admin/partners.tsx#79" open={showCreateOffer} onClose={() => setShowCreateOffer(false)}>
+      <BottomSheet open={showCreateOffer} onClose={() => setShowCreateOffer(false)}>
         {/* Header */}
-        <div data-eos-id="src/pages/admin/partners.tsx#80" className="flex items-center justify-between mb-4">
-          <h2 data-eos-id="src/pages/admin/partners.tsx#81" className="font-heading text-lg font-semibold text-neutral-900">Add Partner Offer</h2>
-          <button data-eos-id="src/pages/admin/partners.tsx#82"
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-heading text-lg font-semibold text-neutral-900">Add Partner Offer</h2>
+          <button
             onClick={() => setShowCreateOffer(false)}
             className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
             aria-label="Close"
           >
-            <X data-eos-id="src/pages/admin/partners.tsx#83" size={20} />
+            <X size={20} />
           </button>
         </div>
-        <div data-eos-id="src/pages/admin/partners.tsx#84" className="space-y-4">
-          <Input data-eos-id="src/pages/admin/partners.tsx#85"
+        <div className="space-y-4">
+          <Input
             label="Offer Title"
             value={offerForm.title}
             onChange={(e) =>
@@ -574,7 +574,7 @@ export default function AdminPartnersPage() {
             }
             required
           />
-          <Input data-eos-id="src/pages/admin/partners.tsx#86"
+          <Input
             type="textarea"
             label="Description"
             value={offerForm.description}
@@ -583,7 +583,7 @@ export default function AdminPartnersPage() {
             }
           />
           {organisations && organisations.length > 0 && (
-            <Dropdown data-eos-id="src/pages/admin/partners.tsx#87"
+            <Dropdown
               options={[
                 { value: '', label: 'Select organisation...' },
                 ...organisations.map((o) => ({ value: o.id, label: o.name })),
@@ -595,7 +595,7 @@ export default function AdminPartnersPage() {
               label="Organisation"
             />
           )}
-          <Input data-eos-id="src/pages/admin/partners.tsx#88"
+          <Input
             label="Category"
             value={offerForm.category}
             onChange={(e) =>
@@ -603,7 +603,7 @@ export default function AdminPartnersPage() {
             }
             placeholder="e.g. Outdoor Gear, Food & Drink"
           />
-          <Input data-eos-id="src/pages/admin/partners.tsx#89"
+          <Input
             type="textarea"
             label="Terms & Conditions"
             value={offerForm.terms}
@@ -611,7 +611,7 @@ export default function AdminPartnersPage() {
               setOfferForm((p) => ({ ...p, terms: e.target.value }))
             }
           />
-          <Button data-eos-id="src/pages/admin/partners.tsx#90"
+          <Button
             variant="primary"
             fullWidth
             onClick={() => createOfferMutation.mutate(offerForm)}
@@ -623,7 +623,7 @@ export default function AdminPartnersPage() {
         </div>
       </BottomSheet>
 
-      <ConfirmationSheet data-eos-id="src/pages/admin/partners.tsx#91"
+      <ConfirmationSheet
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget)}

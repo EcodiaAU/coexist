@@ -127,70 +127,70 @@ function PinnedMessageBar({
   const hasMultiple = messages.length > 1
 
   return (
-    <div data-eos-id="src/pages/chat/chat-room.tsx#0" data-eos-v="2" className="shrink-0 bg-white border-b border-neutral-100">
-      <div data-eos-id="src/pages/chat/chat-room.tsx#1" className="flex w-full items-center gap-2.5 px-4 py-2.5 min-h-11">
-        <div data-eos-id="src/pages/chat/chat-room.tsx#2" className="flex items-center justify-center h-7 w-7 rounded-sm bg-primary-50 shrink-0">
-          <Pin data-eos-id="src/pages/chat/chat-room.tsx#3" size={13} className="text-primary-500" />
+    <div className="shrink-0 bg-white border-b border-neutral-100">
+      <div className="flex w-full items-center gap-2.5 px-4 py-2.5 min-h-11">
+        <div className="flex items-center justify-center h-7 w-7 rounded-sm bg-primary-50 shrink-0">
+          <Pin size={13} className="text-primary-500" />
         </div>
-        <p data-eos-id="src/pages/chat/chat-room.tsx#4" data-eos-var="latest.content" data-eos-var-label="Content" data-eos-var-scope="prop" className="text-xs text-neutral-800 truncate flex-1 text-left">
-          <span data-eos-id="src/pages/chat/chat-room.tsx#5" className="font-bold">Pinned: </span>
+        <p className="text-xs text-neutral-800 truncate flex-1 text-left">
+          <span className="font-bold">Pinned: </span>
           {latest.content ?? 'Image'}
         </p>
 
         {hasMultiple && (
-          <button data-eos-id="src/pages/chat/chat-room.tsx#6"
+          <button
             type="button"
             onClick={() => setExpanded(!expanded)}
             className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
             aria-label={expanded ? 'Collapse pinned messages' : 'Show all pinned messages'}
           >
-            <ChevronDown data-eos-id="src/pages/chat/chat-room.tsx#7" size={16} className={cn('transition-transform duration-200', expanded && 'rotate-180')} />
-            <span data-eos-id="src/pages/chat/chat-room.tsx#8" className="text-[11px] font-semibold ml-0.5">{messages.length}</span>
+            <ChevronDown size={16} className={cn('transition-transform duration-200', expanded && 'rotate-180')} />
+            <span className="text-[11px] font-semibold ml-0.5">{messages.length}</span>
           </button>
         )}
 
         {isStaff && !expanded && (
-          <button data-eos-id="src/pages/chat/chat-room.tsx#9"
+          <button
             type="button"
             onClick={() => onUnpin(latest.id)}
             className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-300 hover:text-neutral-500 hover:bg-neutral-50 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
             aria-label="Unpin message"
           >
-            <X data-eos-id="src/pages/chat/chat-room.tsx#10" size={16} />
+            <X size={16} />
           </button>
         )}
       </div>
 
-      <AnimatePresence data-eos-id="src/pages/chat/chat-room.tsx#11">
+      <AnimatePresence>
         {expanded && (
-          <motion.div data-eos-id="src/pages/chat/chat-room.tsx#12"
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="overflow-hidden"
           >
-            <div data-eos-id="src/pages/chat/chat-room.tsx#13" className="px-4 pb-2 space-y-1.5">
+            <div className="px-4 pb-2 space-y-1.5">
               {messages.map((msg) => (
-                <div data-eos-id="src/pages/chat/chat-room.tsx#14"
+                <div
                   key={msg.id}
                   className="flex items-center gap-2 rounded-sm bg-neutral-50 px-3 py-2"
                 >
-                  <Pin data-eos-id="src/pages/chat/chat-room.tsx#15" size={10} className="text-neutral-300 shrink-0" />
-                  <p data-eos-id="src/pages/chat/chat-room.tsx#16" data-eos-var="msg.content" data-eos-var-label="Content" data-eos-var-scope="item" className="text-xs text-neutral-700 truncate flex-1">
+                  <Pin size={10} className="text-neutral-300 shrink-0" />
+                  <p className="text-xs text-neutral-700 truncate flex-1">
                     {msg.content ?? 'Image'}
                   </p>
-                  <span data-eos-id="src/pages/chat/chat-room.tsx#17" data-eos-var="msg.profiles.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-[11px] text-neutral-400 shrink-0">
+                  <span className="text-[11px] text-neutral-400 shrink-0">
                     {msg.profiles?.display_name}
                   </span>
                   {isStaff && (
-                    <button data-eos-id="src/pages/chat/chat-room.tsx#18"
+                    <button
                       type="button"
                       onClick={() => onUnpin(msg.id)}
                       className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-300 hover:text-error-500 hover:bg-error-50 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                       aria-label={`Unpin: ${msg.content?.slice(0, 30) ?? 'message'}`}
                     >
-                      <X data-eos-id="src/pages/chat/chat-room.tsx#19" size={14} />
+                      <X size={14} />
                     </button>
                   )}
                 </div>
@@ -851,10 +851,10 @@ export default function ChatRoomPage() {
   /* ---- Not found guard ---- */
   if (isChannel && !channelId) {
     return (
-      <div data-eos-id="src/pages/chat/chat-room.tsx#20" className="flex flex-col flex-1 min-h-0 max-h-dvh overflow-hidden relative bg-white" style={{ paddingTop: 'var(--safe-top)' }}>
-        <Header data-eos-id="src/pages/chat/chat-room.tsx#21" title="Staff Chat" back className="!relative !top-0" />
-        <div data-eos-id="src/pages/chat/chat-room.tsx#22" className="flex-1 flex items-center justify-center">
-          <EmptyState data-eos-id="src/pages/chat/chat-room.tsx#23" illustration="empty" title="Channel not found" description="This channel may have been removed." />
+      <div className="flex flex-col flex-1 min-h-0 max-h-dvh overflow-hidden relative bg-white" style={{ paddingTop: 'var(--safe-top)' }}>
+        <Header title="Staff Chat" back className="!relative !top-0" />
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState illustration="empty" title="Channel not found" description="This channel may have been removed." />
         </div>
       </div>
     )
@@ -863,9 +863,9 @@ export default function ChatRoomPage() {
   /* ---- Loading (collective uses Page wrapper) ---- */
   if (isCollective && showLoading) {
     return (
-      <Page data-eos-id="src/pages/chat/chat-room.tsx#24" swipeBack header={<Header data-eos-id="src/pages/chat/chat-room.tsx#25" title="Chat" back />}>
-        <div data-eos-id="src/pages/chat/chat-room.tsx#26" className="py-4">
-          <Skeleton data-eos-id="src/pages/chat/chat-room.tsx#27" variant="list-item" count={8} />
+      <Page swipeBack header={<Header title="Chat" back />}>
+        <div className="py-4">
+          <Skeleton variant="list-item" count={8} />
         </div>
       </Page>
     )
@@ -874,8 +874,8 @@ export default function ChatRoomPage() {
   /* ---- Error state ---- */
   if (isError) {
     return (
-      <Page data-eos-id="src/pages/chat/chat-room.tsx#28" swipeBack header={<Header data-eos-id="src/pages/chat/chat-room.tsx#29" title="Chat" back />}>
-        <EmptyState data-eos-id="src/pages/chat/chat-room.tsx#30"
+      <Page swipeBack header={<Header title="Chat" back />}>
+        <EmptyState
           illustration="error"
           title="Couldn't load messages"
           description="Something went wrong loading this chat. Check your connection and try again."
@@ -886,45 +886,45 @@ export default function ChatRoomPage() {
   }
 
   return (
-    <div data-eos-id="src/pages/chat/chat-room.tsx#31"
+    <div
       className="flex flex-col flex-1 min-h-0 max-h-dvh overflow-hidden relative bg-white"
       style={{ paddingTop: 'var(--safe-top)' }}
     >
       {/* Header - shrink-0 keeps it pinned at the top of the flex column */}
-      <motion.div data-eos-id="src/pages/chat/chat-room.tsx#32"
+      <motion.div
         className="shrink-0"
         variants={isCollective && !shouldReduceMotion ? fadeUp : undefined}
         initial={isCollective ? 'hidden' : undefined}
         animate={isCollective ? 'visible' : undefined}
       >
-        <Header data-eos-id="src/pages/chat/chat-room.tsx#33"
+        <Header
           title={title}
           back
           showTitle
           className="!relative !top-0"
           rightActions={
-            <div data-eos-id="src/pages/chat/chat-room.tsx#34" className="flex items-center gap-1">
-              <ChatSwitcherDropdown data-eos-id="src/pages/chat/chat-room.tsx#35"
+            <div className="flex items-center gap-1">
+              <ChatSwitcherDropdown
                 currentCollectiveId={isCollective ? collectiveId : undefined}
                 currentChannelId={isChannel ? channelId : undefined}
               />
               {isCollective && isLeaderOrAbove && (
-                <button data-eos-id="src/pages/chat/chat-room.tsx#36"
+                <button
                   type="button"
                   onClick={() => setShowManageMembers(true)}
                   aria-label="Manage members"
                   className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-500 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                 >
-                  <Users data-eos-id="src/pages/chat/chat-room.tsx#37" size={20} />
+                  <Users size={20} />
                 </button>
               )}
-              <button data-eos-id="src/pages/chat/chat-room.tsx#38"
+              <button
                 type="button"
                 onClick={() => isCollective ? setShowSearch(true) : undefined}
                 aria-label="Search messages"
                 className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-500 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
-                <Search data-eos-id="src/pages/chat/chat-room.tsx#39" size={20} />
+                <Search size={20} />
               </button>
             </div>
           }
@@ -933,7 +933,7 @@ export default function ChatRoomPage() {
 
       {/* Pinned messages (collective only) */}
       {isCollective && (
-        <PinnedMessageBar data-eos-id="src/pages/chat/chat-room.tsx#40"
+        <PinnedMessageBar
           messages={pinnedMessages as ChatMessageWithSender[]}
           isStaff={isLeaderOrAbove}
           onUnpin={async (messageId) => {
@@ -948,7 +948,7 @@ export default function ChatRoomPage() {
       )}
 
       {/* Messages area */}
-      <ChatMessageList data-eos-id="src/pages/chat/chat-room.tsx#41"
+      <ChatMessageList
         isCollective={isCollective}
         isChannel={isChannel}
         channelType={channel?.type}
@@ -971,30 +971,30 @@ export default function ChatRoomPage() {
       />
 
       {/* Reply bar */}
-      <AnimatePresence data-eos-id="src/pages/chat/chat-room.tsx#42">
+      <AnimatePresence>
         {replyTo && (
-          <motion.div data-eos-id="src/pages/chat/chat-room.tsx#43"
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.15 }}
             className="shrink-0 bg-white border-t border-neutral-100 px-4 py-2.5"
           >
-            <div data-eos-id="src/pages/chat/chat-room.tsx#44" className="flex items-center gap-2.5">
-              <div data-eos-id="src/pages/chat/chat-room.tsx#45" className="flex items-center justify-center h-7 w-7 rounded-sm bg-primary-50">
-                <Reply data-eos-id="src/pages/chat/chat-room.tsx#46" size={14} className="text-primary-500 shrink-0" />
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center h-7 w-7 rounded-sm bg-primary-50">
+                <Reply size={14} className="text-primary-500 shrink-0" />
               </div>
-              <div data-eos-id="src/pages/chat/chat-room.tsx#47" className="flex-1 min-w-0">
-                <p data-eos-id="src/pages/chat/chat-room.tsx#48" data-eos-var="replyTo.profiles.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="text-xs font-bold text-neutral-700">{replyTo.profiles?.display_name ?? 'Unknown'}</p>
-                <p data-eos-id="src/pages/chat/chat-room.tsx#49" data-eos-var="replyTo.content" data-eos-var-label="Content" data-eos-var-scope="prop" className="text-xs text-neutral-500 truncate">{replyTo.content ?? 'Image'}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-neutral-700">{replyTo.profiles?.display_name ?? 'Unknown'}</p>
+                <p className="text-xs text-neutral-500 truncate">{replyTo.content ?? 'Image'}</p>
               </div>
-              <button data-eos-id="src/pages/chat/chat-room.tsx#50"
+              <button
                 type="button"
                 onClick={() => setReplyTo(null)}
                 aria-label="Cancel reply"
                 className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
-                <X data-eos-id="src/pages/chat/chat-room.tsx#51" size={16} />
+                <X size={16} />
               </button>
             </div>
           </motion.div>
@@ -1003,27 +1003,27 @@ export default function ChatRoomPage() {
 
       {/* Edit bar (collective only) */}
       {isCollective && (
-        <AnimatePresence data-eos-id="src/pages/chat/chat-room.tsx#52">
+        <AnimatePresence>
           {editingMessage && (
-            <motion.div data-eos-id="src/pages/chat/chat-room.tsx#53"
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.15 }}
               className="shrink-0 bg-warning-50 border-t border-neutral-100 px-4 py-2.5"
             >
-              <div data-eos-id="src/pages/chat/chat-room.tsx#54" className="flex items-center gap-2.5">
-                <div data-eos-id="src/pages/chat/chat-room.tsx#55" className="flex items-center justify-center h-7 w-7 rounded-sm bg-warning-50">
-                  <Pencil data-eos-id="src/pages/chat/chat-room.tsx#56" size={14} className="text-warning-700 shrink-0" />
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center h-7 w-7 rounded-sm bg-warning-50">
+                  <Pencil size={14} className="text-warning-700 shrink-0" />
                 </div>
-                <p data-eos-id="src/pages/chat/chat-room.tsx#57" className="text-xs font-bold text-warning-700 flex-1">Editing message</p>
-                <button data-eos-id="src/pages/chat/chat-room.tsx#58"
+                <p className="text-xs font-bold text-warning-700 flex-1">Editing message</p>
+                <button
                   type="button"
                   onClick={() => { setEditingMessage(null); setEditText('') }}
                   aria-label="Cancel edit"
                   className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                 >
-                  <X data-eos-id="src/pages/chat/chat-room.tsx#59" size={16} />
+                  <X size={16} />
                 </button>
               </div>
             </motion.div>
@@ -1032,9 +1032,9 @@ export default function ChatRoomPage() {
       )}
 
       {/* Scroll to bottom button */}
-      <AnimatePresence data-eos-id="src/pages/chat/chat-room.tsx#60">
+      <AnimatePresence>
         {showScrollDown && (
-          <motion.button data-eos-id="src/pages/chat/chat-room.tsx#61"
+          <motion.button
             type="button"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -1046,15 +1046,15 @@ export default function ChatRoomPage() {
               hasBottomTabs ? 'bottom-32' : 'bottom-20',
             )}
           >
-            <ArrowDown data-eos-id="src/pages/chat/chat-room.tsx#62" size={20} />
+            <ArrowDown size={20} />
           </motion.button>
         )}
       </AnimatePresence>
 
       {/* Upload progress */}
       {(chatUpload.uploading || chatUpload.error) && (
-        <div data-eos-id="src/pages/chat/chat-room.tsx#63" className="shrink-0 px-4 py-1">
-          <UploadProgress data-eos-id="src/pages/chat/chat-room.tsx#64"
+        <div className="shrink-0 px-4 py-1">
+          <UploadProgress
             progress={chatUpload.progress}
             uploading={chatUpload.uploading}
             error={chatUpload.error}
@@ -1064,21 +1064,21 @@ export default function ChatRoomPage() {
 
       {/* Offline indicator (collective only) */}
       {isCollective && isOffline && (
-        <div data-eos-id="src/pages/chat/chat-room.tsx#65" className="shrink-0 px-4 py-1.5">
-          <OfflineIndicator data-eos-id="src/pages/chat/chat-room.tsx#66"
+        <div className="shrink-0 px-4 py-1.5">
+          <OfflineIndicator
             dataUpdatedAt={collectiveMessages.data?.pages?.[0]?.[0]?.created_at ? new Date(collectiveMessages.data.pages[0][0].created_at).getTime() : undefined}
           />
         </div>
       )}
 
       {/* Message input */}
-      <motion.div data-eos-id="src/pages/chat/chat-room.tsx#67"
+      <motion.div
         className="shrink-0"
         variants={isCollective && !shouldReduceMotion ? fadeUp : undefined}
         initial={isCollective ? 'hidden' : undefined}
         animate={isCollective ? 'visible' : undefined}
       >
-        <MessageInput data-eos-id="src/pages/chat/chat-room.tsx#68"
+        <MessageInput
           onSend={handleSend}
           onAttach={isOffline ? undefined : handleAttach}
           onTyping={isCollective ? sendTyping : undefined}
@@ -1115,7 +1115,7 @@ export default function ChatRoomPage() {
 
         {/* Carpool creation sheet (collective only) */}
         {isCollective && (
-          <CreateCarpoolSheet data-eos-id="src/pages/chat/chat-room.tsx#69"
+          <CreateCarpoolSheet
             open={showCarpoolSheet}
             onClose={() => setShowCarpoolSheet(false)}
             onSubmit={handleCreateCarpool}
@@ -1126,7 +1126,7 @@ export default function ChatRoomPage() {
       </motion.div>
 
       {/* Message actions sheet */}
-      <MessageActionsSheet data-eos-id="src/pages/chat/chat-room.tsx#70"
+      <MessageActionsSheet
         message={selectedMessage}
         isModerator={isLeaderOrAbove}
         isOwnMessage={selectedMessage?.user_id === user?.id}
@@ -1165,7 +1165,7 @@ export default function ChatRoomPage() {
 
       {/* Report content sheet */}
       {reportTarget && (
-        <ReportContentSheet data-eos-id="src/pages/chat/chat-room.tsx#71"
+        <ReportContentSheet
           open={showReportSheet}
           onClose={() => { setShowReportSheet(false); setReportTarget(null) }}
           contentId={reportTarget.id}
@@ -1175,7 +1175,7 @@ export default function ChatRoomPage() {
 
       {/* Block user sheet */}
       {blockTarget && (
-        <BlockUserSheet data-eos-id="src/pages/chat/chat-room.tsx#72"
+        <BlockUserSheet
           open={showBlockSheet}
           onClose={() => { setShowBlockSheet(false); setBlockTarget(null) }}
           userId={blockTarget.id}
@@ -1184,7 +1184,7 @@ export default function ChatRoomPage() {
       )}
 
       {/* Leader panels: polls, announcements, broadcast, manage members */}
-      <ChatLeaderPanel data-eos-id="src/pages/chat/chat-room.tsx#73"
+      <ChatLeaderPanel
         isCollective={isCollective}
         isLeaderOrAbove={isLeaderOrAbove}
         collectiveId={collectiveId}
@@ -1211,14 +1211,14 @@ export default function ChatRoomPage() {
 
       {/* Search overlay (collective only) */}
       {isCollective && (
-        <AnimatePresence data-eos-id="src/pages/chat/chat-room.tsx#74">
+        <AnimatePresence>
           {showSearch && collectiveId && (
-            <motion.div data-eos-id="src/pages/chat/chat-room.tsx#75"
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <ChatSearch data-eos-id="src/pages/chat/chat-room.tsx#76"
+              <ChatSearch
                 collectiveId={collectiveId}
                 onClose={() => setShowSearch(false)}
               />
@@ -1228,7 +1228,7 @@ export default function ChatRoomPage() {
       )}
 
       {/* Profile modal */}
-      <ProfileModal data-eos-id="src/pages/chat/chat-room.tsx#77" userId={profileUserId} open={!!profileUserId} onClose={() => setProfileUserId(null)} />
+      <ProfileModal userId={profileUserId} open={!!profileUserId} onClose={() => setProfileUserId(null)} />
     </div>
   )
 }

@@ -47,36 +47,36 @@ export default function ShippingTab() {
   }, [flatRate, freeThreshold, updateConfig, toast])
 
   if (showLoading) {
-    return <Skeleton data-eos-id="src/pages/admin/merch/shipping-tab.tsx#0" data-eos-v="2" variant="text" count={3} />
+    return <Skeleton variant="text" count={3} />
   }
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
   return (
-    <motion.div data-eos-id="src/pages/admin/merch/shipping-tab.tsx#1"
+    <motion.div
       className="space-y-4"
       variants={stagger}
       initial="hidden"
       animate="visible"
     >
-      <motion.div data-eos-id="src/pages/admin/merch/shipping-tab.tsx#2" variants={fadeUp}>
-        <h2 data-eos-id="src/pages/admin/merch/shipping-tab.tsx#3" className="font-heading font-semibold text-neutral-900">Shipping configuration</h2>
+      <motion.div variants={fadeUp}>
+        <h2 className="font-heading font-semibold text-neutral-900">Shipping configuration</h2>
       </motion.div>
-      <motion.div data-eos-id="src/pages/admin/merch/shipping-tab.tsx#4" variants={fadeUp}>
-      <Input data-eos-id="src/pages/admin/merch/shipping-tab.tsx#5"
+      <motion.div variants={fadeUp}>
+      <Input
         label="Flat rate ($)"
         value={flatRate}
         onChange={(e) => setFlatRate(e.target.value)}
         helperText="Standard shipping cost"
       />
-      <Input data-eos-id="src/pages/admin/merch/shipping-tab.tsx#6"
+      <Input
         label="Free shipping threshold ($)"
         value={freeThreshold}
         onChange={(e) => setFreeThreshold(e.target.value)}
         helperText="Orders above this amount get free shipping. Leave empty for no threshold."
       />
       </motion.div>
-      <motion.div data-eos-id="src/pages/admin/merch/shipping-tab.tsx#7" variants={fadeUp}>
-      <Button data-eos-id="src/pages/admin/merch/shipping-tab.tsx#8"
+      <motion.div variants={fadeUp}>
+      <Button
         variant="primary"
         fullWidth
         loading={updateConfig.isPending}

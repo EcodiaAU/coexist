@@ -58,18 +58,18 @@ function SummaryCards({ items }: { items: FlatVariant[] }) {
   ]
 
   return (
-    <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#0" data-eos-v="2" className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
       {cards.map((c) => {
         const Icon = c.icon
         return (
-          <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#1" key={c.label} className="p-3.5 rounded-md bg-white border border-neutral-100 shadow-sm text-center">
-            <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#2" className={cn('w-7 h-7 rounded-sm flex items-center justify-center mx-auto mb-1', c.iconBg)}>
-              <Icon data-eos-id="src/pages/admin/merch/inventory-tab.tsx#3" size={14} />
+          <div key={c.label} className="p-3.5 rounded-md bg-white border border-neutral-100 shadow-sm text-center">
+            <div className={cn('w-7 h-7 rounded-sm flex items-center justify-center mx-auto mb-1', c.iconBg)}>
+              <Icon size={14} />
             </div>
-            <p data-eos-id="src/pages/admin/merch/inventory-tab.tsx#4" data-eos-var="c.value" data-eos-var-label="Value" data-eos-var-scope="item" className="font-heading text-xl font-bold tabular-nums text-neutral-900">
+            <p className="font-heading text-xl font-bold tabular-nums text-neutral-900">
               {c.value}
             </p>
-            <p data-eos-id="src/pages/admin/merch/inventory-tab.tsx#5" data-eos-var="c.label" data-eos-var-label="Label" data-eos-var-scope="item" data-eos-var-src="literal" className="text-[11px] text-neutral-500 font-semibold mt-0.5">{c.label}</p>
+            <p className="text-[11px] text-neutral-500 font-semibold mt-0.5">{c.label}</p>
           </div>
         )
       })}
@@ -106,24 +106,24 @@ function InlineStepper({
   )
 
   return (
-    <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#6" className="flex items-center gap-0.5">
-      <button data-eos-id="src/pages/admin/merch/inventory-tab.tsx#7"
+    <div className="flex items-center gap-0.5">
+      <button
         type="button"
         onClick={(e) => { e.stopPropagation(); handleAdjust(-1) }}
         disabled={item.variant.stock === 0}
         className="flex items-center justify-center w-8 h-8 rounded-l-sm bg-white/80 border border-neutral-100 text-neutral-500 hover:bg-error-50 hover:text-error-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98] transition-transform duration-150"
       >
-        <Minus data-eos-id="src/pages/admin/merch/inventory-tab.tsx#8" size={12} />
+        <Minus size={12} />
       </button>
-      <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#9" data-eos-var="item.variant.stock" data-eos-var-label="Stock" data-eos-var-scope="prop" className="flex items-center justify-center w-10 h-8 bg-white/80 border-y border-neutral-100 text-sm font-bold tabular-nums text-neutral-900">
+      <div className="flex items-center justify-center w-10 h-8 bg-white/80 border-y border-neutral-100 text-sm font-bold tabular-nums text-neutral-900">
         {item.variant.stock}
       </div>
-      <button data-eos-id="src/pages/admin/merch/inventory-tab.tsx#10"
+      <button
         type="button"
         onClick={(e) => { e.stopPropagation(); handleAdjust(1) }}
         className="flex items-center justify-center w-8 h-8 rounded-r-sm bg-white/80 border border-neutral-100 text-neutral-500 hover:bg-success-50 hover:text-success-600 cursor-pointer active:scale-[0.98] transition-transform duration-150"
       >
-        <Plus data-eos-id="src/pages/admin/merch/inventory-tab.tsx#11" size={12} />
+        <Plus size={12} />
       </button>
     </div>
   )
@@ -183,26 +183,26 @@ function BatchAdjustSheet({
   }, [selected, adjustStock, toast, onClose])
 
   return (
-    <BottomSheet data-eos-id="src/pages/admin/merch/inventory-tab.tsx#12" open={open} onClose={onClose}>
-      <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#13" className="space-y-5">
-        <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#14">
-          <h3 data-eos-id="src/pages/admin/merch/inventory-tab.tsx#15" className="font-heading font-semibold text-neutral-900">Batch Stock Adjustment</h3>
-          <p data-eos-id="src/pages/admin/merch/inventory-tab.tsx#16" className="text-xs text-neutral-400 mt-1">
+    <BottomSheet open={open} onClose={onClose}>
+      <div className="space-y-5">
+        <div>
+          <h3 className="font-heading font-semibold text-neutral-900">Batch Stock Adjustment</h3>
+          <p className="text-xs text-neutral-400 mt-1">
             Adjust {selected.length} variant{selected.length !== 1 ? 's' : ''} at once
           </p>
         </div>
 
         {/* Selected items preview */}
-        <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#17" className="max-h-32 overflow-y-auto space-y-1 rounded-sm bg-neutral-50 p-2.5">
+        <div className="max-h-32 overflow-y-auto space-y-1 rounded-sm bg-neutral-50 p-2.5">
           {selected.map((item) => (
-            <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#18"
+            <div
               key={`${item.product.id}-${item.variant.id}`}
               className="flex items-center justify-between text-xs py-1"
             >
-              <span data-eos-id="src/pages/admin/merch/inventory-tab.tsx#19" data-eos-var="item.product.name,item.variant" data-eos-var-label="Name, Variant" data-eos-var-scope="item" className="text-neutral-600 truncate">
+              <span className="text-neutral-600 truncate">
                 {item.product.name} · {variantLabel(item.variant)}
               </span>
-              <span data-eos-id="src/pages/admin/merch/inventory-tab.tsx#20" data-eos-var="item.variant.stock" data-eos-var-label="Stock" data-eos-var-scope="item" className="font-semibold tabular-nums text-neutral-900 ml-2 shrink-0">
+              <span className="font-semibold tabular-nums text-neutral-900 ml-2 shrink-0">
                 {item.variant.stock}
               </span>
             </div>
@@ -210,13 +210,13 @@ function BatchAdjustSheet({
         </div>
 
         {/* Quick restock buttons */}
-        <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#21">
-          <p data-eos-id="src/pages/admin/merch/inventory-tab.tsx#22" className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+        <div>
+          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
             Quick Restock
           </p>
-          <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#23" className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {quickAmounts.map((qa) => (
-              <button data-eos-id="src/pages/admin/merch/inventory-tab.tsx#24" data-eos-var="qa.label" data-eos-var-label="Label" data-eos-var-scope="item" data-eos-var-src="literal"
+              <button
                 key={qa.value}
                 type="button"
                 disabled={processing}
@@ -230,19 +230,19 @@ function BatchAdjustSheet({
         </div>
 
         {/* Custom amount */}
-        <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#25">
-          <p data-eos-id="src/pages/admin/merch/inventory-tab.tsx#26" className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+        <div>
+          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
             Custom Amount
           </p>
-          <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#27" className="flex gap-2">
-            <input data-eos-id="src/pages/admin/merch/inventory-tab.tsx#28"
+          <div className="flex gap-2">
+            <input
               type="number"
               value={adjustment}
               onChange={(e) => setAdjustment(e.target.value)}
               placeholder="+/- amount"
               className="flex-1 h-12 px-4 rounded-sm bg-neutral-50 text-sm font-semibold text-neutral-900 placeholder:text-neutral-400/50 outline-none focus:ring-2 focus:ring-primary-300/50 tabular-nums"
             />
-            <Button data-eos-id="src/pages/admin/merch/inventory-tab.tsx#29"
+            <Button
               variant="primary"
               loading={processing}
               disabled={!adjustment || Number(adjustment) === 0}
@@ -252,7 +252,7 @@ function BatchAdjustSheet({
               Apply
             </Button>
           </div>
-          <p data-eos-id="src/pages/admin/merch/inventory-tab.tsx#30" className="text-[11px] text-neutral-400 mt-1.5">
+          <p className="text-[11px] text-neutral-400 mt-1.5">
             Positive to add, negative to remove
           </p>
         </div>
@@ -304,30 +304,30 @@ function ProductGroup({
       : 'border-neutral-100'
 
   return (
-    <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#31" className={cn('rounded-md border overflow-hidden shadow-sm bg-white', headerBorder)}>
+    <div className={cn('rounded-md border overflow-hidden shadow-sm bg-white', headerBorder)}>
       {/* Product header row */}
-      <button data-eos-id="src/pages/admin/merch/inventory-tab.tsx#32"
+      <button
         type="button"
         onClick={toggleAll}
         className="w-full flex items-center gap-3 p-3.5 cursor-pointer hover:bg-white/30 transition-colors"
       >
-        <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#33" className="shrink-0 text-neutral-400">
+        <div className="shrink-0 text-neutral-400">
           {allSelected ? (
-            <CheckSquare data-eos-id="src/pages/admin/merch/inventory-tab.tsx#34" size={18} className="text-primary-600" />
+            <CheckSquare size={18} className="text-primary-600" />
           ) : someSelected ? (
-            <CheckSquare data-eos-id="src/pages/admin/merch/inventory-tab.tsx#35" size={18} className="text-neutral-400 opacity-50" />
+            <CheckSquare size={18} className="text-neutral-400 opacity-50" />
           ) : (
-            <Square data-eos-id="src/pages/admin/merch/inventory-tab.tsx#36" size={18} />
+            <Square size={18} />
           )}
         </div>
-        <img data-eos-src="dynamic" data-eos-src-label="Value" data-eos-id="src/pages/admin/merch/inventory-tab.tsx#37"
+        <img
           src={product.images[0] ?? '/img/placeholder-merch.jpg'}
           alt={product.name}
           className="w-10 h-10 rounded-sm object-cover shrink-0"
         />
-        <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#38" className="flex-1 min-w-0 text-left">
-          <p data-eos-id="src/pages/admin/merch/inventory-tab.tsx#39" data-eos-var="product.name" data-eos-var-label="Name" data-eos-var-scope="prop" className="text-sm font-bold text-neutral-900 truncate">{product.name}</p>
-          <p data-eos-id="src/pages/admin/merch/inventory-tab.tsx#40" data-eos-var="v.variant.stock" data-eos-var-label="Stock" data-eos-var-scope="prop" className="text-[11px] text-neutral-400">
+        <div className="flex-1 min-w-0 text-left">
+          <p className="text-sm font-bold text-neutral-900 truncate">{product.name}</p>
+          <p className="text-[11px] text-neutral-400">
             {variants.length} variant{variants.length !== 1 ? 's' : ''} ·{' '}
             {variants.reduce((sum, v) => sum + v.variant.stock, 0)} total units
           </p>
@@ -335,7 +335,7 @@ function ProductGroup({
       </button>
 
       {/* Variant rows */}
-      <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#41" className="divide-y divide-neutral-100/40">
+      <div className="divide-y divide-neutral-100/40">
         {variants.map((item) => {
           const key = `${product.id}-${item.variant.id}`
           const isSelected = selectedIds.has(key)
@@ -343,45 +343,45 @@ function ProductGroup({
           const isLow = !isOOS && item.variant.stock <= item.variant.low_stock_threshold
 
           return (
-            <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#42"
+            <div
               key={key}
               className={cn(
                 'flex items-center gap-2.5 px-3.5 py-2.5 transition-colors',
                 isSelected && 'bg-neutral-100/40',
               )}
             >
-              <button data-eos-id="src/pages/admin/merch/inventory-tab.tsx#43"
+              <button
                 type="button"
                 onClick={() => onToggleSelect(key)}
                 className="shrink-0 text-neutral-400 cursor-pointer"
               >
                 {isSelected ? (
-                  <CheckSquare data-eos-id="src/pages/admin/merch/inventory-tab.tsx#44" size={16} className="text-primary-600" />
+                  <CheckSquare size={16} className="text-primary-600" />
                 ) : (
-                  <Square data-eos-id="src/pages/admin/merch/inventory-tab.tsx#45" size={16} />
+                  <Square size={16} />
                 )}
               </button>
 
-              <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#46" className="flex-1 min-w-0">
-                <p data-eos-id="src/pages/admin/merch/inventory-tab.tsx#47" data-eos-var="item.variant" data-eos-var-label="Variant" data-eos-var-scope="item" className="text-sm text-neutral-700 truncate">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-neutral-700 truncate">
                   {variantLabel(item.variant)}
                 </p>
-                <p data-eos-id="src/pages/admin/merch/inventory-tab.tsx#48" data-eos-var="item.variant.sku" data-eos-var-label="Sku" data-eos-var-scope="item" className="text-[11px] text-neutral-400 truncate">
+                <p className="text-[11px] text-neutral-400 truncate">
                   {item.variant.sku ?? ''}
                   {isOOS && (
-                    <span data-eos-id="src/pages/admin/merch/inventory-tab.tsx#49" className="ml-1.5 px-1.5 py-0.5 rounded-full bg-error-100 text-error-700 font-semibold text-[10px]">
+                    <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-error-100 text-error-700 font-semibold text-[10px]">
                       OUT
                     </span>
                   )}
                   {isLow && (
-                    <span data-eos-id="src/pages/admin/merch/inventory-tab.tsx#50" className="ml-1.5 px-1.5 py-0.5 rounded-full bg-warning-100 text-warning-700 font-semibold text-[10px]">
+                    <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-warning-100 text-warning-700 font-semibold text-[10px]">
                       LOW
                     </span>
                   )}
                 </p>
               </div>
 
-              <InlineStepper data-eos-id="src/pages/admin/merch/inventory-tab.tsx#51" item={item} adjustStock={adjustStock} />
+              <InlineStepper item={item} adjustStock={adjustStock} />
             </div>
           )
         })}
@@ -505,40 +505,40 @@ export default function InventoryTab() {
 
   if (showLoading) {
     return (
-      <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#52" className="space-y-3">
-        <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#53" className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton data-eos-id="src/pages/admin/merch/inventory-tab.tsx#54" key={i} variant="stat-card" />
+            <Skeleton key={i} variant="stat-card" />
           ))}
         </div>
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton data-eos-id="src/pages/admin/merch/inventory-tab.tsx#55" key={i} variant="card" />
+          <Skeleton key={i} variant="card" />
         ))}
       </div>
     )
   }
   return (
-    <motion.div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#56"
+    <motion.div
       variants={stagger}
       initial="hidden"
       animate="visible"
     >
       {/* Summary cards */}
-      <motion.div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#57" variants={fadeUp}>
-        <SummaryCards data-eos-id="src/pages/admin/merch/inventory-tab.tsx#58" items={allItems} />
+      <motion.div variants={fadeUp}>
+        <SummaryCards items={allItems} />
       </motion.div>
 
       {/* Filter tabs + sort */}
-      <motion.div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#59" variants={fadeUp} className="flex items-end gap-2 mb-3">
-        <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#60" className="flex-1 min-w-0">
-          <TabBar data-eos-id="src/pages/admin/merch/inventory-tab.tsx#61"
+      <motion.div variants={fadeUp} className="flex items-end gap-2 mb-3">
+        <div className="flex-1 min-w-0">
+          <TabBar
             tabs={STOCK_FILTERS.map((f) => ({ id: f.value, label: f.label }))}
             activeTab={filter}
             onChange={(id) => setFilter(id as StockFilter)}
             aria-label="Stock filter"
           />
         </div>
-        <button data-eos-id="src/pages/admin/merch/inventory-tab.tsx#62"
+        <button
           type="button"
           onClick={() =>
             setSort((s) =>
@@ -547,14 +547,14 @@ export default function InventoryTab() {
           }
           className="flex items-center gap-1.5 px-3 py-2 rounded-sm text-xs font-semibold whitespace-nowrap bg-white border border-neutral-100 text-neutral-700 cursor-pointer transition-[color,background-color,transform] hover:shadow-sm active:scale-[0.97] shrink-0 mb-px"
         >
-          <ArrowUpDown data-eos-id="src/pages/admin/merch/inventory-tab.tsx#63" size={12} />
+          <ArrowUpDown size={12} />
           {sort === 'stock-asc' ? 'Stock ↑' : sort === 'name' ? 'A-Z' : 'Product'}
         </button>
       </motion.div>
 
       {/* Search */}
-      <motion.div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#64" variants={fadeUp} className="mb-4">
-        <SearchBar data-eos-id="src/pages/admin/merch/inventory-tab.tsx#65"
+      <motion.div variants={fadeUp} className="mb-4">
+        <SearchBar
           value={search}
           onChange={setSearch}
           placeholder="Search products or SKUs..."
@@ -563,32 +563,32 @@ export default function InventoryTab() {
       </motion.div>
 
       {/* Batch action bar */}
-      <AnimatePresence data-eos-id="src/pages/admin/merch/inventory-tab.tsx#66">
+      <AnimatePresence>
         {selectedItems.length > 0 && (
-          <motion.div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#67"
+          <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             className="mb-4 flex items-center gap-2 p-3 rounded-md bg-primary-600 shadow-sm"
           >
-            <span data-eos-id="src/pages/admin/merch/inventory-tab.tsx#68" className="text-sm font-semibold text-white flex-1">
+            <span className="text-sm font-semibold text-white flex-1">
               {selectedItems.length} selected
             </span>
-            <button data-eos-id="src/pages/admin/merch/inventory-tab.tsx#69"
+            <button
               type="button"
               onClick={selectAll}
               className="px-4 min-h-11 rounded-sm bg-white/15 text-sm font-semibold text-white hover:bg-white/25 cursor-pointer transition-colors"
             >
               All
             </button>
-            <button data-eos-id="src/pages/admin/merch/inventory-tab.tsx#70"
+            <button
               type="button"
               onClick={clearSelection}
               className="px-4 min-h-11 rounded-sm bg-white/15 text-sm font-semibold text-white hover:bg-white/25 cursor-pointer transition-colors"
             >
               Clear
             </button>
-            <Button data-eos-id="src/pages/admin/merch/inventory-tab.tsx#71"
+            <Button
               variant="secondary"
               size="sm"
               onClick={() => setBatchOpen(true)}
@@ -600,9 +600,9 @@ export default function InventoryTab() {
       </AnimatePresence>
 
       {/* Product-grouped inventory list */}
-      <motion.div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#72" variants={fadeUp}>
+      <motion.div variants={fadeUp}>
         {filtered.length === 0 ? (
-          <EmptyState data-eos-id="src/pages/admin/merch/inventory-tab.tsx#73"
+          <EmptyState
             illustration={filter === 'out' ? 'success' : 'search'}
             title={
               filter === 'out'
@@ -620,9 +620,9 @@ export default function InventoryTab() {
             }
           />
         ) : (
-          <div data-eos-id="src/pages/admin/merch/inventory-tab.tsx#74" className="space-y-3">
+          <div className="space-y-3">
             {groupedByProduct.map(({ product, variants }) => (
-              <ProductGroup data-eos-id="src/pages/admin/merch/inventory-tab.tsx#75"
+              <ProductGroup
                 key={product.id}
                 product={product}
                 variants={variants}
@@ -636,7 +636,7 @@ export default function InventoryTab() {
       </motion.div>
 
       {/* Batch adjust sheet */}
-      <BatchAdjustSheet data-eos-id="src/pages/admin/merch/inventory-tab.tsx#76"
+      <BatchAdjustSheet
         open={batchOpen}
         onClose={() => {
           setBatchOpen(false)
