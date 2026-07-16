@@ -36,7 +36,7 @@ const variantStyles: Record<SkeletonVariant, string> = {
 
 function ShimmerBlock({ className }: { className?: string }) {
   return (
-    <div data-eos-id="src/components/skeleton.tsx#0"
+    <div data-eos-id="src/components/skeleton.tsx#0" data-eos-v="2"
       className={cn(shimmerClass, className)}
       aria-hidden="true"
     />
