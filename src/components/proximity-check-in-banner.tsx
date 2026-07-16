@@ -22,7 +22,7 @@ export function ProximityCheckInBanner() {
   const showEvent = nearbyEvent && !dismissed.has(nearbyEvent.id)
 
   return (
-    <AnimatePresence data-eos-id="src/components/proximity-check-in-banner.tsx#0">
+    <AnimatePresence data-eos-id="src/components/proximity-check-in-banner.tsx#0" data-eos-v="2">
       {showEvent && (
         <motion.div data-eos-id="src/components/proximity-check-in-banner.tsx#1"
           key={nearbyEvent.id}
