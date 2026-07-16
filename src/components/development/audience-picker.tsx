@@ -15,7 +15,7 @@ import { TARGET_ROLE_OPTIONS } from '@/hooks/use-admin-development'
 /* ------------------------------------------------------------------ */
 
 const ROLE_ICONS: Record<string, React.ReactNode> = {
-  leader: <Crown data-eos-id="src/components/development/audience-picker.tsx#0" size={14} />,
+  leader: <Crown data-eos-id="src/components/development/audience-picker.tsx#0" data-eos-v="2" size={14} />,
   co_leader: <Shield data-eos-id="src/components/development/audience-picker.tsx#1" size={14} />,
   assist_leader: <UserPlus data-eos-id="src/components/development/audience-picker.tsx#2" size={14} />,
   national_leader: <Briefcase data-eos-id="src/components/development/audience-picker.tsx#3" size={14} />,
