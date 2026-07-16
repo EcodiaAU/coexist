@@ -46,7 +46,7 @@ type EmergencyContact = Tables<'emergency_contacts'>
 /* ------------------------------------------------------------------ */
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  emergency: <Siren data-eos-id="src/pages/admin/contacts.tsx#0" size={16} />,
+  emergency: <Siren data-eos-id="src/pages/admin/contacts.tsx#0" data-eos-v="2" size={16} />,
   wildlife: <TreePine data-eos-id="src/pages/admin/contacts.tsx#1" size={16} />,
   marine: <Waves data-eos-id="src/pages/admin/contacts.tsx#2" size={16} />,
   poison: <Bug data-eos-id="src/pages/admin/contacts.tsx#3" size={16} />,
