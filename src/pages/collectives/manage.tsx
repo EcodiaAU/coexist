@@ -114,56 +114,56 @@ function EditCollectiveSheet({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} snapPoints={[0.85]}>
-      <div className="space-y-4">
-        <h3 className="font-heading text-lg font-semibold text-neutral-900">
+    <BottomSheet data-eos-id="src/pages/collectives/manage.tsx#0" open={open} onClose={onClose} snapPoints={[0.85]}>
+      <div data-eos-id="src/pages/collectives/manage.tsx#1" className="space-y-4">
+        <h3 data-eos-id="src/pages/collectives/manage.tsx#2" className="font-heading text-lg font-semibold text-neutral-900">
           Edit Collective
         </h3>
 
         {/* Cover image */}
-        <div>
-          <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+        <div data-eos-id="src/pages/collectives/manage.tsx#3">
+          <label data-eos-id="src/pages/collectives/manage.tsx#4" className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
             Cover Image
           </label>
-          <div className="mt-1.5 relative rounded-sm overflow-hidden bg-neutral-100" style={{ aspectRatio: '16/9' }}>
+          <div data-eos-id="src/pages/collectives/manage.tsx#5" className="mt-1.5 relative rounded-sm overflow-hidden bg-neutral-100" style={{ aspectRatio: '16/9' }}>
             {coverPreview ? (
-              <img src={coverPreview} alt="Cover" loading="lazy" className="w-full h-full object-cover" />
+              <img data-eos-id="src/pages/collectives/manage.tsx#6" src={coverPreview} alt="Cover" loading="lazy" className="w-full h-full object-cover" />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-neutral-400 gap-1.5">
-                <ImagePlus size={28} />
-                <span className="text-[11px] font-medium">Add a cover photo</span>
+              <div data-eos-id="src/pages/collectives/manage.tsx#7" className="flex flex-col items-center justify-center h-full text-neutral-400 gap-1.5">
+                <ImagePlus data-eos-id="src/pages/collectives/manage.tsx#8" size={28} />
+                <span data-eos-id="src/pages/collectives/manage.tsx#9" className="text-[11px] font-medium">Add a cover photo</span>
               </div>
             )}
             {uploading && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <div className="bg-white rounded-sm px-4 py-2 shadow-sm">
-                  <p className="text-xs font-semibold text-primary-700 tabular-nums">{progress ?? 0}%</p>
+              <div data-eos-id="src/pages/collectives/manage.tsx#10" className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <div data-eos-id="src/pages/collectives/manage.tsx#11" className="bg-white rounded-sm px-4 py-2 shadow-sm">
+                  <p data-eos-id="src/pages/collectives/manage.tsx#12" className="text-xs font-semibold text-primary-700 tabular-nums">{progress ?? 0}%</p>
                 </div>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <Button
+          <div data-eos-id="src/pages/collectives/manage.tsx#13" className="flex items-center gap-2 mt-2">
+            <Button data-eos-id="src/pages/collectives/manage.tsx#14"
               variant="secondary"
               size="sm"
-              icon={<Camera size={14} />}
+              icon={<Camera data-eos-id="src/pages/collectives/manage.tsx#15" size={14} />}
               disabled={uploading}
               onClick={() => fileRef.current?.click()}
             >
               {coverPreview ? 'Replace' : 'Upload'}
             </Button>
             {coverPreview && (
-              <Button
+              <Button data-eos-id="src/pages/collectives/manage.tsx#16"
                 variant="ghost"
                 size="sm"
-                icon={<Trash2 size={14} />}
+                icon={<Trash2 data-eos-id="src/pages/collectives/manage.tsx#17" size={14} />}
                 onClick={() => setCoverPreview(null)}
                 disabled={uploading}
               >
                 Remove
               </Button>
             )}
-            <input
+            <input data-eos-id="src/pages/collectives/manage.tsx#18"
               ref={fileRef}
               type="file"
               accept="image/*"
@@ -174,11 +174,11 @@ function EditCollectiveSheet({
         </div>
 
         {/* Name */}
-        <div>
-          <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+        <div data-eos-id="src/pages/collectives/manage.tsx#19">
+          <label data-eos-id="src/pages/collectives/manage.tsx#20" className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
             Name
           </label>
-          <Input
+          <Input data-eos-id="src/pages/collectives/manage.tsx#21"
             label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -188,7 +188,7 @@ function EditCollectiveSheet({
         </div>
 
         {/* Description */}
-        <Input
+        <Input data-eos-id="src/pages/collectives/manage.tsx#22"
           type="textarea"
           label="Description"
           value={description}
@@ -198,12 +198,12 @@ function EditCollectiveSheet({
         />
 
         {/* Region + State */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+        <div data-eos-id="src/pages/collectives/manage.tsx#23" className="grid grid-cols-2 gap-3">
+          <div data-eos-id="src/pages/collectives/manage.tsx#24">
+            <label data-eos-id="src/pages/collectives/manage.tsx#25" className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
               Region
             </label>
-            <PlaceAutocomplete
+            <PlaceAutocomplete data-eos-id="src/pages/collectives/manage.tsx#26"
               label="Region"
               value={region}
               onChange={(val, place) => {
@@ -219,7 +219,7 @@ function EditCollectiveSheet({
               className="mt-1"
             />
           </div>
-          <Dropdown
+          <Dropdown data-eos-id="src/pages/collectives/manage.tsx#27"
             label="State"
             placeholder="Select..."
             options={AUSTRALIAN_STATES.map((s) => ({ value: s, label: s }))}
@@ -229,7 +229,7 @@ function EditCollectiveSheet({
           />
         </div>
 
-        <Button
+        <Button data-eos-id="src/pages/collectives/manage.tsx#28"
           variant="primary"
           fullWidth
           loading={isSaving || uploading}
@@ -268,22 +268,22 @@ function RoleAssignSheet({
   )
 
   return (
-    <BottomSheet open={!!member} onClose={onClose}>
-      <div className="space-y-3 pb-2">
-        <h3 className="font-heading text-lg font-semibold text-neutral-900">
+    <BottomSheet data-eos-id="src/pages/collectives/manage.tsx#29" open={!!member} onClose={onClose}>
+      <div data-eos-id="src/pages/collectives/manage.tsx#30" className="space-y-3 pb-2">
+        <h3 data-eos-id="src/pages/collectives/manage.tsx#31" className="font-heading text-lg font-semibold text-neutral-900">
           Change Role
         </h3>
-        <p className="text-sm text-neutral-500">
-          {member.profiles?.display_name ?? 'Member'} is currently <strong>{ROLE_LABELS[member.role!]}</strong>
+        <p data-eos-id="src/pages/collectives/manage.tsx#32" data-eos-var="member.profiles.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="text-sm text-neutral-500">
+          {member.profiles?.display_name ?? 'Member'} is currently <strong data-eos-id="src/pages/collectives/manage.tsx#33" data-eos-var="ROLE_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop">{ROLE_LABELS[member.role!]}</strong>
         </p>
 
-        <div className="space-y-2">
+        <div data-eos-id="src/pages/collectives/manage.tsx#34" className="space-y-2">
           {assignableRoles.map((role) => {
             const Icon = ROLE_ICONS[role]
             const isActive = member.role === role
 
             return (
-              <button
+              <button data-eos-id="src/pages/collectives/manage.tsx#35"
                 key={role}
                 type="button"
                 onClick={() => onAssign(role)}
@@ -295,10 +295,10 @@ function RoleAssignSheet({
                     : 'text-neutral-900 hover:bg-neutral-50',
                 )}
               >
-                <Icon size={18} className={isActive ? 'text-primary-500' : 'text-primary-400'} />
-                <span className="font-medium">{ROLE_LABELS[role]}</span>
+                <Icon data-eos-id="src/pages/collectives/manage.tsx#36" size={18} className={isActive ? 'text-primary-500' : 'text-primary-400'} />
+                <span data-eos-id="src/pages/collectives/manage.tsx#37" data-eos-var="ROLE_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className="font-medium">{ROLE_LABELS[role]}</span>
                 {isActive && (
-                  <span className="ml-auto text-xs text-primary-500 font-semibold">Current</span>
+                  <span data-eos-id="src/pages/collectives/manage.tsx#38" className="ml-auto text-xs text-primary-500 font-semibold">Current</span>
                 )}
               </button>
             )
@@ -429,10 +429,10 @@ export default function CollectiveManagePage() {
 
   if (showLoading || loadingCollective || loadingMembers) {
     return (
-      <Page swipeBack header={<Header title="Manage" back />}>
-        <div className="py-4 space-y-4">
-          <Skeleton variant="card" />
-          <Skeleton variant="list-item" count={6} />
+      <Page data-eos-id="src/pages/collectives/manage.tsx#39" swipeBack header={<Header data-eos-id="src/pages/collectives/manage.tsx#40" title="Manage" back />}>
+        <div data-eos-id="src/pages/collectives/manage.tsx#41" className="py-4 space-y-4">
+          <Skeleton data-eos-id="src/pages/collectives/manage.tsx#42" variant="card" />
+          <Skeleton data-eos-id="src/pages/collectives/manage.tsx#43" variant="list-item" count={6} />
         </div>
       </Page>
     )
@@ -440,8 +440,8 @@ export default function CollectiveManagePage() {
 
   if (!collective || !canManage) {
     return (
-      <Page swipeBack header={<Header title="Manage" back />}>
-        <EmptyState
+      <Page data-eos-id="src/pages/collectives/manage.tsx#44" swipeBack header={<Header data-eos-id="src/pages/collectives/manage.tsx#45" title="Manage" back />}>
+        <EmptyState data-eos-id="src/pages/collectives/manage.tsx#46"
           illustration="error"
           title="Access denied"
           description="Only leaders and co-leaders can manage the collective"
@@ -452,50 +452,50 @@ export default function CollectiveManagePage() {
   }
 
   return (
-    <Page
+    <Page data-eos-id="src/pages/collectives/manage.tsx#47"
       swipeBack
       header={
-        <Header
+        <Header data-eos-id="src/pages/collectives/manage.tsx#48"
           title="Manage Collective"
           back
           rightActions={
-            <button
+            <button data-eos-id="src/pages/collectives/manage.tsx#49"
               type="button"
               onClick={handleExportCSV}
               aria-label="Export members CSV"
               className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
             >
-              <Download size={20} />
+              <Download data-eos-id="src/pages/collectives/manage.tsx#50" size={20} />
             </button>
           }
         />
       }
     >
-      <motion.div variants={shouldReduceMotion ? undefined : stagger} initial="hidden" animate="visible" className="space-y-6 py-4">
+      <motion.div data-eos-id="src/pages/collectives/manage.tsx#51" variants={shouldReduceMotion ? undefined : stagger} initial="hidden" animate="visible" className="space-y-6 py-4">
         {/* Collective info card */}
-        <motion.div variants={fadeUp} className="rounded-md bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-sm bg-primary-100">
+        <motion.div data-eos-id="src/pages/collectives/manage.tsx#52" variants={fadeUp} className="rounded-md bg-white p-4 shadow-sm">
+          <div data-eos-id="src/pages/collectives/manage.tsx#53" className="flex items-center gap-3">
+            <div data-eos-id="src/pages/collectives/manage.tsx#54" className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-sm bg-primary-100">
               {collective.cover_image_url ? (
-                <img src={collective.cover_image_url} alt={collective.name} loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                <img data-eos-id="src/pages/collectives/manage.tsx#55" src={collective.cover_image_url} alt={collective.name} loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
               ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <Users size={24} className="text-primary-400" />
+                <div data-eos-id="src/pages/collectives/manage.tsx#56" className="flex h-full w-full items-center justify-center">
+                  <Users data-eos-id="src/pages/collectives/manage.tsx#57" size={24} className="text-primary-400" />
                 </div>
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-heading text-base font-semibold text-neutral-900 truncate">
+            <div data-eos-id="src/pages/collectives/manage.tsx#58" className="flex-1 min-w-0">
+              <h3 data-eos-id="src/pages/collectives/manage.tsx#59" data-eos-var="collective.name" data-eos-var-label="Name" data-eos-var-scope="prop" className="font-heading text-base font-semibold text-neutral-900 truncate">
                 {collective.name}
               </h3>
-              <p className="text-xs text-neutral-500">
+              <p data-eos-id="src/pages/collectives/manage.tsx#60" data-eos-var="collective.member_count" data-eos-var-label="Member count" data-eos-var-scope="prop" className="text-xs text-neutral-500">
                 {collective.member_count} members
               </p>
             </div>
-            <Button
+            <Button data-eos-id="src/pages/collectives/manage.tsx#61"
               variant="ghost"
               size="sm"
-              icon={<Pencil size={16} />}
+              icon={<Pencil data-eos-id="src/pages/collectives/manage.tsx#62" size={16} />}
               onClick={() => setShowEdit(true)}
             >
               Edit
@@ -504,21 +504,21 @@ export default function CollectiveManagePage() {
         </motion.div>
 
         {/* Member search */}
-        <motion.div variants={fadeUp}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-heading text-sm font-semibold text-neutral-500 uppercase tracking-wider">
+        <motion.div data-eos-id="src/pages/collectives/manage.tsx#63" variants={fadeUp}>
+          <div data-eos-id="src/pages/collectives/manage.tsx#64" className="flex items-center justify-between mb-3">
+            <h3 data-eos-id="src/pages/collectives/manage.tsx#65" className="font-heading text-sm font-semibold text-neutral-500 uppercase tracking-wider">
               Members ({members.length})
             </h3>
           </div>
 
-          <div className="mb-3">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search by name, email, or Instagram..." compact />
+          <div data-eos-id="src/pages/collectives/manage.tsx#66" className="mb-3">
+            <SearchBar data-eos-id="src/pages/collectives/manage.tsx#67" value={searchQuery} onChange={setSearchQuery} placeholder="Search by name, email, or Instagram..." compact />
           </div>
 
           {/* Role filter pills */}
-          <div className="flex gap-1.5 mb-3 overflow-x-auto scrollbar-none">
+          <div data-eos-id="src/pages/collectives/manage.tsx#68" className="flex gap-1.5 mb-3 overflow-x-auto scrollbar-none">
             {(['all', 'leader', 'co_leader', 'assist_leader', 'participant'] as const).map((r) => (
-              <button
+              <button data-eos-id="src/pages/collectives/manage.tsx#69" data-eos-var="ROLE_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop"
                 key={r}
                 type="button"
                 onClick={() => setRoleFilter(r)}
@@ -535,26 +535,26 @@ export default function CollectiveManagePage() {
           </div>
 
           {/* Member list */}
-          <motion.div variants={shouldReduceMotion ? undefined : listStagger} initial="hidden" animate="visible" className="space-y-1">
+          <motion.div data-eos-id="src/pages/collectives/manage.tsx#70" variants={shouldReduceMotion ? undefined : listStagger} initial="hidden" animate="visible" className="space-y-1">
             {filteredMembers.map((member) => {
               const Icon = ROLE_ICONS[member.role!]
               const isCurrentUser = member.user_id === user?.id
 
               return (
-                <motion.div
+                <motion.div data-eos-id="src/pages/collectives/manage.tsx#71"
                   key={member.id}
                   variants={fadeUp}
                   layout
                   className="flex items-center gap-3 rounded-sm px-3 py-2.5 hover:bg-neutral-50 transition-colors"
                 >
                   {/* Avatar - tappable to user card */}
-                  <button
+                  <button data-eos-id="src/pages/collectives/manage.tsx#72"
                     type="button"
                     onClick={() => setSelectedUser(member)}
                     aria-label={`View ${member.profiles?.display_name}`}
                     className="flex items-center justify-center min-h-11 min-w-11 rounded-full active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                   >
-                    <Avatar
+                    <Avatar data-eos-id="src/pages/collectives/manage.tsx#73"
                       src={member.profiles?.avatar_url}
                       name={member.profiles?.display_name}
                       size="sm"
@@ -562,23 +562,23 @@ export default function CollectiveManagePage() {
                   </button>
 
                   {/* Name + role */}
-                  <button
+                  <button data-eos-id="src/pages/collectives/manage.tsx#74"
                     type="button"
                     onClick={() => setSelectedUser(member)}
                     className="flex-1 min-w-0 min-h-11 text-left active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                   >
-                    <p className="text-sm font-medium text-neutral-900 truncate">
+                    <p data-eos-id="src/pages/collectives/manage.tsx#75" data-eos-var="member.profiles.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-sm font-medium text-neutral-900 truncate">
                       {member.profiles?.display_name ?? 'Unknown'}
                       {isCurrentUser && (
-                        <span className="text-xs text-neutral-500 ml-1">(you)</span>
+                        <span data-eos-id="src/pages/collectives/manage.tsx#76" className="text-xs text-neutral-500 ml-1">(you)</span>
                       )}
                     </p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className={cn(
+                    <div data-eos-id="src/pages/collectives/manage.tsx#77" className="flex items-center gap-1.5 mt-0.5">
+                      <span data-eos-id="src/pages/collectives/manage.tsx#78" data-eos-var="ROLE_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className={cn(
                         'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-semibold',
                         ROLE_COLORS[member.role!],
                       )}>
-                        <Icon size={10} />
+                        <Icon data-eos-id="src/pages/collectives/manage.tsx#79" size={10} />
                         {ROLE_LABELS[member.role!]}
                       </span>
                     </div>
@@ -586,22 +586,22 @@ export default function CollectiveManagePage() {
 
                   {/* Actions: not for self; leaders can manage up to co_leader, others only below their rank */}
                   {!isCurrentUser && (myRole === 'leader' ? ROLE_RANK[member.role!] <= ROLE_RANK.co_leader : ROLE_RANK[member.role!] < (myRole ? ROLE_RANK[myRole] : -1)) && (
-                    <div className="flex items-center gap-1">
-                      <button
+                    <div data-eos-id="src/pages/collectives/manage.tsx#80" className="flex items-center gap-1">
+                      <button data-eos-id="src/pages/collectives/manage.tsx#81"
                         type="button"
                         onClick={() => setRoleAssignMember(member)}
                         aria-label="Change role"
                         className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                       >
-                        <Shield size={16} />
+                        <Shield data-eos-id="src/pages/collectives/manage.tsx#82" size={16} />
                       </button>
-                      <button
+                      <button data-eos-id="src/pages/collectives/manage.tsx#83"
                         type="button"
                         onClick={() => setRemovingMember(member)}
                         aria-label="Remove member"
                         className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 hover:bg-error-50 hover:text-error-500 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                       >
-                        <UserMinus size={16} />
+                        <UserMinus data-eos-id="src/pages/collectives/manage.tsx#84" size={16} />
                       </button>
                     </div>
                   )}
@@ -613,7 +613,7 @@ export default function CollectiveManagePage() {
       </motion.div>
 
       {/* Edit collective sheet */}
-      <EditCollectiveSheet
+      <EditCollectiveSheet data-eos-id="src/pages/collectives/manage.tsx#85"
         open={showEdit}
         onClose={() => setShowEdit(false)}
         collective={collective}
@@ -622,7 +622,7 @@ export default function CollectiveManagePage() {
       />
 
       {/* Role assignment sheet */}
-      <RoleAssignSheet
+      <RoleAssignSheet data-eos-id="src/pages/collectives/manage.tsx#86"
         member={roleAssignMember}
         onClose={() => setRoleAssignMember(null)}
         onAssign={handleAssignRole}
@@ -630,7 +630,7 @@ export default function CollectiveManagePage() {
       />
 
       {/* Remove member confirmation */}
-      <ConfirmationSheet
+      <ConfirmationSheet data-eos-id="src/pages/collectives/manage.tsx#87"
         open={!!removingMember}
         onClose={() => setRemovingMember(null)}
         onConfirm={handleRemoveMember}
@@ -642,32 +642,32 @@ export default function CollectiveManagePage() {
 
       {/* User card bottom sheet */}
       {selectedUser && (
-        <BottomSheet open={!!selectedUser} onClose={() => setSelectedUser(null)}>
-          <div className="flex flex-col items-center py-2">
-            <Avatar
+        <BottomSheet data-eos-id="src/pages/collectives/manage.tsx#88" open={!!selectedUser} onClose={() => setSelectedUser(null)}>
+          <div data-eos-id="src/pages/collectives/manage.tsx#89" className="flex flex-col items-center py-2">
+            <Avatar data-eos-id="src/pages/collectives/manage.tsx#90"
               src={selectedUser.profiles?.avatar_url}
               name={selectedUser.profiles?.display_name}
               size="xl"
             />
-            <h3 className="mt-3 font-heading text-lg font-bold text-neutral-900">
+            <h3 data-eos-id="src/pages/collectives/manage.tsx#91" data-eos-var="selectedUser.profiles.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="mt-3 font-heading text-lg font-bold text-neutral-900">
               {selectedUser.profiles?.display_name}
             </h3>
             {selectedUser.profiles?.pronouns && (
-              <span className="text-xs text-neutral-500">{selectedUser.profiles.pronouns}</span>
+              <span data-eos-id="src/pages/collectives/manage.tsx#92" data-eos-var="selectedUser.profiles.pronouns" data-eos-var-label="Pronouns" data-eos-var-scope="prop" className="text-xs text-neutral-500">{selectedUser.profiles.pronouns}</span>
             )}
-            <div className="flex items-center gap-2 mt-2">
-              <span className={cn(
+            <div data-eos-id="src/pages/collectives/manage.tsx#93" className="flex items-center gap-2 mt-2">
+              <span data-eos-id="src/pages/collectives/manage.tsx#94" data-eos-var="ROLE_LABELS.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className={cn(
                 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold',
                 ROLE_COLORS[selectedUser.role!],
               )}>
                 {ROLE_LABELS[selectedUser.role!]}
               </span>
               {selectedUser.profiles?.location && (
-                <span className="text-xs text-neutral-500">{selectedUser.profiles.location}</span>
+                <span data-eos-id="src/pages/collectives/manage.tsx#95" data-eos-var="selectedUser.profiles.location" data-eos-var-label="Location" data-eos-var-scope="prop" className="text-xs text-neutral-500">{selectedUser.profiles.location}</span>
               )}
             </div>
-            <div className="mt-4 w-full">
-              <Button
+            <div data-eos-id="src/pages/collectives/manage.tsx#96" className="mt-4 w-full">
+              <Button data-eos-id="src/pages/collectives/manage.tsx#97"
                 variant="primary"
                 fullWidth
                 onClick={() => {
