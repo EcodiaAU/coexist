@@ -45,7 +45,7 @@ export default function EmailVerificationPage() {
   }
 
   return (
-    <div data-eos-id="src/pages/auth/email-verification.tsx#0" className="min-h-dvh flex flex-col items-center justify-center px-6 bg-white">
+    <div data-eos-id="src/pages/auth/email-verification.tsx#0" data-eos-v="2" className="min-h-dvh flex flex-col items-center justify-center px-6 bg-white">
       <OGMeta data-eos-id="src/pages/auth/email-verification.tsx#1"
         title="Verify Your Email"
         description="Check your inbox to verify your Co-Exist account email address and start volunteering for conservation."
