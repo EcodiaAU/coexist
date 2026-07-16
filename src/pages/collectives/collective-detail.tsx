@@ -46,7 +46,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 
 function CollectiveDetailSkeleton() {
   return (
-    <div data-eos-id="src/pages/collectives/collective-detail.tsx#0" className="space-y-4 py-4">
+    <div data-eos-id="src/pages/collectives/collective-detail.tsx#0" data-eos-v="2" className="space-y-4 py-4">
       <Skeleton data-eos-id="src/pages/collectives/collective-detail.tsx#1" variant="image" className="!aspect-[3/4] !rounded-none -mx-4 lg:-mx-6 w-[calc(100%+2rem)] lg:w-[calc(100%+3rem)]" />
       <div data-eos-id="src/pages/collectives/collective-detail.tsx#2" className="space-y-3 px-1">
         <Skeleton data-eos-id="src/pages/collectives/collective-detail.tsx#3" variant="title" />
