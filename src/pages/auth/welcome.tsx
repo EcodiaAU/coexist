@@ -10,8 +10,8 @@ export default function WelcomePage() {
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <div className="min-h-dvh flex flex-col bg-white">
-      <OGMeta
+    <div data-eos-id="src/pages/auth/welcome.tsx#0" className="min-h-dvh flex flex-col bg-white">
+      <OGMeta data-eos-id="src/pages/auth/welcome.tsx#1"
         title="Welcome"
         description="Co-Exist is Australia's youth conservation platform. Join local tree planting, beach cleanups, habitat restoration events, and connect with conservation collectives near you."
         canonicalPath="/welcome"
@@ -34,9 +34,9 @@ export default function WelcomePage() {
       />
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
+      <div data-eos-id="src/pages/auth/welcome.tsx#2" className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
         {/* Wordmark */}
-        <motion.img
+        <motion.img data-eos-id="src/pages/auth/welcome.tsx#3"
           src="/logos/black-wordmark.png"
           alt={APP_NAME}
           initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
@@ -46,7 +46,7 @@ export default function WelcomePage() {
         />
 
         {/* Tagline */}
-        <motion.p
+        <motion.p data-eos-id="src/pages/auth/welcome.tsx#4"
           initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
@@ -56,7 +56,7 @@ export default function WelcomePage() {
         </motion.p>
 
         {/* Description */}
-        <motion.p
+        <motion.p data-eos-id="src/pages/auth/welcome.tsx#5"
           initial={shouldReduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.5 }}
@@ -67,24 +67,24 @@ export default function WelcomePage() {
       </div>
 
       {/* Bottom CTAs */}
-      <motion.div
+      <motion.div data-eos-id="src/pages/auth/welcome.tsx#6"
         initial={shouldReduceMotion ? false : { opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.6 }}
         className="px-4 sm:px-6 lg:px-8 pb-10 space-y-3 flex flex-col items-center"
         style={{ paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))' }}
       >
-        <Button
+        <Button data-eos-id="src/pages/auth/welcome.tsx#7"
           variant="primary"
           size="lg"
-          icon={<ArrowRight size={20} />}
+          icon={<ArrowRight data-eos-id="src/pages/auth/welcome.tsx#8" size={20} />}
           onClick={() => navigate('/signup')}
           className="w-56"
         >
           Get Started
         </Button>
 
-        <Button
+        <Button data-eos-id="src/pages/auth/welcome.tsx#9"
           variant="ghost"
           size="lg"
           onClick={() => navigate('/login')}
