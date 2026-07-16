@@ -15,7 +15,7 @@ interface EcodiaAttributionProps {
  */
 export function EcodiaAttribution({ className }: EcodiaAttributionProps) {
   return (
-    <a
+    <a data-eos-href="static" data-eos-id="src/components/ecodia-attribution.tsx#0"
       href="https://ecodia.au"
       target="_blank"
       rel="noopener noreferrer"
