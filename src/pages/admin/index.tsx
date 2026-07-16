@@ -73,7 +73,7 @@ function AdminHero({
   }, [rm])
 
   return (
-    <div data-eos-id="src/pages/admin/index.tsx#0" className="relative">
+    <div data-eos-id="src/pages/admin/index.tsx#0" data-eos-v="2" className="relative">
       <div data-eos-id="src/pages/admin/index.tsx#1" className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
         {/* Layer 0: Background landscape - slowest parallax. Stacked imgs,
             opacity crossfades the active pair in. */}
@@ -82,7 +82,7 @@ function AdminHero({
           className="h-full relative will-change-transform"
         >
           {ADMIN_HERO_PAIRS.map((pair, i) => (
-            <img data-eos-id="src/pages/admin/index.tsx#3"
+            <img data-eos-src="literal" data-eos-src-label="Bg" data-eos-src-binding="bg" data-eos-id="src/pages/admin/index.tsx#3"
               key={`bg-${i}`}
               src={pair.bg}
               alt={i === activeIndex ? pair.alt : ''}
@@ -118,7 +118,7 @@ function AdminHero({
                   className={cn('absolute bottom-0 inset-x-0 flex justify-center pointer-events-none', fadeCls)}
                 >
                   <div data-eos-id="src/pages/admin/index.tsx#6" className="w-[120%] -ml-[10%] sm:w-[70%] sm:ml-0">
-                    <img data-eos-id="src/pages/admin/index.tsx#7"
+                    <img data-eos-src="literal" data-eos-src-label="Fg" data-eos-src-binding="fg" data-eos-id="src/pages/admin/index.tsx#7"
                       src={pair.fg}
                       alt=""
                       loading={i === 0 ? 'eager' : 'lazy'}
@@ -130,7 +130,7 @@ function AdminHero({
               )
             }
             return (
-              <img data-eos-id="src/pages/admin/index.tsx#8"
+              <img data-eos-src="literal" data-eos-src-label="Fg" data-eos-src-binding="fg" data-eos-id="src/pages/admin/index.tsx#8"
                 key={`fg-${i}`}
                 src={pair.fg}
                 alt=""
@@ -157,7 +157,7 @@ function AdminHero({
             transition={{ duration: 0.5, delay: 0.1 }}
             className="flex flex-col items-center text-center"
           >
-            <img data-eos-id="src/pages/admin/index.tsx#11"
+            <img data-eos-src="static" data-eos-id="src/pages/admin/index.tsx#11"
               src="/logos/white-wordmark.webp"
               alt="Co-Exist"
               className="h-24 sm:h-36"
