@@ -35,7 +35,7 @@ export function VideoPlayer({ url, provider, className }: VideoPlayerProps) {
   // Direct upload  use native <video>
   if (provider === 'upload' || (!embedUrl && !url.includes('youtu') && !url.includes('vimeo'))) {
     return (
-      <div data-eos-id="src/components/development/video-player.tsx#0" className={cn('rounded-sm overflow-hidden bg-primary-900', className)}>
+      <div data-eos-id="src/components/development/video-player.tsx#0" data-eos-v="2" className={cn('rounded-sm overflow-hidden bg-primary-900', className)}>
         <video data-eos-id="src/components/development/video-player.tsx#1"
           src={url}
           controls
