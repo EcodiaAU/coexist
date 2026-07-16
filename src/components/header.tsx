@@ -43,7 +43,7 @@ export function Header({
   if (!back && !rightActions) return null
 
   return (
-    <div
+    <div data-eos-id="src/components/header.tsx#0"
       className={cn(
         'sticky z-40',
         'px-4',
@@ -59,11 +59,11 @@ export function Header({
       }}
       aria-label={`${title} page header`}
     >
-      <div className="flex items-center h-14">
+      <div data-eos-id="src/components/header.tsx#1" className="flex items-center h-14">
         {/* Left zone: back button */}
-        <div className="flex items-center shrink-0 w-10">
+        <div data-eos-id="src/components/header.tsx#2" className="flex items-center shrink-0 w-10">
           {back && (
-            <motion.button
+            <motion.button data-eos-id="src/components/header.tsx#3"
               type="button"
               onClick={handleBack}
               whileTap={shouldReduceMotion ? undefined : { scale: 0.9 }}
@@ -82,15 +82,15 @@ export function Header({
               )}
               aria-label="Go back"
             >
-              <ArrowLeft size={22} />
+              <ArrowLeft data-eos-id="src/components/header.tsx#4" size={22} />
             </motion.button>
           )}
         </div>
 
         {/* Center zone: title or spacer */}
-        <div className="flex-1 min-w-0">
+        <div data-eos-id="src/components/header.tsx#5" className="flex-1 min-w-0">
           {showTitle && (
-            <p className={cn(
+            <p data-eos-id="src/components/header.tsx#6" className={cn(
               'text-sm font-bold truncate pl-2 pointer-events-auto',
               transparent ? 'text-white' : 'text-primary-900',
             )}>
@@ -101,7 +101,7 @@ export function Header({
 
         {/* Right zone: actions. Only re-enable pointer events when there
             are actually actions  an empty zone would silently eat taps. */}
-        <div
+        <div data-eos-id="src/components/header.tsx#7"
           className={cn(
             'flex items-center shrink-0 gap-1 justify-end',
             rightActions && 'pointer-events-auto',
