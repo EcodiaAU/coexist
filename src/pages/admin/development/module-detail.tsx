@@ -28,7 +28,7 @@ export default function AdminModuleDetailPage() {
 
   useAdminHeader('Module Detail', {
     heroContent: module ? (
-      <AdminHeroStatRow data-eos-id="src/pages/admin/development/module-detail.tsx#0">
+      <AdminHeroStatRow data-eos-id="src/pages/admin/development/module-detail.tsx#0" data-eos-v="2">
         <AdminHeroStat data-eos-id="src/pages/admin/development/module-detail.tsx#1" value={blocks.length} label="Blocks" icon={<Layers data-eos-id="src/pages/admin/development/module-detail.tsx#2" size={17} />} color="bark" delay={0} reducedMotion={rm} />
         <AdminHeroStat data-eos-id="src/pages/admin/development/module-detail.tsx#3" value={assignedCount} label="Learners" icon={<Users data-eos-id="src/pages/admin/development/module-detail.tsx#4" size={17} />} color="primary" delay={1} reducedMotion={rm} />
         <AdminHeroStat data-eos-id="src/pages/admin/development/module-detail.tsx#5" value={completedCount} label="Completed" icon={<CheckCircle2 data-eos-id="src/pages/admin/development/module-detail.tsx#6" size={17} />} color="moss" delay={2} reducedMotion={rm} />
@@ -60,7 +60,7 @@ export default function AdminModuleDetailPage() {
       <motion.div data-eos-id="src/pages/admin/development/module-detail.tsx#20" variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6">
         <div data-eos-id="src/pages/admin/development/module-detail.tsx#21" className="flex items-start gap-4">
           {module.thumbnail_url ? (
-            <img data-eos-id="src/pages/admin/development/module-detail.tsx#22" src={module.thumbnail_url} alt="" loading="lazy" className="w-20 h-20 rounded-sm object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+            <img data-eos-src="dynamic" data-eos-src-label="Thumbnail url" data-eos-id="src/pages/admin/development/module-detail.tsx#22" src={module.thumbnail_url} alt="" loading="lazy" className="w-20 h-20 rounded-sm object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
           ) : (
             <div data-eos-id="src/pages/admin/development/module-detail.tsx#23" className="flex items-center justify-center w-20 h-20 rounded-sm bg-bark-700 shadow-sm shrink-0">
               <BookOpen data-eos-id="src/pages/admin/development/module-detail.tsx#24" size={28} className="text-white" />
