@@ -34,7 +34,7 @@ export default function AnalyticsTab() {
   // Only show skeleton on first ever load, not on period tab switches
   if (showLoading && !analytics) {
     return (
-      <div data-eos-id="src/pages/admin/merch/analytics-tab.tsx#0" className="space-y-3">
+      <div data-eos-id="src/pages/admin/merch/analytics-tab.tsx#0" data-eos-v="2" className="space-y-3">
         <Skeleton data-eos-id="src/pages/admin/merch/analytics-tab.tsx#1" variant="card" />
         <Skeleton data-eos-id="src/pages/admin/merch/analytics-tab.tsx#2" variant="card" />
         <Skeleton data-eos-id="src/pages/admin/merch/analytics-tab.tsx#3" variant="card" />
