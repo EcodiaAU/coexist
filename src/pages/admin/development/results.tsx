@@ -16,7 +16,7 @@ function downloadCsv(filename: string, headers: string[], rows: string[][]) {
 
 function SectionHeader({ icon, label, action }: { icon: React.ReactNode; label: string; action?: { label: string; onClick: () => void } }) {
   return (
-    <div data-eos-id="src/pages/admin/development/results.tsx#0" className="flex items-center justify-between">
+    <div data-eos-id="src/pages/admin/development/results.tsx#0" data-eos-v="2" className="flex items-center justify-between">
       <div data-eos-id="src/pages/admin/development/results.tsx#1" className="flex items-center gap-2"><span data-eos-id="src/pages/admin/development/results.tsx#2" className="text-neutral-400">{icon}</span><h2 data-eos-id="src/pages/admin/development/results.tsx#3" className="font-heading text-[13px] font-bold text-neutral-500/60 uppercase tracking-widest">{label}</h2></div>
       {action && <Button data-eos-id="src/pages/admin/development/results.tsx#4" data-eos-var="action.label" data-eos-var-label="Label" data-eos-var-scope="prop" variant="ghost" size="sm" icon={<Download data-eos-id="src/pages/admin/development/results.tsx#5" size={12} />} onClick={action.onClick}>{action.label}</Button>}
     </div>
@@ -100,7 +100,7 @@ export default function AdminDevelopmentResultsPage() {
               <div data-eos-id="src/pages/admin/development/results.tsx#66" className="space-y-2">{learnerStats.map((l) => (
                 <div data-eos-id="src/pages/admin/development/results.tsx#67" key={l.userId} className="flex items-center gap-3 p-3.5 rounded-md bg-white shadow-sm transition-shadow">
                   {l.avatarUrl ? (
-                    <img data-eos-id="src/pages/admin/development/results.tsx#68" src={l.avatarUrl} alt="" loading="lazy" className="w-10 h-10 rounded-sm object-cover shrink-0 shadow-sm" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                    <img data-eos-src="dynamic" data-eos-src-label="Avatar url" data-eos-id="src/pages/admin/development/results.tsx#68" src={l.avatarUrl} alt="" loading="lazy" className="w-10 h-10 rounded-sm object-cover shrink-0 shadow-sm" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                   ) : (
                     <div data-eos-id="src/pages/admin/development/results.tsx#69" data-eos-var="l.displayName" data-eos-var-label="Display name" data-eos-var-scope="item" className="w-10 h-10 rounded-sm bg-primary-700 flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-sm">{l.displayName.slice(0, 2).toUpperCase()}</div>
                   )}
