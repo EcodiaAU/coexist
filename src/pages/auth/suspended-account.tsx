@@ -12,7 +12,7 @@ export default function SuspendedAccountPage() {
   const shouldReduceMotion = useReducedMotion()
 
   // Non-suspended or unauthenticated users shouldn't see this page
-  if (!user) return <Navigate data-eos-id="src/pages/auth/suspended-account.tsx#0" to="/login" replace />
+  if (!user) return <Navigate data-eos-id="src/pages/auth/suspended-account.tsx#0" data-eos-v="2" to="/login" replace />
   if (!isSuspended) return <Navigate data-eos-id="src/pages/auth/suspended-account.tsx#1" to="/" replace />
 
   const reason = profile?.suspended_reason ?? 'No reason provided.'
