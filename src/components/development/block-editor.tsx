@@ -48,7 +48,7 @@ import { useDevQuizzes, type ContentBlockInput, type DevContentType } from '@/ho
 /* ------------------------------------------------------------------ */
 
 const BLOCK_TYPES: { type: DevContentType; label: string; desc: string; icon: React.ReactNode; color: string }[] = [
-  { type: 'text', label: 'Text', desc: 'Rich markdown content', icon: <Type data-eos-id="src/components/development/block-editor.tsx#0" size={18} />, color: 'bg-primary-100 text-primary-700' },
+  { type: 'text', label: 'Text', desc: 'Rich markdown content', icon: <Type data-eos-id="src/components/development/block-editor.tsx#0" data-eos-v="2" size={18} />, color: 'bg-primary-100 text-primary-700' },
   { type: 'video', label: 'Video', desc: 'Upload or embed a video', icon: <Video data-eos-id="src/components/development/block-editor.tsx#1" size={18} />, color: 'bg-sky-100 text-sky-700' },
   { type: 'file', label: 'Document', desc: 'PDF, PowerPoint, or slides', icon: <FileDown data-eos-id="src/components/development/block-editor.tsx#2" size={18} />, color: 'bg-bark-100 text-bark-700' },
   { type: 'slideshow', label: 'Slideshow', desc: 'Image gallery with captions', icon: <Images data-eos-id="src/components/development/block-editor.tsx#3" size={18} />, color: 'bg-secondary-100 text-secondary-700' },
@@ -153,7 +153,7 @@ function SlideCard({
       exit={{ opacity: 0, scale: 0.9 }}
       className="flex gap-3 p-2.5 rounded-sm bg-white border border-neutral-100 shadow-sm"
     >
-      <img data-eos-id="src/components/development/block-editor.tsx#13"
+      <img data-eos-src="dynamic" data-eos-src-label="Url" data-eos-id="src/components/development/block-editor.tsx#13"
         src={slide.url}
         alt={slide.caption || `Slide ${index + 1}`}
         loading="lazy"
@@ -302,7 +302,7 @@ function SortableBlock({
 
       {/* Thumbnail for visual types */}
       {block.content_type === 'slideshow' && block.image_urls?.[0] && (
-        <img data-eos-id="src/components/development/block-editor.tsx#44" src={block.image_urls[0]} alt="" loading="lazy" decoding="async" className="w-10 h-10 rounded-sm object-cover shrink-0" />
+        <img data-eos-src="dynamic" data-eos-src-label="Value" data-eos-id="src/components/development/block-editor.tsx#44" src={block.image_urls[0]} alt="" loading="lazy" decoding="async" className="w-10 h-10 rounded-sm object-cover shrink-0" />
       )}
 
       <div data-eos-id="src/components/development/block-editor.tsx#45" className="flex-1 min-w-0">
