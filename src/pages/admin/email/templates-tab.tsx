@@ -168,7 +168,7 @@ function TemplateEditor({
   const sanitizedBodyHtml = sanitizeHtml(bodyHtml)
 
   return (
-    <div data-eos-id="src/pages/admin/email/templates-tab.tsx#0" className="space-y-4">
+    <div data-eos-id="src/pages/admin/email/templates-tab.tsx#0" data-eos-v="2" className="space-y-4">
       <Header data-eos-id="src/pages/admin/email/templates-tab.tsx#1" title="" back onBack={onClose} />
 
       {/* Basics */}
