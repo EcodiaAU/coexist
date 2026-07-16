@@ -60,7 +60,7 @@ export function Page({
   const hasInlineHeader = !!header && !stickyOverlay
 
   return (
-    <div data-eos-id="src/components/page.tsx#0" className={cn('flex flex-col flex-1', !isDesktopNav && 'min-h-0')}>
+    <div data-eos-id="src/components/page.tsx#0" data-eos-v="2" className={cn('flex flex-col flex-1', !isDesktopNav && 'min-h-0')}>
       <main data-eos-id="src/components/page.tsx#1"
         id="main-content"
         ref={scrollRef}
