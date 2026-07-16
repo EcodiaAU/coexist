@@ -421,7 +421,7 @@ function UserSettingsSheet({
 
   return (
     <>
-      <BottomSheet data-eos-id="src/pages/admin/users.tsx#0" open={open} onClose={onClose} snapPoints={[0.92]}>
+      <BottomSheet data-eos-id="src/pages/admin/users.tsx#0" data-eos-v="2" open={open} onClose={onClose} snapPoints={[0.92]}>
         <div data-eos-id="src/pages/admin/users.tsx#1" className="space-y-5 pb-6">
           {/* User header */}
           <div data-eos-id="src/pages/admin/users.tsx#2" className="flex items-center gap-4 p-4 -mx-1 rounded-md bg-white border border-neutral-100">
