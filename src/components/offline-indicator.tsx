@@ -31,18 +31,18 @@ export function OfflineIndicator({
 
   if (isFetching && !isOffline) {
     return (
-      <span className={cn('inline-flex items-center gap-1 text-xs text-neutral-500', className)}>
-        <RefreshCw size={12} className="animate-spin" />
-        {!compact && <span>Updating…</span>}
+      <span data-eos-id="src/components/offline-indicator.tsx#0" className={cn('inline-flex items-center gap-1 text-xs text-neutral-500', className)}>
+        <RefreshCw data-eos-id="src/components/offline-indicator.tsx#1" size={12} className="animate-spin" />
+        {!compact && <span data-eos-id="src/components/offline-indicator.tsx#2">Updating…</span>}
       </span>
     )
   }
 
   if (isOffline) {
     return (
-      <span className={cn('inline-flex items-center gap-1 text-xs text-warning-600', className)}>
-        <WifiOff size={12} />
-        {!compact && <span>Offline - cached data</span>}
+      <span data-eos-id="src/components/offline-indicator.tsx#3" className={cn('inline-flex items-center gap-1 text-xs text-warning-600', className)}>
+        <WifiOff data-eos-id="src/components/offline-indicator.tsx#4" size={12} />
+        {!compact && <span data-eos-id="src/components/offline-indicator.tsx#5">Offline - cached data</span>}
       </span>
     )
   }
@@ -54,9 +54,9 @@ export function OfflineIndicator({
       const mins = Math.round(age / 60_000)
       const label = mins >= 60 ? `${Math.round(mins / 60)}h ago` : `${mins}m ago`
       return (
-        <span className={cn('inline-flex items-center gap-1 text-xs text-neutral-500', className)}>
-          <Clock size={12} />
-          {!compact ? <span>Updated {label}</span> : null}
+        <span data-eos-id="src/components/offline-indicator.tsx#6" className={cn('inline-flex items-center gap-1 text-xs text-neutral-500', className)}>
+          <Clock data-eos-id="src/components/offline-indicator.tsx#7" size={12} />
+          {!compact ? <span data-eos-id="src/components/offline-indicator.tsx#8">Updated {label}</span> : null}
         </span>
       )
     }
