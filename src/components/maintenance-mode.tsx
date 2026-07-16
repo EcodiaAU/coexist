@@ -18,7 +18,7 @@ export function MaintenanceMode({
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <div data-eos-id="src/components/maintenance-mode.tsx#0"
+    <div data-eos-id="src/components/maintenance-mode.tsx#0" data-eos-v="2"
       className={cn(
         'fixed inset-0 z-[200] flex flex-col items-center justify-center',
         'bg-gradient-to-b from-white to-white',
