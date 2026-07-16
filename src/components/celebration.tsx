@@ -48,7 +48,7 @@ export function Celebration({
   }, [open])
 
   return createPortal(
-    <AnimatePresence data-eos-id="src/components/celebration.tsx#0">
+    <AnimatePresence data-eos-id="src/components/celebration.tsx#0" data-eos-v="2">
       {open && (
         <motion.div data-eos-id="src/components/celebration.tsx#1"
           className={cn(
