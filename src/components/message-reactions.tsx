@@ -51,7 +51,7 @@ export function MessageReactions({
   if (groups.length === 0) return null
 
   return (
-    <div data-eos-id="src/components/message-reactions.tsx#0"
+    <div data-eos-id="src/components/message-reactions.tsx#0" data-eos-v="2"
       className={cn(
         'mt-1 flex flex-wrap items-center gap-1.5',
         sent ? 'justify-end pr-1' : 'justify-start pl-10',
