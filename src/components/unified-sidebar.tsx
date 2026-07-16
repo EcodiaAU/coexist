@@ -61,7 +61,7 @@ function getSuiteIdentity(suite: Suite, collectiveName: string): SuiteIdentity {
         label: 'Admin',
         subtitle: 'Co-Exist',
         path: '/admin',
-        icon: <Shield data-eos-id="src/components/unified-sidebar.tsx#0" size={14} className="text-white" />,
+        icon: <Shield data-eos-id="src/components/unified-sidebar.tsx#0" data-eos-v="2" size={14} className="text-white" />,
         iconSmall: <Shield data-eos-id="src/components/unified-sidebar.tsx#1" size={12} className="text-white" />,
         iconGradient: 'from-primary-700 to-primary-900',
         badgeBg: 'from-primary-50/80 to-primary-50/30',
@@ -277,7 +277,7 @@ function MobileSidebarOverlay({
             >
               <div data-eos-id="src/components/unified-sidebar.tsx#16" className="flex items-center justify-between mb-4">
                 <div data-eos-id="src/components/unified-sidebar.tsx#17" className="flex-1" />
-                <img data-eos-id="src/components/unified-sidebar.tsx#18"
+                <img data-eos-src="static" data-eos-id="src/components/unified-sidebar.tsx#18"
                   src="/logos/black-wordmark.png"
                   alt={APP_NAME}
                   className="h-5 w-auto"
