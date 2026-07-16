@@ -35,7 +35,7 @@ import { prettyInterestLabel } from '@/lib/interests'
 
 function ProfileModalSkeleton() {
   return (
-    <div data-eos-id="src/components/profile-modal.tsx#0" className="space-y-6 py-4">
+    <div data-eos-id="src/components/profile-modal.tsx#0" data-eos-v="2" className="space-y-6 py-4">
       <div data-eos-id="src/components/profile-modal.tsx#1" className="flex flex-col items-center gap-3">
         <Skeleton data-eos-id="src/components/profile-modal.tsx#2" variant="avatar" className="h-24 w-24" />
         <Skeleton data-eos-id="src/components/profile-modal.tsx#3" variant="title" className="w-40" />
