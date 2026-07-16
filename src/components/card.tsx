@@ -26,7 +26,7 @@ import { OptimizedImage } from './optimized-image'
 
 /** Map activity types to their watermark Lucide icon */
 const ACTIVITY_WATERMARK_ICONS: Record<string, ReactNode> = {
-  clean_up:               <Waves data-eos-id="src/components/card.tsx#0" size={72} strokeWidth={1} />,
+  clean_up:               <Waves data-eos-id="src/components/card.tsx#0" data-eos-v="2" size={72} strokeWidth={1} />,
   tree_planting:           <TreePine data-eos-id="src/components/card.tsx#1" size={72} strokeWidth={1} />,
   ecosystem_restoration:   <Sprout data-eos-id="src/components/card.tsx#2" size={72} strokeWidth={1} />,
   nature_hike:             <Compass data-eos-id="src/components/card.tsx#3" size={72} strokeWidth={1} />,
