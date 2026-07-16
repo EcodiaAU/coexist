@@ -62,7 +62,7 @@ export default function AdminEditModulePage() {
     } catch { toast.error('Failed to update module') }
   }, [moduleId, title, description, category, estimatedMinutes, thumbnailUrl, targetRoles, blocks, updateModule, saveContent, toast])
 
-  if (moduleLoading || blocksLoading) return <div data-eos-id="src/pages/admin/development/edit-module.tsx#0" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#1" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#2" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#3" className="h-32 rounded-md" /></div>
+  if (moduleLoading || blocksLoading) return <div data-eos-id="src/pages/admin/development/edit-module.tsx#0" data-eos-v="2" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#1" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#2" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#3" className="h-32 rounded-md" /></div>
 
   if (saved) {
     return (
