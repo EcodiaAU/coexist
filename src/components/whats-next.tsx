@@ -33,7 +33,7 @@ export function WhatsNext({
   if (suggestions.length === 0) return null
 
   return (
-    <motion.div data-eos-id="src/components/whats-next.tsx#0"
+    <motion.div data-eos-id="src/components/whats-next.tsx#0" data-eos-v="2"
       className={cn('space-y-2', className)}
       initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
