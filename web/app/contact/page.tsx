@@ -11,51 +11,51 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <main>
-      <PageHeader
+    <main data-eos-id="web/app/contact/page.tsx#0">
+      <PageHeader data-eos-id="web/app/contact/page.tsx#1"
         eyebrow="Contact us"
         title="Say hello"
         subtitle="Whether you want to start a collective, partner with us, or just say hi, we read every message."
         image="/images/hero.webp"
       />
 
-      <section className="mx-auto grid max-w-6xl gap-14 px-6 py-20 md:grid-cols-[1fr_1.1fr]">
-        <div>
-          <h2 className="has-mark text-4xl text-neutral-900 sm:text-5xl">
+      <section data-eos-id="web/app/contact/page.tsx#2" className="mx-auto grid max-w-6xl gap-14 px-6 py-20 md:grid-cols-[1fr_1.1fr]">
+        <div data-eos-id="web/app/contact/page.tsx#3">
+          <h2 data-eos-id="web/app/contact/page.tsx#4" className="has-mark text-4xl text-neutral-900 sm:text-5xl">
             Get in touch to
-            <span className="mt-2 block">
-              <WordSwap words={['start a collective', 'partner with us', 'volunteer', 'ask us anything', 'just say hi']} />
+            <span data-eos-id="web/app/contact/page.tsx#5" className="mt-2 block">
+              <WordSwap data-eos-id="web/app/contact/page.tsx#6" words={['start a collective', 'partner with us', 'volunteer', 'ask us anything', 'just say hi']} />
             </span>
           </h2>
-          <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-neutral-500">
+          <p data-eos-id="web/app/contact/page.tsx#7" className="mt-6 max-w-sm text-[15px] leading-relaxed text-neutral-500">
             We are a small team of young people who care a lot. Tell us what you have in mind.
           </p>
 
-          <p className="mt-4 text-lg text-neutral-700">
+          <p data-eos-id="web/app/contact/page.tsx#8" className="mt-4 text-lg text-neutral-700">
             Real replies, no auto-responders. We aim to respond within one business day.
           </p>
 
-          <div className="mt-10 space-y-8">
-            <div>
-              <p className="label text-neutral-400">Email</p>
-              <a
+          <div data-eos-id="web/app/contact/page.tsx#9" className="mt-10 space-y-8">
+            <div data-eos-id="web/app/contact/page.tsx#10">
+              <p data-eos-id="web/app/contact/page.tsx#11" className="label text-neutral-400">Email</p>
+              <a data-eos-href="static" data-eos-id="web/app/contact/page.tsx#12"
                 href="mailto:hello@coexistaus.org"
                 className="mt-2 block text-2xl text-neutral-900 underline decoration-neutral-300 underline-offset-4 transition-[text-decoration-color] hover:decoration-olive-700"
               >
                 hello@coexistaus.org
               </a>
             </div>
-            <div>
-              <p className="label text-neutral-400">Follow along</p>
-              <SocialIcons tone="dark" className="mt-3" />
+            <div data-eos-id="web/app/contact/page.tsx#13">
+              <p data-eos-id="web/app/contact/page.tsx#14" className="label text-neutral-400">Follow along</p>
+              <SocialIcons data-eos-id="web/app/contact/page.tsx#15" tone="dark" className="mt-3" />
             </div>
-            <p className="text-xs text-neutral-400">
+            <p data-eos-id="web/app/contact/page.tsx#16" className="text-xs text-neutral-400">
               Co-Exist Australia Ltd is an ACNC registered charity. ABN 39 660 776 983.
             </p>
           </div>
         </div>
 
-        <ContactForm />
+        <ContactForm data-eos-id="web/app/contact/page.tsx#17" />
       </section>
     </main>
   )

@@ -5,6 +5,7 @@ import { SITE_URL } from '@/lib/env'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import './globals.css'
+import Script from 'next/script';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -58,22 +59,23 @@ const ORG_JSONLD = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-AU" className={`${montserrat.variable} ${aileron.variable}`}>
+    <html data-eos-id="web/app/layout.tsx#0" lang="en-AU" className={`${montserrat.variable} ${aileron.variable}`}>
       {/* Spectral - Ecodia's own serif, used only for the "built by Ecodia" attribution mark. */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link
+      <link data-eos-href="static" data-eos-id="web/app/layout.tsx#1" rel="preconnect" href="https://fonts.googleapis.com" />
+      <link data-eos-href="static" data-eos-id="web/app/layout.tsx#2" rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link data-eos-href="static" data-eos-id="web/app/layout.tsx#3"
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600&display=swap"
       />
-      <body className="flex min-h-screen flex-col">
-        <script
+      <body data-eos-id="web/app/layout.tsx#4" className="flex min-h-screen flex-col">
+        <script data-eos-id="web/app/layout.tsx#5"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}
         />
-        <SiteHeader />
-        <div className="flex-1">{children}</div>
-        <SiteFooter />
+        <SiteHeader data-eos-id="web/app/layout.tsx#6" />
+        <div data-eos-id="web/app/layout.tsx#7" className="flex-1">{children}</div>
+        <SiteFooter data-eos-id="web/app/layout.tsx#8" />
+              <Script src="https://ecosphere.ecodia.au/preview-editor.js" strategy="afterInteractive" />
       </body>
     </html>
   )

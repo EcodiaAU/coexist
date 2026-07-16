@@ -32,7 +32,7 @@ export function NewsletterForm({
 
   if (state === 'done') {
     return (
-      <p className={`text-sm ${tone === 'light' ? 'text-oncream' : 'text-primary-700'} ${className}`}>
+      <p data-eos-id="web/components/newsletter-form.tsx#0" className={`text-sm ${tone === 'light' ? 'text-oncream' : 'text-primary-700'} ${className}`}>
         You are in. Look out for our next update.
       </p>
     )
@@ -49,8 +49,8 @@ export function NewsletterForm({
       : 'bg-sage text-olive-900 hover:bg-primary-200'
 
   return (
-    <form onSubmit={onSubmit} className={`flex flex-col gap-2 sm:flex-row ${className}`}>
-      <input
+    <form data-eos-id="web/components/newsletter-form.tsx#1" onSubmit={onSubmit} className={`flex flex-col gap-2 sm:flex-row ${className}`}>
+      <input data-eos-id="web/components/newsletter-form.tsx#2"
         type="text"
         value={firstName}
         onChange={(e) => setFirstName(e.target.value)}
@@ -58,7 +58,7 @@ export function NewsletterForm({
         className={`w-full rounded-none px-0 py-2 text-sm outline-none focus:border-b-2 sm:w-28 ${inputCls}`}
         aria-label="First name"
       />
-      <input
+      <input data-eos-id="web/components/newsletter-form.tsx#3"
         type="email"
         required
         value={email}
@@ -67,7 +67,7 @@ export function NewsletterForm({
         className={`w-full rounded-none px-0 py-2 text-sm outline-none focus:border-b-2 ${inputCls}`}
         aria-label="Email address"
       />
-      <button
+      <button data-eos-id="web/components/newsletter-form.tsx#4"
         type="submit"
         disabled={state === 'submitting'}
         className={`rounded-none px-6 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition-colors disabled:opacity-60 ${btn}`}
@@ -75,7 +75,7 @@ export function NewsletterForm({
         {state === 'submitting' ? '…' : 'Join'}
       </button>
       {state === 'error' && (
-        <span className={`self-center text-xs ${tone === 'light' ? 'text-oncream/90' : 'text-error-500'}`}>Something went wrong</span>
+        <span data-eos-id="web/components/newsletter-form.tsx#5" className={`self-center text-xs ${tone === 'light' ? 'text-oncream/90' : 'text-error-500'}`}>Something went wrong</span>
       )}
     </form>
   )

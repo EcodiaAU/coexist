@@ -32,7 +32,7 @@ export function BentoTile({
       {image ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <img data-eos-id="web/components/bento-tile.tsx#0"
             src={image}
             alt={alt}
             loading="lazy"
@@ -44,7 +44,7 @@ export function BentoTile({
           />
           {hoverImage ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <img data-eos-id="web/components/bento-tile.tsx#1"
               src={hoverImage}
               alt=""
               aria-hidden
@@ -54,20 +54,20 @@ export function BentoTile({
           ) : null}
         </>
       ) : null}
-      {tint ? <div className="absolute inset-0 -z-20 bg-olive-900/35 mix-blend-multiply transition-opacity duration-500 group-hover:opacity-50" /> : null}
-      <div className="absolute inset-x-0 bottom-0 -z-20 h-1/2 bg-gradient-to-t from-olive-950/90 via-olive-950/12 to-transparent" />
-      <div className="grain-layer absolute inset-0 -z-10" />
+      {tint ? <div data-eos-id="web/components/bento-tile.tsx#2" className="absolute inset-0 -z-20 bg-olive-900/35 mix-blend-multiply transition-opacity duration-500 group-hover:opacity-50" /> : null}
+      <div data-eos-id="web/components/bento-tile.tsx#3" className="absolute inset-x-0 bottom-0 -z-20 h-1/2 bg-gradient-to-t from-olive-950/90 via-olive-950/12 to-transparent" />
+      <div data-eos-id="web/components/bento-tile.tsx#4" className="grain-layer absolute inset-0 -z-10" />
       {children}
     </>
   )
 
   const cls = `group relative isolate block overflow-hidden bg-olive-900 ${span}`
   return external ? (
-    <a href={href} className={cls}>
+    <a data-eos-href="dynamic" data-eos-href-label="Href" data-eos-href-scope="prop" data-eos-id="web/components/bento-tile.tsx#5" href={href} className={cls}>
       {inner}
     </a>
   ) : (
-    <Link href={href} className={cls}>
+    <Link data-eos-href="dynamic" data-eos-href-label="Href" data-eos-href-scope="prop" data-eos-id="web/components/bento-tile.tsx#6" href={href} className={cls}>
       {inner}
     </Link>
   )

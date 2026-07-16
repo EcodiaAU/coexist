@@ -32,7 +32,7 @@ export function Reveal({
   }, [])
 
   return (
-    <div ref={ref} className={`reveal ${seen ? 'in' : ''} ${className}`} style={{ transitionDelay: `${delay}ms` }}>
+    <div data-eos-id="web/components/reveal.tsx#0" ref={ref} className={`reveal ${seen ? 'in' : ''} ${className}`} style={{ transitionDelay: `${delay}ms` }}>
       {children}
     </div>
   )

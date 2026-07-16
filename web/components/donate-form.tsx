@@ -47,11 +47,11 @@ export function DonateForm() {
     'w-full border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors duration-200 focus:border-primary-400'
 
   return (
-    <form onSubmit={onSubmit} className="border border-neutral-200 bg-white p-6 sm:p-8">
+    <form data-eos-id="web/components/donate-form.tsx#0" onSubmit={onSubmit} className="border border-neutral-200 bg-white p-6 sm:p-8">
       {/* Frequency toggle */}
-      <div className="flex border border-neutral-200">
+      <div data-eos-id="web/components/donate-form.tsx#1" className="flex border border-neutral-200">
         {(['one_time', 'monthly'] as const).map((f) => (
-          <button
+          <button data-eos-id="web/components/donate-form.tsx#2"
             key={f}
             type="button"
             onClick={() => setFrequency(f)}
@@ -65,9 +65,9 @@ export function DonateForm() {
       </div>
 
       {/* Amount presets */}
-      <div className="mt-5 grid grid-cols-4 gap-px bg-neutral-200">
+      <div data-eos-id="web/components/donate-form.tsx#3" className="mt-5 grid grid-cols-4 gap-px bg-neutral-200">
         {PRESETS.map((a) => (
-          <button
+          <button data-eos-id="web/components/donate-form.tsx#4"
             key={a}
             type="button"
             onClick={() => {
@@ -85,11 +85,11 @@ export function DonateForm() {
         ))}
       </div>
 
-      <div className="mt-3">
-        <label className="text-xs font-semibold text-neutral-600">Or enter an amount</label>
-        <div className="mt-1 flex items-center border border-neutral-200 bg-white px-4 focus-within:border-primary-400">
-          <span className="text-neutral-500">$</span>
-          <input
+      <div data-eos-id="web/components/donate-form.tsx#5" className="mt-3">
+        <label data-eos-id="web/components/donate-form.tsx#6" className="text-xs font-semibold text-neutral-600">Or enter an amount</label>
+        <div data-eos-id="web/components/donate-form.tsx#7" className="mt-1 flex items-center border border-neutral-200 bg-white px-4 focus-within:border-primary-400">
+          <span data-eos-id="web/components/donate-form.tsx#8" className="text-neutral-500">$</span>
+          <input data-eos-id="web/components/donate-form.tsx#9"
             type="number"
             min={1}
             value={custom}
@@ -100,15 +100,15 @@ export function DonateForm() {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <input
+      <div data-eos-id="web/components/donate-form.tsx#10" className="mt-4 grid gap-3 sm:grid-cols-2">
+        <input data-eos-id="web/components/donate-form.tsx#11"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name (optional)"
           className={inputCls}
         />
-        <input
+        <input data-eos-id="web/components/donate-form.tsx#12"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -117,7 +117,7 @@ export function DonateForm() {
         />
       </div>
 
-      <button
+      <button data-eos-id="web/components/donate-form.tsx#13" data-eos-var="Number.isFinite" data-eos-var-label="Is finite" data-eos-var-scope="prop"
         type="submit"
         disabled={state === 'submitting'}
         className="mt-5 w-full bg-olive-700 px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-olive-800 disabled:opacity-60"
@@ -126,8 +126,8 @@ export function DonateForm() {
           ? 'Taking you to checkout…'
           : `Donate $${Number.isFinite(effectiveAmount) && effectiveAmount > 0 ? effectiveAmount : ''}${frequency === 'monthly' ? '/month' : ''}`}
       </button>
-      {error && <p className="mt-3 text-sm text-error-500">{error}</p>}
-      <p className="mt-3 text-center text-xs text-neutral-400">
+      {error && <p data-eos-id="web/components/donate-form.tsx#14" className="mt-3 text-sm text-error-500">{error}</p>}
+      <p data-eos-id="web/components/donate-form.tsx#15" className="mt-3 text-center text-xs text-neutral-400">
         Secure checkout by Stripe. No account needed. Co-Exist Australia Ltd, ACNC registered charity.
       </p>
     </form>

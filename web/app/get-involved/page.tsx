@@ -46,7 +46,7 @@ const WAYS = [
 
 function ChevronRight() {
   return (
-    <svg
+    <svg data-eos-id="web/app/get-involved/page.tsx#0"
       aria-hidden
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 16 16"
@@ -57,15 +57,15 @@ function ChevronRight() {
       strokeLinejoin="round"
       className="inline-block h-4 w-4 flex-shrink-0 translate-x-0 transition-transform duration-200 group-hover:translate-x-1"
     >
-      <path d="M6 3l5 5-5 5" />
+      <path data-eos-id="web/app/get-involved/page.tsx#1" d="M6 3l5 5-5 5" />
     </svg>
   )
 }
 
 export default function GetInvolvedPage() {
   return (
-    <main>
-      <PageHeader
+    <main data-eos-id="web/app/get-involved/page.tsx#2">
+      <PageHeader data-eos-id="web/app/get-involved/page.tsx#3"
         eyebrow="Get involved"
         title="Find your way in"
         subtitle="Whatever you have to give - an afternoon, your skills, or your support - there is a place for you here."
@@ -73,23 +73,23 @@ export default function GetInvolvedPage() {
       />
 
       {/* 2-col bento grid, flush, no gap */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-0">
+      <section data-eos-id="web/app/get-involved/page.tsx#4" className="grid grid-cols-1 sm:grid-cols-2 gap-0">
         {WAYS.map((w) => (
-          <BentoTile
+          <BentoTile data-eos-href="dynamic" data-eos-href-label="Href" data-eos-href-scope="item" data-eos-id="web/app/get-involved/page.tsx#5"
             key={w.href}
             href={w.href}
             image={w.image}
             alt={w.alt}
             tint
           >
-            <div className="relative flex flex-col justify-end h-72 sm:h-80 p-7">
-              <h2 className="display-tight text-xl font-normal text-white leading-tight">
+            <div data-eos-id="web/app/get-involved/page.tsx#6" className="relative flex flex-col justify-end h-72 sm:h-80 p-7">
+              <h2 data-eos-id="web/app/get-involved/page.tsx#7" data-eos-var="w.title" data-eos-var-label="Title" data-eos-var-scope="item" className="display-tight text-xl font-normal text-white leading-tight">
                 {w.title}
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-white/75">{w.body}</p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-normal text-sage tracking-wide">
+              <p data-eos-id="web/app/get-involved/page.tsx#8" data-eos-var="w.body" data-eos-var-label="Body" data-eos-var-scope="item" className="mt-2 text-sm leading-relaxed text-white/75">{w.body}</p>
+              <span data-eos-id="web/app/get-involved/page.tsx#9" className="mt-4 inline-flex items-center gap-1.5 text-sm font-normal text-sage tracking-wide">
                 {w.cta}
-                <ChevronRight />
+                <ChevronRight data-eos-id="web/app/get-involved/page.tsx#10" />
               </span>
             </div>
           </BentoTile>
@@ -97,16 +97,16 @@ export default function GetInvolvedPage() {
       </section>
 
       {/* Slim full-bleed olive strip */}
-      <section className="bg-olive-800 py-10 px-5 text-center">
-        <p className="text-sm tracking-wide text-white/70 uppercase" style={{ letterSpacing: '0.1em' }}>
+      <section data-eos-id="web/app/get-involved/page.tsx#11" className="bg-olive-800 py-10 px-5 text-center">
+        <p data-eos-id="web/app/get-involved/page.tsx#12" className="text-sm tracking-wide text-white/70 uppercase" style={{ letterSpacing: '0.1em' }}>
           Already part of Co-Exist?
         </p>
-        <a
+        <a data-eos-href="dynamic" data-eos-href-label="App url" data-eos-href-scope="prop" data-eos-id="web/app/get-involved/page.tsx#13"
           href={APP_URL}
           className="mt-3 inline-flex items-center gap-2 text-base font-normal text-sage hover:text-white transition-colors duration-200"
         >
           Open the app
-          <ChevronRight />
+          <ChevronRight data-eos-id="web/app/get-involved/page.tsx#14" />
         </a>
       </section>
     </main>

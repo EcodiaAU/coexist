@@ -39,8 +39,8 @@ const DO = [
 
 export default function DownloadPage() {
   return (
-    <main>
-      <PageHeader
+    <main data-eos-id="web/app/get-involved/download/page.tsx#0">
+      <PageHeader data-eos-id="web/app/get-involved/download/page.tsx#1"
         eyebrow="Get involved"
         title="Get the app"
         subtitle="Join thousands of young Australians restoring habitat, one weekend at a time. Free, forever."
@@ -48,39 +48,39 @@ export default function DownloadPage() {
       />
 
       {/* Store badges + web fallback */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-          <StoreBadges className="justify-center" />
-          <p className="mt-4 text-[12px] uppercase tracking-[0.14em] text-neutral-400">iOS and Android · Ages 18 to 30</p>
-          <Link href={WEB_URL} className="mt-6 inline-block text-sm text-primary-700 underline underline-offset-4 transition-colors hover:text-primary-900">
+      <section data-eos-id="web/app/get-involved/download/page.tsx#2" className="bg-white">
+        <div data-eos-id="web/app/get-involved/download/page.tsx#3" className="mx-auto max-w-3xl px-6 py-16 text-center">
+          <StoreBadges data-eos-id="web/app/get-involved/download/page.tsx#4" className="justify-center" />
+          <p data-eos-id="web/app/get-involved/download/page.tsx#5" className="mt-4 text-[12px] uppercase tracking-[0.14em] text-neutral-400">iOS and Android · Ages 18 to 30</p>
+          <Link data-eos-href="dynamic" data-eos-href-label="Web url" data-eos-href-scope="prop" data-eos-id="web/app/get-involved/download/page.tsx#6" href={WEB_URL} className="mt-6 inline-block text-sm text-primary-700 underline underline-offset-4 transition-colors hover:text-primary-900">
             Or continue on the web
           </Link>
         </div>
       </section>
 
       {/* Phone screenshots */}
-      <section className="bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap justify-center gap-8 px-6 pb-8">
+      <section data-eos-id="web/app/get-involved/download/page.tsx#7" className="bg-white">
+        <div data-eos-id="web/app/get-involved/download/page.tsx#8" className="mx-auto flex max-w-5xl flex-wrap justify-center gap-8 px-6 pb-8">
           {SHOTS.map((s) => (
-            <Reveal key={s.caption} className="w-56">
+            <Reveal data-eos-id="web/app/get-involved/download/page.tsx#9" key={s.caption} className="w-56">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={s.src} alt={s.caption} loading="lazy" className="w-full rounded-3xl border border-neutral-200 shadow-[0_18px_42px_rgba(71,79,47,0.18)]" />
-              <p className="mt-4 text-center text-sm font-medium text-neutral-600">{s.caption}</p>
+              <img data-eos-id="web/app/get-involved/download/page.tsx#10" src={s.src} alt={s.caption} loading="lazy" className="w-full rounded-3xl border border-neutral-200 shadow-[0_18px_42px_rgba(71,79,47,0.18)]" />
+              <p data-eos-id="web/app/get-involved/download/page.tsx#11" data-eos-var="s.caption" data-eos-var-label="Caption" data-eos-var-scope="item" className="mt-4 text-center text-sm font-medium text-neutral-600">{s.caption}</p>
             </Reveal>
           ))}
         </div>
       </section>
 
       {/* What you can do */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-20 text-center">
-          <p className="eyebrow text-primary-600">Everything in one place</p>
-          <h2 className="mt-3 text-4xl text-neutral-900 sm:text-5xl">What you can do</h2>
-          <div className="mt-12 grid gap-6 text-left sm:grid-cols-3">
+      <section data-eos-id="web/app/get-involved/download/page.tsx#12" className="bg-white">
+        <div data-eos-id="web/app/get-involved/download/page.tsx#13" className="mx-auto max-w-6xl px-6 py-20 text-center">
+          <p data-eos-id="web/app/get-involved/download/page.tsx#14" className="eyebrow text-primary-600">Everything in one place</p>
+          <h2 data-eos-id="web/app/get-involved/download/page.tsx#15" className="mt-3 text-4xl text-neutral-900 sm:text-5xl">What you can do</h2>
+          <div data-eos-id="web/app/get-involved/download/page.tsx#16" className="mt-12 grid gap-6 text-left sm:grid-cols-3">
             {DO.map((d) => (
-              <Reveal key={d.title} className="rounded-2xl border border-neutral-200 bg-white p-7 shadow-[0_8px_26px_rgba(71,79,47,0.06)]">
-                <h3 className="text-lg font-semibold text-neutral-900">{d.title}</h3>
-                <p className="mt-3 text-[15px] leading-relaxed text-neutral-600">{d.body}</p>
+              <Reveal data-eos-id="web/app/get-involved/download/page.tsx#17" key={d.title} className="rounded-2xl border border-neutral-200 bg-white p-7 shadow-[0_8px_26px_rgba(71,79,47,0.06)]">
+                <h3 data-eos-id="web/app/get-involved/download/page.tsx#18" data-eos-var="d.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-lg font-semibold text-neutral-900">{d.title}</h3>
+                <p data-eos-id="web/app/get-involved/download/page.tsx#19" data-eos-var="d.body" data-eos-var-label="Body" data-eos-var-scope="item" className="mt-3 text-[15px] leading-relaxed text-neutral-600">{d.body}</p>
               </Reveal>
             ))}
           </div>
@@ -88,13 +88,13 @@ export default function DownloadPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="bg-olive-800 text-oncream">
-        <div className="mx-auto max-w-3xl px-6 py-20 text-center">
-          <h2 className="display-tight text-[2.4rem] text-oncream sm:text-5xl">Ready to begin?</h2>
-          <p className="mx-auto mt-5 max-w-md text-[15px] text-oncream/80">
+      <section data-eos-id="web/app/get-involved/download/page.tsx#20" className="bg-olive-800 text-oncream">
+        <div data-eos-id="web/app/get-involved/download/page.tsx#21" className="mx-auto max-w-3xl px-6 py-20 text-center">
+          <h2 data-eos-id="web/app/get-involved/download/page.tsx#22" className="display-tight text-[2.4rem] text-oncream sm:text-5xl">Ready to begin?</h2>
+          <p data-eos-id="web/app/get-involved/download/page.tsx#23" className="mx-auto mt-5 max-w-md text-[15px] text-oncream/80">
             Download Co-Exist and join your nearest collective today.
           </p>
-          <StoreBadges className="mt-8 justify-center" />
+          <StoreBadges data-eos-id="web/app/get-involved/download/page.tsx#24" className="mt-8 justify-center" />
         </div>
       </section>
     </main>

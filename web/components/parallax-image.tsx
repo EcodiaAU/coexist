@@ -57,8 +57,8 @@ export function ParallaxImage({
   }, [])
 
   return (
-    <div ref={ref} className="absolute inset-x-0 -top-[20%] -z-10 h-[140%] will-change-transform">
-      <Image
+    <div data-eos-id="web/components/parallax-image.tsx#0" ref={ref} className="absolute inset-x-0 -top-[20%] -z-10 h-[140%] will-change-transform">
+      <Image data-eos-id="web/components/parallax-image.tsx#1"
         src={src}
         alt=""
         fill
@@ -71,7 +71,7 @@ export function ParallaxImage({
       />
       {/* paper texture rides inside the transformed container so it is locked to
           the image and parallaxes with it (printed-surface feel) */}
-      {paper && <div className="paper-texture absolute inset-0" />}
+      {paper && <div data-eos-id="web/components/parallax-image.tsx#2" className="paper-texture absolute inset-0" />}
     </div>
   )
 }

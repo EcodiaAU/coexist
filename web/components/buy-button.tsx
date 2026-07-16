@@ -90,17 +90,17 @@ export function BuyButton({
   }
 
   return (
-    <div>
+    <div data-eos-id="web/components/buy-button.tsx#0">
       {hasAxes ? (
-        <div className="mt-6 space-y-5">
+        <div data-eos-id="web/components/buy-button.tsx#1" className="mt-6 space-y-5">
           {colours.length > 0 && (
-            <div>
-              <p className="label text-neutral-400">
-                Colour{colour ? <span className="ml-2 text-neutral-600">{colour}</span> : null}
+            <div data-eos-id="web/components/buy-button.tsx#2">
+              <p data-eos-id="web/components/buy-button.tsx#3" className="label text-neutral-400">
+                Colour{colour ? <span data-eos-id="web/components/buy-button.tsx#4" className="ml-2 text-neutral-600">{colour}</span> : null}
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div data-eos-id="web/components/buy-button.tsx#5" className="mt-3 flex flex-wrap gap-2">
                 {colours.map((c) => (
-                  <button key={c} type="button" onClick={() => setColour(c)} className={chip(colour === c)}>
+                  <button data-eos-id="web/components/buy-button.tsx#6" key={c} type="button" onClick={() => setColour(c)} className={chip(colour === c)}>
                     {c}
                   </button>
                 ))}
@@ -108,13 +108,13 @@ export function BuyButton({
             </div>
           )}
           {sizes.length > 0 && (
-            <div>
-              <p className="label text-neutral-400">
-                Size{size ? <span className="ml-2 text-neutral-600">{size}</span> : null}
+            <div data-eos-id="web/components/buy-button.tsx#7">
+              <p data-eos-id="web/components/buy-button.tsx#8" className="label text-neutral-400">
+                Size{size ? <span data-eos-id="web/components/buy-button.tsx#9" className="ml-2 text-neutral-600">{size}</span> : null}
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div data-eos-id="web/components/buy-button.tsx#10" className="mt-3 flex flex-wrap gap-2">
                 {sizes.map((s) => (
-                  <button key={s} type="button" onClick={() => setSize(s)} className={chip(size === s)}>
+                  <button data-eos-id="web/components/buy-button.tsx#11" key={s} type="button" onClick={() => setSize(s)} className={chip(size === s)}>
                     {s}
                   </button>
                 ))}
@@ -124,11 +124,11 @@ export function BuyButton({
         </div>
       ) : (
         active.length > 0 && (
-          <div className="mt-6">
-            <p className="label text-neutral-400">Option</p>
-            <div className="mt-3 flex flex-wrap gap-2">
+          <div data-eos-id="web/components/buy-button.tsx#12" className="mt-6">
+            <p data-eos-id="web/components/buy-button.tsx#13" className="label text-neutral-400">Option</p>
+            <div data-eos-id="web/components/buy-button.tsx#14" className="mt-3 flex flex-wrap gap-2">
               {active.map((v) => (
-                <button key={v.id} type="button" onClick={() => setVariantId(v.id)} className={chip(variantId === v.id)}>
+                <button data-eos-id="web/components/buy-button.tsx#15" data-eos-var="v.label" data-eos-var-label="Label" data-eos-var-scope="item" key={v.id} type="button" onClick={() => setVariantId(v.id)} className={chip(variantId === v.id)}>
                   {v.label}
                 </button>
               ))}
@@ -137,13 +137,13 @@ export function BuyButton({
         )
       )}
 
-      <div className="mt-6 flex items-center gap-4">
-        <div className="flex items-center rounded-none border border-neutral-300">
-          <button type="button" aria-label="Decrease" onClick={() => setQty((q) => Math.max(1, q - 1))} className="px-4 py-2.5 text-base text-neutral-600 hover:bg-neutral-100 transition-colors">-</button>
-          <span className="w-8 text-center text-sm font-normal">{qty}</span>
-          <button type="button" aria-label="Increase" onClick={() => setQty((q) => Math.min(20, q + 1))} className="px-4 py-2.5 text-base text-neutral-600 hover:bg-neutral-100 transition-colors">+</button>
+      <div data-eos-id="web/components/buy-button.tsx#16" className="mt-6 flex items-center gap-4">
+        <div data-eos-id="web/components/buy-button.tsx#17" className="flex items-center rounded-none border border-neutral-300">
+          <button data-eos-id="web/components/buy-button.tsx#18" type="button" aria-label="Decrease" onClick={() => setQty((q) => Math.max(1, q - 1))} className="px-4 py-2.5 text-base text-neutral-600 hover:bg-neutral-100 transition-colors">-</button>
+          <span data-eos-id="web/components/buy-button.tsx#19" className="w-8 text-center text-sm font-normal">{qty}</span>
+          <button data-eos-id="web/components/buy-button.tsx#20" type="button" aria-label="Increase" onClick={() => setQty((q) => Math.min(20, q + 1))} className="px-4 py-2.5 text-base text-neutral-600 hover:bg-neutral-100 transition-colors">+</button>
         </div>
-        <button
+        <button data-eos-id="web/components/buy-button.tsx#21"
           type="button"
           onClick={buy}
           disabled={state === 'submitting' || soldOut}
@@ -153,9 +153,9 @@ export function BuyButton({
         </button>
       </div>
       {state === 'error' && (
-        <p className="mt-3 text-sm text-error-500">Could not start checkout. Please try again.</p>
+        <p data-eos-id="web/components/buy-button.tsx#22" className="mt-3 text-sm text-error-500">Could not start checkout. Please try again.</p>
       )}
-      <p className="mt-3 text-xs text-neutral-400">Secure checkout by Stripe. No account needed.</p>
+      <p data-eos-id="web/components/buy-button.tsx#23" className="mt-3 text-xs text-neutral-400">Secure checkout by Stripe. No account needed.</p>
     </div>
   )
 }

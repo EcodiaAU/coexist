@@ -40,8 +40,8 @@ export default async function CollectivesPage() {
   for (const idx of small) placed[idx] = byMembers[si++]
 
   return (
-    <main>
-      <PageHeader
+    <main data-eos-id="web/app/collectives/page.tsx#0">
+      <PageHeader data-eos-id="web/app/collectives/page.tsx#1"
         eyebrow="Get involved"
         title="Find your collective"
         subtitle={`${collectives.length} youth-led collectives across Australia, each running conservation in their own backyard.`}
@@ -49,19 +49,19 @@ export default async function CollectivesPage() {
       />
 
       {/* Full-bleed interactive map (ported from the app), flush to hero + grid */}
-      <CollectiveMapClient collectives={collectives} className="h-[78vh] min-h-[540px] w-full" />
+      <CollectiveMapClient data-eos-id="web/app/collectives/page.tsx#2" collectives={collectives} className="h-[78vh] min-h-[540px] w-full" />
 
       {/* Full-bleed flush bento - flat bottom (CTA is the last tile, fills its row) */}
-      <section>
+      <section data-eos-id="web/app/collectives/page.tsx#3">
         {collectives.length === 0 ? (
-          <p className="py-16 text-center text-neutral-500">Collectives are loading. Check back shortly.</p>
+          <p data-eos-id="web/app/collectives/page.tsx#4" className="py-16 text-center text-neutral-500">Collectives are loading. Check back shortly.</p>
         ) : (
-          <div className={BENTO_GRID}>
+          <div data-eos-id="web/app/collectives/page.tsx#5" className={BENTO_GRID}>
             {placed.map((c, i) => (
-              <BentoTile key={c.id} href={`/collectives/${c.slug}`} image={c.cover_image_url} alt={c.name} span={spans[i]}>
-                <div className="absolute inset-x-0 bottom-0 p-5">
+              <BentoTile data-eos-href="dynamic" data-eos-href-label="Slug" data-eos-href-scope="item" data-eos-id="web/app/collectives/page.tsx#6" key={c.id} href={`/collectives/${c.slug}`} image={c.cover_image_url} alt={c.name} span={spans[i]}>
+                <div data-eos-id="web/app/collectives/page.tsx#7" className="absolute inset-x-0 bottom-0 p-5">
                   {/* Large tiles keep bigger type; small tiles use tightened 2xl ramp */}
-                  <h2
+                  <h2 data-eos-id="web/app/collectives/page.tsx#8" data-eos-var="c.name" data-eos-var-label="Name" data-eos-var-scope="item"
                     className={`uppercase leading-[0.96] text-oncream ${
                       spans[i].includes('row-span-2')
                         ? 'text-4xl tracking-[-0.03em] sm:text-5xl'
@@ -76,7 +76,7 @@ export default async function CollectivesPage() {
 
             {/* CTA tile: tinted background image + grain so it reads as content, not a hole.
                 Flat-bottom bento math (bentoSpans) is preserved. */}
-            <a
+            <a data-eos-href="dynamic" data-eos-href-label="Value" data-eos-href-scope="prop" data-eos-id="web/app/collectives/page.tsx#9"
               href={`${APP_URL}/lead-a-collective`}
               className={`group relative flex flex-col items-center justify-center overflow-hidden p-5 text-center ${spans[n - 1]}`}
               style={{
@@ -86,13 +86,13 @@ export default async function CollectivesPage() {
               }}
             >
               {/* Flat black scrim matching PageHeader/BentoTile convention */}
-              <div className="absolute inset-0 bg-black/55" />
+              <div data-eos-id="web/app/collectives/page.tsx#10" className="absolute inset-0 bg-black/55" />
               {/* Grain over the CTA tile */}
-              <div className="grain-layer pointer-events-none absolute inset-0" />
-              <span className="relative z-10 text-2xl leading-tight text-oncream tracking-[-0.02em] sm:text-3xl">
+              <div data-eos-id="web/app/collectives/page.tsx#11" className="grain-layer pointer-events-none absolute inset-0" />
+              <span data-eos-id="web/app/collectives/page.tsx#12" className="relative z-10 text-2xl leading-tight text-oncream tracking-[-0.02em] sm:text-3xl">
                 Start a collective
               </span>
-              <span className="relative z-10 mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-oncream/70">
+              <span data-eos-id="web/app/collectives/page.tsx#13" className="relative z-10 mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-oncream/70">
                 Not near one yet?
               </span>
             </a>

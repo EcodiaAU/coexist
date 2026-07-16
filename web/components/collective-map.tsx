@@ -109,35 +109,35 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
   }, [])
 
   return (
-    <div className={`relative isolate overflow-hidden ${className}`}>
-      <div ref={ref} className="cx-cmap h-full w-full" style={{ zIndex: 0 }} />
+    <div data-eos-id="web/components/collective-map.tsx#0" className={`relative isolate overflow-hidden ${className}`}>
+      <div data-eos-id="web/components/collective-map.tsx#1" ref={ref} className="cx-cmap h-full w-full" style={{ zIndex: 0 }} />
 
       {/* Grain overlay over the map container */}
-      <div className="grain-layer pointer-events-none absolute inset-0" style={{ zIndex: 1 }} />
+      <div data-eos-id="web/components/collective-map.tsx#2" className="grain-layer pointer-events-none absolute inset-0" style={{ zIndex: 1 }} />
 
       {/* Count pill: flat squared, olive hairline, cream fill, no shadow */}
-      <div className="absolute left-4 top-4 z-[500] border border-olive-700 bg-cream px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-olive-800">
+      <div data-eos-id="web/components/collective-map.tsx#3" className="absolute left-4 top-4 z-[500] border border-olive-700 bg-cream px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-olive-800">
         {collectives.length} collectives across Australia
       </div>
 
       {/* Selected card: flat, squared, olive hairline, cream fill, no shadow, no rounded */}
       {selected && (
-        <div className="absolute inset-x-4 bottom-4 z-[500] overflow-hidden border border-olive-700 bg-cream">
-          <div className="flex items-stretch">
+        <div data-eos-id="web/components/collective-map.tsx#4" className="absolute inset-x-4 bottom-4 z-[500] overflow-hidden border border-olive-700 bg-cream">
+          <div data-eos-id="web/components/collective-map.tsx#5" className="flex items-stretch">
             {selected.cover_image_url && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={selected.cover_image_url} alt={selected.name} className="hidden h-auto w-40 shrink-0 object-cover sm:block" />
+              <img data-eos-id="web/components/collective-map.tsx#6" src={selected.cover_image_url} alt={selected.name} className="hidden h-auto w-40 shrink-0 object-cover sm:block" />
             )}
-            <div className="flex-1 p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-xl tracking-[-0.02em] text-neutral-900">{selected.name}</h3>
-                  {selected.state && <p className="mt-0.5 text-xs uppercase tracking-[0.1em] text-neutral-500">{selected.state}</p>}
+            <div data-eos-id="web/components/collective-map.tsx#7" className="flex-1 p-5">
+              <div data-eos-id="web/components/collective-map.tsx#8" className="flex items-start justify-between">
+                <div data-eos-id="web/components/collective-map.tsx#9">
+                  <h3 data-eos-id="web/components/collective-map.tsx#10" data-eos-var="selected.name" data-eos-var-label="Name" data-eos-var-scope="prop" className="text-xl tracking-[-0.02em] text-neutral-900">{selected.name}</h3>
+                  {selected.state && <p data-eos-id="web/components/collective-map.tsx#11" data-eos-var="selected.state" data-eos-var-label="State" data-eos-var-scope="prop" className="mt-0.5 text-xs uppercase tracking-[0.1em] text-neutral-500">{selected.state}</p>}
                 </div>
-                <button onClick={() => setSelected(null)} aria-label="Close" className="text-neutral-400 hover:text-neutral-700">✕</button>
+                <button data-eos-id="web/components/collective-map.tsx#12" onClick={() => setSelected(null)} aria-label="Close" className="text-neutral-400 hover:text-neutral-700">✕</button>
               </div>
-              {selected.description && <p className="mt-2 line-clamp-2 text-sm text-neutral-500">{selected.description}</p>}
-              <button
+              {selected.description && <p data-eos-id="web/components/collective-map.tsx#13" data-eos-var="selected.description" data-eos-var-label="Description" data-eos-var-scope="prop" className="mt-2 line-clamp-2 text-sm text-neutral-500">{selected.description}</p>}
+              <button data-eos-id="web/components/collective-map.tsx#14"
                 onClick={() => router.push(`/collectives/${selected.slug}`)}
                 className="mt-4 border border-olive-700 bg-olive-700 px-6 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-oncream hover:bg-olive-800"
               >

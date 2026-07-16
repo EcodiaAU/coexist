@@ -39,8 +39,8 @@ const ROLES = [
 
 export default function TeamPage() {
   return (
-    <main>
-      <PageHeader
+    <main data-eos-id="web/app/get-involved/team/page.tsx#0">
+      <PageHeader data-eos-id="web/app/get-involved/team/page.tsx#1"
         eyebrow="Join the movement"
         title="Join the team"
         subtitle="Co-Exist is powered by young people who decided to stop scrolling and start doing. No experience needed, just the want to."
@@ -48,21 +48,21 @@ export default function TeamPage() {
       />
 
       {/* Why join - full-bleed split */}
-      <section className="grid items-stretch bg-white md:grid-cols-2">
-        <Reveal className="relative order-1 min-h-[54vh] overflow-hidden md:order-2">
-          <Image src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill quality={88} sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/nature.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+      <section data-eos-id="web/app/get-involved/team/page.tsx#2" className="grid items-stretch bg-white md:grid-cols-2">
+        <Reveal data-eos-id="web/app/get-involved/team/page.tsx#3" className="relative order-1 min-h-[54vh] overflow-hidden md:order-2">
+          <Image data-eos-id="web/app/get-involved/team/page.tsx#4" src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill quality={88} sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/nature.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
           {/* olive-900/15 tint + grain to match hero grade */}
-          <div className="absolute inset-0 bg-olive-900/15" />
-          <div className="grain-layer" />
+          <div data-eos-id="web/app/get-involved/team/page.tsx#5" className="absolute inset-0 bg-olive-900/15" />
+          <div data-eos-id="web/app/get-involved/team/page.tsx#6" className="grain-layer" />
         </Reveal>
-        <div className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
-          <Reveal className="max-w-md">
-            <p className="eyebrow text-primary-600">Why join</p>
-            <h2 className="display-tight has-mark mt-5 text-5xl text-neutral-900 sm:text-6xl">
+        <div data-eos-id="web/app/get-involved/team/page.tsx#7" className="order-2 flex items-center px-6 py-24 md:order-1 md:px-16">
+          <Reveal data-eos-id="web/app/get-involved/team/page.tsx#8" className="max-w-md">
+            <p data-eos-id="web/app/get-involved/team/page.tsx#9" className="eyebrow text-primary-600">Why join</p>
+            <h2 data-eos-id="web/app/get-involved/team/page.tsx#10" className="display-tight has-mark mt-5 text-5xl text-neutral-900 sm:text-6xl">
               Find something that
-              <span className="mt-2 block"><WordSwap words={['actually matters', 'lasts', 'feels good', 'is yours']} /></span>
+              <span data-eos-id="web/app/get-involved/team/page.tsx#11" className="mt-2 block"><WordSwap data-eos-id="web/app/get-involved/team/page.tsx#12" words={['actually matters', 'lasts', 'feels good', 'is yours']} /></span>
             </h2>
-            <p className="mt-6 text-[15px] leading-relaxed text-neutral-500">
+            <p data-eos-id="web/app/get-involved/team/page.tsx#13" className="mt-6 text-[15px] leading-relaxed text-neutral-500">
               You meet people who care about the same things you do. You learn skills you keep for
               life. And you get outside and do real work for the place you live. That is the whole
               offer, and it is a good one.
@@ -72,32 +72,32 @@ export default function TeamPage() {
       </section>
 
       {/* Ways in - editorial numbered list */}
-      <section className="bg-white">
-        <div className="max-w-6xl px-6 pb-24 pt-4 md:px-16">
-          <p className="eyebrow text-primary-600">Ways in</p>
-          <h2 className="display-tight mt-3 text-5xl text-neutral-900 sm:text-6xl">Three ways to get involved</h2>
-          <div className="mt-12 border-t border-neutral-300">
+      <section data-eos-id="web/app/get-involved/team/page.tsx#14" className="bg-white">
+        <div data-eos-id="web/app/get-involved/team/page.tsx#15" className="max-w-6xl px-6 pb-24 pt-4 md:px-16">
+          <p data-eos-id="web/app/get-involved/team/page.tsx#16" className="eyebrow text-primary-600">Ways in</p>
+          <h2 data-eos-id="web/app/get-involved/team/page.tsx#17" className="display-tight mt-3 text-5xl text-neutral-900 sm:text-6xl">Three ways to get involved</h2>
+          <div data-eos-id="web/app/get-involved/team/page.tsx#18" className="mt-12 border-t border-neutral-300">
             {ROLES.map((r, i) => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const Wrap: any = r.external ? 'a' : Link
               return (
-                <Reveal key={r.title} delay={i * 110}>
-                  <Wrap
+                <Reveal data-eos-id="web/app/get-involved/team/page.tsx#19" key={r.title} delay={i * 110}>
+                  <Wrap data-eos-href="dynamic" data-eos-href-label="Href" data-eos-href-scope="item" data-eos-id="web/app/get-involved/team/page.tsx#20"
                     href={r.href}
                     {...(r.external ? { target: '_self' } : {})}
                     className="group/role relative block border-b border-neutral-300"
                   >
-                    <div className="grid gap-3 py-12 md:grid-cols-[5rem_1fr_auto] md:items-center md:gap-10 md:py-14">
-                      <span className="text-6xl font-light leading-none text-primary-300 transition-colors duration-300 group-hover/role:text-primary-500 sm:text-7xl">
+                    <div data-eos-id="web/app/get-involved/team/page.tsx#21" className="grid gap-3 py-12 md:grid-cols-[5rem_1fr_auto] md:items-center md:gap-10 md:py-14">
+                      <span data-eos-id="web/app/get-involved/team/page.tsx#22" className="text-6xl font-light leading-none text-primary-300 transition-colors duration-300 group-hover/role:text-primary-500 sm:text-7xl">
                         0{i + 1}
                       </span>
-                      <div>
-                        <h3 className="text-2xl text-neutral-900 transition-colors duration-300 group-hover/role:text-primary-800">{r.title}</h3>
-                        <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-neutral-500">{r.body}</p>
+                      <div data-eos-id="web/app/get-involved/team/page.tsx#23">
+                        <h3 data-eos-id="web/app/get-involved/team/page.tsx#24" data-eos-var="r.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-2xl text-neutral-900 transition-colors duration-300 group-hover/role:text-primary-800">{r.title}</h3>
+                        <p data-eos-id="web/app/get-involved/team/page.tsx#25" data-eos-var="r.body" data-eos-var-label="Body" data-eos-var-scope="item" className="mt-2 max-w-xl text-[15px] leading-relaxed text-neutral-500">{r.body}</p>
                       </div>
-                      <span className="flex shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">
+                      <span data-eos-id="web/app/get-involved/team/page.tsx#26" className="flex shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">
                         {r.cta}
-                        <span className="transition-transform duration-300 group-hover/role:translate-x-1">→</span>
+                        <span data-eos-id="web/app/get-involved/team/page.tsx#27" className="transition-transform duration-300 group-hover/role:translate-x-1">→</span>
                       </span>
                     </div>
                   </Wrap>
