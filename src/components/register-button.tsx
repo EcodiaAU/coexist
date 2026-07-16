@@ -24,7 +24,7 @@ export function RegisterButton({
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <motion.button data-eos-id="src/components/register-button.tsx#0"
+    <motion.button data-eos-id="src/components/register-button.tsx#0" data-eos-v="2"
       type="button"
       onClick={registered ? onCancel : onRegister}
       disabled={loading}
