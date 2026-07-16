@@ -9,7 +9,7 @@ interface MarkdownRendererProps {
 
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   return (
-    <div
+    <div data-eos-id="src/components/development/markdown-renderer.tsx#0"
       className={cn(
         // Tailwind prose styling for markdown content
         'prose prose-sm max-w-none',
@@ -31,7 +31,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
         className,
       )}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown data-eos-id="src/components/development/markdown-renderer.tsx#1" remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </div>
   )
 }
