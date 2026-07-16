@@ -483,7 +483,7 @@ export function QuickSendTab() {
   void sanitizeHtml
 
   return (
-    <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#0" className="space-y-6 pb-24">
+    <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#0" data-eos-v="2" className="space-y-6 pb-24">
       {/* Step 1: prompt */}
       <section data-eos-id="src/pages/admin/email/quick-send-tab.tsx#1" className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
         <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#2" className="flex items-center gap-2">
@@ -628,7 +628,7 @@ export function QuickSendTab() {
                         className="group relative aspect-square rounded-sm overflow-hidden ring-1 ring-neutral-200 hover:ring-2 hover:ring-primary-500 cursor-pointer"
                         title={`${p.event_title} - ${p.collective_name}`}
                       >
-                        <img data-eos-id="src/pages/admin/email/quick-send-tab.tsx#40"
+                        <img data-eos-src="dynamic" data-eos-src-label="Url" data-eos-id="src/pages/admin/email/quick-send-tab.tsx#40"
                           src={p.url as string}
                           alt={p.caption ?? p.event_title}
                           loading="lazy"
