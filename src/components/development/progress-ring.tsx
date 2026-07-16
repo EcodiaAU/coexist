@@ -25,10 +25,10 @@ export function ProgressRing({
         : 'text-bark-400'
 
   return (
-    <div className={cn('relative inline-flex items-center justify-center', className)} style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="transform -rotate-90">
+    <div data-eos-id="src/components/development/progress-ring.tsx#0" className={cn('relative inline-flex items-center justify-center', className)} style={{ width: size, height: size }}>
+      <svg data-eos-id="src/components/development/progress-ring.tsx#1" width={size} height={size} className="transform -rotate-90">
         {/* Background circle */}
-        <circle
+        <circle data-eos-id="src/components/development/progress-ring.tsx#2"
           cx={size / 2}
           cy={size / 2}
           r={radius}
@@ -38,7 +38,7 @@ export function ProgressRing({
           className="text-primary-200/60"
         />
         {/* Progress arc */}
-        <circle
+        <circle data-eos-id="src/components/development/progress-ring.tsx#3"
           cx={size / 2}
           cy={size / 2}
           r={radius}
@@ -52,7 +52,7 @@ export function ProgressRing({
         />
       </svg>
       {/* Center text */}
-      <span className={cn('absolute text-[10px] font-bold tabular-nums', color)}>
+      <span data-eos-id="src/components/development/progress-ring.tsx#4" data-eos-var="Math.round" data-eos-var-label="Round" data-eos-var-scope="prop" className={cn('absolute text-[10px] font-bold tabular-nums', color)}>
         {Math.round(percent)}
       </span>
     </div>
