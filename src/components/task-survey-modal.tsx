@@ -135,7 +135,7 @@ export function TaskSurveyModal({
   }
 
   return (
-    <BottomSheet data-eos-id="src/components/task-survey-modal.tsx#0" open={open} onClose={onClose}>
+    <BottomSheet data-eos-id="src/components/task-survey-modal.tsx#0" data-eos-v="2" open={open} onClose={onClose}>
       {/* Header */}
       <div data-eos-id="src/components/task-survey-modal.tsx#1" className="flex items-center justify-between mb-4">
         <h2 data-eos-id="src/components/task-survey-modal.tsx#2" data-eos-var="survey.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="font-heading text-lg font-semibold text-neutral-900">{survey?.title ?? 'Survey'}</h2>
