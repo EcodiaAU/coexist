@@ -100,7 +100,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
     const h = compact ? 'h-11' : 'h-12'
 
     return (
-      <div data-eos-id="src/components/search-bar.tsx#0" className={cn('relative group', className)}>
+      <div data-eos-id="src/components/search-bar.tsx#0" data-eos-v="2" className={cn('relative group', className)}>
         {/* Animated gradient glow behind - visible on focus */}
         <motion.div data-eos-id="src/components/search-bar.tsx#1"
           className="absolute -inset-[1px] rounded-full opacity-0 pointer-events-none"
