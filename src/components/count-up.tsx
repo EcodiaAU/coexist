@@ -73,13 +73,13 @@ export function CountUp({
     }).format(end)}${suffix}`
 
   return (
-    <span
+    <span data-eos-id="src/components/count-up.tsx#0"
       ref={ref}
       aria-label={displayLabel}
       className={cn('tabular-nums', className)}
     >
       {prefix}
-      <motion.span>{formatted}</motion.span>
+      <motion.span data-eos-id="src/components/count-up.tsx#1">{formatted}</motion.span>
       {suffix}
     </span>
   )
