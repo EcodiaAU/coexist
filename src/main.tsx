@@ -227,16 +227,16 @@ if (!isEngineSupported()) {
 
   try {
     createRoot(document.getElementById('root')!).render(
-      <StrictMode>
-        <HelmetProvider>
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <AuthProvider>
-                <ToastProvider>
-                  <SentryErrorBoundary>
-                    <App />
+      <StrictMode data-eos-id="src/main.tsx#0">
+        <HelmetProvider data-eos-id="src/main.tsx#1">
+          <QueryClientProvider data-eos-id="src/main.tsx#2" client={queryClient}>
+            <BrowserRouter data-eos-id="src/main.tsx#3">
+              <AuthProvider data-eos-id="src/main.tsx#4">
+                <ToastProvider data-eos-id="src/main.tsx#5">
+                  <SentryErrorBoundary data-eos-id="src/main.tsx#6">
+                    <App data-eos-id="src/main.tsx#7" />
                   </SentryErrorBoundary>
-                  <CookieConsentBanner />
+                  <CookieConsentBanner data-eos-id="src/main.tsx#8" />
                 </ToastProvider>
               </AuthProvider>
             </BrowserRouter>
