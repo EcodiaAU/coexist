@@ -36,27 +36,27 @@ export function ListItem({
   const content = (
     <>
       {(icon || avatar) && (
-        <span
+        <span data-eos-id="src/components/list-item.tsx#0"
           className="flex items-center justify-center shrink-0 mr-3 text-neutral-400"
           aria-hidden="true"
         >
           {avatar ?? icon}
         </span>
       )}
-      <span className="flex-1 min-w-0">
-        <span className="block text-sm font-medium text-neutral-900 truncate">
+      <span data-eos-id="src/components/list-item.tsx#1" className="flex-1 min-w-0">
+        <span data-eos-id="src/components/list-item.tsx#2" className="block text-sm font-medium text-neutral-900 truncate">
           {title}
         </span>
         {subtitle && (
-          <span className="block text-xs text-neutral-500 truncate mt-0.5">
+          <span data-eos-id="src/components/list-item.tsx#3" className="block text-xs text-neutral-500 truncate mt-0.5">
             {subtitle}
           </span>
         )}
       </span>
-      <span className="flex items-center shrink-0 ml-3 text-neutral-400">
+      <span data-eos-id="src/components/list-item.tsx#4" className="flex items-center shrink-0 ml-3 text-neutral-400">
         {rightContent ?? (
           isInteractive && (
-            <ChevronRight className="w-5 h-5" aria-hidden="true" />
+            <ChevronRight data-eos-id="src/components/list-item.tsx#5" className="w-5 h-5" aria-hidden="true" />
           )
         )}
       </span>
@@ -75,7 +75,7 @@ export function ListItem({
 
   if (href && !disabled) {
     return (
-      <motion.a
+      <motion.a data-eos-href="dynamic" data-eos-href-label="Href" data-eos-href-scope="prop" data-eos-id="src/components/list-item.tsx#6"
         href={href}
         aria-label={ariaLabel ?? title}
         aria-disabled={disabled}
@@ -90,7 +90,7 @@ export function ListItem({
 
   if (onClick && !disabled) {
     return (
-      <motion.button
+      <motion.button data-eos-id="src/components/list-item.tsx#7"
         type="button"
         onClick={onClick}
         aria-label={ariaLabel ?? title}
@@ -105,7 +105,7 @@ export function ListItem({
   }
 
   return (
-    <div
+    <div data-eos-id="src/components/list-item.tsx#8"
       aria-label={ariaLabel ?? title}
       aria-disabled={disabled || undefined}
       className={sharedClassName}
