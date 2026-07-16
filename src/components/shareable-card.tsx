@@ -132,9 +132,9 @@ export function ShareableCard({
   }, [generatePng, variant, title, subtitle])
 
   return (
-    <div className={cn('flex flex-col items-center gap-4', className)}>
+    <div data-eos-id="src/components/shareable-card.tsx#0" className={cn('flex flex-col items-center gap-4', className)}>
       {/* The card to be captured */}
-      <motion.div
+      <motion.div data-eos-id="src/components/shareable-card.tsx#1"
         ref={cardRef}
         initial={shouldReduceMotion ? false : { scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -147,31 +147,31 @@ export function ShareableCard({
         )}
       >
         {/* Background texture */}
-        <div className="absolute inset-0 opacity-10" aria-hidden="true">
-          <svg width="100%" height="100%">
-            <pattern id={`pattern-${variant}`} x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-              <circle cx="20" cy="20" r="1.5" fill="currentColor" />
+        <div data-eos-id="src/components/shareable-card.tsx#2" className="absolute inset-0 opacity-10" aria-hidden="true">
+          <svg data-eos-id="src/components/shareable-card.tsx#3" width="100%" height="100%">
+            <pattern data-eos-id="src/components/shareable-card.tsx#4" id={`pattern-${variant}`} x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+              <circle data-eos-id="src/components/shareable-card.tsx#5" cx="20" cy="20" r="1.5" fill="currentColor" />
             </pattern>
-            <rect width="100%" height="100%" fill={`url(#pattern-${variant})`} />
+            <rect data-eos-id="src/components/shareable-card.tsx#6" width="100%" height="100%" fill={`url(#pattern-${variant})`} />
           </svg>
         </div>
 
-        <div className="relative z-10">
+        <div data-eos-id="src/components/shareable-card.tsx#7" className="relative z-10">
           {/* Header row */}
-          <div className="flex items-center justify-between">
-            <span className={cn('text-xs font-semibold uppercase tracking-wider', config.accent)}>
+          <div data-eos-id="src/components/shareable-card.tsx#8" className="flex items-center justify-between">
+            <span data-eos-id="src/components/shareable-card.tsx#9" className={cn('text-xs font-semibold uppercase tracking-wider', config.accent)}>
               {variant === 'impact' && 'My Impact'}
               {variant === 'badge' && 'Badge Unlocked'}
               {variant === 'event' && 'Event'}
               {variant === 'milestone' && 'Milestone Reached'}
             </span>
-            <Icon size={20} className={config.accent} />
+            <Icon data-eos-id="src/components/shareable-card.tsx#10" size={20} className={config.accent} />
           </div>
 
           {/* Image or large value */}
           {imageUrl ? (
-            <div className="mt-4 flex justify-center">
-              <img
+            <div data-eos-id="src/components/shareable-card.tsx#11" className="mt-4 flex justify-center">
+              <img data-eos-id="src/components/shareable-card.tsx#12"
                 src={imageUrl}
                 alt={title}
                 className="h-24 w-24 rounded-sm object-cover shadow-sm"
@@ -179,23 +179,23 @@ export function ShareableCard({
               />
             </div>
           ) : value != null ? (
-            <p className="mt-4 font-heading text-5xl font-bold tracking-tight">
+            <p data-eos-id="src/components/shareable-card.tsx#13" className="mt-4 font-heading text-5xl font-bold tracking-tight">
               {value}
             </p>
           ) : null}
 
           {/* Title + subtitle */}
-          <h3 className="mt-4 font-heading text-xl font-bold leading-tight">{title}</h3>
+          <h3 data-eos-id="src/components/shareable-card.tsx#14" className="mt-4 font-heading text-xl font-bold leading-tight">{title}</h3>
           {subtitle && (
-            <p className="mt-1 text-sm text-white/80 leading-relaxed">{subtitle}</p>
+            <p data-eos-id="src/components/shareable-card.tsx#15" className="mt-1 text-sm text-white/80 leading-relaxed">{subtitle}</p>
           )}
 
           {/* Attribution */}
-          <div className="mt-6 flex items-center justify-between bg-white/10 rounded-sm px-3 pt-3 pb-2 -mx-1">
+          <div data-eos-id="src/components/shareable-card.tsx#16" className="mt-6 flex items-center justify-between bg-white/10 rounded-sm px-3 pt-3 pb-2 -mx-1">
             {userName && (
-              <p className="text-xs text-white/70">{userName}</p>
+              <p data-eos-id="src/components/shareable-card.tsx#17" className="text-xs text-white/70">{userName}</p>
             )}
-            <p className={cn('text-xs font-semibold', !userName && 'ml-auto')}>
+            <p data-eos-id="src/components/shareable-card.tsx#18" className={cn('text-xs font-semibold', !userName && 'ml-auto')}>
               {APP_NAME}
             </p>
           </div>
@@ -203,20 +203,20 @@ export function ShareableCard({
       </motion.div>
 
       {/* Action buttons */}
-      <div className="flex gap-2">
-        <Button
+      <div data-eos-id="src/components/shareable-card.tsx#19" className="flex gap-2">
+        <Button data-eos-id="src/components/shareable-card.tsx#20"
           variant="secondary"
           size="sm"
-          icon={<Download size={16} />}
+          icon={<Download data-eos-id="src/components/shareable-card.tsx#21" size={16} />}
           onClick={handleDownload}
           disabled={generating}
         >
           Save
         </Button>
-        <Button
+        <Button data-eos-id="src/components/shareable-card.tsx#22"
           variant="primary"
           size="sm"
-          icon={<Share2 size={16} />}
+          icon={<Share2 data-eos-id="src/components/shareable-card.tsx#23" size={16} />}
           onClick={handleShare}
           disabled={generating}
         >
