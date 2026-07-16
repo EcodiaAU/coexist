@@ -78,27 +78,27 @@ function CreateCollectiveModal({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
+    <BottomSheet data-eos-id="src/pages/admin/collectives.tsx#0" open={open} onClose={onClose}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading text-lg font-semibold text-neutral-900">Create Collective</h2>
-        <button
+      <div data-eos-id="src/pages/admin/collectives.tsx#1" className="flex items-center justify-between mb-4">
+        <h2 data-eos-id="src/pages/admin/collectives.tsx#2" className="font-heading text-lg font-semibold text-neutral-900">Create Collective</h2>
+        <button data-eos-id="src/pages/admin/collectives.tsx#3"
           onClick={onClose}
           className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
           aria-label="Close"
         >
-          <X size={20} />
+          <X data-eos-id="src/pages/admin/collectives.tsx#4" size={20} />
         </button>
       </div>
-      <div className="space-y-4">
-        <Input
+      <div data-eos-id="src/pages/admin/collectives.tsx#5" className="space-y-4">
+        <Input data-eos-id="src/pages/admin/collectives.tsx#6"
           label="Collective Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
           placeholder="e.g. Byron Bay Collective"
         />
-        <Input
+        <Input data-eos-id="src/pages/admin/collectives.tsx#7"
           type="textarea"
           label="Description"
           value={description}
@@ -106,7 +106,7 @@ function CreateCollectiveModal({
           placeholder="What does this collective focus on?"
           rows={3}
         />
-        <PlaceAutocomplete
+        <PlaceAutocomplete data-eos-id="src/pages/admin/collectives.tsx#8"
           label="Region"
           value={region}
           onChange={(val, place) => {
@@ -119,7 +119,7 @@ function CreateCollectiveModal({
           }}
           placeholder="e.g. Byron Bay"
         />
-        <Dropdown
+        <Dropdown data-eos-id="src/pages/admin/collectives.tsx#9"
           label="State"
           placeholder="Select state..."
           options={[
@@ -135,7 +135,7 @@ function CreateCollectiveModal({
           value={state}
           onChange={setState}
         />
-        <Button
+        <Button data-eos-id="src/pages/admin/collectives.tsx#10"
           variant="primary"
           fullWidth
           onClick={handleCreate}
@@ -169,10 +169,10 @@ export default function AdminCollectivesPage() {
   const archiveMutation = useArchiveCollective()
 
   const heroActions = useMemo(() => (
-    <Button
+    <Button data-eos-id="src/pages/admin/collectives.tsx#11"
       variant="primary"
       size="sm"
-      icon={<Plus size={16} />}
+      icon={<Plus data-eos-id="src/pages/admin/collectives.tsx#12" size={16} />}
       onClick={() => setShowCreate(true)}
     >
       Create
@@ -199,20 +199,20 @@ export default function AdminCollectivesPage() {
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
   return (
-    <div>
-        <motion.div variants={stagger} initial="hidden" animate="visible">
+    <div data-eos-id="src/pages/admin/collectives.tsx#13">
+        <motion.div data-eos-id="src/pages/admin/collectives.tsx#14" variants={stagger} initial="hidden" animate="visible">
           {/* Filters */}
-          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
-            <SearchBar
+          <motion.div data-eos-id="src/pages/admin/collectives.tsx#15" variants={fadeUp} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+            <SearchBar data-eos-id="src/pages/admin/collectives.tsx#16"
               value={search}
               onChange={setSearch}
               placeholder="Search collectives..."
               compact
               className="flex-1"
             />
-            <div className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5">
+            <div data-eos-id="src/pages/admin/collectives.tsx#17" className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5">
               {(['active', 'archived', 'all'] as const).map((s) => (
-                <button
+                <button data-eos-id="src/pages/admin/collectives.tsx#18"
                   key={s}
                   type="button"
                   onClick={() => setStatusFilter(s)}
@@ -231,11 +231,11 @@ export default function AdminCollectivesPage() {
           </motion.div>
 
           {/* List */}
-          <motion.div variants={fadeUp}>
+          <motion.div data-eos-id="src/pages/admin/collectives.tsx#19" variants={fadeUp}>
           {showLoading ? (
-            <Skeleton variant="list-item" count={5} />
+            <Skeleton data-eos-id="src/pages/admin/collectives.tsx#20" variant="list-item" count={5} />
           ) : !collectives?.length ? (
-            <EmptyState
+            <EmptyState data-eos-id="src/pages/admin/collectives.tsx#21"
               illustration="empty"
               title="No collectives found"
               description={search ? 'Try a different search term' : 'Create your first collective'}
@@ -246,14 +246,14 @@ export default function AdminCollectivesPage() {
               }
             />
           ) : (
-            <motion.div layout className="space-y-2">
+            <motion.div data-eos-id="src/pages/admin/collectives.tsx#22" layout className="space-y-2">
               {collectives.map((c) => {
                 return (
-                  <motion.div
+                  <motion.div data-eos-id="src/pages/admin/collectives.tsx#23"
                     key={c.id}
                     layout="position"
                   >
-                    <Link
+                    <Link data-eos-id="src/pages/admin/collectives.tsx#24"
                       to={`/admin/collectives/${c.id}`}
                       className={cn(
                         'flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm',
@@ -264,55 +264,55 @@ export default function AdminCollectivesPage() {
                     >
                       {/* Cover image */}
                       {c.cover_image_url ? (
-                        <img
+                        <img data-eos-id="src/pages/admin/collectives.tsx#25"
                           src={c.cover_image_url}
                           alt=""
                           className="w-12 h-12 sm:w-14 sm:h-14 rounded-sm object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-sm bg-neutral-100 flex items-center justify-center shrink-0">
-                          <MapPin size={20} className="text-neutral-400 sm:hidden" />
-                          <MapPin size={24} className="text-neutral-400 hidden sm:block" />
+                        <div data-eos-id="src/pages/admin/collectives.tsx#26" className="w-12 h-12 sm:w-14 sm:h-14 rounded-sm bg-neutral-100 flex items-center justify-center shrink-0">
+                          <MapPin data-eos-id="src/pages/admin/collectives.tsx#27" size={20} className="text-neutral-400 sm:hidden" />
+                          <MapPin data-eos-id="src/pages/admin/collectives.tsx#28" size={24} className="text-neutral-400 hidden sm:block" />
                         </div>
                       )}
 
                       {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="font-heading text-sm font-semibold text-neutral-900 truncate">
+                      <div data-eos-id="src/pages/admin/collectives.tsx#29" className="flex-1 min-w-0">
+                        <div data-eos-id="src/pages/admin/collectives.tsx#30" className="flex items-center gap-2 mb-0.5">
+                          <p data-eos-id="src/pages/admin/collectives.tsx#31" data-eos-var="c.name" data-eos-var-label="Name" data-eos-var-scope="item" className="font-heading text-sm font-semibold text-neutral-900 truncate">
                             {c.name}
                           </p>
                           {!c.is_active && (
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500 shrink-0">
+                            <span data-eos-id="src/pages/admin/collectives.tsx#32" className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500 shrink-0">
                               Archived
                             </span>
                           )}
                         </div>
                         {(c.region || c.state) && (
-                          <p className="text-[11px] sm:text-xs text-neutral-400 flex items-center gap-1 truncate">
-                            <MapPin size={12} className="shrink-0" />
-                            <span className="truncate">{[c.region, c.state].filter(Boolean).join(', ')}</span>
+                          <p data-eos-id="src/pages/admin/collectives.tsx#33" className="text-[11px] sm:text-xs text-neutral-400 flex items-center gap-1 truncate">
+                            <MapPin data-eos-id="src/pages/admin/collectives.tsx#34" size={12} className="shrink-0" />
+                            <span data-eos-id="src/pages/admin/collectives.tsx#35" data-eos-var="c.region" data-eos-var-label="Region" data-eos-var-scope="item" className="truncate">{[c.region, c.state].filter(Boolean).join(', ')}</span>
                           </p>
                         )}
-                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1 text-[11px] sm:text-xs text-neutral-400">
-                          <span className="flex items-center gap-1 shrink-0">
-                            <Users size={12} className="shrink-0" /> {c.memberCount} members
+                        <div data-eos-id="src/pages/admin/collectives.tsx#36" className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1 text-[11px] sm:text-xs text-neutral-400">
+                          <span data-eos-id="src/pages/admin/collectives.tsx#37" data-eos-var="c.memberCount" data-eos-var-label="Member count" data-eos-var-scope="item" className="flex items-center gap-1 shrink-0">
+                            <Users data-eos-id="src/pages/admin/collectives.tsx#38" size={12} className="shrink-0" /> {c.memberCount} members
                           </span>
-                          <span className="flex items-center gap-1 shrink-0">
-                            <CalendarDays size={12} className="shrink-0" /> {c.eventCount} events
+                          <span data-eos-id="src/pages/admin/collectives.tsx#39" data-eos-var="c.eventCount" data-eos-var-label="Event count" data-eos-var-scope="item" className="flex items-center gap-1 shrink-0">
+                            <CalendarDays data-eos-id="src/pages/admin/collectives.tsx#40" size={12} className="shrink-0" /> {c.eventCount} events
                           </span>
                           {c.leaderName && (
-                            <span className="flex items-center gap-1 min-w-0 max-w-full">
-                              <Crown size={12} className="shrink-0" />
-                              <span className="truncate">{c.leaderName}</span>
+                            <span data-eos-id="src/pages/admin/collectives.tsx#41" className="flex items-center gap-1 min-w-0 max-w-full">
+                              <Crown data-eos-id="src/pages/admin/collectives.tsx#42" size={12} className="shrink-0" />
+                              <span data-eos-id="src/pages/admin/collectives.tsx#43" data-eos-var="c.leaderName" data-eos-var-label="Leader name" data-eos-var-scope="item" className="truncate">{c.leaderName}</span>
                             </span>
                           )}
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-                        <button
+                      <div data-eos-id="src/pages/admin/collectives.tsx#44" className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+                        <button data-eos-id="src/pages/admin/collectives.tsx#45"
                           type="button"
                           onClick={(e) => {
                             e.preventDefault()
@@ -322,9 +322,9 @@ export default function AdminCollectivesPage() {
                           className="flex items-center justify-center min-w-10 min-h-10 sm:min-w-11 sm:min-h-11 rounded-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.98] transition-[colors,transform]"
                           aria-label={c.is_active ? `Archive ${c.name}` : `Restore ${c.name}`}
                         >
-                          {c.is_active ? <Archive size={16} /> : <RotateCcw size={16} />}
+                          {c.is_active ? <Archive data-eos-id="src/pages/admin/collectives.tsx#46" size={16} /> : <RotateCcw data-eos-id="src/pages/admin/collectives.tsx#47" size={16} />}
                         </button>
-                        <ChevronRight size={16} className="text-neutral-300 hidden sm:block" />
+                        <ChevronRight data-eos-id="src/pages/admin/collectives.tsx#48" size={16} className="text-neutral-300 hidden sm:block" />
                       </div>
                     </Link>
                   </motion.div>
@@ -336,13 +336,13 @@ export default function AdminCollectivesPage() {
         </motion.div>
 
       {/* Create modal */}
-      <CreateCollectiveModal
+      <CreateCollectiveModal data-eos-id="src/pages/admin/collectives.tsx#49"
         open={showCreate}
         onClose={() => setShowCreate(false)}
       />
 
       {/* Archive / Restore confirmation */}
-      <ConfirmationSheet
+      <ConfirmationSheet data-eos-id="src/pages/admin/collectives.tsx#50"
         open={!!archiveTarget}
         onClose={() => setArchiveTarget(null)}
         onConfirm={handleArchiveToggle}
