@@ -197,13 +197,13 @@ export function EventShareSheet({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} className="max-h-[92vh]">
+    <BottomSheet data-eos-id="src/components/event-share-sheet.tsx#0" open={open} onClose={onClose} className="max-h-[92vh]">
 
       {/* Offscreen capture instances - one per size, no CSS transform parent.
           These are the html2canvas capture targets. Rendered at native resolution,
           positioned far off-screen so they never appear to the user. */}
       {SIZE_ORDER.map((sz) => (
-        <EventShareGraphic
+        <EventShareGraphic data-eos-id="src/components/event-share-sheet.tsx#1"
           key={`capture-${sz}`}
           ref={(el) => { captureRefs.current[sz] = el }}
           size={sz}
@@ -212,36 +212,36 @@ export function EventShareSheet({
         />
       ))}
 
-      <div className="px-5 pt-3 pb-6">
+      <div data-eos-id="src/components/event-share-sheet.tsx#2" className="px-5 pt-3 pb-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-1">
-          <div>
-            <h2 className="font-heading text-lg font-bold text-neutral-900">Share this event</h2>
-            <p className="text-[13px] text-neutral-500 mt-0.5">
+        <div data-eos-id="src/components/event-share-sheet.tsx#3" className="flex items-center justify-between mb-1">
+          <div data-eos-id="src/components/event-share-sheet.tsx#4">
+            <h2 data-eos-id="src/components/event-share-sheet.tsx#5" className="font-heading text-lg font-bold text-neutral-900">Share this event</h2>
+            <p data-eos-id="src/components/event-share-sheet.tsx#6" className="text-[13px] text-neutral-500 mt-0.5">
               Save a graphic to your camera roll, then post it.
             </p>
           </div>
-          <button
+          <button data-eos-id="src/components/event-share-sheet.tsx#7"
             type="button"
             onClick={onClose}
             aria-label="Close"
             className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-500 hover:bg-neutral-100 active:scale-95 transition-transform"
           >
-            <X size={18} />
+            <X data-eos-id="src/components/event-share-sheet.tsx#8" size={18} />
           </button>
         </div>
 
         {/* Preview row - horizontal scroll on mobile so all 3 fit */}
-        <div className="mt-4 -mx-5 px-5 overflow-x-auto">
-          <div className="flex gap-4 pb-2" style={{ minWidth: 'min-content' }}>
+        <div data-eos-id="src/components/event-share-sheet.tsx#9" className="mt-4 -mx-5 px-5 overflow-x-auto">
+          <div data-eos-id="src/components/event-share-sheet.tsx#10" className="flex gap-4 pb-2" style={{ minWidth: 'min-content' }}>
             {SIZE_ORDER.map((sz) => {
               const spec = SHARE_SIZES[sz]
               const scale = previewScale(sz)
               const ph = previewHeight(sz)
               return (
-                <div key={sz} className="flex flex-col items-center shrink-0">
+                <div data-eos-id="src/components/event-share-sheet.tsx#11" key={sz} className="flex flex-col items-center shrink-0">
                   {/* Preview frame */}
-                  <div
+                  <div data-eos-id="src/components/event-share-sheet.tsx#12"
                     className={cn(
                       'rounded-md overflow-hidden ring-1 ring-neutral-200/80 shadow-sm bg-neutral-50',
                       'relative',
@@ -249,7 +249,7 @@ export function EventShareSheet({
                     style={{ width: PREVIEW_WIDTH, height: ph }}
                   >
                     {/* Scaled-down visual preview. Ref stored in previewRefs (not used for capture). */}
-                    <div
+                    <div data-eos-id="src/components/event-share-sheet.tsx#13"
                       style={{
                         position: 'absolute',
                         top: 0,
@@ -260,7 +260,7 @@ export function EventShareSheet({
                         height: spec.height,
                       }}
                     >
-                      <EventShareGraphic
+                      <EventShareGraphic data-eos-id="src/components/event-share-sheet.tsx#14"
                         ref={(el) => { previewRefs.current[sz] = el }}
                         size={sz}
                         {...sharedGraphicProps}
@@ -269,28 +269,28 @@ export function EventShareSheet({
 
                     {/* Busy overlay */}
                     {busy === sz && (
-                      <motion.div
+                      <motion.div data-eos-id="src/components/event-share-sheet.tsx#15"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="absolute inset-0 bg-black/40 flex items-center justify-center text-white"
                       >
-                        <Loader2 size={28} className="animate-spin" />
+                        <Loader2 data-eos-id="src/components/event-share-sheet.tsx#16" size={28} className="animate-spin" />
                       </motion.div>
                     )}
                   </div>
 
                   {/* Label + actions */}
-                  <div className="mt-3 text-center">
-                    <p className="text-[13px] font-bold text-neutral-900">{spec.label}</p>
-                    <p className="text-[11px] text-neutral-500">
+                  <div data-eos-id="src/components/event-share-sheet.tsx#17" className="mt-3 text-center">
+                    <p data-eos-id="src/components/event-share-sheet.tsx#18" data-eos-var="spec.label" data-eos-var-label="Label" data-eos-var-scope="prop" className="text-[13px] font-bold text-neutral-900">{spec.label}</p>
+                    <p data-eos-id="src/components/event-share-sheet.tsx#19" data-eos-var="spec.aspect,spec.width,spec.height" data-eos-var-label="Aspect, Width, Height" data-eos-var-scope="prop" className="text-[11px] text-neutral-500">
                       {spec.aspect}  ·  {spec.width}×{spec.height}
                     </p>
                   </div>
-                  <div className="mt-2 flex flex-col gap-1.5 w-full">
-                    <Button
+                  <div data-eos-id="src/components/event-share-sheet.tsx#20" className="mt-2 flex flex-col gap-1.5 w-full">
+                    <Button data-eos-id="src/components/event-share-sheet.tsx#21"
                       variant="primary"
                       size="sm"
-                      icon={preferDownload ? <Download size={14} /> : <Share2 size={14} />}
+                      icon={preferDownload ? <Download data-eos-id="src/components/event-share-sheet.tsx#22" size={14} /> : <Share2 data-eos-id="src/components/event-share-sheet.tsx#23" size={14} />}
                       onClick={() => handleSystemShare(sz)}
                       disabled={busy !== null}
                       fullWidth
@@ -314,27 +314,27 @@ export function EventShareSheet({
             link card has too much padding form the side of the screen and
             the copy button should be underneatht the url preview because
             its getting truncated way too much right now and looks bad". */}
-        <div className="mt-5 rounded-md border border-neutral-200 bg-neutral-50 px-2 py-3">
-          <p className="text-[12px] font-bold text-neutral-900 mb-1.5 px-1">Event link</p>
-          <div className="rounded-sm bg-white border border-neutral-200 px-3 py-2">
-            <p className="text-[12px] text-neutral-600 break-all">{shareUrl}</p>
+        <div data-eos-id="src/components/event-share-sheet.tsx#24" className="mt-5 rounded-md border border-neutral-200 bg-neutral-50 px-2 py-3">
+          <p data-eos-id="src/components/event-share-sheet.tsx#25" className="text-[12px] font-bold text-neutral-900 mb-1.5 px-1">Event link</p>
+          <div data-eos-id="src/components/event-share-sheet.tsx#26" className="rounded-sm bg-white border border-neutral-200 px-3 py-2">
+            <p data-eos-id="src/components/event-share-sheet.tsx#27" className="text-[12px] text-neutral-600 break-all">{shareUrl}</p>
           </div>
-          <Button
+          <Button data-eos-id="src/components/event-share-sheet.tsx#28"
             variant={linkCopied ? 'secondary' : 'primary'}
             size="sm"
-            icon={linkCopied ? <Check size={14} /> : <Link2 size={14} />}
+            icon={linkCopied ? <Check data-eos-id="src/components/event-share-sheet.tsx#29" size={14} /> : <Link2 data-eos-id="src/components/event-share-sheet.tsx#30" size={14} />}
             onClick={handleCopyLink}
             fullWidth
             className="mt-2"
           >
             {linkCopied ? 'Copied' : 'Copy link'}
           </Button>
-          <p className="mt-2 text-[11px] text-neutral-500 leading-relaxed px-1">
+          <p data-eos-id="src/components/event-share-sheet.tsx#31" className="mt-2 text-[11px] text-neutral-500 leading-relaxed px-1">
             Anyone can open this link to see the event - no app or login needed.
           </p>
         </div>
 
-        <p className="mt-4 text-[12px] text-neutral-500 leading-relaxed">
+        <p data-eos-id="src/components/event-share-sheet.tsx#32" className="mt-4 text-[12px] text-neutral-500 leading-relaxed">
           Save the image, then post it on Instagram from your camera roll. The
           image can&apos;t carry a tappable link, so copy the event link above
           to share in your story, bio, or DMs.
