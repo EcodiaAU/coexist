@@ -20,7 +20,7 @@ interface EmptyStateProps {
 
 const presetIllustrations: Record<string, ReactNode> = {
   search: (
-    <svg
+    <svg data-eos-id="src/components/empty-state.tsx#0"
       width="120"
       height="120"
       viewBox="0 0 120 120"
@@ -28,13 +28,13 @@ const presetIllustrations: Record<string, ReactNode> = {
       aria-hidden="true"
       className="mx-auto"
     >
-      <circle cx="52" cy="52" r="32" stroke="currentColor" strokeWidth="4" className="text-primary-200" />
-      <line x1="76" y1="76" x2="100" y2="100" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="text-primary-300" />
-      <circle cx="52" cy="52" r="12" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" className="text-primary-200" />
+      <circle data-eos-id="src/components/empty-state.tsx#1" cx="52" cy="52" r="32" stroke="currentColor" strokeWidth="4" className="text-primary-200" />
+      <line data-eos-id="src/components/empty-state.tsx#2" x1="76" y1="76" x2="100" y2="100" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="text-primary-300" />
+      <circle data-eos-id="src/components/empty-state.tsx#3" cx="52" cy="52" r="12" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" className="text-primary-200" />
     </svg>
   ),
   empty: (
-    <svg
+    <svg data-eos-id="src/components/empty-state.tsx#4"
       width="120"
       height="120"
       viewBox="0 0 120 120"
@@ -42,13 +42,13 @@ const presetIllustrations: Record<string, ReactNode> = {
       aria-hidden="true"
       className="mx-auto"
     >
-      <rect x="24" y="32" width="72" height="56" rx="8" stroke="currentColor" strokeWidth="4" className="text-primary-200" />
-      <path d="M24 52 h72" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" className="text-primary-200" />
-      <circle cx="60" cy="72" r="6" fill="currentColor" className="text-primary-200" />
+      <rect data-eos-id="src/components/empty-state.tsx#5" x="24" y="32" width="72" height="56" rx="8" stroke="currentColor" strokeWidth="4" className="text-primary-200" />
+      <path data-eos-id="src/components/empty-state.tsx#6" d="M24 52 h72" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" className="text-primary-200" />
+      <circle data-eos-id="src/components/empty-state.tsx#7" cx="60" cy="72" r="6" fill="currentColor" className="text-primary-200" />
     </svg>
   ),
   error: (
-    <svg
+    <svg data-eos-id="src/components/empty-state.tsx#8"
       width="120"
       height="120"
       viewBox="0 0 120 120"
@@ -56,13 +56,13 @@ const presetIllustrations: Record<string, ReactNode> = {
       aria-hidden="true"
       className="mx-auto"
     >
-      <circle cx="60" cy="60" r="36" stroke="currentColor" strokeWidth="4" className="text-primary-200" />
-      <path d="M60 44v20" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="text-primary-300" />
-      <circle cx="60" cy="76" r="3" fill="currentColor" className="text-primary-300" />
+      <circle data-eos-id="src/components/empty-state.tsx#9" cx="60" cy="60" r="36" stroke="currentColor" strokeWidth="4" className="text-primary-200" />
+      <path data-eos-id="src/components/empty-state.tsx#10" d="M60 44v20" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="text-primary-300" />
+      <circle data-eos-id="src/components/empty-state.tsx#11" cx="60" cy="76" r="3" fill="currentColor" className="text-primary-300" />
     </svg>
   ),
   wildlife: (
-    <svg
+    <svg data-eos-id="src/components/empty-state.tsx#12"
       width="120"
       height="120"
       viewBox="0 0 120 120"
@@ -70,12 +70,12 @@ const presetIllustrations: Record<string, ReactNode> = {
       aria-hidden="true"
       className="mx-auto"
     >
-      <path d="M60 28 C40 28 28 44 28 60 C28 80 44 96 60 96 C76 96 92 80 92 60 C92 44 80 28 60 28Z" stroke="currentColor" strokeWidth="3" className="text-primary-200" />
-      <circle cx="48" cy="54" r="4" fill="currentColor" className="text-primary-300" />
-      <circle cx="72" cy="54" r="4" fill="currentColor" className="text-primary-300" />
-      <path d="M50 68 Q60 76 70 68" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none" className="text-primary-300" />
-      <path d="M36 36 Q28 20 40 28" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" className="text-primary-200" />
-      <path d="M84 36 Q92 20 80 28" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" className="text-primary-200" />
+      <path data-eos-id="src/components/empty-state.tsx#13" d="M60 28 C40 28 28 44 28 60 C28 80 44 96 60 96 C76 96 92 80 92 60 C92 44 80 28 60 28Z" stroke="currentColor" strokeWidth="3" className="text-primary-200" />
+      <circle data-eos-id="src/components/empty-state.tsx#14" cx="48" cy="54" r="4" fill="currentColor" className="text-primary-300" />
+      <circle data-eos-id="src/components/empty-state.tsx#15" cx="72" cy="54" r="4" fill="currentColor" className="text-primary-300" />
+      <path data-eos-id="src/components/empty-state.tsx#16" d="M50 68 Q60 76 70 68" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none" className="text-primary-300" />
+      <path data-eos-id="src/components/empty-state.tsx#17" d="M36 36 Q28 20 40 28" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" className="text-primary-200" />
+      <path data-eos-id="src/components/empty-state.tsx#18" d="M84 36 Q92 20 80 28" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" className="text-primary-200" />
     </svg>
   ),
 }
@@ -100,7 +100,7 @@ export function EmptyState({
   const resolvedIllustration = resolveIllustration(illustration)
 
   const actionButton = action ? (
-    <Button
+    <Button data-eos-id="src/components/empty-state.tsx#19" data-eos-var="action.label" data-eos-var-label="Label" data-eos-var-scope="prop"
       variant="primary"
       onClick={action.onClick}
       aria-label={action.label}
@@ -110,7 +110,7 @@ export function EmptyState({
   ) : null
 
   return (
-    <div
+    <div data-eos-id="src/components/empty-state.tsx#20"
       className={cn(
         'flex min-h-[320px] flex-col items-center justify-center px-6 py-12 text-center',
         className,
@@ -119,21 +119,21 @@ export function EmptyState({
       aria-label={title}
     >
       {resolvedIllustration && (
-        <div className="mb-6">{resolvedIllustration}</div>
+        <div data-eos-id="src/components/empty-state.tsx#21" className="mb-6">{resolvedIllustration}</div>
       )}
 
-      <h3 className="font-heading text-lg font-semibold text-neutral-900">
+      <h3 data-eos-id="src/components/empty-state.tsx#22" className="font-heading text-lg font-semibold text-neutral-900">
         {title}
       </h3>
 
-      <p className="mt-2 max-w-xs text-sm leading-relaxed text-neutral-500">
+      <p data-eos-id="src/components/empty-state.tsx#23" className="mt-2 max-w-xs text-sm leading-relaxed text-neutral-500">
         {description}
       </p>
 
       {action && (
-        <div className="mt-6">
+        <div data-eos-id="src/components/empty-state.tsx#24" className="mt-6">
           {action.to ? (
-            <Link to={action.to} tabIndex={-1}>
+            <Link data-eos-id="src/components/empty-state.tsx#25" to={action.to} tabIndex={-1}>
               {actionButton}
             </Link>
           ) : (
