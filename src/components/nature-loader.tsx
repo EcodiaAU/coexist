@@ -18,7 +18,7 @@ const sizeMap = {
 
 function SeedlingAnimation({ size }: { size: number }) {
   return (
-    <svg data-eos-id="src/components/nature-loader.tsx#0"
+    <svg data-eos-id="src/components/nature-loader.tsx#0" data-eos-v="2"
       width={size}
       height={size}
       viewBox="0 0 48 48"
