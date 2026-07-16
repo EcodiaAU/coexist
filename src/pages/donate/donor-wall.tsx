@@ -31,7 +31,7 @@ export default function DonorWallPage() {
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <Page data-eos-id="src/pages/donate/donor-wall.tsx#0" swipeBack header={<Header data-eos-id="src/pages/donate/donor-wall.tsx#1" title="Donor Wall" back />}>
+    <Page data-eos-id="src/pages/donate/donor-wall.tsx#0" data-eos-v="2" swipeBack header={<Header data-eos-id="src/pages/donate/donor-wall.tsx#1" title="Donor Wall" back />}>
       <div data-eos-id="src/pages/donate/donor-wall.tsx#2" className="max-w-2xl mx-auto w-full py-5">
         {/* Intro */}
         <motion.div data-eos-id="src/pages/donate/donor-wall.tsx#3"
