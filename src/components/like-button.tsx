@@ -16,7 +16,7 @@ function LeafParticle({ index, total }: { index: number; total: number }) {
   const [distance] = useState(() => 18 + Math.random() * 8)
 
   return (
-    <motion.span
+    <motion.span data-eos-id="src/components/like-button.tsx#0"
       className="absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full bg-primary-500"
       initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
       animate={{
@@ -55,7 +55,7 @@ export function LikeButton({
   }, [liked, onToggle, shouldReduceMotion])
 
   return (
-    <button
+    <button data-eos-id="src/components/like-button.tsx#1"
       type="button"
       onClick={handleClick}
       className={cn(
@@ -71,7 +71,7 @@ export function LikeButton({
       aria-pressed={liked}
     >
       {/* Leaf icon */}
-      <motion.svg
+      <motion.svg data-eos-id="src/components/like-button.tsx#2"
         width="20"
         height="20"
         viewBox="0 0 24 24"
@@ -94,16 +94,16 @@ export function LikeButton({
         }
         aria-hidden="true"
       >
-        <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 1 8-2 7-8 10-9 10Z" />
-        <path d="M10.7 20C7.4 16 5.8 11.8 7.3 7.4" />
+        <path data-eos-id="src/components/like-button.tsx#3" d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 1 8-2 7-8 10-9 10Z" />
+        <path data-eos-id="src/components/like-button.tsx#4" d="M10.7 20C7.4 16 5.8 11.8 7.3 7.4" />
       </motion.svg>
 
       {/* Particle burst */}
-      <AnimatePresence>
+      <AnimatePresence data-eos-id="src/components/like-button.tsx#5">
         {bursting && (
-          <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span data-eos-id="src/components/like-button.tsx#6" className="absolute inset-0 flex items-center justify-center pointer-events-none">
             {Array.from({ length: 8 }, (_, i) => (
-              <LeafParticle key={i} index={i} total={8} />
+              <LeafParticle data-eos-id="src/components/like-button.tsx#7" key={i} index={i} total={8} />
             ))}
           </span>
         )}
@@ -111,7 +111,7 @@ export function LikeButton({
 
       {/* Count */}
       {count != null && (
-        <span className="text-sm font-medium tabular-nums">{count}</span>
+        <span data-eos-id="src/components/like-button.tsx#8" className="text-sm font-medium tabular-nums">{count}</span>
       )}
     </button>
   )
