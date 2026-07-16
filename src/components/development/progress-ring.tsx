@@ -25,7 +25,7 @@ export function ProgressRing({
         : 'text-bark-400'
 
   return (
-    <div data-eos-id="src/components/development/progress-ring.tsx#0" className={cn('relative inline-flex items-center justify-center', className)} style={{ width: size, height: size }}>
+    <div data-eos-id="src/components/development/progress-ring.tsx#0" data-eos-v="2" className={cn('relative inline-flex items-center justify-center', className)} style={{ width: size, height: size }}>
       <svg data-eos-id="src/components/development/progress-ring.tsx#1" width={size} height={size} className="transform -rotate-90">
         {/* Background circle */}
         <circle data-eos-id="src/components/development/progress-ring.tsx#2"
