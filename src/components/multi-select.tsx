@@ -186,7 +186,7 @@ export function MultiSelect({
   }, [open, isMobile])
 
   const trigger = (
-    <button
+    <button data-eos-id="src/components/multi-select.tsx#0"
       ref={triggerRef}
       type="button"
       id={id}
@@ -206,7 +206,7 @@ export function MultiSelect({
         triggerClassName,
       )}
     >
-      <span
+      <span data-eos-id="src/components/multi-select.tsx#1"
         className={cn(
           'truncate min-w-0',
           selectedOptions.length > 0 ? 'text-neutral-900' : 'text-neutral-500',
@@ -214,7 +214,7 @@ export function MultiSelect({
       >
         {triggerLabel}
       </span>
-      <ChevronDown
+      <ChevronDown data-eos-id="src/components/multi-select.tsx#2"
         size={18}
         className={cn(
           'shrink-0 ml-2 text-neutral-400 transition-transform duration-150',
@@ -226,7 +226,7 @@ export function MultiSelect({
   )
 
   const optionsList = (
-    <ul
+    <ul data-eos-id="src/components/multi-select.tsx#3"
       id={listboxId}
       role="listbox"
       aria-multiselectable="true"
@@ -237,7 +237,7 @@ export function MultiSelect({
         const isSelected = selectedSet.has(option.value)
 
         return (
-          <li
+          <li data-eos-id="src/components/multi-select.tsx#4"
             key={option.value}
             role="option"
             aria-selected={isSelected}
@@ -258,8 +258,8 @@ export function MultiSelect({
                 : 'text-neutral-900 hover:bg-neutral-50 active:bg-neutral-50',
             )}
           >
-            <span className="flex items-center gap-3 min-w-0">
-              <span
+            <span data-eos-id="src/components/multi-select.tsx#5" className="flex items-center gap-3 min-w-0">
+              <span data-eos-id="src/components/multi-select.tsx#6"
                 className={cn(
                   'shrink-0 grid place-items-center w-[18px] h-[18px] rounded-[5px] border transition-colors',
                   isSelected
@@ -268,14 +268,14 @@ export function MultiSelect({
                 )}
                 aria-hidden="true"
               >
-                {isSelected && <Check size={13} className="text-white" strokeWidth={3} />}
+                {isSelected && <Check data-eos-id="src/components/multi-select.tsx#7" size={13} className="text-white" strokeWidth={3} />}
               </span>
               {option.icon && (
-                <span className="shrink-0" aria-hidden="true">
+                <span data-eos-id="src/components/multi-select.tsx#8" data-eos-var="option.icon" data-eos-var-label="Icon" data-eos-var-scope="item" className="shrink-0" aria-hidden="true">
                   {option.icon}
                 </span>
               )}
-              <span className="whitespace-normal sm:whitespace-nowrap">{option.label}</span>
+              <span data-eos-id="src/components/multi-select.tsx#9" data-eos-var="option.label" data-eos-var-label="Label" data-eos-var-scope="item" className="whitespace-normal sm:whitespace-nowrap">{option.label}</span>
             </span>
           </li>
         )
@@ -285,7 +285,7 @@ export function MultiSelect({
 
   // "All / Clear" reset row - selecting it drops back to the all-collectives view.
   const clearRow = (
-    <button
+    <button data-eos-id="src/components/multi-select.tsx#10"
       type="button"
       onClick={clearAll}
       disabled={value.length === 0}
@@ -298,15 +298,15 @@ export function MultiSelect({
           : 'text-neutral-600 hover:bg-neutral-50',
       )}
     >
-      <span>{allLabel}</span>
-      {value.length === 0 && <Check size={18} className="shrink-0 text-primary-400" aria-hidden="true" />}
+      <span data-eos-id="src/components/multi-select.tsx#11">{allLabel}</span>
+      {value.length === 0 && <Check data-eos-id="src/components/multi-select.tsx#12" size={18} className="shrink-0 text-primary-400" aria-hidden="true" />}
     </button>
   )
 
   return (
-    <div className={cn('w-full', className)}>
+    <div data-eos-id="src/components/multi-select.tsx#13" className={cn('w-full', className)}>
       {label && (
-        <label
+        <label data-eos-id="src/components/multi-select.tsx#14"
           id={labelId}
           htmlFor={id}
           className="block mb-1.5 text-sm font-medium text-neutral-900"
@@ -315,15 +315,15 @@ export function MultiSelect({
         </label>
       )}
 
-      <div className="relative">
+      <div data-eos-id="src/components/multi-select.tsx#15" className="relative">
         {trigger}
 
         {/* Desktop popover - portalled with fixed position to escape overflow clipping */}
         {!isMobile &&
           createPortal(
-            <AnimatePresence>
+            <AnimatePresence data-eos-id="src/components/multi-select.tsx#16">
               {open && (
-                <motion.div
+                <motion.div data-eos-id="src/components/multi-select.tsx#17"
                   initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -4, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.98 }}
@@ -331,7 +331,7 @@ export function MultiSelect({
                   style={popoverStyle}
                   className="z-[60] relative gpu-panel"
                 >
-                  <div
+                  <div data-eos-id="src/components/multi-select.tsx#18"
                     ref={popoverRef}
                     className={cn(
                       'bg-white rounded-md shadow-sm border border-neutral-100',
@@ -339,7 +339,7 @@ export function MultiSelect({
                     )}
                   >
                     {clearRow}
-                    <div className="my-1 border-t border-neutral-100" />
+                    <div data-eos-id="src/components/multi-select.tsx#19" className="my-1 border-t border-neutral-100" />
                     {optionsList}
                   </div>
                 </motion.div>
@@ -351,16 +351,16 @@ export function MultiSelect({
 
       {/* Mobile bottom sheet */}
       {isMobile && (
-        <BottomSheet
+        <BottomSheet data-eos-id="src/components/multi-select.tsx#20"
           open={open}
           onClose={() => setOpen(false)}
           snapPoints={[0.6]}
         >
-          <h3 className="font-heading text-base font-semibold text-neutral-900 mb-3">
+          <h3 data-eos-id="src/components/multi-select.tsx#21" className="font-heading text-base font-semibold text-neutral-900 mb-3">
             {label ?? allLabel}
           </h3>
           {clearRow}
-          <div className="my-1 border-t border-neutral-100" />
+          <div data-eos-id="src/components/multi-select.tsx#22" className="my-1 border-t border-neutral-100" />
           {optionsList}
         </BottomSheet>
       )}
