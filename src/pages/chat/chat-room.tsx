@@ -127,7 +127,7 @@ function PinnedMessageBar({
   const hasMultiple = messages.length > 1
 
   return (
-    <div data-eos-id="src/pages/chat/chat-room.tsx#0" className="shrink-0 bg-white border-b border-neutral-100">
+    <div data-eos-id="src/pages/chat/chat-room.tsx#0" data-eos-v="2" className="shrink-0 bg-white border-b border-neutral-100">
       <div data-eos-id="src/pages/chat/chat-room.tsx#1" className="flex w-full items-center gap-2.5 px-4 py-2.5 min-h-11">
         <div data-eos-id="src/pages/chat/chat-room.tsx#2" className="flex items-center justify-center h-7 w-7 rounded-sm bg-primary-50 shrink-0">
           <Pin data-eos-id="src/pages/chat/chat-room.tsx#3" size={13} className="text-primary-500" />
