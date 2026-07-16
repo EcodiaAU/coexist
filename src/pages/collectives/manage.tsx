@@ -114,7 +114,7 @@ function EditCollectiveSheet({
   }
 
   return (
-    <BottomSheet data-eos-id="src/pages/collectives/manage.tsx#0" open={open} onClose={onClose} snapPoints={[0.85]}>
+    <BottomSheet data-eos-id="src/pages/collectives/manage.tsx#0" data-eos-v="2" open={open} onClose={onClose} snapPoints={[0.85]}>
       <div data-eos-id="src/pages/collectives/manage.tsx#1" className="space-y-4">
         <h3 data-eos-id="src/pages/collectives/manage.tsx#2" className="font-heading text-lg font-semibold text-neutral-900">
           Edit Collective
@@ -127,7 +127,7 @@ function EditCollectiveSheet({
           </label>
           <div data-eos-id="src/pages/collectives/manage.tsx#5" className="mt-1.5 relative rounded-sm overflow-hidden bg-neutral-100" style={{ aspectRatio: '16/9' }}>
             {coverPreview ? (
-              <img data-eos-id="src/pages/collectives/manage.tsx#6" src={coverPreview} alt="Cover" loading="lazy" className="w-full h-full object-cover" />
+              <img data-eos-src="dynamic" data-eos-src-label="Cover preview" data-eos-id="src/pages/collectives/manage.tsx#6" src={coverPreview} alt="Cover" loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <div data-eos-id="src/pages/collectives/manage.tsx#7" className="flex flex-col items-center justify-center h-full text-neutral-400 gap-1.5">
                 <ImagePlus data-eos-id="src/pages/collectives/manage.tsx#8" size={28} />
@@ -477,7 +477,7 @@ export default function CollectiveManagePage() {
           <div data-eos-id="src/pages/collectives/manage.tsx#53" className="flex items-center gap-3">
             <div data-eos-id="src/pages/collectives/manage.tsx#54" className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-sm bg-primary-100">
               {collective.cover_image_url ? (
-                <img data-eos-id="src/pages/collectives/manage.tsx#55" src={collective.cover_image_url} alt={collective.name} loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/collectives/manage.tsx#55" src={collective.cover_image_url} alt={collective.name} loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
               ) : (
                 <div data-eos-id="src/pages/collectives/manage.tsx#56" className="flex h-full w-full items-center justify-center">
                   <Users data-eos-id="src/pages/collectives/manage.tsx#57" size={24} className="text-primary-400" />
