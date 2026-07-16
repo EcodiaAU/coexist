@@ -71,10 +71,10 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
   const isCampout = channel.type === 'campout'
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/pages/chat/index.tsx#0"
       variants={shouldReduceMotion ? undefined : fadeUp}
     >
-      <Link
+      <Link data-eos-id="src/pages/chat/index.tsx#1"
         to={`/chat/channel/${channel.id}`}
         className={cn(
           'group relative flex items-center gap-4 rounded-md p-4',
@@ -84,50 +84,50 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
         )}
       >
         {/* Channel type icon */}
-        <div className="relative flex-shrink-0">
-          <div className={cn(
+        <div data-eos-id="src/pages/chat/index.tsx#2" className="relative flex-shrink-0">
+          <div data-eos-id="src/pages/chat/index.tsx#3" className={cn(
             'h-12 w-12 rounded-sm flex items-center justify-center',
             config.iconBg,
           )}>
-            <Icon size={22} strokeWidth={2} />
+            <Icon data-eos-id="src/pages/chat/index.tsx#4" size={22} strokeWidth={2} />
           </div>
           {/* Lock badge (staff channels only) */}
           {!isCampout && (
-            <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white flex items-center justify-center shadow-sm ring-1 ring-neutral-100">
-              <Lock size={10} strokeWidth={2} className="text-neutral-500" />
+            <div data-eos-id="src/pages/chat/index.tsx#5" className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white flex items-center justify-center shadow-sm ring-1 ring-neutral-100">
+              <Lock data-eos-id="src/pages/chat/index.tsx#6" size={10} strokeWidth={2} className="text-neutral-500" />
             </div>
           )}
           {hasUnread && (
-            <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-primary-500 ring-2 ring-white" />
+            <div data-eos-id="src/pages/chat/index.tsx#7" className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-primary-500 ring-2 ring-white" />
           )}
         </div>
 
         {/* Name + label */}
-        <div className="flex-1 min-w-0">
-          <p className={cn(
+        <div data-eos-id="src/pages/chat/index.tsx#8" className="flex-1 min-w-0">
+          <p data-eos-id="src/pages/chat/index.tsx#9" data-eos-var="channel.name" data-eos-var-label="Name" data-eos-var-scope="prop" className={cn(
             'text-[15px] line-clamp-2 leading-snug break-words',
             hasUnread ? 'font-bold text-neutral-900' : 'font-semibold text-neutral-800',
           )}>
             {cleanChannelName(channel.name)}
           </p>
-          <div className="flex items-center gap-2 mt-1">
-            <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', config.badge)}>
+          <div data-eos-id="src/pages/chat/index.tsx#10" className="flex items-center gap-2 mt-1">
+            <span data-eos-id="src/pages/chat/index.tsx#11" data-eos-var="config.label" data-eos-var-label="Label" data-eos-var-scope="prop" className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', config.badge)}>
               {config.label}
             </span>
-            <span className="text-[11px] font-medium text-neutral-400">
+            <span data-eos-id="src/pages/chat/index.tsx#12" className="text-[11px] font-medium text-neutral-400">
               {isCampout ? 'Group chat' : 'Staff only'}
             </span>
           </div>
         </div>
 
         {/* Unread / chevron */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div data-eos-id="src/pages/chat/index.tsx#13" className="flex items-center gap-2 shrink-0">
           {hasUnread ? (
-            <span className="flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-500 px-2 text-xs font-bold text-white">
+            <span data-eos-id="src/pages/chat/index.tsx#14" className="flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-500 px-2 text-xs font-bold text-white">
               {unread > 99 ? '99+' : unread}
             </span>
           ) : (
-            <ChevronRight size={18} strokeWidth={2} className="text-neutral-300 transition-transform duration-150 group-hover:translate-x-0.5" />
+            <ChevronRight data-eos-id="src/pages/chat/index.tsx#15" size={18} strokeWidth={2} className="text-neutral-300 transition-transform duration-150 group-hover:translate-x-0.5" />
           )}
         </div>
       </Link>
@@ -161,10 +161,10 @@ function CollectiveChatRow({
   const hasUnread = unread > 0
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/pages/chat/index.tsx#16"
       variants={shouldReduceMotion ? undefined : fadeUp}
     >
-      <Link
+      <Link data-eos-id="src/pages/chat/index.tsx#17"
         to={`/chat/${collectiveId}`}
         className={cn(
           'group relative flex items-center gap-4 rounded-md p-4',
@@ -174,8 +174,8 @@ function CollectiveChatRow({
         )}
       >
         {/* Collective avatar */}
-        <div className="relative flex-shrink-0">
-          <div
+        <div data-eos-id="src/pages/chat/index.tsx#18" className="relative flex-shrink-0">
+          <div data-eos-id="src/pages/chat/index.tsx#19"
             className={cn(
               'h-12 w-12 overflow-hidden rounded-sm',
               hasUnread
@@ -184,26 +184,26 @@ function CollectiveChatRow({
             )}
           >
             {collective.cover_image_url ? (
-              <img
+              <img data-eos-id="src/pages/chat/index.tsx#20"
                 src={collective.cover_image_url}
                 alt=""
                 loading="lazy"
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-primary-50">
-                <Leaf size={20} strokeWidth={2} className="text-primary-500" />
+              <div data-eos-id="src/pages/chat/index.tsx#21" className="flex h-full w-full items-center justify-center bg-primary-50">
+                <Leaf data-eos-id="src/pages/chat/index.tsx#22" size={20} strokeWidth={2} className="text-primary-500" />
               </div>
             )}
           </div>
           {hasUnread && (
-            <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-primary-500 ring-2 ring-white" />
+            <div data-eos-id="src/pages/chat/index.tsx#23" className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-primary-500 ring-2 ring-white" />
           )}
         </div>
 
         {/* Name + meta */}
-        <div className="flex-1 min-w-0">
-          <p
+        <div data-eos-id="src/pages/chat/index.tsx#24" className="flex-1 min-w-0">
+          <p data-eos-id="src/pages/chat/index.tsx#25" data-eos-var="collective.name" data-eos-var-label="Name" data-eos-var-scope="prop"
             className={cn(
               'text-[15px] line-clamp-2 leading-snug break-words',
               hasUnread ? 'font-bold text-neutral-900' : 'font-semibold text-neutral-800',
@@ -211,16 +211,16 @@ function CollectiveChatRow({
           >
             {collective.name}
           </p>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-[11px] font-medium text-neutral-500 flex items-center gap-1">
-              <Users size={11} strokeWidth={2} className="shrink-0" />
+          <div data-eos-id="src/pages/chat/index.tsx#26" className="flex items-center gap-2 mt-1">
+            <span data-eos-id="src/pages/chat/index.tsx#27" data-eos-var="collective.member_count" data-eos-var-label="Member count" data-eos-var-scope="prop" className="text-[11px] font-medium text-neutral-500 flex items-center gap-1">
+              <Users data-eos-id="src/pages/chat/index.tsx#28" size={11} strokeWidth={2} className="shrink-0" />
               {collective.member_count}
             </span>
             {(collective.region || collective.state) && (
               <>
-                <span className="w-1 h-1 rounded-full bg-neutral-300" />
-                <span className="text-[11px] font-medium text-neutral-500 truncate flex items-center gap-1">
-                  <MapPin size={11} strokeWidth={2} className="shrink-0" />
+                <span data-eos-id="src/pages/chat/index.tsx#29" className="w-1 h-1 rounded-full bg-neutral-300" />
+                <span data-eos-id="src/pages/chat/index.tsx#30" data-eos-var="collective.region" data-eos-var-label="Region" data-eos-var-scope="prop" className="text-[11px] font-medium text-neutral-500 truncate flex items-center gap-1">
+                  <MapPin data-eos-id="src/pages/chat/index.tsx#31" size={11} strokeWidth={2} className="shrink-0" />
                   {collective.region ?? collective.state}
                 </span>
               </>
@@ -229,13 +229,13 @@ function CollectiveChatRow({
         </div>
 
         {/* Unread / chevron */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div data-eos-id="src/pages/chat/index.tsx#32" className="flex items-center gap-2 shrink-0">
           {hasUnread ? (
-            <span className="flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-500 px-2 text-xs font-bold text-white">
+            <span data-eos-id="src/pages/chat/index.tsx#33" className="flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-500 px-2 text-xs font-bold text-white">
               {unread > 99 ? '99+' : unread}
             </span>
           ) : (
-            <ChevronRight size={18} strokeWidth={2} className="text-neutral-300 transition-transform duration-150 group-hover:translate-x-0.5" />
+            <ChevronRight data-eos-id="src/pages/chat/index.tsx#34" size={18} strokeWidth={2} className="text-neutral-300 transition-transform duration-150 group-hover:translate-x-0.5" />
           )}
         </div>
       </Link>
@@ -249,12 +249,12 @@ function CollectiveChatRow({
 
 function SectionDivider({ icon: Icon, label }: { icon: typeof Lock; label: string }) {
   return (
-    <div className="flex items-center gap-2 px-1 mb-3">
-      <Icon size={12} strokeWidth={2} className="text-neutral-400" />
-      <p className="text-[11px] uppercase tracking-[0.15em] font-bold text-neutral-400">
+    <div data-eos-id="src/pages/chat/index.tsx#35" className="flex items-center gap-2 px-1 mb-3">
+      <Icon data-eos-id="src/pages/chat/index.tsx#36" size={12} strokeWidth={2} className="text-neutral-400" />
+      <p data-eos-id="src/pages/chat/index.tsx#37" className="text-[11px] uppercase tracking-[0.15em] font-bold text-neutral-400">
         {label}
       </p>
-      <div className="h-px flex-1 bg-neutral-100" />
+      <div data-eos-id="src/pages/chat/index.tsx#38" className="h-px flex-1 bg-neutral-100" />
     </div>
   )
 }
@@ -331,15 +331,15 @@ export default function ChatListPage() {
 
   if (showLoading) {
     return (
-      <Page noBackground className="!px-0 bg-white">
-        <div className="px-4 lg:px-6 pt-14 pb-4 space-y-3">
+      <Page data-eos-id="src/pages/chat/index.tsx#39" noBackground className="!px-0 bg-white">
+        <div data-eos-id="src/pages/chat/index.tsx#40" className="px-4 lg:px-6 pt-14 pb-4 space-y-3">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="rounded-md bg-white border border-neutral-100 p-4 animate-pulse">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-sm bg-neutral-100" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-neutral-100 rounded w-2/3" />
-                  <div className="h-3 bg-neutral-100 rounded w-1/3" />
+            <div data-eos-id="src/pages/chat/index.tsx#41" key={i} className="rounded-md bg-white border border-neutral-100 p-4 animate-pulse">
+              <div data-eos-id="src/pages/chat/index.tsx#42" className="flex items-center gap-4">
+                <div data-eos-id="src/pages/chat/index.tsx#43" className="w-12 h-12 rounded-sm bg-neutral-100" />
+                <div data-eos-id="src/pages/chat/index.tsx#44" className="flex-1 space-y-2">
+                  <div data-eos-id="src/pages/chat/index.tsx#45" className="h-4 bg-neutral-100 rounded w-2/3" />
+                  <div data-eos-id="src/pages/chat/index.tsx#46" className="h-3 bg-neutral-100 rounded w-1/3" />
                 </div>
               </div>
             </div>
@@ -352,9 +352,9 @@ export default function ChatListPage() {
 
   if (isError && channelsError) {
     return (
-      <Page noBackground className="!px-0 bg-white">
-        <div className="px-4 lg:px-6 pt-14">
-          <EmptyState
+      <Page data-eos-id="src/pages/chat/index.tsx#47" noBackground className="!px-0 bg-white">
+        <div data-eos-id="src/pages/chat/index.tsx#48" className="px-4 lg:px-6 pt-14">
+          <EmptyState data-eos-id="src/pages/chat/index.tsx#49"
             illustration="error"
             title="Something went wrong"
             description="We couldn't load your chats. Try again later."
@@ -366,12 +366,12 @@ export default function ChatListPage() {
 
   if (!myCollectives?.length && !hasStaffChannels && !hasCampoutChannels && !isGlobalStaff) {
     return (
-      <Page noBackground className="!px-0 bg-white">
-        <div className="px-4 lg:px-6 pt-14">
-          <h1 className="text-[11px] uppercase tracking-[0.15em] font-bold text-neutral-400 mb-6">
+      <Page data-eos-id="src/pages/chat/index.tsx#50" noBackground className="!px-0 bg-white">
+        <div data-eos-id="src/pages/chat/index.tsx#51" className="px-4 lg:px-6 pt-14">
+          <h1 data-eos-id="src/pages/chat/index.tsx#52" className="text-[11px] uppercase tracking-[0.15em] font-bold text-neutral-400 mb-6">
             Chat
           </h1>
-          <EmptyState
+          <EmptyState data-eos-id="src/pages/chat/index.tsx#53"
             illustration="empty"
             title="No group chats yet"
             description="Join a collective to access group chat with other members"
@@ -383,9 +383,9 @@ export default function ChatListPage() {
   }
 
   return (
-    <Page noBackground className="!px-0 bg-white">
-        <div className="px-4 lg:px-6">
-            <motion.div
+    <Page data-eos-id="src/pages/chat/index.tsx#54" noBackground className="!px-0 bg-white">
+        <div data-eos-id="src/pages/chat/index.tsx#55" className="px-4 lg:px-6">
+            <motion.div data-eos-id="src/pages/chat/index.tsx#56"
               className="pt-14 pb-6 space-y-6"
               variants={shouldReduceMotion ? undefined : stagger}
               initial="hidden"
@@ -394,16 +394,16 @@ export default function ChatListPage() {
 
               {/* Campouts section */}
               {hasCampoutChannels && (
-                <motion.div variants={fadeUp}>
-                  <SectionDivider icon={Tent} label="Campouts" />
-                  <motion.div
+                <motion.div data-eos-id="src/pages/chat/index.tsx#57" variants={fadeUp}>
+                  <SectionDivider data-eos-id="src/pages/chat/index.tsx#58" icon={Tent} label="Campouts" />
+                  <motion.div data-eos-id="src/pages/chat/index.tsx#59"
                     className="space-y-3"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"
                   >
                     {campoutChannels.map((channel) => (
-                      <StaffChannelRow
+                      <StaffChannelRow data-eos-id="src/pages/chat/index.tsx#60"
                         key={channel.id}
                         channel={channel}
                         unread={channelUnreads[channel.id] ?? 0}
@@ -416,16 +416,16 @@ export default function ChatListPage() {
 
               {/* Staff Channels section */}
               {hasStaffChannels && (
-                <motion.div variants={fadeUp}>
-                  <SectionDivider icon={Lock} label="Staff Channels" />
-                  <motion.div
+                <motion.div data-eos-id="src/pages/chat/index.tsx#61" variants={fadeUp}>
+                  <SectionDivider data-eos-id="src/pages/chat/index.tsx#62" icon={Lock} label="Staff Channels" />
+                  <motion.div data-eos-id="src/pages/chat/index.tsx#63"
                     className="space-y-3"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"
                   >
                     {otherChannels.map((channel) => (
-                      <StaffChannelRow
+                      <StaffChannelRow data-eos-id="src/pages/chat/index.tsx#64"
                         key={channel.id}
                         channel={channel}
                         unread={channelUnreads[channel.id] ?? 0}
@@ -438,9 +438,9 @@ export default function ChatListPage() {
 
               {/* Collective Chats section */}
               {(myCollectives?.length ?? 0) > 0 && (
-                <motion.div variants={fadeUp}>
-                  <SectionDivider icon={MessageCircle} label="Collectives" />
-                  <motion.div
+                <motion.div data-eos-id="src/pages/chat/index.tsx#65" variants={fadeUp}>
+                  <SectionDivider data-eos-id="src/pages/chat/index.tsx#66" icon={MessageCircle} label="Collectives" />
+                  <motion.div data-eos-id="src/pages/chat/index.tsx#67"
                     className="space-y-3"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
@@ -460,7 +460,7 @@ export default function ChatListPage() {
                       if (!collective) return null
 
                       return (
-                        <CollectiveChatRow
+                        <CollectiveChatRow data-eos-id="src/pages/chat/index.tsx#68"
                           key={membership.collective_id}
                           collective={collective}
                           collectiveId={membership.collective_id}
@@ -475,16 +475,16 @@ export default function ChatListPage() {
 
               {/* All Collectives section (staff/admin only) */}
               {isGlobalStaff && otherCollectives.length > 0 && (
-                <motion.div variants={fadeUp}>
-                  <SectionDivider icon={Shield} label="All Collectives" />
-                  <motion.div
+                <motion.div data-eos-id="src/pages/chat/index.tsx#69" variants={fadeUp}>
+                  <SectionDivider data-eos-id="src/pages/chat/index.tsx#70" icon={Shield} label="All Collectives" />
+                  <motion.div data-eos-id="src/pages/chat/index.tsx#71"
                     className="space-y-3"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"
                   >
                     {otherCollectives.map((collective) => (
-                      <CollectiveChatRow
+                      <CollectiveChatRow data-eos-id="src/pages/chat/index.tsx#72"
                         key={collective.id}
                         collective={collective}
                         collectiveId={collective.id}
