@@ -70,7 +70,7 @@ export function SurveyQuestionRenderer({
   const visibleQuestions = questions.filter((q) => isQuestionVisible(q, answers))
 
   return (
-    <div data-eos-id="src/components/survey-questions.tsx#0" className={cn('space-y-5', className)}>
+    <div data-eos-id="src/components/survey-questions.tsx#0" data-eos-v="2" className={cn('space-y-5', className)}>
       {visibleQuestions.map((q, i) => (
         <div data-eos-id="src/components/survey-questions.tsx#1" key={q.id} className="space-y-2">
           <div data-eos-id="src/components/survey-questions.tsx#2">
