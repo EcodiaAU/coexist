@@ -186,7 +186,7 @@ export function MultiSelect({
   }, [open, isMobile])
 
   const trigger = (
-    <button data-eos-id="src/components/multi-select.tsx#0"
+    <button data-eos-id="src/components/multi-select.tsx#0" data-eos-v="2"
       ref={triggerRef}
       type="button"
       id={id}
