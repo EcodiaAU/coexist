@@ -44,12 +44,12 @@ export function Toggle({
   const config = sizeConfig[size]
 
   return (
-    <div className={cn('flex items-start gap-3 min-h-11', className)}>
+    <div data-eos-id="src/components/toggle.tsx#0" className={cn('flex items-start gap-3 min-h-11', className)}>
       {/* Label area (left side) */}
       {(label || description) && (
-        <div className="flex-1 min-w-0 select-none">
+        <div data-eos-id="src/components/toggle.tsx#1" className="flex-1 min-w-0 select-none">
           {label && (
-            <label
+            <label data-eos-id="src/components/toggle.tsx#2"
               id={id}
               htmlFor={`${id}-switch`}
               className={cn(
@@ -61,7 +61,7 @@ export function Toggle({
             </label>
           )}
           {description && (
-            <p
+            <p data-eos-id="src/components/toggle.tsx#3"
               id={descriptionId}
               className={cn(
                 'text-caption text-neutral-500 mt-0.5',
@@ -75,7 +75,7 @@ export function Toggle({
       )}
 
       {/* Switch - outer tap area wraps the visual track for easy touch */}
-      <button
+      <button data-eos-id="src/components/toggle.tsx#4"
         id={`${id}-switch`}
         type="button"
         role="switch"
@@ -93,7 +93,7 @@ export function Toggle({
           'disabled:opacity-50 disabled:cursor-not-allowed',
         )}
       >
-        <span
+        <span data-eos-id="src/components/toggle.tsx#5"
           className={cn(
             'relative inline-flex shrink-0 rounded-full',
             'transition-colors duration-150',
@@ -101,7 +101,7 @@ export function Toggle({
             checked ? 'bg-primary-500' : 'bg-primary-200',
           )}
         >
-          <motion.span
+          <motion.span data-eos-id="src/components/toggle.tsx#6"
             aria-hidden="true"
             className={cn(
               'absolute top-1/2 block rounded-full bg-white shadow-sm',
