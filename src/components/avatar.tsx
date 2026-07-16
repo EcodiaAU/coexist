@@ -62,7 +62,7 @@ export function Avatar({
   /* Skeleton */
   if (loading) {
     return (
-      <div data-eos-id="src/components/avatar.tsx#0"
+      <div data-eos-id="src/components/avatar.tsx#0" data-eos-v="2"
         role="status"
         aria-label="Loading avatar"
         className={cn('rounded-full bg-white animate-pulse shrink-0', className)}
@@ -85,7 +85,7 @@ export function Avatar({
         )}
       >
         {showImage ? (
-          <img data-eos-id="src/components/avatar.tsx#3"
+          <img data-eos-src="dynamic" data-eos-src-label="Px" data-eos-id="src/components/avatar.tsx#3"
             src={isSupabaseStorageUrl(src!) ? getTransformUrl(src!, { width: s.px * 2, height: s.px * 2 }) : src!}
             alt={name ?? undefined}
             loading="lazy"
