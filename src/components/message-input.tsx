@@ -207,7 +207,7 @@ export function MessageInput({
   const canUseActions = isLeader || !!onCreateCarpool
 
   return (
-    <div
+    <div data-eos-id="src/components/message-input.tsx#0"
       className={cn(
         'z-10 bg-white shadow-none border-t border-neutral-100',
         className,
@@ -219,31 +219,31 @@ export function MessageInput({
       }}
     >
       {/* Leader actions panel */}
-      <AnimatePresence>
+      <AnimatePresence data-eos-id="src/components/message-input.tsx#1">
         {showLeaderActions && canUseActions && (
-          <motion.div
+          <motion.div data-eos-id="src/components/message-input.tsx#2"
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="bg-neutral-50 px-3 py-3"
           >
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 flex-1">
+            <div data-eos-id="src/components/message-input.tsx#3" className="flex items-center gap-1.5 mb-1.5">
+              <p data-eos-id="src/components/message-input.tsx#4" className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 flex-1">
                 {isLeader ? 'Leader Actions' : 'Actions'}
               </p>
-              <button
+              <button data-eos-id="src/components/message-input.tsx#5"
                 type="button"
                 onClick={() => setShowLeaderActions(false)}
                 className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 hover:bg-neutral-100 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                 aria-label="Close actions"
               >
-                <X size={14} />
+                <X data-eos-id="src/components/message-input.tsx#6" size={14} />
               </button>
             </div>
-            <div className="flex gap-2">
+            <div data-eos-id="src/components/message-input.tsx#7" className="flex gap-2">
               {actions.map((action) => (
-                <button
+                <button data-eos-id="src/components/message-input.tsx#8"
                   key={action.label}
                   type="button"
                   onClick={() => {
@@ -259,8 +259,8 @@ export function MessageInput({
                     !action.onClick && 'opacity-40 cursor-default',
                   )}
                 >
-                  <action.icon size={18} />
-                  <span className="text-[11px] font-semibold leading-tight text-center">
+                  <action.icon data-eos-id="src/components/message-input.tsx#9" size={18} />
+                  <span data-eos-id="src/components/message-input.tsx#10" data-eos-var="action.label" data-eos-var-label="Label" data-eos-var-scope="item" className="text-[11px] font-semibold leading-tight text-center">
                     {action.label}
                   </span>
                 </button>
@@ -272,7 +272,7 @@ export function MessageInput({
 
       {/* Mention picker - sits above the input bar so it never overlaps the soft keyboard */}
       {mentionCollectiveId && (
-        <MentionPicker
+        <MentionPicker data-eos-id="src/components/message-input.tsx#11"
           collectiveId={mentionCollectiveId}
           query={mentionState?.query ?? ''}
           open={mentionState !== null}
@@ -283,26 +283,26 @@ export function MessageInput({
       )}
 
       {/* Profanity warning */}
-      <AnimatePresence>
+      <AnimatePresence data-eos-id="src/components/message-input.tsx#12">
         {profanityWarning && (
-          <motion.div
+          <motion.div data-eos-id="src/components/message-input.tsx#13"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="px-3 pt-2"
           >
-            <div className="flex items-center gap-2 rounded-sm bg-warning-100 px-3.5 py-2.5 border border-warning-200/60">
-              <p className="text-xs font-semibold text-warning-800">
+            <div data-eos-id="src/components/message-input.tsx#14" className="flex items-center gap-2 rounded-sm bg-warning-100 px-3.5 py-2.5 border border-warning-200/60">
+              <p data-eos-id="src/components/message-input.tsx#15" className="text-xs font-semibold text-warning-800">
                 Please keep it friendly! Your message contains language that isn't allowed. Try rephrasing it.
               </p>
-              <button
+              <button data-eos-id="src/components/message-input.tsx#16"
                 type="button"
                 onClick={() => setProfanityWarning(false)}
                 className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-warning-500 hover:bg-warning-200 active:scale-[0.98] transition-[colors,transform] duration-150 shrink-0 cursor-pointer"
                 aria-label="Dismiss warning"
               >
-                <X size={14} />
+                <X data-eos-id="src/components/message-input.tsx#17" size={14} />
               </button>
             </div>
           </motion.div>
@@ -310,8 +310,8 @@ export function MessageInput({
       </AnimatePresence>
 
       {/* Input bar */}
-      <div className="px-3 pt-2">
-        <div
+      <div data-eos-id="src/components/message-input.tsx#18" className="px-3 pt-2">
+        <div data-eos-id="src/components/message-input.tsx#19"
           role="toolbar"
           aria-label={ariaLabel}
           className={cn(
@@ -323,7 +323,7 @@ export function MessageInput({
         >
           {/* Actions plus button (leaders: full set; members: carpool) */}
           {canUseActions && (
-            <button
+            <button data-eos-id="src/components/message-input.tsx#20"
               type="button"
               onClick={() => setShowLeaderActions(!showLeaderActions)}
               disabled={disabled}
@@ -338,13 +338,13 @@ export function MessageInput({
                 'disabled:pointer-events-none',
               )}
             >
-              <Plus size={20} aria-hidden="true" />
+              <Plus data-eos-id="src/components/message-input.tsx#21" size={20} aria-hidden="true" />
             </button>
           )}
 
           {/* Attachment button */}
           {onAttach && (
-            <button
+            <button data-eos-id="src/components/message-input.tsx#22"
               type="button"
               onClick={onAttach}
               disabled={disabled}
@@ -357,12 +357,12 @@ export function MessageInput({
                 'disabled:pointer-events-none',
               )}
             >
-              <Paperclip size={20} aria-hidden="true" />
+              <Paperclip data-eos-id="src/components/message-input.tsx#23" size={20} aria-hidden="true" />
             </button>
           )}
 
           {/* Textarea */}
-          <textarea
+          <textarea data-eos-id="src/components/message-input.tsx#24"
             ref={textareaRef}
             value={value}
             onChange={handleChange}
@@ -388,9 +388,9 @@ export function MessageInput({
           />
 
           {/* Send button */}
-          <AnimatePresence>
+          <AnimatePresence data-eos-id="src/components/message-input.tsx#25">
             {hasText && (
-              <motion.button
+              <motion.button data-eos-id="src/components/message-input.tsx#26"
                 type="button"
                 onClick={handleSend}
                 disabled={disabled}
@@ -408,7 +408,7 @@ export function MessageInput({
                   'disabled:pointer-events-none disabled:opacity-50',
                 )}
               >
-                <SendHorizontal size={19} strokeWidth={2.5} aria-hidden="true" />
+                <SendHorizontal data-eos-id="src/components/message-input.tsx#27" size={19} strokeWidth={2.5} aria-hidden="true" />
               </motion.button>
             )}
           </AnimatePresence>
