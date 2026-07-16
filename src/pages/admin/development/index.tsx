@@ -41,7 +41,7 @@ import {
 
 function StatusBadge({ status }: { status: string }) {
   return (
-    <span data-eos-id="src/pages/admin/development/index.tsx#0"
+    <span data-eos-id="src/pages/admin/development/index.tsx#0" data-eos-v="2"
       className={cn(
         'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider',
         status === 'published' && 'bg-moss-100 text-moss-700',
