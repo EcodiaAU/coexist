@@ -213,7 +213,7 @@ export default function AdminPhotosPage() {
   const hasFilters = !!collectiveId || dateRange !== 'all' || !!activityType || !!attendedByUserId
 
   return (
-    <div data-eos-id="src/pages/admin/photos.tsx#0" className="px-2 sm:px-4 lg:px-6 pt-6 pb-24 w-full">
+    <div data-eos-id="src/pages/admin/photos.tsx#0" data-eos-v="2" className="px-2 sm:px-4 lg:px-6 pt-6 pb-24 w-full">
       <AnimatePresence data-eos-id="src/pages/admin/photos.tsx#1" mode="wait">
         {openedGroup ? (
           /* --- LIBRARY VIEW: photos from a single event --- */
@@ -458,7 +458,7 @@ function EventGroupCard({ group, onOpen }: { group: EventGroup; onOpen: () => vo
         {preview.map((p, i) => (
           <div data-eos-id="src/pages/admin/photos.tsx#62" key={p.id} className="relative aspect-square bg-neutral-200 overflow-hidden">
             {p.url && (
-              <img data-eos-id="src/pages/admin/photos.tsx#63"
+              <img data-eos-src="dynamic" data-eos-src-label="Url" data-eos-id="src/pages/admin/photos.tsx#63"
                 src={p.url}
                 alt=""
                 loading="lazy"
@@ -535,7 +535,7 @@ function PhotoLibraryGrid({
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : (
-                <img data-eos-id="src/pages/admin/photos.tsx#78"
+                <img data-eos-src="dynamic" data-eos-src-label="Url" data-eos-id="src/pages/admin/photos.tsx#78"
                   src={p.url}
                   alt={p.caption ?? ''}
                   loading="lazy"
