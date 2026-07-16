@@ -38,7 +38,7 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item._key })
   const style = { transform: CSS.Transform.toString(transform), transition }
   return (
-    <motion.div
+    <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#0"
       ref={setNodeRef}
       style={style}
       layout
@@ -53,17 +53,17 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
           : 'bg-white shadow-sm',
       )}
     >
-      <button type="button" className="cursor-grab touch-none text-neutral-300 hover:text-neutral-500 active:cursor-grabbing transition-colors" {...attributes} {...listeners}>
-        <GripVertical size={18} />
+      <button data-eos-id="src/pages/admin/development/create-section.tsx#1" type="button" className="cursor-grab touch-none text-neutral-300 hover:text-neutral-500 active:cursor-grabbing transition-colors" {...attributes} {...listeners}>
+        <GripVertical data-eos-id="src/pages/admin/development/create-section.tsx#2" size={18} />
       </button>
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-bold text-neutral-900 truncate">{item.module.title}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[11px] text-secondary-600 font-medium capitalize">{item.module.category.replace('_', ' ')}</span>
-          <span className="flex items-center gap-0.5 text-[11px] text-neutral-400"><Clock size={10} />{item.module.estimated_minutes}m</span>
+      <div data-eos-id="src/pages/admin/development/create-section.tsx#3" className="flex-1 min-w-0">
+        <p data-eos-id="src/pages/admin/development/create-section.tsx#4" data-eos-var="item.module.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="text-[13px] font-bold text-neutral-900 truncate">{item.module.title}</p>
+        <div data-eos-id="src/pages/admin/development/create-section.tsx#5" className="flex items-center gap-2 mt-0.5">
+          <span data-eos-id="src/pages/admin/development/create-section.tsx#6" data-eos-var="item.module.category" data-eos-var-label="Category" data-eos-var-scope="prop" className="text-[11px] text-secondary-600 font-medium capitalize">{item.module.category.replace('_', ' ')}</span>
+          <span data-eos-id="src/pages/admin/development/create-section.tsx#7" data-eos-var="item.module.estimated_minutes" data-eos-var-label="Estimated minutes" data-eos-var-scope="prop" className="flex items-center gap-0.5 text-[11px] text-neutral-400"><Clock data-eos-id="src/pages/admin/development/create-section.tsx#8" size={10} />{item.module.estimated_minutes}m</span>
         </div>
       </div>
-      <motion.button
+      <motion.button data-eos-id="src/pages/admin/development/create-section.tsx#9" data-eos-var="item.is_required" data-eos-var-label="Is required" data-eos-var-scope="prop"
         type="button"
         onClick={onToggleRequired}
         whileTap={{ scale: 0.93 }}
@@ -72,23 +72,23 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
           item.is_required ? 'bg-moss-100 text-moss-700' : 'bg-neutral-50 text-neutral-400',
         )}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence data-eos-id="src/pages/admin/development/create-section.tsx#10" mode="wait">
           {item.is_required && (
-            <motion.span key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.15 }}>
-              <Check size={10} />
+            <motion.span data-eos-id="src/pages/admin/development/create-section.tsx#11" key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.15 }}>
+              <Check data-eos-id="src/pages/admin/development/create-section.tsx#12" size={10} />
             </motion.span>
           )}
         </AnimatePresence>
         {item.is_required ? 'Required' : 'Optional'}
       </motion.button>
-      <motion.button
+      <motion.button data-eos-id="src/pages/admin/development/create-section.tsx#13"
         type="button"
         onClick={onRemove}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         className="flex items-center justify-center w-9 h-9 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors"
       >
-        <Trash2 size={16} />
+        <Trash2 data-eos-id="src/pages/admin/development/create-section.tsx#14" size={16} />
       </motion.button>
     </motion.div>
   )
@@ -102,20 +102,20 @@ function ModulePicker({ modules, selectedIds, onSelect }: { modules: DevModule[]
   }, [modules, selectedIds, search])
 
   return (
-    <div className="space-y-3">
-      <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search published modules..." className="text-sm" />
+    <div data-eos-id="src/pages/admin/development/create-section.tsx#15" className="space-y-3">
+      <Input data-eos-id="src/pages/admin/development/create-section.tsx#16" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search published modules..." className="text-sm" />
       {filtered.length === 0 ? (
-        <p className="text-[11px] text-neutral-400 text-center py-4">{search ? 'No matching modules' : 'All published modules are already added'}</p>
+        <p data-eos-id="src/pages/admin/development/create-section.tsx#17" className="text-[11px] text-neutral-400 text-center py-4">{search ? 'No matching modules' : 'All published modules are already added'}</p>
       ) : (
-        <div className="max-h-60 overflow-y-auto space-y-1.5">
+        <div data-eos-id="src/pages/admin/development/create-section.tsx#18" className="max-h-60 overflow-y-auto space-y-1.5">
           {filtered.map((m) => (
-            <motion.button key={m.id} type="button" onClick={() => onSelect(m)} whileTap={{ scale: 0.98 }}
+            <motion.button data-eos-id="src/pages/admin/development/create-section.tsx#19" key={m.id} type="button" onClick={() => onSelect(m)} whileTap={{ scale: 0.98 }}
               className="w-full flex items-center gap-3 p-3 rounded-sm hover:bg-neutral-50 transition-colors text-left">
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-neutral-900 truncate">{m.title}</p>
-                <p className="text-[11px] text-neutral-500 capitalize">{m.category.replace('_', ' ')} · {m.estimated_minutes}m</p>
+              <div data-eos-id="src/pages/admin/development/create-section.tsx#20" className="flex-1 min-w-0">
+                <p data-eos-id="src/pages/admin/development/create-section.tsx#21" data-eos-var="m.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-[13px] font-semibold text-neutral-900 truncate">{m.title}</p>
+                <p data-eos-id="src/pages/admin/development/create-section.tsx#22" data-eos-var="m.category,m.estimated_minutes" data-eos-var-label="Category, Estimated minutes" data-eos-var-scope="item" className="text-[11px] text-neutral-500 capitalize">{m.category.replace('_', ' ')} · {m.estimated_minutes}m</p>
               </div>
-              <Plus size={16} className="text-neutral-400 shrink-0" />
+              <Plus data-eos-id="src/pages/admin/development/create-section.tsx#23" size={16} className="text-neutral-400 shrink-0" />
             </motion.button>
           ))}
         </div>
@@ -188,75 +188,75 @@ export default function AdminCreateSectionPage() {
 
   if (saved) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto py-8">
-        <SaveSuccessBanner show message={saved.status === 'published' ? 'Section published!' : 'Draft saved!'} subtitle={`"${title}" has been ${saved.status === 'published' ? 'published' : 'saved as a draft'}.`} editPath={`/admin/development/sections/${saved.id}/edit`} onDismiss={() => { setSaved(null); setTitle(''); setDescription(''); setModuleItems([]); setTargetRoles(['leader', 'co_leader', 'assist_leader']) }} />
+      <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#24" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto py-8">
+        <SaveSuccessBanner data-eos-id="src/pages/admin/development/create-section.tsx#25" show message={saved.status === 'published' ? 'Section published!' : 'Draft saved!'} subtitle={`"${title}" has been ${saved.status === 'published' ? 'published' : 'saved as a draft'}.`} editPath={`/admin/development/sections/${saved.id}/edit`} onDismiss={() => { setSaved(null); setTitle(''); setDescription(''); setModuleItems([]); setTargetRoles(['leader', 'co_leader', 'assist_leader']) }} />
       </motion.div>
     )
   }
 
   return (
-    <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">
+    <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#26" variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">
       {/* Details */}
-      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5 mb-1">
-          <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-secondary-700 shadow-sm">
-            <Layers size={16} className="text-white" />
+      <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#27" variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6 space-y-4">
+        <div data-eos-id="src/pages/admin/development/create-section.tsx#28" className="flex items-center gap-2.5 mb-1">
+          <div data-eos-id="src/pages/admin/development/create-section.tsx#29" className="flex items-center justify-center w-9 h-9 rounded-sm bg-secondary-700 shadow-sm">
+            <Layers data-eos-id="src/pages/admin/development/create-section.tsx#30" size={16} className="text-white" />
           </div>
-          <h2 className="font-heading text-base font-bold text-neutral-900">Section Details</h2>
+          <h2 data-eos-id="src/pages/admin/development/create-section.tsx#31" className="font-heading text-base font-bold text-neutral-900">Section Details</h2>
         </div>
-        <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Onboarding Pathway" required />
-        <Input type="textarea" label="Description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What does this pathway cover?" rows={3} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Dropdown label="Category" options={CATEGORY_OPTIONS} value={category} onChange={(v) => setCategory(v as DevCategory)} />
-          <Dropdown label="Prerequisite Section" options={prerequisiteOptions} value={prerequisiteId} onChange={setPrerequisiteId} />
+        <Input data-eos-id="src/pages/admin/development/create-section.tsx#32" label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Onboarding Pathway" required />
+        <Input data-eos-id="src/pages/admin/development/create-section.tsx#33" type="textarea" label="Description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What does this pathway cover?" rows={3} />
+        <div data-eos-id="src/pages/admin/development/create-section.tsx#34" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Dropdown data-eos-id="src/pages/admin/development/create-section.tsx#35" label="Category" options={CATEGORY_OPTIONS} value={category} onChange={(v) => setCategory(v as DevCategory)} />
+          <Dropdown data-eos-id="src/pages/admin/development/create-section.tsx#36" label="Prerequisite Section" options={prerequisiteOptions} value={prerequisiteId} onChange={setPrerequisiteId} />
         </div>
-        <Input label="Thumbnail URL (optional)" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} placeholder="Upload to dev-assets bucket first" />
+        <Input data-eos-id="src/pages/admin/development/create-section.tsx#37" label="Thumbnail URL (optional)" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} placeholder="Upload to dev-assets bucket first" />
       </motion.div>
 
       {/* Audience */}
-      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6">
-        <div className="flex items-center gap-2.5 mb-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-700 shadow-sm">
-            <Users size={16} className="text-white" />
+      <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#38" variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6">
+        <div data-eos-id="src/pages/admin/development/create-section.tsx#39" className="flex items-center gap-2.5 mb-3">
+          <div data-eos-id="src/pages/admin/development/create-section.tsx#40" className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-700 shadow-sm">
+            <Users data-eos-id="src/pages/admin/development/create-section.tsx#41" size={16} className="text-white" />
           </div>
-          <h2 className="font-heading text-base font-bold text-neutral-900">Target Audience</h2>
+          <h2 data-eos-id="src/pages/admin/development/create-section.tsx#42" className="font-heading text-base font-bold text-neutral-900">Target Audience</h2>
         </div>
-        <AudiencePicker selectedRoles={targetRoles} onRolesChange={setTargetRoles} />
+        <AudiencePicker data-eos-id="src/pages/admin/development/create-section.tsx#43" selectedRoles={targetRoles} onRolesChange={setTargetRoles} />
       </motion.div>
 
       {/* Modules */}
-      <motion.div variants={fadeUp}>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="flex items-center gap-2 font-heading text-[13px] font-bold text-neutral-700/60 uppercase tracking-widest">Modules</h2>
-          <Button variant="secondary" size="sm" icon={<Plus size={14} />} onClick={() => setShowPicker(!showPicker)}>Add Modules</Button>
+      <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#44" variants={fadeUp}>
+        <div data-eos-id="src/pages/admin/development/create-section.tsx#45" className="flex items-center justify-between mb-3">
+          <h2 data-eos-id="src/pages/admin/development/create-section.tsx#46" className="flex items-center gap-2 font-heading text-[13px] font-bold text-neutral-700/60 uppercase tracking-widest">Modules</h2>
+          <Button data-eos-id="src/pages/admin/development/create-section.tsx#47" variant="secondary" size="sm" icon={<Plus data-eos-id="src/pages/admin/development/create-section.tsx#48" size={14} />} onClick={() => setShowPicker(!showPicker)}>Add Modules</Button>
         </div>
-        <AnimatePresence>
+        <AnimatePresence data-eos-id="src/pages/admin/development/create-section.tsx#49">
           {showPicker && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
-              <div className="rounded-md bg-white shadow-sm p-4 mb-4">
-                <ModulePicker modules={allModules} selectedIds={selectedIds} onSelect={(m) => setModuleItems((prev) => [...prev, { _key: `sm-${Date.now()}-${m.id}`, module: m, is_required: true }])} />
+            <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#50" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
+              <div data-eos-id="src/pages/admin/development/create-section.tsx#51" className="rounded-md bg-white shadow-sm p-4 mb-4">
+                <ModulePicker data-eos-id="src/pages/admin/development/create-section.tsx#52" modules={allModules} selectedIds={selectedIds} onSelect={(m) => setModuleItems((prev) => [...prev, { _key: `sm-${Date.now()}-${m.id}`, module: m, is_required: true }])} />
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-        <AnimatePresence mode="wait">
+        <AnimatePresence data-eos-id="src/pages/admin/development/create-section.tsx#53" mode="wait">
           {moduleItems.length === 0 ? (
-            <motion.div key="empty" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
+            <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#54" key="empty" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
               className="flex flex-col items-center justify-center py-14 rounded-md bg-neutral-50"
             >
-              <div className="flex items-center justify-center w-12 h-12 rounded-md bg-secondary-700 shadow-sm mb-3">
-                <Layers size={24} strokeWidth={1.5} className="text-white" />
+              <div data-eos-id="src/pages/admin/development/create-section.tsx#55" className="flex items-center justify-center w-12 h-12 rounded-md bg-secondary-700 shadow-sm mb-3">
+                <Layers data-eos-id="src/pages/admin/development/create-section.tsx#56" size={24} strokeWidth={1.5} className="text-white" />
               </div>
-              <p className="text-[13px] font-semibold text-neutral-600 mb-1">No modules added</p>
-              <p className="text-[11px] text-neutral-400">Add modules to build this pathway</p>
+              <p data-eos-id="src/pages/admin/development/create-section.tsx#57" className="text-[13px] font-semibold text-neutral-600 mb-1">No modules added</p>
+              <p data-eos-id="src/pages/admin/development/create-section.tsx#58" className="text-[11px] text-neutral-400">Add modules to build this pathway</p>
             </motion.div>
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={moduleItems.map((m) => m._key)} strategy={verticalListSortingStrategy}>
-                <motion.div key="list" className="space-y-2">
-                  <AnimatePresence>
+            <DndContext data-eos-id="src/pages/admin/development/create-section.tsx#59" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext data-eos-id="src/pages/admin/development/create-section.tsx#60" items={moduleItems.map((m) => m._key)} strategy={verticalListSortingStrategy}>
+                <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#61" key="list" className="space-y-2">
+                  <AnimatePresence data-eos-id="src/pages/admin/development/create-section.tsx#62">
                     {moduleItems.map((item) => (
-                      <SortableModuleItem key={item._key} item={item}
+                      <SortableModuleItem data-eos-id="src/pages/admin/development/create-section.tsx#63" key={item._key} item={item}
                         onToggleRequired={() => setModuleItems((prev) => prev.map((m) => m._key === item._key ? { ...m, is_required: !m.is_required } : m))}
                         onRemove={() => setModuleItems((prev) => prev.filter((m) => m._key !== item._key))} />
                     ))}
@@ -269,12 +269,12 @@ export default function AdminCreateSectionPage() {
       </motion.div>
 
       {/* Bottom bar */}
-      <motion.div variants={fadeUp} className="sticky bottom-0 z-20 -mx-4 sm:-mx-6 lg:-mx-8 -mb-4 sm:-mb-6 lg:-mb-8 px-4 sm:px-6 lg:px-8 py-3 bg-white/95 backdrop-blur-sm border-t border-neutral-100 flex items-center justify-between gap-3">
-        <p className="text-[11px] font-semibold text-neutral-400">{moduleItems.length} module{moduleItems.length !== 1 ? 's' : ''}</p>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/admin/development')}>Cancel</Button>
-          <Button variant="secondary" size="sm" icon={<Save size={14} />} onClick={() => handleSave('draft')} loading={isSaving} disabled={!title.trim()}>Save Draft</Button>
-          <Button variant="primary" size="sm" icon={<Send size={14} />} onClick={() => handleSave('published')} loading={isSaving} disabled={!canPublish}>Publish</Button>
+      <motion.div data-eos-id="src/pages/admin/development/create-section.tsx#64" variants={fadeUp} className="sticky bottom-0 z-20 -mx-4 sm:-mx-6 lg:-mx-8 -mb-4 sm:-mb-6 lg:-mb-8 px-4 sm:px-6 lg:px-8 py-3 bg-white/95 backdrop-blur-sm border-t border-neutral-100 flex items-center justify-between gap-3">
+        <p data-eos-id="src/pages/admin/development/create-section.tsx#65" className="text-[11px] font-semibold text-neutral-400">{moduleItems.length} module{moduleItems.length !== 1 ? 's' : ''}</p>
+        <div data-eos-id="src/pages/admin/development/create-section.tsx#66" className="flex items-center gap-2">
+          <Button data-eos-id="src/pages/admin/development/create-section.tsx#67" variant="ghost" size="sm" onClick={() => navigate('/admin/development')}>Cancel</Button>
+          <Button data-eos-id="src/pages/admin/development/create-section.tsx#68" variant="secondary" size="sm" icon={<Save data-eos-id="src/pages/admin/development/create-section.tsx#69" size={14} />} onClick={() => handleSave('draft')} loading={isSaving} disabled={!title.trim()}>Save Draft</Button>
+          <Button data-eos-id="src/pages/admin/development/create-section.tsx#70" variant="primary" size="sm" icon={<Send data-eos-id="src/pages/admin/development/create-section.tsx#71" size={14} />} onClick={() => handleSave('published')} loading={isSaving} disabled={!canPublish}>Publish</Button>
         </div>
       </motion.div>
     </motion.div>
