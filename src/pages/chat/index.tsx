@@ -71,7 +71,7 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
   const isCampout = channel.type === 'campout'
 
   return (
-    <motion.div data-eos-id="src/pages/chat/index.tsx#0"
+    <motion.div data-eos-id="src/pages/chat/index.tsx#0" data-eos-v="2"
       variants={shouldReduceMotion ? undefined : fadeUp}
     >
       <Link data-eos-id="src/pages/chat/index.tsx#1"
@@ -184,7 +184,7 @@ function CollectiveChatRow({
             )}
           >
             {collective.cover_image_url ? (
-              <img data-eos-id="src/pages/chat/index.tsx#20"
+              <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/chat/index.tsx#20"
                 src={collective.cover_image_url}
                 alt=""
                 loading="lazy"
