@@ -58,7 +58,7 @@ export function SegmentedControl<T extends string = string>({
   const styles = VARIANT_STYLES[variant]
 
   return (
-    <div
+    <div data-eos-id="src/components/segmented-control.tsx#0"
       role="tablist"
       aria-label={ariaLabel}
       className={cn('flex', styles.track, className)}
@@ -67,7 +67,7 @@ export function SegmentedControl<T extends string = string>({
         const isActive = seg.id === value
 
         return (
-          <button
+          <button data-eos-id="src/components/segmented-control.tsx#1"
             key={seg.id}
             type="button"
             role="tab"
@@ -84,11 +84,11 @@ export function SegmentedControl<T extends string = string>({
             )}
           >
             {seg.icon && (
-              <span className="shrink-0" aria-hidden="true">
+              <span data-eos-id="src/components/segmented-control.tsx#2" data-eos-var="seg.icon" data-eos-var-label="Icon" data-eos-var-scope="item" className="shrink-0" aria-hidden="true">
                 {seg.icon}
               </span>
             )}
-            <span className={compact ? 'hidden sm:inline' : undefined}>{seg.label}</span>
+            <span data-eos-id="src/components/segmented-control.tsx#3" data-eos-var="seg.label" data-eos-var-label="Label" data-eos-var-scope="item" className={compact ? 'hidden sm:inline' : undefined}>{seg.label}</span>
           </button>
         )
       })}
