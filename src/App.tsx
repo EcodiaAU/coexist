@@ -201,7 +201,7 @@ function PageFallback() {
   // jarring blank flashes while lazy chunks download.
   // The opacity animation is CSS-only (no JS) for zero overhead.
   return (
-    <div
+    <div data-eos-id="src/App.tsx#0"
       className="flex-1 flex flex-col min-h-0 bg-surface-1 animate-pulse"
       style={{ opacity: 0.4 }}
     />
@@ -223,8 +223,8 @@ function CatchAllRoute() {
   const { user, isLoading } = useAuth()
   if (isLoading) return null
   return (
-    <AppShell bare>
-      {user ? <NotFoundPage /> : <WelcomePage />}
+    <AppShell data-eos-id="src/App.tsx#1" bare>
+      {user ? <NotFoundPage data-eos-id="src/App.tsx#2" /> : <WelcomePage data-eos-id="src/App.tsx#3" />}
     </AppShell>
   )
 }
@@ -259,128 +259,128 @@ function App() {
   }, [])
 
   if (maintenanceMode) {
-    return <MaintenanceMode message={maintenanceMessage} />
+    return <MaintenanceMode data-eos-id="src/App.tsx#4" message={maintenanceMessage} />
   }
 
   if (forceUpdate) {
-    return <UpdateRequired latestVersion={latestVersion} installedVersion={installedVersion} />
+    return <UpdateRequired data-eos-id="src/App.tsx#5" latestVersion={latestVersion} installedVersion={installedVersion} />
   }
 
   return (
     <>
-    {showSplash && <SplashPage onReady={handleSplashReady} />}
+    {showSplash && <SplashPage data-eos-id="src/App.tsx#6" onReady={handleSplashReady} />}
 {/* Scroll management handled by Page component  saves position per
          history entry and restores on back-nav, scrolls to top for new routes */}
-    <ErrorBoundary>
-    <Suspense fallback={<PageFallback />}>
+    <ErrorBoundary data-eos-id="src/App.tsx#7">
+    <Suspense data-eos-id="src/App.tsx#8" fallback={<PageFallback data-eos-id="src/App.tsx#9" />}>
       {/* Page enter/exit transitions are scoped to the <Outlet/> INSIDE each
           persistent layout shell (AppShell / AdminLayout / LeaderLayout) via
           AnimatedOutlet, NOT keyed around the whole <Routes>. Keying <Routes>
           by pathname remounted the layout shells on every nav and reset the
           sidebar scroll to 0 (2026-06-22 bug). React Router now reconciles the
           shells by type and keeps the sidebar mounted across navigation. */}
-      <Routes>
+      <Routes data-eos-id="src/App.tsx#10">
         {/* ---- Bare routes (no app shell) ---- */}
-        <Route
+        <Route data-eos-id="src/App.tsx#11"
           path="/welcome"
           element={
-            <AppShell bare>
-              <WelcomePage />
+            <AppShell data-eos-id="src/App.tsx#12" bare>
+              <WelcomePage data-eos-id="src/App.tsx#13" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#14"
           path="/signup"
           element={
-            <AppShell bare>
-              <SignUpPage />
+            <AppShell data-eos-id="src/App.tsx#15" bare>
+              <SignUpPage data-eos-id="src/App.tsx#16" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#17"
           path="/login"
           element={
-            <AppShell bare>
-              <LoginPage />
+            <AppShell data-eos-id="src/App.tsx#18" bare>
+              <LoginPage data-eos-id="src/App.tsx#19" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#20"
           path="/forgot-password"
           element={
-            <AppShell bare>
-              <ForgotPasswordPage />
+            <AppShell data-eos-id="src/App.tsx#21" bare>
+              <ForgotPasswordPage data-eos-id="src/App.tsx#22" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#23"
           path="/verify-email"
           element={
-            <AppShell bare>
-              <EmailVerificationPage />
+            <AppShell data-eos-id="src/App.tsx#24" bare>
+              <EmailVerificationPage data-eos-id="src/App.tsx#25" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#26"
           path="/auth/callback"
           element={
-            <AppShell bare>
-              <AuthCallbackPage />
+            <AppShell data-eos-id="src/App.tsx#27" bare>
+              <AuthCallbackPage data-eos-id="src/App.tsx#28" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#29"
           path="/reset-password"
           element={
-            <AppShell bare>
-              <ResetPasswordPage />
+            <AppShell data-eos-id="src/App.tsx#30" bare>
+              <ResetPasswordPage data-eos-id="src/App.tsx#31" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#32"
           path="/suspended"
           element={
-            <AppShell bare>
-              <SuspendedAccountPage />
+            <AppShell data-eos-id="src/App.tsx#33" bare>
+              <SuspendedAccountPage data-eos-id="src/App.tsx#34" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#35"
           path="/accept-terms"
           element={
-            <AppShell bare>
-              <AcceptTermsPage />
+            <AppShell data-eos-id="src/App.tsx#36" bare>
+              <AcceptTermsPage data-eos-id="src/App.tsx#37" />
             </AppShell>
           }
         />
 
         {/* ---- Onboarding (auth required, bare shell) ---- */}
-        <Route
+        <Route data-eos-id="src/App.tsx#38"
           path="/onboarding"
           element={
-            <RequireAuth>
-              <AppShell bare>
-                <OnboardingPage />
+            <RequireAuth data-eos-id="src/App.tsx#39">
+              <AppShell data-eos-id="src/App.tsx#40" bare>
+                <OnboardingPage data-eos-id="src/App.tsx#41" />
               </AppShell>
             </RequireAuth>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#42"
           path="/leader-welcome"
           element={
-            <RequireAuth>
-              <AppShell bare>
-                <LeaderWelcomePage />
+            <RequireAuth data-eos-id="src/App.tsx#43">
+              <AppShell data-eos-id="src/App.tsx#44" bare>
+                <LeaderWelcomePage data-eos-id="src/App.tsx#45" />
               </AppShell>
             </RequireAuth>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#46"
           path="/welcome-back"
           element={
-            <RequireAuth>
-              <AppShell bare>
-                <WelcomeBackPage />
+            <RequireAuth data-eos-id="src/App.tsx#47">
+              <AppShell data-eos-id="src/App.tsx#48" bare>
+                <WelcomeBackPage data-eos-id="src/App.tsx#49" />
               </AppShell>
             </RequireAuth>
           }
@@ -389,80 +389,80 @@ function App() {
         {/* ============================================================ */}
         {/*  Protected routes - AppShell mounted ONCE via layout route    */}
         {/* ============================================================ */}
-        <Route element={<RequireAuth><AppShell><AnimatedOutlet /></AppShell></RequireAuth>}>
+        <Route data-eos-id="src/App.tsx#50" element={<RequireAuth data-eos-id="src/App.tsx#51"><AppShell data-eos-id="src/App.tsx#52"><AnimatedOutlet data-eos-id="src/App.tsx#53" /></AppShell></RequireAuth>}>
 
           {/* ---- Member pages (animated by AnimatedOutlet in AppShell) ---- */}
-          <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
+          <Route data-eos-id="src/App.tsx#54" path="/" element={<ErrorBoundary data-eos-id="src/App.tsx#55"><HomePage data-eos-id="src/App.tsx#56" /></ErrorBoundary>} />
           {/* Canonical home is /, never /home (stale links / deep-link fallbacks). */}
-          <Route path="/home" element={<Navigate to="/" replace />} />
-          <Route path="/explore" element={<ExplorePage />} />
-          <Route path="/events" element={<Navigate to="/explore" replace />} />
-          <Route path="/events/create" element={<CreateEventPage />} />
-          <Route path="/events/:id" element={<ErrorBoundary><EventDetailPage /></ErrorBoundary>} />
-          <Route path="/events/:id/check-in" element={<CheckInPage />} />
-          <Route path="/events/:id/profile-survey" element={<ProfileSurveyPage />} />
-          <Route path="/events/:id/day" element={<EventDayPage />} />
-          <Route path="/events/:id/impact" element={<ErrorBoundary><LogImpactPage /></ErrorBoundary>} />
-          <Route path="/events/:id/survey" element={<PostEventSurveyPage />} />
-          <Route path="/events/:id/edit" element={<EditEventPage />} />
-          <Route path="/events/:id/ticket-confirmation" element={<TicketConfirmationPage />} />
-          <Route path="/collectives" element={<Navigate to="/explore?tab=collectives" replace />} />
-          <Route path="/collectives/:slug" element={<CollectiveDetailPage />} />
-          <Route path="/collectives/:slug/manage" element={<CollectiveManagePage />} />
-          <Route path="/tasks" element={<TasksPage />} />
-          <Route path="/chat" element={<ChatListPage />} />
-          <Route path="/chat/channel/:channelId" element={<ErrorBoundary><ChatRoomPage /></ErrorBoundary>} />
-          <Route path="/chat/:collectiveId" element={<ErrorBoundary><ChatRoomPage /></ErrorBoundary>} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/profile/edit" element={<EditProfilePage />} />
-          <Route path="/profile/tickets" element={<MyTicketsPage />} />
-          <Route path="/profile/:userId" element={<ViewProfilePage />} />
-          <Route path="/impact" element={<Navigate to="/profile" replace />} />
-          <Route path="/referral" element={<ReferralPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/updates" element={<UpdatesPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/settings/notifications" element={<SettingsNotificationsPage />} />
-          <Route path="/settings/privacy" element={<SettingsPrivacyPage />} />
+          <Route data-eos-id="src/App.tsx#57" path="/home" element={<Navigate data-eos-id="src/App.tsx#58" to="/" replace />} />
+          <Route data-eos-id="src/App.tsx#59" path="/explore" element={<ExplorePage data-eos-id="src/App.tsx#60" />} />
+          <Route data-eos-id="src/App.tsx#61" path="/events" element={<Navigate data-eos-id="src/App.tsx#62" to="/explore" replace />} />
+          <Route data-eos-id="src/App.tsx#63" path="/events/create" element={<CreateEventPage data-eos-id="src/App.tsx#64" />} />
+          <Route data-eos-id="src/App.tsx#65" path="/events/:id" element={<ErrorBoundary data-eos-id="src/App.tsx#66"><EventDetailPage data-eos-id="src/App.tsx#67" /></ErrorBoundary>} />
+          <Route data-eos-id="src/App.tsx#68" path="/events/:id/check-in" element={<CheckInPage data-eos-id="src/App.tsx#69" />} />
+          <Route data-eos-id="src/App.tsx#70" path="/events/:id/profile-survey" element={<ProfileSurveyPage data-eos-id="src/App.tsx#71" />} />
+          <Route data-eos-id="src/App.tsx#72" path="/events/:id/day" element={<EventDayPage data-eos-id="src/App.tsx#73" />} />
+          <Route data-eos-id="src/App.tsx#74" path="/events/:id/impact" element={<ErrorBoundary data-eos-id="src/App.tsx#75"><LogImpactPage data-eos-id="src/App.tsx#76" /></ErrorBoundary>} />
+          <Route data-eos-id="src/App.tsx#77" path="/events/:id/survey" element={<PostEventSurveyPage data-eos-id="src/App.tsx#78" />} />
+          <Route data-eos-id="src/App.tsx#79" path="/events/:id/edit" element={<EditEventPage data-eos-id="src/App.tsx#80" />} />
+          <Route data-eos-id="src/App.tsx#81" path="/events/:id/ticket-confirmation" element={<TicketConfirmationPage data-eos-id="src/App.tsx#82" />} />
+          <Route data-eos-id="src/App.tsx#83" path="/collectives" element={<Navigate data-eos-id="src/App.tsx#84" to="/explore?tab=collectives" replace />} />
+          <Route data-eos-id="src/App.tsx#85" path="/collectives/:slug" element={<CollectiveDetailPage data-eos-id="src/App.tsx#86" />} />
+          <Route data-eos-id="src/App.tsx#87" path="/collectives/:slug/manage" element={<CollectiveManagePage data-eos-id="src/App.tsx#88" />} />
+          <Route data-eos-id="src/App.tsx#89" path="/tasks" element={<TasksPage data-eos-id="src/App.tsx#90" />} />
+          <Route data-eos-id="src/App.tsx#91" path="/chat" element={<ChatListPage data-eos-id="src/App.tsx#92" />} />
+          <Route data-eos-id="src/App.tsx#93" path="/chat/channel/:channelId" element={<ErrorBoundary data-eos-id="src/App.tsx#94"><ChatRoomPage data-eos-id="src/App.tsx#95" /></ErrorBoundary>} />
+          <Route data-eos-id="src/App.tsx#96" path="/chat/:collectiveId" element={<ErrorBoundary data-eos-id="src/App.tsx#97"><ChatRoomPage data-eos-id="src/App.tsx#98" /></ErrorBoundary>} />
+          <Route data-eos-id="src/App.tsx#99" path="/profile" element={<ProfilePage data-eos-id="src/App.tsx#100" />} />
+          <Route data-eos-id="src/App.tsx#101" path="/profile/edit" element={<EditProfilePage data-eos-id="src/App.tsx#102" />} />
+          <Route data-eos-id="src/App.tsx#103" path="/profile/tickets" element={<MyTicketsPage data-eos-id="src/App.tsx#104" />} />
+          <Route data-eos-id="src/App.tsx#105" path="/profile/:userId" element={<ViewProfilePage data-eos-id="src/App.tsx#106" />} />
+          <Route data-eos-id="src/App.tsx#107" path="/impact" element={<Navigate data-eos-id="src/App.tsx#108" to="/profile" replace />} />
+          <Route data-eos-id="src/App.tsx#109" path="/referral" element={<ReferralPage data-eos-id="src/App.tsx#110" />} />
+          <Route data-eos-id="src/App.tsx#111" path="/notifications" element={<NotificationsPage data-eos-id="src/App.tsx#112" />} />
+          <Route data-eos-id="src/App.tsx#113" path="/updates" element={<UpdatesPage data-eos-id="src/App.tsx#114" />} />
+          <Route data-eos-id="src/App.tsx#115" path="/settings" element={<SettingsPage data-eos-id="src/App.tsx#116" />} />
+          <Route data-eos-id="src/App.tsx#117" path="/settings/notifications" element={<SettingsNotificationsPage data-eos-id="src/App.tsx#118" />} />
+          <Route data-eos-id="src/App.tsx#119" path="/settings/privacy" element={<SettingsPrivacyPage data-eos-id="src/App.tsx#120" />} />
           {/* 1.8.4 item 4 (fork_motzkqf5_016150) - canonical privacy lives at
               /settings/privacy; legacy deep-links from earlier builds resolve here. */}
-          <Route path="/profile/privacy" element={<Navigate to="/settings/privacy" replace />} />
-          <Route path="/privacy/settings" element={<Navigate to="/settings/privacy" replace />} />
-          <Route path="/settings/account" element={<SettingsAccountPage />} />
+          <Route data-eos-id="src/App.tsx#121" path="/profile/privacy" element={<Navigate data-eos-id="src/App.tsx#122" to="/settings/privacy" replace />} />
+          <Route data-eos-id="src/App.tsx#123" path="/privacy/settings" element={<Navigate data-eos-id="src/App.tsx#124" to="/settings/privacy" replace />} />
+          <Route data-eos-id="src/App.tsx#125" path="/settings/account" element={<SettingsAccountPage data-eos-id="src/App.tsx#126" />} />
 
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/partners" element={<PartnersPage />} />
-          <Route path="/leadership" element={<LeadershipPage />} />
-          <Route path="/lead-a-collective" element={<LeadACollectivePage />} />
-          <Route path="/donate" element={<DonatePage />} />
-          <Route path="/donate/thank-you" element={<DonateThankYouPage />} />
-          <Route path="/donate/donors" element={<DonorWallPage />} />
-          <Route path="/shop" element={<ShopPage />} />
-          <Route path="/shop/cart" element={<CartPage />} />
-          <Route path="/shop/checkout" element={<CheckoutPage />} />
-          <Route path="/shop/order-confirmation" element={<OrderConfirmationPage />} />
-          <Route path="/shop/orders" element={<OrdersPage />} />
-          <Route path="/shop/orders/:orderId" element={<OrderDetailPage />} />
-          <Route path="/shop/:slug" element={<ProductDetailPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/impact/national" element={<NationalImpactPage />} />
+          <Route data-eos-id="src/App.tsx#127" path="/contact" element={<ContactPage data-eos-id="src/App.tsx#128" />} />
+          <Route data-eos-id="src/App.tsx#129" path="/partners" element={<PartnersPage data-eos-id="src/App.tsx#130" />} />
+          <Route data-eos-id="src/App.tsx#131" path="/leadership" element={<LeadershipPage data-eos-id="src/App.tsx#132" />} />
+          <Route data-eos-id="src/App.tsx#133" path="/lead-a-collective" element={<LeadACollectivePage data-eos-id="src/App.tsx#134" />} />
+          <Route data-eos-id="src/App.tsx#135" path="/donate" element={<DonatePage data-eos-id="src/App.tsx#136" />} />
+          <Route data-eos-id="src/App.tsx#137" path="/donate/thank-you" element={<DonateThankYouPage data-eos-id="src/App.tsx#138" />} />
+          <Route data-eos-id="src/App.tsx#139" path="/donate/donors" element={<DonorWallPage data-eos-id="src/App.tsx#140" />} />
+          <Route data-eos-id="src/App.tsx#141" path="/shop" element={<ShopPage data-eos-id="src/App.tsx#142" />} />
+          <Route data-eos-id="src/App.tsx#143" path="/shop/cart" element={<CartPage data-eos-id="src/App.tsx#144" />} />
+          <Route data-eos-id="src/App.tsx#145" path="/shop/checkout" element={<CheckoutPage data-eos-id="src/App.tsx#146" />} />
+          <Route data-eos-id="src/App.tsx#147" path="/shop/order-confirmation" element={<OrderConfirmationPage data-eos-id="src/App.tsx#148" />} />
+          <Route data-eos-id="src/App.tsx#149" path="/shop/orders" element={<OrdersPage data-eos-id="src/App.tsx#150" />} />
+          <Route data-eos-id="src/App.tsx#151" path="/shop/orders/:orderId" element={<OrderDetailPage data-eos-id="src/App.tsx#152" />} />
+          <Route data-eos-id="src/App.tsx#153" path="/shop/:slug" element={<ProductDetailPage data-eos-id="src/App.tsx#154" />} />
+          <Route data-eos-id="src/App.tsx#155" path="/reports" element={<ReportsPage data-eos-id="src/App.tsx#156" />} />
+          <Route data-eos-id="src/App.tsx#157" path="/impact/national" element={<NationalImpactPage data-eos-id="src/App.tsx#158" />} />
 
           {/* ---- My Leadership Journey (learner) ---- */}
-          <Route path="/learn" element={<LearnIndexPage />} />
-          <Route path="/learn/module/:moduleId" element={<LearnModulePage />} />
-          <Route path="/learn/section/:sectionId" element={<LearnSectionPage />} />
-          <Route path="/learn/quiz/:quizId" element={<LearnQuizPage />} />
-          <Route path="/learn/complete" element={<LearnCompletePage />} />
+          <Route data-eos-id="src/App.tsx#159" path="/learn" element={<LearnIndexPage data-eos-id="src/App.tsx#160" />} />
+          <Route data-eos-id="src/App.tsx#161" path="/learn/module/:moduleId" element={<LearnModulePage data-eos-id="src/App.tsx#162" />} />
+          <Route data-eos-id="src/App.tsx#163" path="/learn/section/:sectionId" element={<LearnSectionPage data-eos-id="src/App.tsx#164" />} />
+          <Route data-eos-id="src/App.tsx#165" path="/learn/quiz/:quizId" element={<LearnQuizPage data-eos-id="src/App.tsx#166" />} />
+          <Route data-eos-id="src/App.tsx#167" path="/learn/complete" element={<LearnCompletePage data-eos-id="src/App.tsx#168" />} />
 
           {/* ---- Leader Dashboard & sub-pages ---- */}
-          <Route path="/leader" element={<RequireLeaderAccess><ErrorBoundary><LeaderLayoutRoute /></ErrorBoundary></RequireLeaderAccess>}>
-            <Route index element={<LeaderDashboardPage />} />
+          <Route data-eos-id="src/App.tsx#169" path="/leader" element={<RequireLeaderAccess data-eos-id="src/App.tsx#170"><ErrorBoundary data-eos-id="src/App.tsx#171"><LeaderLayoutRoute data-eos-id="src/App.tsx#172" /></ErrorBoundary></RequireLeaderAccess>}>
+            <Route data-eos-id="src/App.tsx#173" index element={<LeaderDashboardPage data-eos-id="src/App.tsx#174" />} />
             {/* Canonical home is /leader, never /leader/home (stale links / notifications). */}
-            <Route path="home" element={<Navigate to="/leader" replace />} />
-            <Route path="events" element={<LeaderEventsPage />} />
-            <Route path="tasks" element={<LeaderTasksPage />} />
-            <Route path="feedback" element={<LeaderFeedbackPage />} />
-            <Route path="reports" element={<LeaderReportsPage />} />
+            <Route data-eos-id="src/App.tsx#175" path="home" element={<Navigate data-eos-id="src/App.tsx#176" to="/leader" replace />} />
+            <Route data-eos-id="src/App.tsx#177" path="events" element={<LeaderEventsPage data-eos-id="src/App.tsx#178" />} />
+            <Route data-eos-id="src/App.tsx#179" path="tasks" element={<LeaderTasksPage data-eos-id="src/App.tsx#180" />} />
+            <Route data-eos-id="src/App.tsx#181" path="feedback" element={<LeaderFeedbackPage data-eos-id="src/App.tsx#182" />} />
+            <Route data-eos-id="src/App.tsx#183" path="reports" element={<LeaderReportsPage data-eos-id="src/App.tsx#184" />} />
           </Route>
 
           {/* ---- Admin routes (manager+) - 1.8.5 item 7, fork_moy0xmrx_158384.
@@ -472,202 +472,202 @@ function App() {
               Defence-in-depth: also gated by per-page <RequireCapability> +
               capability resolver in capabilities.ts (leader caps now empty)
               + RLS is_admin_tier() helper in 20260509300000_admin_rls_audit.sql. */}
-          <Route path="/admin" element={<RequireRole minRole="manager"><ErrorBoundary><AdminLayoutRoute /></ErrorBoundary></RequireRole>}>
-            <Route index element={<AdminDashboardPage />} />
+          <Route data-eos-id="src/App.tsx#185" path="/admin" element={<RequireRole data-eos-id="src/App.tsx#186" minRole="manager"><ErrorBoundary data-eos-id="src/App.tsx#187"><AdminLayoutRoute data-eos-id="src/App.tsx#188" /></ErrorBoundary></RequireRole>}>
+            <Route data-eos-id="src/App.tsx#189" index element={<AdminDashboardPage data-eos-id="src/App.tsx#190" />} />
             {/* Canonical home is /admin, never /admin/home (stale links / notifications). */}
-            <Route path="home" element={<Navigate to="/admin" replace />} />
-            <Route path="collectives" element={<RequireCapability cap="manage_collectives"><AdminCollectivesPage /></RequireCapability>} />
-            <Route path="collectives/:collectiveId" element={<RequireCapability cap="manage_collectives"><AdminCollectiveDetailPage /></RequireCapability>} />
-            <Route path="users" element={<RequireCapability cap="manage_users"><AdminUsersPage /></RequireCapability>} />
-            <Route path="create" element={<RequireCapability cap="manage_workflows"><AdminCreatePage /></RequireCapability>} />
-            <Route path="updates" element={<RequireCapability cap="send_announcements"><AdminUpdatesPage /></RequireCapability>} />
-            <Route path="tasks" element={<RequireCapability cap="manage_workflows"><AdminWorkflowsPage /></RequireCapability>} />
-            <Route path="events" element={<RequireCapability cap="manage_events"><AdminEventsPage /></RequireCapability>} />
-            <Route path="events/create" element={<RequireCapability cap="manage_events"><CreateEventPage /></RequireCapability>} />
-            <Route path="surveys" element={<RequireCapability cap="manage_surveys"><AdminSurveysPage /></RequireCapability>} />
-            <Route path="applications" element={<RequireCapability cap="manage_users"><AdminApplicationsPage /></RequireCapability>} />
-            <Route path="surveys/create" element={<RequireCapability cap="manage_surveys"><AdminCreateSurveyPage /></RequireCapability>} />
-            <Route path="surveys/:id/edit" element={<RequireCapability cap="manage_surveys"><AdminCreateSurveyPage /></RequireCapability>} />
-            <Route path="national-impact" element={<RequireCapability cap="view_reports"><NationalImpactPage /></RequireCapability>} />
-            <Route path="email" element={<RequireCapability cap="manage_email"><AdminEmailPage /></RequireCapability>} />
-            <Route path="audit-log" element={<RequireCapability cap="view_audit_log"><AdminAuditLogPage /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#191" path="home" element={<Navigate data-eos-id="src/App.tsx#192" to="/admin" replace />} />
+            <Route data-eos-id="src/App.tsx#193" path="collectives" element={<RequireCapability data-eos-id="src/App.tsx#194" cap="manage_collectives"><AdminCollectivesPage data-eos-id="src/App.tsx#195" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#196" path="collectives/:collectiveId" element={<RequireCapability data-eos-id="src/App.tsx#197" cap="manage_collectives"><AdminCollectiveDetailPage data-eos-id="src/App.tsx#198" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#199" path="users" element={<RequireCapability data-eos-id="src/App.tsx#200" cap="manage_users"><AdminUsersPage data-eos-id="src/App.tsx#201" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#202" path="create" element={<RequireCapability data-eos-id="src/App.tsx#203" cap="manage_workflows"><AdminCreatePage data-eos-id="src/App.tsx#204" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#205" path="updates" element={<RequireCapability data-eos-id="src/App.tsx#206" cap="send_announcements"><AdminUpdatesPage data-eos-id="src/App.tsx#207" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#208" path="tasks" element={<RequireCapability data-eos-id="src/App.tsx#209" cap="manage_workflows"><AdminWorkflowsPage data-eos-id="src/App.tsx#210" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#211" path="events" element={<RequireCapability data-eos-id="src/App.tsx#212" cap="manage_events"><AdminEventsPage data-eos-id="src/App.tsx#213" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#214" path="events/create" element={<RequireCapability data-eos-id="src/App.tsx#215" cap="manage_events"><CreateEventPage data-eos-id="src/App.tsx#216" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#217" path="surveys" element={<RequireCapability data-eos-id="src/App.tsx#218" cap="manage_surveys"><AdminSurveysPage data-eos-id="src/App.tsx#219" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#220" path="applications" element={<RequireCapability data-eos-id="src/App.tsx#221" cap="manage_users"><AdminApplicationsPage data-eos-id="src/App.tsx#222" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#223" path="surveys/create" element={<RequireCapability data-eos-id="src/App.tsx#224" cap="manage_surveys"><AdminCreateSurveyPage data-eos-id="src/App.tsx#225" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#226" path="surveys/:id/edit" element={<RequireCapability data-eos-id="src/App.tsx#227" cap="manage_surveys"><AdminCreateSurveyPage data-eos-id="src/App.tsx#228" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#229" path="national-impact" element={<RequireCapability data-eos-id="src/App.tsx#230" cap="view_reports"><NationalImpactPage data-eos-id="src/App.tsx#231" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#232" path="email" element={<RequireCapability data-eos-id="src/App.tsx#233" cap="manage_email"><AdminEmailPage data-eos-id="src/App.tsx#234" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#235" path="audit-log" element={<RequireCapability data-eos-id="src/App.tsx#236" cap="view_audit_log"><AdminAuditLogPage data-eos-id="src/App.tsx#237" /></RequireCapability>} />
             {/* Insights is the merged surface for Impact + Attendance (Metrics) + Reports.
                 The three legacy URLs redirect to the right tab via hash anchor (2026-06-10). */}
-            <Route path="insights" element={<RequireCapability cap="view_reports"><AdminInsightsPage /></RequireCapability>} />
-            <Route path="impact" element={<Navigate to="/admin/insights#impact" replace />} />
-            <Route path="metrics" element={<Navigate to="/admin/insights#attendance" replace />} />
-            <Route path="reports" element={<Navigate to="/admin/insights#reports" replace />} />
-            <Route path="exports" element={<Navigate to="/admin/insights#reports" replace />} />
-            <Route path="photos" element={<RequireCapability cap="view_reports"><AdminPhotosPage /></RequireCapability>} />
-            <Route path="shop" element={<RequireCapability cap="manage_merch"><AdminMerchPage /></RequireCapability>} />
-            <Route path="partners" element={<RequireCapability cap="manage_partners"><AdminPartnersPage /></RequireCapability>} />
-            <Route path="challenges" element={<RequireCapability cap="manage_challenges"><AdminChallengesPage /></RequireCapability>} />
-            <Route path="moderation" element={<RequireCapability cap="manage_content"><ModerationQueuePage /></RequireCapability>} />
-            <Route path="contacts" element={<RequireCapability cap="manage_users"><AdminContactsPage /></RequireCapability>} />
-            <Route path="legal-pages" element={<RequireCapability cap="manage_system"><AdminLegalPagesPage /></RequireCapability>} />
-            <Route path="dev-tools" element={<RequireCapability cap="manage_system"><DevToolsPage /></RequireCapability>} />
-            <Route path="development" element={<RequireCapability cap="manage_content"><AdminDevelopmentPage /></RequireCapability>} />
-            <Route path="development/modules/new" element={<RequireCapability cap="manage_content"><AdminCreateModulePage /></RequireCapability>} />
-            <Route path="development/modules/:moduleId" element={<RequireCapability cap="manage_content"><AdminModuleDetailPage /></RequireCapability>} />
-            <Route path="development/modules/:moduleId/edit" element={<RequireCapability cap="manage_content"><AdminEditModulePage /></RequireCapability>} />
-            <Route path="development/sections/new" element={<RequireCapability cap="manage_content"><AdminCreateSectionPage /></RequireCapability>} />
-            <Route path="development/sections/:sectionId/edit" element={<RequireCapability cap="manage_content"><AdminEditSectionPage /></RequireCapability>} />
-            <Route path="development/quizzes/new" element={<RequireCapability cap="manage_content"><AdminCreateQuizPage /></RequireCapability>} />
-            <Route path="development/quizzes/:quizId/edit" element={<RequireCapability cap="manage_content"><AdminEditQuizPage /></RequireCapability>} />
-            <Route path="development/results" element={<RequireCapability cap="manage_content"><AdminDevResultsPage /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#238" path="insights" element={<RequireCapability data-eos-id="src/App.tsx#239" cap="view_reports"><AdminInsightsPage data-eos-id="src/App.tsx#240" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#241" path="impact" element={<Navigate data-eos-id="src/App.tsx#242" to="/admin/insights#impact" replace />} />
+            <Route data-eos-id="src/App.tsx#243" path="metrics" element={<Navigate data-eos-id="src/App.tsx#244" to="/admin/insights#attendance" replace />} />
+            <Route data-eos-id="src/App.tsx#245" path="reports" element={<Navigate data-eos-id="src/App.tsx#246" to="/admin/insights#reports" replace />} />
+            <Route data-eos-id="src/App.tsx#247" path="exports" element={<Navigate data-eos-id="src/App.tsx#248" to="/admin/insights#reports" replace />} />
+            <Route data-eos-id="src/App.tsx#249" path="photos" element={<RequireCapability data-eos-id="src/App.tsx#250" cap="view_reports"><AdminPhotosPage data-eos-id="src/App.tsx#251" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#252" path="shop" element={<RequireCapability data-eos-id="src/App.tsx#253" cap="manage_merch"><AdminMerchPage data-eos-id="src/App.tsx#254" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#255" path="partners" element={<RequireCapability data-eos-id="src/App.tsx#256" cap="manage_partners"><AdminPartnersPage data-eos-id="src/App.tsx#257" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#258" path="challenges" element={<RequireCapability data-eos-id="src/App.tsx#259" cap="manage_challenges"><AdminChallengesPage data-eos-id="src/App.tsx#260" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#261" path="moderation" element={<RequireCapability data-eos-id="src/App.tsx#262" cap="manage_content"><ModerationQueuePage data-eos-id="src/App.tsx#263" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#264" path="contacts" element={<RequireCapability data-eos-id="src/App.tsx#265" cap="manage_users"><AdminContactsPage data-eos-id="src/App.tsx#266" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#267" path="legal-pages" element={<RequireCapability data-eos-id="src/App.tsx#268" cap="manage_system"><AdminLegalPagesPage data-eos-id="src/App.tsx#269" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#270" path="dev-tools" element={<RequireCapability data-eos-id="src/App.tsx#271" cap="manage_system"><DevToolsPage data-eos-id="src/App.tsx#272" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#273" path="development" element={<RequireCapability data-eos-id="src/App.tsx#274" cap="manage_content"><AdminDevelopmentPage data-eos-id="src/App.tsx#275" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#276" path="development/modules/new" element={<RequireCapability data-eos-id="src/App.tsx#277" cap="manage_content"><AdminCreateModulePage data-eos-id="src/App.tsx#278" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#279" path="development/modules/:moduleId" element={<RequireCapability data-eos-id="src/App.tsx#280" cap="manage_content"><AdminModuleDetailPage data-eos-id="src/App.tsx#281" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#282" path="development/modules/:moduleId/edit" element={<RequireCapability data-eos-id="src/App.tsx#283" cap="manage_content"><AdminEditModulePage data-eos-id="src/App.tsx#284" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#285" path="development/sections/new" element={<RequireCapability data-eos-id="src/App.tsx#286" cap="manage_content"><AdminCreateSectionPage data-eos-id="src/App.tsx#287" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#288" path="development/sections/:sectionId/edit" element={<RequireCapability data-eos-id="src/App.tsx#289" cap="manage_content"><AdminEditSectionPage data-eos-id="src/App.tsx#290" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#291" path="development/quizzes/new" element={<RequireCapability data-eos-id="src/App.tsx#292" cap="manage_content"><AdminCreateQuizPage data-eos-id="src/App.tsx#293" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#294" path="development/quizzes/:quizId/edit" element={<RequireCapability data-eos-id="src/App.tsx#295" cap="manage_content"><AdminEditQuizPage data-eos-id="src/App.tsx#296" /></RequireCapability>} />
+            <Route data-eos-id="src/App.tsx#297" path="development/results" element={<RequireCapability data-eos-id="src/App.tsx#298" cap="manage_content"><AdminDevResultsPage data-eos-id="src/App.tsx#299" /></RequireCapability>} />
           </Route>
 
         </Route>
 
         {/* ---- Legal pages (no auth required) ---- */}
-        <Route
+        <Route data-eos-id="src/App.tsx#300"
           path="/terms"
           element={
-            <AppShell bare>
-              <TermsOfServicePage />
+            <AppShell data-eos-id="src/App.tsx#301" bare>
+              <TermsOfServicePage data-eos-id="src/App.tsx#302" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#303"
           path="/privacy"
           element={
-            <AppShell bare>
-              <PrivacyPolicyPage />
+            <AppShell data-eos-id="src/App.tsx#304" bare>
+              <PrivacyPolicyPage data-eos-id="src/App.tsx#305" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#306"
           path="/about"
           element={
-            <AppShell bare>
-              <AboutPage />
+            <AppShell data-eos-id="src/App.tsx#307" bare>
+              <AboutPage data-eos-id="src/App.tsx#308" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#309"
           path="/accessibility"
           element={
-            <AppShell bare>
-              <AccessibilityPage />
+            <AppShell data-eos-id="src/App.tsx#310" bare>
+              <AccessibilityPage data-eos-id="src/App.tsx#311" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#312"
           path="/cookies"
           element={
-            <AppShell bare>
-              <CookiePolicyPage />
+            <AppShell data-eos-id="src/App.tsx#313" bare>
+              <CookiePolicyPage data-eos-id="src/App.tsx#314" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#315"
           path="/data-policy"
           element={
-            <AppShell bare>
-              <DataPolicyPage />
+            <AppShell data-eos-id="src/App.tsx#316" bare>
+              <DataPolicyPage data-eos-id="src/App.tsx#317" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#318"
           path="/disclaimer"
           element={
-            <AppShell bare>
-              <DisclaimerPage />
+            <AppShell data-eos-id="src/App.tsx#319" bare>
+              <DisclaimerPage data-eos-id="src/App.tsx#320" />
             </AppShell>
           }
         />
 
         {/* ---- Public pages (no auth required) ---- */}
-        <Route
+        <Route data-eos-id="src/App.tsx#321"
           path="/campouts"
           element={
-            <AppShell bare>
-              <PublicCampoutsPage />
+            <AppShell data-eos-id="src/App.tsx#322" bare>
+              <PublicCampoutsPage data-eos-id="src/App.tsx#323" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#324"
           path="/campouts/:type"
           element={
-            <AppShell bare>
-              <CampoutTypePage />
+            <AppShell data-eos-id="src/App.tsx#325" bare>
+              <CampoutTypePage data-eos-id="src/App.tsx#326" />
             </AppShell>
           }
         />
         {/* Eventbrite migration claim link. Public so it can greet signed-out
             invitees, stash the target, and send them to log in / sign up;
             after onboarding it resumes here and grants the free ticket. */}
-        <Route
+        <Route data-eos-id="src/App.tsx#327"
           path="/claim/:eventId/:token"
           element={
-            <AppShell bare>
-              <ClaimTicketPage />
+            <AppShell data-eos-id="src/App.tsx#328" bare>
+              <ClaimTicketPage data-eos-id="src/App.tsx#329" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#330"
           path="/event/:id"
           element={
-            <AppShell bare>
-              <PublicEventPage />
+            <AppShell data-eos-id="src/App.tsx#331" bare>
+              <PublicEventPage data-eos-id="src/App.tsx#332" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#333"
           path="/check-in/:token"
           element={
-            <AppShell bare>
-              <PublicCheckInPage />
+            <AppShell data-eos-id="src/App.tsx#334" bare>
+              <PublicCheckInPage data-eos-id="src/App.tsx#335" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#336"
           path="/collective/:slug"
           element={
-            <AppShell bare>
-              <PublicCollectivePage />
+            <AppShell data-eos-id="src/App.tsx#337" bare>
+              <PublicCollectivePage data-eos-id="src/App.tsx#338" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#339"
           path="/download"
           element={
-            <AppShell bare>
-              <DownloadPage />
+            <AppShell data-eos-id="src/App.tsx#340" bare>
+              <DownloadPage data-eos-id="src/App.tsx#341" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#342"
           path="/account-deletion"
           element={
-            <AppShell bare>
-              <AccountDeletionPage />
+            <AppShell data-eos-id="src/App.tsx#343" bare>
+              <AccountDeletionPage data-eos-id="src/App.tsx#344" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#345"
           path="/data-deletion"
           element={
-            <AppShell bare>
-              <DataDeletionPage />
+            <AppShell data-eos-id="src/App.tsx#346" bare>
+              <DataDeletionPage data-eos-id="src/App.tsx#347" />
             </AppShell>
           }
         />
-        <Route
+        <Route data-eos-id="src/App.tsx#348"
           path="/unsubscribe"
           element={
-            <AppShell bare>
-              <UnsubscribePage />
+            <AppShell data-eos-id="src/App.tsx#349" bare>
+              <UnsubscribePage data-eos-id="src/App.tsx#350" />
             </AppShell>
           }
         />
 
         {/* Design showcase (dev only) */}
-        <Route path="/design/events" element={<EventEditorialShowcase />} />
+        <Route data-eos-id="src/App.tsx#351" path="/design/events" element={<EventEditorialShowcase data-eos-id="src/App.tsx#352" />} />
 
         {/* Catch-all: authed users get a friendly 404 (QA P3-4 - they used
             to see the logged-out Welcome screen); visitors get Welcome. */}
-        <Route path="*" element={<CatchAllRoute />} />
+        <Route data-eos-id="src/App.tsx#353" path="*" element={<CatchAllRoute data-eos-id="src/App.tsx#354" />} />
 
       </Routes>
     </Suspense>
