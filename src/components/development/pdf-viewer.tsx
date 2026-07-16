@@ -23,7 +23,7 @@ function getFileType(url: string, fileName?: string | null): 'pdf' | 'presentati
 
 function fileIcon(type: 'pdf' | 'presentation' | 'document') {
   switch (type) {
-    case 'pdf': return <FileDown data-eos-id="src/components/development/pdf-viewer.tsx#0" size={18} className="text-bark-600" />
+    case 'pdf': return <FileDown data-eos-id="src/components/development/pdf-viewer.tsx#0" data-eos-v="2" size={18} className="text-bark-600" />
     case 'presentation': return <Presentation data-eos-id="src/components/development/pdf-viewer.tsx#1" size={18} className="text-bark-600" />
     default: return <FileText data-eos-id="src/components/development/pdf-viewer.tsx#2" size={18} className="text-bark-600" />
   }
