@@ -197,7 +197,7 @@ export function EventShareSheet({
   }
 
   return (
-    <BottomSheet data-eos-id="src/components/event-share-sheet.tsx#0" open={open} onClose={onClose} className="max-h-[92vh]">
+    <BottomSheet data-eos-id="src/components/event-share-sheet.tsx#0" data-eos-v="2" open={open} onClose={onClose} className="max-h-[92vh]">
 
       {/* Offscreen capture instances - one per size, no CSS transform parent.
           These are the html2canvas capture targets. Rendered at native resolution,
