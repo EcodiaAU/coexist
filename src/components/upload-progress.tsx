@@ -26,7 +26,7 @@ export function UploadProgress({
 
   if (variant === 'bar') {
     return (
-      <AnimatePresence data-eos-id="src/components/upload-progress.tsx#0">
+      <AnimatePresence data-eos-id="src/components/upload-progress.tsx#0" data-eos-v="2">
         {(isActive || isDone || error) && (
           <motion.div data-eos-id="src/components/upload-progress.tsx#1"
             initial={{ opacity: 0, height: 0 }}
