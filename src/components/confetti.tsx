@@ -52,7 +52,7 @@ function createParticles(count: number): Particle[] {
 function ParticleShape({ shape, color }: { shape: Particle['shape']; color: string }) {
   if (shape === 'circle') {
     return (
-      <div
+      <div data-eos-id="src/components/confetti.tsx#0"
         className="w-2.5 h-2.5 rounded-full"
         style={{ backgroundColor: color }}
       />
@@ -60,7 +60,7 @@ function ParticleShape({ shape, color }: { shape: Particle['shape']; color: stri
   }
   if (shape === 'rect') {
     return (
-      <div
+      <div data-eos-id="src/components/confetti.tsx#1"
         className="w-3 h-1.5 rounded-sm"
         style={{ backgroundColor: color }}
       />
@@ -68,8 +68,8 @@ function ParticleShape({ shape, color }: { shape: Particle['shape']; color: stri
   }
   // Leaf shape
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-      <path
+    <svg data-eos-id="src/components/confetti.tsx#2" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+      <path data-eos-id="src/components/confetti.tsx#3"
         d="M6 0C6 0 0 4 0 8c0 2.2 2.7 4 6 4s6-1.8 6-4c0-4-6-8-6-8z"
         fill={color}
       />
@@ -108,14 +108,14 @@ export function Confetti({
 
   if (shouldReduceMotion && visible) {
     return (
-      <div
+      <div data-eos-id="src/components/confetti.tsx#4"
         className={cn(
           'fixed inset-0 z-[200] pointer-events-none flex items-center justify-center',
           className,
         )}
         aria-hidden="true"
       >
-        <motion.div
+        <motion.div data-eos-id="src/components/confetti.tsx#5"
           className="w-16 h-16 rounded-full bg-primary-400/30"
           initial={{ scale: 0, opacity: 1 }}
           animate={{ scale: 3, opacity: 0 }}
@@ -126,14 +126,14 @@ export function Confetti({
   }
 
   return (
-    <AnimatePresence>
+    <AnimatePresence data-eos-id="src/components/confetti.tsx#6">
       {visible && (
-        <div
+        <div data-eos-id="src/components/confetti.tsx#7"
           className={cn('particle-layer', className)}
           aria-hidden="true"
         >
           {particles.map((p) => (
-            <div
+            <div data-eos-id="src/components/confetti.tsx#8"
               key={p.id}
               className="css-particle"
               style={{
@@ -146,7 +146,7 @@ export function Confetti({
                 '--particle-rotate': `${p.rotate}deg`,
               } as React.CSSProperties}
             >
-              <ParticleShape shape={p.shape} color={p.color} />
+              <ParticleShape data-eos-id="src/components/confetti.tsx#9" shape={p.shape} color={p.color} />
             </div>
           ))}
         </div>
