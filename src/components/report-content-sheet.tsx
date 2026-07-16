@@ -51,7 +51,7 @@ export function ReportContentSheet({
   }
 
   return (
-    <BottomSheet data-eos-id="src/components/report-content-sheet.tsx#0" open={open} onClose={onClose}>
+    <BottomSheet data-eos-id="src/components/report-content-sheet.tsx#0" data-eos-v="2" open={open} onClose={onClose}>
       <div data-eos-id="src/components/report-content-sheet.tsx#1" className="px-1 pb-2">
         <div data-eos-id="src/components/report-content-sheet.tsx#2" className="flex items-center gap-2.5 mb-4">
           <div data-eos-id="src/components/report-content-sheet.tsx#3" className="flex items-center justify-center w-9 h-9 rounded-full bg-warning-100 text-warning-600">
