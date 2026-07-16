@@ -135,41 +135,41 @@ export function TaskSurveyModal({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
+    <BottomSheet data-eos-id="src/components/task-survey-modal.tsx#0" open={open} onClose={onClose}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading text-lg font-semibold text-neutral-900">{survey?.title ?? 'Survey'}</h2>
-        <button
+      <div data-eos-id="src/components/task-survey-modal.tsx#1" className="flex items-center justify-between mb-4">
+        <h2 data-eos-id="src/components/task-survey-modal.tsx#2" data-eos-var="survey.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="font-heading text-lg font-semibold text-neutral-900">{survey?.title ?? 'Survey'}</h2>
+        <button data-eos-id="src/components/task-survey-modal.tsx#3"
           onClick={onClose}
           className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
           aria-label="Close"
         >
-          <X size={20} />
+          <X data-eos-id="src/components/task-survey-modal.tsx#4" size={20} />
         </button>
       </div>
       {isLoading ? (
-        <Skeleton variant="list-item" count={4} />
+        <Skeleton data-eos-id="src/components/task-survey-modal.tsx#5" variant="list-item" count={4} />
       ) : !questions.length ? (
-        <p className="text-sm text-neutral-500 py-4">No questions found in this survey.</p>
+        <p data-eos-id="src/components/task-survey-modal.tsx#6" className="text-sm text-neutral-500 py-4">No questions found in this survey.</p>
       ) : (
-        <div className="space-y-5">
-          <p className="text-xs text-neutral-500">
+        <div data-eos-id="src/components/task-survey-modal.tsx#7" className="space-y-5">
+          <p data-eos-id="src/components/task-survey-modal.tsx#8" className="text-xs text-neutral-500">
             Please complete this survey to finish the task.
           </p>
 
-          <SurveyQuestionRenderer
+          <SurveyQuestionRenderer data-eos-id="src/components/task-survey-modal.tsx#9"
             questions={questions}
             answers={answers}
             setAnswer={setAnswer}
           />
 
-          <Button
+          <Button data-eos-id="src/components/task-survey-modal.tsx#10"
             variant="primary"
             fullWidth
             onClick={handleSubmit}
             loading={submitting}
             disabled={!allRequiredAnswered}
-            icon={<CheckCircle size={15} />}
+            icon={<CheckCircle data-eos-id="src/components/task-survey-modal.tsx#11" size={15} />}
           >
             Submit Survey & Complete Task
           </Button>
