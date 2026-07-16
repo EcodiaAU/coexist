@@ -48,7 +48,7 @@ export function ConfirmationSheet({
   const Icon = config.icon
 
   return (
-    <BottomSheet data-eos-id="src/components/confirmation-sheet.tsx#0"
+    <BottomSheet data-eos-id="src/components/confirmation-sheet.tsx#0" data-eos-v="2"
       open={open}
       onClose={onClose}
       className={className}
