@@ -52,7 +52,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div data-eos-id="src/pages/auth/reset-password.tsx#0" className="min-h-dvh flex flex-col bg-white">
+    <div data-eos-id="src/pages/auth/reset-password.tsx#0" data-eos-v="2" className="min-h-dvh flex flex-col bg-white">
       <OGMeta data-eos-id="src/pages/auth/reset-password.tsx#1" title="Set New Password" description="Set a new password for your Co-Exist account." noindex />
       <Header data-eos-id="src/pages/auth/reset-password.tsx#2" title="New Password" />
 
