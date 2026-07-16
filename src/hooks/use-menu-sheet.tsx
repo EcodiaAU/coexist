@@ -23,7 +23,7 @@ export function MenuSheetProvider({ children }: { children: ReactNode }) {
   )
 
   return (
-    <MenuSheetContext.Provider data-eos-id="src/hooks/use-menu-sheet.tsx#0" value={value}>
+    <MenuSheetContext.Provider data-eos-id="src/hooks/use-menu-sheet.tsx#0" data-eos-v="2" value={value}>
       {children}
     </MenuSheetContext.Provider>
   )
