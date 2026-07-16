@@ -1,5 +1,5 @@
 export const APP_NAME = 'Co-Exist'
-export const TAGLINE = 'Explore. Connect. Protect.'
+export const TAGLINE = 'Expand. Connect. Protect.'
 export const PHILOSOPHY = 'Do good, feel good'
 
 export const CONTACT_EMAIL = 'hello@coexistaus.org'
