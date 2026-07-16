@@ -61,8 +61,8 @@ function getSuiteIdentity(suite: Suite, collectiveName: string): SuiteIdentity {
         label: 'Admin',
         subtitle: 'Co-Exist',
         path: '/admin',
-        icon: <Shield size={14} className="text-white" />,
-        iconSmall: <Shield size={12} className="text-white" />,
+        icon: <Shield data-eos-id="src/components/unified-sidebar.tsx#0" size={14} className="text-white" />,
+        iconSmall: <Shield data-eos-id="src/components/unified-sidebar.tsx#1" size={12} className="text-white" />,
         iconGradient: 'from-primary-700 to-primary-900',
         badgeBg: 'from-primary-50/80 to-primary-50/30',
         badgeBorder: 'border-neutral-100',
@@ -75,8 +75,8 @@ function getSuiteIdentity(suite: Suite, collectiveName: string): SuiteIdentity {
         label: 'Leader',
         subtitle: collectiveName,
         path: '/leader',
-        icon: <TreePine size={14} className="text-white" />,
-        iconSmall: <TreePine size={12} className="text-white" />,
+        icon: <TreePine data-eos-id="src/components/unified-sidebar.tsx#2" size={14} className="text-white" />,
+        iconSmall: <TreePine data-eos-id="src/components/unified-sidebar.tsx#3" size={12} className="text-white" />,
         iconGradient: 'from-moss-400 to-moss-600',
         badgeBg: 'from-moss-50/80 to-moss-50/30',
         badgeBorder: 'border-moss-100/30',
@@ -89,8 +89,8 @@ function getSuiteIdentity(suite: Suite, collectiveName: string): SuiteIdentity {
         label: 'Member',
         subtitle: 'Co-Exist',
         path: '/',
-        icon: <Leaf size={14} className="text-white" />,
-        iconSmall: <Leaf size={12} className="text-white" />,
+        icon: <Leaf data-eos-id="src/components/unified-sidebar.tsx#4" size={14} className="text-white" />,
+        iconSmall: <Leaf data-eos-id="src/components/unified-sidebar.tsx#5" size={12} className="text-white" />,
         iconGradient: 'from-sprout-500 to-primary-600',
         badgeBg: 'from-sprout-50/80 to-primary-50/30',
         badgeBorder: 'border-sprout-100/30',
@@ -108,7 +108,7 @@ function MobileProfileCard({ onNavigate }: { onNavigate: (path: string) => void 
   const { profile } = useAuth()
 
   return (
-    <button
+    <button data-eos-id="src/components/unified-sidebar.tsx#6"
       type="button"
       onClick={() => onNavigate('/profile')}
       className={cn(
@@ -121,17 +121,17 @@ function MobileProfileCard({ onNavigate }: { onNavigate: (path: string) => void 
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
       )}
     >
-      <Avatar
+      <Avatar data-eos-id="src/components/unified-sidebar.tsx#7"
         src={profile?.avatar_url}
         name={profile?.display_name ?? ''}
         size="lg"
       />
-      <div className="flex-1 min-w-0">
-        <p className="font-heading text-[15px] sm:text-[17px] font-bold text-neutral-900 line-clamp-2 leading-tight">
+      <div data-eos-id="src/components/unified-sidebar.tsx#8" className="flex-1 min-w-0">
+        <p data-eos-id="src/components/unified-sidebar.tsx#9" data-eos-var="profile.display_name" data-eos-var-label="Display name" data-eos-var-scope="prop" className="font-heading text-[15px] sm:text-[17px] font-bold text-neutral-900 line-clamp-2 leading-tight">
           {profile?.display_name}
         </p>
       </div>
-      <ChevronRight
+      <ChevronRight data-eos-id="src/components/unified-sidebar.tsx#10"
         size={16}
         strokeWidth={1.5}
         className="text-neutral-300 group-hover:text-neutral-400 transition-colors shrink-0"
@@ -235,10 +235,10 @@ function MobileSidebarOverlay({
     : { duration: 0.22, ease: [0.25, 0.1, 0.25, 1] as const }
 
   return createPortal(
-    <AnimatePresence>
+    <AnimatePresence data-eos-id="src/components/unified-sidebar.tsx#11">
       {open && (
-        <div className="fixed inset-0 z-50">
-          <motion.div
+        <div data-eos-id="src/components/unified-sidebar.tsx#12" className="fixed inset-0 z-50">
+          <motion.div data-eos-id="src/components/unified-sidebar.tsx#13"
             className="fixed inset-0 bg-black/50 gpu-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: backdropTransition }}
@@ -247,7 +247,7 @@ function MobileSidebarOverlay({
             aria-hidden="true"
           />
 
-          <motion.div
+          <motion.div data-eos-id="src/components/unified-sidebar.tsx#14"
             ref={sheetRef}
             role="dialog"
             aria-modal="true"
@@ -271,19 +271,19 @@ function MobileSidebarOverlay({
             }}
             onKeyDown={handleKeyDown}
           >
-            <div
+            <div data-eos-id="src/components/unified-sidebar.tsx#15"
               className="px-5 pb-4"
               style={{ paddingTop: 'calc(var(--safe-top, 0px) + 0.75rem)' }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex-1" />
-                <img
+              <div data-eos-id="src/components/unified-sidebar.tsx#16" className="flex items-center justify-between mb-4">
+                <div data-eos-id="src/components/unified-sidebar.tsx#17" className="flex-1" />
+                <img data-eos-id="src/components/unified-sidebar.tsx#18"
                   src="/logos/black-wordmark.png"
                   alt={APP_NAME}
                   className="h-5 w-auto"
                 />
-                <div className="flex-1 flex justify-end">
-                  <button
+                <div data-eos-id="src/components/unified-sidebar.tsx#19" className="flex-1 flex justify-end">
+                  <button data-eos-id="src/components/unified-sidebar.tsx#20"
                     type="button"
                     onClick={onClose}
                     className={cn(
@@ -295,21 +295,21 @@ function MobileSidebarOverlay({
                     )}
                     aria-label="Close menu"
                   >
-                    <X size={16} strokeWidth={1.5} />
+                    <X data-eos-id="src/components/unified-sidebar.tsx#21" size={16} strokeWidth={1.5} />
                   </button>
                 </div>
               </div>
 
-              <MobileProfileCard onNavigate={handleNavigate} />
+              <MobileProfileCard data-eos-id="src/components/unified-sidebar.tsx#22" onNavigate={handleNavigate} />
             </div>
 
-            <div
+            <div data-eos-id="src/components/unified-sidebar.tsx#23"
               className="flex-1 min-h-0 overflow-y-auto overscroll-none hide-scrollbar"
               style={{
                 paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 2rem)',
               }}
             >
-              <SidebarNavList
+              <SidebarNavList data-eos-id="src/components/unified-sidebar.tsx#24"
                 suite="main"
                 categories={flatCategories}
                 collapsed={false}
@@ -321,13 +321,13 @@ function MobileSidebarOverlay({
               />
             </div>
 
-            <div
+            <div data-eos-id="src/components/unified-sidebar.tsx#25"
               className={cn('p-2.5 border-t', accent.borderColor)}
               style={{
                 paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 0.625rem)',
               }}
             >
-              <button
+              <button data-eos-id="src/components/unified-sidebar.tsx#26"
                 type="button"
                 onClick={() => handleNavigate('/settings')}
                 className={cn(
@@ -339,8 +339,8 @@ function MobileSidebarOverlay({
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                 )}
               >
-                <Settings size={17} strokeWidth={1.5} />
-                <span>Settings</span>
+                <Settings data-eos-id="src/components/unified-sidebar.tsx#27" size={17} strokeWidth={1.5} />
+                <span data-eos-id="src/components/unified-sidebar.tsx#28">Settings</span>
               </button>
             </div>
           </motion.div>
@@ -452,9 +452,9 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
     // get the leader suite via isAnyLeader below.
     const highestHome = isAdminTier ? adminHomeItem : isAnyLeader ? leaderHomeItem : memberHomeItem
 
-    const updatesItem: NavItem = { label: 'Updates', path: '/updates', icon: <Megaphone size={17} strokeWidth={1.5} />, badge: updatesBadgeCount }
-    const chatItem: NavItem = { label: 'Chat', path: '/chat', icon: <MessageCircle size={17} strokeWidth={1.5} />, desktopOnly: true }
-    const learnItem: NavItem = { label: 'Learn', path: '/learn', icon: <BookOpen size={17} strokeWidth={1.5} /> }
+    const updatesItem: NavItem = { label: 'Updates', path: '/updates', icon: <Megaphone data-eos-id="src/components/unified-sidebar.tsx#29" size={17} strokeWidth={1.5} />, badge: updatesBadgeCount }
+    const chatItem: NavItem = { label: 'Chat', path: '/chat', icon: <MessageCircle data-eos-id="src/components/unified-sidebar.tsx#30" size={17} strokeWidth={1.5} />, desktopOnly: true }
+    const learnItem: NavItem = { label: 'Learn', path: '/learn', icon: <BookOpen data-eos-id="src/components/unified-sidebar.tsx#31" size={17} strokeWidth={1.5} /> }
 
     // Learn is gated to staff + collective leaders (assist/co/leader). Participants
     // and non-admin members don't see it (Tate verbatim 2026-05-28: "participant
@@ -521,7 +521,7 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
   // ── Mobile mode: render overlay sidebar ──
   if (isMobileMode) {
     return (
-      <MobileSidebarOverlay
+      <MobileSidebarOverlay data-eos-id="src/components/unified-sidebar.tsx#32"
         open={!!mobileOpen}
         onClose={onMobileClose ?? (() => {})}
         suite={suite}
@@ -538,11 +538,11 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
 
   // ── Desktop mode: shell + nav list ──
   return (
-    <SidebarShell
+    <SidebarShell data-eos-id="src/components/unified-sidebar.tsx#33"
       collapsed={collapsed}
       onToggleCollapse={() => setCollapsed((p) => !p)}
     >
-      <SidebarNavList
+      <SidebarNavList data-eos-id="src/components/unified-sidebar.tsx#34"
         suite="main"
         categories={flatCategories}
         collapsed={collapsed}
