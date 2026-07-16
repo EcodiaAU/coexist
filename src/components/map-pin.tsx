@@ -31,14 +31,14 @@ export function MapPin({
   const fillColor = color ?? variantColors[variant]
 
   return (
-    <div
+    <div data-eos-id="src/components/map-pin.tsx#0"
       role="img"
       aria-label={ariaLabel}
       className={cn('relative inline-flex items-center justify-center', className)}
     >
       {/* Pulse ring for active state */}
       {active && !shouldReduceMotion && (
-        <motion.div
+        <motion.div data-eos-id="src/components/map-pin.tsx#1"
           className="absolute rounded-full"
           style={{
             width: 48,
@@ -58,7 +58,7 @@ export function MapPin({
 
       {/* Active static ring (reduced motion fallback) */}
       {active && shouldReduceMotion && (
-        <div
+        <div data-eos-id="src/components/map-pin.tsx#2"
           className="absolute rounded-full opacity-20"
           style={{
             width: 56,
@@ -70,7 +70,7 @@ export function MapPin({
       )}
 
       {/* Pin SVG */}
-      <svg
+      <svg data-eos-id="src/components/map-pin.tsx#3"
         width="36"
         height="46"
         viewBox="0 0 36 46"
@@ -80,18 +80,18 @@ export function MapPin({
         aria-hidden="true"
       >
         {/* Pin body */}
-        <path
+        <path data-eos-id="src/components/map-pin.tsx#4"
           d="M18 0C8.06 0 0 8.06 0 18c0 12.6 16.2 26.4 17.1 27.15a1.5 1.5 0 0 0 1.8 0C19.8 44.4 36 30.6 36 18 36 8.06 27.94 0 18 0Z"
           fill={fillColor}
         />
 
         {/* Inner circle background */}
-        <circle cx="18" cy="17" r="10" fill="white" fillOpacity="0.9" />
+        <circle data-eos-id="src/components/map-pin.tsx#5" cx="18" cy="17" r="10" fill="white" fillOpacity="0.9" />
       </svg>
 
       {/* Icon inside circle */}
       {icon && (
-        <div
+        <div data-eos-id="src/components/map-pin.tsx#6"
           className="absolute flex items-center justify-center"
           style={{ top: 8, width: 20, height: 20 }}
           aria-hidden="true"
@@ -102,7 +102,7 @@ export function MapPin({
 
       {/* Default dot if no icon */}
       {!icon && (
-        <div
+        <div data-eos-id="src/components/map-pin.tsx#7"
           className="absolute rounded-full"
           style={{
             top: 13,
