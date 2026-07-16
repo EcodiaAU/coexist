@@ -104,7 +104,7 @@ function PromoFormSheet({
   }, [])
 
   return (
-    <BottomSheet data-eos-id="src/pages/admin/merch/promos-tab.tsx#0" open={open} onClose={onClose} snapPoints={SNAP_POINTS_75}>
+    <BottomSheet data-eos-id="src/pages/admin/merch/promos-tab.tsx#0" data-eos-v="2" open={open} onClose={onClose} snapPoints={SNAP_POINTS_75}>
       <div data-eos-id="src/pages/admin/merch/promos-tab.tsx#1" className="space-y-5" onKeyDown={handleKeyDown}>
         <h3 data-eos-id="src/pages/admin/merch/promos-tab.tsx#2" className="font-heading font-semibold text-lg text-neutral-900">
           {promo ? 'Edit promo' : 'New promo code'}
