@@ -107,7 +107,7 @@ export function CoverImageFocalPointPicker({
   }
 
   return (
-    <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#0" className={cn('flex flex-col gap-3', className)}>
+    <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#0" data-eos-v="2" className={cn('flex flex-col gap-3', className)}>
       <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#1" className="flex flex-col gap-2">
         <p data-eos-id="src/components/cover-image-focal-point-picker.tsx#2" className="text-xs font-medium text-neutral-700">
           Focal point
@@ -158,7 +158,7 @@ export function CoverImageFocalPointPicker({
         )}
         data-testid="cover-image-focal-point-picker"
       >
-        <img data-eos-id="src/components/cover-image-focal-point-picker.tsx#5"
+        <img data-eos-src="dynamic" data-eos-src-label="Image url" data-eos-id="src/components/cover-image-focal-point-picker.tsx#5"
           src={imageUrl}
           alt="Cover (full)"
           className="w-full h-auto block pointer-events-none"
@@ -229,7 +229,7 @@ export function CoverImageFocalPointPicker({
       <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#17" className="flex flex-col gap-1">
         <p data-eos-id="src/components/cover-image-focal-point-picker.tsx#18" className="text-xs font-medium text-neutral-700">Live preview</p>
         <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#19" className="rounded-sm overflow-hidden bg-neutral-100">
-          <img data-eos-id="src/components/cover-image-focal-point-picker.tsx#20"
+          <img data-eos-src="dynamic" data-eos-src-label="Image url" data-eos-id="src/components/cover-image-focal-point-picker.tsx#20"
             src={imageUrl}
             alt="Cover preview"
             className="w-full object-cover block"
