@@ -87,26 +87,26 @@ export function OptimizedImage({
 
   if (error) {
     return (
-      <div
+      <div data-eos-id="src/components/optimized-image.tsx#0"
         className={cn(
           'flex items-center justify-center bg-primary-50',
           wrapperClassName,
         )}
         style={aspectRatio ? { aspectRatio } : undefined}
       >
-        <span className="text-sm text-neutral-500">Image unavailable</span>
+        <span data-eos-id="src/components/optimized-image.tsx#1" className="text-sm text-neutral-500">Image unavailable</span>
       </div>
     )
   }
 
   return (
-    <div
+    <div data-eos-id="src/components/optimized-image.tsx#2"
       className={cn('relative overflow-hidden', wrapperClassName)}
       style={aspectRatio ? { aspectRatio } : undefined}
     >
       {/* Tiny blur placeholder */}
       {showPlaceholder && (
-        <img
+        <img data-eos-id="src/components/optimized-image.tsx#3"
           src={placeholderSrc}
           alt=""
           aria-hidden="true"
@@ -114,7 +114,7 @@ export function OptimizedImage({
         />
       )}
 
-      <img
+      <img data-eos-id="src/components/optimized-image.tsx#4"
         ref={imgRef}
         src={imgSrc}
         srcSet={srcSet || undefined}
