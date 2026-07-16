@@ -129,23 +129,23 @@ const leaderBottomTabs: Tab[] = [
     label: 'App',
     path: '/',
     exact: true,
-    icon: <Home size={22} strokeWidth={1.5} />,
-    activeIcon: <Home size={22} strokeWidth={2} fill="currentColor" />,
+    icon: <Home data-eos-id="src/components/leader-layout.tsx#0" size={22} strokeWidth={1.5} />,
+    activeIcon: <Home data-eos-id="src/components/leader-layout.tsx#1" size={22} strokeWidth={2} fill="currentColor" />,
   },
   {
     key: 'leader-home',
     label: 'Dashboard',
     path: '/leader',
     exact: true,
-    icon: <LayoutDashboard size={22} strokeWidth={1.5} />,
-    activeIcon: <LayoutDashboard size={22} strokeWidth={2} fill="currentColor" />,
+    icon: <LayoutDashboard data-eos-id="src/components/leader-layout.tsx#2" size={22} strokeWidth={1.5} />,
+    activeIcon: <LayoutDashboard data-eos-id="src/components/leader-layout.tsx#3" size={22} strokeWidth={2} fill="currentColor" />,
   },
   {
     key: 'leader-events',
     label: 'Events',
     path: '/leader/events',
-    icon: <CalendarDays size={22} strokeWidth={1.5} />,
-    activeIcon: <CalendarDays size={22} strokeWidth={2} fill="currentColor" />,
+    icon: <CalendarDays data-eos-id="src/components/leader-layout.tsx#4" size={22} strokeWidth={1.5} />,
+    activeIcon: <CalendarDays data-eos-id="src/components/leader-layout.tsx#5" size={22} strokeWidth={2} fill="currentColor" />,
   },
   {
     key: 'more',
@@ -153,8 +153,8 @@ const leaderBottomTabs: Tab[] = [
     path: '/more',
     exact: true,
     isMore: true,
-    icon: <MoreHorizontal size={22} strokeWidth={1.5} />,
-    activeIcon: <MoreHorizontal size={22} strokeWidth={2} />,
+    icon: <MoreHorizontal data-eos-id="src/components/leader-layout.tsx#6" size={22} strokeWidth={1.5} />,
+    activeIcon: <MoreHorizontal data-eos-id="src/components/leader-layout.tsx#7" size={22} strokeWidth={2} />,
   },
 ]
 
@@ -169,7 +169,7 @@ const leaderBottomTabs: Tab[] = [
 function LeaderBottomTabs() {
   const { openMenu } = useMenuSheet()
   return (
-    <BottomTabBar
+    <BottomTabBar data-eos-id="src/components/leader-layout.tsx#8"
       tabs={leaderBottomTabs}
       layoutPrefix="leader-tab"
       accent="moss"
@@ -222,15 +222,15 @@ export function LeaderLayout() {
   const headerCtx = useMemo(() => ({ setHeader, collectiveId, collectiveSlug }), [setHeader, collectiveId, collectiveSlug])
 
   return (
-    <LeaderCollectiveScopeContext.Provider value={scopeCtx}>
-    <LeaderHeaderContext.Provider value={headerCtx}>
-      <div className="flex flex-1 min-h-0">
+    <LeaderCollectiveScopeContext.Provider data-eos-id="src/components/leader-layout.tsx#9" value={scopeCtx}>
+    <LeaderHeaderContext.Provider data-eos-id="src/components/leader-layout.tsx#10" value={headerCtx}>
+      <div data-eos-id="src/components/leader-layout.tsx#11" className="flex flex-1 min-h-0">
         {/* Desktop sidebar is handled by UnifiedSidebar in AppShell */}
 
         {/* Mobile drawer + hamburger removed - handled by UnifiedSidebar in AppShell */}
 
         {/* ── Main content ── */}
-        <div ref={scrollRef} className={cn(
+        <div data-eos-id="src/components/leader-layout.tsx#12" ref={scrollRef} className={cn(
           'flex-1 flex flex-col min-w-0 min-h-0 bg-surface-1',
           showBottomTabs && 'overflow-y-auto overscroll-none hide-scrollbar',
         )}>
@@ -239,7 +239,7 @@ export function LeaderLayout() {
             const cfg = PAGE_HERO_CONFIG[header.title] ?? DEFAULT_HERO
             const subtitle = header.subtitle ?? cfg.defaultSubtitle
             return (
-              <div
+              <div data-eos-id="src/components/leader-layout.tsx#13"
                 className={cn(
                   'relative overflow-hidden',
                   'transition-colors duration-700 ease-in-out',
@@ -248,35 +248,35 @@ export function LeaderLayout() {
                   'before:absolute before:inset-x-0 before:bottom-full before:h-[200px] before:bg-inherit',
                 )}
               >
-                <div className="relative z-10">
-                  <div className="flex items-end justify-between gap-4 flex-wrap">
-                    <div>
-                      <h1 className="font-heading text-3xl sm:text-4xl font-normal display-tight text-white">
+                <div data-eos-id="src/components/leader-layout.tsx#14" className="relative z-10">
+                  <div data-eos-id="src/components/leader-layout.tsx#15" className="flex items-end justify-between gap-4 flex-wrap">
+                    <div data-eos-id="src/components/leader-layout.tsx#16">
+                      <h1 data-eos-id="src/components/leader-layout.tsx#17" data-eos-var="header.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="font-heading text-3xl sm:text-4xl font-normal display-tight text-white">
                         {header.title}
                       </h1>
                       {subtitle && (
-                        <p className="mt-1 text-sm text-white/50">{subtitle}</p>
+                        <p data-eos-id="src/components/leader-layout.tsx#18" className="mt-1 text-sm text-white/50">{subtitle}</p>
                       )}
                     </div>
                     {header.actions && (
-                      <div className="flex items-center gap-2 shrink-0">{header.actions}</div>
+                      <div data-eos-id="src/components/leader-layout.tsx#19" data-eos-var="header.actions" data-eos-var-label="Actions" data-eos-var-scope="prop" className="flex items-center gap-2 shrink-0">{header.actions}</div>
                     )}
                   </div>
 
                   {header.heroContent && (
-                    <div className="mt-5">{header.heroContent}</div>
+                    <div data-eos-id="src/components/leader-layout.tsx#20" data-eos-var="header.heroContent" data-eos-var-label="Hero content" data-eos-var-scope="prop" className="mt-5">{header.heroContent}</div>
                   )}
                 </div>
 
                 {/* Wave divider */}
-                <div className="absolute bottom-0 left-0 right-0 z-20">
-                  <svg
+                <div data-eos-id="src/components/leader-layout.tsx#21" className="absolute bottom-0 left-0 right-0 z-20">
+                  <svg data-eos-id="src/components/leader-layout.tsx#22"
                     viewBox="0 0 1440 70"
                     preserveAspectRatio="none"
                     className="w-full h-7 sm:h-10 block"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <path d={WAVE_PATHS[0]} className="fill-white" />
+                    <path data-eos-id="src/components/leader-layout.tsx#23" d={WAVE_PATHS[0]} className="fill-white" />
                   </svg>
                 </div>
               </div>
@@ -284,20 +284,20 @@ export function LeaderLayout() {
           })() : null}
 
           {/* Content rendered by nested <Route> children */}
-          <div className={cn(
+          <div data-eos-id="src/components/leader-layout.tsx#24" className={cn(
             'relative flex-1',
             header.fullBleed ? 'p-0 bg-white' : 'p-4 sm:p-6 lg:p-8',
             !header.fullBleed && 'bg-neutral-50',
             showBottomTabs && 'pb-[calc(5rem+var(--safe-bottom))]',
           )}>
 
-            <AnimatedOutlet />
+            <AnimatedOutlet data-eos-id="src/components/leader-layout.tsx#25" />
           </div>
         </div>
 
         {/* Leader bottom tab bar - mobile only */}
         {showBottomTabs && (
-          <LeaderBottomTabs />
+          <LeaderBottomTabs data-eos-id="src/components/leader-layout.tsx#26" />
         )}
       </div>
     </LeaderHeaderContext.Provider>
