@@ -247,7 +247,7 @@ export const Input = forwardRef<
     .join(' ') || undefined
 
   return (
-    <div data-eos-id="src/components/input.tsx#0" className={cn('w-full', className)}>
+    <div data-eos-id="src/components/input.tsx#0" data-eos-v="2" className={cn('w-full', className)}>
       <div data-eos-id="src/components/input.tsx#1" className="relative">
         {/* Search icon */}
         {isSearch && (
