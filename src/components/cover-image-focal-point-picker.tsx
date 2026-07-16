@@ -107,18 +107,18 @@ export function CoverImageFocalPointPicker({
   }
 
   return (
-    <div className={cn('flex flex-col gap-3', className)}>
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium text-neutral-700">
+    <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#0" className={cn('flex flex-col gap-3', className)}>
+      <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#1" className="flex flex-col gap-2">
+        <p data-eos-id="src/components/cover-image-focal-point-picker.tsx#2" className="text-xs font-medium text-neutral-700">
           Focal point
         </p>
-        <p className="text-xs text-neutral-500">
+        <p data-eos-id="src/components/cover-image-focal-point-picker.tsx#3" className="text-xs text-neutral-500">
           Tap the cover image to choose which part stays visible when the image
           is cropped to fit different layouts.
         </p>
       </div>
 
-      <div
+      <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#4"
         role={disabled ? undefined : 'button'}
         tabIndex={disabled ? undefined : 0}
         aria-label={
@@ -158,14 +158,14 @@ export function CoverImageFocalPointPicker({
         )}
         data-testid="cover-image-focal-point-picker"
       >
-        <img
+        <img data-eos-id="src/components/cover-image-focal-point-picker.tsx#5"
           src={imageUrl}
           alt="Cover (full)"
           className="w-full h-auto block pointer-events-none"
           draggable={false}
         />
         {/* Crosshair indicator */}
-        <div
+        <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#6"
           aria-hidden
           className="absolute pointer-events-none"
           style={{
@@ -175,15 +175,15 @@ export function CoverImageFocalPointPicker({
           }}
           data-testid="cover-image-focal-point-indicator"
         >
-          <div className="w-5 h-5 rounded-full border-2 border-white shadow-md bg-primary-500/80" />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-white" />
+          <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#7" className="w-5 h-5 rounded-full border-2 border-white shadow-md bg-primary-500/80" />
+          <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#8" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-white" />
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 text-xs text-neutral-700">
-          <span className="w-4">x</span>
-          <input
+      <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#9" className="flex items-center gap-3">
+        <label data-eos-id="src/components/cover-image-focal-point-picker.tsx#10" className="flex items-center gap-2 text-xs text-neutral-700">
+          <span data-eos-id="src/components/cover-image-focal-point-picker.tsx#11" className="w-4">x</span>
+          <input data-eos-id="src/components/cover-image-focal-point-picker.tsx#12"
             type="number"
             min={0}
             max={100}
@@ -195,9 +195,9 @@ export function CoverImageFocalPointPicker({
             aria-label="Focal point x percentage"
           />
         </label>
-        <label className="flex items-center gap-2 text-xs text-neutral-700">
-          <span className="w-4">y</span>
-          <input
+        <label data-eos-id="src/components/cover-image-focal-point-picker.tsx#13" className="flex items-center gap-2 text-xs text-neutral-700">
+          <span data-eos-id="src/components/cover-image-focal-point-picker.tsx#14" className="w-4">y</span>
+          <input data-eos-id="src/components/cover-image-focal-point-picker.tsx#15"
             type="number"
             min={0}
             max={100}
@@ -209,7 +209,7 @@ export function CoverImageFocalPointPicker({
             aria-label="Focal point y percentage"
           />
         </label>
-        <button
+        <button data-eos-id="src/components/cover-image-focal-point-picker.tsx#16"
           type="button"
           onClick={() => {
             setLocalX(50)
@@ -226,10 +226,10 @@ export function CoverImageFocalPointPicker({
         </button>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <p className="text-xs font-medium text-neutral-700">Live preview</p>
-        <div className="rounded-sm overflow-hidden bg-neutral-100">
-          <img
+      <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#17" className="flex flex-col gap-1">
+        <p data-eos-id="src/components/cover-image-focal-point-picker.tsx#18" className="text-xs font-medium text-neutral-700">Live preview</p>
+        <div data-eos-id="src/components/cover-image-focal-point-picker.tsx#19" className="rounded-sm overflow-hidden bg-neutral-100">
+          <img data-eos-id="src/components/cover-image-focal-point-picker.tsx#20"
             src={imageUrl}
             alt="Cover preview"
             className="w-full object-cover block"
