@@ -93,7 +93,7 @@ export function Badge({
           : 'bg-primary-100 text-primary-700'
 
   return (
-    <span data-eos-id="src/components/badge.tsx#0"
+    <span data-eos-id="src/components/badge.tsx#0" data-eos-v="2"
       role="status"
       aria-label={ariaLabel}
       className={cn(
