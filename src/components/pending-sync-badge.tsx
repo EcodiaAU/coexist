@@ -16,7 +16,7 @@ export function PendingSyncBadge({ className }: PendingSyncBadgeProps) {
   if (count === 0) return null
 
   return (
-    <span data-eos-id="src/components/pending-sync-badge.tsx#0"
+    <span data-eos-id="src/components/pending-sync-badge.tsx#0" data-eos-v="2"
       className={cn(
         'inline-flex items-center gap-1 rounded-full bg-warning-100 px-2 py-0.5',
         'text-xs font-medium text-warning-700',
