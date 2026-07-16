@@ -79,7 +79,7 @@ export function AdminHeroStat({
   const isNegative = sub?.startsWith('-')
 
   return (
-    <motion.div data-eos-id="src/components/admin-hero-stat.tsx#0"
+    <motion.div data-eos-id="src/components/admin-hero-stat.tsx#0" data-eos-v="2"
       initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
