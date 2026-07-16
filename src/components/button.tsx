@@ -41,7 +41,7 @@ export interface ButtonProps {
 
 function Spinner({ className }: { className?: string }) {
   return (
-    <svg
+    <svg data-eos-id="src/components/button.tsx#0"
       className={cn('animate-spin', className)}
       width="16"
       height="16"
@@ -49,7 +49,7 @@ function Spinner({ className }: { className?: string }) {
       fill="none"
       aria-hidden="true"
     >
-      <circle
+      <circle data-eos-id="src/components/button.tsx#1"
         cx="8"
         cy="8"
         r="6"
@@ -57,7 +57,7 @@ function Spinner({ className }: { className?: string }) {
         strokeOpacity="0.25"
         strokeWidth="2.5"
       />
-      <path
+      <path data-eos-id="src/components/button.tsx#2"
         d="M14 8a6 6 0 0 0-6-6"
         stroke="currentColor"
         strokeWidth="2.5"
@@ -89,7 +89,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const isDisabled = disabled || loading
 
     return (
-      <motion.button
+      <motion.button data-eos-id="src/components/button.tsx#3"
         ref={ref}
         type={type}
         disabled={isDisabled}
@@ -116,23 +116,23 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <>
-            <Spinner
+            <Spinner data-eos-id="src/components/button.tsx#4"
               className={cn(
                 size === 'sm' && 'w-3.5 h-3.5',
                 size === 'md' && 'w-4 h-4',
                 size === 'lg' && 'w-5 h-5',
               )}
             />
-            {children && <span>{children}</span>}
+            {children && <span data-eos-id="src/components/button.tsx#5">{children}</span>}
           </>
         ) : (
           <>
             {icon && (
-              <span className="flex items-center justify-center shrink-0">
+              <span data-eos-id="src/components/button.tsx#6" className="flex items-center justify-center shrink-0">
                 {icon}
               </span>
             )}
-            {children && <span>{children}</span>}
+            {children && <span data-eos-id="src/components/button.tsx#7">{children}</span>}
           </>
         )}
       </motion.button>
