@@ -31,9 +31,9 @@ function SubscriberAvatar({ url, name }: { url: string | null | undefined; name:
   const [failed, setFailed] = useState(false)
   const showImg = !!url && !failed
   return (
-    <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#0" className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100 shrink-0 overflow-hidden">
+    <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#0" data-eos-v="2" className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100 shrink-0 overflow-hidden">
       {showImg ? (
-        <img data-eos-id="src/pages/admin/email/subscribers-tab.tsx#1"
+        <img data-eos-src="dynamic" data-eos-src-label="Value" data-eos-id="src/pages/admin/email/subscribers-tab.tsx#1"
           src={url ?? ''}
           alt=""
           loading="lazy"
