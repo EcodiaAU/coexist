@@ -16,15 +16,15 @@ export function PendingSyncBadge({ className }: PendingSyncBadgeProps) {
   if (count === 0) return null
 
   return (
-    <span
+    <span data-eos-id="src/components/pending-sync-badge.tsx#0"
       className={cn(
         'inline-flex items-center gap-1 rounded-full bg-warning-100 px-2 py-0.5',
         'text-xs font-medium text-warning-700',
         className,
       )}
     >
-      <CloudOff size={12} />
-      <span>{count} pending</span>
+      <CloudOff data-eos-id="src/components/pending-sync-badge.tsx#1" size={12} />
+      <span data-eos-id="src/components/pending-sync-badge.tsx#2">{count} pending</span>
     </span>
   )
 }
