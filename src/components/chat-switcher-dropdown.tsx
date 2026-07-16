@@ -85,38 +85,38 @@ export function ChatSwitcherDropdown({
   if (!hasOptions) return null
 
   return (
-    <div ref={dropdownRef} className="relative">
-      <button
+    <div data-eos-id="src/components/chat-switcher-dropdown.tsx#0" ref={dropdownRef} className="relative">
+      <button data-eos-id="src/components/chat-switcher-dropdown.tsx#1"
         type="button"
         onClick={() => setOpen(!open)}
         className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-primary-500 hover:bg-primary-100 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
         aria-label="Switch chat"
         aria-expanded={open}
       >
-        <ChevronDown size={16} className={cn('transition-transform duration-200', open && 'rotate-180')} />
+        <ChevronDown data-eos-id="src/components/chat-switcher-dropdown.tsx#2" size={16} className={cn('transition-transform duration-200', open && 'rotate-180')} />
       </button>
 
-      <AnimatePresence>
+      <AnimatePresence data-eos-id="src/components/chat-switcher-dropdown.tsx#3">
         {open && (
-          <motion.div
+          <motion.div data-eos-id="src/components/chat-switcher-dropdown.tsx#4"
             initial={{ opacity: 0, y: -8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
             className="absolute right-0 top-full mt-2 z-50 w-60 max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-13rem-var(--safe-bottom,0px))] rounded-sm bg-white shadow-sm ring-1 ring-neutral-200/70 overflow-hidden"
           >
-            <div className="max-h-[inherit] overflow-y-auto py-1">
+            <div data-eos-id="src/components/chat-switcher-dropdown.tsx#5" className="max-h-[inherit] overflow-y-auto py-1">
               {/* Collectives */}
               {collectives.length > 0 && (
-                <div>
-                  <p className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Collectives</p>
+                <div data-eos-id="src/components/chat-switcher-dropdown.tsx#6">
+                  <p data-eos-id="src/components/chat-switcher-dropdown.tsx#7" className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Collectives</p>
                   {collectives.map((c) => {
                     const isPrimary = primaryChatId === c.id
                     const isCurrent = c.id === currentCollectiveId
 
                     return (
-                      <div key={c.id} className="flex items-center">
-                        <button
+                      <div data-eos-id="src/components/chat-switcher-dropdown.tsx#8" key={c.id} className="flex items-center">
+                        <button data-eos-id="src/components/chat-switcher-dropdown.tsx#9"
                           type="button"
                           onClick={() => {
                             setOpen(false)
@@ -129,25 +129,25 @@ export function ChatSwitcherDropdown({
                               : 'text-neutral-700 hover:bg-neutral-50',
                           )}
                         >
-                          <div className="h-6 w-6 rounded-md overflow-hidden shrink-0 relative bg-primary-100">
+                          <div data-eos-id="src/components/chat-switcher-dropdown.tsx#10" className="h-6 w-6 rounded-md overflow-hidden shrink-0 relative bg-primary-100">
                             {c.coverUrl ? (
-                              <img src={c.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                              <img data-eos-id="src/components/chat-switcher-dropdown.tsx#11" src={c.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center bg-secondary-600">
-                                <Leaf size={11} className="text-white" />
+                              <div data-eos-id="src/components/chat-switcher-dropdown.tsx#12" className="flex h-full w-full items-center justify-center bg-secondary-600">
+                                <Leaf data-eos-id="src/components/chat-switcher-dropdown.tsx#13" size={11} className="text-white" />
                               </div>
                             )}
                           </div>
-                          <span className="truncate flex-1">{c.name}</span>
+                          <span data-eos-id="src/components/chat-switcher-dropdown.tsx#14" data-eos-var="c.name" data-eos-var-label="Name" data-eos-var-scope="item" className="truncate flex-1">{c.name}</span>
                           {isPrimary && (
-                            <span className="text-[9px] font-bold text-primary-500 bg-primary-100 px-1.5 py-0.5 rounded-full shrink-0">
+                            <span data-eos-id="src/components/chat-switcher-dropdown.tsx#15" className="text-[9px] font-bold text-primary-500 bg-primary-100 px-1.5 py-0.5 rounded-full shrink-0">
                               Default
                             </span>
                           )}
                         </button>
                         {/* Set as default button (only show when user has 2+ collectives) */}
                         {collectives.length > 1 && (
-                          <button
+                          <button data-eos-id="src/components/chat-switcher-dropdown.tsx#16"
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation()
@@ -162,7 +162,7 @@ export function ChatSwitcherDropdown({
                             aria-label={isPrimary ? 'Remove as default chat' : 'Set as default chat'}
                             title={isPrimary ? 'Remove as default' : 'Set as default'}
                           >
-                            <Star size={12} className={isPrimary ? 'fill-current' : ''} />
+                            <Star data-eos-id="src/components/chat-switcher-dropdown.tsx#17" size={12} className={isPrimary ? 'fill-current' : ''} />
                           </button>
                         )}
                       </div>
@@ -173,11 +173,11 @@ export function ChatSwitcherDropdown({
 
               {/* Staff channels */}
               {channels.length > 0 && (
-                <div>
-                  {collectives.length > 0 && <div className="h-px bg-neutral-100 mx-3 my-1" />}
-                  <p className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Staff Channels</p>
+                <div data-eos-id="src/components/chat-switcher-dropdown.tsx#18">
+                  {collectives.length > 0 && <div data-eos-id="src/components/chat-switcher-dropdown.tsx#19" className="h-px bg-neutral-100 mx-3 my-1" />}
+                  <p data-eos-id="src/components/chat-switcher-dropdown.tsx#20" className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Staff Channels</p>
                   {channels.map((ch) => (
-                    <button
+                    <button data-eos-id="src/components/chat-switcher-dropdown.tsx#21"
                       key={ch.id}
                       type="button"
                       onClick={() => {
@@ -191,10 +191,10 @@ export function ChatSwitcherDropdown({
                           : 'text-neutral-700 hover:bg-neutral-50',
                       )}
                     >
-                      <div className="h-6 w-6 rounded-md bg-plum-600 flex items-center justify-center shrink-0">
-                        <Lock size={11} className="text-white" />
+                      <div data-eos-id="src/components/chat-switcher-dropdown.tsx#22" className="h-6 w-6 rounded-md bg-plum-600 flex items-center justify-center shrink-0">
+                        <Lock data-eos-id="src/components/chat-switcher-dropdown.tsx#23" size={11} className="text-white" />
                       </div>
-                      <span className="truncate">{ch.name}</span>
+                      <span data-eos-id="src/components/chat-switcher-dropdown.tsx#24" data-eos-var="ch.name" data-eos-var-label="Name" data-eos-var-scope="item" className="truncate">{ch.name}</span>
                     </button>
                   ))}
                 </div>
@@ -202,11 +202,11 @@ export function ChatSwitcherDropdown({
 
               {/* Campout group chats - per-event, ticket holders */}
               {campoutChats.length > 0 && (
-                <div>
-                  {(collectives.length > 0 || channels.length > 0) && <div className="h-px bg-neutral-100 mx-3 my-1" />}
-                  <p className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Campouts</p>
+                <div data-eos-id="src/components/chat-switcher-dropdown.tsx#25">
+                  {(collectives.length > 0 || channels.length > 0) && <div data-eos-id="src/components/chat-switcher-dropdown.tsx#26" className="h-px bg-neutral-100 mx-3 my-1" />}
+                  <p data-eos-id="src/components/chat-switcher-dropdown.tsx#27" className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Campouts</p>
                   {campoutChats.map((ch) => (
-                    <button
+                    <button data-eos-id="src/components/chat-switcher-dropdown.tsx#28"
                       key={ch.id}
                       type="button"
                       onClick={() => {
@@ -220,10 +220,10 @@ export function ChatSwitcherDropdown({
                           : 'text-neutral-700 hover:bg-neutral-50',
                       )}
                     >
-                      <div className="h-6 w-6 rounded-md bg-primary-600 flex items-center justify-center shrink-0">
-                        <Tent size={11} className="text-white" />
+                      <div data-eos-id="src/components/chat-switcher-dropdown.tsx#29" className="h-6 w-6 rounded-md bg-primary-600 flex items-center justify-center shrink-0">
+                        <Tent data-eos-id="src/components/chat-switcher-dropdown.tsx#30" size={11} className="text-white" />
                       </div>
-                      <span className="truncate">{ch.name}</span>
+                      <span data-eos-id="src/components/chat-switcher-dropdown.tsx#31" data-eos-var="ch.name" data-eos-var-label="Name" data-eos-var-scope="item" className="truncate">{ch.name}</span>
                     </button>
                   ))}
                 </div>
@@ -231,11 +231,11 @@ export function ChatSwitcherDropdown({
 
               {/* Carpool chats - per-event breakouts */}
               {carpoolChats.length > 0 && (
-                <div>
-                  {(collectives.length > 0 || channels.length > 0 || campoutChats.length > 0) && <div className="h-px bg-neutral-100 mx-3 my-1" />}
-                  <p className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Carpool Chats</p>
+                <div data-eos-id="src/components/chat-switcher-dropdown.tsx#32">
+                  {(collectives.length > 0 || channels.length > 0 || campoutChats.length > 0) && <div data-eos-id="src/components/chat-switcher-dropdown.tsx#33" className="h-px bg-neutral-100 mx-3 my-1" />}
+                  <p data-eos-id="src/components/chat-switcher-dropdown.tsx#34" className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Carpool Chats</p>
                   {carpoolChats.map((ch) => (
-                    <button
+                    <button data-eos-id="src/components/chat-switcher-dropdown.tsx#35"
                       key={ch.id}
                       type="button"
                       onClick={() => {
@@ -249,10 +249,10 @@ export function ChatSwitcherDropdown({
                           : 'text-neutral-700 hover:bg-neutral-50',
                       )}
                     >
-                      <div className="h-6 w-6 rounded-md bg-success-600 flex items-center justify-center shrink-0">
-                        <Car size={11} className="text-white" />
+                      <div data-eos-id="src/components/chat-switcher-dropdown.tsx#36" className="h-6 w-6 rounded-md bg-success-600 flex items-center justify-center shrink-0">
+                        <Car data-eos-id="src/components/chat-switcher-dropdown.tsx#37" size={11} className="text-white" />
                       </div>
-                      <span className="truncate">{ch.name}</span>
+                      <span data-eos-id="src/components/chat-switcher-dropdown.tsx#38" data-eos-var="ch.name" data-eos-var-label="Name" data-eos-var-scope="item" className="truncate">{ch.name}</span>
                     </button>
                   ))}
                 </div>
@@ -260,13 +260,13 @@ export function ChatSwitcherDropdown({
 
               {/* All collectives (staff/admin only) */}
               {otherCollectives.length > 0 && (
-                <div>
-                  {(collectives.length > 0 || channels.length > 0 || campoutChats.length > 0 || carpoolChats.length > 0) && <div className="h-px bg-neutral-100 mx-3 my-1" />}
-                  <p className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">All Collectives</p>
+                <div data-eos-id="src/components/chat-switcher-dropdown.tsx#39">
+                  {(collectives.length > 0 || channels.length > 0 || campoutChats.length > 0 || carpoolChats.length > 0) && <div data-eos-id="src/components/chat-switcher-dropdown.tsx#40" className="h-px bg-neutral-100 mx-3 my-1" />}
+                  <p data-eos-id="src/components/chat-switcher-dropdown.tsx#41" className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">All Collectives</p>
                   {otherCollectives.map((c) => {
                     const isCurrent = c.id === currentCollectiveId
                     return (
-                      <button
+                      <button data-eos-id="src/components/chat-switcher-dropdown.tsx#42"
                         key={c.id}
                         type="button"
                         onClick={() => {
@@ -280,16 +280,16 @@ export function ChatSwitcherDropdown({
                             : 'text-neutral-700 hover:bg-neutral-50',
                         )}
                       >
-                        <div className="h-6 w-6 rounded-md overflow-hidden shrink-0 bg-primary-100">
+                        <div data-eos-id="src/components/chat-switcher-dropdown.tsx#43" className="h-6 w-6 rounded-md overflow-hidden shrink-0 bg-primary-100">
                           {c.coverUrl ? (
-                            <img src={c.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                            <img data-eos-id="src/components/chat-switcher-dropdown.tsx#44" src={c.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-secondary-600">
-                              <Leaf size={11} className="text-white" />
+                            <div data-eos-id="src/components/chat-switcher-dropdown.tsx#45" className="flex h-full w-full items-center justify-center bg-secondary-600">
+                              <Leaf data-eos-id="src/components/chat-switcher-dropdown.tsx#46" size={11} className="text-white" />
                             </div>
                           )}
                         </div>
-                        <span className="truncate">{c.name}</span>
+                        <span data-eos-id="src/components/chat-switcher-dropdown.tsx#47" data-eos-var="c.name" data-eos-var-label="Name" data-eos-var-scope="item" className="truncate">{c.name}</span>
                       </button>
                     )
                   })}
