@@ -78,7 +78,7 @@ export function MentionPicker({
   }, [members, debouncedQuery, selfUserId])
 
   return (
-    <AnimatePresence data-eos-id="src/components/mention-picker.tsx#0">
+    <AnimatePresence data-eos-id="src/components/mention-picker.tsx#0" data-eos-v="2">
       {open && candidates.length > 0 && (
         <motion.div data-eos-id="src/components/mention-picker.tsx#1"
           initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
