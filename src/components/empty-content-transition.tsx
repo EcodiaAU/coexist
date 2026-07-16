@@ -24,7 +24,7 @@ export function EmptyContentTransition({
   const shouldReduceMotion = useReducedMotion()
 
   if (shouldReduceMotion) {
-    return <div data-eos-id="src/components/empty-content-transition.tsx#0" className={className}>{hasContent ? children : emptyState}</div>
+    return <div data-eos-id="src/components/empty-content-transition.tsx#0" data-eos-v="2" className={className}>{hasContent ? children : emptyState}</div>
   }
 
   return (
