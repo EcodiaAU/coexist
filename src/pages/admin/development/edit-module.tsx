@@ -62,50 +62,50 @@ export default function AdminEditModulePage() {
     } catch { toast.error('Failed to update module') }
   }, [moduleId, title, description, category, estimatedMinutes, thumbnailUrl, targetRoles, blocks, updateModule, saveContent, toast])
 
-  if (moduleLoading || blocksLoading) return <div className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton className="h-10 w-32 rounded-sm" /><Skeleton className="h-48 rounded-md" /><Skeleton className="h-32 rounded-md" /></div>
+  if (moduleLoading || blocksLoading) return <div data-eos-id="src/pages/admin/development/edit-module.tsx#0" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#1" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#2" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#3" className="h-32 rounded-md" /></div>
 
   if (saved) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto py-8">
-        <SaveSuccessBanner show message={saved.status === 'published' ? 'Module published!' : 'Draft saved!'} subtitle={`"${title}" has been updated successfully.`} editPath={`/admin/development/modules/${moduleId}/edit`} onDismiss={() => setSaved(null)} />
+      <motion.div data-eos-id="src/pages/admin/development/edit-module.tsx#4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto py-8">
+        <SaveSuccessBanner data-eos-id="src/pages/admin/development/edit-module.tsx#5" show message={saved.status === 'published' ? 'Module published!' : 'Draft saved!'} subtitle={`"${title}" has been updated successfully.`} editPath={`/admin/development/modules/${moduleId}/edit`} onDismiss={() => setSaved(null)} />
       </motion.div>
     )
   }
 
   return (
-    <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">
-      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5 mb-1">
-          <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-bark-700 shadow-sm"><BookOpen size={16} className="text-white" /></div>
-          <h2 className="font-heading text-base font-bold text-neutral-900">Module Details</h2>
+    <motion.div data-eos-id="src/pages/admin/development/edit-module.tsx#6" variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">
+      <motion.div data-eos-id="src/pages/admin/development/edit-module.tsx#7" variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6 space-y-4">
+        <div data-eos-id="src/pages/admin/development/edit-module.tsx#8" className="flex items-center gap-2.5 mb-1">
+          <div data-eos-id="src/pages/admin/development/edit-module.tsx#9" className="flex items-center justify-center w-9 h-9 rounded-sm bg-bark-700 shadow-sm"><BookOpen data-eos-id="src/pages/admin/development/edit-module.tsx#10" size={16} className="text-white" /></div>
+          <h2 data-eos-id="src/pages/admin/development/edit-module.tsx#11" className="font-heading text-base font-bold text-neutral-900">Module Details</h2>
         </div>
-        <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        <Input type="textarea" label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Dropdown label="Category" options={CATEGORY_OPTIONS} value={category} onChange={(v) => setCategory(v as DevCategory)} />
-          <Input label="Estimated Minutes" type="number" value={String(estimatedMinutes)} onChange={(e) => setEstimatedMinutes(Math.max(1, parseInt(e.target.value) || 1))} />
+        <Input data-eos-id="src/pages/admin/development/edit-module.tsx#12" label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <Input data-eos-id="src/pages/admin/development/edit-module.tsx#13" type="textarea" label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+        <div data-eos-id="src/pages/admin/development/edit-module.tsx#14" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Dropdown data-eos-id="src/pages/admin/development/edit-module.tsx#15" label="Category" options={CATEGORY_OPTIONS} value={category} onChange={(v) => setCategory(v as DevCategory)} />
+          <Input data-eos-id="src/pages/admin/development/edit-module.tsx#16" label="Estimated Minutes" type="number" value={String(estimatedMinutes)} onChange={(e) => setEstimatedMinutes(Math.max(1, parseInt(e.target.value) || 1))} />
         </div>
       </motion.div>
 
-      <motion.div variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6">
-        <div className="flex items-center gap-2.5 mb-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-700 shadow-sm"><Users size={16} className="text-white" /></div>
-          <h2 className="font-heading text-base font-bold text-neutral-900">Target Audience</h2>
+      <motion.div data-eos-id="src/pages/admin/development/edit-module.tsx#17" variants={fadeUp} className="rounded-md bg-white shadow-sm p-5 sm:p-6">
+        <div data-eos-id="src/pages/admin/development/edit-module.tsx#18" className="flex items-center gap-2.5 mb-3">
+          <div data-eos-id="src/pages/admin/development/edit-module.tsx#19" className="flex items-center justify-center w-9 h-9 rounded-sm bg-primary-700 shadow-sm"><Users data-eos-id="src/pages/admin/development/edit-module.tsx#20" size={16} className="text-white" /></div>
+          <h2 data-eos-id="src/pages/admin/development/edit-module.tsx#21" className="font-heading text-base font-bold text-neutral-900">Target Audience</h2>
         </div>
-        <AudiencePicker selectedRoles={targetRoles} onRolesChange={setTargetRoles} />
+        <AudiencePicker data-eos-id="src/pages/admin/development/edit-module.tsx#22" selectedRoles={targetRoles} onRolesChange={setTargetRoles} />
       </motion.div>
 
-      <motion.div variants={fadeUp}>
-        <h2 className="flex items-center gap-2 font-heading text-[13px] font-bold text-neutral-700/60 uppercase tracking-widest mb-3">Content Blocks</h2>
-        <BlockEditor blocks={blocks} onChange={setBlocks} />
+      <motion.div data-eos-id="src/pages/admin/development/edit-module.tsx#23" variants={fadeUp}>
+        <h2 data-eos-id="src/pages/admin/development/edit-module.tsx#24" className="flex items-center gap-2 font-heading text-[13px] font-bold text-neutral-700/60 uppercase tracking-widest mb-3">Content Blocks</h2>
+        <BlockEditor data-eos-id="src/pages/admin/development/edit-module.tsx#25" blocks={blocks} onChange={setBlocks} />
       </motion.div>
 
-      <motion.div variants={fadeUp} className="sticky bottom-0 z-20 -mx-4 sm:-mx-6 lg:-mx-8 -mb-4 sm:-mb-6 lg:-mb-8 px-4 sm:px-6 lg:px-8 py-3 bg-white/95 backdrop-blur-sm border-t border-neutral-100 flex items-center justify-between gap-3">
-        <p className="text-[11px] font-semibold text-neutral-400">{blocks.length} block{blocks.length !== 1 ? 's' : ''}{targetRoles.length > 0 && ` · ${targetRoles.length} role${targetRoles.length !== 1 ? 's' : ''}`}</p>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/admin/development')}>Cancel</Button>
-          <Button variant="secondary" size="sm" icon={<Save size={14} />} onClick={() => handleSave('draft')} loading={isSaving} disabled={!title.trim()}>Save Draft</Button>
-          <Button variant="primary" size="sm" icon={<Send size={14} />} onClick={() => handleSave('published')} loading={isSaving} disabled={!canPublish}>Publish</Button>
+      <motion.div data-eos-id="src/pages/admin/development/edit-module.tsx#26" variants={fadeUp} className="sticky bottom-0 z-20 -mx-4 sm:-mx-6 lg:-mx-8 -mb-4 sm:-mb-6 lg:-mb-8 px-4 sm:px-6 lg:px-8 py-3 bg-white/95 backdrop-blur-sm border-t border-neutral-100 flex items-center justify-between gap-3">
+        <p data-eos-id="src/pages/admin/development/edit-module.tsx#27" className="text-[11px] font-semibold text-neutral-400">{blocks.length} block{blocks.length !== 1 ? 's' : ''}{targetRoles.length > 0 && ` · ${targetRoles.length} role${targetRoles.length !== 1 ? 's' : ''}`}</p>
+        <div data-eos-id="src/pages/admin/development/edit-module.tsx#28" className="flex items-center gap-2">
+          <Button data-eos-id="src/pages/admin/development/edit-module.tsx#29" variant="ghost" size="sm" onClick={() => navigate('/admin/development')}>Cancel</Button>
+          <Button data-eos-id="src/pages/admin/development/edit-module.tsx#30" variant="secondary" size="sm" icon={<Save data-eos-id="src/pages/admin/development/edit-module.tsx#31" size={14} />} onClick={() => handleSave('draft')} loading={isSaving} disabled={!title.trim()}>Save Draft</Button>
+          <Button data-eos-id="src/pages/admin/development/edit-module.tsx#32" variant="primary" size="sm" icon={<Send data-eos-id="src/pages/admin/development/edit-module.tsx#33" size={14} />} onClick={() => handleSave('published')} loading={isSaving} disabled={!canPublish}>Publish</Button>
         </div>
       </motion.div>
     </motion.div>
