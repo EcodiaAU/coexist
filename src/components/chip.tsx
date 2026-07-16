@@ -39,7 +39,7 @@ export function Chip({
   const styles = variantStyles[variant]
 
   return (
-    <motion.button data-eos-id="src/components/chip.tsx#0"
+    <motion.button data-eos-id="src/components/chip.tsx#0" data-eos-v="2"
       type="button"
       role="option"
       aria-selected={selected}
