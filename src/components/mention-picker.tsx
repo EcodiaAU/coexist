@@ -78,9 +78,9 @@ export function MentionPicker({
   }, [members, debouncedQuery, selfUserId])
 
   return (
-    <AnimatePresence>
+    <AnimatePresence data-eos-id="src/components/mention-picker.tsx#0">
       {open && candidates.length > 0 && (
-        <motion.div
+        <motion.div data-eos-id="src/components/mention-picker.tsx#1"
           initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
@@ -89,13 +89,13 @@ export function MentionPicker({
           role="listbox"
           aria-label="Mention suggestions"
         >
-          <div className="rounded-md bg-white shadow-sm ring-1 ring-neutral-200 overflow-hidden">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 border-b border-primary-100">
-              <AtSign size={12} className="text-primary-500" />
-              <p className="text-[11px] font-bold text-primary-700">
+          <div data-eos-id="src/components/mention-picker.tsx#2" className="rounded-md bg-white shadow-sm ring-1 ring-neutral-200 overflow-hidden">
+            <div data-eos-id="src/components/mention-picker.tsx#3" className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 border-b border-primary-100">
+              <AtSign data-eos-id="src/components/mention-picker.tsx#4" size={12} className="text-primary-500" />
+              <p data-eos-id="src/components/mention-picker.tsx#5" className="text-[11px] font-bold text-primary-700">
                 Mention a member{debouncedQuery ? ` matching "${debouncedQuery}"` : ''}
               </p>
-              <button
+              <button data-eos-id="src/components/mention-picker.tsx#6"
                 type="button"
                 onClick={onClose}
                 className="ml-auto text-[11px] font-semibold text-neutral-500 hover:text-neutral-700 cursor-pointer select-none px-1.5 py-0.5"
@@ -104,10 +104,10 @@ export function MentionPicker({
                 Esc
               </button>
             </div>
-            <ul className="max-h-56 overflow-y-auto overscroll-contain">
+            <ul data-eos-id="src/components/mention-picker.tsx#7" className="max-h-56 overflow-y-auto overscroll-contain">
               {candidates.map((c) => (
-                <li key={c.user_id}>
-                  <button
+                <li data-eos-id="src/components/mention-picker.tsx#8" key={c.user_id}>
+                  <button data-eos-id="src/components/mention-picker.tsx#9"
                     type="button"
                     onMouseDown={(e) => {
                       // Prevent the textarea from losing focus before the
@@ -125,12 +125,12 @@ export function MentionPicker({
                     role="option"
                     aria-selected="false"
                   >
-                    <Avatar
+                    <Avatar data-eos-id="src/components/mention-picker.tsx#10"
                       src={c.avatar_url ?? undefined}
                       name={c.display_name}
                       size="sm"
                     />
-                    <span className="text-sm font-semibold text-neutral-900 truncate flex-1">
+                    <span data-eos-id="src/components/mention-picker.tsx#11" data-eos-var="c.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 truncate flex-1">
                       {c.display_name}
                     </span>
                   </button>
