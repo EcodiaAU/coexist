@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div data-eos-id="src/pages/auth/forgot-password.tsx#0" className="min-h-dvh flex flex-col bg-white">
+    <div data-eos-id="src/pages/auth/forgot-password.tsx#0" data-eos-v="2" className="min-h-dvh flex flex-col bg-white">
       <OGMeta data-eos-id="src/pages/auth/forgot-password.tsx#1"
         title="Reset Password"
         description="Reset your Co-Exist account password. Enter your email to receive a secure password reset link."
