@@ -60,7 +60,7 @@ export default function AdminChallengesPage() {
   const showLoading = useDelayedLoading(isLoading)
 
   const heroActions = useMemo(() => (
-    <Button data-eos-id="src/pages/admin/challenges.tsx#0"
+    <Button data-eos-id="src/pages/admin/challenges.tsx#0" data-eos-v="2"
       variant="primary"
       size="sm"
       icon={<Plus data-eos-id="src/pages/admin/challenges.tsx#1" size={16} />}
