@@ -66,7 +66,7 @@ export default function MapViewInner({
   })
 
   return (
-    <div
+    <div data-eos-id="src/components/map/map-view-inner.tsx#0"
       ref={containerRef}
       className="h-full w-full min-h-[200px]"
       style={{ zIndex: 0 }}
