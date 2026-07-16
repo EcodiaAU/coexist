@@ -85,7 +85,7 @@ export function ChatSwitcherDropdown({
   if (!hasOptions) return null
 
   return (
-    <div data-eos-id="src/components/chat-switcher-dropdown.tsx#0" ref={dropdownRef} className="relative">
+    <div data-eos-id="src/components/chat-switcher-dropdown.tsx#0" data-eos-v="2" ref={dropdownRef} className="relative">
       <button data-eos-id="src/components/chat-switcher-dropdown.tsx#1"
         type="button"
         onClick={() => setOpen(!open)}
@@ -131,7 +131,7 @@ export function ChatSwitcherDropdown({
                         >
                           <div data-eos-id="src/components/chat-switcher-dropdown.tsx#10" className="h-6 w-6 rounded-md overflow-hidden shrink-0 relative bg-primary-100">
                             {c.coverUrl ? (
-                              <img data-eos-id="src/components/chat-switcher-dropdown.tsx#11" src={c.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                              <img data-eos-src="dynamic" data-eos-src-label="Cover url" data-eos-id="src/components/chat-switcher-dropdown.tsx#11" src={c.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                             ) : (
                               <div data-eos-id="src/components/chat-switcher-dropdown.tsx#12" className="flex h-full w-full items-center justify-center bg-secondary-600">
                                 <Leaf data-eos-id="src/components/chat-switcher-dropdown.tsx#13" size={11} className="text-white" />
@@ -282,7 +282,7 @@ export function ChatSwitcherDropdown({
                       >
                         <div data-eos-id="src/components/chat-switcher-dropdown.tsx#43" className="h-6 w-6 rounded-md overflow-hidden shrink-0 bg-primary-100">
                           {c.coverUrl ? (
-                            <img data-eos-id="src/components/chat-switcher-dropdown.tsx#44" src={c.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                            <img data-eos-src="dynamic" data-eos-src-label="Cover url" data-eos-id="src/components/chat-switcher-dropdown.tsx#44" src={c.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                           ) : (
                             <div data-eos-id="src/components/chat-switcher-dropdown.tsx#45" className="flex h-full w-full items-center justify-center bg-secondary-600">
                               <Leaf data-eos-id="src/components/chat-switcher-dropdown.tsx#46" size={11} className="text-white" />
