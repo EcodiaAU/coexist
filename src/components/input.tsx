@@ -247,11 +247,11 @@ export const Input = forwardRef<
     .join(' ') || undefined
 
   return (
-    <div className={cn('w-full', className)}>
-      <div className="relative">
+    <div data-eos-id="src/components/input.tsx#0" className={cn('w-full', className)}>
+      <div data-eos-id="src/components/input.tsx#1" className="relative">
         {/* Search icon */}
         {isSearch && (
-          <Search
+          <Search data-eos-id="src/components/input.tsx#2"
             size={18}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none"
             aria-hidden="true"
@@ -260,13 +260,13 @@ export const Input = forwardRef<
 
         {/* Custom icon */}
         {icon && !isSearch && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none">
+          <span data-eos-id="src/components/input.tsx#3" className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none">
             {icon}
           </span>
         )}
 
         {isTextarea ? (
-          <textarea
+          <textarea data-eos-id="src/components/input.tsx#4"
             ref={setRef as React.Ref<HTMLTextAreaElement>}
             id={id}
             name={name}
@@ -293,7 +293,7 @@ export const Input = forwardRef<
             className={cn(sharedClasses, 'resize-y', isCompact ? 'min-h-[80px]' : 'min-h-[100px]')}
           />
         ) : (
-          <input
+          <input data-eos-id="src/components/input.tsx#5"
             ref={setRef as React.Ref<HTMLInputElement>}
             id={id}
             type={isTextarea ? undefined : inputType}
@@ -327,7 +327,7 @@ export const Input = forwardRef<
 
         {/* Floating label */}
         {!isCompact && (
-          <motion.label
+          <motion.label data-eos-id="src/components/input.tsx#6"
             htmlFor={id}
             {...(labelMotion as Record<string, unknown>)}
             className={cn(
@@ -339,13 +339,13 @@ export const Input = forwardRef<
             )}
           >
             {label}
-            {required && <span className="text-error ml-0.5">*</span>}
+            {required && <span data-eos-id="src/components/input.tsx#7" className="text-error ml-0.5">*</span>}
           </motion.label>
         )}
 
         {/* Password toggle */}
         {isPassword && (
-          <button
+          <button data-eos-id="src/components/input.tsx#8"
             type="button"
             onClick={() => setShowPassword((p) => !p)}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
@@ -358,15 +358,15 @@ export const Input = forwardRef<
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
             )}
           >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            {showPassword ? <EyeOff data-eos-id="src/components/input.tsx#9" size={18} /> : <Eye data-eos-id="src/components/input.tsx#10" size={18} />}
           </button>
         )}
       </div>
 
       {/* Error / helper text */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence data-eos-id="src/components/input.tsx#11" mode="wait">
         {error ? (
-          <motion.p
+          <motion.p data-eos-id="src/components/input.tsx#12"
             key="error"
             id={errorId}
             role="alert"
@@ -379,7 +379,7 @@ export const Input = forwardRef<
             {error}
           </motion.p>
         ) : helperText ? (
-          <motion.p
+          <motion.p data-eos-id="src/components/input.tsx#13"
             key="helper"
             id={helperId}
             initial={shouldReduceMotion ? false : { opacity: 0 }}
