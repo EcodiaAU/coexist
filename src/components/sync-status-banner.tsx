@@ -20,7 +20,7 @@ export function SyncStatusBanner({ issue, pendingCount, onSignIn, className }: S
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <AnimatePresence data-eos-id="src/components/sync-status-banner.tsx#0">
+    <AnimatePresence data-eos-id="src/components/sync-status-banner.tsx#0" data-eos-v="2">
       {issue && (
         <motion.div data-eos-id="src/components/sync-status-banner.tsx#1"
           initial={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
