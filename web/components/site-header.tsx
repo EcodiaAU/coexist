@@ -34,7 +34,7 @@ export function SiteHeader() {
   }, [open])
 
   return (
-    <header data-eos-id="web/components/site-header.tsx#2" className="sticky top-0 z-50 border-b border-neutral-200/70 bg-cream/85 backdrop-blur">
+    <header data-eos-id="web/components/site-header.tsx#2" className="sticky top-0 z-50 border-b border-neutral-200/70 bg-cream/85 backdrop-blur text-[#b33a3a]">
       <div data-eos-id="web/components/site-header.tsx#3" className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 sm:h-24 sm:px-6">
         <Link data-eos-href="static" data-eos-id="web/components/site-header.tsx#4" href="/" className="flex items-center" aria-label="Co-Exist Australia home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
