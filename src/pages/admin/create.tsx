@@ -45,7 +45,7 @@ function QuickAction({
   delay?: number
 }) {
   return (
-    <Link data-eos-id="src/pages/admin/create.tsx#0" to={to} className="block">
+    <Link data-eos-id="src/pages/admin/create.tsx#0" data-eos-v="2" to={to} className="block">
       <motion.div data-eos-id="src/pages/admin/create.tsx#1"
         initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
