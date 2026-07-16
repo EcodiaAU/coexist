@@ -134,7 +134,7 @@ export function IssueTicketSheet({
   }
 
   return (
-    <BottomSheet data-eos-id="src/components/issue-ticket-sheet.tsx#0" open={open} onClose={onClose} snapPoints={[0.85]}>
+    <BottomSheet data-eos-id="src/components/issue-ticket-sheet.tsx#0" data-eos-v="2" open={open} onClose={onClose} snapPoints={[0.85]}>
       <div data-eos-id="src/components/issue-ticket-sheet.tsx#1" className="space-y-5 pb-2">
         <div data-eos-id="src/components/issue-ticket-sheet.tsx#2" className="flex items-center gap-2">
           <Ticket data-eos-id="src/components/issue-ticket-sheet.tsx#3" size={18} className="text-primary-500" />
