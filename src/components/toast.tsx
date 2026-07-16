@@ -144,7 +144,7 @@ export function ToastProvider({ children, className }: ToastProviderProps) {
   }
 
   return (
-    <ToastContext.Provider data-eos-id="src/components/toast.tsx#0" value={{ toast }}>
+    <ToastContext.Provider data-eos-id="src/components/toast.tsx#0" data-eos-v="2" value={{ toast }}>
       {children}
       {createPortal(
         <div data-eos-id="src/components/toast.tsx#1"
