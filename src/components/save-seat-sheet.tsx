@@ -50,7 +50,7 @@ export function SaveSeatSheet({
   }
 
   return (
-    <BottomSheet data-eos-id="src/components/save-seat-sheet.tsx#0" open={open} onClose={onClose}>
+    <BottomSheet data-eos-id="src/components/save-seat-sheet.tsx#0" data-eos-v="2" open={open} onClose={onClose}>
       <div data-eos-id="src/components/save-seat-sheet.tsx#1" className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
         {/* Header */}
         <div data-eos-id="src/components/save-seat-sheet.tsx#2" className="flex items-center gap-2.5 mb-4">
