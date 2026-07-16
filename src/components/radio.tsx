@@ -30,7 +30,7 @@ export function Radio({
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <fieldset
+    <fieldset data-eos-id="src/components/radio.tsx#0"
       className={cn('space-y-2', className)}
       disabled={disabled}
       aria-label="Radio group"
@@ -41,7 +41,7 @@ export function Radio({
         const isSelected = option.value === value
 
         return (
-          <label
+          <label data-eos-id="src/components/radio.tsx#1"
             key={option.value}
             htmlFor={optionId}
             className={cn(
@@ -51,7 +51,7 @@ export function Radio({
             )}
           >
             {/* Hidden native radio */}
-            <input
+            <input data-eos-id="src/components/radio.tsx#2"
               id={optionId}
               type="radio"
               name={radioName}
@@ -64,7 +64,7 @@ export function Radio({
             />
 
             {/* Visual radio */}
-            <span
+            <span data-eos-id="src/components/radio.tsx#3"
               aria-hidden="true"
               className={cn(
                 'relative flex items-center justify-center shrink-0',
@@ -77,7 +77,7 @@ export function Radio({
               )}
             >
               {isSelected && (
-                <motion.span
+                <motion.span data-eos-id="src/components/radio.tsx#4"
                   className="w-2.5 h-2.5 rounded-full bg-primary-800"
                   initial={shouldReduceMotion ? false : { scale: 0 }}
                   animate={{ scale: 1 }}
@@ -91,12 +91,12 @@ export function Radio({
             </span>
 
             {/* Label + description */}
-            <div className="min-w-0">
-              <span className="block text-sm font-medium text-primary-800">
+            <div data-eos-id="src/components/radio.tsx#5" className="min-w-0">
+              <span data-eos-id="src/components/radio.tsx#6" data-eos-var="option.label" data-eos-var-label="Label" data-eos-var-scope="item" className="block text-sm font-medium text-primary-800">
                 {option.label}
               </span>
               {option.description && (
-                <span
+                <span data-eos-id="src/components/radio.tsx#7" data-eos-var="option.description" data-eos-var-label="Description" data-eos-var-scope="item"
                   id={descId}
                   className="block text-caption text-primary-400 mt-0.5"
                 >
