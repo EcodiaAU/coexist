@@ -87,7 +87,7 @@ function RichContent({ text, className }: { text: string; className?: string }) 
 
     if (match[1] && match[2]) {
       parts.push(
-        <a data-eos-href="dynamic" data-eos-href-label="Value" data-eos-href-scope="prop" data-eos-id="src/pages/admin/updates.tsx#0"
+        <a data-eos-href="dynamic" data-eos-href-label="Value" data-eos-href-scope="prop" data-eos-id="src/pages/admin/updates.tsx#0" data-eos-v="2"
           key={key++}
           href={match[2]}
           target="_blank"
@@ -408,7 +408,7 @@ function ComposeModal({
             <div data-eos-id="src/pages/admin/updates.tsx#32" className="grid grid-cols-4 gap-2 mb-3">
               {existingImages.map((src, i) => (
                 <div data-eos-id="src/pages/admin/updates.tsx#33" key={`existing-${i}`} className="relative aspect-square rounded-sm overflow-hidden group ring-1 ring-neutral-100">
-                  <img data-eos-id="src/pages/admin/updates.tsx#34" src={src} alt="" loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                  <img data-eos-src="dynamic" data-eos-src-label="Src" data-eos-id="src/pages/admin/updates.tsx#34" src={src} alt="" loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                   <button data-eos-id="src/pages/admin/updates.tsx#35"
                     type="button"
                     onClick={() => removeExisting(i)}
@@ -420,7 +420,7 @@ function ComposeModal({
               ))}
               {previews.map((src, i) => (
                 <div data-eos-id="src/pages/admin/updates.tsx#37" key={`new-${i}`} className="relative aspect-square rounded-sm overflow-hidden group ring-1 ring-neutral-100">
-                  <img data-eos-id="src/pages/admin/updates.tsx#38" src={src} alt="" loading="lazy" className="w-full h-full object-cover" />
+                  <img data-eos-src="dynamic" data-eos-src-label="Src" data-eos-id="src/pages/admin/updates.tsx#38" src={src} alt="" loading="lazy" className="w-full h-full object-cover" />
                   <button data-eos-id="src/pages/admin/updates.tsx#39"
                     type="button"
                     onClick={() => removeNew(i)}
@@ -582,7 +582,7 @@ function ComposeModal({
                         )}
                       >
                         {c.cover_image_url ? (
-                          <img data-eos-id="src/pages/admin/updates.tsx#68" src={c.cover_image_url} alt="" loading="lazy" className="w-8 h-8 rounded-sm object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                          <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/admin/updates.tsx#68" src={c.cover_image_url} alt="" loading="lazy" className="w-8 h-8 rounded-sm object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                         ) : (
                           <div data-eos-id="src/pages/admin/updates.tsx#69" className="w-8 h-8 rounded-sm bg-primary-100 flex items-center justify-center shrink-0">
                             <Users data-eos-id="src/pages/admin/updates.tsx#70" size={14} className="text-neutral-400" />
@@ -719,7 +719,7 @@ function DetailPanel({
         {/* Hero image */}
         {images.length > 0 && (
           <div data-eos-id="src/pages/admin/updates.tsx#91" className="relative">
-            <img data-eos-id="src/pages/admin/updates.tsx#92"
+            <img data-eos-src="dynamic" data-eos-src-label="Value" data-eos-id="src/pages/admin/updates.tsx#92"
               src={images[0]}
               alt=""
               className="w-full aspect-[16/9] object-cover"
@@ -808,7 +808,7 @@ function DetailPanel({
             <div data-eos-id="src/pages/admin/updates.tsx#122" className="space-y-2">
               {images.slice(1).map((src, i) => (
                 <div data-eos-id="src/pages/admin/updates.tsx#123" key={i} className="rounded-sm overflow-hidden ring-1 ring-black/[0.04]">
-                  <img data-eos-id="src/pages/admin/updates.tsx#124" src={src} alt="" loading="lazy" className="w-full object-cover" />
+                  <img data-eos-src="dynamic" data-eos-src-label="Src" data-eos-id="src/pages/admin/updates.tsx#124" src={src} alt="" loading="lazy" className="w-full object-cover" />
                 </div>
               ))}
             </div>
@@ -882,7 +882,7 @@ function UpdateRow({
     >
       {/* Thumbnail */}
       {images.length > 0 ? (
-        <img data-eos-id="src/pages/admin/updates.tsx#131"
+        <img data-eos-src="dynamic" data-eos-src-label="Value" data-eos-id="src/pages/admin/updates.tsx#131"
           src={images[0]}
           alt=""
           className="w-14 h-14 rounded-sm object-cover shrink-0 ring-1 ring-black/[0.04]"
