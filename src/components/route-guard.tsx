@@ -17,8 +17,8 @@ type CollectiveRole = Database['public']['Enums']['collective_role']
 
 function GuardSpinner() {
   return (
-    <div className="min-h-dvh bg-white flex items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
+    <div data-eos-id="src/components/route-guard.tsx#0" className="min-h-dvh bg-white flex items-center justify-center">
+      <div data-eos-id="src/components/route-guard.tsx#1" className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
     </div>
   )
 }
@@ -46,35 +46,35 @@ export function RequireAuth({ children }: RequireAuthProps) {
   }, [profile, onboardingDone, user, isLoading])
 
   if (isLoading) {
-    return <GuardSpinner />
+    return <GuardSpinner data-eos-id="src/components/route-guard.tsx#2" />
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate data-eos-id="src/components/route-guard.tsx#3" to="/login" state={{ from: location }} replace />
   }
 
   if (isSuspended) {
-    return <Navigate to="/suspended" replace />
+    return <Navigate data-eos-id="src/components/route-guard.tsx#4" to="/suspended" replace />
   }
 
   if (needsTosAcceptance && !location.pathname.startsWith('/accept-terms')) {
-    return <Navigate to="/accept-terms" replace />
+    return <Navigate data-eos-id="src/components/route-guard.tsx#5" to="/accept-terms" replace />
   }
 
   if ((authError || guardTimedOut) && !profile && !onboardingDone) {
     return (
-      <div className="min-h-dvh bg-white flex flex-col items-center justify-center px-6">
-        <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center">
-          <AlertCircle className="w-10 h-10 text-error" />
+      <div data-eos-id="src/components/route-guard.tsx#6" className="min-h-dvh bg-white flex flex-col items-center justify-center px-6">
+        <div data-eos-id="src/components/route-guard.tsx#7" className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center">
+          <AlertCircle data-eos-id="src/components/route-guard.tsx#8" className="w-10 h-10 text-error" />
         </div>
-        <h1 className="mt-6 font-heading text-2xl font-bold text-neutral-900">
+        <h1 data-eos-id="src/components/route-guard.tsx#9" className="mt-6 font-heading text-2xl font-bold text-neutral-900">
           Something went wrong
         </h1>
-        <p className="mt-2 text-neutral-500 text-center max-w-xs">
+        <p data-eos-id="src/components/route-guard.tsx#10" className="mt-2 text-neutral-500 text-center max-w-xs">
           {authError || 'Profile loading timed out. Please try again.'}
         </p>
-        <div className="mt-8 w-full max-w-xs space-y-3">
-          <Button
+        <div data-eos-id="src/components/route-guard.tsx#11" className="mt-8 w-full max-w-xs space-y-3">
+          <Button data-eos-id="src/components/route-guard.tsx#12"
             variant="primary"
             size="lg"
             fullWidth
@@ -85,7 +85,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
           >
             Try again
           </Button>
-          <Button
+          <Button data-eos-id="src/components/route-guard.tsx#13"
             variant="ghost"
             size="lg"
             fullWidth
@@ -99,13 +99,13 @@ export function RequireAuth({ children }: RequireAuthProps) {
   }
 
   if (!profile && !onboardingDone) {
-    return <GuardSpinner />
+    return <GuardSpinner data-eos-id="src/components/route-guard.tsx#14" />
   }
 
   const onboardingPaths = ['/onboarding', '/leader-welcome', '/welcome-back']
   const isOnboardingPath = onboardingPaths.some((p) => location.pathname.startsWith(p))
   if (!onboardingDone && (!profile || !profile.onboarding_completed) && !isOnboardingPath) {
-    return <Navigate to="/onboarding" replace />
+    return <Navigate data-eos-id="src/components/route-guard.tsx#15" to="/onboarding" replace />
   }
 
   return <>{children}</>
@@ -125,17 +125,17 @@ export function RequireRole({ minRole, children }: RequireRoleProps) {
   const location = useLocation()
 
   if (isLoading) {
-    return <GuardSpinner />
+    return <GuardSpinner data-eos-id="src/components/route-guard.tsx#16" />
   }
 
   // Must be authenticated first
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate data-eos-id="src/components/route-guard.tsx#17" to="/login" state={{ from: location }} replace />
   }
 
   if (_GLOBAL_RANK[role] < _GLOBAL_RANK[minRole]) {
     return (
-      <EmptyState
+      <EmptyState data-eos-id="src/components/route-guard.tsx#18"
         illustration="error"
         title="Access restricted"
         description="You don't have permission to view this page. Contact an admin if you think this is a mistake."
@@ -167,11 +167,11 @@ export function RequireLeaderAccess({ children }: RequireLeaderAccessProps) {
   const location = useLocation()
 
   if (isLoading) {
-    return <GuardSpinner />
+    return <GuardSpinner data-eos-id="src/components/route-guard.tsx#19" />
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate data-eos-id="src/components/route-guard.tsx#20" to="/login" state={{ from: location }} replace />
   }
 
   // National staff and above always have access
@@ -185,7 +185,7 @@ export function RequireLeaderAccess({ children }: RequireLeaderAccessProps) {
 
   if (!isStaffPlus && !isManagerWithCollectives && !hasLeaderRole) {
     return (
-      <EmptyState
+      <EmptyState data-eos-id="src/components/route-guard.tsx#21"
         illustration="error"
         title="Leader access required"
         description="You need to be a collective leader, co-leader, or assist-leader to access this area."
@@ -221,16 +221,16 @@ export function RequireCapability({ cap, children }: RequireCapabilityProps) {
   const location = useLocation()
 
   if (isLoading) {
-    return <GuardSpinner />
+    return <GuardSpinner data-eos-id="src/components/route-guard.tsx#22" />
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate data-eos-id="src/components/route-guard.tsx#23" to="/login" state={{ from: location }} replace />
   }
 
   if (!hasCapability(cap)) {
     return (
-      <EmptyState
+      <EmptyState data-eos-id="src/components/route-guard.tsx#24"
         illustration="error"
         title="Permission required"
         description="You don't have the required permission to access this section. Contact an admin to request access."
@@ -256,12 +256,12 @@ export function RequireCollectiveRole({
   const location = useLocation()
 
   if (authLoading || isLoading) {
-    return <GuardSpinner />
+    return <GuardSpinner data-eos-id="src/components/route-guard.tsx#25" />
   }
 
   // Must be authenticated first
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate data-eos-id="src/components/route-guard.tsx#26" to="/login" state={{ from: location }} replace />
   }
 
   // National staff+ always have access to collective-scoped routes
@@ -269,7 +269,7 @@ export function RequireCollectiveRole({
 
   if (!isStaffPlus && !hasMinRole(minRole)) {
     return (
-      <EmptyState
+      <EmptyState data-eos-id="src/components/route-guard.tsx#27"
         illustration="error"
         title="Insufficient role"
         description="You need a higher collective role to access this page."
