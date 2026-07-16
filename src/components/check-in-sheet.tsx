@@ -151,17 +151,17 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
 
   return (
     <>
-      <BottomSheet open={open} onClose={handleClose} snapPoints={snapPoints}>
-        <div className="h-[70vh] overflow-y-auto relative">
-        <AnimatePresence mode="wait">
+      <BottomSheet data-eos-id="src/components/check-in-sheet.tsx#0" open={open} onClose={handleClose} snapPoints={snapPoints}>
+        <div data-eos-id="src/components/check-in-sheet.tsx#1" className="h-[70vh] overflow-y-auto relative">
+        <AnimatePresence data-eos-id="src/components/check-in-sheet.tsx#2" mode="wait">
           {/* Profile details (blocks check-in) */}
           {step === 'details' && (
-            <ProfileDetails onComplete={() => setStep('checkin')} />
+            <ProfileDetails data-eos-id="src/components/check-in-sheet.tsx#3" onComplete={() => setStep('checkin')} />
           )}
 
           {/* 3-digit code entry */}
           {step === 'checkin' && (
-            <CheckInModeView
+            <CheckInModeView data-eos-id="src/components/check-in-sheet.tsx#4"
               eventTitle={eventTitle}
               collectiveName={collectiveName}
               isPending={checkInMutation.isPending || codeCheckIn.isPending}
@@ -171,25 +171,25 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
 
           {/* Success */}
           {step === 'success' && (
-            <motion.div
+            <motion.div data-eos-id="src/components/check-in-sheet.tsx#5"
               key="success"
               initial={rm ? undefined : { opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={rm ? { duration: 0 } : { duration: 0.35, type: 'spring', stiffness: 300 }}
               className="flex flex-col items-center py-6 text-center"
             >
-              <Confetti active count={40} duration={2500} />
+              <Confetti data-eos-id="src/components/check-in-sheet.tsx#6" active count={40} duration={2500} />
 
-              <motion.div
+              <motion.div data-eos-id="src/components/check-in-sheet.tsx#7"
                 initial={rm ? undefined : { scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={rm ? { duration: 0 } : { delay: 0.2, type: 'spring', stiffness: 200 }}
                 className="w-18 h-18 rounded-full bg-primary-100 flex items-center justify-center mb-5"
               >
-                <CheckCircle2 size={36} className="text-primary-400" />
+                <CheckCircle2 data-eos-id="src/components/check-in-sheet.tsx#8" size={36} className="text-primary-400" />
               </motion.div>
 
-              <motion.h3
+              <motion.h3 data-eos-id="src/components/check-in-sheet.tsx#9"
                 initial={rm ? undefined : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={rm ? { duration: 0 } : { delay: 0.3 }}
@@ -198,7 +198,7 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
                 You're checked in!
               </motion.h3>
 
-              <motion.p
+              <motion.p data-eos-id="src/components/check-in-sheet.tsx#10"
                 initial={rm ? undefined : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={rm ? { duration: 0 } : { delay: 0.4 }}
@@ -208,40 +208,40 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
               </motion.p>
 
               {checkedInOffline && (
-                <motion.div
+                <motion.div data-eos-id="src/components/check-in-sheet.tsx#11"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                   className="flex items-center gap-2 mt-3 px-3 py-2 rounded-sm bg-warning-50 text-warning-700 text-caption"
                 >
-                  <WifiOff size={14} />
+                  <WifiOff data-eos-id="src/components/check-in-sheet.tsx#12" size={14} />
                   Queued offline - will sync when you reconnect
                 </motion.div>
               )}
 
-              <motion.div
+              <motion.div data-eos-id="src/components/check-in-sheet.tsx#13"
                 initial={rm ? undefined : { opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={rm ? { duration: 0 } : { delay: 0.6 }}
                 className="mt-6 w-full"
               >
-                <WhatsNext
+                <WhatsNext data-eos-id="src/components/check-in-sheet.tsx#14"
                   suggestions={[
                     {
                       label: 'View Event Details',
                       description: 'See the schedule and other attendees',
-                      icon: <CheckCircle2 size={18} />,
+                      icon: <CheckCircle2 data-eos-id="src/components/check-in-sheet.tsx#15" size={18} />,
                       onClick: () => { onClose(); navigate(`/events/${eventId}`) },
                     },
                     {
                       label: 'Share a Photo',
                       description: 'Capture the moment with your group',
-                      icon: <Camera size={18} />,
+                      icon: <Camera data-eos-id="src/components/check-in-sheet.tsx#16" size={18} />,
                       onClick: () => { onClose(); navigate(`/events/${eventId}?tab=photos`) },
                     },
                   ]}
                 />
               </motion.div>
 
-              <Button variant="ghost" className="mt-4" onClick={handleClose}>
+              <Button data-eos-id="src/components/check-in-sheet.tsx#17" variant="ghost" className="mt-4" onClick={handleClose}>
                 Done
               </Button>
             </motion.div>
@@ -249,7 +249,7 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
 
           {/* Error */}
           {step === 'error' && (
-            <motion.div
+            <motion.div data-eos-id="src/components/check-in-sheet.tsx#18"
               key="error"
               initial={rm ? undefined : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -257,26 +257,26 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
               transition={rm ? { duration: 0 } : { duration: 0.25, ease: 'easeInOut' }}
               className="flex flex-col items-center py-8 text-center"
             >
-              <div className="w-14 h-14 rounded-full bg-error-100 flex items-center justify-center mb-4">
-                <XCircle size={28} className="text-error-600" />
+              <div data-eos-id="src/components/check-in-sheet.tsx#19" className="w-14 h-14 rounded-full bg-error-100 flex items-center justify-center mb-4">
+                <XCircle data-eos-id="src/components/check-in-sheet.tsx#20" size={28} className="text-error-600" />
               </div>
-              <h3 className="font-heading text-lg font-bold text-neutral-900">
+              <h3 data-eos-id="src/components/check-in-sheet.tsx#21" className="font-heading text-lg font-bold text-neutral-900">
                 {errorKind === 'already_checked_in' ? 'Already Checked In' : 'Check-in Failed'}
               </h3>
-              <p className="text-neutral-500 mt-1.5 max-w-xs text-sm">
+              <p data-eos-id="src/components/check-in-sheet.tsx#22" data-eos-var="CHECK_IN_ERROR_MESSAGES.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className="text-neutral-500 mt-1.5 max-w-xs text-sm">
                 {CHECK_IN_ERROR_MESSAGES[errorKind]}
               </p>
-              <div className="mt-5 w-full space-y-2">
+              <div data-eos-id="src/components/check-in-sheet.tsx#23" className="mt-5 w-full space-y-2">
                 {errorKind === 'already_checked_in' ? (
-                  <Button variant="primary" fullWidth onClick={() => { onClose(); navigate(`/events/${eventId}`) }}>
+                  <Button data-eos-id="src/components/check-in-sheet.tsx#24" variant="primary" fullWidth onClick={() => { onClose(); navigate(`/events/${eventId}`) }}>
                     View Event
                   </Button>
                 ) : (
-                  <Button variant="primary" fullWidth onClick={() => setStep('checkin')}>
+                  <Button data-eos-id="src/components/check-in-sheet.tsx#25" variant="primary" fullWidth onClick={() => setStep('checkin')}>
                     Try Again
                   </Button>
                 )}
-                <Button variant="ghost" fullWidth onClick={handleClose}>
+                <Button data-eos-id="src/components/check-in-sheet.tsx#26" variant="ghost" fullWidth onClick={handleClose}>
                   Close
                 </Button>
               </div>
@@ -286,12 +286,12 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
         </div>
       </BottomSheet>
 
-      <Celebration
+      <Celebration data-eos-id="src/components/check-in-sheet.tsx#27"
         open={showCelebration}
         onClose={() => setShowCelebration(false)}
         title="Amazing work!"
         subtitle="Thanks for checking in - enjoy making an impact!"
-        icon={<Sparkles size={36} className="text-white" />}
+        icon={<Sparkles data-eos-id="src/components/check-in-sheet.tsx#28" size={36} className="text-white" />}
         autoDismiss={4000}
       />
     </>
