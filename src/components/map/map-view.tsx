@@ -54,7 +54,7 @@ const MapViewInner = lazyWithRetry(() => import('./map-view-inner'))
 
 function MapPlaceholder({ className, ariaLabel }: { className?: string; ariaLabel: string }) {
   return (
-    <div data-eos-id="src/components/map/map-view.tsx#0"
+    <div data-eos-id="src/components/map/map-view.tsx#0" data-eos-v="2"
       role="status"
       aria-label={`Loading ${ariaLabel}`}
       className={cn(
