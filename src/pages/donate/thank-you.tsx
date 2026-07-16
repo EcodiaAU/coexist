@@ -57,7 +57,7 @@ function Confetti({ rm }: { rm: boolean }) {
   if (rm) return null
 
   return (
-    <div data-eos-id="src/pages/donate/thank-you.tsx#0" className="fixed inset-0 z-50 pointer-events-none overflow-hidden" aria-hidden="true">
+    <div data-eos-id="src/pages/donate/thank-you.tsx#0" data-eos-v="2" className="fixed inset-0 z-50 pointer-events-none overflow-hidden" aria-hidden="true">
       {particles.map((p, i) => (
         <motion.div data-eos-id="src/pages/donate/thank-you.tsx#1"
           key={i}
