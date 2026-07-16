@@ -30,7 +30,7 @@ export function Radio({
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <fieldset data-eos-id="src/components/radio.tsx#0"
+    <fieldset data-eos-id="src/components/radio.tsx#0" data-eos-v="2"
       className={cn('space-y-2', className)}
       disabled={disabled}
       aria-label="Radio group"
