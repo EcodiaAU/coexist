@@ -43,7 +43,7 @@ interface FieldProps {
 export function BasicsFields({ fields, onChange, disabled }: FieldProps) {
   return (
     <>
-      <Input
+      <Input data-eos-id="src/pages/events/components/event-form-fields.tsx#0"
         label="Event Title"
         placeholder="e.g. Byron Bay Dune Planting Day"
         value={fields.title}
@@ -51,7 +51,7 @@ export function BasicsFields({ fields, onChange, disabled }: FieldProps) {
         required
         disabled={disabled}
       />
-      <Dropdown
+      <Dropdown data-eos-id="src/pages/events/components/event-form-fields.tsx#1"
         label="Activity Type"
         placeholder="Select activity type"
         value={fields.activity_type || undefined}
@@ -62,7 +62,7 @@ export function BasicsFields({ fields, onChange, disabled }: FieldProps) {
         }))}
         disabled={disabled}
       />
-      <Input
+      <Input data-eos-id="src/pages/events/components/event-form-fields.tsx#2"
         type="textarea"
         label="Description"
         placeholder="Tell people what this event is about..."
@@ -97,14 +97,14 @@ export function DateTimeFields({
   // @/lib/date-format).
   return (
     <>
-      <DatePicker
+      <DatePicker data-eos-id="src/pages/events/components/event-form-fields.tsx#3"
         label="Start Date & Time"
         value={fields.date_start}
         onChange={(d) => onChange({ date_start: d })}
         mode="datetime"
         min={minStart}
       />
-      <DatePicker
+      <DatePicker data-eos-id="src/pages/events/components/event-form-fields.tsx#4"
         label="End Date & Time"
         value={fields.date_end}
         onChange={(d) => onChange({ date_end: d })}
@@ -144,19 +144,19 @@ export function LocationFields({ fields, onChange }: FieldProps) {
 
   return (
     <>
-      <PlaceAutocomplete
+      <PlaceAutocomplete data-eos-id="src/pages/events/components/event-form-fields.tsx#5"
         label="Address"
         placeholder="Search for an address..."
         value={fields.address}
         onChange={handlePlaceSelect}
       />
 
-      <LocationSyncStatusBar
+      <LocationSyncStatusBar data-eos-id="src/pages/events/components/event-form-fields.tsx#6"
         status={sync.status}
         addressIsBlank={fields.address.trim().length === 0}
       />
 
-      <MapView
+      <MapView data-eos-id="src/pages/events/components/event-form-fields.tsx#7"
         center={
           fields.location_lat != null && fields.location_lng != null
             ? { lat: fields.location_lat, lng: fields.location_lng }
@@ -169,7 +169,7 @@ export function LocationFields({ fields, onChange }: FieldProps) {
         className="aspect-[16/10] rounded-sm shadow-sm"
       />
 
-      <PendingReverseAddressPrompt
+      <PendingReverseAddressPrompt data-eos-id="src/pages/events/components/event-form-fields.tsx#8"
         pending={sync.pendingReverseAddress}
         onAccept={sync.acceptPendingReverse}
         onDismiss={sync.dismissPendingReverse}
@@ -194,24 +194,24 @@ function LocationSyncStatusBar({
 
   if (status === 'searching') {
     return (
-      <p className="-mt-2 text-xs text-neutral-500 flex items-center gap-1.5">
-        <Loader2 size={12} className="animate-spin shrink-0" />
+      <p data-eos-id="src/pages/events/components/event-form-fields.tsx#9" className="-mt-2 text-xs text-neutral-500 flex items-center gap-1.5">
+        <Loader2 data-eos-id="src/pages/events/components/event-form-fields.tsx#10" size={12} className="animate-spin shrink-0" />
         Looking up location...
       </p>
     )
   }
   if (status === 'no-result') {
     return (
-      <p className="-mt-2 text-xs text-bark-600 flex items-center gap-1.5">
-        <AlertCircle size={12} className="shrink-0" />
+      <p data-eos-id="src/pages/events/components/event-form-fields.tsx#11" className="-mt-2 text-xs text-bark-600 flex items-center gap-1.5">
+        <AlertCircle data-eos-id="src/pages/events/components/event-form-fields.tsx#12" size={12} className="shrink-0" />
         Couldn't find this address - drag the pin to set the exact spot.
       </p>
     )
   }
   // synced
   return (
-    <p className="-mt-2 text-xs text-moss-600 flex items-center gap-1.5">
-      <MapPin size={12} className="shrink-0" />
+    <p data-eos-id="src/pages/events/components/event-form-fields.tsx#13" className="-mt-2 text-xs text-moss-600 flex items-center gap-1.5">
+      <MapPin data-eos-id="src/pages/events/components/event-form-fields.tsx#14" size={12} className="shrink-0" />
       Pin synced to address.
     </p>
   )
@@ -232,24 +232,24 @@ function PendingReverseAddressPrompt({
 }) {
   if (!pending) return null
   return (
-    <div className="rounded-sm border border-neutral-200 bg-neutral-50 px-3 py-2.5 flex items-start gap-2.5">
-      <MapPin size={14} className="text-neutral-500 mt-0.5 shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-neutral-600">
-          Pin moved to <span className="font-medium text-neutral-800">{pending}</span>
+    <div data-eos-id="src/pages/events/components/event-form-fields.tsx#15" className="rounded-sm border border-neutral-200 bg-neutral-50 px-3 py-2.5 flex items-start gap-2.5">
+      <MapPin data-eos-id="src/pages/events/components/event-form-fields.tsx#16" size={14} className="text-neutral-500 mt-0.5 shrink-0" />
+      <div data-eos-id="src/pages/events/components/event-form-fields.tsx#17" className="flex-1 min-w-0">
+        <p data-eos-id="src/pages/events/components/event-form-fields.tsx#18" className="text-xs text-neutral-600">
+          Pin moved to <span data-eos-id="src/pages/events/components/event-form-fields.tsx#19" className="font-medium text-neutral-800">{pending}</span>
         </p>
-        <p className="text-[11px] text-neutral-500 mt-0.5">
+        <p data-eos-id="src/pages/events/components/event-form-fields.tsx#20" className="text-[11px] text-neutral-500 mt-0.5">
           Update the address to match? (Your venue name will be replaced.)
         </p>
-        <div className="flex gap-2 mt-2">
-          <button
+        <div data-eos-id="src/pages/events/components/event-form-fields.tsx#21" className="flex gap-2 mt-2">
+          <button data-eos-id="src/pages/events/components/event-form-fields.tsx#22"
             type="button"
             onClick={onAccept}
             className="text-xs font-medium text-moss-700 hover:text-moss-800 flex items-center gap-1"
           >
-            <Check size={12} /> Update address
+            <Check data-eos-id="src/pages/events/components/event-form-fields.tsx#23" size={12} /> Update address
           </button>
-          <button
+          <button data-eos-id="src/pages/events/components/event-form-fields.tsx#24"
             type="button"
             onClick={onDismiss}
             className="text-xs font-medium text-neutral-500 hover:text-neutral-700"
@@ -269,14 +269,14 @@ function PendingReverseAddressPrompt({
 export function DetailsFields({ fields, onChange, disabled }: FieldProps) {
   return (
     <>
-      <Input
+      <Input data-eos-id="src/pages/events/components/event-form-fields.tsx#25"
         label="Capacity"
         placeholder="Max participants (leave empty for unlimited)"
         value={fields.capacity}
         onChange={(e) => onChange({ capacity: e.target.value })}
         disabled={disabled}
       />
-      <Toggle
+      <Toggle data-eos-id="src/pages/events/components/event-form-fields.tsx#26"
         label="Public Event"
         description="Anyone can discover and register for this event"
         checked={fields.is_public}
@@ -301,15 +301,15 @@ export function ExtrasFields({
   disabled?: boolean
 }) {
   return (
-    <div className="space-y-4">
-      <Input
+    <div data-eos-id="src/pages/events/components/event-form-fields.tsx#27" className="space-y-4">
+      <Input data-eos-id="src/pages/events/components/event-form-fields.tsx#28"
         label="Meeting Point"
         placeholder="e.g. North end of the carpark, near the rotunda"
         value={extras.meeting_point}
         onChange={(e) => onChange({ meeting_point: e.target.value })}
         disabled={disabled}
       />
-      <Input
+      <Input data-eos-id="src/pages/events/components/event-form-fields.tsx#29"
         type="textarea"
         label="What to bring"
         placeholder="Water, gloves, sturdy shoes..."
@@ -318,7 +318,7 @@ export function ExtrasFields({
         onChange={(e) => onChange({ what_to_bring: e.target.value })}
         disabled={disabled}
       />
-      <Input
+      <Input data-eos-id="src/pages/events/components/event-form-fields.tsx#30"
         type="textarea"
         label="What to wear"
         placeholder="Long sleeves, sun hat, closed-toe shoes..."
@@ -327,14 +327,14 @@ export function ExtrasFields({
         onChange={(e) => onChange({ what_to_wear: e.target.value })}
         disabled={disabled}
       />
-      <Input
+      <Input data-eos-id="src/pages/events/components/event-form-fields.tsx#31"
         label="Terrain"
         placeholder="e.g. uneven coastal track with steep sections"
         value={extras.terrain}
         onChange={(e) => onChange({ terrain: e.target.value })}
         disabled={disabled}
       />
-      <Dropdown
+      <Dropdown data-eos-id="src/pages/events/components/event-form-fields.tsx#32"
         label="Difficulty"
         value={extras.difficulty}
         onChange={(v) => onChange({ difficulty: v as EventExtras['difficulty'] })}
@@ -345,14 +345,14 @@ export function ExtrasFields({
         ]}
         disabled={disabled}
       />
-      <Toggle
+      <Toggle data-eos-id="src/pages/events/components/event-form-fields.tsx#33"
         label="Wheelchair accessible"
         description="The venue and route are wheelchair accessible"
         checked={extras.wheelchair_access}
         onChange={(v) => onChange({ wheelchair_access: v })}
         disabled={disabled}
       />
-      <Input
+      <Input data-eos-id="src/pages/events/components/event-form-fields.tsx#34"
         label="Partner organisation"
         placeholder="e.g. Landcare NSW (leave blank if none)"
         value={extras.partner_name}
@@ -400,9 +400,9 @@ export function CoverImageFields({
   return (
     <>
       {coverImageUrl ? (
-        <div className="space-y-3">
-          <div className="relative rounded-sm overflow-hidden">
-            <img
+        <div data-eos-id="src/pages/events/components/event-form-fields.tsx#35" className="space-y-3">
+          <div data-eos-id="src/pages/events/components/event-form-fields.tsx#36" className="relative rounded-sm overflow-hidden">
+            <img data-eos-id="src/pages/events/components/event-form-fields.tsx#37"
               src={coverImageUrl}
               alt="Cover preview"
               className="w-full object-cover"
@@ -412,18 +412,18 @@ export function CoverImageFields({
               }}
             />
             {!disabled && (
-              <button
+              <button data-eos-id="src/pages/events/components/event-form-fields.tsx#38"
                 type="button"
                 onClick={onRemove}
                 className="absolute top-2 right-2 min-w-11 min-h-11 rounded-full bg-black/50 text-white flex items-center justify-center cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
                 aria-label="Remove cover image"
               >
-                <X size={16} />
+                <X data-eos-id="src/pages/events/components/event-form-fields.tsx#39" size={16} />
               </button>
             )}
           </div>
           {onPositionChange && (
-            <CoverImageFocalPointPicker
+            <CoverImageFocalPointPicker data-eos-id="src/pages/events/components/event-form-fields.tsx#40"
               imageUrl={coverImageUrl}
               x={positionX}
               y={positionY}
@@ -433,7 +433,7 @@ export function CoverImageFields({
           )}
         </div>
       ) : (
-        <button
+        <button data-eos-id="src/pages/events/components/event-form-fields.tsx#41"
           type="button"
           onClick={onUpload}
           disabled={disabled || cameraLoading || uploading}
@@ -447,23 +447,23 @@ export function CoverImageFields({
           )}
           aria-label="Upload cover image"
         >
-          <Image size={32} />
-          <p className="text-sm font-medium mt-2">Tap to upload a cover photo</p>
+          <Image data-eos-id="src/pages/events/components/event-form-fields.tsx#42" size={32} />
+          <p data-eos-id="src/pages/events/components/event-form-fields.tsx#43" className="text-sm font-medium mt-2">Tap to upload a cover photo</p>
         </button>
       )}
       {!disabled && (
         <>
-          <UploadProgress
+          <UploadProgress data-eos-id="src/pages/events/components/event-form-fields.tsx#44"
             progress={uploadProgress}
             uploading={uploading}
             error={uploadError}
             variant="bar"
           />
           {!coverImageUrl && (
-            <Button
+            <Button data-eos-id="src/pages/events/components/event-form-fields.tsx#45"
               variant="secondary"
               size="sm"
-              icon={<Camera size={14} />}
+              icon={<Camera data-eos-id="src/pages/events/components/event-form-fields.tsx#46" size={14} />}
               onClick={onUpload}
               disabled={cameraLoading || uploading}
             >
