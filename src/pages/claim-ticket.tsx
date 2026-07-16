@@ -68,7 +68,7 @@ export default function ClaimTicketPage() {
   const goAuth = (path: '/login' | '/signup') => navigate(path, { state: { from: { pathname: location.pathname } } })
 
   return (
-    <div data-eos-id="src/pages/claim-ticket.tsx#0" className="flex min-h-dvh flex-col items-center justify-center bg-white px-6 text-center">
+    <div data-eos-id="src/pages/claim-ticket.tsx#0" data-eos-v="2" className="flex min-h-dvh flex-col items-center justify-center bg-white px-6 text-center">
       <OGMeta data-eos-id="src/pages/claim-ticket.tsx#1" title="Claim your spot" description="Claim your free Co-Exist campout ticket." canonicalPath="/claim" />
 
       {(state.kind === 'loading') && (
