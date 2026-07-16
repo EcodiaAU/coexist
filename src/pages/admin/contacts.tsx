@@ -46,12 +46,12 @@ type EmergencyContact = Tables<'emergency_contacts'>
 /* ------------------------------------------------------------------ */
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  emergency: <Siren size={16} />,
-  wildlife: <TreePine size={16} />,
-  marine: <Waves size={16} />,
-  poison: <Bug size={16} />,
-  ses: <Shield size={16} />,
-  internal: <Users size={16} />,
+  emergency: <Siren data-eos-id="src/pages/admin/contacts.tsx#0" size={16} />,
+  wildlife: <TreePine data-eos-id="src/pages/admin/contacts.tsx#1" size={16} />,
+  marine: <Waves data-eos-id="src/pages/admin/contacts.tsx#2" size={16} />,
+  poison: <Bug data-eos-id="src/pages/admin/contacts.tsx#3" size={16} />,
+  ses: <Shield data-eos-id="src/pages/admin/contacts.tsx#4" size={16} />,
+  internal: <Users data-eos-id="src/pages/admin/contacts.tsx#5" size={16} />,
 }
 
 
@@ -133,21 +133,21 @@ function ContactFormModal({
   const isPending = createMutation.isPending || updateMutation.isPending
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
+    <BottomSheet data-eos-id="src/pages/admin/contacts.tsx#6" open={open} onClose={onClose}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading text-lg font-semibold text-neutral-900">{isEdit ? 'Edit Contact' : 'Add Contact'}</h2>
-        <button
+      <div data-eos-id="src/pages/admin/contacts.tsx#7" className="flex items-center justify-between mb-4">
+        <h2 data-eos-id="src/pages/admin/contacts.tsx#8" className="font-heading text-lg font-semibold text-neutral-900">{isEdit ? 'Edit Contact' : 'Add Contact'}</h2>
+        <button data-eos-id="src/pages/admin/contacts.tsx#9"
           onClick={onClose}
           className="flex items-center justify-center rounded-full min-w-11 min-h-11 text-neutral-400 hover:bg-neutral-50 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
           aria-label="Close"
         >
-          <X size={20} />
+          <X data-eos-id="src/pages/admin/contacts.tsx#10" size={20} />
         </button>
       </div>
-      <div className="space-y-4">
+      <div data-eos-id="src/pages/admin/contacts.tsx#11" className="space-y-4">
         {/* Category */}
-        <Dropdown
+        <Dropdown data-eos-id="src/pages/admin/contacts.tsx#12"
           label="Category"
           options={CONTACT_CATEGORIES.map((c) => ({ value: c.id, label: c.label }))}
           value={category}
@@ -155,7 +155,7 @@ function ContactFormModal({
         />
 
         {/* Name */}
-        <Input
+        <Input data-eos-id="src/pages/admin/contacts.tsx#13"
           label="Contact Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -164,7 +164,7 @@ function ContactFormModal({
         />
 
         {/* Phone */}
-        <Input
+        <Input data-eos-id="src/pages/admin/contacts.tsx#14"
           label="Phone Number"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
@@ -174,7 +174,7 @@ function ContactFormModal({
         />
 
         {/* Note */}
-        <Input
+        <Input data-eos-id="src/pages/admin/contacts.tsx#15"
           label="Note / Role"
           value={note}
           onChange={(e) => setNote(e.target.value)}
@@ -182,16 +182,16 @@ function ContactFormModal({
         />
 
         {/* States */}
-        <div>
-          <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1.5">
+        <div data-eos-id="src/pages/admin/contacts.tsx#16">
+          <label data-eos-id="src/pages/admin/contacts.tsx#17" className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1.5">
             Applicable States
           </label>
-          <p className="text-[11px] text-neutral-400 mb-2">
+          <p data-eos-id="src/pages/admin/contacts.tsx#18" className="text-[11px] text-neutral-400 mb-2">
             Leave empty to show in all states. Select specific states to only show this contact for events in those states.
           </p>
-          <div className="flex flex-wrap gap-1.5">
+          <div data-eos-id="src/pages/admin/contacts.tsx#19" className="flex flex-wrap gap-1.5">
             {AUSTRALIAN_STATES.map((state) => (
-              <button
+              <button data-eos-id="src/pages/admin/contacts.tsx#20"
                 key={state}
                 type="button"
                 onClick={() => toggleState(state)}
@@ -206,7 +206,7 @@ function ContactFormModal({
               </button>
             ))}
             {selectedStates.length > 0 && (
-              <button
+              <button data-eos-id="src/pages/admin/contacts.tsx#21"
                 type="button"
                 onClick={() => setSelectedStates([])}
                 className="px-3 py-1.5 rounded-sm text-xs font-semibold text-neutral-400 hover:text-neutral-600 min-h-[36px]"
@@ -218,7 +218,7 @@ function ContactFormModal({
         </div>
 
         {/* Sort order */}
-        <Input
+        <Input data-eos-id="src/pages/admin/contacts.tsx#22"
           label="Sort Order"
           value={String(sortOrder)}
           onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)}
@@ -227,9 +227,9 @@ function ContactFormModal({
         />
 
         {/* Active toggle */}
-        <div className="flex items-center justify-between py-2">
-          <span className="text-sm font-medium text-neutral-900">Active</span>
-          <button
+        <div data-eos-id="src/pages/admin/contacts.tsx#23" className="flex items-center justify-between py-2">
+          <span data-eos-id="src/pages/admin/contacts.tsx#24" className="text-sm font-medium text-neutral-900">Active</span>
+          <button data-eos-id="src/pages/admin/contacts.tsx#25"
             type="button"
             onClick={() => setIsActive(!isActive)}
             className={cn(
@@ -237,7 +237,7 @@ function ContactFormModal({
               isActive ? 'bg-success-500' : 'bg-neutral-200',
             )}
           >
-            <span
+            <span data-eos-id="src/pages/admin/contacts.tsx#26"
               className={cn(
                 'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-150',
                 isActive && 'translate-x-5',
@@ -246,7 +246,7 @@ function ContactFormModal({
           </button>
         </div>
 
-        <Button
+        <Button data-eos-id="src/pages/admin/contacts.tsx#27"
           variant="primary"
           fullWidth
           onClick={handleSubmit}
@@ -321,10 +321,10 @@ export default function AdminContactsPage() {
 
   const heroActions = useMemo(
     () => (
-      <Button
+      <Button data-eos-id="src/pages/admin/contacts.tsx#28"
         variant="primary"
         size="sm"
-        icon={<Plus size={16} />}
+        icon={<Plus data-eos-id="src/pages/admin/contacts.tsx#29" size={16} />}
         onClick={() => { setEditTarget(null); setShowForm(true) }}
       >
         Add Contact
@@ -335,10 +335,10 @@ export default function AdminContactsPage() {
 
   const heroStats = useMemo(
     () => (
-      <AdminHeroStatRow>
-        <AdminHeroStat value={stats?.total ?? 0} label="Total" icon={<Phone size={18} />} color="primary" delay={0} reducedMotion={rm} />
-        <AdminHeroStat value={stats?.categories ?? 0} label="Categories" icon={<MapPin size={18} />} color="moss" delay={1} reducedMotion={rm} />
-        <AdminHeroStat value={stats?.stateSpecific ?? 0} label="State-Specific" icon={<MapPin size={18} />} color="sprout" delay={2} reducedMotion={rm} />
+      <AdminHeroStatRow data-eos-id="src/pages/admin/contacts.tsx#30">
+        <AdminHeroStat data-eos-id="src/pages/admin/contacts.tsx#31" value={stats?.total ?? 0} label="Total" icon={<Phone data-eos-id="src/pages/admin/contacts.tsx#32" size={18} />} color="primary" delay={0} reducedMotion={rm} />
+        <AdminHeroStat data-eos-id="src/pages/admin/contacts.tsx#33" value={stats?.categories ?? 0} label="Categories" icon={<MapPin data-eos-id="src/pages/admin/contacts.tsx#34" size={18} />} color="moss" delay={1} reducedMotion={rm} />
+        <AdminHeroStat data-eos-id="src/pages/admin/contacts.tsx#35" value={stats?.stateSpecific ?? 0} label="State-Specific" icon={<MapPin data-eos-id="src/pages/admin/contacts.tsx#36" size={18} />} color="sprout" delay={2} reducedMotion={rm} />
       </AdminHeroStatRow>
     ),
     [stats, rm],
@@ -349,19 +349,19 @@ export default function AdminContactsPage() {
   const { stagger, fadeUp } = adminVariants(rm)
 
   return (
-    <div>
-      <motion.div variants={stagger} initial="hidden" animate="visible">
+    <div data-eos-id="src/pages/admin/contacts.tsx#37">
+      <motion.div data-eos-id="src/pages/admin/contacts.tsx#38" variants={stagger} initial="hidden" animate="visible">
         {/* Filters */}
-        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
-          <SearchBar
+        <motion.div data-eos-id="src/pages/admin/contacts.tsx#39" variants={fadeUp} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+          <SearchBar data-eos-id="src/pages/admin/contacts.tsx#40"
             value={search}
             onChange={setSearch}
             placeholder="Search contacts..."
             compact
             className="flex-1"
           />
-          <div className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5 overflow-x-auto">
-            <button
+          <div data-eos-id="src/pages/admin/contacts.tsx#41" className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5 overflow-x-auto">
+            <button data-eos-id="src/pages/admin/contacts.tsx#42"
               type="button"
               onClick={() => setCategoryFilter('')}
               className={cn(
@@ -375,7 +375,7 @@ export default function AdminContactsPage() {
               All
             </button>
             {CONTACT_CATEGORIES.map((cat) => (
-              <button
+              <button data-eos-id="src/pages/admin/contacts.tsx#43" data-eos-var="cat.label" data-eos-var-label="Label" data-eos-var-scope="item"
                 key={cat.id}
                 type="button"
                 onClick={() => setCategoryFilter(cat.id)}
@@ -394,11 +394,11 @@ export default function AdminContactsPage() {
         </motion.div>
 
         {/* Contact list */}
-        <motion.div variants={fadeUp}>
+        <motion.div data-eos-id="src/pages/admin/contacts.tsx#44" variants={fadeUp}>
           {showLoading ? (
-            <Skeleton variant="list-item" count={8} />
+            <Skeleton data-eos-id="src/pages/admin/contacts.tsx#45" variant="list-item" count={8} />
           ) : !grouped.length ? (
-            <EmptyState
+            <EmptyState data-eos-id="src/pages/admin/contacts.tsx#46"
               illustration="empty"
               title="No contacts found"
               description={search ? 'Try a different search term' : 'Add your first emergency contact'}
@@ -409,16 +409,16 @@ export default function AdminContactsPage() {
               }
             />
           ) : (
-            <div className="space-y-6">
+            <div data-eos-id="src/pages/admin/contacts.tsx#47" className="space-y-6">
               {grouped.map((group) => {
                 const colors = CONTACT_CATEGORY_COLORS[group.category] ?? CONTACT_CATEGORY_COLORS.emergency
                 const icon = CATEGORY_ICONS[group.category]
 
                 return (
-                  <div key={group.category}>
+                  <div data-eos-id="src/pages/admin/contacts.tsx#48" key={group.category}>
                     {/* Category header */}
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <span
+                    <div data-eos-id="src/pages/admin/contacts.tsx#49" className="flex items-center gap-2.5 mb-3">
+                      <span data-eos-id="src/pages/admin/contacts.tsx#50"
                         className={cn(
                           'flex items-center justify-center w-8 h-8 rounded-sm',
                           colors.bg,
@@ -427,18 +427,18 @@ export default function AdminContactsPage() {
                       >
                         {icon}
                       </span>
-                      <h3 className="font-heading text-sm font-bold text-neutral-900">
+                      <h3 data-eos-id="src/pages/admin/contacts.tsx#51" data-eos-var="group.meta.label" data-eos-var-label="Label" data-eos-var-scope="item" className="font-heading text-sm font-bold text-neutral-900">
                         {group.meta.label}
                       </h3>
-                      <span className="text-xs text-neutral-400">
+                      <span data-eos-id="src/pages/admin/contacts.tsx#52" className="text-xs text-neutral-400">
                         {group.contacts.length} contact{group.contacts.length !== 1 ? 's' : ''}
                       </span>
                     </div>
 
                     {/* Contact rows */}
-                    <div className="space-y-1.5">
+                    <div data-eos-id="src/pages/admin/contacts.tsx#53" className="space-y-1.5">
                       {group.contacts.map((contact, i) => (
-                        <motion.div
+                        <motion.div data-eos-id="src/pages/admin/contacts.tsx#54"
                           key={contact.id}
                           initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -454,43 +454,43 @@ export default function AdminContactsPage() {
                           )}
                         >
                           {/* Phone icon */}
-                          <span
+                          <span data-eos-id="src/pages/admin/contacts.tsx#55"
                             className={cn(
                               'flex items-center justify-center w-9 h-9 rounded-full ring-1 shrink-0',
                               colors.bg,
                               colors.ring,
                             )}
                           >
-                            <Phone size={14} className={colors.text} />
+                            <Phone data-eos-id="src/pages/admin/contacts.tsx#56" size={14} className={colors.text} />
                           </span>
 
                           {/* Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start gap-2 mb-0.5">
-                              <p className="text-sm font-semibold text-neutral-900 leading-snug break-words flex-1 min-w-0">
+                          <div data-eos-id="src/pages/admin/contacts.tsx#57" className="flex-1 min-w-0">
+                            <div data-eos-id="src/pages/admin/contacts.tsx#58" className="flex items-start gap-2 mb-0.5">
+                              <p data-eos-id="src/pages/admin/contacts.tsx#59" data-eos-var="contact.name" data-eos-var-label="Name" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 leading-snug break-words flex-1 min-w-0">
                                 {contact.name}
                               </p>
                               {!contact.is_active && (
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500 shrink-0 mt-0.5">
+                                <span data-eos-id="src/pages/admin/contacts.tsx#60" className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500 shrink-0 mt-0.5">
                                   Inactive
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-neutral-400">
-                              <span className="font-medium tabular-nums">
+                            <div data-eos-id="src/pages/admin/contacts.tsx#61" className="flex items-center gap-2 text-xs text-neutral-400">
+                              <span data-eos-id="src/pages/admin/contacts.tsx#62" data-eos-var="contact.phone" data-eos-var-label="Phone" data-eos-var-scope="item" className="font-medium tabular-nums">
                                 {formatPhone(contact.phone)}
                               </span>
                               {contact.note && (
                                 <>
-                                  <span className="text-neutral-200">·</span>
-                                  <span className="truncate">{contact.note}</span>
+                                  <span data-eos-id="src/pages/admin/contacts.tsx#63" className="text-neutral-200">·</span>
+                                  <span data-eos-id="src/pages/admin/contacts.tsx#64" data-eos-var="contact.note" data-eos-var-label="Note" data-eos-var-scope="item" className="truncate">{contact.note}</span>
                                 </>
                               )}
                             </div>
                             {contact.states.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-1.5">
+                              <div data-eos-id="src/pages/admin/contacts.tsx#65" className="flex flex-wrap gap-1 mt-1.5">
                                 {contact.states.map((s) => (
-                                  <span
+                                  <span data-eos-id="src/pages/admin/contacts.tsx#66"
                                     key={s}
                                     className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-neutral-50 text-neutral-500"
                                   >
@@ -502,22 +502,22 @@ export default function AdminContactsPage() {
                           </div>
 
                           {/* Actions */}
-                          <div className="flex items-center gap-0.5 shrink-0">
-                            <button
+                          <div data-eos-id="src/pages/admin/contacts.tsx#67" className="flex items-center gap-0.5 shrink-0">
+                            <button data-eos-id="src/pages/admin/contacts.tsx#68"
                               type="button"
                               onClick={() => { setEditTarget(contact); setShowForm(true) }}
                               className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.98] transition-[colors,transform]"
                               aria-label={`Edit ${contact.name}`}
                             >
-                              <Pencil size={15} />
+                              <Pencil data-eos-id="src/pages/admin/contacts.tsx#69" size={15} />
                             </button>
-                            <button
+                            <button data-eos-id="src/pages/admin/contacts.tsx#70"
                               type="button"
                               onClick={() => setDeleteTarget(contact)}
                               className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-red-50 hover:text-red-500 cursor-pointer active:scale-[0.98] transition-[colors,transform]"
                               aria-label={`Delete ${contact.name}`}
                             >
-                              <Trash2 size={15} />
+                              <Trash2 data-eos-id="src/pages/admin/contacts.tsx#71" size={15} />
                             </button>
                           </div>
                         </motion.div>
@@ -533,7 +533,7 @@ export default function AdminContactsPage() {
 
       {/* Create / Edit modal */}
       {showForm && (
-        <ContactFormModal
+        <ContactFormModal data-eos-id="src/pages/admin/contacts.tsx#72"
           open={showForm}
           onClose={() => { setShowForm(false); setEditTarget(null) }}
           contact={editTarget}
@@ -541,7 +541,7 @@ export default function AdminContactsPage() {
       )}
 
       {/* Delete confirmation */}
-      <ConfirmationSheet
+      <ConfirmationSheet data-eos-id="src/pages/admin/contacts.tsx#73"
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
