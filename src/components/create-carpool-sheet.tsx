@@ -73,8 +73,8 @@ function EventPicker({
   const selected = events.find((e) => e.id === selectedId)
 
   return (
-    <div className="relative">
-      <button
+    <div data-eos-id="src/components/create-carpool-sheet.tsx#0" className="relative">
+      <button data-eos-id="src/components/create-carpool-sheet.tsx#1"
         type="button"
         onClick={() => setDropdownOpen(!dropdownOpen)}
         className={cn(
@@ -86,8 +86,8 @@ function EventPicker({
           dropdownOpen && 'ring-2 ring-success-400 bg-white',
         )}
       >
-        <Calendar size={16} className="shrink-0 text-success-500" />
-        <span className="flex-1 truncate">
+        <Calendar data-eos-id="src/components/create-carpool-sheet.tsx#2" size={16} className="shrink-0 text-success-500" />
+        <span data-eos-id="src/components/create-carpool-sheet.tsx#3" data-eos-var="selected.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="flex-1 truncate">
           {isLoading
             ? 'Loading events...'
             : selected
@@ -96,7 +96,7 @@ function EventPicker({
                 ? 'No upcoming events'
                 : 'Select an event...'}
         </span>
-        <ChevronDown
+        <ChevronDown data-eos-id="src/components/create-carpool-sheet.tsx#4"
           size={16}
           className={cn(
             'shrink-0 text-success-400 transition-transform duration-150',
@@ -106,9 +106,9 @@ function EventPicker({
       </button>
 
       {dropdownOpen && events.length > 0 && (
-        <div className="absolute z-30 mt-1.5 w-full rounded-sm bg-white shadow-sm ring-1 ring-success-200/60 max-h-52 overflow-y-auto overscroll-contain">
+        <div data-eos-id="src/components/create-carpool-sheet.tsx#5" className="absolute z-30 mt-1.5 w-full rounded-sm bg-white shadow-sm ring-1 ring-success-200/60 max-h-52 overflow-y-auto overscroll-contain">
           {events.map((event) => (
-            <button
+            <button data-eos-id="src/components/create-carpool-sheet.tsx#6"
               key={event.id}
               type="button"
               onClick={() => {
@@ -122,23 +122,23 @@ function EventPicker({
                 'first:rounded-t-sm last:rounded-b-sm',
               )}
             >
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{event.title}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Calendar size={11} className="text-neutral-400 shrink-0" />
-                  <span className="text-[11px] text-neutral-500">
+              <div data-eos-id="src/components/create-carpool-sheet.tsx#7" className="flex-1 min-w-0">
+                <p data-eos-id="src/components/create-carpool-sheet.tsx#8" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{event.title}</p>
+                <div data-eos-id="src/components/create-carpool-sheet.tsx#9" className="flex items-center gap-1.5 mt-0.5">
+                  <Calendar data-eos-id="src/components/create-carpool-sheet.tsx#10" size={11} className="text-neutral-400 shrink-0" />
+                  <span data-eos-id="src/components/create-carpool-sheet.tsx#11" data-eos-var="event.date_start,event.date_start" data-eos-var-label="Date start, Date start" data-eos-var-scope="item" className="text-[11px] text-neutral-500">
                     {formatEventDate(event.date_start)} at {formatEventTime(event.date_start)}
                   </span>
                 </div>
                 {event.address && (
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <MapPin size={11} className="text-neutral-400 shrink-0" />
-                    <span className="text-[11px] text-neutral-400 truncate">{event.address}</span>
+                  <div data-eos-id="src/components/create-carpool-sheet.tsx#12" className="flex items-center gap-1.5 mt-0.5">
+                    <MapPin data-eos-id="src/components/create-carpool-sheet.tsx#13" size={11} className="text-neutral-400 shrink-0" />
+                    <span data-eos-id="src/components/create-carpool-sheet.tsx#14" data-eos-var="event.address" data-eos-var-label="Address" data-eos-var-scope="item" className="text-[11px] text-neutral-400 truncate">{event.address}</span>
                   </div>
                 )}
               </div>
               {event.id === selectedId && (
-                <Check size={16} className="text-success-600 shrink-0 mt-0.5" />
+                <Check data-eos-id="src/components/create-carpool-sheet.tsx#15" size={16} className="text-success-600 shrink-0 mt-0.5" />
               )}
             </button>
           ))}
@@ -166,8 +166,8 @@ function SeatsStepper({
   const dec = () => onChange(Math.max(min, value - 1))
   const inc = () => onChange(Math.min(max, value + 1))
   return (
-    <div className="flex items-center gap-3">
-      <button
+    <div data-eos-id="src/components/create-carpool-sheet.tsx#16" className="flex items-center gap-3">
+      <button data-eos-id="src/components/create-carpool-sheet.tsx#17"
         type="button"
         onClick={dec}
         disabled={value <= min}
@@ -179,15 +179,15 @@ function SeatsStepper({
           'disabled:opacity-40 disabled:cursor-not-allowed',
         )}
       >
-        <Minus size={16} />
+        <Minus data-eos-id="src/components/create-carpool-sheet.tsx#18" size={16} />
       </button>
-      <div className="flex items-center gap-2 min-w-0">
-        <Users size={14} className="text-neutral-400 shrink-0" />
-        <span className="text-sm font-bold text-neutral-900 tabular-nums">
+      <div data-eos-id="src/components/create-carpool-sheet.tsx#19" className="flex items-center gap-2 min-w-0">
+        <Users data-eos-id="src/components/create-carpool-sheet.tsx#20" size={14} className="text-neutral-400 shrink-0" />
+        <span data-eos-id="src/components/create-carpool-sheet.tsx#21" className="text-sm font-bold text-neutral-900 tabular-nums">
           {value} seat{value !== 1 ? 's' : ''}
         </span>
       </div>
-      <button
+      <button data-eos-id="src/components/create-carpool-sheet.tsx#22"
         type="button"
         onClick={inc}
         disabled={value >= max}
@@ -199,7 +199,7 @@ function SeatsStepper({
           'disabled:opacity-40 disabled:cursor-not-allowed',
         )}
       >
-        <Plus size={16} />
+        <Plus data-eos-id="src/components/create-carpool-sheet.tsx#23" size={16} />
       </button>
     </div>
   )
@@ -293,76 +293,76 @@ export function CreateCarpoolSheet({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose}>
-      <div className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
+    <BottomSheet data-eos-id="src/components/create-carpool-sheet.tsx#24" open={open} onClose={onClose}>
+      <div data-eos-id="src/components/create-carpool-sheet.tsx#25" className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
         {/* Header */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-success-100 text-success-600">
-            <Car size={20} />
+        <div data-eos-id="src/components/create-carpool-sheet.tsx#26" className="flex items-center gap-2.5 mb-4">
+          <div data-eos-id="src/components/create-carpool-sheet.tsx#27" className="flex h-10 w-10 items-center justify-center rounded-sm bg-success-100 text-success-600">
+            <Car data-eos-id="src/components/create-carpool-sheet.tsx#28" size={20} />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-neutral-900">Offer a carpool</h3>
-            <p className="text-xs text-neutral-500">Drive other members to an event</p>
+          <div data-eos-id="src/components/create-carpool-sheet.tsx#29">
+            <h3 data-eos-id="src/components/create-carpool-sheet.tsx#30" className="text-base font-bold text-neutral-900">Offer a carpool</h3>
+            <p data-eos-id="src/components/create-carpool-sheet.tsx#31" className="text-xs text-neutral-500">Drive other members to an event</p>
           </div>
         </div>
 
         {/* Event picker */}
-        <div className="mb-3">
-          <label className="text-xs font-semibold text-neutral-900 mb-1 block">Event</label>
-          <EventPicker
+        <div data-eos-id="src/components/create-carpool-sheet.tsx#32" className="mb-3">
+          <label data-eos-id="src/components/create-carpool-sheet.tsx#33" className="text-xs font-semibold text-neutral-900 mb-1 block">Event</label>
+          <EventPicker data-eos-id="src/components/create-carpool-sheet.tsx#34"
             events={upcomingEvents}
             selectedId={eventId}
             onSelect={setEventId}
             isLoading={eventsLoading}
           />
           {!eventsLoading && upcomingEvents.length === 0 && (
-            <p className="text-[11px] text-warning-600 mt-1">
+            <p data-eos-id="src/components/create-carpool-sheet.tsx#35" className="text-[11px] text-warning-600 mt-1">
               No upcoming events found. Create an event first, then offer carpools.
             </p>
           )}
         </div>
 
         {/* Departure point */}
-        <div className="mb-3">
-          <Input
+        <div data-eos-id="src/components/create-carpool-sheet.tsx#36" className="mb-3">
+          <Input data-eos-id="src/components/create-carpool-sheet.tsx#37"
             label="Departure point"
             value={departurePoint}
             onChange={(e) => setDeparturePoint(e.target.value)}
             placeholder="e.g. Sippy Downs Macca's car park"
             maxLength={200}
-            icon={<MapPin size={16} className="text-success-500" />}
+            icon={<MapPin data-eos-id="src/components/create-carpool-sheet.tsx#38" size={16} className="text-success-500" />}
           />
-          <p className="text-[11px] text-neutral-400 mt-1">
+          <p data-eos-id="src/components/create-carpool-sheet.tsx#39" className="text-[11px] text-neutral-400 mt-1">
             Visible to all collective members.
           </p>
         </div>
 
         {/* Departure time */}
-        <div className="mb-3">
-          <Input
+        <div data-eos-id="src/components/create-carpool-sheet.tsx#40" className="mb-3">
+          <Input data-eos-id="src/components/create-carpool-sheet.tsx#41"
             label="Departure time"
             type="text"
             value={departureTime}
             onChange={(e) => setDepartureTime(e.target.value)}
             placeholder="YYYY-MM-DDTHH:mm"
-            icon={<Clock size={16} className="text-success-500" />}
+            icon={<Clock data-eos-id="src/components/create-carpool-sheet.tsx#42" size={16} className="text-success-500" />}
           />
-          <p className="text-[11px] text-neutral-400 mt-1">
+          <p data-eos-id="src/components/create-carpool-sheet.tsx#43" className="text-[11px] text-neutral-400 mt-1">
             Format: YYYY-MM-DD HH:mm (24h, event local time).
           </p>
         </div>
 
         {/* Seats stepper */}
-        <div className="mb-3">
-          <label className="text-xs font-semibold text-neutral-900 mb-1.5 block">
+        <div data-eos-id="src/components/create-carpool-sheet.tsx#44" className="mb-3">
+          <label data-eos-id="src/components/create-carpool-sheet.tsx#45" className="text-xs font-semibold text-neutral-900 mb-1.5 block">
             Seats available
           </label>
-          <SeatsStepper value={seatsTotal} onChange={setSeatsTotal} min={1} max={8} />
+          <SeatsStepper data-eos-id="src/components/create-carpool-sheet.tsx#46" value={seatsTotal} onChange={setSeatsTotal} min={1} max={8} />
         </div>
 
         {/* Notes */}
-        <div className="mb-4">
-          <Input
+        <div data-eos-id="src/components/create-carpool-sheet.tsx#47" className="mb-4">
+          <Input data-eos-id="src/components/create-carpool-sheet.tsx#48"
             type="textarea"
             label="Notes (optional)"
             value={notes}
@@ -374,7 +374,7 @@ export function CreateCarpoolSheet({
         </div>
 
         {/* Submit */}
-        <Button
+        <Button data-eos-id="src/components/create-carpool-sheet.tsx#49"
           variant="primary"
           size="lg"
           fullWidth
