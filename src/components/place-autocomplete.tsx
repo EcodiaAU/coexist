@@ -219,7 +219,7 @@ function DropdownPortal({
   }, [open, anchorRef])
 
   return createPortal(
-    <AnimatePresence data-eos-id="src/components/place-autocomplete.tsx#0">
+    <AnimatePresence data-eos-id="src/components/place-autocomplete.tsx#0" data-eos-v="2">
       {open && results.length > 0 && (
         <motion.ul data-eos-id="src/components/place-autocomplete.tsx#1"
           initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
