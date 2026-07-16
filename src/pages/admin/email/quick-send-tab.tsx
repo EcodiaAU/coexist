@@ -483,20 +483,20 @@ export function QuickSendTab() {
   void sanitizeHtml
 
   return (
-    <div className="space-y-6 pb-24">
+    <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#0" className="space-y-6 pb-24">
       {/* Step 1: prompt */}
-      <section className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary-100 text-primary-700">
-            <Sparkles size={16} />
+      <section data-eos-id="src/pages/admin/email/quick-send-tab.tsx#1" className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
+        <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#2" className="flex items-center gap-2">
+          <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#3" className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary-100 text-primary-700">
+            <Sparkles data-eos-id="src/pages/admin/email/quick-send-tab.tsx#4" size={16} />
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-neutral-900">Tell us what to send</h2>
-            <p className="text-xs text-neutral-500">Plain English. The AI drafts a branded email for you.</p>
+          <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#5">
+            <h2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#6" className="text-sm font-bold text-neutral-900">Tell us what to send</h2>
+            <p data-eos-id="src/pages/admin/email/quick-send-tab.tsx#7" className="text-xs text-neutral-500">Plain English. The AI drafts a branded email for you.</p>
           </div>
         </div>
 
-        <Input
+        <Input data-eos-id="src/pages/admin/email/quick-send-tab.tsx#8"
           type="textarea"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -504,9 +504,9 @@ export function QuickSendTab() {
           rows={3}
         />
 
-        <div className="flex flex-wrap gap-2">
+        <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#9" className="flex flex-wrap gap-2">
           {SUGGESTION_PILLS.map((p) => (
-            <button
+            <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#10" data-eos-var="p.label" data-eos-var-label="Label" data-eos-var-scope="item" data-eos-var-src="literal"
               key={p.label}
               type="button"
               onClick={() => handlePill(p)}
@@ -517,15 +517,15 @@ export function QuickSendTab() {
                 'disabled:opacity-60 disabled:cursor-wait',
               )}
             >
-              <Sparkles size={11} />
+              <Sparkles data-eos-id="src/pages/admin/email/quick-send-tab.tsx#11" size={11} />
               {p.label}
             </button>
           ))}
         </div>
 
-        <Button
+        <Button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#12"
           variant="primary"
-          icon={drafting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+          icon={drafting ? <Loader2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#13" size={14} className="animate-spin" /> : <Sparkles data-eos-id="src/pages/admin/email/quick-send-tab.tsx#14" size={14} />}
           onClick={() => handleDraft()}
           loading={drafting}
           disabled={!prompt.trim()}
@@ -538,36 +538,36 @@ export function QuickSendTab() {
           prompt and preview so admins set the visual before reading
           the draft. Empty = solid olive hero (current default). */}
       {bodyHtml && (
-        <section className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-              <ImagePlus size={14} className="text-primary-700" />
+        <section data-eos-id="src/pages/admin/email/quick-send-tab.tsx#15" className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
+          <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#16" className="flex items-center justify-between">
+            <h2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#17" className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+              <ImagePlus data-eos-id="src/pages/admin/email/quick-send-tab.tsx#18" size={14} className="text-primary-700" />
               Hero photo
-              <span className="text-[10px] font-medium text-neutral-400 uppercase tracking-wider">optional</span>
+              <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#19" className="text-[10px] font-medium text-neutral-400 uppercase tracking-wider">optional</span>
             </h2>
             {heroImageUrl && (
-              <button
+              <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#20"
                 type="button"
                 onClick={() => setHeroImageUrl('')}
                 className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-500 hover:text-neutral-700 cursor-pointer"
               >
-                <X size={11} />
+                <X data-eos-id="src/pages/admin/email/quick-send-tab.tsx#21" size={11} />
                 Remove
               </button>
             )}
           </div>
 
           {!heroImageUrl && !showPhotoPicker && (
-            <div className="rounded-sm border-2 border-dashed border-neutral-200 p-5 text-center space-y-3">
-              <p className="text-sm text-neutral-600">
+            <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#22" className="rounded-sm border-2 border-dashed border-neutral-200 p-5 text-center space-y-3">
+              <p data-eos-id="src/pages/admin/email/quick-send-tab.tsx#23" className="text-sm text-neutral-600">
                 Add a photo and the hero becomes that photo with a dark wash so the
                 heading stays legible. Skip for the solid olive look.
               </p>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <label className="inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-primary-50 text-primary-700 ring-1 ring-primary-200/60 hover:bg-primary-100 text-sm font-medium cursor-pointer">
-                  {uploadingHero ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
+              <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#24" className="flex flex-wrap items-center justify-center gap-2">
+                <label data-eos-id="src/pages/admin/email/quick-send-tab.tsx#25" className="inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-primary-50 text-primary-700 ring-1 ring-primary-200/60 hover:bg-primary-100 text-sm font-medium cursor-pointer">
+                  {uploadingHero ? <Loader2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#26" size={14} className="animate-spin" /> : <ImagePlus data-eos-id="src/pages/admin/email/quick-send-tab.tsx#27" size={14} />}
                   {uploadingHero ? 'Uploading...' : 'Upload a photo'}
-                  <input
+                  <input data-eos-id="src/pages/admin/email/quick-send-tab.tsx#28"
                     type="file"
                     accept="image/*"
                     className="hidden"
@@ -579,12 +579,12 @@ export function QuickSendTab() {
                     }}
                   />
                 </label>
-                <button
+                <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#29"
                   type="button"
                   onClick={() => setShowPhotoPicker(true)}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-100 text-sm font-medium cursor-pointer"
                 >
-                  <ImageIcon size={14} />
+                  <ImageIcon data-eos-id="src/pages/admin/email/quick-send-tab.tsx#30" size={14} />
                   Choose from event photos
                 </button>
               </div>
@@ -592,10 +592,10 @@ export function QuickSendTab() {
           )}
 
           {!heroImageUrl && showPhotoPicker && (
-            <div className="rounded-sm border border-neutral-200 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-neutral-900">Recent event photos</p>
-                <button
+            <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#31" className="rounded-sm border border-neutral-200 p-4 space-y-3">
+              <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#32" className="flex items-center justify-between">
+                <p data-eos-id="src/pages/admin/email/quick-send-tab.tsx#33" className="text-sm font-semibold text-neutral-900">Recent event photos</p>
+                <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#34"
                   type="button"
                   onClick={() => setShowPhotoPicker(false)}
                   className="text-[11px] font-semibold text-neutral-500 hover:text-neutral-700 cursor-pointer"
@@ -604,21 +604,21 @@ export function QuickSendTab() {
                 </button>
               </div>
               {photosLoading ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#35" className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="aspect-square rounded-sm bg-neutral-100 animate-pulse" />
+                    <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#36" key={i} className="aspect-square rounded-sm bg-neutral-100 animate-pulse" />
                   ))}
                 </div>
               ) : !recentPhotos?.length ? (
-                <p className="text-xs text-neutral-500 py-6 text-center">
+                <p data-eos-id="src/pages/admin/email/quick-send-tab.tsx#37" className="text-xs text-neutral-500 py-6 text-center">
                   No event photos yet. Upload one instead.
                 </p>
               ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[320px] overflow-y-auto">
+                <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#38" className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[320px] overflow-y-auto">
                   {recentPhotos
                     .filter((p: AdminEventPhoto) => p.url && !p.storage_path?.match(/\.(mp4|mov|webm|m4v)$/i))
                     .map((p: AdminEventPhoto) => (
-                      <button
+                      <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#39"
                         key={p.id}
                         type="button"
                         onClick={() => {
@@ -628,7 +628,7 @@ export function QuickSendTab() {
                         className="group relative aspect-square rounded-sm overflow-hidden ring-1 ring-neutral-200 hover:ring-2 hover:ring-primary-500 cursor-pointer"
                         title={`${p.event_title} - ${p.collective_name}`}
                       >
-                        <img
+                        <img data-eos-id="src/pages/admin/email/quick-send-tab.tsx#40"
                           src={p.url as string}
                           alt={p.caption ?? p.event_title}
                           loading="lazy"
@@ -642,8 +642,8 @@ export function QuickSendTab() {
           )}
 
           {heroImageUrl && (
-            <div className="space-y-3">
-              <div
+            <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#41" className="space-y-3">
+              <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#42"
                 className="relative rounded-sm overflow-hidden ring-1 ring-neutral-200"
                 style={{
                   backgroundImage: `url('${heroImageUrl}')`,
@@ -652,24 +652,24 @@ export function QuickSendTab() {
                   height: 180,
                 }}
               >
-                <div
+                <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#43"
                   className="absolute inset-0 flex items-center justify-center"
                   style={{ background: `rgba(0,0,0,${heroOverlay})` }}
                 >
-                  <p className="text-white font-heading text-base font-bold drop-shadow">
+                  <p data-eos-id="src/pages/admin/email/quick-send-tab.tsx#44" className="text-white font-heading text-base font-bold drop-shadow">
                     Heading preview
                   </p>
                 </div>
-                <div
+                <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#45"
                   className="absolute w-4 h-4 -ml-2 -mt-2 rounded-full bg-white ring-2 ring-primary-600 pointer-events-none"
                   style={{ left: `${heroFocalX}%`, top: `${heroFocalY}%` }}
                   aria-label="Focal point"
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <label className="space-y-1">
-                  <span className="font-semibold text-neutral-700">Focal point horizontal</span>
-                  <input
+              <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#46" className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <label data-eos-id="src/pages/admin/email/quick-send-tab.tsx#47" className="space-y-1">
+                  <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#48" className="font-semibold text-neutral-700">Focal point horizontal</span>
+                  <input data-eos-id="src/pages/admin/email/quick-send-tab.tsx#49"
                     type="range"
                     min={0}
                     max={100}
@@ -679,9 +679,9 @@ export function QuickSendTab() {
                     className="w-full accent-primary-600"
                   />
                 </label>
-                <label className="space-y-1">
-                  <span className="font-semibold text-neutral-700">Focal point vertical</span>
-                  <input
+                <label data-eos-id="src/pages/admin/email/quick-send-tab.tsx#50" className="space-y-1">
+                  <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#51" className="font-semibold text-neutral-700">Focal point vertical</span>
+                  <input data-eos-id="src/pages/admin/email/quick-send-tab.tsx#52"
                     type="range"
                     min={0}
                     max={100}
@@ -691,11 +691,11 @@ export function QuickSendTab() {
                     className="w-full accent-primary-600"
                   />
                 </label>
-                <label className="space-y-1">
-                  <span className="font-semibold text-neutral-700">
+                <label data-eos-id="src/pages/admin/email/quick-send-tab.tsx#53" className="space-y-1">
+                  <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#54" data-eos-var="Math.round" data-eos-var-label="Round" data-eos-var-scope="prop" className="font-semibold text-neutral-700">
                     Dark overlay {Math.round(heroOverlay * 100)}%
                   </span>
-                  <input
+                  <input data-eos-id="src/pages/admin/email/quick-send-tab.tsx#55"
                     type="range"
                     min={0}
                     max={80}
@@ -715,13 +715,13 @@ export function QuickSendTab() {
           HTML editing. Staff describe the change ("make it shorter",
           "drop the bit about RSVPs", "warmer tone") and the AI rewrites. */}
       {bodyHtml && (
-        <section ref={previewRef} className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
-          <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-            <Eye size={14} className="text-primary-700" />
+        <section data-eos-id="src/pages/admin/email/quick-send-tab.tsx#56" ref={previewRef} className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
+          <h2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#57" className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+            <Eye data-eos-id="src/pages/admin/email/quick-send-tab.tsx#58" size={14} className="text-primary-700" />
             Preview
           </h2>
 
-          <Input
+          <Input data-eos-id="src/pages/admin/email/quick-send-tab.tsx#59"
             label="Subject"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
@@ -729,12 +729,12 @@ export function QuickSendTab() {
           />
 
           {variablesDetected.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+            <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#60" className="flex flex-wrap items-center gap-1.5">
+              <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#61" className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
                 Personalised per recipient
               </span>
               {variablesDetected.map((v) => (
-                <span key={v} className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">
+                <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#62" key={v} className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">
                   {`{{${v}}}`}
                 </span>
               ))}
@@ -744,42 +744,42 @@ export function QuickSendTab() {
           {/* Inline-edit toolbar. Standard inline formatting (bold,
               italic, link) + a centring helper for the active block,
               so admins can fix off-centre buttons without touching HTML. */}
-          <div className="flex flex-wrap items-center gap-1 px-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 mr-1">Edit inline</span>
-            <button
+          <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#63" className="flex flex-wrap items-center gap-1 px-1">
+            <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#64" className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 mr-1">Edit inline</span>
+            <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#65"
               type="button"
               onMouseDown={(e) => { e.preventDefault(); execCmd('bold') }}
               className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
               aria-label="Bold"
             >
-              <Bold size={13} />
+              <Bold data-eos-id="src/pages/admin/email/quick-send-tab.tsx#66" size={13} />
             </button>
-            <button
+            <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#67"
               type="button"
               onMouseDown={(e) => { e.preventDefault(); execCmd('italic') }}
               className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
               aria-label="Italic"
             >
-              <Italic size={13} />
+              <Italic data-eos-id="src/pages/admin/email/quick-send-tab.tsx#68" size={13} />
             </button>
-            <button
+            <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#69"
               type="button"
               onMouseDown={(e) => { e.preventDefault(); execCmd('formatBlock', 'H2') }}
               className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
               aria-label="Heading"
             >
-              <Heading2 size={13} />
+              <Heading2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#70" size={13} />
             </button>
-            <button
+            <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#71"
               type="button"
               onMouseDown={(e) => { e.preventDefault(); handleLink() }}
               className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
               aria-label="Link"
             >
-              <LinkIcon size={13} />
+              <LinkIcon data-eos-id="src/pages/admin/email/quick-send-tab.tsx#72" size={13} />
             </button>
-            <span className="mx-1 text-neutral-300">|</span>
-            <button
+            <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#73" className="mx-1 text-neutral-300">|</span>
+            <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#74"
               type="button"
               onMouseDown={(e) => { e.preventDefault(); execCmd('justifyCenter') }}
               className="text-[11px] font-medium px-2 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
@@ -787,7 +787,7 @@ export function QuickSendTab() {
             >
               Centre
             </button>
-            <button
+            <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#75"
               type="button"
               onMouseDown={(e) => { e.preventDefault(); execCmd('justifyLeft') }}
               className="text-[11px] font-medium px-2 h-7 rounded-md hover:bg-neutral-100 cursor-pointer"
@@ -797,7 +797,7 @@ export function QuickSendTab() {
             </button>
           </div>
 
-          <div
+          <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#76"
             ref={editorRef}
             contentEditable
             suppressContentEditableWarning
@@ -808,7 +808,7 @@ export function QuickSendTab() {
             }}
             className="prose prose-sm max-w-none rounded-sm border border-neutral-200 bg-neutral-50 p-4 max-h-[480px] overflow-y-auto focus:outline-none focus:ring-2 focus:ring-primary-300 focus:bg-white"
           />
-          <p className="text-[11px] text-neutral-400 pl-1">
+          <p data-eos-id="src/pages/admin/email/quick-send-tab.tsx#77" className="text-[11px] text-neutral-400 pl-1">
             Click in the preview to type. Changes save when you click away.
           </p>
 
@@ -816,24 +816,24 @@ export function QuickSendTab() {
               uses per-recipient variables, since that is the only time
               the resolved view differs from the editable one. */}
           {variablesDetected.length > 0 && (sampleSubs?.length ?? 0) > 0 && (
-            <div className="rounded-sm border border-neutral-200 p-3 space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <UserCircle2 size={14} className="text-primary-700" />
-                <span className="text-xs font-semibold text-neutral-900">See it as</span>
-                <select
+            <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#78" className="rounded-sm border border-neutral-200 p-3 space-y-2">
+              <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#79" className="flex flex-wrap items-center gap-2">
+                <UserCircle2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#80" size={14} className="text-primary-700" />
+                <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#81" className="text-xs font-semibold text-neutral-900">See it as</span>
+                <select data-eos-id="src/pages/admin/email/quick-send-tab.tsx#82"
                   value={previewSubId}
                   onChange={(e) => setPreviewSubId(e.target.value)}
                   className="text-xs rounded-sm border border-neutral-200 bg-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-300"
                 >
-                  <option value="">Pick a subscriber...</option>
+                  <option data-eos-id="src/pages/admin/email/quick-send-tab.tsx#83" value="">Pick a subscriber...</option>
                   {sampleSubs!.map((s) => (
-                    <option key={s.id} value={s.id}>
+                    <option data-eos-id="src/pages/admin/email/quick-send-tab.tsx#84" data-eos-var="s.first_name" data-eos-var-label="First name" data-eos-var-scope="item" key={s.id} value={s.id}>
                       {s.first_name || s.display_name || s.email}
                     </option>
                   ))}
                 </select>
                 {previewSubId && (
-                  <button
+                  <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#85"
                     type="button"
                     onClick={() => setPreviewSubId('')}
                     className="text-[11px] font-medium text-neutral-500 hover:text-neutral-700 cursor-pointer"
@@ -843,7 +843,7 @@ export function QuickSendTab() {
                 )}
               </div>
               {previewSubId && previewVars && (
-                <div
+                <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#86"
                   className="prose prose-sm max-w-none rounded-sm border border-neutral-200 bg-white p-3 max-h-[420px] overflow-y-auto"
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHtml(
@@ -861,21 +861,21 @@ export function QuickSendTab() {
             </div>
           )}
 
-          <div className="rounded-sm bg-primary-50/70 border border-primary-200/60 p-3 space-y-2">
-            <p className="text-xs font-semibold text-primary-900">
+          <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#87" className="rounded-sm bg-primary-50/70 border border-primary-200/60 p-3 space-y-2">
+            <p data-eos-id="src/pages/admin/email/quick-send-tab.tsx#88" className="text-xs font-semibold text-primary-900">
               Want to change something? Tell the AI in plain words.
             </p>
-            <Input
+            <Input data-eos-id="src/pages/admin/email/quick-send-tab.tsx#89"
               type="textarea"
               value={tweak}
               onChange={(e) => setTweak(e.target.value)}
               placeholder='e.g. "Make it shorter and warmer", "Drop the RSVP section", "Open with a question instead"'
               rows={2}
             />
-            <Button
+            <Button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#90"
               variant="secondary"
               size="sm"
-              icon={tweaking ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+              icon={tweaking ? <Loader2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#91" size={13} className="animate-spin" /> : <Sparkles data-eos-id="src/pages/admin/email/quick-send-tab.tsx#92" size={13} />}
               onClick={handleTweak}
               loading={tweaking}
               disabled={!tweak.trim()}
@@ -888,26 +888,26 @@ export function QuickSendTab() {
 
       {/* Step 3: audience */}
       {bodyHtml && (
-        <section className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-              <Users size={14} className="text-primary-700" />
+        <section data-eos-id="src/pages/admin/email/quick-send-tab.tsx#93" className="rounded-md bg-white border border-neutral-200 shadow-sm p-5 space-y-3">
+          <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#94" className="flex items-center justify-between">
+            <h2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#95" className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+              <Users data-eos-id="src/pages/admin/email/quick-send-tab.tsx#96" size={14} className="text-primary-700" />
               Who gets it
             </h2>
-            <span className="text-[11px] text-neutral-500">
+            <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#97" data-eos-var="stats.subscribers" data-eos-var-label="Subscribers" data-eos-var-scope="prop" className="text-[11px] text-neutral-500">
               {audienceMode === 'all' ? `${stats?.subscribers ?? 0} subscribers` : 'Resolved at send'}
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#98" className="flex flex-wrap gap-2">
             {(
               [
-                { value: 'all' as const, label: `Everyone (${stats?.subscribers ?? 0})`, icon: <Users size={12} /> },
-                { value: 'collective' as const, label: 'Pick collectives', icon: <MapPin size={12} /> },
-                { value: 'tag' as const, label: 'Pick tags', icon: <TagIcon size={12} /> },
+                { value: 'all' as const, label: `Everyone (${stats?.subscribers ?? 0})`, icon: <Users data-eos-id="src/pages/admin/email/quick-send-tab.tsx#99" size={12} /> },
+                { value: 'collective' as const, label: 'Pick collectives', icon: <MapPin data-eos-id="src/pages/admin/email/quick-send-tab.tsx#100" size={12} /> },
+                { value: 'tag' as const, label: 'Pick tags', icon: <TagIcon data-eos-id="src/pages/admin/email/quick-send-tab.tsx#101" size={12} /> },
               ]
             ).map((opt) => (
-              <button
+              <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#102" data-eos-var="opt.icon,opt.label" data-eos-var-label="Icon, Label" data-eos-var-scope="item"
                 key={opt.value}
                 type="button"
                 onClick={() => setAudienceMode(opt.value)}
@@ -925,11 +925,11 @@ export function QuickSendTab() {
           </div>
 
           {audienceMode === 'tag' && (
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#103" className="flex flex-wrap gap-2 pt-1">
               {(tags ?? []).map((t) => {
                 const active = audienceTagIds.includes(t.id)
                 return (
-                  <button
+                  <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#104" data-eos-var="t.name" data-eos-var-label="Name" data-eos-var-scope="item"
                     key={t.id}
                     type="button"
                     onClick={() =>
@@ -944,7 +944,7 @@ export function QuickSendTab() {
                         : 'bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-100',
                     )}
                   >
-                    <TagIcon size={10} />
+                    <TagIcon data-eos-id="src/pages/admin/email/quick-send-tab.tsx#105" size={10} />
                     {t.name}
                   </button>
                 )
@@ -953,11 +953,11 @@ export function QuickSendTab() {
           )}
 
           {audienceMode === 'collective' && (
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#106" className="flex flex-wrap gap-2 pt-1">
               {(collectives ?? []).map((c) => {
                 const active = audienceCollectiveIds.includes(c.id)
                 return (
-                  <button
+                  <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#107" data-eos-var="c.name" data-eos-var-label="Name" data-eos-var-scope="item"
                     key={c.id}
                     type="button"
                     onClick={() =>
@@ -972,7 +972,7 @@ export function QuickSendTab() {
                         : 'bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-100',
                     )}
                   >
-                    <MapPin size={10} />
+                    <MapPin data-eos-id="src/pages/admin/email/quick-send-tab.tsx#108" size={10} />
                     {c.name}
                   </button>
                 )
@@ -984,18 +984,18 @@ export function QuickSendTab() {
 
       {/* Step 4: send */}
       {bodyHtml && (
-        <section className="rounded-md bg-primary-50/70 border border-primary-200/70 p-5 space-y-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-primary-700" />
-            <p className="text-sm font-semibold text-primary-900">
+        <section data-eos-id="src/pages/admin/email/quick-send-tab.tsx#109" className="rounded-md bg-primary-50/70 border border-primary-200/70 p-5 space-y-3">
+          <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#110" className="flex items-center gap-2">
+            <CheckCircle2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#111" size={16} className="text-primary-700" />
+            <p data-eos-id="src/pages/admin/email/quick-send-tab.tsx#112" className="text-sm font-semibold text-primary-900">
               Test it on yourself first, then send to the list.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
+          <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#113" className="flex flex-wrap items-center gap-3">
+            <Button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#114" data-eos-var="profile.email" data-eos-var-label="Email" data-eos-var-scope="prop"
               variant="secondary"
-              icon={<Mail size={14} />}
+              icon={<Mail data-eos-id="src/pages/admin/email/quick-send-tab.tsx#115" size={14} />}
               loading={sendCampaign.isPending && sendCampaign.variables?.testOnly === true}
               onClick={() => sendCampaign.mutate({ testOnly: true })}
               disabled={!profile?.email || !subject.trim()}
@@ -1003,9 +1003,9 @@ export function QuickSendTab() {
               Send test to {profile?.email || 'me'}
             </Button>
 
-            <Button
+            <Button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#116"
               variant="primary"
-              icon={<Send size={14} />}
+              icon={<Send data-eos-id="src/pages/admin/email/quick-send-tab.tsx#117" size={14} />}
               loading={sendCampaign.isPending && sendCampaign.variables?.testOnly === false}
               onClick={() => {
                 const confirmMessage =
@@ -1037,8 +1037,8 @@ export function QuickSendTab() {
             </Button>
 
             {sendCampaign.isError && (
-              <span className="text-xs text-error-600 flex items-center gap-1">
-                <AlertCircle size={12} />
+              <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#118" data-eos-var="sendCampaign.error" data-eos-var-label="Error" data-eos-var-scope="prop" className="text-xs text-error-600 flex items-center gap-1">
+                <AlertCircle data-eos-id="src/pages/admin/email/quick-send-tab.tsx#119" size={12} />
                 {(sendCampaign.error as Error)?.message || 'Send failed'}
               </span>
             )}
