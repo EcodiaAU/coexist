@@ -137,7 +137,7 @@ export function PhoneGate() {
   if (!show) return null
 
   return createPortal(
-    <div data-eos-id="src/components/phone-gate.tsx#0"
+    <div data-eos-id="src/components/phone-gate.tsx#0" data-eos-v="2"
       className="fixed left-0 right-0 top-0 z-[200] flex items-end sm:items-center justify-center"
       // Lift the container's bottom edge above the keyboard. keyboardHeight
       // comes from the Capacitor Keyboard plugin on native (the only signal
