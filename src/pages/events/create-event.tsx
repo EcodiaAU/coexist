@@ -45,7 +45,8 @@ import { supabase } from '@/lib/supabase'
 import { useEventForm } from '@/hooks/use-event-form'
 import type { EventFormFields, ActivityType } from '@/hooks/use-event-form'
 import { useActivityTypeDefaults } from '@/hooks/use-activity-defaults'
-import { parseLocationPoint } from '@/lib/geo'
+import { parseLocationPoint, resolveCollectiveCoords } from '@/lib/geo'
+import type { MapCenter } from '@/components/map/use-map'
 import { wallClockNow } from '@/lib/date-format'
 import {
     DateTimeFields,
@@ -369,7 +370,7 @@ function useAllActiveCollectives() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('collectives')
-        .select('id, name, region, state, cover_image_url, timezone')
+        .select('id, name, slug, region, state, cover_image_url, timezone, location_point')
         .eq('is_active', true)
         .order('name')
       if (error) throw error
@@ -635,11 +636,13 @@ function StepLocation({
   onChange,
   extra,
   onExtraChange,
+  bias,
 }: {
   fields: EventFormFields
   onChange: (updates: Partial<EventFormFields>) => void
   extra: CreateExtraFields
   onExtraChange: (updates: Partial<CreateExtraFields>) => void
+  bias?: MapCenter | null
 }) {
   return (
     <div className="space-y-4">
@@ -648,7 +651,7 @@ function StepLocation({
         <p className="text-caption text-neutral-500 -mt-1 mb-3">
           Type an address or drag the pin - they stay in sync. Pin position is what attendees see on event day.
         </p>
-        <LocationFields fields={fields} onChange={onChange} />
+        <LocationFields fields={fields} onChange={onChange} bias={bias} />
       </StepCard>
 
       <StepCard>
@@ -1930,6 +1933,18 @@ export default function CreateEventPage() {
   // collective names for the summary panel.
   const { data: allCollectives } = useAllActiveCollectives()
 
+  // Geocode proximity bias: the primary (first-selected) collective's home
+  // coords. Keeps the address search local - "Currawong Park" typed by a
+  // Tamworth leader resolves to the East Tamworth park, not the identically
+  // named one in Gregory Hills that Nominatim ranks higher nationally.
+  const geoBias = useMemo<MapCenter | null>(() => {
+    const primaryId = extra.selected_collective_ids[0]
+    if (!primaryId) return null
+    const c = allCollectives?.find((col) => col.id === primaryId)
+    if (!c) return null
+    return resolveCollectiveCoords(c.location_point, c.slug)
+  }, [extra.selected_collective_ids, allCollectives])
+
   // Per-section validity. Drives the section status pills + the publish-time
   // gate. Optional sections are always valid.
   const sectionStatus = useMemo(() => ({
@@ -2311,7 +2326,7 @@ export default function CreateEventPage() {
         required: true,
         valid: sectionStatus.location,
         summary: form.fields.address || '',
-        content: <StepLocation fields={form.fields} onChange={form.updateFields} extra={extra} onExtraChange={updateExtra} />,
+        content: <StepLocation fields={form.fields} onChange={form.updateFields} extra={extra} onExtraChange={updateExtra} bias={geoBias} />,
       },
       {
         key: 'details',
@@ -2383,7 +2398,7 @@ export default function CreateEventPage() {
         content: <StepPartner extra={extra} onExtraChange={updateExtra} fields={form.fields} onFieldsChange={form.updateFields} />,
       },
     ] as const
-  }, [extra, form, sectionStatus, toggleCollective, updateExtra, coverSuggestions.suggestions, coverSuggestions.isLoading, handleSelectCoverSuggestion])
+  }, [extra, form, sectionStatus, toggleCollective, updateExtra, coverSuggestions.suggestions, coverSuggestions.isLoading, handleSelectCoverSuggestion, geoBias])
 
   return (
     <Page

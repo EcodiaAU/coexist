@@ -42,7 +42,7 @@ import {
 } from '@/components'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { cn } from '@/lib/cn'
-import { parseLocationPoint } from '@/lib/geo'
+import { parseLocationPoint, COLLECTIVE_SLUG_COORDS } from '@/lib/geo'
 
 /* ------------------------------------------------------------------ */
 /*  Page Component                                                     */
@@ -405,6 +405,11 @@ export default function EditEventPage() {
           <LocationFields
             fields={form.fields}
             onChange={form.updateFields}
+            bias={
+              event?.collectives?.slug
+                ? COLLECTIVE_SLUG_COORDS[event.collectives.slug] ?? null
+                : null
+            }
           />
         </motion.div>
 

@@ -119,11 +119,21 @@ export function DateTimeFields({
 /*  Location: address + map                                            */
 /* ------------------------------------------------------------------ */
 
-export function LocationFields({ fields, onChange }: FieldProps) {
+interface LocationFieldsProps extends FieldProps {
+  /**
+   * Proximity bias for geocoding - the host collective's home coords.
+   * Keeps "Currawong Park" typed by a Tamworth leader resolving to the
+   * East Tamworth park instead of the higher-ranked Gregory Hills one.
+   */
+  bias?: MapCenter | null
+}
+
+export function LocationFields({ fields, onChange, bias }: LocationFieldsProps) {
   const sync = useLocationSync({
     address: fields.address,
     lat: fields.location_lat,
     lng: fields.location_lng,
+    bias,
     onChange: (updates) => {
       const partial: Partial<EventFormFields> = {}
       if (updates.address !== undefined) partial.address = updates.address
@@ -149,11 +159,13 @@ export function LocationFields({ fields, onChange }: FieldProps) {
         placeholder="Search for an address..."
         value={fields.address}
         onChange={handlePlaceSelect}
+        bias={bias}
       />
 
       <LocationSyncStatusBar
         status={sync.status}
         addressIsBlank={fields.address.trim().length === 0}
+        resolvedLabel={sync.resolvedLabel}
       />
 
       <MapView
@@ -185,9 +197,11 @@ export function LocationFields({ fields, onChange }: FieldProps) {
 function LocationSyncStatusBar({
   status,
   addressIsBlank,
+  resolvedLabel,
 }: {
   status: 'idle' | 'searching' | 'no-result' | 'synced'
   addressIsBlank: boolean
+  resolvedLabel?: string | null
 }) {
   if (addressIsBlank && status === 'idle') return null
   if (status === 'idle') return null
@@ -208,11 +222,18 @@ function LocationSyncStatusBar({
       </p>
     )
   }
-  // synced
+  // synced - name WHERE the pin landed so a wrong-town geocode is visible
+  // at a glance instead of hiding behind a bare success message.
   return (
     <p className="-mt-2 text-xs text-moss-600 flex items-center gap-1.5">
       <MapPin size={12} className="shrink-0" />
-      Pin synced to address.
+      {resolvedLabel ? (
+        <>
+          Pin set near <span className="font-medium">{resolvedLabel}</span> - drag it if this isn't right.
+        </>
+      ) : (
+        'Pin synced to address.'
+      )}
     </p>
   )
 }

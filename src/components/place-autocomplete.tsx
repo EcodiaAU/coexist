@@ -5,6 +5,8 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Input } from '@/components/input'
 import { cn } from '@/lib/cn'
 import { useOffline } from '@/hooks/use-offline'
+import { haversineKm } from '@/lib/geo'
+import type { MapCenter } from '@/components/map/use-map'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -25,6 +27,12 @@ export interface PlaceAutocompleteProps {
   onChange: (value: string, place: PlaceResult | null) => void
   /** Bias results to Australia by default */
   countryCode?: string
+  /**
+   * Proximity bias (usually the collective's home coords). Results are
+   * ranked nearest-first around this point so a same-named place in a
+   * bigger town elsewhere doesn't outrank the local one.
+   */
+  bias?: MapCenter | null
   icon?: React.ReactNode
   className?: string
   inputClassName?: string
@@ -123,6 +131,7 @@ async function searchPlaces(
   query: string,
   countryCode: string,
   signal: AbortSignal,
+  bias?: MapCenter | null,
 ): Promise<PlaceResult[]> {
   const params = new URLSearchParams({
     q: query,
@@ -132,6 +141,16 @@ async function searchPlaces(
     countrycodes: countryCode,
     dedupe: '0',
   })
+  if (bias) {
+    // Soft viewbox (~150km across) nudges Nominatim's ranking toward the
+    // collective's area without excluding results outside it (bounded=0).
+    const d = 0.75
+    params.set(
+      'viewbox',
+      `${bias.lng - d},${bias.lat + d},${bias.lng + d},${bias.lat - d}`,
+    )
+    params.set('bounded', '0')
+  }
 
   const res = await fetch(
     `https://nominatim.openstreetmap.org/search?${params}`,
@@ -158,9 +177,21 @@ async function searchPlaces(
     _hasHouseNumber: !!r.address.house_number,
   }))
 
+  // Nearest-to-collective first: a Tamworth leader typing "Currawong Park"
+  // must see the East Tamworth park above the Gregory Hills one 450km away
+  // (Nominatim's own importance ranking prefers the bigger town's match).
+  if (bias) {
+    mapped.sort(
+      (a, b) =>
+        haversineKm(bias, { lat: a.lat, lng: a.lng }) -
+        haversineKm(bias, { lat: b.lat, lng: b.lng }),
+    )
+  }
+
   // When the user typed a number, surface results that actually have a
   // house number first - Nominatim otherwise mixes street-only matches in
-  // and the picker grabs whichever comes first.
+  // and the picker grabs whichever comes first. (Stable sort, so the
+  // proximity order above is preserved within each group.)
   if (queryHasNumber) {
     mapped.sort((a, b) => Number(b._hasHouseNumber) - Number(a._hasHouseNumber))
   }
@@ -281,6 +312,7 @@ export function PlaceAutocomplete({
   value,
   onChange,
   countryCode = 'au',
+  bias = null,
   icon,
   className,
   inputClassName,
@@ -338,7 +370,7 @@ export function PlaceAutocomplete({
         abortRef.current = controller
 
         try {
-          const places = await searchPlaces(query, countryCode, controller.signal)
+          const places = await searchPlaces(query, countryCode, controller.signal, bias)
           setResults(places)
           setOpen(places.length > 0)
           setHighlightIndex(-1)
@@ -352,7 +384,7 @@ export function PlaceAutocomplete({
         }
       }, 350)
     },
-    [countryCode, isOffline],
+    [countryCode, isOffline, bias],
   )
 
   const handleInputChange = useCallback(

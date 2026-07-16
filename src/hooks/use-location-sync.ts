@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MapCenter } from '@/components/map/use-map'
+import { haversineKm } from '@/lib/geo'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -56,6 +57,14 @@ interface UseLocationSyncOpts {
   countryCode?: string
   /** Debounce window for forward-geocode after typing stops (ms). */
   debounceMs?: number
+  /**
+   * Proximity bias (usually the collective's home coords). When set, the
+   * free-text forward geocode fetches several candidates and picks the one
+   * nearest this point instead of Nominatim's national top hit - "Currawong
+   * Park" typed by a Tamworth leader must resolve to the East Tamworth park,
+   * not the higher-ranked one in Gregory Hills 450km away (Tamika, 2026-07-17).
+   */
+  bias?: MapCenter | null
 }
 
 export interface LocationSyncReturn {
@@ -95,6 +104,14 @@ export interface LocationSyncReturn {
   acceptPendingReverse: () => void
   /** Discard the pending reverse-geocoded address. */
   dismissPendingReverse: () => void
+  /**
+   * Short label of where the last free-text forward-geocode actually landed
+   * (e.g. "Raglan Street, East Tamworth, New South Wales"). Rendered next to
+   * the 'synced' status so a wrong-town resolution is visible immediately
+   * instead of hiding behind a bare "Pin synced" message. Null when the pin
+   * came from an autocomplete pick or drag (those are already explicit).
+   */
+  resolvedLabel: string | null
 }
 
 /* ------------------------------------------------------------------ */
@@ -129,19 +146,34 @@ function buildShortNameFromAddress(addr: NominatimReverseResult['address']): str
   return parts.join(', ')
 }
 
-async function forwardGeocodeTopResult(
+/** Exported for unit tests (bias-pick regression, Tamika 2026-07-17). */
+export async function forwardGeocodeTopResult(
   query: string,
   countryCode: string,
   signal: AbortSignal,
+  bias?: MapCenter | null,
 ): Promise<{ lat: number; lng: number; address: string } | null> {
   if (query.trim().length < 3) return null
   const params = new URLSearchParams({
     q: query,
     format: 'json',
-    limit: '1',
+    // With a proximity bias we need candidates to choose from; Nominatim's
+    // own ranking is importance-based and routinely puts a same-named place
+    // in a bigger town above the local one.
+    limit: bias ? '10' : '1',
     addressdetails: '1',
     countrycodes: countryCode,
   })
+  if (bias) {
+    // Soft viewbox (~150km across) nudges Nominatim's ranking toward the
+    // collective's area without excluding results outside it (bounded=0).
+    const d = 0.75
+    params.set(
+      'viewbox',
+      `${bias.lng - d},${bias.lat + d},${bias.lng + d},${bias.lat - d}`,
+    )
+    params.set('bounded', '0')
+  }
   const res = await fetch(
     `https://nominatim.openstreetmap.org/search?${params}`,
     { signal, headers: NOMINATIM_HEADERS },
@@ -149,7 +181,13 @@ async function forwardGeocodeTopResult(
   if (!res.ok) return null
   const data = (await res.json()) as NominatimForwardResult[]
   if (!data.length) return null
-  const top = data[0]
+  const top = bias
+    ? data.reduce((best, r) => {
+        const dist = (x: NominatimForwardResult) =>
+          haversineKm(bias, { lat: parseFloat(x.lat), lng: parseFloat(x.lon) })
+        return dist(r) < dist(best) ? r : best
+      })
+    : data[0]
   const short = top.address
     ? buildShortNameFromAddress(top.address)
     : top.display_name.split(',').slice(0, 3).join(',').trim()
@@ -206,8 +244,10 @@ export function useLocationSync({
   onChange,
   countryCode = 'au',
   debounceMs = 500,
+  bias = null,
 }: UseLocationSyncOpts): LocationSyncReturn {
   const [status, setStatus] = useState<LocationSyncStatus>('idle')
+  const [resolvedLabel, setResolvedLabel] = useState<string | null>(null)
   const [pendingReverseAddress, setPendingReverseAddress] =
     useState<string | null>(null)
 
@@ -245,7 +285,7 @@ export function useLocationSync({
       forwardAbortRef.current = controller
       setStatus('searching')
 
-      forwardGeocodeTopResult(query, countryCode, controller.signal)
+      forwardGeocodeTopResult(query, countryCode, controller.signal, bias)
         .then((result) => {
           if (controller.signal.aborted) return
           if (!result) {
@@ -258,6 +298,8 @@ export function useLocationSync({
           // Record the sync baseline so a subsequent pin-drag knows whether
           // this address was hook-driven (safe to overwrite) or user-typed.
           lastSyncedAddressRef.current = query
+          // Surface WHERE the geocode landed so a wrong-town hit is visible.
+          setResolvedLabel(result.address)
           setStatus('synced')
         })
         .catch((err: unknown) => {
@@ -272,13 +314,14 @@ export function useLocationSync({
           setStatus('no-result')
         })
     },
-    [countryCode, onChange],
+    [countryCode, onChange, bias],
   )
 
   const onAddressTyped = useCallback(
     (value: string) => {
       addressOwnerRef.current = 'user-typed'
       setPendingReverseAddress(null)
+      setResolvedLabel(null)
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
       if (value.trim().length < 3) {
         setStatus('idle')
@@ -297,6 +340,7 @@ export function useLocationSync({
       addressOwnerRef.current = 'autocomplete'
       lastSyncedAddressRef.current = value
       setPendingReverseAddress(null)
+      setResolvedLabel(null) // explicit pick - no need to re-announce it
       setStatus('synced')
       // Cancel any pending forward-geocode triggered by mid-typing.
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
@@ -312,6 +356,7 @@ export function useLocationSync({
     (pos: MapCenter) => {
       // Always commit the new lat/lng first (cheap, local).
       onChange({ lat: pos.lat, lng: pos.lng })
+      setResolvedLabel(null) // manual drag - pin position is explicit now
 
       reverseAbortRef.current?.abort()
       const controller = new AbortController()
@@ -393,5 +438,6 @@ export function useLocationSync({
     pendingReverseAddress,
     acceptPendingReverse,
     dismissPendingReverse,
+    resolvedLabel,
   }
 }
