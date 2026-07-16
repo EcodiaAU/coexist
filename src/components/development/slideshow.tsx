@@ -15,7 +15,7 @@ export function Slideshow({ images, captions = [], className }: SlideshowProps) 
 
   if (images.length === 0) {
     return (
-      <div className={cn('rounded-sm bg-primary-100 p-8 text-center text-sm text-primary-500', className)}>
+      <div data-eos-id="src/components/development/slideshow.tsx#0" className={cn('rounded-sm bg-primary-100 p-8 text-center text-sm text-primary-500', className)}>
         No images in this slideshow
       </div>
     )
@@ -30,11 +30,11 @@ export function Slideshow({ images, captions = [], className }: SlideshowProps) 
   const next = () => go(current === images.length - 1 ? 0 : current + 1)
 
   return (
-    <div className={cn('rounded-sm overflow-hidden', className)}>
+    <div data-eos-id="src/components/development/slideshow.tsx#1" className={cn('rounded-sm overflow-hidden', className)}>
       {/* Image area */}
-      <div className="relative aspect-[16/10] bg-primary-900 overflow-hidden">
-        <AnimatePresence mode="wait" initial={false} custom={direction}>
-          <motion.img
+      <div data-eos-id="src/components/development/slideshow.tsx#2" className="relative aspect-[16/10] bg-primary-900 overflow-hidden">
+        <AnimatePresence data-eos-id="src/components/development/slideshow.tsx#3" mode="wait" initial={false} custom={direction}>
+          <motion.img data-eos-id="src/components/development/slideshow.tsx#4"
             key={current}
             src={images[current]}
             alt={captions[current] || `Slide ${current + 1}`}
@@ -50,40 +50,40 @@ export function Slideshow({ images, captions = [], className }: SlideshowProps) 
         {/* Nav arrows */}
         {images.length > 1 && (
           <>
-            <button
+            <button data-eos-id="src/components/development/slideshow.tsx#5"
               type="button"
               onClick={prev}
               className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors backdrop-blur-sm"
               aria-label="Previous slide"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft data-eos-id="src/components/development/slideshow.tsx#6" size={18} />
             </button>
-            <button
+            <button data-eos-id="src/components/development/slideshow.tsx#7"
               type="button"
               onClick={next}
               className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors backdrop-blur-sm"
               aria-label="Next slide"
             >
-              <ChevronRight size={18} />
+              <ChevronRight data-eos-id="src/components/development/slideshow.tsx#8" size={18} />
             </button>
           </>
         )}
 
         {/* Slide counter */}
-        <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/40 text-white text-xs font-medium backdrop-blur-sm">
+        <div data-eos-id="src/components/development/slideshow.tsx#9" className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/40 text-white text-xs font-medium backdrop-blur-sm">
           {current + 1} / {images.length}
         </div>
       </div>
 
       {/* Caption + dots */}
-      <div className="bg-white px-4 py-3">
+      <div data-eos-id="src/components/development/slideshow.tsx#10" className="bg-white px-4 py-3">
         {captions[current] && (
-          <p className="text-sm text-primary-700 text-center mb-2">{captions[current]}</p>
+          <p data-eos-id="src/components/development/slideshow.tsx#11" data-eos-var="captions.[..]" data-eos-var-label="]" data-eos-var-scope="prop" className="text-sm text-primary-700 text-center mb-2">{captions[current]}</p>
         )}
         {images.length > 1 && (
-          <div className="flex items-center justify-center gap-1.5">
+          <div data-eos-id="src/components/development/slideshow.tsx#12" className="flex items-center justify-center gap-1.5">
             {images.map((_, i) => (
-              <button
+              <button data-eos-id="src/components/development/slideshow.tsx#13"
                 key={i}
                 type="button"
                 onClick={() => go(i)}
