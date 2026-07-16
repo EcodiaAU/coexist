@@ -52,7 +52,7 @@ function createParticles(count: number): Particle[] {
 function ParticleShape({ shape, color }: { shape: Particle['shape']; color: string }) {
   if (shape === 'circle') {
     return (
-      <div data-eos-id="src/components/confetti.tsx#0"
+      <div data-eos-id="src/components/confetti.tsx#0" data-eos-v="2"
         className="w-2.5 h-2.5 rounded-full"
         style={{ backgroundColor: color }}
       />
