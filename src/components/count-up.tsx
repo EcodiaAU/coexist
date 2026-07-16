@@ -73,7 +73,7 @@ export function CountUp({
     }).format(end)}${suffix}`
 
   return (
-    <span data-eos-id="src/components/count-up.tsx#0"
+    <span data-eos-id="src/components/count-up.tsx#0" data-eos-v="2"
       ref={ref}
       aria-label={displayLabel}
       className={cn('tabular-nums', className)}
