@@ -93,7 +93,7 @@ export function Badge({
           : 'bg-primary-100 text-primary-700'
 
   return (
-    <span
+    <span data-eos-id="src/components/badge.tsx#0"
       role="status"
       aria-label={ariaLabel}
       className={cn(
@@ -104,7 +104,7 @@ export function Badge({
       )}
     >
       {icon && (
-        <span className="flex items-center justify-center shrink-0" aria-hidden="true">
+        <span data-eos-id="src/components/badge.tsx#1" className="flex items-center justify-center shrink-0" aria-hidden="true">
           {icon}
         </span>
       )}
