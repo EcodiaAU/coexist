@@ -61,7 +61,7 @@ export default async function HomePage() {
 
         <div data-eos-id="web/app/page.tsx#5" className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-6 py-32 text-center">
           <p data-eos-id="web/app/page.tsx#6" className="eyebrow text-oncream/70">Co-Exist Australia</p>
-          <h1 data-eos-id="web/app/page.tsx#7" className="display-tight mx-auto mt-6 max-w-4xl text-[3.6rem] leading-[0.92] text-oncream sm:text-[7.5rem]">{heroTitle}</h1>
+          <h1 data-eos-id="web/app/page.tsx#7" className="display-tight mx-auto mt-6 max-w-4xl text-[3.6rem] leading-[0.92] text-oncream sm:text-[7.5rem] text-[#f0f0f0]">{heroTitle}</h1>
           <p data-eos-id="web/app/page.tsx#8" className="mx-auto mt-7 max-w-md text-base text-oncream/85">{heroSubtitle}</p>
           <div data-eos-id="web/app/page.tsx#9" className="mt-9 flex flex-wrap justify-center gap-3">
             <Link data-eos-href="static" data-eos-id="web/app/page.tsx#10" href="/collectives" className="rounded-full bg-oncream px-7 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-olive-900 transition-all duration-300 hover:px-9">
