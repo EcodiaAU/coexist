@@ -46,9 +46,9 @@ export function AppShell({ children, bare = false }: AppShellProps) {
 
   if (bare) {
     return (
-      <KeyboardOpenContext.Provider value={keyboardOpen}>
-        <div className="flex flex-col min-h-dvh">
-          <Suspense fallback={<div className="flex-1 bg-surface-1" />}>
+      <KeyboardOpenContext.Provider data-eos-id="src/components/app-shell.tsx#0" value={keyboardOpen}>
+        <div data-eos-id="src/components/app-shell.tsx#1" className="flex flex-col min-h-dvh">
+          <Suspense data-eos-id="src/components/app-shell.tsx#2" fallback={<div data-eos-id="src/components/app-shell.tsx#3" className="flex-1 bg-surface-1" />}>
             {children}
           </Suspense>
         </div>
@@ -57,9 +57,9 @@ export function AppShell({ children, bare = false }: AppShellProps) {
   }
 
   return (
-    <KeyboardOpenContext.Provider value={keyboardOpen}>
-      <MenuSheetProvider>
-        <AppShellInner>{children}</AppShellInner>
+    <KeyboardOpenContext.Provider data-eos-id="src/components/app-shell.tsx#4" value={keyboardOpen}>
+      <MenuSheetProvider data-eos-id="src/components/app-shell.tsx#5">
+        <AppShellInner data-eos-id="src/components/app-shell.tsx#6">{children}</AppShellInner>
       </MenuSheetProvider>
     </KeyboardOpenContext.Provider>
   )
@@ -71,7 +71,7 @@ export function AppShell({ children, bare = false }: AppShellProps) {
  * useLocation() internally for active-link highlighting.
  */
 const StableSidebar = memo(function StableSidebar() {
-  return <UnifiedSidebar />
+  return <UnifiedSidebar data-eos-id="src/components/app-shell.tsx#7" />
 })
 
 /**
@@ -82,7 +82,7 @@ const MobileSidebar = memo(function MobileSidebar() {
   const { open, closeMenu } = useMenuSheet()
 
   return (
-    <UnifiedSidebar mobileOpen={open} onMobileClose={closeMenu} />
+    <UnifiedSidebar data-eos-id="src/components/app-shell.tsx#8" mobileOpen={open} onMobileClose={closeMenu} />
   )
 })
 
@@ -111,12 +111,12 @@ function LocationAwareChrome({ showBottomTabs, syncWarning }: { showBottomTabs: 
       {/* Web footer - public marketing surface only. The admin and leader
           shells are internal tools and should not carry the consumer-facing
           footer (Co-Exist links, app-store badges, acknowledgment). */}
-      {isWeb && !isMobile && !isChatRoute && !isAdminRoute && !isLeaderRoute && <WebFooter />}
+      {isWeb && !isMobile && !isChatRoute && !isAdminRoute && !isLeaderRoute && <WebFooter data-eos-id="src/components/app-shell.tsx#9" />}
 
       {/* Bottom tab bar (mobile + native) - hidden on admin/leader pages and when keyboard is open.
           Chat detail (/chat/<id>) keeps the tab bar visible so users can navigate out without back-button hunt. */}
       {showBottomTabs && !isAdminRoute && !isLeaderRoute && !keyboardOpen && (
-        <BottomTabBar onMorePress={openMenu} chatBadge={totalUnread} syncWarning={syncWarning} />
+        <BottomTabBar data-eos-id="src/components/app-shell.tsx#10" onMorePress={openMenu} chatBadge={totalUnread} syncWarning={syncWarning} />
       )}
     </>
   )
@@ -155,7 +155,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const showSidebar = navMode === 'sidebar'
 
   return (
-    <div
+    <div data-eos-id="src/components/app-shell.tsx#11"
       className={cn(
         'flex flex-col bg-surface-1',
         // Desktop web: document can grow for natural window scrolling + WebFooter
@@ -168,7 +168,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       } : undefined}
     >
       {/* Skip to content link for keyboard/screen reader users */}
-      <a
+      <a data-eos-href="static" data-eos-id="src/components/app-shell.tsx#12"
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-sm focus:shadow-sm focus:text-primary-700 focus:text-sm focus:font-medium"
       >
@@ -176,31 +176,31 @@ function AppShellInner({ children }: { children: ReactNode }) {
       </a>
 
       {/* Offline connectivity banner */}
-      <OfflineBanner />
+      <OfflineBanner data-eos-id="src/components/app-shell.tsx#13" />
 
       {/* Persistent sync issue banner (auth expired / storage full) */}
-      <SyncStatusBanner
+      <SyncStatusBanner data-eos-id="src/components/app-shell.tsx#14"
         issue={syncIssue}
         pendingCount={pendingCount}
         onSignIn={() => navigate('/login')}
       />
 
       {/* Sidebar + content row */}
-      <div className="flex flex-1 min-h-0">
+      <div data-eos-id="src/components/app-shell.tsx#15" className="flex flex-1 min-h-0">
         {/* Unified sidebar - desktop: permanent left sidebar (stable, no remount) */}
-        {showSidebar && <StableSidebar />}
+        {showSidebar && <StableSidebar data-eos-id="src/components/app-shell.tsx#16" />}
 
         {/* Content */}
-        <main id="main-content" className="flex-1 flex flex-col min-w-0 min-h-0">
+        <main data-eos-id="src/components/app-shell.tsx#17" id="main-content" className="flex-1 flex flex-col min-w-0 min-h-0">
           {children}
         </main>
       </div>
 
       {/* Location-aware chrome (footer + bottom tabs) - isolated to prevent sidebar re-renders */}
-      <LocationAwareChrome showBottomTabs={showBottomTabs} syncWarning={syncIssue !== null} />
+      <LocationAwareChrome data-eos-id="src/components/app-shell.tsx#18" showBottomTabs={showBottomTabs} syncWarning={syncIssue !== null} />
 
       {/* Mobile sidebar overlay (opened via "More" tab in bottom bar) */}
-      {showBottomTabs && <MobileSidebar />}
+      {showBottomTabs && <MobileSidebar data-eos-id="src/components/app-shell.tsx#19" />}
 
       {/* Required mobile-number gate - blocks onboarded users with no phone
           on file until they add one (event leaders need it for event day).
@@ -210,8 +210,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
           crash where every phone-less member (780 of 1321) was funnelled
           through this one screen. The primary fix is the build-target floor +
           runtime polyfills (see vite.config.ts + src/lib/polyfills.ts). */}
-      <SentryErrorBoundary fallback={null}>
-        <PhoneGate />
+      <SentryErrorBoundary data-eos-id="src/components/app-shell.tsx#20" fallback={null}>
+        <PhoneGate data-eos-id="src/components/app-shell.tsx#21" />
       </SentryErrorBoundary>
 
       {/* Dietary-requirements gate - blocks users who hold a ticket or
@@ -220,8 +220,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
           takes precedence: DietaryGate only renders once a phone is on
           file, so the two blocking portals never stack. Same error-
           boundary defence as PhoneGate. */}
-      <SentryErrorBoundary fallback={null}>
-        <DietaryGate />
+      <SentryErrorBoundary data-eos-id="src/components/app-shell.tsx#22" fallback={null}>
+        <DietaryGate data-eos-id="src/components/app-shell.tsx#23" />
       </SentryErrorBoundary>
     </div>
   )
