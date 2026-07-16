@@ -64,7 +64,7 @@ export default function AuthCallbackPage() {
   }, [state, authLoading, authError, navigate])
 
   return (
-    <div data-eos-id="src/pages/auth/auth-callback.tsx#0" className="min-h-dvh flex flex-col items-center justify-center px-6 bg-white">
+    <div data-eos-id="src/pages/auth/auth-callback.tsx#0" data-eos-v="2" className="min-h-dvh flex flex-col items-center justify-center px-6 bg-white">
       <OGMeta data-eos-id="src/pages/auth/auth-callback.tsx#1" title="Verifying..." description="Verifying your Co-Exist account." noindex />
 
       {state === 'processing' && (
