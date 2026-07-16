@@ -108,7 +108,7 @@ export default function AdminAuditLogPage() {
 
   const rm = !!shouldReduceMotion
   const heroStats = useMemo(() => (
-    <AdminHeroStatRow data-eos-id="src/pages/admin/audit-log.tsx#0">
+    <AdminHeroStatRow data-eos-id="src/pages/admin/audit-log.tsx#0" data-eos-v="2">
       <AdminHeroStat data-eos-id="src/pages/admin/audit-log.tsx#1" value={data?.total ?? 0} label="Total Entries" icon={<FileSearch data-eos-id="src/pages/admin/audit-log.tsx#2" size={18} />} color="plum" delay={0} reducedMotion={rm} />
     </AdminHeroStatRow>
   ), [data?.total, rm])
