@@ -73,14 +73,14 @@ export function QuizQuestionCard({
   const canSubmit = isText ? textInput.trim().length > 0 : selectedIds.size > 0
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div data-eos-id="src/components/development/quiz-question-card.tsx#0" className={cn('space-y-4', className)}>
       {/* Question text */}
-      <div>
-        <p className="text-base font-semibold text-neutral-900 leading-relaxed">
+      <div data-eos-id="src/components/development/quiz-question-card.tsx#1">
+        <p data-eos-id="src/components/development/quiz-question-card.tsx#2" data-eos-var="question.question_text" data-eos-var-label="Question text" data-eos-var-scope="prop" className="text-base font-semibold text-neutral-900 leading-relaxed">
           {question.question_text}
         </p>
         {question.image_url && (
-          <img
+          <img data-eos-id="src/components/development/quiz-question-card.tsx#3"
             src={question.image_url}
             alt="Question illustration"
             className="mt-3 rounded-sm max-h-48 object-contain"
@@ -90,11 +90,11 @@ export function QuizQuestionCard({
 
       {/* Options */}
       {!isText && (
-        <div className="space-y-2">
+        <div data-eos-id="src/components/development/quiz-question-card.tsx#4" className="space-y-2">
           {options.map((opt) => {
             const state = getOptionState(opt)
             return (
-              <button
+              <button data-eos-id="src/components/development/quiz-question-card.tsx#5"
                 key={opt.id}
                 type="button"
                 onClick={() => handleOptionClick(opt.id)}
@@ -109,7 +109,7 @@ export function QuizQuestionCard({
                 )}
               >
                 {/* Selection indicator */}
-                <div
+                <div data-eos-id="src/components/development/quiz-question-card.tsx#6"
                   className={cn(
                     'flex items-center justify-center w-6 h-6 rounded-full border-2 shrink-0 text-xs',
                     state === 'default' && 'border-neutral-300',
@@ -118,11 +118,11 @@ export function QuizQuestionCard({
                     state === 'incorrect' && 'border-error-400 bg-error-400 text-white',
                   )}
                 >
-                  {state === 'correct' && <Check size={12} />}
-                  {state === 'incorrect' && <X size={12} />}
-                  {state === 'selected' && <Check size={12} />}
+                  {state === 'correct' && <Check data-eos-id="src/components/development/quiz-question-card.tsx#7" size={12} />}
+                  {state === 'incorrect' && <X data-eos-id="src/components/development/quiz-question-card.tsx#8" size={12} />}
+                  {state === 'selected' && <Check data-eos-id="src/components/development/quiz-question-card.tsx#9" size={12} />}
                 </div>
-                <span className="flex-1">{opt.option_text}</span>
+                <span data-eos-id="src/components/development/quiz-question-card.tsx#10" data-eos-var="opt.option_text" data-eos-var-label="Option text" data-eos-var-scope="item" className="flex-1">{opt.option_text}</span>
               </button>
             )
           })}
@@ -131,12 +131,12 @@ export function QuizQuestionCard({
 
       {/* Short answer */}
       {isText && (
-        <Input type="textarea" value={textInput} onChange={(e) => setTextInput(e.target.value)} placeholder="Type your answer..." disabled={disabled || submitted} rows={4} />
+        <Input data-eos-id="src/components/development/quiz-question-card.tsx#11" type="textarea" value={textInput} onChange={(e) => setTextInput(e.target.value)} placeholder="Type your answer..." disabled={disabled || submitted} rows={4} />
       )}
 
       {/* Submit button */}
       {!submitted && (
-        <button
+        <button data-eos-id="src/components/development/quiz-question-card.tsx#12"
           type="button"
           onClick={handleSubmit}
           disabled={!canSubmit || disabled}
@@ -153,13 +153,13 @@ export function QuizQuestionCard({
 
       {/* Feedback / explanation */}
       {submitted && showFeedback && question.explanation && (
-        <motion.div
+        <motion.div data-eos-id="src/components/development/quiz-question-card.tsx#13"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="rounded-sm bg-neutral-50 border border-neutral-200 px-4 py-3"
         >
-          <p className="text-xs font-semibold text-neutral-500 mb-1">Explanation</p>
-          <p className="text-sm text-neutral-700">{question.explanation}</p>
+          <p data-eos-id="src/components/development/quiz-question-card.tsx#14" className="text-xs font-semibold text-neutral-500 mb-1">Explanation</p>
+          <p data-eos-id="src/components/development/quiz-question-card.tsx#15" data-eos-var="question.explanation" data-eos-var-label="Explanation" data-eos-var-scope="prop" className="text-sm text-neutral-700">{question.explanation}</p>
         </motion.div>
       )}
     </div>
