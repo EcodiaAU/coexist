@@ -176,7 +176,7 @@ const ANCHOR_OPTIONS: { value: TimelineAnchor; label: string; description: strin
 ]
 
 const tabs = [
-  { id: 'templates', label: 'Templates', icon: <ClipboardCheck data-eos-id="src/pages/admin/workflows.tsx#0" size={14} /> },
+  { id: 'templates', label: 'Templates', icon: <ClipboardCheck data-eos-id="src/pages/admin/workflows.tsx#0" data-eos-v="2" size={14} /> },
   { id: 'kpi', label: 'KPI Dashboard', icon: <BarChart3 data-eos-id="src/pages/admin/workflows.tsx#1" size={14} /> },
 ]
 
