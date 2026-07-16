@@ -41,7 +41,7 @@ const fadeUp: Variants = {
 
 const CONTACT_INFO = [
   {
-    icon: <Mail data-eos-id="src/pages/contact.tsx#0" size={18} />,
+    icon: <Mail data-eos-id="src/pages/contact.tsx#0" data-eos-v="2" size={18} />,
     label: 'Email',
     value: 'hello@coexistaus.org',
     href: 'mailto:hello@coexistaus.org',
@@ -150,7 +150,7 @@ export default function ContactPage() {
             ref={rm ? undefined : bgRef}
             className="h-full"
           >
-            <img data-eos-id="src/pages/contact.tsx#9"
+            <img data-eos-src="static" data-eos-id="src/pages/contact.tsx#9"
               src="/img/contact-hero-bg.webp"
               alt="Contact Co-Exist"
               width={1920}
@@ -167,7 +167,7 @@ export default function ContactPage() {
             ref={rm ? undefined : fgRef}
             className="absolute inset-0 z-[3]"
           >
-            <img data-eos-id="src/pages/contact.tsx#11"
+            <img data-eos-src="static" data-eos-id="src/pages/contact.tsx#11"
               src="/img/contact-hero-fg.webp"
               alt=""
               width={1920}
