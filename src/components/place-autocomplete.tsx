@@ -219,9 +219,9 @@ function DropdownPortal({
   }, [open, anchorRef])
 
   return createPortal(
-    <AnimatePresence>
+    <AnimatePresence data-eos-id="src/components/place-autocomplete.tsx#0">
       {open && results.length > 0 && (
-        <motion.ul
+        <motion.ul data-eos-id="src/components/place-autocomplete.tsx#1"
           initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           exit={shouldReduceMotion ? undefined : { opacity: 0, y: -4 }}
@@ -236,7 +236,7 @@ function DropdownPortal({
           className="z-[9999] rounded-sm bg-white shadow-sm border border-neutral-100 overflow-hidden max-h-64 overflow-y-auto"
         >
           {results.map((place, i) => (
-            <li
+            <li data-eos-id="src/components/place-autocomplete.tsx#2"
               key={`${place.lat}-${place.lng}-${i}`}
               role="option"
               aria-selected={i === highlightIndex}
@@ -250,18 +250,18 @@ function DropdownPortal({
                 i === highlightIndex ? 'bg-neutral-50' : 'hover:bg-neutral-50',
               )}
             >
-              <MapPin size={16} className="mt-0.5 shrink-0 text-neutral-400" />
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-neutral-900 truncate">
+              <MapPin data-eos-id="src/components/place-autocomplete.tsx#3" size={16} className="mt-0.5 shrink-0 text-neutral-400" />
+              <div data-eos-id="src/components/place-autocomplete.tsx#4" className="min-w-0">
+                <p data-eos-id="src/components/place-autocomplete.tsx#5" data-eos-var="place.short_name" data-eos-var-label="Short name" data-eos-var-scope="item" className="text-sm font-medium text-neutral-900 truncate">
                   {place.short_name}
                 </p>
-                <p className="text-xs text-neutral-500 truncate">
+                <p data-eos-id="src/components/place-autocomplete.tsx#6" data-eos-var="place.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-xs text-neutral-500 truncate">
                   {place.display_name}
                 </p>
               </div>
             </li>
           ))}
-          <li className="px-4 py-1.5 text-[10px] text-neutral-400 text-right">
+          <li data-eos-id="src/components/place-autocomplete.tsx#7" className="px-4 py-1.5 text-[10px] text-neutral-400 text-right">
             Powered by OpenStreetMap
           </li>
         </motion.ul>
@@ -396,8 +396,8 @@ export function PlaceAutocomplete({
   )
 
   return (
-    <div ref={containerRef} className={cn('relative', className)} onKeyDown={handleKeyDown}>
-      <Input
+    <div data-eos-id="src/components/place-autocomplete.tsx#8" ref={containerRef} className={cn('relative', className)} onKeyDown={handleKeyDown}>
+      <Input data-eos-id="src/components/place-autocomplete.tsx#9"
         label={label}
         compact={compact}
         placeholder={isOffline ? 'Type your location manually' : placeholder}
@@ -405,11 +405,11 @@ export function PlaceAutocomplete({
         onChange={handleInputChange}
         icon={
           loading ? (
-            <Loader2 size={18} className="animate-spin text-neutral-400" />
+            <Loader2 data-eos-id="src/components/place-autocomplete.tsx#10" size={18} className="animate-spin text-neutral-400" />
           ) : isOffline ? (
-            <WifiOff size={18} className="text-neutral-400" />
+            <WifiOff data-eos-id="src/components/place-autocomplete.tsx#11" size={18} className="text-neutral-400" />
           ) : (
-            icon ?? <MapPin size={18} />
+            icon ?? <MapPin data-eos-id="src/components/place-autocomplete.tsx#12" size={18} />
           )
         }
         inputClassName={inputClassName}
@@ -418,13 +418,13 @@ export function PlaceAutocomplete({
       />
 
       {isOffline && value.trim().length >= 2 && results.length === 0 && (
-        <p className="mt-1 text-xs text-neutral-500 flex items-center gap-1.5">
-          <WifiOff size={12} className="shrink-0" />
+        <p data-eos-id="src/components/place-autocomplete.tsx#13" className="mt-1 text-xs text-neutral-500 flex items-center gap-1.5">
+          <WifiOff data-eos-id="src/components/place-autocomplete.tsx#14" size={12} className="shrink-0" />
           No internet - type your location manually
         </p>
       )}
 
-      <DropdownPortal
+      <DropdownPortal data-eos-id="src/components/place-autocomplete.tsx#15"
         anchorRef={containerRef}
         open={open}
         results={results}
