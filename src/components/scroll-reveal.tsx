@@ -17,11 +17,11 @@ export function ScrollReveal({ children, delay = 0, className }: ScrollRevealPro
   const shouldReduceMotion = useReducedMotion()
 
   if (shouldReduceMotion) {
-    return <div className={className}>{children}</div>
+    return <div data-eos-id="src/components/scroll-reveal.tsx#0" className={className}>{children}</div>
   }
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/scroll-reveal.tsx#1"
       className={cn(className)}
       initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -64,11 +64,11 @@ export function StaggeredList({
   const shouldReduceMotion = useReducedMotion()
 
   if (shouldReduceMotion) {
-    return <div className={className}>{children}</div>
+    return <div data-eos-id="src/components/scroll-reveal.tsx#2" className={className}>{children}</div>
   }
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/scroll-reveal.tsx#3"
       className={className}
       initial="hidden"
       animate="visible"
@@ -89,7 +89,7 @@ export function StaggeredItem({
   className?: string
 }) {
   return (
-    <motion.div className={className} variants={itemVariants}>
+    <motion.div data-eos-id="src/components/scroll-reveal.tsx#4" className={className} variants={itemVariants}>
       {children}
     </motion.div>
   )
