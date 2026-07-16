@@ -28,7 +28,7 @@ const baseTabs: Tab[] = [
     label: 'Home',
     path: '/',
     exact: true,
-    icon: <Home data-eos-id="src/components/bottom-tab-bar.tsx#0" size={21} strokeWidth={1.5} />,
+    icon: <Home data-eos-id="src/components/bottom-tab-bar.tsx#0" data-eos-v="2" size={21} strokeWidth={1.5} />,
     activeIcon: <Home data-eos-id="src/components/bottom-tab-bar.tsx#1" size={21} strokeWidth={2.2} />,
   },
   {
