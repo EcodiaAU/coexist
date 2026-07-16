@@ -32,55 +32,55 @@ export function OGMeta({
   const ogImage = image || DEFAULT_OG_IMAGE
 
   return (
-    <Helmet>
-      <title>{fullTitle}</title>
-      <meta name="description" content={description} />
+    <Helmet data-eos-id="src/components/og-meta.tsx#0">
+      <title data-eos-id="src/components/og-meta.tsx#1">{fullTitle}</title>
+      <meta data-eos-id="src/components/og-meta.tsx#2" name="description" content={description} />
 
       {/* Robots */}
-      {noindex && <meta name="robots" content="noindex, nofollow" />}
+      {noindex && <meta data-eos-id="src/components/og-meta.tsx#3" name="robots" content="noindex, nofollow" />}
 
       {/* Canonical */}
-      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+      {canonicalUrl && <link data-eos-href="dynamic" data-eos-href-label="Canonical url" data-eos-href-scope="prop" data-eos-id="src/components/og-meta.tsx#4" rel="canonical" href={canonicalUrl} />}
 
       {/* Open Graph */}
-      <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
-      <meta property="og:type" content={type} />
-      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
-      <meta property="og:image" content={ogImage} />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={title} />
-      <meta property="og:site_name" content={SITE_NAME} />
-      <meta property="og:locale" content="en_AU" />
+      <meta data-eos-id="src/components/og-meta.tsx#5" property="og:title" content={fullTitle} />
+      <meta data-eos-id="src/components/og-meta.tsx#6" property="og:description" content={description} />
+      <meta data-eos-id="src/components/og-meta.tsx#7" property="og:type" content={type} />
+      {canonicalUrl && <meta data-eos-id="src/components/og-meta.tsx#8" property="og:url" content={canonicalUrl} />}
+      <meta data-eos-id="src/components/og-meta.tsx#9" property="og:image" content={ogImage} />
+      <meta data-eos-id="src/components/og-meta.tsx#10" property="og:image:width" content="1200" />
+      <meta data-eos-id="src/components/og-meta.tsx#11" property="og:image:height" content="630" />
+      <meta data-eos-id="src/components/og-meta.tsx#12" property="og:image:alt" content={title} />
+      <meta data-eos-id="src/components/og-meta.tsx#13" property="og:site_name" content={SITE_NAME} />
+      <meta data-eos-id="src/components/og-meta.tsx#14" property="og:locale" content="en_AU" />
 
       {/* Twitter */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={ogImage} />
-      <meta name="twitter:image:alt" content={title} />
+      <meta data-eos-id="src/components/og-meta.tsx#15" name="twitter:card" content="summary_large_image" />
+      <meta data-eos-id="src/components/og-meta.tsx#16" name="twitter:title" content={fullTitle} />
+      <meta data-eos-id="src/components/og-meta.tsx#17" name="twitter:description" content={description} />
+      <meta data-eos-id="src/components/og-meta.tsx#18" name="twitter:image" content={ogImage} />
+      <meta data-eos-id="src/components/og-meta.tsx#19" name="twitter:image:alt" content={title} />
 
       {/* App Links (Smart App Banners + deep linking) */}
-      <meta name="apple-itunes-app" content="app-id=COEXIST_APP_ID" />
+      <meta data-eos-id="src/components/og-meta.tsx#20" name="apple-itunes-app" content="app-id=COEXIST_APP_ID" />
       {canonicalUrl && (
-        <meta
+        <meta data-eos-id="src/components/og-meta.tsx#21"
           property="al:ios:url"
           content={canonicalUrl.replace(/^https?:\/\/[^/]+/, 'coexist:/')}
         />
       )}
       {canonicalUrl && (
-        <meta
+        <meta data-eos-id="src/components/og-meta.tsx#22"
           property="al:android:url"
           content={canonicalUrl.replace(/^https?:\/\/[^/]+/, 'coexist:/')}
         />
       )}
-      <meta property="al:android:package" content="org.coexistaus.app" />
-      <meta property="al:web:should_fallback" content="true" />
+      <meta data-eos-id="src/components/og-meta.tsx#23" property="al:android:package" content="org.coexistaus.app" />
+      <meta data-eos-id="src/components/og-meta.tsx#24" property="al:web:should_fallback" content="true" />
 
       {/* JSON-LD Structured Data */}
       {jsonLd && (
-        <script type="application/ld+json">
+        <script data-eos-id="src/components/og-meta.tsx#25" data-eos-var="JSON.stringify" data-eos-var-label="Stringify" data-eos-var-scope="prop" type="application/ld+json">
           {JSON.stringify(
             Array.isArray(jsonLd)
               ? jsonLd
