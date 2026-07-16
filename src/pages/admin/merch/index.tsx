@@ -16,7 +16,7 @@ import ShippingTab from './shipping-tab'
 /* Combined tab components */
 function SectionHeader({ label }: { label: string }) {
   return (
-    <div data-eos-id="src/pages/admin/merch/index.tsx#0" className="flex items-center gap-2 mb-3">
+    <div data-eos-id="src/pages/admin/merch/index.tsx#0" data-eos-v="2" className="flex items-center gap-2 mb-3">
       <div data-eos-id="src/pages/admin/merch/index.tsx#1" className="h-px flex-1 bg-gradient-to-r from-transparent via-neutral-200/40 to-transparent" />
       <span data-eos-id="src/pages/admin/merch/index.tsx#2" className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.12em]">{label}</span>
       <div data-eos-id="src/pages/admin/merch/index.tsx#3" className="h-px flex-1 bg-gradient-to-r from-transparent via-neutral-200/40 to-transparent" />
