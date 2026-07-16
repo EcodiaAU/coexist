@@ -24,14 +24,14 @@ export function EmptyContentTransition({
   const shouldReduceMotion = useReducedMotion()
 
   if (shouldReduceMotion) {
-    return <div className={className}>{hasContent ? children : emptyState}</div>
+    return <div data-eos-id="src/components/empty-content-transition.tsx#0" className={className}>{hasContent ? children : emptyState}</div>
   }
 
   return (
-    <div className={className}>
-      <AnimatePresence mode="wait" initial={false}>
+    <div data-eos-id="src/components/empty-content-transition.tsx#1" className={className}>
+      <AnimatePresence data-eos-id="src/components/empty-content-transition.tsx#2" mode="wait" initial={false}>
         {hasContent ? (
-          <motion.div
+          <motion.div data-eos-id="src/components/empty-content-transition.tsx#3"
             key="content"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -41,7 +41,7 @@ export function EmptyContentTransition({
             {children}
           </motion.div>
         ) : (
-          <motion.div
+          <motion.div data-eos-id="src/components/empty-content-transition.tsx#4"
             key="empty"
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
