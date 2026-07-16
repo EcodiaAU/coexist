@@ -70,7 +70,7 @@ function EventPicker({
   const selected = events.find((e) => e.id === selectedId)
 
   return (
-    <div data-eos-id="src/components/create-announcement-sheet.tsx#0" className="relative">
+    <div data-eos-id="src/components/create-announcement-sheet.tsx#0" data-eos-v="2" className="relative">
       <button data-eos-id="src/components/create-announcement-sheet.tsx#1"
         type="button"
         onClick={() => setDropdownOpen(!dropdownOpen)}
