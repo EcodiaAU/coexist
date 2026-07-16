@@ -24,7 +24,7 @@ export function RegisterButton({
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <motion.button
+    <motion.button data-eos-id="src/components/register-button.tsx#0"
       type="button"
       onClick={registered ? onCancel : onRegister}
       disabled={loading}
@@ -47,9 +47,9 @@ export function RegisterButton({
       aria-label={registered ? "You're going! Tap to cancel" : 'Register for event'}
       aria-pressed={registered}
     >
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence data-eos-id="src/components/register-button.tsx#1" mode="wait" initial={false}>
         {registered ? (
-          <motion.span
+          <motion.span data-eos-id="src/components/register-button.tsx#2"
             key="registered"
             className="flex items-center gap-2"
             initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
@@ -58,7 +58,7 @@ export function RegisterButton({
             transition={{ duration: 0.2 }}
           >
             {/* Checkmark that draws in */}
-            <motion.span
+            <motion.span data-eos-id="src/components/register-button.tsx#3"
               initial={shouldReduceMotion ? false : { scale: 0, rotate: -90 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={
@@ -67,12 +67,12 @@ export function RegisterButton({
                   : { type: 'spring', stiffness: 500, damping: 15, delay: 0.1 }
               }
             >
-              <Check size={18} strokeWidth={3} />
+              <Check data-eos-id="src/components/register-button.tsx#4" size={18} strokeWidth={3} />
             </motion.span>
             You&apos;re going!
           </motion.span>
         ) : (
-          <motion.span
+          <motion.span data-eos-id="src/components/register-button.tsx#5"
             key="register"
             initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
