@@ -168,18 +168,18 @@ function TemplateEditor({
   const sanitizedBodyHtml = sanitizeHtml(bodyHtml)
 
   return (
-    <div className="space-y-4">
-      <Header title="" back onBack={onClose} />
+    <div data-eos-id="src/pages/admin/email/templates-tab.tsx#0" className="space-y-4">
+      <Header data-eos-id="src/pages/admin/email/templates-tab.tsx#1" title="" back onBack={onClose} />
 
       {/* Basics */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Input
+      <div data-eos-id="src/pages/admin/email/templates-tab.tsx#2" className="grid gap-3 sm:grid-cols-2">
+        <Input data-eos-id="src/pages/admin/email/templates-tab.tsx#3"
           label="Template Name"
           placeholder="e.g. Event Announcement"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <Dropdown
+        <Dropdown data-eos-id="src/pages/admin/email/templates-tab.tsx#4"
           options={[
             { value: 'general', label: 'General' },
             { value: 'newsletter', label: 'Newsletter' },
@@ -194,7 +194,7 @@ function TemplateEditor({
         />
       </div>
 
-      <Input
+      <Input data-eos-id="src/pages/admin/email/templates-tab.tsx#5"
         label="Default Subject Line"
         placeholder="e.g. {{event_title}} - this Saturday!"
         value={subject}
@@ -202,29 +202,29 @@ function TemplateEditor({
       />
 
       {/* AI Generator */}
-      <div className="rounded-sm bg-neutral-50 border border-neutral-200 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-primary-500" />
-          <h4 className="text-sm font-semibold text-neutral-900">
+      <div data-eos-id="src/pages/admin/email/templates-tab.tsx#6" className="rounded-sm bg-neutral-50 border border-neutral-200 p-4 space-y-3">
+        <div data-eos-id="src/pages/admin/email/templates-tab.tsx#7" className="flex items-center gap-2">
+          <Sparkles data-eos-id="src/pages/admin/email/templates-tab.tsx#8" size={16} className="text-primary-500" />
+          <h4 data-eos-id="src/pages/admin/email/templates-tab.tsx#9" className="text-sm font-semibold text-neutral-900">
             {bodyHtml ? 'Regenerate with AI' : 'Generate Template with AI'}
           </h4>
         </div>
-        <p className="text-xs text-neutral-500 leading-relaxed">
+        <p data-eos-id="src/pages/admin/email/templates-tab.tsx#10" className="text-xs text-neutral-500 leading-relaxed">
           Describe the email template you need. AI knows Co-Exist&apos;s brand, colours, logos, links and will create editable {'{{fields}}'} you can fill in each time you send.
         </p>
-        <Input
+        <Input data-eos-id="src/pages/admin/email/templates-tab.tsx#11"
           type="textarea"
           value={aiPrompt}
           onChange={(e) => setAiPrompt(e.target.value)}
           placeholder="e.g. An event announcement template with a hero image, event title, date, location, a short description, and a register button. Include a section for impact stats from the last event."
           rows={3}
         />
-        <Button
+        <Button data-eos-id="src/pages/admin/email/templates-tab.tsx#12"
           variant="primary"
           size="sm"
           onClick={handleAiGenerate}
           loading={aiGenerating}
-          icon={aiGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+          icon={aiGenerating ? <Loader2 data-eos-id="src/pages/admin/email/templates-tab.tsx#13" size={14} className="animate-spin" /> : <Sparkles data-eos-id="src/pages/admin/email/templates-tab.tsx#14" size={14} />}
           disabled={!aiPrompt.trim()}
         >
           {aiGenerating ? 'Generating...' : bodyHtml ? 'Regenerate' : 'Generate Template'}
@@ -239,38 +239,38 @@ function TemplateEditor({
               campaign body lands personalised in each subscriber's inbox
               (Brisbane folks see their next event, Perth folks see
               theirs). Authors can drop any of them into their copy. */}
-          <div className="rounded-sm bg-white border border-neutral-200 shadow-sm p-4 space-y-3">
-            <div>
-              <h4 className="text-sm font-semibold text-neutral-900 mb-1">
+          <div data-eos-id="src/pages/admin/email/templates-tab.tsx#15" className="rounded-sm bg-white border border-neutral-200 shadow-sm p-4 space-y-3">
+            <div data-eos-id="src/pages/admin/email/templates-tab.tsx#16">
+              <h4 data-eos-id="src/pages/admin/email/templates-tab.tsx#17" className="text-sm font-semibold text-neutral-900 mb-1">
                 Auto-filled per recipient
               </h4>
-              <p className="text-xs text-neutral-500 mb-2">
+              <p data-eos-id="src/pages/admin/email/templates-tab.tsx#18" className="text-xs text-neutral-500 mb-2">
                 These resolve at send time. One campaign, every subscriber sees their own.
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div data-eos-id="src/pages/admin/email/templates-tab.tsx#19" className="flex flex-wrap gap-2">
                 {AUTOFILL_VARS.map((v) => (
-                  <span
+                  <span data-eos-id="src/pages/admin/email/templates-tab.tsx#20" data-eos-var="v.key" data-eos-var-label="Key" data-eos-var-scope="item" data-eos-var-src="literal"
                     key={v.key}
                     title={v.desc}
                     className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full bg-primary-100 text-primary-600"
                   >
                     {`{{${v.key}}}`}
-                    <span className="ml-1 text-neutral-400 font-normal hidden sm:inline">{v.shortLabel}</span>
+                    <span data-eos-id="src/pages/admin/email/templates-tab.tsx#21" data-eos-var="v.shortLabel" data-eos-var-label="Short label" data-eos-var-scope="item" data-eos-var-src="literal" className="ml-1 text-neutral-400 font-normal hidden sm:inline">{v.shortLabel}</span>
                   </span>
                 ))}
               </div>
             </div>
             {templateVars.length > 0 && (
-              <div className="border-t border-neutral-100 pt-3">
-                <h4 className="text-sm font-semibold text-neutral-900 mb-1">
+              <div data-eos-id="src/pages/admin/email/templates-tab.tsx#22" className="border-t border-neutral-100 pt-3">
+                <h4 data-eos-id="src/pages/admin/email/templates-tab.tsx#23" className="text-sm font-semibold text-neutral-900 mb-1">
                   Editable Fields
                 </h4>
-                <p className="text-xs text-neutral-500 mb-2">
+                <p data-eos-id="src/pages/admin/email/templates-tab.tsx#24" className="text-xs text-neutral-500 mb-2">
                   These {'{{fields}}'} prompt for a value each time a campaign is created from this template.
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div data-eos-id="src/pages/admin/email/templates-tab.tsx#25" className="flex flex-wrap gap-2">
                   {templateVars.map((v) => (
-                    <span
+                    <span data-eos-id="src/pages/admin/email/templates-tab.tsx#26"
                       key={v}
                       className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full bg-secondary-50 text-secondary-700 border border-secondary-200"
                     >
@@ -283,34 +283,34 @@ function TemplateEditor({
           </div>
 
           {/* Preview / HTML toggle */}
-          <div className="flex gap-1 bg-white rounded-sm p-1">
-            <button
+          <div data-eos-id="src/pages/admin/email/templates-tab.tsx#27" className="flex gap-1 bg-white rounded-sm p-1">
+            <button data-eos-id="src/pages/admin/email/templates-tab.tsx#28"
               onClick={() => setActiveView('preview')}
               className={cn(
                 'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-sm transition-colors duration-150 cursor-pointer',
                 activeView === 'preview' ? 'bg-primary-50 shadow-sm text-neutral-900' : 'text-neutral-500 hover:text-neutral-700',
               )}
             >
-              <Eye size={14} /> Preview
+              <Eye data-eos-id="src/pages/admin/email/templates-tab.tsx#29" size={14} /> Preview
             </button>
-            <button
+            <button data-eos-id="src/pages/admin/email/templates-tab.tsx#30"
               onClick={() => setActiveView('html')}
               className={cn(
                 'flex-1 min-h-11 flex items-center justify-center gap-1.5 text-sm font-medium rounded-sm transition-colors duration-150 cursor-pointer',
                 activeView === 'html' ? 'bg-primary-50 shadow-sm text-neutral-900' : 'text-neutral-500 hover:text-neutral-700',
               )}
             >
-              <Edit3 size={14} /> Edit HTML
+              <Edit3 data-eos-id="src/pages/admin/email/templates-tab.tsx#31" size={14} /> Edit HTML
             </button>
           </div>
 
           {activeView === 'preview' ? (
-            <div
+            <div data-eos-id="src/pages/admin/email/templates-tab.tsx#32"
               className="prose prose-sm max-w-none text-neutral-900 rounded-sm bg-white p-4 border border-neutral-200 shadow-sm max-h-[500px] overflow-y-auto"
               dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml }}
             />
           ) : (
-            <Input
+            <Input data-eos-id="src/pages/admin/email/templates-tab.tsx#33"
               type="textarea"
               value={bodyHtml}
               onChange={(e) => setBodyHtml(e.target.value)}
@@ -320,7 +320,7 @@ function TemplateEditor({
           )}
 
           {/* Plain text */}
-          <Input
+          <Input data-eos-id="src/pages/admin/email/templates-tab.tsx#34"
             type="textarea"
             label="Plain Text Fallback"
             value={bodyText}
@@ -332,15 +332,15 @@ function TemplateEditor({
       )}
 
       {/* Actions */}
-      <div className="flex gap-2">
-        <Button variant="secondary" onClick={onClose} className="flex-1">
+      <div data-eos-id="src/pages/admin/email/templates-tab.tsx#35" className="flex gap-2">
+        <Button data-eos-id="src/pages/admin/email/templates-tab.tsx#36" variant="secondary" onClick={onClose} className="flex-1">
           Cancel
         </Button>
-        <Button
+        <Button data-eos-id="src/pages/admin/email/templates-tab.tsx#37"
           variant="primary"
           onClick={handleSave}
           loading={saving}
-          icon={<Save size={14} />}
+          icon={<Save data-eos-id="src/pages/admin/email/templates-tab.tsx#38" size={14} />}
           className="flex-1"
           disabled={!name.trim() || !subject.trim() || !bodyHtml.trim()}
         >
@@ -387,7 +387,7 @@ export function TemplatesTab() {
 
   if (editing !== undefined) {
     return (
-      <TemplateEditor
+      <TemplateEditor data-eos-id="src/pages/admin/email/templates-tab.tsx#39"
         template={editing}
         onClose={() => setEditing(undefined)}
         onSaved={() => setEditing(undefined)}
@@ -397,45 +397,45 @@ export function TemplatesTab() {
 
   return (
     <>
-      <div className="flex items-center gap-2 mb-4">
-        <Button variant="primary" size="sm" icon={<Plus size={14} />} onClick={() => setEditing(null)}>
+      <div data-eos-id="src/pages/admin/email/templates-tab.tsx#40" className="flex items-center gap-2 mb-4">
+        <Button data-eos-id="src/pages/admin/email/templates-tab.tsx#41" variant="primary" size="sm" icon={<Plus data-eos-id="src/pages/admin/email/templates-tab.tsx#42" size={14} />} onClick={() => setEditing(null)}>
           New Template
         </Button>
       </div>
 
       {showLoading ? (
-        <Skeleton variant="list-item" count={4} />
+        <Skeleton data-eos-id="src/pages/admin/email/templates-tab.tsx#43" variant="list-item" count={4} />
       ) : !templates?.length ? (
-        <EmptyState
+        <EmptyState data-eos-id="src/pages/admin/email/templates-tab.tsx#44"
           illustration="empty"
           title="No templates"
           description="Save reusable email templates to speed up campaign creation"
           action={{ label: 'Create Template', onClick: () => setEditing(null) }}
         />
       ) : (
-        <StaggeredList className="grid gap-3 sm:grid-cols-2">
+        <StaggeredList data-eos-id="src/pages/admin/email/templates-tab.tsx#45" className="grid gap-3 sm:grid-cols-2">
           {templates.map((tpl) => (
-            <StaggeredItem
+            <StaggeredItem data-eos-id="src/pages/admin/email/templates-tab.tsx#46"
               key={tpl.id}
               className="bg-white rounded-sm shadow-sm p-4 cursor-pointer transition-colors group"
             >
-              <div className="flex items-start justify-between gap-2" onClick={() => setEditing(tpl)}>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-neutral-900 truncate">{tpl.name}</p>
-                  <p className="text-xs text-neutral-500 truncate mt-0.5">{tpl.subject}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-500 capitalize">
+              <div data-eos-id="src/pages/admin/email/templates-tab.tsx#47" className="flex items-start justify-between gap-2" onClick={() => setEditing(tpl)}>
+                <div data-eos-id="src/pages/admin/email/templates-tab.tsx#48" className="flex-1 min-w-0">
+                  <p data-eos-id="src/pages/admin/email/templates-tab.tsx#49" data-eos-var="tpl.name" data-eos-var-label="Name" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 truncate">{tpl.name}</p>
+                  <p data-eos-id="src/pages/admin/email/templates-tab.tsx#50" data-eos-var="tpl.subject" data-eos-var-label="Subject" data-eos-var-scope="item" className="text-xs text-neutral-500 truncate mt-0.5">{tpl.subject}</p>
+                  <div data-eos-id="src/pages/admin/email/templates-tab.tsx#51" className="flex items-center gap-2 mt-2">
+                    <span data-eos-id="src/pages/admin/email/templates-tab.tsx#52" data-eos-var="tpl.category" data-eos-var-label="Category" data-eos-var-scope="item" className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-500 capitalize">
                       {tpl.category}
                     </span>
-                    <span className="text-[11px] text-neutral-400">Updated {formatDate(tpl.updated_at)}</span>
+                    <span data-eos-id="src/pages/admin/email/templates-tab.tsx#53" data-eos-var="tpl.updated_at" data-eos-var-label="Updated at" data-eos-var-scope="item" className="text-[11px] text-neutral-400">Updated {formatDate(tpl.updated_at)}</span>
                   </div>
                 </div>
-                <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                  <button onClick={() => setEditing(tpl)} className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-primary-100 hover:text-primary-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.98]" aria-label="Edit">
-                    <Edit3 size={14} />
+                <div data-eos-id="src/pages/admin/email/templates-tab.tsx#54" className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                  <button data-eos-id="src/pages/admin/email/templates-tab.tsx#55" onClick={() => setEditing(tpl)} className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-primary-100 hover:text-primary-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.98]" aria-label="Edit">
+                    <Edit3 data-eos-id="src/pages/admin/email/templates-tab.tsx#56" size={14} />
                   </button>
-                  <button onClick={() => setDeletingId(tpl.id)} className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-error-100 hover:text-error-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.98]" aria-label="Delete">
-                    <Trash2 size={14} />
+                  <button data-eos-id="src/pages/admin/email/templates-tab.tsx#57" onClick={() => setDeletingId(tpl.id)} className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-error-100 hover:text-error-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.98]" aria-label="Delete">
+                    <Trash2 data-eos-id="src/pages/admin/email/templates-tab.tsx#58" size={14} />
                   </button>
                 </div>
               </div>
@@ -444,7 +444,7 @@ export function TemplatesTab() {
         </StaggeredList>
       )}
 
-      <ConfirmationSheet
+      <ConfirmationSheet data-eos-id="src/pages/admin/email/templates-tab.tsx#59"
         open={!!deletingId}
         onClose={() => setDeletingId(null)}
         onConfirm={() => deletingId && deleteMutation.mutate(deletingId)}
