@@ -127,31 +127,31 @@ export function TransferTicketSheet({
     : `All ${liveTicketCount ?? 0} ticket holders`
 
   return (
-    <BottomSheet open={open} onClose={close} snapPoints={[0.85]}>
-      <div className="space-y-5 pb-2">
-        <div className="flex items-center gap-2">
-          <ArrowRightLeft size={18} className="text-primary-500" />
-          <h2 className="text-base font-bold text-neutral-900">
+    <BottomSheet data-eos-id="src/components/transfer-ticket-sheet.tsx#0" open={open} onClose={close} snapPoints={[0.85]}>
+      <div data-eos-id="src/components/transfer-ticket-sheet.tsx#1" className="space-y-5 pb-2">
+        <div data-eos-id="src/components/transfer-ticket-sheet.tsx#2" className="flex items-center gap-2">
+          <ArrowRightLeft data-eos-id="src/components/transfer-ticket-sheet.tsx#3" size={18} className="text-primary-500" />
+          <h2 data-eos-id="src/components/transfer-ticket-sheet.tsx#4" className="text-base font-bold text-neutral-900">
             {mode === 'single' ? 'Move to another event' : 'Move all attendees'}
           </h2>
         </div>
 
-        <p className="text-xs text-neutral-500 leading-relaxed">
+        <p data-eos-id="src/components/transfer-ticket-sheet.tsx#5" className="text-xs text-neutral-500 leading-relaxed">
           {mode === 'single'
             ? `Move ${attendeeLabel ?? 'this attendee'}'s ticket across to another event. They keep the same ticket. Nothing is refunded and they do not pay again.`
             : `Move every live ticket on this event across to another event. Everyone keeps the ticket they already bought. Nothing is refunded and nobody pays again.`}
         </p>
 
         {/* Target picker */}
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Move to</p>
-          {isLoading && <p className="text-xs text-neutral-400 px-1">Loading events...</p>}
+        <div data-eos-id="src/components/transfer-ticket-sheet.tsx#6" className="space-y-2">
+          <p data-eos-id="src/components/transfer-ticket-sheet.tsx#7" className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Move to</p>
+          {isLoading && <p data-eos-id="src/components/transfer-ticket-sheet.tsx#8" className="text-xs text-neutral-400 px-1">Loading events...</p>}
           {!isLoading && (targets ?? []).length === 0 && (
-            <p className="text-xs text-neutral-400 px-1">No other upcoming ticketed events to move to.</p>
+            <p data-eos-id="src/components/transfer-ticket-sheet.tsx#9" className="text-xs text-neutral-400 px-1">No other upcoming ticketed events to move to.</p>
           )}
-          <div className="space-y-1 max-h-[240px] overflow-y-auto">
+          <div data-eos-id="src/components/transfer-ticket-sheet.tsx#10" className="space-y-1 max-h-[240px] overflow-y-auto">
             {(targets ?? []).map((e) => (
-              <button
+              <button data-eos-id="src/components/transfer-ticket-sheet.tsx#11"
                 key={e.id}
                 type="button"
                 onClick={() => setSelected(e)}
@@ -162,15 +162,15 @@ export function TransferTicketSheet({
                     : 'border-neutral-200 bg-white hover:bg-neutral-50',
                 )}
               >
-                <p className="text-sm font-medium text-neutral-800 truncate">{e.title}</p>
-                <p className="text-[11px] text-neutral-500 flex items-center gap-1 mt-0.5">
-                  <CalendarDays size={11} />
+                <p data-eos-id="src/components/transfer-ticket-sheet.tsx#12" data-eos-var="e.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-sm font-medium text-neutral-800 truncate">{e.title}</p>
+                <p data-eos-id="src/components/transfer-ticket-sheet.tsx#13" data-eos-var="e.date_start" data-eos-var-label="Date start" data-eos-var-scope="item" className="text-[11px] text-neutral-500 flex items-center gap-1 mt-0.5">
+                  <CalendarDays data-eos-id="src/components/transfer-ticket-sheet.tsx#14" size={11} />
                   {formatDate(e.date_start)}
                 </p>
                 {e.address && (
-                  <p className="text-[11px] text-neutral-400 flex items-center gap-1 mt-0.5 truncate">
-                    <MapPin size={11} className="shrink-0" />
-                    <span className="truncate">{e.address}</span>
+                  <p data-eos-id="src/components/transfer-ticket-sheet.tsx#15" className="text-[11px] text-neutral-400 flex items-center gap-1 mt-0.5 truncate">
+                    <MapPin data-eos-id="src/components/transfer-ticket-sheet.tsx#16" size={11} className="shrink-0" />
+                    <span data-eos-id="src/components/transfer-ticket-sheet.tsx#17" data-eos-var="e.address" data-eos-var-label="Address" data-eos-var-scope="item" className="truncate">{e.address}</span>
                   </p>
                 )}
               </button>
@@ -180,20 +180,20 @@ export function TransferTicketSheet({
 
         {/* Plain-words confirmation of exactly what is about to happen */}
         {selected && (
-          <div className="rounded-sm border border-warning-200 bg-warning-50 p-3 space-y-1.5">
-            <p className="text-xs font-bold text-warning-800">
+          <div data-eos-id="src/components/transfer-ticket-sheet.tsx#18" className="rounded-sm border border-warning-200 bg-warning-50 p-3 space-y-1.5">
+            <p data-eos-id="src/components/transfer-ticket-sheet.tsx#19" data-eos-var="selected.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="text-xs font-bold text-warning-800">
               {who} will move to {selected.title}.
             </p>
-            <ul className="text-[11px] text-warning-700 leading-relaxed list-disc pl-4 space-y-0.5">
-              <li>No refund is issued and nobody is charged again. The ticket moves as-is.</li>
-              <li>They leave the group chat for this event and join the one for {selected.title}.</li>
-              <li>Their spot on this event is released.</li>
-              <li>They get an email telling them which event they are now going to.</li>
+            <ul data-eos-id="src/components/transfer-ticket-sheet.tsx#20" className="text-[11px] text-warning-700 leading-relaxed list-disc pl-4 space-y-0.5">
+              <li data-eos-id="src/components/transfer-ticket-sheet.tsx#21">No refund is issued and nobody is charged again. The ticket moves as-is.</li>
+              <li data-eos-id="src/components/transfer-ticket-sheet.tsx#22" data-eos-var="selected.title" data-eos-var-label="Title" data-eos-var-scope="prop">They leave the group chat for this event and join the one for {selected.title}.</li>
+              <li data-eos-id="src/components/transfer-ticket-sheet.tsx#23">Their spot on this event is released.</li>
+              <li data-eos-id="src/components/transfer-ticket-sheet.tsx#24">They get an email telling them which event they are now going to.</li>
             </ul>
           </div>
         )}
 
-        <Button
+        <Button data-eos-id="src/components/transfer-ticket-sheet.tsx#25"
           variant="primary"
           size="md"
           fullWidth
@@ -201,7 +201,7 @@ export function TransferTicketSheet({
           disabled={submitting || !selected}
           onClick={handleTransfer}
         >
-          <ArrowRightLeft size={16} className="mr-1.5" />
+          <ArrowRightLeft data-eos-id="src/components/transfer-ticket-sheet.tsx#26" size={16} className="mr-1.5" />
           {mode === 'single' ? 'Move ticket' : `Move ${liveTicketCount ?? 0} tickets`}
         </Button>
       </div>
