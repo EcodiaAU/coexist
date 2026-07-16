@@ -472,44 +472,44 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
   }, [shouldReduceMotion, showVicIndividual, vicIds])
 
   return (
-    <div className={cn('relative overflow-hidden rounded-md', className)}>
+    <div data-eos-id="src/components/collective-map.tsx#0" className={cn('relative overflow-hidden rounded-md', className)}>
       {/* Map container */}
-      <div
+      <div data-eos-id="src/components/collective-map.tsx#1"
         ref={containerRef}
         className="coexist-cmap w-full h-full"
         style={{ zIndex: 0 }}
       />
 
       {/* Loading */}
-      <AnimatePresence>
+      <AnimatePresence data-eos-id="src/components/collective-map.tsx#2">
         {!mapReady && (
-          <motion.div
+          <motion.div data-eos-id="src/components/collective-map.tsx#3"
             className="absolute inset-0 z-[400] flex items-center justify-center bg-white"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="h-8 w-8 rounded-full border-2 border-primary-200 border-t-primary-500 animate-spin" />
+            <div data-eos-id="src/components/collective-map.tsx#4" className="h-8 w-8 rounded-full border-2 border-primary-200 border-t-primary-500 animate-spin" />
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Top-left badge */}
-      <div className="absolute top-3 left-3 z-[500]">
-        <div className="flex items-center gap-2 rounded-sm bg-white/90 backdrop-blur-sm px-3 py-2 shadow-sm">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-400">
-            <TreePine size={12} className="text-white" />
+      <div data-eos-id="src/components/collective-map.tsx#5" className="absolute top-3 left-3 z-[500]">
+        <div data-eos-id="src/components/collective-map.tsx#6" className="flex items-center gap-2 rounded-sm bg-white/90 backdrop-blur-sm px-3 py-2 shadow-sm">
+          <div data-eos-id="src/components/collective-map.tsx#7" className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-400">
+            <TreePine data-eos-id="src/components/collective-map.tsx#8" size={12} className="text-white" />
           </div>
-          <span className="text-xs font-semibold text-secondary-700">
+          <span data-eos-id="src/components/collective-map.tsx#9" className="text-xs font-semibold text-secondary-700">
             {collectives.length} Collectives
           </span>
         </div>
       </div>
 
       {/* Selected collective card - with hero image */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence data-eos-id="src/components/collective-map.tsx#10" mode="wait">
         {selected && (
-          <motion.div
+          <motion.div data-eos-id="src/components/collective-map.tsx#11"
             key={selected.id}
             className="absolute bottom-3 left-3 right-3 top-3 z-[500] flex flex-col justify-end pointer-events-none"
             initial={{ y: '110%', opacity: 0 }}
@@ -517,89 +517,89 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
             exit={{ y: '110%', opacity: 0 }}
             transition={shouldReduceMotion ? { duration: 0.12 } : springSheet}
           >
-            <div className="overflow-hidden rounded-md bg-white shadow-sm pointer-events-auto max-h-full flex flex-col">
+            <div data-eos-id="src/components/collective-map.tsx#12" className="overflow-hidden rounded-md bg-white shadow-sm pointer-events-auto max-h-full flex flex-col">
               {/* Hero image - full bleed, shrinks to fit container */}
               {selected.cover_image_url ? (
-                <div className="relative w-full overflow-hidden shrink min-h-0" style={{ aspectRatio: '16 / 8' }}>
-                  <img
+                <div data-eos-id="src/components/collective-map.tsx#13" className="relative w-full overflow-hidden shrink min-h-0" style={{ aspectRatio: '16 / 8' }}>
+                  <img data-eos-id="src/components/collective-map.tsx#14"
                     src={selected.cover_image_url}
                     alt={selected.name}
                     className="absolute inset-0 h-full w-full object-cover"
                     loading="eager"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+                  <div data-eos-id="src/components/collective-map.tsx#15" className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
                   {/* Name overlay on image */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 pb-2.5">
-                    <h4 className="text-[15px] font-bold text-white leading-snug drop-shadow-sm">
+                  <div data-eos-id="src/components/collective-map.tsx#16" className="absolute bottom-0 left-0 right-0 p-3 pb-2.5">
+                    <h4 data-eos-id="src/components/collective-map.tsx#17" data-eos-var="selected.name" data-eos-var-label="Name" data-eos-var-scope="prop" className="text-[15px] font-bold text-white leading-snug drop-shadow-sm">
                       {selected.name}
                     </h4>
-                    <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/80">
-                      <MapPin size={10} />
-                      <span>{[selected.region, selected.state].filter(Boolean).join(', ')}</span>
+                    <div data-eos-id="src/components/collective-map.tsx#18" className="mt-0.5 flex items-center gap-1 text-[11px] text-white/80">
+                      <MapPin data-eos-id="src/components/collective-map.tsx#19" size={10} />
+                      <span data-eos-id="src/components/collective-map.tsx#20" data-eos-var="selected.region" data-eos-var-label="Region" data-eos-var-scope="prop">{[selected.region, selected.state].filter(Boolean).join(', ')}</span>
                     </div>
                   </div>
                   {/* Close button */}
-                  <button
+                  <button data-eos-id="src/components/collective-map.tsx#21"
                     onClick={(e) => { e.stopPropagation(); handleClose() }}
                     className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white active:scale-[0.98] transition-transform duration-150 cursor-pointer"
                     aria-label="Close"
                   >
-                    <X size={14} />
+                    <X data-eos-id="src/components/collective-map.tsx#22" size={14} />
                   </button>
                 </div>
               ) : (
                 <>
                   {/* Green accent when no image */}
-                  <div className="h-1 bg-primary-300" />
+                  <div data-eos-id="src/components/collective-map.tsx#23" className="h-1 bg-primary-300" />
                 </>
               )}
 
-              <div className={cn('p-3 shrink-0', !selected.cover_image_url && 'pt-3')}>
+              <div data-eos-id="src/components/collective-map.tsx#24" className={cn('p-3 shrink-0', !selected.cover_image_url && 'pt-3')}>
                 {/* Name + close (only when no hero image) */}
                 {!selected.cover_image_url && (
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-[15px] font-bold text-secondary-800 leading-snug">
+                  <div data-eos-id="src/components/collective-map.tsx#25" className="flex items-start justify-between gap-2 mb-2">
+                    <div data-eos-id="src/components/collective-map.tsx#26" className="flex-1 min-w-0">
+                      <h4 data-eos-id="src/components/collective-map.tsx#27" data-eos-var="selected.name" data-eos-var-label="Name" data-eos-var-scope="prop" className="text-[15px] font-bold text-secondary-800 leading-snug">
                         {selected.name}
                       </h4>
-                      <div className="mt-0.5 flex items-center gap-1 text-xs text-secondary-400">
-                        <Navigation size={11} />
-                        <span>{[selected.region, selected.state].filter(Boolean).join(', ')}</span>
+                      <div data-eos-id="src/components/collective-map.tsx#28" className="mt-0.5 flex items-center gap-1 text-xs text-secondary-400">
+                        <Navigation data-eos-id="src/components/collective-map.tsx#29" size={11} />
+                        <span data-eos-id="src/components/collective-map.tsx#30" data-eos-var="selected.region" data-eos-var-label="Region" data-eos-var-scope="prop">{[selected.region, selected.state].filter(Boolean).join(', ')}</span>
                       </div>
                     </div>
-                    <button
+                    <button data-eos-id="src/components/collective-map.tsx#31"
                       onClick={(e) => { e.stopPropagation(); handleClose() }}
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-200/60 text-secondary-400 active:scale-[0.98] transition-transform duration-150 cursor-pointer"
                       aria-label="Close"
                     >
-                      <X size={14} />
+                      <X data-eos-id="src/components/collective-map.tsx#32" size={14} />
                     </button>
                   </div>
                 )}
 
-                <p className="text-xs leading-relaxed text-secondary-500 line-clamp-2">
+                <p data-eos-id="src/components/collective-map.tsx#33" data-eos-var="selected.description" data-eos-var-label="Description" data-eos-var-scope="prop" className="text-xs leading-relaxed text-secondary-500 line-clamp-2">
                   {selected.description}
                 </p>
 
-                <div className="mt-2.5 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div data-eos-id="src/components/collective-map.tsx#34" className="mt-2.5 flex items-center justify-between gap-3">
+                  <div data-eos-id="src/components/collective-map.tsx#35" className="flex items-center gap-3 min-w-0 flex-1">
                     {selected.member_count != null && (
-                      <div className="flex items-center gap-1 text-xs shrink-0">
-                        <Users size={13} className="text-primary-500" />
-                        <span className="font-semibold text-secondary-700">{selected.member_count}</span>
+                      <div data-eos-id="src/components/collective-map.tsx#36" className="flex items-center gap-1 text-xs shrink-0">
+                        <Users data-eos-id="src/components/collective-map.tsx#37" size={13} className="text-primary-500" />
+                        <span data-eos-id="src/components/collective-map.tsx#38" data-eos-var="selected.member_count" data-eos-var-label="Member count" data-eos-var-scope="prop" className="font-semibold text-secondary-700">{selected.member_count}</span>
                       </div>
                     )}
                     {selected.nextEvent && (
-                      <div className="flex items-center gap-1 text-xs text-secondary-400 min-w-0">
-                        <Calendar size={12} className="text-primary-500 shrink-0" />
-                        <span className="truncate">
+                      <div data-eos-id="src/components/collective-map.tsx#39" className="flex items-center gap-1 text-xs text-secondary-400 min-w-0">
+                        <Calendar data-eos-id="src/components/collective-map.tsx#40" size={12} className="text-primary-500 shrink-0" />
+                        <span data-eos-id="src/components/collective-map.tsx#41" data-eos-var="selected.nextEvent.date_start,selected.nextEvent.title" data-eos-var-label="Date start, Title" data-eos-var-scope="prop" className="truncate">
                           {formatShortDate(selected.nextEvent.date_start)} &middot; {selected.nextEvent.title}
                         </span>
                       </div>
                     )}
                   </div>
 
-                  <button
+                  <button data-eos-id="src/components/collective-map.tsx#42"
                     onClick={() => navigate(`/collectives/${selected.slug}`)}
                     className={cn(
                       'flex items-center gap-1.5 shrink-0',
@@ -609,7 +609,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
                     )}
                   >
                     View
-                    <ArrowRight size={13} />
+                    <ArrowRight data-eos-id="src/components/collective-map.tsx#43" size={13} />
                   </button>
                 </div>
               </div>
@@ -619,18 +619,18 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
       </AnimatePresence>
 
       {/* Scrollable mini-cards with hero thumbnails */}
-      <AnimatePresence>
+      <AnimatePresence data-eos-id="src/components/collective-map.tsx#44">
         {!selected && mapReady && (
-          <motion.div
+          <motion.div data-eos-id="src/components/collective-map.tsx#45"
             className="absolute bottom-3 left-0 right-0 z-[500] px-3"
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 30, opacity: 0 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
+            <div data-eos-id="src/components/collective-map.tsx#46" className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
               {collectives.map((c) => (
-                <button
+                <button data-eos-id="src/components/collective-map.tsx#47"
                   key={c.id}
                   onClick={() => selectCollective(c)}
                   className={cn(
@@ -641,24 +641,24 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
                   )}
                 >
                   {c.cover_image_url ? (
-                    <img
+                    <img data-eos-id="src/components/collective-map.tsx#48"
                       src={c.cover_image_url}
                       alt=""
                       className="block h-16 w-full object-cover"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="h-16 w-full bg-primary-200 flex items-center justify-center">
-                      <TreePine size={18} className="text-neutral-400" />
+                    <div data-eos-id="src/components/collective-map.tsx#49" className="h-16 w-full bg-primary-200 flex items-center justify-center">
+                      <TreePine data-eos-id="src/components/collective-map.tsx#50" size={18} className="text-neutral-400" />
                     </div>
                   )}
-                  <div className="px-2 py-1.5">
-                    <span className="text-[11px] font-semibold text-secondary-700 leading-tight line-clamp-1 block">
+                  <div data-eos-id="src/components/collective-map.tsx#51" className="px-2 py-1.5">
+                    <span data-eos-id="src/components/collective-map.tsx#52" className="text-[11px] font-semibold text-secondary-700 leading-tight line-clamp-1 block">
                       {shortName(c)}
                     </span>
                     {c.member_count != null && (
-                      <span className="text-[10px] text-secondary-400 flex items-center gap-0.5 mt-0.5">
-                        <Users size={9} />
+                      <span data-eos-id="src/components/collective-map.tsx#53" data-eos-var="c.member_count" data-eos-var-label="Member count" data-eos-var-scope="item" className="text-[10px] text-secondary-400 flex items-center gap-0.5 mt-0.5">
+                        <Users data-eos-id="src/components/collective-map.tsx#54" size={9} />
                         {c.member_count}
                       </span>
                     )}
