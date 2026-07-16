@@ -154,7 +154,7 @@ const TEMPLATES: SurveyTemplate[] = [
 /* ------------------------------------------------------------------ */
 
 const QUESTION_TYPES: { value: QuestionType; label: string; icon: React.ReactNode; description: string }[] = [
-  { value: 'multiple_choice', label: 'Multiple Choice', icon: <CircleDot data-eos-id="src/pages/admin/create-survey.tsx#0" size={14} />, description: 'Single select from a list' },
+  { value: 'multiple_choice', label: 'Multiple Choice', icon: <CircleDot data-eos-id="src/pages/admin/create-survey.tsx#0" data-eos-v="2" size={14} />, description: 'Single select from a list' },
   { value: 'checkbox', label: 'Checkboxes', icon: <ListChecks data-eos-id="src/pages/admin/create-survey.tsx#1" size={14} />, description: 'Multi-select from a list' },
   { value: 'dropdown', label: 'Dropdown', icon: <ChevronDown data-eos-id="src/pages/admin/create-survey.tsx#2" size={14} />, description: 'Select from a dropdown menu' },
   { value: 'rating', label: 'Rating (1–5 stars)', icon: <Star data-eos-id="src/pages/admin/create-survey.tsx#3" size={14} />, description: '5-star rating scale' },
