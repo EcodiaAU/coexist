@@ -46,7 +46,7 @@ export function AppShell({ children, bare = false }: AppShellProps) {
 
   if (bare) {
     return (
-      <KeyboardOpenContext.Provider data-eos-id="src/components/app-shell.tsx#0" value={keyboardOpen}>
+      <KeyboardOpenContext.Provider data-eos-id="src/components/app-shell.tsx#0" data-eos-v="2" value={keyboardOpen}>
         <div data-eos-id="src/components/app-shell.tsx#1" className="flex flex-col min-h-dvh">
           <Suspense data-eos-id="src/components/app-shell.tsx#2" fallback={<div data-eos-id="src/components/app-shell.tsx#3" className="flex-1 bg-surface-1" />}>
             {children}
