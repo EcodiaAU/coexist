@@ -16,7 +16,7 @@ function LeafParticle({ index, total }: { index: number; total: number }) {
   const [distance] = useState(() => 18 + Math.random() * 8)
 
   return (
-    <motion.span data-eos-id="src/components/like-button.tsx#0"
+    <motion.span data-eos-id="src/components/like-button.tsx#0" data-eos-v="2"
       className="absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full bg-primary-500"
       initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
       animate={{
