@@ -14,9 +14,9 @@ export function OfflineBanner({ className }: OfflineBannerProps) {
   const show = isOffline || justReconnected
 
   return (
-    <AnimatePresence>
+    <AnimatePresence data-eos-id="src/components/offline-banner.tsx#0">
       {show && (
-        <motion.div
+        <motion.div data-eos-id="src/components/offline-banner.tsx#1"
           initial={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
           animate={shouldReduceMotion ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
           exit={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
@@ -25,7 +25,7 @@ export function OfflineBanner({ className }: OfflineBannerProps) {
           aria-live="polite"
           className={cn('overflow-hidden', className)}
         >
-          <div
+          <div data-eos-id="src/components/offline-banner.tsx#2"
             className={cn(
               'flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium',
               isOffline
@@ -35,13 +35,13 @@ export function OfflineBanner({ className }: OfflineBannerProps) {
           >
             {isOffline ? (
               <>
-                <WifiOff size={14} />
-                <span>You're offline - some features may be limited</span>
+                <WifiOff data-eos-id="src/components/offline-banner.tsx#3" size={14} />
+                <span data-eos-id="src/components/offline-banner.tsx#4">You're offline - some features may be limited</span>
               </>
             ) : (
               <>
-                <Wifi size={14} />
-                <span>Back online</span>
+                <Wifi data-eos-id="src/components/offline-banner.tsx#5" size={14} />
+                <span data-eos-id="src/components/offline-banner.tsx#6">Back online</span>
               </>
             )}
           </div>
