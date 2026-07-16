@@ -82,29 +82,29 @@ export function MessageActionsSheet({
   const canDelete = isOwnMessage || isModerator
 
   return (
-    <BottomSheet open={!!message} onClose={onClose}>
+    <BottomSheet data-eos-id="src/components/message-actions-sheet.tsx#0" open={!!message} onClose={onClose}>
       {/* Fixed min-height so the sheet never shrinks/flickers between states */}
-      <div className="min-h-[296px] flex flex-col">
+      <div data-eos-id="src/components/message-actions-sheet.tsx#1" className="min-h-[296px] flex flex-col">
         {confirmingDelete ? (
           /* ── Delete confirmation view ── */
-          <div className="flex flex-1 flex-col items-center px-5 pb-4 pt-2 text-center">
-            <div
+          <div data-eos-id="src/components/message-actions-sheet.tsx#2" className="flex flex-1 flex-col items-center px-5 pb-4 pt-2 text-center">
+            <div data-eos-id="src/components/message-actions-sheet.tsx#3"
               className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-error-100"
               aria-hidden="true"
             >
-              <Trash2 size={24} className="text-error-600" />
+              <Trash2 data-eos-id="src/components/message-actions-sheet.tsx#4" size={24} className="text-error-600" />
             </div>
 
-            <h3 className="font-heading text-lg font-semibold text-neutral-900">
+            <h3 data-eos-id="src/components/message-actions-sheet.tsx#5" className="font-heading text-lg font-semibold text-neutral-900">
               Delete this message?
             </h3>
 
-            <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+            <p data-eos-id="src/components/message-actions-sheet.tsx#6" className="mt-2 text-sm leading-relaxed text-neutral-500">
               This message will be permanently removed for everyone in the chat.
             </p>
 
-            <div className="mt-6 flex w-full flex-col gap-2">
-              <Button
+            <div data-eos-id="src/components/message-actions-sheet.tsx#7" className="mt-6 flex w-full flex-col gap-2">
+              <Button data-eos-id="src/components/message-actions-sheet.tsx#8"
                 variant="danger"
                 fullWidth
                 onClick={() => {
@@ -115,7 +115,7 @@ export function MessageActionsSheet({
               >
                 Delete Message
               </Button>
-              <Button
+              <Button data-eos-id="src/components/message-actions-sheet.tsx#9"
                 variant="ghost"
                 fullWidth
                 onClick={() => setConfirmingDelete(false)}
@@ -127,12 +127,12 @@ export function MessageActionsSheet({
           </div>
         ) : (
           /* ── Actions list view ── */
-          <div className="space-y-1 pb-2">
+          <div data-eos-id="src/components/message-actions-sheet.tsx#10" className="space-y-1 pb-2">
             {/* React row (collective only). 1.8.5 polish (10 May 2026):
                 replaces the always-visible reaction picker that used to sit
                 under every message bubble. Tapping toggles + closes. */}
             {onReact && (
-              <div
+              <div data-eos-id="src/components/message-actions-sheet.tsx#11"
                 className="mx-1 mb-2 flex items-center justify-around rounded-md bg-neutral-50 px-2 py-2 ring-1 ring-neutral-100"
                 role="group"
                 aria-label="React with emoji"
@@ -140,7 +140,7 @@ export function MessageActionsSheet({
                 {REACTION_EMOJIS.map((emoji) => {
                   const isActive = activeReactions?.includes(emoji) ?? false
                   return (
-                    <button
+                    <button data-eos-id="src/components/message-actions-sheet.tsx#12"
                       key={emoji}
                       type="button"
                       onClick={() => {
@@ -170,44 +170,44 @@ export function MessageActionsSheet({
               </div>
             )}
 
-            <button
+            <button data-eos-id="src/components/message-actions-sheet.tsx#13"
               type="button"
               onClick={onReply}
               className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
             >
-              <Reply size={18} className="text-neutral-400" />
+              <Reply data-eos-id="src/components/message-actions-sheet.tsx#14" size={18} className="text-neutral-400" />
               Reply
             </button>
 
             {onEdit && isOwnMessage && message.content && message.created_at && canEdit(message.created_at) && (
-              <button
+              <button data-eos-id="src/components/message-actions-sheet.tsx#15"
                 type="button"
                 onClick={onEdit}
                 className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
-                <Pencil size={18} className="text-neutral-400" />
+                <Pencil data-eos-id="src/components/message-actions-sheet.tsx#16" size={18} className="text-neutral-400" />
                 Edit message
               </button>
             )}
 
             {onPin && isModerator && (
-              <button
+              <button data-eos-id="src/components/message-actions-sheet.tsx#17" data-eos-var="message.is_pinned" data-eos-var-label="Is pinned" data-eos-var-scope="prop"
                 type="button"
                 onClick={onPin}
                 className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
-                <Pin size={18} className="text-neutral-400" />
+                <Pin data-eos-id="src/components/message-actions-sheet.tsx#18" size={18} className="text-neutral-400" />
                 {message.is_pinned ? 'Unpin message' : 'Pin message'}
               </button>
             )}
 
             {canDelete && (
-              <button
+              <button data-eos-id="src/components/message-actions-sheet.tsx#19"
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
                 className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
               >
-                <Trash2 size={18} />
+                <Trash2 data-eos-id="src/components/message-actions-sheet.tsx#20" size={18} />
                 Delete message
               </button>
             )}
@@ -215,26 +215,26 @@ export function MessageActionsSheet({
             {/* ── Report & Block (only for other users' messages) ── */}
             {!isOwnMessage && (
               <>
-                <div className="mx-4 my-1 border-t border-neutral-100" />
+                <div data-eos-id="src/components/message-actions-sheet.tsx#21" className="mx-4 my-1 border-t border-neutral-100" />
 
                 {onReport && (
-                  <button
+                  <button data-eos-id="src/components/message-actions-sheet.tsx#22"
                     type="button"
                     onClick={onReport}
                     className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-warning-700 hover:bg-warning-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                   >
-                    <Flag size={18} />
+                    <Flag data-eos-id="src/components/message-actions-sheet.tsx#23" size={18} />
                     Report message
                   </button>
                 )}
 
                 {onBlockUser && (
-                  <button
+                  <button data-eos-id="src/components/message-actions-sheet.tsx#24"
                     type="button"
                     onClick={onBlockUser}
                     className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-error-600 hover:bg-error-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
                   >
-                    <ShieldOff size={18} />
+                    <ShieldOff data-eos-id="src/components/message-actions-sheet.tsx#25" size={18} />
                     Block user
                   </button>
                 )}
