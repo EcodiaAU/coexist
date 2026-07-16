@@ -55,7 +55,7 @@ function LinearProgress({
   const clamped = Math.max(0, Math.min(100, value))
 
   return (
-    <div data-eos-id="src/components/progress-bar.tsx#0" className={cn('w-full', className)}>
+    <div data-eos-id="src/components/progress-bar.tsx#0" data-eos-v="2" className={cn('w-full', className)}>
       {(showLabel || label) && (
         <div data-eos-id="src/components/progress-bar.tsx#1" className="flex items-center justify-between mb-1.5">
           {label && (
