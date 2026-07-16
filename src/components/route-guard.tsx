@@ -17,7 +17,7 @@ type CollectiveRole = Database['public']['Enums']['collective_role']
 
 function GuardSpinner() {
   return (
-    <div data-eos-id="src/components/route-guard.tsx#0" className="min-h-dvh bg-white flex items-center justify-center">
+    <div data-eos-id="src/components/route-guard.tsx#0" data-eos-v="2" className="min-h-dvh bg-white flex items-center justify-center">
       <div data-eos-id="src/components/route-guard.tsx#1" className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
     </div>
   )
