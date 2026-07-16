@@ -38,7 +38,7 @@ export function WaveTransition({
   const cfg = SIZE_CONFIG[size]
 
   return (
-    <div data-eos-id="src/components/wave-transition.tsx#0"
+    <div data-eos-id="src/components/wave-transition.tsx#0" data-eos-v="2"
       className={cn(
         position === 'bottom'
           ? 'absolute bottom-0 left-0 right-0 z-20'
