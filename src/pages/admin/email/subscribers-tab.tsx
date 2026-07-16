@@ -31,9 +31,9 @@ function SubscriberAvatar({ url, name }: { url: string | null | undefined; name:
   const [failed, setFailed] = useState(false)
   const showImg = !!url && !failed
   return (
-    <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100 shrink-0 overflow-hidden">
+    <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#0" className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100 shrink-0 overflow-hidden">
       {showImg ? (
-        <img
+        <img data-eos-id="src/pages/admin/email/subscribers-tab.tsx#1"
           src={url ?? ''}
           alt=""
           loading="lazy"
@@ -43,7 +43,7 @@ function SubscriberAvatar({ url, name }: { url: string | null | undefined; name:
           onError={() => setFailed(true)}
         />
       ) : (
-        <span className="text-xs font-semibold text-primary-700 tabular-nums">
+        <span data-eos-id="src/pages/admin/email/subscribers-tab.tsx#2" className="text-xs font-semibold text-primary-700 tabular-nums">
           {initialsOf(name)}
         </span>
       )}
@@ -126,12 +126,12 @@ function AssignTagsSheet({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} snapPoints={[0.5]}>
-      <h2 className="font-heading text-lg font-semibold text-neutral-900 mb-1">Manage Tags</h2>
-      <p className="text-sm text-neutral-400 mb-4">{profileName}</p>
-      <div className="flex flex-wrap gap-2 mb-6">
+    <BottomSheet data-eos-id="src/pages/admin/email/subscribers-tab.tsx#3" open={open} onClose={onClose} snapPoints={[0.5]}>
+      <h2 data-eos-id="src/pages/admin/email/subscribers-tab.tsx#4" className="font-heading text-lg font-semibold text-neutral-900 mb-1">Manage Tags</h2>
+      <p data-eos-id="src/pages/admin/email/subscribers-tab.tsx#5" className="text-sm text-neutral-400 mb-4">{profileName}</p>
+      <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#6" className="flex flex-wrap gap-2 mb-6">
         {allTags?.map((tag) => (
-          <button
+          <button data-eos-id="src/pages/admin/email/subscribers-tab.tsx#7" data-eos-var="tag.name" data-eos-var-label="Name" data-eos-var-scope="item"
             key={tag.id}
             onClick={() => toggle(tag.id)}
             className={cn(
@@ -145,12 +145,12 @@ function AssignTagsSheet({
               color: tag.colour,
             }}
           >
-            {selectedIds.has(tag.id) && <CheckCircle2 size={12} className="mr-1" />}
+            {selectedIds.has(tag.id) && <CheckCircle2 data-eos-id="src/pages/admin/email/subscribers-tab.tsx#8" size={12} className="mr-1" />}
             {tag.name}
           </button>
-        )) ?? <p className="text-sm text-neutral-400">No tags available</p>}
+        )) ?? <p data-eos-id="src/pages/admin/email/subscribers-tab.tsx#9" className="text-sm text-neutral-400">No tags available</p>}
       </div>
-      <Button variant="primary" fullWidth loading={saving} onClick={handleSave}>
+      <Button data-eos-id="src/pages/admin/email/subscribers-tab.tsx#10" variant="primary" fullWidth loading={saving} onClick={handleSave}>
         Save Tags
       </Button>
     </BottomSheet>
@@ -204,28 +204,28 @@ export function SubscribersTab() {
   return (
     <>
       {/* Auto-sync bar */}
-      <div className="flex items-center justify-between gap-3 mb-4 rounded-sm bg-white border border-neutral-100 p-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-neutral-700">Auto-tagging</p>
-          <p className="text-[11px] text-neutral-400">
+      <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#11" className="flex items-center justify-between gap-3 mb-4 rounded-sm bg-white border border-neutral-100 p-3">
+        <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#12" className="flex-1 min-w-0">
+          <p data-eos-id="src/pages/admin/email/subscribers-tab.tsx#13" className="text-xs font-semibold text-neutral-700">Auto-tagging</p>
+          <p data-eos-id="src/pages/admin/email/subscribers-tab.tsx#14" className="text-[11px] text-neutral-400">
             Syncs tags from onboarding interests, collectives, tiers, attendance, and location
           </p>
         </div>
-        <Button
+        <Button data-eos-id="src/pages/admin/email/subscribers-tab.tsx#15"
           variant="secondary"
           size="sm"
           onClick={handleSyncTags}
           loading={syncing}
-          icon={<RefreshCw size={13} className={syncing ? 'animate-spin' : ''} />}
+          icon={<RefreshCw data-eos-id="src/pages/admin/email/subscribers-tab.tsx#16" size={13} className={syncing ? 'animate-spin' : ''} />}
         >
           Sync Now
         </Button>
       </div>
 
-      <div className="flex gap-2 mb-4">
-        <SearchBar value={search} onChange={setSearch} placeholder="Search subscribers..." compact className="flex-1" />
+      <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#17" className="flex gap-2 mb-4">
+        <SearchBar data-eos-id="src/pages/admin/email/subscribers-tab.tsx#18" value={search} onChange={setSearch} placeholder="Search subscribers..." compact className="flex-1" />
         {tags && tags.length > 0 && (
-          <Dropdown
+          <Dropdown data-eos-id="src/pages/admin/email/subscribers-tab.tsx#19"
             options={[
               { value: '', label: 'All Tags' },
               ...tags.map((t) => ({ value: t.id, label: t.name })),
@@ -237,55 +237,55 @@ export function SubscribersTab() {
         )}
       </div>
 
-      <div className="flex gap-2 mb-4">
-        <div className="flex-1 rounded-sm bg-success-50 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-success-600">Opted In</p>
-          <p className="text-lg font-bold text-success-700 tabular-nums">{optedIn.length}</p>
+      <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#20" className="flex gap-2 mb-4">
+        <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#21" className="flex-1 rounded-sm bg-success-50 p-3">
+          <p data-eos-id="src/pages/admin/email/subscribers-tab.tsx#22" className="text-[11px] font-semibold uppercase tracking-wider text-success-600">Opted In</p>
+          <p data-eos-id="src/pages/admin/email/subscribers-tab.tsx#23" className="text-lg font-bold text-success-700 tabular-nums">{optedIn.length}</p>
         </div>
-        <div className="flex-1 rounded-sm bg-neutral-50 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Opted Out</p>
-          <p className="text-lg font-bold text-neutral-600 tabular-nums">{optedOut.length}</p>
+        <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#24" className="flex-1 rounded-sm bg-neutral-50 p-3">
+          <p data-eos-id="src/pages/admin/email/subscribers-tab.tsx#25" className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Opted Out</p>
+          <p data-eos-id="src/pages/admin/email/subscribers-tab.tsx#26" className="text-lg font-bold text-neutral-600 tabular-nums">{optedOut.length}</p>
         </div>
       </div>
 
       {showLoading ? (
-        <Skeleton variant="list-item" count={8} />
+        <Skeleton data-eos-id="src/pages/admin/email/subscribers-tab.tsx#27" variant="list-item" count={8} />
       ) : !subscribers?.length ? (
-        <EmptyState
+        <EmptyState data-eos-id="src/pages/admin/email/subscribers-tab.tsx#28"
           illustration="empty"
           title="No subscribers found"
           description={search ? 'Try a different search term' : 'Users who sign up will appear here'}
         />
       ) : (
-        <StaggeredList className="space-y-1">
+        <StaggeredList data-eos-id="src/pages/admin/email/subscribers-tab.tsx#29" className="space-y-1">
           {subscribers.map((sub) => (
-            <StaggeredItem key={sub.id} className="flex items-center gap-3 p-3 rounded-sm bg-white shadow-sm">
-              <SubscriberAvatar url={sub.avatar_url} name={sub.display_name} />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-neutral-900 truncate">
+            <StaggeredItem data-eos-id="src/pages/admin/email/subscribers-tab.tsx#30" key={sub.id} className="flex items-center gap-3 p-3 rounded-sm bg-white shadow-sm">
+              <SubscriberAvatar data-eos-id="src/pages/admin/email/subscribers-tab.tsx#31" url={sub.avatar_url} name={sub.display_name} />
+              <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#32" className="flex-1 min-w-0">
+                <p data-eos-id="src/pages/admin/email/subscribers-tab.tsx#33" data-eos-var="sub.display_name" data-eos-var-label="Display name" data-eos-var-scope="item" className="text-sm font-medium text-neutral-900 truncate">
                   {sub.display_name || 'Anonymous'}
                 </p>
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#34" className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   {sub.location && (
-                    <span className="flex items-center gap-0.5 text-[11px] text-neutral-400">
-                      <MapPin size={9} />{sub.location}
+                    <span data-eos-id="src/pages/admin/email/subscribers-tab.tsx#35" data-eos-var="sub.location" data-eos-var-label="Location" data-eos-var-scope="item" className="flex items-center gap-0.5 text-[11px] text-neutral-400">
+                      <MapPin data-eos-id="src/pages/admin/email/subscribers-tab.tsx#36" size={9} />{sub.location}
                     </span>
                   )}
                   {sub.marketing_opt_in === false && (
-                    <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
+                    <span data-eos-id="src/pages/admin/email/subscribers-tab.tsx#37" className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
                       Opted out
                     </span>
                   )}
                 </div>
                 {sub.tags?.length > 0 && (
-                  <div className="flex items-center gap-1 mt-1 flex-wrap">
+                  <div data-eos-id="src/pages/admin/email/subscribers-tab.tsx#38" className="flex items-center gap-1 mt-1 flex-wrap">
                     {sub.tags.map((tag: EmailTag) => (
-                      <TagPill key={tag.id} tag={tag} size="xs" />
+                      <TagPill data-eos-id="src/pages/admin/email/subscribers-tab.tsx#39" key={tag.id} tag={tag} size="xs" />
                     ))}
                   </div>
                 )}
               </div>
-              <button
+              <button data-eos-id="src/pages/admin/email/subscribers-tab.tsx#40"
                 onClick={() => setTaggingProfile({
                   id: sub.id,
                   name: sub.display_name || 'User',
@@ -294,7 +294,7 @@ export function SubscribersTab() {
                 className="flex items-center justify-center min-w-11 min-h-11 rounded-sm text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600 transition-colors cursor-pointer shrink-0"
                 aria-label="Manage tags"
               >
-                <Tag size={14} />
+                <Tag data-eos-id="src/pages/admin/email/subscribers-tab.tsx#41" size={14} />
               </button>
             </StaggeredItem>
           ))}
@@ -302,7 +302,7 @@ export function SubscribersTab() {
       )}
 
       {taggingProfile && (
-        <AssignTagsSheet
+        <AssignTagsSheet data-eos-id="src/pages/admin/email/subscribers-tab.tsx#42"
           open={!!taggingProfile}
           onClose={() => setTaggingProfile(null)}
           profileId={taggingProfile.id}
