@@ -10,7 +10,7 @@ export default function WelcomePage() {
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <div data-eos-id="src/pages/auth/welcome.tsx#0" className="min-h-dvh flex flex-col bg-white">
+    <div data-eos-id="src/pages/auth/welcome.tsx#0" data-eos-v="2" className="min-h-dvh flex flex-col bg-white">
       <OGMeta data-eos-id="src/pages/auth/welcome.tsx#1"
         title="Welcome"
         description="Co-Exist is Australia's youth conservation platform. Join local tree planting, beach cleanups, habitat restoration events, and connect with conservation collectives near you."
