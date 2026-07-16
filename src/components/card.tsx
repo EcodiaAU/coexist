@@ -26,16 +26,16 @@ import { OptimizedImage } from './optimized-image'
 
 /** Map activity types to their watermark Lucide icon */
 const ACTIVITY_WATERMARK_ICONS: Record<string, ReactNode> = {
-  clean_up:               <Waves size={72} strokeWidth={1} />,
-  tree_planting:           <TreePine size={72} strokeWidth={1} />,
-  ecosystem_restoration:   <Sprout size={72} strokeWidth={1} />,
-  nature_hike:             <Compass size={72} strokeWidth={1} />,
-  camp_out:                <Bird size={72} strokeWidth={1} />,
-  spotlighting:            <Flower2 size={72} strokeWidth={1} />,
-  other:                   <Leaf size={72} strokeWidth={1} />,
+  clean_up:               <Waves data-eos-id="src/components/card.tsx#0" size={72} strokeWidth={1} />,
+  tree_planting:           <TreePine data-eos-id="src/components/card.tsx#1" size={72} strokeWidth={1} />,
+  ecosystem_restoration:   <Sprout data-eos-id="src/components/card.tsx#2" size={72} strokeWidth={1} />,
+  nature_hike:             <Compass data-eos-id="src/components/card.tsx#3" size={72} strokeWidth={1} />,
+  camp_out:                <Bird data-eos-id="src/components/card.tsx#4" size={72} strokeWidth={1} />,
+  spotlighting:            <Flower2 data-eos-id="src/components/card.tsx#5" size={72} strokeWidth={1} />,
+  other:                   <Leaf data-eos-id="src/components/card.tsx#6" size={72} strokeWidth={1} />,
 }
 
-const DEFAULT_WATERMARK = <Leaf size={72} strokeWidth={1} />
+const DEFAULT_WATERMARK = <Leaf data-eos-id="src/components/card.tsx#7" size={72} strokeWidth={1} />
 
 export function getWatermark(activityType?: string): ReactNode {
   if (!activityType) return DEFAULT_WATERMARK
@@ -104,8 +104,8 @@ const CardRoot = forwardRef<HTMLDivElement, CardRootProps>(function CardRoot(
       : null
 
   return (
-    <CardContext.Provider value={{ variant }}>
-      <motion.div
+    <CardContext.Provider data-eos-id="src/components/card.tsx#8" value={{ variant }}>
+      <motion.div data-eos-id="src/components/card.tsx#9"
         ref={ref}
         role={isInteractive ? 'button' : 'article'}
         tabIndex={isInteractive ? 0 : undefined}
@@ -137,7 +137,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardRootProps>(function CardRoot(
       >
         {children}
         {watermarkIcon && (
-          <div
+          <div data-eos-id="src/components/card.tsx#10"
             className="absolute -bottom-2 -right-2 opacity-[0.06] text-neutral-800 pointer-events-none"
             aria-hidden="true"
           >
@@ -176,8 +176,8 @@ function CardImage({
   const hasGradient = variant === 'event'
 
   return (
-    <div className={cn('relative w-full overflow-hidden', className)} style={{ aspectRatio }}>
-      <OptimizedImage
+    <div data-eos-id="src/components/card.tsx#11" className={cn('relative w-full overflow-hidden', className)} style={{ aspectRatio }}>
+      <OptimizedImage data-eos-id="src/components/card.tsx#12"
         src={src}
         alt={alt}
         aspectRatio={aspectRatio}
@@ -186,7 +186,7 @@ function CardImage({
         imgStyle={coverImagePositionStyle(positionX, positionY)}
       />
       {hasGradient && (
-        <div
+        <div data-eos-id="src/components/card.tsx#13"
           className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"
           aria-hidden="true"
         />
@@ -228,8 +228,8 @@ function CardOverlay({
     : 'bg-gradient-to-t from-black/65 via-black/30 to-transparent'
 
   return (
-    <div className={cn('relative w-full overflow-hidden', className)} style={{ aspectRatio }}>
-      <OptimizedImage
+    <div data-eos-id="src/components/card.tsx#14" className={cn('relative w-full overflow-hidden', className)} style={{ aspectRatio }}>
+      <OptimizedImage data-eos-id="src/components/card.tsx#15"
         src={src}
         alt={alt}
         aspectRatio={aspectRatio}
@@ -237,8 +237,8 @@ function CardOverlay({
         className="absolute inset-0"
         imgStyle={coverImagePositionStyle(positionX, positionY)}
       />
-      <div className={cn('absolute inset-0', gradientClass)} aria-hidden="true" />
-      <div className="absolute inset-0 flex flex-col justify-end p-4">
+      <div data-eos-id="src/components/card.tsx#16" className={cn('absolute inset-0', gradientClass)} aria-hidden="true" />
+      <div data-eos-id="src/components/card.tsx#17" className="absolute inset-0 flex flex-col justify-end p-4">
         {children}
       </div>
     </div>
@@ -268,7 +268,7 @@ function CardBadge({
   className,
 }: CardBadgeProps) {
   return (
-    <span
+    <span data-eos-id="src/components/card.tsx#18"
       className={cn(
         'absolute z-10',
         badgePositionMap[position],
@@ -290,7 +290,7 @@ interface CardContentProps {
 }
 
 function CardContent({ children, className }: CardContentProps) {
-  return <div className={cn('p-4', className)}>{children}</div>
+  return <div data-eos-id="src/components/card.tsx#19" className={cn('p-4', className)}>{children}</div>
 }
 
 /* ------------------------------------------------------------------ */
@@ -305,7 +305,7 @@ interface CardTitleProps {
 
 function CardTitle({ children, as: Tag = 'h3', className }: CardTitleProps) {
   return (
-    <Tag
+    <Tag data-eos-id="src/components/card.tsx#20"
       className={cn(
         'font-heading font-semibold text-neutral-900 leading-tight',
         className,
@@ -327,7 +327,7 @@ interface CardMetaProps {
 
 function CardMeta({ children, className }: CardMetaProps) {
   return (
-    <p className={cn('text-caption text-neutral-500 mt-1', className)}>
+    <p data-eos-id="src/components/card.tsx#21" className={cn('text-caption text-neutral-500 mt-1', className)}>
       {children}
     </p>
   )
@@ -349,7 +349,7 @@ function CardSkeleton({
   className,
 }: CardSkeletonProps) {
   return (
-    <div
+    <div data-eos-id="src/components/card.tsx#22"
       role="status"
       aria-label="Loading card"
       className={cn(
@@ -358,11 +358,11 @@ function CardSkeleton({
       )}
     >
       {hasImage && (
-        <div className="w-full bg-neutral-100" style={{ aspectRatio: '16/9' }} />
+        <div data-eos-id="src/components/card.tsx#23" className="w-full bg-neutral-100" style={{ aspectRatio: '16/9' }} />
       )}
-      <div className="p-4 space-y-2.5">
+      <div data-eos-id="src/components/card.tsx#24" className="p-4 space-y-2.5">
         {Array.from({ length: lines }).map((_, i) => (
-          <div
+          <div data-eos-id="src/components/card.tsx#25"
             key={i}
             className={cn(
               'h-3.5 bg-neutral-100 rounded',
