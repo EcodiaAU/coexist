@@ -127,7 +127,7 @@ export function TransferTicketSheet({
     : `All ${liveTicketCount ?? 0} ticket holders`
 
   return (
-    <BottomSheet data-eos-id="src/components/transfer-ticket-sheet.tsx#0" open={open} onClose={close} snapPoints={[0.85]}>
+    <BottomSheet data-eos-id="src/components/transfer-ticket-sheet.tsx#0" data-eos-v="2" open={open} onClose={close} snapPoints={[0.85]}>
       <div data-eos-id="src/components/transfer-ticket-sheet.tsx#1" className="space-y-5 pb-2">
         <div data-eos-id="src/components/transfer-ticket-sheet.tsx#2" className="flex items-center gap-2">
           <ArrowRightLeft data-eos-id="src/components/transfer-ticket-sheet.tsx#3" size={18} className="text-primary-500" />
