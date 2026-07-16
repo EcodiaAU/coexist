@@ -72,27 +72,27 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, onClo
   if (!open) return null
 
   return createPortal(
-    <div
+    <div data-eos-id="src/components/campout-requirements-modal.tsx#0"
       className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="campout-reqs-title"
     >
-      <div className="fixed inset-0 bg-black/60" aria-hidden="true" onClick={saving ? undefined : onClose} />
+      <div data-eos-id="src/components/campout-requirements-modal.tsx#1" className="fixed inset-0 bg-black/60" aria-hidden="true" onClick={saving ? undefined : onClose} />
 
-      <div
+      <div data-eos-id="src/components/campout-requirements-modal.tsx#2"
         className="relative w-full sm:max-w-md max-h-full overflow-y-auto bg-surface-0 rounded-t-md sm:rounded-md shadow-sm flex flex-col"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.5rem)' }}
       >
-        <div className="px-6 pt-7 pb-6 space-y-5">
-          <div className="flex flex-col items-center text-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
-              <Tent size={22} className="text-primary-800" />
+        <div data-eos-id="src/components/campout-requirements-modal.tsx#3" className="px-6 pt-7 pb-6 space-y-5">
+          <div data-eos-id="src/components/campout-requirements-modal.tsx#4" className="flex flex-col items-center text-center gap-3">
+            <div data-eos-id="src/components/campout-requirements-modal.tsx#5" className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
+              <Tent data-eos-id="src/components/campout-requirements-modal.tsx#6" size={22} className="text-primary-800" />
             </div>
-            <h2 id="campout-reqs-title" className="font-heading text-xl font-bold text-neutral-900">
+            <h2 data-eos-id="src/components/campout-requirements-modal.tsx#7" id="campout-reqs-title" className="font-heading text-xl font-bold text-neutral-900">
               Before you book this camp-out
             </h2>
-            <p className="text-sm text-neutral-500 leading-relaxed">
+            <p data-eos-id="src/components/campout-requirements-modal.tsx#8" className="text-sm text-neutral-500 leading-relaxed">
               Camp-outs are catered and remote, so our leaders need your dietary
               and medical/allergy info before you book. Only event leaders can
               see it.
@@ -100,8 +100,8 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, onClo
           </div>
 
           {needDietary && (
-            <div className="space-y-1.5">
-              <Input
+            <div data-eos-id="src/components/campout-requirements-modal.tsx#9" className="space-y-1.5">
+              <Input data-eos-id="src/components/campout-requirements-modal.tsx#10"
                 type="textarea"
                 label="Dietary requirements"
                 value={dietary}
@@ -110,7 +110,7 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, onClo
                 rows={2}
                 maxLength={500}
               />
-              <button
+              <button data-eos-id="src/components/campout-requirements-modal.tsx#11"
                 type="button"
                 disabled={saving}
                 onClick={() => { setDietary(NO_DIETARY_SENTINEL); if (error) setError(null) }}
@@ -122,8 +122,8 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, onClo
           )}
 
           {needMedical && (
-            <div className="space-y-1.5">
-              <Input
+            <div data-eos-id="src/components/campout-requirements-modal.tsx#12" className="space-y-1.5">
+              <Input data-eos-id="src/components/campout-requirements-modal.tsx#13"
                 type="textarea"
                 label="Medical / allergy info"
                 value={medical}
@@ -132,7 +132,7 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, onClo
                 rows={2}
                 maxLength={500}
               />
-              <button
+              <button data-eos-id="src/components/campout-requirements-modal.tsx#14"
                 type="button"
                 disabled={saving}
                 onClick={() => { setMedical(NO_MEDICAL_SENTINEL); if (error) setError(null) }}
@@ -143,10 +143,10 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, onClo
             </div>
           )}
 
-          {error && <p className="text-xs text-error-500">{error}</p>}
+          {error && <p data-eos-id="src/components/campout-requirements-modal.tsx#15" className="text-xs text-error-500">{error}</p>}
 
-          <div className="space-y-2.5">
-            <Button
+          <div data-eos-id="src/components/campout-requirements-modal.tsx#16" className="space-y-2.5">
+            <Button data-eos-id="src/components/campout-requirements-modal.tsx#17"
               variant="primary"
               fullWidth
               loading={saving}
@@ -154,7 +154,7 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, onClo
             >
               Save and continue to payment
             </Button>
-            <Button
+            <Button data-eos-id="src/components/campout-requirements-modal.tsx#18"
               variant="ghost"
               fullWidth
               disabled={saving}
