@@ -48,13 +48,13 @@ export function ProgressiveImage({
     : src
 
   return (
-    <div
+    <div data-eos-id="src/components/progressive-image.tsx#0"
       className={cn('relative overflow-hidden bg-white', className)}
       style={{ aspectRatio }}
     >
       {/* Placeholder / blur layer */}
       {autoPlaceholder && !loaded && !error && (
-        <img
+        <img data-eos-id="src/components/progressive-image.tsx#1"
           src={autoPlaceholder}
           alt=""
           aria-hidden="true"
@@ -64,7 +64,7 @@ export function ProgressiveImage({
 
       {/* Shimmer while loading (only if no placeholder available) */}
       {!loaded && !error && !autoPlaceholder && (
-        <div
+        <div data-eos-id="src/components/progressive-image.tsx#2"
           className={cn(
             'absolute inset-0 bg-white',
             'before:absolute before:inset-0',
@@ -78,7 +78,7 @@ export function ProgressiveImage({
 
       {/* Full image */}
       {!error && (
-        <motion.img
+        <motion.img data-eos-id="src/components/progressive-image.tsx#3"
           ref={imgRef}
           src={imgSrc}
           srcSet={srcSet || undefined}
@@ -100,8 +100,8 @@ export function ProgressiveImage({
 
       {/* Error fallback */}
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white">
-          <span className="text-sm text-neutral-500">Image unavailable</span>
+        <div data-eos-id="src/components/progressive-image.tsx#4" className="absolute inset-0 flex items-center justify-center bg-white">
+          <span data-eos-id="src/components/progressive-image.tsx#5" className="text-sm text-neutral-500">Image unavailable</span>
         </div>
       )}
     </div>
