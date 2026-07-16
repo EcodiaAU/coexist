@@ -227,7 +227,7 @@ if (!isEngineSupported()) {
 
   try {
     createRoot(document.getElementById('root')!).render(
-      <StrictMode data-eos-id="src/main.tsx#0">
+      <StrictMode data-eos-id="src/main.tsx#0" data-eos-v="2">
         <HelmetProvider data-eos-id="src/main.tsx#1">
           <QueryClientProvider data-eos-id="src/main.tsx#2" client={queryClient}>
             <BrowserRouter data-eos-id="src/main.tsx#3">
