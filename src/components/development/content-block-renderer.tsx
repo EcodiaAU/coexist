@@ -13,7 +13,7 @@ interface ContentBlockRendererProps {
   className?: string
 }
 
-const BlockFallback = () => <div data-eos-id="src/components/development/content-block-renderer.tsx#0" className="h-24 animate-pulse rounded-sm bg-white" />
+const BlockFallback = () => <div data-eos-id="src/components/development/content-block-renderer.tsx#0" data-eos-v="2" className="h-24 animate-pulse rounded-sm bg-white" />
 
 export function ContentBlockRenderer({ block, className }: ContentBlockRendererProps) {
   return (
