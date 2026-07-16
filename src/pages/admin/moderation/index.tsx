@@ -136,7 +136,7 @@ function ReportCard({
 
   return (
     <>
-      <motion.div data-eos-id="src/pages/admin/moderation/index.tsx#0"
+      <motion.div data-eos-id="src/pages/admin/moderation/index.tsx#0" data-eos-v="2"
         initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-md shadow-sm overflow-hidden"
