@@ -76,7 +76,7 @@ function ChatTextOrImageBubble({
   const signed = useSignedChatImage(imagePath ?? null)
   const photo = imagePath ? signed.url : (msg.image_url ?? undefined)
   return (
-    <ChatBubble data-eos-id="src/pages/chat/chat-message-list.tsx#0"
+    <ChatBubble data-eos-id="src/pages/chat/chat-message-list.tsx#0" data-eos-v="2"
       message={msg.content ?? ''}
       sent={sent}
       timestamp={new Date(msg.created_at!)}
@@ -337,7 +337,7 @@ function InlineEventPhotos({
             {preview.map((p, i) => (
               <div data-eos-id="src/pages/chat/chat-message-list.tsx#14" key={p.id} className="relative aspect-square bg-neutral-100">
                 {p.url && (
-                  <img data-eos-id="src/pages/chat/chat-message-list.tsx#15"
+                  <img data-eos-src="dynamic" data-eos-src-label="Url" data-eos-id="src/pages/chat/chat-message-list.tsx#15"
                     src={p.url}
                     alt=""
                     loading="lazy"
