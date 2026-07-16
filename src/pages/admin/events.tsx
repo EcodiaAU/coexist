@@ -82,7 +82,7 @@ function CountdownBadge({ dateStr }: { dateStr: string }) {
   if (days < 0) return null
   if (days === 0) {
     return (
-      <span data-eos-id="src/pages/admin/events.tsx#0" className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-success-100 text-success-700 animate-pulse">
+      <span data-eos-id="src/pages/admin/events.tsx#0" data-eos-v="2" className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-success-100 text-success-700 animate-pulse">
         <Flame data-eos-id="src/pages/admin/events.tsx#1" size={10} /> Today
       </span>
     )
@@ -135,7 +135,7 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
         {/* Image header */}
         <div data-eos-id="src/pages/admin/events.tsx#7" className="relative h-28 bg-primary-100">
           {event.cover_image_url ? (
-            <img data-eos-id="src/pages/admin/events.tsx#8"
+            <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/admin/events.tsx#8"
               src={event.cover_image_url}
               alt={event.title}
               className="w-full h-full object-cover"
@@ -280,7 +280,7 @@ function HottestEventSpotlight({ event }: { event: AdminEvent }) {
         {/* Image */}
         <div data-eos-id="src/pages/admin/events.tsx#50" className="relative w-24 h-24 rounded-sm overflow-hidden shrink-0 bg-neutral-200">
           {event.cover_image_url ? (
-            <img data-eos-id="src/pages/admin/events.tsx#51" src={event.cover_image_url} alt={event.title} loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+            <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/admin/events.tsx#51" src={event.cover_image_url} alt={event.title} loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
           ) : (
             <div data-eos-id="src/pages/admin/events.tsx#52" className="w-full h-full flex items-center justify-center">
               <CalendarDays data-eos-id="src/pages/admin/events.tsx#53" size={28} className="text-neutral-500" />
@@ -337,7 +337,7 @@ function PastEventRow({ event, index }: { event: AdminEvent; index: number }) {
         )}
       >
         {event.cover_image_url ? (
-          <img data-eos-id="src/pages/admin/events.tsx#64"
+          <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/admin/events.tsx#64"
             src={event.cover_image_url}
             alt={event.title}
             className="w-10 h-10 rounded-sm object-cover shrink-0"
