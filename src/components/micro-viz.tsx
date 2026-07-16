@@ -31,7 +31,7 @@ export function MiniBar({ value, max, color = 'bg-primary-500', className }: Min
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
 
   return (
-    <div data-eos-id="src/components/micro-viz.tsx#0" className={cn('h-1.5 w-full rounded-full bg-neutral-100 overflow-hidden', className)}>
+    <div data-eos-id="src/components/micro-viz.tsx#0" data-eos-v="2" className={cn('h-1.5 w-full rounded-full bg-neutral-100 overflow-hidden', className)}>
       <motion.div data-eos-id="src/components/micro-viz.tsx#1"
         className={cn('h-full rounded-full', color)}
         initial={rm ? { width: `${pct}%` } : { width: 0 }}
