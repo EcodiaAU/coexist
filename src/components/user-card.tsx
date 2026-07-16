@@ -32,7 +32,7 @@ function StatBox({
   label: string
 }) {
   return (
-    <div data-eos-id="src/components/user-card.tsx#0" className="flex flex-1 flex-col items-center gap-1 rounded-sm bg-surface-2 px-3 py-2.5">
+    <div data-eos-id="src/components/user-card.tsx#0" data-eos-v="2" className="flex flex-1 flex-col items-center gap-1 rounded-sm bg-surface-2 px-3 py-2.5">
       <span data-eos-id="src/components/user-card.tsx#1" className="text-neutral-400" aria-hidden="true">
         {icon}
       </span>
@@ -103,7 +103,7 @@ export function UserCard({
 
           {/* Avatar */}
           {avatarUrl ? (
-            <img data-eos-id="src/components/user-card.tsx#9"
+            <img data-eos-src="dynamic" data-eos-src-label="Avatar url" data-eos-id="src/components/user-card.tsx#9"
               src={avatarUrl}
               alt={`${name}'s avatar`}
               className="h-16 w-16 rounded-full object-cover ring-2 ring-neutral-100"
