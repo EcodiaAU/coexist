@@ -77,7 +77,7 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
   }
 
   return (
-    <div data-eos-id="src/pages/events/admin-attendees-export.tsx#0" className="rounded-2xl border border-neutral-100 bg-white shadow-sm overflow-hidden">
+    <div data-eos-id="src/pages/events/admin-attendees-export.tsx#0" data-eos-v="2" className="rounded-2xl border border-neutral-100 bg-white shadow-sm overflow-hidden">
       <button data-eos-id="src/pages/events/admin-attendees-export.tsx#1"
         type="button"
         onClick={() => setOpen((v) => !v)}
