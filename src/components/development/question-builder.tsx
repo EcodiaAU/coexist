@@ -21,7 +21,7 @@ import type { QuizQuestionInput, DevQuestionType } from '@/hooks/use-admin-devel
 /* ------------------------------------------------------------------ */
 
 const QUESTION_TYPES: { type: DevQuestionType; label: string; icon: React.ReactNode }[] = [
-  { type: 'multiple_choice', label: 'Multiple Choice', icon: <CircleDot data-eos-id="src/components/development/question-builder.tsx#0" size={14} /> },
+  { type: 'multiple_choice', label: 'Multiple Choice', icon: <CircleDot data-eos-id="src/components/development/question-builder.tsx#0" data-eos-v="2" size={14} /> },
   { type: 'multi_select', label: 'Multi-Select', icon: <CheckSquare data-eos-id="src/components/development/question-builder.tsx#1" size={14} /> },
   { type: 'true_false', label: 'True / False', icon: <ToggleLeft data-eos-id="src/components/development/question-builder.tsx#2" size={14} /> },
   { type: 'short_answer', label: 'Short Answer', icon: <MessageSquare data-eos-id="src/components/development/question-builder.tsx#3" size={14} /> },
