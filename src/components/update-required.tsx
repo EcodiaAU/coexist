@@ -69,7 +69,7 @@ export function UpdateRequired({
     : 'A required update is ready with the latest fixes and improvements.'
 
   return (
-    <div
+    <div data-eos-id="src/components/update-required.tsx#0"
       className={cn(
         'fixed inset-0 z-[200] flex flex-col items-center justify-center',
         'bg-white px-6 text-center',
@@ -78,17 +78,17 @@ export function UpdateRequired({
       role="alert"
       aria-label="App update required"
     >
-      <motion.div
+      <motion.div data-eos-id="src/components/update-required.tsx#1"
         className="flex flex-col items-center gap-4 max-w-sm"
         initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="font-heading text-3xl font-bold text-black tracking-tight">
+        <h1 data-eos-id="src/components/update-required.tsx#2" className="font-heading text-3xl font-bold text-black tracking-tight">
           {APP_NAME}
         </h1>
 
-        <svg
+        <svg data-eos-id="src/components/update-required.tsx#3"
           width="120"
           height="80"
           viewBox="0 0 120 80"
@@ -96,31 +96,31 @@ export function UpdateRequired({
           aria-hidden="true"
           className="my-4"
         >
-          <ellipse cx="60" cy="72" rx="50" ry="6" fill="var(--color-primary-100)" />
-          <rect x="56" y="40" width="8" height="32" rx="3" fill="var(--color-secondary-400)" />
-          <circle cx="60" cy="32" r="24" fill="var(--color-primary-300)" />
-          <circle cx="48" cy="38" r="16" fill="var(--color-primary-400)" />
-          <circle cx="72" cy="38" r="16" fill="var(--color-primary-400)" />
+          <ellipse data-eos-id="src/components/update-required.tsx#4" cx="60" cy="72" rx="50" ry="6" fill="var(--color-primary-100)" />
+          <rect data-eos-id="src/components/update-required.tsx#5" x="56" y="40" width="8" height="32" rx="3" fill="var(--color-secondary-400)" />
+          <circle data-eos-id="src/components/update-required.tsx#6" cx="60" cy="32" r="24" fill="var(--color-primary-300)" />
+          <circle data-eos-id="src/components/update-required.tsx#7" cx="48" cy="38" r="16" fill="var(--color-primary-400)" />
+          <circle data-eos-id="src/components/update-required.tsx#8" cx="72" cy="38" r="16" fill="var(--color-primary-400)" />
         </svg>
 
-        <h2 className="font-heading text-xl font-semibold text-neutral-900">
+        <h2 data-eos-id="src/components/update-required.tsx#9" className="font-heading text-xl font-semibold text-neutral-900">
           Update required
         </h2>
 
-        <p className="text-sm text-neutral-500 leading-relaxed">
+        <p data-eos-id="src/components/update-required.tsx#10" className="text-sm text-neutral-500 leading-relaxed">
           {versionTagline}
         </p>
 
         {installedVersion && (
-          <p className="text-xs text-neutral-400">
+          <p data-eos-id="src/components/update-required.tsx#11" className="text-xs text-neutral-400">
             You have v{installedVersion}
             {latestVersion ? `. Latest is v${latestVersion}.` : '.'}
           </p>
         )}
 
-        <div className="mt-4 flex flex-col gap-3 w-full">
+        <div data-eos-id="src/components/update-required.tsx#12" className="mt-4 flex flex-col gap-3 w-full">
           {(isIOS || !isNative) && (
-            <a
+            <a data-eos-href="dynamic" data-eos-href-label="Value" data-eos-href-scope="prop" data-eos-id="src/components/update-required.tsx#13"
               href={isNative ? APP_STORE_DEEP : APP_STORE_WEB}
               target={isNative ? undefined : '_blank'}
               rel="noopener noreferrer"
@@ -140,7 +140,7 @@ export function UpdateRequired({
             </a>
           )}
           {(isAndroid || !isNative) && (
-            <a
+            <a data-eos-href="dynamic" data-eos-href-label="Value" data-eos-href-scope="prop" data-eos-id="src/components/update-required.tsx#14"
               href={isNative ? PLAY_STORE_DEEP : PLAY_STORE_WEB}
               target={isNative ? undefined : '_blank'}
               rel="noopener noreferrer"
@@ -161,7 +161,7 @@ export function UpdateRequired({
           )}
         </div>
 
-        <p className="mt-2 text-xs text-neutral-400">
+        <p data-eos-id="src/components/update-required.tsx#15" className="mt-2 text-xs text-neutral-400">
           The app can't be used until the update is installed.
         </p>
       </motion.div>
