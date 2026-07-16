@@ -132,7 +132,7 @@ export function ShareableCard({
   }, [generatePng, variant, title, subtitle])
 
   return (
-    <div data-eos-id="src/components/shareable-card.tsx#0" className={cn('flex flex-col items-center gap-4', className)}>
+    <div data-eos-id="src/components/shareable-card.tsx#0" data-eos-v="2" className={cn('flex flex-col items-center gap-4', className)}>
       {/* The card to be captured */}
       <motion.div data-eos-id="src/components/shareable-card.tsx#1"
         ref={cardRef}
@@ -171,7 +171,7 @@ export function ShareableCard({
           {/* Image or large value */}
           {imageUrl ? (
             <div data-eos-id="src/components/shareable-card.tsx#11" className="mt-4 flex justify-center">
-              <img data-eos-id="src/components/shareable-card.tsx#12"
+              <img data-eos-src="dynamic" data-eos-src-label="Image url" data-eos-id="src/components/shareable-card.tsx#12"
                 src={imageUrl}
                 alt={title}
                 className="h-24 w-24 rounded-sm object-cover shadow-sm"
