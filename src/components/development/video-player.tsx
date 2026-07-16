@@ -35,8 +35,8 @@ export function VideoPlayer({ url, provider, className }: VideoPlayerProps) {
   // Direct upload  use native <video>
   if (provider === 'upload' || (!embedUrl && !url.includes('youtu') && !url.includes('vimeo'))) {
     return (
-      <div className={cn('rounded-sm overflow-hidden bg-primary-900', className)}>
-        <video
+      <div data-eos-id="src/components/development/video-player.tsx#0" className={cn('rounded-sm overflow-hidden bg-primary-900', className)}>
+        <video data-eos-id="src/components/development/video-player.tsx#1"
           src={url}
           controls
           preload="metadata"
@@ -52,9 +52,9 @@ export function VideoPlayer({ url, provider, className }: VideoPlayerProps) {
   // Embed (YouTube / Vimeo)
   if (embedUrl) {
     return (
-      <div className={cn('rounded-sm overflow-hidden bg-primary-900', className)}>
-        <div className="relative w-full aspect-video">
-          <iframe
+      <div data-eos-id="src/components/development/video-player.tsx#2" className={cn('rounded-sm overflow-hidden bg-primary-900', className)}>
+        <div data-eos-id="src/components/development/video-player.tsx#3" className="relative w-full aspect-video">
+          <iframe data-eos-id="src/components/development/video-player.tsx#4"
             src={embedUrl}
             title="Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -68,7 +68,7 @@ export function VideoPlayer({ url, provider, className }: VideoPlayerProps) {
 
   // Fallback
   return (
-    <div className={cn('rounded-sm bg-primary-100 p-4 text-center text-sm text-primary-500', className)}>
+    <div data-eos-id="src/components/development/video-player.tsx#5" className={cn('rounded-sm bg-primary-100 p-4 text-center text-sm text-primary-500', className)}>
       Unable to load video
     </div>
   )
