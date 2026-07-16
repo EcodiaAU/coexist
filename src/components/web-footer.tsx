@@ -39,7 +39,7 @@ export function WebFooter({ className }: WebFooterProps) {
   const platform = getDevicePlatform()
 
   return (
-    <footer data-eos-id="src/components/web-footer.tsx#0"
+    <footer data-eos-id="src/components/web-footer.tsx#0" data-eos-v="2"
       className={cn(
         'bg-primary-950 text-white/70',
         'mt-auto',
@@ -51,7 +51,7 @@ export function WebFooter({ className }: WebFooterProps) {
         <div data-eos-id="src/components/web-footer.tsx#2" className="grid gap-10 md:grid-cols-3">
           {/* Brand column */}
           <div data-eos-id="src/components/web-footer.tsx#3">
-            <img data-eos-id="src/components/web-footer.tsx#4"
+            <img data-eos-src="static" data-eos-id="src/components/web-footer.tsx#4"
               src="/logos/white-wordmark.webp"
               alt={APP_NAME}
               className="h-20 w-auto"
@@ -188,12 +188,12 @@ export function WebFooter({ className }: WebFooterProps) {
         {/* Acknowledgment */}
         <div data-eos-id="src/components/web-footer.tsx#31" className="mt-10 pt-8 border-t border-primary-800">
           <div data-eos-id="src/components/web-footer.tsx#32" className="flex items-center gap-3 mb-4">
-            <img data-eos-id="src/components/web-footer.tsx#33"
+            <img data-eos-src="static" data-eos-id="src/components/web-footer.tsx#33"
               src="/img/aboriginal-peoples-flag.png"
               alt="Aboriginal Peoples flag"
               className="h-6 w-auto"
             />
-            <img data-eos-id="src/components/web-footer.tsx#34"
+            <img data-eos-src="static" data-eos-id="src/components/web-footer.tsx#34"
               src="/img/torres-strait-peoples-flag.png"
               alt="Torres Strait Islander Peoples flag"
               className="h-6 w-auto"
