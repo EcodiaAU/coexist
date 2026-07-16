@@ -35,14 +35,14 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
     // Positive empty state - reassures staff the queue is clear, and that the
     // surface exists even when there's nothing outstanding.
     return (
-      <motion.div
+      <motion.div data-eos-id="src/components/events-missing-impact-card.tsx#0"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         className="rounded-md bg-sprout-50 border border-sprout-200/50 p-4 flex items-center gap-2.5"
       >
-        <CheckCircle2 size={16} className="text-sprout-600 shrink-0" />
-        <p className="text-sm font-medium text-sprout-800">
+        <CheckCircle2 data-eos-id="src/components/events-missing-impact-card.tsx#1" size={16} className="text-sprout-600 shrink-0" />
+        <p data-eos-id="src/components/events-missing-impact-card.tsx#2" className="text-sm font-medium text-sprout-800">
           Every finished event has its impact logged. Nothing outstanding.
         </p>
       </motion.div>
@@ -50,34 +50,34 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
   }
 
   return (
-    <motion.div
+    <motion.div data-eos-id="src/components/events-missing-impact-card.tsx#3"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <div className="rounded-md bg-warning-50 border border-warning-200/50 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <AlertTriangle size={16} className="text-warning-600 shrink-0" />
-          <h3 className="text-sm font-semibold text-warning-800">
+      <div data-eos-id="src/components/events-missing-impact-card.tsx#4" className="rounded-md bg-warning-50 border border-warning-200/50 p-4 space-y-3">
+        <div data-eos-id="src/components/events-missing-impact-card.tsx#5" className="flex items-center gap-2">
+          <AlertTriangle data-eos-id="src/components/events-missing-impact-card.tsx#6" size={16} className="text-warning-600 shrink-0" />
+          <h3 data-eos-id="src/components/events-missing-impact-card.tsx#7" className="text-sm font-semibold text-warning-800">
             {count} event{count !== 1 ? 's' : ''} missing impact data
           </h3>
         </div>
-        <p className="text-xs text-warning-700">
+        <p data-eos-id="src/components/events-missing-impact-card.tsx#8" className="text-xs text-warning-700">
           These events ended in the last 30 days but no leader has logged impact yet.
         </p>
-        <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
+        <div data-eos-id="src/components/events-missing-impact-card.tsx#9" className="space-y-1.5 max-h-[240px] overflow-y-auto">
           {missingImpact!.map((e) => (
-            <div key={e.id} className="flex items-center gap-3 px-3 py-2 rounded-sm bg-white/70">
-              <Link
+            <div data-eos-id="src/components/events-missing-impact-card.tsx#10" key={e.id} className="flex items-center gap-3 px-3 py-2 rounded-sm bg-white/70">
+              <Link data-eos-id="src/components/events-missing-impact-card.tsx#11"
                 to={`/events/${e.id}/impact`}
                 className="flex-1 min-w-0 hover:opacity-80 active:scale-[0.99] transition-all"
               >
-                <p className="text-sm font-medium text-neutral-800 truncate">{e.title}</p>
-                <p className="text-[11px] text-neutral-400">
+                <p data-eos-id="src/components/events-missing-impact-card.tsx#12" data-eos-var="e.title" data-eos-var-label="Title" data-eos-var-scope="item" className="text-sm font-medium text-neutral-800 truncate">{e.title}</p>
+                <p data-eos-id="src/components/events-missing-impact-card.tsx#13" data-eos-var="e.collective_name,ACTIVITY_TYPE_LABELS.[..],e.days_since" data-eos-var-label="Collective name, ], Days since" data-eos-var-scope="item" className="text-[11px] text-neutral-400">
                   {e.collective_name ?? 'Unknown'} · {ACTIVITY_TYPE_LABELS[e.activity_type] ?? e.activity_type} · {e.days_since}d ago
                 </p>
               </Link>
-              <button
+              <button data-eos-id="src/components/events-missing-impact-card.tsx#14" data-eos-var="e.id" data-eos-var-label="Id" data-eos-var-scope="item"
                 type="button"
                 onClick={() => {
                   setNudgingEvent(e.id)
@@ -100,7 +100,7 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
               >
                 {nudgingEvent === e.id ? 'Sending...' : 'Nudge'}
               </button>
-              <span className={cn(
+              <span data-eos-id="src/components/events-missing-impact-card.tsx#15" data-eos-var="e.days_since" data-eos-var-label="Days since" data-eos-var-scope="item" className={cn(
                 'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
                 e.days_since > 7 ? 'bg-error-100 text-error-700' : e.days_since > 3 ? 'bg-warning-100 text-warning-700' : 'bg-neutral-100 text-neutral-500',
               )}>
