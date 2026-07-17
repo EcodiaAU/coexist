@@ -19,6 +19,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useReferralCode, useReferralStats } from '@/hooks/use-referral'
 import { analytics, ANALYTICS_EVENTS } from '@/lib/analytics'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
+import { isNativePlatform, isShareCancellation, shareLinkNative } from '@/lib/native-share'
 
 /* ------------------------------------------------------------------ */
 /*  Skeleton                                                           */
@@ -77,7 +78,11 @@ export default function ReferralPage() {
       url: referralLink,
     }
     try {
-      if (navigator.share) {
+      if (isNativePlatform()) {
+        // Android WebView has no navigator.share - use the native sheet.
+        await shareLinkNative(shareData)
+        analytics.track(ANALYTICS_EVENTS.REFERRAL_SHARED, { method: 'native_share' })
+      } else if (navigator.share) {
         await navigator.share(shareData)
         analytics.track(ANALYTICS_EVENTS.REFERRAL_SHARED, { method: 'native_share' })
       } else {
@@ -85,7 +90,7 @@ export default function ReferralPage() {
       }
     } catch (err) {
       // User cancelled the share dialog  not an error
-      if (err instanceof Error && err.name === 'AbortError') return
+      if (isShareCancellation(err)) return
       toast.error('Could not share link')
     }
   }

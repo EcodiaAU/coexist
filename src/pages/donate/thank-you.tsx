@@ -13,6 +13,7 @@ import { WaveTransition } from '@/components/wave-transition'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { getImpactMessage } from '@/types/donations'
+import { isNativePlatform, isShareCancellation, shareLinkNative } from '@/lib/native-share'
 
 /* ------------------------------------------------------------------ */
 /*  Animations                                                         */
@@ -149,6 +150,21 @@ export default function DonateThankYouPage() {
   const handleShare = async () => {
     const recurringLabel = isRecurring ? ' monthly' : ''
     const text = `I just donated $${amount}${recurringLabel} to Co-Exist Australia! Every dollar goes to conservation. Join me: coexistaus.org/donate`
+    if (isNativePlatform()) {
+      // Android WebView has no navigator.share - use the native sheet.
+      try {
+        await shareLinkNative({ text, url: 'https://coexistaus.org/donate' })
+      } catch (err) {
+        if (isShareCancellation(err)) return
+        try {
+          await navigator.clipboard.writeText(text)
+          toast.success('Copied to clipboard')
+        } catch {
+          toast.error('Could not share')
+        }
+      }
+      return
+    }
     if (navigator.share) {
       try {
         await navigator.share({ text, url: 'https://coexistaus.org/donate' })

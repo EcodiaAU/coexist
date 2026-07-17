@@ -2,15 +2,24 @@
  * Photo download / save helpers.
  *
  * - On web (laptop / desktop browser): triggers a regular browser download.
- * - On iOS / Android WKWebView via Capacitor: opens the native share sheet
- *   so the user can pick "Save to Photos" / "Save Image". navigator.share
- *   exists in iOS Safari + WKWebView; when files: are passed it shares the
- *   bytes directly so iOS offers Save Image inline.
+ * - On iOS / Android native (Capacitor): saves straight into the photo
+ *   library via @capacitor-community/media (see src/lib/native-share.ts).
+ *   The old navigator.share route was a silent no-op on Android (the system
+ *   WebView has no Web Share API and Capacitor has no DownloadListener, so
+ *   the <a download> fallback did nothing) - client bug, Tamika Wilton
+ *   2026-07-17. If the direct save fails we fall back to the native share
+ *   sheet so the user can still pick "Save Image" there.
  *
  * The long-press handler in the photo viewer fires saveToCameraRoll(); the
  * download button calls downloadOne / downloadMany.
  */
 import JSZip from 'jszip'
+import {
+  isNativePlatform,
+  isShareCancellation,
+  saveMediaToGallery,
+  shareBlobNative,
+} from '@/lib/native-share'
 
 function filenameFromPath(path: string, fallback = 'photo'): string {
   const cleaned = path.split('?')[0]
@@ -49,9 +58,30 @@ export async function saveToCameraRoll(
   const name = filenameFromPath(storagePath)
   const mime = mimeFromPath(storagePath)
 
-  // Try the native file-share path first (iOS / Android via WKWebView).
-  // navigator.canShare with files is the cross-browser detection. If it
-  // works the user can pick "Save Image" / "Save to Photos" from the sheet.
+  // Native app: save straight into the photo library. The media plugin
+  // downloads the remote URL natively, so no fetch->blob round trip needed.
+  if (isNativePlatform()) {
+    const kind = mime.startsWith('video/') ? 'video' : 'photo'
+    try {
+      await saveMediaToGallery(url, name, kind)
+      return
+    } catch (e) {
+      console.error('[photo-download] direct gallery save failed', e)
+      // Fall back to the native share sheet ("Save Image" lives there too).
+      try {
+        const blob = await fetchAsBlob(url)
+        await shareBlobNative(blob, name, { text: caption ?? '' })
+        return
+      } catch (shareErr) {
+        if (isShareCancellation(shareErr)) return
+        console.error('[photo-download] share-sheet fallback failed', shareErr)
+        // fall through to the browser-download path below
+      }
+    }
+  }
+
+  // Mobile-browser file share (NOT the native app - navigator.share exists
+  // in iOS Safari / Chrome for Android). Lets the user pick "Save Image".
   try {
     const blob = await fetchAsBlob(url)
     const file = new File([blob], name, { type: mime })

@@ -9,6 +9,7 @@ import { useToast } from '@/components/toast'
 import { Button } from '@/components/button'
 import { Avatar } from '@/components/avatar'
 import { saveToCameraRoll } from '@/lib/photo-download'
+import { isNativePlatform, isShareCancellation, shareLinkNative } from '@/lib/native-share'
 
 // Detect a video by storage_path extension. Keeps the schema flat.
 // eslint-disable-next-line react-refresh/only-export-components
@@ -328,12 +329,19 @@ export function PhotoCarouselLightbox({
     const url = current.url
     if (!url) return
     try {
-      if (navigator.share) {
+      if (isNativePlatform()) {
+        // Android WebView has no navigator.share - use the native sheet.
+        await shareLinkNative({ title: eventTitle, text: `From ${eventTitle} on Co-Exist`, url })
+      } else if (navigator.share) {
         await navigator.share({ title: eventTitle, text: `From ${eventTitle} on Co-Exist`, url })
       } else {
         await navigator.clipboard.writeText(url)
       }
-    } catch { /* cancelled / unsupported */ }
+    } catch (e) {
+      if (!isShareCancellation(e)) {
+        console.error('[event-photos] share failed', e)
+      }
+    }
   }
 
   async function handleSave() {

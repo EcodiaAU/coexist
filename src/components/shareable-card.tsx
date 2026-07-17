@@ -5,6 +5,12 @@ import html2canvas from 'html2canvas'
 import { Button } from '@/components/button'
 import { cn } from '@/lib/cn'
 import { APP_NAME } from '@/lib/constants'
+import {
+  isNativePlatform,
+  isShareCancellation,
+  saveBlobToGallery,
+  shareBlobNative,
+} from '@/lib/native-share'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -100,6 +106,16 @@ export function ShareableCard({
   const handleDownload = useCallback(async () => {
     const blob = await generatePng()
     if (!blob) return
+    // Native app: <a download> is a silent no-op inside the Capacitor
+    // WebView (no DownloadListener) - save to the photo library instead.
+    if (isNativePlatform()) {
+      try {
+        await saveBlobToGallery(blob, `coexist-${variant}-${Date.now()}.png`)
+      } catch (e) {
+        console.error('[shareable-card] gallery save failed', e)
+      }
+      return
+    }
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -111,6 +127,22 @@ export function ShareableCard({
   const handleShare = useCallback(async () => {
     const blob = await generatePng()
     if (!blob) return
+
+    // Native app: cache the PNG and open the OS share sheet (the Web Share
+    // API is absent in the Android WebView and activation-bound in WKWebView).
+    if (isNativePlatform()) {
+      try {
+        await shareBlobNative(blob, `coexist-${variant}.png`, {
+          title: `${title} - ${APP_NAME}`,
+          text: subtitle || title,
+        })
+      } catch (e) {
+        if (!isShareCancellation(e)) {
+          console.error('[shareable-card] native share failed', e)
+        }
+      }
+      return
+    }
 
     const file = new File([blob], `coexist-${variant}.png`, { type: 'image/png' })
 

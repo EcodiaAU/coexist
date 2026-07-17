@@ -3,6 +3,11 @@ import { motion } from 'framer-motion'
 import { Capacitor } from '@capacitor/core'
 import { Share2, Download, X, Loader2, Link2, Check } from 'lucide-react'
 import html2canvas from 'html2canvas'
+import {
+  isShareCancellation,
+  saveBlobToGallery,
+  shareBlobNative,
+} from '@/lib/native-share'
 import { BottomSheet } from './bottom-sheet'
 import { Button } from './button'
 import {
@@ -76,6 +81,8 @@ export function EventShareSheet({
   })
 
   const [busy, setBusy] = useState<ShareSize | null>(null)
+  const [savedSize, setSavedSize] = useState<ShareSize | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [linkCopied, setLinkCopied] = useState(false)
 
   // Public, no-auth event page so interested attendees (who may not have the
@@ -140,8 +147,67 @@ export function EventShareSheet({
     window.matchMedia?.('(pointer: coarse)').matches
   const preferDownload = !isNative && !isTouch
 
+  // NATIVE save: write the PNG straight into the photo library via
+  // @capacitor-community/media. This replaces the old navigator.share path,
+  // which was a silent no-op on Android (no Web Share API in the system
+  // WebView) and flaky on iOS (transient user activation expires during the
+  // 1-3s html2canvas capture). Client bug: Tamika Wilton 2026-07-17.
+  const handleNativeSave = useCallback(
+    async (size: ShareSize) => {
+      try {
+        setBusy(size)
+        setSaveError(null)
+        const blob = await captureBlob(size)
+        if (!blob) throw new Error('Could not render the graphic')
+        await saveBlobToGallery(blob, buildFilename(size))
+        setSavedSize(size)
+        setTimeout(() => setSavedSize((cur) => (cur === size ? null : cur)), 2500)
+      } catch (e) {
+        console.error('[event-share] native save failed', e)
+        setSaveError(
+          /denied|not allowed/i.test((e as Error)?.message ?? '')
+            ? 'Photo access is off for Co-Exist. Allow "Add Photos" in your phone settings, then try again.'
+            : 'Could not save the image. Please try again.',
+        )
+      } finally {
+        setBusy(null)
+      }
+    },
+    [captureBlob, buildFilename],
+  )
+
+  // NATIVE share: cache the PNG to a file and open the OS share sheet via
+  // @capacitor/share (no user-activation constraint, works on both WebViews).
+  const handleNativeShare = useCallback(
+    async (size: ShareSize) => {
+      try {
+        setBusy(size)
+        setSaveError(null)
+        const blob = await captureBlob(size)
+        if (!blob) throw new Error('Could not render the graphic')
+        await shareBlobNative(blob, buildFilename(size), {
+          title,
+          text: `${title} - ${dateLabel}\n${shareUrl}`,
+        })
+      } catch (e) {
+        if (!isShareCancellation(e)) {
+          console.error('[event-share] native share failed', e)
+          setSaveError('Could not open the share sheet. Please try again.')
+        }
+      } finally {
+        setBusy(null)
+      }
+    },
+    [captureBlob, buildFilename, title, dateLabel, shareUrl],
+  )
+
   const handleSystemShare = useCallback(
     async (size: ShareSize) => {
+      if (isNative) {
+        // Button is labelled "Save" on native - save straight to camera roll.
+        await handleNativeSave(size)
+        return
+      }
       try {
         setBusy(size)
         const blob = await captureBlob(size)
@@ -168,9 +234,9 @@ export function EventShareSheet({
         if (navigator.canShare?.({ files: [file] })) {
           await navigator.share({ files: [file], title, text: shareText })
         } else if (navigator.share) {
-          // WKWebView/Android WebView usually can't share files but CAN share
-          // text+url. Fall back to a link share so the event link still gets
-          // out, then download the image so the user has the graphic too.
+          // Mobile browsers that can't share files but CAN share text+url.
+          // Fall back to a link share so the event link still gets out, then
+          // download the image so the user has the graphic too.
           await navigator.share({ title, text: shareText, url: shareUrl })
           downloadBlob()
         } else {
@@ -185,7 +251,16 @@ export function EventShareSheet({
         setBusy(null)
       }
     },
-    [captureBlob, buildFilename, title, dateLabel, preferDownload, shareUrl],
+    [
+      captureBlob,
+      buildFilename,
+      title,
+      dateLabel,
+      preferDownload,
+      shareUrl,
+      isNative,
+      handleNativeSave,
+    ],
   )
 
   const sharedGraphicProps = {
@@ -288,21 +363,45 @@ export function EventShareSheet({
                   </div>
                   <div data-eos-id="src/components/event-share-sheet.tsx#20" className="mt-2 flex flex-col gap-1.5 w-full">
                     <Button data-eos-id="src/components/event-share-sheet.tsx#21"
-                      variant="primary"
+                      variant={savedSize === sz ? 'secondary' : 'primary'}
                       size="sm"
-                      icon={preferDownload ? <Download data-eos-id="src/components/event-share-sheet.tsx#22" size={14} /> : <Share2 data-eos-id="src/components/event-share-sheet.tsx#23" size={14} />}
+                      icon={
+                        savedSize === sz
+                          ? <Check data-eos-id="src/components/event-share-sheet.tsx#33" size={14} />
+                          : isNative || preferDownload
+                            ? <Download data-eos-id="src/components/event-share-sheet.tsx#22" size={14} />
+                            : <Share2 data-eos-id="src/components/event-share-sheet.tsx#23" size={14} />
+                      }
                       onClick={() => handleSystemShare(sz)}
                       disabled={busy !== null}
                       fullWidth
                     >
-                      {preferDownload ? 'Download' : 'Save'}
+                      {savedSize === sz ? 'Saved' : preferDownload ? 'Download' : 'Save'}
                     </Button>
+                    {isNative && (
+                      <Button data-eos-id="src/components/event-share-sheet.tsx#34"
+                        variant="secondary"
+                        size="sm"
+                        icon={<Share2 data-eos-id="src/components/event-share-sheet.tsx#35" size={14} />}
+                        onClick={() => handleNativeShare(sz)}
+                        disabled={busy !== null}
+                        fullWidth
+                      >
+                        Share
+                      </Button>
+                    )}
                   </div>
                 </div>
               )
             })}
           </div>
         </div>
+
+        {saveError && (
+          <p data-eos-id="src/components/event-share-sheet.tsx#36" className="mt-3 text-[12px] text-error-600 leading-relaxed" role="alert">
+            {saveError}
+          </p>
+        )}
 
         {/* Event link - the graphic is just an image (no tappable link), so
             this Copy button is the only way to hand attendees a direct,

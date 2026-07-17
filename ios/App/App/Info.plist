@@ -57,6 +57,8 @@
 	<!-- Photo Library -->
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Co-Exist accesses your photos to upload images for events, profiles, and impact reports.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Co-Exist saves event graphics and photos you choose to your photo library.</string>
 
 	<!-- Location -->
 	<key>NSLocationWhenInUseUsageDescription</key>

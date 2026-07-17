@@ -60,6 +60,7 @@ import { TaskSurveyModal } from '@/components/task-survey-modal'
 import { useToast } from '@/components/toast'
 import { supabase } from '@/lib/supabase'
 import { APP_NAME } from '@/lib/constants'
+import { isNativePlatform, shareLinkNative } from '@/lib/native-share'
 import { useUnreadUpdateCount } from '@/hooks/use-updates'
 import {
     useMyTasks,
@@ -511,7 +512,16 @@ function InviteAction({ collectiveSlug, collectiveId, collectiveName }: { collec
   }
 
   const handleShare = async () => {
-    if (navigator.share) {
+    if (isNativePlatform()) {
+      // Android WebView has no navigator.share - use the native sheet.
+      try {
+        await shareLinkNative({
+          title: `Join ${collectiveName} on ${APP_NAME}`,
+          text: `Join our conservation collective and make a difference!`,
+          url: inviteUrl,
+        })
+      } catch { /* cancelled */ }
+    } else if (navigator.share) {
       try {
         await navigator.share({
           title: `Join ${collectiveName} on ${APP_NAME}`,

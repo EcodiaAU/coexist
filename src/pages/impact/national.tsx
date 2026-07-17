@@ -28,6 +28,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useNationalImpact, useNationalCustomMetrics } from '@/hooks/use-impact'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { supabase } from '@/lib/supabase'
+import { isNativePlatform, isShareCancellation, shareLinkNative } from '@/lib/native-share'
 import { wallClockNow } from '@/lib/date-format'
 import { parseLocationPoint } from '@/lib/geo'
 import { MapView } from '@/components'
@@ -340,6 +341,21 @@ export default function NationalImpactPage() {
     if (data?.leadersEmpowered) parts.push(`${data.leadersEmpowered} leaders empowered`)
     const text = parts.join(', ') + '!'
     const url = window.location.href
+    if (isNativePlatform()) {
+      // Android WebView has no navigator.share - use the native sheet.
+      try {
+        await shareLinkNative({ title: 'Co-Exist National Impact', text, url })
+      } catch (err) {
+        if (isShareCancellation(err)) return
+        try {
+          await navigator.clipboard.writeText(`${text} ${url}`)
+          toast.success('Copied to clipboard')
+        } catch {
+          toast.error('Could not share')
+        }
+      }
+      return
+    }
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Co-Exist National Impact', text, url })
