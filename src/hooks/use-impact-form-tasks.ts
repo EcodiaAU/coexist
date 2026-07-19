@@ -246,7 +246,7 @@ export function useNotifyLeadersForImpactForm() {
         .in('role', ['leader', 'co_leader', 'assist_leader'])
 
       if (leadersError) throw leadersError
-      if (!leaders?.length) return { sent: 0 }
+      if (!leaders?.length) return { notified: 0, pushed: 0, pushError: false }
 
       const title = 'Impact form ready'
       const body = `Log the impact for "${eventTitle}" - any leader in your collective can fill this out.`
@@ -265,18 +265,32 @@ export function useNotifyLeadersForImpactForm() {
 
       if (notifError) throw notifError
 
-      // Send push notifications
+      // Send push notifications. AWAIT it (was fire-and-forget) so we can tell
+      // the operator how many leaders actually got a phone alert. A leader only
+      // gets a push if their device is registered in push_tokens - staff on the
+      // web /admin, or anyone who has not opened the app / granted push, has no
+      // token, so "notified in-app" and "pushed to a phone" are different counts.
+      // The old code returned leaders.length as `sent` regardless, so the button
+      // always claimed success even when zero phones were reachable.
       const leaderIds = leaders.map((l) => l.user_id)
-      supabase.functions.invoke('send-push', {
-        body: {
-          userIds: leaderIds,
-          title,
-          body,
-          data: { type: 'survey_request', subtype: 'impact_form', event_id: eventId },
-        },
-      }).catch(console.error)
+      let pushed = 0
+      let pushError = false
+      try {
+        const { data: pushResult, error: pushErr } = await supabase.functions.invoke('send-push', {
+          body: {
+            userIds: leaderIds,
+            title,
+            body,
+            data: { type: 'survey_request', subtype: 'impact_form', event_id: eventId },
+          },
+        })
+        if (pushErr) pushError = true
+        else pushed = (pushResult as { sent?: number } | null)?.sent ?? 0
+      } catch {
+        pushError = true
+      }
 
-      return { sent: leaders.length }
+      return { notified: leaders.length, pushed, pushError }
     },
   })
 }

@@ -85,7 +85,18 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
                     { eventId: e.id, eventTitle: e.title, collectiveId: e.collective_id },
                     {
                       onSuccess: (result) => {
-                        toast.success(`Reminder sent to ${result?.sent ?? 0} leader${(result?.sent ?? 0) !== 1 ? 's' : ''}`)
+                        const notified = result?.notified ?? 0
+                        const pushed = result?.pushed ?? 0
+                        const s = notified !== 1 ? 's' : ''
+                        if (notified === 0) {
+                          toast.success('No leaders to remind for this collective')
+                        } else if (result?.pushError) {
+                          toast.success(`Reminder saved in-app for ${notified} leader${s}, but phone alerts could not be sent right now`)
+                        } else if (pushed > 0) {
+                          toast.success(`Reminder sent - ${pushed} of ${notified} leader${s} got a phone alert`)
+                        } else {
+                          toast.success(`Reminder saved in-app for ${notified} leader${s}. None have push notifications set up yet`)
+                        }
                         setNudgingEvent(null)
                       },
                       onError: () => {
