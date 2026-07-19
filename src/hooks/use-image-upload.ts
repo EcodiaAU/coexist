@@ -65,7 +65,7 @@ export function useImageUpload({
   )
 
   // Base state management from shared hook
-  const { uploading, progress, error, reset: resetBase, run } = useUpload<
+  const { uploading, progress, error, reset: resetBase, run, runMany } = useUpload<
     { file: Blob; path: string },
     UploadImageResult
   >(
@@ -98,13 +98,12 @@ export function useImageUpload({
   const uploadMultiple = useCallback(
     async (files: Blob[]): Promise<UploadImageResult[]> => {
       if (!user) throw new Error('Not authenticated')
+      if (files.length === 0) return []
 
-      const settled = await Promise.allSettled(
-        files.map((file) => {
-          const path = buildPath()
-          return uploadImage(file, bucket, path)
-        }),
-      )
+      // Route through runMany so the whole batch shows as one uploading window
+      // with aggregate progress (drives the button spinner + the "upload in
+      // progress" submit guard). Each file gets its own storage path.
+      const settled = await runMany(files.map((file) => ({ file, path: buildPath() })))
 
       const results: UploadImageResult[] = []
       const newFailures: FailedUpload[] = []
@@ -125,7 +124,7 @@ export function useImageUpload({
 
       return results
     },
-    [user, bucket, buildPath],
+    [user, buildPath, runMany],
   )
 
   const retry = useCallback(

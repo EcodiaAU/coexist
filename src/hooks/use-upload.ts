@@ -50,5 +50,41 @@ export function useUpload<TFile, TResult>(
     [uploadFn],
   )
 
-  return { uploading, progress, error, reset, run }
+  /**
+   * Upload a batch of files in one uploading window. Runs them in parallel,
+   * reports count-based aggregate progress (per-file byte progress is coarse
+   * across a batch, so we advance as each file settles), and keeps `uploading`
+   * true for the whole batch. Never throws - returns the settled results so
+   * the caller can split successes from failures.
+   */
+  const runMany = useCallback(
+    async (files: TFile[]): Promise<PromiseSettledResult<TResult>[]> => {
+      if (files.length === 0) return []
+      setUploading(true)
+      setError(null)
+      setProgress(0)
+
+      let done = 0
+      try {
+        const settled = await Promise.allSettled(
+          files.map(async (file) => {
+            const result = await uploadFn(file, () => {})
+            done++
+            setProgress(Math.round((done / files.length) * 100))
+            return result
+          }),
+        )
+        setProgress(100)
+        if (settled.every((s) => s.status === 'rejected')) {
+          setError('Upload failed')
+        }
+        return settled
+      } finally {
+        setUploading(false)
+      }
+    },
+    [uploadFn],
+  )
+
+  return { uploading, progress, error, reset, run, runMany }
 }

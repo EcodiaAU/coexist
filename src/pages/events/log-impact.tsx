@@ -811,13 +811,14 @@ export default function LogImpactPage() {
     uploader: ReturnType<typeof useImageUpload>,
   ) => {
     if (isOffline) return
-    const result = await camera.pickFromGallery()
-    if (!result) return
-    try {
-      const uploaded = await uploader.upload(result.blob)
-      setter((prev) => [...prev, uploaded.url])
-    } catch {
-      // error tracked by hook's failedUploads state
+    // Multi-select: one gallery trip can add many photos. uploadMultiple runs
+    // the batch as one uploading window and surfaces any failures via the
+    // hook's failedUploads state (retry UI below).
+    const results = await camera.pickMultipleFromGallery()
+    if (results.length === 0) return
+    const uploaded = await uploader.uploadMultiple(results.map((r) => r.blob))
+    if (uploaded.length > 0) {
+      setter((prev) => [...prev, ...uploaded.map((u) => u.url)])
     }
   }
 

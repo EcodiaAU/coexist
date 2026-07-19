@@ -14,6 +14,12 @@ interface UseCameraReturn {
   capture: () => Promise<CameraResult | null>
   /** Open the device gallery to pick a photo */
   pickFromGallery: () => Promise<CameraResult | null>
+  /**
+   * Open the device gallery to pick several photos at once. Returns every
+   * selected photo (compressed + EXIF-corrected). Empty array on cancel.
+   * `limit` caps the selection (0 = unlimited).
+   */
+  pickMultipleFromGallery: (limit?: number) => Promise<CameraResult[]>
   /** Whether a camera operation is in progress */
   loading: boolean
   /** Last error message, if any */
@@ -77,48 +83,65 @@ export function useCamera(): UseCameraReturn {
 
         if (!blob) return null
 
-        // Compress (also fixes EXIF orientation via createImageBitmap)
-        const compressed = await compressImage(blob)
-        const compressedUrl = URL.createObjectURL(compressed)
-
-        // Get dimensions of compressed result
-        const dims = await getImageDimensions(compressedUrl)
-
-        return {
-          dataUrl: compressedUrl,
-          blob: compressed,
-          width: dims.width,
-          height: dims.height,
-        }
+        return await blobToResult(blob)
       } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Camera error'
-        const name = e instanceof Error ? e.name : ''
-
-        // User cancelled - not an error
-        if (msg.includes('cancelled') || msg.includes('User cancelled') || msg.includes('pickImages') || msg.includes('No image')) {
-          return null
-        }
-
-        // Capacitor Camera permission denied
-        if (msg.includes('denied') || msg.includes('permission') || msg.includes('access')) {
-          setError('Photo access denied. Please enable in your device Settings.')
-          return null
-        }
-
-        // Storage full (QuotaExceededError from canvas/blob/createObjectURL)
-        if (name === 'QuotaExceededError' || msg.includes('quota') || msg.includes('storage')) {
-          setError('Not enough storage on your device. Free up some space and try again.')
-          return null
-        }
-
-        // SecurityError - camera blocked by browser policy
-        if (name === 'NotAllowedError' || name === 'SecurityError') {
-          setError('Camera access was blocked. Please allow camera access in your browser or device settings.')
-          return null
-        }
-
-        setError(msg)
+        const friendly = classifyCameraError(e)
+        setError(friendly) // null when the user simply cancelled
         return null
+      } finally {
+        setLoading(false)
+      }
+    },
+    [],
+  )
+
+  const pickMultiple = useCallback(
+    async (limit = 0): Promise<CameraResult[]> => {
+      setLoading(true)
+      setError(null)
+
+      try {
+        let blobs: Blob[] = []
+
+        if (Capacitor.isNativePlatform()) {
+          const { Camera } = await import('@capacitor/camera')
+          // v8 API: chooseFromGallery with allowMultipleSelection returns
+          // MediaResults.results[] - one entry per selected photo.
+          const result = await Camera.chooseFromGallery({
+            allowMultipleSelection: true,
+            limit,
+            quality: 80,
+            targetWidth: 1200,
+            targetHeight: 1200,
+            correctOrientation: true,
+          })
+
+          for (const photo of result.results ?? []) {
+            if (!photo?.webPath) continue
+            const response = await fetch(photo.webPath)
+            blobs.push(await response.blob())
+          }
+        } else {
+          // Web fallback: multi-select file input.
+          blobs = await pickFilesWeb(limit)
+        }
+
+        if (blobs.length === 0) return []
+
+        // Compress each in parallel; skip any that fail to decode rather than
+        // losing the whole batch.
+        const settled = await Promise.allSettled(blobs.map((b) => blobToResult(b)))
+        const results = settled
+          .filter((s): s is PromiseFulfilledResult<CameraResult> => s.status === 'fulfilled')
+          .map((s) => s.value)
+
+        if (results.length === 0 && settled.length > 0) {
+          setError('Those photos could not be read. Please try again.')
+        }
+        return results
+      } catch (e) {
+        setError(classifyCameraError(e)) // null when cancelled
+        return []
       } finally {
         setLoading(false)
       }
@@ -129,7 +152,50 @@ export function useCamera(): UseCameraReturn {
   const capture = useCallback(() => takePhoto('camera'), [takePhoto])
   const pickFromGallery = useCallback(() => takePhoto('gallery'), [takePhoto])
 
-  return { capture, pickFromGallery, loading, error }
+  return { capture, pickFromGallery, pickMultipleFromGallery: pickMultiple, loading, error }
+}
+
+/**
+ * Compress a raw blob (also fixes EXIF orientation via createImageBitmap) and
+ * measure the compressed result. Shared by single + multi pick paths.
+ */
+async function blobToResult(blob: Blob): Promise<CameraResult> {
+  const compressed = await compressImage(blob)
+  const compressedUrl = URL.createObjectURL(compressed)
+  const dims = await getImageDimensions(compressedUrl)
+  return {
+    dataUrl: compressedUrl,
+    blob: compressed,
+    width: dims.width,
+    height: dims.height,
+  }
+}
+
+/**
+ * Map a raw camera/gallery error to a friendly message, or null when the user
+ * simply cancelled (which is not an error worth surfacing).
+ */
+function classifyCameraError(e: unknown): string | null {
+  const msg = e instanceof Error ? e.message : 'Camera error'
+  const name = e instanceof Error ? e.name : ''
+
+  // User cancelled - not an error
+  if (msg.includes('cancelled') || msg.includes('User cancelled') || msg.includes('pickImages') || msg.includes('No image')) {
+    return null
+  }
+  // Capacitor Camera permission denied
+  if (msg.includes('denied') || msg.includes('permission') || msg.includes('access')) {
+    return 'Photo access denied. Please enable in your device Settings.'
+  }
+  // Storage full (QuotaExceededError from canvas/blob/createObjectURL)
+  if (name === 'QuotaExceededError' || msg.includes('quota') || msg.includes('storage')) {
+    return 'Not enough storage on your device. Free up some space and try again.'
+  }
+  // SecurityError - camera blocked by browser policy
+  if (name === 'NotAllowedError' || name === 'SecurityError') {
+    return 'Camera access was blocked. Please allow camera access in your browser or device settings.'
+  }
+  return msg
 }
 
 /* ------------------------------------------------------------------ */
@@ -181,6 +247,49 @@ function pickFileWeb(
         if (!input.files?.length) {
           cleanup()
           resolve(null)
+        }
+        window.removeEventListener('focus', onFocus)
+      }, 300)
+    }
+    window.addEventListener('focus', onFocus)
+
+    input.click()
+  })
+}
+
+/**
+ * Web multi-select gallery picker. Returns the selected files as blobs, capped
+ * at `limit` (0 = unlimited). Empty array on cancel.
+ */
+function pickFilesWeb(limit = 0): Promise<Blob[]> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.multiple = true
+    // iOS WKWebView requires the input to be in the DOM
+    input.style.position = 'fixed'
+    input.style.opacity = '0'
+    input.style.pointerEvents = 'none'
+    document.body.appendChild(input)
+
+    const cleanup = () => {
+      input.remove()
+    }
+
+    input.onchange = () => {
+      let files = Array.from(input.files ?? [])
+      if (limit > 0) files = files.slice(0, limit)
+      cleanup()
+      resolve(files)
+    }
+
+    // Handle cancel (focus returns to window without change event)
+    const onFocus = () => {
+      setTimeout(() => {
+        if (!input.files?.length) {
+          cleanup()
+          resolve([])
         }
         window.removeEventListener('focus', onFocus)
       }, 300)
