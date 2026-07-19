@@ -57,8 +57,22 @@ androidWebViewHierarchy: devtools
 # replacement: it renders only when the member actually has an upcoming event, which is
 # exactly the fixture dependence this gate avoids. The tab bar below is the real
 # always-present anchor for "the authed shell rendered".
-- assertVisible: "Home"
-- assertVisible: "Chat"
-- assertVisible: "Profile"
-- assertVisible: "More"
+# Retry-with-timeout, not a snapshot assert: the Chat tab carries an unread
+# badge whose count arrives async and re-renders the button, so a plain
+# assertVisible on "Chat" can query mid-reconciliation and miss the label even
+# though the tab is on screen (a11y-tree-fills-after-pixels, capacitor webview).
+# extendedWaitUntil proves the SAME anchor (each tab is visible) while absorbing
+# the render race. Failure here still means the tab genuinely never appeared.
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 12000
+- extendedWaitUntil:
+    visible: "Chat"
+    timeout: 12000
+- extendedWaitUntil:
+    visible: "Profile"
+    timeout: 12000
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 12000
 - takeScreenshot: /tmp/maestro-cx-nativegate-authed-shell
