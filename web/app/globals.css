@@ -1,5 +1,52 @@
 @import "tailwindcss";
 
+
+/* @ecodia:brand-tokens:start - generated from the brand record; edit the palette in Studio, not this block */
+:root {
+  --site-ground: #6f8a4e;
+  --site-ground-50: #f2f5ef;
+  --site-ground-100: #e5ecdf;
+  --site-ground-200: #cddbc0;
+  --site-ground-300: #a8c18d;
+  --site-ground-400: #849f64;
+  --site-ground-500: #6f8a4e;
+  --site-ground-600: #5b723e;
+  --site-ground-700: #485b32;
+  --site-ground-800: #3a4929;
+  --site-ground-900: #2e3921;
+  --site-ground-950: #1b2114;
+  --site-ground-deep: #646f44;
+  --site-ground-deep-50: #f2f3ee;
+  --site-ground-deep-100: #e5e8de;
+  --site-ground-deep-200: #cbd1bd;
+  --site-ground-deep-300: #a5b08a;
+  --site-ground-deep-400: #7c885d;
+  --site-ground-deep-500: #646f44;
+  --site-ground-deep-600: #535c37;
+  --site-ground-deep-700: #434a2d;
+  --site-ground-deep-800: #363d25;
+  --site-ground-deep-900: #2c301f;
+  --site-ground-deep-950: #1b1d13;
+  --site-ink: #1a1a15;
+  --site-ink-50: #ededed;
+  --site-ink-100: #d9d9d8;
+  --site-ink-200: #b2b2af;
+  --site-ink-300: #7a7a75;
+  --site-ink-400: #3c3c37;
+  --site-ink-500: #1a1a15;
+  --site-ink-600: #181814;
+  --site-ink-700: #161613;
+  --site-ink-800: #151512;
+  --site-ink-900: #131311;
+  --site-ink-950: #111110;
+  --site-surface: #ffffff;
+  --site-muted: #6c6d66;
+  --site-line: #e4e5e1;
+  --site-bg: #ffffff;
+  --site-fg: #1a1a15;
+}
+/* @ecodia:brand-tokens:end */
+
 /*
  * Co-Exist marketing site - editorial aesthetic (2026 rebrand direction).
  * High-contrast display serif (Fraunces, matching the Co-Exist wordmark),
@@ -8,37 +55,37 @@
  */
 @theme {
   /* Brand olive / sage scale (buttons, accents, light sections) */
-  --color-primary-50: #f5f7f0;
-  --color-primary-100: #e8eddf;
-  --color-primary-200: #d1dbbf;
-  --color-primary-300: #acc088;
-  --color-primary-400: #869e62; /* brand sage */
-  --color-primary-500: #6f8a4e;
-  --color-primary-600: #5a7340;
-  --color-primary-700: #475c34;
-  --color-primary-800: #3a4b2c;
-  --color-primary-900: #2f3d26;
-  --color-primary-950: #1c2417;
+  --color-primary-50: var(--site-ground-50);
+  --color-primary-100: var(--site-ground-100);
+  --color-primary-200: var(--site-ground-200);
+  --color-primary-300: var(--site-ground-300);
+  --color-primary-400: var(--site-ground-400); /* brand sage */
+  --color-primary-500: var(--site-ground-500);
+  --color-primary-600: var(--site-ground-600);
+  --color-primary-700: var(--site-ground-700);
+  --color-primary-800: var(--site-ground-800);
+  --color-primary-900: var(--site-ground-900);
+  --color-primary-950: var(--site-ground-950);
 
   /* Deep army-olive - the feature-section + hero-overlay green from the new
      marketing aesthetic. */
-  --color-olive-50: #f3f4ec;
-  --color-olive-100: #e3e6d3;
-  --color-olive-200: #c7cead;
-  --color-olive-300: #a3ae7f;
-  --color-olive-400: #818d5b;
-  --color-olive-500: #646f44;
-  --color-olive-600: #4e5836;
-  --color-olive-700: #474f2f; /* primary feature green (screenshots) */
-  --color-olive-800: #3a4028;
-  --color-olive-900: #2d3220;
-  --color-olive-950: #191c12;
+  --color-olive-50: var(--site-ground-deep-50);
+  --color-olive-100: var(--site-ground-deep-100);
+  --color-olive-200: var(--site-ground-deep-200);
+  --color-olive-300: var(--site-ground-deep-300);
+  --color-olive-400: var(--site-ground-deep-400);
+  --color-olive-500: var(--site-ground-deep-500);
+  --color-olive-600: var(--site-ground-deep-600);
+  --color-olive-700: var(--site-ground-deep-700); /* primary feature green (screenshots) */
+  --color-olive-800: var(--site-ground-deep-800);
+  --color-olive-900: var(--site-ground-deep-900);
+  --color-olive-950: var(--site-ground-deep-950);
 
   /* Canvas = white (match the live Co-Exist site). "cream/paper" tokens kept
      as aliases so existing classes resolve; they now read white / near-white. */
-  --color-cream: #ffffff;
+  --color-cream: var(--site-surface);
   --color-cream-soft: #f6f7f3;
-  --color-paper: #ffffff;
+  --color-paper: var(--site-surface);
   --color-surface-1: #f6f7f3;
 
   /* Light text used on olive backgrounds */
