@@ -179,7 +179,7 @@ if (!isEngineSupported()) {
   if (Capacitor.isNativePlatform()) {
     import('@/hooks/use-push').then(({ attachEarlyTapListener }) => {
       attachEarlyTapListener().catch((err) => console.warn('[push] early tap listener attach failed:', err))
-    })
+    }).catch(() => { /* chunk unavailable - push tap routing degrades gracefully */ })
 
     // Race AppDelegate.didReceive against React mount. AppDelegate writes
     // 'pendingPushRoute' to Preferences when iOS delivers a tap response
@@ -219,7 +219,7 @@ if (!isEngineSupported()) {
           clearInterval(iv)
         }
       }, 50)
-    })
+    }).catch(() => { /* chunk unavailable - cold-launch route falls to in-hook poll */ })
   }
 
   // Initialize Sentry error reporting (no-op if VITE_SENTRY_DSN is not set)

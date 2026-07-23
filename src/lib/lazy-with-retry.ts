@@ -31,7 +31,10 @@ function isChunkLoadError(err: unknown): boolean {
     /error loading dynamically imported module/i.test(msg) ||
     // Firefox / Safari variants
     /ChunkLoadError/i.test(msg) ||
-    /Loading chunk \d+ failed/i.test(msg)
+    /Loading chunk \d+ failed/i.test(msg) ||
+    // Vite's preload helper: the JS chunk loaded but a CSS dep 404'd
+    // (same stale-manifest class - a reload picks up the new hashes)
+    /Unable to preload CSS/i.test(msg)
   )
 }
 

@@ -113,13 +113,19 @@ export function useRolePrefetch() {
 
     const priority = getPriorityImports(isStaff, isLeader)
 
-    // Phase 1: role-specific priority pages
+    // Phase 1: role-specific priority pages.
+    // Every load() MUST swallow its rejection: prefetch is a best-effort
+    // optimization, and after a deploy rotates the chunk hashes a device
+    // still holding the old shell 404s on EVERY prefetched chunk. Unhandled,
+    // those rejections spray "Importing a module script failed" into Sentry
+    // (COEXIST-Q, 23 Jul 2026) while the user sees nothing wrong. Real
+    // navigation failures are recovered by lazyWithRetry's reload-once path.
     scheduleIdle(() => {
-      for (const load of priority) load()
+      for (const load of priority) load().catch(() => {})
 
       // Phase 2: remaining secondary pages
       scheduleIdle(() => {
-        for (const load of SECONDARY) load()
+        for (const load of SECONDARY) load().catch(() => {})
       })
     })
   }, [profile, isStaff, isLeader])

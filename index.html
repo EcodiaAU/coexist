@@ -105,7 +105,33 @@
         var BOOT_WINDOW_MS = 5000;
         var paintsAllowed = true;
         setTimeout(function () { paintsAllowed = false; }, BOOT_WINDOW_MS);
+        // Stale-deploy self-heal (COEXIST-Q, 23 Jul 2026): after a deploy
+        // rotates the Vite chunk hashes, a device holding the old shell
+        // (SW-cached HTML or a long-open PWA tab) requests a dead chunk and
+        // Safari surfaces "Importing a module script failed" as an
+        // unhandledrejection. One reload fetches fresh HTML (the SW's
+        // navigation handler is network-first) and fully recovers, so we
+        // reload ONCE per session instead of painting the diagnostic overlay
+        // at the user. Shares lazy-with-retry's sessionStorage guard key
+        // (cleared by clearChunkReloadGuard once a fresh entry mounts), so
+        // the loop-guard semantics are one system: guard set -> reload ->
+        // fresh entry loads -> guard cleared. If the reload lands on the same
+        // error (a real outage, not a stale shell) the guard is still set,
+        // recovery stands down, and the overlay paints as before.
+        var CHUNK_ERR = /Importing a module script failed|dynamically imported module|Loading chunk|Unable to preload CSS/i;
+        var CHUNK_GUARD_KEY = 'coexist-chunk-reload-attempted';
+        function chunkRecover(payload) {
+          try {
+            var msg = typeof payload === 'string' ? payload : (payload && payload.message) || '';
+            if (!CHUNK_ERR.test(msg)) return false;
+            if (sessionStorage.getItem(CHUNK_GUARD_KEY)) return false;
+            sessionStorage.setItem(CHUNK_GUARD_KEY, '1');
+            window.location.reload();
+            return true;
+          } catch (e) { return false; }
+        }
         function paint(label, payload) {
+          if (chunkRecover(payload)) return;
           var headForLog = '';
           try {
             if (typeof payload === 'string') headForLog = payload;
