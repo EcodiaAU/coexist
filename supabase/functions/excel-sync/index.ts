@@ -67,8 +67,17 @@ import { withSentry } from '../_shared/sentry.ts'
 const GRAPH_TENANT_ID = Deno.env.get('GRAPH_TENANT_ID') ?? ''
 const GRAPH_CLIENT_ID = Deno.env.get('GRAPH_CLIENT_ID') ?? ''
 const GRAPH_CLIENT_SECRET = Deno.env.get('GRAPH_CLIENT_SECRET') ?? ''
-const DRIVE_ID = 'b!jB_eUPJMbUWf3eip_Me-34G0StMYwYdHtdf4sTNow-uVV9nof_IvQprzswNpaD8y'
-const ITEM_ID = '01RJHFBL37QUUGOQUVL5DJ67A53VKNDAGE'
+// Repointed 2026-07-23 (Resi request 2026-07-21): the Master Impact Data Sheet
+// moved from David Watters' personal OneDrive to the shared SharePoint site
+// coexistau.sharepoint.com/sites/coexist, library "06 Events & Programs",
+// folder "Impact Data". Old OneDrive IDs (retired):
+//   DRIVE_ID b!jB_eUPJMbUWf3eip_Me-34G0StMYwYdHtdf4sTNow-uVV9nof_IvQprzswNpaD8y
+//   ITEM_ID  01RJHFBL37QUUGOQUVL5DJ67A53VKNDAGE
+// NOTE: the file content on the new item was refreshed at cutover from the
+// OneDrive copy because the 20 Jul manual upload was a corrupt-for-Excel-online
+// artifact (workbook API 504 on every call; fresh bytes open in ~1s).
+const DRIVE_ID = 'b!72r-xBiNQ0G-HPKuI5EFsJGKS5BL_QBLva685PCC-LUxatZDDpjUTohwRaOCGC5W'
+const ITEM_ID = '017S623FVE2HWFPZ5JXZGIISGUMS2BLPWJ'
 const SHEET_NAME = 'Post Event Review'
 
 // Only sync events from 2026-05-04 onwards - historical 2026 Forms data has
