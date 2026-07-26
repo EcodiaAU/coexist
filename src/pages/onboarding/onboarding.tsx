@@ -11,35 +11,52 @@ import { takePendingClaim } from '@/lib/pending-claim'
 
 import { StepNameHandle } from './steps/step-name-handle'
 import { StepLocation } from './steps/step-location'
+import { StepPhone } from './steps/step-phone'
 import { StepCollective } from './steps/step-collective'
 import { StepFirstEvent } from './steps/step-first-event'
 import { StepCelebration } from './steps/step-celebration'
 
-const TOTAL_STEPS = 4
+// The profile-bootstrap fallback in use-auth writes this literal when a social
+// signup arrives with no name in its provider metadata. Treat it as "no real
+// name" so we still ask once, but never re-ask a user who gave a real name.
+const NEW_USER_FALLBACK = 'New User'
 
-const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? '100%' : '-100%',
-    opacity: 0,
-  }),
-  center: { x: 0, opacity: 1 },
-  exit: (direction: number) => ({
-    x: direction > 0 ? '-100%' : '100%',
-    opacity: 0,
-  }),
-}
+type StepId = 'name' | 'location' | 'phone' | 'collective' | 'event'
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
-  const { user, collectiveRoles, isStaff, refreshProfile, markOnboardingComplete } = useAuth()
+  const { user, profile, collectiveRoles, isStaff, refreshProfile, markOnboardingComplete } = useAuth()
   const shouldReduceMotion = useReducedMotion()
 
   // Trigger the device location permission prompt as soon as onboarding opens
   // (step 0), so the OS dialog appears well before the "Join a Collective"
-  // step (step 2). The resolved coords are cached under ['user-location'] and
-  // read back by StepCollective to rank collectives by proximity. Fire-and-
-  // cache: we don't block any step on the result.
+  // step. The resolved coords are cached under ['user-location'] and read back
+  // by StepCollective to rank collectives by proximity. Fire-and-cache: we
+  // don't block any step on the result.
   useUserLocation()
+
+  // Name is captured at sign-up (writes profiles.display_name via user
+  // metadata, see use-auth), and phone was historically captured by a blocking
+  // PhoneGate modal the instant onboarding finished. Both are folded in here so
+  // nothing is asked twice and there's no post-onboarding ambush (Tate
+  // 2026-07-26). The step list is computed ONCE from the settled profile
+  // (route-guard guarantees it's loaded before /onboarding mounts) so it never
+  // reshuffles mid-flow.
+  const existingName = (profile?.display_name ?? '').trim()
+  const hasRealName = existingName.length > 0 && existingName !== NEW_USER_FALLBACK
+  const existingPhone = (profile?.phone ?? '').trim()
+
+  const [stepOrder] = useState<StepId[]>(
+    () =>
+      [
+        hasRealName ? null : 'name',
+        'location',
+        existingPhone ? null : 'phone',
+        'collective',
+        'event',
+      ].filter(Boolean) as StepId[],
+  )
+  const totalSteps = stepOrder.length
 
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState(1)
@@ -48,9 +65,11 @@ export default function OnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const isLeaderAfterComplete = useRef(false)
 
-  // Shared onboarding data
+  // Shared onboarding data (name + phone prefilled from the profile so a user
+  // who already has them never has to re-enter).
   const [data, setData] = useState({
-    displayName: '',
+    displayName: hasRealName ? existingName : '',
+    phone: existingPhone,
     location: '',
     locationPoint: null as { lat: number; lng: number } | null,
     collectiveId: null as string | null,
@@ -81,6 +100,10 @@ export default function OnboardingPage() {
 
       if (data.displayName) profilePayload.display_name = data.displayName
       if (data.location) profilePayload.location = data.location
+      // Persist phone here so a new user who filled it in during onboarding
+      // never trips the legacy PhoneGate backstop (which only shows when a
+      // fully-onboarded profile has no phone on file).
+      if (data.phone) profilePayload.phone = data.phone
 
       const { error: profileError } = await supabase
         .from('profiles')
@@ -145,13 +168,13 @@ export default function OnboardingPage() {
   }, [user, isSubmitting, data, collectiveRoles, isStaff, markOnboardingComplete, refreshProfile])
 
   const goNext = useCallback(() => {
-    if (step < TOTAL_STEPS - 1) {
+    if (step < totalSteps - 1) {
       setDirection(1)
       setStep((s) => s + 1)
     } else {
       completeOnboarding()
     }
-  }, [step, completeOnboarding])
+  }, [step, totalSteps, completeOnboarding])
 
   const goBack = useCallback(() => {
     if (step > 0) {
@@ -173,42 +196,60 @@ export default function OnboardingPage() {
     )
   }
 
-  const steps = [
-    <StepNameHandle
-      key="name"
-      displayName={data.displayName}
-      onChange={(name) => updateData({ displayName: name })}
-      onNext={goNext}
-      onSkip={goNext}
-    />,
-    <StepLocation
-      key="location"
-      location={data.location}
-      onChange={(loc, point) => updateData({ location: loc, locationPoint: point })}
-      onNext={goNext}
-      onSkip={goNext}
-    />,
-    <StepCollective
-      key="collective"
-      selectedId={data.collectiveId}
-      locationPoint={data.locationPoint}
-      onSelect={(id) => updateData({ collectiveId: id })}
-      onNext={goNext}
-      onSkip={goNext}
-    />,
-    <StepFirstEvent
-      key="event"
-      collectiveId={data.collectiveId}
-      onNext={goNext}
-      onSkip={goNext}
-    />,
-  ]
+  function renderStep(id: StepId) {
+    switch (id) {
+      case 'name':
+        return (
+          <StepNameHandle
+            displayName={data.displayName}
+            onChange={(name) => updateData({ displayName: name })}
+            onNext={goNext}
+            onSkip={goNext}
+          />
+        )
+      case 'location':
+        return (
+          <StepLocation
+            location={data.location}
+            onChange={(loc, point) => updateData({ location: loc, locationPoint: point })}
+            onNext={goNext}
+            onSkip={goNext}
+          />
+        )
+      case 'phone':
+        return (
+          <StepPhone
+            phone={data.phone}
+            onChange={(phone) => updateData({ phone })}
+            onNext={goNext}
+          />
+        )
+      case 'collective':
+        return (
+          <StepCollective
+            selectedId={data.collectiveId}
+            locationPoint={data.locationPoint}
+            onSelect={(id) => updateData({ collectiveId: id })}
+            onNext={goNext}
+            onSkip={goNext}
+          />
+        )
+      case 'event':
+        return (
+          <StepFirstEvent
+            collectiveId={data.collectiveId}
+            onNext={goNext}
+            onSkip={goNext}
+          />
+        )
+    }
+  }
 
   return (
     <div className="h-dvh flex flex-col bg-white overflow-hidden">
       {/* Progress dots */}
       <div className="flex items-center justify-center gap-2 pt-6 pb-4 px-6">
-        {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+        {Array.from({ length: totalSteps }, (_, i) => (
           <motion.div
             key={i}
             className={cn(
@@ -244,7 +285,7 @@ export default function OnboardingPage() {
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="absolute inset-0 flex flex-col"
           >
-            {steps[step]}
+            {renderStep(stepOrder[step])}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -266,4 +307,16 @@ export default function OnboardingPage() {
       )}
     </div>
   )
+}
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? '100%' : '-100%',
+    opacity: 0,
+  }),
+  center: { x: 0, opacity: 1 },
+  exit: (direction: number) => ({
+    x: direction > 0 ? '-100%' : '100%',
+    opacity: 0,
+  }),
 }

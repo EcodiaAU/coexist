@@ -47,3 +47,6 @@ playwright-report/
 
 # Detached git worktrees checked out inside the repo (full tree copies).
 _worktrees/
+
+# Playwright visual-verify artifacts
+e2e/__artifacts__/
