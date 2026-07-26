@@ -371,7 +371,12 @@ export function useCodeCheckIn() {
               'id' in (d as Record<string, unknown>) &&
               'check_in_code' in (d as Record<string, unknown>),
           )
-          .find((d) => (d.check_in_code ?? '').toString().trim() === code)
+          .find(
+            (d) =>
+              (d.check_in_code ?? '').toString().trim() === code &&
+              d.status !== 'completed' &&
+              d.status !== 'cancelled',
+          )
 
         if (!cached) {
           throw new Error("You're offline and we can't verify the code right now. Reconnect to check in.")
@@ -392,16 +397,37 @@ export function useCodeCheckIn() {
       }
 
       // ── ONLINE PATH ──
-      const { data: event, error: lookupErr } = await supabase
+      // 3-char codes are REUSED: generate_event_check_in_code only guarantees a
+      // code is unique among NON-terminal events (status NOT IN completed,
+      // cancelled), and prevent_check_in_code_change stops an old event's code
+      // ever being cleared - so a completed event keeps its code forever and a
+      // new live event can be handed the same one. The lookup must therefore be
+      // scoped to that SAME non-terminal set, or a stale completed event shadows
+      // the live one. It previously used .maybeSingle() over ALL statuses, which
+      // ERRORS on >1 match and took down a whole event's check-in (Corso Park
+      // National Tree Day, code 887 collided with a Jan-2025 completed hike,
+      // 2026-07-26). Never rely on .maybeSingle() here.
+      const { data: matches, error: lookupErr } = await supabase
         .from('events')
-        .select('id, title, status')
+        .select('id, title, status, date_start')
         .eq('check_in_code', code)
-        .maybeSingle()
+        .not('status', 'in', '(completed,cancelled)')
 
       if (lookupErr) throw lookupErr
-      if (!event) throw new Error('No event found with that code. Check the code and try again.')
+      if (!matches || matches.length === 0) {
+        throw new Error('No event found with that code. Check the code and try again.')
+      }
 
-      if (event.status === 'cancelled') throw new Error('This event has been cancelled.')
+      // Belt-and-braces: if two live events ever share a code, check in to the
+      // one happening closest to now (check-in is always day-of).
+      const nowMs = Date.now()
+      const event = matches.reduce((best, e) =>
+        Math.abs(new Date(e.date_start).getTime() - nowMs) <
+        Math.abs(new Date(best.date_start).getTime() - nowMs)
+          ? e
+          : best,
+      )
+
       if (event.status === 'draft') throw new Error('This event is not active yet.')
 
       const { data: registration, error: regErr } = await supabase
