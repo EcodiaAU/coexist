@@ -100,6 +100,14 @@ type CheckInState = 'idle' | 'success' | 'error' | 'waitlisted'
 
 type ErrorKind = CheckInErrorKind
 
+// On LOW (not zero) signal the device still reports navigator.onLine === true,
+// so the check-in skips the offline queue and hits the live mutation, which had
+// no timeout and spun forever - the user saw an endless spinner, nothing landed,
+// and they retried over and over. Cap the wait; on timeout fall back to the same
+// offline queue (server replay is an idempotent upsert, so a lost-but-succeeded
+// request is safe to re-queue). Origin: flaky-signal check-in, 2026-07-27.
+const CHECK_IN_TIMEOUT_MS = 12000
+
 /* ------------------------------------------------------------------ */
 /*  Page Component                                                     */
 /* ------------------------------------------------------------------ */
@@ -209,8 +217,17 @@ export default function CheckInPage() {
     setTimeout(() => setShowCelebration(true), 600)
   }, [eventId, user])
 
+  /* ---- Queue the check-in and confirm (flaky-signal fallback) ---- */
+  const queueCheckInFallback = useCallback(() => {
+    if (!eventId || !user) return
+    queueOfflineCheckIn(eventId, user.id)
+    setCheckedInOffline(true)
+    setState('success')
+    setTimeout(() => setShowCelebration(true), 600)
+  }, [eventId, user])
+
   /* ---- Code submit ---- */
-  const handleCodeSubmit = useCallback(() => {
+  const handleCodeSubmit = useCallback(async () => {
     if (!user || !isComplete) return
 
     if (isOffline) {
@@ -218,44 +235,55 @@ export default function CheckInPage() {
       return
     }
 
-    codeCheckIn.mutate(
-      { checkInCode: code },
-      {
-        onSuccess: () => {
-          setState('success')
-          setTimeout(() => setShowCelebration(true), 600)
-        },
-        onError: (err) => {
-          const msg = err instanceof Error ? err.message : ''
-          if (msg.includes('Already checked in') || msg.includes('already checked in')) {
-            setErrorKind('already_checked_in')
-          } else if (msg.includes('not found') || msg.includes('No event')) {
-            setErrorKind('invalid_qr')
-          } else if (msg.includes('not registered')) {
-            setErrorKind('not_registered')
-          } else if (msg.includes('waitlist')) {
-            setState('waitlisted')
-            return
-          } else if (msg.includes('cancelled')) {
-            setErrorKind('event_cancelled')
-          } else if (
-            // Post-event backfill window guards (leaders only / impact logged /
-            // before the day) raised by the BE check-in trigger. Participants
-            // self-checking-in outside the day-of window land here.
-            msg.includes('Check-in is closed') ||
-            msg.includes('Post-event check-in') ||
-            msg.includes('not available before the day') ||
-            msg.includes('leaders only')
-          ) {
-            setErrorKind('event_not_active')
-          } else {
-            setErrorKind('generic')
-          }
-          setState('error')
-        },
-      },
-    )
-  }, [user, isComplete, code, isOffline, codeCheckIn, handleOfflineCheckIn])
+    let timedOut = false
+    try {
+      await Promise.race([
+        codeCheckIn.mutateAsync({ checkInCode: code }),
+        new Promise((_, reject) =>
+          setTimeout(() => { timedOut = true; reject(new Error('CHECKIN_TIMEOUT')) }, CHECK_IN_TIMEOUT_MS),
+        ),
+      ])
+      setState('success')
+      setTimeout(() => setShowCelebration(true), 600)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      // Flaky connection (hung request / lost response): queue it instead of
+      // failing, so a low-signal check-in still lands. Server replay upserts to
+      // 'attended', so re-queuing a request that actually succeeded is safe.
+      if (
+        timedOut ||
+        /CHECKIN_TIMEOUT|timed? ?out|failed to fetch|network request failed|networkerror|load failed|fetch failed/i.test(msg)
+      ) {
+        queueCheckInFallback()
+        return
+      }
+      if (msg.includes('Already checked in') || msg.includes('already checked in')) {
+        setErrorKind('already_checked_in')
+      } else if (msg.includes('not found') || msg.includes('No event')) {
+        setErrorKind('invalid_qr')
+      } else if (msg.includes('not registered')) {
+        setErrorKind('not_registered')
+      } else if (msg.includes('waitlist')) {
+        setState('waitlisted')
+        return
+      } else if (msg.includes('cancelled')) {
+        setErrorKind('event_cancelled')
+      } else if (
+        // Post-event backfill window guards (leaders only / impact logged /
+        // before the day) raised by the BE check-in trigger. Participants
+        // self-checking-in outside the day-of window land here.
+        msg.includes('Check-in is closed') ||
+        msg.includes('Post-event check-in') ||
+        msg.includes('not available before the day') ||
+        msg.includes('leaders only')
+      ) {
+        setErrorKind('event_not_active')
+      } else {
+        setErrorKind('generic')
+      }
+      setState('error')
+    }
+  }, [user, isComplete, code, isOffline, codeCheckIn, handleOfflineCheckIn, queueCheckInFallback])
 
   /* ---- Promote from waitlist (leader action) ---- */
   const handlePromoteFromWaitlist = useCallback(async () => {
