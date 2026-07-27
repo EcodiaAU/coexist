@@ -37,6 +37,7 @@ import { useEventSurvey } from '@/hooks/use-event-survey'
 import { useSurveyDraft } from '@/hooks/use-survey-draft'
 import { getSurveyDraft, removeSurveyDraft } from '@/lib/offline-sync'
 import { SurveyQuestionRenderer } from '@/components/survey-questions'
+import { EventPhotosSection } from '@/components/event-photos-section'
 import { canSubmitSurvey as computeCanSubmitSurvey, stripHiddenAnswers } from '@/components/survey-questions-utils'
 import { syncSurveyImpact } from '@/lib/survey-impact'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
@@ -1381,27 +1382,22 @@ export default function LogImpactPage() {
           <WildlifeSightingTracker sightings={wildlifeSightings} onChange={setWildlifeSightings} />
         </motion.div>
 
-        {/* Event photos */}
+        {/* Event photos & videos - the app's album uploader embedded straight
+            into the survey so leaders submit media in ONE place. Every upload
+            goes to the shared event album (event_photos, photos AND videos) and
+            auto-syncs to this event's OneDrive folder
+            (Photos/<Collective>/<Event date>) via the onedrive-mirror function.
+            Replaces the old images-only impact-photos widget. Tate 2026-07-27. */}
         <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
           <SectionCard className="p-4">
-            <SectionHeader
-              icon={<Camera size={16} />}
-              title="Event Photos"
-              iconColor="text-neutral-600"
-              iconBg="bg-neutral-100"
-            />
-            <PhotoUploadSection
-              photos={photos}
-              onAdd={() => handleAddPhoto(setPhotos, eventPhotosUpload)}
-              onRemove={(i) => setPhotos((p) => p.filter((_, idx) => idx !== i))}
-              label="Event Photos"
-              uploading={eventPhotosUpload.uploading}
-              progress={eventPhotosUpload.progress}
-              error={eventPhotosUpload.error}
-              failedUploads={eventPhotosUpload.failedUploads}
-              onRetry={(i) => handleRetryPhoto(setPhotos, eventPhotosUpload, i)}
-              onClearFailed={(i) => eventPhotosUpload.clearFailed(i)}
-              isOffline={isOffline}
+            <p className="text-[12px] text-neutral-500 mb-3">
+              Add your event photos and videos here. They save to this event's OneDrive folder automatically.
+            </p>
+            <EventPhotosSection
+              eventId={eventId ?? ''}
+              canUpload={canEdit}
+              eventEndIso={event?.date_end ?? event?.date_start ?? null}
+              eventTitle={event?.title ?? 'this event'}
             />
           </SectionCard>
         </motion.div>
