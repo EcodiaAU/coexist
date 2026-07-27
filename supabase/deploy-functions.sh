@@ -24,6 +24,7 @@ FUNCTIONS=(
   notify-application
   notify-report
   excel-sync
+  onedrive-mirror
 )
 
 echo "Deploying ${#FUNCTIONS[@]} functions to $PROJECT_REF..."

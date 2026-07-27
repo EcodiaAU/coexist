@@ -665,8 +665,19 @@ export default function LogImpactPage() {
       type: 'number' as const,
       required: true,
     }]
-    return [...leaderQ, ...postcodeQ, ...(surveyData?.questions ?? [])]
-  }, [surveyData?.questions, collectiveLeaders])
+    // Per-event OneDrive deep-link: once this event's media has mirrored, the
+    // event carries its own folder link. Point the "Images uploaded to OneDrive?"
+    // question (q12) at THAT exact per-event folder instead of the global upload
+    // link, so leaders always see the right place for this specific event.
+    // Origin: Tate 2026-07-27 ("show the correct link for every event").
+    const eventFolderUrl = (event as { onedrive_folder_url?: string | null } | undefined)?.onedrive_folder_url
+    const baseQuestions = (surveyData?.questions ?? []).map((q) =>
+      q.id === 'q12' && eventFolderUrl
+        ? { ...q, link_url: eventFolderUrl, link_label: "Open this event's OneDrive photo folder" }
+        : q,
+    )
+    return [...leaderQ, ...postcodeQ, ...baseQuestions]
+  }, [surveyData?.questions, collectiveLeaders, event])
 
   // Load existing survey response (for edit pre-fill)
   const { data: existingSurveyResponse } = useQuery({

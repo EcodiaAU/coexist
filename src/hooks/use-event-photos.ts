@@ -125,6 +125,12 @@ export function useUploadEventPhoto(eventId: string | undefined) {
     onSuccess: () => {
       if (eventId) {
         queryClient.invalidateQueries({ queryKey: ['event-photos', eventId] })
+        // Auto-mirror this event's media to the correct OneDrive folder
+        // (Photos/<Collective>/<Event date>), fire-and-forget so it never
+        // blocks the UI. The onedrive-mirror function is idempotent and a sweep
+        // cron backstops anything missed (offline sync, transient failure).
+        // Origin: Tate 2026-07-27 - "upload in the app, auto-upload to OneDrive".
+        supabase.functions.invoke('onedrive-mirror', { body: { event_id: eventId } }).catch(() => {})
       }
     },
   })
