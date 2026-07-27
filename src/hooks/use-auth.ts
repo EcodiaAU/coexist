@@ -10,6 +10,64 @@ import { CURRENT_TOS_VERSION, GLOBAL_ROLE_RANK, COLLECTIVE_ROLE_RANK } from '@/l
 import type { Database } from '@/types/database.types'
 
 /* ------------------------------------------------------------------ */
+/*  Flaky-network hardening for auth calls                             */
+/* ------------------------------------------------------------------ */
+
+// On a poor mobile connection a Supabase auth fetch can hang at the OS TCP
+// timeout (tens of seconds to effectively forever), leaving the user staring at
+// a spinner that never resolves - so they force-quit and retry, sometimes many
+// times, until one attempt happens to land on a better-signal moment. Two
+// compounding failures produced the "redo sign-in over and over before it
+// showed up" report: no client-side timeout, and raw "Failed to fetch" errors
+// that read like the app is broken rather than the connection. This wraps every
+// auth network call in a hard timeout and rewrites the network/timeout error
+// family into plain language the auth screens can show. Origin: Nicola, iPhone,
+// Co-Exist national meeting 2026-07-27.
+const AUTH_TIMEOUT_MS = 15000
+
+class AuthTimeoutError extends Error {
+  constructor() {
+    super('AUTH_TIMEOUT')
+    this.name = 'AuthTimeoutError'
+  }
+}
+
+function withAuthTimeout<T>(op: Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new AuthTimeoutError()), AUTH_TIMEOUT_MS)
+    op.then(
+      (v) => { clearTimeout(timer); resolve(v) },
+      (e) => { clearTimeout(timer); reject(e) },
+    )
+  })
+}
+
+// Map a thrown/returned auth error to a friendly, user-facing message. Real auth
+// errors (wrong password, already-registered) pass through with a clearer
+// wording; only the network/timeout family is fully rewritten so a flaky
+// connection reads as "check your connection" instead of "Failed to fetch".
+function toFriendlyAuthError(err: unknown): AuthError {
+  const message =
+    err instanceof Error
+      ? err.message
+      : String((err as { message?: string })?.message ?? err ?? '')
+
+  if (err instanceof AuthTimeoutError || /AUTH_TIMEOUT/i.test(message)) {
+    return { name: 'AuthError', message: 'This is taking longer than usual. Check your connection and try again.', status: 0 } as unknown as AuthError
+  }
+  if (/failed to fetch|network request failed|networkerror|load failed|fetch failed|retryable|timed? ?out/i.test(message)) {
+    return { name: 'AuthError', message: "Couldn't reach Co-Exist. Check your connection and try again.", status: 0 } as unknown as AuthError
+  }
+  if (/already registered|already exists|user already/i.test(message)) {
+    return { name: 'AuthError', message: 'An account with this email already exists. Try logging in instead.', status: 400 } as unknown as AuthError
+  }
+  // Real auth error (e.g. invalid credentials) - pass through unchanged so the
+  // original status/name are preserved.
+  if (err && typeof err === 'object' && 'message' in err) return err as AuthError
+  return { name: 'AuthError', message: message || 'Something went wrong. Please try again.', status: 0 } as unknown as AuthError
+}
+
+/* ------------------------------------------------------------------ */
 /*  One-time SocialLogin initialization (native only)                  */
 /* ------------------------------------------------------------------ */
 
@@ -687,17 +745,25 @@ export function useAuthProvider(): AuthContextValue {
 
   /* ---- auth actions ---- */
   const signUp = useCallback(async (email: string, password: string, displayName: string, dateOfBirth?: string) => {
-    const { error, data } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { display_name: displayName, date_of_birth: dateOfBirth },
-        emailRedirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback`,
-      },
-    })
+    let error: AuthError | null = null
+    let data: Awaited<ReturnType<typeof supabase.auth.signUp>>['data'] | null = null
+    try {
+      const res = await withAuthTimeout(supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: displayName, date_of_birth: dateOfBirth },
+          emailRedirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback`,
+        },
+      }))
+      error = res.error ? toFriendlyAuthError(res.error) : null
+      data = res.data
+    } catch (err) {
+      return { error: toFriendlyAuthError(err), hasSession: false }
+    }
 
     // Send welcome email on successful signup
-    if (!error && data.user) {
+    if (!error && data?.user) {
       supabase.functions.invoke('send-email', {
         body: {
           type: 'welcome',
@@ -717,8 +783,12 @@ export function useAuthProvider(): AuthContextValue {
   }, [])
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error }
+    try {
+      const { error } = await withAuthTimeout(supabase.auth.signInWithPassword({ email, password }))
+      return { error: error ? toFriendlyAuthError(error) : null }
+    } catch (err) {
+      return { error: toFriendlyAuthError(err) }
+    }
   }, [])
 
   const signInWithGoogle = useCallback(async () => {
@@ -735,13 +805,13 @@ export function useAuthProvider(): AuthContextValue {
         const result = await SocialLogin.login({ provider: 'google', options: {} })
         const idToken = (result?.result as unknown as Record<string, unknown>)?.idToken as string | undefined
         if (!idToken) return { error: { message: 'No ID token received from Google', status: 400 } as unknown as AuthError }
-        const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: idToken })
-        return { error }
+        const { error } = await withAuthTimeout(supabase.auth.signInWithIdToken({ provider: 'google', token: idToken }))
+        return { error: error ? toFriendlyAuthError(error) : null }
       } catch (err: unknown) {
         // User cancelled = not an error
         const e = err as { message?: string; code?: string }
         if (e?.message?.includes('cancel') || e?.code === 'SIGN_IN_CANCELLED') return { error: null }
-        return { error: { message: e?.message ?? 'Google sign-in failed', status: 500 } as unknown as AuthError }
+        return { error: toFriendlyAuthError(err) }
       }
     }
     // Web: use Supabase OAuth redirect
@@ -760,13 +830,13 @@ export function useAuthProvider(): AuthContextValue {
         const result = await SocialLogin.login({ provider: 'apple', options: { scopes: ['email', 'name'] } })
         const idToken = (result?.result as unknown as Record<string, unknown>)?.idToken as string | undefined
         if (!idToken) return { error: { message: 'No ID token received from Apple', status: 400 } as unknown as AuthError }
-        const { error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: idToken })
-        return { error }
+        const { error } = await withAuthTimeout(supabase.auth.signInWithIdToken({ provider: 'apple', token: idToken }))
+        return { error: error ? toFriendlyAuthError(error) : null }
       } catch (err: unknown) {
         // User cancelled = not an error
         const e = err as { message?: string; code?: string }
         if (e?.message?.includes('cancel') || e?.code === '1001') return { error: null }
-        return { error: { message: e?.message ?? 'Apple sign-in failed', status: 500 } as unknown as AuthError }
+        return { error: toFriendlyAuthError(err) }
       }
     }
     // Web: use Supabase OAuth redirect
@@ -778,11 +848,15 @@ export function useAuthProvider(): AuthContextValue {
   }, [])
 
   const signInWithMagicLink = useCallback(async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback` },
-    })
-    return { error }
+    try {
+      const { error } = await withAuthTimeout(supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback` },
+      }))
+      return { error: error ? toFriendlyAuthError(error) : null }
+    } catch (err) {
+      return { error: toFriendlyAuthError(err) }
+    }
   }, [])
 
   const signOut = useCallback(async () => {

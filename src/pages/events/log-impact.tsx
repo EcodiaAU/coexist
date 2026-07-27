@@ -34,6 +34,8 @@ import {
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import { useAuth } from '@/hooks/use-auth'
 import { useEventSurvey } from '@/hooks/use-event-survey'
+import { useSurveyDraft } from '@/hooks/use-survey-draft'
+import { getSurveyDraft, removeSurveyDraft } from '@/lib/offline-sync'
 import { SurveyQuestionRenderer } from '@/components/survey-questions'
 import { canSubmitSurvey as computeCanSubmitSurvey, stripHiddenAnswers } from '@/components/survey-questions-utils'
 import { syncSurveyImpact } from '@/lib/survey-impact'
@@ -739,6 +741,38 @@ export default function LogImpactPage() {
   const [afterPhotos, setAfterPhotos] = useState<string[]>([])
   const [drawnArea, setDrawnArea] = useState<Record<string, unknown> | null>(null)
 
+  // Restore an in-progress impact-form draft on mount so leaving the app to
+  // upload photos to OneDrive/Drive (which cold-starts the WebView) doesn't wipe
+  // the leader's answers on return (Winnie, 2026-07-27). Runs once after the
+  // existing-response query settles; a submitted response always wins.
+  const draftSeededRef = useRef(false)
+  useEffect(() => {
+    if (draftSeededRef.current) return
+    if (!surveyData?.surveyId || !eventId || !user || existingSurveyResponse === undefined) return
+    draftSeededRef.current = true
+    if (existingSurveyResponse && Object.keys(existingSurveyResponse).length > 0) {
+      removeSurveyDraft(surveyData.surveyId, eventId, user.id)
+      return
+    }
+    const draft = getSurveyDraft(surveyData.surveyId, eventId, user.id)
+    if (draft) {
+      if (Object.keys(draft.answers).length > 0) setSurveyAnswers(draft.answers)
+      const draftNotes = draft.extra?.notes
+      if (typeof draftNotes === 'string' && draftNotes) setNotes(draftNotes)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surveyData?.surveyId, eventId, user, existingSurveyResponse])
+
+  // Persist the in-progress impact form (debounced + on app background).
+  useSurveyDraft({
+    surveyId: surveyData?.surveyId,
+    eventId,
+    userId: user?.id,
+    answers: surveyAnswers,
+    extra: { notes },
+    enabled: !submitted,
+  })
+
   // Visible-required gate: a question blocks submit only when it IS rendered
   // (show_if matches) AND required AND unanswered. Conditional follow-ups
   // (q1_name, q2 Landcare, q3 OzFish, q7 What-was-collected) that depend on
@@ -1023,6 +1057,9 @@ export default function LogImpactPage() {
       queryClient.invalidateQueries({ queryKey: ['pending-surveys'] })
 
       setSubmitted(true)
+      if (surveyData?.surveyId && eventId && user) {
+        removeSurveyDraft(surveyData.surveyId, eventId, user.id)
+      }
     } catch (err) {
       // Previously this whole block had no catch - a failed upsert or network
       // error silently returned the form with no indication anything was wrong,
@@ -1438,6 +1475,7 @@ export default function LogImpactPage() {
               iconBg="bg-neutral-100"
             />
             <Input
+              compact
               type="textarea"
               placeholder="Any observations, challenges, or highlights from the event..."
               value={notes}

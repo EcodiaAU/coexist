@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Mail } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { useOffline } from '@/hooks/use-offline'
 import { OGMeta } from '@/components/og-meta'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isLoading, signIn, signInWithGoogle, signInWithApple, signInWithMagicLink } = useAuth()
+  const { isOffline } = useOffline()
   const shouldReduceMotion = useReducedMotion()
   const rm = !!shouldReduceMotion
 
@@ -34,6 +36,14 @@ export default function LoginPage() {
     e.preventDefault()
     if (!canSubmit) return
 
+    // Block a doomed submit on a dead connection rather than firing a request
+    // that hangs on a spinner and drives repeated retries (Nicola, iPhone, low
+    // service, 2026-07-27).
+    if (isOffline) {
+      setError("You appear to be offline. Connect to the internet and try again.")
+      return
+    }
+
     setIsSubmitting(true)
     setError(null)
 
@@ -55,6 +65,10 @@ export default function LoginPage() {
   async function handleMagicLink() {
     if (!email.trim()) {
       setError('Enter your email first')
+      return
+    }
+    if (isOffline) {
+      setError("You appear to be offline. Connect to the internet and try again.")
       return
     }
     setError(null)

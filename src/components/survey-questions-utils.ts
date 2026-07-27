@@ -47,6 +47,14 @@ export interface SurveyQuestion {
   //   - q7 (what was collected) only when q6 (collect_anything) = Yes
   // Hidden questions are NOT included in canSubmit's required check.
   show_if?: { question_id: string; equals: unknown }
+  // Optional external upload link rendered as a tappable button ABOVE this
+  // question's answer control - e.g. the OneDrive / Dropbox / Google Drive
+  // folder for event photos+videos, set on the "have you uploaded?" question so
+  // leaders can go upload right there before answering (Keeley, Co-Exist
+  // national meeting 2026-07-27). Config-driven per question; the URL is
+  // supplied by Co-Exist. Absent -> nothing renders.
+  link_url?: string
+  link_label?: string
 }
 
 // Returns true when the question should be rendered given the current answers.
@@ -206,6 +214,8 @@ export function parseSurveyQuestions(raw: unknown): SurveyQuestion[] {
       date_min: (q.date_min as string) || undefined,
       date_max: (q.date_max as string) || undefined,
       impact_metric: (q.impact_metric as string) || undefined,
+      link_url: (q.link_url as string) || undefined,
+      link_label: (q.link_label as string) || undefined,
       default_value: (q as Record<string, unknown>).default_value,
       show_if: (() => {
         const raw = (q as Record<string, unknown>).show_if as

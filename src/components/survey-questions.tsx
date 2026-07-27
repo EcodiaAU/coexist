@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle, Star, UserCircle } from 'lucide-react'
+import { CheckCircle, Star, UserCircle, UploadCloud, ExternalLink } from 'lucide-react'
 import { Input } from '@/components/input'
 import { DateInput } from '@/components/date-input'
 import { Dropdown } from '@/components/dropdown'
@@ -81,6 +81,29 @@ export function SurveyQuestionRenderer({
             </p>
             {q.description && (
               <p data-eos-id="src/components/survey-questions.tsx#6" data-eos-var="q.description" data-eos-var-label="Description" data-eos-var-scope="item" className="text-xs text-neutral-500 mt-0.5 ml-5">{q.description}</p>
+            )}
+            {/* Optional upload link (e.g. OneDrive/Dropbox/Drive) rendered above
+                the answer control so leaders can go upload their event photos+
+                videos right here before the "have you uploaded?" question
+                (Keeley, 2026-07-27). Config-driven; only renders when set.
+                target=_blank + rel=noopener as the URL comes from survey config. */}
+            {q.link_url && (
+              <a
+                data-eos-id="src/components/survey-questions.tsx#41"
+                href={q.link_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  'mt-2 flex items-center justify-center gap-2 w-full',
+                  'px-4 py-2.5 rounded-sm text-sm font-semibold',
+                  'bg-primary-600 text-white active:scale-[0.98]',
+                  'transition-transform duration-150 cursor-pointer',
+                )}
+              >
+                <UploadCloud size={16} />
+                {q.link_label || 'Open the upload folder'}
+                <ExternalLink size={14} className="opacity-80" />
+              </a>
             )}
           </div>
 
@@ -179,6 +202,7 @@ export function SurveyQuestionRenderer({
               </div>
               {q.allow_other && answers[q.id] === '__other__' && (
                 <Input data-eos-id="src/components/survey-questions.tsx#20"
+                  compact
                   value={otherValues[q.id] ?? ''}
                   onChange={(e) => setOtherValues((prev) => ({ ...prev, [q.id]: e.target.value }))}
                   placeholder="Type your answer..."
@@ -227,6 +251,7 @@ export function SurveyQuestionRenderer({
               </div>
               {q.allow_other && ((answers[q.id] as string[]) ?? []).includes('__other__') && (
                 <Input data-eos-id="src/components/survey-questions.tsx#26"
+                  compact
                   value={otherValues[q.id] ?? ''}
                   onChange={(e) => setOtherValues((prev) => ({ ...prev, [q.id]: e.target.value }))}
                   placeholder="Type your answer..."
@@ -249,6 +274,7 @@ export function SurveyQuestionRenderer({
               />
               {q.allow_other && answers[q.id] === '__other__' && (
                 <Input data-eos-id="src/components/survey-questions.tsx#29"
+                  compact
                   value={otherValues[q.id] ?? ''}
                   onChange={(e) => setOtherValues((prev) => ({ ...prev, [q.id]: e.target.value }))}
                   placeholder="Type your answer..."
@@ -286,6 +312,7 @@ export function SurveyQuestionRenderer({
           {q.type === 'free_text' && (
             <div data-eos-id="src/components/survey-questions.tsx#32" className="space-y-1">
               <Input data-eos-id="src/components/survey-questions.tsx#33"
+                compact
                 type={q.text_multiline !== false ? 'textarea' : 'text'}
                 value={(answers[q.id] as string) ?? ''}
                 onChange={(e) => setAnswer(q.id, e.target.value)}
@@ -308,6 +335,7 @@ export function SurveyQuestionRenderer({
           {q.type === 'number' && (
             <div data-eos-id="src/components/survey-questions.tsx#35" className="space-y-1">
               <Input data-eos-id="src/components/survey-questions.tsx#36"
+                compact
                 type="number"
                 value={String(answers[q.id] ?? '')}
                 // QA P3-8: e.target.value is a string, so numeric answers
@@ -344,6 +372,7 @@ export function SurveyQuestionRenderer({
           {/* Email */}
           {q.type === 'email' && (
             <Input data-eos-id="src/components/survey-questions.tsx#39"
+              compact
               type="email"
               value={(answers[q.id] as string) ?? ''}
               onChange={(e) => setAnswer(q.id, e.target.value)}
@@ -354,6 +383,7 @@ export function SurveyQuestionRenderer({
           {/* Phone */}
           {q.type === 'phone' && (
             <Input data-eos-id="src/components/survey-questions.tsx#40"
+              compact
               type="tel"
               value={(answers[q.id] as string) ?? ''}
               onChange={(e) => setAnswer(q.id, e.target.value)}

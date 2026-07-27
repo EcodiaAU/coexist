@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { UserPlus } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { useOffline } from '@/hooks/use-offline'
 import { OGMeta } from '@/components/og-meta'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
@@ -47,6 +48,7 @@ export default function SignUpPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { signUp, signInWithGoogle, signInWithApple } = useAuth()
+  const { isOffline } = useOffline()
   const shouldReduceMotion = useReducedMotion()
 
   const [displayName, setDisplayName] = useState('')
@@ -90,6 +92,12 @@ export default function SignUpPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!canSubmit) return
+
+    // Block a doomed submit on a dead connection (see login.tsx / Nicola 2026-07-27).
+    if (isOffline) {
+      setError("You appear to be offline. Connect to the internet and try again.")
+      return
+    }
 
     setIsSubmitting(true)
     setError(null)

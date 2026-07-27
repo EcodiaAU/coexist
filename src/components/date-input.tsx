@@ -117,6 +117,11 @@ export function DateInput({
   return (
     <Input data-eos-id="src/components/date-input.tsx#0" data-eos-v="2"
       type="text"
+      // compact only engages when there is no floating label (Input guards it
+      // with `compact && !label`). Labelled use (sign-up DOB) keeps the floating
+      // label; label-less survey use gets an always-visible DD/MM/YYYY
+      // placeholder and no phantom label band (PES overlap fix 2026-07-27).
+      compact
       label={label}
       value={display}
       onChange={handleChange}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
@@ -22,6 +22,8 @@ import {
 } from '@/components'
 import { useToast } from '@/components/toast'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
+import { useSurveyDraft } from '@/hooks/use-survey-draft'
+import { getSurveyDraft, removeSurveyDraft } from '@/lib/offline-sync'
 import { supabase } from '@/lib/supabase'
 import type { Json } from '@/types/database.types'
 
@@ -131,6 +133,7 @@ function useSubmitSurvey() {
 
 export default function PostEventSurveyPage() {
   const { id: eventId } = useParams<{ id: string }>()
+  const { user } = useAuth()
   const shouldReduceMotion = useReducedMotion()
 
   const { data: event, isLoading: eventLoading } = useEventDetail(eventId)
@@ -166,6 +169,36 @@ export default function PostEventSurveyPage() {
     setUserAnswers((prev) => ({ ...prev, [key]: value }))
   }, [])
 
+  // Restore an in-progress draft on mount so leaving the app to upload photos
+  // to OneDrive/Drive doesn't wipe the survey (Winnie, 2026-07-27). Runs once,
+  // after the existing-response query has settled: a submitted response always
+  // wins and any stale local draft is discarded.
+  const seededRef = useRef(false)
+  useEffect(() => {
+    if (seededRef.current) return
+    if (!surveyId || !eventId || !user || existingResponse === undefined) return
+    seededRef.current = true
+    const resp = existingResponse as Record<string, unknown> | null
+    const submittedAnswers = (resp?.answers as Record<string, unknown>) ?? {}
+    if (Object.keys(submittedAnswers).length > 0) {
+      removeSurveyDraft(surveyId, eventId, user.id)
+      return
+    }
+    const draft = getSurveyDraft(surveyId, eventId, user.id)
+    if (draft && Object.keys(draft.answers).length > 0) {
+      setUserAnswers(draft.answers)
+    }
+  }, [surveyId, eventId, user, existingResponse])
+
+  // Persist the in-progress survey (debounced + on app background).
+  useSurveyDraft({
+    surveyId,
+    eventId,
+    userId: user?.id,
+    answers,
+    enabled: !submitted,
+  })
+
   // Canonical gate: every visible required question must be filled. Shared
   // with log-impact so both survey surfaces recognise 0 ratings, "No"
   // answers, "0" number entries and multi-selects identically, and skip
@@ -180,10 +213,11 @@ export default function PostEventSurveyPage() {
       const cleanAnswers = stripHiddenAnswers(questions, answers)
       await submitMutation.mutateAsync({ surveyId, eventId, answers: cleanAnswers as Json })
       setSubmitted(true)
+      if (user) removeSurveyDraft(surveyId, eventId, user.id)
     } catch {
       toast.error('Failed to submit survey. Please try again.')
     }
-  }, [eventId, surveyId, canSubmit, answers, submitMutation, questions, toast])
+  }, [eventId, surveyId, canSubmit, answers, submitMutation, questions, toast, user])
 
   // 7-day survey window
   const surveyWindowExpired = useMemo(() => {

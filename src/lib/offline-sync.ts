@@ -1175,6 +1175,72 @@ export function removeChatDraft(collectiveId: string) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Survey / impact-form drafts                                        */
+/* ------------------------------------------------------------------ */
+
+// A partially-filled survey lives only in component useState and is persisted
+// to Supabase ONLY on submit. The page fully unmounts on navigation (the
+// KeepAlive cache layer was removed) and the Capacitor WebView cold-starts when
+// the user leaves the app to upload photos to OneDrive/Drive - so on return the
+// whole survey was back to blank. This mirrors the chat-draft localStorage
+// pattern above to keep an in-progress survey until it is submitted. Origin:
+// Winnie, Co-Exist national meeting 2026-07-27.
+const SURVEY_DRAFT_KEY = 'coexist-survey-drafts'
+
+export interface SurveyDraft {
+  answers: Record<string, unknown>
+  /** Optional extra leader impact-form fields (notes, etc.). */
+  extra?: Record<string, unknown>
+  updatedAt: string
+}
+
+function surveyDraftKey(surveyId: string, eventId: string, userId: string): string {
+  return `${surveyId}::${eventId}::${userId}`
+}
+
+function getSurveyDrafts(): Record<string, SurveyDraft> {
+  return safeGet<Record<string, SurveyDraft>>(SURVEY_DRAFT_KEY, {})
+}
+
+/** Save an in-progress survey/impact-form draft (keyed survey:event:user). */
+export function saveSurveyDraft(
+  surveyId: string,
+  eventId: string,
+  userId: string,
+  answers: Record<string, unknown>,
+  extra?: Record<string, unknown>,
+) {
+  const hasAnswers = !!answers && Object.keys(answers).length > 0
+  const hasExtra =
+    !!extra &&
+    Object.values(extra).some((v) => (Array.isArray(v) ? v.length > 0 : v != null && v !== ''))
+  if (!hasAnswers && !hasExtra) {
+    removeSurveyDraft(surveyId, eventId, userId)
+    return
+  }
+  const drafts = getSurveyDrafts()
+  drafts[surveyDraftKey(surveyId, eventId, userId)] = {
+    answers: answers ?? {},
+    extra,
+    updatedAt: new Date().toISOString(),
+  }
+  safeSet(SURVEY_DRAFT_KEY, drafts)
+}
+
+/** Read a saved survey draft, or null if none. */
+export function getSurveyDraft(surveyId: string, eventId: string, userId: string): SurveyDraft | null {
+  const drafts = getSurveyDrafts()
+  return drafts[surveyDraftKey(surveyId, eventId, userId)] ?? null
+}
+
+/** Remove a survey draft (after successful submit). */
+export function removeSurveyDraft(surveyId: string, eventId: string, userId: string) {
+  const drafts = getSurveyDrafts()
+  delete drafts[surveyDraftKey(surveyId, eventId, userId)]
+  safeSet(SURVEY_DRAFT_KEY, drafts)
+}
+
+/* ------------------------------------------------------------------ */
 /*  Last sync timestamp                                                */
 /* ------------------------------------------------------------------ */
 

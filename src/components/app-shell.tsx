@@ -48,6 +48,11 @@ export function AppShell({ children, bare = false }: AppShellProps) {
     return (
       <KeyboardOpenContext.Provider data-eos-id="src/components/app-shell.tsx#0" data-eos-v="2" value={keyboardOpen}>
         <div data-eos-id="src/components/app-shell.tsx#1" className="flex flex-col min-h-dvh">
+          {/* Auth + onboarding render via the bare shell. Surface the offline
+              banner here too so sign-in/sign-up show connectivity state (a flaky
+              connection was silently invisible on these screens - Nicola, iPhone,
+              2026-07-27). */}
+          <OfflineBanner data-eos-id="src/components/app-shell.tsx#15" />
           <Suspense data-eos-id="src/components/app-shell.tsx#2" fallback={<div data-eos-id="src/components/app-shell.tsx#3" className="flex-1 bg-surface-1" />}>
             {children}
           </Suspense>
