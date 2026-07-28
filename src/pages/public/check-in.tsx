@@ -14,7 +14,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
-import { Leaf, CheckCircle2, AlertCircle, Loader2, Calendar, MapPin } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Loader2, Calendar, MapPin } from 'lucide-react'
 import { useImeSafeOnChange } from '@/hooks/use-ime-safe-on-change'
 import { formatEventDate } from '@/lib/date-format'
 
@@ -247,9 +247,9 @@ export default function PublicCheckInPage() {
       : null
 
   return (
-    <div className="min-h-dvh bg-neutral-50 flex flex-col" style={safeEdges}>
+    <div className="min-h-dvh w-full bg-neutral-50 flex flex-col">
       {/* ============================ Hero ============================ */}
-      <div className="relative">
+      <div className="relative w-full">
         {/* Background: event cover image, or a branded green gradient. */}
         {hasCover ? (
           <>
@@ -266,20 +266,12 @@ export default function PublicCheckInPage() {
 
         {/* Hero content */}
         <div
-          className="relative flex flex-col justify-between min-h-[46dvh] px-5 pb-6"
-          style={{ paddingTop: 'calc(var(--safe-top, 0px) + 20px)' }}
+          className="relative flex flex-col justify-end min-h-[42dvh] px-5 pb-6"
+          style={{ paddingTop: 'calc(var(--safe-top, 0px) + 24px)' }}
         >
-          {/* Brand mark */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/15 backdrop-blur-sm ring-1 ring-white/25">
-              <Leaf size={18} className="text-white" />
-            </div>
-            <span className="font-heading font-semibold text-white text-lg tracking-tight drop-shadow">Co-Exist</span>
-          </div>
-
           {/* Event identity */}
           {eventInfo && (
-            <div className="mt-8">
+            <div>
               {eventInfo.collective_name && (
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/80 mb-2">
                   {eventInfo.collective_name}
@@ -297,12 +289,12 @@ export default function PublicCheckInPage() {
         </div>
       </div>
 
-      {/* ======================== Form card ========================= */}
-      <main className="relative -mt-5 flex-1 rounded-t-3xl bg-white shadow-[0_-8px_24px_rgba(0,0,0,0.06)]">
+      {/* ===================== Form (below the hero) ===================== */}
+      <main className="flex-1 w-full bg-white">
         <form
           onSubmit={handleSubmit}
           noValidate
-          className="px-5 pt-7"
+          className="px-5 pt-6"
           style={{ paddingBottom: 'calc(var(--safe-bottom, 0px) + 24px)' }}
         >
           <h2 className="font-heading text-xl font-semibold text-neutral-900">Check in</h2>
@@ -404,10 +396,6 @@ export default function PublicCheckInPage() {
               Try again
             </button>
           )}
-
-          <p className="mt-6 text-center text-xs text-neutral-400">
-            Co-Exist  -  connecting conservation communities
-          </p>
         </form>
       </main>
     </div>
