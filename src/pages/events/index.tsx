@@ -18,7 +18,7 @@ import { useCollectives, useMyCollectives } from '@/hooks/use-collective'
 import {
   Page,
   Card,
-  Badge, EmptyState, Dropdown,
+  Badge, EmptyState, Dropdown, MultiSelect,
   WaveTransition, SegmentedControl,
 } from '@/components'
 import { useParallaxLayers } from '@/hooks/use-parallax-scroll'
@@ -148,7 +148,7 @@ export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState<ExploreTab>(initialTab)
 
   const [activityFilter, setActivityFilter] = useState<ActivityType | ''>('')
-  const [collectiveFilter, setCollectiveFilter] = useState<string>('')
+  const [collectiveIds, setCollectiveIds] = useState<string[]>([])
 
   const { isError: upcomingError, dataUpdatedAt, isFetching } = useMyEvents('upcoming')
 
@@ -161,7 +161,7 @@ export default function ExplorePage() {
     isFetchingNextPage,
   } = useDiscoverEvents({
     activityType: activityFilter,
-    collectiveId: collectiveFilter || undefined,
+    collectiveIds,
   })
   const discoverEvents = discoverData?.pages.flat()
   const discoverShowLoading = useDelayedLoading(discoverLoading)
@@ -170,10 +170,7 @@ export default function ExplorePage() {
   const { data: myCollectives } = useMyCollectives()
 
 
-  const collectiveOptions = [
-    { value: '', label: 'All collectives' },
-    ...(allCollectives).map((c) => ({ value: c.id, label: c.name })),
-  ]
+  const collectiveOptions = (allCollectives).map((c) => ({ value: c.id, label: c.name }))
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([
@@ -257,11 +254,12 @@ export default function ExplorePage() {
                         placeholder="Filter by type"
                         className="flex-1"
                       />
-                      <Dropdown
-                        value={collectiveFilter}
-                        onChange={(v) => setCollectiveFilter(v)}
+                      <MultiSelect
+                        value={collectiveIds}
+                        onChange={setCollectiveIds}
                         options={collectiveOptions}
-                        placeholder="All collectives"
+                        allLabel="All collectives"
+                        countLabel={(n) => `${n} collectives`}
                         className="flex-1"
                       />
                     </div>
@@ -274,9 +272,9 @@ export default function ExplorePage() {
                       <EmptyState
                         illustration="empty"
                         title="No events found"
-                        description={activityFilter || collectiveFilter ? 'Try different filters or check back soon.' : 'No upcoming events right now. Check back soon!'}
-                        action={activityFilter || collectiveFilter
-                          ? { label: 'Clear filters', onClick: () => { setActivityFilter(''); setCollectiveFilter('') } }
+                        description={activityFilter || collectiveIds.length ? 'Try different filters or check back soon.' : 'No upcoming events right now. Check back soon!'}
+                        action={activityFilter || collectiveIds.length
+                          ? { label: 'Clear filters', onClick: () => { setActivityFilter(''); setCollectiveIds([]) } }
                           : { label: 'Browse collectives', onClick: () => setActiveTab('collectives') }
                         }
                       />

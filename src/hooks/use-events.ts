@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { useToast } from '@/components/toast'
 import { queueOfflineAction } from '@/lib/offline-sync'
-import { fetchEventIdsForCollective } from '@/lib/collective-event-ids'
+import { fetchEventIdsForCollective, fetchEventIdsForCollectives } from '@/lib/collective-event-ids'
 import { formatEventLong, wallClockNow } from '@/lib/date-format'
 import type {
   Database,
@@ -747,10 +747,12 @@ const DISCOVER_PAGE_SIZE = 20
 
 export function useDiscoverEvents(filters?: {
   activityType?: ActivityType | ''
-  collectiveId?: string
+  collectiveIds?: string[]
 }) {
+  // Stable, order-independent key for the selected collectives.
+  const collectiveKey = (filters?.collectiveIds ?? []).slice().sort().join(',')
   return useInfiniteQuery({
-    queryKey: ['discover-events', filters?.activityType, filters?.collectiveId],
+    queryKey: ['discover-events', filters?.activityType, collectiveKey],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       const wcNow = wallClockNow()
       const now = wcNow.toISOString()
@@ -771,11 +773,12 @@ export function useDiscoverEvents(filters?: {
       if (filters?.activityType) {
         query = query.eq('activity_type', filters.activityType)
       }
-      if (filters?.collectiveId) {
+      if (filters?.collectiveIds && filters.collectiveIds.length > 0) {
         // event_hosts so co-hosted events surface here too, not just events
-        // where this collective is the primary host.
-        const ids = await fetchEventIdsForCollective(filters.collectiveId)
-        if (!ids || ids.length === 0) return [] as EventWithCollective[]
+        // where a collective is the primary host. Union across every selected
+        // collective (an event hosted by any of them qualifies).
+        const ids = await fetchEventIdsForCollectives(filters.collectiveIds)
+        if (ids.length === 0) return [] as EventWithCollective[]
         query = query.in('id', ids)
       }
 

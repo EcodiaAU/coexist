@@ -108,7 +108,7 @@ Deno.serve(withSentry('public-event-check-in', async (req: Request) => {
 
     const { data: event, error } = await db
       .from('events')
-      .select('title, collectives(name), public_check_in_enabled, status, date_start, public_check_in_token')
+      .select('title, collectives(name, timezone), public_check_in_enabled, status, date_start, address, cover_image_url, activity_type, timezone, public_check_in_token')
       .eq('public_check_in_token', token)
       .single()
 
@@ -122,9 +122,15 @@ Deno.serve(withSentry('public-event-check-in', async (req: Request) => {
       return json({ error: 'Event not available' }, 404)
     }
 
+    const collective = event.collectives as { name: string; timezone: string | null } | null
     return json({
       event_title: event.title,
-      collective_name: (event.collectives as { name: string } | null)?.name ?? '',
+      collective_name: collective?.name ?? '',
+      cover_image_url: event.cover_image_url ?? null,
+      date_start: event.date_start ?? null,
+      address: event.address ?? null,
+      activity_type: event.activity_type ?? null,
+      timezone: event.timezone ?? collective?.timezone ?? null,
     })
   }
 
