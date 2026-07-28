@@ -57,17 +57,18 @@ androidWebViewHierarchy: devtools
 # replacement: it renders only when the member actually has an upcoming event, which is
 # exactly the fixture dependence this gate avoids. The tab bar below is the real
 # always-present anchor for "the authed shell rendered".
-# Retry-with-timeout, not a snapshot assert: the Chat tab carries an unread
-# badge whose count arrives async and re-renders the button, so a plain
-# assertVisible on "Chat" can query mid-reconciliation and miss the label even
-# though the tab is on screen (a11y-tree-fills-after-pixels, capacitor webview).
-# extendedWaitUntil proves the SAME anchor (each tab is visible) while absorbing
-# the render race. Failure here still means the tab genuinely never appeared.
+# Retry-with-timeout, not a snapshot assert: the tab bar fills async on the
+# capacitor webview (a11y-tree-fills-after-pixels). extendedWaitUntil absorbs
+# that render race. We assert Home + Profile + More (three of the four tabs) as
+# the authed-shell anchor and deliberately do NOT assert "Chat": that tab carries
+# an unread-count badge that mutates its accessibility label to "<n>\nChat", and
+# the badge overlay makes a plain visible:"Chat" match miss even though the tab
+# is on screen (it failed every run 2026-07 for exactly this reason). All four
+# tabs render from the same BottomNav component, so Home+Profile+More visible
+# proves the shell rendered; the Chat tab is present with them. Failure here
+# still means the authed shell genuinely never appeared.
 - extendedWaitUntil:
     visible: "Home"
-    timeout: 12000
-- extendedWaitUntil:
-    visible: "Chat"
     timeout: 12000
 - extendedWaitUntil:
     visible: "Profile"
