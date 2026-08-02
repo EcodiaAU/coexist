@@ -141,6 +141,17 @@ Deno.serve(withSentry('carpool-save-seat', async (req: Request) => {
     )
   }
 
+  // Channel-scoped (campout) carpools have no collective, and the
+  // carpool_breakout channel type requires collective_id NOT NULL. Passengers
+  // already share the campout group chat as their coordination surface, so we
+  // skip breakout creation and return the confirmed seat now.
+  if (!widget.collective_id) {
+    return new Response(
+      JSON.stringify({ success: true, seat, breakout_channel_id: null }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+    )
+  }
+
   const { data: eventRow } = await admin
     .from('events')
     .select('title')

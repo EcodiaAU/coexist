@@ -42,7 +42,11 @@ import { withSentry } from '../_shared/sentry.ts'
  */
 
 interface CreateWidgetBody {
-  collective_id: string
+  /** Collective-scoped carpool (collective chat). Exactly one of
+   *  collective_id / channel_id must be set. */
+  collective_id?: string | null
+  /** Channel-scoped carpool (campout group chat). */
+  channel_id?: string | null
   event_id: string
   departure_point_text: string
   departure_lat?: number | null
@@ -215,13 +219,19 @@ Deno.serve(withSentry('carpool-create-widget', async (req: Request) => {
   }
 
   const {
-    collective_id, event_id, departure_point_text,
+    collective_id = null, channel_id = null, event_id, departure_point_text,
     departure_lat = null, departure_lng = null,
     departure_time, seats_total, notes = null,
   } = body || ({} as CreateWidgetBody)
 
-  // Validation - explicit field checks (no silent defaults that mutate)
-  if (!collective_id) return bad(400, 'collective_id required')
+  // Validation - explicit field checks (no silent defaults that mutate).
+  // A carpool is scoped to EXACTLY ONE of a collective (collective chat) or a
+  // channel (campout group chat). This mirrors the carpool_widgets_scope_chk
+  // CHECK constraint.
+  if (!collective_id && !channel_id) return bad(400, 'collective_id or channel_id required')
+  if (collective_id && channel_id) {
+    return bad(400, 'provide exactly one of collective_id / channel_id')
+  }
   if (!event_id) return bad(400, 'event_id required')
   if (!departure_point_text || !departure_point_text.trim()) {
     return bad(400, 'departure_point_text required')
@@ -249,33 +259,85 @@ Deno.serve(withSentry('carpool-create-widget', async (req: Request) => {
   // Service-role client for transactional writes
   const admin = createClient(supabaseUrl, serviceKey)
 
-  // Membership check (caller must belong to the collective)
-  const { data: memberRow, error: memberErr } = await admin
-    .from('collective_members')
-    .select('id, status')
-    .eq('user_id', driverId)
-    .eq('collective_id', collective_id)
-    .eq('status', 'active')
-    .maybeSingle()
-  if (memberErr) {
-    console.error('[carpool-create-widget] membership query failed:', memberErr.message)
-    return bad(500, 'membership lookup failed')
-  }
-  if (!memberRow) return bad(403, 'driver not a member of this collective')
+  // Membership + event-scope check. Two modes, one scope each:
+  //   collective mode -> driver is an active collective member, event belongs
+  //                      to that collective.
+  //   channel mode    -> driver is a member of the (campout) channel, and the
+  //                      channel is bound to event_id.
+  // We double-check here for clean 4xx codes instead of an opaque RLS reject.
+  let eventTitle: string
 
-  // Event must exist and belong to the same collective
-  const { data: eventRow, error: eventErr } = await admin
-    .from('events')
-    .select('id, collective_id, title')
-    .eq('id', event_id)
-    .maybeSingle()
-  if (eventErr) {
-    console.error('[carpool-create-widget] event lookup failed:', eventErr.message)
-    return bad(500, 'event lookup failed')
-  }
-  if (!eventRow) return bad(404, 'event not found')
-  if (eventRow.collective_id !== collective_id) {
-    return bad(400, 'event does not belong to this collective')
+  if (channel_id) {
+    // Channel (campout) mode
+    const { data: chanRow, error: chanErr } = await admin
+      .from('chat_channels')
+      .select('id, type, event_id')
+      .eq('id', channel_id)
+      .maybeSingle()
+    if (chanErr) {
+      console.error('[carpool-create-widget] channel lookup failed:', chanErr.message)
+      return bad(500, 'channel lookup failed')
+    }
+    if (!chanRow) return bad(404, 'channel not found')
+    if (chanRow.type !== 'campout') {
+      return bad(400, 'carpools can only be created in a campout channel')
+    }
+    if (chanRow.event_id !== event_id) {
+      return bad(400, 'event does not belong to this channel')
+    }
+
+    const { data: chanMember, error: cmErr } = await admin
+      .from('chat_channel_members')
+      .select('user_id')
+      .eq('channel_id', channel_id)
+      .eq('user_id', driverId)
+      .maybeSingle()
+    if (cmErr) {
+      console.error('[carpool-create-widget] channel membership query failed:', cmErr.message)
+      return bad(500, 'membership lookup failed')
+    }
+    if (!chanMember) return bad(403, 'driver not a member of this channel')
+
+    const { data: evtRow, error: evtErr } = await admin
+      .from('events')
+      .select('title')
+      .eq('id', event_id)
+      .maybeSingle()
+    if (evtErr) {
+      console.error('[carpool-create-widget] event lookup failed:', evtErr.message)
+      return bad(500, 'event lookup failed')
+    }
+    if (!evtRow) return bad(404, 'event not found')
+    eventTitle = evtRow.title
+  } else {
+    // Collective mode
+    const { data: memberRow, error: memberErr } = await admin
+      .from('collective_members')
+      .select('id, status')
+      .eq('user_id', driverId)
+      .eq('collective_id', collective_id)
+      .eq('status', 'active')
+      .maybeSingle()
+    if (memberErr) {
+      console.error('[carpool-create-widget] membership query failed:', memberErr.message)
+      return bad(500, 'membership lookup failed')
+    }
+    if (!memberRow) return bad(403, 'driver not a member of this collective')
+
+    const { data: eventRow, error: eventErr } = await admin
+      .from('events')
+      .select('id, collective_id, title')
+      .eq('id', event_id)
+      .maybeSingle()
+    if (eventErr) {
+      console.error('[carpool-create-widget] event lookup failed:', eventErr.message)
+      return bad(500, 'event lookup failed')
+    }
+    if (!eventRow) return bad(404, 'event not found')
+    if (eventRow.collective_id !== collective_id) {
+      return bad(400, 'event does not belong to this collective')
+    }
+    eventTitle = eventRow.title
   }
 
   // Resolve coords (caller -> cache -> nominatim). 422 on geocode failure
@@ -299,11 +361,16 @@ Deno.serve(withSentry('carpool-create-widget', async (req: Request) => {
     return bad(500, 'geocode lookup failed')
   }
 
+  // Scope columns: exactly one of collective_id / channel_id is non-null on
+  // both the widget and its in-stream message, so the campout channel's
+  // channel-membership RLS surfaces the carpool bubble to ticket-buyers.
+  const scope = channel_id ? { channel_id } : { collective_id }
+
   // 1. Insert carpool_widgets
   const { data: widget, error: widgetErr } = await admin
     .from('carpool_widgets')
     .insert({
-      collective_id,
+      ...scope,
       event_id,
       driver_id: driverId,
       departure_point_text: trimmedDeparturePoint,
@@ -325,11 +392,11 @@ Deno.serve(withSentry('carpool-create-widget', async (req: Request) => {
   const { data: msg, error: msgErr } = await admin
     .from('chat_messages')
     .insert({
-      collective_id,
+      ...scope,
       user_id: driverId,
       message_type: 'carpool',
       carpool_id: widget.id,
-      content: `🚗 Carpool to ${eventRow.title}`,
+      content: `🚗 Carpool to ${eventTitle}`,
     })
     .select()
     .single()

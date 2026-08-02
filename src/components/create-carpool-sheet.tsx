@@ -26,6 +26,12 @@ interface CreateCarpoolSheetProps {
   loading?: boolean
   /** Current collective ID - needed to fetch its upcoming events */
   collectiveId?: string
+  /**
+   * Channel (campout) mode: the carpool is fixed to a single event (the
+   * channel's event), so we skip the collective event picker entirely and
+   * lock the event. When set, collectiveId is ignored.
+   */
+  fixedEvent?: { id: string; title: string; date_start?: string | null }
 }
 
 /* ------------------------------------------------------------------ */
@@ -215,6 +221,7 @@ export function CreateCarpoolSheet({
   onSubmit,
   loading,
   collectiveId,
+  fixedEvent,
 }: CreateCarpoolSheetProps) {
   const [eventId, setEventId] = useState('')
   const [departurePoint, setDeparturePoint] = useState('')
@@ -222,15 +229,24 @@ export function CreateCarpoolSheet({
   const [seatsTotal, setSeatsTotal] = useState(3)
   const [notes, setNotes] = useState('')
 
+  // Collective mode fetches the collective's upcoming events for the picker.
+  // Channel (campout) mode locks to a single fixed event and skips the fetch.
   const { data: upcomingEvents = [], isLoading: eventsLoading } = useCollectiveEvents(
-    open ? collectiveId : undefined,
+    open && !fixedEvent ? collectiveId : undefined,
   )
+  const events: EventWithCollective[] = fixedEvent
+    ? [{
+        id: fixedEvent.id,
+        title: fixedEvent.title,
+        date_start: fixedEvent.date_start ?? '',
+      } as EventWithCollective]
+    : upcomingEvents
 
   // Reset on open with a sensible default departure time (event start - 1h, or now + 1h)
   useEffect(() => {
     if (!open) return
     startTransition(() => {
-      setEventId('')
+      setEventId(fixedEvent ? fixedEvent.id : '')
       setDeparturePoint('')
       // wall-clock now + 1h, rounded to the hour, in the wall-clock frame
       const inOneHour = new Date(wallClockNow().getTime() + 60 * 60 * 1000)
@@ -306,19 +322,29 @@ export function CreateCarpoolSheet({
           </div>
         </div>
 
-        {/* Event picker */}
+        {/* Event picker (locked to the channel's event in campout mode) */}
         <div data-eos-id="src/components/create-carpool-sheet.tsx#32" className="mb-3">
           <label data-eos-id="src/components/create-carpool-sheet.tsx#33" className="text-xs font-semibold text-neutral-900 mb-1 block">Event</label>
-          <EventPicker data-eos-id="src/components/create-carpool-sheet.tsx#34"
-            events={upcomingEvents}
-            selectedId={eventId}
-            onSelect={setEventId}
-            isLoading={eventsLoading}
-          />
-          {!eventsLoading && upcomingEvents.length === 0 && (
-            <p data-eos-id="src/components/create-carpool-sheet.tsx#35" className="text-[11px] text-warning-600 mt-1">
-              No upcoming events found. Create an event first, then offer carpools.
-            </p>
+          {fixedEvent ? (
+            <div className="w-full rounded-sm px-3.5 py-2.5 text-sm min-h-11 flex items-center gap-2 bg-success-50 text-success-800 ring-2 ring-success-400">
+              <Calendar size={16} className="shrink-0 text-success-500" />
+              <span className="flex-1 truncate font-medium">{fixedEvent.title}</span>
+              <Check size={16} className="shrink-0 text-success-600" />
+            </div>
+          ) : (
+            <>
+              <EventPicker data-eos-id="src/components/create-carpool-sheet.tsx#34"
+                events={events}
+                selectedId={eventId}
+                onSelect={setEventId}
+                isLoading={eventsLoading}
+              />
+              {!eventsLoading && events.length === 0 && (
+                <p data-eos-id="src/components/create-carpool-sheet.tsx#35" className="text-[11px] text-warning-600 mt-1">
+                  No upcoming events found. Create an event first, then offer carpools.
+                </p>
+              )}
+            </>
           )}
         </div>
 
@@ -333,7 +359,7 @@ export function CreateCarpoolSheet({
             icon={<MapPin data-eos-id="src/components/create-carpool-sheet.tsx#38" size={16} className="text-success-500" />}
           />
           <p data-eos-id="src/components/create-carpool-sheet.tsx#39" className="text-[11px] text-neutral-400 mt-1">
-            Visible to all collective members.
+            Visible to everyone in this chat.
           </p>
         </div>
 

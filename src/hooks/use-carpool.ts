@@ -163,7 +163,11 @@ export function useCarpoolBreakout(carpoolId: string | undefined) {
 /* ------------------------------------------------------------------ */
 
 export interface CreateCarpoolInput {
-  collective_id: string
+  /** Collective-scoped carpool (collective chat). Provide exactly one of
+   *  collective_id / channel_id. */
+  collective_id?: string | null
+  /** Channel-scoped carpool (campout group chat). */
+  channel_id?: string | null
   event_id: string
   departure_point_text: string
   departure_lat?: number | null
@@ -186,7 +190,8 @@ export function useCreateCarpool() {
         'carpool-create-widget',
         {
           body: {
-            collective_id: input.collective_id,
+            collective_id: input.collective_id ?? null,
+            channel_id: input.channel_id ?? null,
             event_id: input.event_id,
             departure_point_text: input.departure_point_text,
             departure_lat: input.departure_lat ?? null,
@@ -202,8 +207,13 @@ export function useCreateCarpool() {
       return data as { id: string; message_id: string | null }
     },
     onSuccess: (_, input) => {
-      queryClient.invalidateQueries({ queryKey: ['chat-messages', input.collective_id] })
-      queryClient.invalidateQueries({ queryKey: ['carpools', input.collective_id] })
+      if (input.collective_id) {
+        queryClient.invalidateQueries({ queryKey: ['chat-messages', input.collective_id] })
+        queryClient.invalidateQueries({ queryKey: ['carpools', input.collective_id] })
+      }
+      if (input.channel_id) {
+        queryClient.invalidateQueries({ queryKey: ['channel-messages', input.channel_id] })
+      }
     },
     onError: (err) => {
       const msg = err instanceof Error ? err.message : 'Failed to create carpool'

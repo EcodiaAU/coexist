@@ -801,10 +801,28 @@ export default function ChatRoomPage() {
       .catch(() => toast.error('Some invites failed to send'))
   }
 
-  /* ---- Carpool creation (collective only) ---- */
+  /* ---- Carpool creation (collective chat OR campout channel) ---- */
   const handleCreateCarpool = (data: CreateCarpoolSubmitData) => {
+    // Campout group chat: the carpool is scoped to the channel, and its event
+    // is the channel's event (the sheet runs in fixedEvent mode).
+    if (isCampoutChannel && channelId && channel?.event_id) {
+      setShowCarpoolSheet(false)
+      toast.info('Posting carpool...')
+      createCarpool.mutate(
+        {
+          channel_id: channelId,
+          event_id: data.event_id,
+          departure_point_text: data.departure_point_text,
+          departure_time: data.departure_time,
+          seats_total: data.seats_total,
+          notes: data.notes,
+        },
+        { onSuccess: () => toast.success('Carpool posted!') },
+      )
+      return
+    }
     if (!isCollective || !collectiveId) {
-      toast.error('Carpools can only be created in a collective chat')
+      toast.error('Carpools can only be created in a collective or campout chat')
       return
     }
     setShowCarpoolSheet(false)
@@ -1107,20 +1125,25 @@ export default function ChatRoomPage() {
             setAnnouncementType('announcement')
             setShowAnnouncementSheet(true)
           }}
-          onCreateCarpool={isCollective ? () => setShowCarpoolSheet(true) : undefined}
+          onCreateCarpool={(isCollective || isCampoutChannel) ? () => setShowCarpoolSheet(true) : undefined}
           onBroadcastNotification={() => setShowBroadcastSheet(true)}
           mentionCollectiveId={isCollective ? collectiveId : undefined}
           mentionSelfUserId={user?.id}
         />
 
-        {/* Carpool creation sheet (collective only) */}
-        {isCollective && (
+        {/* Carpool creation sheet (collective chat OR campout channel) */}
+        {(isCollective || isCampoutChannel) && (
           <CreateCarpoolSheet
             open={showCarpoolSheet}
             onClose={() => setShowCarpoolSheet(false)}
             onSubmit={handleCreateCarpool}
             loading={createCarpool.isPending}
-            collectiveId={collectiveId}
+            collectiveId={isCollective ? collectiveId : undefined}
+            fixedEvent={
+              isCampoutChannel && channel?.event_id
+                ? { id: channel.event_id, title: channel.name ?? 'Campout' }
+                : undefined
+            }
           />
         )}
       </motion.div>
