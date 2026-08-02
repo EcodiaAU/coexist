@@ -1,6 +1,5 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { countByField, STATUS_FILTERS } from '@/lib/query-builders'
 
 /* ------------------------------------------------------------------ */
 /*  Admin events dashboard hook                                        */
@@ -72,36 +71,35 @@ async function fetchAdminEventsData(): Promise<AdminEventsData> {
 
   const eventList = (events ?? []) as (Omit<AdminEvent, 'registrationCount'>)[]
 
-  // Batch-fetch registration + check-in counts separately. Registration
-  // counts power the upcoming-events stats; check-in counts power the
-  // "average attendance" card, which has to reflect real turnout (status
-  // = 'attended'), not signups.
+  // Aggregate registration + check-in + walk-in counts SERVER-SIDE via
+  // get_event_engagement_counts. The old approach fetched every matching
+  // event_registrations row and tallied them client-side with countByField,
+  // but PostgREST caps a response at 1000 rows: with 2000+ registered rows
+  // across all events, the batched fetch silently truncated and any event
+  // whose rows fell past the boundary read 0 (Myall Park campout showed 0/30
+  // against 26 real registrations). The RPC does the GROUP BY in Postgres so
+  // no row cap can truncate it. Registration counts power the upcoming-events
+  // stats; check-in + walk-in attended counts power the "average attendance"
+  // card, which reflects real turnout (status = 'attended'), not signups.
   const eventIds = eventList.map((e) => e.id)
-  let regCounts = new Map<unknown, number>()
-  let checkInCounts = new Map<unknown, number>()
-  let walkInCounts = new Map<unknown, number>()
+  const regCounts = new Map<unknown, number>()
+  const checkInCounts = new Map<unknown, number>()
+  const walkInCounts = new Map<unknown, number>()
   if (eventIds.length > 0) {
-    const [regRes, checkInRes, walkInRes] = await Promise.all([
-      supabase
-        .from('event_registrations')
-        .select('event_id')
-        .in('event_id', eventIds)
-        .in('status', STATUS_FILTERS.events.REGISTRATION),
-      supabase
-        .from('event_registrations')
-        .select('event_id')
-        .in('event_id', eventIds)
-        .eq('status', 'attended'),
-      supabase
-        .from('event_walk_ins')
-        .select('event_id')
-        .in('event_id', eventIds)
-        .eq('status', 'attended'),
-    ])
-
-    regCounts = countByField((regRes.data ?? []) as { event_id: string }[], 'event_id')
-    checkInCounts = countByField((checkInRes.data ?? []) as { event_id: string }[], 'event_id')
-    walkInCounts = countByField((walkInRes.data ?? []) as { event_id: string }[], 'event_id')
+    const { data: countRows, error: countErr } = await supabase.rpc('get_event_engagement_counts', {
+      event_ids: eventIds,
+    })
+    if (countErr) throw countErr
+    for (const row of (countRows ?? []) as {
+      event_id: string
+      registered_count: number
+      attended_count: number
+      walkin_attended_count: number
+    }[]) {
+      regCounts.set(row.event_id, row.registered_count)
+      checkInCounts.set(row.event_id, row.attended_count)
+      walkInCounts.set(row.event_id, row.walkin_attended_count)
+    }
   }
 
   const enriched: AdminEvent[] = eventList.map((event) => ({
