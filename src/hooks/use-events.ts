@@ -536,6 +536,9 @@ export interface RosterPerson extends AttendeeWithStatus {
   scenario: RosterScenario
   /** why they are not attending (only set when scenario === 'notAttending') */
   reason?: 'refunded' | 'cancelled' | 'no ticket'
+  /** lifetime count of events this person has attended (status='attended'),
+   *  incl. this one once checked in. 0 = first-timer. Leader/staff-only stat. */
+  eventsAttended: number
 }
 
 export interface EventRoster {
@@ -602,6 +605,25 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
       if (regErr) throw regErr
       if (tixErr) throw tixErr
 
+      // Per-attendee lifetime "events attended" count, aggregated SERVER-SIDE
+      // (get_user_attended_counts GROUP BYs so no 1000-row fetch cap can
+      // truncate it) and gated to leaders/staff. Best-effort: a failure here
+      // must not break the roster, so we default everyone to 0.
+      const attendedByUser = new Map<string, number>()
+      const rosterUserIds = [...new Set((regs ?? []).map((r) => (r as AttendeeWithStatus).user_id))]
+      if (rosterUserIds.length > 0) {
+        const { data: attendedRows, error: attErr } = await supabase.rpc('get_user_attended_counts', {
+          user_ids: rosterUserIds,
+        })
+        if (attErr) {
+          console.warn('[useEventRoster] attended-count RPC failed:', attErr.message)
+        } else {
+          for (const row of (attendedRows ?? []) as { user_id: string; attended_count: number }[]) {
+            attendedByUser.set(row.user_id, row.attended_count)
+          }
+        }
+      }
+
       const tix = ((states as { tickets?: { user_id: string; status: string }[] } | null)?.tickets
         ?? []) as { user_id: string; status: string }[]
 
@@ -664,7 +686,13 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
           scenario = 'expected'
         }
 
-        const person: RosterPerson = { ...r, validTicketCount: a.valid, scenario, reason }
+        const person: RosterPerson = {
+          ...r,
+          validTicketCount: a.valid,
+          scenario,
+          reason,
+          eventsAttended: attendedByUser.get(r.user_id) ?? 0,
+        }
         groups[scenario].push(person)
       }
 

@@ -181,6 +181,23 @@ function AttendeeRow({
           {hasEmergencyInfo && !isNotAttending && (
             <AlertTriangle size={12} className="text-warning-500 shrink-0" aria-label="Has safety info" />
           )}
+          {!isNotAttending && (
+            person.eventsAttended > 0 ? (
+              <span
+                className="shrink-0 rounded-full bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-500 leading-none"
+                title="Events attended (lifetime)"
+              >
+                {person.eventsAttended} {person.eventsAttended === 1 ? 'event' : 'events'}
+              </span>
+            ) : (
+              <span
+                className="shrink-0 rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-bold text-sky-700 leading-none"
+                title="First Co-Exist event"
+              >
+                New
+              </span>
+            )
+          )}
         </div>
         <p className={cn(
           'text-caption font-medium',
