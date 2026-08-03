@@ -252,6 +252,22 @@ function App() {
     // Drop the index.html boot cover now that React is painting. Until this
     // runs the user sees the branded cover instead of an empty white body.
     document.getElementById('boot-splash')?.remove()
+    // Capgo live updates: confirm THIS web bundle booted. If an OTA bundle
+    // never reaches here within appReadyTimeout, the updater assumes it is
+    // broken and rolls back to the previous working bundle. Reaching a mounted
+    // App is the strongest possible "boot succeeded" signal, so it goes here.
+    // Guarded + dynamically imported so a plain web build (no native plugin)
+    // is a no-op.
+    ;(async () => {
+      try {
+        const { CapacitorUpdater } = await import('@capgo/capacitor-updater')
+        await CapacitorUpdater.notifyAppReady()
+        const { WEB_BUNDLE_VERSION } = await import('@/lib/web-bundle-version')
+        console.log(`[coexist] web bundle ${WEB_BUNDLE_VERSION} ready`)
+      } catch {
+        /* updater unavailable (web build / plugin missing) - ignore */
+      }
+    })()
   }, [])
 
   const handleSplashReady = useCallback(() => {

@@ -14,6 +14,17 @@ const config: CapacitorConfig = {
 
   // ---- Plugins ----
   plugins: {
+    // Capgo live updates (OTA): push web-layer (JS/HTML/CSS) fixes to installed
+    // apps without a store submission. Native changes (plugins, entitlements,
+    // icons, splash) still need a store build. autoUpdate downloads on launch
+    // and applies on next background/resume; if a bundle fails to boot (App.tsx
+    // does not call notifyAppReady within appReadyTimeout) it rolls back.
+    CapacitorUpdater: {
+      autoUpdate: true,
+      resetWhenUpdate: true,
+      defaultChannel: 'production',
+    },
+
     // Push Notifications (FCM + APNs)
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
