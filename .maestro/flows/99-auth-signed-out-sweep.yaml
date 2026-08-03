@@ -34,8 +34,15 @@ androidWebViewHierarchy: devtools
 # cold launch paints in 4-15s, and an identical clearState launch that SETTLES before the
 # first poll renders the sign-in screen every time. So settle first, THEN assert. Do not
 # "fix" a future red here by inflating the timeout again - check whether it died early.
-- waitForAnimationToEnd:
-    timeout: 15000
+#
+# 2026-08-03 ROOT CAUSE + FIX: the waitForAnimationToEnd here returned instantly on a
+# blank-but-stable first frame (0 settle), so the extendedWaitUntil that followed became
+# the FIRST hierarchy op and polled while the WebView devtools target was still attaching,
+# hard-erroring on an empty tree and dying early (2/2 red on this Mac emulator). Sibling
+# 71-authed-member-shell-gate does the IDENTICAL clearState launch and passes because its
+# extendedWaitUntil is the first op after launch, so the launch overhead gives devtools
+# time to attach. Fix = drop the animation wait; let the assert itself be the first op and
+# poll out the attach, exactly like 71. Do NOT reintroduce a pre-assert hierarchy op here.
 - extendedWaitUntil:
     visible: ".*(Welcome back|Welcome|Log In|Sign In|Create account|Get Started|I have an account).*"
     timeout: 90000
