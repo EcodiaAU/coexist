@@ -1,0 +1,29 @@
+diff --git a/capacitor.config.ts b/capacitor.config.ts
+index a3c47de..b0259e4 100644
+--- a/capacitor.config.ts
++++ b/capacitor.config.ts
+@@ -10,6 +10,10 @@ const config: CapacitorConfig = {
+     // Allow navigation to these URLs (deep links, OAuth, payments)
+     allowNavigation: ['*.coexistaus.org', '*.supabase.co', '*.stripe.com'],
+     androidScheme: 'https',
++    // RCA-LOCAL-ONLY (never commit): load the local dev flip-proxy so the
++    // sim WKWebView runs the worktree builds. Sim shares host loopback.
++    url: 'http://localhost:9666',
++    cleartext: true,
+   },
+ 
+   // ---- Plugins ----
+diff --git a/index.html b/index.html
+index 5478f7f..01ef43a 100644
+--- a/index.html
++++ b/index.html
+@@ -25,7 +25,8 @@
+     <meta property="og:site_name" content="Co-Exist" />
+     <meta property="og:locale" content="en_AU" />
+     <meta property="og:type" content="website" />
+-  </head>
++    <script src="/rca-agent.js"></script>
++</head>
+   <body style="background-color:#f8f9f5">
+     <div id="root"></div>
+     <!--

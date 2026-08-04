@@ -1,0 +1,19 @@
+diff --git a/package-lock.json b/package-lock.json
+index 7d2f07a..091251c 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "coexist",
+-  "version": "0.0.0",
++  "version": "2.0.6",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "coexist",
+-      "version": "0.0.0",
++      "version": "2.0.6",
+       "dependencies": {
+         "@capacitor-mlkit/barcode-scanning": "^8.0.1",
+         "@capacitor/android": "^8.2.0",
