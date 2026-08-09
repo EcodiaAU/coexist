@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useReducedMotion, useMotionValue, animate } fr
 import { Camera, ImagePlus, Video as VideoIcon, X, Trash2, Share2, Loader2, ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/use-auth'
-import { useEventPhotos, useUploadEventPhoto, useDeleteEventPhoto, type EventPhoto } from '@/hooks/use-event-photos'
+import { useEventPhotos, useUploadEventPhoto, useDeleteEventPhoto, MAX_ALBUM_UPLOAD_BYTES, MAX_ALBUM_UPLOAD_MB, type EventPhoto } from '@/hooks/use-event-photos'
 import { useCamera } from '@/hooks/use-camera'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/button'
@@ -64,31 +64,67 @@ export function EventPhotosSection({
   }
 
   async function handlePickMultiple() {
-    // Multi-pick via plain file input - works on web + native via Capacitor's
-    // bridged input. Accepts both photos and videos. Cap at MAX_PER_UPLOAD.
+    // Multi-pick via a file input - works on web + native via Capacitor's
+    // bridged input. Accepts photos AND videos. Cap at MAX_PER_UPLOAD.
+    // The input must be attached to the DOM for iOS WKWebView to open the
+    // picker reliably (matches use-camera's web picker).
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*,video/*'
     input.multiple = true
+    input.style.position = 'fixed'
+    input.style.opacity = '0'
+    input.style.pointerEvents = 'none'
+    document.body.appendChild(input)
+    const cleanup = () => { if (document.body.contains(input)) input.remove() }
+
     input.onchange = async () => {
-      const files = Array.from(input.files ?? []).slice(0, MAX_PER_UPLOAD)
+      const picked = Array.from(input.files ?? [])
+      cleanup()
+      const files = picked.slice(0, MAX_PER_UPLOAD)
       if (files.length === 0) return
-      setUploadCount({ done: 0, total: files.length })
+
+      // Pre-reject oversize files with a clear message instead of a silent
+      // failure deep in the upload. A phone video can be large; the album
+      // caps each file at MAX_ALBUM_UPLOAD_MB.
+      const okFiles = files.filter((f) => f.size <= MAX_ALBUM_UPLOAD_BYTES)
+      const tooBig = files.filter((f) => f.size > MAX_ALBUM_UPLOAD_BYTES)
+      if (tooBig.length > 0) {
+        toast.error(
+          tooBig.length === 1
+            ? `That ${tooBig[0].type.startsWith('video/') ? 'video' : 'file'} is over ${MAX_ALBUM_UPLOAD_MB}MB. Try a shorter clip.`
+            : `${tooBig.length} files were over ${MAX_ALBUM_UPLOAD_MB}MB and were skipped.`,
+        )
+      }
+      if (okFiles.length === 0) return
+
+      setUploadCount({ done: 0, total: okFiles.length })
       let ok = 0
-      let fail = 0
-      for (const f of files) {
+      let firstError = ''
+      for (const f of okFiles) {
         try {
           await upload.mutateAsync({ blob: f })
           ok++
-        } catch {
-          fail++
+        } catch (e) {
+          if (!firstError) firstError = e instanceof Error ? e.message : 'Upload failed'
         }
         setUploadCount((p) => ({ ...p, done: p.done + 1 }))
       }
       setUploadCount({ done: 0, total: 0 })
-      if (ok > 0) toast.success(`Added ${ok} photo${ok !== 1 ? 's' : ''}`)
-      if (fail > 0) toast.error(`${fail} upload${fail !== 1 ? 's' : ''} failed`)
+      const fail = okFiles.length - ok
+      if (ok > 0) toast.success(`Added ${ok} item${ok !== 1 ? 's' : ''}`)
+      // Surface the real reason (e.g. the size message) rather than a bare count.
+      if (fail > 0) toast.error(firstError || `${fail} upload${fail !== 1 ? 's' : ''} failed`)
     }
+
+    // Cancel path: focus returns without a change event -> clean up the input.
+    const onFocus = () => {
+      setTimeout(() => {
+        if (!input.files?.length) cleanup()
+        window.removeEventListener('focus', onFocus)
+      }, 300)
+    }
+    window.addEventListener('focus', onFocus)
     input.click()
   }
 
@@ -134,10 +170,10 @@ export function EventPhotosSection({
             <Camera data-eos-id="src/components/event-photos-section.tsx#10" size={26} className="text-primary-600" />
           </div>
           <p data-eos-id="src/components/event-photos-section.tsx#11" className="font-heading text-base font-bold text-neutral-900">
-            {isRecent ? 'Share your photos from this event' : 'Add to the photo album'}
+            {isRecent ? 'Share your photos & videos' : 'Add to the album'}
           </p>
           <p data-eos-id="src/components/event-photos-section.tsx#12" className="text-[13px] text-neutral-600 mt-1 max-w-xs mx-auto">
-            Pictures live here forever so the memory stays with the collective.
+            Photos and videos live here forever so the memory stays with the collective.
           </p>
           <div data-eos-id="src/components/event-photos-section.tsx#13" className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-4">
             <Button data-eos-id="src/components/event-photos-section.tsx#14" onClick={handleCapture} variant="primary" icon={<Camera data-eos-id="src/components/event-photos-section.tsx#15" size={16} />} disabled={camera.loading || upload.isPending}>

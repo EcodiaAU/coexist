@@ -34,6 +34,18 @@ export interface EventPhoto {
 
 const BUCKET = 'event-photos'
 
+/**
+ * Max bytes per album upload. Mirrors the event-photos storage bucket's
+ * file_size_limit, raised 50MB -> 200MB on 2026-08-09 so real phone videos
+ * fit (a typical 1080p clip over ~30s exceeds 50MB). Kept in sync here so the
+ * client can reject an oversize file with a friendly message before wasting an
+ * upload round-trip instead of surfacing a raw storage 413.
+ */
+export const MAX_ALBUM_UPLOAD_MB = 200
+export const MAX_ALBUM_UPLOAD_BYTES = MAX_ALBUM_UPLOAD_MB * 1024 * 1024
+
+const VIDEO_EXT_RE = /\.(mp4|mov|webm|m4v)$/i
+
 function publicUrl(path: string): string {
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
 }
@@ -81,20 +93,39 @@ export function useUploadEventPhoto(eventId: string | undefined) {
   return useMutation({
     mutationFn: async ({ blob, caption }: { blob: Blob; caption?: string }) => {
       if (!user || !eventId) throw new Error('Not authenticated or event missing')
-      const isVideo = blob.type.startsWith('video/')
+      // Detect a video by MIME, falling back to the filename extension for the
+      // rare picked file that reports an empty MIME type (seen with some
+      // Android content-URI picks) so it isn't misrouted into image compression.
+      const name = blob instanceof File ? blob.name : ''
+      const isVideo = blob.type.startsWith('video/') || VIDEO_EXT_RE.test(name)
+
+      // Reject an oversize file up front with a precise, friendly message
+      // rather than letting the storage layer return a bare 413.
+      if (blob.size > MAX_ALBUM_UPLOAD_BYTES) {
+        const mb = Math.round(blob.size / (1024 * 1024))
+        throw new Error(
+          `This ${isVideo ? 'video' : 'file'} is ${mb}MB. The album limit is ${MAX_ALBUM_UPLOAD_MB}MB${isVideo ? ' - try trimming it to a shorter clip.' : '.'}`,
+        )
+      }
+
       let storedPath: string
 
       if (isVideo) {
         // Skip image compression for videos - just stream the raw blob to storage.
-        // Path mirrors useImageUpload's layout: <eventId>/<userId>/<rand>.<ext>
-        const ext = blob.type.includes('quicktime') ? 'mov'
+        // Path mirrors useImageUpload's layout: <eventId>/<userId>/<rand>.<ext>.
+        // Derive the extension + content-type from the filename first so an
+        // empty-MIME .mov is stored + served correctly (not mislabelled mp4).
+        const nameExt = name.match(VIDEO_EXT_RE)?.[1]?.toLowerCase()
+        const ext = nameExt
+          ?? (blob.type.includes('quicktime') ? 'mov'
           : blob.type.includes('webm') ? 'webm'
-          : blob.type.includes('mp4') ? 'mp4'
-          : 'mp4'
+          : 'mp4')
+        const contentType = blob.type
+          || (ext === 'mov' ? 'video/quicktime' : ext === 'webm' ? 'video/webm' : 'video/mp4')
         const rand = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
         const path = `${eventId}/${user.id}/${rand}.${ext}`
         const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, blob, {
-          contentType: blob.type || 'video/mp4',
+          contentType,
           upsert: false,
         })
         if (upErr) throw upErr
