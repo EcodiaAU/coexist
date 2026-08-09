@@ -160,6 +160,40 @@ export function useDeleteEventPhoto(eventId: string | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Campout channel membership                                         */
+/*                                                                     */
+/*  Campouts are national events with a dedicated group-chat channel    */
+/*  (chat_channels.event_id). Members of that channel can view + add     */
+/*  to the event's album even when they don't belong to the event's     */
+/*  own collective and were never marked `attended` - the RLS grants     */
+/*  it (migration 20260809000000) and this predicate mirrors it so the   */
+/*  UI shows the album + upload CTA to the whole crew.                   */
+/* ------------------------------------------------------------------ */
+export function useIsCampoutChannelMember(eventId: string | undefined) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['event-campout-membership', eventId, user?.id],
+    queryFn: async () => {
+      if (!eventId || !user) return false
+      const { data: channels } = await supabase
+        .from('chat_channels')
+        .select('id')
+        .eq('event_id', eventId)
+      const channelIds = (channels ?? []).map((c) => c.id)
+      if (channelIds.length === 0) return false
+      const { count } = await supabase
+        .from('chat_channel_members')
+        .select('*', { count: 'exact', head: true })
+        .in('channel_id', channelIds)
+        .eq('user_id', user.id)
+      return (count ?? 0) > 0
+    },
+    enabled: !!eventId && !!user,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+/* ------------------------------------------------------------------ */
 /*  Admin: filtered photo browser                                      */
 /* ------------------------------------------------------------------ */
 export interface AdminPhotoFilters {

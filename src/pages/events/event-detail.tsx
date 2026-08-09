@@ -45,6 +45,7 @@ import {
 } from 'lucide-react'
 import { EventShareSheet } from '@/components/event-share-sheet'
 import { EventPhotosSection } from '@/components/event-photos-section'
+import { useIsCampoutChannelMember } from '@/hooks/use-event-photos'
 import { EventHero, EventHeroOverlay } from './event-hero'
 import { EventActions } from './event-actions'
 import { EventAttendees } from './event-attendees'
@@ -683,6 +684,10 @@ export default function EventDetailPage() {
   const belongsToCollective = collectiveRole.role !== null
   const isLeaderOrAbove = (belongsToCollective && collectiveRole.isAssistLeader) || isGlobalStaff
   const isStaff = isLeaderOrAbove
+  // Campout crew: members of the event's group-chat channel can view + add to
+  // the album even when they're not in the event's own collective and were
+  // never marked `attended` (national campouts). Mirrors the event_photos RLS.
+  const isCampoutMember = useIsCampoutChannelMember(event?.id).data ?? false
 
   const capacityText = useMemo(() => {
     if (!event) return ''
@@ -1896,15 +1901,17 @@ export default function EventDetailPage() {
           </motion.div>
         )}
 
-        {/* ── Post-event: shared photo album ──
-            Visible to collective members; upload available to attendees + leaders. */}
-        {past && (belongsToCollective || isLeaderOrAbove) && (
+        {/* ── Shared photo album ──
+            Visible post-event to collective members + leaders, and any time to
+            campout crew (channel members) so they can share as the trip runs.
+            Upload available to attendees, leaders, and campout crew. */}
+        {((past && (belongsToCollective || isLeaderOrAbove)) || isCampoutMember) && (
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <EventPhotosSection
               eventId={event.id}
               eventTitle={event.title}
               eventEndIso={event.date_end ?? event.date_start}
-              canUpload={userStatus === 'attended' || isLeaderOrAbove}
+              canUpload={userStatus === 'attended' || isLeaderOrAbove || isCampoutMember}
             />
           </motion.div>
         )}
