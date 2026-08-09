@@ -24,7 +24,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
-import { getGraphToken, graph, ensureFolderPath, uploadFile, createShareLink, type DriveItem } from '../_shared/graph.ts'
+import { getGraphToken, graph, ensureFolderPath, uploadFile, uploadStream, createShareLink, FOUR_MB, type DriveItem } from '../_shared/graph.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -62,10 +62,9 @@ Deno.serve(withSentry('onedrive-mirror', async (req: Request) => {
     })
   }
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('COEXIST_SERVICE_ROLE_KEY') ?? '',
-  )
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+  const SERVICE_KEY = Deno.env.get('COEXIST_SERVICE_ROLE_KEY') ?? ''
+  const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
 
   try {
     const body = await req.json().catch(() => ({})) as { event_id?: string; event_photo_id?: string; sweep?: boolean; limit?: number }
@@ -148,15 +147,30 @@ Deno.serve(withSentry('onedrive-mirror', async (req: Request) => {
         }).eq('id', eventId)
       }
 
-      // 3) Mirror each file: download from storage -> upload to OneDrive.
+      // 3) Mirror each file. Stream storage -> OneDrive so a large video never
+      //    has to sit fully in edge memory: fetch the object with a streaming
+      //    body (service-role auth, so it works whether the bucket is public or
+      //    private), size it from Content-Length, and push it up in chunks.
       for (const r of evRows) {
         try {
-          const { data: blob, error: dlErr } = await supabase.storage.from(MEDIA_BUCKET).download(r.storage_path)
-          if (dlErr || !blob) throw new Error(`storage download failed: ${dlErr?.message ?? 'no blob'}`)
-          const bytes = new Uint8Array(await blob.arrayBuffer())
+          const objPath = r.storage_path.split('/').map(encodeURIComponent).join('/')
+          const resp = await fetch(
+            `${SUPABASE_URL}/storage/v1/object/authenticated/${MEDIA_BUCKET}/${objPath}`,
+            { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } },
+          )
+          if (!resp.ok || !resp.body) throw new Error(`storage fetch failed (${resp.status}): ${(await resp.text().catch(() => '')).slice(0, 160)}`)
           const fname = baseName(r.storage_path)
-          const ctype = CONTENT_TYPES[extOf(fname)] ?? blob.type ?? 'application/octet-stream'
-          const item = await uploadFile(token, driveId, folder.id, fname, bytes, ctype)
+          const clen = Number(resp.headers.get('content-length') ?? '0')
+          const ctype = CONTENT_TYPES[extOf(fname)] ?? resp.headers.get('content-type') ?? 'application/octet-stream'
+          let item: DriveItem
+          if (clen > 0 && clen >= FOUR_MB) {
+            // Large (any real video): chunked upload session, memory-safe.
+            item = await uploadStream(token, driveId, folder.id, fname, resp.body, clen, ctype)
+          } else {
+            // Small (photos, tiny clips) or unknown length: simple buffered PUT.
+            const bytes = new Uint8Array(await resp.arrayBuffer())
+            item = await uploadFile(token, driveId, folder.id, fname, bytes, ctype)
+          }
           await supabase.from('event_photos').update({
             onedrive_item_id: item.id,
             onedrive_mirrored_at: new Date().toISOString(),

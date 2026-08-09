@@ -121,7 +121,7 @@ export async function ensureFolderPath(
   return folder
 }
 
-const FOUR_MB = 4 * 1024 * 1024
+export const FOUR_MB = 4 * 1024 * 1024
 
 /** Upload bytes into a folder. Simple PUT under 4MB; upload session (video) above. */
 export async function uploadFile(
@@ -138,7 +138,7 @@ export async function uploadFile(
       token,
       'PUT',
       `/drives/${driveId}/items/${folderId}:/${encodeURIComponent(name)}:/content?@microsoft.graph.conflictBehavior=replace`,
-      { headers: { 'Content-Type': contentType || 'application/octet-stream' }, body: bytes },
+      { headers: { 'Content-Type': contentType || 'application/octet-stream' }, body: bytes.slice().buffer },
     )
     if (!r.json?.id) throw new Error(`upload PUT failed (${r.status}): ${r.text.slice(0, 200)}`)
     return { id: r.json.id as string, name: r.json.name as string, webUrl: r.json.webUrl as string }
@@ -161,14 +161,14 @@ export async function uploadFile(
   let final: GraphResponse = { status: 0, json: {}, text: '' }
   while (start < total) {
     const end = Math.min(start + CHUNK, total)
-    const chunk = bytes.subarray(start, end)
+    const chunk = bytes.slice(start, end) // copy -> ArrayBuffer-backed body
     const res = await fetch(uploadUrl, {
       method: 'PUT',
       headers: {
         'Content-Length': String(chunk.byteLength),
         'Content-Range': `bytes ${start}-${end - 1}/${total}`,
       },
-      body: chunk,
+      body: chunk.buffer,
     })
     const text = await res.text()
     let json: Record<string, unknown> = {}
@@ -177,6 +177,100 @@ export async function uploadFile(
     if (!res.ok && res.status !== 202) throw new Error(`upload chunk failed (${res.status}): ${text.slice(0, 200)}`)
     start = end
   }
+  if (!final.json?.id) throw new Error(`upload session did not finalize (${final.status})`)
+  return { id: final.json.id as string, name: final.json.name as string, webUrl: final.json.webUrl as string }
+}
+
+/**
+ * Upload a file from a ReadableStream into an upload session WITHOUT ever
+ * buffering the whole file. Reads the stream in order, PUTs 10MiB-aligned
+ * chunks (Graph requires every non-final chunk to be a multiple of 320KiB),
+ * and finalises. Peak memory stays ~2 chunks, so a 200MB event-album video
+ * mirrors inside the edge function's memory budget (a full-blob arrayBuffer
+ * would OOM). `total` MUST be the exact byte length (the object's
+ * Content-Length). Each chunk PUT retries on 429/503/504 (re-PUTting the same
+ * Content-Range is idempotent), so one transient hiccup mid-upload does not
+ * lose the whole file.
+ */
+export async function uploadStream(
+  token: string,
+  driveId: string,
+  folderId: string,
+  filename: string,
+  stream: ReadableStream<Uint8Array>,
+  total: number,
+  _contentType: string,
+): Promise<DriveItem> {
+  const name = sanitizeName(filename)
+  const sess = await graph(
+    token,
+    'POST',
+    `/drives/${driveId}/items/${folderId}:/${encodeURIComponent(name)}:/createUploadSession`,
+    {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item: { '@microsoft.graph.conflictBehavior': 'replace' } }),
+    },
+  )
+  const uploadUrl = sess.json?.uploadUrl as string | undefined
+  if (!uploadUrl) throw new Error(`createUploadSession failed (${sess.status}): ${sess.text.slice(0, 200)}`)
+
+  const CHUNK = 10 * 1024 * 1024 // 10MiB, a multiple of 320KiB
+  const reader = stream.getReader()
+  const parts: Uint8Array[] = []
+  let buffered = 0
+  let start = 0
+  let final: GraphResponse = { status: 0, json: {}, text: '' }
+
+  // Coalesce queued reads into a fresh ArrayBuffer of the first `n` bytes,
+  // keeping the remainder queued. The copy guarantees an ArrayBuffer-backed
+  // body (a subarray view is ArrayBufferLike, which Deno's fetch rejects).
+  const take = (n: number): ArrayBuffer => {
+    const out = new Uint8Array(n)
+    let off = 0
+    let need = n
+    while (need > 0) {
+      const p = parts[0]
+      if (p.byteLength <= need) { out.set(p, off); off += p.byteLength; need -= p.byteLength; parts.shift() }
+      else { out.set(p.subarray(0, need), off); parts[0] = p.subarray(need); need = 0 }
+    }
+    buffered -= n
+    return out.buffer
+  }
+
+  const putChunk = async (chunk: ArrayBuffer): Promise<void> => {
+    const end = start + chunk.byteLength
+    for (let attempt = 0; attempt <= GRAPH_MAX_RETRIES; attempt++) {
+      const res = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Length': String(chunk.byteLength),
+          'Content-Range': `bytes ${start}-${end - 1}/${total}`,
+        },
+        body: chunk,
+      })
+      const text = await res.text()
+      let json: Record<string, unknown> = {}
+      try { json = text ? JSON.parse(text) : {} } catch { /* 202 progress has no/other JSON */ }
+      if (res.ok || res.status === 202) { final = { status: res.status, json, text }; start = end; return }
+      if (GRAPH_RETRYABLE.has(res.status) && attempt < GRAPH_MAX_RETRIES) {
+        const ra = Number(res.headers.get('retry-after'))
+        await sleep(Number.isFinite(ra) && ra > 0 ? ra * 1000 : Math.min(30000, 1000 * 2 ** attempt))
+        continue
+      }
+      throw new Error(`upload chunk failed (${res.status}) at byte ${start}: ${text.slice(0, 200)}`)
+    }
+  }
+
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) break
+    if (value && value.byteLength) { parts.push(value); buffered += value.byteLength }
+    while (buffered >= CHUNK) await putChunk(take(CHUNK))
+  }
+  // Final (short) chunk - the only chunk allowed to be smaller than 320KiB.
+  if (buffered > 0) await putChunk(take(buffered))
+
+  if (start !== total) throw new Error(`upload stream size mismatch: sent ${start} of ${total}`)
   if (!final.json?.id) throw new Error(`upload session did not finalize (${final.status})`)
   return { id: final.json.id as string, name: final.json.name as string, webUrl: final.json.webUrl as string }
 }
