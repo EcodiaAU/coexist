@@ -50,10 +50,17 @@ export function BentoStatCard({
 }: BentoStatCardProps) {
   const rm = useReducedMotion()
   const isNum = typeof value === 'number'
-  const display = useCountUp(isNum ? value : 0, 1200, isNum && !rm)
+  // Impact stats (litter kg, volunteer hours) can arrive fractional. Round up
+  // to the nearest whole unit so the stat cards never render a decimal (Tate
+  // 2026-08-10). Counts are already integers, so ceil is a no-op for them. This
+  // also aligns the two count-up paths: the animated tick rounded but the
+  // reduced-motion branch used to pass the raw fractional target straight to
+  // toLocaleString(), leaking the decimal.
+  const numericValue = isNum ? Math.ceil(value) : 0
+  const display = useCountUp(numericValue, 1200, isNum && !rm)
 
   const formatted = isNum
-    ? (value > 0 ? display.toLocaleString() : '0')
+    ? (numericValue > 0 ? display.toLocaleString() : '0')
     : value
 
   return (
@@ -83,7 +90,7 @@ export function BentoStatCard({
             : 'p-4 sm:p-5',
         className,
       )}
-      aria-label={`${label}: ${value}${unit ? ` ${unit}` : ''}`}
+      aria-label={`${label}: ${isNum ? numericValue : value}${unit ? ` ${unit}` : ''}`}
     >
       {/* Top row: icon badge + optional comparison badge */}
       <div data-eos-id="src/components/bento-stats.tsx#1" className={cn('flex items-start justify-between', compact ? 'mb-1.5' : 'mb-3')}>
