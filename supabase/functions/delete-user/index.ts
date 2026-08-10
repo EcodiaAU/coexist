@@ -1,6 +1,7 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import { outranks } from '../_shared/d3-guards.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,8 +11,12 @@ const corsHeaders = {
 /**
  * delete-user - GDPR-compliant user deletion
  *
- * Called from Admin > User Management when an admin deletes a user account.
- * Removes all user data across tables, then deletes the auth user.
+ * Called from Admin > User Management when an admin (or manager) deletes a user
+ * account. Removes all user data across tables, then deletes the auth user.
+ *
+ * Authorization: the caller must be admin/manager AND strictly outrank the
+ * target (rank guard) - a manager cannot delete an admin, no lateral or
+ * upward deletes, no self-deletion. GDPR deletion is irreversible.
  */
 
 Deno.serve(withSentry('delete-user', async (req: Request) => {
@@ -75,6 +80,29 @@ Deno.serve(withSentry('delete-user', async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
+    }
+
+    // ---- Rank guard: the caller must STRICTLY outrank the target ----
+    // Without this, the ['admin','manager'] gate above let a manager (rank 4)
+    // delete an admin (rank 5), and allowed lateral deletes (manager deleting a
+    // peer manager). GDPR deletion is irreversible, so only a strictly-higher
+    // ranked actor may perform it (mirrors the collective member-removal rule).
+    const { data: targetProfile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single()
+    if (!targetProfile) {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    if (!outranks(callerProfile.role, targetProfile.role)) {
+      return new Response(
+        JSON.stringify({ error: 'You cannot delete an account with equal or higher privileges' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
     }
 
     // ---- Delete user data across all tables ----

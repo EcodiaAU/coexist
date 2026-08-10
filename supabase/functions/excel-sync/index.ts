@@ -62,6 +62,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { generate as uuidv5 } from 'https://deno.land/std@0.224.0/uuid/v5.ts'
 import { withSentry } from '../_shared/sentry.ts'
+import { timingSafeEqual } from '../_shared/d3-guards.ts'
 
 // ---- Config ----
 const GRAPH_TENANT_ID = Deno.env.get('GRAPH_TENANT_ID') ?? ''
@@ -221,6 +222,36 @@ async function graphRequest(token: string, path: string, method = 'GET', body?: 
     break
   }
   throw new Error(`Graph API ${method} ${path} failed (${lastStatus}) after retries: ${lastErrText}`)
+}
+
+// ---- Auth helpers ----
+// The pg_cron `from-excel` job and the per-event `to-excel` trigger both POST the
+// project vault service_role_key as the Bearer token (see 20260413060000_pg_cron_excel_sync
+// and 20260413020000_excel_sync_triggers_v2). That token is a valid service_role
+// JWT, but it may be a DIFFERENT one than this function's configured service key
+// (same project + JWT secret, different `iat`), so a plain string compare is not
+// enough. First try a fast exact match against the configured keys; otherwise
+// verify the token's role by using it on the GoTrue admin API, which authorizes
+// ONLY a genuine service_role key. This delegates signature + role verification to
+// the platform (works for HS256 or ES256 keys) without needing the JWT secret.
+async function isServiceRoleToken(
+  token: string,
+  supabaseUrl: string,
+  serviceKey: string,
+): Promise<boolean> {
+  if (!token) return false
+  const keys = [serviceKey, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '']
+  if (keys.some((k) => k.length > 0 && timingSafeEqual(token, k))) return true
+  try {
+    // Only a valid service_role key is authorized to list users. A user JWT -> 403,
+    // an anon key -> 401, a forged/unsigned token -> 401. res.ok <=> service_role.
+    const res = await fetch(`${supabaseUrl}/auth/v1/admin/users?page=1&per_page=1`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: serviceKey },
+    })
+    return res.ok
+  } catch {
+    return false
+  }
 }
 
 // ---- Date helpers ----
@@ -1124,7 +1155,11 @@ async function syncToExcel(
 
   // Sort into append vs update
   const newRows: (string | number | null)[][] = []
-  const updateRows: { rowIndex: number; row: (string | number | null)[] }[] = []
+  // Carry the event id (not a pre-resolved row index): the index is resolved
+  // against a FRESH used-range read immediately before writing (see below), so a
+  // row that shifted between the top-of-run snapshot and the write is not
+  // clobbered at a stale position.
+  const updateRows: { eid: string; row: (string | number | null)[] }[] = []
 
   // Pre-fetch the created_by / UUID status for candidate events so we can skip
   // synthetic events (those created by the from-excel reverse-sync). Synthetic
@@ -1185,7 +1220,7 @@ async function syncToExcel(
       if (existingRowIndex) {
         // App event already in sheet - UPDATE the row (no impact gate on updates;
         // rows placed before this gate was deployed still receive data as it arrives).
-        updateRows.push({ rowIndex: existingRowIndex, row })
+        updateRows.push({ eid, row })
         updated++
       } else {
         // New app event - APPEND path.
@@ -1254,42 +1289,84 @@ async function syncToExcel(
     }
   }
 
-  // Append new rows to the end of the sheet
-  if (newRows.length > 0) {
+  // ---- Re-read the TRUE used-range immediately before writing ----
+  // The rowCount + idToRowIndex snapshot above was taken at the START of the run,
+  // before all the per-event fetch/dedup work (seconds of wall-clock). Appending
+  // at `rowCount + 1` from that stale count is the clobber bug: if another writer
+  // (the per-event trigger and the hourly batch overlap) or a human editor added
+  // rows in the meantime, the computed start row sits on top of real rows and
+  // overwrites them (the 2026-06-29 "duplicate app rows + overwritten Forms rows"
+  // incident). Re-reading now makes the append land past the real end and every
+  // update target the row's CURRENT position, collapsing the stale window to a
+  // single Graph call right before the write.
+  if (newRows.length > 0 || updateRows.length > 0) {
+    let freshRowCount = excelState.rowCount
+    const freshIdToRowIndex = new Map<string, number>()
     try {
-      const startRow = excelState.rowCount + 1
-      const endRow = startRow + newRows.length - 1
-      const range = `A${startRow}:AB${endRow}`
-
-      await graphRequest(
-        graphToken,
-        `/range(address='${range}')`,
-        'PATCH',
-        { values: newRows },
-      )
+      const fresh = await readExcelState(graphToken)
+      freshRowCount = fresh.rowCount
+      for (let i = 1; i < fresh.rows.length; i++) {
+        const id = String(fresh.rows[i][0] ?? '')
+        if (id) freshIdToRowIndex.set(id, i + 1) // +1 -> 1-based Excel row
+      }
     } catch (err) {
-      errors.push(`Failed to append rows: ${(err as Error).message}`)
-      appended = 0
+      // If the pre-write re-read fails, fall back to the top-of-run snapshot for
+      // updates (indices unchanged in the common case) but SUPPRESS the append -
+      // an append computed from a possibly-stale count is exactly the clobber risk.
+      errors.push(`Pre-write used-range re-read failed: ${(err as Error).message}`)
+      for (const { eid } of updateRows) {
+        const idx = idToRowIndex.get(eid)
+        if (idx) freshIdToRowIndex.set(eid, idx)
+      }
+      freshRowCount = -1 // sentinel: suppress append below
     }
-  }
 
-  // Update existing rows. Pace each PATCH to avoid bursting the workbook write
-  // lock (the cause of the 429 EditModeCannotAcquireLock storms). graphRequest
-  // already retries with backoff; the inter-row delay keeps a healthy run from
-  // tripping the throttle in the first place.
-  for (let u = 0; u < updateRows.length; u++) {
-    const { rowIndex, row } = updateRows[u]
-    try {
-      await graphRequest(
-        graphToken,
-        `/range(address='A${rowIndex}:AB${rowIndex}')`,
-        'PATCH',
-        { values: [row] },
-      )
-    } catch (err) {
-      errors.push(`Failed to update row ${rowIndex}: ${(err as Error).message}`)
+    // Append new rows past the true end of the sheet.
+    if (newRows.length > 0) {
+      if (freshRowCount >= 0) {
+        try {
+          const startRow = freshRowCount + 1
+          const endRow = startRow + newRows.length - 1
+          await graphRequest(
+            graphToken,
+            `/range(address='A${startRow}:AB${endRow}')`,
+            'PATCH',
+            { values: newRows },
+          )
+        } catch (err) {
+          errors.push(`Failed to append rows: ${(err as Error).message}`)
+          appended = 0
+        }
+      } else {
+        // Re-read failed; do not append against a stale count.
+        appended = 0
+      }
     }
-    if (u < updateRows.length - 1) await sleep(250)
+
+    // Update existing rows at their CURRENT position. Pace each PATCH to avoid
+    // bursting the workbook write lock (the 429 EditModeCannotAcquireLock storms);
+    // graphRequest already retries with backoff.
+    for (let u = 0; u < updateRows.length; u++) {
+      const { eid, row } = updateRows[u]
+      const rowIndex = freshIdToRowIndex.get(eid)
+      if (!rowIndex) {
+        // The row moved out from under us (e.g. a human deleted it mid-run).
+        // Skip rather than PATCH a stale index onto whatever now occupies it.
+        updated--
+        continue
+      }
+      try {
+        await graphRequest(
+          graphToken,
+          `/range(address='A${rowIndex}:AB${rowIndex}')`,
+          'PATCH',
+          { values: [row] },
+        )
+      } catch (err) {
+        errors.push(`Failed to update row ${rowIndex} (${eid}): ${(err as Error).message}`)
+      }
+      if (u < updateRows.length - 1) await sleep(250)
+    }
   }
 
   return { appended, updated, skipped, skippedDuplicates, skippedNoImpact, weakDedupWarnings, errors }
@@ -1786,7 +1863,14 @@ Deno.serve(withSentry('excel-sync', async (req: Request) => {
     const direction = url.searchParams.get('direction') ?? 'from-excel'
     const eventId = url.searchParams.get('event_id') ?? undefined
 
-    // Auth: require service_role or valid user token
+    // ---- Real authorization ----
+    // Deployed with --no-verify-jwt, so the platform performs NO auth: this
+    // in-function check is the ONLY gate. Before it, any `Authorization: Bearer x`
+    // reached service-role DB writes (from-excel upserts to event_impact), the
+    // SharePoint master-sheet writes (to-excel), and the `?direction=delete` row
+    // delete. Legit callers are (a) the pg_cron / per-event-trigger server paths,
+    // which POST the project service_role key, and (b) a manual admin/manager call
+    // with their user JWT.
     const authHeader = req.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Missing authorization' }), {
@@ -1794,11 +1878,36 @@ Deno.serve(withSentry('excel-sync', async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    const token = authHeader.slice('Bearer '.length).trim()
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('COEXIST_SERVICE_ROLE_KEY') ?? '',
-    )
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+    const SERVICE_KEY = Deno.env.get('COEXIST_SERVICE_ROLE_KEY') ?? ''
+    const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
+
+    if (!(await isServiceRoleToken(token, SUPABASE_URL, SERVICE_KEY))) {
+      // Not a server caller: must be an admin/manager user JWT.
+      const gotru = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: { Authorization: `Bearer ${token}`, apikey: SERVICE_KEY },
+      })
+      if (!gotru.ok) {
+        return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      const caller = await gotru.json() as { id: string }
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', caller.id)
+        .single()
+      if (!prof || !['admin', 'manager'].includes(prof.role)) {
+        return new Response(JSON.stringify({ error: 'Admin access required' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    }
 
     const graphToken = await getGraphToken()
     const results: Record<string, unknown> = {}

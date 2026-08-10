@@ -56,14 +56,28 @@ Deno.serve(withSentry('claim-event-ticket', async (req: Request) => {
     if (typeof body.event_id !== 'string' || !UUID_RE.test(body.event_id)) return json({ error: 'Invalid event' }, 400)
     const claimToken = typeof body.token === 'string' ? body.token : ''
 
-    // ---- Verify the event + claim token ----
+    // ---- Verify the event exists ----
     const { data: evt } = await supabase
       .from('events')
-      .select('id, is_ticketed, status, activity_type, event_extras')
+      .select('id, is_ticketed, status, activity_type')
       .eq('id', body.event_id)
       .single()
     if (!evt) return json({ error: 'Event not found' }, 404)
-    const expected = (evt.event_extras as { claim_token?: string } | null)?.claim_token
+
+    // ---- Verify the claim token ----
+    // The token is stored PRIVATELY in event_claim_tokens (readable only by
+    // service_role), not in the world-readable events.event_extras. Before
+    // migration 20260810140000 it lived in event_extras, which anon +
+    // authenticated can SELECT via events_select_public_anon, so any signed-in
+    // user could read the token off the public event and self-grant a free
+    // ticket. The token still travels in the shared claim URL (/claim/:id/:token);
+    // only its validation source moved server-side.
+    const { data: tokRow } = await supabase
+      .from('event_claim_tokens')
+      .select('token')
+      .eq('event_id', body.event_id)
+      .maybeSingle()
+    const expected = tokRow?.token
     if (!expected || claimToken !== expected) return json({ error: 'This claim link is not valid' }, 403)
 
     // ---- Idempotency: reuse an existing live ticket ----

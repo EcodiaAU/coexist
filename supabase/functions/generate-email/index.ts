@@ -273,7 +273,13 @@ Deno.serve(withSentry('generate-email', async (req: Request) => {
       .select('role')
       .eq('id', user.id)
       .single()
-    if (!callerProfile || !['national_leader', 'manager', 'admin'].includes(callerProfile.role)) {
+    // 'national_leader' removed 2026-08-10 (D3): the role does not exist in
+    // profiles (live roles: participant, leader, assist_leader, co_leader,
+    // manager, admin), so it never matched anyone - the effective allowlist has
+    // always been manager+admin. Kept as manager+admin (national email/marketing
+    // is an admin/manager function); leader inclusion is a product decision left
+    // to Tate, not a silent scope change here.
+    if (!callerProfile || !['manager', 'admin'].includes(callerProfile.role)) {
       return new Response(JSON.stringify({ success: false, error: 'Admin access required' }), {
         status: 403, headers: JSON_HEADERS,
       })
