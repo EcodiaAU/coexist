@@ -356,6 +356,25 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
       }
     }
 
+    // Exclude recipients who have BLOCKED the sender. Block filtering was
+    // client-side display-only (use-chat.ts hides blocked users' messages);
+    // push recipients were all active members minus the sender, with no
+    // user_blocks exclusion, so a blocked user still received notifications
+    // from the very person who blocked them. This is the authoritative gate.
+    // Only applies to a personal sender (callerUid); service-role / system
+    // broadcasts have no sender to have been blocked.
+    if (callerUid && targetUserIds.length > 0) {
+      const { data: blockedBy } = await supabaseAdmin
+        .from('user_blocks')
+        .select('blocker_id')
+        .eq('blocked_id', callerUid)
+        .in('blocker_id', targetUserIds)
+      const blockers = new Set((blockedBy ?? []).map((b: { blocker_id: string }) => b.blocker_id))
+      if (blockers.size > 0) {
+        targetUserIds = targetUserIds.filter((id) => !blockers.has(id))
+      }
+    }
+
     if (targetUserIds.length === 0) {
       return new Response(JSON.stringify({ sent: 0 }), {
         headers: JSON_HEADERS,

@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Lock, Camera, MessageSquareHeart, Tent } from 'lucide-react'
+import { Lock, Camera, MessageSquareHeart, Tent, Play } from 'lucide-react'
 import { ChatBubble, PollCard, AnnouncementCard, CarpoolCard } from '@/components/chat-bubble'
 import { HtmlChatBubble } from '@/components/html-chat-bubble'
 import { MessageReactions } from '@/components/message-reactions'
@@ -32,6 +32,7 @@ import { supabase } from '@/lib/supabase'
 import { useEventDetail, type EventDetailData } from '@/hooks/use-events'
 import { useCarpool, useCarpoolSeats, useCarpoolBreakout, useSaveSeat, useCancelSeat } from '@/hooks/use-carpool'
 import { useEventPhotos } from '@/hooks/use-event-photos'
+import { isVideoPath } from '@/components/event-photos-section'
 import { useSignedChatImage } from '@/hooks/use-signed-chat-image'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import type { Tables, Json } from '@/types/database.types'
@@ -337,13 +338,32 @@ function InlineEventPhotos({
             {preview.map((p, i) => (
               <div key={p.id} className="relative aspect-square bg-neutral-100">
                 {p.url && (
-                  <img
-                    src={p.url}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
+                  isVideoPath(p.storage_path) ? (
+                    <>
+                      <video
+                        src={p.url}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-black/55 text-white">
+                          <Play size={11} fill="currentColor" />
+                        </span>
+                      </span>
+                    </>
+                  ) : (
+                    <img
+                      src={p.thumbUrl ?? p.url}
+                      alt=""
+                      width={400}
+                      height={400}
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  )
                 )}
                 {i === preview.length - 1 && more > 0 && (
                   <div className="absolute inset-0 bg-black/55 flex items-center justify-center">

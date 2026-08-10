@@ -7159,6 +7159,13 @@ export type Database = {
         }[]
       }
       get_collective_stats: { Args: { p_collective_id: string }; Returns: Json }
+      get_collective_unread_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          collective_id: string
+          unread_count: number
+        }[]
+      }
       get_event_attendee_export: { Args: { p_event_id: string }; Returns: Json }
       get_event_ticket_states: { Args: { p_event_id: string }; Returns: Json }
       get_events_within_radius: {

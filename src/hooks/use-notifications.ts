@@ -155,6 +155,13 @@ export function resolveNotificationRoute(
     case 'chat_image':
     case 'chat_poll':
     case 'chat_announcement':
+      // A campout/staff channel push carries channel_id (and, for a campout,
+      // also its parent collective_id). Route to the channel room first;
+      // otherwise the collective's own channel_id would open the WRONG chat
+      // (the collective main thread, or - for a staff channel with no
+      // collective_id - the bare chat list). Falls back to the collective
+      // main chat for ordinary collective messages that carry no channel_id.
+      if (data?.channel_id) return `/chat/channel/${data.channel_id}`
       return data?.collective_id ? `/chat/${data.collective_id}` : '/chat'
     case 'survey_request':
       return data?.event_id ? `/events/${data.event_id}/survey` : '/events'

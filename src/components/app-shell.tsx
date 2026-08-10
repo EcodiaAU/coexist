@@ -22,6 +22,7 @@ import { useKeyboardHeight } from '@/hooks/use-keyboard-height'
 import { useRolePrefetch } from '@/hooks/use-role-prefetch'
 import { useDataPrefetch } from '@/hooks/use-data-prefetch'
 import { useUnreadCounts } from '@/hooks/use-chat'
+import { useChannelUnreadCounts } from '@/hooks/use-staff-channels'
 import { useSwipeBack } from '@/hooks/use-swipe-back'
 
 interface AppShellProps {
@@ -104,12 +105,17 @@ function LocationAwareChrome({ showBottomTabs, syncWarning }: { showBottomTabs: 
   const isLeaderRoute = location.pathname.startsWith('/leader') && !location.pathname.startsWith('/leaderboard') && !location.pathname.startsWith('/leadership')
   const isChatRoute = location.pathname.startsWith('/chat/')
 
-  // Compute total unread chat messages for the badge
+  // Compute total unread chat messages for the badge. Sum BOTH the collective
+  // chat unreads AND the campout/staff channel unreads - otherwise unreads in
+  // whole conversation types never increment the nav badge and users silently
+  // miss them.
   const { data: unreadCounts } = useUnreadCounts()
-  const totalUnread = useMemo(
-    () => Object.values(unreadCounts ?? {}).reduce((sum, n) => sum + (n as number), 0),
-    [unreadCounts],
-  )
+  const { data: channelUnreadCounts } = useChannelUnreadCounts()
+  const totalUnread = useMemo(() => {
+    const collective = Object.values(unreadCounts ?? {}).reduce((sum, n) => sum + (n as number), 0)
+    const channels = Object.values(channelUnreadCounts ?? {}).reduce((sum, n) => sum + (n as number), 0)
+    return collective + channels
+  }, [unreadCounts, channelUnreadCounts])
 
   return (
     <>
