@@ -128,7 +128,7 @@ export default function MyEventsPage() {
   const showLoading = useDelayedLoading(isLoading)
 
   return (
-    <Page noBackground header={<Header title="My Events" back />}>
+    <Page noBackground header={<Header title="My Events" back showTitle />}>
       <div className="pt-2 pb-8 space-y-4">
         <SegmentedControl
           segments={TABS}
