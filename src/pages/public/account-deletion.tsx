@@ -213,7 +213,7 @@ export default function AccountDeletionPage() {
                   <ul className="space-y-3 text-sm text-neutral-600">
                     <li className="flex gap-3">
                       <Shield size={18} className="text-neutral-400 shrink-0 mt-0.5" />
-                      <span>Your account will be marked for deletion with a <strong className="text-primary-700">30-day grace period</strong>. During this time, you can recover your account by simply logging back in.</span>
+                      <span>Your account will be marked for deletion with a <strong className="text-primary-700">30-day grace period</strong>. During this time, you can recover your account by logging back in and choosing <strong className="text-primary-700">Cancel deletion</strong> in Settings &rsaquo; Account.</span>
                     </li>
                     <li className="flex gap-3">
                       <AlertTriangle size={18} className="text-bark-500 shrink-0 mt-0.5" />
@@ -365,7 +365,7 @@ export default function AccountDeletionPage() {
                   </div>
                   <h2 className="font-heading text-2xl font-bold text-neutral-900">Account Deletion Requested</h2>
                   <p className="text-neutral-500 text-sm leading-relaxed max-w-md mx-auto">
-                    Your account has been marked for deletion. You have <strong className="text-primary-700">30 days</strong> to change your mind by logging back in.
+                    Your account has been marked for deletion. You have <strong className="text-primary-700">30 days</strong> to change your mind: log back in and choose <strong className="text-primary-700">Cancel deletion</strong> in Settings &rsaquo; Account.
                   </p>
                 </motion.div>
 
@@ -378,7 +378,7 @@ export default function AccountDeletionPage() {
                     </li>
                     <li className="flex gap-2">
                       <span className="text-neutral-500">2.</span>
-                      Within 30 days, you can recover your account by logging in.
+                      Within 30 days, log back in and choose Cancel deletion in Settings &rsaquo; Account to recover it.
                     </li>
                     <li className="flex gap-2">
                       <span className="text-neutral-500">3.</span>

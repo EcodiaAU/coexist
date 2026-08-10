@@ -62,17 +62,13 @@ export default function UnsubscribePage() {
     if (!email.trim()) return
     setBusy(true)
     try {
-      // Resubscribe = direct update flipping opt-in back on. Same exact-match
-      // by email rule as the RPC, but performed through a Supabase JS update
-      // so RLS gives an anonymous caller the safest privilege envelope.
-      // For correctness we re-use the RPC: send-email + system templates
-      // honour marketing_opt_in IS DISTINCT FROM false, so flipping to true
-      // is equivalent to deleting the false marker. We update through the
-      // RPC-shaped path to keep ACL simple.
-      const { error } = await supabase
-        .from('profiles')
-        .update({ marketing_opt_in: true })
-        .eq('email', email.trim().toLowerCase())
+      // Resubscribe through the anon-granted resubscribe_by_email RPC (mirror
+      // of unsubscribe_by_email). A direct profiles.update from the anonymous
+      // client matched 0 rows (there is no anon UPDATE policy on profiles) and
+      // returned no error, so the page toasted success while the recipient
+      // stayed opted out. The SECURITY DEFINER RPC flips marketing_opt_in=true
+      // on the matching profile and is idempotent + non-enumerating.
+      const { error } = await supabase.rpc('resubscribe_by_email', { p_email: email.trim() })
       if (error) throw error
       setStatus('resubscribed')
       toast.success("You're back on the list.")

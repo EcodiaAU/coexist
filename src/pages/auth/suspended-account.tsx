@@ -8,7 +8,7 @@ import { CONTACT_EMAIL } from '@/lib/constants'
 
 export default function SuspendedAccountPage() {
   const navigate = useNavigate()
-  const { profile, signOut, isSuspended, user } = useAuth()
+  const { profile, signOut, isSuspended, suspendedUntil, user } = useAuth()
   const shouldReduceMotion = useReducedMotion()
 
   // Non-suspended or unauthenticated users shouldn't see this page
@@ -16,6 +16,15 @@ export default function SuspendedAccountPage() {
   if (!isSuspended) return <Navigate to="/" replace />
 
   const reason = profile?.suspended_reason ?? 'No reason provided.'
+
+  // A time-boxed suspension carries suspended_until; without surfacing it the
+  // screen reads as a permanent ban even when access is due to return. Only
+  // render it when it is genuinely in the future (a past/expired value is
+  // cleared server-side by check_user_suspended on next load).
+  const returnsAt = suspendedUntil ? new Date(suspendedUntil) : null
+  const returnsAtLabel = returnsAt && returnsAt.getTime() > Date.now()
+    ? returnsAt.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
+    : null
 
   async function handleSignOut() {
     await signOut()
@@ -49,8 +58,20 @@ export default function SuspendedAccountPage() {
         </h1>
 
         <p className="mt-3 text-neutral-500 leading-relaxed">
-          Your account has been suspended and you cannot access the app at this time.
+          {returnsAtLabel
+            ? 'Your account has been temporarily suspended.'
+            : 'Your account has been suspended and you cannot access the app at this time.'}
         </p>
+
+        {/* Access-returns card (time-boxed suspensions only) */}
+        {returnsAtLabel && (
+          <div className="mt-6 rounded-sm bg-primary-50 border border-primary-100 p-4 text-left">
+            <p className="text-xs font-medium text-primary-500 uppercase tracking-wider mb-1">
+              Access returns
+            </p>
+            <p className="text-sm text-primary-900 leading-relaxed font-medium">{returnsAtLabel}</p>
+          </div>
+        )}
 
         {/* Reason card */}
         <div className="mt-6 rounded-sm bg-white border border-neutral-100 p-4 text-left">

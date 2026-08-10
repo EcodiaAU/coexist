@@ -7,6 +7,7 @@ import { BottomTabBar } from '@/components/bottom-tab-bar'
 import { UnifiedSidebar } from '@/components/unified-sidebar'
 import { WebFooter } from '@/components/web-footer'
 import { OfflineBanner } from '@/components/offline-banner'
+import { PendingDeletionBanner } from '@/components/pending-deletion-banner'
 import { PhoneGate } from '@/components/phone-gate'
 import { DietaryGate } from '@/components/dietary-gate'
 import { SentryErrorBoundary } from '@/lib/sentry'
@@ -200,6 +201,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
         pendingCount={pendingCount}
         onSignIn={() => navigate('/login')}
       />
+
+      {/* App-wide pending-account-deletion warning (D7). Login no longer
+          auto-recovers a pending deletion, so a returning user needs a
+          persistent reminder + one-tap cancel on every screen or they get
+          silently purged at day 30. Self-hides on Settings > Account. */}
+      <PendingDeletionBanner />
 
       {/* Sidebar + content row */}
       <div data-eos-id="src/components/app-shell.tsx#15" className="flex flex-1 min-h-0">

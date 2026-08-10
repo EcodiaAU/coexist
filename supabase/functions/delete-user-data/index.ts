@@ -93,61 +93,76 @@ Deno.serve(withSentry('delete-user-data', async (req: Request) => {
 
     const isAll = categories.includes('all')
     const has = (cat: string) => isAll || categories.includes(cat)
-    const deleted: string[] = []
 
     // ---- Delete selected categories ----
-    const ops: Promise<unknown>[] = []
+    // Each delete carries the table label it removes. A label only lands in
+    // `deleted` AFTER its delete returns no {error}; a failed one lands in
+    // `failed`. supabase-js RESOLVES (does not throw) on a row-level failure,
+    // so the previous version - which pushed every label into `deleted`
+    // BEFORE running the ops and never inspected the result - reported data as
+    // permanently removed that an FK/constraint/RLS failure had actually left
+    // in place (a GDPR false-positive the /data-deletion page then rendered as
+    // "Data Deleted"). Now the caller learns exactly what did and did not go.
+    const ops: { label: string; run: () => PromiseLike<{ error: unknown }> }[] = []
 
     if (has('chat_messages')) {
-      ops.push(supabase.from('chat_messages').delete().eq('user_id', userId))
-      deleted.push('chat_messages')
+      ops.push({ label: 'chat_messages', run: () => supabase.from('chat_messages').delete().eq('user_id', userId) })
     }
-
     if (has('event_history')) {
-      ops.push(supabase.from('event_registrations').delete().eq('user_id', userId))
-      ops.push(supabase.from('event_impact').delete().eq('logged_by', userId))
-      deleted.push('event_registrations', 'event_impact')
+      ops.push({ label: 'event_registrations', run: () => supabase.from('event_registrations').delete().eq('user_id', userId) })
+      ops.push({ label: 'event_impact', run: () => supabase.from('event_impact').delete().eq('logged_by', userId) })
     }
-
     if (has('notifications')) {
-      ops.push(supabase.from('notifications').delete().eq('user_id', userId))
-      deleted.push('notifications')
+      ops.push({ label: 'notifications', run: () => supabase.from('notifications').delete().eq('user_id', userId) })
     }
-
     if (has('points')) {
-      ops.push(supabase.from('points_ledger').delete().eq('user_id', userId))
-      deleted.push('points_ledger')
+      ops.push({ label: 'points_ledger', run: () => supabase.from('points_ledger').delete().eq('user_id', userId) })
     }
-
     if (has('survey_responses')) {
-      ops.push(supabase.from('survey_responses').delete().eq('user_id', userId))
-      deleted.push('survey_responses')
+      ops.push({ label: 'survey_responses', run: () => supabase.from('survey_responses').delete().eq('user_id', userId) })
     }
-
     if (has('social')) {
-      ops.push(supabase.from('post_likes').delete().eq('user_id', userId))
-      ops.push(supabase.from('post_comments').delete().eq('user_id', userId))
-      ops.push(supabase.from('posts').delete().eq('user_id', userId))
-      deleted.push('posts', 'post_comments', 'post_likes')
+      ops.push({ label: 'post_likes', run: () => supabase.from('post_likes').delete().eq('user_id', userId) })
+      ops.push({ label: 'post_comments', run: () => supabase.from('post_comments').delete().eq('user_id', userId) })
+      ops.push({ label: 'posts', run: () => supabase.from('posts').delete().eq('user_id', userId) })
     }
-
     if (has('reports')) {
-      ops.push(supabase.from('content_reports').delete().eq('reporter_id', userId))
-      deleted.push('content_reports')
+      ops.push({ label: 'content_reports', run: () => supabase.from('content_reports').delete().eq('reporter_id', userId) })
     }
-
     if (has('invites')) {
-      ops.push(supabase.from('invites').delete().eq('inviter_id', userId))
-      deleted.push('invites')
+      ops.push({ label: 'invites', run: () => supabase.from('invites').delete().eq('inviter_id', userId) })
     }
-
     if (has('challenges')) {
-      ops.push(supabase.from('challenge_participants').delete().eq('user_id', userId))
-      ops.push(supabase.from('offer_redemptions').delete().eq('user_id', userId))
-      deleted.push('challenge_participants', 'offer_redemptions')
+      ops.push({ label: 'challenge_participants', run: () => supabase.from('challenge_participants').delete().eq('user_id', userId) })
+      ops.push({ label: 'offer_redemptions', run: () => supabase.from('offer_redemptions').delete().eq('user_id', userId) })
     }
 
-    await Promise.all(ops)
+    const deleted: string[] = []
+    const failed: string[] = []
+    const results = await Promise.all(
+      ops.map(async (op) => {
+        const { error } = await op.run()
+        return { label: op.label, error }
+      }),
+    )
+    for (const r of results) {
+      if (r.error) {
+        failed.push(r.label)
+        console.error(`[delete-user-data] ${r.label} failed for user ${userId}:`, r.error)
+      } else {
+        deleted.push(r.label)
+      }
+    }
+
+    if (failed.length > 0) {
+      // 207 Multi-Status: some categories were removed, some were not. Still a
+      // 2xx so supabase-js delivers the body; the page inspects success/failed.
+      console.error(`[delete-user-data] Partial failure for user ${userId}: failed=[${failed.join(', ')}]`)
+      return new Response(JSON.stringify({ success: false, deleted, failed }), {
+        status: 207,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     console.log(`[delete-user-data] Deleted categories [${deleted.join(', ')}] for user ${userId}`)
 

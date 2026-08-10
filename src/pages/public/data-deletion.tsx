@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
-  Database, CheckCircle, ArrowLeft, Lock, Shield,
+  Database, CheckCircle, ArrowLeft, Lock, Shield, AlertTriangle,
   MessageSquare, Calendar, Bell, Award, ClipboardList,
   Users, Flag, Send, Trophy,
 } from 'lucide-react'
@@ -56,6 +56,7 @@ export default function DataDeletionPage() {
   const [error, setError] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deletedCategories, setDeletedCategories] = useState<string[]>([])
+  const [failedCategories, setFailedCategories] = useState<string[]>([])
   const sessionRef = useRef<string | null>(null)
   const oauthHandled = useRef(false)
 
@@ -170,8 +171,19 @@ export default function DataDeletionPage() {
         setLoading(false)
         return
       }
-      setDeletedCategories(data?.deleted ?? categories)
-      await supabase.auth.signOut()
+      // The function returns the exact tables it removed (`deleted`) and, on a
+      // partial failure, the ones it could not (`failed`). Trust that, not the
+      // requested list - reporting a category as removed when the delete
+      // silently failed is the GDPR false-positive we are fixing.
+      const doneDeleted: string[] = Array.isArray(data?.deleted) ? data.deleted : []
+      const doneFailed: string[] = Array.isArray(data?.failed) ? data.failed : []
+      setDeletedCategories(doneDeleted)
+      setFailedCategories(doneFailed)
+      // Only sign out on a clean, complete deletion. On a partial failure keep
+      // the session so the user can retry the categories that did not go.
+      if (doneFailed.length === 0) {
+        await supabase.auth.signOut()
+      }
       setStep('done')
     } catch {
       setError('Something went wrong. Please try again.')
@@ -447,26 +459,50 @@ export default function DataDeletionPage() {
             {step === 'done' && (
               <>
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="text-center space-y-3">
-                  <div className="mx-auto w-14 h-14 rounded-md bg-primary-100 flex items-center justify-center">
-                    <CheckCircle size={28} className="text-primary-700" />
+                  <div className={`mx-auto w-14 h-14 rounded-md flex items-center justify-center ${failedCategories.length > 0 ? 'bg-bark-100' : 'bg-primary-100'}`}>
+                    {failedCategories.length > 0
+                      ? <AlertTriangle size={28} className="text-bark-600" />
+                      : <CheckCircle size={28} className="text-primary-700" />}
                   </div>
-                  <h2 className="font-heading text-2xl font-bold text-neutral-900">Data Deleted</h2>
+                  <h2 className="font-heading text-2xl font-bold text-neutral-900">
+                    {failedCategories.length > 0
+                      ? (deletedCategories.length > 0 ? 'Some data could not be removed' : 'Data could not be removed')
+                      : 'Data Deleted'}
+                  </h2>
                   <p className="text-neutral-500 text-sm leading-relaxed max-w-md mx-auto">
-                    The selected data has been permanently removed from our servers. Your account remains active.
+                    {failedCategories.length > 0
+                      ? 'We removed what we could, but some categories could not be deleted. Please try again shortly, or contact us and we will remove them for you.'
+                      : 'The selected data has been permanently removed from our servers. Your account remains active.'}
                   </p>
                 </motion.div>
 
-                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-md shadow-sm border border-neutral-100 p-5 space-y-3">
-                  <h3 className="font-heading font-semibold text-neutral-900">What was deleted</h3>
-                  <ul className="space-y-1.5 text-sm text-neutral-600">
-                    {deletedCategories.map((cat) => (
-                      <li key={cat} className="flex items-center gap-2">
-                        <CheckCircle size={14} className="text-primary-500 shrink-0" />
-                        {cat.replace(/_/g, ' ')}
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
+                {deletedCategories.length > 0 && (
+                  <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-md shadow-sm border border-neutral-100 p-5 space-y-3">
+                    <h3 className="font-heading font-semibold text-neutral-900">What was deleted</h3>
+                    <ul className="space-y-1.5 text-sm text-neutral-600">
+                      {deletedCategories.map((cat) => (
+                        <li key={cat} className="flex items-center gap-2">
+                          <CheckCircle size={14} className="text-primary-500 shrink-0" />
+                          {cat.replace(/_/g, ' ')}
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
+
+                {failedCategories.length > 0 && (
+                  <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-bark-50 rounded-md shadow-sm border border-bark-100 p-5 space-y-3">
+                    <h3 className="font-heading font-semibold text-bark-800">Could not be removed</h3>
+                    <ul className="space-y-1.5 text-sm text-bark-700">
+                      {failedCategories.map((cat) => (
+                        <li key={cat} className="flex items-center gap-2">
+                          <AlertTriangle size={14} className="text-bark-500 shrink-0" />
+                          {cat.replace(/_/g, ' ')}
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
 
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="bg-white/90 rounded-md shadow-sm border border-neutral-100 p-5 space-y-3">
                   <h3 className="font-heading font-semibold text-neutral-900">What was retained</h3>

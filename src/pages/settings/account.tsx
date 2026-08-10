@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/components/toast'
 import { usePush } from '@/hooks/use-push'
 import { supabase } from '@/lib/supabase'
+import { isNativePlatform, shareBlobNative, isShareCancellation } from '@/lib/native-share'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
 
@@ -229,16 +230,31 @@ function DataPrivacySheet({ open, onClose }: { open: boolean; onClose: () => voi
       if (error) throw error
 
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `coexist-data-export-${new Date().toISOString().slice(0, 10)}.json`
-      a.click()
-      URL.revokeObjectURL(url)
+      const filename = `coexist-data-export-${new Date().toISOString().slice(0, 10)}.json`
 
-      toast.success('Your data has been downloaded.')
-    } catch {
-      toast.error('Export request failed. Please try again.')
+      if (isNativePlatform()) {
+        // The Capacitor WKWebView / Android WebView has no <a download>
+        // handler, so the anchor-click path is a silent no-op on device (the
+        // user taps, sees a success toast, and no file is delivered). Hand the
+        // blob to the native share sheet instead, so it can be saved to Files
+        // or shared. Same root cause + primitive as the .ics/media share fix.
+        await shareBlobNative(blob, filename, { title: 'Your Co-Exist data export' })
+        toast.success('Your data is ready to save or share.')
+      } else {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        a.click()
+        URL.revokeObjectURL(url)
+        toast.success('Your data has been downloaded.')
+      }
+    } catch (err) {
+      // Dismissing the native share sheet is not a failure - the export
+      // succeeded, the user just chose not to save it. Stay silent then.
+      if (!isShareCancellation(err)) {
+        toast.error('Export request failed. Please try again.')
+      }
     }
     setExporting(false)
     onClose()
@@ -258,7 +274,9 @@ function DataPrivacySheet({ open, onClose }: { open: boolean; onClose: () => voi
           Request Data Export
         </Button>
         <p className="text-xs text-neutral-500 text-center">
-          Your complete data downloads to this device as a JSON file straight away.
+          {isNativePlatform()
+            ? 'Your complete data is prepared as a JSON file you can save or share straight away.'
+            : 'Your complete data downloads to this device as a JSON file straight away.'}
         </p>
       </div>
     </BottomSheet>

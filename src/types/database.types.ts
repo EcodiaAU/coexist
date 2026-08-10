@@ -8024,6 +8024,7 @@ export type Database = {
         Returns: Json
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      resubscribe_by_email: { Args: { p_email: string }; Returns: undefined }
       unsubscribe_by_email: { Args: { p_email: string }; Returns: undefined }
       update_collective_location: {
         Args: { p_collective_id: string; p_lat: number; p_lng: number }
