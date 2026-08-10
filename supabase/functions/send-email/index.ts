@@ -975,6 +975,26 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       )
     }
 
+    // Backfill the greeting name from the profile when a caller supplies a
+    // userId but leaves data.name empty (e.g. transfer-event-ticket passes
+    // name:''). Without this, greeting() falls back to "Hey there,". Best-effort:
+    // a lookup miss leaves the existing fallback intact. `data` is the same
+    // object threaded into buildEmailHtml/subject below, so mutating it here is
+    // enough for every template that greets by name.
+    if (payload.userId && (!data.name || String(data.name).trim() === '')) {
+      const nameClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      )
+      const { data: nameProfile } = await nameClient
+        .from('profiles')
+        .select('display_name')
+        .eq('id', payload.userId)
+        .maybeSingle()
+      const displayName = (nameProfile?.display_name as string | null | undefined) ?? ''
+      if (displayName.trim()) data.name = displayName
+    }
+
     // Look up template
     const templateDef = EMAIL_TEMPLATES[type]
     if (!templateDef) {

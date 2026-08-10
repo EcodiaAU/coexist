@@ -235,61 +235,77 @@ async function sendReminders(
   for (const reg of registrations) {
     if (!alreadySentIds.has(reg.user_id)) pendingUserIds.push(reg.user_id)
   }
+  if (pendingUserIds.length === 0) return { sent: 0, errors: 0 }
 
-  // Fire one batched push for the whole event - send-push fans out per token + honours
-  // per-user notification prefs (event_reminder toggle, quiet hours). One network call
-  // beats N parallel ones; failures inside send-push don't abort the loop here.
-  if (pendingUserIds.length > 0) {
-    try {
-      await supabase.functions.invoke('send-push', {
-        body: {
-          userIds: pendingUserIds,
-          title: push.pushTitle,
-          body: push.pushBody,
-          data: {
-            type: 'event_reminder',
-            event_id: event.id,
-            route: `/events/${event.id}`,
-          },
-        },
-      })
-    } catch (err) {
-      console.error(`[event-reminders] batched push failed for event ${event.id}:`, (err as Error).message)
-      // Don't bail - email still goes per-user below.
-    }
+  // Fire one batched push for the whole event - send-push fans out per token +
+  // honours per-user notification prefs (event_reminder toggle, quiet hours).
+  // functions.invoke returns { error } on a non-2xx rather than throwing, so the
+  // result must be inspected.
+  const { error: pushError } = await supabase.functions.invoke('send-push', {
+    body: {
+      userIds: pendingUserIds,
+      title: push.pushTitle,
+      body: push.pushBody,
+      data: {
+        type: 'event_reminder',
+        event_id: event.id,
+        route: `/events/${event.id}`,
+      },
+    },
+  })
+
+  if (pushError) {
+    // Leave the tracking rows unwritten and send no email this fire, so the next
+    // in-window cron fire cleanly retries the whole unit. Writing a partial state
+    // here (email row present, push never recorded) is exactly what produced the
+    // duplicate-push storm: the email row does not gate the push, so every later
+    // fire re-pushed the user while send-email was down.
+    console.error(`[event-reminders] batched push failed for event ${event.id}:`, pushError.message)
+    return { sent: 0, errors: pendingUserIds.length }
   }
 
+  // Record push delivery NOW, independently of email. This row is the push
+  // idempotency marker - once a user has it they are never re-pushed, even if
+  // their reminder email later fails. Email is best-effort from here (a failed
+  // email is logged, not retried; retrying would need an absent row, which would
+  // re-push). onConflict/ignoreDuplicates makes the write race-safe.
+  const { error: markErr } = await supabase
+    .from('email_reminders_sent')
+    .upsert(
+      pendingUserIds.map((user_id) => ({ event_id: event.id, user_id, reminder_type: reminderType })),
+      { onConflict: 'event_id,user_id,reminder_type', ignoreDuplicates: true },
+    )
+  if (markErr) {
+    // Could not persist the marker - do not send email (which would leave the
+    // push unrecorded and re-push next fire). Retry the whole unit next fire.
+    console.error(`[event-reminders] marker write failed for event ${event.id}:`, markErr.message)
+    return { sent: 0, errors: pendingUserIds.length }
+  }
+
+  // Every pending user has now been pushed + recorded.
+  sent = pendingUserIds.length
+
+  // Best-effort reminder email per pushed user (push already delivered).
   for (const reg of registrations) {
     if (alreadySentIds.has(reg.user_id)) continue
 
-    try {
-      const displayName = (reg as any).profiles?.display_name ?? 'there'
-
-      await supabase.functions.invoke('send-email', {
-        body: {
-          type: 'event_reminder',
-          userId: reg.user_id,
-          data: {
-            name: displayName,
-            event_title: event.title,
-            event_date: eventDate,
-            event_location: event.address ?? '',
-            event_url: `https://app.coexistaus.org/events/${event.id}`,
-            time_until: timeUntil,
-          },
+    const displayName = (reg as any).profiles?.display_name ?? 'there'
+    const { error: emailErr } = await supabase.functions.invoke('send-email', {
+      body: {
+        type: 'event_reminder',
+        userId: reg.user_id,
+        data: {
+          name: displayName,
+          event_title: event.title,
+          event_date: eventDate,
+          event_location: event.address ?? '',
+          event_url: `https://app.coexistaus.org/events/${event.id}`,
+          time_until: timeUntil,
         },
-      })
-
-      // Record that this reminder was sent
-      await supabase.from('email_reminders_sent').insert({
-        event_id: event.id,
-        user_id: reg.user_id,
-        reminder_type: reminderType,
-      })
-
-      sent++
-    } catch (err) {
-      console.error(`[event-reminders] Failed for user ${reg.user_id}:`, (err as Error).message)
+      },
+    })
+    if (emailErr) {
+      console.error(`[event-reminders] reminder email failed for user ${reg.user_id}:`, emailErr.message)
       errors++
     }
   }

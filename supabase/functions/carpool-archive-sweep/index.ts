@@ -130,7 +130,7 @@ Deno.serve(withSentry('carpool-archive-sweep', async (req: Request) => {
             const userIds = (members ?? []).map((m: { user_id: string }) => m.user_id)
             if (userIds.length > 0) {
               try {
-                await fetch(
+                const resp = await fetch(
                   `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push`,
                   {
                     method: 'POST',
@@ -150,6 +150,16 @@ Deno.serve(withSentry('carpool-archive-sweep', async (req: Request) => {
                     }),
                   },
                 )
+                // A non-2xx (fetch does not throw on it) must NOT mark the
+                // warning posted: warning_posted_at is what opens the +2h delete
+                // gate below, so recording an unsent warning as sent would delete
+                // the carpool chat without ever warning its members. Skip the
+                // marker so the next cron fire re-sends the warning.
+                if (!resp.ok) {
+                  console.error(`[carpool-archive-sweep] warning send-push returned ${resp.status} for channel ${b.channel_id}`)
+                  results.errors++
+                  continue
+                }
               } catch (e) {
                 console.error('[carpool-archive-sweep] warning push failed:', (e as Error).message)
                 results.errors++

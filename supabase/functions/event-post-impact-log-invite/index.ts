@@ -191,7 +191,7 @@ Deno.serve(withSentry('event-post-impact-log-invite', async (req: Request) => {
       for (const [step, userIds] of dueByStep) {
         const copy = COPY[step]
         try {
-          await fetch(
+          const resp = await fetch(
             `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push`,
             {
               method: 'POST',
@@ -213,6 +213,15 @@ Deno.serve(withSentry('event-post-impact-log-invite', async (req: Request) => {
               }),
             },
           )
+          // fetch only throws on a network error, never on a 4xx/5xx. Without
+          // this check a failed send-push was recorded as sent below and the
+          // step was never retried. Leave the sent-tracking unwritten on a
+          // non-2xx so the next cron fire re-sends this step.
+          if (!resp.ok) {
+            console.error(`[event-post-impact-log-invite] send-push returned ${resp.status} for ${e.id} step ${step}`)
+            results.errors++
+            continue
+          }
         } catch (err) {
           console.error(`[event-post-impact-log-invite] push failed for ${e.id} step ${step}:`, (err as Error).message)
           results.errors++

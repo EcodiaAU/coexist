@@ -35,7 +35,20 @@ interface EventRow {
   activity_type: string
   collective_id: string
   timezone: string | null
-  collectives: { timezone: string | null } | null
+  collectives: { timezone: string | null; slug: string | null } | null
+}
+
+/**
+ * Test / non-production events must never fire live day-of pushes to real
+ * members. Mirrors event-reminders: the SQL selection filters slug != 'test'
+ * via the collectives !inner join, and this null-safe guard is a second line of
+ * defence so a test-collective event can never slip through even if the embedded
+ * filter is later weakened. Before this guard, event-day-notify selected on
+ * status='published' alone (no slug filter, no isTestEvent), so day-of pushes
+ * and in-app notifications fired for the QA 'test' collective's events.
+ */
+function isTestEvent(event: EventRow): boolean {
+  return event.collectives?.slug === 'test'
 }
 
 function audienceTzFor(event: EventRow): string {
@@ -91,14 +104,16 @@ Deno.serve(withSentry('event-day-notify', async (req: Request) => {
 
     const { data: soonEvents } = await supabase
       .from('events')
-      .select('id, title, date_start, address, activity_type, collective_id, timezone, collectives(timezone)')
+      .select('id, title, date_start, address, activity_type, collective_id, timezone, collectives!inner(timezone, slug)')
       .eq('status', 'published')
+      .neq('collectives.slug', 'test')
       .gte('date_start', soonWindowStart.toISOString())
       .lte('date_start', soonWindowEnd.toISOString())
 
     if (soonEvents?.length) {
       results.candidates_soon = soonEvents.length
       for (const event of (soonEvents as unknown) as EventRow[]) {
+        if (isTestEvent(event)) continue
         const wallClockNow = wallClockNowInTz(audienceTzFor(event))
         const diffMinutes = minutesBetween(wallClockNow, new Date(event.date_start))
         if (diffMinutes < 15 || diffMinutes > 35) continue
@@ -121,14 +136,16 @@ Deno.serve(withSentry('event-day-notify', async (req: Request) => {
 
     const { data: nowEvents } = await supabase
       .from('events')
-      .select('id, title, date_start, date_end, address, activity_type, collective_id, timezone, collectives(timezone)')
+      .select('id, title, date_start, date_end, address, activity_type, collective_id, timezone, collectives!inner(timezone, slug)')
       .eq('status', 'published')
+      .neq('collectives.slug', 'test')
       .gte('date_start', nowWindowStart.toISOString())
       .lte('date_start', nowWindowEnd.toISOString())
 
     if (nowEvents?.length) {
       results.candidates_now = nowEvents.length
       for (const event of (nowEvents as unknown) as EventRow[]) {
+        if (isTestEvent(event)) continue
         const wallClockNow = wallClockNowInTz(audienceTzFor(event))
         const diffMinutes = minutesBetween(wallClockNow, new Date(event.date_start))
         // event started in last 15 min: date_start <= wallClockNow and (wallClockNow - date_start) <= 15min
@@ -200,23 +217,42 @@ async function notifyAttendees(
 
   if (!toNotify.length) return { sent: 0, errors: 0 }
 
-  try {
-    // Send push notification to all target users via the send-push function
-    const pushType = notifType === 'starting_soon' ? 'event_reminder' : 'event_updated'
-    await supabase.functions.invoke('send-push', {
-      body: {
-        userIds: toNotify,
-        title,
-        body,
-        data: {
-          type: pushType,
-          event_id: event.id,
-        },
+  // Send push notification to all target users via the send-push function.
+  // functions.invoke returns { error } on a non-2xx rather than throwing, so the
+  // result must be inspected: a silently-failed push was previously still
+  // recorded in event_day_notifications_sent, so it was lost and never retried.
+  const pushType = notifType === 'starting_soon' ? 'event_reminder' : 'event_updated'
+  const { error: pushError } = await supabase.functions.invoke('send-push', {
+    body: {
+      userIds: toNotify,
+      title,
+      body,
+      data: {
+        type: pushType,
+        event_id: event.id,
       },
-    })
+    },
+  })
 
-    // Also create in-app notifications
-    // Note: read_at defaults to null in the DB schema - do NOT pass a `read` column
+  if (pushError) {
+    // Write neither the tracking row nor the in-app notification - leave the
+    // whole unit for the next cron fire to retry cleanly (no duplicate).
+    console.error(`[event-day-notify] send-push failed for event ${event.id}:`, pushError.message)
+    return { sent: 0, errors: toNotify.length }
+  }
+
+  try {
+    // Record the tracking row first (the push idempotency marker) so a later
+    // in-app insert hiccup can never re-push these users on the next fire.
+    const tracking = toNotify.map((userId: string) => ({
+      event_id: event.id,
+      user_id: userId,
+      notification_type: notifType,
+    }))
+    const { error: trackErr } = await supabase.from('event_day_notifications_sent').insert(tracking)
+    if (trackErr) throw trackErr
+
+    // In-app notifications (read_at defaults to null - do NOT pass a `read` column).
     const notifications = toNotify.map((userId: string) => ({
       user_id: userId,
       type: pushType,
@@ -224,21 +260,11 @@ async function notifyAttendees(
       body,
       data: { event_id: event.id },
     }))
-
     await supabase.from('notifications').insert(notifications)
-
-    // Track sent notifications to prevent duplicates
-    const tracking = toNotify.map((userId: string) => ({
-      event_id: event.id,
-      user_id: userId,
-      notification_type: notifType,
-    }))
-
-    await supabase.from('event_day_notifications_sent').insert(tracking)
 
     sent = toNotify.length
   } catch (err) {
-    console.error(`[event-day-notify] Failed for event ${event.id}:`, (err as Error).message)
+    console.error(`[event-day-notify] persist failed for event ${event.id}:`, (err as Error).message)
     errors = toNotify.length
   }
 
