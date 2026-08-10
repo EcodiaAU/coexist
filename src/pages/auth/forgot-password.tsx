@@ -16,6 +16,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
+  const [resent, setResent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -33,6 +34,17 @@ export default function ForgotPasswordPage() {
     } else {
       setSent(true)
       setIsSubmitting(false)
+    }
+  }
+
+  async function handleResend() {
+    if (!email.trim() || isSubmitting) return
+    setIsSubmitting(true)
+    const { error: authError } = await resetPassword(email)
+    setIsSubmitting(false)
+    if (!authError) {
+      setResent(true)
+      setTimeout(() => setResent(false), 5000)
     }
   }
 
@@ -71,13 +83,37 @@ export default function ForgotPasswordPage() {
                 We've sent a password reset link to{' '}
                 <span className="font-medium text-neutral-900">{email}</span>
               </p>
-              <Button
-                variant="ghost"
-                className="mt-8"
-                onClick={() => navigate('/login')}
-              >
-                Back to login
-              </Button>
+              <p className="mt-2 text-xs text-neutral-400 max-w-xs">
+                No email after a minute? Check spam, or resend / try a different address.
+              </p>
+              <div className="mt-6 w-full max-w-xs space-y-2">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  fullWidth
+                  loading={isSubmitting}
+                  disabled={resent}
+                  onClick={handleResend}
+                >
+                  {resent ? 'Sent again!' : 'Resend email'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  fullWidth
+                  onClick={() => { setSent(false); setResent(false) }}
+                >
+                  Try a different email
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  fullWidth
+                  onClick={() => navigate('/login')}
+                >
+                  Back to login
+                </Button>
+              </div>
             </motion.div>
           ) : (
             <motion.form

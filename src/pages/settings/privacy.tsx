@@ -6,6 +6,7 @@ import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { Toggle } from '@/components/toggle'
 import { BottomSheet } from '@/components/bottom-sheet'
+import { Avatar } from '@/components/avatar'
 import { Skeleton } from '@/components/skeleton'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/components/toast'
@@ -116,8 +117,15 @@ function BlockedUsersSheet({ open, onClose }: { open: boolean; onClose: () => vo
       ) : (
         <div className="space-y-2 max-h-[50vh] overflow-y-auto">
           {blockedUsers.map((block) => (
-            <div key={block.blocked_id} className="flex items-center justify-between px-3 py-2.5 rounded-sm bg-neutral-50">
-              <span className="text-sm text-neutral-700 truncate flex-1">{block.blocked_id}</span>
+            <div key={block.blocked_id} className="flex items-center gap-3 px-3 py-2.5 rounded-sm bg-neutral-50">
+              <Avatar
+                src={block.avatar_url ?? undefined}
+                name={block.display_name ?? 'Blocked user'}
+                size="sm"
+              />
+              <span className="text-sm text-neutral-800 truncate flex-1 min-w-0">
+                {block.display_name ?? 'Blocked user'}
+              </span>
               <button
                 type="button"
                 onClick={() => {
@@ -126,7 +134,7 @@ function BlockedUsersSheet({ open, onClose }: { open: boolean; onClose: () => vo
                     onError: () => toast.error('Failed to unblock'),
                   })
                 }}
-                className="text-xs font-medium text-neutral-500 hover:text-neutral-700 px-3 py-1.5 rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer select-none"
+                className="shrink-0 text-xs font-medium text-neutral-500 hover:text-neutral-700 px-3 py-1.5 rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer select-none"
               >
                 Unblock
               </button>

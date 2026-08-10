@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -19,6 +19,7 @@ import { Input } from '@/components/input'
 import { Chip } from '@/components/chip'
 import { Skeleton } from '@/components/skeleton'
 import { UploadProgress } from '@/components/upload-progress'
+import { ConfirmationSheet } from '@/components/confirmation-sheet'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/use-auth'
@@ -251,9 +252,60 @@ export default function EditProfilePage() {
         profile_details_completed: true,
       })
       toast.success('Profile updated!')
+      setSaved(true)
       navigate('/profile')
     } catch {
       toast.error('Failed to update profile')
+    }
+  }
+
+  // ----- Unsaved-changes guard -----------------------------------------
+  // The form persists only on Save; swipe-back / header-back / a browser
+  // refresh silently discarded a half-filled profile. Track dirtiness against
+  // the loaded profile and intercept every exit path.
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  const sortedInterests = (arr: string[]) => [...arr].sort().join('')
+  const isDirty =
+    initialized &&
+    !saved &&
+    (displayName !== (profile?.display_name ?? '') ||
+      pronouns !== (profile?.pronouns ?? '') ||
+      bio !== (profile?.bio ?? '') ||
+      instagramHandle !== (profile?.instagram_handle ?? '') ||
+      location !== (profile?.location ?? '') ||
+      phone !== (profile?.phone ?? '') ||
+      sortedInterests(interests) !== sortedInterests(profile?.interests ?? []) ||
+      firstName !== (profile?.first_name ?? '') ||
+      lastName !== (profile?.last_name ?? '') ||
+      age !== (profile?.age != null ? String(profile.age) : '') ||
+      postcode !== (profile?.postcode ?? '') ||
+      gender !== (profile?.gender ?? '') ||
+      email !== (profile?.email ?? '') ||
+      collectiveDiscovery !== (profile?.collective_discovery ?? '') ||
+      accessibilityRequirements !== (profile?.accessibility_requirements ?? '') ||
+      dietaryRequirements !== (profile?.dietary_requirements ?? '') ||
+      emergencyContactName !== (profile?.emergency_contact_name ?? '') ||
+      emergencyContactPhone !== (profile?.emergency_contact_phone ?? '') ||
+      emergencyContactRelationship !== (profile?.emergency_contact_relationship ?? ''))
+
+  // Web: browser refresh / tab close prompt while dirty.
+  useEffect(() => {
+    if (!isDirty) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isDirty])
+
+  const handleAttemptBack = () => {
+    if (isDirty) {
+      setShowDiscardConfirm(true)
+    } else {
+      navigate('/profile')
     }
   }
 
@@ -272,10 +324,10 @@ export default function EditProfilePage() {
 
   return (
     <Page
-      swipeBack
+      swipeBack={!isDirty}
       noBackground
       className="bg-neutral-50"
-      stickyOverlay={<Header title="" back transparent className="-mb-14" />}
+      stickyOverlay={<Header title="" back transparent className="-mb-14" onBack={handleAttemptBack} />}
       footer={
         <Button
           variant="primary"
@@ -396,12 +448,13 @@ export default function EditProfilePage() {
                 />
               </div>
               <Input
-                label="Email"
+                label="Contact email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 type="email"
                 maxLength={100}
+                helperText="A contact email shown to event leaders. This is NOT your login email - change that in Settings > Account > Change Email."
                 className={inputStyle}
               />
               <Input
@@ -598,6 +651,19 @@ export default function EditProfilePage() {
           */}
         </motion.div>
       </div>
+
+      <ConfirmationSheet
+        open={showDiscardConfirm}
+        onClose={() => setShowDiscardConfirm(false)}
+        onConfirm={() => {
+          setShowDiscardConfirm(false)
+          navigate('/profile')
+        }}
+        title="Discard changes?"
+        description="You have unsaved changes. If you leave now, they'll be lost."
+        confirmLabel="Discard"
+        variant="danger"
+      />
     </Page>
   )
 }

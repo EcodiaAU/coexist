@@ -10,7 +10,6 @@ import { Header } from '@/components/header'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { BottomSheet } from '@/components/bottom-sheet'
-import { ConfirmationSheet } from '@/components/confirmation-sheet'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/components/toast'
 import { usePush } from '@/hooks/use-push'
@@ -179,7 +178,10 @@ function ChangeEmailSheet({ open, onClose }: { open: boolean; onClose: () => voi
     if (err) {
       setError(err.message)
     } else {
-      toast.success('Verification email sent to your new address')
+      // The login email does NOT change until the new address is confirmed;
+      // the current email stays active until then. Say so, so the user doesn't
+      // think they're locked out of their old address.
+      toast.success(`We sent a confirmation link to ${newEmail}. Your current email stays active until you confirm.`)
       setNewEmail('')
       onClose()
     }
@@ -264,6 +266,73 @@ function DataPrivacySheet({ open, onClose }: { open: boolean; onClose: () => voi
 }
 
 /* ------------------------------------------------------------------ */
+/*  Delete Account Sheet (typed re-confirmation)                       */
+/*                                                                     */
+/*  The in-app path starts the same destructive 30-day deletion from   */
+/*  an already-authed session; a single tap was too easy to trigger by */
+/*  accident. Require the user to type DELETE (matching the friction   */
+/*  the public account-deletion path gets from re-auth). Works for     */
+/*  password AND OAuth accounts, which a password re-prompt would not. */
+/* ------------------------------------------------------------------ */
+
+function DeleteAccountSheet({
+  open,
+  onClose,
+  onConfirm,
+  deleting,
+}: {
+  open: boolean
+  onClose: () => void
+  onConfirm: () => void
+  deleting: boolean
+}) {
+  const [typed, setTyped] = useState('')
+
+  useEffect(() => {
+    if (open) setTyped('')
+  }, [open])
+
+  const canDelete = typed.trim().toUpperCase() === 'DELETE'
+
+  return (
+    <BottomSheet open={open} onClose={onClose} snapPoints={[0.55]}>
+      <div className="flex items-center gap-2.5 mb-2">
+        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-error-100 text-error-600">
+          <AlertTriangle size={16} />
+        </div>
+        <h2 className="font-heading text-lg font-semibold text-neutral-900">Delete Account?</h2>
+      </div>
+      <p className="text-sm text-neutral-500 mb-4 leading-relaxed">
+        Your account will be marked for deletion. You have 30 days to recover it from Settings before
+        all your data is permanently removed. To confirm, type <span className="font-semibold text-neutral-900">DELETE</span> below.
+      </p>
+      <Input
+        label="Type DELETE to confirm"
+        value={typed}
+        onChange={(e) => setTyped(e.target.value)}
+        autoCapitalize="characters"
+        autoCorrect="off"
+        placeholder="DELETE"
+      />
+      <div className="mt-4 space-y-2">
+        <Button
+          variant="danger"
+          fullWidth
+          loading={deleting}
+          disabled={!canDelete}
+          onClick={onConfirm}
+        >
+          Delete My Account
+        </Button>
+        <Button variant="ghost" fullWidth onClick={onClose} disabled={deleting}>
+          Keep My Account
+        </Button>
+      </div>
+    </BottomSheet>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main page                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -290,8 +359,10 @@ export default function SettingsAccountPage() {
     ? Math.max(0, 30 - Math.floor((Date.now() - deletionRequestedAt.getTime()) / (1000 * 60 * 60 * 24)))
     : null
 
+  const [deletingAccount, setDeletingAccount] = useState(false)
   const handleDeleteAccount = async () => {
-    if (!user) return
+    if (!user || deletingAccount) return
+    setDeletingAccount(true)
     const { error } = await supabase
       .from('profiles')
       .update({
@@ -303,6 +374,7 @@ export default function SettingsAccountPage() {
 
     if (error) {
       toast.error('Failed to delete account. Please contact support.')
+      setDeletingAccount(false)
       return
     }
     toast.info('Account marked for deletion. You have 30 days to recover it.')
@@ -422,14 +494,11 @@ export default function SettingsAccountPage() {
           <ChangeEmailSheet open={showChangeEmail} onClose={() => setShowChangeEmail(false)} />
           <DataPrivacySheet open={showDataPrivacy} onClose={() => setShowDataPrivacy(false)} />
 
-          <ConfirmationSheet
+          <DeleteAccountSheet
             open={showDeleteConfirm}
             onClose={() => setShowDeleteConfirm(false)}
             onConfirm={handleDeleteAccount}
-            title="Delete Account?"
-            description="Your account will be marked for deletion. You have 30 days to recover it by logging back in. After that, all data will be permanently removed."
-            confirmLabel="Delete My Account"
-            variant="danger"
+            deleting={deletingAccount}
           />
         </motion.div>
       </div>

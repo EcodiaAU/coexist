@@ -2,13 +2,15 @@ import { useState, useCallback, useEffect } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { motion } from 'framer-motion'
 import {
-  Bell, MessageSquare, Moon, Volume2,
+  Bell, BellOff, BellRing, Moon, Volume2,
 } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { Toggle } from '@/components/toggle'
+import { Button } from '@/components/button'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { useAuth } from '@/hooks/use-auth'
+import { usePush } from '@/hooks/use-push'
 import { patchNotificationPrefs } from '@/lib/profile-prefs'
 import type { NotificationPreferences } from '@/hooks/use-notifications'
 import { DEFAULT_PREFERENCES } from '@/hooks/use-notifications'
@@ -88,6 +90,76 @@ function QuietHoursSheet({
 /* ------------------------------------------------------------------ */
 /*  Main page                                                          */
 /* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/*  OS permission banner                                               */
+/*                                                                     */
+/*  The ~17 category toggles below control which notifications the     */
+/*  server SENDS; none of them matter if the OS has push turned off.   */
+/*  This banner reflects the real device permission and gives a way    */
+/*  to fix it, so a user who denied push isn't silently toggling dead  */
+/*  switches. Native only - on web checkPermissions() is 'unsupported' */
+/*  and the banner never renders.                                      */
+/* ------------------------------------------------------------------ */
+
+function PushPermissionBanner() {
+  const { checkPermissions, requestPermission } = usePush()
+  const [perm, setPerm] = useState<string>('unsupported')
+  const [requesting, setRequesting] = useState(false)
+
+  const refresh = useCallback(() => {
+    checkPermissions().then(setPerm)
+  }, [checkPermissions])
+
+  useEffect(() => {
+    refresh()
+  }, [refresh])
+
+  const handleEnable = async () => {
+    setRequesting(true)
+    await requestPermission()
+    // Re-read - if the user granted, the banner disappears; if they denied at
+    // the OS prompt, it flips to the "turned off" guidance.
+    const next = await checkPermissions()
+    setPerm(next)
+    setRequesting(false)
+  }
+
+  if (perm === 'granted' || perm === 'unsupported') return null
+
+  const denied = perm === 'denied'
+
+  return (
+    <div className={`mt-2 rounded-md border p-4 ${denied ? 'border-warning-200 bg-warning-50/80' : 'border-primary-200 bg-primary-50/80'}`}>
+      <div className="flex items-start gap-3">
+        <div className={`w-9 h-9 rounded-sm flex items-center justify-center shrink-0 ${denied ? 'bg-warning-100 text-warning-700' : 'bg-primary-100 text-primary-600'}`}>
+          {denied ? <BellOff size={18} /> : <BellRing size={18} />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-heading font-semibold text-neutral-900 text-sm">
+            {denied ? 'Notifications are turned off' : 'Notifications aren’t on yet'}
+          </p>
+          <p className="text-xs text-neutral-600 mt-0.5 leading-relaxed">
+            {denied
+              ? 'Your device is blocking Co-Exist notifications, so nothing below will reach you. Turn them on for Co-Exist in your device Settings.'
+              : 'Turn on notifications so event reminders, chat and announcements actually reach you.'}
+          </p>
+          {!denied && (
+            <Button
+              variant="primary"
+              size="sm"
+              className="mt-3"
+              loading={requesting}
+              onClick={handleEnable}
+            >
+              Enable notifications
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function SettingsNotificationsPage() {
   const { user, profile } = useAuth()
@@ -190,6 +262,10 @@ export default function SettingsNotificationsPage() {
           initial="hidden"
           animate="visible"
         >
+          <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+            <PushPermissionBanner />
+          </motion.div>
+
           {/* ---- Notification Preferences ---- */}
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <SectionHeader label="Event & App Notifications" />

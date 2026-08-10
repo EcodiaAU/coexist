@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { MapPin } from 'lucide-react'
+import { MapPin, LocateFixed, Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/button'
 import { PlaceAutocomplete } from '@/components/place-autocomplete'
 import type { PlaceResult } from '@/components/place-autocomplete'
@@ -9,17 +9,28 @@ import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 interface StepLocationProps {
   location: string
   onChange: (location: string, point: { lat: number; lng: number } | null) => void
+  /** Resolve the device's location on an explicit tap (A5). Returns coords or null. */
+  onUseCurrentLocation?: () => Promise<{ lat: number; lng: number } | null>
+  locating?: boolean
   onNext: () => void
   onSkip: () => void
 }
 
-export function StepLocation({ location, onChange, onNext, onSkip }: StepLocationProps) {
+export function StepLocation({ location, onChange, onUseCurrentLocation, locating, onNext, onSkip }: StepLocationProps) {
   const [query, setQuery] = useState(location)
+  const [usedCurrent, setUsedCurrent] = useState(false)
   const shouldReduceMotion = useReducedMotion()
 
   function handleChange(value: string, place: PlaceResult | null) {
     setQuery(value)
+    setUsedCurrent(false)
     onChange(value, place ? { lat: place.lat, lng: place.lng } : null)
+  }
+
+  async function handleUseCurrentLocation() {
+    if (!onUseCurrentLocation) return
+    const point = await onUseCurrentLocation()
+    setUsedCurrent(!!point)
   }
 
   return (
@@ -48,6 +59,22 @@ export function StepLocation({ location, onChange, onNext, onSkip }: StepLocatio
             onChange={handleChange}
             placeholder="e.g. Byron Bay, NSW"
           />
+          {onUseCurrentLocation && (
+            <button
+              type="button"
+              onClick={handleUseCurrentLocation}
+              disabled={locating}
+              className="mt-3 flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700 active:scale-[0.98] transition-[colors,transform] duration-150 disabled:opacity-60 disabled:cursor-default"
+            >
+              {locating ? (
+                <><Loader2 size={16} className="animate-spin" /> Finding your location...</>
+              ) : usedCurrent ? (
+                <><Check size={16} /> Using your current location</>
+              ) : (
+                <><LocateFixed size={16} /> Use my current location</>
+              )}
+            </button>
+          )}
         </motion.div>
       </motion.div>
 

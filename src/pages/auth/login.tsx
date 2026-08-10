@@ -47,7 +47,15 @@ export default function LoginPage() {
     setIsSubmitting(true)
     setError(null)
 
-    const { error: authError } = await signIn(email, password)
+    const { error: authError, emailUnconfirmed } = await signIn(email, password)
+
+    // An account that signed up but never confirmed its email lands in a
+    // dead-end here (raw "Email not confirmed" with no next step). Route to the
+    // verify-email screen, which carries the resend affordance (B8/A2).
+    if (emailUnconfirmed) {
+      navigate('/verify-email', { state: { email } })
+      return
+    }
 
     if (authError) {
       setError(authError.message)
@@ -186,7 +194,7 @@ export default function LoginPage() {
                 type="email"
                 label="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setMagicLinkSent(false) }}
                 autoComplete="email"
                 required
                 inputClassName="bg-white border-2 border-neutral-200 text-neutral-900 focus:border-primary-500 rounded-sm"
@@ -206,7 +214,8 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={handleMagicLink}
-                  className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold hover:text-neutral-700 active:scale-[0.97] transition-[colors,transform] duration-150 cursor-pointer"
+                  disabled={magicLinkSent}
+                  className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold hover:text-neutral-700 active:scale-[0.97] transition-[colors,transform] duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-default"
                 >
                   <Mail size={13} />
                   {magicLinkSent ? 'Link sent!' : 'Magic link'}
@@ -229,6 +238,22 @@ export default function LoginPage() {
                 role="alert"
               >
                 {error}
+              </motion.div>
+            )}
+
+            {/* Magic-link confirmation (mirrors forgot-password's inbox panel) */}
+            {magicLinkSent && !error && (
+              <motion.div
+                initial={rm ? false : { opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 px-4 py-3 bg-primary-50 border border-primary-100 rounded-sm text-sm text-neutral-700 text-center"
+                role="status"
+              >
+                <p className="font-semibold text-neutral-900">Check your inbox</p>
+                <p className="mt-0.5">
+                  We sent a sign-in link to <span className="font-medium text-neutral-900">{email}</span>.
+                  Tap it to log in - no password needed.
+                </p>
               </motion.div>
             )}
           </motion.div>

@@ -25,7 +25,6 @@ import { cn } from '@/lib/cn'
 import { EcodiaAttribution } from '@/components/ecodia-attribution'
 import { useAuth } from '@/hooks/use-auth'
 import { usePlatform } from '@/hooks/use-platform'
-import { useToast } from '@/components/toast'
 import {
     APP_NAME,
     TAGLINE,
@@ -35,6 +34,7 @@ import {
     FACEBOOK_URL,
 } from '@/lib/constants'
 import { usePush } from '@/hooks/use-push'
+import { useAppVersion } from '@/hooks/use-app-version'
 import { useLegalPage } from '@/hooks/use-legal-page'
 import DOMPurify from 'dompurify'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
@@ -43,9 +43,19 @@ import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const APP_VERSION = '1.0.0'
+// Fallback version labels when the legal_pages record (which carries the real
+// last-updated date) has not loaded. The app version itself is sourced from the
+// build via useAppVersion, never hand-maintained here.
 const TOS_VERSION = '1.0'
 const PRIVACY_VERSION = '1.0'
+
+/** "March 2026" style stamp from a legal page's updated_at, for the sheet header. */
+function formatLegalDate(iso?: string | null): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  return d.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })
+}
 
 /* ------------------------------------------------------------------ */
 /*  Section header                                                     */
@@ -247,7 +257,11 @@ function TermsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
       <h2 className="font-heading text-lg font-semibold text-neutral-900 mb-1">
         Terms of Service
       </h2>
-      <p className="text-xs text-neutral-500 mb-4">Version {TOS_VERSION}</p>
+      <p className="text-xs text-neutral-500 mb-4">
+        {formatLegalDate(legalPage?.updated_at)
+          ? `Last updated ${formatLegalDate(legalPage?.updated_at)}`
+          : `Version ${TOS_VERSION}`}
+      </p>
 
       {isWeb && isLoading && (
         <div className="space-y-2">
@@ -312,7 +326,11 @@ function PrivacySheet({ open, onClose }: { open: boolean; onClose: () => void })
       <h2 className="font-heading text-lg font-semibold text-neutral-900 mb-1">
         Privacy Policy
       </h2>
-      <p className="text-xs text-neutral-500 mb-4">Version {PRIVACY_VERSION}</p>
+      <p className="text-xs text-neutral-500 mb-4">
+        {formatLegalDate(legalPage?.updated_at)
+          ? `Last updated ${formatLegalDate(legalPage?.updated_at)}`
+          : `Version ${PRIVACY_VERSION}`}
+      </p>
 
       {isWeb && isLoading && (
         <div className="space-y-2">
@@ -352,6 +370,79 @@ function PrivacySheet({ open, onClose }: { open: boolean; onClose: () => void })
             aware of data collected from a child under 13, we will delete it promptly.</p>
           <p className="text-xs text-neutral-500 mt-4">
             Contact our privacy team: {CONTACT_EMAIL}
+          </p>
+        </div>
+      )}
+    </BottomSheet>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Child Safety Policy Sheet                                          */
+/*                                                                     */
+/*  Store compliance (Apple/Google both require a durable, readable    */
+/*  child-safety statement) needs a real page, not the transient toast */
+/*  this used to fire. Renders the legal_pages 'child-safety' record   */
+/*  when present (web, admin-editable) and a solid hardcoded fallback  */
+/*  otherwise, matching the Terms/Privacy sheets.                      */
+/* ------------------------------------------------------------------ */
+
+function ChildSafetySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { isWeb } = usePlatform()
+  const { data: legalPage, isLoading } = useLegalPage('child-safety')
+  const showDynamic = isWeb && legalPage?.content
+  const sanitisedHtml = showDynamic ? DOMPurify.sanitize(legalPage.content) : ''
+
+  return (
+    <BottomSheet open={open} onClose={onClose} snapPoints={[0.75]}>
+      <div className="flex items-center gap-2.5 mb-1">
+        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-100 text-primary-600">
+          <ShieldCheck size={16} />
+        </div>
+        <h2 className="font-heading text-lg font-semibold text-neutral-900">
+          Child Safety Policy
+        </h2>
+      </div>
+      <p className="text-xs text-neutral-500 mb-4">Our commitment to keeping young people safe</p>
+
+      {isWeb && isLoading && (
+        <div className="space-y-2">
+          <Skeleton variant="text" count={5} />
+        </div>
+      )}
+
+      {sanitisedHtml ? (
+        <div
+          className="legal-content max-w-none text-sm text-neutral-700 leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: sanitisedHtml }}
+        />
+      ) : (
+        <div className="prose prose-sm text-neutral-900 space-y-3 text-sm leading-relaxed">
+          <p>
+            Co-Exist is committed to the safety and wellbeing of every young person who takes part in
+            our conservation activities. We have zero tolerance for child abuse, exploitation, or any
+            form of harm.
+          </p>
+          <h4 className="font-semibold text-neutral-900 text-sm">Who can use Co-Exist</h4>
+          <p>
+            You must be at least 18 years old to create an account. Under-18s may attend Co-Exist
+            events only with parental or guardian consent, arranged through an approved Collective
+            leader, and are never given an account of their own.
+          </p>
+          <h4 className="font-semibold text-neutral-900 text-sm">Our safeguards</h4>
+          <p>
+            Collective leaders are selected for their commitment and are expected to follow our
+            safeguarding practices at every event. In-app content can be reported and blocked, and our
+            team reviews reports promptly.
+          </p>
+          <h4 className="font-semibold text-neutral-900 text-sm">Reporting a concern</h4>
+          <p>
+            If you have any concern about the safety of a child or young person, contact us
+            immediately at {CONTACT_EMAIL}. Where there is an immediate risk to a child, always
+            contact your local police or emergency services first.
+          </p>
+          <p className="text-xs text-neutral-500 mt-4">
+            We report suspected abuse to the relevant authorities as required by Australian law.
           </p>
         </div>
       )}
@@ -422,14 +513,15 @@ export default function SettingsPage() {
   const navigate = useNavigate()
   const { user, profile, signOut } = useAuth()
   const { isWeb } = usePlatform()
-  const { toast } = useToast()
   const { unregister: unregisterPush } = usePush()
   const shouldReduceMotion = useReducedMotion()
+  const appVersion = useAppVersion()
 
   // Sheet states (About / Legal / Help only - settings sub-pages handle the rest)
   const [showAbout, setShowAbout] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
+  const [showChildSafety, setShowChildSafety] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
@@ -498,22 +590,20 @@ export default function SettingsPage() {
                 <MenuRow
                   icon={<FileText size={18} />}
                   label="Terms of Service"
-                  subtitle={`Version ${TOS_VERSION}`}
+                  subtitle="Read our terms and conditions"
                   onClick={() => setShowTerms(true)}
                 />
                 <MenuRow
                   icon={<ShieldCheck size={18} />}
                   label="Privacy Policy"
-                  subtitle={`Version ${PRIVACY_VERSION}`}
+                  subtitle="How we handle your data"
                   onClick={() => setShowPrivacy(true)}
                 />
                 <MenuRow
                   icon={<Info size={18} />}
                   label="Child Safety Policy"
                   subtitle="Our commitment to child safety"
-                  onClick={() => {
-                    toast.info('Co-Exist is committed to child safety. Users must be 18+ to create accounts. Under-18 attendance requires guardian consent via Collective leaders.')
-                  }}
+                  onClick={() => setShowChildSafety(true)}
                 />
                 {isWeb && (
                   <MenuRow
@@ -545,7 +635,7 @@ export default function SettingsPage() {
             {/* ---- App Info ---- */}
             <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="mt-6 flex flex-col items-center gap-1.5">
               <p className="text-xs text-neutral-500">
-                {APP_NAME} v{APP_VERSION}
+                {APP_NAME} v{appVersion}
               </p>
               <EcodiaAttribution />
             </motion.div>
@@ -567,6 +657,7 @@ export default function SettingsPage() {
             <AboutSheet open={showAbout} onClose={() => setShowAbout(false)} />
             <TermsSheet open={showTerms} onClose={() => setShowTerms(false)} />
             <PrivacySheet open={showPrivacy} onClose={() => setShowPrivacy(false)} />
+            <ChildSafetySheet open={showChildSafety} onClose={() => setShowChildSafety(false)} />
             <HelpSheet open={showHelp} onClose={() => setShowHelp(false)} />
 
             {/* Logout Confirmation */}

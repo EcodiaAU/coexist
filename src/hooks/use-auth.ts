@@ -51,20 +51,35 @@ function toFriendlyAuthError(err: unknown): AuthError {
     err instanceof Error
       ? err.message
       : String((err as { message?: string })?.message ?? err ?? '')
+  // Preserve the Supabase error code (e.g. 'email_not_confirmed',
+  // 'invalid_credentials') so callers can branch on it even after we rewrite
+  // the human-facing message.
+  const code =
+    err && typeof err === 'object' && 'code' in err
+      ? (err as { code?: string }).code
+      : undefined
+  const make = (m: string, status: number): AuthError =>
+    ({ name: 'AuthError', message: m, status, code } as unknown as AuthError)
 
   if (err instanceof AuthTimeoutError || /AUTH_TIMEOUT/i.test(message)) {
-    return { name: 'AuthError', message: 'This is taking longer than usual. Check your connection and try again.', status: 0 } as unknown as AuthError
+    return make('This is taking longer than usual. Check your connection and try again.', 0)
   }
   if (/failed to fetch|network request failed|networkerror|load failed|fetch failed|retryable|timed? ?out/i.test(message)) {
-    return { name: 'AuthError', message: "Couldn't reach Co-Exist. Check your connection and try again.", status: 0 } as unknown as AuthError
+    return make("Couldn't reach Co-Exist. Check your connection and try again.", 0)
   }
   if (/already registered|already exists|user already/i.test(message)) {
-    return { name: 'AuthError', message: 'An account with this email already exists. Try logging in instead.', status: 400 } as unknown as AuthError
+    return make('An account with this email already exists. Try logging in instead.', 400)
   }
-  // Real auth error (e.g. invalid credentials) - pass through unchanged so the
-  // original status/name are preserved.
+  if (code === 'email_not_confirmed' || /email not confirmed|email_not_confirmed|not confirmed/i.test(message)) {
+    return make('Please confirm your email to continue. We can resend the verification link.', 400)
+  }
+  if (code === 'invalid_credentials' || /invalid login credentials|invalid_credentials/i.test(message)) {
+    return make('The email or password is incorrect. Check them and try again, or reset your password.', 400)
+  }
+  // Real auth error - pass through unchanged so the original status/name are
+  // preserved.
   if (err && typeof err === 'object' && 'message' in err) return err as AuthError
-  return { name: 'AuthError', message: message || 'Something went wrong. Please try again.', status: 0 } as unknown as AuthError
+  return make(message || 'Something went wrong. Please try again.', 0)
 }
 
 /* ------------------------------------------------------------------ */
@@ -253,7 +268,7 @@ interface AuthContextValue {
   isSuperAdmin: boolean
   managedCollectiveIds: string[]
   signUp: (email: string, password: string, displayName: string, dateOfBirth?: string) => Promise<{ error: AuthError | null; hasSession?: boolean }>
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null; emailUnconfirmed?: boolean }>
   signInWithGoogle: () => Promise<{ error: AuthError | null }>
   signInWithApple: () => Promise<{ error: AuthError | null }>
   signInWithMagicLink: (email: string) => Promise<{ error: AuthError | null }>
@@ -785,7 +800,11 @@ export function useAuthProvider(): AuthContextValue {
   const signIn = useCallback(async (email: string, password: string) => {
     try {
       const { error } = await withAuthTimeout(supabase.auth.signInWithPassword({ email, password }))
-      return { error: error ? toFriendlyAuthError(error) : null }
+      if (!error) return { error: null }
+      const emailUnconfirmed =
+        (error as { code?: string }).code === 'email_not_confirmed' ||
+        /email not confirmed|email_not_confirmed|not confirmed/i.test(error.message ?? '')
+      return { error: toFriendlyAuthError(error), emailUnconfirmed }
     } catch (err) {
       return { error: toFriendlyAuthError(err) }
     }
@@ -819,7 +838,7 @@ export function useAuthProvider(): AuthContextValue {
       provider: 'google',
       options: { redirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback` },
     })
-    return { error }
+    return { error: error ? toFriendlyAuthError(error) : null }
   }, [])
 
   const signInWithApple = useCallback(async () => {
@@ -844,7 +863,7 @@ export function useAuthProvider(): AuthContextValue {
       provider: 'apple',
       options: { redirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback` },
     })
-    return { error }
+    return { error: error ? toFriendlyAuthError(error) : null }
   }, [])
 
   const signInWithMagicLink = useCallback(async (email: string) => {
@@ -892,15 +911,23 @@ export function useAuthProvider(): AuthContextValue {
   }, [])
 
   const resetPassword = useCallback(async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/reset-password`,
-    })
-    return { error }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/reset-password`,
+      })
+      return { error: error ? toFriendlyAuthError(error) : null }
+    } catch (err) {
+      return { error: toFriendlyAuthError(err) }
+    }
   }, [])
 
   const updatePassword = useCallback(async (newPassword: string) => {
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    return { error }
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      return { error: error ? toFriendlyAuthError(error) : null }
+    } catch (err) {
+      return { error: toFriendlyAuthError(err) }
+    }
   }, [])
 
   return useMemo(

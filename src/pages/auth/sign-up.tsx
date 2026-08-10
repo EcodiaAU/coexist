@@ -89,6 +89,24 @@ export default function SignUpPage() {
     isAgeValid &&
     agreedToTerms
 
+  // Surface WHY "Create Account" is disabled instead of silently greying it out
+  // (A4). Show the first unmet requirement, but only once the user has started
+  // filling the form, so a pristine form isn't nagged.
+  const hasStarted = Boolean(
+    displayName.trim() || email.trim() || password.length > 0 || dateOfBirth || agreedToTerms,
+  )
+  const unmetRequirement = !displayName.trim()
+    ? 'Add your display name'
+    : !email.trim()
+      ? 'Add your email'
+      : !isPasswordValid
+        ? 'Use a password of at least 8 characters, with an uppercase letter, number, or symbol'
+        : !isAgeValid
+          ? 'You must be at least 18 to create an account'
+          : !agreedToTerms
+            ? 'Tick to agree to the Terms and Privacy Policy'
+            : null
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!canSubmit) return
@@ -365,6 +383,12 @@ export default function SignUpPage() {
             >
               Create Account
             </Button>
+
+            {!canSubmit && hasStarted && unmetRequirement && (
+              <p className="mt-2 text-center text-xs text-neutral-500">
+                {unmetRequirement}
+              </p>
+            )}
 
             <p className="mt-4 text-center text-sm text-neutral-500">
               Already have an account?{' '}

@@ -15,6 +15,8 @@ import { KeyboardOpenContext, useKeyboardOpen } from '@/components/app-shell-con
 import { MenuSheetProvider, useMenuSheet } from '@/hooks/use-menu-sheet'
 import { useSyncManager } from '@/hooks/use-sync-manager'
 import { usePushRegistration } from '@/hooks/use-push'
+import { useTextZoom } from '@/hooks/use-text-zoom'
+import { PushSoftAsk } from '@/components/push-soft-ask'
 import { useAppLifecycle } from '@/hooks/use-app-lifecycle'
 import { useAndroidBackButton } from '@/hooks/use-android-back-button'
 import { useKeyboard } from '@/hooks/use-keyboard'
@@ -150,6 +152,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // re-registers on app resume. Runs once for all authenticated users.
   usePushRegistration()
 
+  // Honour the OS text-size / Dynamic Type setting on native (C4). No-op on web.
+  useTextZoom()
+
   // Native app lifecycle: invalidate queries on resume so stale data refreshes.
   useAppLifecycle()
 
@@ -233,6 +238,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
           boundary defence as PhoneGate. */}
       <SentryErrorBoundary data-eos-id="src/components/app-shell.tsx#22" fallback={null}>
         <DietaryGate data-eos-id="src/components/app-shell.tsx#23" />
+      </SentryErrorBoundary>
+
+      {/* One-time push soft-ask (A6). Native only; asks with context instead of
+          the OS dialog cold-firing on first Home entry. */}
+      <SentryErrorBoundary fallback={null}>
+        <PushSoftAsk />
       </SentryErrorBoundary>
     </div>
   )

@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn'
 import { formatClockTime } from '@/lib/date-format'
 import { ROLE_COLORS } from '@/lib/constants'
 import { useLongPress } from '@/hooks/use-long-press'
+import { hapticImpact } from '@/lib/haptics'
 
 /** See chat-bubble.tsx for the swipe-reply doctrine - this mirrors it. */
 const SWIPE_REPLY_FIRE_PX = 60
@@ -85,9 +86,7 @@ export function HtmlChatBubble({
     if (!onSwipeReply || swipeFiredRef.current) return
     if (info.offset.x >= SWIPE_REPLY_FIRE_PX) {
       swipeFiredRef.current = true
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        navigator.vibrate(15)
-      }
+      void hapticImpact('light')
       onSwipeReply()
     }
   }

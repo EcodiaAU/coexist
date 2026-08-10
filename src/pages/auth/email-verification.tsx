@@ -5,12 +5,19 @@ import { Mail, RefreshCw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { OGMeta } from '@/components/og-meta'
 import { Button } from '@/components/button'
+import { Input } from '@/components/input'
 
 export default function EmailVerificationPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const shouldReduceMotion = useReducedMotion()
-  const email = (location.state as { email?: string })?.email ?? ''
+
+  // The email arrives via router state, but a hard refresh / deep-link drops
+  // that state, leaving the old page with an enabled Resend button that did
+  // nothing (A11). Keep it as editable state and recover the address from the
+  // session where possible; if we still can't, let the user type it in.
+  const stateEmail = (location.state as { email?: string })?.email ?? ''
+  const [email, setEmail] = useState(stateEmail)
 
   const [resending, setResending] = useState(false)
   const [resent, setResent] = useState(false)
@@ -18,9 +25,14 @@ export default function EmailVerificationPage() {
 
   // If the project auto-confirms email, a session is already present (or
   // about to arrive). Bounce into the app instead of asking the user to
-  // click a verification link that was never sent.
+  // click a verification link that was never sent. Also recover the address
+  // from the user record when router state was lost.
   useEffect(() => {
     let mounted = true
+    supabase.auth.getUser().then(({ data }) => {
+      if (!mounted) return
+      if (!stateEmail && data.user?.email) setEmail(data.user.email)
+    })
     supabase.auth.getSession().then(({ data }) => {
       if (mounted && data.session) navigate('/', { replace: true })
     })
@@ -28,13 +40,13 @@ export default function EmailVerificationPage() {
       if (mounted && session) navigate('/', { replace: true })
     })
     return () => { mounted = false; subscription.unsubscribe() }
-  }, [navigate])
+  }, [navigate, stateEmail])
 
   async function handleResend() {
-    if (!email || resending) return
+    if (!email.trim() || resending) return
     setResending(true)
     setResendError(null)
-    const { error } = await supabase.auth.resend({ type: 'signup', email })
+    const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim() })
     setResending(false)
     if (error) {
       setResendError(error.message)
@@ -89,6 +101,16 @@ export default function EmailVerificationPage() {
         transition={{ delay: 0.5 }}
         className="mt-8 space-y-3 w-full max-w-sm"
       >
+        {!email && (
+          <Input
+            type="email"
+            label="Your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            placeholder="you@email.com"
+          />
+        )}
         <Button
           variant="secondary"
           size="lg"
@@ -96,7 +118,7 @@ export default function EmailVerificationPage() {
           icon={<RefreshCw size={18} className={resending ? 'animate-spin' : ''} />}
           loading={resending}
           onClick={handleResend}
-          disabled={resent}
+          disabled={resent || !email.trim()}
         >
           {resent ? 'Email sent!' : 'Resend verification email'}
         </Button>
