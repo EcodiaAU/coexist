@@ -7231,6 +7231,7 @@ export type Database = {
       }
       get_public_stats: { Args: never; Returns: Json }
       get_user_impact_stats: { Args: { p_user_id: string }; Returns: Json }
+      get_user_points_total: { Args: { p_user_id?: string }; Returns: number }
       get_user_profile_v1: { Args: { target_user_id: string }; Returns: Json }
       gettransactionid: { Args: never; Returns: unknown }
       handle_announcement_rsvp: {

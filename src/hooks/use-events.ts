@@ -407,11 +407,16 @@ export function prefetchEventDetail(
       if (error) throw error
       if (!event) return null
 
-      const { count: regCount } = await supabase
-        .from('event_registrations')
-        .select('id', { count: 'exact', head: true })
-        .eq('event_id', eventId)
-        .in('status', ['registered', 'attended'])
+      // Going count via the SECURITY DEFINER RPC (RLS-independent), mirroring
+      // useEventDetail. A raw event_registrations head count here is subject to
+      // registrations_select_visible RLS, so for a non-registrant it returns 0
+      // and for a registrant it undercounts profile-hidden co-registrants - and
+      // because prefetch writes the SAME cache key ['event', eventId, userId]
+      // with a 2min staleTime, that wrong count would win on the home "next
+      // event" swipe path (useEventDetail sees fresh cache and does not refetch).
+      const { data: regCount } = await supabase.rpc('event_going_count', {
+        p_event_id: eventId,
+      })
 
       const { data: userRegData } = await supabase
         .from('event_registrations')
@@ -456,7 +461,7 @@ export function prefetchEventDetail(
 
       return {
         ...event,
-        registration_count: regCount ?? 0,
+        registration_count: (regCount as number | null) ?? 0,
         user_registration: userRegData,
         attendees,
         impact,

@@ -259,7 +259,7 @@ const SYSTEM_TEMPLATES: TemplateInfo[] = [
     defaultHeroSubtitle: '{{challenge_title}}',
     defaultCtaLabel: 'View Challenge',
     defaultCtaUrl: '{{challenge_url}}',
-    sampleData: { name: 'Alex', challenge_title: 'Plant 10,000 Trees', challenge_description: 'Help us reach our biggest planting goal yet.', challenge_url: 'https://app.coexistaus.org/challenges/test' },
+    sampleData: { name: 'Alex', challenge_title: 'Plant 10,000 Trees', challenge_description: 'Help us reach our biggest planting goal yet.', challenge_url: 'https://app.coexistaus.org/updates' },
   },
   {
     type: 'newsletter',

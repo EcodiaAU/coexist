@@ -89,6 +89,7 @@ const ViewProfilePage = lazy(() => import('@/pages/profile/view-profile'))
 const EditProfilePage = lazy(() => import('@/pages/profile/edit-profile'))
 
 const ReferralPage = lazy(() => import('@/pages/referral/index'))
+const LeaderboardPage = lazy(() => import('@/pages/leaderboard/index'))
 
 // Explore (unified events + collectives page)
 const ExplorePage = lazy(() => import('@/pages/events/index'))
@@ -436,6 +437,7 @@ function App() {
           <Route data-eos-id="src/App.tsx#105" path="/profile/:userId" element={<ViewProfilePage data-eos-id="src/App.tsx#106" />} />
           <Route data-eos-id="src/App.tsx#107" path="/impact" element={<Navigate data-eos-id="src/App.tsx#108" to="/profile" replace />} />
           <Route data-eos-id="src/App.tsx#109" path="/referral" element={<ReferralPage data-eos-id="src/App.tsx#110" />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route data-eos-id="src/App.tsx#111" path="/notifications" element={<NotificationsPage data-eos-id="src/App.tsx#112" />} />
           <Route data-eos-id="src/App.tsx#113" path="/updates" element={<UpdatesPage data-eos-id="src/App.tsx#114" />} />
           <Route data-eos-id="src/App.tsx#115" path="/settings" element={<SettingsPage data-eos-id="src/App.tsx#116" />} />

@@ -6,7 +6,6 @@ import {
     Users,
     Gift,
     CheckCircle,
-    Clock,
 } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
@@ -20,6 +19,7 @@ import { useReferralCode, useReferralStats } from '@/hooks/use-referral'
 import { analytics, ANALYTICS_EVENTS } from '@/lib/analytics'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 import { isNativePlatform, isShareCancellation, shareLinkNative } from '@/lib/native-share'
+import { getPublicAppUrl } from '@/lib/app-url'
 
 /* ------------------------------------------------------------------ */
 /*  Skeleton                                                           */
@@ -53,8 +53,11 @@ export default function ReferralPage() {
   const [copied, setCopied] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
 
+  // getPublicAppUrl(), not window.location.origin: on native the webview origin
+  // is capacitor://localhost / https://localhost, so a raw-origin invite link is
+  // dead for the recipient and the referral loop produces zero joins on mobile.
   const referralLink = code
-    ? `${window.location.origin}/signup?ref=${code}`
+    ? `${getPublicAppUrl()}/signup?ref=${code}`
     : ''
 
   const handleCopy = async () => {
@@ -195,26 +198,18 @@ export default function ReferralPage() {
             </motion.div>
           )}
 
-          {/* Stats */}
+          {/* Stat: friends who joined via your code.
+             There is no email-invite UI (useSendInvite has no consumer) and the
+             only invites-row source is accept_referral, which always inserts a
+             row already marked 'accepted' - so "Invites Sent" would always equal
+             "Joined" and "Pending" would be permanently 0. We surface the one
+             number that is actually meaningful: friends who joined. */}
           {stats && (
-            <motion.div
-              variants={fadeUp}
-              className="mt-6 grid grid-cols-3 gap-3"
-            >
-              <StatCard
-                value={stats.total}
-                label="Invites Sent"
-                icon={<Share2 size={18} />}
-              />
+            <motion.div variants={fadeUp} className="mt-6">
               <StatCard
                 value={stats.accepted}
-                label="Joined"
+                label="Friends Joined"
                 icon={<Users size={18} />}
-              />
-              <StatCard
-                value={stats.pending}
-                label="Pending"
-                icon={<Clock size={18} />}
               />
             </motion.div>
           )}

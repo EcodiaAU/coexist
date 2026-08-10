@@ -140,7 +140,10 @@ export default function DonateThankYouPage() {
     : 25
   const isRecurring = searchParams.get('recurring') === 'true'
   const impactMessage = getImpactMessage(amount)
-  const points = Math.floor(amount)
+  // Points are credited server-side by the Stripe webhook (award_points ->
+  // points_ledger). We intentionally do NOT compute or display a number here:
+  // the only value available client-side is the URL ?amount= param, which is
+  // trivially spoofable and can diverge from what was actually credited.
 
   useEffect(() => {
     const timer = setTimeout(() => setShowConfetti(false), 5000)
@@ -261,8 +264,8 @@ export default function DonateThankYouPage() {
                   )}
                 >
                   <Sparkles size={14} className="text-white/90" />
-                  <span className="text-sm font-bold text-white tabular-nums">
-                    +{points} points
+                  <span className="text-sm font-bold text-white">
+                    Points added
                   </span>
                 </motion.div>
               </motion.div>

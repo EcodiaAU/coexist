@@ -145,7 +145,10 @@ export function resolveNotificationRoute(
     case 'global_announcement':
       return '/updates'
     case 'challenge_update':
-      return '/'
+      // No participant /challenges surface exists (feature unbuilt - see F6);
+      // a challenge announcement lives in the Updates feed, so route there
+      // rather than dumping the user on the home screen.
+      return '/updates'
     case 'chat_mention':
     case 'chat_messages':
     case 'chat_reply':
