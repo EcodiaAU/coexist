@@ -8017,6 +8017,10 @@ export type Database = {
       }
       unlockrows: { Args: { "": string }; Returns: number }
       unsubscribe_by_email: { Args: { p_email: string }; Returns: undefined }
+      update_collective_location: {
+        Args: { p_collective_id: string; p_lat: number; p_lng: number }
+        Returns: undefined
+      }
       update_event_location: {
         Args: { p_event_id: string; p_lat: number; p_lng: number }
         Returns: undefined

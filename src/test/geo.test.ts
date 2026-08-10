@@ -112,6 +112,7 @@ describe('resolveCollectiveCoords', () => {
       'cairns',
       'tamworth',
       'north-east-victoria',
+      'darwin',
     ]
     for (const slug of productionSlugs) {
       expect(resolveCollectiveCoords(null, slug), `slug ${slug}`).not.toBeNull()
