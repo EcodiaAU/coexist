@@ -92,6 +92,7 @@ const ReferralPage = lazy(() => import('@/pages/referral/index'))
 
 // Explore (unified events + collectives page)
 const ExplorePage = lazy(() => import('@/pages/events/index'))
+const MyEventsPage = lazy(() => import('@/pages/events/my-events'))
 const EventDetailPage = lazy(() => import('@/pages/events/event-detail'))
 const CreateEventPage = lazy(() => import('@/pages/events/create-event'))
 const CheckInPage = lazy(() => import('@/pages/events/check-in'))
@@ -412,6 +413,7 @@ function App() {
           <Route data-eos-id="src/App.tsx#57" path="/home" element={<Navigate data-eos-id="src/App.tsx#58" to="/" replace />} />
           <Route data-eos-id="src/App.tsx#59" path="/explore" element={<ExplorePage data-eos-id="src/App.tsx#60" />} />
           <Route data-eos-id="src/App.tsx#61" path="/events" element={<Navigate data-eos-id="src/App.tsx#62" to="/explore" replace />} />
+          <Route path="/events/mine" element={<MyEventsPage />} />
           <Route data-eos-id="src/App.tsx#63" path="/events/create" element={<CreateEventPage data-eos-id="src/App.tsx#64" />} />
           <Route data-eos-id="src/App.tsx#65" path="/events/:id" element={<ErrorBoundary data-eos-id="src/App.tsx#66"><EventDetailPage data-eos-id="src/App.tsx#67" /></ErrorBoundary>} />
           <Route data-eos-id="src/App.tsx#68" path="/events/:id/check-in" element={<CheckInPage data-eos-id="src/App.tsx#69" />} />

@@ -1,7 +1,9 @@
 import { type ReactNode, useRef } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
 import { useKeyboardOpen } from '@/components/app-shell-context'
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
 
 interface PageProps {
   /** Optional header component (e.g. <Header />) */
@@ -21,6 +23,9 @@ interface PageProps {
   className?: string
   /** Hide the default atmospheric background (when the page provides its own) */
   noBackground?: boolean
+  /** Opt-in pull-to-refresh. When provided, dragging down from the top of the
+   *  scroll container fires this; the returned promise holds the spinner. */
+  onRefresh?: () => void | Promise<void>
   /** @deprecated Swipe-back is now handled globally by useSwipeBack in AppShell */
   swipeBack?: boolean
 }
@@ -34,10 +39,12 @@ export function Page({
   children,
   className,
   noBackground = false,
+  onRefresh,
 }: PageProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const { navMode } = useLayout()
   const keyboardOpen = useKeyboardOpen()
+  const { pull, refreshing } = usePullToRefresh(scrollRef, onRefresh)
 
   const isDesktopNav = navMode === 'sidebar'
 
@@ -85,6 +92,27 @@ export function Page({
               : 'var(--safe-bottom)',
         }}
       >
+        {/* Pull-to-refresh indicator (only when onRefresh is wired + pulling) */}
+        {onRefresh && (pull > 0 || refreshing) && (
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center"
+            style={{
+              transform: `translateY(${Math.max(0, pull - 24)}px)`,
+              opacity: refreshing ? 1 : Math.min(1, pull / 48),
+              transition: refreshing || pull === 0 ? 'transform 0.2s ease, opacity 0.2s ease' : 'none',
+            }}
+            aria-hidden="true"
+          >
+            <div className="mt-2 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-neutral-100">
+              <RefreshCw
+                size={17}
+                className={cn('text-primary-600', refreshing && 'animate-spin')}
+                style={refreshing ? undefined : { transform: `rotate(${pull * 2.4}deg)` }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Atmospheric background - sticky so it stays viewport-pinned while
             content scrolls over it. Negative margin collapses it out of flow. */}
         {!noBackground && (
