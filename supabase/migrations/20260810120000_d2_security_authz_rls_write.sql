@@ -43,12 +43,15 @@
 -- leader/national_leader/national_staff 3 < manager/national_admin 4 <
 -- admin/super_admin 5. Unknown -> -1.
 -- ---------------------------------------------------------------------
-create or replace function public.role_rank(p_role text)
+-- NOTE: an earlier migration already defines role_rank(r text). CREATE OR
+-- REPLACE cannot rename an input parameter, so keep the name `r` and extend
+-- the mapping with the national_*/super_admin aliases (unknown -> -1).
+create or replace function public.role_rank(r text)
 returns int
 language sql
 immutable
 as $$
-  select case p_role
+  select case r
     when 'participant'     then 0
     when 'member'          then 0
     when 'assist_leader'   then 1
@@ -252,14 +255,19 @@ comment on policy "audit_log_select_super_admin" on public.audit_log is
   'D2/F305: broadened from is_super_admin to (is_admin_or_staff AND has_cap(view_audit_log)) so the manager-default view_audit_log capability actually resolves rows. Name retained for migration stability.';
 
 -- =====================================================================
--- F652: carpool pickup PII. Revoke column SELECT so neither a direct fetch
--- nor the realtime (walrus filters columns by has_column_privilege) can
--- carry pickup_*. Writes go through the carpool-save-seat edge function
--- (service role) so they are unaffected. Authorised pickup access remains
--- via get_carpool_seat_pickup (SECURITY DEFINER).
+-- F652: carpool pickup PII. A column-level REVOKE is a no-op while a
+-- table-level SELECT grant exists (authenticated + anon both hold one), so
+-- remove the table-level SELECT and re-grant SELECT on ONLY the non-pickup
+-- columns. pickup_address_text/lat/lng then become unreadable by
+-- authenticated/anon over BOTH a direct fetch (permission denied) AND the
+-- realtime payload (walrus filters columns by has_column_privilege). Writes
+-- (INSERT/UPDATE/DELETE) remain table-level and RLS-gated; carpool-save-seat
+-- uses service_role. Authorised pickup access remains via
+-- get_carpool_seat_pickup (SECURITY DEFINER) and v_carpool_seats_safe.
 -- =====================================================================
-revoke select (pickup_address_text, pickup_lat, pickup_lng)
-  on public.carpool_seats from authenticated, anon;
+revoke select on public.carpool_seats from authenticated, anon;
+grant select (id, carpool_id, passenger_id, status, created_at)
+  on public.carpool_seats to authenticated, anon;
 
 -- Re-point the (previously shipped but unwired) safe view at the SECURITY
 -- DEFINER pickup RPC so it still functions after the column revoke and keeps
