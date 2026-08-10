@@ -666,7 +666,7 @@ export default function AdminApplicationsPage() {
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
       const { data: { user } } = await supabase.auth.getUser()
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from('collective_applications')
         .update({
           status,
@@ -675,12 +675,25 @@ export default function AdminApplicationsPage() {
           reviewed_at: new Date().toISOString(),
         })
         .eq('id', id)
+        .select('email, first_name, last_name')
+        .single()
       if (error) throw error
       await logAudit({
         action: `application_${status}`,
         target_type: 'collective_application',
         target_id: id,
       })
+      // Email the applicant their decision so accept/reject is not a silent
+      // black hole (backlog 345). Non-blocking - the decision is already saved.
+      if ((status === 'accepted' || status === 'rejected') && updated?.email) {
+        supabase.functions.invoke('notify-application', {
+          body: {
+            kind: status,
+            applicant_name: `${updated.first_name ?? ''} ${updated.last_name ?? ''}`.trim() || 'there',
+            applicant_email: updated.email,
+          },
+        }).catch(() => {})
+      }
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['admin-applications'] })

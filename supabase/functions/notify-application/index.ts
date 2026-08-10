@@ -9,9 +9,14 @@ import { withSentry } from '../_shared/sentry.ts'
 interface NotifyPayload {
   applicant_name: string
   applicant_email: string
-  roles: string[]
-  suburb: string
-  state: string
+  roles?: string[]
+  suburb?: string
+  state?: string
+  /**
+   * 'submitted' (default): applicant confirmation email + staff notify/push.
+   * 'accepted'/'rejected': applicant decision email only (no staff fan-out).
+   */
+  kind?: 'submitted' | 'accepted' | 'rejected'
 }
 
 /* ------------------------------------------------------------------ */
@@ -101,6 +106,80 @@ async function sendEmailNotification(
   if (!resp.ok) {
     const err = await resp.text()
     console.error(`[notify-application] Resend error:`, err)
+    return false
+  }
+  return true
+}
+
+/* ------------------------------------------------------------------ */
+/*  Applicant-facing email (confirmation + accept/reject decision)     */
+/* ------------------------------------------------------------------ */
+
+async function sendApplicantEmail(
+  toEmail: string,
+  applicantName: string,
+  kind: 'submitted' | 'accepted' | 'rejected',
+): Promise<boolean> {
+  const safeName = sanitizeHtml(applicantName)
+  const firstName = safeName.split(' ')[0] || 'there'
+
+  const copy = {
+    submitted: {
+      subject: "We've received your Co-Exist Collective application",
+      heading: 'Application received',
+      lede: "Thanks for applying to lead a Co-Exist Collective. We have your application and our team will review it soon.",
+      body: "We review every application personally, so it can take a little while. We will be in touch by email with the next steps. In the meantime, come along to an event near you.",
+      cta: { label: 'Explore Events', url: 'https://app.coexistaus.org/explore' },
+    },
+    accepted: {
+      subject: 'Great news about your Co-Exist Collective application',
+      heading: "You're in!",
+      lede: "We would love to have you on the Co-Exist core team. Congratulations, your application has been accepted.",
+      body: "Someone from our team will reach out with onboarding and your next steps. Welcome aboard.",
+      cta: { label: 'Open Co-Exist', url: 'https://app.coexistaus.org' },
+    },
+    rejected: {
+      subject: 'An update on your Co-Exist Collective application',
+      heading: 'Thank you for applying',
+      lede: "Thank you for your interest in leading a Co-Exist Collective. After careful consideration, we are not able to move forward with your application at this time.",
+      body: "This is not a reflection of your passion for conservation, we simply have limited spots right now. We would love for you to stay involved as a volunteer, and you are welcome to apply again in the future.",
+      cta: { label: 'Find an Event', url: 'https://app.coexistaus.org/explore' },
+    },
+  }[kind]
+
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to: [toEmail],
+      subject: copy.subject,
+      html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #869e62 0%, #3d4d33 100%); padding: 32px; border-radius: 16px 16px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 22px;">${copy.heading}</h1>
+              </div>
+              <div style="background: #f9faf7; padding: 24px; border-radius: 0 0 16px 16px; border: 1px solid #e8eddf; color: #2d3a22;">
+                <p style="font-size: 15px; margin: 0 0 12px;">Hi ${firstName},</p>
+                <p style="font-size: 14px; line-height: 1.6; margin: 0 0 12px;">${copy.lede}</p>
+                <p style="font-size: 14px; line-height: 1.6; margin: 0 0 20px; color: #6b7a5a;">${copy.body}</p>
+                <a href="${copy.cta.url}" style="display: inline-block; background: #869e62; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 14px;">${copy.cta.label}</a>
+              </div>
+            </div>
+          `,
+      tags: [
+        { name: 'category', value: 'transactional' },
+        { name: 'type', value: `collective_application_${kind}` },
+      ],
+    }),
+  })
+
+  if (!resp.ok) {
+    const err = await resp.text()
+    console.error(`[notify-application] applicant email (${kind}) Resend error:`, err)
     return false
   }
   return true
@@ -198,6 +277,30 @@ Deno.serve(withSentry('notify-application', async (req: Request) => {
       )
     }
 
+    const kind: 'submitted' | 'accepted' | 'rejected' =
+      payload.kind === 'accepted' || payload.kind === 'rejected' ? payload.kind : 'submitted'
+
+    // Applicant-facing email (every kind). The applicant used to get NOTHING -
+    // no confirmation on submit, no email on accept/reject (backlog 345).
+    let applicantEmailSent = false
+    try {
+      applicantEmailSent = await sendApplicantEmail(
+        payload.applicant_email,
+        payload.applicant_name,
+        kind,
+      )
+    } catch (err) {
+      console.error('[notify-application] applicant email error:', err)
+    }
+
+    // Accept/reject is an applicant decision email only - no staff fan-out.
+    if (kind !== 'submitted') {
+      return new Response(
+        JSON.stringify({ applicant_email_sent: applicantEmailSent }),
+        { headers: { 'Content-Type': 'application/json' } },
+      )
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -260,7 +363,7 @@ Deno.serve(withSentry('notify-application', async (req: Request) => {
     )
 
     return new Response(
-      JSON.stringify({ emails_sent: emailsSent, push_sent: pushSent }),
+      JSON.stringify({ emails_sent: emailsSent, push_sent: pushSent, applicant_email_sent: applicantEmailSent }),
       { headers: { 'Content-Type': 'application/json' } },
     )
   } catch (err) {
