@@ -28,6 +28,8 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useNationalImpact, useNationalCustomMetrics } from '@/hooks/use-impact'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { supabase } from '@/lib/supabase'
+import { STATUS_FILTERS } from '@/lib/query-builders'
+import { buildReportHtml, openReportWindow, writeReportWindow } from '@/lib/print-report'
 import { isNativePlatform, isShareCancellation, shareLinkNative } from '@/lib/native-share'
 import { wallClockNow } from '@/lib/date-format'
 import { parseLocationPoint } from '@/lib/geo'
@@ -46,6 +48,7 @@ function useTopCollectives() {
       const { data: events } = await supabase
         .from('events')
         .select('collective_id')
+        .in('status', STATUS_FILTERS.events.ACTIVE)
 
       if (!events?.length) return []
 
@@ -80,6 +83,7 @@ function useEventMapPoints() {
         .from('events')
         .select('id, title, location_point, activity_type')
         .not('location_point', 'is', null)
+        .in('status', STATUS_FILTERS.events.ACTIVE)
         .limit(200)
       return (data ?? [])
         .map((e): MapMarker | null => {
@@ -141,6 +145,7 @@ function useByActivity() {
         .from('events')
         .select('activity_type, collectives(state)')
         .lt('date_start', wallClockNow().toISOString())
+        .in('status', STATUS_FILTERS.events.ACTIVE)
         .limit(2000)
 
       const events = (data ?? []) as { activity_type?: string; collectives?: { state?: string } | null }[]
@@ -326,7 +331,64 @@ export default function NationalImpactPage() {
   }
 
   const exportPDF = () => {
-    alert('PDF export will be generated via Edge Function with branded Co-Exist template')
+    // Open the tab synchronously inside the click so the browser does not block
+    // the popup. All data is already loaded, so we write the document at once.
+    const w = openReportWindow()
+    if (!w) {
+      toast.error('Allow pop-ups for this site to export the report.')
+      return
+    }
+    const fmt = (n?: number) => (n ?? 0).toLocaleString('en-AU')
+    const rangeLabel =
+      timeRange === 'current-year' ? `Current year (${new Date().getFullYear()})` : 'All time'
+    const html = buildReportHtml({
+      title: 'Co-Exist National Impact Report',
+      meta: [
+        'Scope: National (all collectives)',
+        `Period: ${rangeLabel}`,
+        `Generated: ${new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+      ],
+      sections: [
+        {
+          heading: 'Headline impact',
+          rows: [
+            { label: 'Event attendances', value: fmt(data?.eventsAttended) },
+            { label: 'Est. volunteer hours', value: fmt(data?.volunteerHours) },
+            { label: 'Events held', value: fmt(data?.eventsHeld) },
+            { label: 'Trees planted', value: fmt(data?.treesPlanted) },
+            { label: 'Invasive weeds pulled', value: fmt(data?.invasiveWeedsPulled) },
+            { label: 'Litter removed (kg)', value: fmt(data?.rubbishCollectedKg) },
+            { label: 'Cleanup sites', value: fmt(data?.cleanupSites) },
+            { label: 'Coastline cleaned (m)', value: fmt(data?.coastlineCleanedM) },
+            { label: 'Active collectives', value: fmt(data?.collectivesCount) },
+            { label: 'Leaders empowered', value: fmt(data?.leadersEmpowered) },
+            { label: 'Total members', value: fmt(data?.totalMembers) },
+          ],
+        },
+        {
+          heading: 'Top collectives by events',
+          rows: (topCollectives ?? []).map((c) => ({
+            label: c.name,
+            value: `${fmt(c.eventCount)} events`,
+          })),
+        },
+        {
+          heading: 'Activity by type',
+          rows: (breakdown?.byActivity ?? []).map(([type, count]) => ({
+            label: String(type).replace(/_/g, ' '),
+            value: fmt(Number(count)),
+          })),
+        },
+        {
+          heading: 'Activity by state',
+          rows: (breakdown?.byState ?? []).map(([state, count]) => ({
+            label: String(state),
+            value: fmt(Number(count)),
+          })),
+        },
+      ],
+    })
+    writeReportWindow(w, html)
   }
 
   const shareLink = async () => {

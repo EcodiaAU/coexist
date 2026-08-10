@@ -143,7 +143,10 @@ export default function LeaderFeedbackPage() {
   const [expandedResponses, setExpandedResponses] = useState<Set<string>>(new Set())
 
   const collectiveScopeOptions = useMemo(
-    () => scopeCtx.availableCollectives.map((c) => ({ value: c.id, label: c.name })),
+    () => scopeCtx.availableCollectives.map((c) => ({
+      value: c.id,
+      label: c.name.replace(/\s+Collective$/i, '') + (c.state ? ` (${c.state})` : ''),
+    })),
     [scopeCtx.availableCollectives],
   )
 

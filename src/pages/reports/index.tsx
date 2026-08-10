@@ -1,19 +1,19 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
-    Download, Check, Mail, Loader2
+    Download, Loader2
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { useAdminHeader, useIsAdminLayout } from '@/components/admin-layout'
 import { useLeaderHeader, useIsLeaderLayout } from '@/components/leader-layout'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
 import { Chip } from '@/components/chip'
-import { Toggle } from '@/components/toggle'
-import { cn } from '@/lib/cn'
+import { buildReportHtml, openReportWindow, writeReportWindow } from '@/lib/print-report'
 import { supabase } from '@/lib/supabase'
 import { IMPACT_SELECT_COLUMNS, sumMetric, sumMetricWeighted, type EventHostShare } from '@/lib/impact-metrics'
 import { fetchImpactRows } from '@/lib/impact-query'
@@ -23,15 +23,9 @@ import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 /*  Types & constants                                                  */
 /* ------------------------------------------------------------------ */
 
-type ReportType = 'collective' | 'national' | 'event' | 'annual' | 'donor'
-
-const reportTypes: { value: ReportType; label: string; description: string }[] = [
-  { value: 'collective', label: 'Collective Impact', description: 'Per-collective report with all impact metrics' },
-  { value: 'national', label: 'National Impact', description: 'All collectives aggregated for board/grants' },
-  { value: 'event', label: 'Per-Event', description: 'Individual event detail with attendees and impact' },
-  { value: 'annual', label: 'Annual Charity (ACNC)', description: 'Formatted for registered charity annual reporting' },
-  { value: 'donor', label: 'Donor Impact', description: 'How donations were used, linked to conservation outcomes' },
-]
+// Leader collective roles (collective-scoped tier). National scope + the
+// cross-collective report is gated to admin/manager only (finding 340).
+const LEADER_COLLECTIVE_ROLES = ['assist_leader', 'co_leader', 'leader']
 
 const datePresets = [
   { value: 'this-month', label: 'This Month' },
@@ -305,25 +299,59 @@ async function fetchReportData(
 /* ------------------------------------------------------------------ */
 
 export default function ReportsPage() {
-  const isAdmin = useIsAdminLayout()
-  const isLeader = useIsLeaderLayout()
+  const isAdminLayout = useIsAdminLayout()
+  const isLeaderLayout = useIsLeaderLayout()
   useAdminHeader('Reports')
   useLeaderHeader('Reports')
   const shouldReduceMotion = useReducedMotion()
-  const [reportType, setReportType] = useState<ReportType>('collective')
+  const { isAdmin, isManager, collectiveRoles } = useAuth()
+  // National tier (admin/manager) gets national + cross-collective scope; a
+  // plain leader (assist_leader/co_leader/leader) is scoped to their own
+  // collective(s) only - the Reports page used to default National and list
+  // every collective to any leader (finding 340).
+  const isNationalTier = isAdmin || isManager
+
   const [datePreset, setDatePreset] = useState('this-month')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
-  const [scope, setScope] = useState('national')
+  const [scope, setScope] = useState(isNationalTier ? 'national' : 'collective')
   const [selectedCollective, setSelectedCollective] = useState('')
   const [selectedMetrics, setSelectedMetrics] = useState<Set<string>>(
     new Set(impactMetrics),
   )
-  const [scheduleRecurring, setScheduleRecurring] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
 
-  const { data: collectives } = useCollectivesList()
+  const { data: allCollectives } = useCollectivesList()
+
+  // Own leader-tier collective ids (empty for admin/manager, who see all).
+  const ownCollectiveIds = useMemo(
+    () =>
+      collectiveRoles
+        .filter((m) => LEADER_COLLECTIVE_ROLES.includes(m.role))
+        .map((m) => m.collective_id),
+    [collectiveRoles],
+  )
+
+  // Collectives offered in the picker: all for national tier, own-only leader.
+  const collectives = useMemo(() => {
+    if (isNationalTier) return allCollectives ?? []
+    const own = new Set(ownCollectiveIds)
+    return (allCollectives ?? []).filter((c) => own.has(c.id))
+  }, [allCollectives, isNationalTier, ownCollectiveIds])
+
+  // Scope choices: national tier gets national/state/collective; a plain leader
+  // can only report on their own collective.
+  const scopeChoices = isNationalTier
+    ? scopeOptions
+    : scopeOptions.filter((o) => o.value === 'collective')
+
+  // Effective scope/collective (derived, not effect-synced): a plain leader is
+  // always collective-scoped and auto-targets their first collective; national
+  // tier uses whatever scope they picked.
+  const effectiveScope = isNationalTier ? scope : 'collective'
+  const effectiveCollective =
+    !selectedCollective && collectives.length > 0 ? collectives[0].id : selectedCollective
 
   const toggleMetric = (metric: string) => {
     setSelectedMetrics((prev) => {
@@ -336,12 +364,22 @@ export default function ReportsPage() {
 
   const generateReport = async (format: 'pdf' | 'csv') => {
     if (selectedMetrics.size === 0) return
+    // For PDF, open the tab synchronously inside the click so the browser does
+    // not block the popup; we write the document once the data resolves.
+    let printWindow: Window | null = null
+    if (format === 'pdf') {
+      printWindow = openReportWindow()
+      if (!printWindow) {
+        setGenerateError('Allow pop-ups for this site to export the PDF.')
+        return
+      }
+    }
     setGenerating(true)
     setGenerateError(null)
 
     try {
       const dateRange = getDateRange(datePreset, customStart, customEnd)
-      const rows = await fetchReportData(selectedMetrics, dateRange, scope, selectedCollective)
+      const rows = await fetchReportData(selectedMetrics, dateRange, effectiveScope, effectiveCollective)
 
       if (format === 'csv') {
         const csvLines = ['Metric,Value']
@@ -355,12 +393,30 @@ export default function ReportsPage() {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `co-exist-report-${reportType}-${datePreset}.csv`
+        a.download = `co-exist-impact-report-${effectiveScope}-${datePreset}.csv`
         a.click()
         URL.revokeObjectURL(url)
+      } else {
+        const scopeLabel =
+          effectiveScope === 'collective'
+            ? collectives.find((c) => c.id === effectiveCollective)?.name ?? 'Collective'
+            : effectiveScope === 'state'
+              ? 'By state / region'
+              : 'National'
+        const presetLabel = datePresets.find((p) => p.value === datePreset)?.label ?? datePreset
+        const html = buildReportHtml({
+          title: 'Co-Exist Impact Report',
+          meta: [
+            `Scope: ${scopeLabel}`,
+            `Period: ${presetLabel}`,
+            `Generated: ${new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+          ],
+          sections: [{ rows: rows.map((r) => ({ label: r.metric, value: r.value })) }],
+        })
+        writeReportWindow(printWindow, html)
       }
-      // TODO: PDF export via edge function
     } catch (err) {
+      printWindow?.close()
       setGenerateError(err instanceof Error ? err.message : 'Failed to generate report')
     } finally {
       setGenerating(false)
@@ -375,46 +431,6 @@ export default function ReportsPage() {
         animate="visible"
       >
         <div className="space-y-6">
-          {/* Report type */}
-          <motion.section variants={fadeUp}>
-            <h2 className="font-heading text-sm font-semibold text-neutral-900 mb-2">
-              Report Type
-            </h2>
-            <div className="space-y-2">
-              {reportTypes.map((rt) => (
-                <button
-                  key={rt.value}
-                  type="button"
-                  onClick={() => setReportType(rt.value)}
-                  className={cn(
-                    'w-full flex items-start gap-3 p-3 rounded-sm text-left min-h-11',
-                    'active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none',
-                    reportType === rt.value
-                      ? 'bg-white ring-1 ring-primary-300 shadow-sm'
-                      : 'bg-white shadow-sm hover:bg-neutral-50',
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'flex items-center justify-center w-5 h-5 rounded-full border-2 mt-0.5 shrink-0',
-                      reportType === rt.value
-                        ? 'border-primary-600 bg-primary-800'
-                        : 'border-neutral-200',
-                    )}
-                  >
-                    {reportType === rt.value && (
-                      <Check size={12} className="text-white" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-neutral-900">{rt.label}</p>
-                    <p className="text-xs text-neutral-500 mt-0.5">{rt.description}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </motion.section>
-
           {/* Date range */}
           <motion.section variants={fadeUp}>
             <h2 className="font-heading text-sm font-semibold text-neutral-900 mb-2">
@@ -448,22 +464,29 @@ export default function ReportsPage() {
             <h2 className="font-heading text-sm font-semibold text-neutral-900 mb-2">
               Scope
             </h2>
-            <Dropdown
-              options={scopeOptions}
-              value={scope}
-              onChange={setScope}
-            />
-            {scope === 'collective' && collectives && (
+            {isNationalTier && (
+              <Dropdown
+                options={scopeChoices}
+                value={scope}
+                onChange={setScope}
+              />
+            )}
+            {effectiveScope === 'collective' && collectives.length > 0 && (
               <Dropdown
                 options={collectives.map((c) => ({
                   value: c.id,
                   label: c.name,
                 }))}
-                value={selectedCollective}
+                value={effectiveCollective}
                 onChange={setSelectedCollective}
                 placeholder="Select collective..."
-                className="mt-3"
+                className={isNationalTier ? 'mt-3' : ''}
               />
+            )}
+            {!isNationalTier && (
+              <p className="text-xs text-neutral-500 mt-2">
+                Scoped to your collective{collectives.length > 1 ? 's' : ''}.
+              </p>
             )}
           </motion.section>
 
@@ -482,24 +505,6 @@ export default function ReportsPage() {
                 />
               ))}
             </div>
-          </motion.section>
-
-          {/* Schedule */}
-          <motion.section variants={fadeUp}>
-            <Toggle
-              checked={scheduleRecurring}
-              onChange={setScheduleRecurring}
-              label="Schedule recurring report"
-              description="Email this report monthly to the board"
-            />
-            {scheduleRecurring && (
-              <div className="mt-3 p-3 rounded-sm bg-white">
-                <p className="text-xs text-neutral-500 flex items-center gap-1">
-                  <Mail size={12} />
-                  Monthly email will be sent to registered board members
-                </p>
-              </div>
-            )}
           </motion.section>
 
           {/* Generating state */}
@@ -552,7 +557,7 @@ export default function ReportsPage() {
       </motion.div>
   )
 
-  if (isAdmin || isLeader) return content
+  if (isAdminLayout || isLeaderLayout) return content
 
   return (
     <Page swipeBack header={<Header title="Impact Reports" back />}>

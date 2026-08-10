@@ -134,6 +134,33 @@ export function useDeleteMetricDef() {
   })
 }
 
+/* ------------------------------------------------------------------ */
+/*  Non-hook: active metric keys (for aggregation queryFns)            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The set of ADMIN-DEFINED, currently-active metric keys. Used to allowlist
+ * `event_impact.custom_metrics` aggregation so internal marker flags
+ * (`survey_synced:true`, `forms_id:"206"`, `auto_derived:true` ...) can never
+ * be coerced to numbers and rendered as headline impact. Falls back to the
+ * bundled defaults if the table read fails, so an offline/error path still
+ * filters rather than opening the floodgates.
+ */
+export async function fetchActiveMetricKeys(): Promise<Set<string>> {
+  try {
+    const { data, error } = await supabase
+      .from('impact_metric_defs')
+      .select('key, is_active')
+    if (error) throw error
+    const keys = (data ?? [])
+      .filter((d) => (d as { is_active?: boolean }).is_active)
+      .map((d) => (d as { key: string }).key)
+    return new Set(keys)
+  } catch {
+    return new Set(FALLBACK_METRIC_DEFS.filter((d) => d.is_active).map((d) => d.key))
+  }
+}
+
 export function useReorderMetricDefs() {
   const qc = useQueryClient()
 

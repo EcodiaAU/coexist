@@ -92,6 +92,18 @@ const SKILL_OPTIONS = [
   { key: 'social_media_content', label: 'Social Media Content Creation' },
 ]
 
+// Position Description PDFs (canonical copy lives in leadership.tsx PD_LINKS).
+const PD_LINKS = [
+  {
+    title: 'Collective Leader',
+    url: 'https://tjutlbzekfouwsiaplbr.supabase.co/storage/v1/object/public/dev-assets/CollectiveLeader.pdf',
+  },
+  {
+    title: 'Assistant Leader',
+    url: 'https://tjutlbzekfouwsiaplbr.supabase.co/storage/v1/object/public/dev-assets/AssistantLeader.pdf',
+  },
+]
+
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
@@ -129,6 +141,7 @@ export default function LeadACollectivePage() {
 
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   const toggleRole = useCallback((key: string) => {
     setRoles(prev => prev.includes(key) ? prev.filter(r => r !== key) : [...prev, key])
@@ -138,23 +151,35 @@ export default function LeadACollectivePage() {
     setSkills(prev => prev.includes(key) ? prev.filter(s => s !== key) : [...prev, key])
   }, [])
 
-  const canSubmit =
-    firstName.trim() &&
-    lastName.trim() &&
-    email.trim() &&
-    addressLine1.trim() &&
-    suburb.trim() &&
-    state &&
-    postcode.trim() &&
-    whyVolunteer.trim() &&
-    roles.length > 0 &&
-    timeCommitment &&
-    howHeard &&
-    !submitting
+  // Which required fields are still empty. Surfaced on a submit attempt so the
+  // user is told exactly what is missing instead of facing a silently-greyed
+  // button with no explanation.
+  const missingRequiredFields = (): string[] => {
+    const missing: string[] = []
+    if (!firstName.trim()) missing.push('First name')
+    if (!lastName.trim()) missing.push('Last name')
+    if (!email.trim()) missing.push('Email')
+    if (!addressLine1.trim()) missing.push('Address line 1')
+    if (!suburb.trim()) missing.push('Suburb')
+    if (!state) missing.push('State')
+    if (!postcode.trim()) missing.push('Postcode')
+    if (!whyVolunteer.trim()) missing.push('Why you want to volunteer')
+    if (roles.length === 0) missing.push('At least one role')
+    if (!timeCommitment) missing.push('Time commitment')
+    if (!howHeard) missing.push('How you heard about us')
+    return missing
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!canSubmit) return
+    if (submitting) return
+
+    const missing = missingRequiredFields()
+    if (missing.length > 0) {
+      setFormError(`Please complete: ${missing.join(', ')}.`)
+      return
+    }
+    setFormError(null)
 
     const { success, data: validated, error: valError } = safeValidate(collectiveApplicationSchema, {
       firstName: firstName,
@@ -182,12 +207,19 @@ export default function LeadACollectivePage() {
         const { error: uploadError } = await supabase.storage
           .from('collective-applications')
           .upload(path, resumeFile, { upsert: false })
-        if (!uploadError) {
-          const { data: urlData } = supabase.storage
-            .from('collective-applications')
-            .getPublicUrl(path)
-          resumeUrl = urlData.publicUrl
+        if (uploadError) {
+          // Do NOT silently proceed with a null resume and a success screen -
+          // let the applicant decide: retry, or remove the file and submit.
+          toast.toast.error(
+            "We couldn't attach your resume. Remove it and submit again, or try once more.",
+          )
+          setSubmitting(false)
+          return
         }
+        const { data: urlData } = supabase.storage
+          .from('collective-applications')
+          .getPublicUrl(path)
+        resumeUrl = urlData.publicUrl
       }
 
       const { error } = await supabase
@@ -496,9 +528,23 @@ export default function LeadACollectivePage() {
             <label className="block text-[13px] font-medium text-primary-700 mb-1.5">
               What Role/s are you interested in? <span className="text-error">*</span>
             </label>
-            <p className="text-[12px] text-neutral-500 mb-3">
+            <p className="text-[12px] text-neutral-500 mb-2">
               Please read the Position Descriptions before applying. Select all that apply.
             </p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
+              {PD_LINKS.map((pd) => (
+                <a
+                  key={pd.title}
+                  href={pd.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary-700 underline underline-offset-2"
+                >
+                  <FileText size={12} />
+                  {pd.title} PD
+                </a>
+              ))}
+            </div>
             <div className="space-y-2">
               {ROLE_OPTIONS.map(({ key, label }) => (
                 <Checkbox
@@ -638,14 +684,19 @@ export default function LeadACollectivePage() {
         </motion.section>
 
         {/* ---- Submit ---- */}
-        <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+        <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="space-y-3">
+          {formError && (
+            <div className="rounded-sm bg-error-50 border border-error-200 px-4 py-3">
+              <p className="text-[13px] text-error-700">{formError}</p>
+            </div>
+          )}
           <Button
             type="submit"
             variant="primary"
             size="lg"
             fullWidth
             loading={submitting}
-            disabled={!canSubmit}
+            disabled={submitting}
             icon={<Send size={16} />}
           >
             Submit Application

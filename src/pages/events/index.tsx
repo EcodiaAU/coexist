@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
@@ -189,6 +189,23 @@ export default function ExplorePage() {
 
   const { data: allCollectives = [] } = useCollectives()
   const { data: myCollectives } = useMyCollectives()
+
+  // Collectives-tab search + state filter (over the already-loaded list, so
+  // finding one by name is a query, not a scrub of the horizontal chip strip).
+  const [collectiveSearch, setCollectiveSearch] = useState('')
+  const [collectiveStateFilter, setCollectiveStateFilter] = useState('')
+  const collectiveStates = useMemo(
+    () => [...new Set(allCollectives.map((c) => c.state).filter(Boolean))].sort() as string[],
+    [allCollectives],
+  )
+  const filteredCollectives = useMemo(() => {
+    const q = collectiveSearch.trim().toLowerCase()
+    return allCollectives.filter((c) =>
+      (!q || c.name.toLowerCase().includes(q)) &&
+      (!collectiveStateFilter || c.state === collectiveStateFilter),
+    )
+  }, [allCollectives, collectiveSearch, collectiveStateFilter])
+  const collectiveFilterActive = !!collectiveSearch.trim() || !!collectiveStateFilter
 
 
   const collectiveOptions = (allCollectives).map((c) => ({ value: c.id, label: c.name }))
@@ -552,9 +569,88 @@ export default function ExplorePage() {
                     </section>
                   )}
 
-                  {/* ── Find a Collective Map ── */}
+                  {/* ── Find a Collective ── */}
                   <section className="px-4 lg:px-6">
                     <SectionHeader title="Find a Collective" />
+
+                    {/* Search + state filter over the loaded collectives. The
+                        map below stays for spatial browse; this makes finding a
+                        collective by name a single query, not a scrub of the
+                        horizontal chip strip. */}
+                    <div className="mb-3 space-y-2.5">
+                      <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                        <input
+                          type="text"
+                          value={collectiveSearch}
+                          onChange={(e) => setCollectiveSearch(e.target.value)}
+                          placeholder="Search collectives by name..."
+                          aria-label="Search collectives by name"
+                          className="w-full pl-9 pr-3 py-2.5 rounded-sm bg-white border border-neutral-200 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                        />
+                      </div>
+                      {collectiveStates.length > 1 && (
+                        <div className="flex gap-2 overflow-x-auto pretty-scrollbar -mx-4 px-4 lg:-mx-6 lg:px-6 pb-1">
+                          <button
+                            type="button"
+                            onClick={() => setCollectiveStateFilter('')}
+                            className={cn(
+                              'shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer select-none',
+                              !collectiveStateFilter ? 'bg-primary-600 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50',
+                            )}
+                          >
+                            All states
+                          </button>
+                          {collectiveStates.map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setCollectiveStateFilter(s === collectiveStateFilter ? '' : s)}
+                              className={cn(
+                                'shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer select-none',
+                                collectiveStateFilter === s ? 'bg-primary-600 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50',
+                              )}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {collectiveFilterActive && (
+                      <div className="mb-4 space-y-2">
+                        {filteredCollectives.length === 0 ? (
+                          <p className="text-sm text-neutral-500 py-4 text-center">No collectives match your search.</p>
+                        ) : (
+                          filteredCollectives.map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => navigate(`/collectives/${c.slug}`)}
+                              className="w-full flex items-center gap-3 p-3 rounded-md bg-white border border-neutral-100 shadow-sm text-left hover:border-neutral-200 active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
+                            >
+                              <div className="w-11 h-11 rounded-sm overflow-hidden bg-primary-50 shrink-0 flex items-center justify-center">
+                                {c.cover_image_url ? (
+                                  <img src={c.cover_image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                ) : (
+                                  <Users size={18} className="text-primary-200" />
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-neutral-900 truncate">{c.name}</p>
+                                <p className="text-xs text-neutral-500 mt-0.5 flex items-center gap-1">
+                                  <MapPin size={10} />
+                                  {[c.region, c.state].filter(Boolean).join(', ') || 'Australia'}
+                                </p>
+                              </div>
+                              <ArrowRight size={16} className="text-neutral-300 shrink-0" />
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+
                     <div className="rounded-md overflow-hidden border border-neutral-100 shadow-sm">
                       <CollectiveMap className="h-[75vh] min-h-[500px]" />
                     </div>

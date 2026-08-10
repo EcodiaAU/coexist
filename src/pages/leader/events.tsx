@@ -10,6 +10,7 @@ import {
     Search,
     UserCheck,
     AlertTriangle,
+    Plus,
 } from 'lucide-react'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useLeaderHeader, useLeaderContext } from '@/components/leader-layout'
@@ -202,6 +203,17 @@ export default function LeaderEventsPage() {
           <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search events..." compact />
         </motion.div>
 
+        {/* ── Create event ── */}
+        <motion.div variants={rm ? undefined : fadeUp}>
+          <Link
+            to="/events/create"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-md bg-moss-600 text-white text-sm font-semibold shadow-sm hover:bg-moss-700 active:scale-[0.99] transition-colors"
+          >
+            <Plus size={16} />
+            Create Event
+          </Link>
+        </motion.div>
+
         {/* ── Event list ── */}
         <AnimatePresence mode="wait" initial={false}>
         {!events || events.length === 0 ? (
@@ -222,6 +234,13 @@ export default function LeaderEventsPage() {
             <p className="text-xs text-neutral-500 max-w-[240px]">
               Create your first conservation event and rally your collective.
             </p>
+            <Link
+              to="/events/create"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-md bg-moss-600 text-white text-sm font-semibold shadow-sm hover:bg-moss-700 active:scale-[0.98] transition-colors"
+            >
+              <Plus size={16} />
+              Create Event
+            </Link>
           </motion.div>
         ) : (
           <motion.div

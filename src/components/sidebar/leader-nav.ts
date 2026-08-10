@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   ClipboardCheck,
+  FileBarChart,
   Home,
   MessageSquareText,
 } from 'lucide-react'
@@ -20,6 +21,7 @@ export const leaderNavCategories: NavCategory[] = [
     dotColor: 'bg-moss-500',
     items: [
       { label: 'Events', path: '/leader/events', icon: icon(CalendarDays) },
+      { label: 'Reports', path: '/leader/reports', icon: icon(FileBarChart) },
       { label: 'Feedback', path: '/leader/feedback', icon: icon(MessageSquareText) },
       { label: 'Tasks', path: '/leader/tasks', icon: icon(ClipboardCheck) },
     ],

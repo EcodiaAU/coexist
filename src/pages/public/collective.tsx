@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
 import { MapPin, Users, TreePine, Heart, Shield, ArrowRight } from 'lucide-react'
@@ -350,12 +350,14 @@ export default function PublicCollectivePage() {
               {upcomingEvents.map((evt) => {
                 const d = new Date(evt.date_start)
                 return (
-                  <div
+                  <Link
                     key={evt.id}
+                    to={`/event/${evt.id}`}
                     className={cn(
                       'flex items-center gap-3.5 rounded-sm p-3.5',
                       'bg-gradient-to-r from-moss-50/60 to-white',
                       'border border-moss-100/50',
+                      'hover:border-moss-200 active:scale-[0.99] transition-[border-color,transform] duration-150',
                     )}
                   >
                     {/* Date badge */}
@@ -376,7 +378,7 @@ export default function PublicCollectivePage() {
                       </p>
                     </div>
                     <ArrowRight size={16} className="text-neutral-400 shrink-0" />
-                  </div>
+                  </Link>
                 )
               })}
             </div>
@@ -437,10 +439,12 @@ export default function PublicCollectivePage() {
                 </div>
               )}
 
-              {/* Web fallback */}
+              {/* Web fallback - a brand-new visitor has no account, so send
+                  them to the public welcome/signup entry, not '/' which is
+                  auth-gated and bounces them to the sign-IN wall. */}
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/welcome')}
                 className={cn(
                   'w-full px-6 py-3',
                   'rounded-sm bg-white/10 text-white/80',

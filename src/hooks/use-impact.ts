@@ -12,6 +12,7 @@ import {
   BASELINE_HOURS,
 } from '@/lib/impact-query'
 import { useAuth } from '@/hooks/use-auth'
+import { fetchActiveMetricKeys } from '@/hooks/use-impact-metric-defs'
 
 /**
  * The metric keys THE RULE aggregates for the canonical-impact shape. Passed to
@@ -216,6 +217,7 @@ export interface AggregatedCustomMetric {
 
 function aggregateCustomMetrics(
   rows: Record<string, unknown>[],
+  validKeys: Set<string>,
   limit?: number,
 ): AggregatedCustomMetric[] {
   const totals = new Map<string, number>()
@@ -223,8 +225,17 @@ function aggregateCustomMetrics(
     const cm = row.custom_metrics as Record<string, unknown> | null
     if (!cm || typeof cm !== 'object') continue
     for (const [key, val] of Object.entries(cm)) {
-      const n = Number(val) || 0
-      if (n > 0) totals.set(key, (totals.get(key) ?? 0) + n)
+      // TWO guards, both required (this panel feeds funder-facing headline
+      // numbers, so a false one is worse than a missing one):
+      //  1. Only aggregate keys that are a real admin-defined metric. Internal
+      //     marker keys (survey_synced, auto_derived, forms_id, ...) live in
+      //     custom_metrics but are NOT metric defs, so they never reach a total.
+      //  2. Only aggregate genuine numbers. `Number(true)` -> 1 and
+      //     `Number("206")` -> 206 used to coerce booleans/id-strings into
+      //     phantom impact; a typeof gate makes that impossible.
+      if (!validKeys.has(key)) continue
+      if (typeof val !== 'number' || !Number.isFinite(val) || val <= 0) continue
+      totals.set(key, (totals.get(key) ?? 0) + val)
     }
   }
   const sorted = Array.from(totals.entries())
@@ -238,8 +249,11 @@ export function useCollectiveCustomMetrics(collectiveId: string | undefined) {
     queryKey: ['collective-custom-metrics', collectiveId],
     queryFn: async (): Promise<AggregatedCustomMetric[]> => {
       if (!collectiveId) return []
-      const { rows } = await fetchImpactRows({ collectiveId, timeRange: 'all-time', includeLegacy: false })
-      return aggregateCustomMetrics(rows)
+      const [{ rows }, validKeys] = await Promise.all([
+        fetchImpactRows({ collectiveId, timeRange: 'all-time', includeLegacy: false }),
+        fetchActiveMetricKeys(),
+      ])
+      return aggregateCustomMetrics(rows, validKeys)
     },
     enabled: !!collectiveId,
     staleTime: 5 * 60 * 1000,
@@ -250,8 +264,11 @@ export function useNationalCustomMetrics(limit = 5) {
   return useQuery({
     queryKey: ['national-custom-metrics', limit],
     queryFn: async (): Promise<AggregatedCustomMetric[]> => {
-      const { rows } = await fetchImpactRows({ timeRange: 'all-time' })
-      return aggregateCustomMetrics(rows, limit)
+      const [{ rows }, validKeys] = await Promise.all([
+        fetchImpactRows({ timeRange: 'all-time' }),
+        fetchActiveMetricKeys(),
+      ])
+      return aggregateCustomMetrics(rows, validKeys, limit)
     },
     staleTime: 5 * 60 * 1000,
   })

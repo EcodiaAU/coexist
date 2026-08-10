@@ -8,7 +8,7 @@ import {
     SkipForward, Flame, Sparkles, Users,
     ClipboardList, BarChart3,
     Plus, Pencil, Eye, Trash2, List,
-    Circle, CheckCircle2, GripVertical, Flag,
+    Circle, CheckCircle2, Flag,
 } from 'lucide-react'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
@@ -916,10 +916,13 @@ function TodoModal({
   open,
   onClose,
   todo,
+  initialDueDate,
 }: {
   open: boolean
   onClose: () => void
   todo?: LeaderTodo | null
+  /** Prefill the due date when creating (e.g. tapped a calendar day). */
+  initialDueDate?: string
 }) {
   const { toast } = useToast()
   const createMutation = useCreateTodo()
@@ -927,7 +930,7 @@ function TodoModal({
 
   const [title, setTitle] = useState(todo?.title ?? '')
   const [description, setDescription] = useState(todo?.description ?? '')
-  const [dueDate, setDueDate] = useState(todo?.due_date ?? '')
+  const [dueDate, setDueDate] = useState(todo?.due_date ?? initialDueDate ?? '')
   const [dueTime, setDueTime] = useState(todo?.due_time?.slice(0, 5) ?? '')
   const [priority, setPriority] = useState<TodoPriority>(todo?.priority ?? 'medium')
 
@@ -1094,13 +1097,6 @@ function TodoItem({
               : 'bg-white shadow-sm',
       )}
     >
-      {/* Edit mode grip */}
-      {editMode && (
-        <div className="flex items-center self-center text-neutral-400 cursor-grab">
-          <GripVertical size={16} />
-        </div>
-      )}
-
       {/* Checkbox */}
       <button
         type="button"
@@ -1195,12 +1191,15 @@ function CalendarView({
   onEdit,
   onDelete,
   onDateClick,
+  onAddForDate,
 }: {
   todos: LeaderTodo[]
   editMode: boolean
   onEdit: (todo: LeaderTodo) => void
   onDelete: (id: string) => void
   onDateClick: (date: string) => void
+  /** Open the create modal with this date prefilled as the due date. */
+  onAddForDate: (date: string) => void
 }) {
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth())
   const [calYear, setCalYear] = useState(() => new Date().getFullYear())
@@ -1348,6 +1347,15 @@ function CalendarView({
                 ))}
               </div>
             )}
+
+            <button
+              type="button"
+              onClick={() => onAddForDate(selectedDate)}
+              className="flex items-center justify-center gap-1.5 w-full mt-1 px-3 py-2.5 rounded-sm border border-dashed border-primary-300 text-primary-700 text-xs font-semibold hover:bg-primary-50 transition-colors"
+            >
+              <Plus size={14} />
+              Add to-do for {formatDate(selectedDate)}
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1404,6 +1412,8 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
   )
 
   const overdueCount = useMemo(() => pendingTodos.filter(isTodoOverdue).length, [pendingTodos])
+
+  const [createDate, setCreateDate] = useState<string | null>(null)
 
   const handleDateClick = useCallback((date: string) => {
     void date
@@ -1604,6 +1614,7 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
             onEdit={setEditTodo}
             onDelete={setDeleteTarget}
             onDateClick={handleDateClick}
+            onAddForDate={(date) => { setCreateDate(date); setShowCreate(true) }}
           />
         )}
       </motion.div>
@@ -1612,7 +1623,8 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
       {showCreate && (
         <TodoModal
           open={showCreate}
-          onClose={() => setShowCreate(false)}
+          onClose={() => { setShowCreate(false); setCreateDate(null) }}
+          initialDueDate={createDate ?? undefined}
         />
       )}
 

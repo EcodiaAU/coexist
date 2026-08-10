@@ -2,6 +2,8 @@ import { useQuery, keepPreviousData, type QueryClient } from '@tanstack/react-qu
 import { supabase } from '@/lib/supabase'
 import { fetchCanonicalImpactRows, composeSummaryMetrics } from '@/lib/impact-query'
 import { wallClockNow } from '@/lib/date-format'
+import { STATUS_FILTERS } from '@/lib/query-builders'
+import { fetchHostedEventIds } from '@/lib/leader-event-scope'
 
 /* ------------------------------------------------------------------ */
 /*  Leader dashboard data hooks                                        */
@@ -59,6 +61,19 @@ async function fetchLeaderDashboard(collectiveId: string): Promise<LeaderDashboa
   const startOfMonth = new Date(Date.UTC(
     now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0,
   )).toISOString()
+  // Upper bound so "events this month" stops at month-end instead of counting
+  // every future month too. Paired with a status allowlist below so drafts and
+  // cancelled events (which the adjacent Upcoming query already excludes) never
+  // inflate the tile - the two used to disagree.
+  const startOfNextMonth = new Date(Date.UTC(
+    now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0, 0,
+  )).toISOString()
+
+  // Host-aware scope: every event this collective hosts (primary OR co-host),
+  // matching the host-aware Events tab (use-leader-events) so co-hosted events
+  // appear on the home dashboard/count instead of being dropped by a bare
+  // primary-host `.eq('collective_id', ...)`.
+  const hostedEventIds = await fetchHostedEventIds(collectiveId)
 
   const [
     membersRes,
@@ -75,7 +90,7 @@ async function fetchLeaderDashboard(collectiveId: string): Promise<LeaderDashboa
     supabase
       .from('events')
       .select('id, title, date_start, address, cover_image_url, check_in_code')
-      .eq('collective_id', collectiveId)
+      .in('id', hostedEventIds)
       .gte('date_start', now.toISOString())
       .neq('status', 'cancelled')
       .neq('status', 'draft')
@@ -84,8 +99,10 @@ async function fetchLeaderDashboard(collectiveId: string): Promise<LeaderDashboa
     supabase
       .from('events')
       .select('id', { count: 'exact', head: true })
-      .eq('collective_id', collectiveId)
-      .gte('date_start', startOfMonth),
+      .in('id', hostedEventIds)
+      .gte('date_start', startOfMonth)
+      .lt('date_start', startOfNextMonth)
+      .in('status', STATUS_FILTERS.events.ACTIVE),
     supabase
       .from('event_impact')
       .select('hours_total, events!inner(collective_id)')
@@ -407,10 +424,14 @@ export function useEventCalendar(collectiveId: string | undefined, month: Date) 
       const start = new Date(Date.UTC(month.getFullYear(), month.getMonth(), 1, 0, 0, 0, 0))
       const end = new Date(Date.UTC(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59, 999))
 
+      // Host-aware (primary OR co-host) so the mini-calendar shows co-hosted
+      // events too, matching the Events tab and the dashboard count.
+      const hostedEventIds = await fetchHostedEventIds(collectiveId)
+
       const { data, error } = await supabase
         .from('events')
         .select('id, title, date_start')
-        .eq('collective_id', collectiveId)
+        .in('id', hostedEventIds)
         .gte('date_start', start.toISOString())
         .lte('date_start', end.toISOString())
       if (error) throw error
