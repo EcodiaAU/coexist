@@ -32,6 +32,26 @@ interface EventRow {
   collectives: { name: string } | null
 }
 
+/**
+ * Pure predicate: is this completed event still awaiting a survey from the
+ * attendee? Pending iff the attendee has not already responded AND an active
+ * auto-send survey covers the event. Coverage matches the useEventSurvey
+ * cascade: either a survey exists for the event's own activity_type, OR a
+ * generic auto-send survey with NULL activity_type exists (which applies to
+ * every event type). The historic bug filtered auto-send surveys with
+ * `.in('activity_type', activityTypes)`, so a NULL-activity survey - the only
+ * kind seeded live - never matched and NOBODY was ever prompted.
+ */
+export function isSurveyPendingForEvent(
+  event: Pick<EventRow, 'id' | 'activity_type'>,
+  respondedIds: Set<string>,
+  surveyedTypes: Set<string>,
+  hasGenericAutoSend: boolean,
+): boolean {
+  if (respondedIds.has(event.id)) return false
+  return hasGenericAutoSend || surveyedTypes.has(event.activity_type)
+}
+
 /* ------------------------------------------------------------------ */
 /*  Hooks                                                              */
 /* ------------------------------------------------------------------ */
@@ -90,18 +110,33 @@ export function usePendingSurveys() {
 
       const respondedIds = new Set((existingResponses ?? []).map((r) => r.event_id))
 
-      // Only show pending for activity types that have an active auto-send survey
+      // Only show pending where an active auto-send survey covers the event.
+      // A NULL-activity_type auto-send survey is generic - it applies to EVERY
+      // event type - so query it separately and treat it as covering all
+      // completed events. Without this, the seeded generic "How was the event?"
+      // survey (the only auto-send survey configured live) never matched the
+      // per-activity_type filter and no attendee was ever prompted.
       const activityTypes = [...new Set(completedEvents.map((e) => e.activity_type))]
-      const { data: autoSendSurveys } = await supabase
-        .from('surveys')
-        .select('activity_type')
-        .in('activity_type', activityTypes)
-        .eq('auto_send_after_event', true)
-        .eq('status', 'active')
-      const surveyedTypes = new Set((autoSendSurveys ?? []).map((s) => s.activity_type))
+      const [{ data: typedAutoSend }, { data: genericAutoSend }] = await Promise.all([
+        supabase
+          .from('surveys')
+          .select('activity_type')
+          .in('activity_type', activityTypes)
+          .eq('auto_send_after_event', true)
+          .eq('status', 'active'),
+        supabase
+          .from('surveys')
+          .select('id')
+          .is('activity_type', null)
+          .eq('auto_send_after_event', true)
+          .eq('status', 'active')
+          .limit(1),
+      ])
+      const surveyedTypes = new Set((typedAutoSend ?? []).map((s) => s.activity_type))
+      const hasGenericAutoSend = (genericAutoSend ?? []).length > 0
 
       return completedEvents
-        .filter((e) => !respondedIds.has(e.id) && surveyedTypes.has(e.activity_type))
+        .filter((e) => isSurveyPendingForEvent(e, respondedIds, surveyedTypes, hasGenericAutoSend))
         .map((e) => ({
           event_id: e.id,
           event_title: e.title,

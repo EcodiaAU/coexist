@@ -9,6 +9,7 @@ import { parseSurveyQuestions, type SurveyQuestion } from '@/components/survey-q
 export interface EventSurveyData {
   surveyId: string
   title: string
+  description: string | null
   questions: SurveyQuestion[]
 }
 
@@ -48,7 +49,7 @@ export function useEventSurvey(
       // 1. Direct event-linked survey
       const { data: direct } = await supabase
         .from('surveys')
-        .select('id, title, questions')
+        .select('id, title, description, questions')
         .eq('event_id', eventId)
         .eq('status', 'active')
         .maybeSingle()
@@ -59,7 +60,7 @@ export function useEventSurvey(
           ? (
               await supabase
                 .from('surveys')
-                .select('id, title, questions')
+                .select('id, title, description, questions')
                 .eq('activity_type', activityType)
                 .eq('is_impact_form', true)
                 .eq('status', 'active')
@@ -76,7 +77,7 @@ export function useEventSurvey(
           ? (
               await supabase
                 .from('surveys')
-                .select('id, title, questions')
+                .select('id, title, description, questions')
                 .eq('activity_type', activityType)
                 .eq('auto_send_after_event', true)
                 .eq('status', 'active')
@@ -97,7 +98,7 @@ export function useEventSurvey(
           ? (
               await supabase
                 .from('surveys')
-                .select('id, title, questions')
+                .select('id, title, description, questions')
                 .is('activity_type', null)
                 .eq('auto_send_after_event', true)
                 .eq('status', 'active')
@@ -112,6 +113,7 @@ export function useEventSurvey(
       return {
         surveyId: survey.id,
         title: survey.title,
+        description: (survey as { description?: string | null }).description ?? null,
         questions: parseSurveyQuestions(survey.questions),
       }
     },

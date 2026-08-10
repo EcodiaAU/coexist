@@ -368,7 +368,9 @@ export default function PostEventSurveyPage() {
             {event.title}
           </h2>
           <p className="text-xs text-neutral-500 mt-1">
-            How was it? Your feedback helps us improve.
+            {surveyData?.description?.trim()
+              ? surveyData.description
+              : 'How was it? Your feedback helps us improve.'}
           </p>
         </div>
 

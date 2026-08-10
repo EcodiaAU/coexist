@@ -224,36 +224,60 @@ export function getNotificationMeta(type: string): { emoji: string; color: strin
 /*  Grouping helper                                                    */
 /* ------------------------------------------------------------------ */
 
-function groupByDay(notifications: Notification[]): GroupedNotifications[] {
+/** Max notifications loaded into the feed. The unread badge is aligned to this
+ *  same window so it never counts rows the user cannot reach or clear. */
+export const NOTIFICATIONS_WINDOW = 100
+
+/**
+ * Local-timezone calendar-day key (YYYY-MM-DD). Built from local date parts,
+ * NOT toISOString() (which is UTC): for an AEST user the local morning
+ * (midnight-10am) falls in the previous UTC day, so a UTC key mislabels
+ * this-morning notifications as "Yesterday". Exported for unit tests.
+ */
+export function localDayKey(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+export function groupByDay(
+  notifications: Notification[],
+  now: Date = new Date(),
+): GroupedNotifications[] {
   const groups: Record<string, Notification[]> = {}
 
   for (const n of notifications) {
-    const date = new Date(n.created_at ?? Date.now())
-    const key = date.toISOString().slice(0, 10) // YYYY-MM-DD
-
+    const key = localDayKey(new Date(n.created_at ?? now))
     if (!groups[key]) groups[key] = []
     groups[key].push(n)
   }
 
-  const today = new Date().toISOString().slice(0, 10)
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const today = localDayKey(now)
+  const yesterday = localDayKey(new Date(now.getTime() - 86400000))
 
   return Object.entries(groups)
     .sort(([a], [b]) => b.localeCompare(a))
-    .map(([date, items]) => ({
-      date,
-      label:
-        date === today
-          ? 'Today'
-          : date === yesterday
-            ? 'Yesterday'
-            : new Date(date).toLocaleDateString('en-AU', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-              }),
-      notifications: items,
-    }))
+    .map(([date, items]) => {
+      const [y, m, d] = date.split('-').map(Number)
+      // Reconstruct at local midnight so the label formats in the same local
+      // frame the key was computed in (never re-parsed as a UTC instant).
+      const localDate = new Date(y, m - 1, d)
+      return {
+        date,
+        label:
+          date === today
+            ? 'Today'
+            : date === yesterday
+              ? 'Yesterday'
+              : localDate.toLocaleDateString('en-AU', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                }),
+        notifications: items,
+      }
+    })
 }
 
 /* ------------------------------------------------------------------ */
@@ -275,7 +299,7 @@ export function useNotifications() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(100)
+        .limit(NOTIFICATIONS_WINDOW)
 
       if (error) throw error
       return data ?? []
@@ -303,8 +327,30 @@ export function useNotifications() {
             ['notifications', user.id],
             (old) => {
               if (!old) return [payload.new as Notification]
-              return [payload.new as Notification, ...old].slice(0, 100)
+              return [payload.new as Notification, ...old].slice(0, NOTIFICATIONS_WINDOW)
             },
+          )
+          queryClient.invalidateQueries({ queryKey: ['notifications-unread', user.id] })
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Patch read_at (and any other field) into the cache so a read on
+          // another device syncs here without waiting for an unrelated
+          // invalidation. Without this the channel only heard INSERT/DELETE and
+          // read-state drifted across devices.
+          const updated = payload.new as Notification
+          if (!updated?.id) return
+          queryClient.setQueryData<Notification[]>(
+            ['notifications', user.id],
+            (old) => old?.map((n) => (n.id === updated.id ? { ...n, ...updated } : n)),
           )
           queryClient.invalidateQueries({ queryKey: ['notifications-unread', user.id] })
         },
@@ -350,14 +396,19 @@ export function useUnreadCount() {
     queryFn: async () => {
       if (!user) return 0
 
-      const { count, error } = await supabase
+      // Count unread within the SAME most-recent window the feed renders, so
+      // the badge never exceeds the rows the user can actually see and clear.
+      // A raw unbounded count showed e.g. "150" while the capped list held 100,
+      // leaving 50 unread that could never be reached or per-item cleared.
+      const { data, error } = await supabase
         .from('notifications')
-        .select('*', { count: 'exact', head: true })
+        .select('read_at')
         .eq('user_id', user.id)
-        .is('read_at', null)
+        .order('created_at', { ascending: false })
+        .limit(NOTIFICATIONS_WINDOW)
 
       if (error) throw error
-      return count ?? 0
+      return (data ?? []).filter((n) => n.read_at == null).length
     },
     enabled: !!user,
     staleTime: 15 * 1000,

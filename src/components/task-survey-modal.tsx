@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { SurveyQuestionRenderer } from '@/components/survey-questions'
 import {
-  resolveOtherValues,
+  canSubmitSurvey,
   parseSurveyQuestions,
   type SurveyQuestion,
 } from '@/components/survey-questions-utils'
@@ -81,7 +81,6 @@ export function TaskSurveyModal({
   const { profile } = useAuth()
   const { data: collective } = useUserCollective(collectiveId)
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
-  const [otherValues, setOtherValues] = useState<Record<string, string>>({})
 
   const questions: SurveyQuestion[] = survey?.questions ?? []
 
@@ -117,21 +116,18 @@ export function TaskSurveyModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions.length, profile, collective])
 
-  const allRequiredAnswered = questions.every((q) => {
-    if (!q.required) return true
-    const val = answers[q.id]
-    if (val === undefined || val === null || val === '') return false
-    if (q.type === 'checkbox' && Array.isArray(val) && val.length === 0) return false
-    return true
-  })
+  // Canonical gate shared with the post-event survey + log-impact form: every
+  // visible required question filled AND no malformed email/phone/number.
+  const allRequiredAnswered = canSubmitSurvey(questions, answers)
 
   const setAnswer = (questionId: string, value: unknown) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }))
   }
 
   const handleSubmit = () => {
-    const finalAnswers = resolveOtherValues(questions, answers, otherValues)
-    onSubmit(finalAnswers)
+    // The renderer persists "Other" write-ins straight into `answers`, so the
+    // answers object is already final - no resolve step needed.
+    onSubmit(answers)
   }
 
   return (

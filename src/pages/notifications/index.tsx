@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion, type PanInfo, type Variants } from 'framer-motion'
-import { CheckCheck, Bell } from 'lucide-react'
+import { CheckCheck, Bell, Check } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { EmptyState } from '@/components/empty-state'
@@ -80,6 +80,15 @@ function NotificationRow({
     if (!dragRef.current) onTap()
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Row is a role="button" div (so it can host a nested Mark-read button);
+    // restore the native Enter/Space activation a real button would have.
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onTap()
+    }
+  }
+
   return (
     <motion.div
       className="relative overflow-hidden rounded-md"
@@ -98,9 +107,11 @@ function NotificationRow({
       </div>
 
       {/* Notification card */}
-      <motion.button
-        type="button"
+      <motion.div
+        role="button"
+        tabIndex={0}
         onClick={handleTap}
+        onKeyDown={handleKeyDown}
         drag="x"
         dragConstraints={{ left: -100, right: 0 }}
         dragElastic={0.1}
@@ -160,14 +171,35 @@ function NotificationRow({
           </span>
         </div>
 
-        {/* Unread indicator */}
+        {/* Unread: dot indicator + a focusable "mark as read" action so the
+            gesture (swipe) is not the only way to clear one item. Keyboard/AT
+            users can Tab to this and press Enter to mark read WITHOUT opening
+            (Enter on the row itself opens + marks read). */}
         {isUnread && (
-          <span
-            className="shrink-0 w-2.5 h-2.5 rounded-full bg-primary-500 mt-2"
-            aria-label="Unread"
-          />
+          <div className="flex flex-col items-center gap-2 shrink-0 mt-1">
+            <span
+              className="w-2.5 h-2.5 rounded-full bg-primary-500"
+              aria-hidden="true"
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onSwipeRead()
+              }}
+              className={cn(
+                'flex items-center justify-center w-8 h-8 rounded-full',
+                'text-neutral-400 hover:bg-neutral-100 hover:text-primary-600',
+                'transition-colors cursor-pointer',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
+              )}
+              aria-label={`Mark "${notification.title}" as read`}
+            >
+              <Check size={16} />
+            </button>
+          </div>
         )}
-      </motion.button>
+      </motion.div>
     </motion.div>
   )
 }
@@ -352,21 +384,16 @@ export default function NotificationsPage() {
     >
       <div className="px-4 lg:px-6">
           {isError ? (
-              // Soft fallback - the loud "Something went wrong" panel scared
-              // users who had zero notifications. Show the standard "All
-              // caught up" pose plus a discreet retry tap target.
-              <>
-                <AllCaughtUp />
-                <div className="flex justify-center pb-6">
-                  <button
-                    type="button"
-                    onClick={() => refetch()}
-                    className="text-xs font-semibold text-neutral-400 hover:text-neutral-600"
-                  >
-                    Tap to refresh
-                  </button>
-                </div>
-              </>
+              // A failed load is NOT an empty inbox: show a distinct, actionable
+              // error with a clear Retry, and reserve the "All caught up" pose
+              // for the genuine empty case (handled below). Conflating the two
+              // told users whose inbox failed to load that they had nothing.
+              <EmptyState
+                illustration="error"
+                title="Couldn't load notifications"
+                description="Something went wrong loading your notifications. Check your connection and try again."
+                action={{ label: 'Retry', onClick: () => refetch() }}
+              />
           ) : showLoading ? (
             <div className="space-y-4 py-6">
               {Array.from({ length: 5 }, (_, i) => (

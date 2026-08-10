@@ -152,7 +152,7 @@ export default function AdminSurveysPage() {
   const { data: surveys, isLoading } = useSurveys()
   const showLoading = useDelayedLoading(isLoading)
   const { data: results } = useSurveyResults(selectedSurvey)
-  const { data: autoConfig } = useAutoSurveyConfig()
+  const { data: autoConfig, isLoading: autoConfigLoading, isError: autoConfigError, refetch: refetchAutoConfig } = useAutoSurveyConfig()
   const updateAutoConfig = useUpdateAutoSurveyConfig()
   const { data: impactFormConfig } = useImpactFormConfig()
   const updateImpactFormConfig = useUpdateImpactFormConfig()
@@ -221,6 +221,26 @@ export default function AdminSurveysPage() {
       toast.success('Survey deleted')
     },
     onError: () => toast.error('Failed to delete survey'),
+  })
+
+  // Toggle a survey between active and draft (non-destructive - responses are
+  // untouched). Gives operators the deactivate escape hatch the impact-form
+  // duplicate error already tells them to use ("deactivate or delete it
+  // first"), instead of only the destructive Delete. status is a text column
+  // constrained to active|closed|draft; a non-active survey drops out of the
+  // auto-send + event-survey queries (all filter status='active') and frees
+  // the per-activity impact-form unique index.
+  const setStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'draft' }) => {
+      await logAudit({ action: 'survey_status_changed', target_type: 'survey', target_id: id })
+      const { error } = await supabase.from('surveys').update({ status }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-surveys'] })
+      toast.success(variables.status === 'active' ? 'Survey activated' : 'Survey deactivated')
+    },
+    onError: () => toast.error('Failed to update survey'),
   })
 
   const deleteResponseMutation = useMutation({
@@ -356,7 +376,7 @@ export default function AdminSurveysPage() {
                                   : 'bg-neutral-100 text-neutral-400',
                               )}
                             >
-                              {status}
+                              {status.charAt(0).toUpperCase() + status.slice(1)}
                             </span>
                             {survey.is_impact_form && (
                               <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-moss-100 text-moss-700 truncate max-w-[180px]">
@@ -410,6 +430,16 @@ export default function AdminSurveysPage() {
                         Edit
                       </button>
                       <div className="flex-1" />
+                      <label className="flex items-center gap-1.5 min-h-11 px-2 select-none cursor-pointer">
+                        <span className="text-xs font-medium text-neutral-500">Active</span>
+                        <Toggle
+                          checked={isActive}
+                          disabled={setStatusMutation.isPending}
+                          onChange={(on) =>
+                            setStatusMutation.mutate({ id: survey.id, status: on ? 'active' : 'draft' })
+                          }
+                        />
+                      </label>
                       <button
                         type="button"
                         onClick={() => setDeleteTarget(survey.id)}
@@ -688,6 +718,25 @@ export default function AdminSurveysPage() {
             confirmLabel="Delete"
             variant="danger"
           />
+        </motion.div>
+      )}
+
+      {/* Auto-Survey Settings - loading / error (config resolves async; without
+          these branches the whole tab rendered blank while loading or on error) */}
+      {activeTab === 'settings' && !autoConfig && (
+        <motion.div variants={fadeUp}>
+          {autoConfigError ? (
+            <EmptyState
+              illustration="error"
+              title="Couldn't load settings"
+              description="The auto-survey configuration failed to load. Check your connection and try again."
+              action={{ label: 'Retry', onClick: () => refetchAutoConfig() }}
+            />
+          ) : autoConfigLoading ? (
+            <div className="p-5 rounded-sm bg-white shadow-sm">
+              <Skeleton variant="list-item" count={3} />
+            </div>
+          ) : null}
         </motion.div>
       )}
 

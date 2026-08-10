@@ -1,11 +1,21 @@
-import { useState } from 'react'
 import { CheckCircle, Star, UserCircle, UploadCloud, ExternalLink } from 'lucide-react'
 import { Input } from '@/components/input'
 import { DateInput } from '@/components/date-input'
 import { Dropdown } from '@/components/dropdown'
 import { cn } from '@/lib/cn'
 import type { SurveyQuestion } from './survey-questions-utils'
-import { isQuestionVisible } from './survey-questions-utils'
+import {
+  isQuestionVisible,
+  getSurveyAnswerError,
+  isOtherValue,
+  otherTextOf,
+  makeOtherValue,
+  OTHER_SENTINEL,
+  checkboxHasOther,
+  checkboxOtherText,
+  setCheckboxOther,
+  toggleCheckboxOther,
+} from './survey-questions-utils'
 
 // SurveyQuestion type and the pure helpers (parseSurveyQuestions,
 // resolveOtherValues) live in ./survey-questions-utils so this file
@@ -55,8 +65,6 @@ export function SurveyQuestionRenderer({
   numbered?: boolean
   className?: string
 }) {
-  const [otherValues, setOtherValues] = useState<Record<string, string>>({})
-
   const toggleCheckbox = (questionId: string, option: string) => {
     const current = (answers[questionId] as string[]) ?? []
     const next = current.includes(option)
@@ -188,10 +196,10 @@ export function SurveyQuestionRenderer({
                 {q.allow_other && (
                   <button data-eos-id="src/components/survey-questions.tsx#19"
                     type="button"
-                    onClick={() => setAnswer(q.id, '__other__')}
+                    onClick={() => setAnswer(q.id, OTHER_SENTINEL)}
                     className={cn(
                       'px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors border border-dashed',
-                      answers[q.id] === '__other__'
+                      isOtherValue(answers[q.id])
                         ? 'bg-primary-600 text-white border-primary-600'
                         : 'bg-white text-neutral-600 border-neutral-300 hover:bg-neutral-50',
                     )}
@@ -200,11 +208,11 @@ export function SurveyQuestionRenderer({
                   </button>
                 )}
               </div>
-              {q.allow_other && answers[q.id] === '__other__' && (
+              {q.allow_other && isOtherValue(answers[q.id]) && (
                 <Input data-eos-id="src/components/survey-questions.tsx#20"
                   compact
-                  value={otherValues[q.id] ?? ''}
-                  onChange={(e) => setOtherValues((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                  value={otherTextOf(answers[q.id])}
+                  onChange={(e) => setAnswer(q.id, makeOtherValue(e.target.value))}
                   placeholder="Type your answer..."
                 />
               )}
@@ -237,10 +245,10 @@ export function SurveyQuestionRenderer({
                 {q.allow_other && (
                   <button data-eos-id="src/components/survey-questions.tsx#25"
                     type="button"
-                    onClick={() => toggleCheckbox(q.id, '__other__')}
+                    onClick={() => setAnswer(q.id, toggleCheckboxOther(answers[q.id]))}
                     className={cn(
                       'px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors border border-dashed',
-                      ((answers[q.id] as string[]) ?? []).includes('__other__')
+                      checkboxHasOther(answers[q.id])
                         ? 'bg-primary-600 text-white border-primary-600'
                         : 'bg-white text-neutral-600 border-neutral-300 hover:bg-neutral-50',
                     )}
@@ -249,11 +257,11 @@ export function SurveyQuestionRenderer({
                   </button>
                 )}
               </div>
-              {q.allow_other && ((answers[q.id] as string[]) ?? []).includes('__other__') && (
+              {q.allow_other && checkboxHasOther(answers[q.id]) && (
                 <Input data-eos-id="src/components/survey-questions.tsx#26"
                   compact
-                  value={otherValues[q.id] ?? ''}
-                  onChange={(e) => setOtherValues((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                  value={checkboxOtherText(answers[q.id])}
+                  onChange={(e) => setAnswer(q.id, setCheckboxOther(answers[q.id], e.target.value))}
                   placeholder="Type your answer..."
                 />
               )}
@@ -266,17 +274,17 @@ export function SurveyQuestionRenderer({
               <Dropdown data-eos-id="src/components/survey-questions.tsx#28"
                 options={[
                   ...(q.options ?? []).map((opt) => ({ value: opt, label: opt })),
-                  ...(q.allow_other ? [{ value: '__other__', label: 'Other...' }] : []),
+                  ...(q.allow_other ? [{ value: OTHER_SENTINEL, label: 'Other...' }] : []),
                 ]}
-                value={(answers[q.id] as string) ?? ''}
+                value={isOtherValue(answers[q.id]) ? OTHER_SENTINEL : ((answers[q.id] as string) ?? '')}
                 onChange={(v) => setAnswer(q.id, v)}
                 placeholder="Select an option..."
               />
-              {q.allow_other && answers[q.id] === '__other__' && (
+              {q.allow_other && isOtherValue(answers[q.id]) && (
                 <Input data-eos-id="src/components/survey-questions.tsx#29"
                   compact
-                  value={otherValues[q.id] ?? ''}
-                  onChange={(e) => setOtherValues((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                  value={otherTextOf(answers[q.id])}
+                  onChange={(e) => setAnswer(q.id, makeOtherValue(e.target.value))}
                   placeholder="Type your answer..."
                 />
               )}
@@ -348,6 +356,7 @@ export function SurveyQuestionRenderer({
                 placeholder={q.placeholder || 'Enter a number...'}
                 min={q.number_min != null ? String(q.number_min) : undefined}
                 max={q.number_max != null ? String(q.number_max) : undefined}
+                error={getSurveyAnswerError(q, answers[q.id]) ?? undefined}
               />
               {(q.number_min != null || q.number_max != null) && (
                 <p data-eos-id="src/components/survey-questions.tsx#37" data-eos-var="q.number_min,q.number_min,q.number_max" data-eos-var-label="Number min, Number min, Number max" data-eos-var-scope="item" className="text-[10px] text-neutral-500">
@@ -377,6 +386,7 @@ export function SurveyQuestionRenderer({
               value={(answers[q.id] as string) ?? ''}
               onChange={(e) => setAnswer(q.id, e.target.value)}
               placeholder={q.placeholder || 'email@example.com'}
+              error={getSurveyAnswerError(q, answers[q.id]) ?? undefined}
             />
           )}
 
@@ -388,6 +398,7 @@ export function SurveyQuestionRenderer({
               value={(answers[q.id] as string) ?? ''}
               onChange={(e) => setAnswer(q.id, e.target.value)}
               placeholder={q.placeholder || '0400 000 000'}
+              error={getSurveyAnswerError(q, answers[q.id]) ?? undefined}
             />
           )}
 

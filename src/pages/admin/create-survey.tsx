@@ -199,7 +199,10 @@ function OptionChipBuilder({
 
   const addOption = () => {
     const trimmed = draft.trim()
-    if (!trimmed || options.includes(trimmed)) return
+    // Case-insensitive dedup to match validateSurvey (which rejects
+    // case-insensitive dups at save). A case-sensitive check here let "Yes"
+    // and "yes" both add, then the save silently failed validation.
+    if (!trimmed || options.some((o) => o.toLowerCase() === trimmed.toLowerCase())) return
     onChange([...options, trimmed])
     setDraft('')
   }
@@ -219,8 +222,8 @@ function OptionChipBuilder({
     if (editingIdx === null) return
     const trimmed = editValue.trim()
     if (trimmed && trimmed !== options[editingIdx]) {
-      // Check for duplicates
-      if (!options.some((o, i) => i !== editingIdx && o === trimmed)) {
+      // Check for duplicates (case-insensitive, matching addOption + validateSurvey)
+      if (!options.some((o, i) => i !== editingIdx && o.toLowerCase() === trimmed.toLowerCase())) {
         onChange(options.map((o, i) => (i === editingIdx ? trimmed : o)))
       }
     }
@@ -812,6 +815,13 @@ function QuestionEditor({
                     options={[
                       { value: '', label: 'None - not linked to impact stats' },
                       ...surveyLinkableMetrics.map((m) => ({ value: m.key, label: m.label })),
+                      // Preserve a mapping to a now-inactive metric instead of
+                      // silently collapsing to "None" (which would drop the
+                      // linkage on save). The option is kept and clearly flagged.
+                      ...(question.impact_metric &&
+                      !surveyLinkableMetrics.some((m) => m.key === question.impact_metric)
+                        ? [{ value: question.impact_metric, label: `${question.impact_metric} (inactive)` }]
+                        : []),
                     ]}
                     value={question.impact_metric ?? ''}
                     onChange={(v) => update({ impact_metric: v || undefined })}
@@ -1127,6 +1137,11 @@ export default function CreateSurveyPage() {
 
   const [title, setTitle] = useState(initialTemplate?.name ?? '')
   const [description, setDescription] = useState('')
+  // Survey lifecycle status. New surveys default active; editing preserves the
+  // existing status (active|closed|draft) so a survey deactivated from the list
+  // is not silently re-activated by a routine content edit. The Active toggle in
+  // Details flips between active and draft.
+  const [status, setStatus] = useState<string>('active')
   const [autoSendAfterEvent, setAutoSendAfterEvent] = useState(false)
   const [isImpactForm, setIsImpactForm] = useState(false)
   const [activityType, setActivityType] = useState('')
@@ -1139,6 +1154,7 @@ export default function CreateSurveyPage() {
     if (existingSurvey && !initialized) {
       setTitle(existingSurvey.title ?? '')
       setDescription((existingSurvey as Record<string, unknown>).description as string ?? '')
+      setStatus(((existingSurvey as Record<string, unknown>).status as string) || 'active')
       setAutoSendAfterEvent(existingSurvey.auto_send_after_event ?? false)
       setIsImpactForm(existingSurvey.is_impact_form ?? false)
       setActivityType((existingSurvey as Record<string, unknown>).activity_type as string ?? '')
@@ -1191,7 +1207,7 @@ export default function CreateSurveyPage() {
         auto_send_after_event: autoSendAfterEvent && !isImpactForm,
         is_impact_form: isImpactForm,
         activity_type: (autoSendAfterEvent || isImpactForm) && activityType ? activityType : null,
-        status: 'active',
+        status,
       }
 
       if (isEdit && surveyId) {
@@ -1325,6 +1341,22 @@ export default function CreateSurveyPage() {
             placeholder="Brief description shown to respondents before they start the survey"
             rows={2}
           />
+
+          {/* Active toggle - a draft survey is hidden from auto-send + event
+              surveys and frees the per-activity impact-form slot. Preserves an
+              existing 'closed'/'draft' status on save (does not force active). */}
+          <div className="flex items-center justify-between py-1">
+            <div>
+              <p className="text-sm font-medium text-neutral-900">Active</p>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                Inactive surveys are saved as drafts and are not sent to attendees or leaders.
+              </p>
+            </div>
+            <Toggle
+              checked={status === 'active'}
+              onChange={(on) => setStatus(on ? 'active' : 'draft')}
+            />
+          </div>
 
           {/* Survey purpose selector */}
           <div data-eos-id="src/pages/admin/create-survey.tsx#186">

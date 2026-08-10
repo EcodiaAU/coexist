@@ -114,13 +114,161 @@ export function surveyMissingRequired(
     .map((q) => q.id)
 }
 
-// True when every visible required question has a filled answer. Canonical
-// gate for both the attendee post-event survey and the leader log-impact form.
+// ---------------------------------------------------------------------------
+//  "Other..." write-in resolution (single source of truth)
+//
+//  The renderer persists a chosen "Other" write-in directly into the answer via
+//  setAnswer, so no consumer has to remember to call resolveOtherValues at
+//  submit time (the historic bug: the write-in lived in an internal useState the
+//  parent could never read, so the stored answer stayed "__other__"). A resolved
+//  single-select answer is `Other: <text>`; a resolved checkbox answer carries
+//  `Other: <text>` in place of the `__other__` sentinel. These helpers keep the
+//  storage format and the "is other selected" detection in one place so the
+//  renderer, the results view and the CSV export all agree.
+// ---------------------------------------------------------------------------
+
+export const OTHER_SENTINEL = '__other__'
+export const OTHER_PREFIX = 'Other: '
+
+/** A single-select value that represents a chosen "Other" (sentinel or resolved text). */
+export function isOtherValue(value: unknown): boolean {
+  return (
+    value === OTHER_SENTINEL ||
+    (typeof value === 'string' && value.startsWith(OTHER_PREFIX))
+  )
+}
+
+/** Extract the typed write-in text from a single-select "Other" value ('' when none). */
+export function otherTextOf(value: unknown): string {
+  return typeof value === 'string' && value.startsWith(OTHER_PREFIX)
+    ? value.slice(OTHER_PREFIX.length)
+    : ''
+}
+
+/** Build the persisted single-select "Other" value from raw typed text. */
+export function makeOtherValue(text: string): string {
+  return text.trim() === '' ? OTHER_SENTINEL : `${OTHER_PREFIX}${text}`
+}
+
+/** True when a checkbox answer array has an "Other" entry chosen (sentinel or resolved). */
+export function checkboxHasOther(arr: unknown): boolean {
+  return Array.isArray(arr) && arr.some((o) => isOtherValue(o))
+}
+
+/** Extract the checkbox "Other" write-in text ('' when none). */
+export function checkboxOtherText(arr: unknown): string {
+  if (!Array.isArray(arr)) return ''
+  const entry = arr.find((o) => typeof o === 'string' && o.startsWith(OTHER_PREFIX))
+  return typeof entry === 'string' ? entry.slice(OTHER_PREFIX.length) : ''
+}
+
+/**
+ * Replace/append the single "Other" entry in a checkbox array with the typed
+ * text, preserving the fixed-option selections and their order. Empty text
+ * keeps the `__other__` sentinel so the option stays visibly selected while the
+ * user is still typing.
+ */
+export function setCheckboxOther(arr: unknown, text: string): string[] {
+  const base = (Array.isArray(arr) ? (arr as string[]) : []).filter(
+    (o) => !isOtherValue(o),
+  )
+  return [...base, makeOtherValue(text)]
+}
+
+/** Toggle the "Other" option in a checkbox array (add sentinel / remove any other entry). */
+export function toggleCheckboxOther(arr: unknown): string[] {
+  const list = Array.isArray(arr) ? (arr as string[]) : []
+  if (checkboxHasOther(list)) return list.filter((o) => !isOtherValue(o))
+  return [...list, OTHER_SENTINEL]
+}
+
+// ---------------------------------------------------------------------------
+//  Answer format / range validation
+//
+//  isAnswerFilled only decides "answered vs blank". This layer decides
+//  "answered but INVALID" (a malformed email/phone, a number outside the
+//  question's declared min/max). The submit gate blocks on it and the renderer
+//  shows the message inline, so the builder captions ("validated automatically")
+//  are honest and out-of-range values never reach event_impact / the public
+//  dashboard. Only a FILLED value is validated; an empty optional field is fine
+//  (required-empty is handled by surveyMissingRequired).
+// ---------------------------------------------------------------------------
+
+// Pragmatic, permissive patterns: reject the clearly-wrong without false-
+// rejecting valid AU/international input. Email: something@something.tld.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * Validation error for a single answer, or null when valid / not applicable.
+ * Pure + exported so it is unit-tested and shared by the gate and the renderer.
+ */
+export function getSurveyAnswerError(
+  q: SurveyQuestion,
+  value: unknown,
+): string | null {
+  if (!isAnswerFilled(value)) return null
+
+  if (q.type === 'email') {
+    const s = String(value).trim()
+    if (!EMAIL_RE.test(s)) return 'Enter a valid email address'
+    return null
+  }
+
+  if (q.type === 'phone') {
+    const s = String(value).trim()
+    // Allow digits, spaces, and the usual phone punctuation; require at least
+    // 6 actual digits so "abc" / "12" are rejected but +61 4xx / (07) work.
+    if (!/^[\d\s()+.-]+$/.test(s) || (s.match(/\d/g) ?? []).length < 6) {
+      return 'Enter a valid phone number'
+    }
+    return null
+  }
+
+  if (q.type === 'number') {
+    const n = typeof value === 'number' ? value : Number(String(value))
+    if (Number.isNaN(n)) return 'Enter a valid number'
+    if (q.number_min != null && n < q.number_min) {
+      return q.number_max != null
+        ? `Enter a number between ${q.number_min} and ${q.number_max}`
+        : `Enter a number of at least ${q.number_min}`
+    }
+    if (q.number_max != null && n > q.number_max) {
+      return q.number_min != null
+        ? `Enter a number between ${q.number_min} and ${q.number_max}`
+        : `Enter a number of at most ${q.number_max}`
+    }
+    return null
+  }
+
+  return null
+}
+
+// Map of visible question id -> validation error, for every filled-but-invalid
+// answer. Empty object means every answer is well-formed.
+export function surveyAnswerErrors(
+  questions: SurveyQuestion[],
+  answers: Record<string, unknown>,
+): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const q of questions) {
+    if (!isQuestionVisible(q, answers)) continue
+    const err = getSurveyAnswerError(q, answers[q.id])
+    if (err) out[q.id] = err
+  }
+  return out
+}
+
+// True when every visible required question has a filled answer AND no visible
+// answer is malformed. Canonical gate for both the attendee post-event survey
+// and the leader log-impact form.
 export function canSubmitSurvey(
   questions: SurveyQuestion[],
   answers: Record<string, unknown>,
 ): boolean {
-  return surveyMissingRequired(questions, answers).length === 0
+  return (
+    surveyMissingRequired(questions, answers).length === 0 &&
+    Object.keys(surveyAnswerErrors(questions, answers)).length === 0
+  )
 }
 
 // Strip hidden-conditional answers before persisting. When a leader fills q7

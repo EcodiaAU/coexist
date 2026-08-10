@@ -38,7 +38,14 @@ export async function syncSurveyImpact(
 
     const raw = answers[q.id]
     const value = typeof raw === 'number' ? raw : parseFloat(String(raw ?? ''))
-    if (!isNaN(value) && value >= 0) {
+    // Reject NaN, negatives, and anything outside the question's declared
+    // min/max. The submit gate (canSubmitSurvey) already blocks out-of-range
+    // entries at the source; this is the last-line guard so a stray value can
+    // never land in event_impact or the public impact dashboard.
+    const inDeclaredRange =
+      (q.number_min == null || value >= q.number_min) &&
+      (q.number_max == null || value <= q.number_max)
+    if (!isNaN(value) && value >= 0 && inDeclaredRange) {
       if (isBuiltinMetric(q.impact_metric)) {
         builtinUpdates[q.impact_metric] = value
       } else {

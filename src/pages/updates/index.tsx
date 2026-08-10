@@ -13,13 +13,12 @@ import {
     useUpdates,
     useMarkUpdateRead,
     useMarkAllUpdatesRead,
+    useUnreadUpdateCount,
     type UpdateWithAuthor,
 } from '@/hooks/use-updates'
 import {
     useNotifications,
     useMarkRead,
-    useMarkAllRead,
-    useUnreadCount,
     getNotificationDeepLink,
     getNotificationMeta,
 } from '@/hooks/use-notifications'
@@ -389,9 +388,11 @@ export default function UpdatesPage() {
   const markRead = useMarkUpdateRead()
   const markAllRead = useMarkAllUpdatesRead()
   const { data: notifications } = useNotifications()
-  const { data: unreadCount = 0 } = useUnreadCount()
+  // Badge beside the "Updates" heading counts unread ANNOUNCEMENTS (matching
+  // the heading), not personal notifications - the latter has its own inbox
+  // preview + bell below and is no longer auto-zeroed on visit.
+  const { data: unreadUpdateCount = 0 } = useUnreadUpdateCount()
   const markNotifRead = useMarkRead()
-  const markAllNotifRead = useMarkAllRead()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedUpdateId, setSelectedUpdateId] = useState<string | null>(null)
 
@@ -399,7 +400,6 @@ export default function UpdatesPage() {
   // Tapping one marks-read + deep-links via the same route resolver used by
   // the dedicated /notifications page and push tap handler.
   const recentNotifications = useMemo(() => (notifications ?? []).slice(0, 5), [notifications])
-  const hasMoreNotifications = (notifications ?? []).length > recentNotifications.length
 
   const handleNotificationTap = useCallback((n: AppNotification) => {
     if (!n.read_at) markNotifRead.mutate(n.id)
@@ -420,10 +420,16 @@ export default function UpdatesPage() {
     }
   }, [selectedUpdateId])
 
-  // Bulk-mark every visible update as read once the page loads.
-  // This clears the side-sheet "Updates" badge without requiring the user
-  // to tap each card. Runs once per (all-ids fingerprint) so it doesn't
-  // refire on every re-render. Tate spec 2026-05-18.
+  // Bulk-mark every visible ANNOUNCEMENT as read once the page loads. This
+  // clears the announcements badge without requiring the user to tap each card.
+  // Runs once per (all-ids fingerprint) so it doesn't refire on every re-render.
+  // Tate spec 2026-05-18.
+  //
+  // Personal notifications are deliberately NOT bulk-marked here: doing so wiped
+  // every unread waitlist promotion / @-mention / reminder on a mere visit to
+  // the feed, including items never rendered. A personal notification is marked
+  // read only when the user actually opens it (handleNotificationTap below) or
+  // on the dedicated /notifications page.
   useEffect(() => {
     if (isLoading) return
     const unreadIds = (all ?? []).filter((a) => !a.is_read).map((a) => a.id)
@@ -431,16 +437,6 @@ export default function UpdatesPage() {
     markAllRead.mutate(unreadIds)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, all])
-
-  // Also flush unread *notifications* (bell-icon items) so the combined
-  // side-sheet badge clears. Same trigger window as updates.
-  useEffect(() => {
-    if (!notifications) return
-    const hasUnread = notifications.some((n) => !n.read_at)
-    if (!hasUnread) return
-    markAllNotifRead.mutate(undefined)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notifications])
 
   const isEmpty = !isLoading && pinned.length === 0 && regular.length === 0 && recentNotifications.length === 0
 
@@ -496,9 +492,9 @@ export default function UpdatesPage() {
             <h1 className="font-heading text-xl font-bold text-neutral-900 tracking-tight">
               Updates
             </h1>
-            {unreadCount > 0 && (
+            {unreadUpdateCount > 0 && (
               <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary-500 text-white text-[10px] font-bold">
-                {unreadCount > 99 ? '99+' : unreadCount}
+                {unreadUpdateCount > 99 ? '99+' : unreadUpdateCount}
               </span>
             )}
           </motion.div>
@@ -516,16 +512,18 @@ export default function UpdatesPage() {
                   <Bell size={11} />
                   Your notifications
                 </div>
-                {hasMoreNotifications && (
-                  <button
-                    type="button"
-                    onClick={() => navigate('/notifications')}
-                    className="text-xs font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-0.5"
-                  >
-                    See all
-                    <ChevronRight size={12} />
-                  </button>
-                )}
+                {/* Always offer the durable entry to the full /notifications
+                    page (the only path to it - it is not in the bottom nav or
+                    sidebar). Previously this rendered only when there were >5
+                    notifications, orphaning the page for most users. */}
+                <button
+                  type="button"
+                  onClick={() => navigate('/notifications')}
+                  className="text-xs font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-0.5"
+                >
+                  See all
+                  <ChevronRight size={12} />
+                </button>
               </div>
               <div className="space-y-2">
                 {recentNotifications.map((n) => {
