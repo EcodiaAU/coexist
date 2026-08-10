@@ -45,37 +45,29 @@ export function useCamera(): UseCameraReturn {
       try {
         let blob: Blob | null = null
 
-        if (Capacitor.isNativePlatform()) {
+        if (source === 'camera' && Capacitor.isNativePlatform()) {
+          // v8 API: takePhoto returns MediaResult with webPath. The camera
+          // capture path (UIImagePickerController) is unaffected by the hang,
+          // so it stays native.
           const { Camera } = await import('@capacitor/camera')
+          const result = await Camera.takePhoto({
+            quality: 80,
+            targetWidth: 1200,
+            targetHeight: 1200,
+            correctOrientation: true,
+          })
 
-          if (source === 'camera') {
-            // v8 API: takePhoto returns MediaResult with webPath
-            const result = await Camera.takePhoto({
-              quality: 80,
-              targetWidth: 1200,
-              targetHeight: 1200,
-              correctOrientation: true,
-            })
-
-            if (!result.webPath) return null
-            const response = await fetch(result.webPath)
-            blob = await response.blob()
-          } else {
-            // v8 API: chooseFromGallery returns MediaResults
-            const result = await Camera.chooseFromGallery({
-              quality: 80,
-              targetWidth: 1200,
-              targetHeight: 1200,
-              correctOrientation: true,
-            })
-
-            const photo = result.results?.[0]
-            if (!photo?.webPath) return null
-            const response = await fetch(photo.webPath)
-            blob = await response.blob()
-          }
+          if (!result.webPath) return null
+          const response = await fetch(result.webPath)
+          blob = await response.blob()
         } else {
-          // Web fallback: use file input
+          // Gallery on every platform (and camera on web) goes through the
+          // <input type="file"> path. On iOS this opens the modern system
+          // PHPicker instead of @capacitor/camera v8's custom SwiftUI grid
+          // (IONCAMRPhotoLibraryView), whose teardown synchronously blocks the
+          // main thread for over 2000ms and trips the OS watchdog, killing the
+          // app. Sentry COEXIST-M issue 7618038716. Compression and EXIF
+          // orientation are still applied downstream in blobToResult.
           const raw = await pickFileWeb(source === 'camera' ? 'camera' : 'gallery')
           if (!raw) return null
           blob = raw.blob
@@ -101,30 +93,14 @@ export function useCamera(): UseCameraReturn {
       setError(null)
 
       try {
-        let blobs: Blob[] = []
-
-        if (Capacitor.isNativePlatform()) {
-          const { Camera } = await import('@capacitor/camera')
-          // v8 API: chooseFromGallery with allowMultipleSelection returns
-          // MediaResults.results[] - one entry per selected photo.
-          const result = await Camera.chooseFromGallery({
-            allowMultipleSelection: true,
-            limit,
-            quality: 80,
-            targetWidth: 1200,
-            targetHeight: 1200,
-            correctOrientation: true,
-          })
-
-          for (const photo of result.results ?? []) {
-            if (!photo?.webPath) continue
-            const response = await fetch(photo.webPath)
-            blobs.push(await response.blob())
-          }
-        } else {
-          // Web fallback: multi-select file input.
-          blobs = await pickFilesWeb(limit)
-        }
+        // Gallery multi-pick on every platform goes through the
+        // <input type="file" multiple> path. On iOS this opens the system
+        // PHPicker instead of @capacitor/camera v8's custom SwiftUI grid
+        // (IONCAMRPhotoLibraryView), whose teardown synchronously blocks the
+        // main thread for over 2000ms and trips the OS watchdog, killing the
+        // app. Sentry COEXIST-M issue 7618038716. `limit` is honoured by
+        // pickFilesWeb (0 = unlimited).
+        const blobs = await pickFilesWeb(limit)
 
         if (blobs.length === 0) return []
 
