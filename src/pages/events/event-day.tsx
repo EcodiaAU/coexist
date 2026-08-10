@@ -99,6 +99,22 @@ function CheckInCodeDisplay({ checkInCode, title }: { checkInCode: string | null
 /*  Attendee Row                                                       */
 /* ------------------------------------------------------------------ */
 
+// COEXIST-K/M/S/X iOS main-thread App Hang cluster (Sentry: COEXIST-K 12
+// events/11 users lastSeen 2026-08-10 now hanging 59.8-60.6s; COEXIST-M FATAL
+// OS-watchdog kill, 4 users). Root cause on the event-day roster: each
+// AttendeeRow mounts a framer-motion `layout` box (getBoundingClientRect per
+// row on every layout change) AND a <FitText> whose ResizeObserver forces a
+// synchronous scrollWidth/clientWidth reflow per row. At a 150+ attendee event
+// (exactly when leaders open this screen) that is a reflow storm that blocks the
+// JS main thread long enough to trip the iOS watchdog. Past this row count each
+// row drops the layout animation (layout={false} => no measurement) and swaps
+// shrink-to-fit for a truncate+title name (no ResizeObserver, no forced reflow),
+// bounding the mount cost. Full first+last names still show for typical rosters;
+// on a large roster the name truncates with the full value in the title/tooltip,
+// and the search bar above narrows to any name. A truncated name is strictly
+// better than an app the OS kills.
+const ROSTER_LIGHT_THRESHOLD = 30
+
 function AttendeeRow({
   person,
   onCheckIn,
@@ -109,6 +125,7 @@ function AttendeeRow({
   isUnchecking,
   isPromoting,
   checkInOpen,
+  light = false,
 }: {
   person: RosterPerson
   onCheckIn: () => void
@@ -119,6 +136,8 @@ function AttendeeRow({
   isUnchecking: boolean
   isPromoting?: boolean
   checkInOpen: boolean
+  /** Large-roster mode: drop the per-row layout animation + FitText reflow. */
+  light?: boolean
 }) {
   const isCheckedIn = person.scenario === 'checkedIn'
   const isWaitlisted = person.scenario === 'waitlist'
@@ -136,7 +155,7 @@ function AttendeeRow({
 
   return (
     <motion.div
-      layout
+      layout={!light}
       className={cn(
         'flex items-center gap-3 px-4 py-3.5 cursor-pointer rounded-sm mb-2',
         'transition-colors duration-200',
@@ -164,11 +183,22 @@ function AttendeeRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           {/* First + Last, shrunk to fit (never truncated) so leaders can tell
-              apart people who share a first name. */}
+              apart people who share a first name. On a large roster (light mode)
+              the per-row FitText ResizeObserver is a main-thread reflow storm
+              (App Hang cluster), so fall back to a truncate + full-name title. */}
           <span className="flex-1 min-w-0">
-            <FitText className={cn('font-medium', isNotAttending ? 'text-neutral-500' : 'text-neutral-900')} max={14} min={10}>
-              {attendeeName(person.profiles, 'Unknown User')}
-            </FitText>
+            {light ? (
+              <span
+                className={cn('block truncate font-medium', isNotAttending ? 'text-neutral-500' : 'text-neutral-900')}
+                title={attendeeName(person.profiles, 'Unknown User')}
+              >
+                {attendeeName(person.profiles, 'Unknown User')}
+              </span>
+            ) : (
+              <FitText className={cn('font-medium', isNotAttending ? 'text-neutral-500' : 'text-neutral-900')} max={14} min={10}>
+                {attendeeName(person.profiles, 'Unknown User')}
+              </FitText>
+            )}
           </span>
           {dupe && (
             <span
@@ -508,6 +538,14 @@ export default function EventDayPage() {
     }
   }, [roster, searchQuery])
 
+  // App Hang guard: switch rows to light rendering past ROSTER_LIGHT_THRESHOLD.
+  // Derived from the FULL roster (not the search-filtered view) so rows don't
+  // remount between FitText and truncate while a leader is typing a search.
+  const lightRoster = !!roster && (
+    roster.groups.checkedIn.length + roster.groups.expected.length +
+    roster.groups.waitlist.length + roster.groups.notAttending.length
+  ) > ROSTER_LIGHT_THRESHOLD
+
   // Walk-ins are recorded outside event_registrations, so fold them into the
   // headline attendance tallies (they came through the gate).
   const walkInCount = walkIns.length
@@ -654,6 +692,7 @@ export default function EventDayPage() {
       isUnchecking={uncheckingUserId === p.user_id}
       isPromoting={promotingUserId === p.user_id}
       checkInOpen={checkInOpen}
+      light={lightRoster}
     />
   )
 
