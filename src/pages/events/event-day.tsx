@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/toast'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
-  Hash,
   Check,
   Users,
   UserCheck,
@@ -28,6 +27,9 @@ import {
   Ticket,
   ChevronDown,
   Ban,
+  Copy,
+  Share2,
+  Maximize2,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import {
@@ -46,6 +48,7 @@ import {
 import { useOffline } from '@/hooks/use-offline'
 import { usePendingSync } from '@/hooks/use-pending-sync'
 import { triggerManualSync } from '@/lib/offline-sync'
+import { isNativePlatform, shareLinkNative, isShareCancellation } from '@/lib/native-share'
 import { isCheckInOpenForLeader, localDateIn } from '@/lib/date-format'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import { useAuth } from '@/hooks/use-auth'
@@ -75,25 +78,6 @@ import { useQueryClient } from '@tanstack/react-query'
 /* ------------------------------------------------------------------ */
 /*  Check-in Code Display Component                                    */
 /* ------------------------------------------------------------------ */
-
-function CheckInCodeDisplay({ checkInCode, title }: { checkInCode: string | null; title: string }) {
-  return (
-    <div className="flex flex-col items-center py-6">
-      <p className="text-sm font-medium text-neutral-900 mb-2 text-center">
-        {title}
-      </p>
-      <p className="text-caption text-neutral-500 mb-4">
-        Tell your attendees this code to check in
-      </p>
-      <div className="px-5 py-5 rounded-md bg-white shadow-md">
-        <p className="text-[11px] uppercase tracking-wider text-neutral-500 text-center mb-2">Check-in code</p>
-        <p className="text-5xl font-heading font-bold text-neutral-900 tracking-[0.4em] text-center">
-          {checkInCode ?? '---'}
-        </p>
-      </div>
-    </div>
-  )
-}
 
 /* ------------------------------------------------------------------ */
 /*  Attendee Row                                                       */
@@ -495,6 +479,7 @@ export default function EventDayPage() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [showQr, setShowQr] = useState(false)
+  const [qrEnlarged, setQrEnlarged] = useState(false)
   // showBulkConfirm removed
   const [checkingInUserId, setCheckingInUserId] = useState<string | null>(null)
   const [uncheckingUserId, setUncheckingUserId] = useState<string | null>(null)
@@ -680,6 +665,54 @@ export default function EventDayPage() {
     }
   }, [eventId, publicCheckInEnabled, queryClient, toast])
 
+  // Public check-in URL for the QR sheet's copy / share / enlarge affordances.
+  const publicCheckInToken =
+    ((event as unknown as Record<string, unknown> | null)?.public_check_in_token as string | undefined)
+  const checkInUrl = publicCheckInToken
+    ? `https://app.coexistaus.org/check-in/${publicCheckInToken}`
+    : ''
+
+  const handleCopyCheckInLink = useCallback(async () => {
+    if (!checkInUrl) return
+    try {
+      await navigator.clipboard.writeText(checkInUrl)
+      toast.success('Check-in link copied')
+    } catch {
+      toast.error('Could not copy the link')
+    }
+  }, [checkInUrl, toast])
+
+  const handleShareCheckIn = useCallback(async () => {
+    if (!checkInUrl) return
+    const shareData = {
+      title: 'Event check-in',
+      text: event ? `Check in to ${event.title}` : 'Check in to this event',
+      url: checkInUrl,
+    }
+    try {
+      if (isNativePlatform()) {
+        await shareLinkNative(shareData)
+        return
+      }
+      if (typeof navigator.share === 'function') {
+        await navigator.share(shareData)
+        return
+      }
+      await navigator.clipboard.writeText(checkInUrl)
+      toast.success('Check-in link copied')
+    } catch (err) {
+      if (isShareCancellation(err)) return
+      // Web Share unavailable / denied - fall back to clipboard so the leader
+      // still gets the link for a printed sign.
+      try {
+        await navigator.clipboard.writeText(checkInUrl)
+        toast.success('Check-in link copied')
+      } catch {
+        toast.error('Could not share the link')
+      }
+    }
+  }, [checkInUrl, event, toast])
+
   const renderRosterRow = (p: RosterPerson) => (
     <AttendeeRow
       key={p.user_id}
@@ -752,11 +785,11 @@ export default function EventDayPage() {
         <div className="flex gap-2">
           <Button
             variant="secondary"
-            icon={<Hash size={16} />}
+            icon={<QrCode size={16} />}
             onClick={() => setShowQr(true)}
             className="flex-1 ring-1 ring-primary-200/60 whitespace-nowrap"
           >
-            Show Code
+            Public QR
           </Button>
           {(isAssistLeader || isStaff) && checkInOpen && (
             <Button
@@ -1105,11 +1138,13 @@ export default function EventDayPage() {
         snapPoints={[0.75]}
       >
         <div className="px-5 pb-6 space-y-5">
-          {/* Existing 3-digit code display */}
-          <CheckInCodeDisplay checkInCode={event.check_in_code} title={event.title} />
-
-          {/* Divider */}
-          <div className="border-t border-neutral-100" />
+          {/* Sheet header. The always-visible page banner already shows the
+              3-char code, so the sheet leads with the QR instead of repeating
+              the code (was a duplicated CheckInCodeDisplay). */}
+          <div className="pt-1 text-center">
+            <p className="text-sm font-semibold text-neutral-900">{event.title}</p>
+            <p className="text-caption text-neutral-500 mt-0.5">Public check-in</p>
+          </div>
 
           {/* Public QR check-in toggle */}
           <div className="space-y-3">
@@ -1144,18 +1179,38 @@ export default function EventDayPage() {
             </button>
 
             {/* QR code (shown only when enabled and token is minted) */}
-            {publicCheckInEnabled && (event as unknown as Record<string, unknown>).public_check_in_token ? (
+            {publicCheckInEnabled && checkInUrl ? (
               <div className="flex flex-col items-center gap-3 py-2">
-                <div className="p-3 rounded-md bg-white shadow-md ring-1 ring-neutral-100">
-                  <QRCodeSVG
-                    value={`https://app.coexistaus.org/check-in/${(event as unknown as Record<string, unknown>).public_check_in_token}`}
-                    size={200}
-                    level="M"
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setQrEnlarged(true)}
+                  aria-label="Enlarge QR code"
+                  className="relative p-3 rounded-md bg-white shadow-md ring-1 ring-neutral-100 active:scale-[0.98] transition-transform"
+                >
+                  <QRCodeSVG value={checkInUrl} size={200} level="M" />
+                  <span className="absolute bottom-1 right-1 flex items-center justify-center w-6 h-6 rounded-full bg-neutral-900/70 text-white">
+                    <Maximize2 size={12} />
+                  </span>
+                </button>
                 <p className="text-xs text-neutral-500 text-center">
-                  Scan this QR code to check in without the app
+                  Scan to check in without the app - tap to enlarge for a printed sign
                 </p>
+                <div className="flex w-full gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyCheckInLink}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-sm bg-neutral-50 ring-1 ring-neutral-200 text-sm font-medium text-neutral-700 active:scale-[0.98] transition-transform"
+                  >
+                    <Copy size={15} /> Copy link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleShareCheckIn}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-sm bg-primary-600 text-white text-sm font-semibold active:scale-[0.98] transition-transform"
+                  >
+                    <Share2 size={15} /> Share
+                  </button>
+                </div>
               </div>
             ) : publicCheckInEnabled ? (
               <p className="text-xs text-neutral-400 text-center italic">
@@ -1165,6 +1220,25 @@ export default function EventDayPage() {
           </div>
         </div>
       </BottomSheet>
+
+      {/* Fullscreen QR (tap-to-enlarge) - large enough to scan across a room or
+          photograph for a printed sign. Tap anywhere to dismiss. */}
+      {qrEnlarged && checkInUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Enlarged check-in QR code"
+          onClick={() => setQrEnlarged(false)}
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/98 backdrop-blur-sm px-6"
+          style={{ paddingTop: 'var(--safe-top, 0px)', paddingBottom: 'var(--safe-bottom, 0px)' }}
+        >
+          <div className="p-4 rounded-lg bg-white shadow-xl ring-1 ring-neutral-100">
+            <QRCodeSVG value={checkInUrl} size={Math.min(320, typeof window !== 'undefined' ? window.innerWidth - 96 : 320)} level="M" />
+          </div>
+          <p className="mt-5 text-sm text-neutral-600 text-center font-medium">{event.title}</p>
+          <p className="mt-1 text-xs text-neutral-400 text-center">Tap anywhere to close</p>
+        </div>
+      )}
 
       {/* Bulk "Mark all present" sheet removed - the trigger is gone. */}
 

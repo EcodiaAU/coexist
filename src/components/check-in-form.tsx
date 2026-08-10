@@ -223,9 +223,14 @@ export function CheckInModeView({
 }: CheckInModeViewProps) {
   const rm = useReducedMotion()
   const { isOffline } = useOffline()
-  const [digits, setDigits] = useState(['', '', '', ''])
+  // Check-in codes are exactly 3 chars (generate_event_check_in_code loops
+  // 1..3). The old component allocated 4 refs / digits and pasted up to 4 but
+  // only rendered [0,1,2], so a 4-char paste was stored in an invisible 4th
+  // slot the user could never see or edit. Collapsed to exactly 3 to match the
+  // code space and the on-screen boxes.
+  const CODE_LENGTH = 3
+  const [digits, setDigits] = useState(['', '', ''])
   const inputRefs = [
-    useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
@@ -236,8 +241,6 @@ export function CheckInModeView({
     requestAnimationFrame(() => inputRefs[0].current?.focus())
   }, [])
 
-  const codeLength = 3 // default; supports up to 4 if extended codes exist
-
   const handleDigitChange = useCallback((index: number, value: string) => {
     // Allow alphanumeric characters, auto-uppercase
     const char = value.replace(/[^a-zA-Z0-9]/g, '').slice(-1).toUpperCase()
@@ -247,7 +250,7 @@ export function CheckInModeView({
       return next
     })
     // Auto-advance to next input
-    if (char && index < 3) {
+    if (char && index < CODE_LENGTH - 1) {
       inputRefs[index + 1].current?.focus()
     }
   }, [])
@@ -260,26 +263,26 @@ export function CheckInModeView({
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 4)
-    if (pasted.length >= 3) {
-      const newDigits = ['', '', '', '']
-      for (let i = 0; i < pasted.length && i < 4; i++) {
+    const pasted = e.clipboardData.getData('text').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, CODE_LENGTH)
+    if (pasted.length >= 1) {
+      const newDigits = ['', '', '']
+      for (let i = 0; i < pasted.length && i < CODE_LENGTH; i++) {
         newDigits[i] = pasted[i]
       }
       setDigits(newDigits)
       // Focus last filled input
-      const lastIdx = Math.min(pasted.length - 1, 3)
+      const lastIdx = Math.min(pasted.length - 1, CODE_LENGTH - 1)
       inputRefs[lastIdx].current?.focus()
     }
   }, [])
 
   const code = digits.join('')
-  const isComplete = code.length >= codeLength && digits.slice(0, codeLength).every(d => d !== '')
+  const isComplete = digits.every(d => d !== '')
 
   const handleSubmit = useCallback(() => {
     if (!isComplete) return
-    onManualSubmit(code.slice(0, digits[3] ? 4 : 3))
-  }, [code, isComplete, digits, onManualSubmit])
+    onManualSubmit(code)
+  }, [code, isComplete, onManualSubmit])
 
   return (
     <motion.div data-eos-id="src/components/check-in-form.tsx#31"

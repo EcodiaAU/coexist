@@ -11,7 +11,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Search, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
-type InputType = 'text' | 'email' | 'password' | 'search' | 'textarea' | 'date' | 'time' | 'tel' | 'number'
+type InputType = 'text' | 'email' | 'password' | 'search' | 'textarea' | 'date' | 'time' | 'datetime-local' | 'tel' | 'number'
 
 export interface InputProps {
   type?: InputType
@@ -196,10 +196,11 @@ export const Input = forwardRef<
 
   const isDate = type === 'date'
   const isTime = type === 'time'
+  const isDateTime = type === 'datetime-local'
   // Native date/time inputs always show their picker affordance, so the
   // floating label needs to start in the floated position to avoid colliding
   // with the picker glyph.
-  const isPicker = isDate || isTime
+  const isPicker = isDate || isTime || isDateTime
   const isCompact = compact && !label
   const isFloating = focused || filled || isPicker
   const isTextarea = type === 'textarea'

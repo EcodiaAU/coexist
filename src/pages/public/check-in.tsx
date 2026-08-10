@@ -10,11 +10,11 @@
  * date + place) sits above an overlapping form card. Every edge respects the
  * device safe-area insets so it fits notches + home indicators cleanly.
  */
-import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
-import { CheckCircle2, AlertCircle, Loader2, Calendar, MapPin } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Loader2, Calendar, MapPin, WifiOff, Download, Clock } from 'lucide-react'
 import { useImeSafeOnChange } from '@/hooks/use-ime-safe-on-change'
 import { formatEventDate } from '@/lib/date-format'
 
@@ -22,7 +22,18 @@ import { formatEventDate } from '@/lib/date-format'
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type PageState = 'loading' | 'idle' | 'submitting' | 'success' | 'error' | 'rate_limited' | 'invalid'
+type PageState =
+  | 'loading'
+  | 'idle'
+  | 'submitting'
+  | 'success'
+  | 'error'
+  | 'rate_limited'
+  | 'invalid'
+  | 'network_error' // transient/5xx/timeout on the info load - retryable, NOT a dead link
+  | 'closed' // valid event but not its day - show the date instead of the live form
+
+type ClosedReason = 'future' | 'past'
 
 interface EventInfo {
   event_title: string
@@ -39,6 +50,25 @@ interface EventInfo {
 /* ------------------------------------------------------------------ */
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-event-check-in`
+
+// How long we wait for the /info load before treating it as a network problem
+// (routes to the retry state, never to the "invalid link" dead-end).
+const INFO_TIMEOUT_MS = 8000
+
+// Calendar-day helpers that mirror the edge function EXACTLY so the client's
+// open/closed decision matches the server's day-guard. The event's calendar day
+// is the stored wall-clock's UTC slice; "today" is the current day in the
+// event's collective timezone (the scanner is physically at the event).
+function eventDayUTC(isoString: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date(isoString))
+}
+function todayInTz(tz: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date())
+}
 
 // Safe-area-aware edge padding for the whole page (notch + home indicator +
 // landscape rounded corners). The CSS vars are defined in globals.css.
@@ -70,6 +100,20 @@ function HeroMeta({ icon, children }: { icon: React.ReactNode; children: React.R
   )
 }
 
+/* Centred status screens (loading / invalid / network-error / closed / rate
+   limited / success). Declared at module scope - it closes over nothing but the
+   module-level safeEdges - so React never re-creates it per render. */
+function CentredStatus({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="min-h-dvh bg-gradient-to-b from-primary-50 to-white flex flex-col items-center justify-center px-6 text-center"
+      style={{ ...safeEdges, paddingTop: 'var(--safe-top, 0px)', paddingBottom: 'var(--safe-bottom, 0px)' }}
+    >
+      {children}
+    </div>
+  )
+}
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
@@ -80,6 +124,7 @@ export default function PublicCheckInPage() {
   const [pageState, setPageState] = useState<PageState>('loading')
   const [eventInfo, setEventInfo] = useState<EventInfo | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const [closedReason, setClosedReason] = useState<ClosedReason>('future')
 
   // Form fields
   const [name, setName] = useState('')
@@ -92,24 +137,57 @@ export default function PublicCheckInPage() {
   const emailProps = useImeSafeOnChange<HTMLInputElement>(setEmail)
   const phoneProps = useImeSafeOnChange<HTMLInputElement>(setPhone)
 
-  // Load event info on mount
-  useEffect(() => {
+  // Load event info. Distinguishes a genuinely dead link (404 -> 'invalid')
+  // from a transient blip (timeout / network throw / 5xx -> 'network_error'
+  // with Retry), so a valid attendee with a momentary drop at a remote/outdoor
+  // event is never wrongly told their link is dead (B3). Also computes openness
+  // client-side so an off-day scan shows the event date instead of a live form
+  // the server would only reject after submit.
+  const loadInfo = useCallback(async () => {
     if (!token) {
       setPageState('invalid')
       return
     }
-    fetch(`${FUNCTIONS_URL}/info?token=${encodeURIComponent(token)}`)
-      .then(async (res) => {
-        if (!res.ok) {
-          setPageState('invalid')
+    setPageState('loading')
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), INFO_TIMEOUT_MS)
+    try {
+      const res = await fetch(`${FUNCTIONS_URL}/info?token=${encodeURIComponent(token)}`, {
+        signal: controller.signal,
+      })
+      clearTimeout(timer)
+      if (res.status === 404) {
+        setPageState('invalid') // genuinely unknown/disabled token
+        return
+      }
+      if (!res.ok) {
+        setPageState('network_error') // 5xx / gateway - retryable, not a dead link
+        return
+      }
+      const data: EventInfo = await res.json()
+      setEventInfo(data)
+      // Client-side day guard: if today (in the event's tz) is not the event's
+      // calendar day, show the date instead of the form.
+      if (data.date_start) {
+        const tz = data.timezone ?? 'Australia/Sydney'
+        const eDay = eventDayUTC(data.date_start)
+        const tDay = todayInTz(tz)
+        if (eDay !== tDay) {
+          setClosedReason(eDay < tDay ? 'past' : 'future')
+          setPageState('closed')
           return
         }
-        const data: EventInfo = await res.json()
-        setEventInfo(data)
-        setPageState('idle')
-      })
-      .catch(() => setPageState('invalid'))
+      }
+      setPageState('idle')
+    } catch {
+      clearTimeout(timer)
+      setPageState('network_error') // abort/timeout/offline - retryable
+    }
   }, [token])
+
+  useEffect(() => {
+    void loadInfo()
+  }, [loadInfo])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -169,17 +247,6 @@ export default function PublicCheckInPage() {
 
   /* ---- Centred status screens (loading / invalid / rate limited) ---- */
 
-  function CentredStatus({ children }: { children: React.ReactNode }) {
-    return (
-      <div
-        className="min-h-dvh bg-gradient-to-b from-primary-50 to-white flex flex-col items-center justify-center px-6 text-center"
-        style={{ ...safeEdges, paddingTop: 'var(--safe-top, 0px)', paddingBottom: 'var(--safe-bottom, 0px)' }}
-      >
-        {children}
-      </div>
-    )
-  }
-
   if (pageState === 'loading') {
     return (
       <CentredStatus>
@@ -199,6 +266,59 @@ export default function PublicCheckInPage() {
         <p className="mt-2 text-sm text-neutral-500 max-w-xs">
           This check-in link is invalid or has expired. Ask your event leader for the current code.
         </p>
+      </CentredStatus>
+    )
+  }
+
+  if (pageState === 'network_error') {
+    return (
+      <CentredStatus>
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-warning-50">
+          <WifiOff size={30} className="text-warning-500" />
+        </div>
+        <h1 className="mt-4 font-heading text-2xl font-semibold text-neutral-900">Couldn't load</h1>
+        <p className="mt-2 text-sm text-neutral-500 max-w-xs">
+          We couldn't reach the event just now. Check your connection and try again.
+        </p>
+        <button type="button" onClick={() => void loadInfo()} className={cn(btnCls, 'mt-6 max-w-xs')}>
+          Try again
+        </button>
+      </CentredStatus>
+    )
+  }
+
+  if (pageState === 'closed') {
+    const closedDate = eventInfo?.date_start
+      ? formatEventDate(eventInfo.date_start, eventInfo.timezone ?? undefined)
+      : null
+    return (
+      <CentredStatus>
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary-50">
+          {closedReason === 'future' ? (
+            <Clock size={30} className="text-primary-500" />
+          ) : (
+            <Calendar size={30} className="text-primary-500" />
+          )}
+        </div>
+        <h1 className="mt-4 font-heading text-2xl font-semibold text-neutral-900">
+          {closedReason === 'future' ? 'Check-in not open yet' : 'This event has ended'}
+        </h1>
+        {eventInfo && (
+          <p className="mt-2 text-base text-neutral-700 max-w-xs font-medium">{eventInfo.event_title}</p>
+        )}
+        <p className="mt-2 text-sm text-neutral-500 max-w-xs">
+          {closedReason === 'future'
+            ? closedDate
+              ? `Check-in opens on the day of the event, ${closedDate}. See you there.`
+              : 'Check-in opens on the day of the event. See you there.'
+            : closedDate
+              ? `This event was on ${closedDate}. Check-in is closed.`
+              : 'Check-in for this event is closed.'}
+        </p>
+        <Link to="/download" className={cn(btnCls, 'mt-6 max-w-xs')}>
+          <Download size={18} />
+          Get the Co-Exist app
+        </Link>
       </CentredStatus>
     )
   }
@@ -231,9 +351,28 @@ export default function PublicCheckInPage() {
             {eventInfo.collective_name ? ` with ${eventInfo.collective_name}` : ''}.
           </p>
         )}
-        <p className="mt-6 text-sm text-neutral-400 max-w-xs">
-          Enjoy the event. Download the Co-Exist app to connect with your collective.
+        <p className="mt-6 text-sm text-neutral-500 max-w-xs">
+          Enjoy the event. Get the app to connect with your collective and track your impact.
         </p>
+        {/* Highest-intent moment: a real, tappable download CTA (was dead grey text). */}
+        <Link to="/download" className={cn(btnCls, 'mt-5 max-w-xs')}>
+          <Download size={18} />
+          Get the Co-Exist app
+        </Link>
+        {/* Greeter flow: check the next person in without reloading the page. */}
+        <button
+          type="button"
+          onClick={() => {
+            setName('')
+            setEmail('')
+            setPhone('')
+            setErrorMessage('')
+            setPageState('idle')
+          }}
+          className="mt-2 w-full max-w-xs text-center text-sm font-medium text-primary-600 underline py-2"
+        >
+          Check in someone else
+        </button>
       </CentredStatus>
     )
   }
@@ -327,10 +466,11 @@ export default function PublicCheckInPage() {
               />
             </div>
 
-            {/* Email */}
+            {/* Email or phone: exactly one is required (validated below). The
+                old "Email *" asterisk falsely implied email was mandatory. */}
             <div className="space-y-1.5">
               <label className="block text-sm font-semibold text-neutral-700">
-                Email <span className="text-error-500">*</span>
+                Email
               </label>
               <input
                 className={inputCls}
@@ -343,10 +483,10 @@ export default function PublicCheckInPage() {
               />
             </div>
 
-            {/* Phone (optional) */}
+            {/* Phone */}
             <div className="space-y-1.5">
               <label className="block text-sm font-semibold text-neutral-700">
-                Phone <span className="text-xs font-normal text-neutral-400">(optional)</span>
+                Phone
               </label>
               <input
                 className={inputCls}
@@ -357,6 +497,9 @@ export default function PublicCheckInPage() {
                 autoComplete="tel"
                 inputMode="tel"
               />
+              <p className="text-xs text-neutral-400">
+                Enter your email or phone so we can reach you.
+              </p>
             </div>
           </div>
 
