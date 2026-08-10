@@ -9,7 +9,6 @@ import {
   FileText,
   Mail,
   Bug,
-  GraduationCap,
   Home,
   Shield,
   Phone,
@@ -33,7 +32,10 @@ export const adminNavCategories: NavCategory[] = [
     items: [
       { label: 'Collectives', path: '/admin/collectives', icon: icon(MapPin), capability: 'manage_collectives' },
       { label: 'Events', path: '/admin/events', icon: icon(CalendarDays), capability: 'manage_events' },
-      { label: 'Development', path: '/admin/development', icon: icon(GraduationCap), capability: 'manage_content' },
+      // Development (LMS) suite hidden from the admin nav 2026-08-10 (Tate directive):
+      // the learner side is unbuilt/dead-ended, so admins should not author into it.
+      // Authoring code + /admin/development routes + all DB tables are kept intact
+      // for the future build; only the nav entry and the learner routes are removed.
       { label: 'Shop', path: '/admin/shop', icon: icon(ShoppingBag), capability: 'manage_merch' },
       { label: 'Users', path: '/admin/users', icon: icon(Users), capability: 'manage_users' },
     ],
