@@ -98,7 +98,9 @@ import { CampoutRequirementsModal } from '@/components/campout-requirements-moda
 import { TicketQuestionsModal } from '@/components/ticket-questions-modal'
 import { useEventTicketQuestions, type TicketAnswers } from '@/hooks/use-event-ticket-questions'
 import { isCampoutActivity } from '@/lib/dietary'
-import { useEventCarpools } from '@/hooks/use-event-carpools'
+import { useEventCarpools, type EventCarpoolBreakout } from '@/hooks/use-event-carpools'
+import { useSaveSeat } from '@/hooks/use-carpool'
+import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import { useEventCampoutChannel } from '@/hooks/use-staff-channels'
 import { MapView } from '@/components'
 import { activityAccent, defaultAccent } from '@/lib/activity-types'
@@ -524,8 +526,11 @@ export default function EventDetailPage() {
   const ticketCheckout = useCreateTicketCheckout()
   const cancelPendingTicket = useCancelPendingTicket()
 
-  // Coordination - carpool breakout chats for this event (Worker 3)
+  // Coordination - carpool offers for this event (Worker 3). Includes open
+  // offers with no breakout chat yet, which a passenger claims via SaveSeatSheet.
   const { data: eventCarpools } = useEventCarpools(id)
+  const [saveSeatCarpool, setSaveSeatCarpool] = useState<EventCarpoolBreakout | null>(null)
+  const saveSeat = useSaveSeat()
   // Campout group chat - RLS exposes it only to confirmed ticket holders + staff
   const { data: campoutChannel } = useEventCampoutChannel(id)
   const [selectedTicketType, setSelectedTicketType] = useState<string | null>(null)
@@ -1788,26 +1793,60 @@ export default function EventDetailPage() {
                   minute: '2-digit',
                   timeZone: 'UTC',
                 })
+                const title = cp.channel_name || `Carpool from ${cp.departure_point_text}`
+                const seatsLine = `${departureLabel} · ${cp.seats_taken}/${cp.seats_total} seats`
+                const isFull = cp.seats_taken >= cp.seats_total
+
+                // Has a breakout chat -> deep-link into it (existing behaviour).
+                if (cp.channel_id) {
+                  return (
+                    <button
+                      key={cp.carpool_id}
+                      type="button"
+                      onClick={() => navigate(`/chat/channel/${cp.channel_id}`)}
+                      className="w-full flex items-center gap-3 min-h-11 p-2 rounded-sm hover:bg-neutral-50 active:scale-[0.98] transition-[opacity,transform] duration-150 text-left cursor-pointer"
+                    >
+                      <div className="w-9 h-9 rounded-sm bg-primary-50 flex items-center justify-center shrink-0">
+                        <Car size={15} className="text-primary-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-neutral-900 truncate">{title}</p>
+                        <p className="text-[11px] text-neutral-500 truncate">{seatsLine}</p>
+                      </div>
+                      <ChevronRight size={14} className="ml-auto shrink-0 text-neutral-400" />
+                    </button>
+                  )
+                }
+
+                // Open offer, no breakout yet. The driver sees their own offer
+                // (read-only); anyone else can claim the first seat, which
+                // spawns the breakout chat (carpool-save-seat).
                 return (
-                  <button
+                  <div
                     key={cp.carpool_id}
-                    type="button"
-                    onClick={() => navigate(`/chat/channel/${cp.channel_id}`)}
-                    className="w-full flex items-center gap-3 min-h-11 p-2 rounded-sm hover:bg-neutral-50 active:scale-[0.98] transition-[opacity,transform] duration-150 text-left cursor-pointer"
+                    className="w-full flex items-center gap-3 min-h-11 p-2 rounded-sm bg-neutral-50/70"
                   >
                     <div className="w-9 h-9 rounded-sm bg-primary-50 flex items-center justify-center shrink-0">
                       <Car size={15} className="text-primary-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-neutral-900 truncate">
-                        {cp.channel_name || `Carpool from ${cp.departure_point_text}`}
-                      </p>
-                      <p className="text-[11px] text-neutral-500 truncate">
-                        {departureLabel} · {cp.seats_taken}/{cp.seats_total} seats
-                      </p>
+                      <p className="text-sm font-bold text-neutral-900 truncate">{title}</p>
+                      <p className="text-[11px] text-neutral-500 truncate">{seatsLine}</p>
                     </div>
-                    <ChevronRight size={14} className="ml-auto shrink-0 text-neutral-400" />
-                  </button>
+                    {cp.viewer_is_driver ? (
+                      <span className="shrink-0 text-[11px] font-semibold text-neutral-400">Your offer</span>
+                    ) : isFull ? (
+                      <span className="shrink-0 text-[11px] font-semibold text-neutral-400">Full</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setSaveSeatCarpool(cp)}
+                        className="shrink-0 rounded-full bg-success-600 text-white text-[11px] font-semibold px-3 min-h-9 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none hover:bg-success-700"
+                      >
+                        Save me a seat
+                      </button>
+                    )}
+                  </div>
                 )
               })}
             </div>
@@ -1979,7 +2018,10 @@ export default function EventDetailPage() {
           <button
             type="button"
             onClick={() => {
-              window.open(getGoogleCalendarUrl(event), '_blank')
+              // Native: '_system' hands off to the OS browser so Google
+              // Calendar's add-event flow opens where the user is signed in,
+              // instead of the in-app WebView (matches the directions handler).
+              window.open(getGoogleCalendarUrl(event), Capacitor.isNativePlatform() ? '_system' : '_blank')
               setShowCalendarSheet(false)
             }}
             className="flex items-center gap-3 w-full min-h-11 px-4 py-3 rounded-sm hover:bg-neutral-50 cursor-pointer select-none text-left active:scale-[0.97] transition-transform duration-150"
@@ -1992,6 +2034,27 @@ export default function EventDetailPage() {
           </button>
         </div>
       </BottomSheet>
+
+      {/* Save-a-seat sheet (claim the first seat on an open carpool offer) */}
+      <SaveSeatSheet
+        open={!!saveSeatCarpool}
+        onClose={() => setSaveSeatCarpool(null)}
+        loading={saveSeat.isPending}
+        driverName={saveSeatCarpool?.driver_name}
+        eventTitle={event?.title}
+        onSubmit={({ pickup_address_text }) => {
+          if (!saveSeatCarpool) return
+          saveSeat.mutate(
+            { carpool_id: saveSeatCarpool.carpool_id, pickup_address_text },
+            {
+              onSuccess: () => {
+                toast.success('Seat saved')
+                setSaveSeatCarpool(null)
+              },
+            },
+          )
+        }}
+      />
 
       {/* Cancel event sheet */}
       <BottomSheet

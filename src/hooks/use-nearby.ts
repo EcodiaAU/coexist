@@ -161,12 +161,21 @@ async function resolveDeviceLocation(): Promise<Location | null> {
   })
 }
 
-export function useUserLocation() {
+/**
+ * Resolve + cache the device location under ['user-location'].
+ *
+ * `enabled` defaults to true (unchanged for existing callers). Pass false to
+ * create the query WITHOUT auto-firing the OS location prompt - the caller then
+ * triggers it explicitly via refetch() on a user action (A5), and other
+ * consumers read the cached result without prompting.
+ */
+export function useUserLocation(enabled = true) {
   return useQuery({
     queryKey: ['user-location'],
     queryFn: resolveDeviceLocation,
     staleTime: 10 * 60 * 1000,
     retry: false,
+    enabled,
   })
 }
 

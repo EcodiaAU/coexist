@@ -57,6 +57,9 @@ function CreateCollectiveModal({
   const [description, setDescription] = useState('')
   const [region, setRegion] = useState('')
   const [state, setState] = useState('')
+  // Coords captured from the Region autocomplete. Written to the collective's
+  // location_point so it pins on the explore map. Null until a place is picked.
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
 
   const handleCreate = async () => {
     try {
@@ -65,12 +68,15 @@ function CreateCollectiveModal({
         description: description || undefined,
         region: region || undefined,
         state: state || undefined,
+        lat: coords?.lat,
+        lng: coords?.lng,
       })
       toast.success('Collective created')
       setName('')
       setDescription('')
       setRegion('')
       setState('')
+      setCoords(null)
       onClose()
     } catch {
       toast.error('Failed to create collective')
@@ -112,9 +118,15 @@ function CreateCollectiveModal({
           onChange={(val, place) => {
             setRegion(val)
             if (place) {
+              // Capture the picked place's coords so the collective pins on the map.
+              setCoords({ lat: place.lat, lng: place.lng })
               const stateMatch = place.short_name.split(',').pop()?.trim()
               const matched = (['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] as const).find((s) => stateMatch?.includes(s))
               if (matched) setState(matched)
+            } else {
+              // Free-typing / cleared: drop stale coords so we don't attach a
+              // pin from a previously-selected place to a different region.
+              setCoords(null)
             }
           }}
           placeholder="e.g. Byron Bay"

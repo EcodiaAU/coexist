@@ -47,9 +47,11 @@ export function StepCollective({
   const shouldReduceMotion = useReducedMotion()
   const [search, setSearch] = useState('')
 
-  // Browser geolocation fallback, only fetched when the user didn't give a
-  // location on the previous step (resolves null if denied or unavailable).
-  const { data: geoLocation } = useUserLocation()
+  // Read the cached device location WITHOUT prompting (A5): the OS location
+  // dialog is now only fired from the "Use my current location" button on the
+  // Location step. If the user tapped it, coords are cached and ranking works;
+  // otherwise this stays null and ranking falls back to member_count.
+  const { data: geoLocation } = useUserLocation(false)
 
   // Prefer the explicitly-entered onboarding location; fall back to geolocation.
   const userLocation = locationPoint ?? geoLocation ?? null

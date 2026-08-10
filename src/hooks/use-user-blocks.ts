@@ -10,6 +10,10 @@ const blocks = () => supabase.from('user_blocks')
 interface UserBlock {
   blocked_id: string
   created_at: string
+  // Enriched from public_profiles so the Blocked Users list shows a real
+  // person, not a raw UUID (B6). Null when the blocked profile can't be read.
+  display_name: string | null
+  avatar_url: string | null
 }
 
 export function useBlockedUsers() {
@@ -25,7 +29,32 @@ export function useBlockedUsers() {
         .eq('blocker_id', user.id)
 
       if (error) throw error
-      return (data ?? []) as UserBlock[]
+      const rows = (data ?? []) as { blocked_id: string; created_at: string }[]
+      if (rows.length === 0) return []
+
+      // Resolve names/avatars in one query against public_profiles (the safe
+      // public projection). user_blocks has no FK to it, so we can't embed -
+      // fetch by id and map. A blocked profile that can't be read degrades to
+      // a neutral placeholder rather than a UUID.
+      const ids = rows.map((r) => r.blocked_id)
+      const { data: profs } = await supabase
+        .from('public_profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', ids)
+
+      const byId = new Map(
+        (profs ?? []).map((p) => [
+          (p as { id: string }).id,
+          p as { display_name: string | null; avatar_url: string | null },
+        ]),
+      )
+
+      return rows.map((r) => ({
+        blocked_id: r.blocked_id,
+        created_at: r.created_at,
+        display_name: byId.get(r.blocked_id)?.display_name ?? null,
+        avatar_url: byId.get(r.blocked_id)?.avatar_url ?? null,
+      }))
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,

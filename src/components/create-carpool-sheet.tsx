@@ -282,10 +282,11 @@ export function CreateCarpoolSheet({
     }
   }, [open])
 
-  // Accept either 'T' or space between date and time (the field is free text
-  // and the default is pre-filled with a 'T'). Gating submit on this prevents
-  // wallClockToUtcIso - which is strict - from throwing on a malformed entry.
-  const DEPARTURE_RE = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}$/
+  // The departure field is now a native <input type="datetime-local">, whose
+  // value is always a well-formed `YYYY-MM-DDTHH:mm` wall-clock string (or ''
+  // when unset), so the old free-text regex gate is unnecessary. Guard on a
+  // minimal shape so wallClockToUtcIso - which is strict - never throws.
+  const DEPARTURE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/
 
   const canSubmit =
     !!eventId &&
@@ -297,8 +298,7 @@ export function CreateCarpoolSheet({
     if (!canSubmit) return
     // Floating-local: stamp the typed wall-clock directly as UTC so departure
     // lives in the same frame as event times (stored 8:30 -> 08:30:00.000Z).
-    // Normalise a space separator to 'T' so the strict parser accepts it.
-    const wallClock = departureTime.trim().replace(' ', 'T')
+    const wallClock = departureTime.trim()
     onSubmit({
       event_id: eventId,
       departure_point_text: departurePoint.trim(),
@@ -363,18 +363,20 @@ export function CreateCarpoolSheet({
           </p>
         </div>
 
-        {/* Departure time */}
+        {/* Departure time - native date+time picker seeded with the event's
+            wall-clock (toWallClockInputValue). Was a hand-typed free-text field
+            with a strict regex gate; the picker removes the typo class and the
+            "departing 9:30pm for an 8:30am event" tz confusion entirely. */}
         <div data-eos-id="src/components/create-carpool-sheet.tsx#40" className="mb-3">
           <Input data-eos-id="src/components/create-carpool-sheet.tsx#41"
             label="Departure time"
-            type="text"
+            type="datetime-local"
             value={departureTime}
             onChange={(e) => setDepartureTime(e.target.value)}
-            placeholder="YYYY-MM-DDTHH:mm"
             icon={<Clock data-eos-id="src/components/create-carpool-sheet.tsx#42" size={16} className="text-success-500" />}
           />
           <p data-eos-id="src/components/create-carpool-sheet.tsx#43" className="text-[11px] text-neutral-400 mt-1">
-            Format: YYYY-MM-DD HH:mm (24h, event local time).
+            When you'll leave the departure point (event local time).
           </p>
         </div>
 

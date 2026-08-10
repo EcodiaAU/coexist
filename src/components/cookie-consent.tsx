@@ -1,10 +1,27 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Cookie, X } from 'lucide-react'
 import { Button } from '@/components/button'
 import { Toggle } from '@/components/toggle'
 import { usePlatform } from '@/hooks/use-platform'
 import { cn } from '@/lib/cn'
+
+// Auth-flow routes where the bottom-pinned banner would sit on top of the
+// primary Log In / Create Account CTAs (and half-cover the signup Terms
+// checkbox) on first web visit. Suppress it here; it appears the moment the
+// user reaches any other route, still before analytics cookies are set (A1).
+const AUTH_ROUTES = [
+  '/welcome',
+  '/welcome-back',
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/onboarding',
+  '/auth',
+]
 
 /* ------------------------------------------------------------------ */
 /*  Cookie categories                                                  */
@@ -44,6 +61,7 @@ function saveConsent(consent: CookieConsent) {
 
 export function CookieConsentBanner({ className }: { className?: string }) {
   const { isWeb } = usePlatform()
+  const location = useLocation()
   const shouldReduceMotion = useReducedMotion()
   const existingConsent = isWeb ? loadConsent() : null
   const [visible, setVisible] = useState(() => isWeb && !existingConsent)
@@ -81,7 +99,11 @@ export function CookieConsentBanner({ className }: { className?: string }) {
     window.dispatchEvent(new CustomEvent('coexist:consent-changed'))
   }, [consent])
 
-  if (!isWeb) return null
+  const onAuthRoute = AUTH_ROUTES.some(
+    (p) => location.pathname === p || location.pathname.startsWith(p + '/'),
+  )
+
+  if (!isWeb || onAuthRoute) return null
 
   return (
     <AnimatePresence data-eos-id="src/components/cookie-consent.tsx#0" data-eos-v="2">

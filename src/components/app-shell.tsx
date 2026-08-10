@@ -15,6 +15,8 @@ import { KeyboardOpenContext, useKeyboardOpen } from '@/components/app-shell-con
 import { MenuSheetProvider, useMenuSheet } from '@/hooks/use-menu-sheet'
 import { useSyncManager } from '@/hooks/use-sync-manager'
 import { usePushRegistration } from '@/hooks/use-push'
+import { useTextZoom } from '@/hooks/use-text-zoom'
+import { PushSoftAsk } from '@/components/push-soft-ask'
 import { useAppLifecycle } from '@/hooks/use-app-lifecycle'
 import { useAndroidBackButton } from '@/hooks/use-android-back-button'
 import { useKeyboard } from '@/hooks/use-keyboard'
@@ -22,6 +24,7 @@ import { useKeyboardHeight } from '@/hooks/use-keyboard-height'
 import { useRolePrefetch } from '@/hooks/use-role-prefetch'
 import { useDataPrefetch } from '@/hooks/use-data-prefetch'
 import { useUnreadCounts } from '@/hooks/use-chat'
+import { useChannelUnreadCounts } from '@/hooks/use-staff-channels'
 import { useSwipeBack } from '@/hooks/use-swipe-back'
 
 interface AppShellProps {
@@ -104,12 +107,17 @@ function LocationAwareChrome({ showBottomTabs, syncWarning }: { showBottomTabs: 
   const isLeaderRoute = location.pathname.startsWith('/leader') && !location.pathname.startsWith('/leaderboard') && !location.pathname.startsWith('/leadership')
   const isChatRoute = location.pathname.startsWith('/chat/')
 
-  // Compute total unread chat messages for the badge
+  // Compute total unread chat messages for the badge. Sum BOTH the collective
+  // chat unreads AND the campout/staff channel unreads - otherwise unreads in
+  // whole conversation types never increment the nav badge and users silently
+  // miss them.
   const { data: unreadCounts } = useUnreadCounts()
-  const totalUnread = useMemo(
-    () => Object.values(unreadCounts ?? {}).reduce((sum, n) => sum + (n as number), 0),
-    [unreadCounts],
-  )
+  const { data: channelUnreadCounts } = useChannelUnreadCounts()
+  const totalUnread = useMemo(() => {
+    const collective = Object.values(unreadCounts ?? {}).reduce((sum, n) => sum + (n as number), 0)
+    const channels = Object.values(channelUnreadCounts ?? {}).reduce((sum, n) => sum + (n as number), 0)
+    return collective + channels
+  }, [unreadCounts, channelUnreadCounts])
 
   return (
     <>
@@ -143,6 +151,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // stores token in DB, handles deep-link routing on tap,
   // re-registers on app resume. Runs once for all authenticated users.
   usePushRegistration()
+
+  // Honour the OS text-size / Dynamic Type setting on native (C4). No-op on web.
+  useTextZoom()
 
   // Native app lifecycle: invalidate queries on resume so stale data refreshes.
   useAppLifecycle()
@@ -227,6 +238,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
           boundary defence as PhoneGate. */}
       <SentryErrorBoundary data-eos-id="src/components/app-shell.tsx#22" fallback={null}>
         <DietaryGate data-eos-id="src/components/app-shell.tsx#23" />
+      </SentryErrorBoundary>
+
+      {/* One-time push soft-ask (A6). Native only; asks with context instead of
+          the OS dialog cold-firing on first Home entry. */}
+      <SentryErrorBoundary fallback={null}>
+        <PushSoftAsk />
       </SentryErrorBoundary>
     </div>
   )

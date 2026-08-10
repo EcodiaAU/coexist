@@ -189,7 +189,10 @@ let registrationInFlight = false
  * Returns true if registration was triggered (token will arrive via listener).
  * Deduplicated - concurrent calls are no-ops.
  */
-async function requestAndRegister(plugin: PushNotificationsPlugin): Promise<boolean> {
+async function requestAndRegister(
+  plugin: PushNotificationsPlugin,
+  promptIfNeeded = true,
+): Promise<boolean> {
   if (registrationInFlight) {
     console.info('[push] registration already in flight - skipping')
     return false
@@ -197,13 +200,16 @@ async function requestAndRegister(plugin: PushNotificationsPlugin): Promise<bool
   registrationInFlight = true
 
   try {
-    return await _doRequestAndRegister(plugin)
+    return await _doRequestAndRegister(plugin, promptIfNeeded)
   } finally {
     registrationInFlight = false
   }
 }
 
-async function _doRequestAndRegister(plugin: PushNotificationsPlugin): Promise<boolean> {
+async function _doRequestAndRegister(
+  plugin: PushNotificationsPlugin,
+  promptIfNeeded = true,
+): Promise<boolean> {
   // Check current permission state first
   let permState: string
   try {
@@ -216,6 +222,15 @@ async function _doRequestAndRegister(plugin: PushNotificationsPlugin): Promise<b
   // If denied, we can't do anything - user must enable in system settings
   if (permState === 'denied') {
     console.warn('[push] permission denied - user must enable in system settings')
+    return false
+  }
+
+  // Soft-ask gate: when promptIfNeeded is false (automatic mount/resume path),
+  // never fire the OS permission dialog cold. Register only if already granted;
+  // otherwise defer to the in-app soft-ask card, which calls requestPermission()
+  // (promptIfNeeded=true) on an explicit "Enable notifications" tap.
+  if (permState !== 'granted' && !promptIfNeeded) {
+    console.info('[push] permission not granted and prompt deferred to soft-ask')
     return false
   }
 
@@ -548,8 +563,11 @@ export function usePushRegistration() {
 
       listenersRef.current = [regListener, errListener, receivedListener, actionListener, { remove: unregisterConsumer }]
 
-      // Register - listeners are already attached so the token callback will fire
-      await requestAndRegister(plugin)
+      // Register - listeners are already attached so the token callback will fire.
+      // promptIfNeeded=false: never cold-fire the OS permission dialog on first
+      // authed entry. If already granted we register silently; otherwise the
+      // in-app soft-ask card (PushSoftAsk) asks with context first (A6).
+      await requestAndRegister(plugin, false)
     }
 
     setup().catch((err) => {
@@ -584,7 +602,9 @@ export function usePushRegistration() {
             await ensurePushPlugin()
             const plugin = getPushPlugin()
             if (plugin && mounted) {
-              await requestAndRegister(plugin)
+              // Resume path also never cold-prompts (A6): refresh the token only
+              // when permission is already granted.
+              await requestAndRegister(plugin, false)
             }
           }
         }).then((l) => {
@@ -626,7 +646,26 @@ export function usePush() {
     const plugin = getPushPlugin()
     if (!plugin) return false
 
-    return requestAndRegister(plugin)
+    return requestAndRegister(plugin, true)
+  }, [])
+
+  /**
+   * Read the current OS push-permission state without prompting. Returns
+   * 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale', or 'unsupported'
+   * on web / when the plugin is unavailable. Used by the notifications settings
+   * page and the soft-ask card to reflect real device state.
+   */
+  const checkPermissions = useCallback(async (): Promise<string> => {
+    if (!Capacitor.isNativePlatform()) return 'unsupported'
+    await ensurePushPlugin()
+    const plugin = getPushPlugin()
+    if (!plugin) return 'unsupported'
+    try {
+      const { receive } = await plugin.checkPermissions()
+      return receive
+    } catch {
+      return 'unsupported'
+    }
   }, [])
 
   /** Remove this device's token on logout (preserves other devices) */
@@ -642,6 +681,7 @@ export function usePush() {
 
   return {
     requestPermission,
+    checkPermissions,
     unregister,
     clearBadgeCount: clearBadge,
   }

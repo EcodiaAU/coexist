@@ -125,7 +125,7 @@ export default function DownloadPage() {
 
   const stats = [
     { value: liveStats ? formatStat(liveStats.treesPlanted) : '...', label: 'Trees planted' },
-    { value: liveStats ? formatStat(liveStats.eventsAttended) : '...', label: 'Volunteers' },
+    { value: liveStats ? formatStat(liveStats.totalMembers) : '...', label: 'Volunteers' },
     { value: liveStats ? formatStat(liveStats.eventsHeld) : '...', label: 'Events held' },
     { value: liveStats ? String(liveStats.collectivesCount) : '...', label: 'Collectives' },
   ]

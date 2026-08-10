@@ -8,6 +8,7 @@ import { wallClockNow } from '@/lib/date-format'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Button } from '@/components/button'
 import { Card } from '@/components/card'
+import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import type { Database } from '@/types/database.types'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
@@ -24,6 +25,7 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
   const { user } = useAuth()
   const shouldReduceMotion = useReducedMotion()
   const queryClient = useQueryClient()
+  const { toast } = useToast()
 
   const { data: events, isLoading, error } = useQuery({
     queryKey: ['onboarding-events', collectiveId],
@@ -56,6 +58,26 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
   const [rsvpedEvents, setRsvpedEvents] = useState<Set<string>>(new Set())
   const [rsvpingEvent, setRsvpingEvent] = useState<string | null>(null)
 
+  // Seed "Going" from the DB so it survives this step being unmounted and
+  // remounted by the onboarding orchestrator (AnimatePresence mode='wait' keyed
+  // on step). Without this, Back-then-Forward wiped the local Set and an
+  // already-RSVPed event showed "RSVP" again, whose tap then 409'd on the
+  // UNIQUE(event_id,user_id) constraint and was silently swallowed (O1).
+  const { data: existingRegistrations } = useQuery({
+    queryKey: ['onboarding-registrations', user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('event_registrations')
+        .select('event_id')
+        .eq('user_id', user!.id)
+      return (data ?? []).map((r) => (r as { event_id: string }).event_id)
+    },
+  })
+
+  // Union of server-known registrations and this-session RSVPs.
+  const goingIds = new Set<string>([...(existingRegistrations ?? []), ...rsvpedEvents])
+
   const rsvpMutation = useMutation({
     mutationFn: async (eventId: string) => {
       if (!user) throw new Error('Not authenticated')
@@ -63,16 +85,21 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
       const { error } = await supabase
         .from('event_registrations')
         .insert({ event_id: eventId, user_id: user.id, status: 'registered' })
-      if (error) throw error
+      // A unique-violation (23505) means the user is ALREADY registered for this
+      // event - a duplicate one-tap RSVP, not a failure. Treat it as idempotent
+      // success so the button flips to "Going" instead of silently doing nothing.
+      if (error && (error as { code?: string }).code !== '23505') throw error
       return eventId
     },
     onSuccess: (eventId) => {
       setRsvpedEvents((prev) => new Set(prev).add(eventId))
       setRsvpingEvent(null)
       queryClient.invalidateQueries({ queryKey: ['onboarding-events'] })
+      queryClient.invalidateQueries({ queryKey: ['onboarding-registrations', user?.id] })
     },
     onError: () => {
       setRsvpingEvent(null)
+      toast.error("Couldn't RSVP right now. Please try again.")
     },
   })
 
@@ -83,7 +110,7 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
 
   /** Overlaid content shared by the image and the gradient-fallback card. */
   function EventOverlayBody({ event }: { event: Event }) {
-    const going = rsvpedEvents.has(event.id)
+    const going = goingIds.has(event.id)
     const saving = rsvpingEvent === event.id
     return (
       <div className="flex items-end justify-between gap-3">

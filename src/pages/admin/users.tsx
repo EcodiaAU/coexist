@@ -929,7 +929,10 @@ export default function AdminUsersPage() {
   const [settingsUser, setSettingsUser] = useState<AdminUserRow | null>(null)
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
+  const [bulkSuspendOpen, setBulkSuspendOpen] = useState(false)
+  const [bulkReason, setBulkReason] = useState('')
 
+  const { user: currentUser } = useAuth()
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
@@ -946,6 +949,59 @@ export default function AdminUsersPage() {
       return next
     })
   }, [])
+
+  // Bulk suspend/un-suspend. The operator is ALWAYS excluded from a bulk
+  // suspend (parity with the single-suspend self-guard) so an admin cannot
+  // lock themselves out; the action is confirmed and carries a real reason.
+  const bulkSuspendUids = useMemo(
+    () => Array.from(selectedUsers).filter((id) => id !== currentUser?.id),
+    [selectedUsers, currentUser?.id],
+  )
+  const selfInSelection = currentUser?.id ? selectedUsers.has(currentUser.id) : false
+
+  const handleBulkSuspend = useCallback(async () => {
+    if (bulkSuspendUids.length === 0) {
+      toast.error('No users to suspend - you cannot suspend your own account')
+      return
+    }
+    const reason = bulkReason.trim() || 'Bulk suspension by admin'
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_suspended: true, suspended_reason: reason })
+      .in('id', bulkSuspendUids)
+    if (error) {
+      toast.error('Failed to suspend users')
+      console.error('[admin] Bulk suspend error:', error)
+      return
+    }
+    for (const uid of bulkSuspendUids) {
+      await logAudit({ action: 'user_suspended', target_type: 'user', target_id: uid, details: { reason, bulk: true } })
+    }
+    queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    toast.success(`${bulkSuspendUids.length} user${bulkSuspendUids.length === 1 ? '' : 's'} suspended`)
+    setSelectedUsers(new Set())
+    setBulkReason('')
+  }, [bulkSuspendUids, bulkReason, queryClient, toast])
+
+  const handleBulkUnsuspend = useCallback(async () => {
+    const uids = Array.from(selectedUsers)
+    if (uids.length === 0) return
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_suspended: false, suspended_reason: null })
+      .in('id', uids)
+    if (error) {
+      toast.error('Failed to un-suspend users')
+      console.error('[admin] Bulk un-suspend error:', error)
+      return
+    }
+    for (const uid of uids) {
+      await logAudit({ action: 'user_unsuspended', target_type: 'user', target_id: uid, details: { bulk: true } })
+    }
+    queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    toast.success(`${uids.length} user${uids.length === 1 ? '' : 's'} un-suspended`)
+    setSelectedUsers(new Set())
+  }, [selectedUsers, queryClient, toast])
 
   const shouldReduceMotion = useReducedMotion()
 
@@ -973,35 +1029,49 @@ export default function AdminUsersPage() {
 
       {/* Bulk actions */}
       {selectedUsers.size > 0 && (
-        <motion.div variants={fadeUp} className="flex items-center gap-2 mb-4 p-3 bg-neutral-50 rounded-sm ring-1 ring-neutral-100">
-          <span className="text-sm text-neutral-700 font-semibold">
-            {selectedUsers.size} selected
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<Ban size={14} />}
-            onClick={async () => {
-              const uids = Array.from(selectedUsers)
-              const { error } = await supabase.from('profiles').update({ is_suspended: true, suspended_reason: 'Bulk suspension by admin' }).in('id', uids)
-              if (error) {
-                toast.error('Failed to suspend users')
-                console.error('[admin] Bulk suspend error:', error)
-                return
-              }
-              for (const uid of uids) {
-                await logAudit({ action: 'user_suspended', target_type: 'user', target_id: uid, details: { reason: 'Bulk suspension by admin' } })
-              }
-              queryClient.invalidateQueries({ queryKey: ['admin-users'] })
-              toast.success(`${selectedUsers.size} users suspended`)
-              setSelectedUsers(new Set())
-            }}
-          >
-            Suspend All
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedUsers(new Set())}>Clear</Button>
+        <motion.div variants={fadeUp} className="flex flex-col gap-2 mb-4 p-3 bg-neutral-50 rounded-sm ring-1 ring-neutral-100">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-neutral-700 font-semibold">
+              {selectedUsers.size} selected
+            </span>
+            {selfInSelection && (
+              <span className="text-[11px] text-neutral-500">(your own account is excluded from suspend)</span>
+            )}
+            <div className="flex items-center gap-2 ml-auto">
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Ban size={14} />}
+                disabled={bulkSuspendUids.length === 0}
+                onClick={() => setBulkSuspendOpen(true)}
+              >
+                Suspend All
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleBulkUnsuspend}>Un-suspend All</Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedUsers(new Set())}>Clear</Button>
+            </div>
+          </div>
+          <input
+            type="text"
+            value={bulkReason}
+            onChange={(e) => setBulkReason(e.target.value)}
+            placeholder="Suspension reason (shown to suspended users)"
+            aria-label="Bulk suspension reason"
+            className="w-full rounded-sm border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+          />
         </motion.div>
       )}
+
+      {/* Bulk suspend confirmation */}
+      <ConfirmationSheet
+        open={bulkSuspendOpen}
+        onClose={() => setBulkSuspendOpen(false)}
+        onConfirm={handleBulkSuspend}
+        variant="danger"
+        title={`Suspend ${bulkSuspendUids.length} ${bulkSuspendUids.length === 1 ? 'user' : 'users'}?`}
+        description={`${selfInSelection ? 'Your own account is excluded. ' : ''}Selected users are signed out immediately and shown the reason${bulkReason.trim() ? `: "${bulkReason.trim()}"` : ' "Bulk suspension by admin"'}. You can un-suspend them from this same bar.`}
+        confirmLabel={`Suspend ${bulkSuspendUids.length}`}
+      />
 
       {/* User list */}
       <motion.div variants={fadeUp}>

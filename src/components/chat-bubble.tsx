@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn'
 import { formatClockTime, formatCardDate, formatCardTime } from '@/lib/date-format'
 import { ROLE_COLORS } from '@/lib/constants'
 import { useLongPress } from '@/hooks/use-long-press'
+import { hapticImpact } from '@/lib/haptics'
 
 /**
  * Swipe-right-to-reply gesture (1.8.6 feature 1).
@@ -99,9 +100,7 @@ export function ChatBubble({
     if (!onSwipeReply || swipeFiredRef.current) return
     if (info.offset.x >= SWIPE_REPLY_FIRE_PX) {
       swipeFiredRef.current = true
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        navigator.vibrate(15)
-      }
+      void hapticImpact('light')
       onSwipeReply()
     }
   }

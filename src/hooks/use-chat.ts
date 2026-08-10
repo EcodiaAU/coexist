@@ -51,6 +51,14 @@ interface SendMessageInput {
   messageType?: string
   pollId?: string
   announcementId?: string
+  /**
+   * Stable per-send id (uuid) used to reconcile the optimistic bubble with the
+   * realtime INSERT echo. Generated in onMutate and threaded through the DB
+   * insert so the realtime handler can match on THIS id rather than on
+   * user+content - the latter mis-resolves image messages (content is null so
+   * null===null matched the first pending image) and duplicate texts.
+   */
+  clientActionId?: string
 }
 
 export interface ChatPoll {
@@ -241,12 +249,20 @@ export function useChatMessages(collectiveId: string | undefined) {
 
               let firstPage = old.pages[0] ?? []
 
-              // Replace optimistic message from same user with matching content
+              // Replace the matching optimistic bubble. Prefer the stable
+              // client_action_id (set on every send now): this correctly
+              // reconciles image messages (content is null, so the old
+              // content match resolved every pending image to the first one)
+              // and duplicate texts. Fall back to the legacy user+content
+              // match only for an echo that carries no client_action_id
+              // (older client build mid-rollout).
               const optimisticIdx = firstPage.findIndex(
                 (m) =>
                   m._optimistic &&
                   m.user_id === fullMsg.user_id &&
-                  m.content === fullMsg.content,
+                  (fullMsg.client_action_id
+                    ? m.client_action_id === fullMsg.client_action_id
+                    : m.content === fullMsg.content),
               )
 
               if (optimisticIdx !== -1) {
@@ -373,6 +389,10 @@ export function useSendMessage() {
           message_type: input.messageType ?? 'text',
           poll_id: input.pollId ?? null,
           announcement_id: input.announcementId ?? null,
+          // onMutate always sets this before the mutationFn runs; the ?? guard
+          // is purely defensive (a bare uuid still inserts cleanly and simply
+          // falls back to the legacy content match if it somehow differs).
+          client_action_id: input.clientActionId ?? crypto.randomUUID(),
         })
         .select()
         .single()
@@ -384,6 +404,12 @@ export function useSendMessage() {
       if (!user) return
 
       await queryClient.cancelQueries({ queryKey: ['chat-messages', input.collectiveId] })
+
+      // Stamp a stable client_action_id BEFORE the mutationFn runs (React Query
+      // awaits onMutate first and passes the same `input` object on), so the
+      // insert and the optimistic bubble share one id the realtime echo dedups on.
+      const clientActionId = input.clientActionId ?? crypto.randomUUID()
+      input.clientActionId = clientActionId
 
       const optimisticId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`
       const optimisticMessage: ChatMessageWithSender = {
@@ -407,7 +433,7 @@ export function useSendMessage() {
         carpool_id: null,
         event_photos_event_id: null,
         event_survey_event_id: null,
-        client_action_id: null,
+        client_action_id: clientActionId,
         profiles: {
           id: user.id,
           display_name: profile?.display_name ?? 'You',
@@ -725,49 +751,30 @@ export function useUnreadCounts() {
   return useQuery({
     queryKey: ['unread-counts', user?.id],
     queryFn: async () => {
-      if (!user) return {}
+      if (!user) return {} as Record<string, number>
 
-      const { data: memberships } = await supabase
-        .from('collective_members')
-        .select('collective_id')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
+      // ONE round-trip instead of one COUNT query per collective membership.
+      // The get_collective_unread_counts RPC (migration 20260810110000, security
+      // invoker) returns { collective_id, unread_count } for each of the caller's
+      // active memberships, applying the same last-read + channel_id IS NULL +
+      // not-own-message filter the client used to compute per collective.
+      const { data, error } = await supabase.rpc('get_collective_unread_counts')
+      if (error) throw error
 
-      if (!memberships?.length) return {}
-
-      const { data: receipts } = await supabase
-        .from('chat_read_receipts')
-        .select('collective_id, last_read_at')
-        .eq('user_id', user.id)
-
-      const receiptMap = new Map(receipts?.map((r) => [r.collective_id, r.last_read_at]) ?? [])
-
-      // Run all count queries in parallel instead of sequentially
-      const results = await Promise.all(
-        memberships.map(async (m) => {
-          const lastRead = receiptMap.get(m.collective_id)
-          let query = supabase
-            .from('chat_messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('collective_id', m.collective_id)
-            .is('channel_id', null)
-            .eq('is_deleted', false)
-            .neq('user_id', user.id)
-
-          if (lastRead) {
-            query = query.gt('created_at', lastRead)
-          }
-
-          const { count } = await query
-          return [m.collective_id, count ?? 0] as const
-        }),
-      )
-
-      return Object.fromEntries(results)
+      const counts: Record<string, number> = {}
+      for (const row of data ?? []) {
+        counts[row.collective_id] = row.unread_count
+      }
+      return counts
     },
     enabled: !!user,
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
+    // Now that the count is a single cheap RPC, the badge polls on a tighter
+    // cadence to cut the lag. There is no global per-user realtime message
+    // stream to invalidate off (the message subscription only covers the room
+    // you're viewing, whose unread is already 0), so a shorter poll - not a
+    // realtime hook - is the right lever for non-focused collectives.
+    refetchInterval: 30 * 1000,
   })
 }
 

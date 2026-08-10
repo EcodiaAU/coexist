@@ -7159,6 +7159,13 @@ export type Database = {
         }[]
       }
       get_collective_stats: { Args: { p_collective_id: string }; Returns: Json }
+      get_collective_unread_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          collective_id: string
+          unread_count: number
+        }[]
+      }
       get_event_attendee_export: { Args: { p_event_id: string }; Returns: Json }
       get_event_ticket_states: { Args: { p_event_id: string }; Returns: Json }
       get_events_within_radius: {
@@ -7231,6 +7238,7 @@ export type Database = {
       }
       get_public_stats: { Args: never; Returns: Json }
       get_user_impact_stats: { Args: { p_user_id: string }; Returns: Json }
+      get_user_points_total: { Args: { p_user_id?: string }; Returns: number }
       get_user_profile_v1: { Args: { target_user_id: string }; Returns: Json }
       gettransactionid: { Args: never; Returns: unknown }
       handle_announcement_rsvp: {
@@ -8017,6 +8025,10 @@ export type Database = {
       }
       unlockrows: { Args: { "": string }; Returns: number }
       unsubscribe_by_email: { Args: { p_email: string }; Returns: undefined }
+      update_collective_location: {
+        Args: { p_collective_id: string; p_lat: number; p_lng: number }
+        Returns: undefined
+      }
       update_event_location: {
         Args: { p_event_id: string; p_lat: number; p_lng: number }
         Returns: undefined

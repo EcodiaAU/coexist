@@ -30,7 +30,6 @@ import {
     Check,
     ClipboardCheck,
     ClipboardList,
-    BookOpen,
     Leaf,
     ListTodo,
     Circle,
@@ -83,8 +82,6 @@ import {
     usePendingItems,
     useEventCalendar,
 } from '@/hooks/use-leader-dashboard'
-import { useMyModuleProgress } from '@/hooks/use-development-progress'
-import { useMyTargetedContent } from '@/hooks/use-development-assignments'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { WaveTransition } from '@/components/wave-transition'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
@@ -945,16 +942,9 @@ export default function LeaderDashboardPage() {
   const { data: pendingItems = [] } = usePendingItems(collectiveId)
   const { data: unreadUpdateCount = 0 } = useUnreadUpdateCount()
 
-  // Development progress  find in-progress module for "Continue Learning" quick action
-  const { data: moduleProgress = [] } = useMyModuleProgress()
-  const { data: devContent } = useMyTargetedContent()
-  const continueModule = useMemo(() => {
-    const inProgress = moduleProgress.find((mp) => mp.status === 'in_progress')
-    if (!inProgress || !devContent?.modules) return null
-    const mod = devContent.modules.find((m) => m.id === inProgress.module_id)
-    if (!mod) return null
-    return { id: mod.id, title: mod.title }
-  }, [moduleProgress, devContent])
+  // Learn (LMS) "Continue Learning" quick action removed 2026-08-10 (Tate directive):
+  // the learner suite is unbuilt/dead-ended and its /learn* routes are removed, so the
+  // leader dashboard no longer surfaces (or fetches) in-progress module state.
 
   // Tasks integration
   const { data: tasks } = useMyTasks()
@@ -1080,14 +1070,6 @@ export default function LeaderDashboardPage() {
       iconBg: 'bg-moss-100',
       iconText: 'text-moss-700',
       badge: pendingItems.length > 1 ? pendingItems.length : 0,
-    }] : []),
-    ...(continueModule ? [{
-      label: 'Continue Learning',
-      icon: <BookOpen size={18} />,
-      to: `/learn/module/${continueModule.id}`,
-      iconBg: 'bg-plum-100',
-      iconText: 'text-plum-600',
-      badge: 0,
     }] : []),
     { label: 'Chat', icon: <MessageCircle size={18} />, to: `/chat/${collectiveId}`, iconBg: 'bg-primary-100', iconText: 'text-primary-600', badge: 0 },
     { label: 'Updates', icon: <Megaphone size={18} />, to: '/updates', iconBg: 'bg-primary-100', iconText: 'text-primary-500', badge: unreadUpdateCount },

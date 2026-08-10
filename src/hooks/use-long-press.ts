@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react'
+import { hapticImpact } from '@/lib/haptics'
 
 interface LongPressHandlers {
   onTouchStart: () => void
@@ -25,14 +26,11 @@ export function useLongPress(onLongPress?: () => void): LongPressHandlers {
     if (!onLongPress) return
     longPressTimerRef.current = setTimeout(() => {
       onLongPress()
-      // Haptic confirmation that the long-press gesture has triggered.
-      // Kept (per haptic pruning policy) because long-press is a discrete
-      // intentional gesture; users benefit from a confirmation pulse that
-      // distinguishes it from a normal tap. Web Vibration API only - silent
-      // on iOS, fires on Android browsers + WebView.
-      if ('vibrate' in navigator) {
-        navigator.vibrate(15)
-      }
+      // Haptic confirmation that the long-press gesture has triggered. Long-press
+      // is a discrete intentional gesture, so a confirmation pulse that
+      // distinguishes it from a normal tap is worth it. Native (iOS + Android)
+      // uses @capacitor/haptics; web falls back to navigator.vibrate.
+      void hapticImpact('medium')
     }, 500)
   }, [onLongPress])
 

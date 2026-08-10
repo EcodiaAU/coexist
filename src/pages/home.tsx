@@ -75,13 +75,13 @@ function Section({
             Tracking-widest with text-sm was the prior cause of truncation -
             uppercase + heavy letter spacing pushed the heading past the
             right-aligned "See All" link. Tate verbatim 2026-05-28. */}
-        <h2 className="font-heading text-[9px] sm:text-[10px] font-bold text-neutral-400 uppercase tracking-wide min-w-0 truncate">
+        <h2 className="font-heading text-[9px] sm:text-[10px] font-bold text-neutral-500 uppercase tracking-wide min-w-0 truncate">
           {title}
         </h2>
         {action && (
           <Link
             to={action.to}
-            className="flex items-center gap-0.5 text-xs font-semibold text-neutral-600 hover:text-neutral-900 active:scale-[0.97] transition-[colors,transform] duration-150 whitespace-nowrap shrink-0"
+            className="relative flex items-center gap-0.5 text-xs font-semibold text-neutral-600 hover:text-neutral-900 active:scale-[0.97] transition-[colors,transform] duration-150 whitespace-nowrap shrink-0 before:absolute before:content-[''] before:-inset-y-3 before:-inset-x-2"
           >
             {action.label}
             <ChevronRight size={14} className="shrink-0" />
@@ -1133,7 +1133,7 @@ function HomeImpactSection({
 
   return (
     <motion.div variants={rm ? undefined : fadeUp} className="-mx-2 sm:-mx-3">
-      <div ref={sectionRef} className="relative overflow-hidden bg-[#879e62] rounded-md">
+      <div ref={sectionRef} className="relative overflow-hidden bg-[#5a6e40] rounded-md">
 
         <div className="relative px-5 sm:px-7 pt-14 pb-16 sm:pt-16 sm:pb-20">
           {/* Header - editorial style */}
@@ -1149,7 +1149,7 @@ function HomeImpactSection({
               </p>
               <Link
                 to="/profile"
-                className="flex items-center gap-0.5 text-[11px] font-semibold text-[#f4f2ec] hover:text-white active:scale-[0.97] transition-[colors,transform] duration-150"
+                className="relative flex items-center gap-0.5 text-[11px] font-semibold text-[#f4f2ec] hover:text-white active:scale-[0.97] transition-[colors,transform] duration-150 before:absolute before:content-[''] before:-inset-y-3 before:-inset-x-2"
               >
                 My impact
                 <ChevronRight size={13} />
@@ -1173,7 +1173,7 @@ function HomeImpactSection({
                 type="button"
                 onClick={() => setScope('national')}
                 className={cn(
-                  'px-3.5 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
+                  'px-3.5 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
                   scope === 'national'
                     ? 'bg-white/90 text-primary-900 shadow-sm'
                     : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
@@ -1195,7 +1195,7 @@ function HomeImpactSection({
                       }
                     }}
                     className={cn(
-                      'px-3.5 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none flex items-center gap-1 max-w-[160px]',
+                      'px-3.5 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none flex items-center gap-1 max-w-[160px]',
                       scope === 'collective'
                         ? 'bg-white/90 text-primary-900 shadow-sm'
                         : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
@@ -1244,7 +1244,7 @@ function HomeImpactSection({
                 type="button"
                 onClick={() => setTimeRange('all-time')}
                 className={cn(
-                  'px-3 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
+                  'px-3 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
                   timeRange === 'all-time'
                     ? 'bg-white/90 text-primary-900 shadow-sm'
                     : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
@@ -1256,7 +1256,7 @@ function HomeImpactSection({
                 type="button"
                 onClick={() => setTimeRange('current-year')}
                 className={cn(
-                  'px-3 min-h-9 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
+                  'px-3 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
                   timeRange === 'current-year'
                     ? 'bg-white/90 text-primary-900 shadow-sm'
                     : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',

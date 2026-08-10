@@ -89,9 +89,11 @@ const ViewProfilePage = lazy(() => import('@/pages/profile/view-profile'))
 const EditProfilePage = lazy(() => import('@/pages/profile/edit-profile'))
 
 const ReferralPage = lazy(() => import('@/pages/referral/index'))
+const LeaderboardPage = lazy(() => import('@/pages/leaderboard/index'))
 
 // Explore (unified events + collectives page)
 const ExplorePage = lazy(() => import('@/pages/events/index'))
+const MyEventsPage = lazy(() => import('@/pages/events/my-events'))
 const EventDetailPage = lazy(() => import('@/pages/events/event-detail'))
 const CreateEventPage = lazy(() => import('@/pages/events/create-event'))
 const CheckInPage = lazy(() => import('@/pages/events/check-in'))
@@ -175,12 +177,11 @@ const LeaderTasksPage = lazy(() => import('@/pages/leader/tasks'))
 const LeaderReportsPage = lazy(() => import('@/pages/reports/index'))
 const LeaderFeedbackPage = lazy(() => import('@/pages/leader/feedback'))
 
-// Learner pages (My Leadership Journey)
-const LearnIndexPage = lazy(() => import('@/pages/learn/index'))
-const LearnModulePage = lazy(() => import('@/pages/learn/module'))
-const LearnSectionPage = lazy(() => import('@/pages/learn/section'))
-const LearnQuizPage = lazy(() => import('@/pages/learn/quiz'))
-const LearnCompletePage = lazy(() => import('@/pages/learn/complete'))
+// Learner pages (My Leadership Journey) - the LMS learner suite is unbuilt/dead-ended,
+// so its routes are removed 2026-08-10 (Tate directive) and /learn* now 404s via the
+// catch-all. The page components under src/pages/learn/* are kept on disk (and the admin
+// authoring suite + DB tables are untouched) for the future build; re-add the lazy
+// imports + the "My Leadership Journey (learner)" <Route> block below to restore them.
 
 // Reports & National Impact
 const ReportsPage = lazy(() => import('@/pages/reports/index'))
@@ -413,6 +414,7 @@ function App() {
           <Route data-eos-id="src/App.tsx#57" path="/home" element={<Navigate data-eos-id="src/App.tsx#58" to="/" replace />} />
           <Route data-eos-id="src/App.tsx#59" path="/explore" element={<ExplorePage data-eos-id="src/App.tsx#60" />} />
           <Route data-eos-id="src/App.tsx#61" path="/events" element={<Navigate data-eos-id="src/App.tsx#62" to="/explore" replace />} />
+          <Route path="/events/mine" element={<MyEventsPage />} />
           <Route data-eos-id="src/App.tsx#63" path="/events/create" element={<CreateEventPage data-eos-id="src/App.tsx#64" />} />
           <Route data-eos-id="src/App.tsx#65" path="/events/:id" element={<ErrorBoundary data-eos-id="src/App.tsx#66"><EventDetailPage data-eos-id="src/App.tsx#67" /></ErrorBoundary>} />
           <Route data-eos-id="src/App.tsx#68" path="/events/:id/check-in" element={<CheckInPage data-eos-id="src/App.tsx#69" />} />
@@ -435,6 +437,7 @@ function App() {
           <Route data-eos-id="src/App.tsx#105" path="/profile/:userId" element={<ViewProfilePage data-eos-id="src/App.tsx#106" />} />
           <Route data-eos-id="src/App.tsx#107" path="/impact" element={<Navigate data-eos-id="src/App.tsx#108" to="/profile" replace />} />
           <Route data-eos-id="src/App.tsx#109" path="/referral" element={<ReferralPage data-eos-id="src/App.tsx#110" />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route data-eos-id="src/App.tsx#111" path="/notifications" element={<NotificationsPage data-eos-id="src/App.tsx#112" />} />
           <Route data-eos-id="src/App.tsx#113" path="/updates" element={<UpdatesPage data-eos-id="src/App.tsx#114" />} />
           <Route data-eos-id="src/App.tsx#115" path="/settings" element={<SettingsPage data-eos-id="src/App.tsx#116" />} />
@@ -463,12 +466,11 @@ function App() {
           <Route data-eos-id="src/App.tsx#155" path="/reports" element={<ReportsPage data-eos-id="src/App.tsx#156" />} />
           <Route data-eos-id="src/App.tsx#157" path="/impact/national" element={<NationalImpactPage data-eos-id="src/App.tsx#158" />} />
 
-          {/* ---- My Leadership Journey (learner) ---- */}
-          <Route data-eos-id="src/App.tsx#159" path="/learn" element={<LearnIndexPage data-eos-id="src/App.tsx#160" />} />
-          <Route data-eos-id="src/App.tsx#161" path="/learn/module/:moduleId" element={<LearnModulePage data-eos-id="src/App.tsx#162" />} />
-          <Route data-eos-id="src/App.tsx#163" path="/learn/section/:sectionId" element={<LearnSectionPage data-eos-id="src/App.tsx#164" />} />
-          <Route data-eos-id="src/App.tsx#165" path="/learn/quiz/:quizId" element={<LearnQuizPage data-eos-id="src/App.tsx#166" />} />
-          <Route data-eos-id="src/App.tsx#167" path="/learn/complete" element={<LearnCompletePage data-eos-id="src/App.tsx#168" />} />
+          {/* ---- My Leadership Journey (learner) - REMOVED 2026-08-10 (Tate directive) ----
+              The LMS learner suite is unbuilt/dead-ended, so /learn, /learn/module/:id,
+              /learn/section/:id, /learn/quiz/:id and /learn/complete are de-registered and
+              now fall through to the catch-all (NotFoundPage). Admin authoring routes
+              (/admin/development/*) and all LMS DB tables are intentionally kept intact. */}
 
           {/* ---- Leader Dashboard & sub-pages ---- */}
           <Route data-eos-id="src/App.tsx#169" path="/leader" element={<RequireLeaderAccess data-eos-id="src/App.tsx#170"><ErrorBoundary data-eos-id="src/App.tsx#171"><LeaderLayoutRoute data-eos-id="src/App.tsx#172" /></ErrorBoundary></RequireLeaderAccess>}>

@@ -288,6 +288,8 @@ export function useCreateCollective() {
       region?: string
       state?: string
       leaderId?: string
+      lat?: number
+      lng?: number
     }) => {
       let slug = input.name
         .toLowerCase()
@@ -319,6 +321,21 @@ export function useCreateCollective() {
         .single()
 
       if (error) throw error
+
+      // location_point is geography(Point,4326); PostgREST cannot cast it
+      // inline on insert (the column silently stays NULL), so write it via the
+      // update_collective_location RPC after the row exists. Mirrors how
+      // useCreateEvent / update_event_location handle the same limitation.
+      // Without this a new collective has no coords and silently never pins on
+      // the explore map (unless its slug happens to be in COLLECTIVE_SLUG_COORDS).
+      if (data && typeof input.lat === 'number' && typeof input.lng === 'number') {
+        const { error: locErr } = await supabase.rpc('update_collective_location', {
+          p_collective_id: data.id,
+          p_lat: input.lat,
+          p_lng: input.lng,
+        })
+        if (locErr) throw locErr
+      }
 
       // If a leader was assigned, also add them as a member with 'leader' role
       if (input.leaderId && data) {

@@ -8,6 +8,7 @@ import {
     AlertTriangle,
     Globe,
     Users,
+    Shield,
     Pencil,
     Trash2,
     Eye,
@@ -55,6 +56,9 @@ import type { Enums } from '@/types/database.types'
 function audienceLabel(update: AdminUpdate): string {
   if (update.target_audience === 'collective_specific' && update.collective?.name) {
     return update.collective.name
+  }
+  if (update.target_audience === 'leaders') {
+    return 'Leaders only'
   }
   return 'All participants'
 }
@@ -177,8 +181,12 @@ function ComposeModal({
   const [title, setTitle] = useState(editTarget?.title ?? '')
   const [content, setContent] = useState(editTarget?.content ?? '')
   const [priority, setPriority] = useState<Enums<'update_priority'>>(editTarget?.priority ?? 'normal')
-  const [targetAudience, setTargetAudience] = useState<'all' | 'collective_specific'>(
-    editTarget?.target_audience === 'collective_specific' ? 'collective_specific' : 'all',
+  const [targetAudience, setTargetAudience] = useState<'all' | 'leaders' | 'collective_specific'>(
+    editTarget?.target_audience === 'collective_specific'
+      ? 'collective_specific'
+      : editTarget?.target_audience === 'leaders'
+        ? 'leaders'
+        : 'all',
   )
   const [selectedCollectiveId, setSelectedCollectiveId] = useState<string | null>(
     editTarget?.target_collective_id ?? null,
@@ -543,6 +551,19 @@ function ComposeModal({
             </button>
             <button
               type="button"
+              onClick={() => { setTargetAudience('leaders'); setSelectedCollectiveId(null) }}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 h-11 rounded-sm text-sm font-semibold',
+                'transition-colors duration-150 cursor-pointer select-none',
+                targetAudience === 'leaders'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'bg-primary-50 text-neutral-600 ring-1 ring-primary-200/60 hover:bg-primary-100',
+              )}
+            >
+              <Shield size={14} /> Leaders Only
+            </button>
+            <button
+              type="button"
               onClick={() => setTargetAudience('collective_specific')}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 h-11 rounded-sm text-sm font-semibold',
@@ -608,9 +629,11 @@ function ComposeModal({
           <p className="mt-2 text-[11px] text-neutral-400 leading-relaxed">
             {targetAudience === 'all'
               ? 'This will be visible to every participant in the app, nationally.'
-              : selectedCollective
-                ? `Only members of ${selectedCollective.name} will see this update.`
-                : 'Choose a collective above to target this update.'}
+              : targetAudience === 'leaders'
+                ? 'Only collective leaders, co-leaders and assistant leaders (plus staff) will see this update.'
+                : selectedCollective
+                  ? `Only members of ${selectedCollective.name} will see this update.`
+                  : 'Choose a collective above to target this update.'}
           </p>
         </div>
 
@@ -751,7 +774,7 @@ function DetailPanel({
                 ? 'bg-accent-50 text-accent-700'
                 : 'bg-sprout-50 text-sprout-700',
             )}>
-              {update.target_audience === 'collective_specific' ? <Users size={10} /> : <Globe size={10} />}
+              {update.target_audience === 'collective_specific' ? <Users size={10} /> : update.target_audience === 'leaders' ? <Shield size={10} /> : <Globe size={10} />}
               {audienceLabel(update)}
             </span>
           </div>
@@ -934,7 +957,7 @@ function UpdateRow({
               ? 'bg-accent-50 text-accent-700'
               : 'bg-sprout-50 text-sprout-700',
           )}>
-            {update.target_audience === 'collective_specific' ? <Users size={9} /> : <Globe size={9} />}
+            {update.target_audience === 'collective_specific' ? <Users size={9} /> : update.target_audience === 'leaders' ? <Shield size={9} /> : <Globe size={9} />}
             {audienceLabel(update)}
           </span>
 

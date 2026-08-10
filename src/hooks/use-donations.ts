@@ -152,29 +152,30 @@ export function useDonorWall() {
   return useQuery({
     queryKey: ['donor-wall'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('donations')
-        .select('id, amount, message, on_behalf_of, created_at, profiles(display_name, avatar_url)')
-        .eq('status', 'succeeded')
-        .eq('is_public', true)
-        .order('created_at', { ascending: false })
-        .limit(100)
-      if (error) throw error
-      interface DonationRow {
-        id: string
-        amount: number
-        message: string | null
-        on_behalf_of: string | null
-        created_at: string
-        profiles: { display_name: string | null; avatar_url: string | null } | null
-      }
-      return ((data ?? []) as DonationRow[]).map((d): DonorWallEntry => ({
+      // Served through the get_public_donor_wall SECURITY DEFINER RPC, which
+      // projects ONLY the recognition fields (name, avatar, amount, message,
+      // date). This closes two holes at once:
+      //   - PII leak: the old direct read relied on the donations_select_public
+      //     RLS policy, which - because RLS is row-level, never column-level -
+      //     exposed donor_email / donor_name / stripe_payment_id of every public
+      //     donation to any logged-in user (backlog 292). That policy is dropped.
+      //   - "Anonymous" collapse: the old profiles(...) embed was subject to
+      //     profiles RLS, so most opted-in donors rendered as Anonymous (backlog
+      //     295). The RPC resolves display_name/avatar inside the definer.
+      const { data, error } = await (supabase as unknown as {
+        rpc: (
+          fn: 'get_public_donor_wall',
+          args: { p_limit: number },
+        ) => Promise<{ data: DonorWallEntry[] | null; error: unknown }>
+      }).rpc('get_public_donor_wall', { p_limit: 100 })
+      if (error) throw error as Error
+      return (data ?? []).map((d): DonorWallEntry => ({
         id: d.id,
-        display_name: d.profiles?.display_name ?? null,
-        on_behalf_of: d.on_behalf_of,
+        display_name: d.display_name ?? null,
+        on_behalf_of: d.on_behalf_of ?? null,
         amount: d.amount,
-        message: d.message,
-        avatar_url: d.profiles?.avatar_url ?? null,
+        message: d.message ?? null,
+        avatar_url: d.avatar_url ?? null,
         created_at: d.created_at,
       }))
     },

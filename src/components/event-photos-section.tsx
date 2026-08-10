@@ -45,6 +45,11 @@ export function EventPhotosSection({
   const camera = useCamera()
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [uploadCount, setUploadCount] = useState({ done: 0, total: 0 })
+  // Human label for the item currently uploading. supabase-js storage.upload
+  // exposes no byte-progress callback, so a big video would otherwise sit on a
+  // bare "Uploading 1 of 1"; label it so the user knows a large file is moving
+  // and to keep the app open. (True byte-% needs an XHR/tus rewrite - follow-up.)
+  const [uploadNote, setUploadNote] = useState('')
 
   const isRecent = useMemo(() => {
     if (!eventEndIso) return false
@@ -81,6 +86,11 @@ export function EventPhotosSection({
     input.onchange = async () => {
       const picked = Array.from(input.files ?? [])
       cleanup()
+      // Tell the user when we're only taking the first batch, instead of
+      // silently dropping the extras they selected.
+      if (picked.length > MAX_PER_UPLOAD) {
+        toast.info(`Adding the first ${MAX_PER_UPLOAD} - pick the rest in another batch.`)
+      }
       const files = picked.slice(0, MAX_PER_UPLOAD)
       if (files.length === 0) return
 
@@ -101,7 +111,17 @@ export function EventPhotosSection({
       setUploadCount({ done: 0, total: okFiles.length })
       let ok = 0
       let firstError = ''
-      for (const f of okFiles) {
+      for (let idx = 0; idx < okFiles.length; idx++) {
+        const f = okFiles[idx]
+        const isVid = f.type.startsWith('video/') || /\.(mp4|mov|webm|m4v)$/i.test(f.name)
+        const isBig = f.size > 20 * 1024 * 1024
+        const noun = isVid ? 'video' : 'photo'
+        const position = okFiles.length > 1 ? ` ${idx + 1} of ${okFiles.length}` : ''
+        setUploadNote(
+          isVid || isBig
+            ? `Uploading ${noun}${position} - large file, keep the app open…`
+            : `Uploading ${noun}${position}…`,
+        )
         try {
           await upload.mutateAsync({ blob: f })
           ok++
@@ -111,6 +131,7 @@ export function EventPhotosSection({
         setUploadCount((p) => ({ ...p, done: p.done + 1 }))
       }
       setUploadCount({ done: 0, total: 0 })
+      setUploadNote('')
       const fail = okFiles.length - ok
       if (ok > 0) toast.success(`Added ${ok} item${ok !== 1 ? 's' : ''}`)
       // Surface the real reason (e.g. the size message) rather than a bare count.
@@ -226,8 +247,10 @@ export function EventPhotosSection({
                     />
                   ) : (
                     <img data-eos-src="dynamic" data-eos-src-label="Url" data-eos-id="src/components/event-photos-section.tsx#25"
-                      src={p.url}
+                      src={p.thumbUrl ?? p.url}
                       alt={p.caption ?? ''}
+                      width={400}
+                      height={400}
                       loading="lazy"
                       decoding="async"
                       className="w-full h-full object-cover"
@@ -249,7 +272,7 @@ export function EventPhotosSection({
       {uploadCount.total > 0 && (
         <div data-eos-id="src/components/event-photos-section.tsx#28" data-eos-var="uploadCount.done,uploadCount.total" data-eos-var-label="Done, Total" data-eos-var-scope="prop" className="mt-3 flex items-center gap-2 rounded-sm bg-primary-50 ring-1 ring-primary-100 p-3 text-xs font-semibold text-primary-700">
           <Loader2 data-eos-id="src/components/event-photos-section.tsx#29" size={14} className="animate-spin" />
-          Uploading {uploadCount.done} of {uploadCount.total}…
+          {uploadNote || `Uploading ${uploadCount.done} of ${uploadCount.total}…`}
         </div>
       )}
 
@@ -301,6 +324,7 @@ export function PhotoCarouselLightbox({
   onDelete?: (photo: EventPhoto) => void
   currentUserId: string | null
 }) {
+  const { toast } = useToast()
   const [index, setIndex] = useState(initialIndex)
   const containerRef = useRef<HTMLDivElement>(null)
   const x = useMotionValue(0)
@@ -382,9 +406,28 @@ export function PhotoCarouselLightbox({
 
   async function handleSave() {
     if (!current.url) return
+    const isVid = isVideoPath(current.storage_path)
+    const noun = isVid ? 'Video' : 'Photo'
     try {
-      await saveToCameraRoll(current.url, current.storage_path, current.caption ?? undefined)
-    } catch { /* user cancelled or save failed quietly */ }
+      const outcome = await saveToCameraRoll(current.url, current.storage_path, current.caption ?? undefined)
+      switch (outcome) {
+        case 'saved':
+          toast.success(`${noun} saved to your photos`)
+          break
+        case 'downloaded':
+          toast.success(`${noun} saved to your device`)
+          break
+        case 'opened':
+          toast.info('Opened in a new tab - press and hold to save')
+          break
+        case 'failed':
+          toast.error(`Could not save that ${noun.toLowerCase()}. Please try again.`)
+          break
+        // 'shared' -> the share sheet is its own feedback; 'cancelled' -> user backed out. No toast.
+      }
+    } catch {
+      toast.error(`Could not save that ${noun.toLowerCase()}. Please try again.`)
+    }
   }
   // Keep the latest handleSave bound to the long-press ref so the
   // setTimeout closure always invokes the freshest closure (handleSave

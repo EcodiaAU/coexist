@@ -2,6 +2,15 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import { readFileSync } from 'fs'
+
+// App version sourced from package.json at build time so Settings shows the
+// REAL build (2.2.x), not a hand-maintained literal that drifts. On native the
+// UI overrides this with @capacitor/app App.getInfo() (version + native build
+// number); on web this compile-time constant is the source of truth.
+const pkgVersion = JSON.parse(
+  readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'),
+).version as string
 
 // Absolute root base for BOTH web (Vercel) and Capacitor (iOS WKWebView via
 // capacitor://localhost/ + Android WebView via https://localhost/, see
@@ -20,6 +29,9 @@ import path from 'path'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: '/',
+  define: {
+    __APP_VERSION__: JSON.stringify(pkgVersion),
+  },
   server: {
     allowedHosts: true,
   },

@@ -39,9 +39,16 @@ export interface ChatSearchProps {
 /* ------------------------------------------------------------------ */
 
 export function ChatSearch({ collectiveId, onClose }: ChatSearchProps) {
-  const { searchQuery, results, isLoading, search } = useChatSearch(collectiveId)
+  const { searchQuery, results, isLoading, search, clearSearch } = useChatSearch(collectiveId)
   const showSearchLoading = useDelayedLoading(isLoading)
   const [query, setQuery] = useState('')
+
+  // Clearing the field (SearchBar X, Escape, or emptying it) must also drop the
+  // committed search so stale result cards disappear and the idle prompt returns.
+  const handleClear = () => {
+    setQuery('')
+    clearSearch()
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
@@ -50,6 +57,7 @@ export function ChatSearch({ collectiveId, onClose }: ChatSearchProps) {
           value={query}
           onChange={setQuery}
           onSubmit={search}
+          onClear={handleClear}
           placeholder="Search messages..."
           compact
           autoFocus
@@ -64,7 +72,13 @@ export function ChatSearch({ collectiveId, onClose }: ChatSearchProps) {
       <div className="flex-1 overflow-y-auto p-4">
         {showSearchLoading ? (
           <Skeleton variant="list-item" count={5} />
-        ) : results.length === 0 && searchQuery ? (
+        ) : !searchQuery ? (
+          <EmptyState
+            illustration="search"
+            title="Search this chat"
+            description="Find a message by keyword, then tap to jump back to it."
+          />
+        ) : results.length === 0 ? (
           <EmptyState
             illustration="search"
             title="No messages found"

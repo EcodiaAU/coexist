@@ -23,6 +23,11 @@ type ProfileBaseRow = Database['public']['Tables']['profiles']['Row']
  */
 export type ProfileRow = ProfileBaseRow & {
   viewer_can_see_sensitive?: boolean
+  // False only when the target opted into "Only collective members" profile
+  // visibility AND the viewer is not self / a fellow active collective member /
+  // admin. get_user_profile_v1 then returns name + avatar only. Undefined on
+  // older payloads and own-profile reads => treated as visible.
+  viewer_can_see_profile?: boolean
   is_self?: boolean
 }
 
@@ -51,6 +56,7 @@ export function useProfile(userId?: string) {
           // branch on viewer_can_see_sensitive (ProfileModal etc) treat
           // the user's own data as visible.
           viewer_can_see_sensitive: true,
+          viewer_can_see_profile: true,
           is_self: true,
         }
       }

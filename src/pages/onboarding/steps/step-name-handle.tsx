@@ -9,10 +9,9 @@ interface StepNameHandleProps {
   instagramHandle?: string
   onChange: (name: string, handle?: string) => void
   onNext: () => void
-  onSkip: () => void
 }
 
-export function StepNameHandle({ displayName, onChange, onNext, onSkip }: StepNameHandleProps) {
+export function StepNameHandle({ displayName, onChange, onNext }: StepNameHandleProps) {
   const shouldReduceMotion = useReducedMotion()
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -71,9 +70,9 @@ export function StepNameHandle({ displayName, onChange, onNext, onSkip }: StepNa
         <Button variant="primary" size="lg" fullWidth onClick={handleContinue}>
           Continue
         </Button>
-        <Button variant="ghost" size="lg" fullWidth onClick={onSkip}>
-          Skip for now
-        </Button>
+        {/* No "Skip" here: a display name is identity-defining and cheap to
+            provide. Skipping stranded the user as the literal "New User" in
+            their collective + group chats with no later nudge (O2). */}
       </div>
     </div>
   )
