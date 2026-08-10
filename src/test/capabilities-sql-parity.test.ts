@@ -20,7 +20,15 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { ROLE_DEFAULT_CAPS, CAPABILITY_KEYS } from '@/lib/capabilities'
 
-const MIGRATION = resolve(
+// coexist_role_caps() was redefined by D2/F306 (drop the dead manage_finances
+// default). The canonical definition therefore lives in the newest migration
+// that redefines it; parse the role-cap arrays from THERE. The has_cap() RLS
+// gate coverage is scanned across BOTH migrations (each canonically adds gates).
+const CAPS_MIGRATION = resolve(
+  __dirname,
+  '../../supabase/migrations/20260810120000_d2_security_authz_rls_write.sql',
+)
+const RLS_MIGRATION = resolve(
   __dirname,
   '../../supabase/migrations/20260714030000_capabilities_enforced_in_db.sql',
 )
@@ -33,7 +41,8 @@ function sqlCapsFor(sql: string, branchMatcher: RegExp): string[] {
 }
 
 describe('capabilities: TypeScript and SQL agree', () => {
-  const sql = readFileSync(MIGRATION, 'utf8')
+  const sql = readFileSync(CAPS_MIGRATION, 'utf8')
+  const gatesSql = readFileSync(RLS_MIGRATION, 'utf8') + '\n' + sql
 
   it('admin caps in SQL match ROLE_DEFAULT_CAPS.admin (the full catalog)', () => {
     const sqlAdmin = sqlCapsFor(sql, /when p_role in \('admin', 'super_admin'\) then array\[([\s\S]*?)\]/)
@@ -54,7 +63,7 @@ describe('capabilities: TypeScript and SQL agree', () => {
   })
 
   it('every capability the RLS policies gate on exists in the catalog', () => {
-    const gated = new Set([...sql.matchAll(/has_cap\('([a-z_]+)'\)/g)].map((m) => m[1]))
+    const gated = new Set([...gatesSql.matchAll(/has_cap\('([a-z_]+)'\)/g)].map((m) => m[1]))
     expect(gated.size).toBeGreaterThan(0)
     for (const cap of gated) {
       expect(CAPABILITY_KEYS, `RLS gates on '${cap}' but it is not in CAPABILITIES`).toContain(cap)

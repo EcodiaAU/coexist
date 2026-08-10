@@ -46,10 +46,11 @@ describe('1.8.5 item 7 - admin-page capability tier discipline', () => {
       expect(caps.has('view_audit_log')).toBe(true)
     })
 
-    it('manager does NOT have manage_finances or manage_charity by default', () => {
-      // These are admin-only per ROLE_DEFAULT_CAPS - manager set excludes them.
+    it('manager does NOT have manage_system by default', () => {
+      // manage_system is admin-only per ROLE_DEFAULT_CAPS - manager set excludes it.
+      // (manage_finances was removed entirely in D2/F306 - it was a dead cap.)
       const caps = resolveCapabilities('manager')
-      expect(caps.has('manage_finances')).toBe(false)
+      expect(caps.has('manage_system')).toBe(false)
       expect(caps.has('manage_charity')).toBe(true) // charity IS in manager set
     })
 
@@ -88,8 +89,8 @@ describe('1.8.5 item 7 - admin-page capability tier discipline', () => {
     })
 
     it('admin with revoke can be narrowed', () => {
-      const caps = resolveCapabilities('admin', { manage_finances: false })
-      expect(caps.has('manage_finances')).toBe(false)
+      const caps = resolveCapabilities('admin', { manage_system: false })
+      expect(caps.has('manage_system')).toBe(false)
       expect(caps.size).toBe(CAPABILITY_KEYS.length - 1)
     })
   })

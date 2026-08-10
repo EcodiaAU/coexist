@@ -42,10 +42,12 @@ export interface CarpoolSeat {
   id: string
   carpool_id: string
   passenger_id: string
-  /** May be null when RLS hides this column for non-driver / non-passenger viewers */
-  pickup_address_text: string | null
-  pickup_lat: number | null
-  pickup_lng: number | null
+  // pickup_address_text / pickup_lat / pickup_lng are DELIBERATELY not on the
+  // seat-list shape. They are private home-pickup PII that must never be
+  // transmitted to co-members. Column SELECT on them is revoked from the
+  // authenticated role (migration 20260810120000); the viewer's own pickup
+  // and (for the driver) each passenger's pickup are fetched on demand via
+  // the get_carpool_seat_pickup SECURITY DEFINER RPC.
   status: CarpoolSeatStatus
   created_at: string
   passenger?: CarpoolDriverProfile | null
@@ -113,8 +115,13 @@ export function useCarpoolSeats(carpoolId: string | undefined) {
         }
       })
         .from('carpool_seats')
+        // Explicit column list: NEVER select pickup_address_text/lat/lng here.
+        // Those are private home addresses (see CarpoolSeat above); selecting
+        // them would leak every passenger's home into the shared React Query
+        // cache of every co-member. RLS grants row read to all members and
+        // cannot mask columns, so the omission is the guard.
         .select(
-          '*, passenger:profiles!carpool_seats_passenger_id_fkey(id, display_name, avatar_url)',
+          'id, carpool_id, passenger_id, status, created_at, passenger:profiles!carpool_seats_passenger_id_fkey(id, display_name, avatar_url)',
         )
         .eq('carpool_id', carpoolId)
         .order('created_at', { ascending: true })

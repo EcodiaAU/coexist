@@ -35,8 +35,12 @@ export const CAPABILITIES: CapabilityDef[] = [
   { key: 'manage_surveys', label: 'Manage Surveys', description: 'Create/edit surveys and view responses', category: 'operations' },
 
   // Finance & Merch
+  // NOTE: manage_finances was removed (D2/F306) - it was a catalogue + role
+  // default that gated ZERO routes/nav/RLS, so toggling it changed nothing
+  // observable and eroded trust in the permission model. Re-add it here AND
+  // wire it to real finance-surface gates (UI + RLS) together if a dedicated
+  // finance permission is ever needed. manage_charity below IS wired.
   { key: 'manage_merch', label: 'Manage Merch', description: 'Product CRUD, inventory, orders', category: 'finance' },
-  { key: 'manage_finances', label: 'Manage Finances', description: 'View donations, refunds, financial reports', category: 'finance' },
   { key: 'manage_charity', label: 'Manage Charity', description: 'Charity settings and donation config', category: 'finance' },
 
   // System & Reports
