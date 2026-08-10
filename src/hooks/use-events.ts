@@ -1684,11 +1684,14 @@ export function useCancelEvent() {
           .in('status', ['registered', 'waitlisted', 'invited']),
       ])
 
-      const { error } = await supabase
-        .from('events')
-        .update({ status: 'cancelled' })
-        .eq('id', eventId)
-      if (error) throw error
+      // Cancel server-side: flips status AND refunds paid tickets / cancels free
+      // ones (client-side status flip left paid holders charged with no notice).
+      const { data: cancelData, error: cancelErr } = await supabase.functions.invoke('cancel-event', {
+        body: { event_id: eventId },
+      })
+      if (cancelErr) throw cancelErr
+      const cancelRes = (cancelData ?? {}) as { ok?: boolean; error?: string; refunded?: number; cancelled?: number; failed?: number }
+      if (cancelRes.error) throw new Error(cancelRes.error)
 
       // Notify all registered/waitlisted/invited attendees
       if (event && registrations?.length) {
@@ -1711,6 +1714,8 @@ export function useCancelEvent() {
           }).catch(console.error)
         }
       }
+
+      return cancelRes
     },
     onMutate: async ({ eventId }) => {
       await queryClient.cancelQueries({ queryKey: ['event', eventId] })

@@ -266,80 +266,24 @@ export function useCancelPendingTicket() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ ticketId, eventId }: { ticketId: string; eventId: string }) => {
-      const { error } = await supabase
-        .from('event_tickets')
-        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-        .eq('id', ticketId)
-        .eq('status', 'pending')
+    mutationFn: async ({ ticketId }: { ticketId: string; eventId: string }) => {
+      // event_tickets has SELECT-only RLS (no UPDATE policy), so a client
+      // UPDATE here matched zero rows and reported a false success while the
+      // ticket stayed pending. Cancellation goes through an owner-scoped
+      // SECURITY DEFINER RPC that flips ONLY the caller's own pending ticket
+      // and returns whether a row actually changed.
+      const { data, error } = await supabase.rpc('cancel_my_pending_ticket', {
+        p_ticket_id: ticketId,
+      })
       if (error) throw error
+      if (data !== true) {
+        throw new Error('That ticket could not be cancelled - it may have already expired or been confirmed.')
+      }
     },
     onSuccess: (_, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['my-event-ticket', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-ticket-types', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-tickets'] })
-    },
-  })
-}
-
-/* ------------------------------------------------------------------ */
-/*  Ticket check-in (scan QR code → check in)                         */
-/* ------------------------------------------------------------------ */
-
-/**
- * Check in a ticket by its code. Updates both the ticket status
- * and the event_registration to maintain compatibility with the
- * existing attendee/impact flow.
- */
-export function useTicketCheckIn() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ ticketCode, eventId }: { ticketCode: string; eventId: string }) => {
-      // Look up the ticket by code
-      const { data: ticket, error: lookupErr } = await supabase
-        .from('event_tickets')
-        .select('id, event_id, user_id, status')
-        .eq('ticket_code', ticketCode.toUpperCase().trim())
-        .maybeSingle()
-
-      if (lookupErr) throw lookupErr
-      if (!ticket) throw new Error('Ticket not found. Check the code and try again.')
-      if (ticket.event_id !== eventId) throw new Error('This ticket is for a different event.')
-      if (ticket.status === 'checked_in') throw new Error('Already checked in.')
-      if (ticket.status !== 'confirmed') throw new Error(`Ticket status is "${ticket.status}" - cannot check in.`)
-
-      // Update ticket status
-      const { error: updateErr } = await supabase
-        .from('event_tickets')
-        .update({
-          status: 'checked_in',
-          checked_in_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', ticket.id)
-        .eq('status', 'confirmed')
-
-      if (updateErr) throw updateErr
-
-      // Update event_registration to 'attended' (for impact/attendee flow)
-      await supabase
-        .from('event_registrations')
-        .update({
-          status: 'attended',
-          checked_in_at: new Date().toISOString(),
-        })
-        .eq('event_id', ticket.event_id)
-        .eq('user_id', ticket.user_id)
-        .in('status', ['registered', 'invited'])
-
-      return { ticketId: ticket.id, userId: ticket.user_id }
-    },
-    onSuccess: (_, { eventId }) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-event-tickets', eventId] })
-      queryClient.invalidateQueries({ queryKey: ['ticket-sales-summary', eventId] })
-      queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
-      queryClient.invalidateQueries({ queryKey: ['event', eventId] })
     },
   })
 }

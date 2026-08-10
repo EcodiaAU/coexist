@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/skeleton'
 import { OGMeta } from '@/components/og-meta'
 import { formatTime } from '@/lib/date-format'
 import { WebFooter } from '@/components/web-footer'
+import { CampoutGuestRequirementsModal } from '@/components/campout-guest-requirements-modal'
 
 type CampoutType = 'outback' | 'rainforest'
 
@@ -103,20 +104,31 @@ export default function CampoutTypePage() {
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [showReqs, setShowReqs] = useState(false)
 
   const rows = dates ?? []
   const selected = rows.find((r) => r.id === selectedId) ?? null
   const cover = rows.find((r) => r.cover_image_url)?.cover_image_url ?? null
 
-  async function book() {
+  // Every event on this page is a camp-out, so dietary + medical are mandatory
+  // before checkout. The Book button opens the requirements modal; its answers
+  // flow into book(). guest-ticket-checkout is the server-side choke-point that
+  // also enforces + persists them.
+  function startBooking() {
     if (!selected?.ticket_type_id || selected.sold_out) return
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setErr('Please enter a valid email address'); return }
+    setErr(null)
+    setShowReqs(true)
+  }
+
+  async function book(reqs: { dietary: string; medical: string }) {
+    if (!selected?.ticket_type_id || selected.sold_out) return
     setBusy(true); setErr(null)
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/guest-ticket-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: import.meta.env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
-        body: JSON.stringify({ event_id: selected.id, ticket_type_id: selected.ticket_type_id, email: email.trim(), name: name.trim(), quantity: 1 }),
+        body: JSON.stringify({ event_id: selected.id, ticket_type_id: selected.ticket_type_id, email: email.trim(), name: name.trim(), quantity: 1, dietary: reqs.dietary, medical: reqs.medical }),
       })
       const out = await res.json()
       if (!res.ok || !out.url) throw new Error(out.error || 'Could not start checkout')
@@ -124,6 +136,7 @@ export default function CampoutTypePage() {
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not start checkout')
       setBusy(false)
+      setShowReqs(false)
     }
   }
 
@@ -279,7 +292,7 @@ export default function CampoutTypePage() {
                       <input value={email} onChange={(e) => { setEmail(e.target.value); setErr(null) }} type="email" inputMode="email" autoComplete="email" placeholder="Email for your ticket" className="w-full rounded-md border border-neutral-200 px-4 py-3 text-neutral-900 outline-none focus:border-primary-500" />
                     </div>
                     {err && <p className="mt-2 text-sm text-error-500">{err}</p>}
-                    <Button variant="primary" size="lg" fullWidth loading={busy} disabled={busy} onClick={book} className="mt-3">
+                    <Button variant="primary" size="lg" fullWidth loading={busy} disabled={busy} onClick={startBooking} className="mt-3">
                       {`Book ${formatDate(selected.date_start)}${selected.price_cents !== null ? ` - $${(selected.price_cents / 100).toFixed(0)}` : ''}`}
                     </Button>
                     <p className="mt-2.5 text-center text-xs text-neutral-400">No account needed. We&apos;ll email your ticket and a link to the group chat.</p>
@@ -290,6 +303,13 @@ export default function CampoutTypePage() {
           </div>
         </div>
       </main>
+
+      <CampoutGuestRequirementsModal
+        open={showReqs}
+        submitting={busy}
+        onClose={() => { if (!busy) setShowReqs(false) }}
+        onSubmit={(vals) => { void book(vals) }}
+      />
 
       <WebFooter />
     </div>

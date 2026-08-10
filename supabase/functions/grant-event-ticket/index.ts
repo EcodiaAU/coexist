@@ -152,6 +152,13 @@ Deno.serve(withSentry('grant-event-ticket', async (req: Request) => {
       }
     } else {
       // ---- Insert a free confirmed ticket (bypasses capacity, like the claim flow) ----
+      // COMP EXEMPTION (D6, backlog:478): grant deliberately does NOT run
+      // validate_ticket_answers. This is a staff-initiated comp with no answer
+      // UI in the issue sheet; the genuine safety data (dietary + medical) is a
+      // profile field enforced app-wide by the path-agnostic DietaryGate for any
+      // live-ticket holder, NOT an event_ticket_question, so the comped recipient
+      // is still caught for dietary/medical. The exempted required questions are
+      // logistics/consent. Answers passed in body.answers are stored verbatim.
       for (let attempt = 0; attempt < 4 && !ticketId; attempt++) {
         const codeVal = ticketCode()
         const { data: inserted, error: insErr } = await supabase

@@ -16,6 +16,8 @@ import { WebFooter } from '@/components/web-footer'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 import { TicketQuestionsModal } from '@/components/ticket-questions-modal'
 import { useEventTicketQuestions, type TicketAnswers } from '@/hooks/use-event-ticket-questions'
+import { CampoutGuestRequirementsModal } from '@/components/campout-guest-requirements-modal'
+import { isCampoutActivity } from '@/lib/dietary'
 
 function formatDate(date: string, _legacyTz?: string) {
   // Floating local time (Tate 2026-05-25): stored wall-clock is the
@@ -87,13 +89,17 @@ export default function PublicEventPage() {
   const [buying, setBuying] = useState(false)
   const [buyError, setBuyError] = useState<string | null>(null)
   const [showGuestQuestions, setShowGuestQuestions] = useState(false)
+  const [showCampoutReqs, setShowCampoutReqs] = useState(false)
+  const [campoutReqs, setCampoutReqs] = useState<{ dietary: string; medical: string } | null>(null)
   const { data: ticketQuestions = [] } = useEventTicketQuestions(id)
 
   const activeTypeId = selectedType ?? ticketTypes?.[0]?.id ?? null
   const activeType = ticketTypes?.find((t) => t.id === activeTypeId) ?? null
+  const isCampout = isCampoutActivity((event as { activity_type?: string } | undefined)?.activity_type)
 
-  async function doGuestCheckout(answers?: TicketAnswers) {
+  async function doGuestCheckout(answers?: TicketAnswers, reqs?: { dietary: string; medical: string } | null) {
     if (!activeTypeId) return
+    const safety = reqs ?? campoutReqs
     setBuying(true)
     setBuyError(null)
     try {
@@ -111,6 +117,7 @@ export default function PublicEventPage() {
           name: buyName.trim(),
           quantity: 1,
           answers: answers ?? null,
+          ...(safety ? { dietary: safety.dietary, medical: safety.medical } : {}),
         }),
       })
       const out = await res.json()
@@ -122,10 +129,28 @@ export default function PublicEventPage() {
     }
   }
 
+  // After the camp-out dietary/medical step, continue to custom questions (if
+  // any) or straight to checkout, carrying the just-collected answers.
+  function continueAfterCampoutReqs(reqs: { dietary: string; medical: string }) {
+    setCampoutReqs(reqs)
+    setShowCampoutReqs(false)
+    if (ticketQuestions.length > 0) {
+      setShowGuestQuestions(true)
+      return
+    }
+    void doGuestCheckout(undefined, reqs)
+  }
+
   function handleBuy() {
     if (!activeTypeId) return
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyEmail.trim())) {
       setBuyError('Please enter a valid email address')
+      return
+    }
+    // Camp-outs are catered + remote: collect the mandatory dietary/medical
+    // safety info first (server also enforces). Then custom questions, then pay.
+    if (isCampout && !campoutReqs) {
+      setShowCampoutReqs(true)
       return
     }
     // Collect custom question answers first if the event has any.
@@ -481,6 +506,13 @@ export default function PublicEventPage() {
       </motion.div>
 
       <WebFooter />
+
+      <CampoutGuestRequirementsModal
+        open={showCampoutReqs}
+        submitting={buying}
+        onClose={() => { if (!buying) setShowCampoutReqs(false) }}
+        onSubmit={continueAfterCampoutReqs}
+      />
 
       <TicketQuestionsModal
         open={showGuestQuestions}

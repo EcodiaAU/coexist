@@ -109,6 +109,18 @@ Deno.serve(withSentry('claim-event-ticket', async (req: Request) => {
     if (!tt) return json({ error: 'This event has no ticket type' }, 400)
 
     // ---- Insert a free confirmed ticket (bypasses capacity; pre-paid elsewhere) ----
+    // COMP / MIGRATION EXEMPTION (D6, backlog:478): unlike reserve_event_ticket,
+    // claim does NOT run validate_ticket_answers. This is deliberate. The claim
+    // link is the low-friction Eventbrite-migration path (pre-paid link-holders,
+    // no answer UI); hard-enforcing an event's required custom questions here
+    // would break that migration for exactly the campout shape it serves (Wild
+    // Mountains carried a required consent question + a claim token). The genuine
+    // safety data (dietary + medical) is NOT an event_ticket_question - it lives
+    // on the profile and is enforced app-wide by the path-agnostic DietaryGate,
+    // which fires for ANY live-ticket holder on an upcoming ticketed event
+    // regardless of how the ticket was obtained. So a claimed attendee is still
+    // caught for dietary/medical; the exempted custom questions are logistics/
+    // consent. Answers passed in body.answers are still stored verbatim.
     let ticketId: string | null = null
     for (let attempt = 0; attempt < 4 && !ticketId; attempt++) {
       const { data: inserted, error: insErr } = await supabase

@@ -794,8 +794,15 @@ export default function EventDetailPage() {
     cancelEventMutation.mutate(
       { eventId: event.id, reason: cancelReason },
       {
-        onSuccess: () => {
-          toast.success('Event cancelled')
+        onSuccess: (res) => {
+          const r = res as { refunded?: number; failed?: number } | undefined
+          if (r?.failed && r.failed > 0) {
+            toast.error(`Event cancelled, but ${r.failed} refund(s) could not be processed. Check Stripe.`)
+          } else if (r?.refunded && r.refunded > 0) {
+            toast.success(`Event cancelled. ${r.refunded} paid ticket${r.refunded === 1 ? '' : 's'} refunded.`)
+          } else {
+            toast.success('Event cancelled')
+          }
           setShowCancelEventSheet(false)
         },
         onError: () => toast.error('Failed to cancel event'),
@@ -1105,7 +1112,13 @@ export default function EventDetailPage() {
                 size="md"
                 fullWidth={!myTicket.stripe_checkout_session_id || isStale}
                 onClick={() => {
-                  cancelPendingTicket.mutate({ ticketId: myTicket.id, eventId: event.id })
+                  cancelPendingTicket.mutate(
+                    { ticketId: myTicket.id, eventId: event.id },
+                    {
+                      onSuccess: () => toast.success(isStale ? 'Cleared - you can try again' : 'Ticket cancelled'),
+                      onError: (e) => toast.error(e instanceof Error ? e.message : 'Could not cancel the ticket'),
+                    },
+                  )
                 }}
                 loading={cancelPendingTicket.isPending}
               >
@@ -2068,7 +2081,7 @@ export default function EventDetailPage() {
               Cancel Event
             </h3>
             <p className="text-caption text-neutral-500 mt-1">
-              All registered and invited attendees will be notified. This cannot be undone.
+              All registered and invited attendees will be notified, and anyone who paid for a ticket will be automatically refunded. This cannot be undone.
             </p>
           </div>
           <Input
