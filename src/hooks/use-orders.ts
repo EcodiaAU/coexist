@@ -57,10 +57,15 @@ export function useMyOrders() {
     queryKey: ['my-orders', user?.id],
     enabled: !!user,
     queryFn: async () => {
+      // Exclude 'pending' orders from history: they are unpaid checkout sessions
+      // (an abandoned Stripe page leaves the row 'pending' forever, with no reaper).
+      // A real purchase becomes 'processing' the moment the webhook lands, so the
+      // history never loses a paid order (#7).
       const { data, error } = await supabase
         .from('merch_orders')
         .select('*')
         .eq('user_id', user!.id)
+        .neq('status', 'pending')
         .order('created_at', { ascending: false })
       if (error) throw error
       return data as unknown as Order[]
@@ -90,6 +95,11 @@ export function useOrder(orderId: string | undefined) {
       return data as unknown as Order
     },
     staleTime: 2 * 60 * 1000,
+    // Poll while the order is still 'pending' so the confirmation page reflects
+    // the webhook flipping it to 'processing' without a manual refresh (#11).
+    // Stops polling the moment it leaves pending.
+    refetchInterval: (query) =>
+      (query.state.data as Order | undefined)?.status === 'pending' ? 3000 : false,
   })
 }
 

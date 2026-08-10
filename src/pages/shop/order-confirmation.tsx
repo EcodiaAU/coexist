@@ -245,7 +245,14 @@ function OrderSummaryCard({
     )
   }
 
-  const config = STATUS_CONFIG[order.status]
+  // While the webhook is still catching up, the order sits 'pending' for a few
+  // seconds after a successful payment. Soften that momentary badge rather than
+  // showing a scary "Pending" over a confetti success hero (#11); useOrder polls
+  // it to 'processing' automatically.
+  const config =
+    order.status === 'pending'
+      ? { label: 'Finalizing payment', color: 'bg-info-100 text-info-800' }
+      : STATUS_CONFIG[order.status]
   const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0)
 
   return (

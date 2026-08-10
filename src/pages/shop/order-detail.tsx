@@ -12,8 +12,8 @@ import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { useToast } from '@/components/toast'
-import { useOrder, useRequestReturn } from '@/hooks/use-orders'
-import { formatPrice, type OrderStatus } from '@/types/merch'
+import { useOrder, useRequestReturn, useMyReturns } from '@/hooks/use-orders'
+import { formatPrice, type OrderStatus, type ShippingAddress } from '@/types/merch'
 import { cn } from '@/lib/cn'
 
 const STATUS_STEPS: OrderStatus[] = ['pending', 'processing', 'shipped', 'delivered']
@@ -70,6 +70,7 @@ export default function OrderDetailPage() {
   const shouldReduceMotion = useReducedMotion()
   const { toast } = useToast()
   const { data: order, isLoading } = useOrder(orderId)
+  const { data: myReturns } = useMyReturns()
   const showLoading = useDelayedLoading(isLoading)
   const requestReturn = useRequestReturn()
 
@@ -123,7 +124,29 @@ export default function OrderDetailPage() {
     )
   }
 
-  const canReturn = order.status === 'delivered' && !order.return_requested
+  // A return already filed for this order hides the button. Backed by the real
+  // return_requests table (the old order.return_requested flag was client-only
+  // and never persisted, so the button never hid after a reload, #9).
+  const hasOpenReturn = (myReturns ?? []).some(
+    (r) => r.order_id === order.id && r.status !== 'denied',
+  )
+  const canReturn = order.status === 'delivered' && !hasOpenReturn
+
+  // shipping_address is nullable in the DB (flat shipping_* columns are the
+  // alternate); render defensively so an order with no JSON address does not
+  // crash the page (#6).
+  const addr = order.shipping_address as ShippingAddress | null
+  const flat = order as unknown as {
+    shipping_name?: string | null
+    shipping_city?: string | null
+    shipping_state?: string | null
+    shipping_postcode?: string | null
+  }
+  const addrName = addr?.full_name ?? flat.shipping_name ?? null
+  const addrCity = addr?.city ?? flat.shipping_city ?? null
+  const addrState = addr?.state ?? flat.shipping_state ?? null
+  const addrPostcode = addr?.postcode ?? flat.shipping_postcode ?? null
+  const hasAddress = Boolean(addr?.line1 || addrName || addrCity)
 
   return (
     <Page swipeBack header={<Header title={`Order #${order.id.slice(0, 8)}`} back />}>
@@ -198,13 +221,21 @@ export default function OrderDetailPage() {
             </h3>
           </div>
           <div className="p-3 rounded-sm bg-white shadow-sm border border-neutral-100 text-sm text-neutral-900">
-            <p className="font-medium">{order.shipping_address.full_name}</p>
-            <p>{order.shipping_address.line1}</p>
-            {order.shipping_address.line2 && <p>{order.shipping_address.line2}</p>}
-            <p>
-              {order.shipping_address.city}, {order.shipping_address.state}{' '}
-              {order.shipping_address.postcode}
-            </p>
+            {hasAddress ? (
+              <>
+                {addrName && <p className="font-medium">{addrName}</p>}
+                {addr?.line1 && <p>{addr.line1}</p>}
+                {addr?.line2 && <p>{addr.line2}</p>}
+                {(addrCity || addrState || addrPostcode) && (
+                  <p>
+                    {[addrCity, addrState].filter(Boolean).join(', ')}
+                    {addrPostcode ? ` ${addrPostcode}` : ''}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-neutral-500">No shipping address on file</p>
+            )}
           </div>
         </motion.section>
 

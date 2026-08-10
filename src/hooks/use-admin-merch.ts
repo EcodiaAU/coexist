@@ -280,16 +280,24 @@ export function useRefundOrder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (orderId: string) => {
-      // Mark order as refunded - actual Stripe refund should be processed
-      // via Stripe dashboard. The charge.refunded webhook handles inventory
-      // restoration automatically.
-      const { error } = await supabase
-        .from('merch_orders')
-        .update({ status: 'refunded', updated_at: new Date().toISOString() })
-        .eq('id', orderId)
+      // Issue a REAL Stripe refund server-side (admin-gated edge fn). The refund
+      // triggers the charge.refunded webhook, which is the single owner of
+      // status='refunded' + inventory restore + the buyer refund email. We do NOT
+      // flip status here: a status-only flag left the customer charged and stock
+      // un-restored, resting on the admin remembering to also refund in Stripe.
+      const { data, error } = await supabase.functions.invoke('refund-order', {
+        body: { order_id: orderId },
+      })
       if (error) throw error
+      if (data && (data as { error?: string }).error) {
+        throw new Error((data as { error: string }).error)
+      }
+      return data as { success: true; refund_id: string; amount_refunded_cents: number }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-orders'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-orders'] })
+      qc.invalidateQueries({ queryKey: ['admin-returns'] })
+    },
   })
 }
 
@@ -347,13 +355,19 @@ export function useUpsertVariant() {
 /*  Order admin notes                                                  */
 /* ------------------------------------------------------------------ */
 
-// Note: admin_notes column doesn't exist on merch_orders yet.
-// This is a no-op placeholder until the column is added via migration.
+// admin_notes column added by migration 20260810140000. Persists for real now;
+// never toast success on a no-op (the mutation throws if the write is rejected).
 export function useUpdateOrderNotes() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ orderId, notes }: { orderId: string; notes: string }) => {
-      console.warn('[useUpdateOrderNotes] admin_notes column not yet on merch_orders, skipping update for', orderId, notes)
+      const { data, error } = await supabase
+        .from('merch_orders')
+        .update({ admin_notes: notes, updated_at: new Date().toISOString() } as Database['public']['Tables']['merch_orders']['Update'])
+        .eq('id', orderId)
+        .select('id')
+      if (error) throw error
+      if (!data || data.length === 0) throw new Error('Notes not saved - check permissions')
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-orders'] }),
   })
@@ -505,7 +519,13 @@ export function useSalesAnalytics(period: 'week' | 'month' | 'year') {
       if (error) throw error
 
       const orders = (data ?? []) as unknown as OrderRow[]
-      const total_revenue_cents = orders.reduce((sum, o) => sum + (o.total_cents ?? 0), 0)
+      // Product revenue = sum of item line totals (excludes the shipping line and
+      // reconciles with the by_product cards). The old headline summed total_cents,
+      // which folds in shipping and never matched the product breakdown (#23).
+      const total_revenue_cents = orders.reduce((sum, o) => {
+        if (!Array.isArray(o.items)) return sum
+        return sum + (o.items as OrderItemRow[]).reduce((s, i) => s + (i.price_cents ?? 0) * (i.quantity ?? 1), 0)
+      }, 0)
       const total_orders = orders.length
       const total_units_sold = orders.reduce((sum, o) => {
         if (!Array.isArray(o.items)) return sum
@@ -546,6 +566,28 @@ export function useSalesAnalytics(period: 'week' | 'month' | 'year') {
 /*  Export orders CSV                                                   */
 /* ------------------------------------------------------------------ */
 
+/** Build a human-readable single-line address for the orders CSV from the
+ *  JSONB shipping_address (the real shape checkout writes), falling back to the
+ *  flat shipping_* columns. Previously interpolated the JSONB object directly,
+ *  rendering "[object Object]" in every row (#22). Exported for unit tests. */
+export function formatCsvAddress(o: Record<string, unknown>): string {
+  const sa = o.shipping_address as
+    | { full_name?: string; line1?: string; line2?: string | null; city?: string; state?: string; postcode?: string; phone?: string | null }
+    | null
+    | undefined
+  if (sa && typeof sa === 'object' && (sa.line1 || sa.city)) {
+    const street = [sa.line1, sa.line2].filter(Boolean).join(', ')
+    const region = [sa.city, sa.state, sa.postcode].filter(Boolean).join(' ')
+    return [street, region].filter(Boolean).join(', ')
+  }
+  // Legacy / fallback flat columns
+  const region = [o.shipping_city, o.shipping_state, o.shipping_postcode]
+    .map((v) => (v == null ? '' : String(v)))
+    .filter(Boolean)
+    .join(' ')
+  return region
+}
+
 export async function exportOrdersCsv(statusFilter?: OrderStatus) {
   let query = supabase
     .from('merch_orders')
@@ -567,9 +609,7 @@ export async function exportOrdersCsv(statusFilter?: OrderStatus) {
       : '',
     total: (((o.total_cents as number) ?? 0) / 100).toFixed(2),
     tracking: (o.tracking_number as string) ?? '',
-    address: o.shipping_address
-      ? `${o.shipping_address}, ${(o.shipping_city as string) ?? ''} ${(o.shipping_state as string) ?? ''} ${(o.shipping_postcode as string) ?? ''}`
-      : '',
+    address: formatCsvAddress(o),
   }))
 
   if (rows.length === 0) return

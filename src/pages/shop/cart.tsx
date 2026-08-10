@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
@@ -11,7 +11,7 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { useToast } from '@/components/toast'
 import { useCart } from '@/hooks/use-cart'
-import { validatePromoCode } from '@/hooks/use-merch'
+import { validatePromoCode, useShippingConfig } from '@/hooks/use-merch'
 import {
     useMyReservations,
     useReservationCountdown,
@@ -80,6 +80,21 @@ export default function CartPage() {
   const totalCents = useCart((s) => s.totalCents())
   const linePriceCents = useCart((s) => s.linePriceCents)
   const hasUnpricedItems = useCart((s) => s.hasUnpricedItems())
+
+  // Load the admin shipping_config into the cart so the displayed shipping,
+  // total and "free over $N" copy match what create-checkout charges server-side
+  // (the cart previously used a hardcoded $9.95 / free-over-$100 default, so the
+  // math and the "$75" copy both diverged from the live config, #5 / PB3).
+  const setShippingConfig = useCart((s) => s.setShippingConfig)
+  const shippingConfig = useCart((s) => s.shippingConfig)
+  const { data: liveShipConfig } = useShippingConfig()
+  useEffect(() => {
+    if (liveShipConfig) setShippingConfig(liveShipConfig)
+  }, [liveShipConfig, setShippingConfig])
+  const freeShipLabel =
+    shippingConfig.free_shipping_threshold_cents != null
+      ? `Free over $${Math.round(shippingConfig.free_shipping_threshold_cents / 100)}`
+      : 'Flat-rate shipping'
 
   const { release, reserve } = useReserveStock()
   const { getReservation } = useMyReservations()
@@ -188,7 +203,7 @@ export default function CartPage() {
           <div className="flex items-center gap-4 mt-8 px-5 py-3 rounded-md bg-white border border-neutral-100 shadow-sm">
             <div className="flex items-center gap-1.5 text-neutral-500">
               <Truck size={14} />
-              <span className="text-xs font-medium">Free over $75</span>
+              <span className="text-xs font-medium">{freeShipLabel}</span>
             </div>
             <div className="w-px h-4 bg-neutral-200" />
             <div className="flex items-center gap-1.5 text-neutral-500">
@@ -462,7 +477,7 @@ export default function CartPage() {
           <motion.div variants={fadeUp} className="flex items-center justify-center gap-4 py-3">
             <div className="flex items-center gap-1.5 text-neutral-400">
               <Truck size={13} />
-              <span className="text-xs font-medium">Free over $75</span>
+              <span className="text-xs font-medium">{freeShipLabel}</span>
             </div>
             <div className="w-px h-3.5 bg-neutral-200" />
             <div className="flex items-center gap-1.5 text-neutral-400">

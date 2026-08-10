@@ -33,12 +33,26 @@ export default function ShippingTab() {
   }, [config])
 
   const handleSave = useCallback(async () => {
+    // Validate before persisting: a non-numeric or negative entry used to be
+    // stored as 'NaN' and silently reverted to the $9.95 default on next read (#21).
+    const flat = Number(flatRate)
+    if (flatRate.trim() === '' || !Number.isFinite(flat) || flat < 0) {
+      toast.error('Flat rate must be $0 or more')
+      return
+    }
+    let threshold: number | null = null
+    if (freeThreshold.trim() !== '') {
+      const t = Number(freeThreshold)
+      if (!Number.isFinite(t) || t < 0) {
+        toast.error('Free shipping threshold must be $0 or more (or leave it empty)')
+        return
+      }
+      threshold = Math.round(t * 100)
+    }
     try {
       await updateConfig.mutateAsync({
-        flat_rate_cents: Math.round(Number(flatRate) * 100),
-        free_shipping_threshold_cents: freeThreshold
-          ? Math.round(Number(freeThreshold) * 100)
-          : null,
+        flat_rate_cents: Math.round(flat * 100),
+        free_shipping_threshold_cents: threshold,
       })
       toast.success('Shipping config updated')
     } catch {

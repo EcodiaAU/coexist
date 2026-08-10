@@ -80,10 +80,10 @@ const CARD_STATUS_GRADIENTS: Record<string, string> = {
 }
 
 const RETURN_STATUS_COLORS: Record<ReturnStatus, string> = {
-  requested: 'bg-warning-100 text-warning-800',
+  pending: 'bg-warning-100 text-warning-800',
   approved: 'bg-success-100 text-success-800',
   denied: 'bg-error-100 text-error-700',
-  refunded: 'bg-plum-100 text-plum-800',
+  completed: 'bg-plum-100 text-plum-800',
 }
 
 const STATUS_FLOW: OrderStatus[] = ['pending', 'processing', 'shipped', 'delivered']
@@ -271,7 +271,7 @@ function ReturnsBanner({ orderId }: { orderId: string }) {
               <p className="text-sm text-neutral-400 mb-1">
                 <span className="font-medium">Reason:</span> {ret.reason}
               </p>
-              {ret.status === 'requested' && (
+              {ret.status === 'pending' && (
                 <div className="flex gap-2 mt-2">
                   <Button
                     variant="primary"
@@ -326,7 +326,7 @@ function AllReturnsList() {
   if (showLoading) return <Skeleton variant="text" count={3} />
   if (!returns || returns.length === 0) return null
 
-  const pending = returns.filter((r) => r.status === 'requested')
+  const pending = returns.filter((r) => r.status === 'pending')
   if (pending.length === 0) return null
 
   return (
@@ -462,9 +462,9 @@ export default function OrdersTab() {
     if (!refundTarget) return
     try {
       await refundOrder.mutateAsync(refundTarget.id)
-      toast.success('Refund initiated - process via Stripe dashboard')
-    } catch {
-      toast.error('Failed to process refund')
+      toast.success('Refund issued to the customer')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to process refund')
     }
     setRefundTarget(null)
   }, [refundTarget, refundOrder, toast])
@@ -830,7 +830,7 @@ export default function OrdersTab() {
                 </Button>
               )}
 
-              {['pending', 'processing'].includes(selectedOrder.status) && (
+              {['processing', 'shipped', 'delivered'].includes(selectedOrder.status) && (
                 <Button
                   variant="danger"
                   fullWidth
@@ -851,7 +851,7 @@ export default function OrdersTab() {
         onClose={() => setRefundTarget(null)}
         onConfirm={handleRefund}
         title="Refund order?"
-        description={`This will mark the order as refunded (${formatPrice(refundTarget?.total_cents ?? 0)}). Process the actual refund via Stripe dashboard.`}
+        description={`This issues a full Stripe refund of ${formatPrice(refundTarget?.total_cents ?? 0)} to the customer and restores stock. This cannot be undone.`}
         confirmLabel="Refund"
         variant="danger"
       />

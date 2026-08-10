@@ -206,12 +206,43 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             }
           }
 
-          // Re-fetch order for email template data
+          // 2b. Release the buyer's stock reservations now the purchase settled,
+          //     so units are not double-held (decrement above + reservation) for
+          //     up to the 15-min reservation TTL (#8).
+          if (metadata.user_id) {
+            const { error: relErr } = await supabase.rpc('release_all_reservations', {
+              p_user_id: metadata.user_id,
+            })
+            if (relErr) console.error('[stripe-webhook] reservation release failed:', relErr.message)
+          }
+
+          // 2c. Increment promo usage on real payment (moved off session-create so
+          //     an abandoned cart never burns a limited-use code, #10).
+          const promoId = typeof metadata.promo_code_id === 'string' ? metadata.promo_code_id : ''
+          if (promoId) {
+            const { data: promoRow } = await supabase
+              .from('promo_codes')
+              .select('id, max_uses')
+              .eq('id', promoId)
+              .maybeSingle()
+            if (promoRow) {
+              const { error: incrErr } = await supabase.rpc('increment_promo_uses', {
+                p_promo_id: promoRow.id,
+                p_max_uses: promoRow.max_uses ?? 999999,
+              })
+              if (incrErr) console.error('[stripe-webhook] promo increment failed:', incrErr.message)
+            }
+          }
+
+          // Re-fetch order for email template data (incl. server-computed breakdown)
           const { data: order } = await supabase
             .from('merch_orders')
-            .select('items')
+            .select('items, subtotal_cents, shipping_cents, discount_cents, total_cents')
             .eq('id', orderId)
             .single()
+
+          const centsToStr = (c: number | null | undefined) =>
+            typeof c === 'number' ? `$${(c / 100).toFixed(2)}` : ''
 
           // 3. Award points for merch purchase (1 point per $2 spent)
           const merchPoints = Math.floor(amountDollars / 2)
@@ -229,9 +260,9 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             order_id: orderId.slice(0, 8),
             items: order?.items ?? [],
             total: `$${amountDollars.toFixed(2)}`,
-            subtotal: '',
-            shipping: '',
-            discount: '',
+            subtotal: centsToStr(order?.subtotal_cents),
+            shipping: centsToStr(order?.shipping_cents),
+            discount: order?.discount_cents ? centsToStr(order.discount_cents) : '',
             shipping_address: {},
             order_url: `https://app.coexistaus.org/shop/orders/${orderId}`,
           })

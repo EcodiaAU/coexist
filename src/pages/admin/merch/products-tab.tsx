@@ -224,6 +224,8 @@ function ProductFormSheet({
   const [options, setOptions] = useState<VariantOption[]>([])
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
+  // Two-step confirm for a save that drops a variant still holding stock (#19)
+  const dropWarnedRef = useRef(false)
 
   // Populate form
   useEffect(() => {
@@ -236,6 +238,7 @@ function ProductFormSheet({
       setStatus(product?.status ?? 'draft')
       setImages(product?.images ?? [])
       setOptions(product?.variants?.length ? extractOptionsFromVariants(product.variants) : [])
+      dropWarnedRef.current = false
     }
   }, [open, product])
 
@@ -279,14 +282,32 @@ function ProductFormSheet({
       return
     }
 
+    const productSlug = slug.trim() || name.trim().toLowerCase().replace(/\s+/g, '-')
+    const variantsToSave = generatedVariants.map((v) => ({
+      ...v,
+      price_cents: v.price_cents || priceNum,
+    }))
+
+    // Warn before an edit that drops a variant that still holds stock (a renamed
+    // option mints a fresh stock:0 variant, so the old one and its stock vanish).
+    // First Save with such a drop warns and aborts; a second Save proceeds (#19).
+    if (product) {
+      const dropped = (product.variants ?? []).filter(
+        (v) => (v.stock ?? 0) > 0 && !variantsToSave.some((n) => n.id === v.id),
+      )
+      if (dropped.length > 0 && !dropWarnedRef.current) {
+        dropWarnedRef.current = true
+        toast.error(
+          `This removes ${dropped.length} variant${dropped.length !== 1 ? 's' : ''} that still hold stock (${dropped
+            .map((v) => variantLabel(v))
+            .join(', ')}). Save again to confirm.`,
+        )
+        return
+      }
+    }
+
     setSaving(true)
     try {
-      const productSlug = slug.trim() || name.trim().toLowerCase().replace(/\s+/g, '-')
-      const variantsToSave = generatedVariants.map((v) => ({
-        ...v,
-        price_cents: v.price_cents || priceNum,
-      }))
-
       if (product) {
         await updateProduct.mutateAsync({
           id: product.id,
@@ -304,6 +325,13 @@ function ProductFormSheet({
           .update({ variants: variantsToSave })
           .eq('id', product.id)
         if (variantError) throw variantError
+        // Reconcile merch_inventory to the new variant set: seed rows for added
+        // variants, drop orphan rows for removed variants (#19). Keeps the
+        // authoritative inventory table from splitting from the JSONB.
+        const { error: syncError } = await supabase.rpc('sync_variant_inventory', {
+          p_product_id: product.id,
+        })
+        if (syncError) console.error('[products-tab] sync_variant_inventory failed:', syncError.message)
       } else {
         const created = await createProduct.mutateAsync({
           name: name.trim(),
@@ -320,9 +348,14 @@ function ProductFormSheet({
             .from('merch_products')
             .update({ variants: variantsToSave.map((v) => ({ ...v, product_id: newId })) })
             .eq('id', newId)
+          const { error: syncError } = await supabase.rpc('sync_variant_inventory', {
+            p_product_id: newId,
+          })
+          if (syncError) console.error('[products-tab] sync_variant_inventory failed:', syncError.message)
         }
       }
 
+      dropWarnedRef.current = false
       toast.success(product ? 'Product updated' : 'Product created')
       onClose()
     } catch {
@@ -710,11 +743,10 @@ function StockAdjustSheet({
   const { toast } = useToast()
   const adjustStock = useAdjustStock()
   const [adjustment, setAdjustment] = useState('')
-  const [reason, setReason] = useState('')
 
   const handleSave = useCallback(async () => {
     const adj = Number(adjustment)
-    if (isNaN(adj) || adj === 0 || !reason.trim()) return
+    if (isNaN(adj) || adj === 0) return
     try {
       await adjustStock.mutateAsync({ productId, variantKey: variantId, adjustment: adj })
       toast.success(`Stock adjusted by ${adj > 0 ? '+' : ''}${adj}`)
@@ -722,7 +754,7 @@ function StockAdjustSheet({
     } catch {
       toast.error('Failed to adjust stock')
     }
-  }, [productId, variantId, adjustment, reason, adjustStock, toast, onClose])
+  }, [productId, variantId, adjustment, adjustStock, toast, onClose])
 
   return (
     <BottomSheet open={open} onClose={onClose}>
@@ -734,12 +766,6 @@ function StockAdjustSheet({
           value={adjustment}
           onChange={(e) => setAdjustment(e.target.value)}
           helperText="Positive to add, negative to remove"
-          required
-        />
-        <Input
-          label="Reason"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
           required
         />
         <Button variant="primary" fullWidth loading={adjustStock.isPending} onClick={handleSave}>

@@ -56,7 +56,9 @@ function PromoFormSheet({
   const [code, setCode] = useState('')
   const [type, setType] = useState<PromoType>('percentage')
   const [value, setValue] = useState('')
+  const [minOrder, setMinOrder] = useState('')
   const [maxUses, setMaxUses] = useState('')
+  const [startsAt, setStartsAt] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
   const [isActive, setIsActive] = useState(true)
 
@@ -67,7 +69,9 @@ function PromoFormSheet({
         setCode(promo?.code ?? '')
         setType(promo?.type ?? 'percentage')
         setValue(promo ? String(promo.value) : '')
+        setMinOrder(promo?.min_order_amount != null ? String(promo.min_order_amount) : '')
         setMaxUses(promo?.max_uses ? String(promo.max_uses) : '')
+        setStartsAt(promo?.valid_from?.slice(0, 10) ?? '')
         setExpiresAt(promo?.valid_to?.slice(0, 10) ?? '')
         setIsActive(promo?.is_active ?? true)
       })
@@ -75,8 +79,29 @@ function PromoFormSheet({
   }, [open, promo])
 
   const handleSave = useCallback(async () => {
-    if (!code.trim() || !value) {
-      toast.error('Code and value are required')
+    if (!code.trim()) {
+      toast.error('Code is required')
+      return
+    }
+    // free_shipping carries no value; every other type needs a valid one (#14/#16/P4B2)
+    if (type !== 'free_shipping') {
+      const num = Number(value)
+      if (!value || !Number.isFinite(num)) {
+        toast.error('Enter a discount value')
+        return
+      }
+      if (type === 'percentage' && (num <= 0 || num > 100)) {
+        toast.error('Percentage must be between 1 and 100')
+        return
+      }
+      if (type === 'flat' && num <= 0) {
+        toast.error('Amount must be greater than $0')
+        return
+      }
+    }
+    const minNum = minOrder ? Number(minOrder) : null
+    if (minNum != null && (!Number.isFinite(minNum) || minNum < 0)) {
+      toast.error('Minimum order must be $0 or more')
       return
     }
     try {
@@ -84,8 +109,10 @@ function PromoFormSheet({
         ...(promo ? { id: promo.id } : {}),
         code: code.toUpperCase().trim(),
         type,
-        value: Number(value),
+        value: type === 'free_shipping' ? 0 : Number(value),
+        min_order_amount: minNum,
         max_uses: maxUses ? Number(maxUses) : null,
+        valid_from: startsAt || null,
         valid_to: expiresAt || null,
         is_active: isActive,
       })
@@ -94,7 +121,7 @@ function PromoFormSheet({
     } catch {
       toast.error('Failed to save promo')
     }
-  }, [code, type, value, maxUses, expiresAt, isActive, promo, upsert, toast, onClose])
+  }, [code, type, value, minOrder, maxUses, startsAt, expiresAt, isActive, promo, upsert, toast, onClose])
 
   // Prevent Enter key from bubbling out of inputs
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -140,19 +167,30 @@ function PromoFormSheet({
 
         {type !== 'free_shipping' && (
           <Input
-            label={type === 'percentage' ? 'Percentage' : 'Amount (cents)'}
+            label={type === 'percentage' ? 'Percentage (1-100)' : 'Amount ($)'}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             required
           />
         )}
         <Input
+          label="Minimum order ($, optional)"
+          value={minOrder}
+          onChange={(e) => setMinOrder(e.target.value)}
+        />
+        <Input
           label="Max uses (optional)"
           value={maxUses}
           onChange={(e) => setMaxUses(e.target.value)}
         />
         <Input
-          label="Expires"
+          label="Starts (optional)"
+          type="date"
+          value={startsAt}
+          onChange={(e) => setStartsAt(e.target.value)}
+        />
+        <Input
+          label="Expires (optional)"
           type="date"
           value={expiresAt}
           onChange={(e) => setExpiresAt(e.target.value)}

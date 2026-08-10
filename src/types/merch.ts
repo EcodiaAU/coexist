@@ -13,7 +13,12 @@ export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number]
 
 export type ProductStatus = 'active' | 'archived' | 'draft'
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
-export type ReturnStatus = 'requested' | 'approved' | 'denied' | 'refunded'
+// Must match the return_requests_status_check DB constraint exactly
+// (status IN ('pending','approved','denied','completed'), default 'pending').
+// The storefront inserts with no status, so the DB default 'pending' applies;
+// the admin console filters/actions key on 'pending' (was 'requested', which
+// matched neither the DB nor the storefront - every return was invisible, P4B1).
+export type ReturnStatus = 'pending' | 'approved' | 'denied' | 'completed'
 export type PromoType = 'percentage' | 'flat' | 'free_shipping'
 
 export interface ProductVariant {

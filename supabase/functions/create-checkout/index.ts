@@ -289,10 +289,118 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
           })
         }
 
-        // Add shipping as a line item (validate it's a positive integer)
-        const shippingCents = typeof body.shipping_cents === 'number' && body.shipping_cents > 0
-          ? Math.round(body.shipping_cents)
-          : 0
+        // `serverTotalCents` is now the product subtotal (server-verified prices,
+        // pre-shipping, pre-discount). Everything below the products is computed
+        // SERVER-SIDE from the DB - never from the client. The amount recorded on
+        // the order must equal the amount Stripe charges.
+        const productSubtotalCents = serverTotalCents
+
+        // ---- Server-authoritative stock check (prevent oversell; PB4) ----
+        // merch_inventory (keyed by the variant UUID) is the sale-decrement source
+        // of truth. Reject if any variant's requested quantity exceeds live stock.
+        // Aggregate quantity per variant first (a cart may list the same variant
+        // twice). A variant with no inventory row is treated as untracked (allowed),
+        // matching prior behaviour; every live variant is seeded by sync_variant_inventory.
+        {
+          const stockProductIds = [...new Set((body.items as Array<{ product_id: string }>).map((i) => i.product_id))]
+          const { data: invRows } = await supabase
+            .from('merch_inventory')
+            .select('product_id, variant_key, stock_count')
+            .in('product_id', stockProductIds)
+          const stockMap = new Map<string, number>()
+          for (const r of invRows ?? []) stockMap.set(`${r.product_id}:${r.variant_key}`, r.stock_count ?? 0)
+          const wanted = new Map<string, number>()
+          for (const it of body.items as Array<{ product_id: string; variant_id: string; quantity: number }>) {
+            const k = `${it.product_id}:${it.variant_id}`
+            wanted.set(k, (wanted.get(k) ?? 0) + it.quantity)
+          }
+          for (const [k, qty] of wanted) {
+            if (stockMap.has(k) && qty > (stockMap.get(k) ?? 0)) {
+              return json({ error: 'insufficient_stock', message: 'One or more items are out of stock. Please adjust your cart.', variant_id: k.split(':')[1] }, 409)
+            }
+          }
+        }
+
+        // ---- Shipping computed server-side from admin shipping_config (PB3) ----
+        // The storefront's hardcoded default is ignored here; the admin's live
+        // shipping_config table is authoritative. This also makes the "free over
+        // $N" copy truthful (the threshold both surfaces read is the same DB row).
+        let flatRateCents = 995
+        let freeThresholdCents: number | null = null
+        {
+          const { data: shipRows } = await supabase.from('shipping_config').select('key, value')
+          for (const r of shipRows ?? []) {
+            if (r.key === 'flat_rate_cents') {
+              const n = parseInt(String(r.value), 10)
+              if (Number.isFinite(n) && n >= 0) flatRateCents = n
+            }
+            if (r.key === 'free_shipping_threshold_cents') {
+              const n = r.value ? parseInt(String(r.value), 10) : NaN
+              freeThresholdCents = Number.isFinite(n) && n >= 0 ? n : null
+            }
+          }
+        }
+
+        // ---- Promo re-validated + discount computed server-side (PB5/PB7/#16) ----
+        // The client cart never dictates the discount. A percentage is clamped
+        // to 0-100, min_order_amount is re-checked here, and the discount is
+        // converted to a FIXED amount_off in cents scoped to the product subtotal,
+        // so a percentage code can never eat the shipping line (PB7 divergence).
+        let discountCents = 0
+        let freeShipping = false
+        let validatedPromo: { id: string; code: string; max_uses: number | null } | null = null
+        if (body.promo_code_id) {
+          const { data: promo } = await supabase
+            .from('promo_codes')
+            .select('*')
+            .eq('id', body.promo_code_id)
+            .single()
+          if (!promo || !promo.is_active) {
+            return json({ error: 'That code is invalid or is no longer active.' }, 400)
+          }
+          const nowDate = new Date()
+          const windowOk =
+            (!promo.valid_from || new Date(promo.valid_from) <= nowDate) &&
+            (!promo.valid_to || new Date(promo.valid_to) >= nowDate)
+          const usesOk = !promo.max_uses || (promo.uses_count ?? 0) < promo.max_uses
+          if (!windowOk || !usesOk) {
+            return json({ error: 'That code is invalid or has expired.' }, 400)
+          }
+          if (promo.min_order_amount && productSubtotalCents < Math.round(Number(promo.min_order_amount) * 100)) {
+            return json({ error: `This code needs a minimum order of $${Number(promo.min_order_amount).toFixed(2)}.` }, 400)
+          }
+          if (promo.type === 'percentage') {
+            const pct = Math.min(100, Math.max(0, Number(promo.value) || 0))
+            discountCents = Math.round(productSubtotalCents * (pct / 100))
+          } else if (promo.type === 'flat') {
+            discountCents = Math.min(productSubtotalCents, Math.max(0, Math.round(Number(promo.value) * 100)))
+          } else if (promo.type === 'free_shipping') {
+            freeShipping = true
+          }
+          validatedPromo = { id: promo.id, code: promo.code, max_uses: promo.max_uses ?? null }
+        }
+
+        // Note: member_discount is dead client plumbing (no member-tier source
+        // exists server-side); the server never trusts a client member discount,
+        // so it can never understate the recorded total below the real charge (PB5).
+
+        const discountedSubtotalCents = Math.max(0, productSubtotalCents - discountCents)
+        let shippingCents = 0
+        if (!freeShipping) {
+          if (freeThresholdCents != null && discountedSubtotalCents >= freeThresholdCents) shippingCents = 0
+          else shippingCents = flatRateCents
+        }
+
+        // Stripe payment-mode Checkout cannot settle a total below A$0.50. If a
+        // discount would drop the total under the floor, cap the discount so the
+        // recorded total and the coupon stay in lock-step and Stripe can charge.
+        const STRIPE_MIN_CENTS = 50
+        if (productSubtotalCents - discountCents + shippingCents < STRIPE_MIN_CENTS && discountCents > 0) {
+          discountCents = Math.max(0, productSubtotalCents + shippingCents - STRIPE_MIN_CENTS)
+        }
+        const dbTotalCents = Math.max(0, productSubtotalCents - discountCents + shippingCents)
+
+        // Add shipping as its own line item (never discounted; see amount_off below)
         if (shippingCents > 0) {
           lineItems.push({
             price_data: {
@@ -302,26 +410,21 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
             },
             quantity: 1,
           })
-          serverTotalCents += shippingCents
         }
 
-        // Compute server-side discount cents (applied after line items are built)
-        // Note: the actual Stripe coupon handles the discount in Stripe's total,
-        // but we need to record accurate cents in our DB for order display.
-        const serverSubtotalCents = serverTotalCents - shippingCents
-        const discountCents = typeof body.discount_cents === 'number' ? Math.max(0, Math.round(body.discount_cents)) : 0
-        const memberDiscountCents = typeof body.member_discount_cents === 'number' ? Math.max(0, Math.round(body.member_discount_cents)) : 0
-        const dbTotalCents = Math.max(0, serverSubtotalCents - memberDiscountCents - discountCents + shippingCents)
-
-        // Insert pending order into DB
+        // Insert pending order into DB with the full server-computed breakdown
         const { data: order, error: orderError } = await supabase
           .from('merch_orders')
           .insert({
             user_id: body.user_id,
             status: 'pending',
             items: body.items,
+            subtotal_cents: productSubtotalCents,
+            shipping_cents: shippingCents,
+            discount_cents: discountCents,
             total_cents: dbTotalCents,
             total: dbTotalCents / 100,
+            promo_code_id: validatedPromo?.id ?? null,
             shipping_address: body.shipping_address,
           })
           .select()
@@ -342,65 +445,29 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
             type: 'merch',
             order_id: order.id,
             user_id: body.user_id,
+            promo_code_id: validatedPromo?.id ?? '',
           },
         }
 
-        // Apply promo code: look it up and add Stripe discount
-        if (body.promo_code_id) {
-          const { data: promo } = await supabase
-            .from('promo_codes')
-            .select('*')
-            .eq('id', body.promo_code_id)
-            .single()
-
-          if (promo && promo.is_active) {
-            // Check max_uses limit before applying
-            if (promo.max_uses && promo.uses_count >= promo.max_uses) {
-              return json({ error: 'Promo code has reached its usage limit' }, 400)
-            }
-
-            // Create a Stripe coupon matching the promo
-            const couponParams: Stripe.CouponCreateParams = {
-              currency: 'aud',
-              name: promo.code,
-            }
-            if (promo.type === 'percentage') {
-              couponParams.percent_off = Number(promo.value)
-            } else if (promo.type === 'flat') {
-              // DB stores value in dollars; Stripe amount_off expects cents
-              couponParams.amount_off = Math.round(Number(promo.value) * 100)
-            }
-            // free_shipping is handled by zeroing shipping_cents client-side
-
-            if (couponParams.percent_off || couponParams.amount_off) {
-              const coupon = await stripe.coupons.create(couponParams)
-              sessionParams.discounts = [{ coupon: coupon.id }]
-            }
-
-          }
+        // Apply the discount as a single fixed amount_off coupon (scoped to the
+        // product subtotal). Stripe subtracts it from the whole-order total, but
+        // because discountCents <= productSubtotalCents the shipping line is never
+        // reduced: Stripe total == productSubtotal + shipping - discount == dbTotalCents.
+        if (discountCents > 0) {
+          const coupon = await stripe.coupons.create({
+            currency: 'aud',
+            amount_off: discountCents,
+            duration: 'once',
+            name: validatedPromo?.code ?? 'Discount',
+          })
+          sessionParams.discounts = [{ coupon: coupon.id }]
         }
 
         const session = await stripe.checkout.sessions.create(sessionParams)
 
-        // Increment promo usage AFTER Stripe session is created successfully.
-        // This prevents wasting a promo use if session creation fails.
-        if (body.promo_code_id) {
-          const { data: promoForIncr } = await supabase
-            .from('promo_codes')
-            .select('id, max_uses')
-            .eq('id', body.promo_code_id)
-            .single()
-
-          if (promoForIncr) {
-            const { error: incrError } = await supabase.rpc('increment_promo_uses', {
-              p_promo_id: promoForIncr.id,
-              p_max_uses: promoForIncr.max_uses ?? 999999,
-            })
-            if (incrError) {
-              console.error('[create-checkout] Promo increment failed:', incrError.message)
-            }
-          }
-        }
+        // Promo usage is incremented on the webhook checkout.session.completed
+        // handler (on real payment), NOT here on session creation, so an abandoned
+        // cart never burns a limited-use code (#10).
 
         return json({ session_id: session.id, url: session.url })
       }

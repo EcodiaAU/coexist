@@ -95,7 +95,10 @@ function InlineStepper({
       try {
         await adjustStock.mutateAsync({
           productId: item.product.id,
-          variantKey: item.variant.sku || item.variant.id,
+          // Canonical variant_key is the variant UUID across every writer/reader
+          // (sale/refund path + sync_variant_inventory). Keying by SKU here split
+          // merch_inventory into a restock row (SKU) the sale path never read (#18).
+          variantKey: item.variant.id,
           adjustment: adj,
         })
       } catch {
@@ -164,7 +167,10 @@ function BatchAdjustSheet({
       try {
         await adjustStock.mutateAsync({
           productId: item.product.id,
-          variantKey: item.variant.sku || item.variant.id,
+          // Canonical variant_key is the variant UUID across every writer/reader
+          // (sale/refund path + sync_variant_inventory). Keying by SKU here split
+          // merch_inventory into a restock row (SKU) the sale path never read (#18).
+          variantKey: item.variant.id,
           adjustment: adj,
         })
         successCount++

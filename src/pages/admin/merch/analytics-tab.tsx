@@ -71,7 +71,7 @@ export default function AnalyticsTab() {
       <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <StatCard
           value={formatPrice(analytics.total_revenue_cents)}
-          label="Revenue"
+          label="Product revenue"
           icon={<DollarSign size={20} />}
         />
         <StatCard
