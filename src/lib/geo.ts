@@ -119,6 +119,7 @@ export const COLLECTIVE_SLUG_COORDS: Record<string, MapCenter> = {
   townsville: { lat: -19.259, lng: 146.8169 },
   cairns: { lat: -16.9186, lng: 145.7781 },
   tamworth: { lat: -31.0927, lng: 150.932 },
+  darwin: { lat: -12.4634, lng: 130.8456 },
 }
 
 /**

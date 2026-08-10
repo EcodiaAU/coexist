@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/use-auth'
  *   coexist://share/impact             → /profile (impact tab)
  *   coexist://share/event/{id}         → /events/{id}
  */
-function resolveDeepLinkPath(rawPath: string): string {
+export function resolveDeepLinkPath(rawPath: string): string {
   // Normalise: strip leading/trailing slashes, lowercase
   const segments = rawPath.replace(/^\/+|\/+$/g, '').split('/')
 
@@ -39,6 +39,36 @@ function resolveDeepLinkPath(rawPath: string): string {
     default:
       return `/${rawPath}`
   }
+}
+
+/**
+ * Resolve a native appUrlOpen URL (custom scheme OR universal link) to an
+ * in-app route, or null to ignore it.
+ *
+ * new URL() does NOT throw on a custom scheme like `coexist://events/abc`:
+ * it parses `events` as the host and leaves pathname `/abc`, so feeding
+ * url.pathname to the resolver produces a bare, unmatched route (`/abc`) that
+ * renders the 404. Custom schemes are therefore scheme-stripped
+ * (coexist://events/abc -> events/abc); only http(s) universal links use
+ * url.pathname (https://app.coexistaus.org/events/abc -> /events/abc).
+ */
+export function resolveAppUrl(rawUrl: string | undefined | null): string | null {
+  const raw = (rawUrl ?? '').trim()
+  if (!raw) return null
+
+  let resolved: string
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      resolved = resolveDeepLinkPath(new URL(raw).pathname)
+    } catch {
+      return null
+    }
+  } else {
+    resolved = resolveDeepLinkPath(raw.replace(/^[^:]+:\/\/+/, ''))
+  }
+
+  if (!resolved || resolved === '/') return null
+  return resolved
 }
 
 export function useDeepLink() {
@@ -65,18 +95,8 @@ export function useDeepLink() {
         const { App } = await import('@capacitor/app')
 
         const listener = await App.addListener('appUrlOpen', (event) => {
-          let resolved: string | null = null
-          try {
-            // Universal link: https://coexist.app/events/abc → /events/abc
-            const url = new URL(event.url)
-            resolved = resolveDeepLinkPath(url.pathname)
-          } catch {
-            // Custom scheme: coexist://events/abc → /events/abc
-            const slug = event.url.replace(/^[^:]+:\/\//, '')
-            resolved = resolveDeepLinkPath(slug)
-          }
-
-          if (!resolved || resolved === '/') return
+          const resolved = resolveAppUrl(event.url)
+          if (!resolved) return
 
           // If auth is still loading (cold start), queue the route
           // so RequireAuth doesn't redirect to /login before session resolves

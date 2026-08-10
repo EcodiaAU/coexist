@@ -183,8 +183,13 @@ Deno.serve(withSentry('public-event-check-in', async (req: Request) => {
   const eventTz = (event.collectives as { timezone?: string } | null)?.timezone ?? 'Australia/Sydney'
   const eventDay = eventDateUTC(event.date_start)
   const today = todayInTz(eventTz)
+  // Friendly event-day label (wall-clock UTC slice, matching eventDay) so the
+  // off-day error names the actual date instead of a bare "not today".
+  const eventDayLabel = new Intl.DateTimeFormat('en-AU', {
+    timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short',
+  }).format(new Date(event.date_start))
   if (eventDay !== today) {
-    return json({ error: 'Check-in is only available on the day of the event' }, 422)
+    return json({ error: `Check-in opens on the day of the event, ${eventDayLabel}.`, event_day: eventDay }, 422)
   }
 
   // Parse client IP from x-forwarded-for (Supabase Edge Runtime sets this)
@@ -192,7 +197,16 @@ Deno.serve(withSentry('public-event-check-in', async (req: Request) => {
   const clientIp = forwarded.split(',')[0].trim() || '0.0.0.0'
   const userAgent = req.headers.get('user-agent') ?? ''
 
-  // Rate limit: max 5 attempts per IP per event per 15 minutes
+  // Rate limit: max 50 successful check-ins per IP per event per 15 minutes.
+  // A row is only written on a SUCCESSFUL walk-in (below), so this counter is a
+  // legitimate-check-in throttle, not an abuse counter. The old ceiling of 5
+  // blocked real group check-ins: at a campout/planting day dozens of phones
+  // share one NAT/CGNAT IP, so the 6th genuine attendee got a 429. 50 fits any
+  // realistic single-event arrival burst on a shared hotspot, and the partial
+  // unique index on event_walk_ins (event_id, lower(email)/phone) means
+  // re-scans/double-submits no longer consume budget (they short-circuit on
+  // 23505 before the rate-limit row is written).
+  const CHECK_IN_RATE_LIMIT = 50
   const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString()
   const { count: attemptCount } = await db
     .from('public_check_in_rate_limits')
@@ -201,7 +215,7 @@ Deno.serve(withSentry('public-event-check-in', async (req: Request) => {
     .eq('ip', clientIp)
     .gte('attempted_at', fifteenMinsAgo)
 
-  if ((attemptCount ?? 0) >= 5) {
+  if ((attemptCount ?? 0) >= CHECK_IN_RATE_LIMIT) {
     return json({ error: 'Too many check-in attempts, please wait a few minutes' }, 429)
   }
 
@@ -212,16 +226,33 @@ Deno.serve(withSentry('public-event-check-in', async (req: Request) => {
     try {
       const { data: { user } } = await db.auth.getUser(userToken)
       if (user?.id) {
-        // Insert event_registrations (ON CONFLICT DO NOTHING  -  idempotent)
-        await db.from('event_registrations').insert({
-          event_id: event.id,
-          user_id: user.id,
-          status: 'attended',
-          checked_in_at: new Date().toISOString(),
-        }).onConflict('user_id, event_id').ignore()
+        // Idempotent registration for a logged-in scanner so they appear on the
+        // leader roster. In supabase-js v2, onConflict/ignoreDuplicates are
+        // UPSERT options - the old `.insert(...).onConflict(...).ignore()` chain
+        // does not exist on the insert builder and threw a TypeError that the
+        // catch below swallowed, so this whole path was dead (the member was
+        // recorded only as an anonymous walk-in). Uses the real
+        // event_registrations_event_id_user_id_key unique constraint.
+        const { error: regErr } = await db
+          .from('event_registrations')
+          .upsert(
+            {
+              event_id: event.id,
+              user_id: user.id,
+              status: 'attended',
+              checked_in_at: new Date().toISOString(),
+            },
+            { onConflict: 'event_id,user_id', ignoreDuplicates: true },
+          )
+        if (regErr) {
+          console.error('[public-event-check-in] event_registrations upsert failed:', regErr.message)
+        }
       }
-    } catch {
-      // JWT validation failure is non-fatal  -  fall through to walk-in path
+    } catch (e) {
+      // JWT validation failure is non-fatal  -  fall through to walk-in path.
+      // Log it so a future silent throw here is visible (the old dead
+      // onConflict chain hid exactly this class of bug).
+      console.error('[public-event-check-in] optional-JWT registration failed:', (e as Error).message)
     }
   }
 
@@ -238,9 +269,17 @@ Deno.serve(withSentry('public-event-check-in', async (req: Request) => {
   })
 
   if (walkInError) {
+    // Idempotency: a re-scan / double-submit hits the partial unique index on
+    // (event_id, lower(email)) or (event_id, phone) for public_form walk-ins
+    // (ERRCODE 23505). That is not an error - the person is already on the list.
+    // Return a distinct success so the client can say "already checked in", and
+    // do NOT record a rate-limit attempt for it (return before the insert below).
+    if (walkInError.code === '23505') {
+      return json({ ok: true, already_checked_in: true, message: "You're already checked in!" })
+    }
     // Day-window trigger fires ERRCODE 22023 if not today (double-guard)
     if (walkInError.code === '22023') {
-      return json({ error: 'Check-in is only available on the day of the event' }, 422)
+      return json({ error: `Check-in opens on the day of the event, ${eventDayLabel}.`, event_day: eventDay }, 422)
     }
     console.error('walk_in insert error:', walkInError)
     return json({ error: 'Check-in failed, please try again' }, 500)

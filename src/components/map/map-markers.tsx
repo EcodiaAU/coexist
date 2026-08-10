@@ -26,13 +26,27 @@ export function useMapMarkers({ map, markers, onMarkerClick, fitBounds = true }:
   useEffect(() => {
     if (!map) return
 
-    // Clean previous cluster group
+    // Clean previous cluster group (clearLayers before removeLayer - see the
+    // teardown comment below re COEXIST-W's deferred-animation icon deref).
     if (clusterGroupRef.current) {
+      try { clusterGroupRef.current.clearLayers() } catch { /* already cleared */ }
       try { map.removeLayer(clusterGroupRef.current) } catch { /* layer already gone */ }
       clusterGroupRef.current = null
     }
 
     if (!markers?.length) return
+
+    // COEXIST-Y (Sentry 7661723303, TypeError "undefined is not an object
+    // (evaluating 'e.lat')"): leaflet dereferences each marker's coords as
+    // e.lat/e.lng when building L.marker([lat,lng]) and latLngBounds. A row with
+    // a null / NaN / undefined coord (an un-geocoded event or collective) throws
+    // inside leaflet, the cluster-add retry then fails deterministically a second
+    // time, and the WHOLE overlay is silently dropped. Filter to finite coords up
+    // front so one un-geocoded row can neither crash the map nor hide every pin.
+    const valid = markers.filter(
+      (m) => Number.isFinite(m.position?.lat) && Number.isFinite(m.position?.lng),
+    )
+    if (!valid.length) return
 
     // Defer the cluster add by one frame after the map signals ready.
     // On iOS WKWebView, the container's layout sometimes isn't fully
@@ -60,10 +74,22 @@ export function useMapMarkers({ map, markers, onMarkerClick, fitBounds = true }:
           maxClusterRadius: 50,
           spiderfyOnMaxZoom: true,
           showCoverageOnHover: false,
-          animate: true,
+          // COEXIST-W (Sentry 7645903029, TypeError "undefined is not an object
+          // (evaluating 'e.classList')"): the cluster zoom/spiderfy animation
+          // schedules async callbacks (via setTimeout/rAF inside markercluster)
+          // that reach `someMarker._icon.classList` a frame or two later. On a
+          // fast map teardown (KeepAlive hide, route change, explore->detail nav)
+          // the icon element is already removed, so the deferred callback derefs
+          // an undefined _icon and throws OUTSIDE our try/catch (the throw is in
+          // leaflet's own timer, not in our addLayer/removeLayer call). These are
+          // transient explore/detail maps where the cluster animation is a
+          // nicety, not essential - spiderfyOnMaxZoom still works without it -
+          // so disabling animation removes the async callback that races the
+          // unmount entirely.
+          animate: false,
         })
 
-        for (const m of markers) {
+        for (const m of valid) {
           const icon = createPinIcon(m.variant ?? 'default')
           const leafletMarker = L.marker([m.position.lat, m.position.lng], { icon })
 
@@ -85,9 +111,9 @@ export function useMapMarkers({ map, markers, onMarkerClick, fitBounds = true }:
         map.addLayer(group)
         clusterGroupRef.current = group
 
-        // Fit bounds if multiple markers
-        if (fitBounds && markers.length > 1) {
-          const bounds = L.latLngBounds(markers.map((m) => [m.position.lat, m.position.lng]))
+        // Fit bounds if multiple markers (finite-coord subset only).
+        if (fitBounds && valid.length > 1) {
+          const bounds = L.latLngBounds(valid.map((m) => [m.position.lat, m.position.lng]))
           map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 })
         }
       } catch (err) {
@@ -111,6 +137,12 @@ export function useMapMarkers({ map, markers, onMarkerClick, fitBounds = true }:
       cancelled = true
       if (rafId !== null) cancelAnimationFrame(rafId)
       if (clusterGroupRef.current) {
+        // COEXIST-W: clearLayers() first removes every child marker synchronously
+        // so any queued cluster animation has no icon to touch, THEN removeLayer
+        // detaches the (now-empty) group. Order matters - removing the group
+        // before clearing leaves markers whose deferred animation callback can
+        // still fire against a detached _icon.
+        try { clusterGroupRef.current.clearLayers() } catch { /* already cleared */ }
         try { map.removeLayer(clusterGroupRef.current) } catch { /* map already torn down */ }
         clusterGroupRef.current = null
       }

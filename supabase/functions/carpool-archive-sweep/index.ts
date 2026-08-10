@@ -7,14 +7,18 @@ import { withSentry } from '../_shared/sentry.ts'
  *
  * Hourly pg_cron-driven sweep that:
  *
- * (1) Archives carpool widgets whose linked event ended >24h ago:
+ * (1) Archives carpool widgets whose linked event ended >=24h ago:
  *     - carpool_widgets.status -> 'archived'
  *     - carpool_breakout_chats.archived_at -> now()
  *     - chat_channels.lifecycle_status -> 'archived'
  *
- * (2) Hard-deletes archived breakout channels older than 7 days:
+ * (2) Hard-deletes a breakout channel ONLY after its members were warned
+ *     ("closes in ~2 hours") AND a 2h grace has elapsed since that warning:
  *     - DELETE chat_channels (cascades to chat_messages, members)
  *     - carpool_breakout_chats.deleted_at -> now()
+ *   A channel is never deleted in the same run it first becomes eligible, so a
+ *   breakout that only surfaces after event_end+24h (cron downtime, a late
+ *   breakout) still gets its warning + grace window before deletion.
  *
  * Auth: requires service-role bearer (cron passes it). NEVER accept user
  * JWT here; this is a privileged sweep.
@@ -50,14 +54,19 @@ Deno.serve(withSentry('carpool-archive-sweep', async (req: Request) => {
 
     const now = new Date()
     // Tate's call (17 May 2026): breakouts close the day after the event so
-    // people don't see stale chats. We POST a warning system message at
-    // event_end + 22h ("This chat closes in ~2 hours"), then ARCHIVE +
-    // HARD-DELETE at event_end + 24h. archiveCutoff and deleteCutoff are
-    // now the same window; we keep a tiny safety margin between them so the
-    // archive marker is visible at deletion time for telemetry.
-    const warnCutoff    = new Date(now.getTime() - 22 * 60 * 60 * 1000) // 22h ago
-    const archiveCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000) // 24h ago
-    const deleteCutoff  = new Date(now.getTime() - 24 * 60 * 60 * 1000) // 24h ago
+    // people don't see stale chats. Lifecycle:
+    //   event_end + 24h  -> ARCHIVE (widget + breakout + channel)
+    //   warned + ~2h     -> HARD-DELETE the channel (cascades chat_messages)
+    // The channel is warned ("closes in ~2 hours") once, then hard-deleted ONLY
+    // after a 2h grace since that warning. This guarantees members always get
+    // the heads-up + time to save photos/contacts, even when a breakout first
+    // becomes eligible AFTER event_end + 24h (pg_cron downtime spanning the
+    // 22-24h window, a Supabase maintenance gap, or a late-created breakout) -
+    // the previous "delete every archived_at IS NOT NULL on the same run"
+    // logic silently deleted those with no warning.
+    const archiveCutoff   = new Date(now.getTime() - 24 * 60 * 60 * 1000) // 24h ago (archive)
+    const warnGraceMs     = 2 * 60 * 60 * 1000                            // 2h grace between warn and delete
+    const warnGraceCutoff = new Date(now.getTime() - warnGraceMs)         // delete only if warned before this
 
     const results = { archived: 0, deleted: 0, warned: 0, errors: 0 }
 
@@ -103,8 +112,12 @@ Deno.serve(withSentry('carpool-archive-sweep', async (req: Request) => {
           const endIso = ev.date_end ?? ev.date_start
           const endMs = new Date(endIso).getTime()
           const ageMs = now.getTime() - endMs
-          // Window: ended at least 22h ago but less than 24h ago.
-          if (ageMs >= 22 * 60 * 60 * 1000 && ageMs < 24 * 60 * 60 * 1000) {
+          // Warn any not-yet-warned breakout whose event ended at least 22h ago
+          // (no upper bound). The `is('warning_posted_at', null)` filter above
+          // keeps this one-shot, and dropping the old `< 24h` ceiling means a
+          // breakout that only surfaces after +24h still gets its warning
+          // before the delete gate (which now requires warning_posted_at + 2h).
+          if (ageMs >= 22 * 60 * 60 * 1000) {
             // Push notification path (chat_messages.user_id is NOT NULL so a
             // synthetic system message would need a bot user; pushes don't).
             // Send to every channel member - they get a banner and can open
@@ -253,17 +266,19 @@ Deno.serve(withSentry('carpool-archive-sweep', async (req: Request) => {
       }
     }
 
-    // ── (2) Hard-delete archived breakout channels ──
-    // Per Tate's 17 May 2026 call: breakouts close the day after the event.
-    // Archive already fired at event_end + 24h above. We hard-delete on the
-    // same cycle so the chat disappears at +24h rather than lingering 7d.
-    // deleteCutoff is the SAME as archiveCutoff (24h ago); referenced here so
-    // the variable stays used.
-    void deleteCutoff
+    // ── (2) Hard-delete archived breakout channels that were WARNED ──
+    // A channel is deleted only once it is archived AND its members were warned
+    // AND at least a 2h grace has passed since that warning. Gating on
+    // warning_posted_at (not just archived_at) closes the silent-loss hole: a
+    // breakout first eligible after event_end+24h used to be archived AND
+    // deleted on the same run with no notice. Now every deletion is preceded by
+    // a warning push + a 2h window for members to save photos/contacts.
     const { data: deletables, error: delQueryErr } = await supabase
       .from('carpool_breakout_chats')
-      .select('carpool_id, channel_id, archived_at')
+      .select('carpool_id, channel_id, archived_at, warning_posted_at')
       .not('archived_at', 'is', null)
+      .not('warning_posted_at', 'is', null)
+      .lte('warning_posted_at', warnGraceCutoff.toISOString())
       .is('deleted_at', null)
 
     if (delQueryErr) {

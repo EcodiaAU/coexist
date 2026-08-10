@@ -16,7 +16,6 @@ type ActivityType = Database['public']['Enums']['activity_type']
 type Event = Tables<'events'>
 type Collective = Tables<'collectives'>
 type Update = Tables<'updates'>
-type Challenge = Tables<'challenges'>
 type Profile = Tables<'profiles'>
 
 /* ------------------------------------------------------------------ */
@@ -26,11 +25,6 @@ type Profile = Tables<'profiles'>
 export interface CollectiveWithNextEvent extends Collective {
   next_event: Event | null
   events_this_month: number
-}
-
-export interface ActiveChallenge extends Challenge {
-  user_progress: number
-  total_progress: number
 }
 
 interface EventWithCollective extends Event {
@@ -331,57 +325,15 @@ export function useMyCollectives() {
   })
 }
 
-/** Active national challenge */
-export function useActiveChallenge() {
-  const { user } = useAuth()
-
-  return useQuery({
-    queryKey: ['home', 'active-challenge', user?.id],
-    queryFn: async () => {
-      const { data: challenge, error } = await supabase
-        .from('challenges')
-        .select('id, title, description, goal_type, goal_value, start_date, end_date, is_active, cover_image_url, status')
-        .eq('is_active', true)
-        .lte('start_date', new Date().toISOString())
-        .gte('end_date', new Date().toISOString())
-        .order('start_date', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      if (error) throw error
-      if (!challenge) return null
-
-      // Get aggregated progress
-      const { data: participants } = await supabase
-        .from('challenge_participants')
-        .select('progress')
-        .eq('challenge_id', challenge.id)
-
-      const totalProgress = (participants ?? []).reduce(
-        (sum, p) => sum + (p.progress ?? 0),
-        0,
-      )
-
-      // User's individual progress
-      let userProgress = 0
-      if (user) {
-        const { data: myParticipation } = await supabase
-          .from('challenge_participants')
-          .select('progress')
-          .eq('challenge_id', challenge.id)
-          .eq('user_id', user.id)
-          .maybeSingle()
-        userProgress = myParticipation?.progress ?? 0
-      }
-
-      return {
-        ...challenge,
-        user_progress: userProgress,
-        total_progress: totalProgress,
-      } as ActiveChallenge
-    },
-    staleTime: 5 * 60 * 1000,
-  })
-}
+// NOTE: the participant-facing Challenges feature is not built. Admins can
+// author challenges (src/pages/admin/challenges.tsx) and the DB tables exist,
+// but there is no participant surface: no /challenges/:id route, no join flow
+// writing challenge_participants, and no engine that attributes progress. A
+// former useActiveChallenge() hook here had zero consumers and read is_active
+// while admin writes status='active', so it never surfaced anything. It was
+// removed (mirroring the F0 Learn/LMS decision) so the app carries no dead
+// participant path; the admin authoring code and all challenge tables are kept
+// intact for when the feature is actually built. See remediation cluster F6.
 
 /** Trending collectives (for users not in one) */
 export function useTrendingCollectives() {

@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   Calendar, MapPin, Users, Leaf, Filter,
-  ArrowRight, ExternalLink,
+  ArrowRight, ExternalLink, Search, X,
 } from 'lucide-react'
 import {
   useMyEvents,
@@ -12,7 +12,9 @@ import {
   formatEventDate,
   ACTIVITY_TYPE_LABELS,
   ACTIVITY_TYPE_OPTIONS,
+  type DiscoverWhen,
 } from '@/hooks/use-events'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import type { Database } from '@/types/database.types'
 import { useCollectives, useMyCollectives } from '@/hooks/use-collective'
 import {
@@ -31,6 +33,13 @@ import { PendingSyncBadge } from '@/components/pending-sync-badge'
 import { CollectiveMap } from '@/components/collective-map'
 
 type ActivityType = Database['public']['Enums']['activity_type']
+
+const WHEN_OPTIONS: { value: DiscoverWhen; label: string }[] = [
+  { value: 'any', label: 'Any time' },
+  { value: 'today', label: 'Today' },
+  { value: 'weekend', label: 'This weekend' },
+  { value: 'month', label: 'This month' },
+]
 
 /* ------------------------------------------------------------------ */
 /*  Section header                                                     */
@@ -149,8 +158,17 @@ export default function ExplorePage() {
 
   const [activityFilter, setActivityFilter] = useState<ActivityType | ''>('')
   const [collectiveIds, setCollectiveIds] = useState<string[]>([])
+  const [searchInput, setSearchInput] = useState('')
+  const [whenFilter, setWhenFilter] = useState<DiscoverWhen>('any')
+  const [stateFilter, setStateFilter] = useState('')
 
-  const { isError: upcomingError, dataUpdatedAt, isFetching } = useMyEvents('upcoming')
+  // Debounce the free-text search and the collective multi-select so a
+  // keystroke / a rapid series of toggles does not refetch on every change
+  // (backlog F2: the collective filter flashed + refetched on every toggle).
+  const debouncedSearch = useDebouncedValue(searchInput, 300)
+  const debouncedCollectiveIds = useDebouncedValue(collectiveIds, 250)
+
+  const { data: myUpcoming, isError: upcomingError, dataUpdatedAt, isFetching } = useMyEvents('upcoming')
 
   const {
     data: discoverData,
@@ -161,7 +179,10 @@ export default function ExplorePage() {
     isFetchingNextPage,
   } = useDiscoverEvents({
     activityType: activityFilter,
-    collectiveIds,
+    collectiveIds: debouncedCollectiveIds,
+    search: debouncedSearch,
+    state: stateFilter,
+    when: whenFilter,
   })
   const discoverEvents = discoverData?.pages.flat()
   const discoverShowLoading = useDelayedLoading(discoverLoading)
@@ -171,6 +192,30 @@ export default function ExplorePage() {
 
 
   const collectiveOptions = (allCollectives).map((c) => ({ value: c.id, label: c.name }))
+
+  // Distinct AU states present among collectives, for the state quick-filter.
+  const stateOptions = Array.from(
+    new Set(
+      (allCollectives as { state?: string | null }[])
+        .map((c) => c.state)
+        .filter((s): s is string => !!s),
+    ),
+  ).sort()
+
+  const hasActiveFilters =
+    !!activityFilter ||
+    collectiveIds.length > 0 ||
+    !!searchInput.trim() ||
+    !!stateFilter ||
+    whenFilter !== 'any'
+
+  const clearFilters = useCallback(() => {
+    setActivityFilter('')
+    setCollectiveIds([])
+    setSearchInput('')
+    setStateFilter('')
+    setWhenFilter('any')
+  }, [])
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([
@@ -182,7 +227,7 @@ export default function ExplorePage() {
   }, [queryClient])
 
   return (
-    <Page noBackground className="!px-0 bg-primary-50/50">
+    <Page noBackground className="!px-0 bg-primary-50/50" onRefresh={handleRefresh}>
       <div className="relative min-h-full">
 
         {/* ============================================================ */}
@@ -242,25 +287,85 @@ export default function ExplorePage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35, delay: 0.14 }}
                   >
-                    <SectionHeader title="Discover Events" />
+                    <SectionHeader
+                      title="Discover Events"
+                      count={myUpcoming?.length}
+                      action={{ label: 'My Events', onClick: () => navigate('/events/mine') }}
+                    />
 
-                    {/* Filters */}
-                    <div className="flex items-center gap-2 mb-4">
+                    {/* Keyword search */}
+                    <div className="relative mb-3">
+                      <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                      <input
+                        type="search"
+                        inputMode="search"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        placeholder="Search events by name or place"
+                        aria-label="Search events"
+                        className="w-full h-11 rounded-full bg-white ring-1 ring-neutral-200 pl-9 pr-9 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                      />
+                      {searchInput && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchInput('')}
+                          aria-label="Clear search"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-neutral-400 hover:bg-neutral-100 cursor-pointer select-none"
+                        >
+                          <X size={15} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* When quick-filter chips */}
+                    <div className="flex gap-1.5 mb-3 overflow-x-auto hide-scrollbar -mx-1 px-1">
+                      {WHEN_OPTIONS.map((opt) => {
+                        const chipActive = whenFilter === opt.value
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setWhenFilter(opt.value)}
+                            aria-pressed={chipActive}
+                            className={cn(
+                              'shrink-0 min-h-9 px-3.5 rounded-full text-[13px] font-semibold transition-colors cursor-pointer select-none',
+                              chipActive
+                                ? 'bg-primary-600 text-white shadow-sm'
+                                : 'bg-white text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-50',
+                            )}
+                          >
+                            {opt.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Type / state / collective filters */}
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
                       <Filter size={14} className="text-neutral-400 shrink-0" />
                       <Dropdown
                         value={activityFilter}
                         onChange={(v) => setActivityFilter(v as ActivityType | '')}
                         options={[{ value: '', label: 'All types' }, ...ACTIVITY_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
                         placeholder="Filter by type"
-                        className="flex-1"
+                        className="flex-1 min-w-[8rem]"
                       />
+                      {stateOptions.length > 0 && (
+                        <Dropdown
+                          value={stateFilter}
+                          onChange={(v) => setStateFilter(v as string)}
+                          options={[{ value: '', label: 'All states' }, ...stateOptions.map((s) => ({ value: s, label: s }))]}
+                          placeholder="State"
+                          className="flex-1 min-w-[7rem]"
+                        />
+                      )}
                       <MultiSelect
                         value={collectiveIds}
                         onChange={setCollectiveIds}
                         options={collectiveOptions}
                         allLabel="All collectives"
                         countLabel={(n) => `${n} collectives`}
-                        className="flex-1"
+                        className="flex-1 min-w-[9rem]"
                       />
                     </div>
 
@@ -272,9 +377,9 @@ export default function ExplorePage() {
                       <EmptyState
                         illustration="empty"
                         title="No events found"
-                        description={activityFilter || collectiveIds.length ? 'Try different filters or check back soon.' : 'No upcoming events right now. Check back soon!'}
-                        action={activityFilter || collectiveIds.length
-                          ? { label: 'Clear filters', onClick: () => { setActivityFilter(''); setCollectiveIds([]) } }
+                        description={hasActiveFilters ? 'Try different filters or check back soon.' : 'No upcoming events right now. Check back soon!'}
+                        action={hasActiveFilters
+                          ? { label: 'Clear filters', onClick: clearFilters }
                           : { label: 'Browse collectives', onClick: () => setActiveTab('collectives') }
                         }
                       />

@@ -28,12 +28,12 @@ export default function OnboardingPage() {
   const { user, profile, collectiveRoles, isStaff, refreshProfile, markOnboardingComplete } = useAuth()
   const shouldReduceMotion = useReducedMotion()
 
-  // Trigger the device location permission prompt as soon as onboarding opens
-  // (step 0), so the OS dialog appears well before the "Join a Collective"
-  // step. The resolved coords are cached under ['user-location'] and read back
-  // by StepCollective to rank collectives by proximity. Fire-and-cache: we
-  // don't block any step on the result.
-  useUserLocation()
+  // Location resolution is NO LONGER auto-fired at mount (A5): firing the OS
+  // location dialog cold at step 0, disconnected from any UI, was jarring. The
+  // query is created disabled here and triggered only when the user taps "Use
+  // my current location" on the Location step. On success it caches coords under
+  // ['user-location'] (read back by StepCollective for proximity ranking).
+  const locationQuery = useUserLocation(false)
 
   // Name is captured at sign-up (writes profiles.display_name via user
   // metadata, see use-auth), and phone was historically captured by a blocking
@@ -204,7 +204,6 @@ export default function OnboardingPage() {
             displayName={data.displayName}
             onChange={(name) => updateData({ displayName: name })}
             onNext={goNext}
-            onSkip={goNext}
           />
         )
       case 'location':
@@ -212,6 +211,12 @@ export default function OnboardingPage() {
           <StepLocation
             location={data.location}
             onChange={(loc, point) => updateData({ location: loc, locationPoint: point })}
+            onUseCurrentLocation={async () => {
+              const { data: point } = await locationQuery.refetch()
+              if (point) updateData({ locationPoint: point })
+              return point ?? null
+            }}
+            locating={locationQuery.isFetching}
             onNext={goNext}
             onSkip={goNext}
           />

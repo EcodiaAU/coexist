@@ -6,6 +6,7 @@ import { useToast } from '@/components/toast'
 import { queueOfflineAction } from '@/lib/offline-sync'
 import { fetchEventIdsForCollective, fetchEventIdsForCollectives } from '@/lib/collective-event-ids'
 import { formatEventLong, wallClockNow } from '@/lib/date-format'
+import { isNativePlatform, shareBlobNative, isShareCancellation } from '@/lib/native-share'
 import type {
   Database,
   Tables,
@@ -406,11 +407,16 @@ export function prefetchEventDetail(
       if (error) throw error
       if (!event) return null
 
-      const { count: regCount } = await supabase
-        .from('event_registrations')
-        .select('id', { count: 'exact', head: true })
-        .eq('event_id', eventId)
-        .in('status', ['registered', 'attended'])
+      // Going count via the SECURITY DEFINER RPC (RLS-independent), mirroring
+      // useEventDetail. A raw event_registrations head count here is subject to
+      // registrations_select_visible RLS, so for a non-registrant it returns 0
+      // and for a registrant it undercounts profile-hidden co-registrants - and
+      // because prefetch writes the SAME cache key ['event', eventId, userId]
+      // with a 2min staleTime, that wrong count would win on the home "next
+      // event" swipe path (useEventDetail sees fresh cache and does not refetch).
+      const { data: regCount } = await supabase.rpc('event_going_count', {
+        p_event_id: eventId,
+      })
 
       const { data: userRegData } = await supabase
         .from('event_registrations')
@@ -455,7 +461,7 @@ export function prefetchEventDetail(
 
       return {
         ...event,
-        registration_count: regCount ?? 0,
+        registration_count: (regCount as number | null) ?? 0,
         user_registration: userRegData,
         attendees,
         impact,
@@ -773,29 +779,127 @@ export function useNearbyEvents(limit = 20) {
 
 const DISCOVER_PAGE_SIZE = 20
 
+/** A "when" quick-filter for discovery. Constrains events by date_start. */
+export type DiscoverWhen = 'any' | 'today' | 'weekend' | 'month'
+
+/**
+ * Wall-clock date-range bounds for a discovery "when" chip, as ISO strings
+ * to compare against event.date_start (wall-clock-as-UTC, same frame as
+ * wallClockNow). Pure + `now`-injectable so it is unit-testable without
+ * faking system time.
+ *  - today:   [today 00:00, today 23:59:59.999]
+ *  - weekend: this weekend's Sat 00:00 .. Sun 23:59:59.999 (if today is
+ *             Sat/Sun, the current weekend; the active-window filter still
+ *             drops any part already past)
+ *  - month:   [today 00:00, last day of the current month 23:59:59.999]
+ */
+export function discoverWhenBounds(
+  when: DiscoverWhen,
+  now: Date = wallClockNow(),
+): { fromIso: string | null; toIso: string | null } {
+  if (when === 'any') return { fromIso: null, toIso: null }
+  const y = now.getUTCFullYear()
+  const m = now.getUTCMonth()
+  const d = now.getUTCDate()
+  const dow = now.getUTCDay() // 0 Sun .. 6 Sat
+
+  if (when === 'today') {
+    return {
+      fromIso: new Date(Date.UTC(y, m, d, 0, 0, 0, 0)).toISOString(),
+      toIso: new Date(Date.UTC(y, m, d, 23, 59, 59, 999)).toISOString(),
+    }
+  }
+
+  if (when === 'weekend') {
+    // Saturday of the current weekend. Sunday counts as still-in-weekend,
+    // so its Saturday is yesterday (offset -1).
+    const satOffset = dow === 0 ? -1 : 6 - dow
+    return {
+      fromIso: new Date(Date.UTC(y, m, d + satOffset, 0, 0, 0, 0)).toISOString(),
+      toIso: new Date(Date.UTC(y, m, d + satOffset + 1, 23, 59, 59, 999)).toISOString(),
+    }
+  }
+
+  // month
+  return {
+    fromIso: new Date(Date.UTC(y, m, d, 0, 0, 0, 0)).toISOString(),
+    // Day 0 of the next month = last day of this month.
+    toIso: new Date(Date.UTC(y, m + 1, 0, 23, 59, 59, 999)).toISOString(),
+  }
+}
+
+/**
+ * Strip PostgREST-significant characters from a free-text search term so it
+ * cannot break the `.or()` filter grammar (commas split terms, parens group
+ * `and()`, `*`/`%` are wildcards, backslash escapes). Returns '' when nothing
+ * usable remains so the caller can skip the filter.
+ */
+export function sanitizeDiscoverSearch(raw: string): string {
+  return raw.replace(/[%,()\\*]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+export interface DiscoverCursor {
+  date_start: string
+  id: string
+}
+
 export function useDiscoverEvents(filters?: {
   activityType?: ActivityType | ''
   collectiveIds?: string[]
+  /** Free-text keyword; matched against title + address (case-insensitive). */
+  search?: string
+  /** Host-collective state quick-filter (e.g. 'QLD'). */
+  state?: string
+  /** Date-range quick-filter constraining date_start. */
+  when?: DiscoverWhen
 }) {
   // Stable, order-independent key for the selected collectives.
   const collectiveKey = (filters?.collectiveIds ?? []).slice().sort().join(',')
+  const search = sanitizeDiscoverSearch(filters?.search ?? '')
+  const state = filters?.state ?? ''
+  const when: DiscoverWhen = filters?.when ?? 'any'
   return useInfiniteQuery({
-    queryKey: ['discover-events', filters?.activityType, collectiveKey],
-    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+    queryKey: ['discover-events', filters?.activityType, collectiveKey, search, state, when],
+    queryFn: async ({ pageParam }: { pageParam: DiscoverCursor | null }) => {
       const wcNow = wallClockNow()
       const now = wcNow.toISOString()
       const cutoff = stillActiveStartCutoffIso(wcNow)
+      // A host-state filter needs an inner join so events whose primary host
+      // collective is NOT in that state are excluded (a left embed would keep
+      // them). collective_id is NOT NULL, so !inner never drops a valid row.
+      const collectiveSelect = state
+        ? 'collectives!inner(id, name, timezone)'
+        : 'collectives(id, name, timezone)'
       // See useNearbyEvents for the rationale on the date_end-null grace.
       let query = supabase
         .from('events')
-        .select('*, collectives(id, name, timezone)')
+        .select(`*, ${collectiveSelect}`)
         .eq('status', 'published')
         .or(`date_end.gte.${now},and(date_end.is.null,date_start.gte.${cutoff})`)
+        // Composite (date_start, id) ordering so the keyset cursor below is
+        // total: a same-timestamp cluster straddling a page boundary is no
+        // longer skipped (the old bare date_start cursor dropped ties).
         .order('date_start', { ascending: true })
+        .order('id', { ascending: true })
         .limit(DISCOVER_PAGE_SIZE)
 
       if (pageParam) {
-        query = query.gt('date_start', pageParam)
+        // (date_start > c.date_start) OR (date_start = c.date_start AND id > c.id)
+        query = query.or(
+          `date_start.gt.${pageParam.date_start},and(date_start.eq.${pageParam.date_start},id.gt.${pageParam.id})`,
+        )
+      }
+
+      if (search) {
+        query = query.or(`title.ilike.*${search}*,address.ilike.*${search}*`)
+      }
+      if (state) {
+        query = query.eq('collectives.state', state)
+      }
+      if (when !== 'any') {
+        const { fromIso, toIso } = discoverWhenBounds(when, wcNow)
+        if (fromIso) query = query.gte('date_start', fromIso)
+        if (toIso) query = query.lte('date_start', toIso)
       }
 
       if (filters?.activityType) {
@@ -814,10 +918,12 @@ export function useDiscoverEvents(filters?: {
       if (error) throw error
       return (data ?? []) as EventWithCollective[]
     },
-    initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => {
+    initialPageParam: null as DiscoverCursor | null,
+    getNextPageParam: (lastPage): DiscoverCursor | undefined => {
       if (lastPage.length < DISCOVER_PAGE_SIZE) return undefined
-      return lastPage[lastPage.length - 1]?.date_start ?? undefined
+      const last = lastPage[lastPage.length - 1]
+      if (!last?.date_start || !last?.id) return undefined
+      return { date_start: last.date_start, id: last.id }
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -2197,13 +2303,36 @@ export function generateIcsFile(event: Event): string {
   ].join('\r\n')
 }
 
-export function downloadIcsFile(event: Event) {
+export async function downloadIcsFile(event: Event) {
   const ics = generateIcsFile(event)
+  const filename = `${event.title.replace(/[^a-zA-Z0-9]/g, '-')}.ics`
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+
+  // Native (Capacitor WebView): an `<a download>` click is a silent no-op -
+  // the user taps "Download .ics" and nothing is delivered (backlog B7, same
+  // root cause as the image-share bug fixed in native-share.ts). Route the file
+  // through the canonical native share helper, which writes it to the cache dir
+  // and opens the OS share sheet ("Add to Calendar" / Files / Mail). The
+  // blob-anchor path below is kept for web, where it works.
+  if (isNativePlatform()) {
+    try {
+      await shareBlobNative(blob, filename, {
+        title: event.title,
+        text: `Add "${event.title}" to your calendar`,
+      })
+    } catch (err) {
+      // A dismissed share sheet is not a failure; anything else is logged in dev.
+      if (!isShareCancellation(err) && import.meta.env?.DEV) {
+        console.warn('[ics] native share failed', err)
+      }
+    }
+    return
+  }
+
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `${event.title.replace(/[^a-zA-Z0-9]/g, '-')}.ics`
+  link.download = filename
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)

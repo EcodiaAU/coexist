@@ -131,6 +131,31 @@ export default function ViewProfilePage() {
     return <Page swipeBack header={<Header title="Profile" back />}><></></Page>
   }
 
+  // Private profile: the target opted into "Only collective members" visibility
+  // and this viewer is not self / a fellow active member / admin. The RPC
+  // returned name + avatar only, so show an explicit private notice instead of
+  // a hollow shell. Undefined (older payloads / own profile) => visible.
+  if (profile.viewer_can_see_profile === false) {
+    return (
+      <Page swipeBack header={<Header title={profile.display_name ?? 'Profile'} back />}>
+        <div className="flex flex-col items-center gap-3 px-6 pt-12 text-center">
+          <Avatar src={profile.avatar_url} name={profile.display_name ?? ''} size="xl" />
+          <h2 className="mt-2 font-heading text-xl font-bold text-neutral-900">
+            {profile.display_name ?? 'Member'}
+          </h2>
+          <div className="mt-1 flex items-center gap-2 text-sm text-neutral-500">
+            <Shield size={16} />
+            <span>This profile is private</span>
+          </div>
+          <p className="max-w-xs text-sm text-neutral-500 leading-relaxed">
+            {profile.display_name ?? 'This member'} shares their full profile only with
+            people in their collectives.
+          </p>
+        </div>
+      </Page>
+    )
+  }
+
   const stagger = {
     hidden: {},
     visible: { transition: { staggerChildren: 0.04 } },

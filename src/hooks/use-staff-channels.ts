@@ -595,6 +595,10 @@ export function useChannelUnreadCounts() {
     },
     enabled: !!user,
     staleTime: 30 * 1000,
+    // Poll on the same cadence as the collective unread count (use-chat.ts
+    // useUnreadCounts). Without this the campout/staff channel badges only
+    // refreshed on window focus, so the chat-list badges silently went stale.
+    refetchInterval: 60 * 1000,
   })
 }
 

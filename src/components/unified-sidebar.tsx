@@ -7,7 +7,6 @@ import {
     Shield,
     X,
     ChevronRight, MessageCircle,
-    BookOpen,
     Megaphone,
     TreePine,
     Leaf
@@ -454,16 +453,10 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
 
     const updatesItem: NavItem = { label: 'Updates', path: '/updates', icon: <Megaphone data-eos-id="src/components/unified-sidebar.tsx#29" size={17} strokeWidth={1.5} />, badge: updatesBadgeCount }
     const chatItem: NavItem = { label: 'Chat', path: '/chat', icon: <MessageCircle data-eos-id="src/components/unified-sidebar.tsx#30" size={17} strokeWidth={1.5} />, desktopOnly: true }
-    const learnItem: NavItem = { label: 'Learn', path: '/learn', icon: <BookOpen data-eos-id="src/components/unified-sidebar.tsx#31" size={17} strokeWidth={1.5} /> }
-
-    // Learn is gated to staff + collective leaders (assist/co/leader). Participants
-    // and non-admin members don't see it (Tate verbatim 2026-05-28: "participant
-    // sees Learn, that's only for assistant/coleader/leaders and staff").
-    const topItems: NavItem[] = isAdminTier
-      ? [highestHome, chatItem, updatesItem]
-      : isAnyLeader
-        ? [highestHome, chatItem, learnItem, updatesItem]
-        : [highestHome, chatItem, updatesItem]
+    // Learn (LMS) nav item removed 2026-08-10 (Tate directive): the learner suite is
+    // unbuilt/dead-ended and its /learn* routes are removed, so there is no top-level
+    // Learn entry for any tier. Authoring code + DB tables are kept for the future build.
+    const topItems: NavItem[] = [highestHome, chatItem, updatesItem]
 
     const cats: NavCategory[] = [{ label: '', items: topItems }]
 

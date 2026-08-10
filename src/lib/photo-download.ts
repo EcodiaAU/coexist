@@ -47,14 +47,30 @@ async function fetchAsBlob(url: string): Promise<Blob> {
 }
 
 /**
- * Single-file download. On native, opens the share sheet (Save Image
- * appears inline). On web, triggers a regular browser download.
+ * Outcome of a save attempt, so the caller can give honest, platform-accurate
+ * feedback instead of the old silent void (every path used to swallow its
+ * result, so a native save that failed looked identical to one that worked -
+ * client bug, no confirmation ever shown).
+ *
+ * - `saved`      native photo library write succeeded
+ * - `shared`     a share sheet was opened (the sheet itself is the feedback)
+ * - `downloaded` a web/desktop browser download was triggered
+ * - `opened`     last-resort open-in-new-tab (user long-presses to save)
+ * - `cancelled`  the user dismissed a share sheet (no toast wanted)
+ * - `failed`     every path failed
+ */
+export type SaveOutcome = 'saved' | 'shared' | 'downloaded' | 'opened' | 'cancelled' | 'failed'
+
+/**
+ * Single-file save. On native, saves straight to the photo library (falls back
+ * to the share sheet). On mobile web, offers the share sheet; on desktop,
+ * downloads. Returns a discriminated outcome the caller toasts on.
  */
 export async function saveToCameraRoll(
   url: string,
   storagePath: string,
   caption?: string,
-): Promise<void> {
+): Promise<SaveOutcome> {
   const name = filenameFromPath(storagePath)
   const mime = mimeFromPath(storagePath)
 
@@ -64,16 +80,16 @@ export async function saveToCameraRoll(
     const kind = mime.startsWith('video/') ? 'video' : 'photo'
     try {
       await saveMediaToGallery(url, name, kind)
-      return
+      return 'saved'
     } catch (e) {
       console.error('[photo-download] direct gallery save failed', e)
       // Fall back to the native share sheet ("Save Image" lives there too).
       try {
         const blob = await fetchAsBlob(url)
         await shareBlobNative(blob, name, { text: caption ?? '' })
-        return
+        return 'shared'
       } catch (shareErr) {
-        if (isShareCancellation(shareErr)) return
+        if (isShareCancellation(shareErr)) return 'cancelled'
         console.error('[photo-download] share-sheet fallback failed', shareErr)
         // fall through to the browser-download path below
       }
@@ -91,10 +107,12 @@ export async function saveToCameraRoll(
     }
     if (nav.share && nav.canShare && nav.canShare({ files: [file] })) {
       await nav.share({ files: [file], text: caption ?? '' })
-      return
+      return 'shared'
     }
-  } catch {
-    // fall through to browser-download path
+  } catch (e) {
+    // A user-dismissed share sheet is not a failure - don't then download.
+    if (isShareCancellation(e)) return 'cancelled'
+    // otherwise fall through to browser-download path
   }
 
   // Web / fallback: trigger a download via blob URL.
@@ -108,9 +126,11 @@ export async function saveToCameraRoll(
     a.click()
     document.body.removeChild(a)
     setTimeout(() => URL.revokeObjectURL(objectUrl), 5000)
+    return 'downloaded'
   } catch {
     // Absolute fallback - open in new tab; user can long-press to save.
-    window.open(url, '_blank', 'noopener')
+    const opened = window.open(url, '_blank', 'noopener')
+    return opened ? 'opened' : 'failed'
   }
 }
 

@@ -58,6 +58,42 @@ export function isInjectedThirdPartyBridgeError(event: Sentry.Event): boolean {
   )
 }
 
+// @supabase/auth-js drives session/token refresh through the browser Navigator
+// LockManager API (navigatorLock in @supabase/auth-js/dist/.../lib/locks.js). On
+// an acquire-timeout or a tab teardown mid-acquire it aborts the underlying
+// navigator.locks.request via an AbortController, and its own recovery path (lock
+// steal / typed NavigatorLockAcquireTimeoutError) is EXPECTED under React
+// StrictMode double-mount and multi-tab contention - the client recovers every
+// time. Nothing in the app can act on it, but an unhandled one surfaces as a
+// DOMException AbortError (or the typed lock-timeout error) through
+// unhandledrejection and pollutes the SAME alerting channel the injected-bridge
+// filter protects, burying real regressions. auth-js 2.105.1 already converts
+// the raw AbortError to a typed error to avoid this leak; this is defence in
+// depth for any residual benign lock rejection. Matched on the auth-js lock
+// STRING signatures (stable across minification, unlike mangled frame names) so
+// it can never suppress an unrelated AbortError (e.g. a real fetch abort).
+const LOCK_SIGNATURE = /Navigator LockManager|navigatorLock|isAcquireTimeout|LockAcquireTimeout|another request stole it/i
+
+export function isBenignNavigatorLockAbort(event: Sentry.Event): boolean {
+  const values = event.exception?.values ?? []
+  for (const value of values) {
+    const type = value.type ?? ''
+    const message = value.value ?? ''
+    // A typed auth-js lock-timeout error is benign by construction.
+    if (/LockAcquireTimeout/i.test(type) || LOCK_SIGNATURE.test(message)) return true
+    // A raw AbortError only counts as lock noise when it also references the lock
+    // path in its message or a stack frame - never a bare AbortError on its own.
+    if (type === 'AbortError' || /AbortError/.test(message)) {
+      if (LOCK_SIGNATURE.test(message)) return true
+      const framesText = (value.stacktrace?.frames ?? [])
+        .map((f) => `${f.function ?? ''} ${f.filename ?? ''} ${f.module ?? ''}`)
+        .join(' ')
+      if (LOCK_SIGNATURE.test(framesText) || /auth-js|gotrue/i.test(framesText)) return true
+    }
+  }
+  return false
+}
+
 let initialised = false
 
 export function initSentry() {
@@ -90,6 +126,10 @@ export function initSentry() {
         // into our page. They are not Co-Exist defects and they degrade the
         // alerting channel by burying real regressions in recurring noise.
         if (isInjectedThirdPartyBridgeError(event)) return null
+        // Drop benign @supabase/auth-js Navigator LockManager abort/steal noise
+        // (COEXIST-J/R class) - auth-js recovers from these every time; they are
+        // never actionable and only bury real regressions.
+        if (isBenignNavigatorLockAbort(event)) return null
         // Strip PII from breadcrumbs if needed
         return event
       },

@@ -30,9 +30,21 @@ export interface EventPhoto {
     avatar_url: string | null
   } | null
   url?: string
+  /**
+   * Downscaled grid/preview URL. For images this is a Supabase render-transform
+   * of the original (the image-transform add-on is enabled on this project), so
+   * a 4-14MB / 900x1200 original is served as a ~30KB 400px square instead of
+   * being downloaded + decoded at full resolution into a 115px cell (that decode
+   * is what fed the album into the iOS app-hang cluster). Undefined for videos
+   * (they use a <video preload="metadata"> poster frame). The full-resolution
+   * `url` is still used for the lightbox, share and save-to-camera-roll.
+   */
+  thumbUrl?: string
 }
 
 const BUCKET = 'event-photos'
+/** Square thumbnail edge in px. 400 keeps 2-3x display density crisp at ~115-133px cells. */
+const THUMB_PX = 400
 
 /**
  * Max bytes per album upload. Mirrors the event-photos storage bucket's
@@ -48,6 +60,17 @@ const VIDEO_EXT_RE = /\.(mp4|mov|webm|m4v)$/i
 
 function publicUrl(path: string): string {
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
+}
+
+/**
+ * Render-transform thumbnail URL for an image path (square, cover-cropped).
+ * Videos have no image transform, so callers pass only image paths here and
+ * fall back to a <video> element for video items.
+ */
+function thumbnailUrl(path: string): string {
+  return supabase.storage.from(BUCKET).getPublicUrl(path, {
+    transform: { width: THUMB_PX, height: THUMB_PX, resize: 'cover' },
+  }).data.publicUrl
 }
 
 /* ------------------------------------------------------------------ */
@@ -69,10 +92,15 @@ export function useEventPhotos(eventId: string | undefined) {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      return (data ?? []).map((p) => ({
-        ...(p as EventPhoto),
-        url: publicUrl((p as EventPhoto).storage_path),
-      })) as EventPhoto[]
+      return (data ?? []).map((p) => {
+        const photo = p as EventPhoto
+        const isVid = VIDEO_EXT_RE.test(photo.storage_path)
+        return {
+          ...photo,
+          url: publicUrl(photo.storage_path),
+          thumbUrl: isVid ? undefined : thumbnailUrl(photo.storage_path),
+        }
+      }) as EventPhoto[]
     },
     enabled: !!eventId,
     staleTime: 30 * 1000,

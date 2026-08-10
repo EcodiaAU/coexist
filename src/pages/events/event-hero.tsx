@@ -26,7 +26,9 @@ export interface EventHeroProps {
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export function EventHero({ event, past, userStatus, accent, onShare }: EventHeroProps) {
+// userStatus is still accepted (callers pass it) but the countdown pill now
+// shows for every non-past viewer, so it is no longer read here.
+export function EventHero({ event, past, accent, onShare }: EventHeroProps) {
   const shouldReduceMotion = useReducedMotion()
 
   return (
@@ -71,7 +73,10 @@ export function EventHero({ event, past, userStatus, accent, onShare }: EventHer
                 >
                   {ACTIVITY_TYPE_LABELS[event.activity_type] ?? event.activity_type}
                 </Badge>
-                {!past && userStatus === 'registered' && (
+                {/* Show the countdown to EVERY non-past viewer, not just
+                    registered ones - a prospective attendee needs the date on
+                    the hero to decide (backlog F2). */}
+                {!past && (
                   <motion.span
                     initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -121,7 +126,8 @@ export function EventHero({ event, past, userStatus, accent, onShare }: EventHer
               >
                 {ACTIVITY_TYPE_LABELS[event.activity_type] ?? event.activity_type}
               </Badge>
-              {!past && userStatus === 'registered' && (
+              {/* Countdown for every non-past viewer (backlog F2). */}
+              {!past && (
                 <span className={cn(
                   'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold',
                   accent.bg, accent.text, accent.border, 'border',
