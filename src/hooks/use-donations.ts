@@ -144,6 +144,27 @@ export function useCancelRecurringDonation() {
   })
 }
 
+/**
+ * Open a Stripe billing-portal session for a recurring gift so the donor can
+ * update their payment method (recovers a past_due subscription). Returns the
+ * portal URL; the caller redirects to it. Throws if the portal is unavailable
+ * (e.g. not configured in Stripe) so the UI can degrade gracefully.
+ */
+export function useBillingPortal() {
+  return useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      const res = await supabase.functions.invoke('create-checkout', {
+        body: {
+          type: 'billing_portal',
+          stripe_subscription_id: subscriptionId,
+        },
+      })
+      if (res.error) throw res.error
+      return res.data as { url: string }
+    },
+  })
+}
+
 /* ------------------------------------------------------------------ */
 /*  Donor wall (public, opt-in)                                        */
 /* ------------------------------------------------------------------ */

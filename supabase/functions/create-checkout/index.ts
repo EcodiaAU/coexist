@@ -173,9 +173,16 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
               is_public: String(body.is_public ?? true),
             },
             subscription_data: {
+              // Carry the recognition context onto the subscription so the FIRST
+              // charge, now recorded by the stripe-webhook invoice.payment_succeeded
+              // handler (not checkout.session.completed), can mirror the one-time
+              // gift on the donor wall (is_public) and keep the donor's message.
               metadata: {
                 user_id: body.user_id,
                 project_id: body.project_id ?? '',
+                message: body.message ?? '',
+                on_behalf_of: body.on_behalf_of ?? '',
+                is_public: String(body.is_public ?? true),
               },
             },
           })
@@ -700,6 +707,35 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
           .eq('stripe_subscription_id', body.stripe_subscription_id)
 
         return json({ success: true })
+      }
+
+      /* ---- Stripe billing portal (update card / manage a recurring gift) ---- */
+      case 'billing_portal': {
+        if (!body.stripe_subscription_id || typeof body.stripe_subscription_id !== 'string') {
+          return json({ error: 'Missing stripe_subscription_id' }, 400)
+        }
+        // Verify the subscription belongs to the authenticated caller
+        const { data: ownedSub } = await supabase
+          .from('recurring_donations')
+          .select('id')
+          .eq('stripe_subscription_id', body.stripe_subscription_id)
+          .eq('user_id', caller.id)
+          .single()
+        if (!ownedSub) {
+          return json({ error: 'Subscription not found or not owned by you' }, 403)
+        }
+        // Resolve the Stripe customer from the subscription, then open a portal
+        // session so the donor can update their card (recovers a past_due gift).
+        const sub = await stripe.subscriptions.retrieve(body.stripe_subscription_id)
+        const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer?.id
+        if (!customerId) {
+          return json({ error: 'No billing account on file for this subscription' }, 400)
+        }
+        const portal = await stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: `${origin}/profile/donations`,
+        })
+        return json({ url: portal.url })
       }
 
       default:

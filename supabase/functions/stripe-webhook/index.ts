@@ -39,6 +39,106 @@ async function sendTemplateEmail(
   }
 }
 
+/**
+ * Reads charity_settings (service_role bypasses its admin-only RLS) and returns
+ * exactly the fields a donation receipt renders from. A valid Australian
+ * tax-deductible receipt must show the DGR's ABN, so `tax_deductible` is only
+ * true when DGR endorsement is set AND an ABN is on file - we never assert
+ * deductibility we cannot substantiate. Auto-upgrades to a full ABN receipt the
+ * moment an admin fills the ABN in charity_settings.
+ */
+async function getCharityReceiptContext(
+  supabase: ReturnType<typeof createClient>,
+): Promise<{ charity_name: string; abn: string; tax_deductible: boolean }> {
+  try {
+    const { data } = await supabase.from('charity_settings').select('key, value')
+    const rows = (data ?? []) as Array<{ key: string; value: string | null }>
+    const m = new Map(rows.map((r) => [r.key, r.value ?? '']))
+    const charity_name = (m.get('charity_name') || 'Co-Exist Australia').trim()
+    const abn = (m.get('abn') || '').trim()
+    const dgr = (m.get('dgr_status') || '').trim().toLowerCase() === 'yes'
+    return { charity_name, abn, tax_deductible: dgr && abn.length > 0 }
+  } catch (err) {
+    console.error('[stripe-webhook] charity_settings read failed:', (err as Error).message)
+    return { charity_name: 'Co-Exist Australia', abn: '', tax_deductible: false }
+  }
+}
+
+/** Mint a monotonic receipt number (CE-YYYY-NNNNNN); null if the RPC fails. */
+async function mintReceiptNumber(
+  supabase: ReturnType<typeof createClient>,
+): Promise<string | null> {
+  const { data, error } = await supabase.rpc('next_donation_receipt_number')
+  if (error) {
+    console.error('[stripe-webhook] receipt number mint failed:', error.message)
+    return null
+  }
+  return (data as string) ?? null
+}
+
+/**
+ * Send a donation receipt to an authenticated donor (by userId) OR an anonymous
+ * donor (by email). Anonymous donors previously received no app receipt at all.
+ */
+async function sendDonationReceipt(
+  supabase: ReturnType<typeof createClient>,
+  opts: { userId?: string | null; toEmail?: string | null; data: Record<string, unknown> },
+) {
+  if (!opts.userId && !opts.toEmail) return
+  try {
+    await supabase.functions.invoke('send-email', {
+      body: {
+        type: 'donation_receipt',
+        ...(opts.userId ? { userId: opts.userId } : {}),
+        ...(opts.toEmail ? { to: opts.toEmail } : {}),
+        data: opts.data,
+      },
+    })
+  } catch (err) {
+    console.error('[stripe-webhook] donation receipt email failed:', (err as Error).message)
+  }
+}
+
+/**
+ * Build a recurring_donations row from a Stripe subscription's metadata.
+ * Handles the anonymous case (public-checkout sends user_id='') by mapping it to
+ * NULL and carrying donor_email/donor_name, so invoice.payment_succeeded can
+ * record each charge by email instead of erroring on the old NOT NULL user_id
+ * and dropping every charge (backlog PB6). Carries the recognition context
+ * (is_public/message/project/on_behalf_of) so the first charge can mirror the
+ * one-time gift on the donor wall.
+ */
+async function recurringRowFromSubscription(
+  supabase: ReturnType<typeof createClient>,
+  subscription: Stripe.Subscription,
+) {
+  const meta = subscription.metadata ?? {}
+  const amount = (subscription.items.data[0]?.price?.unit_amount ?? 0) / 100
+  const userId = meta.user_id && meta.user_id !== '' ? meta.user_id : null
+  let projectName: string | null = null
+  if (meta.project_id) {
+    const { data: proj } = await supabase
+      .from('donation_projects')
+      .select('name')
+      .eq('id', meta.project_id)
+      .maybeSingle()
+    projectName = ((proj as { name: string } | null)?.name) ?? meta.project_id
+  }
+  return {
+    user_id: userId,
+    stripe_subscription_id: subscription.id,
+    amount,
+    currency: 'AUD',
+    status: 'active',
+    donor_email: meta.donor_email || null,
+    donor_name: meta.donor_name || null,
+    is_public: meta.is_public === 'true',
+    message: meta.message || null,
+    project_name: projectName,
+    on_behalf_of: meta.on_behalf_of || null,
+  }
+}
+
 // ── Main handler ──
 
 Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
@@ -71,6 +171,13 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
         const paymentIntentId = session.payment_intent as string
 
         if (metadata.type === 'donation') {
+          // A monthly donation is a Stripe subscription: its first charge is owned
+          // solely by invoice.payment_succeeded (which fires for the first AND every
+          // subsequent invoice). Recording it here too double-recorded the first
+          // month - two donation rows, points awarded twice, two receipts emailed
+          // (backlog PB2). Skip monthly here; the recurring handlers own it.
+          if (metadata.frequency === 'monthly') break
+
           // Idempotency check: skip if this payment was already recorded
           const { data: existingDonation } = await supabase
             .from('donations')
@@ -99,6 +206,7 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           const donorUserId = metadata.user_id && metadata.user_id !== '' ? metadata.user_id : null
           const donorEmail = metadata.donor_email || session.customer_details?.email || null
           const donorName = metadata.donor_name || session.customer_details?.name || null
+          const receiptNumber = await mintReceiptNumber(supabase)
 
           // 1. Record donation (include all metadata fields)
           const { error: donationError } = await supabase.from('donations').insert({
@@ -112,6 +220,7 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             message: metadata.message || null,
             on_behalf_of: metadata.on_behalf_of || null,
             is_public: metadata.is_public !== 'false',
+            receipt_number: receiptNumber,
             status: 'succeeded',
           })
 
@@ -126,24 +235,33 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             await supabase.rpc('award_points', {
               p_user_id: donorUserId,
               p_amount: points,
-              p_reason: metadata.frequency === 'monthly'
-                ? 'recurring_donation'
-                : 'one_time_donation',
+              p_reason: 'one_time_donation',
             })
           }
 
-          // 3. Send receipt email via template - authenticated donors only
-          // (anonymous donors receive Stripe's own receipt; no profile to resolve).
-          if (donorUserId) await sendTemplateEmail(supabase, 'donation_receipt', donorUserId, {
-            name: '', // resolved via userId
-            amount: amountDollars.toFixed(2),
-            currency: 'AUD',
-            date: new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }),
-            project_name: projectName || '',
-            message: metadata.message || '',
-            points_earned: points,
-            is_recurring: metadata.frequency === 'monthly',
-            receipt_url: 'https://app.coexistaus.org/profile/donations',
+          // 3. Send a receipt to BOTH members (by userId) and anonymous donors
+          //    (by email). Anonymous donors previously got no app receipt at all
+          //    (backlog DGR). The receipt renders its charity name / ABN / DGR
+          //    statement from charity_settings (see getCharityReceiptContext).
+          const charity = await getCharityReceiptContext(supabase)
+          await sendDonationReceipt(supabase, {
+            userId: donorUserId,
+            toEmail: donorUserId ? null : donorEmail,
+            data: {
+              name: donorUserId ? '' : (donorName || ''),
+              amount: amountDollars.toFixed(2),
+              currency: 'AUD',
+              date: new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }),
+              project_name: projectName || '',
+              message: metadata.message || '',
+              points_earned: points,
+              is_recurring: false,
+              receipt_number: receiptNumber || '',
+              charity_name: charity.charity_name,
+              abn: charity.abn,
+              tax_deductible: charity.tax_deductible,
+              receipt_url: 'https://app.coexistaus.org/profile/donations',
+            },
           })
 
           console.log('Donation checkout completed:', session.id, `$${amountDollars}`, donorUserId ? '(member)' : '(anon)')
@@ -381,9 +499,6 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
        * ────────────────────────────────────────────── */
       case 'customer.subscription.created': {
         const subscription = event.data.object as Stripe.Subscription
-        const meta = subscription.metadata ?? {}
-        const amount =
-          (subscription.items.data[0]?.price?.unit_amount ?? 0) / 100
 
         // Idempotency check
         const { data: existingSub } = await supabase
@@ -397,19 +512,14 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           break
         }
 
-        const { error: subError } = await supabase.from('recurring_donations').insert({
-          user_id: meta.user_id,
-          stripe_subscription_id: subscription.id,
-          amount,
-          currency: 'AUD',
-          status: 'active',
-        })
+        const row = await recurringRowFromSubscription(supabase, subscription)
+        const { error: subError } = await supabase.from('recurring_donations').insert(row)
 
         if (subError) {
           console.error('Failed to insert recurring_donation:', subError.message)
         }
 
-        console.log('Subscription created:', subscription.id, `$${amount}/mo`)
+        console.log('Subscription created:', subscription.id, `$${row.amount}/mo`, row.user_id ? '(member)' : '(anon)')
         break
       }
 
@@ -425,22 +535,10 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             ? invoice.subscription
             : invoice.subscription.id
 
-        // Look up recurring donation to get user_id
-        const { data: recurring } = await supabase
-          .from('recurring_donations')
-          .select('user_id')
-          .eq('stripe_subscription_id', subscriptionId)
-          .single()
-
-        if (!recurring) {
-          console.warn('No recurring_donation found for subscription:', subscriptionId)
-          break
-        }
-
         const amountDollars = (invoice.amount_paid ?? 0) / 100
-
-        // Idempotency check for recurring payment
         const recurringPaymentId = (invoice.payment_intent as string) ?? invoice.id
+
+        // Idempotency check for recurring payment (survives Stripe retries)
         const { data: existingRecurringDonation } = await supabase
           .from('donations')
           .select('id')
@@ -452,14 +550,77 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           break
         }
 
+        // Resolve the donor. Prefer the recurring_donations row; if it is missing
+        // (webhook race - this invoice arrived before customer.subscription.created,
+        // or a historical anonymous sub that never recorded a row) SELF-HEAL by
+        // reading the subscription metadata and recording the row now. This is
+        // required because checkout.session.completed no longer records the monthly
+        // first charge (PB2), so this handler must own it reliably (PB6).
+        type RecurringCtx = {
+          user_id: string | null
+          donor_email: string | null
+          donor_name: string | null
+          is_public: boolean
+          message: string | null
+          project_name: string | null
+          on_behalf_of: string | null
+        }
+        let recurring: RecurringCtx | null = null
+        {
+          const { data } = await supabase
+            .from('recurring_donations')
+            .select('user_id, donor_email, donor_name, is_public, message, project_name, on_behalf_of')
+            .eq('stripe_subscription_id', subscriptionId)
+            .maybeSingle()
+          recurring = (data as RecurringCtx | null) ?? null
+        }
+
+        if (!recurring) {
+          try {
+            const sub = await stripe.subscriptions.retrieve(subscriptionId)
+            const row = await recurringRowFromSubscription(supabase, sub)
+            // Idempotent - subscription.created may still land later
+            await supabase
+              .from('recurring_donations')
+              .upsert(row, { onConflict: 'stripe_subscription_id' })
+            recurring = {
+              user_id: row.user_id,
+              donor_email: row.donor_email,
+              donor_name: row.donor_name,
+              is_public: row.is_public,
+              message: row.message,
+              project_name: row.project_name,
+              on_behalf_of: row.on_behalf_of,
+            }
+          } catch (err) {
+            console.error('[stripe-webhook] recurring self-heal failed:', (err as Error).message)
+          }
+        }
+
+        // Never drop a real charge: fall back to the invoice's own customer email.
+        const donorUserId = recurring?.user_id ?? null
+        const donorEmail = recurring?.donor_email ?? invoice.customer_email ?? null
+        const donorName = recurring?.donor_name ?? null
+
+        // The first invoice (billing_reason 'subscription_create') mirrors the
+        // one-time gift - honour the donor's wall opt-in + message. Renewals are
+        // private ledger entries.
+        const firstCharge = invoice.billing_reason === 'subscription_create'
+        const receiptNumber = await mintReceiptNumber(supabase)
+
         // Record the charge as a donation
         const { error: recurDonError } = await supabase.from('donations').insert({
-          user_id: recurring.user_id,
+          user_id: donorUserId,
+          donor_email: donorUserId ? null : donorEmail,
+          donor_name: donorUserId ? null : donorName,
           amount: amountDollars,
           currency: 'AUD',
           stripe_payment_id: recurringPaymentId,
-          message: 'Monthly recurring donation',
-          is_public: false,
+          project_name: recurring?.project_name ?? null,
+          message: firstCharge ? (recurring?.message || 'Monthly recurring donation') : 'Monthly recurring donation',
+          on_behalf_of: firstCharge ? (recurring?.on_behalf_of ?? null) : null,
+          is_public: firstCharge ? (recurring?.is_public ?? false) : false,
+          receipt_number: receiptNumber,
           status: 'succeeded',
         })
 
@@ -468,30 +629,39 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           break
         }
 
-        // Award points
+        // Award points (1 per dollar) - authenticated donors only
         const points = Math.floor(amountDollars)
-        if (points > 0) {
+        if (points > 0 && donorUserId) {
           await supabase.rpc('award_points', {
-            p_user_id: recurring.user_id,
+            p_user_id: donorUserId,
             p_amount: points,
             p_reason: 'recurring_donation',
           })
         }
 
-        // Send receipt via template
-        await sendTemplateEmail(supabase, 'donation_receipt', recurring.user_id, {
-          name: '',
-          amount: amountDollars.toFixed(2),
-          currency: 'AUD',
-          date: new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }),
-          project_name: '',
-          message: 'Monthly recurring donation',
-          points_earned: points,
-          is_recurring: true,
-          receipt_url: 'https://app.coexistaus.org/profile/donations',
+        // Receipt to member (by userId) OR anonymous donor (by email)
+        const charity = await getCharityReceiptContext(supabase)
+        await sendDonationReceipt(supabase, {
+          userId: donorUserId,
+          toEmail: donorUserId ? null : donorEmail,
+          data: {
+            name: donorUserId ? '' : (donorName || ''),
+            amount: amountDollars.toFixed(2),
+            currency: 'AUD',
+            date: new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }),
+            project_name: recurring?.project_name ?? '',
+            message: 'Monthly recurring donation',
+            points_earned: points,
+            is_recurring: true,
+            receipt_number: receiptNumber || '',
+            charity_name: charity.charity_name,
+            abn: charity.abn,
+            tax_deductible: charity.tax_deductible,
+            receipt_url: 'https://app.coexistaus.org/profile/donations',
+          },
         })
 
-        console.log('Recurring payment succeeded:', invoice.id, `$${amountDollars}`)
+        console.log('Recurring payment succeeded:', invoice.id, `$${amountDollars}`, donorUserId ? '(member)' : '(anon)', firstCharge ? '[first]' : '[renewal]')
         break
       }
 
@@ -541,11 +711,12 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           .eq('stripe_subscription_id', subscriptionId)
           .single()
 
-        // Update status - the schema CHECK allows 'active', 'cancelled', 'paused'
-        // Use 'paused' to represent past_due since that's closest
+        // Migration 051 added 'past_due' to the status CHECK specifically so a
+        // card failure is distinguishable from a deliberate 'paused'; write it
+        // directly instead of the old 'paused' proxy (backlog past_due finding).
         await supabase
           .from('recurring_donations')
-          .update({ status: 'paused' })
+          .update({ status: 'past_due' })
           .eq('stripe_subscription_id', subscriptionId)
 
         // Notify user about failed payment via template

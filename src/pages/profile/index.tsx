@@ -293,6 +293,7 @@ export default function ProfilePage() {
             { icon: <Pencil size={14} />, label: 'Edit Profile', to: '/profile/edit' },
             { icon: <Trophy size={14} />, label: 'Leaderboard', to: '/leaderboard' },
             { icon: <Ticket size={14} />, label: 'Tickets', to: '/profile/tickets' },
+            { icon: <Heart size={14} />, label: 'Donations', to: '/profile/donations' },
             { icon: <Settings size={14} />, label: 'Settings', to: '/settings' },
           ].map((b) => (
             <button

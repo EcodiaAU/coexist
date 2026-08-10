@@ -507,21 +507,37 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
       p(`<span style="font-size:13px;color:${C.textMuted};">If you didn't request this, you can safely ignore this email. The link expires in 1 hour.</span>`),
   }),
 
-  donation_receipt: (d) => emailShell({
-    heroTitle: d.is_recurring ? 'Thanks for Your Ongoing Support!' : 'Thank You for Your Donation!',
-    heroSubtitle: `${d.amount} ${d.currency || 'AUD'}`,
-    heroEmoji: '\u{1F49A}',
-    body: greeting(d.name) +
-      p(`Your ${d.is_recurring ? 'recurring ' : ''}donation of <strong>${d.amount}</strong> has been received. Every dollar goes directly toward conservation events, native plantings, and protecting Australia's ecosystems.`) +
-      infoCard([
-        ['Amount', `${d.amount} ${d.currency || 'AUD'}`],
-        ['Date', d.date],
-        ['Type', d.is_recurring ? 'Recurring monthly' : 'One-time'],
-      ]) +
-      (d.receipt_url ? p(`<a href="${d.receipt_url}" style="color:${C.brand};text-decoration:underline;">Download receipt</a>`) : '') +
-      p(`<span style="font-size:13px;color:${C.textMuted};">Co-Exist Australia is a registered charity (ACNC). Donations may be tax-deductible.</span>`),
-    footerCta: { label: 'View Your Impact', url: `${APP_URL}/profile` },
-  }),
+  donation_receipt: (d) => {
+    // Render the tax/charity statement FROM SOURCE (charity_settings, passed by
+    // the webhook), never a hardcoded claim. A valid AU tax-deductible receipt
+    // must show the DGR's ABN, so we assert deductibility ONLY when the caller
+    // confirmed DGR endorsement AND an ABN is on file (d.tax_deductible). This
+    // auto-upgrades to a full ABN receipt once the ABN is configured.
+    const charityName = (d.charity_name as string) || 'Co-Exist Australia'
+    const abn = (d.abn as string) || ''
+    const taxDeductible = d.tax_deductible === true
+    const receiptNumber = (d.receipt_number as string) || ''
+    const rows: Array<[string, string]> = []
+    if (receiptNumber) rows.push(['Receipt no.', receiptNumber])
+    rows.push(['Amount', `${d.amount} ${d.currency || 'AUD'}`])
+    rows.push(['Date', d.date as string])
+    rows.push(['Type', d.is_recurring ? 'Recurring monthly' : 'One-time'])
+    if (abn) rows.push(['ABN', abn])
+    const taxLine = taxDeductible
+      ? `${charityName}${abn ? ` (ABN ${abn})` : ''} is endorsed as a deductible gift recipient (DGR). This receipt is for a gift of ${d.amount} ${d.currency || 'AUD'}; no goods or services were provided in return. Gifts of $2 or more are tax-deductible. Please retain this receipt for your records.`
+      : `${charityName} is a registered charity. Please retain this as a record of your donation.`
+    return emailShell({
+      heroTitle: d.is_recurring ? 'Thanks for Your Ongoing Support!' : 'Thank You for Your Donation!',
+      heroSubtitle: `${d.amount} ${d.currency || 'AUD'}`,
+      heroEmoji: '\u{1F49A}',
+      body: greeting(d.name) +
+        p(`Your ${d.is_recurring ? 'recurring ' : ''}donation of <strong>${d.amount}</strong> has been received. Every dollar goes directly toward conservation events, native plantings, and protecting Australia's ecosystems.`) +
+        infoCard(rows) +
+        (d.receipt_url ? p(`<a href="${d.receipt_url}" style="color:${C.brand};text-decoration:underline;">View your donation history and receipts</a>`) : '') +
+        p(`<span style="font-size:13px;color:${C.textMuted};">${taxLine}</span>`),
+      footerCta: { label: 'View Your Impact', url: `${APP_URL}/profile` },
+    })
+  },
 
   order_confirmation: (d) => emailShell({
     heroTitle: 'Order Confirmed!',
