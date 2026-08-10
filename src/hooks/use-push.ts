@@ -6,6 +6,7 @@ import { Preferences } from '@capacitor/preferences'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { resolveNotificationRoute } from '@/hooks/use-notifications'
+import { scheduleIdle } from '@/lib/defer'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -465,7 +466,7 @@ export function usePushRegistration() {
       // is auth-gated and only handles the side effects that need the user row.
       const actionListener = await plugin.addListener(
         'pushNotificationActionPerformed',
-        async (action: unknown) => {
+        (action: unknown) => {
           const a = action as PushNotificationActionPerformed
           const notifData = a.notification.data ?? {}
           // Diagnostic: persist tap event from this listener too. If the early
@@ -473,31 +474,38 @@ export function usePushRegistration() {
           // timing failed. If neither fires, the plugin isn't delivering taps.
           const diagRoute = resolveNotificationRoute(notifData.type ?? '', notifData)
           void persistTapEvent('auth-gated', diagRoute, notifData)
-          // Mark the matching in-app notification as read so the feed stays in sync.
+          // Mark-read is a side effect, not on the navigation path (navigation
+          // is handled by the early tap listener). Defer it off the tap tick so
+          // a deep-link tap on resume is never behind a DB round-trip while
+          // WebKit is rehydrating the WebContent process (COEXIST-K).
           // Match on type + recent timestamp since push doesn't carry the notification row ID.
-          try {
-            const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
-            const { data: matching } = await supabase
-              .from('notifications')
-              .select('id')
-              .eq('user_id', user!.id)
-              .eq('type', notifData.type ?? '')
-              .is('read_at', null)
-              .gte('created_at', fiveMinAgo)
-              .order('created_at', { ascending: false })
-              .limit(1)
+          scheduleIdle(() => {
+            void (async () => {
+              try {
+                const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+                const { data: matching } = await supabase
+                  .from('notifications')
+                  .select('id')
+                  .eq('user_id', user!.id)
+                  .eq('type', notifData.type ?? '')
+                  .is('read_at', null)
+                  .gte('created_at', fiveMinAgo)
+                  .order('created_at', { ascending: false })
+                  .limit(1)
 
-            if (matching?.[0]) {
-              await supabase
-                .from('notifications')
-                .update({ read_at: new Date().toISOString() })
-                .eq('id', matching[0].id)
-              queryClient.invalidateQueries({ queryKey: ['notifications', user!.id] })
-              queryClient.invalidateQueries({ queryKey: ['notifications-unread', user!.id] })
-            }
-          } catch {
-            // Best-effort - don't block navigation on mark-read failure
-          }
+                if (matching?.[0]) {
+                  await supabase
+                    .from('notifications')
+                    .update({ read_at: new Date().toISOString() })
+                    .eq('id', matching[0].id)
+                  queryClient.invalidateQueries({ queryKey: ['notifications', user!.id] })
+                  queryClient.invalidateQueries({ queryKey: ['notifications-unread', user!.id] })
+                }
+              } catch {
+                // Best-effort - don't block navigation on mark-read failure
+              }
+            })()
+          })
         },
       )
 
@@ -569,8 +577,9 @@ export function usePushRegistration() {
         if (!mounted) return
         App.addListener('appStateChange', async ({ isActive }) => {
           if (isActive && mounted) {
-            clearBadgeCount()
-            // Drain native-direct pending push route on every resume.
+            // Drain a native-direct deep-link tap FIRST and navigate promptly -
+            // this is the route the user tapped; it must not wait behind badge
+            // clearing or token re-registration.
             try {
               const got = await Preferences.get({ key: 'pendingPushRoute' })
               const route = got?.value
@@ -581,11 +590,22 @@ export function usePushRegistration() {
                 navigate(route)
               }
             } catch { /* best-effort */ }
-            await ensurePushPlugin()
-            const plugin = getPushPlugin()
-            if (plugin && mounted) {
-              await requestAndRegister(plugin)
-            }
+
+            // Badge clear + token re-registration are not urgent and cross the
+            // native bridge; defer them off the synchronous resume tick so they
+            // do not contend with WebContent rehydration on the main thread
+            // (COEXIST-K, issue 7616758580).
+            scheduleIdle(() => {
+              if (!mounted) return
+              clearBadgeCount()
+              void (async () => {
+                await ensurePushPlugin()
+                const plugin = getPushPlugin()
+                if (plugin && mounted) {
+                  await requestAndRegister(plugin)
+                }
+              })()
+            })
           }
         }).then((l) => {
           if (mounted) {
