@@ -32,7 +32,7 @@ import { parseLocationPoint } from '@/lib/geo'
 import { MapView } from '@/components'
 import { useAuth } from '@/hooks/use-auth'
 import { useProfile, useProfileCollectives, useProfileStats, useMutualConnections } from '@/hooks/use-profile'
-import { useIsBlocked } from '@/hooks/use-user-blocks'
+import { useIsBlocked, useUnblockUser } from '@/hooks/use-user-blocks'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { REDACTED_PLACEHOLDER } from '@/lib/profile-visibility'
 import { prettyInterestLabel } from '@/lib/interests'
@@ -65,6 +65,7 @@ export default function ViewProfilePage() {
   const { data: stats } = useProfileStats(userId)
   const { data: mutualData } = useMutualConnections(userId ?? '')
   const isBlocked = useIsBlocked(userId)
+  const unblockUser = useUnblockUser()
   const isOwnProfile = user?.id === userId
   // Defense-in-depth tier flag from get_user_profile_v1 RPC. The DB drops
   // sensitive fields to NULL for non-staff viewers; this flag drives the
@@ -410,11 +411,18 @@ export default function ViewProfilePage() {
             </button>
             <button
               type="button"
-              onClick={() => setShowBlockSheet(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm text-error-600 bg-error-50 hover:bg-error-100 active:scale-[0.97] transition-all duration-150 cursor-pointer select-none"
+              onClick={() => {
+                if (isBlocked) {
+                  if (userId) unblockUser.mutate(userId)
+                } else {
+                  setShowBlockSheet(true)
+                }
+              }}
+              disabled={unblockUser.isPending}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm text-error-600 bg-error-50 hover:bg-error-100 active:scale-[0.97] transition-all duration-150 cursor-pointer select-none disabled:opacity-50"
             >
               <ShieldOff size={16} />
-              {isBlocked ? 'Blocked' : 'Block'}
+              {isBlocked ? 'Unblock' : 'Block'}
             </button>
           </motion.div>
         )}

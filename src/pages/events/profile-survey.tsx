@@ -77,6 +77,8 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
   const [dietaryRequirements, setDietaryRequirements] = useState(profile?.dietary_requirements ?? '')
   const [medicalRequirements, setMedicalRequirements] = useState(profile?.medical_requirements ?? '')
   const [reqError, setReqError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [ageError, setAgeError] = useState<string | null>(null)
   const [emergencyContactName, setEmergencyContactName] = useState(profile?.emergency_contact_name ?? '')
   const [emergencyContactPhone, setEmergencyContactPhone] = useState(profile?.emergency_contact_phone ?? '')
   const [emergencyContactRelationship, setEmergencyContactRelationship] = useState(profile?.emergency_contact_relationship ?? '')
@@ -119,6 +121,21 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
       return
     }
     setReqError(null)
+    // Email + age are what leaders rely on for safety contact, so validate
+    // before they persist to the profile (a typo'd email or age 999 otherwise
+    // sticks silently).
+    const trimmedEmail = email.trim()
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setEmailError('Enter a valid email address')
+      return
+    }
+    setEmailError(null)
+    const ageNum = age ? parseInt(age, 10) : null
+    if (ageNum != null && (ageNum < 5 || ageNum > 120)) {
+      setAgeError('Enter an age between 5 and 120')
+      return
+    }
+    setAgeError(null)
     try {
       await updateProfile.mutateAsync({
         first_name: firstName || null,
@@ -240,10 +257,11 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
               <Input
                 label="Age"
                 value={age}
-                onChange={(e) => setAge(e.target.value.replace(/\D/g, ''))}
+                onChange={(e) => { setAge(e.target.value.replace(/\D/g, '')); if (ageError) setAgeError(null) }}
                 placeholder="Age"
                 type="number"
                 maxLength={3}
+                error={ageError ?? undefined}
                 className="[&_input]:bg-surface-3"
               />
               <Input
@@ -258,10 +276,11 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
             <Input
               label="Email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null) }}
               placeholder="your@email.com"
               type="email"
               maxLength={100}
+              error={emailError ?? undefined}
               className="[&_input]:bg-surface-3"
             />
             <Input

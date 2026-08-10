@@ -3,6 +3,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
+import { escapeCsvCell } from '@/lib/csv-safe'
 import {
     ClipboardList,
     Plus,
@@ -267,8 +268,7 @@ export default function AdminSurveysPage() {
         return val == null ? '' : String(val)
       }),
     ])
-    const escapeCsv = (v: string) => `"${v.replace(/"/g, '""')}"`
-    const csv = [headers.map(escapeCsv), ...rows.map((row) => row.map(escapeCsv))].map((row) => row.join(',')).join('\n')
+    const csv = [headers.map(escapeCsvCell), ...rows.map((row) => row.map(escapeCsvCell))].map((row) => row.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')

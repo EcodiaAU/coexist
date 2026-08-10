@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import type { Database } from '@/types/database.types'
 import { supabase } from '@/lib/supabase'
+import { escapeCsvCell } from '@/lib/csv-safe'
 import type {
   Product,
   ProductStatus,
@@ -544,6 +545,10 @@ export function useSalesAnalytics(period: 'week' | 'month' | 'year') {
         }
       }
       const by_product = Array.from(productMap.values()).sort((a, b) => b.revenue_cents - a.revenue_cents)
+      // Product revenue = item lines only (excludes shipping, which total_cents
+      // bundles in). total_revenue_cents stays as gross-of-shipping for the
+      // order-value view; the headline card reports product_revenue_cents.
+      const product_revenue_cents = by_product.reduce((s, p) => s + p.revenue_cents, 0)
 
       const dateMap = new Map<string, { date: string; orders: number; revenue_cents: number }>()
       for (const o of orders) {
@@ -555,7 +560,7 @@ export function useSalesAnalytics(period: 'week' | 'month' | 'year') {
       }
       const by_period = Array.from(dateMap.values()).sort((a, b) => a.date.localeCompare(b.date))
 
-      return { total_revenue_cents, total_orders, total_units_sold, by_product, by_period }
+      return { total_revenue_cents, product_revenue_cents, total_orders, total_units_sold, by_product, by_period }
     },
     staleTime: 2 * 60 * 1000,
     placeholderData: keepPreviousData,
@@ -599,26 +604,31 @@ export async function exportOrdersCsv(statusFilter?: OrderStatus) {
   const { data, error } = await query
   if (error) throw error
 
-  const rows = (data as unknown as Record<string, unknown>[]).map((o) => ({
-    order_id: o.id as string,
-    date: o.created_at as string,
-    customer: (o.profiles as { display_name: string | null } | null)?.display_name ?? 'Unknown',
-    status: o.status as string,
-    items: Array.isArray(o.items)
-      ? (o.items as OrderItemRow[]).map((i) => `${i.product_name ?? i.product_id} x${i.quantity}`).join('; ')
-      : '',
-    total: (((o.total_cents as number) ?? 0) / 100).toFixed(2),
-    tracking: (o.tracking_number as string) ?? '',
-    address: formatCsvAddress(o),
-  }))
+  const rows = (data as unknown as Record<string, unknown>[]).map((o) => {
+    const sa = o.shipping_address as { full_name?: string; phone?: string } | null | undefined
+    return {
+      order_id: o.id as string,
+      date: o.created_at as string,
+      customer: (o.profiles as { display_name: string | null } | null)?.display_name ?? 'Unknown',
+      status: o.status as string,
+      items: Array.isArray(o.items)
+        ? (o.items as OrderItemRow[]).map((i) => `${i.product_name ?? i.product_id} x${i.quantity}`).join('; ')
+        : '',
+      total: (((o.total_cents as number) ?? 0) / 100).toFixed(2),
+      tracking: (o.tracking_number as string) ?? '',
+      recipient: sa?.full_name ?? '',
+      phone: sa?.phone ?? '',
+      address: formatCsvAddress(o),
+    }
+  })
 
   if (rows.length === 0) return
 
   const headers = Object.keys(rows[0])
   const csv = [
-    headers.join(','),
+    headers.map(escapeCsvCell).join(','),
     ...rows.map((r) =>
-      headers.map((h) => `"${String((r as Record<string, unknown>)[h] ?? '').replace(/"/g, '""')}"`).join(','),
+      headers.map((h) => escapeCsvCell((r as Record<string, unknown>)[h])).join(','),
     ),
   ].join('\n')
 

@@ -43,6 +43,9 @@ export default function PublicEventPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
+  // Capture "now" once at mount (pure in render) to decide if the event has
+  // ended, instead of calling Date.now() during render.
+  const [nowMs] = useState(() => Date.now())
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ['public-event', id],
@@ -174,6 +177,19 @@ export default function PublicEventPage() {
     ? event.description.slice(0, 155) + (event.description.length > 155 ? '...' : '')
     : `Join this ${activityLabel} event with Co-Exist${collectiveLabel ? `, hosted by ${collectiveLabel}` : ''} in Australia.`
 
+  // Public events are served regardless of status, so cancelled/completed
+  // events must NOT render as live: no buy card, an explicit state banner, and
+  // an accurate JSON-LD eventStatus (backlog public-event status finding).
+  const lifecycleStatus = (event as { status?: string }).status
+  const isCancelled = lifecycleStatus === 'cancelled'
+  const endMs = event.date_end
+    ? new Date(event.date_end).getTime()
+    : event.date_start
+      ? new Date(event.date_start).getTime()
+      : null
+  const isEnded = !isCancelled && (lifecycleStatus === 'completed' || (endMs != null && endMs < nowMs))
+  const isBuyable = !isCancelled && !isEnded
+
   const eventJsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Event',
@@ -182,7 +198,9 @@ export default function PublicEventPage() {
     startDate: event.date_start,
     ...(event.date_end && { endDate: event.date_end }),
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    eventStatus: 'https://schema.org/EventScheduled',
+    eventStatus: isCancelled
+      ? 'https://schema.org/EventCancelled'
+      : 'https://schema.org/EventScheduled',
     ...(event.address && {
       location: {
         '@type': 'Place',
@@ -309,8 +327,32 @@ export default function PublicEventPage() {
           </motion.div>
         )}
 
+        {/* Cancelled / ended states - render instead of a working buy card. */}
+        {isCancelled && (
+          <motion.div
+            variants={shouldReduceMotion ? undefined : fadeUp}
+            className="mt-8 rounded-md border border-error-200 bg-error-50 p-5"
+          >
+            <h2 className="font-heading text-lg font-semibold text-error-700">This event has been cancelled</h2>
+            <p className="mt-2 text-sm text-error-600 leading-relaxed">
+              The organisers have cancelled this event. If you bought a ticket, they will be in touch about a refund.
+            </p>
+          </motion.div>
+        )}
+        {isEnded && (
+          <motion.div
+            variants={shouldReduceMotion ? undefined : fadeUp}
+            className="mt-8 rounded-md border border-neutral-200 bg-neutral-50 p-5"
+          >
+            <h2 className="font-heading text-lg font-semibold text-neutral-900">This event has ended</h2>
+            <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
+              Registrations are closed. Explore what else is happening near you in the Co-Exist app.
+            </p>
+          </motion.div>
+        )}
+
         {/* Sold out (e.g. on Eventbrite): native guest sales closed. */}
-        {isTicketed && soldOut && (
+        {isBuyable && isTicketed && soldOut && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
             className="mt-8 rounded-md border border-neutral-200 bg-neutral-50 p-5"
@@ -327,7 +369,7 @@ export default function PublicEventPage() {
         )}
 
         {/* Guest ticket purchase (no account required) */}
-        {isTicketed && !soldOut && activeType && (
+        {isBuyable && isTicketed && !soldOut && activeType && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
             className="mt-8 rounded-md border border-neutral-100 bg-white p-5 shadow-sm"

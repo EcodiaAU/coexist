@@ -426,7 +426,7 @@ export default function TasksPage() {
   }
 
   return (
-    <Page swipeBack header={<Header title="" back />}>
+    <Page swipeBack header={<Header title="" back />} onRefresh={handleRefresh}>
         <div className="py-4 space-y-6">
           {/* Summary bar */}
           {(totalPending > 0 || totalOverdue > 0) && (

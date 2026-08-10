@@ -109,8 +109,14 @@ async function fetchAdminEventsData(): Promise<AdminEventsData> {
 
   const upcoming = enriched.filter((e) => e.date_start >= now && e.status !== 'cancelled')
   const past = enriched.filter((e) => e.date_start < now)
+  // Headline stats exclude cancelled events so "Events" + "Registrations" tie
+  // out with the adjacent Upcoming/Avg-attendance cards (which already skip
+  // cancelled). Drafts stay counted: they are in-progress events the admin is
+  // authoring and carry ~0 registrations, so they belong in the total without
+  // distorting the registrations figure. `all` keeps every row for the list.
+  const nonCancelled = enriched.filter((e) => e.status !== 'cancelled')
 
-  const totalRegistrations = enriched.reduce((sum, e) => sum + e.registrationCount, 0)
+  const totalRegistrations = nonCancelled.reduce((sum, e) => sum + e.registrationCount, 0)
   const upcomingRegistrations = upcoming.reduce((sum, e) => sum + e.registrationCount, 0)
   // Average actual attendance per past event = (checked-in registrations
   // + checked-in walk-ins) / past-event count, excluding cancelled events
@@ -135,7 +141,7 @@ async function fetchAdminEventsData(): Promise<AdminEventsData> {
     upcoming,
     past,
     stats: {
-      total: enriched.length,
+      total: nonCancelled.length,
       upcoming: upcoming.length,
       totalRegistrations,
       upcomingRegistrations,

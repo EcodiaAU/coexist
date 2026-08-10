@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
 import {
-  Check,
   Trash2,
   AlertTriangle,
   MessageSquare,
@@ -101,6 +100,41 @@ function useReviewReport() {
   })
 }
 
+interface ReportedMessage {
+  content: string | null
+  created_at: string | null
+  is_deleted: boolean | null
+  message_type: string | null
+  author: string | null
+}
+
+/** Fetch the reported chat message so the moderator can see WHAT they are
+ *  acting on before Remove (staff read is granted by chat_select_admin RLS). */
+function useReportedMessage(report: ReportWithReporter) {
+  const enabled = report.content_type === 'chat_message' && !!report.content_id
+  return useQuery({
+    queryKey: ['reported-message', report.content_id],
+    enabled,
+    staleTime: 30 * 1000,
+    queryFn: async (): Promise<ReportedMessage | null> => {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('content, created_at, is_deleted, message_type, author:profiles!chat_messages_user_id_fkey(display_name)')
+        .eq('id', report.content_id!)
+        .maybeSingle()
+      if (error) throw error
+      if (!data) return null
+      return {
+        content: data.content,
+        created_at: data.created_at,
+        is_deleted: data.is_deleted,
+        message_type: data.message_type,
+        author: (data.author as { display_name: string | null } | null)?.display_name ?? null,
+      }
+    },
+  })
+}
+
 /* ------------------------------------------------------------------ */
 /*  Time helper                                                        */
 /* ------------------------------------------------------------------ */
@@ -120,12 +154,10 @@ function formatDate(dateStr: string): string {
 
 function ReportCard({
   report,
-  onApprove,
   onRemove,
   onDismiss,
 }: {
   report: ReportWithReporter
-  onApprove: () => void
   onRemove: () => void
   onDismiss: () => void
 }) {
@@ -133,6 +165,19 @@ function ReportCard({
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
   const config = contentTypeConfig[report.content_type] ?? contentTypeConfig.photo
   const TypeIcon = config.icon
+  const { data: reportedMessage, isLoading: messageLoading } = useReportedMessage(report)
+
+  const isChatMessage = report.content_type === 'chat_message'
+  // The 'removed' status only hides content for chat_message reports (the
+  // handle_content_report_removal trigger no-ops for profile/user). For a
+  // profile report, marking 'removed' is a triage record - it does NOT restrict
+  // the account. Keep the copy honest rather than promising an action that
+  // never fires. No notification is sent for any type, so drop that claim too.
+  const removeLabel = isChatMessage ? 'Remove' : 'Mark actioned'
+  const removeConfirmTitle = isChatMessage ? 'Remove this message?' : 'Mark this report actioned?'
+  const removeConfirmDescription = isChatMessage
+    ? 'The message will be hidden from all users. This cannot be undone from here.'
+    : 'Records that you have reviewed this report. To restrict the user, open their profile - marking here does not automatically suspend the account.'
 
   return (
     <>
@@ -176,22 +221,49 @@ function ReportCard({
           </div>
         </div>
 
-        {/* Reporter + reason */}
-        <div className="flex items-center gap-2 px-4 py-2">
-          <Avatar
-            src={report.reporter?.avatar_url}
-            name={report.reporter?.display_name ?? 'Reporter'}
-            size="xs"
-          />
-          <div className="flex-1 min-w-0">
-            <span className="text-xs text-neutral-400">
-              {report.reporter?.display_name ?? 'Unknown'}
+        {/* Reason - the core signal, given primary emphasis */}
+        <div className="px-4 pt-1 pb-2">
+          <p className="text-sm text-neutral-800 leading-snug line-clamp-3">
+            {report.reason || <span className="italic text-neutral-400">No reason given</span>}
+          </p>
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <Avatar
+              src={report.reporter?.avatar_url}
+              name={report.reporter?.display_name ?? 'Reporter'}
+              size="xs"
+            />
+            <span className="text-[11px] text-neutral-400">
+              Reported by {report.reporter?.display_name ?? 'Unknown'}
             </span>
-            <p className="text-xs text-neutral-400 truncate" title={report.reason}>
-              {report.reason}
-            </p>
           </div>
         </div>
+
+        {/* Reported content preview - never remove blind */}
+        {isChatMessage && (
+          <div className="mx-4 mb-2 rounded-sm border border-neutral-200 bg-neutral-50 px-3 py-2">
+            {messageLoading ? (
+              <Skeleton variant="text" count={1} />
+            ) : !reportedMessage ? (
+              <p className="text-xs italic text-neutral-400">Reported message not found (may already be deleted).</p>
+            ) : (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-medium text-neutral-500">
+                    {reportedMessage.author ?? 'Unknown author'}
+                  </span>
+                  {reportedMessage.is_deleted && (
+                    <span className="text-[10px] font-semibold uppercase text-error-600">Deleted</span>
+                  )}
+                </div>
+                <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-neutral-800">
+                  {reportedMessage.message_type && reportedMessage.message_type !== 'text'
+                    ? `[${reportedMessage.message_type}]${reportedMessage.content ? ' ' + reportedMessage.content : ''}`
+                    : reportedMessage.content || <span className="italic text-neutral-400">(empty message)</span>}
+                </p>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Quick link for profile reports (user blocks / user reports) */}
         {report.content_type === 'profile' && (
@@ -205,17 +277,16 @@ function ReportCard({
           </div>
         )}
 
-        {/* Actions */}
+        {/* Actions - Keep vs Remove/Action (no redundant Approve/Dismiss split) */}
         {report.status === 'pending' && (
           <div className="flex gap-2 px-4 py-3 border-t border-neutral-100">
             <Button
               variant="ghost"
               size="sm"
-              icon={<Check size={14} />}
-              onClick={onApprove}
-              className="flex-1 !text-success-600 hover:!bg-success-50"
+              onClick={onDismiss}
+              className="flex-1"
             >
-              Approve
+              Keep
             </Button>
             <Button
               variant="ghost"
@@ -224,15 +295,7 @@ function ReportCard({
               onClick={() => setShowRemoveConfirm(true)}
               className="flex-1 !text-error-600 hover:!bg-error-50"
             >
-              Remove
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDismiss}
-              className="flex-1"
-            >
-              Dismiss
+              {removeLabel}
             </Button>
           </div>
         )}
@@ -242,9 +305,9 @@ function ReportCard({
         open={showRemoveConfirm}
         onClose={() => setShowRemoveConfirm(false)}
         onConfirm={onRemove}
-        title="Remove this content?"
-        description="The content will be hidden from all users. The author will be notified."
-        confirmLabel="Remove Content"
+        title={removeConfirmTitle}
+        description={removeConfirmDescription}
+        confirmLabel={removeLabel}
         variant="danger"
       />
     </>
@@ -275,11 +338,7 @@ export default function ModerationQueuePage() {
       { reportId, action },
       {
         onSuccess: () => {
-          const label = action === 'approved'
-            ? 'Content approved'
-            : action === 'removed'
-              ? 'Content removed'
-              : 'Report dismissed'
+          const label = action === 'removed' ? 'Report actioned' : 'Report kept'
           toast.success(label)
         },
         onError: () => toast.error('Failed to update report'),
@@ -341,7 +400,6 @@ export default function ModerationQueuePage() {
               <ReportCard
                 key={report.id}
                 report={report}
-                onApprove={() => handleAction(report.id, 'approved')}
                 onRemove={() => handleAction(report.id, 'removed')}
                 onDismiss={() => handleAction(report.id, 'dismissed')}
               />

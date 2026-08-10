@@ -608,27 +608,40 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {sizes.map((size) => {
-                    const variant = product.variants.find(
+                    // Availability is an OR across the other axis: a size is
+                    // selectable if ANY in-stock variant has it. The current
+                    // colour combo just decides whether tapping keeps the colour
+                    // or auto-switches to an in-stock colour for this size.
+                    const comboVariant = product.variants.find(
                       (v) => v.size === size && (activeVariant?.colour ? v.colour === activeVariant.colour : true),
                     )
+                    const comboAvailable = !!comboVariant && getAvailable(comboVariant.id) > 0
+                    const anyInSize = product.variants.some((v) => v.size === size && getAvailable(v.id) > 0)
                     const isSelected = activeVariant?.size === size
-                    const available = variant && getAvailable(variant.id) > 0
 
                     return (
                       <motion.button
                         key={size}
                         type="button"
-                        onClick={() => variant && setSelectedVariant(variant)}
-                        disabled={!available}
-                        whileTap={available ? { scale: 0.93 } : undefined}
+                        onClick={() => {
+                          const target = comboAvailable
+                            ? comboVariant
+                            : product.variants.find((v) => v.size === size && getAvailable(v.id) > 0) ?? comboVariant
+                          if (target) setSelectedVariant(target)
+                        }}
+                        disabled={!anyInSize}
+                        whileTap={anyInSize ? { scale: 0.93 } : undefined}
+                        title={anyInSize && !comboAvailable ? 'Available in another colour' : undefined}
                         className={cn(
                           'relative px-5 py-2.5 min-h-11 min-w-[3.5rem] rounded-sm text-sm font-semibold',
                           'transition-transform duration-200 cursor-pointer select-none',
                           isSelected
                             ? 'bg-neutral-900 text-white shadow-sm'
-                            : available
+                            : comboAvailable
                               ? 'bg-white border border-neutral-100 text-neutral-900 shadow-sm'
-                              : 'bg-neutral-50 text-neutral-300 cursor-not-allowed line-through',
+                              : anyInSize
+                                ? 'bg-white border border-dashed border-neutral-300 text-neutral-500 shadow-sm'
+                                : 'bg-neutral-50 text-neutral-300 cursor-not-allowed line-through',
                         )}
                       >
                         {size}
@@ -651,27 +664,36 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {colours.map((colour) => {
-                    const variant = product.variants.find(
+                    const comboVariant = product.variants.find(
                       (v) => v.colour === colour && (activeVariant?.size ? v.size === activeVariant.size : true),
                     )
+                    const comboAvailable = !!comboVariant && getAvailable(comboVariant.id) > 0
+                    const anyInColour = product.variants.some((v) => v.colour === colour && getAvailable(v.id) > 0)
                     const isSelected = activeVariant?.colour === colour
-                    const available = variant && getAvailable(variant.id) > 0
 
                     return (
                       <motion.button
                         key={colour}
                         type="button"
-                        onClick={() => variant && setSelectedVariant(variant)}
-                        disabled={!available}
-                        whileTap={available ? { scale: 0.93 } : undefined}
+                        onClick={() => {
+                          const target = comboAvailable
+                            ? comboVariant
+                            : product.variants.find((v) => v.colour === colour && getAvailable(v.id) > 0) ?? comboVariant
+                          if (target) setSelectedVariant(target)
+                        }}
+                        disabled={!anyInColour}
+                        whileTap={anyInColour ? { scale: 0.93 } : undefined}
+                        title={anyInColour && !comboAvailable ? 'Available in another size' : undefined}
                         className={cn(
                           'relative px-5 py-2.5 min-h-11 rounded-sm text-sm font-semibold',
                           'transition-transform duration-200 cursor-pointer select-none',
                           isSelected
                             ? 'bg-neutral-900 text-white shadow-sm'
-                            : available
+                            : comboAvailable
                               ? 'bg-white border border-neutral-100 text-neutral-900 shadow-sm'
-                              : 'bg-neutral-50 text-neutral-300 cursor-not-allowed line-through',
+                              : anyInColour
+                                ? 'bg-white border border-dashed border-neutral-300 text-neutral-500 shadow-sm'
+                                : 'bg-neutral-50 text-neutral-300 cursor-not-allowed line-through',
                         )}
                       >
                         {colour}

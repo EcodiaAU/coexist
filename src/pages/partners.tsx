@@ -1,10 +1,10 @@
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
 import { Handshake, Globe, ExternalLink } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { Navigate } from 'react-router-dom'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { Skeleton } from '@/components/skeleton'
+import { EmptyState } from '@/components/empty-state'
 import { WaveTransition } from '@/components/wave-transition'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
@@ -114,7 +114,7 @@ const TYPE_GRADIENTS: Record<string, string> = {
 
 export default function PartnersPage() {
   const shouldReduceMotion = useReducedMotion()
-  const { data: partners, isLoading } = usePartnerOrganisations()
+  const { data: partners, isLoading, isError } = usePartnerOrganisations()
 
   return (
     <Page swipeBack noBackground className="!px-0 bg-white" stickyOverlay={<Header title="" back transparent className="collapse-header" />}>
@@ -153,8 +153,18 @@ export default function PartnersPage() {
       <div className="px-5 pt-4 pb-12">
         {isLoading ? (
           <PartnersSkeleton />
+        ) : isError ? (
+          <EmptyState
+            illustration="error"
+            title="Couldn't load partners"
+            description="Something went wrong loading our partners. Please try again shortly."
+          />
         ) : !partners?.length ? (
-          <Navigate to="/" replace />
+          <EmptyState
+            illustration="empty"
+            title="No partners yet"
+            description="We're building our partner network. Check back soon."
+          />
         ) : (
           <motion.div
             className="space-y-3"
@@ -228,7 +238,7 @@ export default function PartnersPage() {
 
                       {partner.website && (
                         <a
-                          href={partner.website}
+                          href={/^[a-z][a-z0-9+.-]*:\/\//i.test(partner.website.trim()) ? partner.website.trim() : `https://${partner.website.trim()}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={cn(

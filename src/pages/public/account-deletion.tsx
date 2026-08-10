@@ -388,6 +388,12 @@ export default function AccountDeletionPage() {
                 </motion.div>
 
                 <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="text-center text-sm text-neutral-500">
+                  Only want to remove specific data? Use{' '}
+                  <a href="/data-deletion" className="text-primary-600 underline underline-offset-2">data deletion</a>{' '}
+                  instead.
+                </motion.div>
+
+                <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="text-center text-sm text-neutral-500">
                   Questions? Contact us at{' '}
                   <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary-700 underline underline-offset-2">
                     {CONTACT_EMAIL}

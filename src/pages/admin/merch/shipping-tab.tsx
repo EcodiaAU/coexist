@@ -32,33 +32,30 @@ export default function ShippingTab() {
     }
   }, [config])
 
+  const flat = Number(flatRate)
+  const threshold = freeThreshold ? Number(freeThreshold) : null
+  const flatValid = flatRate.trim() !== '' && Number.isFinite(flat) && flat >= 0
+  const thresholdValid = threshold === null || (Number.isFinite(threshold) && threshold >= 0)
+  const canSave = flatValid && thresholdValid
+
   const handleSave = useCallback(async () => {
     // Validate before persisting: a non-numeric or negative entry used to be
-    // stored as 'NaN' and silently reverted to the $9.95 default on next read (#21).
-    const flat = Number(flatRate)
-    if (flatRate.trim() === '' || !Number.isFinite(flat) || flat < 0) {
-      toast.error('Flat rate must be $0 or more')
+    // stored as 'NaN' and silently reverted to the $9.95 default on next read.
+    // Save is also disabled via canSave and inputs show inline errors.
+    if (!canSave) {
+      toast.error('Enter a valid non-negative amount')
       return
-    }
-    let threshold: number | null = null
-    if (freeThreshold.trim() !== '') {
-      const t = Number(freeThreshold)
-      if (!Number.isFinite(t) || t < 0) {
-        toast.error('Free shipping threshold must be $0 or more (or leave it empty)')
-        return
-      }
-      threshold = Math.round(t * 100)
     }
     try {
       await updateConfig.mutateAsync({
         flat_rate_cents: Math.round(flat * 100),
-        free_shipping_threshold_cents: threshold,
+        free_shipping_threshold_cents: threshold != null ? Math.round(threshold * 100) : null,
       })
       toast.success('Shipping config updated')
     } catch {
       toast.error('Failed to update shipping config')
     }
-  }, [flatRate, freeThreshold, updateConfig, toast])
+  }, [canSave, flat, threshold, updateConfig, toast])
 
   if (showLoading) {
     return <Skeleton variant="text" count={3} />
@@ -78,14 +75,22 @@ export default function ShippingTab() {
       <motion.div variants={fadeUp}>
       <Input
         label="Flat rate ($)"
+        type="number"
+        inputMode="decimal"
+        min="0"
         value={flatRate}
         onChange={(e) => setFlatRate(e.target.value)}
+        error={!flatValid && flatRate.trim() !== '' ? 'Enter a non-negative number' : undefined}
         helperText="Standard shipping cost"
       />
       <Input
         label="Free shipping threshold ($)"
+        type="number"
+        inputMode="decimal"
+        min="0"
         value={freeThreshold}
         onChange={(e) => setFreeThreshold(e.target.value)}
+        error={!thresholdValid ? 'Enter a non-negative number' : undefined}
         helperText="Orders above this amount get free shipping. Leave empty for no threshold."
       />
       </motion.div>
@@ -94,6 +99,7 @@ export default function ShippingTab() {
         variant="primary"
         fullWidth
         loading={updateConfig.isPending}
+        disabled={!canSave}
         onClick={handleSave}
       >
         Save

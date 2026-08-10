@@ -41,6 +41,7 @@ import {
     EmptyState,
 } from '@/components'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
+import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { parseLocationPoint, COLLECTIVE_SLUG_COORDS } from '@/lib/geo'
 
@@ -51,6 +52,7 @@ import { parseLocationPoint, COLLECTIVE_SLUG_COORDS } from '@/lib/geo'
 export default function EditEventPage() {
   const { id: eventId } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { toast } = useToast()
   const [searchParams] = useSearchParams()
   const isDayOfMode = searchParams.get('mode') === 'day-of'
   const shouldReduceMotion = useReducedMotion()
@@ -137,6 +139,23 @@ export default function EditEventPage() {
     )
   }, [existingTicketTypes])
 
+  // Shared cover resolution: a missing cover falls back to the per-activity
+  // default so neither Save nor Publish can produce a coverless event.
+  const resolveCoverFields = useCallback(() => {
+    const fallback = !form.fields.cover_image_url && form.fields.activity_type
+      ? activityDefaults?.[form.fields.activity_type]
+      : null
+    return {
+      cover_image_url: form.fields.cover_image_url || fallback?.cover_image_url || null,
+      cover_image_position_x: form.fields.cover_image_url
+        ? form.fields.cover_image_position_x
+        : fallback?.cover_image_position_x ?? form.fields.cover_image_position_x,
+      cover_image_position_y: form.fields.cover_image_url
+        ? form.fields.cover_image_position_y
+        : fallback?.cover_image_position_y ?? form.fields.cover_image_position_y,
+    }
+  }, [form, activityDefaults])
+
   const handleSave = useCallback(async () => {
     if (!eventId) return
 
@@ -148,6 +167,7 @@ export default function EditEventPage() {
         ? {}
         : { location_point: locationPoint }
 
+    try {
     if (isDayOfMode) {
       // Day-of mode: only update time and address
       if (!form.fields.date_start) return
@@ -160,18 +180,7 @@ export default function EditEventPage() {
       })
     } else {
       if (!form.isBasicsValid || !form.isDateValid) return
-      // If the admin cleared the cover image (or never set one), fall back
-      // to the per-activity default so the event isn't naked.
-      const fallback = !form.fields.cover_image_url && form.fields.activity_type
-        ? activityDefaults?.[form.fields.activity_type]
-        : null
-      const resolvedCover = form.fields.cover_image_url || fallback?.cover_image_url || null
-      const resolvedPosX = form.fields.cover_image_url
-        ? form.fields.cover_image_position_x
-        : fallback?.cover_image_position_x ?? form.fields.cover_image_position_x
-      const resolvedPosY = form.fields.cover_image_url
-        ? form.fields.cover_image_position_y
-        : fallback?.cover_image_position_y ?? form.fields.cover_image_position_y
+      const cover = resolveCoverFields()
       await updateEvent.mutateAsync({
         eventId,
         title: form.fields.title,
@@ -182,9 +191,9 @@ export default function EditEventPage() {
         address: form.fields.address || null,
         ...locationPatch,
         capacity: form.parsedCapacity(),
-        cover_image_url: resolvedCover,
-        cover_image_position_x: resolvedPosX,
-        cover_image_position_y: resolvedPosY,
+        cover_image_url: cover.cover_image_url,
+        cover_image_position_x: cover.cover_image_position_x,
+        cover_image_position_y: cover.cover_image_position_y,
         is_public: form.fields.is_public,
         is_external_collaboration: form.fields.is_external_collaboration,
         external_registration_url: form.fields.external_registration_url || null,
@@ -204,7 +213,10 @@ export default function EditEventPage() {
     }
 
     navigate(`/events/${eventId}`, { replace: true })
-  }, [eventId, isDayOfMode, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, activityDefaults, navigate])
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not save the event')
+    }
+  }, [eventId, isDayOfMode, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, resolveCoverFields, navigate, toast])
 
   // Publish a draft event - saves all fields + flips status to published (fork_mp0so5k9_0d2e77)
   const handlePublish = useCallback(async () => {
@@ -216,36 +228,40 @@ export default function EditEventPage() {
         ? {}
         : { location_point: locationPoint }
 
-    await updateEvent.mutateAsync({
-      eventId,
-      title: form.fields.title,
-      description: form.fields.description || null,
-      activity_type: form.fields.activity_type as Exclude<typeof form.fields.activity_type, ''>,
-      date_start: form.fields.date_start!.toISOString(),
-      date_end: form.fields.date_end?.toISOString() ?? null,
-      address: form.fields.address || null,
-      ...locationPatch,
-      capacity: form.parsedCapacity(),
-      cover_image_url: form.fields.cover_image_url || null,
-      cover_image_position_x: form.fields.cover_image_position_x,
-      cover_image_position_y: form.fields.cover_image_position_y,
-      is_public: form.fields.is_public,
-      is_external_collaboration: form.fields.is_external_collaboration,
-      external_registration_url: form.fields.external_registration_url || null,
-      checkin_window_minutes: checkinWindowMinutes,
-      timezone: form.fields.timezone_overrides_collective ? form.fields.timezone : null,
-      status: 'published',
-    })
+    try {
+      await updateEvent.mutateAsync({
+        eventId,
+        title: form.fields.title,
+        description: form.fields.description || null,
+        activity_type: form.fields.activity_type as Exclude<typeof form.fields.activity_type, ''>,
+        date_start: form.fields.date_start!.toISOString(),
+        date_end: form.fields.date_end?.toISOString() ?? null,
+        address: form.fields.address || null,
+        ...locationPatch,
+        capacity: form.parsedCapacity(),
+        // Same cover fallback as Save so publishing a draft never strips it to a
+        // bare placeholder hero; timezone kept NULL to match Save (tz unused).
+        ...resolveCoverFields(),
+        is_public: form.fields.is_public,
+        is_external_collaboration: form.fields.is_external_collaboration,
+        external_registration_url: form.fields.external_registration_url || null,
+        checkin_window_minutes: checkinWindowMinutes,
+        timezone: null,
+        status: 'published',
+      })
 
-    await saveTickets.mutateAsync({
-      eventId,
-      tiers: isTicketed ? ticketTiers : [],
-      removedIds: removedTierIds,
-      isTicketed,
-    })
+      await saveTickets.mutateAsync({
+        eventId,
+        tiers: isTicketed ? ticketTiers : [],
+        removedIds: removedTierIds,
+        isTicketed,
+      })
 
-    navigate(`/events/${eventId}`, { replace: true })
-  }, [eventId, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, activityDefaults, navigate])
+      navigate(`/events/${eventId}`, { replace: true })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not publish the event')
+    }
+  }, [eventId, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, resolveCoverFields, navigate, toast])
 
   const stagger = {
     hidden: {},

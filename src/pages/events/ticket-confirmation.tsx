@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -8,6 +8,7 @@ import {
   Calendar,
   MapPin,
   Clock,
+  Loader2,
   Ticket,
 } from 'lucide-react'
 import { useEventDetail, formatEventDate, formatEventTime } from '@/hooks/use-events'
@@ -28,7 +29,16 @@ export default function TicketConfirmationPage() {
   const shouldReduceMotion = useReducedMotion()
 
   const { data: event, isLoading: eventLoading } = useEventDetail(eventId)
-  const { data: ticket, isLoading: ticketLoading } = useMyEventTicket(eventId)
+  // Bound the webhook-race poll window: keep polling for ~90s, then settle on
+  // the real state (confirmed ticket, stuck-pending, or genuinely not found).
+  const [windowExpired, setWindowExpired] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setWindowExpired(true), 90_000)
+    return () => clearTimeout(t)
+  }, [])
+  const { data: ticket, isLoading: ticketLoading } = useMyEventTicket(eventId, {
+    poll: !windowExpired,
+  })
   const queryClient = useQueryClient()
 
   // Landing here means a ticket purchase or claim just completed (Stripe
@@ -55,13 +65,28 @@ export default function TicketConfirmationPage() {
     )
   }
 
+  // Webhook race: the ticket row may not exist yet. While the poll window is
+  // open, show a neutral confirming spinner instead of a scary error.
+  if (!ticket && !windowExpired) {
+    return (
+      <Page swipeBack header={<Header title="Your Ticket" back />}>
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <Loader2 className="w-10 h-10 text-neutral-400 animate-spin" />
+          <p className="mt-4 text-sm font-medium text-neutral-600">Confirming your ticket...</p>
+          <p className="mt-1 text-xs text-neutral-400">This can take a few seconds after payment.</p>
+        </div>
+      </Page>
+    )
+  }
+
+  // Window elapsed and still nothing (or event missing): the genuine miss.
   if (!event || !ticket) {
     return (
       <Page swipeBack header={<Header title="Your Ticket" back />}>
         <EmptyState
           illustration="error"
           title="Ticket not found"
-          description="We couldn't find your ticket. It may still be processing."
+          description="We couldn't find your ticket. If you just paid, give it a moment and refresh, or contact us if it doesn't appear."
           action={{ label: 'Back to Event', onClick: () => navigate(`/events/${eventId}`) }}
         />
       </Page>

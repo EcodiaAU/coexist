@@ -188,8 +188,10 @@ async function fetchAdminOverview(dateRange: DateRange, collectiveId?: string): 
         ? (collectiveId
             ? supabase.from('events').select('id', { count: 'exact', head: true })
                 .eq('collective_id', collectiveId)
+                .in('status', ['published', 'completed'])
                 .gte('date_start', rangeStart).lt('date_start', now)
             : supabase.from('events').select('id', { count: 'exact', head: true })
+                .in('status', ['published', 'completed'])
                 .gte('date_start', rangeStart).lt('date_start', now))
         : scopedEventsCount,
     ])
@@ -271,6 +273,7 @@ async function fetchTrendData(): Promise<TrendMonth[]> {
         supabase.from('profiles').select('id', { count: 'exact', head: true })
           .gte('created_at', start.toISOString()).lte('created_at', end.toISOString()),
         supabase.from('events').select('id', { count: 'exact', head: true })
+          .in('status', ['published', 'completed'])
           .gte('date_start', start.toISOString())
           .lte('date_start', new Date(Math.min(end.getTime(), now.getTime())).toISOString()),
       ])

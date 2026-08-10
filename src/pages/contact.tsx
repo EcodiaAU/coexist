@@ -128,8 +128,20 @@ export default function ContactPage() {
       toast.toast.success('Message sent! We\'ll get back to you soon.')
       setSubject('')
       setMessage('')
-    } catch {
-      toast.toast.error('Something went wrong. Please try emailing us directly.')
+    } catch (err) {
+      // Branch on the real failure so the user gets an actionable message
+      // instead of one generic line for offline / RLS-reject / server error.
+      console.error('[contact] submission failed', err)
+      const code = (err as { code?: string } | null)?.code
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        toast.toast.error('You appear to be offline. Check your connection and try again.')
+      } else if (code === '42501') {
+        // RLS insufficient-privilege: only reachable if the anon INSERT policy
+        // is ever tightened to authenticated. Point signed-out users to log in.
+        toast.toast.error('Please sign in to send a message, then try again.')
+      } else {
+        toast.toast.error('Something went wrong sending your message. Please try again, or email hello@coexistaus.org.')
+      }
     } finally {
       setSending(false)
     }

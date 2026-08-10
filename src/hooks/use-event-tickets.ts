@@ -95,7 +95,7 @@ export function useEventTicketTypes(eventId: string | undefined) {
 /*  User's ticket for a specific event                                 */
 /* ------------------------------------------------------------------ */
 
-export function useMyEventTicket(eventId: string | undefined) {
+export function useMyEventTicket(eventId: string | undefined, opts?: { poll?: boolean }) {
   const { user } = useAuth()
 
   return useQuery({
@@ -123,6 +123,17 @@ export function useMyEventTicket(eventId: string | undefined) {
     },
     enabled: !!eventId && !!user,
     staleTime: 30 * 1000,
+    // On the Stripe-redirect confirmation page the buyer can return before the
+    // payment webhook has written/confirmed the ticket row. Poll every 3s while
+    // the row is missing or still pending so the page self-resolves instead of
+    // dead-ending on "Ticket not found" / a stuck "Payment processing" banner.
+    // The caller bounds the window (see ticket-confirmation.tsx) so this stops.
+    refetchInterval: opts?.poll
+      ? (query) => {
+          const d = query.state.data as EventTicket | null | undefined
+          return !d || d.status === 'pending' ? 3000 : false
+        }
+      : false,
   })
 }
 
@@ -548,8 +559,23 @@ export function useSaveTicketTypes() {
         if (delErr) throw delErr
       }
 
-      // Upsert existing + insert new tiers
-      const validTiers = tiers.filter((t) => t.name.trim())
+      // A fully-blank row the leader added and never filled is ignored; a row
+      // with ANY content must be complete. This replaces the old silent
+      // name-filter that dropped half-filled tiers on save while toasting
+      // success, and blocks the $0 tier that dead-ends guest checkout (Stripe
+      // rejects unit_amount 0). Ticketed tiers must be >= A$0.50.
+      const isBlankRow = (t: typeof tiers[number]) =>
+        !t.name.trim() && !(t.price_dollars || '').trim() && !(t.capacity || '').trim() && !(t.description || '').trim()
+      const validTiers = tiers.filter((t) => !isBlankRow(t))
+      for (const t of validTiers) {
+        if (!t.name.trim()) {
+          throw new Error('Give every ticket tier a name, or clear the empty row before saving.')
+        }
+        const cents = Math.round(parseFloat(t.price_dollars || '0') * 100)
+        if (!Number.isFinite(cents) || cents < 50) {
+          throw new Error(`"${t.name.trim()}" needs a price of at least $0.50 (free tiers use the claim/invite flow).`)
+        }
+      }
       for (let idx = 0; idx < validTiers.length; idx++) {
         const t = validTiers[idx]
         const row = {

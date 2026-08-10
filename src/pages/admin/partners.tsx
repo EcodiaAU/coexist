@@ -34,6 +34,14 @@ import { supabase } from '@/lib/supabase'
 /*  Data hooks                                                         */
 /* ------------------------------------------------------------------ */
 
+/** Prepend https:// when an org website has no scheme, so a bare "example.com"
+ *  opens the external site instead of navigating inside the app. */
+function normalizeExternalUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return trimmed
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
 function useOrganisations() {
   return useQuery({
     queryKey: ['admin-organisations'],
@@ -89,7 +97,7 @@ export default function AdminPartnersPage() {
   const [activeTab, setActiveTab] = useState('organisations')
   const [showCreateOrg, setShowCreateOrg] = useState(false)
   const [showCreateOffer, setShowCreateOffer] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string; name?: string; offersCount?: number } | null>(null)
   const [orgForm, setOrgForm] = useState({
     name: '',
     type: 'corporate',
@@ -347,7 +355,7 @@ export default function AdminPartnersPage() {
                       {org.contact_name && <span>{org.contact_name}</span>}
                       {org.website && (
                         <a
-                          href={org.website}
+                          href={normalizeExternalUrl(String(org.website))}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-0.5 hover:text-neutral-400"
@@ -361,7 +369,12 @@ export default function AdminPartnersPage() {
 
                   <button
                     type="button"
-                    onClick={() => setDeleteTarget({ id: org.id, type: 'org' })}
+                    onClick={() => setDeleteTarget({
+                      id: String(org.id),
+                      type: 'org',
+                      name: String(org.name),
+                      offersCount: offers?.filter((o) => o.organisation_id === org.id).length ?? 0,
+                    })}
                     className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 cursor-pointer"
                     aria-label={`Delete ${org.name}`}
                   >
@@ -420,7 +433,7 @@ export default function AdminPartnersPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setDeleteTarget({ id: offer.id, type: 'offer' })}
+                      onClick={() => setDeleteTarget({ id: String(offer.id), type: 'offer', name: String(offer.title) })}
                       className="p-1 rounded text-neutral-400 hover:text-error-600 cursor-pointer"
                       aria-label="Delete offer"
                     >
@@ -627,8 +640,14 @@ export default function AdminPartnersPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
-        title="Delete"
-        description="This will permanently delete this item."
+        title={deleteTarget?.name ? `Delete ${deleteTarget.name}?` : 'Delete?'}
+        description={
+          deleteTarget?.type === 'org'
+            ? (deleteTarget.offersCount ?? 0) > 0
+              ? `This permanently deletes ${deleteTarget.name}. Its ${deleteTarget.offersCount} partner offer${deleteTarget.offersCount === 1 ? '' : 's'} will be unlinked and lose their "by ${deleteTarget.name}" attribution.`
+              : `This permanently deletes ${deleteTarget.name}.`
+            : 'This permanently deletes this partner offer.'
+        }
         confirmLabel="Delete"
         variant="danger"
       />

@@ -22,6 +22,7 @@ export default function AuthCallbackPage() {
   const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
+    let active = true
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
         setState('success')
@@ -29,6 +30,16 @@ export default function AuthCallbackPage() {
         if (event === 'PASSWORD_RECOVERY') {
           setTimeout(() => navigate('/reset-password', { replace: true }), 1500)
         }
+      }
+    })
+
+    // Fallback: detectSessionInUrl can fire SIGNED_IN before this listener
+    // subscribes (fast device / cached / re-mount), so no event reaches us and
+    // the page sits at "processing" until the 30s timeout then falsely reports
+    // an expired link. getSession() catches the already-established session.
+    supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session) {
+        setState((prev) => (prev === 'processing' ? 'success' : prev))
       }
     })
 
@@ -43,6 +54,7 @@ export default function AuthCallbackPage() {
     }, 30_000)
 
     return () => {
+      active = false
       subscription.unsubscribe()
       clearTimeout(timeout)
     }

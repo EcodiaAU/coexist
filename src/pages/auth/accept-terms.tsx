@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate, Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { FileText } from 'lucide-react'
 import { Button } from '@/components/button'
@@ -15,6 +15,7 @@ export default function AcceptTermsPage() {
   const shouldReduceMotion = useReducedMotion()
   const [agreed, setAgreed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Suspended users should not be on this page
   if (isSuspended) return <Navigate to="/suspended" replace />
@@ -25,10 +26,12 @@ export default function AcceptTermsPage() {
 
   const handleAccept = async () => {
     setIsSubmitting(true)
+    setError(null)
     try {
       await acceptTos(CURRENT_TOS_VERSION)
       navigate('/', { replace: true })
     } catch {
+      setError('We could not save your acceptance. Check your connection and try again.')
       setIsSubmitting(false)
     }
   }
@@ -92,6 +95,12 @@ export default function AcceptTermsPage() {
             onChange={setAgreed}
             label="I have read and agree to the updated Terms of Service and Privacy Policy"
           />
+          <p className="mt-2 pl-8 text-xs text-neutral-500">
+            Read the full{' '}
+            <Link to="/terms" className="font-medium text-primary-600 underline">Terms of Service</Link>
+            {' '}and{' '}
+            <Link to="/privacy" className="font-medium text-primary-600 underline">Privacy Policy</Link>.
+          </p>
         </motion.div>
 
         <motion.div
@@ -99,6 +108,9 @@ export default function AcceptTermsPage() {
           className="mt-6 space-y-3"
           style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
         >
+          {error && (
+            <p className="text-sm text-error-500 text-center" role="alert">{error}</p>
+          )}
           <Button
             variant="primary"
             size="lg"
