@@ -25,8 +25,6 @@ import {
     Leaf,
     Waves,
     Ticket,
-    Star,
-    Trophy,
 } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Avatar } from '@/components/avatar'
@@ -38,7 +36,6 @@ import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { useAuth } from '@/hooks/use-auth'
 import { useProfile, useProfileCollectives, useProfileStats } from '@/hooks/use-profile'
-import { usePoints } from '@/hooks/use-points'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { bentoMixedTheme } from '@/components/bento-stats-themes'
@@ -148,7 +145,6 @@ export default function ProfilePage() {
   const { data: profile, isLoading: profileLoading } = useProfile()
   const { data: collectives, isLoading: collectivesLoading } = useProfileCollectives()
   const { data: stats, isLoading: statsLoading } = useProfileStats()
-  const { data: points } = usePoints()
 
   const isLoading = profileLoading || collectivesLoading || statsLoading
   const showLoading = useDelayedLoading(isLoading)
@@ -196,7 +192,6 @@ export default function ProfilePage() {
   const allStatsRaw = [
     { value: stats?.eventsAttended ?? 0, label: 'Events', icon: <Calendar size={18} />, alwaysShow: true, unit: undefined },
     { value: stats?.hoursVolunteered ?? 0, label: 'Hours', icon: <Clock size={18} />, alwaysShow: true, unit: undefined },
-    { value: points ?? 0, label: 'Points', icon: <Star size={18} />, alwaysShow: true, unit: undefined },
     { value: stats?.treesPlanted ?? 0, label: 'Trees', icon: <TreePine size={18} />, alwaysShow: false, unit: undefined },
     { value: stats?.rubbishCollectedKg ?? 0, label: 'Litter Removed', icon: <Trash2 size={18} />, alwaysShow: false, unit: 'kg' as const },
     { value: stats?.areaRestoredSqm ?? 0, label: 'Area Regenerated', icon: <Ruler size={18} />, alwaysShow: false, unit: 'sqm' as const },
@@ -291,7 +286,6 @@ export default function ProfilePage() {
         <div className="relative z-20 -mt-5 flex flex-wrap justify-center gap-2 px-4">
           {[
             { icon: <Pencil size={14} />, label: 'Edit Profile', to: '/profile/edit' },
-            { icon: <Trophy size={14} />, label: 'Leaderboard', to: '/leaderboard' },
             { icon: <Ticket size={14} />, label: 'Tickets', to: '/profile/tickets' },
             { icon: <Heart size={14} />, label: 'Donations', to: '/profile/donations' },
             { icon: <Settings size={14} />, label: 'Settings', to: '/settings' },
