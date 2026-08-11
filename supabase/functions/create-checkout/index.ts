@@ -302,29 +302,77 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
         // the order must equal the amount Stripe charges.
         const productSubtotalCents = serverTotalCents
 
-        // ---- Server-authoritative stock check (prevent oversell; PB4) ----
-        // merch_inventory (keyed by the variant UUID) is the sale-decrement source
-        // of truth. Reject if any variant's requested quantity exceeds live stock.
-        // Aggregate quantity per variant first (a cart may list the same variant
-        // twice). A variant with no inventory row is treated as untracked (allowed),
-        // matching prior behaviour; every live variant is seeded by sync_variant_inventory.
+        // ---- Server-authoritative ATOMIC stock reservation (prevent oversell; PB4) ----
+        // This REPLACES the previous advisory read (a non-locking check-then-act:
+        // it SELECTed stock_count and compared, holding no lock). Under concurrency
+        // that advisory read oversold: two last-unit buyers both read stock=1, both
+        // passed, both paid, and the post-payment decrement_stock clamps at
+        // GREATEST(0, stock - qty) so it never rejects => 2 sold, 1 stock.
+        //
+        // reserve_stock (migration 037) takes a FOR UPDATE lock on the inventory row
+        // and reserves against (stock_count - other users' active reservations), so
+        // concurrent checkouts for the last unit serialize on the row lock and
+        // exactly one wins; the loser gets insufficient_stock. The hold is released
+        // post-payment by the webhook (release_all_reservations) and otherwise
+        // self-expires after 15 min (cleanup_expired_reservations cron). Real stock
+        // is only ever decremented post-payment, so an abandoned checkout needs no
+        // compensating restore.
+        //
+        // A variant with no merch_inventory row is untracked (allowed), matching
+        // prior behaviour. Aggregate qty per variant first (a cart may list the same
+        // variant twice). Locks are acquired in a deterministic variant order so two
+        // overlapping concurrent carts cannot deadlock. On any shortfall we release
+        // the reservations made in THIS request (all-or-nothing) and return 409.
         {
           const stockProductIds = [...new Set((body.items as Array<{ product_id: string }>).map((i) => i.product_id))]
           const { data: invRows } = await supabase
             .from('merch_inventory')
-            .select('product_id, variant_key, stock_count')
+            .select('product_id, variant_key')
             .in('product_id', stockProductIds)
-          const stockMap = new Map<string, number>()
-          for (const r of invRows ?? []) stockMap.set(`${r.product_id}:${r.variant_key}`, r.stock_count ?? 0)
-          const wanted = new Map<string, number>()
+          const tracked = new Set<string>()
+          for (const r of invRows ?? []) tracked.add(`${r.product_id}:${r.variant_key}`)
+
+          const wanted = new Map<string, { product_id: string; variant_id: string; qty: number }>()
           for (const it of body.items as Array<{ product_id: string; variant_id: string; quantity: number }>) {
             const k = `${it.product_id}:${it.variant_id}`
-            wanted.set(k, (wanted.get(k) ?? 0) + it.quantity)
+            const cur = wanted.get(k)
+            if (cur) cur.qty += it.quantity
+            else wanted.set(k, { product_id: it.product_id, variant_id: it.variant_id, qty: it.quantity })
           }
-          for (const [k, qty] of wanted) {
-            if (stockMap.has(k) && qty > (stockMap.get(k) ?? 0)) {
-              return json({ error: 'insufficient_stock', message: 'One or more items are out of stock. Please adjust your cart.', variant_id: k.split(':')[1] }, 409)
+
+          // Only tracked variants are reserved; deterministic order (by variant UUID)
+          // prevents a lock-ordering deadlock between concurrent carts sharing variants.
+          const toReserve = [...wanted.values()]
+            .filter((w) => tracked.has(`${w.product_id}:${w.variant_id}`))
+            .sort((a, b) => (a.variant_id < b.variant_id ? -1 : a.variant_id > b.variant_id ? 1 : 0))
+
+          const reservedVariantKeys: string[] = []
+          const releaseReserved = async () => {
+            for (const vk of reservedVariantKeys) {
+              await supabase.rpc('release_reservation', { p_user_id: body.user_id, p_variant_key: vk })
             }
+          }
+
+          for (const w of toReserve) {
+            const { data: res, error: resErr } = await supabase.rpc('reserve_stock', {
+              p_user_id: body.user_id,
+              p_product_id: w.product_id,
+              p_variant_key: w.variant_id,
+              p_quantity: w.qty,
+              p_duration_minutes: 15,
+            })
+            const reserved = !resErr && res && (res as { success?: boolean }).success === true
+            if (!reserved) {
+              await releaseReserved()
+              const available = (res as { available?: number } | null)?.available
+              return json({
+                error: 'insufficient_stock',
+                message: 'One or more items are out of stock. Please adjust your cart.',
+                variant_id: w.variant_id,
+                ...(typeof available === 'number' ? { available } : {}),
+              }, 409)
+            }
+            reservedVariantKeys.push(w.variant_id)
           }
         }
 
