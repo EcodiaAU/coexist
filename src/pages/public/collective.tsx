@@ -1,7 +1,7 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
-import { MapPin, Users, TreePine, Heart, Shield, ArrowRight } from 'lucide-react'
+import { MapPin, Users, TreePine, ArrowRight } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { supabase } from '@/lib/supabase'
@@ -9,7 +9,7 @@ import { wallClockNow } from '@/lib/date-format'
 import { cn } from '@/lib/cn'
 import { Skeleton } from '@/components/skeleton'
 import { OGMeta, SITE_URL } from '@/components/og-meta'
-import { APP_NAME, TAGLINE } from '@/lib/constants'
+import { APP_NAME } from '@/lib/constants'
 import { WebFooter } from '@/components/web-footer'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
@@ -90,19 +90,6 @@ function PlayStoreBadge({ className, onClick }: { className?: string; onClick?: 
         <p className="text-[15px] font-semibold leading-tight">Google Play</p>
       </div>
     </button>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Trust signal pill                                                  */
-/* ------------------------------------------------------------------ */
-
-function TrustPill({ icon: Icon, text }: { icon: typeof Shield; text: string }) {
-  return (
-    <div className="flex items-center gap-1.5 rounded-full bg-moss-50 border border-moss-100/50 px-3 py-1.5">
-      <Icon size={12} className="text-moss-500" />
-      <span className="text-[11px] font-medium text-moss-700">{text}</span>
-    </div>
   )
 }
 
@@ -246,73 +233,74 @@ export default function PublicCollectivePage() {
       {/* ════════════════════════════════════════════════════════════ */}
       {/*  HERO                                                       */}
       {/* ════════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden">
-        {/* Background image or gradient */}
+      <div className="relative flex min-h-[82svh] flex-col overflow-hidden">
+        {/* Full-bleed cover, framed by the admin's stored focal point */}
         <div className="absolute inset-0">
           {collective.cover_image_url ? (
             <img
               src={collective.cover_image_url}
               alt=""
               className="h-full w-full object-cover"
+              style={{
+                objectPosition: `${collective.cover_image_position_x ?? 50}% ${collective.cover_image_position_y ?? 50}%`,
+              }}
               aria-hidden="true"
             />
           ) : (
-            <div className="h-full w-full bg-primary-900" />
+            <div className="h-full w-full bg-gradient-to-br from-primary-700 via-primary-900 to-moss-900" />
           )}
-          {/* Gradient overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+          {/* Editorial gradient: dark enough at the base to hold type, light on top */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
         </div>
 
-        {/* Hero content */}
+        {/* Wordmark: big, centred, on its own */}
+        <div className="relative z-10 flex justify-center pb-4 pt-[calc(env(safe-area-inset-top,0px)+2.25rem)]">
+          <img
+            src="/logos/white-wordmark.webp"
+            alt={APP_NAME}
+            className="h-8 w-auto drop-shadow-md sm:h-9"
+          />
+        </div>
+
+        {/* Name + place, anchored low and centred */}
         <motion.div
-          className="relative z-10 px-5 pt-12 pb-8 sm:px-8 sm:pt-16 sm:pb-12 max-w-2xl mx-auto"
+          className="relative z-10 mx-auto mt-auto w-full max-w-3xl px-6 pb-16 text-center sm:pb-24"
           variants={rm ? undefined : stagger}
           initial="hidden"
           animate="visible"
         >
-          {/* App badge - wide wordmark */}
-          <motion.div variants={fadeUp}>
-            <div className="inline-flex items-center gap-2.5 rounded-full bg-white/20 px-3 py-1.5 mb-4">
-              <img
-                src="/logos/white-wordmark.webp"
-                alt={APP_NAME}
-                className="h-3.5 w-auto"
-              />
-              <span className="text-[11px] text-white/40">|</span>
-              <span className="text-[11px] text-white/60">{TAGLINE}</span>
-            </div>
-          </motion.div>
-
-          {/* Collective name */}
           <motion.h1
             variants={fadeUp}
-            className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-tight drop-shadow-sm"
+            className="font-heading text-[3.25rem] font-normal leading-[0.95] tracking-tight text-white drop-shadow-sm sm:text-7xl"
           >
             {collective.name}
           </motion.h1>
 
-          {/* Location */}
           {locationStr && (
-            <motion.p variants={fadeUp} className="mt-2 flex items-center gap-1.5 text-sm text-white/80">
-              <MapPin size={14} className="text-white/60" />
+            <motion.p
+              variants={fadeUp}
+              className="mt-5 flex items-center justify-center gap-1.5 text-base text-white/85"
+            >
+              <MapPin size={16} className="text-white/70" />
               {locationStr}
             </motion.p>
           )}
 
-          {/* Stats row */}
-          <motion.div variants={fadeUp} className="flex gap-5 mt-5">
-            <div>
-              <p className="font-heading text-2xl font-bold text-white">{collective.member_count ?? 0}</p>
-              <p className="text-xs text-white/50">Members</p>
-            </div>
-            {upcomingEvents && (
-              <div>
-                <p className="font-heading text-2xl font-bold text-white">{upcomingEvents.length}</p>
-                <p className="text-xs text-white/50">Upcoming</p>
-              </div>
-            )}
-          </motion.div>
+          <motion.p variants={fadeUp} className="mt-1.5 text-sm text-white/60">
+            {(collective.member_count ?? 0).toLocaleString()} member{(collective.member_count ?? 0) === 1 ? '' : 's'}
+            {upcomingEvents && upcomingEvents.length > 0
+              ? ` · ${upcomingEvents.length} upcoming event${upcomingEvents.length === 1 ? '' : 's'}`
+              : ''}
+          </motion.p>
+
+          <motion.button
+            variants={fadeUp}
+            type="button"
+            onClick={handleOpenInApp}
+            className="mt-9 inline-flex items-center justify-center rounded-full bg-white px-9 py-3.5 font-heading text-sm font-semibold text-primary-900 shadow-lg transition-[background-color,transform] duration-150 hover:bg-white/90 active:scale-[0.97] cursor-pointer select-none"
+          >
+            Join {collective.name}
+          </motion.button>
         </motion.div>
       </div>
 
@@ -320,23 +308,16 @@ export default function PublicCollectivePage() {
       {/*  BODY                                                       */}
       {/* ════════════════════════════════════════════════════════════ */}
       <motion.div
-        className="flex-1 mx-auto max-w-2xl w-full px-5 py-6 sm:px-8"
+        className="flex-1 mx-auto max-w-2xl w-full px-6 py-14 sm:px-8 sm:py-20"
         variants={rm ? undefined : stagger}
         initial="hidden"
         animate="visible"
       >
-        {/* Trust signals */}
-        <motion.div variants={fadeUp} className="flex flex-wrap gap-2 mb-6">
-          <TrustPill icon={Shield} text="Registered charity" />
-          <TrustPill icon={Heart} text="Free to join" />
-          <TrustPill icon={TreePine} text="Real conservation" />
-        </motion.div>
-
         {/* Description */}
         {collective.description && (
-          <motion.div variants={fadeUp} className="mb-6">
-            <h2 className="font-heading text-lg font-semibold text-neutral-900 mb-2">About</h2>
-            <p className="whitespace-pre-line text-neutral-500 leading-relaxed text-[15px]">
+          <motion.div variants={fadeUp} className="mb-14 text-center">
+            <h2 className="font-heading text-3xl font-normal tracking-tight text-neutral-900 mb-4">About</h2>
+            <p className="whitespace-pre-line text-neutral-600 leading-relaxed text-lg max-w-xl mx-auto">
               {collective.description}
             </p>
           </motion.div>
@@ -344,8 +325,8 @@ export default function PublicCollectivePage() {
 
         {/* Upcoming events */}
         {upcomingEvents && upcomingEvents.length > 0 && (
-          <motion.div variants={fadeUp} className="mb-8">
-            <h2 className="font-heading text-lg font-semibold text-neutral-900 mb-3">Upcoming Events</h2>
+          <motion.div variants={fadeUp} className="mb-14">
+            <h2 className="font-heading text-3xl font-normal tracking-tight text-neutral-900 mb-5 text-center">Upcoming Events</h2>
             <div className="space-y-2.5">
               {upcomingEvents.map((evt) => {
                 const d = new Date(evt.date_start)
@@ -388,16 +369,16 @@ export default function PublicCollectivePage() {
         {/* ── Join CTA section ── */}
         <motion.div
           variants={fadeUp}
-          className="rounded-md bg-primary-800 p-6 text-center relative overflow-hidden"
+          className="rounded-3xl bg-primary-800 p-8 sm:p-10 text-center relative overflow-hidden"
         >
           <div className="relative z-10">
-            <div className="w-14 h-14 rounded-md bg-white/15 flex items-center justify-center mx-auto mb-3">
-              <TreePine size={26} className="text-white" />
+            <div className="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-4">
+              <TreePine size={28} className="text-white" />
             </div>
-            <h2 className="font-heading text-xl font-bold text-white mb-1.5">
+            <h2 className="font-heading text-2xl font-normal tracking-tight text-white mb-2">
               Join {collective.name}
             </h2>
-            <p className="text-sm text-white/60 mb-5 max-w-xs mx-auto">
+            <p className="text-[15px] text-white/70 mb-6 max-w-xs mx-auto">
               Download the free {APP_NAME} app to join this collective, attend events, and track your impact.
             </p>
 
@@ -409,7 +390,7 @@ export default function PublicCollectivePage() {
                 onClick={handleOpenInApp}
                 className={cn(
                   'w-full flex items-center justify-center gap-2.5 px-6 py-3.5',
-                  'rounded-sm bg-white text-primary-800',
+                  'rounded-full bg-white text-primary-800',
                   'font-heading font-semibold',
                   'hover:bg-white/90 active:scale-[0.97]',
                   'transition-colors duration-150',
@@ -447,7 +428,7 @@ export default function PublicCollectivePage() {
                 onClick={() => navigate('/welcome')}
                 className={cn(
                   'w-full px-6 py-3',
-                  'rounded-sm bg-white/10 text-white/80',
+                  'rounded-full bg-white/10 text-white/80',
                   'text-sm font-medium',
                   'hover:bg-white/15 active:scale-[0.97]',
                   'transition-colors duration-150',
@@ -482,7 +463,7 @@ export default function PublicCollectivePage() {
             onClick={handleOpenInApp}
             className={cn(
               'flex-1 flex items-center justify-center gap-2 py-3',
-              'rounded-sm bg-primary-800 text-white',
+              'rounded-full bg-primary-800 text-white',
               'font-heading font-semibold text-sm',
               'active:scale-[0.97] transition-transform',
               'cursor-pointer select-none',
@@ -495,7 +476,7 @@ export default function PublicCollectivePage() {
             onClick={handleDownload}
             className={cn(
               'flex-1 flex items-center justify-center gap-2 py-3',
-              'rounded-sm bg-moss-100 text-moss-800',
+              'rounded-full bg-moss-100 text-moss-800',
               'font-heading font-semibold text-sm',
               'active:scale-[0.97] transition-transform',
               'cursor-pointer select-none',
