@@ -30,6 +30,21 @@ function getDevicePlatform(): 'ios' | 'android' | 'web' {
 const APP_STORE_URL = 'https://apps.apple.com/au/app/co-exist/id6760897574'
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=org.coexistaus.app&hl=en'
 
+/**
+ * Serve a Supabase Storage image through the render/transform pipeline instead
+ * of the raw object. The pipeline re-encodes (webp where supported), quality-
+ * controls, and does a server-side cover-resize, which is noticeably cleaner on
+ * a full-bleed hero than the browser upscaling a raw JPEG. Falls back to the
+ * original URL for anything that is not a public Storage object.
+ */
+function heroImage(url: string): string {
+  const marker = '/storage/v1/object/public/'
+  if (!url.includes(marker)) return url
+  const rendered = url.replace(marker, '/storage/v1/render/image/public/')
+  const sep = rendered.includes('?') ? '&' : '?'
+  return `${rendered}${sep}width=1400&quality=82&resize=cover`
+}
+
 
 /* ------------------------------------------------------------------ */
 /*  Store badge components (real badge styling)                        */
@@ -238,7 +253,7 @@ export default function PublicCollectivePage() {
         <div className="absolute inset-0">
           {collective.cover_image_url ? (
             <img
-              src={collective.cover_image_url}
+              src={heroImage(collective.cover_image_url)}
               alt=""
               className="h-full w-full object-cover"
               style={{
