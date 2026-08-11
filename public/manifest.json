@@ -1,0 +1,31 @@
+{
+  "name": "Co-Exist",
+  "short_name": "Co-Exist",
+  "description": "Australia's youth conservation platform. Join local events, connect with collectives, plant native trees, clean beaches, and track your real-world environmental impact.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#4A7C59",
+  "background_color": "#4A7C59",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
