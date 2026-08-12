@@ -133,7 +133,7 @@ export function ProfileEventMap({ userId, isOwnProfile = false }: ProfileEventMa
           the image rather than a white button bar. */}
       <BottomSheet open={!!selected} onClose={() => setSelectedKey(null)}>
         {selected && (
-          <div className="pb-3">
+          <div>
             <div className="mb-3.5">
               <h3 className="font-heading text-xl font-bold text-neutral-900 leading-tight">{selected.label}</h3>
               <p className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500">
@@ -144,11 +144,14 @@ export function ProfileEventMap({ userId, isOwnProfile = false }: ProfileEventMa
 
             {/* Full-bleed cover tiles (Kurt 2026-08-12: images should bleed edge
                 to edge in the modal). -mx-5 cancels the BottomSheet's px-5 so
-                each cover fills the sheet's full width; a hairline gap keeps
-                stacked tiles legible. */}
-            <div className="-mx-5 space-y-1">
+                each cover fills the sheet's full width; -mb-6 cancels the
+                sheet's bottom padding so the last cover bleeds to the sheet's
+                bottom edge (no white bar under the image), and last:rounded-b-md
+                rounds that final tile to match the sheet's rounded corners. A
+                hairline gap keeps stacked tiles legible. */}
+            <div className="-mx-5 -mb-6 space-y-1">
               {selected.events.map((ev) => (
-                <div key={ev.id} className="group relative w-full overflow-hidden aspect-[16/10]">
+                <div key={ev.id} className="group relative w-full overflow-hidden aspect-[16/10] last:rounded-b-md">
                   {ev.coverImageUrl ? (
                     <img src={ev.coverImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
                   ) : (

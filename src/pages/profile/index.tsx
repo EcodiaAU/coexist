@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
 import {
@@ -157,14 +157,27 @@ export default function ProfilePage() {
   const shouldReduceMotion = useReducedMotion()
   const rm = !!shouldReduceMotion
   const { user } = useAuth()
-  const { data: profile, isLoading: profileLoading } = useProfile()
+  const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useProfile()
   const { data: collectives, isLoading: collectivesLoading } = useProfileCollectives()
   const { data: stats, isLoading: statsLoading } = useProfileStats()
+
+  // A real profile row always carries created_at (DB NOT NULL default now()). A
+  // truthy profile object WITHOUT it is a phantom empty result - it comes from a
+  // transient read race (e.g. a redacted/empty RPC row returned while the auth
+  // token was mid-refresh) and would otherwise render a broken hero: no name, a
+  // "?" avatar, and a fabricated "Member since <today>" from the Date.now()
+  // fallback. Treat it as still-loading and force one refetch so it self-heals
+  // instead of flashing the empty state. Origin: Tate 2026-08-12, profile hero
+  // showed no photo/name on load.
+  const isPhantomProfile = !!profile && !profile.created_at
+  useEffect(() => {
+    if (isPhantomProfile) refetchProfile()
+  }, [isPhantomProfile, refetchProfile])
 
   const isLoading = profileLoading || collectivesLoading || statsLoading
   const showLoading = useDelayedLoading(isLoading)
 
-  if (showLoading) {
+  if (showLoading || isPhantomProfile) {
     return (
       <Page noBackground className="bg-surface-2">
         <ProfileSkeleton />
