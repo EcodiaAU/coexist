@@ -74,8 +74,8 @@ Deno.serve(withSentry('guest-ticket-checkout', async (req: Request) => {
     }
     const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : ''
     const qty = typeof body.quantity === 'number' ? Math.max(1, Math.min(10, Math.floor(body.quantity))) : 1
-    // Camp-out safety info collected on the public booking form (optional in the
-    // request; hard-enforced below only for camp_out events).
+    // Safety info collected on the public booking form (optional in the
+    // request shape; hard-enforced below for every ticketed event).
     const dietaryIn = typeof body.dietary === 'string' ? body.dietary.trim().slice(0, 500) : ''
     const medicalIn = typeof body.medical === 'string' ? body.medical.trim().slice(0, 500) : ''
 
@@ -143,16 +143,17 @@ Deno.serve(withSentry('guest-ticket-checkout', async (req: Request) => {
       }
     }
 
-    // ---- Camp-out safety gate (server-side choke-point) ----
-    // Camp-outs are catered + remote, so dietary + medical/allergy info is a
-    // hard pre-checkout requirement (Angelica, 2026-07-08) - the authed flow
-    // gates on it via CampoutRequirementsModal; the public guest flow used to
-    // skip it entirely. Enforce here so NO buy surface can bypass it, and
-    // persist onto the (just-provisioned or existing) profile. Fill missing
-    // fields ONLY: never overwrite a returning member's existing safety data
-    // with a hurried public answer. 'camp_out' is the activity_type enum value
-    // (mirrors src/lib/dietary.ts CAMPOUT_ACTIVITY_TYPE).
-    if (evt.activity_type === 'camp_out') {
+    // ---- Ticket safety gate (server-side choke-point) ----
+    // Dietary + medical/allergy info is a hard pre-checkout requirement for
+    // EVERY ticketed event (Angelica, 2026-07-08 for camp-outs; broadened to
+    // all ticketed events 2026-08-12 so leaders always hold safety + catering
+    // data for every ticket holder). The authed flow gates on it via
+    // CampoutRequirementsModal; enforce here too so NO buy surface can bypass
+    // it, and persist onto the (just-provisioned or existing) profile. Every
+    // request that reaches here is already for an is_ticketed event (guarded
+    // above). Fill missing fields ONLY: never overwrite a returning member's
+    // existing safety data with a hurried public answer.
+    {
       const { data: prof } = await supabase
         .from('profiles')
         .select('dietary_requirements, medical_requirements')
@@ -161,7 +162,7 @@ Deno.serve(withSentry('guest-ticket-checkout', async (req: Request) => {
       const needDietary = !(prof?.dietary_requirements ?? '').trim()
       const needMedical = !(prof?.medical_requirements ?? '').trim()
       if ((needDietary && !dietaryIn) || (needMedical && !medicalIn)) {
-        return json({ error: 'Camp-outs need your dietary and medical/allergy info before you can book.' }, 400)
+        return json({ error: 'We need your dietary and medical/allergy info before you can book.' }, 400)
       }
       const profUpdates: { dietary_requirements?: string; medical_requirements?: string } = {}
       if (needDietary && dietaryIn) profUpdates.dietary_requirements = dietaryIn
@@ -170,7 +171,7 @@ Deno.serve(withSentry('guest-ticket-checkout', async (req: Request) => {
         const { error: profErr } = await supabase.from('profiles').update(profUpdates).eq('id', userId)
         if (profErr) {
           console.error('[guest-checkout] profile safety update failed:', profErr.message)
-          return json({ error: 'Could not save your camp-out details. Please try again.' }, 500)
+          return json({ error: 'Could not save your details. Please try again.' }, 500)
         }
       }
     }

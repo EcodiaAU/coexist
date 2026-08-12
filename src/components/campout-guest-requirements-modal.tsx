@@ -6,27 +6,30 @@ import { Input } from '@/components/input'
 import { NO_DIETARY_SENTINEL, NO_MEDICAL_SENTINEL } from '@/lib/dietary'
 
 /* ------------------------------------------------------------------ */
-/*  Guest camp-out requirements modal (public booking, no account)     */
+/*  Guest ticket requirements modal (public booking, no account)       */
 /*                                                                     */
 /*  The public campout / event pages let someone book with just name + */
-/*  email, but camp-outs are catered + remote so dietary + medical      */
-/*  info is a hard pre-checkout requirement (Angelica, 2026-07-08) -    */
-/*  the same rule the authed CampoutRequirementsModal enforces. The     */
-/*  guest has no session/profile yet, so unlike that modal this one     */
-/*  does NOT write to the DB: it collects both answers and hands them   */
-/*  back via onSubmit, and guest-ticket-checkout persists them onto the */
+/*  email, but dietary + medical/allergy info is a hard pre-checkout    */
+/*  requirement for EVERY ticketed event (Angelica, 2026-07-08; broad- */
+/*  ened from camp-outs to all ticketed events 2026-08-12) - the same  */
+/*  rule the authed CampoutRequirementsModal enforces. The guest has    */
+/*  no session/profile yet, so unlike that modal this one does NOT      */
+/*  write to the DB: it collects both answers and hands them back via   */
+/*  onSubmit, and guest-ticket-checkout persists them onto the          */
 /*  provisioned profile (and hard-enforces the gate server-side).      */
-/*  An explicit "None" is a valid answer; a blank is not.              */
+/*  An explicit "None" is a valid answer; a blank is not. `isCampout`  */
+/*  only tunes the copy.                                               */
 /* ------------------------------------------------------------------ */
 
 interface Props {
   open: boolean
   submitting: boolean
+  isCampout: boolean
   onClose: () => void
   onSubmit: (values: { dietary: string; medical: string }) => void
 }
 
-export function CampoutGuestRequirementsModal({ open, submitting, onClose, onSubmit }: Props) {
+export function CampoutGuestRequirementsModal({ open, submitting, isCampout, onClose, onSubmit }: Props) {
   const [dietary, setDietary] = useState('')
   const [medical, setMedical] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -67,12 +70,12 @@ export function CampoutGuestRequirementsModal({ open, submitting, onClose, onSub
               <Tent size={22} className="text-primary-800" />
             </div>
             <h2 id="campout-guest-reqs-title" className="font-heading text-xl font-bold text-neutral-900">
-              Before you book this camp-out
+              {isCampout ? 'Before you book this camp-out' : 'Before you book your ticket'}
             </h2>
             <p className="text-sm text-neutral-500 leading-relaxed">
-              Camp-outs are catered and remote, so our leaders need your dietary
-              and medical/allergy info before you book. Only event leaders can
-              see it.
+              {isCampout
+                ? 'Camp-outs are catered and remote, so our leaders need your dietary and medical/allergy info before you book. Only event leaders can see it.'
+                : 'Our leaders need your dietary and medical/allergy info before you book, so we can cater safely and be ready for allergies. Only event leaders can see it.'}
             </p>
           </div>
 

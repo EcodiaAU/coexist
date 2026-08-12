@@ -147,9 +147,10 @@ export default function PublicEventPage() {
       setBuyError('Please enter a valid email address')
       return
     }
-    // Camp-outs are catered + remote: collect the mandatory dietary/medical
-    // safety info first (server also enforces). Then custom questions, then pay.
-    if (isCampout && !campoutReqs) {
+    // Dietary + medical/allergy info is mandatory for every ticketed event
+    // (this buy path is only reachable for ticketed events). Collect it first
+    // (server also enforces). Then custom questions, then pay.
+    if (!campoutReqs) {
       setShowCampoutReqs(true)
       return
     }
@@ -510,6 +511,7 @@ export default function PublicEventPage() {
       <CampoutGuestRequirementsModal
         open={showCampoutReqs}
         submitting={buying}
+        isCampout={isCampout}
         onClose={() => { if (!buying) setShowCampoutReqs(false) }}
         onSubmit={continueAfterCampoutReqs}
       />

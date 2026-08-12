@@ -539,17 +539,18 @@ export default function EventDetailPage() {
   // session. Entered here because Stripe's hosted page cannot settle a $0 total.
   const [promoCode, setPromoCode] = useState('')
 
-  // Camp-out purchase gate: buyers of a camp-out ticket must have dietary +
-  // medical info on file BEFORE checkout (Angelica, Co-Exist, 2026-07-08 -
-  // catering + safety). If either is missing we open a blocking modal that
-  // captures them, persists to the profile, then continues to checkout. Non
-  // camp-out ticketed events are unaffected here (dietary is still enforced
-  // post-purchase by the DietaryGate backstop, unchanged).
+  // Ticket purchase gate: buyers of ANY ticket must have dietary + medical/
+  // allergy info on file BEFORE checkout (Angelica, Co-Exist, 2026-07-08 for
+  // catering + safety; broadened from camp-outs to every ticketed event
+  // 2026-08-12 so leaders always have safety data on file). If either is
+  // missing we open a blocking modal that captures them, persists to the
+  // profile, then continues to checkout. The app-open DietaryGate remains the
+  // path-agnostic backstop for free claims and existing holders.
   const isCampoutEvent = isCampoutActivity(event?.activity_type ?? null)
   const dietaryMissing = !(profile?.dietary_requirements ?? '').trim()
   const medicalMissing = !(profile?.medical_requirements ?? '').trim()
-  const campoutNeedsDietary = isCampoutEvent && dietaryMissing
-  const campoutNeedsMedical = isCampoutEvent && medicalMissing
+  const ticketNeedsDietary = isTicketed && dietaryMissing
+  const ticketNeedsMedical = isTicketed && medicalMissing
   const [showCampoutReqs, setShowCampoutReqs] = useState(false)
   const [showQuestionsModal, setShowQuestionsModal] = useState(false)
   const [pendingTicketTypeId, setPendingTicketTypeId] = useState<string | null>(null)
@@ -598,13 +599,13 @@ export default function EventDetailPage() {
   }, [ticketQuestions, doTicketCheckout])
 
   const beginTicketCheckout = useCallback((ticketTypeId: string) => {
-    if (user && (campoutNeedsDietary || campoutNeedsMedical)) {
+    if (user && (ticketNeedsDietary || ticketNeedsMedical)) {
       setPendingTicketTypeId(ticketTypeId)
       setShowCampoutReqs(true)
       return
     }
     proceedToCheckout(ticketTypeId)
-  }, [user, campoutNeedsDietary, campoutNeedsMedical, proceedToCheckout])
+  }, [user, ticketNeedsDietary, ticketNeedsMedical, proceedToCheckout])
 
   const [showCancelSheet, setShowCancelSheet] = useState(false)
   const [showCalendarSheet, setShowCalendarSheet] = useState(false)
@@ -2219,8 +2220,9 @@ export default function EventDetailPage() {
           buyer is missing either field. Blocks the purchase until answered. */}
       <CampoutRequirementsModal
         open={showCampoutReqs}
-        needDietary={campoutNeedsDietary}
-        needMedical={campoutNeedsMedical}
+        needDietary={ticketNeedsDietary}
+        needMedical={ticketNeedsMedical}
+        isCampout={isCampoutEvent}
         onClose={() => { setShowCampoutReqs(false); setPendingTicketTypeId(null) }}
         onSaved={() => {
           setShowCampoutReqs(false)

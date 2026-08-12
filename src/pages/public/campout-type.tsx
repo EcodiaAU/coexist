@@ -307,6 +307,7 @@ export default function CampoutTypePage() {
       <CampoutGuestRequirementsModal
         open={showReqs}
         submitting={busy}
+        isCampout={true}
         onClose={() => { if (!busy) setShowReqs(false) }}
         onSubmit={(vals) => { void book(vals) }}
       />

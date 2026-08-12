@@ -9,26 +9,32 @@ import { useToast } from '@/components/toast'
 import { NO_DIETARY_SENTINEL, NO_MEDICAL_SENTINEL } from '@/lib/dietary'
 
 /* ------------------------------------------------------------------ */
-/*  Camp-out requirements modal (captured at purchase)                 */
+/*  Ticket requirements modal (captured at purchase)                   */
 /*                                                                     */
-/*  Shown before a camp-out ticket checkout when the buyer is missing  */
-/*  dietary and/or medical info. It BLOCKS the purchase: the buyer     */
-/*  cannot reach Stripe checkout until both required fields are         */
-/*  answered (an explicit "None" is a valid answer, a blank is not).   */
+/*  Shown before ANY ticket checkout when the buyer is missing         */
+/*  dietary and/or medical info. Dietary + medical/allergy info is     */
+/*  mandatory for every ticketed event (not just camp-outs) so leaders */
+/*  always have safety + catering data on file. It BLOCKS the purchase:*/
+/*  the buyer cannot reach Stripe checkout until every required field  */
+/*  is answered (an explicit "None" is a valid answer, a blank is not).*/
 /*  On save it persists to the buyer's profile and invokes onSaved,    */
 /*  which continues to checkout. It is dismissable (Cancel) - unlike   */
 /*  the app-open DietaryGate backstop - because no ticket exists yet.  */
+/*  `isCampout` only tunes the copy (camp-outs are catered + remote,   */
+/*  so the wording leans on that); the requirement itself is identical */
+/*  for every ticketed event.                                          */
 /* ------------------------------------------------------------------ */
 
 interface Props {
   open: boolean
   needDietary: boolean
   needMedical: boolean
+  isCampout: boolean
   onClose: () => void
   onSaved: () => void
 }
 
-export function CampoutRequirementsModal({ open, needDietary, needMedical, onClose, onSaved }: Props) {
+export function CampoutRequirementsModal({ open, needDietary, needMedical, isCampout, onClose, onSaved }: Props) {
   const { user, refreshProfile } = useAuth()
   const { toast } = useToast()
   const [dietary, setDietary] = useState('')
@@ -90,12 +96,12 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, onClo
               <Tent data-eos-id="src/components/campout-requirements-modal.tsx#6" size={22} className="text-primary-800" />
             </div>
             <h2 data-eos-id="src/components/campout-requirements-modal.tsx#7" id="campout-reqs-title" className="font-heading text-xl font-bold text-neutral-900">
-              Before you book this camp-out
+              {isCampout ? 'Before you book this camp-out' : 'Before you book your ticket'}
             </h2>
             <p data-eos-id="src/components/campout-requirements-modal.tsx#8" className="text-sm text-neutral-500 leading-relaxed">
-              Camp-outs are catered and remote, so our leaders need your dietary
-              and medical/allergy info before you book. Only event leaders can
-              see it.
+              {isCampout
+                ? 'Camp-outs are catered and remote, so our leaders need your dietary and medical/allergy info before you book. Only event leaders can see it.'
+                : 'Our leaders need your dietary and medical/allergy info before you book, so we can cater safely and be ready for allergies. Only event leaders can see it.'}
             </p>
           </div>
 

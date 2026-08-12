@@ -11,17 +11,17 @@ import {
   DIETARY_GATE_QUERY_KEY,
   NO_DIETARY_SENTINEL,
   NO_MEDICAL_SENTINEL,
-  CAMPOUT_ACTIVITY_TYPE,
 } from '@/lib/dietary'
 
 /* ------------------------------------------------------------------ */
 /*  Dietary + medical requirements gate                                */
 /*                                                                     */
 /*  Anyone holding a ticket or registration to an UPCOMING TICKETED    */
-/*  event must have dietary requirements on file - catering for        */
-/*  camp-outs and ticketed events is ordered off this field. Holders   */
-/*  of an upcoming CAMP-OUT must additionally have medical / allergy    */
-/*  info on file (safety for multi-day, remote, overnight events).     */
+/*  event must have BOTH dietary requirements and medical / allergy     */
+/*  info on file - catering + safety are ordered off these fields.      */
+/*  (Broadened 2026-08-12 from "medical only for camp-outs" to every    */
+/*  ticketed event, so leaders always hold allergy/medical data for     */
+/*  every ticket holder.)                                              */
 /*                                                                     */
 /*  Users missing a required field who hold such a ticket get a        */
 /*  blocking prompt on app open (which backdates the requirement to    */
@@ -29,8 +29,8 @@ import {
 /*  ticket purchase (the checkout flow invalidates                     */
 /*  DIETARY_GATE_QUERY_KEY, re-running the eligibility check). The      */
 /*  purchase flow itself also captures these fields inline before      */
-/*  checkout for camp-outs; this gate is the backstop for existing     */
-/*  holders, free claims, and any path that bypasses the inline form.  */
+/*  checkout; this gate is the backstop for existing holders, free      */
+/*  claims, and any path that bypasses the inline form.                */
 /*                                                                     */
 /*  Both fields have a legitimate "none" answer, so each offers a       */
 /*  "None" quick-fill that stores the sentinel. An empty/null field    */
@@ -66,26 +66,26 @@ export function DietaryGate() {
     (dietaryEmpty || medicalEmpty)
 
   // Does this user hold a live ticket OR registration to an upcoming ticketed
-  // event, and is any of those events a camp-out? Both tables are checked
-  // because a ticketed event can carry either artefact depending on how the
-  // user got in (paid checkout, free claim, admin registration).
+  // event? Both tables are checked because a ticketed event can carry either
+  // artefact depending on how the user got in (paid checkout, free claim,
+  // admin registration). A single live ticket arms both dietary + medical.
   const { data: eligibility } = useQuery({
     queryKey: [...DIETARY_GATE_QUERY_KEY, user?.id],
-    queryFn: async (): Promise<{ ticketed: boolean; campout: boolean }> => {
-      if (!user) return { ticketed: false, campout: false }
+    queryFn: async (): Promise<{ ticketed: boolean }> => {
+      if (!user) return { ticketed: false }
       const nowIso = new Date().toISOString()
 
       const [tickets, regs] = await Promise.all([
         supabase
           .from('event_tickets')
-          .select('id, events!inner(id, activity_type)')
+          .select('id, events!inner(id)')
           .eq('user_id', user.id)
           .in('status', ['pending', 'confirmed', 'checked_in'])
           .eq('events.is_ticketed', true)
           .gte('events.date_start', nowIso),
         supabase
           .from('event_registrations')
-          .select('id, events!inner(id, activity_type)')
+          .select('id, events!inner(id)')
           .eq('user_id', user.id)
           .in('status', ['registered', 'attended'])
           .eq('events.is_ticketed', true)
@@ -95,21 +95,15 @@ export function DietaryGate() {
       if (tickets.error) throw tickets.error
       if (regs.error) throw regs.error
 
-      const rows = [...(tickets.data ?? []), ...(regs.data ?? [])]
-      const activityOf = (r: unknown): string | null => {
-        const e = (r as { events?: { activity_type?: string | null } | null }).events
-        return e?.activity_type ?? null
-      }
-      const ticketed = rows.length > 0
-      const campout = rows.some((r) => activityOf(r) === CAMPOUT_ACTIVITY_TYPE)
-      return { ticketed, campout }
+      const ticketed = (tickets.data?.length ?? 0) + (regs.data?.length ?? 0) > 0
+      return { ticketed }
     },
     enabled: candidate,
     staleTime: 5 * 60 * 1000,
   })
 
   const needDietary = !!eligibility?.ticketed && dietaryEmpty
-  const needMedical = !!eligibility?.campout && medicalEmpty
+  const needMedical = !!eligibility?.ticketed && medicalEmpty
   const show = candidate && (needDietary || needMedical)
 
   // Lock body scroll while the gate is up.
