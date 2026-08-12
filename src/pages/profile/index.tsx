@@ -177,10 +177,12 @@ export default function ProfilePage() {
   const hasDetails = profile.first_name || profile.email || profile.phone || profile.age || profile.postcode || profile.gender
 
   // Lead the profile with full-bleed imagery, matching the homepage events
-  // sections. Prefer the member's own avatar; fall back to a landscape from a
-  // collective they belong to; otherwise a nature gradient renders in the hero.
+  // sections. The hero background is a landscape (a cover from a collective the
+  // member belongs to, same imagery language as the events cards); the member's
+  // avatar shows as the crisp ring on top. When they belong to no collective, a
+  // nature gradient renders instead. We deliberately do NOT blow the square
+  // avatar up as the background - it crops badly and dark/logo avatars go black.
   const heroImage: string | null =
-    profile.avatar_url ||
     (collectives ?? [])
       .map((m) => (m.collectives as { cover_image_url?: string | null } | null)?.cover_image_url)
       .find((u): u is string => !!u) ||
@@ -220,6 +222,10 @@ export default function ProfilePage() {
           legible sitting over the image, exactly like the events cards. */}
       <div className="-mx-4 lg:-mx-6">
         <div className="relative min-h-[340px] overflow-hidden">
+          {/* Nature gradient base - always painted, so a slow or missing hero
+              image never leaves the hero black. */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#879e62] via-moss-700 to-primary-800" aria-hidden="true" />
+
           {heroImage ? (
             <img
               src={heroImage}
@@ -227,11 +233,7 @@ export default function ProfilePage() {
               className="absolute inset-0 h-full w-full object-cover object-center"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-[#879e62] via-moss-700 to-primary-800" aria-hidden="true" />
-          )}
-
-          {/* Nature watermark on the gradient fallback */}
-          {!heroImage && (
+            /* Nature watermark on the gradient fallback */
             <div className="absolute -right-6 -top-6 text-white/10 pointer-events-none" aria-hidden="true">
               <TreePine size={200} strokeWidth={1} />
             </div>
