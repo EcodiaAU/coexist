@@ -10,8 +10,12 @@ import { withSentry } from '../_shared/sentry.ts'
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'hello@coexistaus.org'
 const FROM_NAME = Deno.env.get('RESEND_FROM_NAME') ?? 'Co-Exist'
-const BATCH_SIZE = 50 // Resend supports up to 100 recipients per batch send
-const DELAY_MS = 200  // Pause between batches to respect rate limits
+// Resend's /emails/batch takes up to 100 personalised emails per HTTP request.
+// One request per 100 recipients keeps us far under the account's 10 req/s
+// limit. The old path fired 50 concurrent single POSTs, so ~41 of every 50 got
+// 429'd and were silently counted as delivered (2026-08-12 investigation).
+const CHUNK_SIZE = 100
+const DELAY_MS = 600  // Pause between chunks (mirrors send-email)
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -58,52 +62,52 @@ function applyRecipientVars(html: string, vars: RecipientVars): string {
   return out
 }
 
-async function sendBatch(
-  recipients: { email: string; vars: RecipientVars }[],
-  subject: string,
-  htmlContent: string,
-  _textContent: string,
-): Promise<{ success: boolean; error?: string }> {
-  // Resend batch: send individual emails per recipient for personalisation.
-  // Subject also gets the recipient vars so a campaign subject can read
-  // "Coming up: {{next_event_title}}" and the inbox preview is personalised.
-  const results = await Promise.allSettled(
-    recipients.map((r) => {
-      const personalised = applyRecipientVars(htmlContent, r.vars)
-      const personalisedSubject = applyRecipientVars(subject, r.vars)
-      return fetch('https://api.resend.com/emails', {
+type PreparedEmail = Record<string, unknown>
+
+// POST one chunk (<=100 emails) to Resend's batch endpoint, retrying on 429 /
+// 5xx with backoff that honours Retry-After. Returns a per-recipient message-id
+// array in input order (null where Resend returned no id), so the caller can
+// record real per-recipient status instead of an optimistic batch guess.
+async function sendChunk(
+  emails: PreparedEmail[],
+): Promise<{ ids: (string | null)[]; error?: string }> {
+  let lastErr = ''
+  for (let attempt = 0; attempt < 5; attempt++) {
+    let resp: Response
+    try {
+      resp = await fetch('https://api.resend.com/emails/batch', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${RESEND_API_KEY}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          from: `${FROM_NAME} <${FROM_EMAIL}>`,
-          to: [r.email],
-          subject: personalisedSubject,
-          html: personalised,
-          tags: [{ name: 'category', value: 'campaign' }],
-          headers: {
-            'List-Unsubscribe': `<mailto:unsubscribe@coexistaus.org?subject=Unsubscribe>, <https://app.coexistaus.org/unsubscribe>`,
-            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-          },
-        }),
+        body: JSON.stringify(emails),
       })
-    }),
-  )
-
-  const failures = results.filter(
-    (r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.ok),
-  )
-
-  if (failures.length === recipients.length) {
-    console.error('[send-campaign] All emails in batch failed')
-    return { success: false, error: `All ${failures.length} emails failed` }
+    } catch (e) {
+      lastErr = `fetch: ${(e as Error).message}`
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)))
+      continue
+    }
+    if (resp.ok) {
+      const body = (await resp.json()) as { data?: { id: string }[] }
+      const data = body.data || []
+      return { ids: emails.map((_, i) => data[i]?.id ?? null) }
+    }
+    if (resp.status === 429 || resp.status >= 500) {
+      const ra = Number(resp.headers.get('retry-after') || '1')
+      lastErr = `${resp.status}: ${(await resp.text()).slice(0, 200)}`
+      await new Promise((r) =>
+        setTimeout(r, Math.min(6000, (ra || 1) * 1000) + attempt * 300),
+      )
+      continue
+    }
+    // 4xx (validation) - retrying won't help.
+    return {
+      ids: emails.map(() => null),
+      error: `${resp.status}: ${(await resp.text()).slice(0, 300)}`,
+    }
   }
-  if (failures.length > 0) {
-    console.warn(`[send-campaign] ${failures.length}/${recipients.length} emails failed in batch`)
-  }
-  return { success: true }
+  return { ids: emails.map(() => null), error: lastErr || 'exhausted retries' }
 }
 
 Deno.serve(withSentry('send-campaign', async (req: Request) => {
@@ -232,15 +236,11 @@ Deno.serve(withSentry('send-campaign', async (req: Request) => {
       )
     }
 
-    // 4. Insert recipient records
-    const recipientRows = audience.map((a: any) => ({
-      campaign_id,
-      profile_id: a.profile_id,
-      email: a.email,
-      status: 'queued',
-    }))
-
-    await supabaseAdmin.from('campaign_recipients').insert(recipientRows)
+    // 4. Per-recipient rows are upserted per chunk after each batch send (step
+    //    6), carrying the real Resend message id and real status. The previous
+    //    unchecked bulk insert of the whole audience was removed: its failure
+    //    was silently swallowed, leaving 0 rows while the campaign still
+    //    reported "1678 delivered" (2026-08-12 investigation).
 
     // 5. Load names for personalisation
     const profileIds = audience.map((a: any) => a.profile_id)
@@ -337,49 +337,67 @@ Deno.serve(withSentry('send-campaign', async (req: Request) => {
       }
     }
 
-    // 6. Send in batches
+    // 6. Send via Resend's batch endpoint, chunked, with real per-recipient
+    //    tracking. total_delivered now counts recipients Resend actually
+    //    ACCEPTED (returned a message id for), not an optimistic batch guess.
+    //    True delivered/bounced/opened land later via the resend-webhook.
+    const ZERO_UUID = '00000000-0000-0000-0000-000000000000'
     let totalSent = 0
     let totalFailed = 0
 
-    for (let i = 0; i < audience.length; i += BATCH_SIZE) {
-      const batch = audience.slice(i, i + BATCH_SIZE)
-      const recipients = batch.map((a: any) => ({
-        email: a.email,
-        vars: buildVars(a.profile_id, a.email),
-      }))
+    for (let i = 0; i < audience.length; i += CHUNK_SIZE) {
+      const slice = audience.slice(i, i + CHUNK_SIZE)
+      const emails: PreparedEmail[] = slice.map((a: any) => {
+        const vars = buildVars(a.profile_id, a.email)
+        return {
+          from: `${FROM_NAME} <${FROM_EMAIL}>`,
+          to: [a.email],
+          subject: applyRecipientVars(campaign.subject, vars),
+          html: applyRecipientVars(campaign.body_html, vars),
+          tags: [{ name: 'category', value: 'campaign' }],
+          headers: {
+            'List-Unsubscribe': `<mailto:unsubscribe@coexistaus.org?subject=Unsubscribe>, <${APP_URL}/unsubscribe?email=${encodeURIComponent(a.email)}>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+          },
+        }
+      })
 
-      const result = await sendBatch(
-        recipients,
-        campaign.subject,
-        campaign.body_html,
-        campaign.body_text || '',
-      )
-
-      // Update recipient statuses
-      const batchIds = batch.map((a: any) => a.profile_id)
-      if (result.success) {
-        totalSent += batch.length
-        await supabaseAdmin
-          .from('campaign_recipients')
-          .update({ status: 'sent', sent_at: new Date().toISOString() })
-          .eq('campaign_id', campaign_id)
-          .in('profile_id', batchIds)
-      } else {
-        totalFailed += batch.length
-        await supabaseAdmin
-          .from('campaign_recipients')
-          .update({ status: 'failed', error_message: result.error?.slice(0, 500) })
-          .eq('campaign_id', campaign_id)
-          .in('profile_id', batchIds)
+      const { ids, error: chunkErr } = await sendChunk(emails)
+      if (chunkErr) {
+        console.warn(`[send-campaign] chunk ${i}-${i + slice.length} error: ${chunkErr}`)
       }
 
-      // Rate limit pause
-      if (i + BATCH_SIZE < audience.length) {
+      const nowIso = new Date().toISOString()
+      const rows = slice
+        .map((a: any, k: number) => ({
+          campaign_id,
+          profile_id: a.profile_id,
+          email: a.email,
+          status: ids[k] ? 'sent' : 'failed',
+          sent_at: ids[k] ? nowIso : null,
+          resend_message_id: ids[k],
+          error_message: ids[k] ? null : (chunkErr?.slice(0, 500) ?? 'no id returned'),
+        }))
+        // Skip the synthetic test profile (all-zero uuid) which FK-violates.
+        .filter((r) => r.profile_id && r.profile_id !== ZERO_UUID)
+
+      if (rows.length) {
+        const { error: upErr } = await supabaseAdmin
+          .from('campaign_recipients')
+          .upsert(rows, { onConflict: 'campaign_id,profile_id' })
+        if (upErr) console.error('[send-campaign] recipient upsert failed:', upErr.message)
+      }
+
+      totalSent += ids.filter(Boolean).length
+      totalFailed += ids.filter((x) => !x).length
+
+      // Rate limit pause between chunks.
+      if (i + CHUNK_SIZE < audience.length) {
         await new Promise((r) => setTimeout(r, DELAY_MS))
       }
     }
 
-    // 7. Finalise campaign
+    // 7. Finalise campaign with REAL counts (accepted vs not-accepted by Resend).
     await supabaseAdmin
       .from('email_campaigns')
       .update({
