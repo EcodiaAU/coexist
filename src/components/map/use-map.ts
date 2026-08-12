@@ -44,6 +44,13 @@ function injectStyles() {
   const style = document.createElement('style')
   style.id = STYLE_ID
   style.textContent = `
+    /* Green + bright basemap (Kurt 2026-08-12): CartoDB Positron ships as a
+       desaturated grey. A tile-pane-only filter washes it toward a fresh,
+       bright Co-Exist green - sepia lays warm chroma onto the greys, hue-rotate
+       swings that warmth to green, saturate + brightness lift it. Scoped to
+       .leaflet-tile so pins, clusters, tooltips and controls (other panes) keep
+       their true colours. */
+    .leaflet-tile-pane { filter: sepia(0.42) saturate(1.5) hue-rotate(58deg) brightness(1.06); }
     .coexist-map-pin { background: none !important; border: none !important; }
     .coexist-cluster-icon { background: none !important; border: none !important; }
     .leaflet-popup-content-wrapper {
