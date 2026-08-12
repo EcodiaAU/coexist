@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  Calendar, MapPin, Users, Leaf, Filter,
+  Calendar, MapPin, Users, Filter,
   ArrowRight, ExternalLink, Search, X,
 } from 'lucide-react'
 import {
@@ -20,14 +20,14 @@ import { useCollectives, useMyCollectives } from '@/hooks/use-collective'
 import {
   Page,
   Card,
-  Badge, EmptyState, Dropdown, MultiSelect,
+  EmptyState, Dropdown, MultiSelect,
   WaveTransition, SegmentedControl,
+  OptimizedImage, getWatermark,
 } from '@/components'
 import { useParallaxLayers } from '@/hooks/use-parallax-scroll'
 import { cn } from '@/lib/cn'
-import { activityToBadge, ACTIVITY_META } from '@/lib/activity-types'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { OfflineIndicator } from '@/components/offline-indicator'
 import { PendingSyncBadge } from '@/components/pending-sync-badge'
 import { CollectiveMap } from '@/components/collective-map'
@@ -125,12 +125,11 @@ function EventListSkeleton() {
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
       {Array.from({ length: 4 }, (_, i) => (
-        <div key={i} className="rounded-md bg-white ring-1 ring-primary-100 shadow-md overflow-hidden animate-pulse">
-          <div className="bg-neutral-100" style={{ aspectRatio: '2/1' }} />
-          <div className="p-4 space-y-3">
-            <div className="h-4 bg-neutral-100 rounded-sm w-3/4" />
-            <div className="h-3 bg-neutral-100 rounded-sm w-1/2" />
-            <div className="h-3 bg-neutral-50 rounded-sm w-2/3" />
+        <div key={i} className="relative rounded-md bg-neutral-200 shadow-md overflow-hidden animate-pulse aspect-[4/3]">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-4 space-y-2">
+            <div className="h-4 bg-white/50 rounded-sm w-3/4" />
+            <div className="h-3 bg-white/35 rounded-sm w-1/2" />
           </div>
         </div>
       ))}
@@ -189,7 +188,6 @@ export default function ExplorePage() {
     when: whenFilter,
   })
   const discoverEvents = discoverData?.pages.flat()
-  const discoverShowLoading = useDelayedLoading(discoverLoading)
 
   const { data: allCollectives = [] } = useCollectives()
   const { data: myCollectives } = useMyCollectives()
@@ -390,7 +388,7 @@ export default function ExplorePage() {
                       />
                     </div>
 
-                    {discoverShowLoading ? (
+                    {discoverLoading ? (
                       <EventListSkeleton />
                     ) : discoverError ? (
                       <EmptyState illustration="error" title="Couldn't load events" description="Pull down to try again." />
@@ -408,74 +406,79 @@ export default function ExplorePage() {
                       <>
                       <motion.div variants={shouldReduceMotion ? undefined : stagger} initial="hidden" animate="visible" className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
                         {discoverEvents.map((event) => {
-                          const meta = ACTIVITY_META[event.activity_type]
+                          const tz = (event as { timezone?: string | null }).timezone
+                            ?? (event as { collectives?: { timezone?: string | null } | null }).collectives?.timezone
+                            ?? undefined
                           return (
                             <motion.div key={event.id} variants={shouldReduceMotion ? undefined : fadeUp}>
+                              {/* Full-bleed image tile: cover fills the card, every line of
+                                  text overlays a dark bottom-up legibility gradient. Activity
+                                  type is plain standout white text, not a pill. Image-less
+                                  events fall back to a nature gradient + activity watermark. */}
                               <Card
                                 variant="event"
-                                watermark={event.activity_type}
                                 onClick={() => openSheet(`/events/${event.id}`)}
                                 aria-label={event.title}
-                                className="bg-white shadow-md ring-1 ring-primary-100 rounded-md"
+                                className="aspect-[4/3] shadow-md ring-1 ring-black/5 rounded-md"
                               >
-                                <div className="relative">
-                                  {event.cover_image_url ? (
-                                    <Card.Image
-                                      src={event.cover_image_url}
-                                      alt={event.title}
-                                      aspectRatio="2/1"
-                                      positionX={event.cover_image_position_x}
-                                      positionY={event.cover_image_position_y}
-                                    />
-                                  ) : (
-                                    <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2/1' }}>
-                                      <div className={cn('absolute inset-0 bg-gradient-to-br opacity-10', meta?.gradient ?? 'from-primary-400 to-moss-500')} />
-                                      <div className="absolute inset-0 bg-neutral-50 flex items-center justify-center">
-                                        <div className="w-12 h-12 rounded-md bg-white shadow-sm flex items-center justify-center">
-                                          <Leaf size={22} strokeWidth={2} className="text-neutral-300" />
-                                        </div>
-                                      </div>
+                                {event.cover_image_url ? (
+                                  <OptimizedImage
+                                    src={event.cover_image_url}
+                                    alt=""
+                                    aspectRatio="4/3"
+                                    wrapperClassName="absolute inset-0"
+                                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                                    className="absolute inset-0"
+                                    imgStyle={coverImagePositionStyle(event.cover_image_position_x, event.cover_image_position_y)}
+                                  />
+                                ) : (
+                                  <>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-moss-700" aria-hidden="true" />
+                                    <div className="absolute -right-3 -top-3 text-white/10 pointer-events-none [&_svg]:w-32 [&_svg]:h-32" aria-hidden="true">
+                                      {getWatermark(event.activity_type)}
                                     </div>
-                                  )}
-                                  <Card.Badge position="top-left">
-                                    <Badge variant="activity" activity={activityToBadge[event.activity_type] ?? 'other'} size="sm">
-                                      {ACTIVITY_TYPE_LABELS[event.activity_type] ?? event.activity_type}
-                                    </Badge>
-                                  </Card.Badge>
-                                </div>
-                                <Card.Content>
-                                  <Card.Title className="text-neutral-900">
+                                  </>
+                                )}
+
+                                {/* Legibility gradient */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" aria-hidden="true" />
+
+                                {/* Top-left: activity type as standout text, no pill */}
+                                <span className="absolute top-3 left-3.5 text-[11px] font-bold uppercase tracking-[0.14em] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]">
+                                  {ACTIVITY_TYPE_LABELS[event.activity_type] ?? event.activity_type}
+                                </span>
+
+                                {/* Bottom overlay: title + meta */}
+                                <div className="absolute inset-x-0 bottom-0 p-4">
+                                  <h3 className="font-heading text-base sm:text-lg font-bold text-white leading-snug line-clamp-2 drop-shadow-[0_1px_6px_rgba(0,0,0,0.8)]">
                                     {event.title}
                                     {event.is_external_collaboration && (
-                                      <span className="inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded-md bg-bark-100 text-bark-600 text-[10px] font-semibold align-middle">
+                                      <span className="inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded-md bg-white/20 backdrop-blur-sm text-white text-[10px] font-semibold align-middle">
                                         <ExternalLink size={10} />
                                         Collab
                                       </span>
                                     )}
-                                  </Card.Title>
-                                  <Card.Meta className="text-neutral-500">
+                                  </h3>
+
+                                  <div className="mt-2 space-y-1 text-xs text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
                                     <span className="flex items-center gap-1.5">
-                                      <Calendar size={13} className="shrink-0 text-neutral-400" />
-                                      <span className="font-semibold text-neutral-600">{formatEventDate(event.date_start, (event as { timezone?: string | null }).timezone ?? (event as { collectives?: { timezone?: string | null } | null }).collectives?.timezone ?? undefined)}</span>
+                                      <Calendar size={13} className="shrink-0 text-white/75" />
+                                      <span className="font-semibold">{formatEventDate(event.date_start, tz)}</span>
                                     </span>
-                                  </Card.Meta>
-                                  {event.collectives && (
-                                    <Card.Meta className="text-neutral-500">
+                                    {event.collectives && (
                                       <span className="flex items-center gap-1.5">
-                                        <Users size={13} className="shrink-0 text-neutral-400" />
-                                        <span>{event.collectives.name}</span>
+                                        <Users size={13} className="shrink-0 text-white/75" />
+                                        <span className="line-clamp-1">{event.collectives.name}</span>
                                       </span>
-                                    </Card.Meta>
-                                  )}
-                                  {event.address && (
-                                    <Card.Meta className="text-neutral-500">
+                                    )}
+                                    {event.address && (
                                       <span className="flex items-center gap-1.5">
-                                        <MapPin size={13} className="shrink-0 text-neutral-400" />
+                                        <MapPin size={13} className="shrink-0 text-white/75" />
                                         <span className="line-clamp-1">{event.address}</span>
                                       </span>
-                                    </Card.Meta>
-                                  )}
-                                </Card.Content>
+                                    )}
+                                  </div>
+                                </div>
                               </Card>
                             </motion.div>
                           )
