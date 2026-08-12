@@ -106,7 +106,6 @@ const PAGE_HERO_CONFIG: Record<string, LeaderHeroCfg> = {
   'Dashboard':      { hue: LEADER_HERO_MOSS,    defaultSubtitle: 'Your collective at a glance',          w: 1 },
   'Events':         { hue: LEADER_HERO_MOSS,    defaultSubtitle: 'Manage and create conservation events', w: 2 },
   'Tasks':          { hue: LEADER_HERO_PRIMARY, defaultSubtitle: 'Tasks and personal to-dos',             w: 3 },
-  'Reports':        { hue: LEADER_HERO_PRIMARY, defaultSubtitle: 'Generate impact and activity reports',  w: 1 },
   'Create Event':   { hue: LEADER_HERO_MOSS,    defaultSubtitle: 'Plan a new conservation activity',      w: 2 },
 }
 

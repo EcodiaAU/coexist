@@ -23,8 +23,11 @@ export interface MapMarker {
 /*  Tile layer config                                                  */
 /* ------------------------------------------------------------------ */
 
-export const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-export const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+// CartoDB Positron: a clean, minimal light basemap (Kurt 2026-08-12: fewer
+// lines, calmer, more beautiful than the busy default OpenStreetMap raster).
+// {r} + detectRetina serves @2x tiles on retina for crisp text.
+export const TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+export const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
 /** Centre of Australia - sensible fallback instead of defaulting to Sydney */
 export const DEFAULT_CENTER: MapCenter = { lat: -25.0, lng: 134.0 }
@@ -143,7 +146,7 @@ export function useMap({
       ...mapOptions,
     })
 
-    L.tileLayer(TILE_URL, { attribution: TILE_ATTR, maxZoom: 19 }).addTo(map)
+    L.tileLayer(TILE_URL, { attribution: TILE_ATTR, subdomains: 'abcd', maxZoom: 20, detectRetina: true }).addTo(map)
     mapRef.current = map
 
     requestAnimationFrame(() => {

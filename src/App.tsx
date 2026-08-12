@@ -3,6 +3,7 @@ import { Suspense, useState, useCallback, useEffect } from 'react'
 import { lazyWithRetry as lazy, clearChunkReloadGuard } from '@/lib/lazy-with-retry'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { RequireAuth, RequireRole, RequireLeaderAccess, RequireCapability } from '@/components/route-guard'
+import { FEATURE_MEMBERSHIPS } from '@/lib/flags'
 import { AppShell } from '@/components/app-shell'
 import { AnimatedOutlet } from '@/components/animated-outlet'
 import { AdminLayout as AdminLayoutRoute } from '@/components/admin-layout'
@@ -88,6 +89,19 @@ const ProfilePage = lazy(() => import('@/pages/profile/index'))
 const ViewProfilePage = lazy(() => import('@/pages/profile/view-profile'))
 const EditProfilePage = lazy(() => import('@/pages/profile/edit-profile'))
 const DonationsPage = lazy(() => import('@/pages/profile/donations'))
+// Memberships (paid subscription) - built on trunk but OFF by default. Gated on
+// the compile-time literal __FEATURE_MEMBERSHIPS__ (NOT the runtime flag) so that
+// when off, rolldown dead-code-eliminates these dynamic imports and the whole
+// feature (chunks, routes) stays out of the shipped bundle. See src/lib/flags.ts.
+const MembershipPage = __FEATURE_MEMBERSHIPS__
+  ? lazy(() => import('@/pages/membership/index'))
+  : null
+const MembershipManagePage = __FEATURE_MEMBERSHIPS__
+  ? lazy(() => import('@/pages/profile/membership'))
+  : null
+const AdminMembershipsPage = __FEATURE_MEMBERSHIPS__
+  ? lazy(() => import('@/pages/admin/memberships/index'))
+  : null
 
 const ReferralPage = lazy(() => import('@/pages/referral/index'))
 const LeaderboardPage = lazy(() => import('@/pages/leaderboard/index'))
@@ -175,7 +189,6 @@ const LeadACollectivePage = lazy(() => import('@/pages/lead-a-collective'))
 const LeaderDashboardPage = lazy(() => import('@/pages/leader/index'))
 const LeaderEventsPage = lazy(() => import('@/pages/leader/events'))
 const LeaderTasksPage = lazy(() => import('@/pages/leader/tasks'))
-const LeaderReportsPage = lazy(() => import('@/pages/reports/index'))
 const LeaderFeedbackPage = lazy(() => import('@/pages/leader/feedback'))
 
 // Learner pages (My Leadership Journey) - the LMS learner suite is unbuilt/dead-ended,
@@ -184,8 +197,8 @@ const LeaderFeedbackPage = lazy(() => import('@/pages/leader/feedback'))
 // authoring suite + DB tables are untouched) for the future build; re-add the lazy
 // imports + the "My Leadership Journey (learner)" <Route> block below to restore them.
 
-// Reports & National Impact
-const ReportsPage = lazy(() => import('@/pages/reports/index'))
+// National Impact (the standalone Reports page was deleted 2026-08-12, Kurt:
+// not needed; admin reporting lives in AdminInsightsPage).
 const NationalImpactPage = lazy(() => import('@/pages/impact/national'))
 
 /* ------------------------------------------------------------------ */
@@ -436,6 +449,9 @@ function App() {
           <Route data-eos-id="src/App.tsx#101" path="/profile/edit" element={<EditProfilePage data-eos-id="src/App.tsx#102" />} />
           <Route data-eos-id="src/App.tsx#103" path="/profile/tickets" element={<MyTicketsPage data-eos-id="src/App.tsx#104" />} />
           <Route path="/profile/donations" element={<DonationsPage />} />
+          {FEATURE_MEMBERSHIPS && MembershipManagePage && (
+            <Route path="/profile/membership" element={<MembershipManagePage />} />
+          )}
           <Route data-eos-id="src/App.tsx#105" path="/profile/:userId" element={<ViewProfilePage data-eos-id="src/App.tsx#106" />} />
           <Route data-eos-id="src/App.tsx#107" path="/impact" element={<Navigate data-eos-id="src/App.tsx#108" to="/profile" replace />} />
           <Route data-eos-id="src/App.tsx#109" path="/referral" element={<ReferralPage data-eos-id="src/App.tsx#110" />} />
@@ -455,6 +471,9 @@ function App() {
           <Route data-eos-id="src/App.tsx#129" path="/partners" element={<PartnersPage data-eos-id="src/App.tsx#130" />} />
           <Route data-eos-id="src/App.tsx#131" path="/leadership" element={<LeadershipPage data-eos-id="src/App.tsx#132" />} />
           <Route data-eos-id="src/App.tsx#133" path="/lead-a-collective" element={<LeadACollectivePage data-eos-id="src/App.tsx#134" />} />
+          {FEATURE_MEMBERSHIPS && MembershipPage && (
+            <Route path="/membership" element={<MembershipPage />} />
+          )}
           <Route data-eos-id="src/App.tsx#135" path="/donate" element={<DonatePage data-eos-id="src/App.tsx#136" />} />
           <Route data-eos-id="src/App.tsx#137" path="/donate/thank-you" element={<DonateThankYouPage data-eos-id="src/App.tsx#138" />} />
           <Route data-eos-id="src/App.tsx#139" path="/donate/donors" element={<DonorWallPage data-eos-id="src/App.tsx#140" />} />
@@ -465,7 +484,6 @@ function App() {
           <Route data-eos-id="src/App.tsx#149" path="/shop/orders" element={<OrdersPage data-eos-id="src/App.tsx#150" />} />
           <Route data-eos-id="src/App.tsx#151" path="/shop/orders/:orderId" element={<OrderDetailPage data-eos-id="src/App.tsx#152" />} />
           <Route data-eos-id="src/App.tsx#153" path="/shop/:slug" element={<ProductDetailPage data-eos-id="src/App.tsx#154" />} />
-          <Route data-eos-id="src/App.tsx#155" path="/reports" element={<ReportsPage data-eos-id="src/App.tsx#156" />} />
           <Route data-eos-id="src/App.tsx#157" path="/impact/national" element={<NationalImpactPage data-eos-id="src/App.tsx#158" />} />
 
           {/* ---- My Leadership Journey (learner) - REMOVED 2026-08-10 (Tate directive) ----
@@ -482,7 +500,6 @@ function App() {
             <Route data-eos-id="src/App.tsx#177" path="events" element={<LeaderEventsPage data-eos-id="src/App.tsx#178" />} />
             <Route data-eos-id="src/App.tsx#179" path="tasks" element={<LeaderTasksPage data-eos-id="src/App.tsx#180" />} />
             <Route data-eos-id="src/App.tsx#181" path="feedback" element={<LeaderFeedbackPage data-eos-id="src/App.tsx#182" />} />
-            <Route data-eos-id="src/App.tsx#183" path="reports" element={<LeaderReportsPage data-eos-id="src/App.tsx#184" />} />
           </Route>
 
           {/* ---- Admin routes (manager+) - 1.8.5 item 7, fork_moy0xmrx_158384.
@@ -521,6 +538,9 @@ function App() {
             <Route data-eos-id="src/App.tsx#249" path="photos" element={<RequireCapability data-eos-id="src/App.tsx#250" cap="view_reports"><AdminPhotosPage data-eos-id="src/App.tsx#251" /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#252" path="shop" element={<RequireCapability data-eos-id="src/App.tsx#253" cap="manage_merch"><AdminMerchPage data-eos-id="src/App.tsx#254" /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#255" path="partners" element={<RequireCapability data-eos-id="src/App.tsx#256" cap="manage_partners"><AdminPartnersPage data-eos-id="src/App.tsx#257" /></RequireCapability>} />
+            {FEATURE_MEMBERSHIPS && AdminMembershipsPage && (
+              <Route path="memberships" element={<RequireCapability cap="manage_membership"><AdminMembershipsPage /></RequireCapability>} />
+            )}
             <Route data-eos-id="src/App.tsx#258" path="challenges" element={<RequireCapability data-eos-id="src/App.tsx#259" cap="manage_challenges"><AdminChallengesPage data-eos-id="src/App.tsx#260" /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#261" path="moderation" element={<RequireCapability data-eos-id="src/App.tsx#262" cap="manage_content"><ModerationQueuePage data-eos-id="src/App.tsx#263" /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#264" path="contacts" element={<RequireCapability data-eos-id="src/App.tsx#265" cap="manage_users"><AdminContactsPage data-eos-id="src/App.tsx#266" /></RequireCapability>} />

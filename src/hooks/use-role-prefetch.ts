@@ -65,7 +65,6 @@ const SECONDARY: ChunkImport[] = [
   () => import('@/pages/partners'),
   () => import('@/pages/leadership'),
   () => import('@/pages/lead-a-collective'),
-  () => import('@/pages/reports/index'),
   () => import('@/pages/impact/national'),
   () => import('@/pages/shop/index'),
   () => import('@/pages/events/index'),
