@@ -66,24 +66,26 @@ const fadeUp: Variants = {
 /*  Detail row                                                         */
 /* ------------------------------------------------------------------ */
 
+// Soft pastel icon badges only - no solid fills, no coloured left stripes.
+// The value is the hero; the tint is a whisper for scannability (design
+// system: activity colours live only on small icon badges).
 const detailTints = {
-  primary: { iconBg: 'bg-primary-500', iconText: 'text-white', stripe: 'border-l-primary-500' },
-  sky:     { iconBg: 'bg-sky-500', iconText: 'text-white', stripe: 'border-l-sky-500' },
-  moss:    { iconBg: 'bg-moss-500', iconText: 'text-white', stripe: 'border-l-moss-500' },
-  sprout:  { iconBg: 'bg-sprout-500', iconText: 'text-white', stripe: 'border-l-sprout-500' },
-  plum:    { iconBg: 'bg-plum-500', iconText: 'text-white', stripe: 'border-l-plum-500' },
+  primary: 'bg-primary-50 text-primary-600',
+  sky:     'bg-sky-50 text-sky-600',
+  moss:    'bg-moss-50 text-moss-600',
+  sprout:  'bg-sprout-50 text-sprout-600',
+  plum:    'bg-plum-50 text-plum-600',
 }
 
 function DetailRow({ icon, label, value, tint = 'primary' }: { icon: React.ReactNode; label: string; value: string; tint?: keyof typeof detailTints }) {
-  const t = detailTints[tint]
   return (
-    <div className={cn('flex items-center gap-3 px-4 py-3 border-l-4', t.stripe)}>
-      <div className={cn('shrink-0 w-8 h-8 rounded-sm flex items-center justify-center', t.iconBg, t.iconText)}>
+    <div className="flex items-center gap-3.5 px-4 py-3.5">
+      <div className={cn('shrink-0 w-9 h-9 rounded-xl flex items-center justify-center', detailTints[tint])}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">{label}</p>
-        <p className="text-sm font-medium text-neutral-900 truncate">{value}</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">{label}</p>
+        <p className="text-[15px] font-semibold text-neutral-900 break-words">{value}</p>
       </div>
     </div>
   )
@@ -93,19 +95,31 @@ function DetailRow({ icon, label, value, tint = 'primary' }: { icon: React.React
 /*  Section heading                                                    */
 /* ------------------------------------------------------------------ */
 
-function SectionHeading({ icon, iconBg, title, action }: { icon?: React.ReactNode; iconBg?: string; title: string; action?: React.ReactNode }) {
+// Journal-header style: a small uppercase micro-label, no solid colour block.
+// `accent` lets one section (emergency) carry a quiet safety cue on the icon
+// without reintroducing chrome.
+function SectionHeading({ icon, title, action, accent }: { icon?: React.ReactNode; title: string; action?: React.ReactNode; accent?: string }) {
   return (
-    <div className="flex items-center justify-between mb-3">
-      <div className="flex items-center gap-2.5">
-        {icon && (
-          <div className={cn('w-7 h-7 rounded-sm flex items-center justify-center text-white', iconBg ?? 'bg-primary-500')}>
-            {icon}
-          </div>
-        )}
-        <h3 className="font-heading text-base font-bold text-neutral-900">{title}</h3>
+    <div className="flex items-center justify-between mb-2.5 px-1">
+      <div className="flex items-center gap-2">
+        {icon && <span className={cn('shrink-0', accent ?? 'text-neutral-400')}>{icon}</span>}
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-neutral-400">{title}</h3>
       </div>
       {action}
     </div>
+  )
+}
+
+// Subtle ghost "Edit" link that replaces the old grey pill button - less
+// chrome, reads as an editorial affordance.
+function EditLink({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-0.5 text-[11px] font-bold uppercase tracking-wider text-primary-600 hover:text-primary-700 active:scale-[0.97] transition-[colors,transform] duration-150 cursor-pointer"
+    >
+      Edit <ChevronRight size={12} />
+    </button>
   )
 }
 
@@ -338,7 +352,7 @@ export default function ProfilePage() {
           animate="visible"
           className="mt-6 mx-auto max-w-sm"
         >
-          <div className="rounded-md bg-white border border-neutral-100 shadow-sm px-5 py-4 text-center">
+          <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm px-5 py-4 text-center">
             <p className="text-sm text-neutral-500 leading-relaxed italic">
               &ldquo;{profile.bio}&rdquo;
             </p>
@@ -376,19 +390,11 @@ export default function ProfilePage() {
         {/* Personal Details */}
         <motion.section variants={fadeUp} className="mt-6">
           <SectionHeading
-            icon={<User size={14} />}
-            iconBg="bg-primary-600"
+            icon={<User size={13} />}
             title="Your Details"
-            action={
-              <button
-                onClick={() => navigate('/profile/edit')}
-                className="flex items-center gap-1 text-xs font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 px-3 min-h-9 rounded-full active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
-              >
-                Edit <ChevronRight size={13} />
-              </button>
-            }
+            action={<EditLink onClick={() => navigate('/profile/edit')} />}
           />
-          <div className="rounded-md bg-white shadow-sm border border-neutral-100 overflow-hidden">
+          <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 overflow-hidden divide-y divide-neutral-100">
             {hasDetails ? (
               <>
                 {(profile.first_name || profile.last_name) && (
@@ -441,25 +447,20 @@ export default function ProfilePage() {
         {/* Emergency Contact */}
         <motion.section variants={fadeUp} className="mt-5">
           <SectionHeading
-            icon={<Shield size={14} />}
-            iconBg="bg-warning-600"
+            icon={<Shield size={13} />}
+            accent="text-warning-500"
             title="Emergency Contact"
             action={
               profile.emergency_contact_name ? (
-                <button
-                  onClick={() => navigate('/profile/edit')}
-                  className="flex items-center gap-1 text-xs font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 px-3 min-h-9 rounded-full active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
-                >
-                  Edit <ChevronRight size={13} />
-                </button>
+                <EditLink onClick={() => navigate('/profile/edit')} />
               ) : undefined
             }
           />
-          <div className="rounded-md overflow-hidden shadow-sm">
+          <div className="rounded-2xl overflow-hidden shadow-sm">
             {profile.emergency_contact_name ? (
-              <div className="bg-white p-4 border border-neutral-100 border-l-4 border-l-warning-400">
+              <div className="bg-white p-4 border border-neutral-100">
                 <div className="flex items-start gap-3">
-                  <div className="shrink-0 w-10 h-10 rounded-full bg-warning-100 flex items-center justify-center">
+                  <div className="shrink-0 w-10 h-10 rounded-xl bg-warning-50 flex items-center justify-center">
                     <Heart size={18} className="text-warning-600" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -479,8 +480,8 @@ export default function ProfilePage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white p-5 text-center border border-neutral-100 border-l-4 border-l-warning-400">
-                <div className="w-12 h-12 rounded-full bg-warning-100 flex items-center justify-center mx-auto mb-3">
+              <div className="bg-white p-5 text-center border border-neutral-100">
+                <div className="w-12 h-12 rounded-2xl bg-warning-50 flex items-center justify-center mx-auto mb-3">
                   <AlertTriangle size={20} className="text-warning-600" />
                 </div>
                 <p className="text-sm font-bold text-neutral-800">No emergency contact set</p>
@@ -504,8 +505,7 @@ export default function ProfilePage() {
           className="mt-6"
         >
           <SectionHeading
-            icon={<TreePine size={14} />}
-            iconBg="bg-moss-600"
+            icon={<TreePine size={13} />}
             title="My Collectives"
           />
           {collectives && collectives.length > 0 ? (
@@ -526,9 +526,9 @@ export default function ProfilePage() {
                     variant="collective"
                     watermark
                     onClick={() => navigate(`/collectives/${collective.slug}`)}
-                    className="flex flex-row items-center gap-3 p-3 bg-white shadow-sm border border-neutral-100"
+                    className="flex flex-row items-center gap-3 p-3 bg-white shadow-sm border border-neutral-100 rounded-2xl"
                   >
-                    <div className="shrink-0 w-12 h-12 rounded-sm overflow-hidden bg-primary-300 shadow-sm">
+                    <div className="shrink-0 w-12 h-12 rounded-xl overflow-hidden bg-primary-100 shadow-sm">
                       {collective.cover_image_url ? (
                         <img
                           src={collective.cover_image_url}
@@ -545,7 +545,7 @@ export default function ProfilePage() {
                       <p className="font-heading font-bold text-sm text-neutral-900 truncate">
                         {collective.name}
                       </p>
-                      <p className="text-xs text-moss-600 font-medium">
+                      <p className="text-xs text-neutral-500 font-medium">
                         {collective.region} · {collective.member_count} members
                       </p>
                     </div>
@@ -574,11 +574,10 @@ export default function ProfilePage() {
             className="mt-6"
           >
             <SectionHeading
-              icon={<Sprout size={14} />}
-              iconBg="bg-sprout-600"
+              icon={<Sprout size={13} />}
               title="Interests"
             />
-            <div className="rounded-md bg-white border border-neutral-100 shadow-sm p-4">
+            <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4">
               <div className="flex flex-wrap gap-2">
                 {profile.interests.map((interest) => (
                   <Chip key={interest} label={prettyInterestLabel(interest)} selected />

@@ -4,6 +4,7 @@ import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
 import { useKeyboardOpen } from '@/components/app-shell-context'
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
+import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 
 interface PageProps {
   /** Optional header component (e.g. <Header />) */
@@ -48,10 +49,12 @@ export function Page({
 
   const isDesktopNav = navMode === 'sidebar'
 
-  // No JS scroll save/restore: when the KeepAlive cache layer was removed
-  // (to match the Chambers fire-and-forget nav feel) the back-nav scroll
-  // hop went with it. Pages start at the top of their scroll container
-  // on entry, same as Chambers.
+  // Per-history-entry scroll save/restore (Kurt 2026-08-12). Lists that lead
+  // into nested detail pages restore their position on back-nav; forward
+  // navigations start at the top. Keyed on location.key so it is robust to the
+  // same route appearing at multiple history-stack depths. Replaces the old
+  // KeepAlive-derived scroll hop that was removed with the cache layer.
+  useScrollRestoration(scrollRef)
 
   const hasBottomTabs = navMode === 'bottom-tabs'
 
