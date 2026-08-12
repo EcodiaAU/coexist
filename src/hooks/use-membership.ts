@@ -38,6 +38,34 @@ export interface Membership {
 const LIVE_STATUSES: MembershipStatus[] = ['active', 'past_due', 'trialing']
 
 /* ------------------------------------------------------------------ */
+/*  Hero imagery - a real Co-Exist campout photo, never a UI gradient  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A real Co-Exist campout/event cover photo for the membership hero. Membership
+ * leads with the campout-discount perk, so a campout photo is on-theme. Prefers a
+ * ticketed campout; falls back to any published event with a cover.
+ */
+export function useMembershipHeroImage() {
+  return useQuery({
+    queryKey: ['membership-hero-image'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('cover_image_url, is_ticketed, date_start')
+        .not('cover_image_url', 'is', null)
+        .eq('status', 'published')
+        .order('is_ticketed', { ascending: false })
+        .order('date_start', { ascending: false })
+        .limit(1)
+      if (error) throw error
+      return (data?.[0]?.cover_image_url as string | undefined) ?? null
+    },
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+/* ------------------------------------------------------------------ */
 /*  Plans (public: any authenticated user can read active plans)       */
 /* ------------------------------------------------------------------ */
 

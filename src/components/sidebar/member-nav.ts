@@ -7,8 +7,10 @@ import {
   Mail,
   MessageCircle,
   Home,
+  Sparkles,
 } from 'lucide-react'
 import { createElement } from 'react'
+import { FEATURE_MEMBERSHIPS } from '@/lib/flags'
 import type { NavCategory, NavItem } from './types'
 
 const icon = (Icon: typeof Home, size = 17) => createElement(Icon, { size, strokeWidth: 1.5 })
@@ -33,6 +35,9 @@ export const memberNavCategories: NavCategory[] = [
     labelColor: 'text-primary-400',
     dotColor: 'bg-primary-400',
     items: [
+      ...(FEATURE_MEMBERSHIPS
+        ? [{ label: 'Membership', path: '/membership', icon: icon(Sparkles) }]
+        : []),
       { label: 'Shop', path: '/shop', icon: icon(ShoppingBag) },
       { label: 'Donate', path: '/donate', icon: icon(Heart) },
       { label: 'Leadership Opportunities', path: '/leadership', icon: icon(Users) },

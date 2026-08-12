@@ -9,6 +9,7 @@ PROJECT_REF="tjutlbzekfouwsiaplbr"
 FUNCTIONS=(
   create-checkout
   stripe-webhook
+  manage-membership-plan
   delete-user
   delete-user-data
   data-export

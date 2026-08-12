@@ -34,6 +34,7 @@ const plan = {
 vi.mock('@/hooks/use-membership', () => ({
   useMembershipPlans: () => ({ data: [plan], isLoading: false }),
   useMyMembership: () => ({ data: null }),
+  useMembershipHeroImage: () => ({ data: null }),
   useCreateMembership: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
 
@@ -58,9 +59,11 @@ describe('MembershipPage (web-first Apple-safety)', () => {
 
   it('renders both pricing tiers with the $5/week framing on the monthly card', () => {
     renderPage()
-    expect(screen.getByText('$20/month')).toBeTruthy()
+    expect(screen.getByText('Monthly')).toBeTruthy()
+    expect(screen.getByText('Yearly')).toBeTruthy()
+    expect(screen.getByText('$20')).toBeTruthy()
     expect(screen.getByText('about $5 a week')).toBeTruthy()
-    expect(screen.getByText('$250/year')).toBeTruthy()
+    expect(screen.getByText('$250')).toBeTruthy()
   })
 
   it('WEB: shows the in-app Join CTA', () => {

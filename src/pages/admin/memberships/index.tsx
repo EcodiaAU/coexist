@@ -6,6 +6,7 @@ import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { BottomSheet } from '@/components/bottom-sheet'
+import { ConfirmationSheet } from '@/components/confirmation-sheet'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
@@ -65,8 +66,6 @@ const emptyForm = {
   description: '',
   price_monthly: '',
   price_yearly: '',
-  stripe_price_monthly: '',
-  stripe_price_yearly: '',
   is_active: true,
 }
 
@@ -85,6 +84,7 @@ const tabs = [
 export default function AdminMembershipsPage() {
   const [activeTab, setActiveTab] = useState('plans')
   const [editing, setEditing] = useState<typeof emptyForm | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
@@ -105,24 +105,25 @@ export default function AdminMembershipsPage() {
 
   useAdminHeader('Membership', { heroContent: heroStats })
 
+  // Plan create/update goes through the manage-membership-plan edge function, which
+  // creates/updates the matching Stripe product + prices automatically. Admins never
+  // touch Stripe; there are no price-ID fields to fill.
   const upsertPlan = useMutation({
     mutationFn: async (form: typeof emptyForm) => {
-      const payload = {
-        name: form.name.trim(),
-        description: form.description.trim() || null,
-        price_monthly: Number(form.price_monthly) || 0,
-        price_yearly: Number(form.price_yearly) || 0,
-        stripe_price_monthly: form.stripe_price_monthly.trim() || null,
-        stripe_price_yearly: form.stripe_price_yearly.trim() || null,
-        is_active: form.is_active,
-      }
-      if (form.id) {
-        const { error } = await supabase.from('membership_plans').update(payload).eq('id', form.id)
-        if (error) throw error
-      } else {
-        const { error } = await supabase.from('membership_plans').insert(payload)
-        if (error) throw error
-      }
+      const res = await supabase.functions.invoke('manage-membership-plan', {
+        body: {
+          action: form.id ? 'update' : 'create',
+          id: form.id || undefined,
+          name: form.name.trim(),
+          description: form.description.trim() || null,
+          price_monthly: Number(form.price_monthly) || 0,
+          price_yearly: Number(form.price_yearly) || 0,
+          is_active: form.is_active,
+        },
+      })
+      if (res.error) throw res.error
+      const err = (res.data as { error?: string })?.error
+      if (err) throw new Error(err)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-membership-plans'] })
@@ -130,7 +131,26 @@ export default function AdminMembershipsPage() {
       setEditing(null)
       toast.success('Plan saved.')
     },
-    onError: () => toast.error('Could not save the plan.'),
+    onError: (e) => toast.error((e as Error)?.message || 'Could not save the plan.'),
+  })
+
+  const deletePlan = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await supabase.functions.invoke('manage-membership-plan', {
+        body: { action: 'delete', id },
+      })
+      if (res.error) throw res.error
+      const err = (res.data as { error?: string })?.error
+      if (err) throw new Error(err)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-membership-plans'] })
+      queryClient.invalidateQueries({ queryKey: ['membership-plans'] })
+      setEditing(null)
+      setConfirmDelete(null)
+      toast.success('Plan deleted.')
+    },
+    onError: (e) => toast.error((e as Error)?.message || 'Could not delete the plan.'),
   })
 
   const openEdit = (plan?: MembershipPlan) => {
@@ -142,8 +162,6 @@ export default function AdminMembershipsPage() {
             description: plan.description ?? '',
             price_monthly: String(plan.price_monthly),
             price_yearly: String(plan.price_yearly),
-            stripe_price_monthly: plan.stripe_price_monthly ?? '',
-            stripe_price_yearly: plan.stripe_price_yearly ?? '',
             is_active: plan.is_active,
           }
         : { ...emptyForm },
@@ -174,8 +192,9 @@ export default function AdminMembershipsPage() {
                         ${Number(plan.price_monthly).toFixed(0)}/mo · ${Number(plan.price_yearly).toFixed(0)}/yr
                       </p>
                       <p className="text-[10px] text-neutral-400 mt-1">
-                        Stripe: {plan.stripe_price_monthly ? 'monthly set' : 'monthly MISSING'},{' '}
-                        {plan.stripe_price_yearly ? 'yearly set' : 'yearly MISSING'}
+                        {plan.stripe_price_monthly && plan.stripe_price_yearly
+                          ? 'Billing synced with Stripe'
+                          : 'Billing syncs on next save'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -257,8 +276,9 @@ export default function AdminMembershipsPage() {
               <Input label="Monthly ($)" inputMode="decimal" value={editing.price_monthly} onChange={(e) => setEditing({ ...editing, price_monthly: e.target.value })} />
               <Input label="Yearly ($)" inputMode="decimal" value={editing.price_yearly} onChange={(e) => setEditing({ ...editing, price_yearly: e.target.value })} />
             </div>
-            <Input label="Stripe price ID (monthly)" value={editing.stripe_price_monthly} onChange={(e) => setEditing({ ...editing, stripe_price_monthly: e.target.value })} placeholder="price_..." />
-            <Input label="Stripe price ID (yearly)" value={editing.stripe_price_yearly} onChange={(e) => setEditing({ ...editing, stripe_price_yearly: e.target.value })} placeholder="price_..." />
+            <p className="text-[11px] text-neutral-400">
+              Billing is handled for you: saving this plan creates or updates the matching Stripe product and prices automatically. You never need to open Stripe.
+            </p>
             <label className="flex items-center gap-2 text-sm text-neutral-700">
               <input
                 type="checkbox"
@@ -270,9 +290,28 @@ export default function AdminMembershipsPage() {
             <Button onClick={() => upsertPlan.mutate(editing)} disabled={upsertPlan.isPending || !editing.name.trim()} className="w-full">
               {upsertPlan.isPending ? 'Saving...' : 'Save plan'}
             </Button>
+            {editing.id && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(editing.id)}
+                className="w-full text-xs font-semibold text-error-600 py-2"
+              >
+                Delete plan
+              </button>
+            )}
           </div>
         )}
       </BottomSheet>
+
+      <ConfirmationSheet
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => confirmDelete && deletePlan.mutate(confirmDelete)}
+        title="Delete this plan?"
+        description="The plan is removed and its Stripe product and prices are archived. Existing members keep their subscription until it ends."
+        confirmLabel="Delete plan"
+        variant="warning"
+      />
     </div>
   )
 }
