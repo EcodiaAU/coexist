@@ -1549,6 +1549,76 @@ export type Database = {
           },
         ]
       }
+      collective_event_invites_sent: {
+        Row: {
+          channel: string
+          collective_id: string
+          event_id: string
+          id: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          collective_id: string
+          event_id: string
+          id?: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          collective_id?: string
+          event_id?: string
+          id?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collective_event_invites_sent_collective_id_fkey"
+            columns: ["collective_id"]
+            isOneToOne: false
+            referencedRelation: "collectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collective_event_invites_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "collective_event_invites_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "collective_event_invites_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collective_event_invites_sent_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collective_event_invites_sent_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collective_members: {
         Row: {
           collective_id: string
@@ -5454,9 +5524,9 @@ export type Database = {
           accessibility_requirements: string | null
           age: number | null
           avatar_url: string | null
-          cover_image_url: string | null
           bio: string | null
           collective_discovery: string | null
+          cover_image_url: string | null
           created_at: string | null
           date_of_birth: string | null
           deleted_at: string | null
@@ -5500,9 +5570,9 @@ export type Database = {
           accessibility_requirements?: string | null
           age?: number | null
           avatar_url?: string | null
-          cover_image_url?: string | null
           bio?: string | null
           collective_discovery?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           date_of_birth?: string | null
           deleted_at?: string | null
@@ -5546,9 +5616,9 @@ export type Database = {
           accessibility_requirements?: string | null
           age?: number | null
           avatar_url?: string | null
-          cover_image_url?: string | null
           bio?: string | null
           collective_discovery?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           date_of_birth?: string | null
           deleted_at?: string | null
@@ -7303,7 +7373,24 @@ export type Database = {
       }
       coexist_impact_legacy_by_activity: { Args: never; Returns: Json }
       coexist_role_caps: { Args: { p_role: string }; Returns: string[] }
+      collective_event_invite_run: {
+        Args: { p_dry_run?: boolean; p_event_ids?: string[] }
+        Returns: Json
+      }
+      collective_event_invite_targets: {
+        Args: { p_event_ids?: string[] }
+        Returns: {
+          collective_id: string
+          collective_name: string
+          event_address: string
+          event_date: string
+          event_id: string
+          event_title: string
+          user_id: string
+        }[]
+      }
       cron_carpool_archive_sweep: { Args: never; Returns: undefined }
+      cron_collective_event_invite: { Args: never; Returns: undefined }
       cron_event_day_notify: { Args: never; Returns: undefined }
       cron_event_post_impact_log_invite: { Args: never; Returns: undefined }
       cron_event_post_photo_invite: { Args: never; Returns: undefined }
@@ -7395,6 +7482,7 @@ export type Database = {
       }
       event_host_count: { Args: { p_event_id: string }; Returns: number }
       event_reengagement_run: { Args: { p_dry_run?: boolean }; Returns: Json }
+      event_spots_taken: { Args: { p_event_id: string }; Returns: number }
       expire_stale_pending_tickets: { Args: never; Returns: number }
       generate_event_check_in_code: { Args: never; Returns: string }
       generate_public_check_in_token: { Args: never; Returns: string }
@@ -7550,6 +7638,10 @@ export type Database = {
           walkin_attended_count: number
         }[]
       }
+      get_event_ticket_availability: {
+        Args: { p_event_id: string }
+        Returns: Json
+      }
       get_event_ticket_states: { Args: { p_event_id: string }; Returns: Json }
       get_events_within_radius: {
         Args: {
@@ -7607,10 +7699,6 @@ export type Database = {
           total_points: number
           user_id: string
         }[]
-      }
-      get_event_ticket_availability: {
-        Args: { p_event_id: string }
-        Returns: Json
       }
       get_national_stats: { Args: never; Returns: Json }
       get_platform_impact_stats: { Args: never; Returns: Json }
