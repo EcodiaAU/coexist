@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Images, Share2, MapPin, ChevronRight } from 'lucide-react'
+import { Images, Share2, MapPin, ChevronRight } from 'lucide-react'
 import { MapView, type MapMarker, type MapCenter } from '@/components/map/map-view'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { EventShareSheet } from '@/components/event-share-sheet'
@@ -125,57 +125,60 @@ export function ProfileEventMap({ userId, isOwnProfile = false }: ProfileEventMa
         </p>
       )}
 
-      {/* Location popup: the events you attended at this spot */}
+      {/* Location popup: image-forward, immersive event tiles (Kurt 2026-08-12:
+          less UI, more image-bleed - same principle as the profile). Each event
+          is a full-bleed cover tile; album + share live as glass controls over
+          the image rather than a white button bar. */}
       <BottomSheet open={!!selected} onClose={() => setSelectedKey(null)}>
         {selected && (
-          <div className="px-4 pb-2">
-            <div className="mb-3 flex items-start gap-2">
-              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
-                <MapPin size={16} />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-heading text-base font-bold text-neutral-900 leading-tight">{selected.label}</h3>
-                <p className="text-xs text-neutral-500">
-                  {selected.events.length} {selected.events.length === 1 ? 'event' : 'events'} attended
-                </p>
-              </div>
+          <div className="px-4 pb-3">
+            <div className="mb-3.5">
+              <h3 className="font-heading text-xl font-bold text-neutral-900 leading-tight">{selected.label}</h3>
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500">
+                <MapPin size={12} className="text-primary-500" />
+                {selected.events.length} {selected.events.length === 1 ? 'event' : 'events'} you showed up to here
+              </p>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {selected.events.map((ev) => (
-                <div key={ev.id} className="rounded-2xl border border-neutral-100 bg-white shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-3 p-3">
-                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-primary-100">
-                      {ev.coverImageUrl ? (
-                        <img src={ev.coverImageUrl} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-primary-400 [&>svg]:h-6 [&>svg]:w-6">
-                          {getWatermark(ev.activityType)}
-                        </div>
-                      )}
+                <div key={ev.id} className="group relative w-full overflow-hidden rounded-2xl shadow-sm aspect-[16/9]">
+                  {ev.coverImageUrl ? (
+                    <img src={ev.coverImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#879e62] via-moss-700 to-primary-800" aria-hidden="true">
+                      <div className="absolute -right-4 -top-4 text-white/10 [&>svg]:h-32 [&>svg]:w-32">
+                        {getWatermark(ev.activityType)}
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-heading text-sm font-bold text-neutral-900">{ev.title}</p>
-                      <p className="flex items-center gap-1.5 text-xs text-neutral-500">
-                        <Calendar size={11} />
-                        {fmtDate(ev.dateStart)} · {prettyActivity(ev.activityType)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex divide-x divide-neutral-100 border-t border-neutral-100">
+                  )}
+                  {/* Legibility gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" aria-hidden="true" />
+
+                  {/* Activity pill (glass, top-left) */}
+                  <span className="absolute top-2.5 left-2.5 rounded-full bg-white/20 backdrop-blur-sm px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+                    {prettyActivity(ev.activityType)}
+                  </span>
+
+                  {/* Share (glass icon, top-right) */}
+                  <button
+                    onClick={() => { setSelectedKey(null); setShareEvent(ev) }}
+                    aria-label={`Share your impact from ${ev.title}`}
+                    className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white active:scale-[0.94] transition-transform"
+                  >
+                    <Share2 size={15} />
+                  </button>
+
+                  {/* Title + date + album action, overlaid at the bottom */}
+                  <div className="absolute inset-x-0 bottom-0 p-3.5">
+                    <p className="font-heading text-base font-bold text-white leading-tight drop-shadow line-clamp-2">{ev.title}</p>
+                    <p className="mt-0.5 text-xs text-white/85">{fmtDate(ev.dateStart)}</p>
                     <button
                       onClick={() => navigate(ev.albumHref)}
-                      className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-neutral-700 active:bg-neutral-50 transition-colors"
+                      className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-white active:scale-[0.97] transition-transform"
                     >
-                      <Images size={14} className="text-sky-600" />
-                      {ev.photoCount > 0 ? `Album (${ev.photoCount})` : 'Album'}
-                    </button>
-                    <button
-                      onClick={() => { setSelectedKey(null); setShareEvent(ev) }}
-                      className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-neutral-700 active:bg-neutral-50 transition-colors"
-                    >
-                      <Share2 size={14} className="text-primary-600" />
-                      Share impact
+                      <Images size={13} />
+                      {ev.photoCount > 0 ? `View album (${ev.photoCount})` : 'View album'}
                     </button>
                   </div>
                 </div>

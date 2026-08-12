@@ -28,10 +28,8 @@ import {
 } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Avatar } from '@/components/avatar'
-import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
 import { Chip } from '@/components/chip'
-import { Card } from '@/components/card'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { useAuth } from '@/hooks/use-auth'
@@ -369,8 +367,19 @@ export default function ProfilePage() {
         animate="visible"
       >
 
+        {/* Your Impact Map - every place you have shown up to an event (Jess
+            2026-08-12). Sits above the impact stats (Kurt 2026-08-12): the map
+            is the hero, the numbers are the supporting detail. */}
+        <motion.section variants={fadeUp}>
+          <SectionHeading
+            icon={<MapPin size={13} />}
+            title="Your Impact Map"
+          />
+          <ProfileEventMap userId={user?.id} isOwnProfile />
+        </motion.section>
+
         {/* Bento Impact Stats - compact + filter zero stats, expandable */}
-        <motion.div variants={fadeUp}>
+        <motion.div variants={fadeUp} className="mt-6">
           <BentoStatGrid compact>
             {allStats.map((s, i) => (
               <BentoStatCard compact key={s.label} value={s.value} label={s.label} icon={s.icon} unit={s.unit} theme={bentoMixedTheme(i)} />
@@ -387,17 +396,6 @@ export default function ProfilePage() {
             </button>
           )}
         </motion.div>
-
-        {/* Your Impact Map - every place you have shown up to an event (Jess
-            2026-08-12): grouped pins, a popup listing the events at each spot
-            with photo-album links, and a shareable impact graphic per event. */}
-        <motion.section variants={fadeUp} className="mt-6">
-          <SectionHeading
-            icon={<MapPin size={13} />}
-            title="Your Impact Map"
-          />
-          <ProfileEventMap userId={user?.id} isOwnProfile />
-        </motion.section>
 
         {/* Personal Details */}
         <motion.section variants={fadeUp} className="mt-6">
@@ -521,7 +519,7 @@ export default function ProfilePage() {
             title="My Collectives"
           />
           {collectives && collectives.length > 0 ? (
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-2 gap-3">
               {collectives.map((membership) => {
                 const collective = membership.collectives as {
                   id: string
@@ -532,39 +530,46 @@ export default function ProfilePage() {
                   member_count: number
                 } | null
                 if (!collective) return null
+                const role = (membership.role ?? '').replace(/_/g, ' ')
                 return (
-                  <Card
+                  <button
                     key={collective.id}
-                    variant="collective"
-                    watermark
+                    type="button"
                     onClick={() => navigate(`/collectives/${collective.slug}`)}
-                    className="flex flex-row items-center gap-3 p-3 bg-white shadow-sm border border-neutral-100 rounded-2xl"
+                    aria-label={collective.name}
+                    className="group relative block w-full overflow-hidden rounded-2xl shadow-sm aspect-[4/3] active:scale-[0.98] transition-transform duration-200"
                   >
-                    <div className="shrink-0 w-12 h-12 rounded-xl overflow-hidden bg-primary-100 shadow-sm">
-                      {collective.cover_image_url ? (
-                        <img
-                          src={collective.cover_image_url}
-                          alt={collective.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white">
-                          <TreePine size={20} />
+                    {collective.cover_image_url ? (
+                      <img
+                        src={collective.cover_image_url}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#879e62] via-moss-700 to-primary-800" aria-hidden="true">
+                        <div className="absolute -right-3 -top-3 text-white/10">
+                          <TreePine size={96} strokeWidth={1} />
                         </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-heading font-bold text-sm text-neutral-900 truncate">
+                      </div>
+                    )}
+                    {/* Legibility gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" aria-hidden="true" />
+                    {/* Role pill (glass) */}
+                    {role && (
+                      <span className="absolute top-2 left-2 rounded-full bg-white/20 backdrop-blur-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                        {role}
+                      </span>
+                    )}
+                    {/* Name + meta overlaid at the bottom */}
+                    <div className="absolute inset-x-0 bottom-0 p-3 text-left">
+                      <p className="font-heading font-bold text-sm text-white leading-tight drop-shadow line-clamp-2">
                         {collective.name}
                       </p>
-                      <p className="text-xs text-neutral-500 font-medium">
-                        {collective.region} · {collective.member_count} members
+                      <p className="mt-0.5 text-[11px] text-white/85">
+                        {[collective.region, collective.member_count != null ? `${collective.member_count} members` : null].filter(Boolean).join(' · ')}
                       </p>
                     </div>
-                    <Badge variant="default" size="sm">
-                      {(membership.role ?? '').replace('_', ' ')}
-                    </Badge>
-                  </Card>
+                  </button>
                 )
               })}
             </div>
