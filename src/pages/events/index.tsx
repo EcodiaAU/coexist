@@ -339,7 +339,7 @@ export default function ExplorePage() {
                     </div>
 
                     {/* When quick-filter chips */}
-                    <div className="flex gap-1.5 mb-3 overflow-x-auto hide-scrollbar -mx-1 px-1">
+                    <div className="flex gap-1.5 mb-3 overflow-x-auto hide-scrollbar -mx-1 px-1 py-1.5">
                       {WHEN_OPTIONS.map((opt) => {
                         const chipActive = whenFilter === opt.value
                         return (

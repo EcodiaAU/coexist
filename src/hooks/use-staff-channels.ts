@@ -19,6 +19,13 @@ export interface StaffChannel {
   event_id: string | null
   name: string
   created_at: string
+  // Resolved thumbnail (Kurt 2026-08-12): campout + collective channels lead
+  // with imagery like the collective chats. Prefer the event's cover, else the
+  // collective's cover; state/national channels have neither and fall back to
+  // the colour-coded gradient.
+  cover_image_url?: string | null
+  cover_image_position_x?: number | null
+  cover_image_position_y?: number | null
 }
 
 export interface ChannelMessageWithSender {
@@ -59,13 +66,27 @@ export function useMyStaffChannels() {
 
       const { data, error } = await supabase
         .from('chat_channel_members')
-        .select('channel_id, chat_channels(id, type, collective_id, state, event_id, name, created_at)')
+        .select('channel_id, chat_channels(id, type, collective_id, state, event_id, name, created_at, collectives(cover_image_url, cover_image_position_x, cover_image_position_y), events(cover_image_url, cover_image_position_x, cover_image_position_y))')
         .eq('user_id', user.id)
 
       if (error) throw error
 
       return (data ?? [])
-        .map((row: Record<string, unknown>) => row.chat_channels as StaffChannel)
+        .map((row: Record<string, unknown>) => {
+          const ch = row.chat_channels as (Omit<StaffChannel, 'cover_image_url' | 'cover_image_position_x' | 'cover_image_position_y'> & {
+            collectives: { cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null } | null
+            events: { cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null } | null
+          }) | null
+          if (!ch) return null
+          const src = ch.events?.cover_image_url ? ch.events : ch.collectives
+          return {
+            id: ch.id, type: ch.type, collective_id: ch.collective_id, state: ch.state,
+            event_id: ch.event_id, name: ch.name, created_at: ch.created_at,
+            cover_image_url: src?.cover_image_url ?? null,
+            cover_image_position_x: src?.cover_image_position_x ?? null,
+            cover_image_position_y: src?.cover_image_position_y ?? null,
+          } as StaffChannel
+        })
         .filter(Boolean)
         .sort((a: StaffChannel, b: StaffChannel) => {
           // National first, then state, then collective staff, then campout

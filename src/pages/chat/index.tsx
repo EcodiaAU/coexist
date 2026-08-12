@@ -109,7 +109,7 @@ function ChatTile({
         aria-label={ariaLabel}
         className={cn(
           'group relative block w-full overflow-hidden rounded-md shadow-sm',
-          'aspect-[16/9] transition-transform duration-200 active:scale-[0.98]',
+          'aspect-square transition-transform duration-200 active:scale-[0.98]',
           hasUnread && 'ring-2 ring-primary-400',
         )}
       >
@@ -117,8 +117,9 @@ function ChatTile({
           <OptimizedImage
             src={image}
             alt={imageAlt ?? ''}
-            aspectRatio="16/9"
-            sizes="(min-width: 640px) 50vw, 100vw"
+            aspectRatio="1/1"
+            wrapperClassName="absolute inset-0"
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="absolute inset-0"
             imgStyle={coverImagePositionStyle(positionX, positionY)}
           />
@@ -168,6 +169,9 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
     <ChatTile
       to={`/chat/channel/${channel.id}`}
       ariaLabel={channel.name}
+      image={channel.cover_image_url}
+      positionX={channel.cover_image_position_x}
+      positionY={channel.cover_image_position_y}
       gradientClass={config.grad}
       watermark={<Icon size={132} strokeWidth={1} />}
       hasUnread={hasUnread}
@@ -351,9 +355,9 @@ export default function ChatListPage() {
   if (showLoading) {
     return (
       <Page noBackground className="!px-0 bg-white">
-        <div className="px-4 lg:px-6 pt-14 pb-4 space-y-3">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="aspect-[16/9] rounded-md bg-neutral-100 animate-pulse" />
+        <div className="px-4 lg:px-6 pt-14 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="aspect-square rounded-md bg-neutral-100 animate-pulse" />
           ))}
         </div>
       </Page>
@@ -408,7 +412,7 @@ export default function ChatListPage() {
                 <motion.div variants={fadeUp}>
                   <SectionDivider icon={Tent} label="Campouts" />
                   <motion.div
-                    className="space-y-3"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"
@@ -430,7 +434,7 @@ export default function ChatListPage() {
                 <motion.div variants={fadeUp}>
                   <SectionDivider icon={Lock} label="Staff Channels" />
                   <motion.div
-                    className="space-y-3"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"
@@ -452,7 +456,7 @@ export default function ChatListPage() {
                 <motion.div variants={fadeUp}>
                   <SectionDivider icon={MessageCircle} label="Collectives" />
                   <motion.div
-                    className="space-y-3"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"
@@ -489,7 +493,7 @@ export default function ChatListPage() {
                 <motion.div variants={fadeUp}>
                   <SectionDivider icon={Shield} label="All Collectives" />
                   <motion.div
-                    className="space-y-3"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"
