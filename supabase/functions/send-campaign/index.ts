@@ -110,6 +110,43 @@ async function sendChunk(
   return { ids: emails.map(() => null), error: lastErr || 'exhausted retries' }
 }
 
+// Fallback when a whole batch is rejected (Resend's /emails/batch is all-or-
+// nothing on validation: a single junk `to` address 422s the entire 100-email
+// chunk). Send each email individually so one bad address only fails itself.
+// Small concurrency pool + pacing to stay under the 10 req/s account limit.
+async function sendIndividually(emails: PreparedEmail[]): Promise<(string | null)[]> {
+  const out: (string | null)[] = new Array(emails.length).fill(null)
+  const POOL = 5
+  for (let i = 0; i < emails.length; i += POOL) {
+    const group = emails.slice(i, i + POOL)
+    const res = await Promise.allSettled(
+      group.map(async (em) => {
+        for (let a = 0; a < 4; a++) {
+          const r = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(em),
+          })
+          if (r.ok) {
+            const b = (await r.json()) as { id?: string }
+            return b.id ?? null
+          }
+          if (r.status === 429 || r.status >= 500) {
+            const ra = Number(r.headers.get('retry-after') || '1')
+            await new Promise((res) => setTimeout(res, (ra || 1) * 1000))
+            continue
+          }
+          return null // validation (bad address) etc - don't retry
+        }
+        return null
+      }),
+    )
+    res.forEach((r, k) => { out[i + k] = r.status === 'fulfilled' ? r.value : null })
+    if (i + POOL < emails.length) await new Promise((r) => setTimeout(r, 700))
+  }
+  return out
+}
+
 Deno.serve(withSentry('send-campaign', async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
@@ -204,13 +241,24 @@ Deno.serve(withSentry('send-campaign', async (req: Request) => {
         audience = [{ profile_id: callerProfile.id, email: callerProfile.email || test_recipient_email }]
       }
     } else {
-      const res = await supabaseAdmin.rpc('resolve_campaign_audience', {
-        p_target_all: campaign.target_all,
-        p_tag_ids: campaign.target_tag_ids || [],
-        p_collective_ids: campaign.target_collective_ids || [],
-      })
-      audience = res.data as { profile_id: string; email: string }[] | null
-      aErr = res.error
+      // Paginate the RPC. PostgREST caps a single response at 1000 rows, which
+      // silently truncated a 2036-person target_all send to 1000 (2026-08-13).
+      const page = 1000
+      const all: { profile_id: string; email: string }[] = []
+      for (let from = 0; ; from += page) {
+        const res = await supabaseAdmin
+          .rpc('resolve_campaign_audience', {
+            p_target_all: campaign.target_all,
+            p_tag_ids: campaign.target_tag_ids || [],
+            p_collective_ids: campaign.target_collective_ids || [],
+          })
+          .range(from, from + page - 1)
+        if (res.error) { aErr = res.error; break }
+        const rows = (res.data as { profile_id: string; email: string }[]) || []
+        all.push(...rows)
+        if (rows.length < page) break
+      }
+      audience = aErr ? null : all
     }
 
     if (aErr) {
@@ -362,9 +410,12 @@ Deno.serve(withSentry('send-campaign', async (req: Request) => {
         }
       })
 
-      const { ids, error: chunkErr } = await sendChunk(emails)
+      let { ids, error: chunkErr } = await sendChunk(emails)
       if (chunkErr) {
-        console.warn(`[send-campaign] chunk ${i}-${i + slice.length} error: ${chunkErr}`)
+        // A batch rejection is usually one bad address poisoning the chunk.
+        // Retry each email individually so the rest still send.
+        console.warn(`[send-campaign] chunk ${i}-${i + slice.length} batch error, retrying individually: ${chunkErr}`)
+        ids = await sendIndividually(emails)
       }
 
       const nowIso = new Date().toISOString()

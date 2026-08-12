@@ -118,7 +118,9 @@ Deno.serve(async (req: Request) => {
         .update({ status: short, error_message: (reason || short).slice(0, 500) })
         .eq('resend_message_id', msgId)
       // Suppress dead / complaining addresses so future campaigns skip them.
-      if (to) await admin.from('email_suppressions').upsert({ email: to, reason: short }, { onConflict: 'email' })
+      // email_suppressions.reason CHECK allows only bounce/complaint/manual.
+      const supReason = short === 'complained' ? 'complaint' : 'bounce'
+      if (to) await admin.from('email_suppressions').upsert({ email: to, reason: supReason }, { onConflict: 'email' })
     }
   }
 
