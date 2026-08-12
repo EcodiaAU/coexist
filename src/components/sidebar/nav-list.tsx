@@ -140,12 +140,13 @@ export function SidebarNavList({
                           </span>
                           <span data-eos-id="src/components/sidebar/nav-list.tsx#15" data-eos-var="item.label" data-eos-var-label="Label" data-eos-var-scope="item" className="truncate flex-1">{item.label}</span>
                           {item.badge !== undefined && item.badge > 0 && (
-                            <span data-eos-id="src/components/sidebar/nav-list.tsx#16" data-eos-var="item.badge" data-eos-var-label="Badge" data-eos-var-scope="item"
-                              className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-success-500 px-1.5 text-[10px] font-bold text-white tabular-nums shrink-0"
-                              aria-label={`${item.badge} unread`}
-                            >
-                              {item.badge > 99 ? '99+' : item.badge}
-                            </span>
+                            // Presence dot, not a count (Kurt 2026-08-12): a small
+                            // Co-Exist-green dot signals "something new" without the
+                            // loud number circle.
+                            <span
+                              className="ml-auto h-2 w-2 rounded-full bg-primary-500 shrink-0"
+                              aria-label={`${item.badge} new`}
+                            />
                           )}
                         </button>
                       ) : (
@@ -198,17 +199,15 @@ export function SidebarNavList({
                             {item.icon}
                             {/* Collapsed: tiny dot indicator if there's a badge */}
                             {collapsed && item.badge !== undefined && item.badge > 0 && (
-                              <span data-eos-id="src/components/sidebar/nav-list.tsx#21" className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-success-500 ring-2 ring-white" />
+                              <span data-eos-id="src/components/sidebar/nav-list.tsx#21" className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white" />
                             )}
                           </span>
                           {!collapsed && <span data-eos-id="src/components/sidebar/nav-list.tsx#22" data-eos-var="item.label" data-eos-var-label="Label" data-eos-var-scope="item" className="truncate flex-1">{item.label}</span>}
                           {!collapsed && item.badge !== undefined && item.badge > 0 && (
-                            <span data-eos-id="src/components/sidebar/nav-list.tsx#23" data-eos-var="item.badge" data-eos-var-label="Badge" data-eos-var-scope="item"
-                              className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-success-500 px-1.5 text-[10px] font-bold text-white tabular-nums shrink-0"
-                              aria-label={`${item.badge} unread`}
-                            >
-                              {item.badge > 99 ? '99+' : item.badge}
-                            </span>
+                            <span
+                              className="ml-auto h-2 w-2 rounded-full bg-primary-500 shrink-0"
+                              aria-label={`${item.badge} new`}
+                            />
                           )}
                         </Link>
                       )}

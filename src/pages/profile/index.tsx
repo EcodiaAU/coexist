@@ -39,6 +39,7 @@ import { useProfile, useProfileCollectives, useProfileStats } from '@/hooks/use-
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { bentoMixedTheme } from '@/components/bento-stats-themes'
+import { ProfileEventMap } from '@/components/profile-event-map'
 import { cn } from '@/lib/cn'
 import { prettyInterestLabel } from '@/lib/interests'
 
@@ -155,7 +156,7 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
   const rm = !!shouldReduceMotion
-  useAuth()
+  const { user } = useAuth()
   const { data: profile, isLoading: profileLoading } = useProfile()
   const { data: collectives, isLoading: collectivesLoading } = useProfileCollectives()
   const { data: stats, isLoading: statsLoading } = useProfileStats()
@@ -386,6 +387,17 @@ export default function ProfilePage() {
             </button>
           )}
         </motion.div>
+
+        {/* Your Impact Map - every place you have shown up to an event (Jess
+            2026-08-12): grouped pins, a popup listing the events at each spot
+            with photo-album links, and a shareable impact graphic per event. */}
+        <motion.section variants={fadeUp} className="mt-6">
+          <SectionHeading
+            icon={<MapPin size={13} />}
+            title="Your Impact Map"
+          />
+          <ProfileEventMap userId={user?.id} isOwnProfile />
+        </motion.section>
 
         {/* Personal Details */}
         <motion.section variants={fadeUp} className="mt-6">
