@@ -139,6 +139,34 @@ async function recurringRowFromSubscription(
   }
 }
 
+/**
+ * Build a memberships row from a Stripe subscription whose metadata.type is
+ * 'membership'. Membership subscriptions must stay entirely out of the donation
+ * tables (recurring_donations / donations) that the GLOBAL subscription and
+ * invoice handlers write by default, or a membership payment would be recorded
+ * as a donation. user_id + plan_id are set at checkout (subscription_data
+ * metadata) and are required by the memberships NOT NULL / FK constraints.
+ */
+function membershipRowFromSubscription(subscription: Stripe.Subscription) {
+  const meta = subscription.metadata ?? {}
+  const customerId =
+    typeof subscription.customer === 'string'
+      ? subscription.customer
+      : subscription.customer?.id ?? null
+  const toIso = (unix: number | null | undefined) =>
+    unix ? new Date(unix * 1000).toISOString() : null
+  return {
+    user_id: meta.user_id || null,
+    plan_id: meta.plan_id || null,
+    stripe_subscription_id: subscription.id,
+    stripe_customer_id: customerId,
+    interval: meta.interval === 'yearly' ? 'yearly' : 'monthly',
+    status: 'active',
+    current_period_start: toIso(subscription.current_period_start),
+    current_period_end: toIso(subscription.current_period_end),
+  }
+}
+
 // ── Main handler ──
 
 Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
@@ -500,6 +528,24 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
       case 'customer.subscription.created': {
         const subscription = event.data.object as Stripe.Subscription
 
+        // Membership subscriptions live in `memberships`, never the donation tables.
+        if (subscription.metadata?.type === 'membership') {
+          const { data: existingMem } = await supabase
+            .from('memberships')
+            .select('id')
+            .eq('stripe_subscription_id', subscription.id)
+            .maybeSingle()
+          if (existingMem) {
+            console.log('Duplicate membership subscription webhook, skipping:', subscription.id)
+            break
+          }
+          const memRow = membershipRowFromSubscription(subscription)
+          const { error: memErr } = await supabase.from('memberships').insert(memRow)
+          if (memErr) console.error('Failed to insert membership:', memErr.message)
+          else console.log('Membership created:', subscription.id, memRow.interval)
+          break
+        }
+
         // Idempotency check
         const { data: existingSub } = await supabase
           .from('recurring_donations')
@@ -534,6 +580,43 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           typeof invoice.subscription === 'string'
             ? invoice.subscription
             : invoice.subscription.id
+
+        // Membership charge (first or renewal): refresh the period, mark active,
+        // and NEVER record a donation. Resolve by the memberships row; self-heal
+        // from subscription metadata if this invoice beat subscription.created
+        // (the same webhook race the donation path guards against).
+        {
+          const { data: mem } = await supabase
+            .from('memberships')
+            .select('id')
+            .eq('stripe_subscription_id', subscriptionId)
+            .maybeSingle()
+          let isMembership = !!mem
+          let subForPeriod: Stripe.Subscription | null = null
+          if (!mem) {
+            try {
+              const sub = await stripe.subscriptions.retrieve(subscriptionId)
+              if (sub.metadata?.type === 'membership') {
+                isMembership = true
+                subForPeriod = sub
+                await supabase
+                  .from('memberships')
+                  .upsert(membershipRowFromSubscription(sub), { onConflict: 'stripe_subscription_id' })
+              }
+            } catch (err) {
+              console.error('[stripe-webhook] membership self-heal failed:', (err as Error).message)
+            }
+          }
+          if (isMembership) {
+            const endUnix =
+              invoice.lines?.data?.[0]?.period?.end ?? subForPeriod?.current_period_end ?? null
+            const patch: Record<string, unknown> = { status: 'active' }
+            if (endUnix) patch.current_period_end = new Date(endUnix * 1000).toISOString()
+            await supabase.from('memberships').update(patch).eq('stripe_subscription_id', subscriptionId)
+            console.log('Membership payment succeeded:', invoice.id, subscriptionId)
+            break
+          }
+        }
 
         const amountDollars = (invoice.amount_paid ?? 0) / 100
         const recurringPaymentId = (invoice.payment_intent as string) ?? invoice.id
@@ -671,6 +754,16 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription
 
+        // Membership cancellation lands on the memberships row, not the donation one.
+        if (sub.metadata?.type === 'membership') {
+          await supabase
+            .from('memberships')
+            .update({ status: 'cancelled' })
+            .eq('stripe_subscription_id', sub.id)
+          console.log('Membership cancelled:', sub.id)
+          break
+        }
+
         await supabase
           .from('recurring_donations')
           .update({
@@ -703,6 +796,23 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           typeof failedInvoice.subscription === 'string'
             ? failedInvoice.subscription
             : failedInvoice.subscription.id
+
+        // Membership card failure -> past_due on the memberships row, no donation-side work.
+        {
+          const { data: mem } = await supabase
+            .from('memberships')
+            .select('id')
+            .eq('stripe_subscription_id', subscriptionId)
+            .maybeSingle()
+          if (mem) {
+            await supabase
+              .from('memberships')
+              .update({ status: 'past_due' })
+              .eq('stripe_subscription_id', subscriptionId)
+            console.log('Membership payment failed -> past_due:', subscriptionId)
+            break
+          }
+        }
 
         // Mark as past_due
         const { data: recurring } = await supabase

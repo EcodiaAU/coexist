@@ -510,7 +510,7 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
         // Verify ticket type and get price
         const { data: ticketType, error: ttDbErr } = await supabase
           .from('event_ticket_types')
-          .select('id, name, price_cents, capacity, sale_start, sale_end, is_active')
+          .select('id, name, price_cents, member_price_cents, capacity, sale_start, sale_end, is_active')
           .eq('id', body.ticket_type_id)
           .eq('event_id', body.event_id)
           .single()
@@ -544,10 +544,33 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
         // applied server-side. A code that zeroes the total COMPS the ticket here,
         // because Stripe payment-mode Checkout cannot settle a $0 total - a 100%
         // code can never work on the hosted page, so it must be handled server-side.
+        // ---- Member pricing (active membership + a member price on this ticket) ----
+        // A member pays member_price_cents when the ticket type defines one lower
+        // than the base price. This is a real-world discount computed server-side,
+        // so it applies from any surface (web or native app) without a membership
+        // ever being sold in-app. Only a truly 'active' membership counts.
+        let memberPriceApplied = false
+        let basePriceCents = ticketType.price_cents
+        if (
+          ticketType.member_price_cents != null &&
+          ticketType.member_price_cents < ticketType.price_cents
+        ) {
+          const { data: activeMembership } = await supabase
+            .from('memberships')
+            .select('id')
+            .eq('user_id', body.user_id)
+            .eq('status', 'active')
+            .maybeSingle()
+          if (activeMembership) {
+            basePriceCents = ticketType.member_price_cents
+            memberPriceApplied = true
+          }
+        }
+
         const rawCode = typeof body.promo_code === 'string' ? body.promo_code.trim() : ''
         let promo: Stripe.PromotionCode | null = null
         let discountCents = 0
-        const unitPriceCents = ticketType.price_cents
+        const unitPriceCents = basePriceCents
         const grossCents = unitPriceCents * qty
         if (rawCode) {
           const found = await stripe.promotionCodes.list({ code: rawCode, active: true, limit: 1 })
@@ -669,6 +692,7 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
             ticket_type_id: body.ticket_type_id,
             user_id: body.user_id,
             quantity: String(qty),
+            member_price_applied: String(memberPriceApplied),
           },
         })
 
@@ -734,6 +758,106 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
         const portal = await stripe.billingPortal.sessions.create({
           customer: customerId,
           return_url: `${origin}/profile/donations`,
+        })
+        return json({ url: portal.url })
+      }
+
+      /* ---- Membership subscription (web-first paid membership) ---- */
+      case 'membership': {
+        const planErr = validateUuid(body.plan_id, 'plan_id')
+        if (planErr) return json({ error: planErr }, 400)
+        const interval = body.interval === 'yearly' ? 'yearly' : 'monthly'
+
+        // One active membership per user
+        const { data: existingMembership } = await supabase
+          .from('memberships')
+          .select('id')
+          .eq('user_id', body.user_id)
+          .in('status', ['active', 'trialing', 'past_due'])
+          .maybeSingle()
+        if (existingMembership) {
+          return json({ error: 'You already have an active membership' }, 409)
+        }
+
+        const { data: plan, error: planDbErr } = await supabase
+          .from('membership_plans')
+          .select('id, name, stripe_price_monthly, stripe_price_yearly, is_active')
+          .eq('id', body.plan_id)
+          .single()
+        if (planDbErr || !plan) return json({ error: 'Membership plan not found' }, 404)
+        if (!plan.is_active) return json({ error: 'This membership plan is not available' }, 400)
+
+        const priceId = interval === 'yearly' ? plan.stripe_price_yearly : plan.stripe_price_monthly
+        if (!priceId) {
+          return json({ error: 'Membership plan is not fully configured yet' }, 400)
+        }
+
+        const customerEmail = await getUserEmail(body.user_id)
+        // The discriminator + context ride on the SUBSCRIPTION metadata so the
+        // webhook's global subscription/invoice handlers can tell a membership
+        // from a recurring donation and never cross-write the donation tables.
+        const subMeta = {
+          type: 'membership',
+          plan_id: String(plan.id),
+          user_id: body.user_id,
+          interval,
+        }
+        const session = await stripe.checkout.sessions.create({
+          mode: 'subscription',
+          customer_email: customerEmail,
+          line_items: [{ price: priceId, quantity: 1 }],
+          success_url: `${origin}/profile/membership?joined=true`,
+          cancel_url: `${origin}/membership`,
+          metadata: subMeta,
+          subscription_data: { metadata: subMeta },
+        })
+        return json({ session_id: session.id, url: session.url })
+      }
+
+      /* ---- Cancel membership ---- */
+      case 'cancel_membership': {
+        if (!body.stripe_subscription_id || typeof body.stripe_subscription_id !== 'string') {
+          return json({ error: 'Missing stripe_subscription_id' }, 400)
+        }
+        const { data: ownedMem } = await supabase
+          .from('memberships')
+          .select('id')
+          .eq('stripe_subscription_id', body.stripe_subscription_id)
+          .eq('user_id', caller.id)
+          .single()
+        if (!ownedMem) {
+          return json({ error: 'Membership not found or not owned by you' }, 403)
+        }
+        await stripe.subscriptions.cancel(body.stripe_subscription_id)
+        await supabase
+          .from('memberships')
+          .update({ status: 'cancelled' })
+          .eq('stripe_subscription_id', body.stripe_subscription_id)
+        return json({ success: true })
+      }
+
+      /* ---- Membership billing portal (update card / recover past_due) ---- */
+      case 'membership_portal': {
+        if (!body.stripe_subscription_id || typeof body.stripe_subscription_id !== 'string') {
+          return json({ error: 'Missing stripe_subscription_id' }, 400)
+        }
+        const { data: ownedMem } = await supabase
+          .from('memberships')
+          .select('id')
+          .eq('stripe_subscription_id', body.stripe_subscription_id)
+          .eq('user_id', caller.id)
+          .single()
+        if (!ownedMem) {
+          return json({ error: 'Membership not found or not owned by you' }, 403)
+        }
+        const sub = await stripe.subscriptions.retrieve(body.stripe_subscription_id)
+        const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer?.id
+        if (!customerId) {
+          return json({ error: 'No billing account on file for this membership' }, 400)
+        }
+        const portal = await stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: `${origin}/profile/membership`,
         })
         return json({ url: portal.url })
       }

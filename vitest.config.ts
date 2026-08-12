@@ -4,6 +4,12 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  // Compile-time literals normally injected by vite.config.ts `define` are not
+  // applied under vitest, so provide them here (feature ON in tests).
+  define: {
+    __APP_VERSION__: '"test"',
+    __FEATURE_MEMBERSHIPS__: 'true',
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

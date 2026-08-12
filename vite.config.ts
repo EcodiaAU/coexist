@@ -31,6 +31,12 @@ export default defineConfig({
   base: '/',
   define: {
     __APP_VERSION__: JSON.stringify(pkgVersion),
+    // Compile-time literal so `__FEATURE_MEMBERSHIPS__ ? lazy(() => import(...)) : null`
+    // dead-code-eliminates the membership chunks when the flag is off. A runtime
+    // `import.meta.env` check does NOT tree-shake the dynamic import (rolldown still
+    // emits the chunk), so the flag MUST be a define'd literal. Set the env var only
+    // in the branch/preview (and later production at go-live). See src/lib/flags.ts.
+    __FEATURE_MEMBERSHIPS__: JSON.stringify(process.env.VITE_FEATURE_MEMBERSHIPS === 'true'),
   },
   server: {
     allowedHosts: true,

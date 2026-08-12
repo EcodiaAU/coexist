@@ -25,7 +25,9 @@ import {
     Leaf,
     Waves,
     Ticket,
+    Sparkles,
 } from 'lucide-react'
+import { FEATURE_MEMBERSHIPS } from '@/lib/flags'
 import { Page } from '@/components/page'
 import { Avatar } from '@/components/avatar'
 import { Button } from '@/components/button'
@@ -328,6 +330,9 @@ export default function ProfilePage() {
             { icon: <Pencil size={14} />, label: 'Edit Profile', to: '/profile/edit' },
             { icon: <Ticket size={14} />, label: 'Tickets', to: '/profile/tickets' },
             { icon: <Heart size={14} />, label: 'Donations', to: '/profile/donations' },
+            ...(FEATURE_MEMBERSHIPS
+              ? [{ icon: <Sparkles size={14} />, label: 'Membership', to: '/profile/membership' }]
+              : []),
             { icon: <Settings size={14} />, label: 'Settings', to: '/settings' },
           ].map((b) => (
             <button

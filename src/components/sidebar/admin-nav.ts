@@ -14,8 +14,10 @@ import {
   Phone,
   Leaf,
   Image as ImageIcon,
+  Sparkles,
 } from 'lucide-react'
 import { createElement } from 'react'
+import { FEATURE_MEMBERSHIPS } from '@/lib/flags'
 import type { NavCategory, NavItem } from './types'
 
 const icon = (Icon: typeof Home, size = 17) => createElement(Icon, { size, strokeWidth: 1.5 })
@@ -37,6 +39,9 @@ export const adminNavCategories: NavCategory[] = [
       // Authoring code + /admin/development routes + all DB tables are kept intact
       // for the future build; only the nav entry and the learner routes are removed.
       { label: 'Shop', path: '/admin/shop', icon: icon(ShoppingBag), capability: 'manage_merch' },
+      ...(FEATURE_MEMBERSHIPS
+        ? [{ label: 'Membership', path: '/admin/memberships', icon: icon(Sparkles), capability: 'manage_membership' }]
+        : []),
       { label: 'Users', path: '/admin/users', icon: icon(Users), capability: 'manage_users' },
     ],
   },
