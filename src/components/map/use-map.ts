@@ -23,10 +23,12 @@ export interface MapMarker {
 /*  Tile layer config                                                  */
 /* ------------------------------------------------------------------ */
 
-// CartoDB Positron: a clean, minimal light basemap (Kurt 2026-08-12: fewer
-// lines, calmer, more beautiful than the busy default OpenStreetMap raster).
-// {r} + detectRetina serves @2x tiles on retina for crisp text.
-export const TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+// CartoDB Voyager: a clean but NATURALLY coloured light basemap - warm cream
+// land, pale-blue water, soft-green parks (Kurt 2026-08-12). Replaces Positron
+// light_all, whose near-white land + grey water needed a green hue-rotate that
+// left land whiteish and swung the ocean garish green. Voyager needs no colour
+// trickery: land reads as land, water as water. {r} + detectRetina = @2x tiles.
+export const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
 export const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
 /** Centre of Australia - sensible fallback instead of defaulting to Sydney */
@@ -44,13 +46,13 @@ function injectStyles() {
   const style = document.createElement('style')
   style.id = STYLE_ID
   style.textContent = `
-    /* Green + bright basemap (Kurt 2026-08-12): CartoDB Positron ships as a
-       desaturated grey. A tile-pane-only filter washes it toward a fresh,
-       bright Co-Exist green - sepia lays warm chroma onto the greys, hue-rotate
-       swings that warmth to green, saturate + brightness lift it. Scoped to
-       .leaflet-tile so pins, clusters, tooltips and controls (other panes) keep
-       their true colours. */
-    .leaflet-tile-pane { filter: sepia(0.42) saturate(1.5) hue-rotate(58deg) brightness(1.06); }
+    /* Bright basemap (Kurt 2026-08-12): Voyager already ships natural cream
+       land + pale-blue water + green parks, so NO hue-rotate (that was what
+       whitened the land and greened the ocean on the old Positron base). A
+       gentle saturate + brightness only lifts the existing colours so greens
+       pop against the olive pins. Scoped to .leaflet-tile-pane so pins,
+       clusters, tooltips and controls keep their true colours. */
+    .leaflet-tile-pane { filter: saturate(1.12) brightness(1.03); }
     .coexist-map-pin { background: none !important; border: none !important; }
     .coexist-cluster-icon { background: none !important; border: none !important; }
     .leaflet-popup-content-wrapper {
