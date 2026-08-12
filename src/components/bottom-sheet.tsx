@@ -246,6 +246,9 @@ function MobileSheet({
         onKeyDown={handleKeyDown}
         className={cn(
           'fixed inset-x-0 bottom-0 z-10 bg-surface-0 rounded-t-md shadow-sm flex flex-col',
+          // Bare hosts a full <Page> whose hero image should bleed to the very
+          // top of the sheet; clip it to the rounded top corners.
+          bare && 'overflow-hidden',
           className,
         )}
         style={{
@@ -256,21 +259,39 @@ function MobileSheet({
         }}
         onTransitionEnd={onTransitionEnd}
       >
-        {/* Grab handle  touch target for dragging */}
+        {/* Grab handle / drag target. Default: a layout row above padded content.
+            Bare: FLOATS over the content (centred, corners left free for the
+            page's own top controls) so a hero image bleeds full to the top of
+            the sheet under the bar. A glass capsule keeps the pill legible over
+            either a light or a dark hero. */}
         <div data-eos-id="src/components/bottom-sheet.tsx#3"
-          className="flex justify-center py-3 cursor-grab active:cursor-grabbing select-none shrink-0"
-          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0.75rem)', touchAction: 'none' }}
+          className={cn(
+            'flex justify-center cursor-grab active:cursor-grabbing select-none',
+            bare
+              ? 'absolute top-0 left-1/2 -translate-x-1/2 z-20 px-10 pt-2.5 pb-5'
+              : 'py-3 shrink-0',
+          )}
+          style={bare
+            ? { touchAction: 'none' }
+            : { paddingTop: 'max(env(safe-area-inset-top, 0px), 0.75rem)', touchAction: 'none' }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
           onTouchCancel={onTouchEnd}
         >
-          <div data-eos-id="src/components/bottom-sheet.tsx#4" className="h-1 w-10 rounded-full bg-primary-200" aria-hidden="true" />
+          {bare ? (
+            <div className="rounded-full bg-black/20 backdrop-blur-md px-2.5 py-1 shadow-sm">
+              <div className="h-1 w-8 rounded-full bg-white/90" aria-hidden="true" />
+            </div>
+          ) : (
+            <div data-eos-id="src/components/bottom-sheet.tsx#4" className="h-1 w-10 rounded-full bg-primary-200" aria-hidden="true" />
+          )}
         </div>
 
         {/* Content. Default: the sheet is the scroll container (padded). Bare:
             the sheet is a plain flex slot with no padding/scroll so a full
-            <Page> child owns its own scroller (no nested double-scroll). */}
+            <Page> child owns its own scroller (no nested double-scroll) and its
+            hero fills the sheet from the very top (handle floats above). */}
         {bare ? (
           <div data-eos-id="src/components/bottom-sheet.tsx#5" ref={scrollRef} className="flex-1 min-h-0 overflow-hidden flex flex-col">
             {children}
@@ -469,8 +490,11 @@ function DesktopModal({
               aria-modal="true"
               aria-label="Dialog"
               className={cn(
-                'relative w-full max-w-md bg-surface-0 rounded-md shadow-sm pointer-events-auto gpu-panel',
-                bare && 'h-[85vh] flex flex-col overflow-hidden',
+                'relative w-full bg-surface-0 rounded-md shadow-sm pointer-events-auto gpu-panel',
+                // Bare hosts a full detail <Page>: wider + capped height + clip to
+                // rounded corners; the content div below is the scroller (the
+                // desktop <Page> itself uses overflow-clip, so it never scrolls).
+                bare ? 'max-w-lg max-h-[88vh] overflow-hidden' : 'max-w-md',
                 className,
               )}
               initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96, y: 12 }}
@@ -484,7 +508,7 @@ function DesktopModal({
                 className={cn(
                   'hide-scrollbar',
                   bare
-                    ? 'flex-1 min-h-0 overflow-hidden flex flex-col'
+                    ? 'overflow-y-auto overscroll-contain max-h-[88vh]'
                     : 'overflow-y-auto overscroll-contain px-5 py-6',
                 )}
                 style={bare ? undefined : { maxHeight: '80vh' }}
