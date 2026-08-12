@@ -115,7 +115,9 @@ export function ProfileEventMap({ userId, isOwnProfile = false }: ProfileEventMa
           zoom={zoom}
           markers={markers}
           onMarkerClick={(id) => setSelectedKey(id)}
-          className="h-64"
+          // Taller on wider screens (Kurt 2026-08-12): a fixed h-64 reads as a
+          // thin band on a laptop where the map spans the full column width.
+          className="h-64 md:h-80 lg:h-[32rem]"
           aria-label="Map of the places you have attended events"
         />
       </div>
