@@ -1,5 +1,25 @@
 import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  CalendarClock,
+  TicketCheck,
+  ArrowUp,
+  CalendarX,
+  RefreshCw,
+  Star,
+  Sprout,
+  MailPlus,
+  Megaphone,
+  Flame,
+  AtSign,
+  MessageCircle,
+  Reply,
+  Camera,
+  BarChart3,
+  ClipboardList,
+  Bell,
+  type LucideIcon,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { subscribeWithReconnect } from '@/lib/realtime'
 import { useAuth } from '@/hooks/use-auth'
@@ -176,47 +196,52 @@ export function getNotificationDeepLink(notification: Notification): string {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Icon + color per type                                              */
+/*  Icon + tint per type                                               */
+/*                                                                     */
+/*  Line-art lucide icons, not emoji. Co-Exist dropped emoji from the  */
+/*  notification surfaces (Tate 2026-08-13): a clean icon in a neutral  */
+/*  circle with a colour-coded stroke reads as considered UI rather     */
+/*  than a chat sticker. `tint` is a text colour applied to the icon.   */
 /* ------------------------------------------------------------------ */
 
-export function getNotificationMeta(type: string): { emoji: string; color: string } {
+export function getNotificationIcon(type: string): { Icon: LucideIcon; tint: string } {
   switch (type as NotificationType) {
     case 'event_reminder':
-      return { emoji: '\u{1F4C5}', color: 'bg-info-100' }
+      return { Icon: CalendarClock, tint: 'text-info-600' }
     case 'registration_confirmed':
-      return { emoji: '\u{2705}', color: 'bg-success-100' }
+      return { Icon: TicketCheck, tint: 'text-success-600' }
     case 'waitlist_promotion':
-      return { emoji: '\u{1F389}', color: 'bg-accent-100' }
+      return { Icon: ArrowUp, tint: 'text-accent-600' }
     case 'event_cancelled':
-      return { emoji: '\u{274C}', color: 'bg-error-100' }
+      return { Icon: CalendarX, tint: 'text-error-600' }
     case 'event_updated':
-      return { emoji: '\u{1F504}', color: 'bg-warning-100' }
+      return { Icon: RefreshCw, tint: 'text-warning-600' }
     case 'points_earned':
-      return { emoji: '\u{2B50}', color: 'bg-warning-100' }
+      return { Icon: Star, tint: 'text-warning-600' }
     case 'new_event_in_collective':
-      return { emoji: '\u{1F331}', color: 'bg-primary-100' }
+      return { Icon: Sprout, tint: 'text-primary-600' }
     case 'event_invite':
-      return { emoji: '\u{1F4E9}', color: 'bg-primary-100' }
+      return { Icon: MailPlus, tint: 'text-primary-600' }
     case 'global_announcement':
-      return { emoji: '\u{1F4E2}', color: 'bg-accent-100' }
+      return { Icon: Megaphone, tint: 'text-accent-600' }
     case 'challenge_update':
-      return { emoji: '\u{1F525}', color: 'bg-secondary-100' }
+      return { Icon: Flame, tint: 'text-secondary-600' }
     case 'chat_mention':
-      return { emoji: '\u{1F4AC}', color: 'bg-info-100' }
+      return { Icon: AtSign, tint: 'text-info-600' }
     case 'chat_messages':
-      return { emoji: '\u{1F4AC}', color: 'bg-neutral-100' }
+      return { Icon: MessageCircle, tint: 'text-neutral-500' }
     case 'chat_reply':
-      return { emoji: '\u{21A9}\u{FE0F}', color: 'bg-info-100' }
+      return { Icon: Reply, tint: 'text-info-600' }
     case 'chat_image':
-      return { emoji: '\u{1F4F7}', color: 'bg-accent-100' }
+      return { Icon: Camera, tint: 'text-accent-600' }
     case 'chat_poll':
-      return { emoji: '\u{1F4CA}', color: 'bg-primary-100' }
+      return { Icon: BarChart3, tint: 'text-primary-600' }
     case 'chat_announcement':
-      return { emoji: '\u{1F4E3}', color: 'bg-warning-100' }
+      return { Icon: Megaphone, tint: 'text-warning-600' }
     case 'survey_request':
-      return { emoji: '\u{1F4CB}', color: 'bg-primary-100' }
+      return { Icon: ClipboardList, tint: 'text-primary-600' }
     default:
-      return { emoji: '\u{1F514}', color: 'bg-neutral-100' }
+      return { Icon: Bell, tint: 'text-neutral-500' }
   }
 }
 
@@ -227,6 +252,24 @@ export function getNotificationMeta(type: string): { emoji: string; color: strin
 /** Max notifications loaded into the feed. The unread badge is aligned to this
  *  same window so it never counts rows the user cannot reach or clear. */
 export const NOTIFICATIONS_WINDOW = 100
+
+/**
+ * Personal notifications are ephemeral activity, not an archive. A reminder for
+ * an event that already happened, or a chat ping from a week ago, is pure noise
+ * once it is stale. We hide anything older than this window from the feed AND
+ * the unread badge (applied as a `created_at >=` cutoff at query time), so last
+ * week's event reminders drop off on their own instead of lingering forever.
+ * Tate 2026-08-13: "still seeing notifications from events last week ... they
+ * should be gone." Announcements (the `updates` table) are unaffected - those
+ * are curated and live on their own surface.
+ */
+export const NOTIFICATION_FRESHNESS_DAYS = 7
+
+/** ISO timestamp of the oldest notification still shown. Computed per call so it
+ *  tracks wall-clock as the query re-runs (staleTime keeps it cheap). */
+export function notificationFreshnessCutoff(now: number = Date.now()): string {
+  return new Date(now - NOTIFICATION_FRESHNESS_DAYS * 86_400_000).toISOString()
+}
 
 /**
  * Local-timezone calendar-day key (YYYY-MM-DD). Built from local date parts,
@@ -298,6 +341,7 @@ export function useNotifications() {
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
+        .gte('created_at', notificationFreshnessCutoff())
         .order('created_at', { ascending: false })
         .limit(NOTIFICATIONS_WINDOW)
 
@@ -404,6 +448,7 @@ export function useUnreadCount() {
         .from('notifications')
         .select('read_at')
         .eq('user_id', user.id)
+        .gte('created_at', notificationFreshnessCutoff())
         .order('created_at', { ascending: false })
         .limit(NOTIFICATIONS_WINDOW)
 

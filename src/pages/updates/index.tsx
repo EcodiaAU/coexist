@@ -1,26 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, useReducedMotion, AnimatePresence, type Variants } from 'framer-motion'
-import { ArrowLeft, Pin, Megaphone, AlertTriangle, Image as ImageIcon, ChevronRight, Bell } from 'lucide-react'
+import { motion, useReducedMotion, type Variants } from 'framer-motion'
+import { Pin, Megaphone, AlertTriangle, ChevronRight, Images } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { Avatar } from '@/components/avatar'
 import { EmptyState } from '@/components/empty-state'
-import { SearchBar } from '@/components/search-bar'
+import { OptimizedImage } from '@/components/optimized-image'
 import { cn } from '@/lib/cn'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import {
     useUpdates,
     useMarkUpdateRead,
     useMarkAllUpdatesRead,
-    useUnreadUpdateCount,
     type UpdateWithAuthor,
 } from '@/hooks/use-updates'
 import {
     useNotifications,
     useMarkRead,
     getNotificationDeepLink,
-    getNotificationMeta,
+    getNotificationIcon,
 } from '@/hooks/use-notifications'
 import type { Tables } from '@/types/database.types'
 
@@ -32,11 +31,11 @@ type AppNotification = Tables<'notifications'>
 
 const stagger: Variants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.05 } },
+  visible: { transition: { staggerChildren: 0.06 } },
 }
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } },
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] } },
 }
 
 /* ------------------------------------------------------------------ */
@@ -59,7 +58,7 @@ function formatDate(dateStr: string): string {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Get all images for an update                                 */
+/*  Get all images for an update                                       */
 /* ------------------------------------------------------------------ */
 
 function getImages(update: UpdateWithAuthor): string[] {
@@ -76,9 +75,6 @@ function getImages(update: UpdateWithAuthor): string[] {
 // Fresh regex per call. A module-level /g pattern would retain `lastIndex`
 // across invocations, so later renders would resume from the previous text's
 // offset and silently skip matches near the start of a new string.
-// Source + flags only; a fresh RegExp is built per call so global-flag
-// state is never shared across renders (react-hooks/immutability bans
-// the previous LINK_PATTERN.lastIndex = 0 mutation pattern).
 const LINK_PATTERN_SOURCE = String.raw`\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<]+)`
 
 function RichContent({ text, className }: { text: string; className?: string }) {
@@ -89,13 +85,11 @@ function RichContent({ text, className }: { text: string; className?: string }) 
   const linkPattern = new RegExp(LINK_PATTERN_SOURCE, 'g')
 
   while ((match = linkPattern.exec(text)) !== null) {
-    // Text before match
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index))
     }
 
     if (match[1] && match[2]) {
-      // Markdown link [label](url)
       parts.push(
         <a
           key={key++}
@@ -108,7 +102,6 @@ function RichContent({ text, className }: { text: string; className?: string }) 
         </a>,
       )
     } else if (match[3]) {
-      // Bare URL
       parts.push(
         <a
           key={key++}
@@ -133,61 +126,10 @@ function RichContent({ text, className }: { text: string; className?: string }) 
 }
 
 /* ------------------------------------------------------------------ */
-/*  Role label                                                         */
-/* ------------------------------------------------------------------ */
-
-
-function _roleLabel(role: string | undefined) {
-  switch (role) {
-    case 'admin': return 'Admin'
-    case 'manager': return 'Manager'
-    case 'leader':
-    case 'national_leader': return 'Leader'
-    default: return ''
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Compact image thumbnail for cards                                  */
-/* ------------------------------------------------------------------ */
-
-function CardThumbnail({ images }: { images: string[] }) {
-  if (images.length === 0) return null
-
-  if (images.length === 1) {
-    return (
-      <div className="w-24 h-24 rounded-sm overflow-hidden shrink-0 ring-1 ring-black/[0.04]">
-        <img src={images[0]} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-      </div>
-    )
-  }
-
-  // 2x2 mini grid for multiple images
-  return (
-    <div className="w-24 h-24 rounded-sm overflow-hidden shrink-0 grid grid-cols-2 gap-0.5 bg-primary-100 ring-1 ring-black/[0.04]">
-      {images.slice(0, 4).map((src, i) => (
-        <div key={i} className="relative overflow-hidden">
-          <img src={src} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-          {i === 3 && images.length > 4 && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">+{images.length - 4}</span>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Inline update detail view (replaces list, no overlay)              */
 /* ------------------------------------------------------------------ */
 
-function UpdateDetailView({
-  update,
-}: {
-  update: UpdateWithAuthor
-}) {
+function UpdateDetailView({ update }: { update: UpdateWithAuthor }) {
   const images = getImages(update)
   const isUrgent = update.priority === 'urgent'
   const splashImage = images[0] ?? null
@@ -207,7 +149,6 @@ function UpdateDetailView({
             alt=""
             className="w-full aspect-[16/9] lg:aspect-[21/9] object-cover"
           />
-          {/* Gradient fade into content area */}
           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white to-transparent" />
         </div>
       )}
@@ -278,101 +219,164 @@ function UpdateDetailView({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Update card - compact white card                                   */
+/*  Announcement tile - full-bleed imagery-first card                  */
+/*                                                                     */
+/*  Same composition as the chat list + homepage event cards: cover    */
+/*  image (or a nature gradient + leaf-mark for image-less posts)      */
+/*  fills the tile, a dark bottom-up gradient keeps the overlaid title  */
+/*  and author legible. Reads as a magazine, not a notification list.   */
 /* ------------------------------------------------------------------ */
 
-function UpdateCard({
+function AnnouncementTile({
   update,
-  onRead,
   onOpen,
 }: {
   update: UpdateWithAuthor
-  onRead: () => void
   onOpen: () => void
 }) {
+  const shouldReduceMotion = useReducedMotion()
+  const images = getImages(update)
+  const cover = images[0] ?? null
   const isUrgent = update.priority === 'urgent'
   const isUnread = !update.is_read
-  const images = getImages(update)
-
-  const handleTap = () => {
-    if (isUnread) onRead()
-    onOpen()
-  }
 
   return (
-    <motion.article
-      variants={fadeUp}
-      onClick={handleTap}
-      className={cn(
-        'group rounded-md overflow-hidden cursor-pointer',
-        'transition-transform duration-200 active:scale-[0.985]',
-        'bg-bark-50',
-        isUrgent && 'border-l-[3px] border-l-warning-500',
-        isUnread && !isUrgent && 'border-l-[3px] border-l-primary-500',
-      )}
-      role="article"
-      aria-label={update.title}
-    >
-      <div className="flex gap-3.5 p-3.5">
-        {/* Left: Content */}
-        <div className="flex-1 min-w-0">
-          {/* Badges row */}
-          {(update.is_pinned || isUrgent || isUnread) && (
-            <div className="flex items-center gap-1.5 mb-1.5">
-              {isUnread && (
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0" aria-hidden="true" />
-              )}
-              {update.is_pinned && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-neutral-500">
-                  <Pin size={9} aria-hidden="true" />
-                  Pinned
-                </span>
-              )}
-              {isUrgent && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-warning-600">
-                  <AlertTriangle size={9} aria-hidden="true" />
-                  Urgent
-                </span>
-              )}
+    <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={update.title}
+        className={cn(
+          'group relative block w-full overflow-hidden rounded-lg shadow-sm text-left',
+          'aspect-[16/10] sm:aspect-[2/1] transition-transform duration-200 active:scale-[0.985]',
+          isUnread && 'ring-2 ring-primary-400',
+        )}
+      >
+        {cover ? (
+          <OptimizedImage
+            src={cover}
+            alt=""
+            aspectRatio="16/10"
+            wrapperClassName="absolute inset-0"
+            sizes="(min-width: 1024px) 66vw, 100vw"
+            className="absolute inset-0"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-moss-700" aria-hidden="true">
+            <div className="absolute -right-6 -top-6 text-white/10 pointer-events-none">
+              <Megaphone size={148} strokeWidth={1} />
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Title */}
-          <h3 className="font-heading font-bold text-sm leading-snug text-neutral-900 line-clamp-2 group-hover:text-neutral-700 transition-colors">
+        {/* Legibility gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" aria-hidden="true" />
+
+        {/* Top-right status pills */}
+        {(update.is_pinned || isUrgent || images.length > 1) && (
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+            {update.is_pinned && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm px-2 py-0.5 text-[11px] font-semibold text-white">
+                <Pin size={11} strokeWidth={2} />
+                Pinned
+              </span>
+            )}
+            {isUrgent && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning-500/90 backdrop-blur-sm px-2 py-0.5 text-[11px] font-semibold text-white">
+                <AlertTriangle size={11} strokeWidth={2} />
+                Urgent
+              </span>
+            )}
+            {images.length > 1 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-black/35 backdrop-blur-sm px-2 py-0.5 text-[11px] font-semibold text-white">
+                <Images size={11} strokeWidth={2} />
+                {images.length}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Bottom overlay content */}
+        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5">
+          <h3 className="font-heading text-lg sm:text-xl font-bold text-white leading-tight drop-shadow-sm line-clamp-2">
             {update.title}
           </h3>
-
-          {/* Content preview */}
-          <p className="mt-1 text-xs leading-relaxed text-neutral-500 line-clamp-2">
+          <p className="mt-1 text-[13px] text-white/80 leading-snug line-clamp-2 drop-shadow-sm">
             {update.content}
           </p>
-
-          {/* Footer: author + time */}
-          <div className="flex items-center gap-2 mt-2.5">
+          <div className="flex items-center gap-2 mt-3">
             <Avatar
               src={update.author?.avatar_url}
               name={update.author?.display_name ?? 'Staff'}
               size="xs"
             />
-            <span className="text-[11px] font-semibold text-neutral-700 truncate">
+            <span className="text-xs font-semibold text-white/90 truncate">
               {update.author?.display_name ?? 'Co-Exist Team'}
             </span>
-            <span className="text-[10px] text-neutral-400 shrink-0">
+            <span className="text-[11px] text-white/60 shrink-0">
               {formatDate(update.created_at ?? '')}
             </span>
-            {images.length > 1 && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] text-neutral-400 shrink-0 ml-auto">
-                <ImageIcon size={10} />
-                {images.length}
-              </span>
-            )}
           </div>
         </div>
+      </button>
+    </motion.div>
+  )
+}
 
-        {/* Right: Thumbnail */}
-        <CardThumbnail images={images} />
+/* ------------------------------------------------------------------ */
+/*  Section label - hairline divider                                   */
+/* ------------------------------------------------------------------ */
+
+function SectionLabel({ label, action }: { label: string; action?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 px-1 mb-3">
+      <p className="text-[11px] uppercase tracking-[0.15em] font-bold text-neutral-400">
+        {label}
+      </p>
+      <div className="h-px flex-1 bg-neutral-100" />
+      {action}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Notification row - icon-led, de-chromed                            */
+/* ------------------------------------------------------------------ */
+
+function NotificationRow({ n, onTap }: { n: AppNotification; onTap: () => void }) {
+  const { Icon, tint } = getNotificationIcon(n.type)
+  const isUnread = !n.read_at
+
+  return (
+    <button
+      type="button"
+      onClick={onTap}
+      className="flex items-center gap-3 w-full text-left rounded-md px-2 py-2.5 transition-colors hover:bg-neutral-50 active:bg-neutral-100"
+      aria-label={`${n.title}. ${n.body ?? ''}`}
+    >
+      <div
+        className="flex items-center justify-center shrink-0 w-10 h-10 rounded-full bg-neutral-100"
+        aria-hidden="true"
+      >
+        <Icon size={17} strokeWidth={2} className={tint} />
       </div>
-    </motion.article>
+      <div className="flex-1 min-w-0">
+        <p className={cn('text-sm leading-snug truncate', isUnread ? 'font-bold text-neutral-900' : 'font-medium text-neutral-500')}>
+          {n.title}
+        </p>
+        {n.body && (
+          <p className={cn('text-[12px] mt-0.5 line-clamp-1', isUnread ? 'text-neutral-500' : 'text-neutral-400')}>
+            {n.body}
+          </p>
+        )}
+      </div>
+      <span className="text-[11px] text-neutral-400 shrink-0">
+        {formatDate(n.created_at ?? '')}
+      </span>
+      {isUnread && (
+        <span className="shrink-0 w-2 h-2 rounded-full bg-primary-500" aria-label="Unread" />
+      )}
+    </button>
   )
 }
 
@@ -383,28 +387,22 @@ function UpdateCard({
 export default function UpdatesPage() {
   const shouldReduceMotion = useReducedMotion()
   const navigate = useNavigate()
-  const { pinned, regular, all, isLoading, isError, refetch } = useUpdates()
+  const { pinned, regular, all, isLoading, isError } = useUpdates()
   const showLoading = useDelayedLoading(isLoading)
   const markRead = useMarkUpdateRead()
   const markAllRead = useMarkAllUpdatesRead()
   const { data: notifications } = useNotifications()
-  // Badge beside the "Updates" heading counts unread ANNOUNCEMENTS (matching
-  // the heading), not personal notifications - the latter has its own inbox
-  // preview + bell below and is no longer auto-zeroed on visit.
-  const { data: unreadUpdateCount = 0 } = useUnreadUpdateCount()
   const markNotifRead = useMarkRead()
-  const [searchQuery, setSearchQuery] = useState('')
   const [selectedUpdateId, setSelectedUpdateId] = useState<string | null>(null)
 
-  // Show up to 5 most-recent notifications inline as an inbox preview.
-  // Tapping one marks-read + deep-links via the same route resolver used by
-  // the dedicated /notifications page and push tap handler.
+  // Show up to 5 most-recent personal notifications inline as an inbox preview.
+  // Stale ones (older than the freshness window) never reach here - they are
+  // filtered at the query level in useNotifications.
   const recentNotifications = useMemo(() => (notifications ?? []).slice(0, 5), [notifications])
 
   const handleNotificationTap = useCallback((n: AppNotification) => {
     if (!n.read_at) markNotifRead.mutate(n.id)
-    const route = getNotificationDeepLink(n)
-    navigate(route)
+    navigate(getNotificationDeepLink(n))
   }, [markNotifRead, navigate])
 
   // Derive selected update from live cache so it stays in sync after mark-as-read
@@ -420,16 +418,10 @@ export default function UpdatesPage() {
     }
   }, [selectedUpdateId])
 
-  // Bulk-mark every visible ANNOUNCEMENT as read once the page loads. This
-  // clears the announcements badge without requiring the user to tap each card.
-  // Runs once per (all-ids fingerprint) so it doesn't refire on every re-render.
-  // Tate spec 2026-05-18.
-  //
-  // Personal notifications are deliberately NOT bulk-marked here: doing so wiped
-  // every unread waitlist promotion / @-mention / reminder on a mere visit to
-  // the feed, including items never rendered. A personal notification is marked
-  // read only when the user actually opens it (handleNotificationTap below) or
-  // on the dedicated /notifications page.
+  // Bulk-mark every visible ANNOUNCEMENT as read once the page loads, clearing
+  // the announcements badge without tapping each card. Personal notifications
+  // are deliberately NOT bulk-marked (that wiped unread items on a mere visit);
+  // they clear only when actually opened. Tate spec 2026-05-18.
   useEffect(() => {
     if (isLoading) return
     const unreadIds = (all ?? []).filter((a) => !a.is_read).map((a) => a.id)
@@ -439,26 +431,6 @@ export default function UpdatesPage() {
   }, [isLoading, all])
 
   const isEmpty = !isLoading && pinned.length === 0 && regular.length === 0 && recentNotifications.length === 0
-
-  const handleRefresh = useCallback(async () => {
-    await refetch()
-  }, [refetch])
-
-  const filteredPinned = searchQuery
-    ? pinned.filter(
-        (a) =>
-          a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          a.content.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : pinned
-
-  const filteredRegular = searchQuery
-    ? regular.filter(
-        (a) =>
-          a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          a.content.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : regular
 
   // --- Detail view (inline, not an overlay) ---
   if (selectedUpdate) {
@@ -478,189 +450,84 @@ export default function UpdatesPage() {
   // --- List view ---
   return (
     <Page swipeBack noBackground className="!px-0 bg-white" header={<Header title="Updates" back />}>
-      <div className="px-4 lg:px-6 pb-6 space-y-4">
-          {/* Title */}
-          <motion.div
-            initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="flex items-center gap-2.5"
-          >
-            <div className="flex items-center justify-center w-8 h-8 rounded-sm bg-primary-50 text-primary-600">
-              <Megaphone size={14} />
-            </div>
-            <h1 className="font-heading text-xl font-bold text-neutral-900 tracking-tight">
-              Updates
-            </h1>
-            {unreadUpdateCount > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary-500 text-white text-[10px] font-bold">
-                {unreadUpdateCount > 99 ? '99+' : unreadUpdateCount}
-              </span>
-            )}
-          </motion.div>
-
-          {/* Notifications inbox preview - recent personal notifications */}
-          {recentNotifications.length > 0 && (
-            <motion.div
-              initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 }}
-              className="space-y-2"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-neutral-500">
-                  <Bell size={11} />
-                  Your notifications
-                </div>
-                {/* Always offer the durable entry to the full /notifications
-                    page (the only path to it - it is not in the bottom nav or
-                    sidebar). Previously this rendered only when there were >5
-                    notifications, orphaning the page for most users. */}
-                <button
-                  type="button"
-                  onClick={() => navigate('/notifications')}
-                  className="text-xs font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-0.5"
-                >
-                  See all
-                  <ChevronRight size={12} />
-                </button>
-              </div>
-              <div className="space-y-2">
-                {recentNotifications.map((n) => {
-                  const meta = getNotificationMeta(n.type)
-                  const isUnread = !n.read_at
-                  return (
-                    <button
-                      key={n.id}
-                      type="button"
-                      onClick={() => handleNotificationTap(n)}
-                      className={cn(
-                        'flex items-start gap-3 w-full text-left rounded-md px-3.5 py-3',
-                        'bg-white border border-neutral-100 shadow-sm',
-                        'transition-transform active:scale-[0.985]',
-                        !isUnread && 'opacity-70',
-                      )}
-                      aria-label={`${n.title}. ${n.body ?? ''}`}
-                    >
-                      <div
-                        className={cn(
-                          'flex items-center justify-center shrink-0 w-9 h-9 rounded-sm text-base',
-                          'bg-neutral-100',
-                          meta.color,
-                        )}
-                        aria-hidden="true"
-                      >
-                        {meta.emoji}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={cn('text-sm leading-snug truncate', isUnread ? 'font-bold text-neutral-900' : 'font-medium text-neutral-600')}>
-                          {n.title}
-                        </p>
-                        {n.body && (
-                          <p className={cn('text-[12px] mt-0.5 line-clamp-2', isUnread ? 'text-neutral-600' : 'text-neutral-400')}>
-                            {n.body}
-                          </p>
-                        )}
-                      </div>
-                      {isUnread && (
-                        <span className="shrink-0 w-2 h-2 rounded-full bg-primary-500 mt-1.5" aria-label="Unread" />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Search */}
-          <motion.div
-            initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.05 }}
-          >
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search updates..."
-              compact
-              aria-label="Search updates"
-            />
-          </motion.div>
-
-          {showLoading ? (
+      <div className="px-4 lg:px-6 pb-8">
+        {showLoading ? (
+          <div className="pt-4 space-y-6">
             <div className="space-y-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-[88px] rounded-md bg-bark-50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+              {[1, 2].map((i) => (
+                <div key={i} className="aspect-[16/10] sm:aspect-[2/1] rounded-lg bg-neutral-100 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
               ))}
             </div>
-          ) : isError ? (
+          </div>
+        ) : isError ? (
+          <div className="pt-6">
             <EmptyState
               illustration="error"
               title="Something went wrong"
               description="We couldn't load updates. Pull down to try again."
             />
-          ) : isEmpty ? (
+          </div>
+        ) : isEmpty ? (
+          <div className="pt-6">
             <EmptyState
               illustration="empty"
               title="No updates yet"
               description="Check back later for updates from the Co-Exist team"
               action={{ label: 'Go Home', to: '/' }}
             />
-          ) : (
-            <motion.div
-                variants={shouldReduceMotion ? undefined : stagger}
-                initial="hidden"
-                animate="visible"
-                className="space-y-2.5"
-              >
-                {/* Pinned section */}
-                {filteredPinned.length > 0 && (
-                  <div className="space-y-2">
-                    {filteredPinned.map((a) => (
-                      <UpdateCard
-                        key={a.id}
-                        update={a}
-                        onRead={() => markRead.mutate(a.id)}
-                        onOpen={() => setSelectedUpdateId(a.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* Divider */}
-                {filteredPinned.length > 0 && filteredRegular.length > 0 && (
-                  <motion.div variants={fadeUp} className="flex items-center gap-3 py-1.5">
-                    <div className="h-px flex-1 bg-neutral-100" />
-                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.15em]">
-                      Recent
-                    </span>
-                    <div className="h-px flex-1 bg-neutral-100" />
-                  </motion.div>
-                )}
-
-                {/* Regular */}
-                {filteredRegular.length > 0 && (
-                  <div className="space-y-2">
-                    {filteredRegular.map((a) => (
-                      <UpdateCard
-                        key={a.id}
-                        update={a}
-                        onRead={() => markRead.mutate(a.id)}
-                        onOpen={() => setSelectedUpdateId(a.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {searchQuery && filteredPinned.length === 0 && filteredRegular.length === 0 && (
-                  <EmptyState
-                    illustration="search"
-                    title="No results"
-                    description={`No updates matching "${searchQuery}"`}
+          </div>
+        ) : (
+          <motion.div
+            variants={shouldReduceMotion ? undefined : stagger}
+            initial="hidden"
+            animate="visible"
+            className="pt-4 space-y-7"
+          >
+            {/* Announcements - imagery-first full-bleed tiles */}
+            {(pinned.length > 0 || regular.length > 0) && (
+              <div className="space-y-3">
+                {pinned.map((a) => (
+                  <AnnouncementTile
+                    key={a.id}
+                    update={a}
+                    onOpen={() => { if (!a.is_read) markRead.mutate(a.id); setSelectedUpdateId(a.id) }}
                   />
-                )}
+                ))}
+                {regular.map((a) => (
+                  <AnnouncementTile
+                    key={a.id}
+                    update={a}
+                    onOpen={() => { if (!a.is_read) markRead.mutate(a.id); setSelectedUpdateId(a.id) }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Personal notifications - quiet icon-led list */}
+            {recentNotifications.length > 0 && (
+              <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+                <SectionLabel
+                  label="Notifications"
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => navigate('/notifications')}
+                      className="text-xs font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-0.5"
+                    >
+                      See all
+                      <ChevronRight size={12} />
+                    </button>
+                  }
+                />
+                <div className="space-y-0.5">
+                  {recentNotifications.map((n) => (
+                    <NotificationRow key={n.id} n={n} onTap={() => handleNotificationTap(n)} />
+                  ))}
+                </div>
               </motion.div>
-          )}
+            )}
+          </motion.div>
+        )}
       </div>
     </Page>
   )

@@ -12,7 +12,7 @@ import {
     useMarkRead,
     useMarkAllRead,
     getNotificationDeepLink,
-    getNotificationMeta,
+    getNotificationIcon,
 } from '@/hooks/use-notifications'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import type { Tables } from '@/types/database.types'
@@ -66,7 +66,7 @@ function NotificationRow({
   index: number
 }) {
   const shouldReduceMotion = useReducedMotion()
-  const meta = getNotificationMeta(notification.type)
+  const { Icon, tint } = getNotificationIcon(notification.type)
   const isUnread = !notification.read_at
   const dragRef = useRef(false)
 
@@ -131,16 +131,12 @@ function NotificationRow({
         )}
         aria-label={`${notification.title}. ${notification.body ?? ''}`}
       >
-        {/* Icon with tinted circle */}
+        {/* Line-art icon in a soft neutral circle */}
         <div
-          className={cn(
-            'flex items-center justify-center shrink-0 w-11 h-11 rounded-sm text-lg shadow-sm',
-            isUnread ? 'bg-neutral-100' : 'bg-neutral-100',
-            meta.color,
-          )}
+          className="flex items-center justify-center shrink-0 w-11 h-11 rounded-full bg-neutral-100"
           aria-hidden="true"
         >
-          {meta.emoji}
+          <Icon size={18} strokeWidth={2} className={tint} />
         </div>
 
         {/* Content */}
