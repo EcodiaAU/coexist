@@ -11,8 +11,8 @@ import {
   Plus,
   Archive,
   RotateCcw,
-  ChevronRight,
   Crown,
+  Leaf,
   X,
 } from 'lucide-react'
 import { useAdminHeader } from '@/components/admin-layout'
@@ -20,11 +20,12 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
 import { SearchBar } from '@/components/search-bar'
-import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { ConfirmationSheet } from '@/components/confirmation-sheet'
+import { OptimizedImage } from '@/components/optimized-image'
 import { useToast } from '@/components/toast'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 import { cn } from '@/lib/cn'
 import {
   useAdminCollectives,
@@ -245,7 +246,11 @@ export default function AdminCollectivesPage() {
           {/* List */}
           <motion.div data-eos-id="src/pages/admin/collectives.tsx#19" variants={fadeUp}>
           {showLoading ? (
-            <Skeleton data-eos-id="src/pages/admin/collectives.tsx#20" variant="list-item" count={5} />
+            <div data-eos-id="src/pages/admin/collectives.tsx#20" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="aspect-[4/3] rounded-md bg-neutral-100 animate-pulse" />
+              ))}
+            </div>
           ) : !collectives?.length ? (
             <EmptyState data-eos-id="src/pages/admin/collectives.tsx#21"
               illustration="empty"
@@ -258,55 +263,81 @@ export default function AdminCollectivesPage() {
               }
             />
           ) : (
-            <motion.div data-eos-id="src/pages/admin/collectives.tsx#22" layout className="space-y-2">
+            <motion.div data-eos-id="src/pages/admin/collectives.tsx#22" layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {collectives.map((c) => {
                 return (
                   <motion.div data-eos-id="src/pages/admin/collectives.tsx#23"
                     key={c.id}
                     layout="position"
                   >
+                    {/* Full-bleed image tile - same imagery-first composition as
+                        the homepage cards and chat-list tiles. Cover fills the
+                        card; name + meta overlay a dark bottom-up gradient. */}
                     <Link data-eos-id="src/pages/admin/collectives.tsx#24"
                       to={`/admin/collectives/${c.id}`}
+                      aria-label={c.name}
                       className={cn(
-                        'flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm',
-                        'bg-white shadow-sm',
-                        'active:scale-[0.99] transition-[color,background-color,transform] duration-150',
+                        'group relative block overflow-hidden rounded-md shadow-sm',
+                        'aspect-[4/3] active:scale-[0.99] transition-transform duration-150',
                         !c.is_active && 'opacity-60',
                       )}
                     >
-                      {/* Cover image */}
+                      {/* Cover imagery (or a nature gradient + leaf watermark) */}
                       {c.cover_image_url ? (
-                        <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/admin/collectives.tsx#25"
+                        <OptimizedImage data-eos-id="src/pages/admin/collectives.tsx#25"
                           src={c.cover_image_url}
                           alt=""
-                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-sm object-cover shrink-0"
+                          aspectRatio="4/3"
+                          wrapperClassName="absolute inset-0"
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          className="absolute inset-0"
+                          imgStyle={coverImagePositionStyle(c.cover_image_position_x, c.cover_image_position_y)}
                         />
                       ) : (
-                        <div data-eos-id="src/pages/admin/collectives.tsx#26" className="w-12 h-12 sm:w-14 sm:h-14 rounded-sm bg-neutral-100 flex items-center justify-center shrink-0">
-                          <MapPin data-eos-id="src/pages/admin/collectives.tsx#27" size={20} className="text-neutral-400 sm:hidden" />
-                          <MapPin data-eos-id="src/pages/admin/collectives.tsx#28" size={24} className="text-neutral-400 hidden sm:block" />
-                        </div>
+                        <>
+                          <div data-eos-id="src/pages/admin/collectives.tsx#26" className="absolute inset-0 bg-gradient-to-br from-primary-600 to-moss-700" aria-hidden="true" />
+                          <div data-eos-id="src/pages/admin/collectives.tsx#27" className="absolute -right-3 -top-3 text-white/10 pointer-events-none [&_svg]:w-32 [&_svg]:h-32" aria-hidden="true">
+                            <Leaf data-eos-id="src/pages/admin/collectives.tsx#28" strokeWidth={1} />
+                          </div>
+                        </>
                       )}
 
-                      {/* Info */}
-                      <div data-eos-id="src/pages/admin/collectives.tsx#29" className="flex-1 min-w-0">
-                        <div data-eos-id="src/pages/admin/collectives.tsx#30" className="flex items-center gap-2 mb-0.5">
-                          <p data-eos-id="src/pages/admin/collectives.tsx#31" data-eos-var="c.name" data-eos-var-label="Name" data-eos-var-scope="item" className="font-heading text-sm font-semibold text-neutral-900 truncate">
-                            {c.name}
-                          </p>
-                          {!c.is_active && (
-                            <span data-eos-id="src/pages/admin/collectives.tsx#32" className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500 shrink-0">
-                              Archived
-                            </span>
-                          )}
-                        </div>
+                      {/* Legibility gradient */}
+                      <div data-eos-id="src/pages/admin/collectives.tsx#28b" className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" aria-hidden="true" />
+
+                      {/* Top-right: archived badge + archive/restore action */}
+                      <div data-eos-id="src/pages/admin/collectives.tsx#44" className="absolute top-3 right-3 flex items-center gap-1.5">
+                        {!c.is_active && (
+                          <span data-eos-id="src/pages/admin/collectives.tsx#32" className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white shrink-0">
+                            Archived
+                          </span>
+                        )}
+                        <button data-eos-id="src/pages/admin/collectives.tsx#45"
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setArchiveTarget(c)
+                          }}
+                          className="flex items-center justify-center min-w-9 min-h-9 rounded-md bg-white/15 backdrop-blur-sm text-white hover:bg-white/25 cursor-pointer active:scale-[0.95] transition-[colors,transform]"
+                          aria-label={c.is_active ? `Archive ${c.name}` : `Restore ${c.name}`}
+                        >
+                          {c.is_active ? <Archive data-eos-id="src/pages/admin/collectives.tsx#46" size={15} /> : <RotateCcw data-eos-id="src/pages/admin/collectives.tsx#47" size={15} />}
+                        </button>
+                      </div>
+
+                      {/* Bottom overlay: name + region + meta */}
+                      <div data-eos-id="src/pages/admin/collectives.tsx#29" className="absolute inset-x-0 bottom-0 p-3.5">
+                        <p data-eos-id="src/pages/admin/collectives.tsx#31" data-eos-var="c.name" data-eos-var-label="Name" data-eos-var-scope="item" className="font-heading text-base font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
+                          {c.name}
+                        </p>
                         {(c.region || c.state) && (
-                          <p data-eos-id="src/pages/admin/collectives.tsx#33" className="text-[11px] sm:text-xs text-neutral-400 flex items-center gap-1 truncate">
+                          <p data-eos-id="src/pages/admin/collectives.tsx#33" className="text-xs text-white/75 flex items-center gap-1 truncate mt-0.5">
                             <MapPin data-eos-id="src/pages/admin/collectives.tsx#34" size={12} className="shrink-0" />
                             <span data-eos-id="src/pages/admin/collectives.tsx#35" data-eos-var="c.region" data-eos-var-label="Region" data-eos-var-scope="item" className="truncate">{[c.region, c.state].filter(Boolean).join(', ')}</span>
                           </p>
                         )}
-                        <div data-eos-id="src/pages/admin/collectives.tsx#36" className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1 text-[11px] sm:text-xs text-neutral-400">
+                        <div data-eos-id="src/pages/admin/collectives.tsx#36" className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1.5 text-xs text-white/85">
                           <span data-eos-id="src/pages/admin/collectives.tsx#37" data-eos-var="c.memberCount" data-eos-var-label="Member count" data-eos-var-scope="item" className="flex items-center gap-1 shrink-0">
                             <Users data-eos-id="src/pages/admin/collectives.tsx#38" size={12} className="shrink-0" /> {c.memberCount} members
                           </span>
@@ -320,23 +351,6 @@ export default function AdminCollectivesPage() {
                             </span>
                           )}
                         </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div data-eos-id="src/pages/admin/collectives.tsx#44" className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-                        <button data-eos-id="src/pages/admin/collectives.tsx#45"
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            setArchiveTarget(c)
-                          }}
-                          className="flex items-center justify-center min-w-10 min-h-10 sm:min-w-11 sm:min-h-11 rounded-sm text-neutral-400 hover:bg-neutral-50 cursor-pointer active:scale-[0.98] transition-[colors,transform]"
-                          aria-label={c.is_active ? `Archive ${c.name}` : `Restore ${c.name}`}
-                        >
-                          {c.is_active ? <Archive data-eos-id="src/pages/admin/collectives.tsx#46" size={16} /> : <RotateCcw data-eos-id="src/pages/admin/collectives.tsx#47" size={16} />}
-                        </button>
-                        <ChevronRight data-eos-id="src/pages/admin/collectives.tsx#48" size={16} className="text-neutral-300 hidden sm:block" />
                       </div>
                     </Link>
                   </motion.div>

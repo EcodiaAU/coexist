@@ -14,6 +14,9 @@ export interface AdminEvent {
   date_end: string | null
   address: string | null
   cover_image_url: string | null
+  /** Cover focal point (0-100). NULL = centre. Honoured by full-bleed tiles. */
+  cover_image_position_x: number | null
+  cover_image_position_y: number | null
   collective_id: string
   capacity: number | null
   activity_type: string | null
@@ -49,7 +52,7 @@ async function fetchAdminEventsData(): Promise<AdminEventsData> {
     supabase
       .from('events')
       .select(
-        'id, title, date_start, date_end, address, cover_image_url, collective_id, capacity, activity_type, status, timezone, collectives(name, region, state, timezone)',
+        'id, title, date_start, date_end, address, cover_image_url, cover_image_position_x, cover_image_position_y, collective_id, capacity, activity_type, status, timezone, collectives(name, region, state, timezone)',
       )
       .gte('date_start', now)
       .order('date_start', { ascending: true })
@@ -57,7 +60,7 @@ async function fetchAdminEventsData(): Promise<AdminEventsData> {
     supabase
       .from('events')
       .select(
-        'id, title, date_start, date_end, address, cover_image_url, collective_id, capacity, activity_type, status, timezone, collectives(name, region, state, timezone)',
+        'id, title, date_start, date_end, address, cover_image_url, cover_image_position_x, cover_image_position_y, collective_id, capacity, activity_type, status, timezone, collectives(name, region, state, timezone)',
       )
       .lt('date_start', now)
       .order('date_start', { ascending: false })

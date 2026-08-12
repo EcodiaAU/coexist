@@ -19,6 +19,9 @@ import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { SearchBar } from '@/components/search-bar'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
+import { OptimizedImage } from '@/components/optimized-image'
+import { getWatermark } from '@/components/card'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 import { cn } from '@/lib/cn'
 import { formatDate, formatTime, daysUntil } from '@/lib/date-format'
 import { ACTIVITY_COLORS, STATUS_BADGE_STYLES } from '@/lib/color-schemes'
@@ -116,6 +119,7 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
   // Pin display to the event's own timezone so a Perth event reads 9am
   // for everyone, not 11am for someone on the Sunshine Coast.
   const tz = event.timezone ?? event.collectives?.timezone ?? undefined
+  const statusBadge = event.status !== 'published' ? STATUS_BADGE_STYLES[event.status] : null
 
   return (
     <motion.div data-eos-id="src/pages/admin/events.tsx#5"
@@ -123,58 +127,63 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.2), duration: 0.25, ease: 'easeOut' }}
     >
+      {/* Full-bleed image tile: cover fills the card, all text overlays over a
+          dark bottom-up gradient - same composition as the homepage event cards
+          and the chat-list tiles, so admin reads imagery-first, not a UI list. */}
       <Link data-eos-id="src/pages/admin/events.tsx#6"
         to={`/events/${event.id}`}
+        aria-label={event.title}
         className={cn(
-          'block rounded-md overflow-hidden',
-          'bg-white shadow-sm',
-          'active:scale-[0.99] transition-[color,background-color,transform] duration-150',
+          'group relative block overflow-hidden rounded-md shadow-sm',
+          'aspect-[4/3] active:scale-[0.99] transition-transform duration-150',
           isPast && 'opacity-60',
         )}
       >
-        {/* Image header */}
-        <div data-eos-id="src/pages/admin/events.tsx#7" className="relative h-28 bg-primary-100">
-          {event.cover_image_url ? (
-            <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/admin/events.tsx#8"
-              src={event.cover_image_url}
-              alt={event.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div data-eos-id="src/pages/admin/events.tsx#9" className="w-full h-full flex items-center justify-center">
-              <CalendarDays data-eos-id="src/pages/admin/events.tsx#10" size={32} className="text-neutral-300" />
+        {/* Cover imagery (or an activity-coded nature gradient + watermark) */}
+        {event.cover_image_url ? (
+          <OptimizedImage data-eos-id="src/pages/admin/events.tsx#8"
+            src={event.cover_image_url}
+            alt=""
+            aspectRatio="4/3"
+            wrapperClassName="absolute inset-0"
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="absolute inset-0"
+            imgStyle={coverImagePositionStyle(event.cover_image_position_x, event.cover_image_position_y)}
+          />
+        ) : (
+          <>
+            <div data-eos-id="src/pages/admin/events.tsx#9" className="absolute inset-0 bg-gradient-to-br from-primary-600 to-moss-700" aria-hidden="true" />
+            <div data-eos-id="src/pages/admin/events.tsx#10" className="absolute -right-3 -top-3 text-white/10 pointer-events-none [&_svg]:w-32 [&_svg]:h-32" aria-hidden="true">
+              {getWatermark(event.activity_type ?? undefined)}
             </div>
-          )}
+          </>
+        )}
 
-          {/* Gradient overlay */}
-          <div data-eos-id="src/pages/admin/events.tsx#11" className="absolute inset-0 bg-gradient-to-t from-primary-950/60 to-transparent" />
+        {/* Legibility gradient */}
+        <div data-eos-id="src/pages/admin/events.tsx#11" className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" aria-hidden="true" />
 
-          {/* Badges overlapping image bottom */}
-          <div data-eos-id="src/pages/admin/events.tsx#12" className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
-            <span data-eos-id="src/pages/admin/events.tsx#13" data-eos-var="event.activity_type" data-eos-var-label="Activity type" data-eos-var-scope="prop" className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full ', actColor)}>
-              {formatActivityType(event.activity_type)}
-            </span>
+        {/* Top row: activity + status / countdown */}
+        <div data-eos-id="src/pages/admin/events.tsx#12" className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2">
+          <span data-eos-id="src/pages/admin/events.tsx#13" data-eos-var="event.activity_type" data-eos-var-label="Activity type" data-eos-var-scope="prop" className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full shadow-sm', actColor)}>
+            {formatActivityType(event.activity_type)}
+          </span>
+          <div data-eos-id="src/pages/admin/events.tsx#12b" className="flex items-center gap-1.5">
+            {statusBadge && (
+              <span data-eos-id="src/pages/admin/events.tsx#18" data-eos-var="badge.label" data-eos-var-label="Label" data-eos-var-scope="prop" className={cn('text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm', statusBadge.className)}>
+                {statusBadge.label}
+              </span>
+            )}
             <CountdownBadge data-eos-id="src/pages/admin/events.tsx#14" dateStr={event.date_start} />
           </div>
         </div>
 
-        {/* Content */}
-        <div data-eos-id="src/pages/admin/events.tsx#15" className="p-3">
-          <div data-eos-id="src/pages/admin/events.tsx#16" className="flex items-center gap-1.5 mb-0.5">
-            <h4 data-eos-id="src/pages/admin/events.tsx#17" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="font-heading text-[13px] sm:text-sm font-semibold text-neutral-900 line-clamp-2 flex-1 leading-snug">
-              {event.title}
-            </h4>
-            {event.status !== 'published' && (() => {
-              const badge = STATUS_BADGE_STYLES[event.status]
-              return badge ? (
-                <span data-eos-id="src/pages/admin/events.tsx#18" data-eos-var="badge.label" data-eos-var-label="Label" data-eos-var-scope="prop" className={cn('text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider shrink-0', badge.className)}>
-                  {badge.label}
-                </span>
-              ) : null
-            })()}
-          </div>
+        {/* Bottom overlay: title + meta + quick actions */}
+        <div data-eos-id="src/pages/admin/events.tsx#15" className="absolute inset-x-0 bottom-0 p-3.5">
+          <h4 data-eos-id="src/pages/admin/events.tsx#17" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="font-heading text-sm sm:text-base font-bold text-white line-clamp-2 leading-snug drop-shadow-sm">
+            {event.title}
+          </h4>
 
-          <div data-eos-id="src/pages/admin/events.tsx#19" className="flex items-center gap-3 mt-1.5 text-xs text-neutral-400">
+          <div data-eos-id="src/pages/admin/events.tsx#19" className="flex items-center gap-3 mt-1.5 text-xs text-white/85">
             <span data-eos-id="src/pages/admin/events.tsx#20" data-eos-var="event.date_start" data-eos-var-label="Date start" data-eos-var-scope="prop" className="flex items-center gap-1">
               <CalendarDays data-eos-id="src/pages/admin/events.tsx#21" size={11} />
               {formatDate(event.date_start, tz)}
@@ -186,34 +195,34 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
           </div>
 
           {event.address && (
-            <p data-eos-id="src/pages/admin/events.tsx#24" data-eos-var="event.address" data-eos-var-label="Address" data-eos-var-scope="prop" className="flex items-center gap-1 mt-1 text-xs text-neutral-400 truncate">
+            <p data-eos-id="src/pages/admin/events.tsx#24" data-eos-var="event.address" data-eos-var-label="Address" data-eos-var-scope="prop" className="flex items-center gap-1 mt-1 text-xs text-white/70 truncate">
               <MapPin data-eos-id="src/pages/admin/events.tsx#25" size={11} className="shrink-0" />
               {event.address}
             </p>
           )}
 
           {/* Registration count + quick actions */}
-          <div data-eos-id="src/pages/admin/events.tsx#26" className="flex items-center justify-between mt-2">
-            <div data-eos-id="src/pages/admin/events.tsx#27" className="flex items-center gap-1.5 text-xs font-semibold text-neutral-600">
+          <div data-eos-id="src/pages/admin/events.tsx#26" className="flex items-center justify-between mt-2.5">
+            <div data-eos-id="src/pages/admin/events.tsx#27" className="flex items-center gap-1.5 text-xs font-semibold text-white">
               <Users data-eos-id="src/pages/admin/events.tsx#28" size={12} />
               <span data-eos-id="src/pages/admin/events.tsx#29" data-eos-var="event.registrationCount,event.capacity" data-eos-var-label="Registration count, Capacity" data-eos-var-scope="prop">{event.registrationCount} registered{event.capacity ? ` / ${event.capacity}` : ''}</span>
             </div>
-            <div data-eos-id="src/pages/admin/events.tsx#30" className="flex items-center gap-0.5">
+            <div data-eos-id="src/pages/admin/events.tsx#30" className="flex items-center gap-1">
               <button data-eos-id="src/pages/admin/events.tsx#31"
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/events/${event.id}/day`) }}
-                className="flex items-center justify-center min-w-11 min-h-11 rounded-sm hover:bg-neutral-50 text-neutral-400 hover:text-neutral-600 active:scale-[0.98] transition-[colors,transform] cursor-pointer"
+                className="flex items-center justify-center min-w-9 min-h-9 rounded-md bg-white/15 backdrop-blur-sm text-white hover:bg-white/25 active:scale-[0.95] transition-[colors,transform] cursor-pointer"
                 title="Event Day"
               >
-                <ClipboardList data-eos-id="src/pages/admin/events.tsx#32" size={16} />
+                <ClipboardList data-eos-id="src/pages/admin/events.tsx#32" size={15} />
               </button>
               <button data-eos-id="src/pages/admin/events.tsx#33"
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/events/${event.id}/edit`) }}
-                className="flex items-center justify-center min-w-11 min-h-11 rounded-sm hover:bg-neutral-50 text-neutral-400 hover:text-neutral-600 active:scale-[0.98] transition-[colors,transform] cursor-pointer"
+                className="flex items-center justify-center min-w-9 min-h-9 rounded-md bg-white/15 backdrop-blur-sm text-white hover:bg-white/25 active:scale-[0.95] transition-[colors,transform] cursor-pointer"
                 title="Edit Event"
               >
-                <Pencil data-eos-id="src/pages/admin/events.tsx#34" size={16} />
+                <Pencil data-eos-id="src/pages/admin/events.tsx#34" size={15} />
               </button>
             </div>
           </div>
@@ -266,50 +275,60 @@ function CollectiveSection({ group, startIndex }: { group: CollectiveGroup; star
 /* ------------------------------------------------------------------ */
 
 function HottestEventSpotlight({ event }: { event: AdminEvent }) {
+  const tz = event.timezone ?? event.collectives?.timezone ?? undefined
+
   return (
     <Link data-eos-id="src/pages/admin/events.tsx#48"
       to={`/events/${event.id}`}
+      aria-label={event.title}
       className={cn(
-        'block rounded-md overflow-hidden',
-        'bg-white border border-neutral-100',
-        'shadow-sm',
-        'hover:shadow-sm active:scale-[0.99] transition-[shadow,transform] duration-150',
+        'group relative block overflow-hidden rounded-md shadow-sm',
+        'aspect-[16/9] sm:aspect-[21/9]',
+        'active:scale-[0.99] transition-transform duration-150',
       )}
     >
-      <div data-eos-id="src/pages/admin/events.tsx#49" className="flex items-center gap-4 p-5">
-        {/* Image */}
-        <div data-eos-id="src/pages/admin/events.tsx#50" className="relative w-24 h-24 rounded-sm overflow-hidden shrink-0 bg-neutral-200">
-          {event.cover_image_url ? (
-            <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="src/pages/admin/events.tsx#51" src={event.cover_image_url} alt={event.title} loading="lazy" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
-          ) : (
-            <div data-eos-id="src/pages/admin/events.tsx#52" className="w-full h-full flex items-center justify-center">
-              <CalendarDays data-eos-id="src/pages/admin/events.tsx#53" size={28} className="text-neutral-500" />
-            </div>
-          )}
-        </div>
-
-        {/* Info */}
-        <div data-eos-id="src/pages/admin/events.tsx#54" className="flex-1 min-w-0">
-          <span data-eos-id="src/pages/admin/events.tsx#55" className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-1 block">
-            Biggest Event
-          </span>
-          <h3 data-eos-id="src/pages/admin/events.tsx#56" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="font-heading text-base sm:text-lg font-bold text-neutral-900 line-clamp-2 leading-snug">
-            {event.title}
-          </h3>
-          <p data-eos-id="src/pages/admin/events.tsx#57" data-eos-var="event.collectives.name,event.date_start" data-eos-var-label="Name, Date start" data-eos-var-scope="prop" className="text-sm text-neutral-600 mt-0.5">
-            {event.collectives?.name} &middot; {formatDate(event.date_start, event.timezone ?? event.collectives?.timezone ?? undefined)}
-          </p>
-          <div data-eos-id="src/pages/admin/events.tsx#58" className="flex items-center gap-2 mt-2">
-            <span data-eos-id="src/pages/admin/events.tsx#59" data-eos-var="event.capacity" data-eos-var-label="Capacity" data-eos-var-scope="prop" className="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 bg-neutral-50 rounded-full px-3 py-1">
-              <Users data-eos-id="src/pages/admin/events.tsx#60" size={14} />
-              {event.capacity
-                ? `${event.registrationCount} / ${event.capacity}`
-                : `${event.registrationCount} registered`}
-            </span>
+      {/* Full-bleed hero cover (or nature gradient + watermark) */}
+      {event.cover_image_url ? (
+        <OptimizedImage data-eos-id="src/pages/admin/events.tsx#51"
+          src={event.cover_image_url}
+          alt=""
+          aspectRatio="21/9"
+          wrapperClassName="absolute inset-0"
+          sizes="(min-width: 640px) 100vw, 100vw"
+          className="absolute inset-0"
+          imgStyle={coverImagePositionStyle(event.cover_image_position_x, event.cover_image_position_y)}
+        />
+      ) : (
+        <>
+          <div data-eos-id="src/pages/admin/events.tsx#52" className="absolute inset-0 bg-gradient-to-br from-primary-600 to-moss-700" aria-hidden="true" />
+          <div data-eos-id="src/pages/admin/events.tsx#53" className="absolute -right-4 -top-4 text-white/10 pointer-events-none [&_svg]:w-40 [&_svg]:h-40" aria-hidden="true">
+            {getWatermark(event.activity_type ?? undefined)}
           </div>
-        </div>
+        </>
+      )}
 
-        <ChevronRight data-eos-id="src/pages/admin/events.tsx#61" size={20} className="text-neutral-500 shrink-0" />
+      {/* Legibility gradient */}
+      <div data-eos-id="src/pages/admin/events.tsx#50" className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" aria-hidden="true" />
+
+      {/* Overlay content */}
+      <div data-eos-id="src/pages/admin/events.tsx#54" className="absolute inset-0 flex flex-col justify-end p-5">
+        <span data-eos-id="src/pages/admin/events.tsx#55" className="inline-flex items-center gap-1.5 self-start text-[10px] font-bold uppercase tracking-widest text-white/90 mb-2 rounded-full bg-white/15 backdrop-blur-sm px-2.5 py-1">
+          <Flame data-eos-id="src/pages/admin/events.tsx#55b" size={11} /> Biggest Event
+        </span>
+        <h3 data-eos-id="src/pages/admin/events.tsx#56" data-eos-var="event.title" data-eos-var-label="Title" data-eos-var-scope="prop" className="font-heading text-lg sm:text-2xl font-bold text-white line-clamp-2 leading-tight drop-shadow-sm">
+          {event.title}
+        </h3>
+        <p data-eos-id="src/pages/admin/events.tsx#57" data-eos-var="event.collectives.name,event.date_start" data-eos-var-label="Name, Date start" data-eos-var-scope="prop" className="text-sm text-white/85 mt-1">
+          {event.collectives?.name} &middot; {formatDate(event.date_start, tz)}
+        </p>
+        <div data-eos-id="src/pages/admin/events.tsx#58" className="flex items-center gap-2 mt-3">
+          <span data-eos-id="src/pages/admin/events.tsx#59" data-eos-var="event.capacity" data-eos-var-label="Capacity" data-eos-var-scope="prop" className="inline-flex items-center gap-1.5 text-sm font-bold text-white bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+            <Users data-eos-id="src/pages/admin/events.tsx#60" size={14} />
+            {event.capacity
+              ? `${event.registrationCount} / ${event.capacity}`
+              : `${event.registrationCount} registered`}
+          </span>
+        </div>
       </div>
     </Link>
   )
