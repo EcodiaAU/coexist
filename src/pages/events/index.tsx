@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -150,6 +150,10 @@ type ExploreTab = 'events' | 'collectives'
 
 export default function ExplorePage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  // Open event/collective detail as a bottom sheet over this still-mounted list
+  // (App.tsx reads state.backgroundLocation). Keeps the list scroll on close.
+  const openSheet = (to: string) => navigate(to, { state: { backgroundLocation: location } })
   const [searchParams] = useSearchParams()
   const shouldReduceMotion = useReducedMotion()
   const queryClient = useQueryClient()
@@ -410,7 +414,7 @@ export default function ExplorePage() {
                               <Card
                                 variant="event"
                                 watermark={event.activity_type}
-                                onClick={() => navigate(`/events/${event.id}`)}
+                                onClick={() => openSheet(`/events/${event.id}`)}
                                 aria-label={event.title}
                                 className="bg-white shadow-md ring-1 ring-primary-100 rounded-md"
                               >
@@ -525,7 +529,7 @@ export default function ExplorePage() {
                             >
                               <button
                                 type="button"
-                                onClick={() => navigate(`/collectives/${c.slug}`)}
+                                onClick={() => openSheet(`/collectives/${c.slug}`)}
                                 className={cn(
                                   'w-full rounded-md bg-white overflow-hidden text-left',
                                   'shadow-sm',
@@ -627,7 +631,7 @@ export default function ExplorePage() {
                             <button
                               key={c.id}
                               type="button"
-                              onClick={() => navigate(`/collectives/${c.slug}`)}
+                              onClick={() => openSheet(`/collectives/${c.slug}`)}
                               className="w-full flex items-center gap-3 p-3 rounded-md bg-white border border-neutral-100 shadow-sm text-left hover:border-neutral-200 active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
                             >
                               <div className="w-11 h-11 rounded-sm overflow-hidden bg-primary-50 shrink-0 flex items-center justify-center">

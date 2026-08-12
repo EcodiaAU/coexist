@@ -1,10 +1,11 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, type Location } from 'react-router-dom'
 import { Suspense, useState, useCallback, useEffect } from 'react'
 import { lazyWithRetry as lazy, clearChunkReloadGuard } from '@/lib/lazy-with-retry'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { RequireAuth, RequireRole, RequireLeaderAccess, RequireCapability } from '@/components/route-guard'
 import { FEATURE_MEMBERSHIPS } from '@/lib/flags'
 import { AppShell } from '@/components/app-shell'
+import { RouteSheet } from '@/components/route-sheet'
 import { AnimatedOutlet } from '@/components/animated-outlet'
 import { AdminLayout as AdminLayoutRoute } from '@/components/admin-layout'
 import { LeaderLayout as LeaderLayoutRoute } from '@/components/leader-layout'
@@ -253,6 +254,13 @@ function App() {
   const { maintenanceMode, maintenanceMessage, forceUpdate, latestVersion, installedVersion } = useAppUpdate()
   useDeepLink()
 
+  // Modal-over-list routing: a list tap that carries state.backgroundLocation
+  // renders the background route (the list) under the main <Routes> AND the
+  // tapped detail as a bottom sheet on top (see the modal <Routes> block below).
+  // A direct URL has no backgroundLocation, so the detail renders as a full page.
+  const location = useLocation()
+  const backgroundLocation = (location.state as { backgroundLocation?: Location } | null)?.backgroundLocation
+
   // Clear the chunk-reload guard after a successful mount. If the user
   // previously hit a stale-chunk reload, we reset the guard so a future
   // deploy within the same session can trigger another reload instead of
@@ -310,7 +318,7 @@ function App() {
           by pathname remounted the layout shells on every nav and reset the
           sidebar scroll to 0 (2026-06-22 bug). React Router now reconciles the
           shells by type and keeps the sidebar mounted across navigation. */}
-      <Routes data-eos-id="src/App.tsx#10">
+      <Routes data-eos-id="src/App.tsx#10" location={backgroundLocation ?? location}>
         {/* ---- Bare routes (no app shell) ---- */}
         <Route data-eos-id="src/App.tsx#11"
           path="/welcome"
@@ -710,6 +718,19 @@ function App() {
         <Route data-eos-id="src/App.tsx#353" path="*" element={<CatchAllRoute data-eos-id="src/App.tsx#354" />} />
 
       </Routes>
+
+      {/* ---- Modal-over-list routes (pilot: events + collectives) ----
+          Rendered ONLY when a list tap supplied state.backgroundLocation, on top
+          of the still-mounted background list above. The detail page renders in a
+          RouteSheet (bottom sheet) so the list keeps its scroll and hardware/
+          browser back closes the sheet. Checkout / check-in / forms / admin CRUD
+          are NOT listed here, so they always render full-page. */}
+      {backgroundLocation && (
+        <Routes>
+          <Route path="/events/:id" element={<RouteSheet><ErrorBoundary><EventDetailPage /></ErrorBoundary></RouteSheet>} />
+          <Route path="/collectives/:slug" element={<RouteSheet><CollectiveDetailPage /></RouteSheet>} />
+        </Routes>
+      )}
     </Suspense>
     </ErrorBoundary>
     </>

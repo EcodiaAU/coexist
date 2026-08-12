@@ -13,6 +13,11 @@ interface BottomSheetProps {
   /** Index into snapPoints for the initial snap position */
   initialSnap?: number
   className?: string
+  /** Bare content mode: the sheet supplies NO inner padding or scroll wrapper,
+   *  so a full <Page> child can host its own scroll container. Used by
+   *  RouteSheet to present a route detail page as a sheet without nesting two
+   *  scrollers. Default false (padded, scrolling content). */
+  bare?: boolean
 }
 
 const MAX_HEIGHT_FRACTION = 0.92
@@ -46,6 +51,7 @@ function MobileSheet({
   maxHeight,
   keyboardHeight,
   className,
+  bare = false,
 }: {
   open: boolean
   onClose: () => void
@@ -53,6 +59,7 @@ function MobileSheet({
   maxHeight: number
   keyboardHeight: number
   className?: string
+  bare?: boolean
 }) {
   const sheetRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -261,18 +268,26 @@ function MobileSheet({
           <div data-eos-id="src/components/bottom-sheet.tsx#4" className="h-1 w-10 rounded-full bg-primary-200" aria-hidden="true" />
         </div>
 
-        {/* Scrollable content */}
-        <div data-eos-id="src/components/bottom-sheet.tsx#5"
-          ref={scrollRef}
-          className="overflow-y-auto overscroll-contain px-5 flex-1 min-h-0 hide-scrollbar"
-          style={{
-            paddingBottom: keyboardHeight > 0
-              ? `calc(${keyboardHeight}px + 1.5rem)`
-              : 'max(env(safe-area-inset-bottom, 0px), 1.5rem)',
-          }}
-        >
-          {children}
-        </div>
+        {/* Content. Default: the sheet is the scroll container (padded). Bare:
+            the sheet is a plain flex slot with no padding/scroll so a full
+            <Page> child owns its own scroller (no nested double-scroll). */}
+        {bare ? (
+          <div data-eos-id="src/components/bottom-sheet.tsx#5" ref={scrollRef} className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            {children}
+          </div>
+        ) : (
+          <div data-eos-id="src/components/bottom-sheet.tsx#5b"
+            ref={scrollRef}
+            className="overflow-y-auto overscroll-contain px-5 flex-1 min-h-0 hide-scrollbar"
+            style={{
+              paddingBottom: keyboardHeight > 0
+                ? `calc(${keyboardHeight}px + 1.5rem)`
+                : 'max(env(safe-area-inset-bottom, 0px), 1.5rem)',
+            }}
+          >
+            {children}
+          </div>
+        )}
 
         {/* Scroll hint gradient */}
         {canScrollDown && (
@@ -295,6 +310,7 @@ export function BottomSheet({
   snapPoints: _snapPoints = [0.5],
   initialSnap: _initialSnap = 0,
   className,
+  bare = false,
 }: BottomSheetProps) {
   const shouldReduceMotion = useReducedMotion()
   const isDesktop = useIsDesktop()
@@ -306,7 +322,7 @@ export function BottomSheet({
   /* ---- If mobile, delegate entirely to MobileSheet ---- */
   if (!isDesktop) {
     return (
-      <MobileSheet data-eos-id="src/components/bottom-sheet.tsx#7" open={open} onClose={onClose} maxHeight={maxHeight} keyboardHeight={keyboardHeight} className={className}>
+      <MobileSheet data-eos-id="src/components/bottom-sheet.tsx#7" open={open} onClose={onClose} maxHeight={maxHeight} keyboardHeight={keyboardHeight} className={className} bare={bare}>
         {children}
       </MobileSheet>
     )
@@ -320,6 +336,7 @@ export function BottomSheet({
     onClose={onClose}
     className={className}
     shouldReduceMotion={shouldReduceMotion ?? false}
+    bare={bare}
   >
     {children}
   </DesktopModal>
@@ -331,12 +348,14 @@ function DesktopModal({
   children,
   className,
   shouldReduceMotion,
+  bare = false,
 }: {
   open: boolean
   onClose: () => void
   children: ReactNode
   className?: string
   shouldReduceMotion: boolean
+  bare?: boolean
 }) {
   const sheetRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -451,6 +470,7 @@ function DesktopModal({
               aria-label="Dialog"
               className={cn(
                 'relative w-full max-w-md bg-surface-0 rounded-md shadow-sm pointer-events-auto gpu-panel',
+                bare && 'h-[85vh] flex flex-col overflow-hidden',
                 className,
               )}
               initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96, y: 12 }}
@@ -461,8 +481,13 @@ function DesktopModal({
             >
               <motion.div data-eos-id="src/components/bottom-sheet.tsx#14"
                 ref={scrollRef}
-                className="overflow-y-auto overscroll-contain px-5 py-6 hide-scrollbar"
-                style={{ maxHeight: '80vh' }}
+                className={cn(
+                  'hide-scrollbar',
+                  bare
+                    ? 'flex-1 min-h-0 overflow-hidden flex flex-col'
+                    : 'overflow-y-auto overscroll-contain px-5 py-6',
+                )}
+                style={bare ? undefined : { maxHeight: '80vh' }}
                 variants={contentVariants}
                 initial="hidden"
                 animate="visible"
