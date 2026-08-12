@@ -1,10 +1,12 @@
-import { useCallback, useEffect } from 'react'
+import { type ReactNode, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { MessageCircle, Users, ChevronRight, Lock, Globe, MapPin, Leaf, MessagesSquare, Shield, Tent } from 'lucide-react'
+import { MessageCircle, Users, Lock, Globe, MapPin, Leaf, Shield, Tent } from 'lucide-react'
 import { Page } from '@/components/page'
 import { EmptyState } from '@/components/empty-state'
+import { OptimizedImage } from '@/components/optimized-image'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 import { cn } from '@/lib/cn'
 import { useMyCollectives, useCollectives } from '@/hooks/use-collective'
 import { useUnreadCounts } from '@/hooks/use-chat'
@@ -21,30 +23,37 @@ const CHANNEL_TYPE_CONFIG: Record<string, {
   iconBg: string
   badge: string
   label: string
+  /** Full-bleed gradient used as the tile background (staff channels carry no
+      cover image, so the tile leads with a colour-coded nature gradient). */
+  grad: string
 }> = {
   staff_national: {
     icon: Globe,
     iconBg: 'bg-plum-50 text-plum-600',
     badge: 'bg-plum-50 text-plum-700',
     label: 'National',
+    grad: 'bg-gradient-to-br from-plum-600 to-plum-800',
   },
   staff_state: {
     icon: MapPin,
     iconBg: 'bg-info-50 text-info-600',
     badge: 'bg-info-50 text-info-700',
     label: 'State',
+    grad: 'bg-gradient-to-br from-info-600 to-info-800',
   },
   staff_collective: {
     icon: Users,
     iconBg: 'bg-primary-50 text-primary-600',
     badge: 'bg-primary-50 text-primary-700',
     label: 'Staff',
+    grad: 'bg-gradient-to-br from-primary-600 to-primary-800',
   },
   campout: {
     icon: Tent,
     iconBg: 'bg-primary-50 text-primary-600',
     badge: 'bg-primary-50 text-primary-700',
     label: 'Campout',
+    grad: 'bg-gradient-to-br from-moss-600 to-moss-800',
   },
 }
 
@@ -58,11 +67,96 @@ function cleanChannelName(name: string): string {
 }
 
 /* ------------------------------------------------------------------ */
+/*  ChatTile - full-bleed image tile (matches the homepage events cards) */
+/* ------------------------------------------------------------------ */
+
+/** A single conversation rendered as a full-bleed tile: cover imagery (or a
+    colour-coded nature gradient when the entity carries no image) fills the
+    tile, a dark bottom-up gradient keeps text legible, and the title + meta
+    sit over the image. This is the same composition as Card.Overlay on the
+    homepage events sections, so chat reads as imagery-first, not a UI list. */
+function ChatTile({
+  to,
+  ariaLabel,
+  image,
+  imageAlt,
+  positionX,
+  positionY,
+  gradientClass,
+  watermark,
+  hasUnread,
+  badge,
+  children,
+}: {
+  to: string
+  ariaLabel: string
+  image?: string | null
+  imageAlt?: string
+  positionX?: number | null
+  positionY?: number | null
+  gradientClass?: string
+  watermark?: ReactNode
+  hasUnread?: boolean
+  badge?: ReactNode
+  children: ReactNode
+}) {
+  const shouldReduceMotion = useReducedMotion()
+
+  return (
+    <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
+      <Link
+        to={to}
+        aria-label={ariaLabel}
+        className={cn(
+          'group relative block w-full overflow-hidden rounded-md shadow-sm',
+          'aspect-[16/9] transition-transform duration-200 active:scale-[0.98]',
+          hasUnread && 'ring-2 ring-primary-400',
+        )}
+      >
+        {image ? (
+          <OptimizedImage
+            src={image}
+            alt={imageAlt ?? ''}
+            aspectRatio="16/9"
+            sizes="(min-width: 640px) 50vw, 100vw"
+            className="absolute inset-0"
+            imgStyle={coverImagePositionStyle(positionX, positionY)}
+          />
+        ) : (
+          <div className={cn('absolute inset-0', gradientClass ?? 'bg-gradient-to-br from-primary-600 to-moss-700')} aria-hidden="true" />
+        )}
+
+        {/* Large low-opacity nature mark for image-less tiles */}
+        {!image && watermark && (
+          <div className="absolute -right-4 -top-4 text-white/10 pointer-events-none" aria-hidden="true">
+            {watermark}
+          </div>
+        )}
+
+        {/* Legibility gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" aria-hidden="true" />
+
+        {/* Top-right badge slot (unread count / lock) */}
+        {badge && (
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+            {badge}
+          </div>
+        )}
+
+        {/* Bottom overlay content (title + meta) */}
+        <div className="absolute inset-0 flex flex-col justify-end p-4">
+          {children}
+        </div>
+      </Link>
+    </motion.div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Staff channel row                                                  */
 /* ------------------------------------------------------------------ */
 
 function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: number; index: number }) {
-  const shouldReduceMotion = useReducedMotion()
   const hasUnread = unread > 0
   const config = CHANNEL_TYPE_CONFIG[channel.type] ?? CHANNEL_TYPE_CONFIG.staff_collective
   const Icon = config.icon
@@ -71,67 +165,40 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
   const isCampout = channel.type === 'campout'
 
   return (
-    <motion.div
-      variants={shouldReduceMotion ? undefined : fadeUp}
-    >
-      <Link
-        to={`/chat/channel/${channel.id}`}
-        className={cn(
-          'group relative flex items-center gap-4 rounded-md p-4',
-          'bg-white border border-neutral-100 shadow-sm',
-          'transition-transform duration-200 active:scale-[0.97]',
-          hasUnread && 'ring-2 ring-primary-400/60',
-        )}
-      >
-        {/* Channel type icon */}
-        <div className="relative flex-shrink-0">
-          <div className={cn(
-            'h-12 w-12 rounded-sm flex items-center justify-center',
-            config.iconBg,
-          )}>
-            <Icon size={22} strokeWidth={2} />
-          </div>
-          {/* Lock badge (staff channels only) */}
+    <ChatTile
+      to={`/chat/channel/${channel.id}`}
+      ariaLabel={channel.name}
+      gradientClass={config.grad}
+      watermark={<Icon size={132} strokeWidth={1} />}
+      hasUnread={hasUnread}
+      badge={
+        <>
           {!isCampout && (
-            <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white flex items-center justify-center shadow-sm ring-1 ring-neutral-100">
-              <Lock size={10} strokeWidth={2} className="text-neutral-500" />
-            </div>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+              <Lock size={12} strokeWidth={2} className="text-white" />
+            </span>
           )}
           {hasUnread && (
-            <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-primary-500 ring-2 ring-white" />
-          )}
-        </div>
-
-        {/* Name + label */}
-        <div className="flex-1 min-w-0">
-          <p className={cn(
-            'text-[15px] line-clamp-2 leading-snug break-words',
-            hasUnread ? 'font-bold text-neutral-900' : 'font-semibold text-neutral-800',
-          )}>
-            {cleanChannelName(channel.name)}
-          </p>
-          <div className="flex items-center gap-2 mt-1">
-            <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', config.badge)}>
-              {config.label}
-            </span>
-            <span className="text-[11px] font-medium text-neutral-400">
-              {isCampout ? 'Group chat' : 'Staff only'}
-            </span>
-          </div>
-        </div>
-
-        {/* Unread / chevron */}
-        <div className="flex items-center gap-2 shrink-0">
-          {hasUnread ? (
-            <span className="flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-500 px-2 text-xs font-bold text-white">
+            <span className="flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-white px-2 text-xs font-bold text-primary-700">
               {unread > 99 ? '99+' : unread}
             </span>
-          ) : (
-            <ChevronRight size={18} strokeWidth={2} className="text-neutral-300 transition-transform duration-150 group-hover:translate-x-0.5" />
           )}
-        </div>
-      </Link>
-    </motion.div>
+        </>
+      }
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="inline-flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm px-2 py-0.5 text-[11px] font-semibold text-white">
+          <Icon size={11} strokeWidth={2} />
+          {config.label}
+        </span>
+        <span className="text-[11px] font-medium text-white/75">
+          {isCampout ? 'Group chat' : 'Staff only'}
+        </span>
+      </div>
+      <h3 className="font-heading text-lg font-bold text-white leading-tight drop-shadow-sm line-clamp-2">
+        {cleanChannelName(channel.name)}
+      </h3>
+    </ChatTile>
   )
 }
 
@@ -157,89 +224,41 @@ function CollectiveChatRow({
   unread: number
   index: number
 }) {
-  const shouldReduceMotion = useReducedMotion()
   const hasUnread = unread > 0
 
   return (
-    <motion.div
-      variants={shouldReduceMotion ? undefined : fadeUp}
+    <ChatTile
+      to={`/chat/${collectiveId}`}
+      ariaLabel={collective.name}
+      image={collective.cover_image_url}
+      imageAlt={collective.name}
+      gradientClass="bg-gradient-to-br from-primary-600 to-moss-700"
+      watermark={<Leaf size={132} strokeWidth={1} />}
+      hasUnread={hasUnread}
+      badge={
+        hasUnread ? (
+          <span className="flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-white px-2 text-xs font-bold text-primary-700">
+            {unread > 99 ? '99+' : unread}
+          </span>
+        ) : null
+      }
     >
-      <Link
-        to={`/chat/${collectiveId}`}
-        className={cn(
-          'group relative flex items-center gap-4 rounded-md p-4',
-          'bg-white border border-neutral-100 shadow-sm',
-          'transition-transform duration-200 active:scale-[0.97]',
-          hasUnread && 'ring-2 ring-primary-400/60',
+      <h3 className="font-heading text-lg font-bold text-white leading-tight drop-shadow-sm line-clamp-2">
+        {collective.name}
+      </h3>
+      <div className="flex items-center gap-3 mt-1.5 text-white/85">
+        <span className="flex items-center gap-1 text-xs font-medium">
+          <Users size={12} strokeWidth={2} className="shrink-0" />
+          {collective.member_count}
+        </span>
+        {(collective.region || collective.state) && (
+          <span className="flex items-center gap-1 text-xs font-medium truncate">
+            <MapPin size={12} strokeWidth={2} className="shrink-0" />
+            {collective.region ?? collective.state}
+          </span>
         )}
-      >
-        {/* Collective avatar */}
-        <div className="relative flex-shrink-0">
-          <div
-            className={cn(
-              'h-12 w-12 overflow-hidden rounded-sm',
-              hasUnread
-                ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-white'
-                : 'ring-1 ring-neutral-100',
-            )}
-          >
-            {collective.cover_image_url ? (
-              <img
-                src={collective.cover_image_url}
-                alt=""
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-primary-50">
-                <Leaf size={20} strokeWidth={2} className="text-primary-500" />
-              </div>
-            )}
-          </div>
-          {hasUnread && (
-            <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-primary-500 ring-2 ring-white" />
-          )}
-        </div>
-
-        {/* Name + meta */}
-        <div className="flex-1 min-w-0">
-          <p
-            className={cn(
-              'text-[15px] line-clamp-2 leading-snug break-words',
-              hasUnread ? 'font-bold text-neutral-900' : 'font-semibold text-neutral-800',
-            )}
-          >
-            {collective.name}
-          </p>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-[11px] font-medium text-neutral-500 flex items-center gap-1">
-              <Users size={11} strokeWidth={2} className="shrink-0" />
-              {collective.member_count}
-            </span>
-            {(collective.region || collective.state) && (
-              <>
-                <span className="w-1 h-1 rounded-full bg-neutral-300" />
-                <span className="text-[11px] font-medium text-neutral-500 truncate flex items-center gap-1">
-                  <MapPin size={11} strokeWidth={2} className="shrink-0" />
-                  {collective.region ?? collective.state}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Unread / chevron */}
-        <div className="flex items-center gap-2 shrink-0">
-          {hasUnread ? (
-            <span className="flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-500 px-2 text-xs font-bold text-white">
-              {unread > 99 ? '99+' : unread}
-            </span>
-          ) : (
-            <ChevronRight size={18} strokeWidth={2} className="text-neutral-300 transition-transform duration-150 group-hover:translate-x-0.5" />
-          )}
-        </div>
-      </Link>
-    </motion.div>
+      </div>
+    </ChatTile>
   )
 }
 
@@ -334,15 +353,7 @@ export default function ChatListPage() {
       <Page noBackground className="!px-0 bg-white">
         <div className="px-4 lg:px-6 pt-14 pb-4 space-y-3">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="rounded-md bg-white border border-neutral-100 p-4 animate-pulse">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-sm bg-neutral-100" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-neutral-100 rounded w-2/3" />
-                  <div className="h-3 bg-neutral-100 rounded w-1/3" />
-                </div>
-              </div>
-            </div>
+            <div key={i} className="aspect-[16/9] rounded-md bg-neutral-100 animate-pulse" />
           ))}
         </div>
       </Page>

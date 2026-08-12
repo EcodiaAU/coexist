@@ -176,6 +176,16 @@ export default function ProfilePage() {
 
   const hasDetails = profile.first_name || profile.email || profile.phone || profile.age || profile.postcode || profile.gender
 
+  // Lead the profile with full-bleed imagery, matching the homepage events
+  // sections. Prefer the member's own avatar; fall back to a landscape from a
+  // collective they belong to; otherwise a nature gradient renders in the hero.
+  const heroImage: string | null =
+    profile.avatar_url ||
+    (collectives ?? [])
+      .map((m) => (m.collectives as { cover_image_url?: string | null } | null)?.cover_image_url)
+      .find((u): u is string => !!u) ||
+    null
+
   // Core metrics always show (even if 0) - these are the canonical Co-Exist impact metrics.
   // Secondary metrics show if value > 0 OR user attended a relevant activity type.
   const at = stats?.activityTypeCounts ?? {}
@@ -203,29 +213,53 @@ export default function ProfilePage() {
 
   return (
     <Page noBackground className="bg-surface-2">
-      {/* Hero banner */}
+      {/* Full-bleed image hero - leads with imagery, matching the homepage
+          events sections (Kurt 2026-08-12: less UI chrome, more full-bleed
+          imagery). The member's photo (or a collective landscape, or a nature
+          gradient) fills the hero; a dark bottom-up gradient keeps the identity
+          legible sitting over the image, exactly like the events cards. */}
       <div className="-mx-4 lg:-mx-6">
-        <div className="relative overflow-hidden bg-[#879e62] pb-20 pt-8">
+        <div className="relative min-h-[340px] overflow-hidden">
+          {heroImage ? (
+            <img
+              src={heroImage}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover object-center"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-[#879e62] via-moss-700 to-primary-800" aria-hidden="true" />
+          )}
+
+          {/* Nature watermark on the gradient fallback */}
+          {!heroImage && (
+            <div className="absolute -right-6 -top-6 text-white/10 pointer-events-none" aria-hidden="true">
+              <TreePine size={200} strokeWidth={1} />
+            </div>
+          )}
+
+          {/* Legibility gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/15" aria-hidden="true" />
+
           {/* Settings button */}
-          <div className="relative z-10 flex justify-end px-4 mt-2">
+          <div className="absolute top-3 right-4 z-10">
             <button
               onClick={() => navigate('/settings')}
-              className="flex items-center justify-center w-11 h-11 rounded-full bg-white/15 text-white/90 hover:bg-white/25 active:scale-[0.98] transition-[colors,transform] duration-150"
+              className="flex items-center justify-center w-11 h-11 rounded-full bg-white/15 backdrop-blur-sm text-white hover:bg-white/25 active:scale-[0.98] transition-[colors,transform] duration-150"
               aria-label="Settings"
             >
               <Settings size={18} />
             </button>
           </div>
 
-          {/* Profile identity */}
+          {/* Profile identity, overlaid at the bottom over the image */}
           <motion.div
-            className="relative z-10 flex flex-col items-center mt-2"
+            className="absolute inset-x-0 bottom-0 z-10 flex items-end gap-4 p-5"
             variants={rm ? undefined : fadeUp}
             initial="hidden"
             animate="visible"
           >
-            <div className="rounded-full p-1 bg-moss-300 shadow-sm">
-              <div className="rounded-full ring-3 ring-white/40 overflow-hidden flex items-center justify-center aspect-square w-24">
+            <div className="rounded-full p-1 bg-white/20 backdrop-blur-sm shadow-lg shrink-0">
+              <div className="rounded-full ring-2 ring-white/60 overflow-hidden flex items-center justify-center aspect-square">
                 <Avatar
                   src={profile.avatar_url}
                   name={profile.display_name ?? ''}
@@ -234,56 +268,47 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <h2 className="mt-3 font-heading text-xl font-bold text-white drop-shadow-sm">
-              {profile.display_name}
-            </h2>
-            {profile.pronouns && (
-              <span className="mt-0.5 text-sm text-sprout-200">{profile.pronouns}</span>
-            )}
+            <div className="min-w-0 flex-1 pb-1">
+              <h2 className="font-heading text-2xl font-bold text-white drop-shadow-md leading-tight truncate">
+                {profile.display_name}
+              </h2>
+              {profile.pronouns && (
+                <span className="text-sm text-white/80">{profile.pronouns}</span>
+              )}
 
-            {/* Location + Instagram */}
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-              {profile.location && (
-                <span className="flex items-center gap-1 text-sm text-white/70">
-                  <MapPin size={13} />
-                  {profile.location}
-                </span>
-              )}
-              {profile.instagram_handle && (
-                <a
-                  href={`https://instagram.com/${profile.instagram_handle.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors"
-                >
-                  <Instagram size={13} />
-                  {profile.instagram_handle.startsWith('@')
-                    ? profile.instagram_handle
-                    : `@${profile.instagram_handle}`}
-                </a>
-              )}
+              {/* Location + Instagram */}
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                {profile.location && (
+                  <span className="flex items-center gap-1 text-xs text-white/85">
+                    <MapPin size={12} />
+                    {profile.location}
+                  </span>
+                )}
+                {profile.instagram_handle && (
+                  <a
+                    href={`https://instagram.com/${profile.instagram_handle.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs text-white/85 hover:text-white transition-colors"
+                  >
+                    <Instagram size={12} />
+                    {profile.instagram_handle.startsWith('@')
+                      ? profile.instagram_handle
+                      : `@${profile.instagram_handle}`}
+                  </a>
+                )}
+              </div>
+
+              <span className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm text-[11px] text-white/90">
+                <Leaf size={11} className="text-sprout-300" />
+                Member since {memberSince}
+              </span>
             </div>
-
-            <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-xs text-white/80">
-              <Leaf size={12} className="text-sprout-300" />
-              Member since {memberSince}
-            </span>
           </motion.div>
         </div>
 
-        {/* Overlapping action buttons.
-            These sit on -mt-5 overlapping the green hero. The previous variant
-            used <Button variant=secondary> with bg-white + !text-neutral-700 +
-            hover:!bg-neutral-50 overrides on top of the secondary variant's
-            bg-primary-100. On Android the framer-motion whileTap scale combined
-            with the multi-layer bg overrides caused the buttons to briefly
-            render transparent during the tap animation, exposing the green
-            hero (and "Helen" display name above it). Tate verbatim 2026-05-28:
-            "while its in the tap animation the button goes transparent and
-            the users display name shows in place of the button". Native
-            <button> with explicit bg-white in every state, no Tailwind !
-            overrides, no framer-motion transform, no negative z-stacking. */}
-        <div className="relative z-20 -mt-5 flex flex-wrap justify-center gap-2 px-4">
+        {/* Action buttons - a light row under the image, no heavy card chrome. */}
+        <div className="flex flex-wrap justify-center gap-2 px-4 mt-4">
           {[
             { icon: <Pencil size={14} />, label: 'Edit Profile', to: '/profile/edit' },
             { icon: <Ticket size={14} />, label: 'Tickets', to: '/profile/tickets' },
