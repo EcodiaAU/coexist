@@ -1,8 +1,21 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import path from 'path'
 import { readFileSync } from 'fs'
+
+// Sentry source-map upload. Gated on SENTRY_AUTH_TOKEN (set as a Vercel
+// PRODUCTION env var). When present we emit HIDDEN source maps (never served
+// publicly) and the plugin uploads them to Sentry stamped with debug IDs, then
+// deletes the local .map files. Debug-ID matching means minified frames resolve
+// to real file/line/code-context INDEPENDENT of the release string, so the
+// SDK's `coexist@x.y.z` release does not need to equal the plugin release.
+// Without the token (local dev, previews) the plugin is a no-op and no maps
+// are emitted. Mirrors the proven 6-web-app rollout (2026-07-07); coexist was
+// the one Vite app missed in that pass, which left COEXIST-N (Maximum update
+// depth, admin bundle) unresolvable as `admin-*.js:61`.
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN
 
 // App version sourced from package.json at build time so Settings shows the
 // REAL build (2.2.x), not a hand-maintained literal that drifts. On native the
@@ -27,7 +40,27 @@ const pkgVersion = JSON.parse(
 // for the same reason - symmetric config is intentional.
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // Appended LAST so it sees the fully-built output. No-op without the token.
+    ...(sentryAuthToken
+      ? [
+          sentryVitePlugin({
+            org: 'ecodia-l4',
+            project: 'coexist',
+            authToken: sentryAuthToken,
+            release: {
+              name: process.env.VITE_SENTRY_RELEASE || process.env.VERCEL_GIT_COMMIT_SHA,
+            },
+            sourcemaps: {
+              filesToDeleteAfterUpload: ['./dist/**/*.map'],
+            },
+            telemetry: false,
+          }),
+        ]
+      : []),
+  ],
   base: '/',
   define: {
     __APP_VERSION__: JSON.stringify(pkgVersion),
@@ -51,7 +84,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
+    // 'hidden' emits .map files (needed for the Sentry plugin to upload +
+    // delete them) WITHOUT adding a `//# sourceMappingURL` comment to the
+    // shipped JS, so maps are never fetched by browsers. Falls back to false
+    // when the token is absent, preserving the prior no-sourcemap behaviour.
+    sourcemap: sentryAuthToken ? 'hidden' : false,
     // Browser-compatibility floor. Vite 8's implicit default target is a modern
     // baseline (roughly Chrome 107 / Safari 16), which leaves Chrome 85-106-era
     // JS *syntax* (logical assignment ??=/||=, class static blocks, private
