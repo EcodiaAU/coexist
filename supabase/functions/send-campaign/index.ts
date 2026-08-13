@@ -410,7 +410,9 @@ Deno.serve(withSentry('send-campaign', async (req: Request) => {
         }
       })
 
-      let { ids, error: chunkErr } = await sendChunk(emails)
+      const chunk = await sendChunk(emails)
+      let ids = chunk.ids
+      const chunkErr = chunk.error
       if (chunkErr) {
         // A batch rejection is usually one bad address poisoning the chunk.
         // Retry each email individually so the rest still send.

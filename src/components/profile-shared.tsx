@@ -1,8 +1,9 @@
 import { type ReactNode } from 'react'
-import { motion, type Variants } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { MapPin, Instagram, Leaf, TreePine, ChevronRight } from 'lucide-react'
 import { Avatar } from '@/components/avatar'
 import { cn } from '@/lib/cn'
+import { profileFadeUp, detailTints } from '@/components/profile-shared-tokens'
 
 /* ------------------------------------------------------------------ */
 /*  Shared profile language                                           */
@@ -13,17 +14,10 @@ import { cn } from '@/lib/cn'
 /*  full-bleed imagery), journal-header section labels, and soft      */
 /*  pastel detail rows. Both consume these primitives so a change to  */
 /*  the hero or a heading lands in both places at once.               */
+/*                                                                    */
+/*  Non-component tokens (motion variants, tint map) live in          */
+/*  profile-shared-tokens.ts so this file exports only components.    */
 /* ------------------------------------------------------------------ */
-
-export const profileStagger: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
-}
-
-export const profileFadeUp: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
-}
 
 /* ------------------------------------------------------------------ */
 /*  Full-bleed image hero                                             */
@@ -195,17 +189,6 @@ export function EditLink({ onClick }: { onClick: () => void }) {
 /* ------------------------------------------------------------------ */
 /*  Detail row                                                        */
 /* ------------------------------------------------------------------ */
-
-// Soft pastel icon badges only - no solid fills, no coloured left stripes.
-// The value is the hero; the tint is a whisper for scannability (design
-// system: activity colours live only on small icon badges).
-export const detailTints = {
-  primary: 'bg-primary-50 text-primary-600',
-  sky: 'bg-sky-50 text-sky-600',
-  moss: 'bg-moss-50 text-moss-600',
-  sprout: 'bg-sprout-50 text-sprout-600',
-  plum: 'bg-plum-50 text-plum-600',
-}
 
 export function DetailRow({
   icon,

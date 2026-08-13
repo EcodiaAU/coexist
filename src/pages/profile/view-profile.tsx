@@ -26,12 +26,11 @@ import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { ReportContentSheet } from '@/components/report-content-sheet'
 import { BlockUserSheet } from '@/components/block-user-sheet'
+import { ProfileHero, SectionHeading } from '@/components/profile-shared'
 import {
-  ProfileHero,
-  SectionHeading,
   profileStagger as stagger,
   profileFadeUp as fadeUp,
-} from '@/components/profile-shared'
+} from '@/components/profile-shared-tokens'
 import { parseLocationPoint } from '@/lib/geo'
 import { MapView } from '@/components'
 import { useAuth } from '@/hooks/use-auth'
