@@ -253,11 +253,12 @@ const C = {
 }
 
 /**
- * Full-bleed hero cell. Matches the app's tile signature: the image fills
- * the block (background-size:cover), a dark bottom-up legibility gradient
- * sits over it, and the white wordmark + heading sit bottom-left in the
- * dark zone. When no image is supplied the cell is a solid olive->darker
- * gradient (the bgcolor is the Outlook fallback, always legible).
+ * True full-bleed hero. The image spans the entire email width edge to edge
+ * (no card, no radius, no side gutter). A dark bottom-up legibility gradient
+ * sits over it and the white wordmark + heading sit bottom-left in the dark
+ * zone, matching the app's full-bleed tiles. No image -> solid olive->darker
+ * gradient (bgcolor is the Outlook fallback, always legible). Side padding
+ * matches the body so the hero heading lines up with the copy below.
  */
 function heroCell(opts: {
   heroTitle: string
@@ -271,26 +272,30 @@ function heroCell(opts: {
   const fx = opts.heroFocalX ?? 50
   const fy = opts.heroFocalY ?? 50
   const bgLayers = hasImg
-    ? `background-image:linear-gradient(to top, rgba(13,18,8,0.80) 0%, rgba(13,18,8,0.34) 46%, rgba(13,18,8,0.05) 100%), url('${opts.heroImage}');background-size:cover;background-position:${fx}% ${fy}%;background-repeat:no-repeat;`
+    ? `background-image:linear-gradient(to top, rgba(13,18,8,0.82) 0%, rgba(13,18,8,0.36) 44%, rgba(13,18,8,0.04) 100%), url('${opts.heroImage}');background-size:cover;background-position:${fx}% ${fy}%;background-repeat:no-repeat;`
     : `background-image:linear-gradient(135deg, ${C.brand} 0%, ${C.brandDark} 100%);`
-  const padTop = hasImg ? '128px' : '38px'
+  const padTop = hasImg ? '210px' : '46px'
   const overline = opts.overline
-    ? `<p style="margin:0 0 8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:rgba(255,255,255,0.82);">${opts.overline}</p>`
+    ? `<p style="margin:0 0 9px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.82);">${opts.overline}</p>`
     : ''
   const sub = opts.heroSubtitle
-    ? `<p style="color:rgba(255,255,255,0.90);margin:11px 0 0;font-size:15px;line-height:1.5;font-weight:500;">${opts.heroSubtitle}</p>`
+    ? `<p style="color:rgba(255,255,255,0.90);margin:12px 0 0;font-size:16px;line-height:1.5;font-weight:500;">${opts.heroSubtitle}</p>`
     : ''
   return `<tr><td bgcolor="${C.brand}" class="ex-hero" style="background-color:${C.brand};${bgLayers}">
-    <div class="ex-hero-pad" style="padding:${padTop} 28px 26px 28px;">
-      <img src="${LOGO_URL}" alt="Co-Exist" width="116" style="width:116px;height:auto;display:block;margin:0 0 ${hasImg ? '14' : '18'}px 0;border:0;outline:none;" />
+    <div class="ex-hero-pad" style="padding:${padTop} 48px 34px 48px;">
+      <img src="${LOGO_URL}" alt="Co-Exist" width="128" style="width:128px;height:auto;display:block;margin:0 0 ${hasImg ? '16' : '20'}px 0;border:0;outline:none;" />
       ${overline}
-      <h1 class="ex-hero-h" style="color:#ffffff;margin:0;font-size:29px;font-weight:700;line-height:1.16;letter-spacing:-0.01em;">${opts.heroTitle}</h1>
+      <h1 class="ex-hero-h" style="color:#ffffff;margin:0;font-size:38px;font-weight:700;line-height:1.12;letter-spacing:-0.015em;">${opts.heroTitle}</h1>
       ${sub}
     </div>
   </td></tr>`
 }
 
-/** Outer email shell - full-bleed hero, single-padding content, footer. */
+/**
+ * Outer email shell. True full-bleed: no card, no border, no rounded box,
+ * no thin centred column. The hero image runs edge to edge and the content
+ * sits directly on the page background with generous side padding.
+ */
 function emailShell(opts: {
   heroTitle: string
   heroSubtitle?: string
@@ -319,30 +324,26 @@ function emailShell(opts: {
   body{margin:0;padding:0;width:100%!important;-webkit-text-size-adjust:100%;}
   img{border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;}
   a{color:${C.brandDark};}
-  /* Mobile: keep a single, comfortable side padding. */
+  /* Mobile: tighter side padding, hero stays full-bleed. */
   @media only screen and (max-width:600px){
-    .ex-card{border-radius:14px!important;}
-    .ex-pad{padding-left:20px!important;padding-right:20px!important;}
-    .ex-hero-pad{padding-left:20px!important;padding-right:20px!important;}
-    .ex-hero-h{font-size:25px!important;}
+    .ex-pad{padding-left:22px!important;padding-right:22px!important;}
+    .ex-hero-pad{padding-left:22px!important;padding-right:22px!important;padding-top:150px!important;}
+    .ex-hero-h{font-size:28px!important;}
   }
   /* Dark mode (Apple Mail / iOS Mail honour this). Gmail app strips the
      <style> block and falls back to the inversion-safe inline baseline. */
   @media (prefers-color-scheme: dark){
-    .ex-body,.ex-outer{background:#111309!important;}
-    .ex-card{background:#1c1f16!important;}
+    .ex-body,.ex-outer,.ex-surface{background:#111309!important;}
     .ex-text{color:#ece9e0!important;}
     .ex-heading{color:#f3f1e9!important;}
     .ex-muted{color:#a9b199!important;}
-    .ex-tint{background:#232719!important;}
-    .ex-hairline{border-color:rgba(255,255,255,0.12)!important;}
+    .ex-hairline{border-color:rgba(255,255,255,0.14)!important;}
     .ex-btn{background:${C.brandDarkMode}!important;color:#12150b!important;}
     .ex-accent{color:#a9c17f!important;}
     .ex-foot{color:#8a9376!important;}
     a{color:#b9cb95!important;}
   }
-  [data-ogsc] .ex-body,[data-ogsc] .ex-outer{background:#111309!important;}
-  [data-ogsc] .ex-card{background:#1c1f16!important;}
+  [data-ogsc] .ex-body,[data-ogsc] .ex-outer,[data-ogsc] .ex-surface{background:#111309!important;}
   [data-ogsc] .ex-text{color:#ece9e0!important;}
   [data-ogsc] .ex-heading{color:#f3f1e9!important;}
   [data-ogsc] .ex-muted{color:#a9b199!important;}
@@ -352,26 +353,26 @@ function emailShell(opts: {
 </head>
 <body class="ex-body" style="margin:0;padding:0;background:${C.bg};font-family:${FONT_STACK};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="ex-outer" style="background:${C.bg};">
-<tr><td align="center" style="padding:26px 12px;">
+<tr><td align="center" style="padding:0;">
 
-<!-- Container: one card, one horizontal padding level. -->
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" class="ex-card" style="max-width:600px;width:100%;background:${C.cardBg};border-radius:18px;overflow:hidden;">
+<!-- Full-bleed container: no card, no border, no radius. Wide, not a thin column. -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="ex-surface" style="max-width:1040px;width:100%;background:${C.bg};">
 
   ${heroCell(opts)}
 
-  <!-- Body content: the ONLY horizontal padding on the page. -->
-  <tr><td class="ex-pad ex-card" style="background:${C.cardBg};padding:28px 24px 10px 24px;">
+  <!-- Body content directly on the page background. -->
+  <tr><td class="ex-pad ex-surface" style="background:${C.bg};padding:34px 48px 12px 48px;">
     ${opts.body}
   </td></tr>
 
   ${opts.footerCta ? `
-  <tr><td align="center" class="ex-pad ex-card" style="background:${C.cardBg};padding:6px 24px 30px 24px;text-align:center;">
-    <a class="ex-btn" href="${opts.footerCta.url}" style="display:inline-block;background:${C.brand};color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;line-height:1;font-family:${FONT_STACK};">${opts.footerCta.label}</a>
+  <tr><td class="ex-pad ex-surface" style="background:${C.bg};padding:8px 48px 34px 48px;">
+    <a class="ex-btn" href="${opts.footerCta.url}" style="display:inline-block;background:${C.brand};color:#ffffff;padding:15px 34px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;line-height:1;font-family:${FONT_STACK};">${opts.footerCta.label}</a>
   </td></tr>` : ''}
 
   <!-- Footer -->
-  <tr><td class="ex-pad ex-card ex-hairline" style="background:${C.cardBg};padding:22px 24px 26px 24px;border-top:1px solid ${C.border};text-align:center;">
-    <p class="ex-muted" style="margin:0 0 10px;font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:${C.textMuted};">
+  <tr><td class="ex-pad ex-surface ex-hairline" style="background:${C.bg};padding:26px 48px 34px 48px;border-top:1px solid ${C.border};">
+    <p class="ex-muted" style="margin:0 0 10px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${C.textMuted};">
       Explore. Connect. Protect.
     </p>
     <p class="ex-foot" style="margin:0 0 12px;font-size:12px;color:${C.textLight};">
@@ -384,20 +385,13 @@ function emailShell(opts: {
     <p class="ex-foot" style="margin:0;font-size:11px;line-height:1.6;color:${C.textLight};">
       Co-Exist Australia &middot; hello@coexistaus.org<br>
       We acknowledge the Traditional Custodians of Country across Australia.
-    </p>
-  </td></tr>
-
-</table>
-
-<!-- Unsubscribe -->
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;margin-top:14px;">
-  <tr><td style="text-align:center;padding:0 12px 30px;">
-    <p class="ex-foot" style="margin:0;font-size:11px;color:${C.textLight};">
-      <a href="${APP_URL}/settings" style="color:${C.textLight};text-decoration:underline;">Manage preferences</a>
       &nbsp;&middot;&nbsp;
       <a href="${unsubUrl}" style="color:${C.textLight};text-decoration:underline;">Unsubscribe</a>
+      &nbsp;&middot;&nbsp;
+      <a href="${APP_URL}/settings" style="color:${C.textLight};text-decoration:underline;">Preferences</a>
     </p>
   </td></tr>
+
 </table>
 
 </td></tr></table>
@@ -422,12 +416,13 @@ function p(text: string): string {
  * work unchanged.
  */
 function infoCard(rows: [string, unknown][]): string {
-  const items = rows.map(([l, v], i) => `<tr><td style="padding:${i === 0 ? '16' : '2'}px 18px 0 18px;">
-      <p class="ex-muted" style="margin:0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:${C.textMuted};">${l}</p>
-      <p class="ex-text" style="margin:2px 0 ${i === rows.length - 1 ? '16' : '13'}px 0;font-size:15px;color:${C.text};line-height:1.4;">${v}</p>
+  const items = rows.map(([l, v]) => `<tr><td class="ex-hairline" style="padding:14px 0 14px 0;border-top:1px solid ${C.border};">
+      <p class="ex-muted" style="margin:0 0 3px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:${C.textMuted};">${l}</p>
+      <p class="ex-text" style="margin:0;font-size:16px;color:${C.text};line-height:1.4;">${v}</p>
     </td></tr>`).join('')
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="ex-tint ex-hairline" style="background:${C.tint};border:1px solid ${C.border};border-radius:14px;margin:2px 0 20px;">
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 22px;">
     ${items}
+    <tr><td class="ex-hairline" style="border-top:1px solid ${C.border};font-size:0;line-height:0;height:0;">&nbsp;</td></tr>
   </table>`
 }
 
@@ -449,11 +444,11 @@ function statBlock(value: unknown, label: string): string {
 /** Numbered step list - olive index marker, bold title, muted line. No emoji. */
 function stepList(steps: [string, string][]): string {
   const rows = steps.map(([title, desc], i) => `<tr>
-      <td width="30" valign="top" style="padding:0 12px 16px 0;">
-        <div class="ex-accent" style="width:26px;height:26px;border-radius:13px;background:${C.tint};color:${C.brand};font-size:13px;font-weight:700;line-height:26px;text-align:center;">${i + 1}</div>
+      <td width="34" valign="top" style="padding:0 14px 18px 0;">
+        <div class="ex-accent" style="color:${C.brand};font-size:22px;font-weight:700;line-height:1.1;">${i + 1}</div>
       </td>
-      <td valign="top" style="padding:0 0 16px 0;">
-        <p class="ex-heading" style="margin:0 0 2px;font-size:15px;font-weight:700;color:${C.text};line-height:1.3;">${title}</p>
+      <td valign="top" style="padding:0 0 18px 0;">
+        <p class="ex-heading" style="margin:0 0 3px;font-size:16px;font-weight:700;color:${C.text};line-height:1.3;">${title}</p>
         <p class="ex-muted" style="margin:0;font-size:14px;color:${C.textMuted};line-height:1.5;">${desc}</p>
       </td>
     </tr>`).join('')

@@ -128,85 +128,87 @@ both and so is the email):
   Outlook forced-dark remapping (explicit colour on every node; never
   light-grey on white).
 - Put class hooks on themable elements AND include this EXACT <style> block
-  in <head> so Apple Mail / iOS Mail restyle for dark. Classes: ex-body
-  (page bg), ex-card (card surface), ex-text (body copy), ex-heading
-  (headings), ex-muted (labels/footer), ex-tint (warm callout block),
-  ex-hairline (borders), ex-btn (CTA), ex-accent (stat numbers/markers):
+  in <head> so Apple Mail / iOS Mail restyle for dark. Classes: ex-body /
+  ex-surface (page + content background, they share the same colour, there is
+  NO separate card), ex-text (body copy), ex-heading (headings), ex-muted
+  (labels/footer), ex-hairline (divider rules), ex-btn (CTA), ex-accent (stat
+  numbers / step markers):
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
       body{margin:0;padding:0;width:100%!important;}
       img{border:0;outline:none;text-decoration:none;}
       @media only screen and (max-width:600px){
-        .ex-card{border-radius:14px!important;}
-        .ex-pad{padding-left:20px!important;padding-right:20px!important;}
+        .ex-pad{padding-left:22px!important;padding-right:22px!important;}
+        .ex-hero-pad{padding-left:22px!important;padding-right:22px!important;padding-top:150px!important;}
       }
       @media (prefers-color-scheme: dark){
-        .ex-body{background:#111309!important;}
-        .ex-card{background:#1c1f16!important;}
+        .ex-body,.ex-surface{background:#111309!important;}
         .ex-text{color:#ece9e0!important;}
         .ex-heading{color:#f3f1e9!important;}
         .ex-muted{color:#a9b199!important;}
-        .ex-tint{background:#232719!important;}
-        .ex-hairline{border-color:rgba(255,255,255,0.12)!important;}
+        .ex-hairline{border-color:rgba(255,255,255,0.14)!important;}
         .ex-btn{background:#93ab6d!important;color:#12150b!important;}
         .ex-accent{color:#a9c17f!important;}
         a{color:#b9cb95!important;}
       }
-      [data-ogsc] .ex-body{background:#111309!important;}
-      [data-ogsc] .ex-card{background:#1c1f16!important;}
+      [data-ogsc] .ex-body,[data-ogsc] .ex-surface{background:#111309!important;}
       [data-ogsc] .ex-text{color:#ece9e0!important;}
       [data-ogsc] .ex-muted{color:#a9b199!important;}
       [data-ogsc] .ex-btn{background:#93ab6d!important;color:#12150b!important;}
     </style>
 
-PADDING (the old emails squished on mobile from nested horizontal padding):
-- EXACTLY ONE horizontal padding level. The single 600px card has ONE
-  content cell with padding:28px 24px. Do NOT add border-left/right on the
-  body cell, and do NOT nest a padded card inside the padded content cell.
-- Outer wrapper adds only vertical padding and a small side gutter (<=12px).
-- Reserve ONE warm-tint block (class ex-tint) for a single distinct callout
-  (the event detail list). Plain paragraphs with margin otherwise.
-- 360px math: card 24px each side leaves ~312px of content. Never less.
+LAYOUT (true full-bleed, NO cards, NO thin centred column):
+- There is NO card. No rounded box, no border, no shadow, no distinct card
+  background. Content sits DIRECTLY on the page background (ex-body / ex-surface,
+  #f4f2ec light). The hero image and content share the same full-width container.
+- The container is width:100%, max-width:1040px (wide and open on laptop, never a
+  thin 600px column floating in the middle). On mobile it is 100%.
+- The HERO image is TRUE full-bleed: it spans the entire container width edge to
+  edge, with NO radius, NO side gutter, NO padding around the image itself.
+- ONE horizontal padding level for text: 48px each side on desktop, 22px on mobile
+  (via the ex-pad class). The hero heading uses the SAME 48/22px side padding so it
+  lines up with the copy below.
+- NEVER a bordered / tinted / rounded detail box. Event details are plain rows with
+  a thin ex-hairline rule between them (see STRUCTURE 3).
 
 STRUCTURE:
-1. Full-bleed hero (ONE cell: small white wordmark at top, heading + optional
-   overline sit BOTTOM-LEFT over the image, matching the app's event tiles).
-   Use this skeleton, swapping the heading/overline/subtitle text:
+1. Full-bleed hero (ONE cell, edge to edge: small white wordmark at top, overline +
+   heading + optional subtitle sit BOTTOM-LEFT over the image). Swap the text:
 
-   <tr><td bgcolor="#869e62" class="ex-hero" style="background-color:#869e62;background-image:linear-gradient(to top, rgba(13,18,8,0.80) 0%, rgba(13,18,8,0.34) 46%, rgba(13,18,8,0.05) 100%), url('{{hero_image_url}}');background-size:cover;background-position:{{hero_focal_x}}% {{hero_focal_y}}%;background-repeat:no-repeat;">
-     <div class="ex-hero-pad" style="padding:128px 28px 26px 28px;">
-       <img src="https://app.coexistaus.org/logos/white-wordmark.png" alt="Co-Exist" width="116" style="width:116px;height:auto;display:block;margin:0 0 14px 0;border:0;" />
-       <p style="margin:0 0 8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:rgba(255,255,255,0.82);">OPTIONAL OVERLINE</p>
-       <h1 class="ex-hero-h" style="color:#ffffff;margin:0;font-size:29px;font-weight:700;line-height:1.16;letter-spacing:-0.01em;">YOUR HEADING</h1>
-       <p style="color:rgba(255,255,255,0.90);margin:11px 0 0 0;font-size:15px;line-height:1.5;">Optional subtitle</p>
+   <tr><td bgcolor="#869e62" class="ex-hero" style="background-color:#869e62;background-image:linear-gradient(to top, rgba(13,18,8,0.82) 0%, rgba(13,18,8,0.36) 44%, rgba(13,18,8,0.04) 100%), url('{{hero_image_url}}');background-size:cover;background-position:{{hero_focal_x}}% {{hero_focal_y}}%;background-repeat:no-repeat;">
+     <div class="ex-hero-pad" style="padding:210px 48px 34px 48px;">
+       <img src="https://app.coexistaus.org/logos/white-wordmark.png" alt="Co-Exist" width="128" style="width:128px;height:auto;display:block;margin:0 0 16px 0;border:0;" />
+       <p style="margin:0 0 9px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.82);">OPTIONAL OVERLINE</p>
+       <h1 class="ex-hero-h" style="color:#ffffff;margin:0;font-size:38px;font-weight:700;line-height:1.12;letter-spacing:-0.015em;">YOUR HEADING</h1>
+       <p style="color:rgba(255,255,255,0.90);margin:12px 0 0 0;font-size:16px;line-height:1.5;">Optional subtitle</p>
      </div>
    </td></tr>
 
    WHY this exact shape:
-   - The stacked linear-gradient darkens the BOTTOM of the photo so the white
-     heading stays legible; the top of the photo stays clear. This matches the
-     app's tile gradient.
-   - bgcolor + background-color:#869e62 is the ALWAYS-present olive fallback
-     (Outlook shows solid olive). When {{hero_image_url}} is empty, drop the
-     url() layer and use background-image:linear-gradient(135deg,#869e62,#5d7340)
-     so a no-image hero is a clean olive gradient with a shorter top padding
-     (~38px instead of 128px).
-   - Heading and logo are BOTTOM-LEFT (the app language). Do NOT centre them.
-   - No separate logo bar. The wordmark lives inside this hero cell.
-2. Body. One content cell, ex-pad + ex-card, padding:28px 24px 10px. Paragraphs
-   are ex-text, 15px, line-height 1.65. Headings are ex-heading.
-3. Event / key detail: the ex-tint block (warm tint, ex-hairline border,
-   radius 14px) with small uppercase ex-muted overline labels over ex-text
-   values. Do NOT wrap every line in its own box.
-4. CTA. ONE olive button:
-   <td align="center" class="ex-pad ex-card" style="padding:6px 24px 30px;text-align:center;">
-     <a class="ex-btn" href="{{cta_url}}" style="display:inline-block;background:#869e62;color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;line-height:1;">Label</a>
-   </td>
-5. Footer. ex-pad ex-card ex-hairline cell with a thin top border. Small
-   ex-muted "Explore. Connect. Protect." overline, the app/website/Instagram
-   links, and the working unsubscribe link. ALWAYS use {{unsubscribe_url}} as
-   the href, e.g. <a href="{{unsubscribe_url}}">Unsubscribe</a>. NEVER a
-   placeholder like "#" or "[unsubscribe]". It is auto-filled per recipient.
+   - No radius, no gutter, no card wrapper. The td is the full container width, so
+     the photo bleeds edge to edge.
+   - The stacked linear-gradient darkens the BOTTOM of the photo so the white heading
+     stays legible; the top of the photo stays clear (the app's tile gradient).
+   - The tall 210px top padding pushes the heading into the dark zone at the bottom.
+     Mobile overrides it to 150px (see the @media block).
+   - bgcolor + background-color:#869e62 is the ALWAYS-present olive fallback (Outlook
+     shows solid olive). When {{hero_image_url}} is empty, drop the url() layer and use
+     background-image:linear-gradient(135deg,#869e62,#5d7340) with a shorter ~46px top
+     padding so a no-image hero is a clean olive gradient.
+   - Heading and logo are BOTTOM-LEFT (the app language). Do NOT centre them. No
+     separate logo bar.
+2. Body cell: class "ex-pad ex-surface", padding:34px 48px 12px. Paragraphs are
+   ex-text, 15-16px, line-height 1.65. Headings are ex-heading.
+3. Event / key detail = PLAIN rows, no box. Each row is a cell with a top
+   ex-hairline rule, an uppercase ex-muted overline label, then the ex-text value.
+   Close with one final ex-hairline rule. NO background, NO side border, NO radius.
+4. CTA. ONE olive button in an ex-pad ex-surface cell (left-aligned is fine):
+     <a class="ex-btn" href="{{cta_url}}" style="display:inline-block;background:#869e62;color:#ffffff;padding:15px 34px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;line-height:1;">Label</a>
+5. Footer. An ex-pad ex-surface ex-hairline cell with a thin top border (NOT a
+   card). Small ex-muted "Explore. Connect. Protect." overline, the
+   app/website/Instagram links, and the working unsubscribe link. ALWAYS use
+   {{unsubscribe_url}} as the href, e.g. <a href="{{unsubscribe_url}}">Unsubscribe</a>.
+   NEVER a placeholder like "#" or "[unsubscribe]". It is auto-filled per recipient.
 
 COLLECTIVE NAMING (strict):
 - When referring to a regional crew, ALWAYS use the form
