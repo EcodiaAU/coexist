@@ -15,7 +15,15 @@
 -- unchanged, so send-campaign keeps working during the deploy window.
 -- =====================================================================
 
-CREATE OR REPLACE FUNCTION public.recipient_next_events(p_user_ids uuid[])
+-- Changing the RETURNS TABLE column set requires a DROP first (Postgres will
+-- not let CREATE OR REPLACE alter the return signature). CASCADE also drops
+-- email_digest_targets(), the SQL-language function that calls this one in a
+-- LATERAL (a hard dependency); the next migration (20260813120500) recreates
+-- it. send-campaign calls this via RPC at runtime, so it carries no DB
+-- dependency and is unaffected by the drop.
+DROP FUNCTION IF EXISTS public.recipient_next_events(uuid[]) CASCADE;
+
+CREATE FUNCTION public.recipient_next_events(p_user_ids uuid[])
 RETURNS TABLE (
   user_id uuid,
   event_id uuid,

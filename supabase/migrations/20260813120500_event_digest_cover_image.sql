@@ -12,7 +12,11 @@
 -- dry-run contract are unchanged from 20260715040000_event_digest_engine.
 -- =====================================================================
 
-CREATE OR REPLACE FUNCTION public.email_digest_targets()
+-- RETURNS TABLE column set changes, so DROP first. The prior migration's
+-- CASCADE has usually already dropped this; IF EXISTS makes it a safe no-op.
+DROP FUNCTION IF EXISTS public.email_digest_targets();
+
+CREATE FUNCTION public.email_digest_targets()
 RETURNS TABLE (
   user_id uuid, email text, name text, event_id uuid, event_title text,
   event_date timestamptz, event_address text, collective_name text,
