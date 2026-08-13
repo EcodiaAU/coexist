@@ -229,6 +229,55 @@ export function useCreateCarpool() {
   })
 }
 
+export interface UpdateCarpoolInput {
+  carpool_id: string
+  /** New total seats. Server rejects a value below the confirmed-passenger
+   *  count, and flips status full<->open to match the new capacity. */
+  seats_total?: number
+  departure_point_text?: string
+  departure_time?: string
+  notes?: string | null
+}
+
+/** Driver edits their own carpool (seats / departure / notes). Backed by the
+ *  carpool-update-widget edge function, which enforces driver-only + the
+ *  seat-count floor and recomputes status. */
+export function useUpdateCarpool() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: async (input: UpdateCarpoolInput) => {
+      if (!user) throw new Error('Not authenticated')
+
+      const { data, error } = await supabase.functions.invoke(
+        'carpool-update-widget',
+        {
+          body: {
+            carpool_id: input.carpool_id,
+            seats_total: input.seats_total,
+            departure_point_text: input.departure_point_text,
+            departure_time: input.departure_time,
+            notes: input.notes,
+          },
+        },
+      )
+
+      if (error) throw error
+      return data as { id: string; seats_total: number; status: CarpoolStatus }
+    },
+    onSuccess: (_, input) => {
+      queryClient.invalidateQueries({ queryKey: ['carpool', input.carpool_id] })
+      queryClient.invalidateQueries({ queryKey: ['carpool-seats', input.carpool_id] })
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : 'Failed to update carpool'
+      toast.error(msg)
+    },
+  })
+}
+
 export interface SaveSeatInput {
   carpool_id: string
   pickup_address_text: string

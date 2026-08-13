@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { motion, useReducedMotion, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
-import { Reply, Megaphone, CalendarPlus, ClipboardCheck, ListChecks, MapPin, Calendar, Clock, Car, Users } from 'lucide-react'
+import { Reply, Megaphone, CalendarPlus, ClipboardCheck, ListChecks, MapPin, Calendar, Clock, Car, Users, Pencil } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatClockTime, formatCardDate, formatCardTime } from '@/lib/date-format'
 import { ROLE_COLORS } from '@/lib/constants'
@@ -801,6 +801,8 @@ interface CarpoolCardProps {
   /** Channel id of the breakout group chat for this carpool (or null if not yet spawned). */
   breakoutChannelId?: string | null
   onOpenChat?: () => void
+  /** Driver-only: open the edit sheet to adjust seats / departure / notes. */
+  onEdit?: () => void
 }
 
 export function CarpoolCard({
@@ -822,6 +824,7 @@ export function CarpoolCard({
   eventId,
   breakoutChannelId,
   onOpenChat,
+  onEdit,
 }: CarpoolCardProps) {
   const shouldReduceMotion = useReducedMotion()
   const confirmedCount = confirmedPassengers.length
@@ -994,6 +997,16 @@ export function CarpoolCard({
             <p data-eos-id="src/components/chat-bubble.tsx#132" className="text-xs font-semibold text-success-700 bg-success-50 rounded-sm px-3 py-2 text-center">
               You're driving
             </p>
+            {onEdit && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="w-full flex items-center justify-center gap-2 rounded-sm bg-white ring-1 ring-neutral-200 py-2.5 text-center text-sm font-semibold text-neutral-700 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none min-h-11 hover:bg-neutral-50"
+              >
+                <Pencil size={15} className="shrink-0" />
+                Edit seats or details
+              </button>
+            )}
             {breakoutChannelId && onOpenChat && (
               <button data-eos-id="src/components/chat-bubble.tsx#133"
                 type="button"

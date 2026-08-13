@@ -267,6 +267,9 @@ export default function ChatRoomPage() {
   // Campout group chats are open to ticket holders, not staff-gated, so their
   // copy (empty state, composer placeholder) must not say "staff".
   const isCampoutChannel = isChannel && channel?.type === 'campout'
+  // Carpool breakout chats are between the driver and their passengers - never
+  // staff. Same member-facing copy rule as campout channels.
+  const isCarpoolBreakout = isChannel && channel?.type === 'carpool_breakout'
   const channelMarkRead = useMarkChannelRead()
   const channelSend = useSendChannelMessage()
   const channelDelete = useDeleteChannelMessage()
@@ -1107,9 +1110,11 @@ export default function ChatRoomPage() {
                 ? 'Type a message (will send when online)...'
                 : isCampoutChannel
                   ? 'Message the campout...'
-                  : isChannel
-                    ? 'Message staff...'
-                    : 'Type a message...'
+                  : isCarpoolBreakout
+                    ? 'Message your carpool...'
+                    : isChannel
+                      ? 'Message staff...'
+                      : 'Type a message...'
           }
           initialValue={editingMessage ? editText : (savedDraft?.content ?? '')}
           onValueChange={

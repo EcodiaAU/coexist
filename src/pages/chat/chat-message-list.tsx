@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Lock, Camera, MessageSquareHeart, Tent, Play } from 'lucide-react'
+import { Lock, Camera, MessageSquareHeart, Tent, Play, Car } from 'lucide-react'
 import { ChatBubble, PollCard, AnnouncementCard, CarpoolCard } from '@/components/chat-bubble'
 import { HtmlChatBubble } from '@/components/html-chat-bubble'
 import { MessageReactions } from '@/components/message-reactions'
@@ -30,7 +30,8 @@ import type { ChannelMessageWithSender } from '@/hooks/use-staff-channels'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useEventDetail, type EventDetailData } from '@/hooks/use-events'
-import { useCarpool, useCarpoolSeats, useCarpoolBreakout, useSaveSeat, useCancelSeat } from '@/hooks/use-carpool'
+import { useCarpool, useCarpoolSeats, useCarpoolBreakout, useSaveSeat, useCancelSeat, useUpdateCarpool } from '@/hooks/use-carpool'
+import { EditCarpoolSheet } from '@/components/create-carpool-sheet'
 import { useEventPhotos } from '@/hooks/use-event-photos'
 import { isVideoPath } from '@/components/event-photos-section'
 import { useSignedChatImage } from '@/hooks/use-signed-chat-image'
@@ -454,7 +455,9 @@ function InlineCarpool({
   const { data: breakout } = useCarpoolBreakout(carpoolId)
   const saveSeat = useSaveSeat()
   const cancelSeat = useCancelSeat()
+  const updateCarpool = useUpdateCarpool()
   const [saveSheetOpen, setSaveSheetOpen] = useState(false)
+  const [editSheetOpen, setEditSheetOpen] = useState(false)
 
   const eventId = carpool?.event_id
   const { data: eventDetail } = useEventDetail(eventId)
@@ -501,6 +504,24 @@ function InlineCarpool({
     cancelSeat.mutate({ seat_id: viewerSeat.id, carpool_id: carpoolId })
   }
 
+  const handleEditSubmit = (data: {
+    seats_total: number
+    departure_point_text: string
+    departure_time: string
+    notes?: string
+  }) => {
+    updateCarpool.mutate(
+      {
+        carpool_id: carpoolId,
+        seats_total: data.seats_total,
+        departure_point_text: data.departure_point_text,
+        departure_time: data.departure_time,
+        notes: data.notes ?? null,
+      },
+      { onSuccess: () => setEditSheetOpen(false) },
+    )
+  }
+
   return (
     <>
       <CarpoolCard
@@ -522,6 +543,11 @@ function InlineCarpool({
         onViewEvent={(evId) => navigate(`/events/${evId}`)}
         breakoutChannelId={breakout?.channel_id ?? null}
         onOpenChat={breakout?.channel_id ? () => navigate(`/chat/channel/${breakout.channel_id}`) : undefined}
+        onEdit={
+          viewerIsDriver && (carpool.status === 'open' || carpool.status === 'full')
+            ? () => setEditSheetOpen(true)
+            : undefined
+        }
       />
       <SaveSeatSheet
         open={saveSheetOpen}
@@ -530,6 +556,19 @@ function InlineCarpool({
         loading={saveSeat.isPending}
         driverName={carpool.driver?.display_name ?? null}
         eventTitle={eventDetail?.title ?? null}
+      />
+      <EditCarpoolSheet
+        open={editSheetOpen}
+        onClose={() => setEditSheetOpen(false)}
+        onSubmit={handleEditSubmit}
+        loading={updateCarpool.isPending}
+        initial={{
+          seats_total: carpool.seats_total,
+          departure_point_text: carpool.departure_point_text,
+          departure_time: carpool.departure_time,
+          notes: carpool.notes,
+        }}
+        minSeats={confirmedSeats.length}
       />
     </>
   )
@@ -975,7 +1014,7 @@ export function ChatMessageList({
         // their own breathing room.
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth px-3 py-1"
         role="log"
-        aria-label={isChannel ? (channelType === 'campout' ? 'Campout chat messages' : 'Staff chat messages') : 'Chat messages'}
+        aria-label={isChannel ? (channelType === 'campout' ? 'Campout chat messages' : channelType === 'carpool_breakout' ? 'Carpool chat messages' : 'Staff chat messages') : 'Chat messages'}
         aria-live="polite"
       >
         {showLoading ? (
@@ -993,6 +1032,18 @@ export function ChatMessageList({
                   <p className="text-base font-bold text-neutral-900">Campout group chat</p>
                   <p className="text-sm text-neutral-500 mt-1.5">
                     Say hi to everyone coming to this campout
+                  </p>
+                </div>
+              </div>
+            ) : channelType === 'carpool_breakout' ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center py-12">
+                  <div className="w-14 h-14 rounded-md bg-success-50 flex items-center justify-center mx-auto mb-4">
+                    <Car size={24} strokeWidth={2.5} className="text-success-600" />
+                  </div>
+                  <p className="text-base font-bold text-neutral-900">Carpool chat</p>
+                  <p className="text-sm text-neutral-500 mt-1.5">
+                    Sort out pickup times and details with your driver and passengers
                   </p>
                 </div>
               </div>

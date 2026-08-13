@@ -416,3 +416,162 @@ export function CreateCarpoolSheet({
     </BottomSheet>
   )
 }
+
+/* ------------------------------------------------------------------ */
+/*  Edit sheet (driver adjusts an existing carpool)                    */
+/* ------------------------------------------------------------------ */
+
+export interface EditCarpoolSubmitData {
+  seats_total: number
+  departure_point_text: string
+  departure_time: string
+  notes?: string
+}
+
+interface EditCarpoolSheetProps {
+  open: boolean
+  onClose: () => void
+  onSubmit: (data: EditCarpoolSubmitData) => void
+  loading?: boolean
+  initial: {
+    seats_total: number
+    departure_point_text: string
+    /** ISO wall-clock-as-UTC, as stored on the widget. */
+    departure_time: string
+    notes: string | null
+  }
+  /** Confirmed passengers already on the trip - the seat count cannot drop
+   *  below this (they've committed). */
+  minSeats: number
+}
+
+export function EditCarpoolSheet({
+  open,
+  onClose,
+  onSubmit,
+  loading,
+  initial,
+  minSeats,
+}: EditCarpoolSheetProps) {
+  const [departurePoint, setDeparturePoint] = useState(initial.departure_point_text)
+  const [departureTime, setDepartureTime] = useState('')
+  const [seatsTotal, setSeatsTotal] = useState(initial.seats_total)
+  const [notes, setNotes] = useState(initial.notes ?? '')
+
+  const floor = Math.max(1, minSeats)
+
+  // Re-seed from the current widget every time the sheet opens.
+  useEffect(() => {
+    if (!open) return
+    startTransition(() => {
+      setDeparturePoint(initial.departure_point_text)
+      setDepartureTime(
+        initial.departure_time
+          ? toWallClockInputValue(new Date(initial.departure_time))
+          : '',
+      )
+      setSeatsTotal(Math.max(floor, initial.seats_total))
+      setNotes(initial.notes ?? '')
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  const DEPARTURE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/
+
+  const canSubmit =
+    departurePoint.trim().length > 0 &&
+    DEPARTURE_RE.test(departureTime.trim()) &&
+    seatsTotal >= floor
+
+  const handleSubmit = () => {
+    if (!canSubmit) return
+    onSubmit({
+      seats_total: seatsTotal,
+      departure_point_text: departurePoint.trim(),
+      departure_time: wallClockToUtcIso(departureTime.trim()),
+      notes: notes.trim() || undefined,
+    })
+  }
+
+  return (
+    <BottomSheet open={open} onClose={onClose}>
+      <div className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
+        {/* Header */}
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-success-100 text-success-600">
+            <Car size={20} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-neutral-900">Edit your carpool</h3>
+            <p className="text-xs text-neutral-500">Update seats, departure or notes</p>
+          </div>
+        </div>
+
+        {/* Departure point */}
+        <div className="mb-3">
+          <Input
+            label="Departure point"
+            value={departurePoint}
+            onChange={(e) => setDeparturePoint(e.target.value)}
+            placeholder="e.g. Sippy Downs Macca's car park"
+            maxLength={200}
+            icon={<MapPin size={16} className="text-success-500" />}
+          />
+          <p className="text-[11px] text-neutral-400 mt-1">Visible to everyone in this chat.</p>
+        </div>
+
+        {/* Departure time */}
+        <div className="mb-3">
+          <Input
+            label="Departure time"
+            type="datetime-local"
+            value={departureTime}
+            onChange={(e) => setDepartureTime(e.target.value)}
+            icon={<Clock size={16} className="text-success-500" />}
+          />
+          <p className="text-[11px] text-neutral-400 mt-1">
+            When you'll leave the departure point (event local time).
+          </p>
+        </div>
+
+        {/* Seats stepper */}
+        <div className="mb-3">
+          <label className="text-xs font-semibold text-neutral-900 mb-1.5 block">
+            Seats available
+          </label>
+          <SeatsStepper value={seatsTotal} onChange={setSeatsTotal} min={floor} max={8} />
+          {minSeats > 0 && (
+            <p className="text-[11px] text-neutral-400 mt-1">
+              {minSeats} passenger{minSeats !== 1 ? 's' : ''} already confirmed, so seats can't drop below {floor}.
+            </p>
+          )}
+        </div>
+
+        {/* Notes */}
+        <div className="mb-4">
+          <Input
+            type="textarea"
+            label="Notes (optional)"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="e.g. happy to pick up along the way, kid seat available, etc."
+            rows={3}
+            maxLength={300}
+          />
+        </div>
+
+        {/* Submit */}
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
+          onClick={handleSubmit}
+          disabled={!canSubmit || loading}
+          loading={loading}
+        >
+          Save changes
+        </Button>
+      </div>
+    </BottomSheet>
+  )
+}
