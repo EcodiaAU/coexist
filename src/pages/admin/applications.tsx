@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import type { Database } from '@/types/database.types'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
 import {
@@ -42,6 +41,7 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { logAudit } from '@/lib/audit'
+import { makeOptimistic, patchItem } from '@/lib/optimistic'
 import { ROLE_LABELS, SKILL_LABELS } from '@/lib/labels-and-enums'
 
 /* ------------------------------------------------------------------ */
@@ -218,9 +218,11 @@ function SectionHeader({ icon, label, color = 'text-neutral-400' }: {
 function ApplicationCard({
   app,
   onUpdateStatus,
+  isPending = false,
 }: {
   app: Application
   onUpdateStatus: (id: string, status: string, notes?: string) => void
+  isPending?: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
   const [notes, setNotes] = useState(app.notes ?? '')
@@ -415,6 +417,7 @@ function ApplicationCard({
                     variant="primary"
                     size="sm"
                     icon={<CheckCircle2 data-eos-id="src/pages/admin/applications.tsx#75" size={14} />}
+                    disabled={isPending}
                     onClick={() => onUpdateStatus(app.id, 'accepted', notes)}
                   >
                     Accept
@@ -425,6 +428,7 @@ function ApplicationCard({
                     variant="danger"
                     size="sm"
                     icon={<XCircle data-eos-id="src/pages/admin/applications.tsx#77" size={14} />}
+                    disabled={isPending}
                     onClick={() => onUpdateStatus(app.id, 'rejected', notes)}
                   >
                     Reject
@@ -435,6 +439,7 @@ function ApplicationCard({
                     variant="secondary"
                     size="sm"
                     icon={<Eye data-eos-id="src/pages/admin/applications.tsx#79" size={14} />}
+                    disabled={isPending}
                     onClick={() => onUpdateStatus(app.id, 'reviewed', notes)}
                   >
                     Mark Reviewed
@@ -661,7 +666,6 @@ export default function AdminApplicationsPage() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { data: applications, isLoading } = useApplications()
-  const showLoading = useDelayedLoading(isLoading)
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
@@ -695,11 +699,29 @@ export default function AdminApplicationsPage() {
         }).catch(() => {})
       }
     },
+    // Optimistic status flip so the badge + action buttons update instantly.
+    // The applicant-decision email is server-gated inside mutationFn (fires only
+    // AFTER the DB update genuinely succeeds), so an optimistic patch that later
+    // rolls back never sends a false email; the irreversible side-effect is not
+    // itself optimistically confirmed.
+    onMutate: async ({ id, status, notes }) => {
+      const opt = makeOptimistic<Application[]>(queryClient, ['admin-applications'])
+      return opt.patch(patchItem<Application>(id, {
+        status: status as Application['status'],
+        notes: notes || null,
+        reviewed_at: new Date().toISOString(),
+      }))
+    },
     onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-applications'] })
       toast.success(`Application ${vars.status}`)
     },
-    onError: () => toast.error('Failed to update application'),
+    onError: (_err, _vars, ctx) => {
+      makeOptimistic<Application[]>(queryClient, ['admin-applications']).rollback(ctx)
+      toast.error('Failed to update application')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-applications'] })
+    },
   })
 
   const handleUpdateStatus = (id: string, status: string, notes?: string) => {
@@ -826,7 +848,7 @@ export default function AdminApplicationsPage() {
           </motion.div>
 
           {/* List */}
-          {showLoading ? (
+          {isLoading ? (
             <div data-eos-id="src/pages/admin/applications.tsx#137" className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton data-eos-id="src/pages/admin/applications.tsx#138" key={i} className="h-16 w-full rounded-md" />
@@ -842,7 +864,7 @@ export default function AdminApplicationsPage() {
             <StaggeredList data-eos-id="src/pages/admin/applications.tsx#141" className="space-y-3">
               {filtered.map(app => (
                 <StaggeredItem data-eos-id="src/pages/admin/applications.tsx#142" key={app.id}>
-                  <ApplicationCard data-eos-id="src/pages/admin/applications.tsx#143" app={app} onUpdateStatus={handleUpdateStatus} />
+                  <ApplicationCard data-eos-id="src/pages/admin/applications.tsx#143" app={app} onUpdateStatus={handleUpdateStatus} isPending={updateStatus.isPending} />
                 </StaggeredItem>
               ))}
             </StaggeredList>

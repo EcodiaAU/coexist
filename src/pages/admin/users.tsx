@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { formatRole } from '@/lib/labels-and-enums'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { adminVariants, expandCollapse as expandCollapseVariants } from '@/lib/admin-motion'
@@ -938,7 +937,6 @@ export default function AdminUsersPage() {
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useAdminUsers(debouncedSearch, roleFilter)
   const users = useMemo(() => data?.pages.flatMap((p) => p) ?? [], [data])
-  const showLoading = useDelayedLoading(isLoading)
   useAdminHeader('User Management')
 
   const toggleUserSelection = useCallback((userId: string) => {
@@ -1075,7 +1073,7 @@ export default function AdminUsersPage() {
 
       {/* User list */}
       <motion.div variants={fadeUp}>
-      {showLoading ? (
+      {isLoading ? (
         <Skeleton variant="list-item" count={8} />
       ) : !users?.length ? (
         <EmptyState

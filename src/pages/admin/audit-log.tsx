@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
 import {
@@ -100,7 +99,6 @@ export default function AdminAuditLogPage() {
   const [page, setPage] = useState(0)
 
   const { data, isLoading } = useAuditLog(search, actionFilter, page)
-  const showLoading = useDelayedLoading(isLoading)
   const pageSize = 25
   const totalPages = data ? Math.ceil(data.total / pageSize) : 0
 
@@ -145,7 +143,7 @@ export default function AdminAuditLogPage() {
 
         {/* Log list */}
         <motion.div data-eos-id="src/pages/admin/audit-log.tsx#8" variants={fadeUp}>
-        {showLoading ? (
+        {isLoading ? (
           <Skeleton data-eos-id="src/pages/admin/audit-log.tsx#9" variant="list-item" count={8} />
         ) : !data?.logs.length ? (
           <EmptyState data-eos-id="src/pages/admin/audit-log.tsx#10"

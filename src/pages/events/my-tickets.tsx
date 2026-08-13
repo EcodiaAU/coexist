@@ -10,7 +10,6 @@ import {
   EmptyState,
 } from '@/components'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { cn } from '@/lib/cn'
 
 function TicketCard({ ticket }: { ticket: EventTicket }) {
@@ -96,7 +95,6 @@ function TicketCard({ ticket }: { ticket: EventTicket }) {
 
 export default function MyTicketsPage() {
   const { data: tickets, isLoading } = useMyTickets()
-  const showLoading = useDelayedLoading(isLoading)
   const shouldReduceMotion = useReducedMotion()
 
   const upcoming = (tickets ?? []).filter((t) => t.event_date && new Date(t.event_date) >= new Date())
@@ -105,7 +103,7 @@ export default function MyTicketsPage() {
   return (
     <Page swipeBack header={<Header title="My Tickets" back />}>
       <div className="p-4 space-y-6 pb-12">
-        {showLoading ? (
+        {isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-24 rounded-md" />
             <Skeleton className="h-24 rounded-md" />

@@ -40,7 +40,6 @@ import {
     Skeleton,
     EmptyState,
 } from '@/components'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { parseLocationPoint, COLLECTIVE_SLUG_COORDS } from '@/lib/geo'
@@ -58,7 +57,6 @@ export default function EditEventPage() {
   const shouldReduceMotion = useReducedMotion()
 
   const { data: event, isLoading } = useEventDetail(eventId)
-  const showLoading = useDelayedLoading(isLoading)
   const updateEvent = useUpdateEvent()
   const { data: activityDefaults } = useActivityTypeDefaults()
 
@@ -275,7 +273,7 @@ export default function EditEventPage() {
 
   const pageTitle = isDayOfMode ? 'Edit Time & Location' : 'Edit Event'
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <Page swipeBack header={<Header title={pageTitle} back />}>
         <div className="pt-4 space-y-4">

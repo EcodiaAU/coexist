@@ -549,7 +549,6 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
     collectiveId,
     showInactive ? 'all' : 'active',
   )
-  const showLoading = useDelayedLoading(isLoading)
   const updateRole = useAdminUpdateMemberRole()
   const removeMember = useAdminRemoveMember()
   const restoreMember = useAdminRestoreMember()
@@ -565,9 +564,11 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
   }, [members, search])
 
   const handleRoleChange = async (userId: string, role: CollectiveRole) => {
+    // Close the sheet immediately; useAdminUpdateMemberRole patches the role
+    // optimistically so the badge updates instantly.
+    setRoleAssignMember(null)
     try {
       await updateRole.mutateAsync({ collectiveId, userId, role })
-      setRoleAssignMember(null)
       toast.success(`Role updated to ${ROLE_LABELS[role]}`)
     } catch {
       toast.error('Failed to update role')
@@ -576,16 +577,19 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
 
   const handleRemove = async () => {
     if (!removingMember) return
+    const target = removingMember
+    // Close the confirm sheet immediately; useAdminRemoveMember drops the row
+    // optimistically (active view) / marks it removed (all view).
+    setRemovingMember(null)
     try {
       await removeMember.mutateAsync({
         collectiveId,
-        userId: removingMember.user_id,
+        userId: target.user_id,
       })
       toast.success('Member removed')
     } catch {
       toast.error('Failed to remove member')
     }
-    setRemovingMember(null)
   }
 
   const handleRestore = async (member: AdminCollectiveMember) => {
@@ -605,7 +609,7 @@ function MembersTab({ collectiveId }: { collectiveId: string }) {
     toast.success('CSV downloaded')
   }
 
-  if (showLoading) return <Skeleton data-eos-id="src/pages/admin/collective-detail.tsx#85" variant="list-item" count={8} />
+  if (isLoading) return <Skeleton data-eos-id="src/pages/admin/collective-detail.tsx#85" variant="list-item" count={8} />
 
   return (
     <div data-eos-id="src/pages/admin/collective-detail.tsx#86" className="space-y-5">
@@ -934,7 +938,6 @@ function AddMemberModal({
 function EventsTab({ collectiveId, reducedMotion }: { collectiveId: string; reducedMotion: boolean }) {
   const rm = reducedMotion
   const { data: events = [], isLoading } = useAdminCollectiveEvents(collectiveId)
-  const showLoading = useDelayedLoading(isLoading)
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const filtered = useMemo(() => {
@@ -952,7 +955,7 @@ function EventsTab({ collectiveId, reducedMotion }: { collectiveId: string; redu
     cancelled: { active: 'bg-error-600 text-white', inactive: 'bg-white text-error-500' },
   }
 
-  if (showLoading) return <Skeleton data-eos-id="src/pages/admin/collective-detail.tsx#146" variant="list-item" count={5} />
+  if (isLoading) return <Skeleton data-eos-id="src/pages/admin/collective-detail.tsx#146" variant="list-item" count={5} />
 
   return (
     <div data-eos-id="src/pages/admin/collective-detail.tsx#147" className="space-y-5">

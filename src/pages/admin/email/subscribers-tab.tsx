@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import {
   Tag,
   MapPin,
@@ -168,7 +167,6 @@ export function SubscribersTab() {
   const queryClient = useQueryClient()
   const { data: tags } = useTags()
   const { data: subscribers, isLoading } = useSubscribers(search, tagFilter)
-  const showLoading = useDelayedLoading(isLoading)
   const [syncing, setSyncing] = useState(false)
 
   const [taggingProfile, setTaggingProfile] = useState<{
@@ -248,7 +246,7 @@ export function SubscribersTab() {
         </div>
       </div>
 
-      {showLoading ? (
+      {isLoading ? (
         <Skeleton data-eos-id="src/pages/admin/email/subscribers-tab.tsx#27" variant="list-item" count={8} />
       ) : !subscribers?.length ? (
         <EmptyState data-eos-id="src/pages/admin/email/subscribers-tab.tsx#28"

@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useEffect, startTransition } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { formatRole } from '@/lib/labels-and-enums'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -808,7 +807,6 @@ function KpiDashboard() {
     collectiveId: collectiveFilter || undefined,
     dateFrom,
   })
-  const showLoading = useDelayedLoading(isLoading)
 
   const collectiveOptions = useMemo(() => [
     { value: '', label: 'All Collectives' },
@@ -825,7 +823,7 @@ function KpiDashboard() {
         className="max-w-xs"
       />
 
-      {showLoading ? (
+      {isLoading ? (
         <Skeleton variant="list-item" count={4} />
       ) : !data ? (
         <EmptyState illustration="empty" title="No data" description="No task instances found for this period" />
@@ -934,7 +932,6 @@ export default function AdminWorkflowsPage() {
     scheduleType: scheduleFilter || undefined,
     search: search || undefined,
   })
-  const showLoading = useDelayedLoading(isLoading)
 
   const toggleMutation = useAdminToggleTemplate()
   const deleteMutation = useAdminDeleteTemplate()
@@ -1030,7 +1027,7 @@ export default function AdminWorkflowsPage() {
 
           {/* Template list */}
           <motion.div variants={fadeUp}>
-            {showLoading ? (
+            {isLoading ? (
               <Skeleton variant="list-item" count={6} />
             ) : !templates?.length ? (
               <EmptyState

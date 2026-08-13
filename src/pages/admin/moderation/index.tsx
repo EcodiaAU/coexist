@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
@@ -330,7 +329,6 @@ export default function ModerationQueuePage() {
   const { toast } = useToast()
   const [activeStatus, setActiveStatus] = useState<Enums<'report_status'>>('pending')
   const { data: reports, isLoading, refetch } = useModerationQueue(activeStatus)
-  const showLoading = useDelayedLoading(isLoading)
   const reviewReport = useReviewReport()
 
   const handleAction = (reportId: string, action: Enums<'report_status'>) => {
@@ -368,7 +366,7 @@ export default function ModerationQueuePage() {
       </motion.div>
 
       <motion.div variants={fadeUp}>
-      {showLoading ? (
+      {isLoading ? (
         <div className="space-y-4">
           <Skeleton variant="card" />
           <Skeleton variant="card" />

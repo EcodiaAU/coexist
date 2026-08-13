@@ -42,6 +42,7 @@ import {
     QueryClientProvider,
     dehydrate,
     hydrate,
+    keepPreviousData,
 } from '@tanstack/react-query'
 import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from '@/components/auth-provider'
@@ -113,6 +114,13 @@ if (!isEngineSupported()) {
         retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
         networkMode: 'offlineFirst' as const,
         refetchOnWindowFocus: false,
+        // Perceived-speed default: when a query key changes (navigating between
+        // two events / profiles / collectives, switching a filter or tab), keep
+        // showing the PREVIOUS result until the new one arrives instead of
+        // dropping to isLoading with undefined data. Eliminates the blank/empty
+        // flash on navigation app-wide. Individual hooks that already set
+        // placeholderData override this.
+        placeholderData: keepPreviousData,
       },
     },
   })

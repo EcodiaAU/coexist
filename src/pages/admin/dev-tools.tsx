@@ -1037,7 +1037,6 @@ export default function DevToolsPage() {
   const shouldReduceMotion = useReducedMotion()
   const { user, profile } = useAuth()
   const { data: testEvents, isLoading } = useTestEvents()
-  const showLoading = useDelayedLoading(isLoading)
   const seedEvent = useSeedTestEvent()
   const cleanup = useCleanupTests()
 
@@ -1151,7 +1150,7 @@ export default function DevToolsPage() {
             </Button>
           </div>
 
-          {showLoading ? (
+          {isLoading ? (
             <div data-eos-id="src/pages/admin/dev-tools.tsx#114" className="space-y-3">
               {[1, 2].map((i) => (
                 <Skeleton data-eos-id="src/pages/admin/dev-tools.tsx#115" key={i} className="h-28 rounded-sm" />

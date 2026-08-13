@@ -404,6 +404,7 @@ export function useArchiveCollective() {
     },
     onMutate: async ({ collectiveId, archive }) => {
       await queryClient.cancelQueries({ queryKey: ['admin-collective-detail', collectiveId] })
+      await queryClient.cancelQueries({ queryKey: ['admin-collectives'] })
       const previousDetail = queryClient.getQueryData<AdminCollectiveDetail>(['admin-collective-detail', collectiveId])
       if (previousDetail) {
         queryClient.setQueryData<AdminCollectiveDetail>(['admin-collective-detail', collectiveId], {
@@ -411,11 +412,23 @@ export function useArchiveCollective() {
           is_active: !archive,
         })
       }
-      return { previousDetail }
+      // Patch every cached list variant (any filter) so the card on the
+      // collectives grid flips its archived state instantly. onSettled below
+      // invalidates the list, so filtered variants reconcile on refetch.
+      const previousLists = queryClient.getQueriesData<AdminCollective[]>({ queryKey: ['admin-collectives'] })
+      queryClient.setQueriesData<AdminCollective[]>({ queryKey: ['admin-collectives'] }, (rows) =>
+        rows?.map((c) => (c.id === collectiveId ? { ...c, is_active: !archive } : c)),
+      )
+      return { previousDetail, previousLists }
     },
     onError: (_err, { collectiveId }, ctx) => {
       if (ctx?.previousDetail) {
         queryClient.setQueryData(['admin-collective-detail', collectiveId], ctx.previousDetail)
+      }
+      if (ctx?.previousLists) {
+        for (const [key, snapshot] of ctx.previousLists) {
+          queryClient.setQueryData(key, snapshot)
+        }
       }
     },
     onSettled: (_, __, { collectiveId }) => {
@@ -499,7 +512,28 @@ export function useAdminUpdateMemberRole() {
       }
       await logAudit({ action: 'member_role_changed', target_type: 'collective_member', target_id: userId, details: { collective_id: collectiveId, new_role: role } })
     },
-    onSuccess: (_, { collectiveId }) => {
+    // Optimistic role flip across both status-filter variants of the members
+    // list. Promoting to leader also optimistically demotes any current leader.
+    // The full server-side reconciliation (leader_id, demotions) lands on
+    // invalidate in onSettled.
+    onMutate: async ({ collectiveId, userId, role }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-collective-members', collectiveId] })
+      const previous = queryClient.getQueriesData<AdminCollectiveMember[]>({ queryKey: ['admin-collective-members', collectiveId] })
+      queryClient.setQueriesData<AdminCollectiveMember[]>({ queryKey: ['admin-collective-members', collectiveId] }, (rows) =>
+        rows?.map((m) => {
+          if (m.user_id === userId) return { ...m, role }
+          if (role === 'leader' && m.role === 'leader') return { ...m, role: 'co_leader' as CollectiveRole }
+          return m
+        }),
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        for (const [key, snapshot] of ctx.previous) queryClient.setQueryData(key, snapshot)
+      }
+    },
+    onSettled: (_d, _e, { collectiveId }) => {
       queryClient.invalidateQueries({ queryKey: ['admin-collective-members', collectiveId] })
       queryClient.invalidateQueries({ queryKey: ['admin-collective-detail', collectiveId] })
       queryClient.invalidateQueries({ queryKey: ['admin-collectives'] })
@@ -526,7 +560,32 @@ export function useAdminRemoveMember() {
       if (error) throw error
       await logAudit({ action: 'member_removed', target_type: 'collective_member', target_id: userId, details: { collective_id: collectiveId } })
     },
-    onSuccess: (_, { collectiveId }) => {
+    // Optimistic remove: drop the row from the active-only list (it no longer
+    // belongs there), and mark it removed in the all-statuses list (so the
+    // restore affordance appears). Rollback restores on failure.
+    onMutate: async ({ collectiveId, userId }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-collective-members', collectiveId] })
+      const previous = queryClient.getQueriesData<AdminCollectiveMember[]>({ queryKey: ['admin-collective-members', collectiveId] })
+      for (const [key, rows] of previous) {
+        if (!rows) continue
+        const statusFilter = key[2]
+        if (statusFilter === 'active') {
+          queryClient.setQueryData(key, rows.filter((m) => m.user_id !== userId))
+        } else {
+          queryClient.setQueryData(
+            key,
+            rows.map((m) => (m.user_id === userId ? { ...m, status: 'removed' as AdminCollectiveMember['status'] } : m)),
+          )
+        }
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        for (const [key, snapshot] of ctx.previous) queryClient.setQueryData(key, snapshot)
+      }
+    },
+    onSettled: (_d, _e, { collectiveId }) => {
       queryClient.invalidateQueries({ queryKey: ['admin-collective-members', collectiveId] })
       queryClient.invalidateQueries({ queryKey: ['admin-collective-detail', collectiveId] })
       queryClient.invalidateQueries({ queryKey: ['admin-collectives'] })

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, startTransition } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
 import { Plus, Edit3, Percent, DollarSign, Truck } from 'lucide-react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Toggle } from '@/components/toggle'
@@ -51,6 +51,7 @@ function PromoFormSheet({
   promo?: PromoCode
 }) {
   const { toast } = useToast()
+  const queryClient = useQueryClient()
   const upsert = useUpsertPromoCode()
 
   const [code, setCode] = useState('')
@@ -104,24 +105,50 @@ function PromoFormSheet({
       toast.error('Minimum order must be $0 or more')
       return
     }
-    try {
-      await upsert.mutateAsync({
-        ...(promo ? { id: promo.id } : {}),
-        code: code.toUpperCase().trim(),
-        type,
-        value: type === 'free_shipping' ? 0 : Number(value),
-        min_order_amount: minNum,
-        max_uses: maxUses ? Number(maxUses) : null,
-        valid_from: startsAt || null,
-        valid_to: expiresAt || null,
-        is_active: isActive,
-      })
-      toast.success(promo ? 'Promo updated' : 'Promo created')
-      onClose()
-    } catch {
-      toast.error('Failed to save promo')
+    const payload = {
+      ...(promo ? { id: promo.id } : {}),
+      code: code.toUpperCase().trim(),
+      type,
+      value: type === 'free_shipping' ? 0 : Number(value),
+      min_order_amount: minNum,
+      max_uses: maxUses ? Number(maxUses) : null,
+      valid_from: startsAt || null,
+      valid_to: expiresAt || null,
+      is_active: isActive,
     }
-  }, [code, type, value, minOrder, maxUses, startsAt, expiresAt, isActive, promo, upsert, toast, onClose])
+
+    // Optimistic: patch the promo list and close immediately. A promo code is a
+    // local, reversible record (no recipient/payment side effect), so an
+    // optimistic create/edit is safe. On failure we roll the cache back and
+    // surface the error; the toggle-active flag rides along in the same edit.
+    await queryClient.cancelQueries({ queryKey: ['admin-promo-codes'] })
+    const prev = queryClient.getQueryData<PromoCode[]>(['admin-promo-codes'])
+    const tempId = promo?.id ?? crypto.randomUUID()
+    const optimistic = {
+      ...(promo ?? {}),
+      ...payload,
+      id: tempId,
+      uses_count: promo?.uses_count ?? 0,
+      created_at: promo?.created_at ?? new Date().toISOString(),
+    } as PromoCode
+    queryClient.setQueryData<PromoCode[]>(['admin-promo-codes'], (old) => {
+      const list = old ?? []
+      return promo
+        ? list.map((p) => (p.id === tempId ? optimistic : p))
+        : [optimistic, ...list]
+    })
+    onClose()
+
+    try {
+      await upsert.mutateAsync(payload)
+      toast.success(promo ? 'Promo updated' : 'Promo created')
+    } catch {
+      if (prev) queryClient.setQueryData(['admin-promo-codes'], prev)
+      toast.error('Failed to save promo')
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ['admin-promo-codes'] })
+    }
+  }, [code, type, value, minOrder, maxUses, startsAt, expiresAt, isActive, promo, upsert, toast, onClose, queryClient])
 
   // Prevent Enter key from bubbling out of inputs
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -208,12 +235,11 @@ function PromoFormSheet({
 
 export default function PromosTab() {
   const { data: promos, isLoading } = useAdminPromoCodes()
-  const showLoading = useDelayedLoading(isLoading)
   const shouldReduceMotion = useReducedMotion()
   const [formOpen, setFormOpen] = useState(false)
   const [editPromo, setEditPromo] = useState<PromoCode | undefined>()
 
-  if (showLoading) {
+  if (isLoading) {
     return <Skeleton variant="text" count={5} />
   }
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)

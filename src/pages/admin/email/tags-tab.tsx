@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Tag, Plus, Trash2, GitMerge, Loader2, ArrowRight } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Skeleton } from '@/components/skeleton'
@@ -241,7 +240,6 @@ function TagManagerSheet({
 
 export function TagsTab() {
   const { data: tags, isLoading } = useTags()
-  const showLoading = useDelayedLoading(isLoading)
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [showCreate, setShowCreate] = useState(false)
@@ -285,7 +283,7 @@ export function TagsTab() {
         </Button>
       </div>
 
-      {showLoading ? (
+      {isLoading ? (
         <Skeleton data-eos-id="src/pages/admin/email/tags-tab.tsx#34" variant="list-item" count={4} />
       ) : !tags?.length ? (
         <EmptyState data-eos-id="src/pages/admin/email/tags-tab.tsx#35"

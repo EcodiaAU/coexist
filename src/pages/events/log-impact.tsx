@@ -57,7 +57,6 @@ import {
     WhatsNext,
     ConfirmationSheet,
 } from '@/components'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { parseLocationPoint } from '@/lib/geo'
@@ -1085,9 +1084,8 @@ export default function LogImpactPage() {
   }, [eventId, user, isSubmitting, existingImpact, surveyData, surveyQuestions, surveyAnswers, species, wildlifeSightings, photos, beforePhotos, afterPhotos, drawnArea, logImpact, computedHoursTotal, finalAttendeeCount, notes, queryClient, validKeys, metricDefsPlaceholder, toast])
 
   const isLoading = eventLoading || impactLoading || roleLoading || surveyLoading
-  const showLoading = useDelayedLoading(isLoading)
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <Page swipeBack header={<Header title="Log Impact" back />}>
         <div className="pt-4 space-y-4">

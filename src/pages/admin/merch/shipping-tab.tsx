@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, startTransition } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Skeleton } from '@/components/skeleton'
@@ -11,7 +10,6 @@ import { useUpdateShippingConfig } from '@/hooks/use-admin-merch'
 
 export default function ShippingTab() {
   const { data: config, isLoading } = useShippingConfig()
-  const showLoading = useDelayedLoading(isLoading)
   const updateConfig = useUpdateShippingConfig()
   const { toast } = useToast()
 
@@ -57,7 +55,7 @@ export default function ShippingTab() {
     }
   }, [canSave, flat, threshold, updateConfig, toast])
 
-  if (showLoading) {
+  if (isLoading) {
     return <Skeleton variant="text" count={3} />
   }
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)

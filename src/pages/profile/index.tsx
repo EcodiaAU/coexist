@@ -36,7 +36,6 @@ import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { useAuth } from '@/hooks/use-auth'
 import { useProfile, useProfileCollectives, useProfileStats } from '@/hooks/use-profile'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { bentoMixedTheme } from '@/components/bento-stats-themes'
 import { ProfileEventMap } from '@/components/profile-event-map'
@@ -175,9 +174,8 @@ export default function ProfilePage() {
   }, [isPhantomProfile, refetchProfile])
 
   const isLoading = profileLoading || collectivesLoading || statsLoading
-  const showLoading = useDelayedLoading(isLoading)
 
-  if (showLoading || isPhantomProfile) {
+  if (isLoading || isPhantomProfile) {
     return (
       <Page noBackground className="bg-surface-2">
         <ProfileSkeleton />

@@ -5,7 +5,6 @@ import {
     Plus, Edit3, Archive, AlertTriangle, X,
     ChevronDown, ImagePlus, GripVertical, Trash2,
 } from 'lucide-react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useImageUpload } from '@/hooks/use-image-upload'
 import { SearchBar } from '@/components/search-bar'
 import { Button } from '@/components/button'
@@ -788,7 +787,6 @@ const STATUS_DOT: Record<ProductStatus, string> = {
 
 export default function ProductsTab() {
   const { data: products, isLoading } = useAdminProducts()
-  const showLoading = useDelayedLoading(isLoading)
   const updateProduct = useUpdateProduct()
   const { toast } = useToast()
   const [formOpen, setFormOpen] = useState(false)
@@ -828,7 +826,7 @@ export default function ProductsTab() {
     setArchiveTarget(null)
   }, [archiveTarget, updateProduct, toast])
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <div className="space-y-2">
         {Array.from({ length: 4 }).map((_, i) => (

@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
@@ -178,7 +177,6 @@ export default function AdminCollectivesPage() {
     search,
     status: statusFilter,
   })
-  const showLoading = useDelayedLoading(isLoading)
   const archiveMutation = useArchiveCollective()
 
   const heroActions = useMemo(() => (
@@ -194,17 +192,20 @@ export default function AdminCollectivesPage() {
 
   const handleArchiveToggle = async () => {
     if (!archiveTarget) return
-    const isCurrentlyActive = archiveTarget.is_active
+    const target = archiveTarget
+    const isCurrentlyActive = target.is_active
+    // Close the confirm sheet immediately; the card flips optimistically via
+    // useArchiveCollective's onMutate, so the toggle feels instant.
+    setArchiveTarget(null)
     try {
       await archiveMutation.mutateAsync({
-        collectiveId: archiveTarget.id,
+        collectiveId: target.id,
         archive: isCurrentlyActive ?? false,
       })
       toast.success(isCurrentlyActive ? 'Collective archived' : 'Collective restored')
     } catch {
       toast.error('Failed to update collective')
     }
-    setArchiveTarget(null)
   }
 
   useAdminHeader('Collectives', { actions: heroActions })
@@ -245,7 +246,7 @@ export default function AdminCollectivesPage() {
 
           {/* List */}
           <motion.div data-eos-id="src/pages/admin/collectives.tsx#19" variants={fadeUp}>
-          {showLoading ? (
+          {isLoading ? (
             <div data-eos-id="src/pages/admin/collectives.tsx#20" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Array.from({ length: 6 }, (_, i) => (
                 <div key={i} className="aspect-[4/3] rounded-md bg-neutral-100 animate-pulse" />

@@ -481,6 +481,37 @@ export function useUpdateUpdate() {
       if (error) throw error
       return data
     },
+    // Optimistically patch the admin list so pin/unpin and content edits render
+    // instantly. All fields here are reversible (no notification side-effect on
+    // update, unlike create), so the cache flips immediately and rolls back on
+    // error. Doctrine: optimistic surfaces render identically to confirmed ones.
+    onMutate: async (params) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-updates'] })
+      const previous = queryClient.getQueryData<AdminUpdate[]>(['admin-updates'])
+      queryClient.setQueryData<AdminUpdate[]>(['admin-updates'], (old) => {
+        if (!old) return old
+        return old.map((u) => {
+          if (u.id !== params.id) return u
+          const patched: AdminUpdate = { ...u }
+          if (params.title !== undefined) patched.title = params.title
+          if (params.content !== undefined) patched.content = params.content
+          if (params.imageUrls !== undefined) {
+            patched.image_urls = params.imageUrls
+            patched.image_url = params.imageUrls[0] ?? null
+          }
+          if (params.priority !== undefined) patched.priority = params.priority
+          if (params.targetAudience !== undefined) patched.target_audience = params.targetAudience
+          if (params.targetCollectiveId !== undefined) patched.target_collective_id = params.targetCollectiveId
+          if (params.isPinned !== undefined) patched.is_pinned = params.isPinned
+          patched.updated_at = new Date().toISOString()
+          return patched
+        })
+      })
+      return { previous }
+    },
+    onError: (_err, _params, context) => {
+      if (context?.previous) queryClient.setQueryData(['admin-updates'], context.previous)
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['updates'] })
       queryClient.invalidateQueries({ queryKey: ['admin-updates'] })

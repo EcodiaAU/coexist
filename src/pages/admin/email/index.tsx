@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   Sparkles,
 } from 'lucide-react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { Skeleton } from '@/components/skeleton'
@@ -38,12 +37,11 @@ const tabs = [
 export default function AdminEmailPage() {
   const [activeTab, setActiveTab] = useState('quick-send')
   const { data: stats, isLoading: statsLoading } = useEmailMarketingStats()
-  const showStatsLoading = useDelayedLoading(statsLoading)
   const shouldReduceMotion = useReducedMotion()
 
   const heroStats = useMemo(
     () =>
-      showStatsLoading || statsLoading ? (
+      statsLoading ? (
         <div data-eos-id="src/pages/admin/email/index.tsx#7" className="flex items-center gap-2 sm:gap-3">
           <Skeleton data-eos-id="src/pages/admin/email/index.tsx#8" variant="stat-card" />
           <Skeleton data-eos-id="src/pages/admin/email/index.tsx#9" variant="stat-card" />
@@ -65,7 +63,7 @@ export default function AdminEmailPage() {
           <Skeleton data-eos-id="src/pages/admin/email/index.tsx#25" variant="stat-card" />
         </div>
       ),
-    [stats, statsLoading, showStatsLoading, shouldReduceMotion],
+    [stats, statsLoading, shouldReduceMotion],
   )
 
   useAdminHeader('Email Marketing', { heroContent: heroStats })

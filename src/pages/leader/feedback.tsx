@@ -9,7 +9,6 @@ import {
     Star,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useLeaderHeader } from '@/components/leader-layout'
 import { useLeaderCollectiveScope } from '@/hooks/use-leader-collective-scope'
 import { Dropdown } from '@/components/dropdown'
@@ -137,7 +136,6 @@ export default function LeaderFeedbackPage() {
   useLeaderHeader('Feedback', { fullBleed: true })
 
   const { data: feedback, isLoading } = useCollectiveFeedback(collectiveId)
-  const showLoading = useDelayedLoading(isLoading || scopeCtx.isLoading)
 
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set())
   const [expandedResponses, setExpandedResponses] = useState<Set<string>>(new Set())
@@ -194,7 +192,7 @@ export default function LeaderFeedbackPage() {
     return c ? c.name.replace(/\s+Collective$/i, '') : null
   }, [scopeCtx.availableCollectives, collectiveId])
 
-  if (showLoading) {
+  if (isLoading || scopeCtx.isLoading) {
     return (
       <div className="relative min-h-dvh overflow-x-hidden bg-white">
         <Header title="Feedback" back transparent className="absolute left-0 right-0 z-30" />

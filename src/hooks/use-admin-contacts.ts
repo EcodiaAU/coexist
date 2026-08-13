@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, escapeIlike } from '@/lib/supabase'
 import { logAudit } from '@/lib/audit'
+import { makeOptimistic, patchItem, removeItem, prependItem } from '@/lib/optimistic'
 import type { Tables, TablesInsert, TablesUpdate } from '@/types/database.types'
 
 type EmergencyContact = Tables<'emergency_contacts'>
@@ -82,7 +83,25 @@ export function useCreateContact() {
       await logAudit({ action: 'emergency_contact_created', target_id: data.id, details: { name: input.name } })
       return data
     },
-    onSuccess: () => {
+    // Optimistic prepend to the admin list so the new contact shows the instant
+    // the modal closes. The real row (with server id + canonical ordering)
+    // replaces the temp on invalidate.
+    onMutate: async (input) => {
+      const opt = makeOptimistic<EmergencyContact[]>(qc, ['admin-contacts'])
+      const temp = {
+        ...input,
+        id: `temp-${Date.now()}`,
+        states: input.states ?? [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as EmergencyContact
+      const ctxAdmin = await opt.patch(prependItem(temp))
+      return { ctxAdmin }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx) makeOptimistic<EmergencyContact[]>(qc, ['admin-contacts']).rollback(ctx.ctxAdmin)
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['admin-contacts'] })
       qc.invalidateQueries({ queryKey: ['emergency-contacts'] })
     },
@@ -107,7 +126,21 @@ export function useUpdateContact() {
       await logAudit({ action: 'emergency_contact_updated', target_id: id, details: { name: updates.name } })
       return data
     },
-    onSuccess: () => {
+    // Optimistic edit across both the admin list and the public list.
+    onMutate: async ({ id, ...updates }) => {
+      const optAdmin = makeOptimistic<EmergencyContact[]>(qc, ['admin-contacts'])
+      const optPublic = makeOptimistic<EmergencyContact[]>(qc, ['emergency-contacts'])
+      const patch = patchItem<EmergencyContact>(id, updates as Partial<EmergencyContact>)
+      const [ctxAdmin, ctxPublic] = await Promise.all([optAdmin.patch(patch), optPublic.patch(patch)])
+      return { ctxAdmin, ctxPublic }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx) {
+        makeOptimistic<EmergencyContact[]>(qc, ['admin-contacts']).rollback(ctx.ctxAdmin)
+        makeOptimistic<EmergencyContact[]>(qc, ['emergency-contacts']).rollback(ctx.ctxPublic)
+      }
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['admin-contacts'] })
       qc.invalidateQueries({ queryKey: ['emergency-contacts'] })
     },
@@ -129,7 +162,21 @@ export function useDeleteContact() {
       if (error) throw error
       await logAudit({ action: 'emergency_contact_deleted', target_id: id })
     },
-    onSuccess: () => {
+    // Optimistic removal from both lists; rollback restores on failure.
+    onMutate: async (id) => {
+      const optAdmin = makeOptimistic<EmergencyContact[]>(qc, ['admin-contacts'])
+      const optPublic = makeOptimistic<EmergencyContact[]>(qc, ['emergency-contacts'])
+      const remove = removeItem<EmergencyContact>(id)
+      const [ctxAdmin, ctxPublic] = await Promise.all([optAdmin.patch(remove), optPublic.patch(remove)])
+      return { ctxAdmin, ctxPublic }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx) {
+        makeOptimistic<EmergencyContact[]>(qc, ['admin-contacts']).rollback(ctx.ctxAdmin)
+        makeOptimistic<EmergencyContact[]>(qc, ['emergency-contacts']).rollback(ctx.ctxPublic)
+      }
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['admin-contacts'] })
       qc.invalidateQueries({ queryKey: ['emergency-contacts'] })
     },

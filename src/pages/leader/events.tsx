@@ -12,7 +12,6 @@ import {
     AlertTriangle,
     Plus,
 } from 'lucide-react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useLeaderHeader, useLeaderContext } from '@/components/leader-layout'
 import { useLeaderCollectiveScope } from '@/hooks/use-leader-collective-scope'
 import { Dropdown } from '@/components/dropdown'
@@ -78,11 +77,10 @@ export default function LeaderEventsPage() {
     const q = searchQuery.toLowerCase()
     return allEvents.filter((e) => e.title.toLowerCase().includes(q))
   }, [allEvents, searchQuery])
-  const showLoading = useDelayedLoading(isLoading)
   const { data: stats } = useEventStats(collectiveId)
 
   /* Loading skeleton */
-  if (showLoading) {
+  if (isLoading) {
     return (
       <div className="relative min-h-dvh overflow-x-hidden bg-white">
         <Header title="Events" back transparent className="absolute left-0 right-0 z-30" />

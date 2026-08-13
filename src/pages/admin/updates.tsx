@@ -37,7 +37,6 @@ import { Avatar } from '@/components/avatar'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { formatDateLong, formatRelative } from '@/lib/date-format'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useCollectives } from '@/hooks/use-collective'
 import { useImageUpload } from '@/hooks/use-image-upload'
 import {
@@ -1017,7 +1016,6 @@ export default function AdminUpdatesPage() {
   const [selectedUpdate, setSelectedUpdate] = useState<AdminUpdate | null>(null)
 
   const { data: updates, isLoading } = useAdminUpdates()
-  const showLoading = useDelayedLoading(isLoading)
   const deleteMutation = useDeleteUpdate()
 
   // Filter
@@ -1143,7 +1141,7 @@ export default function AdminUpdatesPage() {
               'transition-all duration-200',
               activeUpdate ? 'w-full lg:w-1/2 xl:w-[45%]' : 'w-full',
             )}>
-              {showLoading ? (
+              {isLoading ? (
                 <Skeleton variant="list-item" count={5} />
               ) : !filtered.length ? (
                 <EmptyState

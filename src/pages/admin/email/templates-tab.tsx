@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import {
   Plus,
   Trash2,
@@ -357,7 +356,6 @@ function TemplateEditor({
 
 export function TemplatesTab() {
   const { data: templates, isLoading } = useTemplates()
-  const showLoading = useDelayedLoading(isLoading)
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [editing, setEditing] = useState<EmailTemplate | null | undefined>(undefined)
@@ -403,7 +401,7 @@ export function TemplatesTab() {
         </Button>
       </div>
 
-      {showLoading ? (
+      {isLoading ? (
         <Skeleton data-eos-id="src/pages/admin/email/templates-tab.tsx#43" variant="list-item" count={4} />
       ) : !templates?.length ? (
         <EmptyState data-eos-id="src/pages/admin/email/templates-tab.tsx#44"

@@ -31,7 +31,6 @@ import {
     Celebration,
     WhatsNext,
 } from '@/components'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { cn } from '@/lib/cn'
 
 /* ------------------------------------------------------------------ */
@@ -121,7 +120,6 @@ export default function CheckInPage() {
 
   const { data: profileData } = useProfile()
   const { data: event, isLoading } = useEventDetail(eventId)
-  const showLoading = useDelayedLoading(isLoading)
   const checkInMutation = useCheckIn()
   const codeCheckIn = useCodeCheckIn()
   const { validateRegistration } = useCheckInValidation()
@@ -319,7 +317,7 @@ export default function CheckInPage() {
     }
   }, [eventId, user, checkInMutation])
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <Page swipeBack header={<Header title="Check In" back />}>
         <div className="pt-8 space-y-4">
