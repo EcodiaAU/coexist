@@ -8,6 +8,7 @@ import {
     Clock,
     ClipboardList,
     ArrowUpRight,
+    Leaf,
 } from 'lucide-react'
 import { useAdminHeader } from '@/components/admin-layout'
 import { Dropdown } from '@/components/dropdown'
@@ -25,6 +26,10 @@ import {
     dateRangeOptions,
 } from '@/hooks/use-admin-dashboard'
 import { useCollectives } from '@/hooks/use-collective'
+import { useAdminCollectivesNextEvent } from '@/hooks/use-admin-collectives'
+import { formatDate } from '@/lib/date-format'
+import { OptimizedImage } from '@/components/optimized-image'
+import { coverImagePositionStyle } from '@/lib/cover-image'
 
 
 const scaleIn = {
@@ -217,6 +222,119 @@ function SectionHeader({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Collectives - next event + registrations                           */
+/* ------------------------------------------------------------------ */
+
+function CollectivesNextEventSection() {
+  const { data, isLoading, isError } = useAdminCollectivesNextEvent()
+
+  if (isLoading) {
+    return (
+      <div data-eos-id="src/pages/admin/index.tsx#59" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div data-eos-id="src/pages/admin/index.tsx#60" key={i} className="aspect-[4/3] rounded-md bg-neutral-100 animate-pulse" />
+        ))}
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <p data-eos-id="src/pages/admin/index.tsx#65" className="text-sm text-neutral-400 px-1">Couldn't load collective events. Try refreshing.</p>
+    )
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <p data-eos-id="src/pages/admin/index.tsx#66" className="text-sm text-neutral-400 px-1">No active collectives yet.</p>
+    )
+  }
+
+  return (
+    <div data-eos-id="src/pages/admin/index.tsx#67" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {data.map((row) => {
+        const ev = row.nextEvent
+        // Event card links to the event; a collective with nothing scheduled
+        // links to its admin detail (there is no event to open). Image falls
+        // back event cover -> collective cover -> nature gradient + leaf mark.
+        const to = ev ? `/events/${ev.id}` : `/admin/collectives/${row.collectiveId}`
+        const cover = ev?.coverImageUrl ?? row.coverImageUrl
+        return (
+          <Link data-eos-id="src/pages/admin/index.tsx#68"
+            key={row.collectiveId}
+            to={to}
+            aria-label={ev ? `${ev.title} - ${row.collectiveName}` : row.collectiveName}
+            className={cn(
+              'group relative block overflow-hidden rounded-md shadow-sm',
+              'aspect-[4/3] active:scale-[0.99] transition-transform duration-150',
+              !ev && 'opacity-75',
+            )}
+          >
+            {/* Full-bleed cover imagery (or a nature gradient + leaf watermark) */}
+            {cover ? (
+              <OptimizedImage data-eos-id="src/pages/admin/index.tsx#69"
+                src={cover}
+                alt=""
+                aspectRatio="4/3"
+                wrapperClassName="absolute inset-0"
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="absolute inset-0"
+                imgStyle={ev ? coverImagePositionStyle(ev.coverImagePositionX, ev.coverImagePositionY) : undefined}
+              />
+            ) : (
+              <>
+                <div data-eos-id="src/pages/admin/index.tsx#70" className="absolute inset-0 bg-gradient-to-br from-primary-600 to-moss-700" aria-hidden="true" />
+                <div data-eos-id="src/pages/admin/index.tsx#71" className="absolute -right-3 -top-3 text-white/10 pointer-events-none [&_svg]:w-32 [&_svg]:h-32" aria-hidden="true">
+                  <Leaf data-eos-id="src/pages/admin/index.tsx#72" strokeWidth={1} />
+                </div>
+              </>
+            )}
+
+            {/* Legibility gradient */}
+            <div data-eos-id="src/pages/admin/index.tsx#73" className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" aria-hidden="true" />
+
+            {/* Top-right: registrations pill */}
+            {ev && (
+              <div data-eos-id="src/pages/admin/index.tsx#74" className="absolute top-3 right-3">
+                <span data-eos-id="src/pages/admin/index.tsx#75" className="inline-flex items-center gap-1 rounded-full bg-black/45 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 shadow-sm">
+                  <Users data-eos-id="src/pages/admin/index.tsx#76" size={12} className="shrink-0" />
+                  {ev.registrationCount}
+                  {typeof ev.capacity === 'number' && (
+                    <span data-eos-id="src/pages/admin/index.tsx#77" className="font-medium text-white/70">/ {ev.capacity}</span>
+                  )}
+                  <span data-eos-id="src/pages/admin/index.tsx#78" className="sr-only">registered</span>
+                </span>
+              </div>
+            )}
+
+            {/* Bottom overlay: collective eyebrow + event title + date */}
+            <div data-eos-id="src/pages/admin/index.tsx#79" className="absolute inset-x-0 bottom-0 p-3.5">
+              <p data-eos-id="src/pages/admin/index.tsx#80" data-eos-var="row.collectiveName" data-eos-var-label="Collective" data-eos-var-scope="item" className="text-[11px] font-semibold uppercase tracking-wider text-white/75 flex items-center gap-1 truncate">
+                <MapPin data-eos-id="src/pages/admin/index.tsx#81" size={11} className="shrink-0" />
+                <span data-eos-id="src/pages/admin/index.tsx#82" className="truncate">{row.collectiveName}</span>
+              </p>
+              {ev ? (
+                <>
+                  <h4 data-eos-id="src/pages/admin/index.tsx#83" data-eos-var="ev.title" data-eos-var-label="Event" data-eos-var-scope="item" className="font-heading text-sm sm:text-base font-bold text-white line-clamp-2 leading-snug drop-shadow-sm mt-0.5">
+                    {ev.title}
+                  </h4>
+                  <p data-eos-id="src/pages/admin/index.tsx#84" className="flex items-center gap-1 mt-1 text-xs text-white/85">
+                    <CalendarDays data-eos-id="src/pages/admin/index.tsx#85" size={11} className="shrink-0" />
+                    {formatDate(ev.date_start)}
+                  </p>
+                </>
+              ) : (
+                <p data-eos-id="src/pages/admin/index.tsx#86" className="text-sm font-semibold text-white/80 mt-0.5">No upcoming event</p>
+              )}
+            </div>
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Admin Dashboard Page                                               */
 /* ------------------------------------------------------------------ */
 
@@ -332,6 +450,18 @@ export default function AdminDashboardPage() {
               Impact Surveys
             </SectionHeader>
             <EventsMissingImpactCard data-eos-id="src/pages/admin/index.tsx#58" showWhenEmpty />
+          </motion.div>
+
+          {/* ── Upcoming registrations: each collective's next event ── */}
+          <motion.div data-eos-id="src/pages/admin/index.tsx#87" variants={rm ? undefined : fadeUp}>
+            <SectionHeader data-eos-id="src/pages/admin/index.tsx#88"
+              icon={<Users data-eos-id="src/pages/admin/index.tsx#89" size={16} />}
+              sub="Registration counts for each collective's next event"
+              action={{ label: 'All events', to: '/admin/events' }}
+            >
+              Upcoming Registrations
+            </SectionHeader>
+            <CollectivesNextEventSection data-eos-id="src/pages/admin/index.tsx#90" />
           </motion.div>
 
         </motion.div>

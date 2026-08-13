@@ -3,6 +3,7 @@ import { supabase, escapeIlike } from '@/lib/supabase'
 import { fetchCanonicalImpactRows, composeSummaryMetrics } from '@/lib/impact-query'
 import { logAudit } from '@/lib/audit'
 import { STATUS_FILTERS } from '@/lib/query-builders'
+import { wallClockNow } from '@/lib/date-format'
 import type {
   Database,
   Tables,
@@ -217,6 +218,127 @@ export function useAdminCollectiveEvents(collectiveId: string | undefined) {
       } as AdminCollectiveEvent))
     },
     enabled: !!collectiveId,
+    staleTime: 2 * 60 * 1000,
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/*  Next upcoming event + registrations, per active collective          */
+/* ------------------------------------------------------------------ */
+
+export interface AdminCollectiveNextEvent {
+  collectiveId: string
+  collectiveName: string
+  /** Collective cover, used as the card image when the event has none. */
+  coverImageUrl: string | null
+  nextEvent: {
+    id: string
+    title: string
+    date_start: string
+    capacity: number | null
+    registrationCount: number
+    coverImageUrl: string | null
+    coverImagePositionX: number | null
+    coverImagePositionY: number | null
+  } | null
+}
+
+/**
+ * For each active (non-national) collective, its single next upcoming event and
+ * how many people are registered for it. Powers the admin dashboard overview.
+ *
+ * Three round-trips, all batched - never N+1:
+ *   1. active collectives (id, name, cover)
+ *   2. all upcoming published events for those collectives, earliest-first;
+ *      reduced client-side to the first (soonest) event per collective
+ *   3. registration counts for just those next-event ids
+ *
+ * Floating-local wall-clock now (not UTC) so the upcoming cutoff flips at the
+ * viewer's local midnight, matching useCollectiveEvents. An event still counts
+ * as upcoming while it is in progress (date_end in the future), same as the
+ * public collective page. Registration count uses the shared REGISTRATION
+ * status filter, so it agrees with the collective-detail events list.
+ */
+export function useAdminCollectivesNextEvent() {
+  return useQuery({
+    queryKey: ['admin-collectives-next-event'],
+    queryFn: async (): Promise<AdminCollectiveNextEvent[]> => {
+      const { data: collectives, error: cErr } = await supabase
+        .from('collectives')
+        .select('id, name, cover_image_url')
+        .eq('is_active', true)
+        .neq('is_national', true)
+        .order('name')
+      if (cErr) throw cErr
+
+      const collectiveList = collectives ?? []
+      if (collectiveList.length === 0) return []
+
+      const now = wallClockNow().toISOString()
+      const collectiveIds = collectiveList.map((c) => c.id)
+
+      const { data: events, error: eErr } = await supabase
+        .from('events')
+        .select('id, collective_id, title, date_start, capacity, cover_image_url, cover_image_position_x, cover_image_position_y')
+        .in('collective_id', collectiveIds)
+        .eq('status', 'published')
+        .or(`date_start.gte.${now},date_end.gte.${now}`)
+        .order('date_start', { ascending: true })
+      if (eErr) throw eErr
+
+      // Earliest upcoming event per collective (list is already date_start ASC,
+      // so the first one we see for a collective is its next event).
+      type UpcomingRow = {
+        id: string
+        collective_id: string | null
+        title: string
+        date_start: string
+        capacity: number | null
+        cover_image_url: string | null
+        cover_image_position_x: number | null
+        cover_image_position_y: number | null
+      }
+      const nextByCollective = new Map<string, UpcomingRow>()
+      for (const ev of (events ?? []) as UpcomingRow[]) {
+        if (!ev.collective_id) continue
+        if (!nextByCollective.has(ev.collective_id)) nextByCollective.set(ev.collective_id, ev)
+      }
+
+      const nextEventIds = [...nextByCollective.values()].map((ev) => ev.id)
+      const regCounts = new Map<string, number>()
+      if (nextEventIds.length > 0) {
+        const { data: regRows, error: rErr } = await supabase
+          .from('event_registrations')
+          .select('event_id')
+          .in('event_id', nextEventIds)
+          .in('status', STATUS_FILTERS.events.REGISTRATION)
+        if (rErr) throw rErr
+        for (const row of (regRows ?? []) as { event_id: string }[]) {
+          regCounts.set(row.event_id, (regCounts.get(row.event_id) ?? 0) + 1)
+        }
+      }
+
+      return collectiveList.map((c) => {
+        const ev = nextByCollective.get(c.id)
+        return {
+          collectiveId: c.id,
+          collectiveName: c.name,
+          coverImageUrl: c.cover_image_url ?? null,
+          nextEvent: ev
+            ? {
+                id: ev.id,
+                title: ev.title,
+                date_start: ev.date_start,
+                capacity: ev.capacity,
+                registrationCount: regCounts.get(ev.id) ?? 0,
+                coverImageUrl: ev.cover_image_url ?? null,
+                coverImagePositionX: ev.cover_image_position_x ?? null,
+                coverImagePositionY: ev.cover_image_position_y ?? null,
+              }
+            : null,
+        }
+      })
+    },
     staleTime: 2 * 60 * 1000,
   })
 }
