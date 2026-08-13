@@ -141,6 +141,14 @@ export function resolveCollectiveCoords(
   if (slug) {
     const fallback = COLLECTIVE_SLUG_COORDS[slug]
     if (fallback) return fallback
+    // A slug is often the city name with a suffix appended on create
+    // ("darwin" -> "darwin-collective"), which misses an exact table key
+    // and silently drops the pin. Try the same slug with a known suffix
+    // stripped before giving up.
+    const stripped = slug.replace(/-(collective|city|group)$/, '')
+    if (stripped !== slug && COLLECTIVE_SLUG_COORDS[stripped]) {
+      return COLLECTIVE_SLUG_COORDS[stripped]
+    }
     if (import.meta.env.DEV) {
       console.warn(
         `[collective-map] no coords for slug "${slug}". Add to COLLECTIVE_SLUG_COORDS in src/lib/geo.ts or populate location_point on the row, otherwise this collective will not appear on the map.`,
