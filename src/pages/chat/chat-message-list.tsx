@@ -1,6 +1,7 @@
 import {
   Fragment,
   useCallback,
+  useMemo,
   useRef,
   useEffect,
   useLayoutEffect,
@@ -113,6 +114,24 @@ function dateHeader(dateStr: string): string {
   if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
   return d.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })
 }
+
+/* ------------------------------------------------------------------ */
+/*  Chat render cap                                                     */
+/*                                                                     */
+/*  Bound the DOM to the most-recent N messages. The message query      */
+/*  cache can hold hundreds of messages for a long-lived / active       */
+/*  conversation; rendering every bubble at once mounts hundreds of     */
+/*  subtrees plus a per-message reactions subscription and signed-image */
+/*  query in one synchronous pass, which blocked the JS main thread     */
+/*  2-6s and tripped the iOS OS-watchdog (App Hang cluster).            */
+/*                                                                     */
+/*  Older messages stay buffered in memory and are revealed in chunks   */
+/*  as the user scrolls toward the top, which rides the same native     */
+/*  overflow-anchor prepend-stability the pagination path already       */
+/*  relies on - so the viewport does not jump when older rows appear.   */
+/* ------------------------------------------------------------------ */
+const CHAT_RENDER_CAP_INITIAL = 80
+const CHAT_RENDER_CAP_CHUNK = 60
 
 /* ------------------------------------------------------------------ */
 /*  Inline Poll Renderer                                               */
@@ -671,28 +690,76 @@ export function ChatMessageList({
   const [highlightedId, setHighlightedId] = useState<string | null>(null)
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  /* ---- Render cap: only mount the most-recent N messages; reveal older in
+   *      chunks on scroll-up. Reset to the initial cap when the room changes.
+   *      The reset runs during render (React "adjust state on prop change"
+   *      pattern) so a new room never first-paints with a grown cap carried
+   *      over from the previous conversation - which would re-introduce the
+   *      very hang this bounds. */
+  const [renderCap, setRenderCap] = useState(CHAT_RENDER_CAP_INITIAL)
+  const renderCapRoomRef = useRef(roomKey)
+  if (renderCapRoomRef.current !== roomKey) {
+    renderCapRoomRef.current = roomKey
+    setRenderCap(CHAT_RENDER_CAP_INITIAL)
+  }
+
+  // Trim the grouped messages to the last `renderCap` across all date groups.
+  // Groups are walked newest-first; a partially-included oldest group keeps
+  // only its most-recent slice. `hasHiddenOlder` drives reveal-on-scroll-up.
+  const { cappedGroups, hasHiddenOlder } = useMemo(() => {
+    let budget = renderCap
+    let hidden = false
+    const out: { date: string; messages: AnyMessage[] }[] = []
+    for (let i = messageGroups.length - 1; i >= 0 && budget > 0; i--) {
+      const g = messageGroups[i]
+      if (g.messages.length <= budget) {
+        out.unshift(g)
+        budget -= g.messages.length
+      } else {
+        out.unshift({ date: g.date, messages: g.messages.slice(g.messages.length - budget) })
+        budget = 0
+        hidden = true
+      }
+    }
+    // Older messages remain if we stopped before consuming every group, or a
+    // group was only partially included above.
+    if (!hidden && out.length < messageGroups.length) hidden = true
+    return { cappedGroups: out, hasHiddenOlder: hidden }
+  }, [messageGroups, renderCap])
+
   const handleReplyTap = useCallback(
     (parentId: string) => {
       const container = scrollContainerRef.current
       if (!container) return
-      const target = container.querySelector<HTMLElement>(
-        `[data-message-id="${CSS.escape(parentId)}"]`,
-      )
-      if (!target) {
-        // Parent message likely lives in an older page. Fetch more history
-        // and surface a toast - cheaper than full thread expansion in v1.
-        if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+      const scrollToTarget = () => {
+        const target = container.querySelector<HTMLElement>(
+          `[data-message-id="${CSS.escape(parentId)}"]`,
+        )
+        if (!target) return false
+        target.scrollIntoView({
+          behavior: shouldReduceMotion ? 'auto' : 'smooth',
+          block: 'center',
+        })
+        setHighlightedId(parentId)
+        if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+        highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 1600)
+        return true
+      }
+      if (scrollToTarget()) return
+      // Not in the DOM. If it is buffered but hidden by the render cap, reveal
+      // the whole buffer and retry next frame before falling back to fetching
+      // older history from the server.
+      if (hasHiddenOlder) {
+        setRenderCap(allMessages.length)
+        requestAnimationFrame(() => {
+          if (!scrollToTarget() && hasNextPage && !isFetchingNextPage) fetchNextPage()
+        })
         return
       }
-      target.scrollIntoView({
-        behavior: shouldReduceMotion ? 'auto' : 'smooth',
-        block: 'center',
-      })
-      setHighlightedId(parentId)
-      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
-      highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 1600)
+      // Parent message likely lives in an older page still on the server.
+      if (hasNextPage && !isFetchingNextPage) fetchNextPage()
     },
-    [scrollContainerRef, hasNextPage, isFetchingNextPage, fetchNextPage, shouldReduceMotion],
+    [scrollContainerRef, hasNextPage, isFetchingNextPage, fetchNextPage, shouldReduceMotion, hasHiddenOlder, allMessages.length],
   )
 
   useEffect(() => {
@@ -830,11 +897,18 @@ export function ChatMessageList({
       const distFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
       onScrollChange(distFromBottom > (isCollective ? 200 : 300))
 
-      if (container.scrollTop < 200 && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage()
+      if (container.scrollTop < 200) {
+        // Reveal buffered-but-hidden older messages first (cheap, no network,
+        // native overflow-anchor holds the viewport), then fall through to
+        // fetching the next page from the server once the buffer is exhausted.
+        if (hasHiddenOlder) {
+          setRenderCap((c) => c + CHAT_RENDER_CAP_CHUNK)
+        } else if (hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
       }
     })
-  }, [isCollective, hasNextPage, isFetchingNextPage, fetchNextPage, scrollContainerRef, onScrollChange])
+  }, [isCollective, hasNextPage, isFetchingNextPage, fetchNextPage, scrollContainerRef, onScrollChange, hasHiddenOlder])
 
   /** Reset initialScrollDone when the room changes (parent will remount or change props) */
   useEffect(() => {
@@ -1076,7 +1150,7 @@ export function ChatMessageList({
               </div>
             )}
 
-            {messageGroups.map((group) => {
+            {cappedGroups.map((group) => {
               // 1.8.5 item 9: filter once, then walk pairwise so we can
               // compute `isContinuation` against the previous *visible*
               // message in this date-group. System messages reset the run

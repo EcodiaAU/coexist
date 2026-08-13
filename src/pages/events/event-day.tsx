@@ -71,6 +71,7 @@ import { SearchBar } from '@/components/search-bar'
 import { cn } from '@/lib/cn'
 import { attendeeName } from '@/lib/attendee-name'
 import { FitText } from '@/components/fit-text'
+import { Virtualized } from '@/components/virtualized'
 import { supabase } from '@/lib/supabase'
 import { WalkInSheet } from '@/components/walk-in-sheet'
 import { useQueryClient } from '@tanstack/react-query'
@@ -98,6 +99,12 @@ import { useQueryClient } from '@tanstack/react-query'
 // and the search bar above narrows to any name. A truncated name is strictly
 // better than an app the OS kills.
 const ROSTER_LIGHT_THRESHOLD = 30
+
+// Flattened roster item: a section header or an attendee row. Used to window
+// the three live sections into a single virtualized list on large events.
+type VirtualRosterItem =
+  | { kind: 'header'; key: string; title: string; tone: string; count: number }
+  | { kind: 'row'; key: string; person: RosterPerson }
 
 function AttendeeRow({
   person,
@@ -729,6 +736,26 @@ export default function EventDayPage() {
     />
   )
 
+  // Flattened item model for the virtualized roster (large events only). The
+  // three live sections (Expected / Checked in / Waitlist) collapse into one
+  // array of header + row items so a single windowed list mounts only the rows
+  // in view. Walk-ins and the collapsed "Not attending" section stay in normal
+  // flow below (leader-added / opt-in, rarely large). Only built when needed.
+  const virtualRosterItems = useMemo<VirtualRosterItem[]>(() => {
+    const out: VirtualRosterItem[] = []
+    const sections = [
+      { key: 'expected', title: 'Expected', tone: 'text-sky-700', people: filteredGroups.expected },
+      { key: 'checkedIn', title: 'Checked in', tone: 'text-success-700', people: filteredGroups.checkedIn },
+      { key: 'waitlist', title: 'Waitlist', tone: 'text-bark-700', people: filteredGroups.waitlist },
+    ] as const
+    for (const s of sections) {
+      if (s.people.length === 0) continue
+      out.push({ kind: 'header', key: `h-${s.key}`, title: s.title, tone: s.tone, count: s.people.length })
+      for (const p of s.people) out.push({ kind: 'row', key: p.user_id, person: p })
+    }
+    return out
+  }, [filteredGroups])
+
   const isLoading = eventLoading || rosterLoading || roleLoading
   const showLoading = useDelayedLoading(isLoading)
 
@@ -1003,6 +1030,31 @@ export default function EventDayPage() {
                   description={searchQuery ? 'Try a different search' : 'No one has registered yet'}
                 />
               </motion.div>
+            ) : lightRoster ? (
+              // Large roster: window the three live sections so only the rows in
+              // view mount. Bounds the App Hang cluster (COEXIST-K/S/X) that came
+              // from mounting every attendee row (avatar + subscriptions) at once.
+              // Plain div (no motion transform) so the virtualizer's scrollMargin
+              // measurement against #main-content is not skewed by an entrance
+              // animation's transient translateY.
+              <div>
+                <Virtualized
+                  items={virtualRosterItems}
+                  getKey={(i) => virtualRosterItems[i].key}
+                  estimateSize={(i) => (virtualRosterItems[i].kind === 'header' ? 44 : 76)}
+                  overscan={10}
+                  renderItem={(item) =>
+                    item.kind === 'header' ? (
+                      <div className="flex items-center justify-between mb-2 px-1 pt-3">
+                        <h3 className={cn('text-sm font-bold', item.tone)}>{item.title}</h3>
+                        <span className="text-xs font-semibold text-neutral-400">{item.count}</span>
+                      </div>
+                    ) : (
+                      renderRosterRow(item.person)
+                    )
+                  }
+                />
+              </div>
             ) : (
               <motion.div variants={fadeUp}>
                 {([
