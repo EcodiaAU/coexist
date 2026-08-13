@@ -54,22 +54,30 @@ ABOUT CO-EXIST:
 - Contact: hello@coexistaus.org
 - Country: Australia (Southern Hemisphere - summer is Dec-Feb)
 
-BRAND COLOURS (MATCH THE LIVE HOMEPAGE - do NOT use any other green):
-- Primary olive-sage: #879e62 (this is the EXACT colour the homepage Impact section uses; the hero banner of every Co-Exist email must be this colour)
-- Primary darker: #5d7340 (for gradient ends and hover states)
-- Primary lighter: #a3b88a (for subtle backgrounds)
-- Secondary earth: #8B6F47
-- Accent orange (CTAs): #E8913A
-- Background: #f4f2ec (warm off-white that pairs with #879e62)
-- Card background: #fbfaf6
-- Text: #2d3a22 (warm dark green - NEVER pure black #000)
-- Soft text: #f4f2ec (warm off-white, used on top of #879e62 hero)
-- Border: #e6e3da
+BRAND COLOURS (MATCH THE LIVE APP - do NOT use any other green):
+- Primary olive-sage: #869e62 (the EXACT --color-brand the app uses; the hero of every Co-Exist email is this colour, or a full-bleed photo over it)
+- Primary darker: #5d7340 (gradient ends, links)
+- Primary lighter: #a3b88a (subtle backgrounds)
+- Olive for dark mode: #93ab6d (brightened so it pops on a dark background)
+- Accent (CTAs): the olive #869e62 filled button is the primary action
+- Background (light): #f4f2ec (warm off-white)
+- Card surface (light): #ffffff
+- Warm tint block (light): #f5f4ee
+- Text (light): #2d3a22 (warm dark green - NEVER pure black #000)
+- Muted text (light): #7d8768
+- Hairline/border (light): #ece8de
+- On the olive/photo hero, text is #ffffff with white/85 subtitles.
+- DARK MODE surfaces (applied by the @media block below): page #111309, card #1c1f16, text #ece9e0, muted #a9b199, hairline rgba(255,255,255,0.12).
 
-DO NOT use #4A7C59, #1B4332, or any truer-green sage. The brand is olive-sage #879e62. Mixing a different green into the body makes the email look off-brand from the in-app Impact section.
+DO NOT use #4A7C59, #1B4332, or any truer-green sage. The brand is olive-sage #869e62.
 
-FONTS:
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+FONTS (slim, matching the app's Eau Sans -> Montserrat fallback):
+- Load Montserrat via Google Fonts inside a <style> block in <head>:
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+- Use this stack on <body> and every button/text element:
+    font-family:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+- Body copy weight 400-500, headings 600-700, tight display leading (~1.16). Overlines are
+  uppercase, 11px, font-weight 600, letter-spacing 0.08em. This reads slim and modern, like the app.
 
 BRAND IMAGES (logo - read carefully, this matters):
 - Use this exact URL for the wordmark in the email header:
@@ -100,92 +108,105 @@ Templates use {{double_braces}} for fields the admin fills in when creating a ca
 Any other {{variables}} you create are editable fields the admin will fill in per campaign. Use descriptive names like {{event_title}}, {{event_date}}, {{event_location}}, {{cta_url}}, {{hero_image_url}}, {{announcement_text}}, etc. The admin will see these as form fields.
 
 HTML EMAIL RULES:
-- Inline CSS only (many email clients strip <style> blocks)
-- Table-based layout (no flexbox/grid - email clients don't support them)
-- Max width: 600px, centered with margin: 0 auto
-- Images: use width/height attributes AND inline styles for consistency
-- Mobile: tables should be 100% width so they collapse on small screens
-- Buttons: min 44px height, border-radius for rounded corners, background-color for fill
-- Links should use the accent orange colour
-- Always include alt text on images
+- Table-based layout (no flexbox/grid - email clients do not support them).
+- Every text element carries an explicit inline color AND the Montserrat
+  font stack. Never rely on inherited colour or font.
+- Head MUST contain the Montserrat @import (in a <style> block), the
+  viewport meta, and the light/dark scheme meta (see LIGHT/DARK below).
+- Max width 600px, one card centred with margin:0 auto.
+- Images: width/height attributes AND inline styles, always with alt text.
+- Links use the olive #5d7340 (or #869e62). No orange.
+- The CTA is ONE olive filled button (#869e62), white text, radius 12px,
+  line-height:1, inside <td align="center">. No orange, no second button.
 
-DARK MODE (critical - emails were rendering with washed-out unreadable text):
-- The <head> MUST contain BOTH of these meta tags so clients do not remap
-  the palette in dark mode:
-    <meta name="color-scheme" content="light">
-    <meta name="supported-color-schemes" content="light">
-- EVERY text element MUST carry an explicit inline color. Never rely on a
-  default or inherited colour. Body copy is #2d3a22 on a #ffffff or #f4f2ec
-  cell. Hero copy is #ffffff. A heading with no color: set on it will look
-  washed out in dark mode - always set it.
-- Never put light-grey text on white (it disappears in dark mode). Minimum
-  body text colour is #2d3a22.
+LIGHT/DARK AWARE (this REPLACES the old light-lock; the app is beautiful in
+both and so is the email):
+- The <head> MUST declare BOTH schemes so clients render dark properly:
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+- Inline colours are the LIGHT baseline, chosen to also survive Gmail /
+  Outlook forced-dark remapping (explicit colour on every node; never
+  light-grey on white).
+- Put class hooks on themable elements AND include this EXACT <style> block
+  in <head> so Apple Mail / iOS Mail restyle for dark. Classes: ex-body
+  (page bg), ex-card (card surface), ex-text (body copy), ex-heading
+  (headings), ex-muted (labels/footer), ex-tint (warm callout block),
+  ex-hairline (borders), ex-btn (CTA), ex-accent (stat numbers/markers):
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+      body{margin:0;padding:0;width:100%!important;}
+      img{border:0;outline:none;text-decoration:none;}
+      @media only screen and (max-width:600px){
+        .ex-card{border-radius:14px!important;}
+        .ex-pad{padding-left:20px!important;padding-right:20px!important;}
+      }
+      @media (prefers-color-scheme: dark){
+        .ex-body{background:#111309!important;}
+        .ex-card{background:#1c1f16!important;}
+        .ex-text{color:#ece9e0!important;}
+        .ex-heading{color:#f3f1e9!important;}
+        .ex-muted{color:#a9b199!important;}
+        .ex-tint{background:#232719!important;}
+        .ex-hairline{border-color:rgba(255,255,255,0.12)!important;}
+        .ex-btn{background:#93ab6d!important;color:#12150b!important;}
+        .ex-accent{color:#a9c17f!important;}
+        a{color:#b9cb95!important;}
+      }
+      [data-ogsc] .ex-body{background:#111309!important;}
+      [data-ogsc] .ex-card{background:#1c1f16!important;}
+      [data-ogsc] .ex-text{color:#ece9e0!important;}
+      [data-ogsc] .ex-muted{color:#a9b199!important;}
+      [data-ogsc] .ex-btn{background:#93ab6d!important;color:#12150b!important;}
+    </style>
 
-PADDING / MOBILE (was too cramped and over-nested):
-- ONE level of cards. Do NOT nest a card inside a card inside a card. The
-  body content sits in a single white content cell.
-- Side padding on the main content cell: 24px (not 32-40). Vertical padding
-  between sections: 20-24px. Keep it breathable but not cavernous.
-- Do not wrap every paragraph in its own bordered box. Plain paragraphs with
-  margin are correct; reserve a bordered/tinted card for ONE genuinely
-  distinct callout (e.g. the event details block).
-- On a 360px phone the content must never feel pinched. Test mentally at
-  360px: the side padding plus content must fit comfortably.
+PADDING (the old emails squished on mobile from nested horizontal padding):
+- EXACTLY ONE horizontal padding level. The single 600px card has ONE
+  content cell with padding:28px 24px. Do NOT add border-left/right on the
+  body cell, and do NOT nest a padded card inside the padded content cell.
+- Outer wrapper adds only vertical padding and a small side gutter (<=12px).
+- Reserve ONE warm-tint block (class ex-tint) for a single distinct callout
+  (the event detail list). Plain paragraphs with margin otherwise.
+- 360px math: card 24px each side leaves ~312px of content. Never less.
 
-STRUCTURE (suggested, not rigid):
-1. Hero (ONE unified block: the logo and the heading text live in the
-   SAME table cell, not two separate sections). Use this exact
-   skeleton verbatim, only swapping in the heading and subtitle text:
+STRUCTURE:
+1. Full-bleed hero (ONE cell: small white wordmark at top, heading + optional
+   overline sit BOTTOM-LEFT over the image, matching the app's event tiles).
+   Use this skeleton, swapping the heading/overline/subtitle text:
 
-   <tr>
-     <td bgcolor="#879e62" style="background-color:#879e62;background-image:url('{{hero_image_url}}');background-size:cover;background-position:{{hero_focal_x}}% {{hero_focal_y}}%;background-repeat:no-repeat;border-radius:20px 20px 0 0;">
-       <div style="background-color:rgba(0,0,0,{{hero_overlay_opacity}});border-radius:20px 20px 0 0;padding:40px 32px;text-align:center;">
-         <img src="https://app.coexistaus.org/logos/white-wordmark.png" alt="Co-Exist" width="150" style="width:150px;height:auto;display:block;margin:0 auto 22px auto;border:0;outline:none;" />
-         <h1 style="color:#ffffff;margin:0;font-size:26px;font-weight:700;line-height:1.3;">YOUR HEADING HERE</h1>
-         <p style="color:rgba(255,255,255,0.92);margin:12px 0 0 0;font-size:15px;line-height:1.5;">Optional subtitle here</p>
-       </div>
-     </td>
-   </tr>
+   <tr><td bgcolor="#869e62" class="ex-hero" style="background-color:#869e62;background-image:linear-gradient(to top, rgba(13,18,8,0.80) 0%, rgba(13,18,8,0.34) 46%, rgba(13,18,8,0.05) 100%), url('{{hero_image_url}}');background-size:cover;background-position:{{hero_focal_x}}% {{hero_focal_y}}%;background-repeat:no-repeat;">
+     <div class="ex-hero-pad" style="padding:128px 28px 26px 28px;">
+       <img src="https://app.coexistaus.org/logos/white-wordmark.png" alt="Co-Exist" width="116" style="width:116px;height:auto;display:block;margin:0 0 14px 0;border:0;" />
+       <p style="margin:0 0 8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:rgba(255,255,255,0.82);">OPTIONAL OVERLINE</p>
+       <h1 class="ex-hero-h" style="color:#ffffff;margin:0;font-size:29px;font-weight:700;line-height:1.16;letter-spacing:-0.01em;">YOUR HEADING</h1>
+       <p style="color:rgba(255,255,255,0.90);margin:11px 0 0 0;font-size:15px;line-height:1.5;">Optional subtitle</p>
+     </div>
+   </td></tr>
 
    WHY this exact shape:
-   - The logo is centred via display:block;margin:0 auto and the cell's
-     text-align:center. NEVER left-align the logo.
-   - bgcolor + background-color:#879e62 is the ALWAYS-present olive
-     fallback. When {{hero_image_url}} is empty the url('') is ignored
-     and the whole hero is solid olive. When it is set the photo paints
-     over the olive.
-   - {{hero_overlay_opacity}} is 0 when there is no image (so a plain
-     olive hero has NO dark wash) and ~0.35 when there is an image (so
-     the white heading stays legible over any photo).
-   - Do NOT add a separate logo bar above or below this block. The logo
-     belongs inside this one hero cell.
-2. Body. Content sections with clear hierarchy.
-3. CTA. Prominent button in accent orange (#E8913A). The CTA button
-   MUST be horizontally centred. Wrap it in <td align="center"
-   style="text-align:center;padding:24px 0;"> with the <a> as an
-   inline-block. Email clients only honour centre alignment if the
-   table cell carries align="center".
-   The button <a> MUST set line-height:1 (NOT inherited, or there is a
-   blank line of dead space under the label) and symmetric padding,
-   e.g. style="display:inline-block;background:#E8913A;color:#ffffff;
-   padding:14px 30px;border-radius:12px;font-size:15px;font-weight:600;
-   line-height:1;text-decoration:none;". No <br> inside or right after
-   the button.
-
-ALIGNMENT (mobile looked uneven):
-- Centre-align the hero, every heading, the CTA, and the main message
-  paragraphs. A consistent centre column reads clean on a phone; mixed
-  left/centre looks broken.
-- Use ONE consistent vertical gap between blocks (20px). Do not mix
-  8px here and 40px there.
-- Every section uses the same horizontal padding so left and right
-  edges line up down the whole email.
-4. Footer. Social links, mailing address line, and a working
-   unsubscribe link. ALWAYS use {{unsubscribe_url}} as the href on the
-   unsubscribe link, e.g.
-   <a href="{{unsubscribe_url}}">Unsubscribe</a>. NEVER write a
-   placeholder href like "#" or "[unsubscribe]" or "your-link-here".
-   The {{unsubscribe_url}} variable is auto-filled per recipient.
+   - The stacked linear-gradient darkens the BOTTOM of the photo so the white
+     heading stays legible; the top of the photo stays clear. This matches the
+     app's tile gradient.
+   - bgcolor + background-color:#869e62 is the ALWAYS-present olive fallback
+     (Outlook shows solid olive). When {{hero_image_url}} is empty, drop the
+     url() layer and use background-image:linear-gradient(135deg,#869e62,#5d7340)
+     so a no-image hero is a clean olive gradient with a shorter top padding
+     (~38px instead of 128px).
+   - Heading and logo are BOTTOM-LEFT (the app language). Do NOT centre them.
+   - No separate logo bar. The wordmark lives inside this hero cell.
+2. Body. One content cell, ex-pad + ex-card, padding:28px 24px 10px. Paragraphs
+   are ex-text, 15px, line-height 1.65. Headings are ex-heading.
+3. Event / key detail: the ex-tint block (warm tint, ex-hairline border,
+   radius 14px) with small uppercase ex-muted overline labels over ex-text
+   values. Do NOT wrap every line in its own box.
+4. CTA. ONE olive button:
+   <td align="center" class="ex-pad ex-card" style="padding:6px 24px 30px;text-align:center;">
+     <a class="ex-btn" href="{{cta_url}}" style="display:inline-block;background:#869e62;color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;line-height:1;">Label</a>
+   </td>
+5. Footer. ex-pad ex-card ex-hairline cell with a thin top border. Small
+   ex-muted "Explore. Connect. Protect." overline, the app/website/Instagram
+   links, and the working unsubscribe link. ALWAYS use {{unsubscribe_url}} as
+   the href, e.g. <a href="{{unsubscribe_url}}">Unsubscribe</a>. NEVER a
+   placeholder like "#" or "[unsubscribe]". It is auto-filled per recipient.
 
 COLLECTIVE NAMING (strict):
 - When referring to a regional crew, ALWAYS use the form
@@ -321,15 +342,15 @@ AUTO-FILLED PER RECIPIENT (resolve at send time, one campaign personalises to ev
 - {{next_event_collective}} - the branded crew name (e.g. "Co-Exist Brisbane", "Co-Exist Perth")
 - {{next_event_location}} - address of the event
 - {{next_event_url}} - deep link to the event page (opens the native app on mobile via universal links, falls back to web)
+- {{next_event_image}} - the recipient's next event COVER PHOTO url (empty string when the event has no cover). Use this as the hero background-image url() for "next event" campaigns so each subscriber sees their own event photo full-bleed.
+- {{next_event_image_x}} / {{next_event_image_y}} - 0 to 100 focal point for {{next_event_image}} (default 50/50)
 - {{unsubscribe_url}} - one-click unsubscribe link, always use this on the footer Unsubscribe link
 
-PER-CAMPAIGN HERO IMAGE (optional, filled by admin in the UI):
+PER-CAMPAIGN HERO IMAGE (optional, filled by admin in the UI when the campaign is NOT per-recipient):
 - {{hero_image_url}} - CSS background-image URL for the hero
-- {{hero_focal_x}} - 0 to 100, horizontal focal point (default 50)
-- {{hero_focal_y}} - 0 to 100, vertical focal point (default 50)
-- {{hero_overlay_opacity}} - 0 to 1, dark overlay for text legibility (default 0.35)
+- {{hero_focal_x}} / {{hero_focal_y}} - 0 to 100 focal point (default 50)
 
-If the user description mentions "hyping up the next event", "reminder", "what's coming up", "next event near you", or anything that should adapt per region, USE the {{next_event_*}} variables instead of asking the admin to fill them in. Each subscriber will see their own collective's next event.
+If the user description mentions "hyping up the next event", "reminder", "what's coming up", "next event near you", or anything per region, USE the {{next_event_*}} variables (including {{next_event_image}} as the hero photo) instead of asking the admin to fill them in. Each subscriber sees their own collective's next event and its cover photo.
 
 Use {{editable_field_name}} placeholders only for content that genuinely changes per CAMPAIGN, not per recipient. Make the template flexible enough to be reused.`
     } else {
@@ -341,7 +362,7 @@ ${subject ? `Subject line: "${subject}"` : ''}
 
 AUTO-FILLED PER RECIPIENT (use these instead of hard-coding event details if the email is about an upcoming event):
 - {{name}} - recipient's first name
-- {{next_event_title}}, {{next_event_date}}, {{next_event_date_long}}, {{next_event_collective}}, {{next_event_location}}, {{next_event_url}}
+- {{next_event_title}}, {{next_event_date}}, {{next_event_date_long}}, {{next_event_collective}}, {{next_event_location}}, {{next_event_url}}, {{next_event_image}} (cover photo url for the hero), {{next_event_image_x}}, {{next_event_image_y}}
 
 If the user wants to "hype up the next event for everyone" or similar, USE these variables so each subscriber sees their own collective's next event. Otherwise fill content in directly.`
     }

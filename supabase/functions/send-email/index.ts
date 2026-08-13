@@ -218,33 +218,86 @@ const LOGO_URL = 'https://app.coexistaus.org/logos/white-wordmark.png'
 const LOGO_DARK_URL = 'https://app.coexistaus.org/logos/black-wordmark.png'
 const APP_URL = 'https://app.coexistaus.org'
 
-// Brand palette: Co-Exist olive-sage. This is the colour the homepage
-// Impact section uses (src/pages/home.tsx -> bg-[#879e62] with the
-// warm off-white #f4f2ec text on top). The 2026-06-10 detour to a
-// truer-green sage #4A7C59 was off-brand vs what subscribers see on
-// the homepage, so reverted to the homepage olive and kept the
-// matching primary-* family as darker / lighter siblings.
+// Co-Exist email design language (2026-08-13 rebuild). Matches the app's
+// home/profile/explore surfaces: full-bleed hero imagery, slim Montserrat
+// (the app's own Eau Sans -> Montserrat web fallback), warm palette,
+// single content column, no emoji, genuinely light/dark aware.
+//
+// FONT: emails cannot reliably load the bundled Eau Sans woff2, so we use
+// Montserrat via Google Fonts (the app's declared fallback) with a system
+// sans fallback for clients that strip webfonts (Gmail app).
+const FONT_STACK =
+  "'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+
+// Brand olive is #869e62 - the EXACT hex the live app uses
+// (src/styles/globals.css --color-brand). Emails previously used an
+// off-by-one #879e62; aligned here so the email hero matches the in-app
+// Impact section pixel-for-pixel. Light values are the inline baseline;
+// dark values are applied by class in the <style> media query below.
 const C = {
-  brand: '#879e62',
+  brand: '#869e62',
   brandDark: '#5d7340',
   brandLight: '#a3b88a',
+  brandDarkMode: '#93ab6d', // brightened olive for dark backgrounds
   bg: '#f4f2ec',
-  cardBg: '#fbfaf6',
-  border: '#e6e3da',
+  cardBg: '#ffffff',
+  tint: '#f5f4ee',
+  border: '#ece8de',
   text: '#2d3a22',
-  textMuted: '#5e6b4a',
-  textLight: '#8a9474',
+  textMuted: '#7d8768',
+  textLight: '#9aa382',
   white: '#ffffff',
   error: '#c0392b',
   warning: '#E8913A',
-  success: '#879e62',
+  success: '#869e62',
 }
 
-/** Outer email shell - logo header, gradient banner, content area, footer */
+/**
+ * Full-bleed hero cell. Matches the app's tile signature: the image fills
+ * the block (background-size:cover), a dark bottom-up legibility gradient
+ * sits over it, and the white wordmark + heading sit bottom-left in the
+ * dark zone. When no image is supplied the cell is a solid olive->darker
+ * gradient (the bgcolor is the Outlook fallback, always legible).
+ */
+function heroCell(opts: {
+  heroTitle: string
+  heroSubtitle?: string
+  heroImage?: string
+  heroFocalX?: number
+  heroFocalY?: number
+  overline?: string
+}): string {
+  const hasImg = !!opts.heroImage
+  const fx = opts.heroFocalX ?? 50
+  const fy = opts.heroFocalY ?? 50
+  const bgLayers = hasImg
+    ? `background-image:linear-gradient(to top, rgba(13,18,8,0.80) 0%, rgba(13,18,8,0.34) 46%, rgba(13,18,8,0.05) 100%), url('${opts.heroImage}');background-size:cover;background-position:${fx}% ${fy}%;background-repeat:no-repeat;`
+    : `background-image:linear-gradient(135deg, ${C.brand} 0%, ${C.brandDark} 100%);`
+  const padTop = hasImg ? '128px' : '38px'
+  const overline = opts.overline
+    ? `<p style="margin:0 0 8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:rgba(255,255,255,0.82);">${opts.overline}</p>`
+    : ''
+  const sub = opts.heroSubtitle
+    ? `<p style="color:rgba(255,255,255,0.90);margin:11px 0 0;font-size:15px;line-height:1.5;font-weight:500;">${opts.heroSubtitle}</p>`
+    : ''
+  return `<tr><td bgcolor="${C.brand}" class="ex-hero" style="background-color:${C.brand};${bgLayers}">
+    <div class="ex-hero-pad" style="padding:${padTop} 28px 26px 28px;">
+      <img src="${LOGO_URL}" alt="Co-Exist" width="116" style="width:116px;height:auto;display:block;margin:0 0 ${hasImg ? '14' : '18'}px 0;border:0;outline:none;" />
+      ${overline}
+      <h1 class="ex-hero-h" style="color:#ffffff;margin:0;font-size:29px;font-weight:700;line-height:1.16;letter-spacing:-0.01em;">${opts.heroTitle}</h1>
+      ${sub}
+    </div>
+  </td></tr>`
+}
+
+/** Outer email shell - full-bleed hero, single-padding content, footer. */
 function emailShell(opts: {
   heroTitle: string
   heroSubtitle?: string
-  heroEmoji?: string
+  heroImage?: string
+  heroFocalX?: number
+  heroFocalY?: number
+  overline?: string
   body: string
   footerCta?: { label: string; url: string }
   /** Recipient email so the unsubscribe link carries the address token. */
@@ -255,68 +308,91 @@ function emailShell(opts: {
     : `${APP_URL}/unsubscribe`
   return `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${opts.heroTitle}</title></head>
-<body style="margin:0;padding:0;background:${C.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg};">
-<tr><td align="center" style="padding:32px 16px 0;">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>${opts.heroTitle}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+  body{margin:0;padding:0;width:100%!important;-webkit-text-size-adjust:100%;}
+  img{border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;}
+  a{color:${C.brandDark};}
+  /* Mobile: keep a single, comfortable side padding. */
+  @media only screen and (max-width:600px){
+    .ex-card{border-radius:14px!important;}
+    .ex-pad{padding-left:20px!important;padding-right:20px!important;}
+    .ex-hero-pad{padding-left:20px!important;padding-right:20px!important;}
+    .ex-hero-h{font-size:25px!important;}
+  }
+  /* Dark mode (Apple Mail / iOS Mail honour this). Gmail app strips the
+     <style> block and falls back to the inversion-safe inline baseline. */
+  @media (prefers-color-scheme: dark){
+    .ex-body,.ex-outer{background:#111309!important;}
+    .ex-card{background:#1c1f16!important;}
+    .ex-text{color:#ece9e0!important;}
+    .ex-heading{color:#f3f1e9!important;}
+    .ex-muted{color:#a9b199!important;}
+    .ex-tint{background:#232719!important;}
+    .ex-hairline{border-color:rgba(255,255,255,0.12)!important;}
+    .ex-btn{background:${C.brandDarkMode}!important;color:#12150b!important;}
+    .ex-accent{color:#a9c17f!important;}
+    .ex-foot{color:#8a9376!important;}
+    a{color:#b9cb95!important;}
+  }
+  [data-ogsc] .ex-body,[data-ogsc] .ex-outer{background:#111309!important;}
+  [data-ogsc] .ex-card{background:#1c1f16!important;}
+  [data-ogsc] .ex-text{color:#ece9e0!important;}
+  [data-ogsc] .ex-heading{color:#f3f1e9!important;}
+  [data-ogsc] .ex-muted{color:#a9b199!important;}
+  [data-ogsc] .ex-btn{background:${C.brandDarkMode}!important;color:#12150b!important;}
+  [data-ogsc] .ex-accent{color:#a9c17f!important;}
+</style>
+</head>
+<body class="ex-body" style="margin:0;padding:0;background:${C.bg};font-family:${FONT_STACK};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="ex-outer" style="background:${C.bg};">
+<tr><td align="center" style="padding:26px 12px;">
 
-<!-- Container -->
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+<!-- Container: one card, one horizontal padding level. -->
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" class="ex-card" style="max-width:600px;width:100%;background:${C.cardBg};border-radius:18px;overflow:hidden;">
 
-  <!-- Logo bar. The wordmark is white pixels on transparent. Dark-mode
-       email clients drop transparency to black, so the cell carries an
-       explicit olive bgcolor that becomes the visible backdrop when
-       transparency is stripped. The olive bgcolor also makes the
-       wordmark sit visually attached to the hero gradient below. -->
-  <tr><td bgcolor="${C.brand}" style="background:${C.brand};padding:24px 0 0;text-align:center;border-radius:20px 20px 0 0;">
-    <a href="${APP_URL}" style="text-decoration:none;">
-      <img src="${LOGO_URL}" alt="Co-Exist" width="140" style="width:140px;height:auto;display:inline-block;border:0;outline:none;" />
-    </a>
-  </td></tr>
+  ${heroCell(opts)}
 
-  <!-- Hero gradient banner -->
-  <tr><td bgcolor="${C.brand}" style="background:${C.brand};background-image:linear-gradient(135deg,${C.brand} 0%,${C.brandDark} 100%);padding:32px 32px 40px;text-align:center;">
-    ${opts.heroEmoji ? `<div style="font-size:40px;margin-bottom:12px;">${opts.heroEmoji}</div>` : ''}
-    <h1 style="color:${C.white};margin:0;font-size:24px;font-weight:700;line-height:1.3;">${opts.heroTitle}</h1>
-    ${opts.heroSubtitle ? `<p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:15px;line-height:1.5;">${opts.heroSubtitle}</p>` : ''}
-  </td></tr>
-
-  <!-- Body content -->
-  <tr><td style="background:${C.white};padding:32px;border-left:1px solid ${C.border};border-right:1px solid ${C.border};">
+  <!-- Body content: the ONLY horizontal padding on the page. -->
+  <tr><td class="ex-pad ex-card" style="background:${C.cardBg};padding:28px 24px 10px 24px;">
     ${opts.body}
   </td></tr>
 
-  <!-- CTA button (if provided) -->
   ${opts.footerCta ? `
-  <tr><td style="background:${C.white};padding:0 32px 32px;border-left:1px solid ${C.border};border-right:1px solid ${C.border};text-align:center;">
-    <a href="${opts.footerCta.url}" style="display:inline-block;background:${C.brand};color:${C.white};padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:600;font-size:15px;line-height:1;">${opts.footerCta.label}</a>
+  <tr><td align="center" class="ex-pad ex-card" style="background:${C.cardBg};padding:6px 24px 30px 24px;text-align:center;">
+    <a class="ex-btn" href="${opts.footerCta.url}" style="display:inline-block;background:${C.brand};color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;line-height:1;font-family:${FONT_STACK};">${opts.footerCta.label}</a>
   </td></tr>` : ''}
 
   <!-- Footer -->
-  <tr><td style="background:${C.cardBg};padding:24px 32px;border-radius:0 0 20px 20px;border:1px solid ${C.border};border-top:none;text-align:center;">
-    <p style="margin:0 0 8px;font-size:12px;color:${C.textLight};">
+  <tr><td class="ex-pad ex-card ex-hairline" style="background:${C.cardBg};padding:22px 24px 26px 24px;border-top:1px solid ${C.border};text-align:center;">
+    <p class="ex-muted" style="margin:0 0 10px;font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:${C.textMuted};">
       Explore. Connect. Protect.
     </p>
-    <p style="margin:0 0 12px;font-size:11px;color:${C.textLight};">
-      <a href="${APP_URL}" style="color:${C.brand};text-decoration:none;">Open App</a>
+    <p class="ex-foot" style="margin:0 0 12px;font-size:12px;color:${C.textLight};">
+      <a href="${APP_URL}" style="color:${C.brandDark};text-decoration:none;">Open app</a>
       &nbsp;&middot;&nbsp;
-      <a href="https://coexistaus.org" style="color:${C.brand};text-decoration:none;">Website</a>
+      <a href="https://coexistaus.org" style="color:${C.brandDark};text-decoration:none;">Website</a>
       &nbsp;&middot;&nbsp;
-      <a href="https://instagram.com/coexistaus" style="color:${C.brand};text-decoration:none;">Instagram</a>
+      <a href="https://instagram.com/coexistaus" style="color:${C.brandDark};text-decoration:none;">Instagram</a>
     </p>
-    <p style="margin:0;font-size:10px;color:${C.textLight};">
+    <p class="ex-foot" style="margin:0;font-size:11px;line-height:1.6;color:${C.textLight};">
       Co-Exist Australia &middot; hello@coexistaus.org<br>
-      We respectfully acknowledge the Traditional Custodians of Country throughout Australia.
+      We acknowledge the Traditional Custodians of Country across Australia.
     </p>
   </td></tr>
 
 </table>
 
 <!-- Unsubscribe -->
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;margin-top:16px;">
-  <tr><td style="text-align:center;padding:0 0 32px;">
-    <p style="margin:0;font-size:10px;color:${C.textLight};">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;margin-top:14px;">
+  <tr><td style="text-align:center;padding:0 12px 30px;">
+    <p class="ex-foot" style="margin:0;font-size:11px;color:${C.textLight};">
       <a href="${APP_URL}/settings" style="color:${C.textLight};text-decoration:underline;">Manage preferences</a>
       &nbsp;&middot;&nbsp;
       <a href="${unsubUrl}" style="color:${C.textLight};text-decoration:underline;">Unsubscribe</a>
@@ -331,43 +407,72 @@ function emailShell(opts: {
 /** Greeting line */
 function greeting(name: unknown): string {
   const n = (name as string) || 'there'
-  return `<p style="margin:0 0 20px;font-size:16px;color:${C.text};line-height:1.5;">Hey ${n},</p>`
+  return `<p class="ex-text" style="margin:0 0 18px;font-size:16px;color:${C.text};line-height:1.55;font-weight:500;">Hi ${n},</p>`
 }
 
 /** Body paragraph */
 function p(text: string): string {
-  return `<p style="margin:0 0 16px;font-size:15px;color:${C.text};line-height:1.6;">${text}</p>`
+  return `<p class="ex-text" style="margin:0 0 16px;font-size:15px;color:${C.text};line-height:1.65;">${text}</p>`
 }
 
-/** Info card row (label + value) */
-function infoRow(label: string, value: unknown): string {
-  return `<tr>
-    <td style="padding:10px 12px;color:${C.textMuted};font-size:13px;font-weight:600;width:120px;vertical-align:top;">${label}</td>
-    <td style="padding:10px 12px;color:${C.text};font-size:14px;">${value}</td>
-  </tr>`
-}
-
-/** Info card - a table of label/value rows with a subtle background */
+/**
+ * De-chromed detail block. Replaces the old heavy bordered table with a
+ * single warm-tint card of stacked overline-label / value rows, matching
+ * the app's overline treatment. Kept named `infoCard` so all call sites
+ * work unchanged.
+ */
 function infoCard(rows: [string, unknown][]): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cardBg};border:1px solid ${C.border};border-radius:12px;margin:0 0 20px;overflow:hidden;">
-    ${rows.map(([l, v]) => infoRow(l, v)).join('')}
+  const items = rows.map(([l, v], i) => `<tr><td style="padding:${i === 0 ? '16' : '2'}px 18px 0 18px;">
+      <p class="ex-muted" style="margin:0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:${C.textMuted};">${l}</p>
+      <p class="ex-text" style="margin:2px 0 ${i === rows.length - 1 ? '16' : '13'}px 0;font-size:15px;color:${C.text};line-height:1.4;">${v}</p>
+    </td></tr>`).join('')
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="ex-tint ex-hairline" style="background:${C.tint};border:1px solid ${C.border};border-radius:14px;margin:2px 0 20px;">
+    ${items}
   </table>`
 }
 
 /** CTA button (inline, for use inside body) */
 function ctaButton(label: string, url: string): string {
-  return `<div style="text-align:center;margin:24px 0 8px;">
-    <a href="${url}" style="display:inline-block;background:${C.brand};color:${C.white};padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:600;font-size:15px;line-height:1;">${label}</a>
+  return `<div style="margin:22px 0 6px;">
+    <a class="ex-btn" href="${url}" style="display:inline-block;background:${C.brand};color:#ffffff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;line-height:1;font-family:${FONT_STACK};">${label}</a>
   </div>`
 }
 
-/** Stat block for impact recaps */
-function statBlock(value: unknown, label: string, emoji: string): string {
-  return `<td style="text-align:center;padding:12px 8px;">
-    <div style="font-size:24px;margin-bottom:4px;">${emoji}</div>
-    <div style="font-size:28px;font-weight:700;color:${C.brand};line-height:1;">${value}</div>
-    <div style="font-size:11px;color:${C.textMuted};margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">${label}</div>
+/** Stat block for impact recaps - big olive number over an uppercase label, no emoji. */
+function statBlock(value: unknown, label: string): string {
+  return `<td align="center" style="text-align:center;padding:10px 6px;">
+    <div class="ex-accent" style="font-size:30px;font-weight:700;color:${C.brand};line-height:1;">${value}</div>
+    <div class="ex-muted" style="font-size:10.5px;font-weight:600;color:${C.textMuted};margin-top:6px;text-transform:uppercase;letter-spacing:0.07em;">${label}</div>
   </td>`
+}
+
+/** Numbered step list - olive index marker, bold title, muted line. No emoji. */
+function stepList(steps: [string, string][]): string {
+  const rows = steps.map(([title, desc], i) => `<tr>
+      <td width="30" valign="top" style="padding:0 12px 16px 0;">
+        <div class="ex-accent" style="width:26px;height:26px;border-radius:13px;background:${C.tint};color:${C.brand};font-size:13px;font-weight:700;line-height:26px;text-align:center;">${i + 1}</div>
+      </td>
+      <td valign="top" style="padding:0 0 16px 0;">
+        <p class="ex-heading" style="margin:0 0 2px;font-size:15px;font-weight:700;color:${C.text};line-height:1.3;">${title}</p>
+        <p class="ex-muted" style="margin:0;font-size:14px;color:${C.textMuted};line-height:1.5;">${desc}</p>
+      </td>
+    </tr>`).join('')
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 18px;">${rows}</table>`
+}
+
+/**
+ * Pull an optional full-bleed hero image out of the template data. Event
+ * emails pass event_image (+ focal x/y); when present the hero shows the
+ * real event cover photo, when absent the hero falls back to solid olive.
+ */
+function heroFromData(d: Record<string, unknown>): { heroImage?: string; heroFocalX?: number; heroFocalY?: number } {
+  const img = (d.event_image as string) || ''
+  if (!img) return {}
+  return {
+    heroImage: img,
+    heroFocalX: d.event_image_x != null ? Number(d.event_image_x) : 50,
+    heroFocalY: d.event_image_y != null ? Number(d.event_image_y) : 50,
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -376,24 +481,24 @@ function statBlock(value: unknown, label: string, emoji: string): string {
 
 const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   welcome: (d) => emailShell({
-    heroTitle: 'Welcome to Co-Exist!',
-    heroSubtitle: 'You\'re part of the movement now.',
-    heroEmoji: '\u{1F331}',
+    heroTitle: 'Welcome to Co-Exist',
+    heroSubtitle: 'Conservation, run by your local crew.',
     body: greeting(d.name) +
-      p('Thanks for joining Co-Exist - a youth-led conservation community making a real difference across Australia.') +
-      p('Here\'s how to get started:') +
-      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
-        <tr><td style="padding:8px 0;font-size:15px;color:${C.text};line-height:1.6;">\u{1F50D} &nbsp;<strong>Find a Collective</strong> near you and join your local crew</td></tr>
-        <tr><td style="padding:8px 0;font-size:15px;color:${C.text};line-height:1.6;">\u{1F4C5} &nbsp;<strong>Register for an event</strong> - beach clean-ups, tree plantings, habitat restoration</td></tr>
-        <tr><td style="padding:8px 0;font-size:15px;color:${C.text};line-height:1.6;">\u{1F3C5} &nbsp;<strong>Earn badges</strong> and level up as you contribute to real conservation impact</td></tr>
-      </table>`,
-    footerCta: { label: 'Open the App', url: d.app_url as string || APP_URL },
+      p('Thanks for joining Co-Exist, a youth-led conservation community running events right across Australia.') +
+      p('Three things to get you started:') +
+      stepList([
+        ['Find a Collective', 'Join your local crew and see what is on near you.'],
+        ['Register for an event', 'Beach clean-ups, tree plantings, habitat restoration.'],
+        ['Earn badges', 'Level up as you show up for real conservation work.'],
+      ]),
+    footerCta: { label: 'Open the app', url: d.app_url as string || APP_URL },
   }),
 
   event_confirmation: (d) => emailShell({
-    heroTitle: 'You\'re registered!',
+    heroTitle: 'You\'re registered',
     heroSubtitle: d.event_title as string,
-    heroEmoji: '\u{2705}',
+    overline: 'You\'re in',
+    ...heroFromData(d),
     body: greeting(d.name) +
       p(`You're all set for <strong>${d.event_title}</strong>. Here are the details:`) +
       infoCard([
@@ -401,17 +506,18 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
         ['Date', d.event_date],
         ['Location', d.event_location],
       ]) +
-      p('We\'ll send you a reminder before the event. See you there!'),
-    footerCta: { label: 'View Event Details', url: d.event_url as string || APP_URL },
+      p('We will send a reminder before the day. See you there.'),
+    footerCta: { label: 'View event details', url: d.event_url as string || APP_URL },
   }),
 
   // Ticket purchase confirmation. ticket_url is the access link: for guest
   // buyers it is a single-use magic link that signs them in and opens the
   // ticket + event group chat; for members it is the direct ticket page.
   ticket_confirmation: (d) => emailShell({
-    heroTitle: 'You\'re going!',
+    heroTitle: 'You\'re going',
     heroSubtitle: d.event_title as string,
-    heroEmoji: '\u{1F3AB}',
+    overline: 'Ticket confirmed',
+    ...heroFromData(d),
     body: greeting(d.name) +
       p(`Your ticket for <strong>${d.event_title}</strong> is confirmed. Tap below to view your ticket and join the group chat.`) +
       infoCard([
@@ -432,7 +538,7 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   ticket_transferred: (d) => emailShell({
     heroTitle: 'Your ticket has moved',
     heroSubtitle: d.event_title as string,
-    heroEmoji: '\u{1F3D5}\u{FE0F}',
+    ...heroFromData(d),
     body: greeting(d.name) +
       p(d.previous_event_title
         ? `Your ticket for <strong>${d.previous_event_title}</strong> has been moved across to <strong>${d.event_title}</strong>. You keep the same ticket, nothing was refunded, and there is nothing to pay.`
@@ -449,24 +555,24 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   }),
 
   event_reminder: (d) => emailShell({
-    heroTitle: `Coming up ${d.time_until || 'soon'}!`,
+    heroTitle: `Coming up ${d.time_until || 'soon'}`,
     heroSubtitle: d.event_title as string,
-    heroEmoji: '\u{23F0}',
+    overline: 'Reminder',
+    ...heroFromData(d),
     body: greeting(d.name) +
-      p(`Just a heads up - <strong>${d.event_title}</strong> is happening ${d.time_until || 'soon'}.`) +
+      p(`A heads up that <strong>${d.event_title}</strong> is happening ${d.time_until || 'soon'}.`) +
       infoCard([
         ['Event', d.event_title],
         ['When', d.event_date],
         ['Where', d.event_location],
       ]) +
-      p('Don\'t forget to bring water, sunscreen, and a good attitude!'),
-    footerCta: { label: 'View Event', url: d.event_url as string || APP_URL },
+      p('Bring water, sunscreen, and a hat. We supply the rest.'),
+    footerCta: { label: 'View event', url: d.event_url as string || APP_URL },
   }),
 
   event_cancelled: (d) => emailShell({
     heroTitle: 'Event Cancelled',
     heroSubtitle: d.event_title as string,
-    heroEmoji: '\u{1F6AB}',
     body: greeting(d.name) +
       p(`Unfortunately, <strong>${d.event_title}</strong> scheduled for ${d.event_date} has been cancelled.`) +
       (d.reason ? p(`<strong>Reason:</strong> ${d.reason}`) : '') +
@@ -477,7 +583,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   event_invite: (d) => emailShell({
     heroTitle: 'You\'re Invited!',
     heroSubtitle: d.event_title as string,
-    heroEmoji: '\u{1F389}',
     body: greeting(d.name) +
       p(`<strong>${d.inviter_name}</strong> has invited you to join <strong>${d.event_title}</strong>.`) +
       p('Tap below to check it out and register.'),
@@ -487,7 +592,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   waitlist_promoted: (d) => emailShell({
     heroTitle: 'You\'re In!',
     heroSubtitle: 'A spot opened up just for you.',
-    heroEmoji: '\u{1F389}',
     body: greeting(d.name) +
       p(`Great news - a spot has opened up for <strong>${d.event_title}</strong>!`) +
       infoCard([
@@ -500,7 +604,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
 
   password_reset: (d) => emailShell({
     heroTitle: 'Reset Your Password',
-    heroEmoji: '\u{1F510}',
     body: greeting(d.name) +
       p('We received a request to reset your password. Tap the button below to set a new one.') +
       ctaButton('Reset Password', d.reset_url as string || APP_URL) +
@@ -529,7 +632,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     return emailShell({
       heroTitle: d.is_recurring ? 'Thanks for Your Ongoing Support!' : 'Thank You for Your Donation!',
       heroSubtitle: `${d.amount} ${d.currency || 'AUD'}`,
-      heroEmoji: '\u{1F49A}',
       body: greeting(d.name) +
         p(`Your ${d.is_recurring ? 'recurring ' : ''}donation of <strong>${d.amount}</strong> has been received. Every dollar goes directly toward conservation events, native plantings, and protecting Australia's ecosystems.`) +
         infoCard(rows) +
@@ -542,7 +644,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   order_confirmation: (d) => emailShell({
     heroTitle: 'Order Confirmed!',
     heroSubtitle: `Order #${d.order_id}`,
-    heroEmoji: '\u{1F6CD}\u{FE0F}',
     body: greeting(d.name) +
       p('Thanks for your order! Here\'s a summary:') +
       infoCard([
@@ -558,7 +659,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   order_shipped: (d) => emailShell({
     heroTitle: 'Your Order Has Shipped!',
     heroSubtitle: `Order #${d.order_id}`,
-    heroEmoji: '\u{1F4E6}',
     body: greeting(d.name) +
       p(`Your order <strong>#${d.order_id}</strong> is on its way!`) +
       infoCard([
@@ -570,7 +670,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
 
   'data-export-request': (d) => emailShell({
     heroTitle: 'Data Export Requested',
-    heroEmoji: '\u{1F4E5}',
     body: greeting(d.name) +
       p('We\'ve received your data export request. We\'ll prepare your data and send you a download link within 48 hours.') +
       p(`<span style="font-size:13px;color:${C.textMuted};">Request email: ${d.email}</span>`),
@@ -579,7 +678,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   payment_failed: (d) => emailShell({
     heroTitle: 'Payment Failed',
     heroSubtitle: 'Action needed to continue your support.',
-    heroEmoji: '\u{26A0}\u{FE0F}',
     body: greeting(d.name) +
       p(`We weren't able to process your recurring donation of <strong>${d.amount}</strong>.`) +
       p('Please update your payment method to keep your support going. Your impact matters!'),
@@ -589,7 +687,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   subscription_cancelled: (d) => emailShell({
     heroTitle: 'Donation Cancelled',
     heroSubtitle: 'We\'ll miss your support.',
-    heroEmoji: '\u{1F49B}',
     body: greeting(d.name) +
       p('Your recurring donation has been cancelled. Thank you for the support you\'ve given - every contribution made a real impact.') +
       p('If you\'d ever like to support us again, even a one-time donation makes a difference.'),
@@ -599,7 +696,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   refund_confirmation: (d) => emailShell({
     heroTitle: 'Refund Processed',
     heroSubtitle: `Order #${d.order_id}`,
-    heroEmoji: '\u{1F4B3}',
     body: greeting(d.name) +
       p(`We've processed a refund of <strong>${d.refund_amount} ${d.currency || 'AUD'}</strong> for order <strong>#${d.order_id}</strong>.`) +
       p('It may take 5-10 business days to appear on your statement.'),
@@ -608,7 +704,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   collective_application: (d) => emailShell({
     heroTitle: 'New Collective Application',
     heroSubtitle: 'Someone wants to lead a collective!',
-    heroEmoji: '\u{1F64B}',
     body: infoCard([
       ['Name', d.applicant_name],
       ['Email', `<a href="mailto:${d.applicant_email}" style="color:${C.brand};text-decoration:none;">${d.applicant_email}</a>`],
@@ -622,14 +717,12 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
 
   newsletter: (d) => emailShell({
     heroTitle: 'Co-Exist Update',
-    heroEmoji: '\u{1F4E8}',
     body: greeting(d.name) + (d.content_html as string || ''),
   }),
 
   challenge_announcement: (d) => emailShell({
     heroTitle: 'New Challenge!',
     heroSubtitle: d.challenge_title as string,
-    heroEmoji: '\u{1F525}',
     body: greeting(d.name) +
       p(`A new challenge has just launched: <strong>${d.challenge_title}</strong>`) +
       (d.challenge_description ? p(d.challenge_description as string) : '') +
@@ -640,15 +733,14 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   monthly_impact_recap: (d) => emailShell({
     heroTitle: `Your ${d.month} Impact`,
     heroSubtitle: 'Here\'s what you helped achieve.',
-    heroEmoji: '\u{1F30F}',
     body: greeting(d.name) +
       p('Take a look at the difference you made this month:') +
       `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cardBg};border:1px solid ${C.border};border-radius:12px;margin:0 0 20px;overflow:hidden;">
         <tr>
-          ${statBlock(d.events_count, 'Events', '\u{1F4C5}')}
-          ${statBlock(d.trees, 'Trees', '\u{1F333}')}
-          ${statBlock(d.hours, 'Hours', '\u{23F1}\u{FE0F}')}
-          ${statBlock(d.rubbish_kg, 'kg Rubbish', '\u{267B}\u{FE0F}')}
+          ${statBlock(d.events_count, 'Events')}
+          ${statBlock(d.trees, 'Trees')}
+          ${statBlock(d.hours, 'Hours')}
+          ${statBlock(d.rubbish_kg, 'kg litter')}
         </tr>
       </table>` +
       p('Every event, every hour, every seedling - it all adds up. Thank you for showing up.'),
@@ -665,7 +757,6 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     ).join('')
     return emailShell({
       heroTitle: 'This Week at Co-Exist',
-      heroEmoji: '\u{1F4E3}',
       body: greeting(d.name) +
         p('Here\'s what you might have missed:') +
         `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cardBg};border:1px solid ${C.border};border-radius:12px;margin:0 0 20px;overflow:hidden;">
@@ -675,18 +766,23 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     })
   },
 
+  // The re-engagement digest ("What's on with <collective>"). Leads with the
+  // real event cover photo full-bleed (event_image), the event title as the
+  // hero heading and the collective as an overline, matching the app's event
+  // tiles. Falls back to solid olive when the event has no cover image.
   upcoming_in_collective: (d) => emailShell({
-    heroTitle: 'Your next meetup',
-    heroSubtitle: d.collective_name as string,
+    heroTitle: (d.event_title as string) || 'Your next event',
+    heroSubtitle: (d.event_date as string) || undefined,
+    overline: (d.collective_name as string) || 'Co-Exist',
+    ...heroFromData(d),
     body: greeting(d.name) +
-      p(`Your ${d.collective_name} collective has something coming up.`) +
+      p(`${d.collective_name} has an event coming up. A few hours outdoors with good people.`) +
       infoCard([
-        ['Event', d.event_title],
         ['When', d.event_date],
-        ['Where', d.event_location || 'See event details'],
+        ['Where', d.event_location || 'See the event page'],
       ]) +
-      p('A few hours outdoors with good people. If you are free, come along.'),
-    footerCta: { label: 'View and RSVP', url: (d.event_url as string) || APP_URL },
+      p('If you are free, come along. Every hand counts.'),
+    footerCta: { label: 'See details and RSVP', url: (d.event_url as string) || APP_URL },
     recipientEmail: d.__recipientEmail as string | undefined,
   }),
 }
@@ -710,7 +806,6 @@ function buildOverrideHtml(
   return emailShell({
     heroTitle: interpolate(override.hero_title || 'Co-Exist', data),
     heroSubtitle: override.hero_subtitle ? interpolate(override.hero_subtitle, data) : undefined,
-    heroEmoji: override.hero_emoji || undefined,
     body: greeting(data.name) + body,
     footerCta: override.cta_label && override.cta_url
       ? { label: interpolate(override.cta_label, data), url: interpolate(override.cta_url, data) }

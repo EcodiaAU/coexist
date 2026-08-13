@@ -50,8 +50,12 @@ interface RecipientVars {
   next_event_collective: string
   next_event_location: string
   next_event_url: string
-  // Also referenced via the interface key but not destructured here:
-  // unsubscribe_url is set in buildVars.
+  // Full-bleed hero image of the recipient's next event (empty string when
+  // the event has no cover, so a {{next_event_image}} background falls back
+  // to solid olive). Focal point as 0-100 percentage strings.
+  next_event_image: string
+  next_event_image_x: string
+  next_event_image_y: string
 }
 
 function applyRecipientVars(html: string, vars: RecipientVars): string {
@@ -312,7 +316,10 @@ Deno.serve(withSentry('send-campaign', async (req: Request) => {
 
     const eventMap = new Map<
       string,
-      { title: string; date_start: string; address: string | null; collective_name: string; event_id: string }
+      {
+        title: string; date_start: string; address: string | null; collective_name: string; event_id: string
+        cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null
+      }
     >()
     if (needsNextEvent && profileIds.length > 0) {
       // DISTINCT ON (cm.user_id) ordered by event date gives each user
@@ -332,6 +339,9 @@ Deno.serve(withSentry('send-campaign', async (req: Request) => {
             address: row.address,
             collective_name: row.collective_name,
             event_id: row.event_id,
+            cover_image_url: row.cover_image_url ?? null,
+            cover_image_position_x: row.cover_image_position_x ?? null,
+            cover_image_position_y: row.cover_image_position_y ?? null,
           })
         }
       }
@@ -362,6 +372,9 @@ Deno.serve(withSentry('send-campaign', async (req: Request) => {
           next_event_collective: 'your Co-Exist crew',
           next_event_location: '',
           next_event_url: `${APP_URL}/events`,
+          next_event_image: '',
+          next_event_image_x: '50',
+          next_event_image_y: '50',
           unsubscribe_url,
         }
       }
@@ -381,6 +394,9 @@ Deno.serve(withSentry('send-campaign', async (req: Request) => {
         next_event_collective: brandCollective(evt.collective_name),
         next_event_location: evt.address || '',
         next_event_url: `${APP_URL}/events/${evt.event_id}`,
+        next_event_image: evt.cover_image_url || '',
+        next_event_image_x: String(evt.cover_image_position_x ?? 50),
+        next_event_image_y: String(evt.cover_image_position_y ?? 50),
         unsubscribe_url,
       }
     }
