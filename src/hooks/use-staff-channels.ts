@@ -28,6 +28,24 @@ export interface StaffChannel {
   cover_image_position_y?: number | null
 }
 
+/*
+ * Staff channel types hidden from the whole UI. As of 2026-08-13, state-scoped
+ * staff chats ('staff_state') are HIDDEN at Tate's direction: Co-Exist staff
+ * never adopted them (everyone lives in Microsoft Teams) so they sat empty and
+ * cluttered the chat list, switcher, and unread badge.
+ *
+ * This is deliberately a HIDE, not a delete - it is REVERSIBLE. The channels,
+ * their memberships, and every message row remain untouched in the database.
+ * Filtering here (the single source both useMyStaffChannels and the unread-count
+ * query read) removes them from every surface at once: the chat-list "Staff
+ * Channels" section, the chat-switcher dropdown, and the app-shell unread badge.
+ *
+ * TO RESTORE: remove 'staff_state' from this set (or clear it). Tate has vetoed
+ * re-shipping state staff chats until he re-opens it - do not un-hide without him.
+ * Doctrine: coexist-state-staff-chats-hidden-not-deleted-2026-08-13.
+ */
+export const HIDDEN_STAFF_CHANNEL_TYPES: ReadonlySet<StaffChannel['type']> = new Set(['staff_state'])
+
 export interface ChannelMessageWithSender {
   id: string
   channel_id: string
@@ -87,7 +105,10 @@ export function useMyStaffChannels() {
             cover_image_position_y: src?.cover_image_position_y ?? null,
           } as StaffChannel
         })
-        .filter(Boolean)
+        // Drop nulls AND any hidden channel type (staff_state - see
+        // HIDDEN_STAFF_CHANNEL_TYPES above). This is the single chokepoint that
+        // removes state staff chats from the chat list, switcher, and room resolver.
+        .filter((ch): ch is StaffChannel => !!ch && !HIDDEN_STAFF_CHANNEL_TYPES.has(ch.type))
         .sort((a: StaffChannel, b: StaffChannel) => {
           // National first, then state, then collective staff, then campout
           // group chats, then carpool breakouts at the bottom. Both campout and
@@ -542,10 +563,11 @@ export function useChannelUnreadCounts() {
     queryFn: async () => {
       if (!user) return {}
 
-      // Get user's channel memberships with collective_id
+      // Get user's channel memberships with collective_id + type (type is read
+      // only to drop hidden channels - staff_state - from the unread badge).
       const { data: memberships } = await supabase
         .from('chat_channel_members')
-        .select('channel_id, chat_channels(collective_id)')
+        .select('channel_id, chat_channels(type, collective_id)')
         .eq('user_id', user.id)
 
       if (!memberships?.length) return {}
@@ -555,7 +577,9 @@ export function useChannelUnreadCounts() {
       // since the channel has no parent collective. Mirrors the write path
       // after migration 20260518030000.
       const channelInfo = new Map<string, { collectiveId: string | null }>()
-      for (const m of memberships as unknown as { channel_id: string; chat_channels: { collective_id: string | null } | null }[]) {
+      for (const m of memberships as unknown as { channel_id: string; chat_channels: { type: StaffChannel['type']; collective_id: string | null } | null }[]) {
+        // Skip hidden channel types (staff_state) so their unread never reaches the badge.
+        if (m.chat_channels && HIDDEN_STAFF_CHANNEL_TYPES.has(m.chat_channels.type)) continue
         channelInfo.set(m.channel_id, { collectiveId: m.chat_channels?.collective_id ?? null })
       }
 
