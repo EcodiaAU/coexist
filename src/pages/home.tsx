@@ -22,7 +22,6 @@ import {
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import {
     getGreeting,
     useMyCollective,
@@ -365,14 +364,12 @@ function HomeHero({ rm }: { rm: boolean }) {
 function NextEventCard({
   events,
   isLoading,
-  showLoading,
   rm,
   firstName,
   fallbackEvent,
 }: {
   events: ReturnType<typeof useMyUpcomingEvents>['data']
   isLoading: boolean
-  showLoading: boolean
   rm: boolean
   firstName?: string
   /** Soonest upcoming event across the user's collectives, shown when they
@@ -438,7 +435,7 @@ function NextEventCard({
     )
   }
 
-  if (isLoading && showLoading) {
+  if (isLoading) {
     return (
       <div className="rounded-md bg-surface-1 shadow-sm p-6 animate-pulse space-y-3">
         <div className="h-3 w-28 rounded-full bg-primary-100" />
@@ -1401,9 +1398,7 @@ export default function HomePage() {
   const collectiveEvents = useCollectiveUpcomingEvents()
   const impact = useProfileStats()
   const pendingSurveys = usePendingSurveys()
-  const initialLoading = myCollective.isLoading || myEvents.isLoading || impact.isLoading
   const initialError = myCollective.isError && myEvents.isError && impact.isError
-  const showLoading = useDelayedLoading(initialLoading)
 
   // Prefetch the "Your Next Event" detail page so tapping it is instant
   const nextEventId = myEvents.data?.[0]?.id
@@ -1497,7 +1492,6 @@ export default function HomePage() {
             <NextEventCard
               events={myEvents.data}
               isLoading={myEvents.isLoading}
-              showLoading={showLoading}
               rm={rm}
               firstName={firstName}
               fallbackEvent={collectiveEvents.data?.[0]}

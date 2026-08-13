@@ -5,7 +5,6 @@ import {
     AlertTriangle, PackageX, ArrowUpDown,
     Minus, Plus, CheckSquare, Square, Package, Layers
 } from 'lucide-react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { TabBar } from '@/components/tab-bar'
 import { SearchBar } from '@/components/search-bar'
 import { Button } from '@/components/button'
@@ -402,7 +401,6 @@ function ProductGroup({
 
 export default function InventoryTab() {
   const { data: products, isLoading } = useAdminProducts()
-  const showLoading = useDelayedLoading(isLoading)
   const shouldReduceMotion = useReducedMotion()
   const adjustStock = useAdjustStock()
 
@@ -509,7 +507,7 @@ export default function InventoryTab() {
 
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <div className="space-y-3">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

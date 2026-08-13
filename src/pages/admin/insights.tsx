@@ -28,6 +28,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow, type HeroStatColor } from '@/components/admin-hero-stat'
+import { Skeleton } from '@/components/skeleton'
 import { Dropdown } from '@/components/dropdown'
 import { MultiSelect } from '@/components/multi-select'
 import { SearchBar } from '@/components/search-bar'
@@ -487,6 +488,45 @@ export default function AdminInsightsPage() {
       r.attendance ?? '', ...visibleDefs.map((d) => r.metrics[d.key] ?? 0), r.estimatedVolHours ?? '', r.isLegacy ? 'Legacy' : 'App',
     ]),
   })
+
+  // Cold-load skeleton. Without it the page renders its shell with every stat
+  // showing 0 until the observations query resolves, so the real numbers "pop"
+  // from zero. obsLoading is the RAW isLoading (keepPreviousData is the global
+  // default), so this is TRUE only on the first cold load - a filter change
+  // keeps the previous data visible with no skeleton flash. Layout mirrors the
+  // sticky filter bar + the Overview and Impact stat-card rows below it.
+  if (obsLoading) {
+    return (
+      <div className="pb-28">
+        <div
+          className="-mx-4 -mt-4 px-4 pb-3 border-b border-neutral-100 mb-6"
+          style={{ paddingTop: 'calc(var(--safe-top, 0px) + 0.75rem)' }}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-11 w-36 rounded-full" />
+            <Skeleton className="h-11 w-44 rounded-full" />
+            <Skeleton className="h-11 w-40 rounded-full" />
+          </div>
+          <div className="mt-2">
+            <Skeleton variant="text" className="h-3 max-w-md" />
+          </div>
+        </div>
+
+        <div className="space-y-10">
+          {[0, 1].map((section) => (
+            <div key={section} className="space-y-3">
+              <Skeleton variant="title" className="w-40" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Skeleton key={i} variant="stat-card" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <motion.div data-eos-id="src/pages/admin/insights.tsx#32" className="pb-28" variants={v.stagger} initial="hidden" animate="visible">

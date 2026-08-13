@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
 import {
@@ -26,6 +25,21 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { logAudit } from '@/lib/audit'
+import { makeOptimistic, patchItem, prependItem, removeItem } from '@/lib/optimistic'
+
+// Loose shape for optimistic cache patches. The generated challenges row type
+// omits `status` (rows are cast to read it below), so we carry a local shape
+// rather than fight the type on setQueriesData.
+type ChallengeRow = {
+  id: string
+  title: string
+  description: string | null
+  goal_type: string
+  goal_value: number
+  start_date: string | null
+  end_date: string | null
+  status: string
+}
 
 function useChallenges() {
   return useQuery({
@@ -57,7 +71,6 @@ export default function AdminChallengesPage() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { data: challenges, isLoading } = useChallenges()
-  const showLoading = useDelayedLoading(isLoading)
 
   const heroActions = useMemo(() => (
     <Button data-eos-id="src/pages/admin/challenges.tsx#0" data-eos-v="2"
@@ -93,8 +106,23 @@ export default function AdminChallengesPage() {
       if (error) throw error
       await logAudit({ action: 'challenge_created', target_type: 'challenge', target_id: data?.id, details: { title: form.title } })
     },
+    // Optimistic prepend so the new challenge appears the instant the sheet
+    // closes; the real row (with its server id) replaces the temp on invalidate.
+    onMutate: async () => {
+      const opt = makeOptimistic<ChallengeRow[]>(queryClient, ['admin-challenges'])
+      const temp: ChallengeRow = {
+        id: `temp-${Date.now()}`,
+        title: form.title,
+        description: form.description || null,
+        goal_type: form.goal_type,
+        goal_value: parseInt(form.goal_value) || 0,
+        start_date: form.start_date || null,
+        end_date: form.end_date || null,
+        status: 'active',
+      }
+      return opt.patch(prependItem(temp))
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-challenges'] })
       setShowCreate(false)
       setForm({
         title: '',
@@ -106,7 +134,13 @@ export default function AdminChallengesPage() {
       })
       toast.success('Challenge created')
     },
-    onError: () => toast.error('Failed to create challenge'),
+    onError: (_err, _vars, ctx) => {
+      makeOptimistic<ChallengeRow[]>(queryClient, ['admin-challenges']).rollback(ctx)
+      toast.error('Failed to create challenge')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-challenges'] })
+    },
   })
 
   const endMutation = useMutation({
@@ -118,11 +152,20 @@ export default function AdminChallengesPage() {
       if (error) throw error
       await logAudit({ action: 'challenge_ended', target_type: 'challenge', target_id: id })
     },
+    onMutate: async (id) => {
+      const opt = makeOptimistic<ChallengeRow[]>(queryClient, ['admin-challenges'])
+      return opt.patch(patchItem<ChallengeRow>(id, { status: 'ended', end_date: new Date().toISOString() }))
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-challenges'] })
       toast.success('Challenge ended')
     },
-    onError: () => toast.error('Failed to end challenge'),
+    onError: (_err, _vars, ctx) => {
+      makeOptimistic<ChallengeRow[]>(queryClient, ['admin-challenges']).rollback(ctx)
+      toast.error('Failed to end challenge')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-challenges'] })
+    },
   })
 
   const deleteMutation = useMutation({
@@ -134,12 +177,23 @@ export default function AdminChallengesPage() {
       // it happened. Now the log only reflects actual completed deletes.
       await logAudit({ action: 'challenge_deleted', target_type: 'challenge', target_id: id })
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-challenges'] })
+    // Optimistic remove + close the confirm sheet instantly; rollback restores
+    // the row if the delete fails.
+    onMutate: async (id) => {
       setDeleteTarget(null)
+      const opt = makeOptimistic<ChallengeRow[]>(queryClient, ['admin-challenges'])
+      return opt.patch(removeItem<ChallengeRow>(id))
+    },
+    onSuccess: () => {
       toast.success('Challenge deleted')
     },
-    onError: () => toast.error('Failed to delete challenge'),
+    onError: (_err, _vars, ctx) => {
+      makeOptimistic<ChallengeRow[]>(queryClient, ['admin-challenges']).rollback(ctx)
+      toast.error('Failed to delete challenge')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-challenges'] })
+    },
   })
 
   const shouldReduceMotion = useReducedMotion()
@@ -150,7 +204,7 @@ export default function AdminChallengesPage() {
     <div data-eos-id="src/pages/admin/challenges.tsx#7">
         <motion.div data-eos-id="src/pages/admin/challenges.tsx#8" variants={stagger} initial="hidden" animate="visible">
           <motion.div data-eos-id="src/pages/admin/challenges.tsx#9" variants={fadeUp}>
-          {showLoading ? (
+          {isLoading ? (
             <Skeleton data-eos-id="src/pages/admin/challenges.tsx#10" variant="list-item" count={4} />
           ) : !challenges?.length ? (
             <EmptyState data-eos-id="src/pages/admin/challenges.tsx#11"
@@ -231,6 +285,7 @@ export default function AdminChallengesPage() {
                           <Button data-eos-id="src/pages/admin/challenges.tsx#29"
                             variant="ghost"
                             size="sm"
+                            disabled={endMutation.isPending}
                             onClick={() => endMutation.mutate(challenge.id)}
                           >
                             End
@@ -238,6 +293,7 @@ export default function AdminChallengesPage() {
                         )}
                         <button data-eos-id="src/pages/admin/challenges.tsx#30"
                           type="button"
+                          disabled={deleteMutation.isPending}
                           onClick={() => setDeleteTarget(challenge.id)}
                           className="p-1.5 min-h-11 min-w-11 flex items-center justify-center rounded-sm text-neutral-400 hover:bg-error-50 hover:text-error-600 transition-[colors,transform] duration-150 cursor-pointer active:scale-[0.98]"
                           aria-label="Delete challenge"

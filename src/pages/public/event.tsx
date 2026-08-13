@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Calendar, MapPin, Users, TreePine, ExternalLink, Download, Ticket } from 'lucide-react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/button'
@@ -63,7 +62,6 @@ export default function PublicEventPage() {
     },
     enabled: !!id,
   })
-  const showLoading = useDelayedLoading(isLoading)
 
   // Guest ticket purchase (no account needed) for public ticketed events.
   const isTicketed = !!(event as { is_ticketed?: boolean } | undefined)?.is_ticketed
@@ -162,7 +160,7 @@ export default function PublicEventPage() {
     void doGuestCheckout()
   }
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-dvh bg-white">
         <div className="h-64 animate-pulse bg-white" />

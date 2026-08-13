@@ -16,7 +16,6 @@ import {
   type MyEventItem,
 } from '@/hooks/use-events'
 import { activityToBadge } from '@/lib/activity-types'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { fadeUp, adminStagger as stagger } from '@/lib/admin-motion'
 
 /* ------------------------------------------------------------------ */
@@ -125,7 +124,6 @@ export default function MyEventsPage() {
   const [tab, setTab] = useState<Tab>('upcoming')
 
   const { data: events, isLoading, isError } = useMyEvents(tab)
-  const showLoading = useDelayedLoading(isLoading)
 
   return (
     <Page noBackground header={<Header title="My Events" back showTitle />}>
@@ -138,7 +136,7 @@ export default function MyEventsPage() {
           aria-label="Filter my events"
         />
 
-        {showLoading ? (
+        {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }, (_, i) => (
               <RowSkeleton key={i} />

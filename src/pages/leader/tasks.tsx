@@ -11,7 +11,6 @@ import {
     Circle, CheckCircle2, Flag,
 } from 'lucide-react'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useLeaderHeader } from '@/components/leader-layout'
 import { Header } from '@/components/header'
 import { SegmentedControl } from '@/components/segmented-control'
@@ -704,7 +703,6 @@ function TasksTabContent({ rm }: { rm: boolean }) {
   const queryClient = useQueryClient()
   const { data: tasks, isLoading, isError } = useMyTasks()
   const { data: impactFormTasks } = usePendingImpactFormTasks()
-  const showLoading = useDelayedLoading(isLoading)
   const generateMutation = useGenerateTaskInstances()
   // Scope every list on this page to the collective picked in the leader
   // header (matches the Events tab). Admins / multi-collective leaders see
@@ -736,7 +734,7 @@ function TasksTabContent({ rm }: { rm: boolean }) {
   const totalOverdue = groups.reduce((sum, g) => sum + g.overdueCount, 0) + impactFormOverdue
   const totalCompleted = groups.reduce((sum, g) => g.tasks.filter((t) => t.status === 'completed').length + sum, 0) + completedImpactForms.length
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <div className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1384,7 +1382,6 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
   const [showCompleted, setShowCompleted] = useState(false)
 
   const { data: todos, isLoading } = useLeaderTodos()
-  const showLoading = useDelayedLoading(isLoading)
   const deleteMutation = useDeleteTodo()
 
   const pendingTodos = useMemo(
@@ -1419,7 +1416,7 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
     void date
   }, [])
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-3">

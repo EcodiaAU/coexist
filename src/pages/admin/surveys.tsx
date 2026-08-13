@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
@@ -38,6 +37,7 @@ import { Input } from '@/components/input'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { logAudit } from '@/lib/audit'
+import { makeOptimistic, patchItem, removeItem } from '@/lib/optimistic'
 import {
     useAutoSurveyConfig,
     useUpdateAutoSurveyConfig,
@@ -150,7 +150,6 @@ export default function AdminSurveysPage() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { data: surveys, isLoading } = useSurveys()
-  const showLoading = useDelayedLoading(isLoading)
   const { data: results } = useSurveyResults(selectedSurvey)
   const { data: autoConfig, isLoading: autoConfigLoading, isError: autoConfigError, refetch: refetchAutoConfig } = useAutoSurveyConfig()
   const updateAutoConfig = useUpdateAutoSurveyConfig()
@@ -209,18 +208,33 @@ export default function AdminSurveysPage() {
 
   useAdminHeader('Surveys', { heroContent: heroStats })
 
+  // Optimistic handle for the survey list. Both the status toggle and delete
+  // are reversible (status is non-destructive; delete rolls back on error), so
+  // they patch the cache immediately and reconcile on settle.
+  const surveysOpt = makeOptimistic<Array<Record<string, unknown> & { id: string }>>(
+    queryClient,
+    ['admin-surveys'],
+  )
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await logAudit({ action: 'survey_deleted', target_type: 'survey', target_id: id })
       const { error } = await supabase.from('surveys').delete().eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-surveys'] })
+    onMutate: async (id) => {
+      // Close the confirmation sheet immediately - the row vanishes optimistically.
       setDeleteTarget(null)
+      return surveysOpt.patch(removeItem(id))
+    },
+    onSuccess: () => {
       toast.success('Survey deleted')
     },
-    onError: () => toast.error('Failed to delete survey'),
+    onError: (_err, _id, ctx) => {
+      surveysOpt.rollback(ctx)
+      toast.error('Failed to delete survey')
+    },
+    onSettled: () => surveysOpt.invalidate(),
   })
 
   // Toggle a survey between active and draft (non-destructive - responses are
@@ -236,11 +250,24 @@ export default function AdminSurveysPage() {
       const { error } = await supabase.from('surveys').update({ status }).eq('id', id)
       if (error) throw error
     },
+    onMutate: async ({ id, status }) => {
+      // Reflect the toggle instantly. isActive derives from both status and
+      // is_active, so patch both so the pill + toggle flip together.
+      return surveysOpt.patch(
+        patchItem<Record<string, unknown> & { id: string }>(id, {
+          status,
+          is_active: status === 'active',
+        }),
+      )
+    },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-surveys'] })
       toast.success(variables.status === 'active' ? 'Survey activated' : 'Survey deactivated')
     },
-    onError: () => toast.error('Failed to update survey'),
+    onError: (_err, _vars, ctx) => {
+      surveysOpt.rollback(ctx)
+      toast.error('Failed to update survey')
+    },
+    onSettled: () => surveysOpt.invalidate(),
   })
 
   const deleteResponseMutation = useMutation({
@@ -324,7 +351,7 @@ export default function AdminSurveysPage() {
             </Button>
           </div>
 
-          {showLoading ? (
+          {isLoading ? (
             <Skeleton variant="list-item" count={4} />
           ) : !surveys?.length ? (
             <EmptyState
@@ -338,7 +365,7 @@ export default function AdminSurveysPage() {
               {surveys.map((survey) => {
                 const surveyRecord = survey as unknown as Record<string, unknown>
                 const status = (surveyRecord.status as string) ?? (survey.is_active ? 'active' : 'inactive')
-                const isActive = surveyRecord.status === 'active' || survey.is_active
+                const isActive = surveyRecord.status === 'active' || survey.is_active === true
                 const questionCount = (() => {
                   try {
                     const q = typeof surveyRecord.questions === 'string'

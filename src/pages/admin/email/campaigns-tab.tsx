@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import {
     Send,
     Users,
@@ -589,7 +588,6 @@ function CampaignDetailSheet({
 
 export function CampaignsTab() {
   const { data: campaigns, isLoading } = useCampaigns()
-  const showLoading = useDelayedLoading(isLoading)
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [composing, setComposing] = useState(false)
@@ -702,7 +700,7 @@ export function CampaignsTab() {
         </div>
       </div>
 
-      {showLoading ? (
+      {isLoading ? (
         <Skeleton data-eos-id="src/pages/admin/email/campaigns-tab.tsx#90" variant="list-item" count={5} />
       ) : !filtered?.length ? (
         <EmptyState data-eos-id="src/pages/admin/email/campaigns-tab.tsx#91"

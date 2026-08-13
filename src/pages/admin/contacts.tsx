@@ -36,7 +36,6 @@ import {
   CONTACT_CATEGORIES,
   AUSTRALIAN_STATES,
 } from '@/hooks/use-admin-contacts'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import type { Tables } from '@/types/database.types'
 
 type EmergencyContact = Tables<'emergency_contacts'>
@@ -274,18 +273,20 @@ export default function AdminContactsPage() {
   const { toast } = useToast()
 
   const { data: contacts, isLoading } = useAdminContacts({ search, category: categoryFilter })
-  const showLoading = useDelayedLoading(isLoading)
   const deleteMutation = useDeleteContact()
 
   const handleDelete = async () => {
     if (!deleteTarget) return
+    const target = deleteTarget
+    // Close the sheet immediately; the row is removed optimistically by
+    // useDeleteContact's onMutate, so the delete feels instant.
+    setDeleteTarget(null)
     try {
-      await deleteMutation.mutateAsync(deleteTarget.id)
+      await deleteMutation.mutateAsync(target.id)
       toast.success('Contact deleted')
     } catch {
       toast.error('Failed to delete contact')
     }
-    setDeleteTarget(null)
   }
 
   // Group contacts by category for display
@@ -395,7 +396,7 @@ export default function AdminContactsPage() {
 
         {/* Contact list */}
         <motion.div data-eos-id="src/pages/admin/contacts.tsx#44" variants={fadeUp}>
-          {showLoading ? (
+          {isLoading ? (
             <Skeleton data-eos-id="src/pages/admin/contacts.tsx#45" variant="list-item" count={8} />
           ) : !grouped.length ? (
             <EmptyState data-eos-id="src/pages/admin/contacts.tsx#46"

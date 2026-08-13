@@ -16,7 +16,6 @@ import {
     X,
     RotateCcw,
 } from 'lucide-react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { TabBar } from '@/components/tab-bar'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
@@ -307,7 +306,6 @@ function ReturnsBanner({ orderId }: { orderId: string }) {
 
 function AllReturnsList() {
   const { data: returns, isLoading } = useAdminReturns()
-  const showLoading = useDelayedLoading(isLoading)
   const updateReturn = useUpdateReturnStatus()
   const { toast } = useToast()
 
@@ -323,7 +321,7 @@ function AllReturnsList() {
     [updateReturn, toast],
   )
 
-  if (showLoading) return <Skeleton variant="text" count={3} />
+  if (isLoading) return <Skeleton variant="text" count={3} />
   if (!returns || returns.length === 0) return null
 
   const pending = returns.filter((r) => r.status === 'pending')
@@ -414,7 +412,6 @@ export default function OrdersTab() {
   const { data: orders, isLoading } = useAdminOrders(
     statusFilter === 'all' ? undefined : statusFilter,
   )
-  const showLoading = useDelayedLoading(isLoading)
   const updateStatus = useUpdateOrderStatus()
   const refundOrder = useRefundOrder()
   const updateNotes = useUpdateOrderNotes()
@@ -495,8 +492,9 @@ export default function OrdersTab() {
     [],
   )
 
-  // Only show skeleton on first ever load, not on tab/filter switches
-  if (showLoading && !orders) {
+  // Instant skeleton on first ever load; keepPreviousData holds rows on
+  // tab/filter switches so it never re-flashes.
+  if (isLoading && !orders) {
     return (
       <div className="space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
@@ -510,7 +508,6 @@ export default function OrdersTab() {
       </div>
     )
   }
-  if (isLoading && !orders) return null
 
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 

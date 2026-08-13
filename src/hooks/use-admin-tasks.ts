@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import type { Database } from '@/types/database.types'
 import { supabase, escapeIlike } from '@/lib/supabase'
+import { makeOptimistic, patchItem, removeItem } from '@/lib/optimistic'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -280,6 +281,8 @@ export function useAdminUpdateTemplate() {
 
 export function useAdminToggleTemplate() {
   const queryClient = useQueryClient()
+  // Prefix key patches every filter-variant of the template list at once.
+  const opt = makeOptimistic<TaskTemplate[]>(queryClient, ['admin-task-templates'])
   return useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
       const { error } = await supabase
@@ -288,14 +291,16 @@ export function useAdminToggleTemplate() {
         .eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-task-templates'] })
-    },
+    // Reversible flip - flip the cache instantly, roll back on error.
+    onMutate: ({ id, is_active }) => opt.patch(patchItem<TaskTemplate>(id, { is_active })),
+    onError: (_err, _vars, ctx) => opt.rollback(ctx),
+    onSettled: () => opt.invalidate(),
   })
 }
 
 export function useAdminDeleteTemplate() {
   const queryClient = useQueryClient()
+  const opt = makeOptimistic<TaskTemplate[]>(queryClient, ['admin-task-templates'])
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -305,8 +310,10 @@ export function useAdminDeleteTemplate() {
       if (error) throw error
       return id
     },
+    // Reversible delete - drop the row optimistically, restore on error.
+    onMutate: (id) => opt.patch(removeItem<TaskTemplate>(id)),
+    onError: (_err, _id, ctx) => opt.rollback(ctx),
     onSuccess: (deletedId) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-task-templates'] })
       // DB cascade deletes the timeline_rule, but clear the stale cache entry
       queryClient.removeQueries({ queryKey: ['timeline-rule', deletedId] })
       // Also invalidate task instance queries since cascade deletes those too
@@ -314,6 +321,7 @@ export function useAdminDeleteTemplate() {
       queryClient.invalidateQueries({ queryKey: ['collective-tasks'] })
       queryClient.invalidateQueries({ queryKey: ['admin-kpi-dashboard'] })
     },
+    onSettled: () => opt.invalidate(),
   })
 }
 

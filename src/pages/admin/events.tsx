@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
@@ -404,7 +403,6 @@ export default function AdminEventsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('upcoming')
 
   const { data, isLoading, isError } = useAdminEventsData()
-  const showLoading = useDelayedLoading(isLoading)
 
   const heroStats = useMemo(() => (
     <AdminHeroStatRow data-eos-id="src/pages/admin/events.tsx#74">
@@ -464,7 +462,7 @@ export default function AdminEventsPage() {
 
   const { stagger, fadeUp } = adminVariants(rm)
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <div data-eos-id="src/pages/admin/events.tsx#81" className="space-y-4">
         <div data-eos-id="src/pages/admin/events.tsx#82" className="grid grid-cols-2 lg:grid-cols-4 gap-3">

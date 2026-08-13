@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
 import {
@@ -117,9 +116,7 @@ export default function AdminPartnersPage() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { data: organisations, isLoading: orgsLoading } = useOrganisations()
-  const showOrgsLoading = useDelayedLoading(orgsLoading)
   const { data: offers, isLoading: offersLoading } = usePartnerOffers()
-  const showOffersLoading = useDelayedLoading(offersLoading)
 
   const heroStats = useMemo(() => (
     <AdminHeroStatRow>
@@ -311,9 +308,9 @@ export default function AdminPartnersPage() {
             </Button>
           </div>
 
-          {showOrgsLoading ? (
+          {orgsLoading ? (
             <Skeleton variant="list-item" count={4} />
-          ) : orgsLoading ? null : !organisations?.length ? (
+          ) : !organisations?.length ? (
             <EmptyState
               illustration="empty"
               title="No organisations"
@@ -401,9 +398,9 @@ export default function AdminPartnersPage() {
             </Button>
           </div>
 
-          {showOffersLoading ? (
+          {offersLoading ? (
             <Skeleton variant="list-item" count={4} />
-          ) : offersLoading ? null : !offers?.length ? (
+          ) : !offers?.length ? (
             <EmptyState
               illustration="empty"
               title="No partner offers"

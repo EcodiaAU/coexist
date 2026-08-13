@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import {
   Save,
   Eye,
@@ -653,7 +652,6 @@ function SystemTemplateEditor({
 
 export function SystemTemplatesTab() {
   const { data: overrides, isLoading } = useSystemOverrides()
-  const showLoading = useDelayedLoading(isLoading)
   const [editing, setEditing] = useState<TemplateInfo | null>(null)
 
   const overrideMap = useMemo(() => {
@@ -685,7 +683,7 @@ export function SystemTemplatesTab() {
         </p>
       </div>
 
-      {showLoading ? (
+      {isLoading ? (
         <Skeleton data-eos-id="src/pages/admin/email/system-templates-tab.tsx#48" variant="list-item" count={6} />
       ) : (
         <>

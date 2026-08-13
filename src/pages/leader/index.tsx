@@ -39,7 +39,6 @@ import {
     Hash,
 } from 'lucide-react'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
-import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { Avatar } from '@/components/avatar'
 import { Button } from '@/components/button'
@@ -936,7 +935,6 @@ export default function LeaderDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ['my-tasks'] }),
     ])
   }, [queryClient, collectiveId])
-  const showLoading = useDelayedLoading(isLoading)
   const { data: collectiveDetail } = useCollective(collectiveId)
   const collectiveSlug = leaderCtx.collectiveSlug ?? collectiveDetail?.slug ?? collectiveId
   const { data: pendingItems = [] } = usePendingItems(collectiveId)
@@ -990,7 +988,7 @@ export default function LeaderDashboardPage() {
   }, [data])
 
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <Wrapper>
         <div className="relative min-h-dvh overflow-x-hidden bg-white">
