@@ -50,6 +50,23 @@ else
   echo "==> shipping current web bundle version $VERSION (SKIP_BUMP)"
 fi
 
+# Sentry source-map upload for the OTA bundle. The native app has no server.url,
+# so it serves THIS bundled dist locally - its JS crash stacks (e.g. COEXIST-N
+# "Maximum update depth" in the admin bundle) only resolve to real file/line if
+# this build uploads hidden source maps. vite.config gates the @sentry/vite-plugin
+# on SENTRY_AUTH_TOKEN; map it from the write-scoped token in the creds file so an
+# OTA ship symbolicates the native surface, not just the Vercel web build.
+if [ -z "${SENTRY_AUTH_TOKEN:-}" ] && [ -f /Users/ecodia/PRIVATE/ecodia-creds/sentry.env ]; then
+  # shellcheck disable=SC1091
+  set -a; source /Users/ecodia/PRIVATE/ecodia-creds/sentry.env; set +a
+  export SENTRY_AUTH_TOKEN="$SENTRY_WRITE_TOKEN"
+fi
+if [ -n "${SENTRY_AUTH_TOKEN:-}" ]; then
+  echo "==> Sentry token present: OTA bundle will upload hidden source maps"
+else
+  echo "==> WARN: no Sentry token - OTA bundle ships WITHOUT source maps (JS crash stacks stay minified)"
+fi
+
 echo "==> building web bundle (CAPACITOR_BUILD=true npm run build)"
 (cd "$APP_ROOT" && CAPACITOR_BUILD=true npm run build)
 
