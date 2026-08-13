@@ -51,10 +51,26 @@ export function Virtualized<T>({
   const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null)
   const [scrollMargin, setScrollMargin] = useState(0)
 
-  // Resolve the ancestor scroll element once mounted. The Page's <main> is in
-  // the same commit as this list, so it is present by the layout phase.
+  // Resolve the ancestor scroll element by walking UP from the wrapper to the
+  // nearest scrollable ancestor. This binds to the real DOM parent that owns
+  // this list, which is correct even when a global id is ambiguous - the Page
+  // keeps a previous route's <main id="main-content"> mounted during the
+  // transition, so getElementById can return the wrong (non-scrolling) one and
+  // the window never updates as the user scrolls. Falls back to the id lookup,
+  // then the document scroller, so it still resolves on desktop where the Page
+  // clips overflow and the window scrolls.
   useLayoutEffect(() => {
-    setScrollEl(document.getElementById(scrollElementId))
+    let el: HTMLElement | null = wrapRef.current?.parentElement ?? null
+    while (el) {
+      const oy = getComputedStyle(el).overflowY
+      if (oy === 'auto' || oy === 'scroll') break
+      el = el.parentElement
+    }
+    setScrollEl(
+      el ??
+        document.getElementById(scrollElementId) ??
+        (document.scrollingElement as HTMLElement | null),
+    )
   }, [scrollElementId])
 
   // scrollMargin = the wrapper's offset from the top of the scroll element's
