@@ -525,47 +525,55 @@ export default function ExplorePage() {
                           return (
                             <motion.div
                               key={m.collective_id}
-                              className="w-[220px] shrink-0"
+                              className="w-[260px] shrink-0"
                               initial={shouldReduceMotion ? false : { opacity: 0, x: 16 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: idx * 0.06, duration: 0.25 }}
                             >
+                              {/* Full-bleed tile: cover fills the card, role + name +
+                                  place + member count overlay a dark bottom-up gradient
+                                  as plain white text, no pills. */}
                               <button
                                 type="button"
                                 onClick={() => openSheet(`/collectives/${c.slug}`)}
                                 className={cn(
-                                  'w-full rounded-md bg-white overflow-hidden text-left',
-                                  'shadow-sm',
-                                  'border border-neutral-100',
-                                  'active:scale-[0.98] transition-all duration-150 cursor-pointer select-none',
-                                  '',
+                                  'relative w-full aspect-[4/3] rounded-md overflow-hidden text-left',
+                                  'shadow-md ring-1 ring-black/5',
+                                  'active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none',
                                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                                 )}
                               >
-                                <div className="h-24 w-full relative overflow-hidden">
-                                  {c.cover_image_url ? (
-                                    <img src={c.cover_image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                                  ) : (
-                                    <div className="absolute inset-0 bg-primary-50 flex items-center justify-center">
-                                      <Users size={28} className="text-primary-200" />
+                                {c.cover_image_url ? (
+                                  <img src={c.cover_image_url} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                                ) : (
+                                  <>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-moss-700" aria-hidden="true" />
+                                    <div className="absolute -right-3 -top-3 text-white/10 pointer-events-none [&_svg]:w-28 [&_svg]:h-28" aria-hidden="true">
+                                      <Users />
                                     </div>
-                                  )}
-                                  {/* Scrim for role badge */}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                                  <div className="absolute bottom-2 left-2.5">
-                                    <span className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold text-primary-700 uppercase tracking-wide shadow-sm">
-                                      {m.role?.replace(/_/g, ' ') ?? 'member'}
+                                  </>
+                                )}
+
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" aria-hidden="true" />
+
+                                {/* Role as standout text, no pill */}
+                                <span className="absolute top-3 left-3.5 text-[11px] font-bold uppercase tracking-[0.14em] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]">
+                                  {m.role?.replace(/_/g, ' ') ?? 'member'}
+                                </span>
+
+                                <div className="absolute inset-x-0 bottom-0 p-3.5">
+                                  <p className="font-heading text-base font-bold text-white truncate drop-shadow-[0_1px_6px_rgba(0,0,0,0.8)]">{c.name}</p>
+                                  <div className="mt-1.5 space-y-1 text-xs text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
+                                    {[c.region, c.state].filter(Boolean).length > 0 && (
+                                      <span className="flex items-center gap-1.5">
+                                        <MapPin size={12} className="shrink-0 text-white/75" />
+                                        <span className="truncate">{[c.region, c.state].filter(Boolean).join(', ')}</span>
+                                      </span>
+                                    )}
+                                    <span className="flex items-center gap-1.5 font-semibold">
+                                      <Users size={12} className="shrink-0 text-white/75" />
+                                      {c.member_count ?? 0} members
                                     </span>
-                                  </div>
-                                </div>
-                                <div className="p-3.5">
-                                  <p className="text-sm font-semibold text-neutral-900 truncate">{c.name}</p>
-                                  <p className="text-xs text-neutral-500 mt-0.5 flex items-center gap-1">
-                                    <MapPin size={10} />
-                                    {[c.region, c.state].filter(Boolean).join(', ')}
-                                  </p>
-                                  <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-50 text-xs font-semibold text-primary-600">
-                                    <Users size={11} /> {c.member_count ?? 0} members
                                   </div>
                                 </div>
                               </button>
