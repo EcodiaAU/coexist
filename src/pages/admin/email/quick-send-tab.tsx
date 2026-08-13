@@ -21,6 +21,7 @@
  * non-power-user landing.
  */
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Sparkles,
   Send,
@@ -43,6 +44,7 @@ import {
 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/button'
+import { ProgressBar } from '@/components/progress-bar'
 import { Input } from '@/components/input'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
@@ -104,6 +106,13 @@ export function QuickSendTab() {
 
   const [prompt, setPrompt] = useState('')
   const [drafting, setDrafting] = useState(false)
+  // Determinate progress for the AI draft. The generate-email edge
+  // function returns in one shot (no token stream), so there is no
+  // true percentage to read. Instead we ease toward a ~92% ceiling
+  // over the expected duration, snap to 100% on success, then hide.
+  // This gives the wait structure and a sense of movement a bare
+  // spinner cannot, without claiming progress we do not have.
+  const [draftProgress, setDraftProgress] = useState(0)
   const [bodyHtml, setBodyHtml] = useState('')
   const [bodyText, setBodyText] = useState('')
   const [subject, setSubject] = useState('')
@@ -174,48 +183,54 @@ export function QuickSendTab() {
   // re-derives correctly when the admin changes the photo/focal/wash.
   function normalizeHero(html: string): string {
     const hasImage = !!heroImageUrl.trim()
+    // Full-bleed legibility gradient (dark at the bottom so the white heading
+    // reads over any photo) + the no-image olive gradient. Matches the
+    // send-email code path (2026-08-13 full-bleed, no-card redesign).
+    const gradient =
+      'linear-gradient(to top, rgba(13,18,8,0.82) 0%, rgba(13,18,8,0.36) 44%, rgba(13,18,8,0.04) 100%)'
+    const oliveGradient = 'linear-gradient(135deg,#869e62 0%,#5d7340 100%)'
+    // Substitute the per-campaign hero token (the admin upload). The
+    // per-recipient {{next_event_image}} token is intentionally LEFT for
+    // send-campaign to fill with each subscriber's own next-event photo.
     let out = html
       .replace(/\{\{hero_image_url\}\}/g, hasImage ? heroImageUrl : '')
       .replace(/\{\{hero_focal_x\}\}/g, String(heroFocalX))
       .replace(/\{\{hero_focal_y\}\}/g, String(heroFocalY))
-      .replace(/\{\{hero_overlay_opacity\}\}/g, hasImage ? String(heroOverlay) : '0')
-    // The hero cell is the one carrying the olive #879e62 background.
-    // The AI is inconsistent (sometimes no background-image at all, so
-    // an added photo never showed). Rewrite that cell's style directly:
-    // ensure it has the right background-image (real photo or none),
-    // cover sizing, and the focal point. This is what guarantees an
-    // added image actually renders.
+    // Authoritatively set the ex-hero cell background, matched by CLASS so it
+    // survives brand-hex changes (the old matcher keyed on #879e62 and broke
+    // when the brand aligned to the app's #869e62). Three cases:
+    //   - admin uploaded a photo          -> that photo, overriding any token
+    //   - hero carries {{next_event_image}} -> keep it (per-recipient event photo)
+    //   - empty                            -> clean olive gradient, no dark wash
     out = out.replace(
-      /style="([^"]*?background-color\s*:\s*#879e62[^"]*?)"/gi,
-      (_m, css: string) => {
+      /(<td\b[^>]*\bclass="[^"]*\bex-hero\b[^"]*"[^>]*\bstyle=")([^"]*)(")/gi,
+      (_m, pre: string, css: string, post: string) => {
+        const usesNextEvent = /\{\{next_event_image\}\}/.test(css)
         let s = css
-        s = s.replace(/background-image\s*:\s*url\([^)]*\)\s*;?/gi, '')
-        s = s.replace(/background-size\s*:\s*[^;"]*;?/gi, '')
-        s = s.replace(/background-position\s*:\s*[^;"]*;?/gi, '')
-        s = s.replace(/background-repeat\s*:\s*[^;"]*;?/gi, '')
-        s = s.replace(/;\s*;/g, ';').trim()
-        if (!s.endsWith(';')) s += ';'
+          .replace(/background-image\s*:\s*[^;"]*;?/gi, '')
+          .replace(/background-size\s*:\s*[^;"]*;?/gi, '')
+          .replace(/background-position\s*:\s*[^;"]*;?/gi, '')
+          .replace(/background-repeat\s*:\s*[^;"]*;?/gi, '')
+          .replace(/;\s*;/g, ';').trim()
+        if (s && !s.endsWith(';')) s += ';'
+        if (!/background-color\s*:/i.test(s)) s += 'background-color:#869e62;'
         if (hasImage) {
-          s += `background-image:url('${heroImageUrl}');background-size:cover;background-position:${heroFocalX}% ${heroFocalY}%;background-repeat:no-repeat;`
+          s += `background-image:${gradient}, url('${heroImageUrl}');background-size:cover;background-position:${heroFocalX}% ${heroFocalY}%;background-repeat:no-repeat;`
+        } else if (usesNextEvent) {
+          s += `background-image:${gradient}, url('{{next_event_image}}');background-size:cover;background-position:{{next_event_image_x}}% {{next_event_image_y}}%;background-repeat:no-repeat;`
+        } else {
+          s += `background-image:${oliveGradient};`
         }
-        return `style="${s}"`
+        return `${pre}${s}${post}`
       },
     )
 
-    // Force every black wash to the right alpha. With no image the wash
-    // must be fully transparent so the olive shows flat.
-    out = out.replace(
-      /rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*[0-9.]+\s*\)/gi,
-      hasImage ? `rgba(0,0,0,${heroOverlay})` : 'rgba(0,0,0,0)',
-    )
-
-    // Dark-mode safety net: clients wash out text when no color-scheme is
-    // declared. Inject the light-only metas into <head> if the AI left
-    // them out, so the palette is never remapped.
+    // Light/dark aware: the redesign renders in both. Declare BOTH schemes if
+    // the template lacks the meta, instead of the old light-only lock.
     if (/<head[^>]*>/i.test(out) && !/name=["']color-scheme["']/i.test(out)) {
       out = out.replace(
         /<head[^>]*>/i,
-        (m) => `${m}\n<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">`,
+        (m) => `${m}\n<meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark">`,
       )
     }
 
@@ -353,12 +368,35 @@ export function QuickSendTab() {
     }
   }, [bodyHtml])
 
+  // While drafting, decelerate toward a 92% ceiling so the bar keeps
+  // moving but never pretends to finish before the response arrives.
+  // handleDraft snaps it to 100% on success and clears it in finally.
+  useEffect(() => {
+    if (!drafting) return
+    const id = setInterval(() => {
+      setDraftProgress((p) => (p >= 92 ? p : Math.min(92, p + Math.max(0.6, (92 - p) * 0.07))))
+    }, 180)
+    return () => clearInterval(id)
+  }, [drafting])
+
+  const draftPhase =
+    draftProgress >= 100
+      ? 'Ready'
+      : draftProgress >= 80
+        ? 'Adding the finishing touches'
+        : draftProgress >= 55
+          ? 'Designing the layout'
+          : draftProgress >= 25
+            ? 'Writing the copy'
+            : 'Understanding your brief'
+
   const handleDraft = async (overridePrompt?: string) => {
     const effectivePrompt = (overridePrompt ?? prompt).trim()
     if (!effectivePrompt) {
       toast.error('Tell us what to send first.')
       return
     }
+    setDraftProgress(8)
     setDrafting(true)
     try {
       const { data, error } = await supabase.functions.invoke('generate-email', {
@@ -376,10 +414,15 @@ export function QuickSendTab() {
       if (h1 && !subject) {
         setSubject(h1[1].replace(/<[^>]*>/g, '').slice(0, 120).trim())
       }
+      // Snap the bar to 100% and let it read as complete for a beat
+      // before the drafting UI unmounts.
+      setDraftProgress(100)
+      await new Promise((r) => setTimeout(r, 450))
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'AI draft failed - try again')
     } finally {
       setDrafting(false)
+      setDraftProgress(0)
     }
   }
 
@@ -525,13 +568,43 @@ export function QuickSendTab() {
 
         <Button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#12"
           variant="primary"
-          icon={drafting ? <Loader2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#13" size={14} className="animate-spin" /> : <Sparkles data-eos-id="src/pages/admin/email/quick-send-tab.tsx#14" size={14} />}
+          icon={<Sparkles data-eos-id="src/pages/admin/email/quick-send-tab.tsx#14" size={14} />}
           onClick={() => handleDraft()}
-          loading={drafting}
-          disabled={!prompt.trim()}
+          disabled={drafting || !prompt.trim()}
         >
-          {bodyHtml ? 'Redraft' : 'Draft with AI'}
+          {drafting ? 'Drafting...' : bodyHtml ? 'Redraft' : 'Draft with AI'}
         </Button>
+
+        {/* Determinate progress replaces the old button spinner: the AI
+            draft can take 10-20s, and a moving bar with a phase label
+            reads far better than a spinner that gives no sense of how
+            far along the request is. */}
+        <AnimatePresence data-eos-id="src/pages/admin/email/quick-send-tab.tsx#200">
+          {drafting && (
+            <motion.div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#201"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-sm bg-primary-50/70 border border-primary-200/60 p-3 space-y-1.5"
+            >
+              <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#202" className="flex items-center justify-between">
+                <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#203" className="flex items-center gap-1.5 text-xs font-medium text-primary-800">
+                  <Sparkles data-eos-id="src/pages/admin/email/quick-send-tab.tsx#204" size={12} className="text-primary-600" />
+                  {draftPhase}
+                </span>
+                <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#205" className="text-xs tabular-nums text-primary-700/70">
+                  {Math.round(draftProgress)}%
+                </span>
+              </div>
+              <ProgressBar data-eos-id="src/pages/admin/email/quick-send-tab.tsx#206"
+                value={draftProgress}
+                size="sm"
+                aria-label="Drafting your email"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       {/* Optional: hero photo with focal point + overlay. Sits between

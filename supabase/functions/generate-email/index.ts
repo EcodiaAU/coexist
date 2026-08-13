@@ -175,7 +175,7 @@ STRUCTURE:
 1. Full-bleed hero (ONE cell, edge to edge: small white wordmark at top, overline +
    heading + optional subtitle sit BOTTOM-LEFT over the image). Swap the text:
 
-   <tr><td bgcolor="#869e62" class="ex-hero" style="background-color:#869e62;background-image:linear-gradient(to top, rgba(13,18,8,0.82) 0%, rgba(13,18,8,0.36) 44%, rgba(13,18,8,0.04) 100%), url('{{hero_image_url}}');background-size:cover;background-position:{{hero_focal_x}}% {{hero_focal_y}}%;background-repeat:no-repeat;">
+   <tr><td bgcolor="#869e62" class="ex-hero" style="background-color:#869e62;background-image:linear-gradient(to top, rgba(13,18,8,0.82) 0%, rgba(13,18,8,0.36) 44%, rgba(13,18,8,0.04) 100%), url('{{next_event_image}}');background-size:cover;background-position:{{next_event_image_x}}% {{next_event_image_y}}%;background-repeat:no-repeat;">
      <div class="ex-hero-pad" style="padding:210px 48px 34px 48px;">
        <img src="https://app.coexistaus.org/logos/white-wordmark.png" alt="Co-Exist" width="128" style="width:128px;height:auto;display:block;margin:0 0 16px 0;border:0;" />
        <p style="margin:0 0 9px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.82);">OPTIONAL OVERLINE</p>
@@ -183,6 +183,17 @@ STRUCTURE:
        <p style="color:rgba(255,255,255,0.90);margin:12px 0 0 0;font-size:16px;line-height:1.5;">Optional subtitle</p>
      </div>
    </td></tr>
+
+   HERO IMAGE (default to the auto per-recipient event photo):
+   - The default hero url above is {{next_event_image}}. This auto-fills to EACH
+     recipient's own next-event cover photo at send time, so an event / what's-on /
+     reminder campaign shows a real full-bleed photo with NO admin upload needed.
+     ALWAYS use {{next_event_image}} for anything event-oriented or per-region.
+   - Only for a GENERAL (non-event) campaign where one fixed photo suits everyone,
+     use url('{{hero_image_url}}') with {{hero_focal_x}}% {{hero_focal_y}}% instead;
+     the admin uploads that photo in the Quick Send hero-image field.
+   - With no photo at all, the send pipeline swaps the hero to a clean olive
+     gradient automatically, so a bare hero is never dark or muddy.
 
    WHY this exact shape:
    - No radius, no gutter, no card wrapper. The td is the full container width, so
