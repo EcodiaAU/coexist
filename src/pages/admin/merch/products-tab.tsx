@@ -917,10 +917,13 @@ export default function ProductsTab() {
                       </h3>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-sm font-bold text-neutral-700 tabular-nums">
+                      {/* Price is the hero datum on a shop row: promote it above
+                          the product title's weight, dark and larger (review #6,
+                          inverted hierarchy). */}
+                      <span className="text-base font-bold text-neutral-900 tabular-nums">
                         {formatPrice(product.base_price_cents)}
                       </span>
-                      <span className="text-[11px] text-neutral-400">
+                      <span className="text-[11px] text-neutral-500">
                         {product.variants.length} var{product.variants.length !== 1 ? 's' : ''}
                       </span>
                       {product.category && (
