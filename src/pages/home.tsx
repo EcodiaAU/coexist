@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import type { ReactNode } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, useReducedMotion, useInView } from 'framer-motion'
 import { useParallaxLayers } from '@/hooks/use-parallax-scroll'
@@ -43,7 +44,7 @@ import {
     WaveTransition
 } from '@/components'
 import { Card } from '@/components/card'
-import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
+import { useCountUp } from '@/components/stat-card'
 import { prefetchEventDetail, useRegisterForEvent } from '@/hooks/use-events'
 import { cn } from '@/lib/cn'
 import { isSignInButtonVisible, wallClockNow } from '@/lib/date-format'
@@ -74,7 +75,7 @@ function Section({
             Tracking-widest with text-sm was the prior cause of truncation -
             uppercase + heavy letter spacing pushed the heading past the
             right-aligned "See All" link. Tate verbatim 2026-05-28. */}
-        <h2 className="font-heading text-[9px] sm:text-[10px] font-bold text-neutral-500 uppercase tracking-wide min-w-0 truncate">
+        <h2 className="font-heading text-[9px] sm:text-[10px] font-bold text-neutral-500 uppercase tracking-wide min-w-0 leading-tight [text-wrap:balance]">
           {title}
         </h2>
         {action && (
@@ -1072,7 +1073,107 @@ function UpdatesSection({ rm }: { rm: boolean }) {
 /*  Impact row components                                              */
 /* ------------------------------------------------------------------ */
 
-/* (Impact stats now use BentoStatCard / BentoStatGrid from bento-stats.tsx) */
+/* ------------------------------------------------------------------ */
+/*  Photographic impact tiles                                          */
+/*                                                                     */
+/*  Impact is told over REAL Co-Exist photography, not flat cards. Each */
+/*  stat sits on a full-bleed photo of the actual work (volunteers      */
+/*  planting, forest regen, shore country) behind a bottom legibility   */
+/*  scrim - the same image-forward language as the event tiles and the  */
+/*  profile map. No decorative panels, gradients or badges.             */
+/* ------------------------------------------------------------------ */
+
+// Real photos, one per stat. Bundled clean documentary shots (public/img)
+// so they always load and the quality is controlled (event covers in the DB
+// are often promo graphics with baked-in text). Keyed by stat.
+// The single photographic hero moment. The headline stat (Trees Planted, or
+// Litter Removed when trees is zero) sits over one real photo of the work; the
+// supporting stats render as calm numbers, not more photos (Tate 2026-08-13).
+const IMPACT_PHOTOS: Record<string, string> = {
+  trees: '/img/impact/impact-trees.jpg',   // volunteers planting a field, mountains behind
+  litter: '/img/impact/impact-litter.jpg', // cleanup crew holding Co-Exist rubbish bags
+}
+
+function HeroImpactPhoto({
+  value,
+  label,
+  unit,
+  description,
+  icon,
+  src,
+  rm,
+}: {
+  value: number
+  label: string
+  unit?: string
+  description: string
+  icon: ReactNode
+  src: string
+  rm: boolean
+}) {
+  const numericValue = Math.ceil(value)
+  const display = useCountUp(numericValue, 1400, !rm)
+  const formatted = numericValue > 0 ? display.toLocaleString() : '0'
+  return (
+    <div className="relative overflow-hidden">
+      <img src={src} alt="" className="h-[440px] w-full object-cover sm:h-[460px] lg:h-[400px]" />
+      {/* Legibility scrim - the event-tile pattern, not a decorative gradient. */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/5" aria-hidden="true" />
+      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+        <div className="mb-2 flex items-center gap-2 text-white/85">
+          <span className="[&>svg]:h-4 [&>svg]:w-4" aria-hidden="true">{icon}</span>
+          <span className="font-heading text-[11px] font-bold uppercase tracking-[0.2em]">{label}</span>
+        </div>
+        <p className="font-heading text-[62px] font-normal display-tight leading-[0.92] tabular-nums text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.4)] sm:text-[80px] lg:text-[66px]">
+          {formatted}
+          {unit && <span className="ml-2 align-baseline text-2xl font-normal text-white/75 sm:text-3xl">{unit}</span>}
+        </p>
+        <p className="mt-2.5 max-w-[300px] text-[13px] leading-relaxed text-white/80">{description}</p>
+      </div>
+    </div>
+  )
+}
+
+// Editorial data cell: a big ink number on the clean page ground, not a photo
+// tile. The supporting stats read as calm data under the single photographic
+// hero, so the numbers are the hero and the eye can rest (Tate 2026-08-13: the
+// seven-busy-photos wall was noisy and buried the data).
+function DataStat({
+  value,
+  label,
+  unit,
+  icon,
+  delay = 0,
+  rm,
+}: {
+  value: number
+  label: string
+  unit?: string
+  icon: ReactNode
+  delay?: number
+  rm: boolean
+}) {
+  const numericValue = Math.ceil(value)
+  const display = useCountUp(numericValue, 1200, !rm)
+  const formatted = numericValue > 0 ? display.toLocaleString() : '0'
+  return (
+    <motion.div
+      initial={rm ? { opacity: 1 } : { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={rm ? { duration: 0 } : { duration: 0.45, delay: 0.08 + delay * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
+      aria-label={`${label}: ${numericValue}${unit ? ` ${unit}` : ''}`}
+    >
+      <p className="font-heading text-[40px] font-normal display-tight leading-none tabular-nums text-neutral-900 sm:text-[46px]">
+        {formatted}
+        {unit && <span className="ml-1 text-lg font-normal text-neutral-400">{unit}</span>}
+      </p>
+      <p className="mt-2.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-neutral-500">
+        <span className="text-primary-500 [&>svg]:h-3.5 [&>svg]:w-3.5" aria-hidden="true">{icon}</span>
+        {label}
+      </p>
+    </motion.div>
+  )
+}
 
 function HomeImpactSection({
   collectives,
@@ -1129,30 +1230,30 @@ function HomeImpactSection({
   const inView = useInView(sectionRef, { once: true, margin: '-60px' })
 
   return (
-    <motion.div variants={rm ? undefined : fadeUp} className="-mx-2 sm:-mx-3">
-      <div ref={sectionRef} className="relative overflow-hidden bg-[#5a6e40] rounded-md">
+    <motion.div variants={rm ? undefined : fadeUp} className="-mx-4 sm:-mx-6 lg:-mx-8">
+      <div ref={sectionRef} className="relative">
 
-        <div className="relative px-5 sm:px-7 pt-14 pb-16 sm:pt-16 sm:pb-20">
-          {/* Header - editorial style */}
+        <div className="relative">
+          {/* Header - editorial, on the page background above the photography */}
           <motion.div
-            className="mb-8"
+            className="mb-5 px-4 sm:px-6 lg:px-8"
             initial={rm ? undefined : { opacity: 0 }}
             animate={inView ? { opacity: 1 } : undefined}
             transition={{ duration: 0.4 }}
           >
             <div className="flex items-center justify-between mb-1.5">
-              <p className="font-heading text-[10px] font-bold text-[#f4f2ec] uppercase tracking-[0.2em]">
+              <p className="font-heading text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em]">
                 What We've Done
               </p>
               <Link
                 to="/profile"
-                className="relative flex items-center gap-0.5 text-[11px] font-semibold text-[#f4f2ec] hover:text-white active:scale-[0.97] transition-[colors,transform] duration-150 before:absolute before:content-[''] before:-inset-y-3 before:-inset-x-2"
+                className="relative flex items-center gap-0.5 text-[11px] font-semibold text-neutral-600 hover:text-neutral-900 active:scale-[0.97] transition-[colors,transform] duration-150 before:absolute before:content-[''] before:-inset-y-3 before:-inset-x-2"
               >
                 My impact
                 <ChevronRight size={13} />
               </Link>
             </div>
-            <h2 className="font-heading text-[28px] sm:text-[34px] font-bold text-[#f4f2ec] leading-tight tracking-tight">
+            <h2 className="font-heading text-[28px] sm:text-[34px] font-bold text-neutral-900 leading-tight tracking-tight">
               Our Impact
             </h2>
           </motion.div>
@@ -1163,17 +1264,17 @@ function HomeImpactSection({
               alltime/2026 filter pills on the home page impact section arent
               scaling down and end up hitting the right side of the green outter
               card". gap-y-2 keeps vertical breathing room when wrapped. */}
-          <div className="flex items-center gap-x-2 gap-y-2 mb-6 flex-wrap min-w-0">
+          <div className="flex items-center gap-x-2 gap-y-2 mb-4 flex-wrap min-w-0 px-4 sm:px-6 lg:px-8">
             {/* Scope toggle: National / Collective (with dropdown if multiple) */}
-            <div className="flex rounded-full bg-[#f4f2ec]/15 p-0.5">
+            <div className="flex rounded-full bg-neutral-100 p-0.5">
               <button
                 type="button"
                 onClick={() => setScope('national')}
                 className={cn(
                   'px-3.5 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
                   scope === 'national'
-                    ? 'bg-white/90 text-primary-900 shadow-sm'
-                    : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
+                    ? 'bg-primary-600 text-white shadow-sm'
+                    : 'text-neutral-500 hover:text-neutral-800',
                 )}
               >
                 <Globe size={11} className="inline mr-1 -mt-0.5" />
@@ -1194,8 +1295,8 @@ function HomeImpactSection({
                     className={cn(
                       'px-3.5 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none flex items-center gap-1 max-w-[160px]',
                       scope === 'collective'
-                        ? 'bg-white/90 text-primary-900 shadow-sm'
-                        : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
+                        ? 'bg-primary-600 text-white shadow-sm'
+                        : 'text-neutral-500 hover:text-neutral-800',
                     )}
                   >
                     <MapPin size={11} className="-mt-0.5 shrink-0" />
@@ -1236,15 +1337,15 @@ function HomeImpactSection({
             </div>
 
             {/* Time range toggle */}
-            <div className="flex rounded-full bg-[#f4f2ec]/15 p-0.5">
+            <div className="flex rounded-full bg-neutral-100 p-0.5">
               <button
                 type="button"
                 onClick={() => setTimeRange('all-time')}
                 className={cn(
                   'px-3 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
                   timeRange === 'all-time'
-                    ? 'bg-white/90 text-primary-900 shadow-sm'
-                    : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
+                    ? 'bg-primary-600 text-white shadow-sm'
+                    : 'text-neutral-500 hover:text-neutral-800',
                 )}
               >
                 All Time
@@ -1255,8 +1356,8 @@ function HomeImpactSection({
                 className={cn(
                   'px-3 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
                   timeRange === 'current-year'
-                    ? 'bg-white/90 text-primary-900 shadow-sm'
-                    : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
+                    ? 'bg-primary-600 text-white shadow-sm'
+                    : 'text-neutral-500 hover:text-neutral-800',
                 )}
               >
                 {new Date().getFullYear()}
@@ -1264,59 +1365,89 @@ function HomeImpactSection({
             </div>
           </div>
 
-          {/* Content - bento card grid */}
+          {/* Content - photographic impact tiles */}
           {isInitialLoading ? (
-            <div className="space-y-3">
-              <div className="h-36 rounded-md bg-white/20 animate-pulse" />
-              <div className="grid grid-cols-2 gap-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-24 rounded-md bg-white/15 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+            <div>
+              <div className="h-[440px] bg-neutral-100 animate-pulse sm:h-[460px] lg:h-[420px]" />
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8 px-4 sm:px-6 lg:px-8 pt-9 sm:pt-11">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i}>
+                    <div className="h-9 w-24 rounded bg-neutral-100 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+                    <div className="mt-2.5 h-2.5 w-16 rounded bg-neutral-100 animate-pulse" />
+                  </div>
                 ))}
               </div>
             </div>
           ) : (
             (() => {
-              // Hero card chooses Trees Planted, but only when it has a non-zero
-              // value - otherwise fall back to Litter Removed so we never show a
-              // zero as the giant hero stat. Description scopes to the selected
-              // collective name when scope='collective', so 'across the country'
-              // doesn't show on a single-collective view.
+              // The hero is the single loudest number: Trees Planted when it has
+              // a non-zero value, otherwise Litter Removed so we never render a
+              // zero as the giant title. Whichever loses the hero slot drops into
+              // the photo grid so no stat is lost. Description scopes to the
+              // selected collective name when scope='collective'.
               const treesValue = data?.treesPlanted ?? 0
               const litterValue = data?.rubbishCollectedKg ?? 0
               const collectiveLabel = scope === 'collective' && selectedCollective?.name
                 ? `in ${selectedCollective.name}`
                 : 'across the country'
-              const treesCard = (
-                <BentoStatCard
-                  key="trees"
-                  value={treesValue}
-                  label="Trees Planted"
-                  icon={<TreePine size={20} />}
-                  description={`Every tree planted by Co-Exist volunteers ${collectiveLabel}.`}
-                />
-              )
-              const litterCard = (
-                <BentoStatCard
-                  key="litter"
-                  value={litterValue}
-                  label="Litter Removed"
-                  icon={<Trash2 size={18} />}
-                  unit="kg"
-                  description={`Every kilo of litter Co-Exist volunteers have cleared ${collectiveLabel}.`}
-                />
-              )
-              const heroFirst = treesValue > 0 ? treesCard : litterCard
-              const heroSecond = treesValue > 0 ? litterCard : treesCard
+              const treesIsHero = treesValue > 0
+              const hero = treesIsHero
+                ? {
+                    value: treesValue,
+                    label: 'Trees Planted',
+                    icon: <TreePine size={16} strokeWidth={2} />,
+                    unit: undefined as string | undefined,
+                    src: IMPACT_PHOTOS.trees,
+                    description: `Every tree put in the ground by Co-Exist volunteers ${collectiveLabel}.`,
+                  }
+                : {
+                    value: litterValue,
+                    label: 'Litter Removed',
+                    icon: <Trash2 size={16} strokeWidth={2} />,
+                    unit: 'kg' as string | undefined,
+                    src: IMPACT_PHOTOS.litter,
+                    description: `Every kilo of litter Co-Exist volunteers have cleared ${collectiveLabel}.`,
+                  }
+
+              // Supporting stats - the loser of the hero slot leads so the pair
+              // (trees + litter) stays adjacent in the reading order. These render
+              // as calm editorial numbers, not photos, under the single hero.
+              const supporting = [
+                treesIsHero
+                  ? { value: litterValue, label: 'Litter Removed', unit: 'kg', icon: <Trash2 /> }
+                  : { value: treesValue, label: 'Trees Planted', unit: undefined, icon: <TreePine /> },
+                { value: data?.eventsAttended ?? 0, label: 'Attendees', unit: undefined, icon: <Users /> },
+                { value: totalEvents, label: 'Events', unit: undefined, icon: <Calendar /> },
+                { value: data?.volunteerHours ?? 0, label: 'Volunteer Hours', unit: 'hrs', icon: <Clock /> },
+                { value: data?.leadersEmpowered ?? 0, label: 'Leaders Empowered', unit: undefined, icon: <GraduationCap /> },
+                { value: data?.collectivesCount ?? 0, label: 'Collectives', unit: undefined, icon: <MapPin /> },
+              ]
+
               return (
-                <BentoStatGrid>
-                  {heroFirst}
-                  <BentoStatCard value={data?.eventsAttended ?? 0} label="Attendees" icon={<Users size={18} />} />
-                  <BentoStatCard value={totalEvents} label="Events" icon={<Calendar size={18} />} />
-                  <BentoStatCard value={data?.volunteerHours ?? 0} label="Vol. Hours" icon={<Clock size={18} />} unit="hrs" />
-                  {heroSecond}
-                  <BentoStatCard value={data?.leadersEmpowered ?? 0} label="Leaders Empowered" icon={<GraduationCap size={18} />} />
-                  <BentoStatCard value={data?.collectivesCount ?? 0} label="Collectives" icon={<MapPin size={18} />} />
-                </BentoStatGrid>
+                <div>
+                  <HeroImpactPhoto
+                    value={hero.value}
+                    label={hero.label}
+                    unit={hero.unit}
+                    icon={hero.icon}
+                    src={hero.src}
+                    description={hero.description}
+                    rm={rm}
+                  />
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8 px-4 sm:px-6 lg:px-8 pt-9 sm:pt-11">
+                    {supporting.map((s, i) => (
+                      <DataStat
+                        key={s.label}
+                        value={s.value}
+                        label={s.label}
+                        unit={s.unit}
+                        icon={s.icon}
+                        delay={i}
+                        rm={rm}
+                      />
+                    ))}
+                  </div>
+                </div>
               )
             })()
           )}

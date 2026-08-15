@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useToast } from '@/components/toast'
 import { ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
@@ -55,19 +55,18 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <div data-eos-id="src/components/events-missing-impact-card.tsx#4" className="rounded-md bg-warning-50 border border-warning-200/50 p-4 space-y-3">
-        <div data-eos-id="src/components/events-missing-impact-card.tsx#5" className="flex items-center gap-2">
-          <AlertTriangle data-eos-id="src/components/events-missing-impact-card.tsx#6" size={16} className="text-warning-600 shrink-0" />
-          <h3 data-eos-id="src/components/events-missing-impact-card.tsx#7" className="text-sm font-semibold text-warning-800">
-            {count} event{count !== 1 ? 's' : ''} missing impact data
+      <div data-eos-id="src/components/events-missing-impact-card.tsx#4" className="rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden">
+        <div data-eos-id="src/components/events-missing-impact-card.tsx#5" className="px-4 py-3 border-b border-neutral-100">
+          <h3 data-eos-id="src/components/events-missing-impact-card.tsx#7" className="text-sm font-semibold text-neutral-900">
+            {count} event{count !== 1 ? 's' : ''} awaiting impact
           </h3>
+          <p data-eos-id="src/components/events-missing-impact-card.tsx#8" className="text-[11px] text-neutral-400 mt-0.5">
+            Finished in the last 30 days with no impact logged yet.
+          </p>
         </div>
-        <p data-eos-id="src/components/events-missing-impact-card.tsx#8" className="text-xs text-warning-700">
-          These events ended in the last 30 days but no leader has logged impact yet.
-        </p>
-        <div data-eos-id="src/components/events-missing-impact-card.tsx#9" className="space-y-1.5 max-h-[240px] overflow-y-auto">
+        <div data-eos-id="src/components/events-missing-impact-card.tsx#9" className="divide-y divide-neutral-100 max-h-[280px] overflow-y-auto">
           {missingImpact!.map((e) => (
-            <div data-eos-id="src/components/events-missing-impact-card.tsx#10" key={e.id} className="flex items-center gap-3 px-3 py-2 rounded-sm bg-white/70">
+            <div data-eos-id="src/components/events-missing-impact-card.tsx#10" key={e.id} className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors">
               <Link data-eos-id="src/components/events-missing-impact-card.tsx#11"
                 to={`/events/${e.id}/impact`}
                 className="flex-1 min-w-0 hover:opacity-80 active:scale-[0.99] transition-all"
@@ -107,7 +106,7 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
                   )
                 }}
                 disabled={nudgingEvent === e.id}
-                className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-warning-200 text-warning-800 hover:bg-warning-300 active:scale-[0.97] transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-primary-50 text-primary-700 hover:bg-primary-100 active:scale-[0.97] transition-all shrink-0 cursor-pointer disabled:opacity-50"
               >
                 {nudgingEvent === e.id ? 'Sending...' : 'Nudge'}
               </button>

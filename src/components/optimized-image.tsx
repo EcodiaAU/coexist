@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, type CSSProperties } from 'react'
+import { ImageOff } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { getSrcSet, getPlaceholderUrl, getTransformUrl, isSupabaseStorageUrl } from '@/lib/image-utils'
 
@@ -86,24 +87,36 @@ export function OptimizedImage({
     : src
 
   if (error) {
+    // Branded fallback tile: a committed brand-tinted ground with a soft
+    // watermark, never raw grey or bare "unavailable" text. Reads as an
+    // intentional empty state under a card's legibility gradient.
     return (
-      <div data-eos-id="src/components/optimized-image.tsx#0" data-eos-v="2"
+      <div data-eos-id="src/components/optimized-image.tsx#0" data-eos-v="3"
+        role="img"
+        aria-label={alt || 'Image unavailable'}
         className={cn(
-          'flex items-center justify-center bg-primary-50',
+          'relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary-100 to-moss-200',
           wrapperClassName,
         )}
         style={aspectRatio ? { aspectRatio } : undefined}
       >
-        <span data-eos-id="src/components/optimized-image.tsx#1" className="text-sm text-neutral-500">Image unavailable</span>
+        <ImageOff data-eos-id="src/components/optimized-image.tsx#1" className="w-1/4 h-1/4 max-w-16 max-h-16 text-primary-700/25" strokeWidth={1.25} aria-hidden="true" />
       </div>
     )
   }
 
   return (
     <div data-eos-id="src/components/optimized-image.tsx#2"
-      className={cn('relative overflow-hidden', wrapperClassName)}
+      className={cn('relative overflow-hidden bg-primary-50', wrapperClassName)}
       style={aspectRatio ? { aspectRatio } : undefined}
     >
+      {/* Brand-tinted skeleton: shown until the image paints, so a slow or
+          below-the-fold load never reads as a broken grey rectangle under a
+          card's legibility gradient. */}
+      {!loaded && (
+        <div data-eos-id="src/components/optimized-image.tsx#5" className="absolute inset-0 bg-gradient-to-br from-primary-50 to-moss-100 animate-pulse" aria-hidden="true" />
+      )}
+
       {/* Tiny blur placeholder */}
       {showPlaceholder && (
         <img data-eos-src="dynamic" data-eos-src-label="Placeholder src" data-eos-id="src/components/optimized-image.tsx#3"

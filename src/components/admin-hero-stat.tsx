@@ -110,7 +110,7 @@ export function AdminHeroStat({
       >
         {display.toLocaleString()}
       </p>
-      <p data-eos-id="src/components/admin-hero-stat.tsx#3" className="mt-1.5 text-[11px] font-semibold text-neutral-500 tracking-wider uppercase truncate max-w-full">
+      <p data-eos-id="src/components/admin-hero-stat.tsx#3" className="mt-1.5 text-[11px] font-semibold text-neutral-500 tracking-wider uppercase leading-tight [text-wrap:balance]">
         {label}
       </p>
       {sub && (

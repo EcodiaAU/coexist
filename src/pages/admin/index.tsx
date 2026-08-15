@@ -6,13 +6,11 @@ import {
     MapPin,
     CalendarDays,
     Clock,
-    ClipboardList,
     ArrowUpRight,
     Leaf,
 } from 'lucide-react'
 import { useAdminHeader } from '@/components/admin-layout'
 import { Dropdown } from '@/components/dropdown'
-import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { WaveTransition } from '@/components/wave-transition'
 import { EmptyState } from '@/components/empty-state'
 import { EventsMissingImpactCard } from '@/components/events-missing-impact-card'
@@ -186,37 +184,65 @@ function AdminHero({
 /*  Section heading - editorial style                                  */
 /* ------------------------------------------------------------------ */
 
+// Editorial section header matching the mature member surfaces (home / explore
+// / insights): a small uppercase tracked title, no decorative icon, no grey
+// sub-caption. The section title carries the meaning; the chrome stays quiet.
 function SectionHeader({
   children,
   action,
-  icon,
-  sub,
 }: {
   children: React.ReactNode
   action?: { label: string; to: string }
-  icon?: React.ReactNode
-  sub?: string
 }) {
   return (
-    <div data-eos-id="src/pages/admin/index.tsx#13" className="flex items-end justify-between mb-4">
-      <div data-eos-id="src/pages/admin/index.tsx#14">
-        <div data-eos-id="src/pages/admin/index.tsx#15" className="flex items-center gap-2 mb-0.5">
-          {icon && <span data-eos-id="src/pages/admin/index.tsx#16" className="text-primary-500">{icon}</span>}
-          <h2 data-eos-id="src/pages/admin/index.tsx#17" className="font-heading text-lg sm:text-xl font-bold text-neutral-900 tracking-tight">
-            {children}
-          </h2>
-        </div>
-        {sub && <p data-eos-id="src/pages/admin/index.tsx#18" className="text-xs text-neutral-400 font-medium">{sub}</p>}
-      </div>
+    <div data-eos-id="src/pages/admin/index.tsx#13" className="flex items-center justify-between gap-3 mb-4">
+      <h2 data-eos-id="src/pages/admin/index.tsx#17" className="font-heading text-[13px] font-bold uppercase tracking-widest text-neutral-700/70">
+        {children}
+      </h2>
       {action && (
         <Link data-eos-id="src/pages/admin/index.tsx#19" data-eos-var="action.label" data-eos-var-label="Label" data-eos-var-scope="prop"
           to={action.to}
-          className="flex items-center gap-1 text-xs text-primary-600 font-semibold hover:text-primary-700 transition-colors duration-150 active:scale-[0.97] pb-0.5"
+          className="flex items-center gap-0.5 shrink-0 text-[11px] font-semibold text-primary-700 hover:text-primary-800 hover:bg-primary-50 px-2.5 py-1 rounded-sm transition-colors duration-150 active:scale-[0.97]"
         >
           {action.label}
-          <ArrowUpRight data-eos-id="src/pages/admin/index.tsx#20" size={13} />
+          <ArrowUpRight data-eos-id="src/pages/admin/index.tsx#20" size={12} />
         </Link>
       )}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Overview stat strip - flat editorial numerals, hairline dividers.  */
+/*  Replaces the boxy multi-colour bento grid: the member app leads     */
+/*  with restraint (home / profile / insights), so admin does too.      */
+/* ------------------------------------------------------------------ */
+
+const fmtStat = (v: number) => Math.round(v ?? 0).toLocaleString()
+
+function OverviewStat({
+  value,
+  label,
+  icon,
+  unit,
+  hero = false,
+}: {
+  value: number
+  label: string
+  icon: React.ReactNode
+  unit?: string
+  hero?: boolean
+}) {
+  return (
+    <div data-eos-id="src/pages/admin/index.tsx#43a" className={cn('bg-white px-4 py-4 sm:px-5 sm:py-5', hero && 'col-span-2 lg:col-span-1')}>
+      <div data-eos-id="src/pages/admin/index.tsx#43b" className="flex items-center gap-1.5 text-neutral-400 mb-2">
+        {icon}
+        <span data-eos-id="src/pages/admin/index.tsx#43c" className="text-[10px] font-semibold uppercase tracking-[0.14em]">{label}</span>
+      </div>
+      <p data-eos-id="src/pages/admin/index.tsx#43d" className={cn('font-heading font-bold text-neutral-900 tabular-nums leading-none', hero ? 'text-[28px] sm:text-3xl' : 'text-2xl')}>
+        {fmtStat(value)}
+        {unit && <span data-eos-id="src/pages/admin/index.tsx#43e" className="text-sm font-semibold text-neutral-400 ml-1">{unit}</span>}
+      </p>
     </div>
   )
 }
@@ -431,20 +457,18 @@ export default function AdminDashboardPage() {
 
           {/* ── Primary stats ── */}
           <motion.div data-eos-id="src/pages/admin/index.tsx#43" variants={rm ? undefined : scaleIn}>
-            <BentoStatGrid data-eos-id="src/pages/admin/index.tsx#44" compact>
-              <BentoStatCard data-eos-id="src/pages/admin/index.tsx#45" value={dateRange === 'all' ? (data?.totalMembers ?? 0) : (data?.periodMembers ?? 0)}  label={dateRange === 'all' ? 'Members' : 'New Members'}  icon={<Users data-eos-id="src/pages/admin/index.tsx#46" size={16} />}       theme="primary" />
-              <BentoStatCard data-eos-id="src/pages/admin/index.tsx#47" value={data?.totalCollectives ?? 0} label="Collectives"   icon={<MapPin data-eos-id="src/pages/admin/index.tsx#48" size={14} />}      theme="moss" />
-              <BentoStatCard data-eos-id="src/pages/admin/index.tsx#49" value={dateRange === 'all' ? (data?.totalEvents ?? 0) : (data?.periodEvents ?? 0)}    label="Events Run"    icon={<CalendarDays data-eos-id="src/pages/admin/index.tsx#50" size={14} />} theme="warning" />
-              <BentoStatCard data-eos-id="src/pages/admin/index.tsx#51" value={data?.totalAttendees ?? 0}   label="Attendees"     icon={<Users data-eos-id="src/pages/admin/index.tsx#52" size={14} />}       theme="sky" />
-              <BentoStatCard data-eos-id="src/pages/admin/index.tsx#53" value={data?.totalHours ?? 0}       label="Vol. Hours"    icon={<Clock data-eos-id="src/pages/admin/index.tsx#54" size={14} />}       theme="bark" unit="hrs" />
-            </BentoStatGrid>
+            <div data-eos-id="src/pages/admin/index.tsx#44" className="grid grid-cols-2 lg:grid-cols-5 gap-px bg-neutral-100 rounded-2xl border border-neutral-100 overflow-hidden shadow-sm">
+              <OverviewStat data-eos-id="src/pages/admin/index.tsx#45" hero value={dateRange === 'all' ? (data?.totalMembers ?? 0) : (data?.periodMembers ?? 0)} label={dateRange === 'all' ? 'Members' : 'New Members'} icon={<Users data-eos-id="src/pages/admin/index.tsx#46" size={13} strokeWidth={1.75} />} />
+              <OverviewStat data-eos-id="src/pages/admin/index.tsx#47" value={data?.totalCollectives ?? 0} label="Collectives" icon={<MapPin data-eos-id="src/pages/admin/index.tsx#48" size={13} strokeWidth={1.75} />} />
+              <OverviewStat data-eos-id="src/pages/admin/index.tsx#49" value={dateRange === 'all' ? (data?.totalEvents ?? 0) : (data?.periodEvents ?? 0)} label="Events Run" icon={<CalendarDays data-eos-id="src/pages/admin/index.tsx#50" size={13} strokeWidth={1.75} />} />
+              <OverviewStat data-eos-id="src/pages/admin/index.tsx#51" value={data?.totalAttendees ?? 0} label="Attendees" icon={<Users data-eos-id="src/pages/admin/index.tsx#52" size={13} strokeWidth={1.75} />} />
+              <OverviewStat data-eos-id="src/pages/admin/index.tsx#53" value={data?.totalHours ?? 0} label="Vol. Hours" icon={<Clock data-eos-id="src/pages/admin/index.tsx#54" size={13} strokeWidth={1.75} />} unit="hrs" />
+            </div>
           </motion.div>
 
           {/* ── Outstanding impact surveys ── */}
           <motion.div data-eos-id="src/pages/admin/index.tsx#55" variants={rm ? undefined : fadeUp}>
             <SectionHeader data-eos-id="src/pages/admin/index.tsx#56"
-              icon={<ClipboardList data-eos-id="src/pages/admin/index.tsx#57" size={16} />}
-              sub="Finished events still waiting on a logged impact survey"
               action={{ label: 'Impact dashboard', to: '/admin/impact' }}
             >
               Impact Surveys
@@ -455,8 +479,6 @@ export default function AdminDashboardPage() {
           {/* ── Upcoming registrations: each collective's next event ── */}
           <motion.div data-eos-id="src/pages/admin/index.tsx#87" variants={rm ? undefined : fadeUp}>
             <SectionHeader data-eos-id="src/pages/admin/index.tsx#88"
-              icon={<Users data-eos-id="src/pages/admin/index.tsx#89" size={16} />}
-              sub="Registration counts for each collective's next event"
               action={{ label: 'All events', to: '/admin/events' }}
             >
               Upcoming Registrations
