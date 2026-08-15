@@ -74,7 +74,7 @@ function Section({
             Tracking-widest with text-sm was the prior cause of truncation -
             uppercase + heavy letter spacing pushed the heading past the
             right-aligned "See All" link. Tate verbatim 2026-05-28. */}
-        <h2 className="font-heading text-[9px] sm:text-[10px] font-bold text-neutral-500 uppercase tracking-wide min-w-0 truncate">
+        <h2 className="font-heading text-[9px] sm:text-[10px] font-bold text-neutral-500 uppercase tracking-wide min-w-0 leading-tight [text-wrap:balance]">
           {title}
         </h2>
         {action && (
