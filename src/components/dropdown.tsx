@@ -187,7 +187,9 @@ export function Dropdown({
         'flex items-center justify-between w-full h-11 rounded-full px-4',
         tone === 'dark'
           ? 'bg-white/20 backdrop-blur-md border border-white/20'
-          : 'bg-surface-3',
+          // White ground + hairline border reads as a finished control; the old
+          // bg-surface-3 grey fill read as a wireframe placeholder (review #9).
+          : 'bg-white border border-neutral-200 hover:border-neutral-300',
         'text-[16px] sm:text-sm leading-normal text-left',
         'cursor-pointer select-none',
         'transition-colors duration-150',
