@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAdminHeader } from '@/components/admin-layout'
+import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { SearchBar } from '@/components/search-bar'
@@ -95,6 +96,28 @@ function useAdminUsers(search: string, roleFilter: string) {
     getNextPageParam: (lastPage, allPages) =>
       lastPage.length < PAGE_SIZE ? undefined : allPages.length * PAGE_SIZE,
     staleTime: 30 * 1000,
+  })
+}
+
+// Head-only counts for the hero band. Same RLS path the dashboard overview
+// already uses (profiles count exact head), so it needs no new privileges.
+const STAFF_ROLES: UserRole[] = ['leader', 'co_leader', 'assist_leader', 'manager', 'admin']
+
+function useAdminUserCounts() {
+  return useQuery({
+    queryKey: ['admin-user-counts'],
+    queryFn: async () => {
+      const [totalRes, staffRes, suspendedRes] = await Promise.all([
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).in('role', STAFF_ROLES),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_suspended', true),
+      ])
+      const total = totalRes.count ?? 0
+      const staff = staffRes.count ?? 0
+      const suspended = suspendedRes.count ?? 0
+      return { total, staff, suspended, participants: Math.max(0, total - staff) }
+    },
+    staleTime: 2 * 60 * 1000,
   })
 }
 
@@ -937,7 +960,20 @@ export default function AdminUsersPage() {
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useAdminUsers(debouncedSearch, roleFilter)
   const users = useMemo(() => data?.pages.flatMap((p) => p) ?? [], [data])
-  useAdminHeader('User Management')
+
+  // Fill the olive hero band with real member counts. An empty hero (title over
+  // a tall void) reads as unfinished; the band is the strongest craft in the app
+  // so it earns its height with numbers already cheap to fetch (head-only counts).
+  const { data: counts } = useAdminUserCounts()
+  const heroStats = useMemo(() => (
+    <AdminHeroStatRow>
+      <AdminHeroStat value={counts?.total ?? 0} label="Members" icon={<Users size={18} />} color="primary" delay={0} />
+      <AdminHeroStat value={counts?.participants ?? 0} label="Participants" icon={<UserCog size={18} />} color="moss" delay={1} />
+      <AdminHeroStat value={counts?.staff ?? 0} label="Staff" icon={<Shield size={18} />} color="sprout" delay={2} />
+      <AdminHeroStat value={counts?.suspended ?? 0} label="Suspended" icon={<Ban size={18} />} color="glass" delay={3} />
+    </AdminHeroStatRow>
+  ), [counts])
+  useAdminHeader('User Management', { heroContent: heroStats })
 
   const toggleUserSelection = useCallback((userId: string) => {
     setSelectedUsers((prev) => {
@@ -1089,10 +1125,10 @@ export default function AdminUsersPage() {
               key={user.id}
               className={cn(
                 'flex items-center gap-3 p-3.5 rounded-sm',
-                'transition-colors duration-200',
+                'transition-all duration-200',
                 user.is_suspended
                   ? 'bg-error-50 ring-1 ring-error-200/60 opacity-70'
-                  : 'bg-white border border-neutral-100 shadow-sm',
+                  : 'bg-white border border-neutral-100 shadow-sm hover:border-neutral-200 hover:shadow-md',
                 selectedUsers.has(user.id) && 'ring-2 ring-primary-500 shadow-sm',
               )}
             >
@@ -1117,9 +1153,14 @@ export default function AdminUsersPage() {
                     <p className="text-sm font-semibold text-neutral-900 truncate">
                       {user.display_name ?? 'Unknown'}
                     </p>
-                    <span className={cn('text-[11px] font-semibold px-1.5 py-0.5 rounded-full shrink-0', roleBadgeColors[user.role] ?? roleBadgeColors.participant)}>
-                      {formatRole(user.role ?? 'participant')}
-                    </span>
+                    {/* Badge only elevated/exception roles. A washed sage pill on
+                        every participant row was a monotone wall; suppressing the
+                        default lets the scarce colour flag the rows that matter. */}
+                    {user.role && user.role !== 'participant' && (
+                      <span className={cn('text-[11px] font-semibold px-1.5 py-0.5 rounded-full shrink-0', roleBadgeColors[user.role] ?? 'bg-neutral-100 text-neutral-600')}>
+                        {formatRole(user.role)}
+                      </span>
+                    )}
                     {user.is_suspended && (
                       <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-error-200 text-error-800 shrink-0">
                         Suspended

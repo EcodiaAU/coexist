@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { Search, Inbox, CloudOff, Leaf, type LucideIcon } from 'lucide-react'
 import { Button } from './button'
 import { cn } from '@/lib/cn'
 
@@ -18,66 +19,29 @@ interface EmptyStateProps {
   className?: string
 }
 
+// A branded solid watermark tile. Replaces the old thin dashed-stroke SVGs,
+// which read as "image failed to load" (the universal broken-placeholder
+// language) - the single most broken-looking element in the app per the
+// 2026-08-15 design review. A soft-filled Lucide mark in a primary-50 tile
+// reads as an intentional, calm empty state instead. Restrained by design:
+// one tinted tile, one soft mark, no dashes, no decorative noise.
+function WatermarkTile({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <div
+      data-eos-id="src/components/empty-state.tsx#0" data-eos-v="3"
+      className="mx-auto flex h-28 w-28 items-center justify-center rounded-[1.75rem] bg-primary-50"
+      aria-hidden="true"
+    >
+      <Icon size={52} strokeWidth={1.25} className="text-primary-300" />
+    </div>
+  )
+}
+
 const presetIllustrations: Record<string, ReactNode> = {
-  search: (
-    <svg data-eos-id="src/components/empty-state.tsx#0" data-eos-v="2"
-      width="120"
-      height="120"
-      viewBox="0 0 120 120"
-      fill="none"
-      aria-hidden="true"
-      className="mx-auto"
-    >
-      <circle data-eos-id="src/components/empty-state.tsx#1" cx="52" cy="52" r="32" stroke="currentColor" strokeWidth="4" className="text-primary-200" />
-      <line data-eos-id="src/components/empty-state.tsx#2" x1="76" y1="76" x2="100" y2="100" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="text-primary-300" />
-      <circle data-eos-id="src/components/empty-state.tsx#3" cx="52" cy="52" r="12" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" className="text-primary-200" />
-    </svg>
-  ),
-  empty: (
-    <svg data-eos-id="src/components/empty-state.tsx#4"
-      width="120"
-      height="120"
-      viewBox="0 0 120 120"
-      fill="none"
-      aria-hidden="true"
-      className="mx-auto"
-    >
-      <rect data-eos-id="src/components/empty-state.tsx#5" x="24" y="32" width="72" height="56" rx="8" stroke="currentColor" strokeWidth="4" className="text-primary-200" />
-      <path data-eos-id="src/components/empty-state.tsx#6" d="M24 52 h72" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" className="text-primary-200" />
-      <circle data-eos-id="src/components/empty-state.tsx#7" cx="60" cy="72" r="6" fill="currentColor" className="text-primary-200" />
-    </svg>
-  ),
-  error: (
-    <svg data-eos-id="src/components/empty-state.tsx#8"
-      width="120"
-      height="120"
-      viewBox="0 0 120 120"
-      fill="none"
-      aria-hidden="true"
-      className="mx-auto"
-    >
-      <circle data-eos-id="src/components/empty-state.tsx#9" cx="60" cy="60" r="36" stroke="currentColor" strokeWidth="4" className="text-primary-200" />
-      <path data-eos-id="src/components/empty-state.tsx#10" d="M60 44v20" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="text-primary-300" />
-      <circle data-eos-id="src/components/empty-state.tsx#11" cx="60" cy="76" r="3" fill="currentColor" className="text-primary-300" />
-    </svg>
-  ),
-  wildlife: (
-    <svg data-eos-id="src/components/empty-state.tsx#12"
-      width="120"
-      height="120"
-      viewBox="0 0 120 120"
-      fill="none"
-      aria-hidden="true"
-      className="mx-auto"
-    >
-      <path data-eos-id="src/components/empty-state.tsx#13" d="M60 28 C40 28 28 44 28 60 C28 80 44 96 60 96 C76 96 92 80 92 60 C92 44 80 28 60 28Z" stroke="currentColor" strokeWidth="3" className="text-primary-200" />
-      <circle data-eos-id="src/components/empty-state.tsx#14" cx="48" cy="54" r="4" fill="currentColor" className="text-primary-300" />
-      <circle data-eos-id="src/components/empty-state.tsx#15" cx="72" cy="54" r="4" fill="currentColor" className="text-primary-300" />
-      <path data-eos-id="src/components/empty-state.tsx#16" d="M50 68 Q60 76 70 68" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none" className="text-primary-300" />
-      <path data-eos-id="src/components/empty-state.tsx#17" d="M36 36 Q28 20 40 28" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" className="text-primary-200" />
-      <path data-eos-id="src/components/empty-state.tsx#18" d="M84 36 Q92 20 80 28" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" className="text-primary-200" />
-    </svg>
-  ),
+  search: <WatermarkTile icon={Search} />,
+  empty: <WatermarkTile icon={Inbox} />,
+  error: <WatermarkTile icon={CloudOff} />,
+  wildlife: <WatermarkTile icon={Leaf} />,
 }
 
 function resolveIllustration(

@@ -7,6 +7,7 @@ import {
   MapPin,
   Users,
   CalendarDays,
+  UserCheck,
   Plus,
   Archive,
   RotateCcw,
@@ -15,6 +16,8 @@ import {
   X,
 } from 'lucide-react'
 import { useAdminHeader } from '@/components/admin-layout'
+import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
+import { useAdminOverview } from '@/hooks/use-admin-dashboard'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
@@ -208,7 +211,20 @@ export default function AdminCollectivesPage() {
     }
   }
 
-  useAdminHeader('Collectives', { actions: heroActions })
+  // Fill the olive hero band, which otherwise carried only a title over a tall
+  // void while the sibling Events band shows stats (review #8, the starkest
+  // empty-hero in the app). Reuses the cached national overview the dashboard
+  // already prefetches, so no extra query fires.
+  const { data: overview } = useAdminOverview('all')
+  const heroStats = useMemo(() => (
+    <AdminHeroStatRow>
+      <AdminHeroStat value={overview?.totalCollectives ?? 0} label="Collectives" icon={<MapPin size={18} />} color="primary" delay={0} />
+      <AdminHeroStat value={overview?.totalMembers ?? 0} label="Members" icon={<Users size={18} />} color="moss" delay={1} />
+      <AdminHeroStat value={overview?.totalEvents ?? 0} label="Events" icon={<CalendarDays size={18} />} color="sprout" delay={2} />
+      <AdminHeroStat value={overview?.totalAttendees ?? 0} label="Attendees" icon={<UserCheck size={18} />} color="glass" delay={3} />
+    </AdminHeroStatRow>
+  ), [overview])
+  useAdminHeader('Collectives', { actions: heroActions, heroContent: heroStats })
 
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 

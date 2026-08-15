@@ -65,6 +65,51 @@ const actionColors: Record<string, string> = {
   default: 'text-neutral-400 bg-neutral-50',
 }
 
+function humanizeValue(v: unknown): string {
+  if (v == null) return ''
+  if (typeof v === 'boolean') return v ? 'yes' : 'no'
+  if (typeof v === 'string') return v.replace(/_/g, ' ')
+  return String(v)
+}
+
+// Turn an audit payload into a human sentence. The old surface printed
+// JSON.stringify(details) straight to the product ({"new_role":"leader"}),
+// reading as a developer debug console (review #4). The generic fallback names
+// the changed fields so even an unmapped action type never leaks raw JSON.
+function formatDetails(action: string, details: AuditLogEntry['details']): string | null {
+  if (!details) return null
+  if (typeof details === 'string') return details
+  const d = details as Record<string, unknown>
+  if (typeof d.message === 'string') return d.message
+
+  switch (action) {
+    case 'role_changed':
+    case 'member_role_changed':
+      return d.new_role ? `Changed role to ${humanizeValue(d.new_role)}` : null
+    case 'user_suspended':
+      return d.reason ? `Suspended: ${humanizeValue(d.reason)}` : 'Account suspended'
+    case 'user_unsuspended':
+      return 'Suspension lifted'
+    case 'user_deleted':
+      return 'Account deleted'
+    case 'member_removed':
+      return 'Removed from collective'
+    case 'content_removed':
+    case 'content_auto_flagged':
+      return d.reason ? humanizeValue(d.reason) : null
+  }
+
+  const keys = Object.keys(d).filter((k) => k !== 'bulk')
+  if (keys.length === 0) return null
+  return `Updated ${keys.map((k) => k.replace(/_/g, ' ')).join(', ')}`
+}
+
+// Never print a full 36-char UUID to the surface; an 8-char token is enough to
+// eyeball and correlate without reading as a debug console (review #4).
+function shortTargetId(id: string): string {
+  return id.length > 8 ? id.slice(0, 8) : id
+}
+
 function useAuditLog(search: string, actionFilter: string, page: number) {
   const pageSize = 25
   return useQuery({
@@ -158,6 +203,7 @@ export default function AdminAuditLogPage() {
                 const profile = log.profiles
                 const colorClass =
                   actionColors[log.action] ?? actionColors.default
+                const detailText = formatDetails(log.action, log.details)
 
                 return (
                   <StaggeredItem data-eos-id="src/pages/admin/audit-log.tsx#12"
@@ -183,14 +229,15 @@ export default function AdminAuditLogPage() {
                           {log.action?.replace(/_/g, ' ')}
                         </span>
                       </div>
-                      {log.details && (
-                        <p data-eos-id="src/pages/admin/audit-log.tsx#18" data-eos-var="log.details" data-eos-var-label="Details" data-eos-var-scope="item" className="text-xs text-neutral-500 mt-0.5 line-clamp-2">
-                          {typeof log.details === 'string' ? log.details : log.details?.message ?? JSON.stringify(log.details)}
+                      {detailText && (
+                        <p data-eos-id="src/pages/admin/audit-log.tsx#18" className="text-xs text-neutral-600 mt-0.5 line-clamp-2">
+                          {detailText}
                         </p>
                       )}
                       {log.target_type && log.target_id && (
-                        <p data-eos-id="src/pages/admin/audit-log.tsx#19" data-eos-var="log.target_type,log.target_id" data-eos-var-label="Target type, Target id" data-eos-var-scope="item" className="text-[11px] text-neutral-400 mt-0.5">
-                          {log.target_type}: {log.target_id}
+                        <p data-eos-id="src/pages/admin/audit-log.tsx#19" className="text-[11px] text-neutral-500 mt-0.5">
+                          {log.target_type.replace(/_/g, ' ')}
+                          <span className="font-mono text-neutral-400"> #{shortTargetId(log.target_id)}</span>
                         </p>
                       )}
                     </div>
