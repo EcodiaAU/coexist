@@ -318,15 +318,15 @@ function SectionCard({
 
 function EmptyRow({ icon, label, to, cta }: { icon: React.ReactNode; label: string; to: string; cta: string }) {
   return (
-    <Link data-eos-id="src/pages/admin/development/index.tsx#68" to={to} className="flex items-center gap-3 p-4 rounded-md border-2 border-dashed border-neutral-200 bg-white hover:bg-neutral-50 transition-colors">
-      <div data-eos-id="src/pages/admin/development/index.tsx#69" className="flex items-center justify-center w-10 h-10 rounded-sm bg-neutral-100 text-neutral-400 shrink-0">
+    <Link data-eos-id="src/pages/admin/development/index.tsx#68" to={to} className="flex items-center gap-3 p-4 rounded-md border border-neutral-100 bg-white shadow-sm hover:bg-neutral-50 transition-colors">
+      <div data-eos-id="src/pages/admin/development/index.tsx#69" className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary-50 text-primary-500 shrink-0">
         {icon}
       </div>
       <div data-eos-id="src/pages/admin/development/index.tsx#70" className="flex-1 min-w-0">
-        <p data-eos-id="src/pages/admin/development/index.tsx#71" className="text-[13px] font-semibold text-neutral-500">{label}</p>
-        <p data-eos-id="src/pages/admin/development/index.tsx#72" className="text-[11px] text-neutral-400 mt-0.5">{cta}</p>
+        <p data-eos-id="src/pages/admin/development/index.tsx#71" className="text-[13px] font-semibold text-neutral-700">{label}</p>
+        <p data-eos-id="src/pages/admin/development/index.tsx#72" className="text-[11px] text-neutral-500 mt-0.5">{cta}</p>
       </div>
-      <ChevronRight data-eos-id="src/pages/admin/development/index.tsx#73" size={16} className="text-neutral-300 shrink-0" />
+      <ChevronRight data-eos-id="src/pages/admin/development/index.tsx#73" size={16} className="text-neutral-400 shrink-0" />
     </Link>
   )
 }
@@ -355,8 +355,11 @@ export default function AdminDevelopmentPage() {
   const isLoading = modulesLoading || sectionsLoading || quizzesLoading || smLoading
 
   /* ── Hero stats ── */
+  // Suppressed until at least one module/section/quiz exists, so a row of four
+  // zeros never sits above the empty builder as a second "nothing here" signal.
+  const devTotal = (stats?.totalModules ?? 0) + (stats?.totalSections ?? 0) + (stats?.totalQuizzes ?? 0)
   useAdminHeader('Development', {
-    heroContent: (
+    heroContent: devTotal === 0 ? undefined : (
       <AdminHeroStatRow data-eos-id="src/pages/admin/development/index.tsx#74">
         <AdminHeroStat data-eos-id="src/pages/admin/development/index.tsx#75" value={stats?.totalModules ?? 0} label="Modules" icon={<BookOpen data-eos-id="src/pages/admin/development/index.tsx#76" size={17} />} color="bark" delay={0} reducedMotion={rm} />
         <AdminHeroStat data-eos-id="src/pages/admin/development/index.tsx#77" value={stats?.publishedModules ?? 0} label="Published" icon={<CheckCircle2 data-eos-id="src/pages/admin/development/index.tsx#78" size={17} />} color="moss" delay={1} reducedMotion={rm} />

@@ -25,7 +25,14 @@ interface EmptyStateProps {
 // 2026-08-15 design review. A soft-filled Lucide mark in a primary-50 tile
 // reads as an intentional, calm empty state instead. Restrained by design:
 // one tinted tile, one soft mark, no dashes, no decorative noise.
-function WatermarkTile({ icon: Icon }: { icon: LucideIcon }) {
+//
+// Exported so any admin page can keep a contextual icon (Users, Calendar,
+// ShoppingBag) while still rendering the branded tile, instead of passing a
+// bare black Lucide outline as the EmptyState illustration (which reads as an
+// unstyled placeholder). Prefer this over the string presets when a
+// page-specific mark communicates more than the generic Inbox.
+// eslint-disable-next-line react-refresh/only-export-components
+export function WatermarkTile({ icon: Icon }: { icon: LucideIcon }) {
   return (
     <div
       data-eos-id="src/components/empty-state.tsx#0" data-eos-v="3"

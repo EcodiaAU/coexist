@@ -96,12 +96,17 @@ export default function AdminMembershipsPage() {
     [members],
   )
 
-  const heroStats = useMemo(() => (
-    <AdminHeroStatRow>
-      <AdminHeroStat value={activeCount} label="Active members" icon={<Users size={18} />} color="sprout" delay={0} reducedMotion={false} />
-      <AdminHeroStat value={plans?.length ?? 0} label="Plans" icon={<CreditCard size={18} />} color="bark" delay={1} reducedMotion={false} />
-    </AdminHeroStatRow>
-  ), [activeCount, plans?.length])
+  // Suppressed until there is at least one member or plan, so an all-zero
+  // 0 members / 0 plans row never stacks above the empty state.
+  const heroStats = useMemo(() => {
+    if (activeCount === 0 && (plans?.length ?? 0) === 0) return undefined
+    return (
+      <AdminHeroStatRow>
+        <AdminHeroStat value={activeCount} label="Active members" icon={<Users size={18} />} color="sprout" delay={0} reducedMotion={false} />
+        <AdminHeroStat value={plans?.length ?? 0} label="Plans" icon={<CreditCard size={18} />} color="bark" delay={1} reducedMotion={false} />
+      </AdminHeroStatRow>
+    )
+  }, [activeCount, plans?.length])
 
   useAdminHeader('Membership', { heroContent: heroStats })
 

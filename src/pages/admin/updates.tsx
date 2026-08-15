@@ -1084,14 +1084,20 @@ export default function AdminUpdatesPage() {
     </Button>
   ), [])
 
-  const heroStats = useMemo(() => (
-    <AdminHeroStatRow>
-      <AdminHeroStat value={stats.total} label="Total" icon={<Megaphone size={18} />} color="primary" delay={0} reducedMotion={rm} />
-      <AdminHeroStat value={stats.pinned} label="Pinned" icon={<Pin size={18} />} color="moss" delay={1} reducedMotion={rm} />
-      <AdminHeroStat value={stats.urgent} label="Urgent" icon={<AlertTriangle size={18} />} color="warning" delay={2} reducedMotion={rm} />
-      <AdminHeroStat value={stats.collective} label="Targeted" icon={<Users size={18} />} color="sprout" delay={3} reducedMotion={rm} />
-    </AdminHeroStatRow>
-  ), [stats, rm])
+  // Suppressed until there is at least one update, so an all-zero stat row
+  // never sits above the empty state as a second "nothing here" signal. The
+  // olive hero carries the title plus the New Update action on its own.
+  const heroStats = useMemo(() => {
+    if (stats.total === 0) return undefined
+    return (
+      <AdminHeroStatRow>
+        <AdminHeroStat value={stats.total} label="Total" icon={<Megaphone size={18} />} color="primary" delay={0} reducedMotion={rm} />
+        <AdminHeroStat value={stats.pinned} label="Pinned" icon={<Pin size={18} />} color="moss" delay={1} reducedMotion={rm} />
+        <AdminHeroStat value={stats.urgent} label="Urgent" icon={<AlertTriangle size={18} />} color="warning" delay={2} reducedMotion={rm} />
+        <AdminHeroStat value={stats.collective} label="Targeted" icon={<Users size={18} />} color="sprout" delay={3} reducedMotion={rm} />
+      </AdminHeroStatRow>
+    )
+  }, [stats, rm])
 
   useAdminHeader('Updates', { actions: heroActions, heroContent: heroStats })
 

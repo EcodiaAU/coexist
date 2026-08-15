@@ -465,9 +465,13 @@ export default function AdminContactsPage() {
                             <Phone data-eos-id="src/pages/admin/contacts.tsx#56" size={14} className={colors.text} />
                           </span>
 
-                          {/* Info */}
+                          {/* Info. The phone number is the one datum staff act
+                              on in an emergency, so it is promoted to the row's
+                              hero numeral (a tel: link on mobile) and the name
+                              sits above it as the label. Note + states stay at
+                              or above the neutral-500 legibility floor. */}
                           <div data-eos-id="src/pages/admin/contacts.tsx#57" className="flex-1 min-w-0">
-                            <div data-eos-id="src/pages/admin/contacts.tsx#58" className="flex items-start gap-2 mb-0.5">
+                            <div data-eos-id="src/pages/admin/contacts.tsx#58" className="flex items-start gap-2">
                               <p data-eos-id="src/pages/admin/contacts.tsx#59" data-eos-var="contact.name" data-eos-var-label="Name" data-eos-var-scope="item" className="text-sm font-semibold text-neutral-900 leading-snug break-words flex-1 min-w-0">
                                 {contact.name}
                               </p>
@@ -477,23 +481,23 @@ export default function AdminContactsPage() {
                                 </span>
                               )}
                             </div>
-                            <div data-eos-id="src/pages/admin/contacts.tsx#61" className="flex items-center gap-2 text-xs text-neutral-400">
-                              <span data-eos-id="src/pages/admin/contacts.tsx#62" data-eos-var="contact.phone" data-eos-var-label="Phone" data-eos-var-scope="item" className="font-medium tabular-nums">
-                                {formatPhone(contact.phone)}
-                              </span>
-                              {contact.note && (
-                                <>
-                                  <span data-eos-id="src/pages/admin/contacts.tsx#63" className="text-neutral-200">·</span>
-                                  <span data-eos-id="src/pages/admin/contacts.tsx#64" data-eos-var="contact.note" data-eos-var-label="Note" data-eos-var-scope="item" className="truncate">{contact.note}</span>
-                                </>
-                              )}
-                            </div>
+                            <a data-eos-id="src/pages/admin/contacts.tsx#62" data-eos-var="contact.phone" data-eos-var-label="Phone" data-eos-var-scope="item"
+                              href={`tel:${contact.phone.replace(/\s/g, '')}`}
+                              className="inline-block mt-0.5 text-base font-semibold text-neutral-900 tabular-nums leading-tight hover:text-primary-700 transition-colors"
+                            >
+                              {formatPhone(contact.phone)}
+                            </a>
+                            {contact.note && (
+                              <p data-eos-id="src/pages/admin/contacts.tsx#64" data-eos-var="contact.note" data-eos-var-label="Note" data-eos-var-scope="item" className="text-xs text-neutral-500 truncate mt-0.5">
+                                {contact.note}
+                              </p>
+                            )}
                             {contact.states.length > 0 && (
                               <div data-eos-id="src/pages/admin/contacts.tsx#65" className="flex flex-wrap gap-1 mt-1.5">
                                 {contact.states.map((s) => (
                                   <span data-eos-id="src/pages/admin/contacts.tsx#66"
                                     key={s}
-                                    className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-neutral-50 text-neutral-500"
+                                    className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600"
                                   >
                                     {s}
                                   </span>

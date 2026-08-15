@@ -541,10 +541,12 @@ export function QuickSendTab() {
 
         <Input data-eos-id="src/pages/admin/email/quick-send-tab.tsx#8"
           type="textarea"
+          compact
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="e.g. Hype up subscribers about their next event near them. Friendly tone, RSVP button."
           rows={3}
+          inputClassName="bg-white border border-neutral-200"
         />
 
         <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#9" className="flex flex-wrap gap-2">
@@ -570,7 +572,7 @@ export function QuickSendTab() {
           variant="primary"
           icon={<Sparkles data-eos-id="src/pages/admin/email/quick-send-tab.tsx#14" size={14} />}
           onClick={() => handleDraft()}
-          disabled={drafting || !prompt.trim()}
+          disabled={drafting}
         >
           {drafting ? 'Drafting...' : bodyHtml ? 'Redraft' : 'Draft with AI'}
         </Button>

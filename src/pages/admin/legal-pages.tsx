@@ -178,7 +178,7 @@ function PageCard({
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left rounded-md bg-white p-5 shadow-sm transition-colors duration-200 cursor-pointer group"
+      className="w-full text-left px-4 py-4 sm:px-5 hover:bg-neutral-50 transition-colors duration-150 cursor-pointer group"
     >
       <div className="flex items-start gap-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-primary-50 group-hover:bg-primary-100 transition-colors">
@@ -195,15 +195,15 @@ function PageCard({
                 Live
               </span>
             ) : (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-50 text-neutral-400 text-[11px] font-semibold uppercase tracking-wide shrink-0">
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-500 text-[11px] font-semibold uppercase tracking-wide shrink-0">
                 Draft
               </span>
             )}
           </div>
           {page.summary && (
-            <p className="text-xs text-neutral-400 mt-1 line-clamp-1">{page.summary}</p>
+            <p className="text-xs text-neutral-500 mt-1 line-clamp-1">{page.summary}</p>
           )}
-          <div className="flex items-center gap-1 mt-2 text-[11px] text-neutral-300">
+          <div className="flex items-center gap-1 mt-2 text-[11px] text-neutral-500">
             <Clock size={10} />
             Updated {new Date(page.updated_at).toLocaleDateString('en-AU', {
               day: 'numeric',
@@ -212,7 +212,7 @@ function PageCard({
             })}
           </div>
         </div>
-        <Pencil size={14} className="text-neutral-300 group-hover:text-neutral-500 transition-colors shrink-0 mt-1" />
+        <Pencil size={14} className="text-neutral-400 group-hover:text-neutral-600 transition-colors shrink-0 mt-1" />
       </div>
     </button>
   )
@@ -429,37 +429,32 @@ export default function AdminLegalPagesPage() {
         initial="hidden"
         animate="visible"
       >
-        {/* Info banner */}
-        <motion.div
+        {/* Intro - a single calm line, not a heavy card. */}
+        <motion.p
           variants={fadeUp}
-          className="rounded-md bg-white border border-neutral-100 p-5 shadow-sm"
+          className="text-sm leading-relaxed text-neutral-600 px-1"
         >
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-white shadow-sm">
-              <FileText size={20} className="text-neutral-600" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-neutral-900">
-                Organisational Policies
-              </h3>
-              <p className="mt-1 text-sm leading-relaxed text-neutral-600">
-                Manage your Terms of Service, Privacy Policy, and other organisational policies.
-                Changes go live immediately when a page is published.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+          Manage your Terms of Service, Privacy Policy, and other organisational policies.
+          Changes go live immediately when a page is published.
+        </motion.p>
 
-        {/* Page cards */}
-        {(pages ?? []).map((page) => (
-          <motion.div key={page.slug} variants={fadeUp}>
-            <PageCard page={page} onClick={() => startEdit(page)} />
+        {/* Policy list - one editorial hairline-divided list, not a stack of
+            identical shadow cards (each policy row shares the same card, so the
+            eye reads a directory instead of a wall of boxes). */}
+        {(pages?.length ?? 0) > 0 && (
+          <motion.div
+            variants={fadeUp}
+            className="overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-sm divide-y divide-neutral-100"
+          >
+            {(pages ?? []).map((page) => (
+              <PageCard key={page.slug} page={page} onClick={() => startEdit(page)} />
+            ))}
           </motion.div>
-        ))}
+        )}
 
         {pages?.length === 0 && (
           <motion.div variants={fadeUp} className="text-center py-12">
-            <p className="text-sm text-neutral-400">No organisational policies found. Run the database migration to seed default pages.</p>
+            <p className="text-sm text-neutral-500">No organisational policies found. Run the database migration to seed default pages.</p>
           </motion.div>
         )}
       </motion.div>

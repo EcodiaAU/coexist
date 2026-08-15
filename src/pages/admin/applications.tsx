@@ -31,7 +31,7 @@ import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
-import { EmptyState } from '@/components/empty-state'
+import { EmptyState, WatermarkTile } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { TabBar } from '@/components/tab-bar'
 import { Toggle } from '@/components/toggle'
@@ -758,17 +758,22 @@ export default function AdminApplicationsPage() {
   const rejected = useMemo(() => (applications ?? []).filter(a => a.status === 'rejected').length, [applications])
   const rm = !!shouldReduceMotion
 
-  // Hero stats
-  const heroStats = useMemo(() => (
-    <AdminHeroStatRow data-eos-id="src/pages/admin/applications.tsx#117">
-      <AdminHeroStat data-eos-id="src/pages/admin/applications.tsx#118" value={stats.total} label="Total" icon={<Users data-eos-id="src/pages/admin/applications.tsx#119" size={18} />} color="primary" delay={0} reducedMotion={rm} />
-      <AdminHeroStat data-eos-id="src/pages/admin/applications.tsx#120" value={stats.pending} label="Pending" icon={<Clock data-eos-id="src/pages/admin/applications.tsx#121" size={18} />} color="warning" delay={1} reducedMotion={rm} />
-      <AdminHeroStat data-eos-id="src/pages/admin/applications.tsx#122" value={stats.accepted} label="Accepted" icon={<CheckCircle2 data-eos-id="src/pages/admin/applications.tsx#123" size={18} />} color="success" delay={2} reducedMotion={rm} />
-      {rejected > 0 && (
-        <AdminHeroStat data-eos-id="src/pages/admin/applications.tsx#124" value={rejected} label="Declined" icon={<XCircle data-eos-id="src/pages/admin/applications.tsx#125" size={18} />} color="error" delay={3} reducedMotion={rm} />
-      )}
-    </AdminHeroStatRow>
-  ), [stats, rejected, rm])
+  // Hero stats. Suppressed entirely when there are no applications yet, so a
+  // row of zeros never stacks above the empty state (two "nothing here"
+  // signals). The olive hero then carries the title alone.
+  const heroStats = useMemo(() => {
+    if (stats.total === 0) return undefined
+    return (
+      <AdminHeroStatRow data-eos-id="src/pages/admin/applications.tsx#117">
+        <AdminHeroStat data-eos-id="src/pages/admin/applications.tsx#118" value={stats.total} label="Total" icon={<Users data-eos-id="src/pages/admin/applications.tsx#119" size={18} />} color="primary" delay={0} reducedMotion={rm} />
+        <AdminHeroStat data-eos-id="src/pages/admin/applications.tsx#120" value={stats.pending} label="Pending" icon={<Clock data-eos-id="src/pages/admin/applications.tsx#121" size={18} />} color="warning" delay={1} reducedMotion={rm} />
+        <AdminHeroStat data-eos-id="src/pages/admin/applications.tsx#122" value={stats.accepted} label="Accepted" icon={<CheckCircle2 data-eos-id="src/pages/admin/applications.tsx#123" size={18} />} color="success" delay={2} reducedMotion={rm} />
+        {rejected > 0 && (
+          <AdminHeroStat data-eos-id="src/pages/admin/applications.tsx#124" value={rejected} label="Declined" icon={<XCircle data-eos-id="src/pages/admin/applications.tsx#125" size={18} />} color="error" delay={3} reducedMotion={rm} />
+        )}
+      </AdminHeroStatRow>
+    )
+  }, [stats, rejected, rm])
 
   useAdminHeader('Applications', {
     heroContent: heroStats,
@@ -856,7 +861,7 @@ export default function AdminApplicationsPage() {
             </div>
           ) : filtered.length === 0 ? (
             <EmptyState data-eos-id="src/pages/admin/applications.tsx#139"
-              illustration={<Users data-eos-id="src/pages/admin/applications.tsx#140" size={40} />}
+              illustration={<WatermarkTile data-eos-id="src/pages/admin/applications.tsx#140" icon={Users} />}
               title="No applications"
               description={statusFilter !== 'all' ? 'No applications match the current filter.' : 'Applications will appear here when people apply to lead a collective.'}
             />

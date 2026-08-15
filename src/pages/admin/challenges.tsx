@@ -83,12 +83,19 @@ export default function AdminChallengesPage() {
     </Button>
   ), [])
 
-  const heroStats = useMemo(() => (
-    <AdminHeroStatRow data-eos-id="src/pages/admin/challenges.tsx#2">
-      <AdminHeroStat data-eos-id="src/pages/admin/challenges.tsx#3" value={challenges?.length ?? 0} label="Total" icon={<Trophy data-eos-id="src/pages/admin/challenges.tsx#4" size={18} />} color="warning" delay={0} reducedMotion={false} />
-      <AdminHeroStat data-eos-id="src/pages/admin/challenges.tsx#5" value={challenges?.filter((c) => (c as unknown as Record<string, unknown>).status === 'active').length ?? 0} label="Active" icon={<Zap data-eos-id="src/pages/admin/challenges.tsx#6" size={18} />} color="success" delay={1} reducedMotion={false} />
-    </AdminHeroStatRow>
-  ), [challenges])
+  // Suppressed until there is at least one challenge, so an all-zero
+  // 0 Total / 0 Active row never stacks above the "No challenges yet" empty
+  // state as a second "nothing here" signal. The olive hero then carries the
+  // title plus the Create Challenge action alone.
+  const heroStats = useMemo(() => {
+    if ((challenges?.length ?? 0) === 0) return undefined
+    return (
+      <AdminHeroStatRow data-eos-id="src/pages/admin/challenges.tsx#2">
+        <AdminHeroStat data-eos-id="src/pages/admin/challenges.tsx#3" value={challenges?.length ?? 0} label="Total" icon={<Trophy data-eos-id="src/pages/admin/challenges.tsx#4" size={18} />} color="warning" delay={0} reducedMotion={false} />
+        <AdminHeroStat data-eos-id="src/pages/admin/challenges.tsx#5" value={challenges?.filter((c) => (c as unknown as Record<string, unknown>).status === 'active').length ?? 0} label="Active" icon={<Zap data-eos-id="src/pages/admin/challenges.tsx#6" size={18} />} color="success" delay={1} reducedMotion={false} />
+      </AdminHeroStatRow>
+    )
+  }, [challenges])
 
   useAdminHeader('Challenges', { actions: heroActions, heroContent: heroStats })
 

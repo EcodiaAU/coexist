@@ -1480,14 +1480,14 @@ export default function CreateSurveyPage() {
         </div>
 
         {questions.length === 0 ? (
-          <div data-eos-id="src/pages/admin/create-survey.tsx#217" className="flex flex-col items-center justify-center py-10 px-4 rounded-md border-2 border-dashed border-neutral-200 bg-neutral-50/30">
-            <div data-eos-id="src/pages/admin/create-survey.tsx#218" className="flex items-center justify-center w-12 h-12 rounded-sm bg-neutral-100 mb-3">
-              <ClipboardList data-eos-id="src/pages/admin/create-survey.tsx#219" size={24} className="text-neutral-400" />
+          <div data-eos-id="src/pages/admin/create-survey.tsx#217" className="flex flex-col items-center justify-center py-10 px-4 rounded-md border border-neutral-100 bg-white shadow-sm">
+            <div data-eos-id="src/pages/admin/create-survey.tsx#218" className="flex items-center justify-center w-12 h-12 rounded-sm bg-primary-50 mb-3">
+              <ClipboardList data-eos-id="src/pages/admin/create-survey.tsx#219" size={24} className="text-primary-400" />
             </div>
-            <p data-eos-id="src/pages/admin/create-survey.tsx#220" className="text-sm font-medium text-neutral-500 text-center">
+            <p data-eos-id="src/pages/admin/create-survey.tsx#220" className="text-sm font-medium text-neutral-700 text-center">
               No questions yet
             </p>
-            <p data-eos-id="src/pages/admin/create-survey.tsx#221" className="text-xs text-neutral-400 text-center mt-1">
+            <p data-eos-id="src/pages/admin/create-survey.tsx#221" className="text-xs text-neutral-500 text-center mt-1">
               Add your first question below
             </p>
           </div>

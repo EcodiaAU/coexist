@@ -342,8 +342,8 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
           <span data-eos-id="src/pages/admin/collective-detail.tsx#41" className="text-xs text-neutral-400 font-medium">({leaders.length})</span>
         </div>
         {leaders.length === 0 ? (
-          <div data-eos-id="src/pages/admin/collective-detail.tsx#42" className="rounded-md border border-dashed border-neutral-100 p-6 text-center">
-            <p data-eos-id="src/pages/admin/collective-detail.tsx#43" className="text-sm text-neutral-400">No leaders assigned yet</p>
+          <div data-eos-id="src/pages/admin/collective-detail.tsx#42" className="rounded-md border border-neutral-100 bg-neutral-50/50 p-6 text-center">
+            <p data-eos-id="src/pages/admin/collective-detail.tsx#43" className="text-sm text-neutral-500">No leaders assigned yet</p>
           </div>
         ) : (
           <div data-eos-id="src/pages/admin/collective-detail.tsx#44" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -409,8 +409,8 @@ function OverviewTab({ collectiveId, reducedMotion }: { collectiveId: string; re
           </div>
         </div>
         {upcomingEvents.length === 0 ? (
-          <div data-eos-id="src/pages/admin/collective-detail.tsx#59" className="rounded-md border border-dashed border-neutral-100 p-6 text-center">
-            <p data-eos-id="src/pages/admin/collective-detail.tsx#60" className="text-sm text-neutral-400">No upcoming events</p>
+          <div data-eos-id="src/pages/admin/collective-detail.tsx#59" className="rounded-md border border-neutral-100 bg-neutral-50/50 p-6 text-center">
+            <p data-eos-id="src/pages/admin/collective-detail.tsx#60" className="text-sm text-neutral-500">No upcoming events</p>
           </div>
         ) : (
           <div data-eos-id="src/pages/admin/collective-detail.tsx#61" className="space-y-2">

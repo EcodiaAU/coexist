@@ -120,6 +120,19 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
   const tz = event.timezone ?? event.collectives?.timezone ?? undefined
   const statusBadge = event.status !== 'published' ? STATUS_BADGE_STYLES[event.status] : null
 
+  // Registration weight, so a full event does not read the same as an empty
+  // one. Monochrome by design (no colour badges): a busy event gets a solid
+  // white chip that pops off the photo, a quiet one a faded chip that recedes.
+  const reg = event.registrationCount
+  const cap = event.capacity ?? null
+  const fillRatio = cap && cap > 0 ? reg / cap : null
+  const regBusy = (fillRatio != null && fillRatio >= 0.75) || reg >= 20
+  const regChipClass = regBusy
+    ? 'bg-white text-neutral-900 shadow-sm'
+    : reg === 0
+      ? 'bg-white/10 text-white/70'
+      : 'bg-white/20 text-white backdrop-blur-sm'
+
   return (
     <motion.div data-eos-id="src/pages/admin/events.tsx#5"
       initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
@@ -202,10 +215,13 @@ function EventCard({ event, index }: { event: AdminEvent; index: number }) {
 
           {/* Registration count + quick actions */}
           <div data-eos-id="src/pages/admin/events.tsx#26" className="flex items-center justify-between mt-2.5">
-            <div data-eos-id="src/pages/admin/events.tsx#27" className="flex items-center gap-1.5 text-xs font-semibold text-white">
+            <span data-eos-id="src/pages/admin/events.tsx#27" data-eos-var="event.registrationCount,event.capacity" data-eos-var-label="Registration count, Capacity" data-eos-var-scope="prop"
+              className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums', regChipClass)}
+            >
               <Users data-eos-id="src/pages/admin/events.tsx#28" size={12} />
-              <span data-eos-id="src/pages/admin/events.tsx#29" data-eos-var="event.registrationCount,event.capacity" data-eos-var-label="Registration count, Capacity" data-eos-var-scope="prop">{event.registrationCount} registered{event.capacity ? ` / ${event.capacity}` : ''}</span>
-            </div>
+              {reg}{cap ? ` / ${cap}` : ''}
+              <span data-eos-id="src/pages/admin/events.tsx#29" className="sr-only"> registered</span>
+            </span>
             <div data-eos-id="src/pages/admin/events.tsx#30" className="flex items-center gap-1">
               <button data-eos-id="src/pages/admin/events.tsx#31"
                 type="button"
@@ -248,13 +264,13 @@ function CollectiveSection({ group, startIndex }: { group: CollectiveGroup; star
               {group.collectiveName}
             </h3>
             {(group.region || group.state) && (
-              <p data-eos-id="src/pages/admin/events.tsx#42" data-eos-var="group.region" data-eos-var-label="Region" data-eos-var-scope="prop" className="text-[11px] text-neutral-400">
+              <p data-eos-id="src/pages/admin/events.tsx#42" data-eos-var="group.region" data-eos-var-label="Region" data-eos-var-scope="prop" className="text-[11px] text-neutral-500">
                 {[group.region, group.state].filter(Boolean).join(', ')}
               </p>
             )}
           </div>
         </div>
-        <div data-eos-id="src/pages/admin/events.tsx#43" className="flex items-center gap-1.5 text-xs text-neutral-400">
+        <div data-eos-id="src/pages/admin/events.tsx#43" className="flex items-center gap-1.5 text-xs text-neutral-500">
           <Users data-eos-id="src/pages/admin/events.tsx#44" size={12} />
           <span data-eos-id="src/pages/admin/events.tsx#45" data-eos-var="group.totalRegistrations" data-eos-var-label="Total registrations" data-eos-var-scope="prop" className="tabular-nums font-medium">{group.totalRegistrations} total</span>
         </div>
