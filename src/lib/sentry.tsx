@@ -72,7 +72,15 @@ export function isInjectedThirdPartyBridgeError(event: Sentry.Event): boolean {
 // depth for any residual benign lock rejection. Matched on the auth-js lock
 // STRING signatures (stable across minification, unlike mangled frame names) so
 // it can never suppress an unrelated AbortError (e.g. a real fetch abort).
-const LOCK_SIGNATURE = /Navigator LockManager|navigatorLock|isAcquireTimeout|LockAcquireTimeout|another request stole it/i
+//
+// "Lock broken by another request" is Chromium's own DOMException wording (Chrome
+// >=142) when a held lock is displaced by a navigator.locks.request({steal:true})
+// call - which is exactly auth-js's stuck-lock recovery. The displaced holder's
+// AbortSignal rejects with this message and, being a frameless unhandledrejection,
+// carries no stack, so the frame-based auth-js/gotrue fallback below cannot see it
+// and the message is the only reliable signature. Sentry issue 7616268242
+// (COEXIST-J): 3 events / 0 users, slipped past the older wordings until this added.
+const LOCK_SIGNATURE = /Navigator LockManager|navigatorLock|isAcquireTimeout|LockAcquireTimeout|another request stole it|Lock broken by another request/i
 
 export function isBenignNavigatorLockAbort(event: Sentry.Event): boolean {
   const values = event.exception?.values ?? []
