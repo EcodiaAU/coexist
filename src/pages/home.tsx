@@ -517,7 +517,9 @@ function NextEventCard({
                 window.setTimeout(() => setJustRegistered(null), 1900)
               }}
             >
-              {registerMutation.isPending ? 'Registering...' : 'Register'}
+              {(fallbackEvent as { is_ticketed?: boolean | null }).is_ticketed
+                ? 'Get Ticket'
+                : registerMutation.isPending ? 'Registering...' : 'Register'}
             </Button>
           </div>
         </>

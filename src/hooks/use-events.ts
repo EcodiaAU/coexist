@@ -669,15 +669,21 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
           // there and the prior register/waitlist behaviour is preserved.
           scenario = 'expected'
         } else if (r.status === 'waitlisted') {
+          // Ticketed events have no RSVP waitlist - the ticket is the only model,
+          // so a waitlisted registration with no valid ticket is just noise on the
+          // leader roster. Drop it and keep the ticketed roster to ticket holders +
+          // checked-in (Tate 2026-08-17 "just the tickets"). Non-ticketed keeps its
+          // real RSVP waitlist section.
+          if (isTicketed) continue
           scenario = 'waitlist'
         } else if (r.status === 'cancelled') {
-          // Cancelled registration = not attending. Non-ticketed events hid these
-          // entirely (prior behaviour) - keep that. On a ticketed event surface
-          // the cancellation (with a refund reason if the ticket was refunded) so
-          // the leader can see who dropped.
-          if (!isTicketed) continue
-          scenario = 'notAttending'
-          reason = a.refunded ? 'refunded' : 'cancelled'
+          // Cancelled / refunded registration = not attending, now hidden on BOTH
+          // ticketed and non-ticketed rosters. Ticketed events previously surfaced
+          // these in a "Not attending" group with refund/cancel reasons - that was
+          // exactly the cancelled/refunded status-mix Tate flagged, so the ticketed
+          // roster now collapses to just ticket holders + checked-in (2026-08-17).
+          // Non-ticketed already hid cancelled rows - unchanged.
+          continue
         } else {
           // Active registration (registered/attended) with no valid ticket. On a
           // ticketed event this is a grandfathered / legacy attendee (e.g. the

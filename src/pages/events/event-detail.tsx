@@ -919,7 +919,14 @@ export default function EventDetailPage() {
       return null
     }
 
-    if (userStatus === 'attended') {
+    // On a ticketed event the ticket is the ONLY model. Every registration-status
+    // branch below (attended / registered / waitlisted / invited) is therefore
+    // guarded with !isTicketed so a ticket holder - who ALSO carries an
+    // event_registrations row, because every confirm path (stripe-webhook, claim,
+    // grant) upserts status='registered' - never falls into a "You're registered /
+    // Cancel Registration" RSVP CTA. Ticketed events flow through the single
+    // isTicketed branch further down. Consolidation per Tate 2026-08-17.
+    if (userStatus === 'attended' && !isTicketed) {
       return (
         <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-md bg-success-50 text-success-700 text-sm font-bold border border-success-200/40">
           <CheckCircle2 size={18} />
@@ -928,7 +935,7 @@ export default function EventDetailPage() {
       )
     }
 
-    if (userStatus === 'registered') {
+    if (userStatus === 'registered' && !isTicketed) {
       // One primary button.
       //   * Check-in open: tappable, reads "Check In Now"
       //   * Check-in not yet open: disabled, reads "Check-in opens at 9:00 AM"
@@ -1016,7 +1023,7 @@ export default function EventDetailPage() {
       )
     }
 
-    if (userStatus === 'waitlisted') {
+    if (userStatus === 'waitlisted' && !isTicketed) {
       return (
         <div className="space-y-2">
           <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-md bg-warning-50 text-warning-700 text-sm font-bold border border-warning-200/40">
@@ -1062,23 +1069,47 @@ export default function EventDetailPage() {
       )
     }
 
-    // ── Ticketed events: show ticket selector ──
+    // ── Ticketed events: the ticket is the ONE model ──
+    // This single branch is authoritative for every state a user can be in on a
+    // ticketed event - confirmed / checked-in / pending / sold-out / no-ticket /
+    // invited / grandfathered - so they only ever see ticket actions, never a
+    // bare RSVP, register, waitlist, or "Cancel Registration" control. Runs
+    // BEFORE the registration-status branches above (Tate 2026-08-17).
     if (isTicketed) {
       if (myTicket && (myTicket.status === 'confirmed' || myTicket.status === 'checked_in')) {
+        // Check-in lives on the ticket now, not a separate "registered" CTA.
+        // checked_in ticket OR an attended registration row both mean present.
+        const checkedIn = myTicket.status === 'checked_in' || userStatus === 'attended'
         return (
           <div className="space-y-2">
             <div className={cn(
               'flex items-center gap-2.5 px-5 py-3.5 rounded-md text-sm font-bold border',
-              accent.bg, accent.text, accent.border,
+              checkedIn
+                ? 'bg-success-50 text-success-700 border-success-200/40'
+                : `${accent.bg} ${accent.text} ${accent.border}`,
             )}>
               <CheckCircle2 size={18} />
               <div className="flex-1 min-w-0">
-                <p>You have a ticket</p>
+                <p>{checkedIn ? "You're checked in!" : 'You have a ticket'}</p>
                 {myTicket.ticket_code && (
                   <p className="text-xs font-mono opacity-70 mt-0.5">{myTicket.ticket_code}</p>
                 )}
               </div>
             </div>
+            {/* Event-day self check-in, preserved from the old registered CTA
+                but now carried by the ticket. */}
+            {!checkedIn && isEventActive && (
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
+                icon={<CheckCircle2 size={18} />}
+                onClick={() => setShowCheckInSheet(true)}
+                className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
+              >
+                Check In Now
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -1133,6 +1164,41 @@ export default function EventDetailPage() {
                 {isStale ? 'Clear & Try Again' : 'Cancel'}
               </Button>
             </div>
+          </div>
+        )
+      }
+
+      // Grandfathered / externally-ticketed attendee: an active registration
+      // with no in-app ticket (e.g. the Eventbrite import for a campout, or a
+      // pre-ticketing RSVP). They already hold a spot outside the app, so never
+      // push them into "buy a ticket" - show a clean going / checked-in state
+      // with check-in, and no RSVP cancel controls. Mirrors the leader roster,
+      // which keeps these people in the "expected" group.
+      if (!myTicket && (userStatus === 'registered' || userStatus === 'attended')) {
+        const checkedIn = userStatus === 'attended'
+        return (
+          <div className="space-y-2">
+            <div className={cn(
+              'flex items-center gap-2.5 px-5 py-3.5 rounded-md text-sm font-bold border',
+              checkedIn
+                ? 'bg-success-50 text-success-700 border-success-200/40'
+                : `${accent.bg} ${accent.text} ${accent.border}`,
+            )}>
+              <CheckCircle2 size={18} />
+              {checkedIn ? "You're checked in!" : "You're going"}
+            </div>
+            {!checkedIn && isEventActive && (
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
+                icon={<CheckCircle2 size={18} />}
+                onClick={() => setShowCheckInSheet(true)}
+                className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
+              >
+                Check In Now
+              </Button>
+            )}
           </div>
         )
       }
