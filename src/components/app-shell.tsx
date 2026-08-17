@@ -18,6 +18,7 @@ import { useSyncManager } from '@/hooks/use-sync-manager'
 import { usePushRegistration } from '@/hooks/use-push'
 import { useTextZoom } from '@/hooks/use-text-zoom'
 import { PushSoftAsk } from '@/components/push-soft-ask'
+import { AnnouncementModal } from '@/components/announcement-modal'
 import { useAppLifecycle } from '@/hooks/use-app-lifecycle'
 import { useAndroidBackButton } from '@/hooks/use-android-back-button'
 import { useKeyboard } from '@/hooks/use-keyboard'
@@ -251,6 +252,14 @@ function AppShellInner({ children }: { children: ReactNode }) {
           the OS dialog cold-firing on first Home entry. */}
       <SentryErrorBoundary fallback={null}>
         <PushSoftAsk />
+      </SentryErrorBoundary>
+
+      {/* Admin-authored announcement modal (A-promo). Shows the active
+          announcement once per member on app open, then not again until the
+          admin publishes a new/updated one. Separate from the Updates tab.
+          Own error boundary so a modal crash never takes the app down. */}
+      <SentryErrorBoundary fallback={null}>
+        <AnnouncementModal />
       </SentryErrorBoundary>
     </div>
   )

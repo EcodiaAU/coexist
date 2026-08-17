@@ -127,6 +127,7 @@ const NotificationsPage = lazy(() => import('@/pages/notifications/index'))
 // Updates
 const UpdatesPage = lazy(() => import('@/pages/updates/index'))
 const AdminUpdatesPage = lazy(() => import('@/pages/admin/updates'))
+const AdminAnnouncementPage = lazy(() => import('@/pages/admin/announcement'))
 
 // Donations
 const DonatePage = lazy(() => import('@/pages/donate/index'))
@@ -526,6 +527,7 @@ function App() {
             <Route data-eos-id="src/App.tsx#199" path="users" element={<RequireCapability data-eos-id="src/App.tsx#200" cap="manage_users"><AdminUsersPage data-eos-id="src/App.tsx#201" /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#202" path="create" element={<RequireCapability data-eos-id="src/App.tsx#203" cap="manage_workflows"><AdminCreatePage data-eos-id="src/App.tsx#204" /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#205" path="updates" element={<RequireCapability data-eos-id="src/App.tsx#206" cap="send_announcements"><AdminUpdatesPage data-eos-id="src/App.tsx#207" /></RequireCapability>} />
+            <Route path="announcement" element={<RequireCapability cap="send_announcements"><AdminAnnouncementPage /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#208" path="tasks" element={<RequireCapability data-eos-id="src/App.tsx#209" cap="manage_workflows"><AdminWorkflowsPage data-eos-id="src/App.tsx#210" /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#211" path="events" element={<RequireCapability data-eos-id="src/App.tsx#212" cap="manage_events"><AdminEventsPage data-eos-id="src/App.tsx#213" /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#214" path="events/create" element={<RequireCapability data-eos-id="src/App.tsx#215" cap="manage_events"><CreateEventPage data-eos-id="src/App.tsx#216" /></RequireCapability>} />

@@ -54,6 +54,7 @@ export const adminNavCategories: NavCategory[] = [
       { label: 'Surveys', path: '/admin/surveys', icon: icon(ClipboardList), capability: 'manage_surveys' },
       { label: 'Email', path: '/admin/email', icon: icon(Mail), capability: 'manage_email' },
       { label: 'Updates', path: '/admin/updates', icon: icon(Megaphone), capability: 'send_announcements' },
+      { label: 'Announcement', path: '/admin/announcement', icon: icon(Sparkles), capability: 'send_announcements' },
     ],
   },
   {
