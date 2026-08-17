@@ -141,7 +141,15 @@ export function useBlockUser() {
       const previous = queryClient.getQueryData<UserBlock[]>(['blocked-users', user?.id])
       queryClient.setQueryData<UserBlock[]>(['blocked-users', user?.id], (old) => [
         ...(old ?? []),
-        { blocked_id: blockedId, created_at: new Date().toISOString() },
+        {
+          blocked_id: blockedId,
+          created_at: new Date().toISOString(),
+          // Same neutral placeholder the query itself falls back to when the
+          // blocked profile can't be read; the real names/avatars arrive on the
+          // onSuccess invalidate/refetch.
+          display_name: null,
+          avatar_url: null,
+        },
       ])
       return { previous }
     },

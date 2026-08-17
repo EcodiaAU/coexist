@@ -44,6 +44,7 @@ export interface InputProps {
   inputMode?: 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search'
   enterKeyHint?: 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send'
   autoCapitalize?: 'off' | 'none' | 'on' | 'sentences' | 'words' | 'characters'
+  autoCorrect?: 'on' | 'off'
   pattern?: string
 }
 
@@ -80,6 +81,7 @@ export const Input = forwardRef<
     inputMode,
     enterKeyHint,
     autoCapitalize,
+    autoCorrect,
     pattern,
   },
   ref,
@@ -291,6 +293,7 @@ export const Input = forwardRef<
             inputMode={inputMode}
             enterKeyHint={enterKeyHint}
             autoCapitalize={autoCapitalize}
+            autoCorrect={autoCorrect}
             className={cn(sharedClasses, 'resize-y', isCompact ? 'min-h-[80px]' : 'min-h-[100px]')}
           />
         ) : (
@@ -321,6 +324,7 @@ export const Input = forwardRef<
             inputMode={inputMode}
             enterKeyHint={enterKeyHint}
             autoCapitalize={autoCapitalize}
+            autoCorrect={autoCorrect}
             pattern={pattern}
             className={sharedClasses}
           />

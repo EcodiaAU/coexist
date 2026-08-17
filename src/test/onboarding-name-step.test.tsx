@@ -25,13 +25,12 @@ import { StepNameHandle } from '@/pages/onboarding/steps/step-name-handle'
 function setup(displayName = '') {
   const onChange = vi.fn()
   const onNext = vi.fn()
-  const onSkip = vi.fn()
   render(
-    <StepNameHandle displayName={displayName} onChange={onChange} onNext={onNext} onSkip={onSkip} />,
+    <StepNameHandle displayName={displayName} onChange={onChange} onNext={onNext} />,
   )
   const input = screen.getByLabelText('Display name') as HTMLInputElement
   const continueBtn = screen.getByRole('button', { name: 'Continue' })
-  return { onChange, onNext, onSkip, input, continueBtn }
+  return { onChange, onNext, input, continueBtn }
 }
 
 describe('StepNameHandle - iOS composition Continue', () => {

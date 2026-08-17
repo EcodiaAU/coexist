@@ -132,7 +132,11 @@ export function usePendingSurveys() {
           .eq('status', 'active')
           .limit(1),
       ])
-      const surveyedTypes = new Set((typedAutoSend ?? []).map((s) => s.activity_type))
+      const surveyedTypes = new Set(
+        (typedAutoSend ?? [])
+          .map((s) => s.activity_type)
+          .filter((t): t is string => t !== null),
+      )
       const hasGenericAutoSend = (genericAutoSend ?? []).length > 0
 
       return completedEvents
