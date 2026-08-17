@@ -3,18 +3,32 @@ import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { MapPin, ArrowRight, Tent } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/cn'
 import { OGMeta } from '@/components/og-meta'
 import { WebFooter } from '@/components/web-footer'
 import { OptimizedImage } from '@/components/optimized-image'
+import {
+  type CampoutEvent,
+  type CampoutGroup,
+  groupUpcomingCampouts,
+  flagshipPlaceholders,
+} from '@/lib/campout-groups'
 
-type CampoutType = 'outback' | 'rainforest'
+// Gap-free bento that adapts to the tile count. Mobile always stacks a single
+// column; the grid only activates from lg (or sm for the 5+ scrolling grid).
+function bentoContainerClass(count: number): string {
+  if (count <= 1) return 'grid grid-cols-1 lg:h-dvh'
+  if (count === 2) return 'grid lg:grid-cols-2 lg:h-dvh'
+  if (count <= 4) return 'grid lg:grid-cols-2 lg:grid-rows-2 lg:h-dvh'
+  return 'grid grid-cols-1 sm:grid-cols-2'
+}
 
-const TYPES: { key: CampoutType; name: string; place: string; match: (t: string) => boolean }[] = [
-  { key: 'rainforest', name: 'Rainforest Campout', place: 'Wild Mountains, Running Creek QLD', match: (t) => /wild mountain/i.test(t) },
-  { key: 'outback', name: 'Outback Campout', place: 'Myall Park Botanic Garden, Glenmorgan QLD', match: (t) => /myall park/i.test(t) },
-]
-
-interface EventRow { id: string; title: string; date_start: string; date_end: string | null; cover_image_url: string | null }
+// Per-tile grid-span so no cell is ever left empty.
+function bentoTileClass(count: number, i: number, total: number): string {
+  if (count === 3 && i === 0) return 'lg:row-span-2' // tall feature left, two stacked right
+  if (count >= 5 && total % 2 === 1 && i === total - 1) return 'sm:col-span-2' // odd tail fills the row
+  return ''
+}
 
 export default function PublicCampoutsPage() {
   const shouldReduceMotion = useReducedMotion()
@@ -24,15 +38,16 @@ export default function PublicCampoutsPage() {
     queryFn: async () => {
       const { data: events, error } = await supabase
         .from('events')
-        .select('id, title, date_start, date_end, cover_image_url')
+        .select('id, title, address, description, date_start, date_end, cover_image_url')
         .eq('is_public', true)
         .eq('status', 'published')
         .eq('activity_type', 'camp_out')
         .order('date_start', { ascending: true })
       if (error) throw error
-      const upcoming = (events ?? []).filter((e) => new Date((e.date_end ?? e.date_start) as string) >= new Date()) as EventRow[]
+      const rows = (events ?? []) as CampoutEvent[]
 
-      const ids = upcoming.map((e) => e.id)
+      const now = new Date()
+      const ids = rows.filter((e) => new Date((e.date_end ?? e.date_start) as string) >= now).map((e) => e.id)
       const priceByEvent: Record<string, number> = {}
       if (ids.length) {
         const { data: tt } = await supabase.from('event_ticket_types').select('event_id, price_cents').in('event_id', ids).eq('is_active', true)
@@ -42,36 +57,32 @@ export default function PublicCampoutsPage() {
         }
       }
 
-      return TYPES.map((ty) => {
-        const mine = upcoming.filter((e) => ty.match(e.title))
-        const minPrice = mine.reduce<number | null>((m, e) => {
-          const p = priceByEvent[e.id]
-          return p === undefined ? m : m === null ? p : Math.min(m, p)
-        }, null)
-        return { ...ty, count: mine.length, cover: mine.find((e) => e.cover_image_url)?.cover_image_url ?? null, minPrice }
-      }).filter((t) => t.count > 0)
+      return groupUpcomingCampouts(rows, priceByEvent)
     },
   })
 
-  const cards = data ?? []
+  const groups = data ?? []
+  const tiles: CampoutGroup[] = groups.length ? groups : flagshipPlaceholders()
+  const count = tiles.length
+  const tileAspect = count >= 5 ? 'aspect-[16/10]' : 'aspect-square lg:aspect-auto lg:h-full'
 
   return (
     <div className="min-h-dvh bg-secondary-950">
       <OGMeta title="Conservation Campouts" description="Weekends in the wild with Co-Exist Australia. Camp, restore habitat, and meet your people. Book your spot." canonicalPath="/campouts" />
 
-      {/* Two full-bleed tiles: side-by-side on laptop, stacked on mobile. */}
-      <div className="grid lg:grid-cols-2 lg:h-dvh">
-        {(cards.length ? cards : TYPES.map((t) => ({ ...t, count: 0, cover: null, minPrice: null }))).map((c, i) => (
+      {/* Full-bleed campout tiles in a gap-free bento; mobile stacks single-column. */}
+      <div className={bentoContainerClass(count)}>
+        {tiles.map((c, i) => (
           <motion.div
-            key={c.key}
+            key={c.slug}
             initial={shouldReduceMotion ? undefined : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: i * 0.08 }}
-            className="relative"
+            className={cn('relative', bentoTileClass(count, i, count))}
           >
             <Link
-              to={`/campouts/${c.key}`}
-              className="group relative flex aspect-square lg:aspect-auto lg:h-full flex-col justify-end overflow-hidden"
+              to={`/campouts/${c.slug}`}
+              className={cn('group relative flex flex-col justify-end overflow-hidden', tileAspect)}
             >
               {c.cover ? (
                 <OptimizedImage

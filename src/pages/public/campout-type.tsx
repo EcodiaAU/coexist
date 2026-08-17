@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
-import { MapPin, ChevronLeft, Tent, Check, TreePine, Users, Flame, Sunrise } from 'lucide-react'
+import { MapPin, ChevronLeft, Tent, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/button'
@@ -11,37 +11,7 @@ import { OGMeta } from '@/components/og-meta'
 import { formatTime } from '@/lib/date-format'
 import { WebFooter } from '@/components/web-footer'
 import { CampoutGuestRequirementsModal } from '@/components/campout-guest-requirements-modal'
-
-type CampoutType = 'outback' | 'rainforest'
-
-interface Highlight { icon: typeof TreePine; label: string }
-
-const TYPE_CONFIG: Record<CampoutType, { name: string; place: string; blurb: string; match: (t: string) => boolean; highlights: Highlight[] }> = {
-  outback: {
-    name: 'Outback Campout',
-    place: 'Myall Park Botanic Garden, Glenmorgan QLD',
-    blurb: 'Out west at Myall Park Botanic Garden. Wide skies, campfires under the stars, and hands-on restoration in the Queensland outback. Arrive Friday afternoon, wrap up Sunday morning.',
-    highlights: [
-      { icon: TreePine, label: 'Hands-on habitat restoration' },
-      { icon: Flame, label: 'Campfires under big outback skies' },
-      { icon: Users, label: 'A weekend with your people' },
-      { icon: Sunrise, label: 'Friday arvo to Sunday morning' },
-    ],
-    match: (t) => /myall park/i.test(t),
-  },
-  rainforest: {
-    name: 'Rainforest Campout',
-    place: 'Wild Mountains, Running Creek QLD',
-    blurb: 'Deep in the Wild Mountains rainforest. Camp under the canopy and help restore one of the region\'s richest ecosystems. A weekend of real work and real people, far from the noise.',
-    highlights: [
-      { icon: TreePine, label: 'Restore ancient rainforest' },
-      { icon: Flame, label: 'Camp under the canopy' },
-      { icon: Users, label: 'A weekend with your people' },
-      { icon: Sunrise, label: 'Friday arvo to Sunday morning' },
-    ],
-    match: (t) => /wild mountain/i.test(t),
-  },
-}
+import { type CampoutEvent, resolveCampoutGroup, flagshipConfig } from '@/lib/campout-groups'
 
 interface DateRow {
   id: string
@@ -62,22 +32,25 @@ function formatDate(date: string): string {
 export default function CampoutTypePage() {
   const { type } = useParams<{ type: string }>()
   const shouldReduceMotion = useReducedMotion()
-  const cfg = type === 'outback' || type === 'rainforest' ? TYPE_CONFIG[type] : null
+  // Flagship slugs (outback/rainforest) resolve their copy synchronously so the
+  // hero renders instantly. Derived slugs resolve once events load.
+  const staticCfg = flagshipConfig(type)
 
-  const { data: dates, isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['public-campout-type', type],
     queryFn: async () => {
       const { data: events, error } = await supabase
         .from('events')
-        .select('id, title, address, date_start, date_end, cover_image_url, event_extras')
+        .select('id, title, address, description, date_start, date_end, cover_image_url, event_extras')
         .eq('is_public', true)
         .eq('status', 'published')
         .eq('activity_type', 'camp_out')
         .order('date_start', { ascending: true })
       if (error) throw error
-      const mine = (events ?? []).filter(
-        (e) => cfg!.match(e.title as string) && new Date((e.date_end ?? e.date_start) as string) >= new Date(),
-      )
+      const group = resolveCampoutGroup((events ?? []) as CampoutEvent[], type)
+      if (!group) return { group: null, rows: [] as DateRow[] }
+
+      const mine = group.events
       const { data: tt } = mine.length
         ? await supabase.from('event_ticket_types').select('event_id, id, price_cents').in('event_id', mine.map((e) => e.id)).eq('is_active', true)
         : { data: [] }
@@ -86,17 +59,23 @@ export default function CampoutTypePage() {
         const cur = ttByEvent[t.event_id as string]
         if (!cur || (t.price_cents as number) < cur.price_cents) ttByEvent[t.event_id as string] = { id: t.id as string, price_cents: t.price_cents as number }
       }
-      return mine.map((e) => {
+      const rows = mine.map((e) => {
         const ex = e.event_extras as Record<string, unknown> | null
         return {
-          ...e,
-          price_cents: ttByEvent[e.id as string]?.price_cents ?? null,
-          ticket_type_id: ttByEvent[e.id as string]?.id ?? null,
+          id: e.id,
+          title: e.title,
+          address: e.address,
+          date_start: e.date_start,
+          date_end: e.date_end,
+          cover_image_url: e.cover_image_url,
+          price_cents: ttByEvent[e.id]?.price_cents ?? null,
+          ticket_type_id: ttByEvent[e.id]?.id ?? null,
           sold_out: !!(ex && typeof ex === 'object' && ex.sold_out === true),
         }
       }) as DateRow[]
+      return { group, rows }
     },
-    enabled: !!cfg,
+    enabled: !!type,
   })
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -106,7 +85,10 @@ export default function CampoutTypePage() {
   const [err, setErr] = useState<string | null>(null)
   const [showReqs, setShowReqs] = useState(false)
 
-  const rows = dates ?? []
+  const group = data?.group ?? null
+  const rows = data?.rows ?? []
+  // Effective header copy: the loaded group, else the synchronous flagship copy.
+  const cfg = group ?? staticCfg
   const selected = rows.find((r) => r.id === selectedId) ?? null
   const cover = rows.find((r) => r.cover_image_url)?.cover_image_url ?? null
 
@@ -141,6 +123,14 @@ export default function CampoutTypePage() {
   }
 
   if (!cfg) {
+    if (isLoading) {
+      return (
+        <div className="flex min-h-dvh flex-col items-center justify-center bg-white p-6 text-center">
+          <OGMeta title="Campouts" description="Co-Exist conservation campouts." canonicalPath="/campouts" />
+          <Skeleton className="h-8 w-52 rounded-md" />
+        </div>
+      )
+    }
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center bg-white p-6 text-center">
         <OGMeta title="Campouts" description="Co-Exist conservation campouts." canonicalPath="/campouts" />
