@@ -122,6 +122,7 @@ function QuestionCard({
 
         <div data-eos-id="src/components/development/question-builder.tsx#22" className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           <button data-eos-id="src/components/development/question-builder.tsx#23"
+            aria-label="Edit question"
             type="button"
             onClick={onEdit}
             className="flex items-center justify-center w-8 h-8 rounded-sm text-primary-400 hover:text-primary-600 hover:bg-neutral-100 transition-colors"
@@ -129,6 +130,7 @@ function QuestionCard({
             <MessageSquare data-eos-id="src/components/development/question-builder.tsx#24" size={14} />
           </button>
           <button data-eos-id="src/components/development/question-builder.tsx#25"
+            aria-label="Delete question"
             type="button"
             onClick={onRemove}
             className="flex items-center justify-center w-8 h-8 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-100/60 transition-colors"
@@ -298,6 +300,7 @@ function QuestionForm({
               />
               {!isTrueFalse && (draft.options?.length ?? 0) > 2 && (
                 <button data-eos-id="src/components/development/question-builder.tsx#40"
+                  aria-label="Remove option"
                   type="button"
                   onClick={() => removeOption(i)}
                   className="text-error-400 hover:text-error-600 transition-colors"

@@ -419,6 +419,7 @@ function ComposeModal({
                   <button
                     type="button"
                     onClick={() => removeExisting(i)}
+                    aria-label="Remove image"
                     className="absolute top-1 right-1 flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
                   >
                     <X size={12} />
@@ -431,6 +432,7 @@ function ComposeModal({
                   <button
                     type="button"
                     onClick={() => removeNew(i)}
+                    aria-label="Remove image"
                     className="absolute top-1 right-1 flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
                   >
                     <X size={12} />

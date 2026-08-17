@@ -85,6 +85,7 @@ function VariantOptionRow({
         <button
           type="button"
           onClick={onRemove}
+          aria-label="Delete option"
           className="w-11 h-11 flex items-center justify-center rounded-sm text-neutral-400 hover:text-error-600 hover:bg-error-50 active:bg-error-100 cursor-pointer transition-colors shrink-0"
         >
           <Trash2 size={16} />
@@ -102,6 +103,7 @@ function VariantOptionRow({
             <button
               type="button"
               onClick={() => removeValue(idx)}
+              aria-label="Remove value"
               className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-neutral-200 active:bg-neutral-300 cursor-pointer"
             >
               <X size={10} />
@@ -415,6 +417,7 @@ function ProductFormSheet({
                 <button
                   type="button"
                   onClick={() => handleRemoveImage(idx)}
+                  aria-label="Remove image"
                   className="absolute bottom-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-error-500"
                 >
                   <X size={10} />

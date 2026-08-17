@@ -47,6 +47,7 @@ import {
 import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from '@/components/auth-provider'
 import { ToastProvider } from '@/components/toast'
+import { TooltipLayer } from '@/components/tooltip'
 import {
     attachOfflineSyncListener,
     restoreQueryCache,
@@ -245,6 +246,7 @@ if (!isEngineSupported()) {
                     <App data-eos-id="src/main.tsx#7" />
                   </SentryErrorBoundary>
                   <CookieConsentBanner data-eos-id="src/main.tsx#8" />
+                  <TooltipLayer />
                 </ToastProvider>
               </AuthProvider>
             </BrowserRouter>

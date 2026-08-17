@@ -53,7 +53,7 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
           : 'bg-white shadow-sm',
       )}
     >
-      <button data-eos-id="src/pages/admin/development/create-section.tsx#1" type="button" className="cursor-grab touch-none text-neutral-300 hover:text-neutral-500 active:cursor-grabbing transition-colors" {...attributes} {...listeners}>
+      <button data-eos-id="src/pages/admin/development/create-section.tsx#1" aria-label="Drag to reorder" type="button" className="cursor-grab touch-none text-neutral-300 hover:text-neutral-500 active:cursor-grabbing transition-colors" {...attributes} {...listeners}>
         <GripVertical data-eos-id="src/pages/admin/development/create-section.tsx#2" size={18} />
       </button>
       <div data-eos-id="src/pages/admin/development/create-section.tsx#3" className="flex-1 min-w-0">
@@ -82,6 +82,7 @@ function SortableModuleItem({ item, onToggleRequired, onRemove }: { item: Module
         {item.is_required ? 'Required' : 'Optional'}
       </motion.button>
       <motion.button data-eos-id="src/pages/admin/development/create-section.tsx#13"
+        aria-label="Remove module"
         type="button"
         onClick={onRemove}
         whileHover={{ scale: 1.1 }}

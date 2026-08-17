@@ -112,6 +112,7 @@ function InlineStepper({
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); handleAdjust(-1) }}
+        aria-label="Decrease quantity"
         disabled={item.variant.stock === 0}
         className="flex items-center justify-center w-8 h-8 rounded-l-sm bg-white/80 border border-neutral-100 text-neutral-500 hover:bg-error-50 hover:text-error-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98] transition-transform duration-150"
       >
@@ -123,6 +124,7 @@ function InlineStepper({
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); handleAdjust(1) }}
+        aria-label="Increase quantity"
         className="flex items-center justify-center w-8 h-8 rounded-r-sm bg-white/80 border border-neutral-100 text-neutral-500 hover:bg-success-50 hover:text-success-600 cursor-pointer active:scale-[0.98] transition-transform duration-150"
       >
         <Plus size={12} />
@@ -358,6 +360,7 @@ function ProductGroup({
               <button
                 type="button"
                 onClick={() => onToggleSelect(key)}
+                aria-label="Toggle selection"
                 className="shrink-0 text-neutral-400 cursor-pointer"
               >
                 {isSelected ? (

@@ -601,6 +601,7 @@ function NotificationSettingsTab() {
                     onChange={(v) => toggleNotifType.mutate({ id: r.id, field: 'notify_push', value: v })}
                   />
                   <button data-eos-id="src/pages/admin/applications.tsx#110"
+                    aria-label="Remove recipient"
                     onClick={() => removeRecipient.mutate(r.id)}
                     className="text-neutral-300 hover:text-error transition-[colors,transform] duration-150 cursor-pointer p-1 rounded-sm hover:bg-error-50 active:scale-[0.98]"
                   >

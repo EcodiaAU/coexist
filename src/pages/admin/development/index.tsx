@@ -142,12 +142,14 @@ function ModuleRow({ module, onDelete, compact }: { module: DevModule; onDelete:
       </Link>
       <div data-eos-id="src/pages/admin/development/index.tsx#23" className="flex items-center gap-1 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <Link data-eos-id="src/pages/admin/development/index.tsx#24"
+          aria-label="Edit module"
           to={`/admin/development/modules/${module.id}/edit`}
           className={cn('flex items-center justify-center rounded-sm text-bark-500 hover:text-bark-700 hover:bg-bark-50 transition-colors', compact ? 'w-8 h-8' : 'w-10 h-10')}
         >
           <Pencil data-eos-id="src/pages/admin/development/index.tsx#25" size={compact ? 14 : 16} />
         </Link>
         <button data-eos-id="src/pages/admin/development/index.tsx#26"
+          aria-label="Delete module"
           type="button"
           onClick={onDelete}
           className={cn('flex items-center justify-center rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors', compact ? 'w-8 h-8' : 'w-10 h-10')}
@@ -184,12 +186,14 @@ function QuizRow({ quiz, onDelete }: { quiz: DevQuiz; onDelete: () => void }) {
       </div>
       <div data-eos-id="src/pages/admin/development/index.tsx#38" className="flex items-center gap-1 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <Link data-eos-id="src/pages/admin/development/index.tsx#39"
+          aria-label="Edit quiz"
           to={`/admin/development/quizzes/${quiz.id}/edit`}
           className="flex items-center justify-center w-10 h-10 rounded-sm text-sky-500 hover:text-sky-700 hover:bg-sky-50 transition-colors"
         >
           <Pencil data-eos-id="src/pages/admin/development/index.tsx#40" size={16} />
         </Link>
         <button data-eos-id="src/pages/admin/development/index.tsx#41"
+          aria-label="Delete quiz"
           type="button"
           onClick={onDelete}
           className="flex items-center justify-center w-10 h-10 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors"
@@ -253,6 +257,7 @@ function SectionCard({
         <div data-eos-id="src/pages/admin/development/index.tsx#55" className="flex items-center gap-1 shrink-0">
           {modules.length > 0 && (
             <button data-eos-id="src/pages/admin/development/index.tsx#56"
+              aria-label="Toggle modules"
               type="button"
               onClick={() => setExpanded(!expanded)}
               className="flex items-center justify-center w-10 h-10 rounded-sm text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50 transition-colors"
@@ -267,12 +272,14 @@ function SectionCard({
           )}
           <div data-eos-id="src/pages/admin/development/index.tsx#59" className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1">
             <Link data-eos-id="src/pages/admin/development/index.tsx#60"
+              aria-label="Edit section"
               to={`/admin/development/sections/${section.id}/edit`}
               className="flex items-center justify-center w-10 h-10 rounded-sm text-secondary-500 hover:text-secondary-700 hover:bg-secondary-50 transition-colors"
             >
               <Pencil data-eos-id="src/pages/admin/development/index.tsx#61" size={16} />
             </Link>
             <button data-eos-id="src/pages/admin/development/index.tsx#62"
+              aria-label="Delete section"
               type="button"
               onClick={onDeleteSection}
               className="flex items-center justify-center w-10 h-10 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-50 transition-colors"

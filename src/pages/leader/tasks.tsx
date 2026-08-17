@@ -1110,6 +1110,7 @@ function TodoItem({
           'mt-0.5 shrink-0 cursor-pointer transition-all duration-200',
           completed ? 'text-moss-500' : overdue ? 'text-error-400 hover:text-error-500' : 'text-neutral-400 hover:text-neutral-600',
         )}
+        aria-label="Toggle complete"
       >
         {completed ? (
           <CheckCircle2 size={22} strokeWidth={2} />
@@ -1238,6 +1239,7 @@ function CalendarView({
         <button
           type="button"
           onClick={prevMonth}
+          aria-label="Previous month"
           className="p-2 rounded-sm hover:bg-neutral-100 cursor-pointer transition-colors text-neutral-500"
         >
           <ChevronLeft size={18} />
@@ -1248,6 +1250,7 @@ function CalendarView({
         <button
           type="button"
           onClick={nextMonth}
+          aria-label="Next month"
           className="p-2 rounded-sm hover:bg-neutral-100 cursor-pointer transition-colors text-neutral-500"
         >
           <ChevronRight size={18} />
@@ -1514,6 +1517,7 @@ function TodosTabContent({ rm, showCreate, setShowCreate }: TodosTabContentProps
         <button
           type="button"
           onClick={() => setShowCreate(true)}
+          aria-label="Add task"
           className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary-700 text-white shadow-md hover:bg-primary-800 cursor-pointer transition-colors"
         >
           <Plus size={18} />

@@ -16,6 +16,8 @@ export { ProfileDetails, CheckInModeView } from './check-in-form'
 export { ToastProvider, useToast } from './toast'
 export { Skeleton } from './skeleton'
 export { EmptyState } from './empty-state'
+export { Tooltip } from './tooltip'
+export type { TooltipProps } from './tooltip'
 
 // Display
 export { TabBar } from './tab-bar'

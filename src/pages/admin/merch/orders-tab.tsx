@@ -738,6 +738,7 @@ export default function OrdersTab() {
                   </span>
                   <a
                     href={`https://auspost.com.au/mypost/track/#/details/${selectedOrder.tracking_number}`}
+                    aria-label="Track parcel"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ml-auto text-plum-600 hover:text-plum-800"

@@ -170,6 +170,7 @@ function SlideCard({
         />
       </div>
       <button data-eos-id="src/components/development/block-editor.tsx#17"
+        aria-label="Delete slide"
         type="button"
         onClick={onRemove}
         className="flex items-center justify-center w-8 h-8 rounded-sm text-error-300 hover:text-error-500 hover:bg-error-50 transition-colors self-center shrink-0"
@@ -211,7 +212,7 @@ function QuizPicker({
         </div>
         <div data-eos-id="src/components/development/block-editor.tsx#24" className="flex items-center gap-1 shrink-0">
           <button data-eos-id="src/components/development/block-editor.tsx#25" type="button" onClick={() => setOpen(true)} className="text-xs text-moss-500 hover:text-moss-700 font-semibold">Change</button>
-          <button data-eos-id="src/components/development/block-editor.tsx#26" type="button" onClick={() => onChange(null)} className="text-error-400 hover:text-error-600 ml-1"><X data-eos-id="src/components/development/block-editor.tsx#27" size={14} /></button>
+          <button data-eos-id="src/components/development/block-editor.tsx#26" aria-label="Remove quiz" type="button" onClick={() => onChange(null)} className="text-error-400 hover:text-error-600 ml-1"><X data-eos-id="src/components/development/block-editor.tsx#27" size={14} /></button>
         </div>
       </div>
     )
@@ -292,6 +293,7 @@ function SortableBlock({
       )}
     >
       <button data-eos-id="src/components/development/block-editor.tsx#42"
+        aria-label="Drag to reorder"
         type="button"
         className="mt-1 cursor-grab touch-none text-primary-300 hover:text-primary-500 active:cursor-grabbing"
         {...attributes}
@@ -323,6 +325,7 @@ function SortableBlock({
 
       <div data-eos-id="src/components/development/block-editor.tsx#51" className="flex items-center gap-0.5 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <button data-eos-id="src/components/development/block-editor.tsx#52"
+          aria-label="Edit block"
           type="button"
           onClick={onEdit}
           className="flex items-center justify-center w-9 h-9 rounded-sm text-primary-400 hover:text-primary-600 hover:bg-neutral-100 transition-colors"
@@ -330,6 +333,7 @@ function SortableBlock({
           <Pencil data-eos-id="src/components/development/block-editor.tsx#53" size={14} />
         </button>
         <button data-eos-id="src/components/development/block-editor.tsx#54"
+          aria-label="Delete block"
           type="button"
           onClick={onRemove}
           className="flex items-center justify-center w-9 h-9 rounded-sm text-error-400 hover:text-error-600 hover:bg-error-100/60 transition-colors"
@@ -440,7 +444,7 @@ function BlockEditForm({
           </span>
           <span data-eos-id="src/components/development/block-editor.tsx#60" className="text-sm font-semibold text-neutral-900">Edit Block</span>
         </div>
-        <button data-eos-id="src/components/development/block-editor.tsx#61" type="button" onClick={onCancel} className="flex items-center justify-center w-9 h-9 rounded-sm text-primary-400 hover:text-primary-600 hover:bg-neutral-100 transition-colors">
+        <button data-eos-id="src/components/development/block-editor.tsx#61" aria-label="Close" type="button" onClick={onCancel} className="flex items-center justify-center w-9 h-9 rounded-sm text-primary-400 hover:text-primary-600 hover:bg-neutral-100 transition-colors">
           <X data-eos-id="src/components/development/block-editor.tsx#62" size={18} />
         </button>
       </div>
@@ -496,7 +500,7 @@ function BlockEditForm({
                   <p data-eos-id="src/components/development/block-editor.tsx#76" data-eos-var="draft.file_name" data-eos-var-label="File name" data-eos-var-scope="prop" className="text-sm font-medium text-sky-800 truncate">{draft.file_name ?? 'Uploaded video'}</p>
                   <p data-eos-id="src/components/development/block-editor.tsx#77" className="text-xs text-sky-500">Ready</p>
                 </div>
-                <button data-eos-id="src/components/development/block-editor.tsx#78" type="button" onClick={() => setDraft({ ...draft, video_url: null, file_name: null })} className="text-error-400 hover:text-error-600">
+                <button data-eos-id="src/components/development/block-editor.tsx#78" aria-label="Remove video" type="button" onClick={() => setDraft({ ...draft, video_url: null, file_name: null })} className="text-error-400 hover:text-error-600">
                   <Trash2 data-eos-id="src/components/development/block-editor.tsx#79" size={14} />
                 </button>
               </div>
@@ -541,7 +545,7 @@ function BlockEditForm({
                   {draft.file_size_bytes ? `${(draft.file_size_bytes / (1024 * 1024)).toFixed(1)} MB` : 'Uploaded'}
                 </p>
               </div>
-              <button data-eos-id="src/components/development/block-editor.tsx#91" type="button" onClick={() => setDraft({ ...draft, file_url: null, file_name: null, file_size_bytes: null })} className="text-error-400 hover:text-error-600">
+              <button data-eos-id="src/components/development/block-editor.tsx#91" aria-label="Remove file" type="button" onClick={() => setDraft({ ...draft, file_url: null, file_name: null, file_size_bytes: null })} className="text-error-400 hover:text-error-600">
                 <Trash2 data-eos-id="src/components/development/block-editor.tsx#92" size={14} />
               </button>
             </div>

@@ -624,6 +624,7 @@ export default function LeadACollectivePage() {
               <button
                 type="button"
                 onClick={() => setResumeFile(null)}
+                aria-label="Remove resume"
                 className="text-neutral-400 hover:text-neutral-700 active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer"
               >
                 <X size={16} />
