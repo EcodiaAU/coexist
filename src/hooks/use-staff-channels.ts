@@ -26,6 +26,11 @@ export interface StaffChannel {
   cover_image_url?: string | null
   cover_image_position_x?: number | null
   cover_image_position_y?: number | null
+  // Campout event dates (Tate 2026-08-17): a campout channel carries its linked
+  // event's start/end so the chat card can show WHEN the campout is. Null for
+  // staff/carpool channels (no event) and any channel whose event row is gone.
+  date_start?: string | null
+  date_end?: string | null
 }
 
 /*
@@ -84,16 +89,16 @@ export function useMyStaffChannels() {
 
       const { data, error } = await supabase
         .from('chat_channel_members')
-        .select('channel_id, chat_channels(id, type, collective_id, state, event_id, name, created_at, collectives(cover_image_url, cover_image_position_x, cover_image_position_y), events(cover_image_url, cover_image_position_x, cover_image_position_y))')
+        .select('channel_id, chat_channels(id, type, collective_id, state, event_id, name, created_at, collectives(cover_image_url, cover_image_position_x, cover_image_position_y), events(cover_image_url, cover_image_position_x, cover_image_position_y, date_start, date_end))')
         .eq('user_id', user.id)
 
       if (error) throw error
 
       return (data ?? [])
         .map((row: Record<string, unknown>) => {
-          const ch = row.chat_channels as (Omit<StaffChannel, 'cover_image_url' | 'cover_image_position_x' | 'cover_image_position_y'> & {
+          const ch = row.chat_channels as (Omit<StaffChannel, 'cover_image_url' | 'cover_image_position_x' | 'cover_image_position_y' | 'date_start' | 'date_end'> & {
             collectives: { cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null } | null
-            events: { cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null } | null
+            events: { cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null; date_start: string | null; date_end: string | null } | null
           }) | null
           if (!ch) return null
           const src = ch.events?.cover_image_url ? ch.events : ch.collectives
@@ -103,6 +108,10 @@ export function useMyStaffChannels() {
             cover_image_url: src?.cover_image_url ?? null,
             cover_image_position_x: src?.cover_image_position_x ?? null,
             cover_image_position_y: src?.cover_image_position_y ?? null,
+            // Dates come from the linked event only (ch.events), never the
+            // collective fallback - a collective has no start/end.
+            date_start: ch.events?.date_start ?? null,
+            date_end: ch.events?.date_end ?? null,
           } as StaffChannel
         })
         // Drop nulls AND any hidden channel type (staff_state - see

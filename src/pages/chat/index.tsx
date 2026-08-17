@@ -2,7 +2,7 @@ import { type ReactNode, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { MessageCircle, Users, Lock, Globe, MapPin, Leaf, Shield, Tent } from 'lucide-react'
+import { MessageCircle, Users, Lock, Globe, MapPin, Leaf, Shield, Tent, Calendar } from 'lucide-react'
 import { Page } from '@/components/page'
 import { EmptyState } from '@/components/empty-state'
 import { OptimizedImage } from '@/components/optimized-image'
@@ -15,6 +15,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useAuth } from '@/hooks/use-auth'
 import { COLLECTIVE_ROLE_RANK as ROLE_RANK } from '@/lib/constants'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
+import { formatDate, formatDateShort, localDateIn } from '@/lib/date-format'
 
 const CHAT_REDIRECTED_KEY = 'coexist-chat-redirected'
 
@@ -164,6 +165,18 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
   // Campout chats are open to ticket holders, not staff-gated, so they skip
   // the lock badge and the "Staff only" caption the staff channels carry.
   const isCampout = channel.type === 'campout'
+  // Campout cards show WHEN the campout is (Tate 2026-08-17) so members can tell
+  // them apart at a glance. Multi-day campouts render a start-to-end range;
+  // single-day render just the day. Dates are the event's stored wall-clock, so
+  // they go through the floating-local date-format helpers. Staff/carpool
+  // channels carry no event date and render nothing.
+  const campoutDate =
+    isCampout && channel.date_start
+      ? channel.date_end &&
+        localDateIn('', channel.date_end) !== localDateIn('', channel.date_start)
+        ? `${formatDate(channel.date_start)} - ${formatDateShort(channel.date_end)}`
+        : formatDate(channel.date_start)
+      : null
 
   return (
     <ChatTile
@@ -202,6 +215,12 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
       <h3 className="font-heading text-lg font-bold text-white leading-tight drop-shadow-sm line-clamp-2">
         {cleanChannelName(channel.name)}
       </h3>
+      {campoutDate && (
+        <div className="flex items-center gap-1.5 mt-1.5 text-white/85">
+          <Calendar size={12} strokeWidth={2} className="shrink-0" />
+          <span className="text-xs font-medium">{campoutDate}</span>
+        </div>
+      )}
     </ChatTile>
   )
 }
