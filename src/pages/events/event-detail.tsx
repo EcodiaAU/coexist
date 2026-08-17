@@ -1034,7 +1034,14 @@ export default function EventDetailPage() {
       )
     }
 
-    if (userStatus === 'invited') {
+    // A ticketed event is only ever joined by obtaining a ticket, never a bare
+    // RSVP - even for an invited member. An invitation to a ticketed event must
+    // therefore fall through to the ticket path below, NOT the "Accept &
+    // Register" button, which calls the bare register mutation the server
+    // rejects for ticketed events, stranding the user on the "This event needs a
+    // ticket" toast with no way forward (Max, 2026-08-17). Non-ticketed invites
+    // keep the Accept & Register flow exactly as before.
+    if (userStatus === 'invited' && !isTicketed) {
       return (
         <div className="space-y-2">
           <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-md bg-info-50 text-info-700 text-sm font-bold border border-info-200/40">
@@ -1148,9 +1155,18 @@ export default function EventDetailPage() {
         )
       }
 
-      // No ticket - show ticket type selector
+      // No ticket - show ticket type selector. An invited member now lands here
+      // too (their invitation to a ticketed event still needs a ticket), so keep
+      // the invite context visible above the selector rather than dropping them
+      // into a bare "pick a ticket" screen with no explanation.
       return (
         <div className="space-y-3">
+          {userStatus === 'invited' && (
+            <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-md bg-info-50 text-info-700 text-sm font-bold border border-info-200/40">
+              <Mail size={18} />
+              You've been invited - grab your ticket below
+            </div>
+          )}
           {(ticketTypes ?? []).map((tt) => {
             const soldOut = tt.remaining !== null && tt.remaining <= 0
             const selected = selectedTicketType === tt.id
