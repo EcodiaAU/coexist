@@ -4,6 +4,7 @@ import {
   useCallback,
   useState,
   useRef,
+  useMemo,
   memo,
   type ReactNode,
 } from 'react'
@@ -136,15 +137,31 @@ export function ToastProvider({ children, className }: ToastProviderProps) {
     [dismiss],
   )
 
-  const toast: ToastApi = {
-    success: (msg, opts) => add('success', msg, opts),
-    error: (msg, opts) => add('error', msg, opts),
-    info: (msg, opts) => add('info', msg, opts),
-    warning: (msg, opts) => add('warning', msg, opts),
-  }
+  // toast + the context value MUST keep a stable identity across renders.
+  // add/dismiss are already stable (useCallback), so this object is created once.
+  // Recreating it every render (the prior `const toast = {...}` + inline `{{ toast }}`)
+  // churned the context identity on every toast add: setToasts re-renders the
+  // provider -> new `toast` ref -> every useToast() consumer re-renders, and any
+  // consumer effect/callback that lists `toast` in its deps (exhaustive-deps does)
+  // re-fires. When such an effect itself calls toast.* (e.g. use-sync-manager's
+  // runSync -> toast.success('Back online') on reconnect/foreground), it re-adds a
+  // toast -> setToasts -> churn -> effect re-fires -> ... "Maximum update depth
+  // exceeded" (Sentry COEXIST-N 7618256794, xr/vendor, Object.success = this file).
+  // Memoising also stops toast adds from re-rendering every consumer app-wide.
+  const toast = useMemo<ToastApi>(
+    () => ({
+      success: (msg, opts) => add('success', msg, opts),
+      error: (msg, opts) => add('error', msg, opts),
+      info: (msg, opts) => add('info', msg, opts),
+      warning: (msg, opts) => add('warning', msg, opts),
+    }),
+    [add],
+  )
+
+  const contextValue = useMemo<ToastContextValue>(() => ({ toast }), [toast])
 
   return (
-    <ToastContext.Provider data-eos-id="src/components/toast.tsx#0" data-eos-v="2" value={{ toast }}>
+    <ToastContext.Provider data-eos-id="src/components/toast.tsx#0" data-eos-v="2" value={contextValue}>
       {children}
       {createPortal(
         <div data-eos-id="src/components/toast.tsx#1"
