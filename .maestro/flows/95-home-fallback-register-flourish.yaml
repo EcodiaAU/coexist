@@ -55,5 +55,15 @@ androidWebViewHierarchy: devtools
       #     card (dynamic event title), not the "YOUR NEXT EVENT" heading - an
       #     unstable cleanup anchor. The flourish animation is verified on-device
       #     by the ship-time CDP visual check (Batch 12 note).
-      - assertVisible: "Register"
+      # The "COMING UP IN YOUR COLLECTIVE" section title sits low on the home
+      # feed, so its one-tap Register CTA in the event card is below the fold on
+      # a phone viewport (verified 2026-08-18 hw-GPU: section title on screen,
+      # Register button clipped by the bottom nav). Scroll it into view before
+      # asserting so a below-fold CTA is not a false-red; a genuinely absent
+      # Register still fails after the scroll budget.
+      - scrollUntilVisible:
+          element:
+            text: "Register"
+          direction: DOWN
+          timeout: 15000
       - takeScreenshot: /tmp/maestro-cx-95-fallback-card

@@ -31,9 +31,13 @@ androidWebViewHierarchy: devtools
 - extendedWaitUntil:
     visible: "Edit Profile"
     timeout: 15000
+# "EVENTS" was a profile stat label that the profile redesign removed (the page
+# now leads with Edit Profile / Tickets / Donations / Settings then "YOUR IMPACT
+# MAP", verified 2026-08-18 hw-GPU render). Assert "Donations", an always-present
+# profile action button, as the fixture-independent anchor instead.
 - assertVisible: "Tickets"
 - assertVisible: ".*Member since.*"
-- assertVisible: "EVENTS"
+- assertVisible: "Donations"
 - tapOn: ".*More.*"
 - extendedWaitUntil:
     visible: "Admin Home"
