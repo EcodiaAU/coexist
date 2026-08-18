@@ -133,6 +133,31 @@ export function isBenignAbortError(event: Sentry.Event): boolean {
   })
 }
 
+// A Windows-only "Non-Error promise rejection" whose value is the string
+// "Object Not Found Matching Id:N, MethodName:update, ParamCount:N" (COEXIST-G).
+// This is the well-documented signature of a browser-extension / security-suite
+// COM-bridge injection (Windows password managers, antivirus web shields) that
+// fails to resolve an object id it planted into the page, rejects a promise with
+// a bare string, and our global onunhandledrejection handler then reports it as a
+// Co-Exist error. Confirmed 2026-08-18 against Sentry issue 7606213151: the event
+// carries ZERO stack frames (the rejection value is a string, not an Error, so it
+// has no app stack), 0 affected users across 10 events since 2026-07-12, and only
+// ever Windows / Chrome - none of which our own code produces. Matched on the two
+// stable string tokens together ("Object Not Found Matching Id" + "MethodName") so
+// it can never suppress a genuine Co-Exist rejection, which would never carry that
+// phrase. Sentry stamps the string on both the exception value and, for a wrapped
+// non-Error rejection, event.message, so both are checked.
+const EXTENSION_INJECTION_SIGNATURE = /Object Not Found Matching Id.*MethodName/i
+
+export function isThirdPartyExtensionInjection(event: Sentry.Event): boolean {
+  const values = event.exception?.values ?? []
+  for (const value of values) {
+    if (EXTENSION_INJECTION_SIGNATURE.test(value.value ?? '')) return true
+  }
+  if (EXTENSION_INJECTION_SIGNATURE.test(event.message ?? '')) return true
+  return false
+}
+
 let initialised = false
 
 export function initSentry() {
@@ -175,6 +200,11 @@ export function initSentry() {
         // Drop benign fetch/navigation AbortError noise (COEXIST-16). Cancelled
         // in-flight requests are expected and never actionable.
         if (isBenignAbortError(event)) return null
+        // Drop the Windows-only browser-extension COM-bridge injection artifact
+        // (COEXIST-G: "Object Not Found Matching Id:N, MethodName:update,
+        // ParamCount:N"). Not a Co-Exist defect - zero frames, zero users - and
+        // it pollutes the same alerting channel the filters above protect.
+        if (isThirdPartyExtensionInjection(event)) return null
         // Strip PII from breadcrumbs if needed
         return event
       },
