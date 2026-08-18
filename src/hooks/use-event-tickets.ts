@@ -65,25 +65,33 @@ export function useEventTicketTypes(eventId: string | undefined) {
       if (error) throw error
       if (!types?.length) return []
 
-      // Count sold tickets per type (pending + confirmed + checked_in)
-      const typeIds = types.map((t) => t.id)
-      const { data: soldData } = await supabase
-        .from('event_tickets')
-        .select('ticket_type_id, quantity')
-        .in('ticket_type_id', typeIds)
-        .in('status', ['pending', 'confirmed', 'checked_in'])
+      // Remaining capacity comes from a SECURITY DEFINER RPC, NOT a client-side
+      // count of event_tickets. event_tickets SELECT is RLS-locked to
+      // tickets_select_own (a member sees only their OWN ticket rows), so
+      // counting sold from the client under-counts every other member's
+      // purchase and a sold-out event renders "X left" with a live "Get Ticket"
+      // CTA. get_event_ticket_availability returns aggregate sold/remaining
+      // only (no PII), using the same sold definition as reserve_event_ticket
+      // (confirmed + checked_in + non-stale pending), so display and the actual
+      // reserve gate agree.
+      const { data: avail, error: availErr } = await supabase.rpc(
+        'get_event_ticket_availability',
+        { p_event_id: eventId },
+      )
+      if (availErr) throw availErr
 
-      const soldByType = new Map<string, number>()
-      for (const row of soldData ?? []) {
-        soldByType.set(
-          row.ticket_type_id,
-          (soldByType.get(row.ticket_type_id) ?? 0) + (row.quantity ?? 1),
-        )
+      const remainingByType = new Map<string, number | null>()
+      for (const row of (avail as Array<{ ticket_type_id: string; remaining: number | null }> | null) ?? []) {
+        remainingByType.set(row.ticket_type_id, row.remaining)
       }
 
       return types.map((t) => ({
         ...t,
-        remaining: t.capacity != null ? Math.max(0, t.capacity - (soldByType.get(t.id) ?? 0)) : null,
+        // RPC is authoritative when it knows the type; otherwise fall back to
+        // capacity (untracked/unlimited) rather than fabricating a count.
+        remaining: remainingByType.has(t.id)
+          ? remainingByType.get(t.id)!
+          : (t.capacity != null ? t.capacity : null),
       })) as TicketType[]
     },
     enabled: !!eventId,
@@ -212,8 +220,26 @@ export function useCreateTicketCheckout() {
         // never created/returned.
         console.error('[create-ticket-checkout] edge function error:', error)
         captureException(error, { extra: { eventId, ticketTypeId, quantity } })
+        // supabase.functions.invoke maps ANY non-2xx to `error`
+        // (FunctionsHttpError) with null data, so the edge function's own
+        // human messages ("This campout is sold out", "You already have a
+        // ticket for this event", "That code is invalid") never reach the
+        // result.error path below and members only ever saw the generic
+        // "Payment could not start" banner. Read the real message off the
+        // response body for business-rule failures (status < 500); keep the
+        // generic line only for a genuine server fault or a bodyless failure.
+        let serverMsg: string | undefined
+        const ctx = (error as { context?: Response }).context
+        if (ctx && typeof ctx.status === 'number' && ctx.status < 500 && typeof ctx.json === 'function') {
+          try {
+            const body = await ctx.clone().json() as { error?: string }
+            if (typeof body?.error === 'string' && body.error.trim()) serverMsg = body.error.trim()
+          } catch {
+            /* body was not JSON - fall through to the generic message */
+          }
+        }
         throw new Error(
-          'Payment could not start. Nothing was charged - try again or contact us.',
+          serverMsg || 'Payment could not start. Nothing was charged - try again or contact us.',
         )
       }
 

@@ -7605,6 +7605,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_event_ticket_availability: {
+        Args: { p_event_id: string }
+        Returns: Json
+      }
       get_national_stats: { Args: never; Returns: Json }
       get_platform_impact_stats: { Args: never; Returns: Json }
       get_product_available_stock: {
