@@ -24,7 +24,7 @@ androidWebViewHierarchy: devtools
     clearState: false
     stopApp: true
 - extendedWaitUntil:
-    visible: "YOUR NEXT EVENT"
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     timeout: 30000
     optional: true
 # 90-cold-start-render runs immediately before this flow (lexical order) with
@@ -32,11 +32,11 @@ androidWebViewHierarchy: devtools
 # recover that, so re-login via the shared subflow when the home is not visible.
 - runFlow:
     when:
-      notVisible: "YOUR NEXT EVENT"
+      notVisible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     commands:
       - runFlow: ../subflows/relogin.yaml
 - extendedWaitUntil:
-    visible: "YOUR NEXT EVENT"
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     timeout: 30000
 # Self-heal: sweep orphans from prior killed runs before the seed lands.
 - runScript: ../scripts/cleanup-admin-event.js
@@ -64,7 +64,7 @@ androidWebViewHierarchy: devtools
 - launchApp:
     clearState: false
 - extendedWaitUntil:
-    visible: "YOUR NEXT EVENT"
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     timeout: 30000
 - openLink: "coexist://admin/events"
 - extendedWaitUntil:

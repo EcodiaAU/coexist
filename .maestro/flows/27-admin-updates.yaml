@@ -7,18 +7,18 @@ androidWebViewHierarchy: devtools
     clearState: false
     stopApp: true
 - extendedWaitUntil:
-    visible: "YOUR NEXT EVENT"
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     timeout: 30000
     optional: true
 - runFlow:
     when:
-      notVisible: "YOUR NEXT EVENT"
+      notVisible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     commands:
       - stopApp
       - launchApp:
           clearState: false
 - extendedWaitUntil:
-    visible: "YOUR NEXT EVENT"
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     timeout: 30000
 - openLink: "coexist://admin/updates"
 - extendedWaitUntil:

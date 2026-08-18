@@ -19,7 +19,7 @@ androidWebViewHierarchy: devtools
     clearState: false
     stopApp: true
 - extendedWaitUntil:
-    visible: "YOUR NEXT EVENT"
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     timeout: 30000
     optional: true
 # 99-auth-signed-out-sweep runs immediately before this flow (lexical order)
@@ -30,11 +30,11 @@ androidWebViewHierarchy: devtools
 # finding). Field-anchored tapOn "Email."/"Password." fixes every login site.
 - runFlow:
     when:
-      notVisible: "YOUR NEXT EVENT"
+      notVisible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     commands:
       - runFlow: ../subflows/relogin.yaml
 - extendedWaitUntil:
-    visible: "YOUR NEXT EVENT"
+    visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     timeout: 20000
 # Deep-link straight to the Port Beach Tree Planting event day page via the
 # custom scheme (the https app-link opens the external browser on the emulator).

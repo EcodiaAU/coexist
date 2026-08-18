@@ -17,7 +17,7 @@ androidWebViewHierarchy: devtools
     clearState: false
     stopApp: true
 - extendedWaitUntil:
-    visible: ".*(Welcome back|YOUR NEXT EVENT|Something went wrong).*"
+    visible: ".*(Welcome back|YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar|Something went wrong).*"
     timeout: 30000
 - runFlow:
     when:
