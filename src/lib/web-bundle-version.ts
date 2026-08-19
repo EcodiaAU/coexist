@@ -7,4 +7,4 @@
 //
 // It is deliberately separate from the NATIVE app version (MARKETING_VERSION /
 // CFBundleShortVersionString / versionName) - those only change on store builds.
-export const WEB_BUNDLE_VERSION = '2.2.4'
+export const WEB_BUNDLE_VERSION = '2.2.5'
