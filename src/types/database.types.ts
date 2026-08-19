@@ -5454,6 +5454,7 @@ export type Database = {
           accessibility_requirements: string | null
           age: number | null
           avatar_url: string | null
+          cover_image_url: string | null
           bio: string | null
           collective_discovery: string | null
           created_at: string | null
@@ -5499,6 +5500,7 @@ export type Database = {
           accessibility_requirements?: string | null
           age?: number | null
           avatar_url?: string | null
+          cover_image_url?: string | null
           bio?: string | null
           collective_discovery?: string | null
           created_at?: string | null
@@ -5544,6 +5546,7 @@ export type Database = {
           accessibility_requirements?: string | null
           age?: number | null
           avatar_url?: string | null
+          cover_image_url?: string | null
           bio?: string | null
           collective_discovery?: string | null
           created_at?: string | null

@@ -119,6 +119,12 @@ export default function EditProfilePage() {
 
   const { capture: _capture, pickFromGallery, loading: cameraLoading, error: cameraError } = useCamera()
   const { upload, progress, uploading, error: uploadError } = useImageUpload({ bucket: 'avatars' })
+  const {
+    upload: uploadCover,
+    progress: coverProgress,
+    uploading: coverUploading,
+    error: coverUploadError,
+  } = useImageUpload({ bucket: 'avatars' })
   const { toast } = useToast()
 
   // Existing fields
@@ -145,6 +151,7 @@ export default function EditProfilePage() {
   const [emergencyContactRelationship, setEmergencyContactRelationship] = useState('')
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
 
   // Initialize form with profile data
@@ -211,6 +218,40 @@ export default function EditProfilePage() {
       setAvatarPreview(null)
       queryClient.setQueryData(['profile', authProfile.id], previousProfile)
       toast.error('Failed to upload avatar')
+    } finally {
+      URL.revokeObjectURL(previewUrl)
+    }
+  }
+
+  // Cover photo: the member's own hero banner (Jess 2026-08-19). Mirrors the
+  // avatar flow - pick, optimistic preview into the query cache, upload to the
+  // owner-scoped avatars bucket at cover.jpg, persist cover_image_url. Falls
+  // back to a collective landscape / nature gradient when unset (in the hero).
+  const handleCoverChange = async () => {
+    const result = await pickFromGallery()
+    if (!result) {
+      if (cameraError) toast.error(cameraError)
+      return
+    }
+    if (!authProfile?.id) return
+
+    const previewUrl = URL.createObjectURL(result.blob)
+    setCoverPreview(previewUrl)
+    const previousProfile = queryClient.getQueryData(['profile', authProfile.id])
+    queryClient.setQueryData(['profile', authProfile.id], (old: Record<string, unknown> | undefined) =>
+      old ? { ...old, cover_image_url: previewUrl } : old,
+    )
+
+    try {
+      const path = `${authProfile.id}/cover.jpg`
+      const uploaded = await uploadCover(result.blob, path)
+      const bustUrl = `${uploaded.url}?t=${Date.now()}`
+      await updateProfile.mutateAsync({ cover_image_url: bustUrl })
+      toast.success('Cover photo updated!')
+    } catch {
+      setCoverPreview(null)
+      queryClient.setQueryData(['profile', authProfile.id], previousProfile)
+      toast.error('Failed to upload cover photo')
     } finally {
       URL.revokeObjectURL(previewUrl)
     }
@@ -347,7 +388,33 @@ export default function EditProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           className="relative -mx-4 lg:-mx-6 overflow-hidden"
         >
-          <div className="bg-moss-400 py-8">
+          <div className="relative py-8">
+            {/* Cover photo banner - the member's own hero image (or their
+                collective landscape / moss fallback when unset). Tappable to
+                replace. */}
+            {(coverPreview ?? profile?.cover_image_url) ? (
+              <img
+                src={coverPreview ?? profile?.cover_image_url ?? undefined}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover object-center"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-moss-400" aria-hidden="true" />
+            )}
+            {/* Legibility scrim over the cover so the avatar + controls read. */}
+            <div className="absolute inset-0 bg-black/25" aria-hidden="true" />
+
+            {/* Change cover */}
+            <button
+              onClick={handleCoverChange}
+              disabled={cameraLoading || coverUploading}
+              className="absolute top-2 right-2 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/40 backdrop-blur-sm px-3 h-9 text-white text-xs font-semibold hover:bg-black/55 active:scale-[0.98] transition-[colors,transform] duration-150 disabled:opacity-50"
+              aria-label="Change cover photo"
+            >
+              <Camera size={14} />
+              Cover photo
+            </button>
+
             <div className="relative z-10 flex flex-col items-center">
               <div className="relative">
                 <div className="ring-4 ring-white/30 rounded-full overflow-hidden flex items-center justify-center aspect-square w-24">
@@ -367,12 +434,12 @@ export default function EditProfilePage() {
                 </button>
               </div>
               <UploadProgress
-                progress={progress}
-                uploading={uploading}
-                error={uploadError}
+                progress={uploading ? progress : coverProgress}
+                uploading={uploading || coverUploading}
+                error={uploadError ?? coverUploadError}
                 className="mt-2 max-w-[200px]"
               />
-              <p className="mt-2 text-xs text-white/60">Tap the camera to change your photo</p>
+              <p className="mt-2 text-xs text-white/80">Tap the camera for your photo, or Cover photo for your banner</p>
             </div>
           </div>
         </motion.div>

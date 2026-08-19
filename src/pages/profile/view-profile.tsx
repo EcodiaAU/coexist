@@ -166,10 +166,12 @@ export default function ViewProfilePage() {
     year: 'numeric',
   })
 
-  // Same hero-image language as the own-profile surface: lead with a landscape
-  // from a collective the member belongs to; fall back to the nature gradient
-  // inside ProfileHero when there is none.
+  // Same hero-image language as the own-profile surface: prefer the member's
+  // own uploaded cover photo (Jess 2026-08-19), then a landscape from a
+  // collective they belong to; fall back to the nature gradient inside
+  // ProfileHero when there is none.
   const heroImage: string | null =
+    profile.cover_image_url ||
     (collectives ?? [])
       .map((m) => (m.collectives as { cover_image_url?: string | null } | null)?.cover_image_url)
       .find((u): u is string => !!u) ||

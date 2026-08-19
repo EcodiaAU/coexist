@@ -34,11 +34,9 @@ import { Button } from '@/components/button'
 import { Chip } from '@/components/chip'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
-import { useAuth } from '@/hooks/use-auth'
 import { useProfile, useProfileCollectives, useProfileStats } from '@/hooks/use-profile'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { bentoMixedTheme } from '@/components/bento-stats-themes'
-import { ProfileEventMap } from '@/components/profile-event-map'
 import { cn } from '@/lib/cn'
 import { prettyInterestLabel } from '@/lib/interests'
 
@@ -155,7 +153,6 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
   const rm = !!shouldReduceMotion
-  const { user } = useAuth()
   const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useProfile()
   const { data: collectives, isLoading: collectivesLoading } = useProfileCollectives()
   const { data: stats, isLoading: statsLoading } = useProfileStats()
@@ -208,7 +205,10 @@ export default function ProfilePage() {
   // avatar shows as the crisp ring on top. When they belong to no collective, a
   // nature gradient renders instead. We deliberately do NOT blow the square
   // avatar up as the background - it crops badly and dark/logo avatars go black.
+  // Prefer the member's own uploaded cover photo (Jess 2026-08-19); fall back
+  // to a collective landscape, then the nature gradient inside the hero.
   const heroImage: string | null =
+    profile.cover_image_url ||
     (collectives ?? [])
       .map((m) => (m.collectives as { cover_image_url?: string | null } | null)?.cover_image_url)
       .find((u): u is string => !!u) ||
@@ -382,17 +382,6 @@ export default function ProfilePage() {
         initial="hidden"
         animate="visible"
       >
-
-        {/* Your Impact Map - every place you have shown up to an event (Jess
-            2026-08-12). Sits above the impact stats (Kurt 2026-08-12): the map
-            is the hero, the numbers are the supporting detail. */}
-        <motion.section variants={fadeUp}>
-          <SectionHeading
-            icon={<MapPin size={13} />}
-            title="Your Impact Map"
-          />
-          <ProfileEventMap userId={user?.id} isOwnProfile />
-        </motion.section>
 
         {/* Bento Impact Stats - compact + filter zero stats, expandable */}
         <motion.div variants={fadeUp} className="mt-6">
