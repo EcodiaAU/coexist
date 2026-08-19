@@ -50,6 +50,28 @@ else
   echo "==> shipping current web bundle version $VERSION (SKIP_BUMP)"
 fi
 
+# NATIVE FLOOR GUARD. Capgo refuses to serve a bundle whose version is <= the
+# device's live native version (error disable_auto_update_under_native, "Cannot
+# revert under native version") - the push uploads fine but reaches ZERO devices,
+# a silent dead push. This bit us on 2026-08-19: web lane sat at 2.2.5 while
+# native store builds marched to iOS 2.2.9 / Android 2.2.8, so every OTA was
+# dead. WEB_BUNDLE_VERSION must exceed the highest native version. The repo's
+# native versions are the ceiling of what can be live, so fail closed against
+# them here (no ASC/Play creds needed).
+IOS_NATIVE=$(sed -n 's/.*MARKETING_VERSION = \([0-9.]*\);.*/\1/p' \
+  "$APP_ROOT/ios/App/App.xcodeproj/project.pbxproj" 2>/dev/null | sort -V | tail -1)
+AND_NATIVE=$(sed -n 's/.*versionName "\([0-9.]*\)".*/\1/p' \
+  "$APP_ROOT/android/app/build.gradle" 2>/dev/null | sort -V | tail -1)
+NATIVE_MAX=$(printf '%s\n%s\n' "${IOS_NATIVE:-0.0.0}" "${AND_NATIVE:-0.0.0}" | sort -V | tail -1)
+HIGHEST=$(printf '%s\n%s\n' "$VERSION" "$NATIVE_MAX" | sort -V | tail -1)
+if [ "$VERSION" = "$NATIVE_MAX" ] || [ "$HIGHEST" != "$VERSION" ]; then
+  echo "FATAL: web bundle $VERSION is not greater than highest native $NATIVE_MAX (iOS ${IOS_NATIVE:-?} / Android ${AND_NATIVE:-?})." >&2
+  echo "       Capgo would block this as a dead push (disable_auto_update_under_native)." >&2
+  echo "       Set WEB_BUNDLE_VERSION above $NATIVE_MAX in src/lib/web-bundle-version.ts and retry." >&2
+  exit 1
+fi
+echo "==> native floor OK: web $VERSION > native $NATIVE_MAX (iOS ${IOS_NATIVE:-?} / Android ${AND_NATIVE:-?})"
+
 # Sentry source-map upload for the OTA bundle. The native app has no server.url,
 # so it serves THIS bundled dist locally - its JS crash stacks (e.g. COEXIST-N
 # "Maximum update depth" in the admin bundle) only resolve to real file/line if
