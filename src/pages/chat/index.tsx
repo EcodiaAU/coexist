@@ -13,7 +13,6 @@ import { useUnreadCounts } from '@/hooks/use-chat'
 import { useMyStaffChannels, useChannelUnreadCounts, type StaffChannel } from '@/hooks/use-staff-channels'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useAuth } from '@/hooks/use-auth'
-import { COLLECTIVE_ROLE_RANK as ROLE_RANK } from '@/lib/constants'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 import { formatDate, formatDateShort, localDateIn } from '@/lib/date-format'
 
@@ -309,7 +308,7 @@ export default function ChatListPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
-  const { profile, isStaff, isAdmin, isSuperAdmin } = useAuth()
+  const { isStaff, isAdmin, isSuperAdmin } = useAuth()
   const isGlobalStaff = isStaff || isAdmin || isSuperAdmin
   const { data: myCollectives, isLoading, isError } = useMyCollectives()
   const { data: allCollectives } = useCollectives()
@@ -324,35 +323,33 @@ export default function ChatListPage() {
     ? (allCollectives ?? []).filter((c) => !myCollectiveIds.has(c.id))
     : []
 
-  // Auto-redirect to primary collective chat (once per session)
+  // Landing behaviour (Tate 2026-08-19): if the user belongs to MORE THAN ONE
+  // chat, stay on the list so they can pick; only auto-open when they belong to
+  // exactly one. "Chats" spans both collective chats (myCollectives) and
+  // staff/campout channels (staffChannels), so a member of one collective plus
+  // one campout counts as two and lands on the list. Runs once per session.
   useEffect(() => {
     if (sessionStorage.getItem(CHAT_REDIRECTED_KEY)) return
-    if (isLoading || !myCollectives?.length) return
+    // Wait until BOTH chat sources have resolved - redirecting on a half-loaded
+    // count would auto-open a user who is actually in more than one chat.
+    if (isLoading || channelsLoading) return
 
-    const myCollectiveIds = new Set(myCollectives.map((m) => m.collective_id))
+    const collectives = myCollectives ?? []
+    const channels = staffChannels ?? []
+    const totalChats = collectives.length + channels.length
 
-    // Use user's chosen primary chat if they've set one and still belong to that collective
-    const userPrimary = profile?.primary_chat_id
-    if (userPrimary && myCollectiveIds.has(userPrimary)) {
-      sessionStorage.setItem(CHAT_REDIRECTED_KEY, '1')
-      navigate(`/chat/${userPrimary}`, { replace: true })
-      return
+    // More than one chat -> show the list (do not auto-open). No chats -> the
+    // empty state renders; nothing to open.
+    if (totalChats !== 1) return
+
+    // Exactly one chat -> open it directly (preserves the prior single-chat UX).
+    sessionStorage.setItem(CHAT_REDIRECTED_KEY, '1')
+    if (collectives.length === 1) {
+      navigate(`/chat/${collectives[0].collective_id}`, { replace: true })
+    } else {
+      navigate(`/chat/channel/${channels[0].id}`, { replace: true })
     }
-
-    // Fallback: pick primary collective by highest role, then earliest join
-    const sorted = [...myCollectives].sort((a, b) => {
-      const rankA = ROLE_RANK[a.role!] ?? 0
-      const rankB = ROLE_RANK[b.role!] ?? 0
-      if (rankB !== rankA) return rankB - rankA
-      return new Date(a.joined_at!).getTime() - new Date(b.joined_at!).getTime()
-    })
-
-    const primaryId = sorted[0]?.collective_id
-    if (primaryId) {
-      sessionStorage.setItem(CHAT_REDIRECTED_KEY, '1')
-      navigate(`/chat/${primaryId}`, { replace: true })
-    }
-  }, [isLoading, myCollectives, navigate, profile])
+  }, [isLoading, channelsLoading, myCollectives, staffChannels, navigate])
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([
