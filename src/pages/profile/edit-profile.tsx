@@ -404,11 +404,14 @@ export default function EditProfilePage() {
             {/* Legibility scrim over the cover so the avatar + controls read. */}
             <div className="absolute inset-0 bg-black/25" aria-hidden="true" />
 
-            {/* Change cover */}
+            {/* Change cover - top offset respects the safe-area inset so the
+                control clears the iOS status bar / dynamic island on native
+                (a flat top-2 sat under the notch and was untappable). */}
             <button
               onClick={handleCoverChange}
               disabled={cameraLoading || coverUploading}
-              className="absolute top-2 right-2 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/40 backdrop-blur-sm px-3 h-9 text-white text-xs font-semibold hover:bg-black/55 active:scale-[0.98] transition-[colors,transform] duration-150 disabled:opacity-50"
+              style={{ top: 'max(env(safe-area-inset-top, 0px), 0.5rem)' }}
+              className="absolute right-2 z-50 inline-flex items-center gap-1.5 rounded-full bg-black/40 backdrop-blur-sm px-3 h-9 text-white text-xs font-semibold hover:bg-black/55 active:scale-[0.98] transition-[colors,transform] duration-150 disabled:opacity-50"
               aria-label="Change cover photo"
             >
               <Camera size={14} />
