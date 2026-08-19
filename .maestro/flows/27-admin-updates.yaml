@@ -24,10 +24,10 @@ androidWebViewHierarchy: devtools
 - extendedWaitUntil:
     visible: "New Update"
     timeout: 15000
-- assertVisible: "TOTAL"
-- assertVisible: "PINNED"
-- assertVisible: "URGENT"
-- assertVisible: "TARGETED"
+# The TOTAL/PINNED/URGENT/TARGETED metric cards were removed in the admin-updates
+# redesign (no such literals remain in src/pages/admin/updates.tsx, and the empty
+# page renders title + New Update + search + filter pills + "No updates found",
+# verified 2026-08-18 hw-GPU). Assert only the always-present shell anchors.
 - assertVisible: ".*Search updates.*"
 - assertVisible: "National"
 - assertVisible: "Collective"

@@ -21,7 +21,11 @@ androidWebViewHierarchy: devtools
     visible: ".*(YOUR NEXT EVENT|COMING UP IN YOUR COLLECTIVE|No events on your calendar).*"
     timeout: 30000
 - openLink: "coexist://updates"
+# Render-proof anchor: the populated page shows the "Updates" header, the empty
+# state (this account) shows "No updates yet" / "Check back later" (updates/
+# index.tsx:474). Match either so an empty test account is not a false-red, while
+# a genuinely blank WebView still fails. Verified 2026-08-18 hw-GPU empty state.
 - extendedWaitUntil:
-    visible: "Updates"
+    visible: ".*(Updates|No updates yet|Check back later).*"
     timeout: 15000
 - takeScreenshot: /tmp/maestro-cx-updates

@@ -24,8 +24,8 @@ androidWebViewHierarchy: devtools
 - extendedWaitUntil:
     visible: "Applications"
     timeout: 15000
-- assertVisible: "TOTAL"
-- assertVisible: "PENDING"
-- assertVisible: "ACCEPTED"
+# The TOTAL/PENDING/ACCEPTED metric cards were removed in the admin redesign (no
+# such literals remain in src/pages/admin/applications.tsx). The always-present
+# shell is the Applications/Notifications subtab pair (applications.tsx:190-191).
 - assertVisible: "Notifications"
 - takeScreenshot: /tmp/maestro-cx-admin-applications
