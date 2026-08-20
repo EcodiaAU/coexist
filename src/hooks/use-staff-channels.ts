@@ -375,6 +375,9 @@ export function useSendChannelMessage() {
       imagePath?: string
       replyToId?: string
       messageType?: string
+      /** Channel display name + type - used only to title the push notification */
+      channelName?: string | null
+      channelType?: StaffChannel['type'] | null
     }) => {
       if (!user) throw new Error('Not authenticated')
 
@@ -431,38 +434,44 @@ export function useSendChannelMessage() {
       queryClient.invalidateQueries({ queryKey: ['channel-messages', variables.channelId] })
     },
     onSuccess: (_data, variables) => {
-      // Send push notification to other channel members (fire-and-forget)
-      if (user) {
-        const senderName = profile?.display_name ?? 'Someone'
-        const pushBody = (variables.imageUrl || variables.imagePath)
-          ? 'Sent a photo'
-          : variables.content?.slice(0, 200) ?? 'Sent a message'
+      // Push to other channel members (fire-and-forget). Recipients are resolved
+      // SERVER-SIDE by channel_id inside send-push (service role), NOT here: the
+      // chat_channel_members SELECT policy is (user_id = auth.uid() OR
+      // is_admin_or_staff), so a ticket-holder participant - every campout /
+      // carpool group-chat sender - can read only their OWN membership row and a
+      // client-side recipient query resolves to an empty set, silently dropping
+      // the push. Passing channelId lets send-push read the full membership and
+      // authorize the caller by channel membership. See send-push channelId path.
+      if (!user) return
+      const senderName = profile?.display_name ?? 'Someone'
+      const pushBody = (variables.imageUrl || variables.imagePath)
+        ? 'Sent a photo'
+        : variables.content?.slice(0, 200) ?? 'Sent a message'
 
-        supabase
-          .from('chat_channel_members')
-          .select('user_id')
-          .eq('channel_id', variables.channelId)
-          .then(({ data: members }) => {
-            const recipientIds = (members ?? [])
-              .map((m: { user_id: string }) => m.user_id)
-              .filter((id: string) => id !== user.id)
+      // Staff channels title as "<name> (Staff)"; member-facing group chats
+      // (campout, carpool breakout) title as "<name> - <channel>" so the push
+      // names the campout, matching the collective-chat "<name> - <region>" shape.
+      const type = variables.channelType ?? undefined
+      const isStaffChannel = type === 'staff_collective' || type === 'staff_state' || type === 'staff_national'
+      const channelName = variables.channelName?.trim()
+      const title = isStaffChannel
+        ? `${senderName} (Staff)`
+        : channelName
+          ? `${senderName} - ${channelName}`
+          : senderName
 
-            if (recipientIds.length > 0) {
-              supabase.functions.invoke('send-push', {
-                body: {
-                  userIds: recipientIds,
-                  title: `${senderName} (Staff)`,
-                  body: pushBody,
-                  data: {
-                    type: 'chat_messages',
-                    channel_id: variables.channelId,
-                    collective_id: variables.collectiveId ?? '',
-                  },
-                },
-              })
-            }
-          })
-      }
+      supabase.functions.invoke('send-push', {
+        body: {
+          channelId: variables.channelId,
+          title,
+          body: pushBody,
+          data: {
+            type: 'chat_messages',
+            channel_id: variables.channelId,
+            collective_id: variables.collectiveId ?? '',
+          },
+        },
+      })
     },
     onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ['channel-messages', variables.channelId] })

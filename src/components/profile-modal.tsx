@@ -32,6 +32,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 import { REDACTED_PLACEHOLDER } from '@/lib/profile-visibility'
 import { prettyInterestLabel } from '@/lib/interests'
+import { calculateAge } from '@/lib/date-format'
 
 function ProfileModalSkeleton() {
   return (
@@ -246,14 +247,17 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
                 {profile.phone && (
                   <DetailRow data-eos-id="src/components/profile-modal.tsx#70" icon={<Phone data-eos-id="src/components/profile-modal.tsx#71" size={14} />} label="Phone" value={profile.phone} tint="moss" />
                 )}
-                {(profile.age || profile.gender) && (
-                  <DetailRow data-eos-id="src/components/profile-modal.tsx#72"
-                    icon={<Calendar data-eos-id="src/components/profile-modal.tsx#73" size={14} />}
-                    label="Age / Gender"
-                    value={[profile.age && `Age ${profile.age}`, profile.gender].filter(Boolean).join(' · ')}
-                    tint="sprout"
-                  />
-                )}
+                {(() => {
+                  const derivedAge = calculateAge(profile.date_of_birth) ?? profile.age
+                  return (derivedAge || profile.gender) && (
+                    <DetailRow data-eos-id="src/components/profile-modal.tsx#72"
+                      icon={<Calendar data-eos-id="src/components/profile-modal.tsx#73" size={14} />}
+                      label="Age / Gender"
+                      value={[derivedAge && `Age ${derivedAge}`, profile.gender].filter(Boolean).join(' · ')}
+                      tint="sprout"
+                    />
+                  )
+                })()}
                 {profile.postcode && (
                   <DetailRow data-eos-id="src/components/profile-modal.tsx#74" icon={<MapPin data-eos-id="src/components/profile-modal.tsx#75" size={14} />} label="Postcode" value={profile.postcode} tint="plum" />
                 )}

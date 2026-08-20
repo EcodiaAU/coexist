@@ -14,6 +14,7 @@ import { UpdateRequired } from '@/components/update-required'
 import { useAppUpdate } from '@/hooks/use-app-update'
 import { useAuth } from '@/hooks/use-auth'
 import { useDeepLink } from '@/hooks/use-deep-link'
+import { BirthdayPromptGate } from '@/components/birthday-prompt-gate'
 import SplashPage from '@/pages/splash'
 
 /* ------------------------------------------------------------------ */
@@ -735,6 +736,7 @@ function App() {
       )}
     </Suspense>
     </ErrorBoundary>
+    <BirthdayPromptGate />
     </>
   )
 }

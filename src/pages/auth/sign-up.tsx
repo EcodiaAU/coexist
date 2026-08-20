@@ -11,6 +11,7 @@ import { DateInput } from '@/components/date-input'
 import { Checkbox } from '@/components/checkbox'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
+import { calculateAge } from '@/lib/date-format'
 import { adminStagger as stagger, fadeOnly } from '@/lib/admin-motion'
 
 /* ------------------------------------------------------------------ */
@@ -29,19 +30,6 @@ function getPasswordStrength(pw: string): { score: number; label: string; color:
   if (score <= 2) return { score, label: 'Fair', color: 'bg-warning-500' }
   if (score <= 3) return { score, label: 'Good', color: 'bg-warning-400' }
   return { score, label: 'Strong', color: 'bg-success-500' }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Age helpers                                                        */
-/* ------------------------------------------------------------------ */
-
-function calculateAge(dob: string): number {
-  const birth = new Date(dob)
-  const today = new Date()
-  let age = today.getFullYear() - birth.getFullYear()
-  const m = today.getMonth() - birth.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
-  return age
 }
 
 export default function SignUpPage() {

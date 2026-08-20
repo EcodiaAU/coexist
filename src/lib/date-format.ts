@@ -138,6 +138,23 @@ export function daysUntil(dateStr: string): number {
 }
 
 /**
+ * Whole years old given an ISO date of birth ("YYYY-MM-DD"). We collect DOB
+ * (not a static age number) so age never goes stale; every surface that shows
+ * or stores age derives it from the birthday via this helper. Returns null for
+ * an empty/invalid DOB.
+ */
+export function calculateAge(dob: string | null | undefined): number | null {
+  if (!dob) return null
+  const birth = new Date(dob)
+  if (Number.isNaN(birth.getTime())) return null
+  const today = new Date()
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+  return age
+}
+
+/**
  * Floating-local "now" as a Date whose UTC value equals the viewer's
  * current local wall-clock. Used to compare against wall-clock-as-UTC
  * stored event dates (event.date_start, event.date_end) inside the

@@ -507,6 +507,8 @@ export default function ChatRoomPage() {
         collectiveId: channel?.collective_id ?? null,
         content: text.trim(),
         replyToId: replyTo?.id,
+        channelName: channel?.name ?? null,
+        channelType: channel?.type ?? null,
       })
       setReplyTo(null)
     }
@@ -548,6 +550,8 @@ export default function ChatRoomPage() {
           collectiveId: channel?.collective_id ?? null,
           content: '',
           imagePath: uploaded.path,
+          channelName: channel?.name ?? null,
+          channelType: channel?.type ?? null,
         })
       }
     } catch {
