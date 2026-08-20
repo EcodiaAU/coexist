@@ -1,0 +1,76 @@
+diff --git a/src/components/phone-gate.tsx b/src/components/phone-gate.tsx
+index 6c3166a..694f2db 100644
+--- a/src/components/phone-gate.tsx
++++ b/src/components/phone-gate.tsx
+@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
+ import { Button } from '@/components/button'
+ import { Input } from '@/components/input'
+ import { useToast } from '@/components/toast'
++import { useKeyboardHeight } from '@/hooks/use-keyboard-height'
+ 
+ /* ------------------------------------------------------------------ */
+ /*  Phone gate                                                         */
+@@ -28,6 +29,21 @@ export function PhoneGate() {
+   const [error, setError] = useState<string | null>(null)
+   const [saving, setSaving] = useState(false)
+ 
++  // Keyboard avoidance. This gate is a bottom-anchored (`items-end`) fixed
++  // sheet. On iOS WebKit a `position:fixed` element is NOT moved when the soft
++  // keyboard opens (it stays pinned to the layout-viewport bottom, i.e. behind
++  // the keyboard), and Capacitor is configured `Keyboard.resize:'none'` so the
++  // OS gives us no avoidance either - the app owns it via `--kb-height`. Without
++  // lifting the sheet, focusing the field raises the keyboard on top of both the
++  // input and the "Save and continue" button: the user cannot see what they type
++  // and cannot reach Save, so signup dead-ends. This is the exact class of bug
++  // the shared BottomSheet already solves with `bottom: keyboardHeight` (added
++  // after the 2026-04-29 "Save button behind keyboard" report). PhoneGate never
++  // adopted BottomSheet, so it reproduced the same defect on the signup path.
++  // Fix: pad the flex container by the live keyboard height so `items-end`
++  // parks the sheet flush on top of the keyboard, fully visible.
++  const keyboardHeight = useKeyboardHeight()
++
+   // Show only for a fully-loaded, onboarded user who has no phone on file.
+   // Gating on onboarding_completed keeps it off the onboarding/auth flow
+   // (those run in a bare shell anyway) and catches new users the moment
+@@ -80,13 +96,25 @@ export function PhoneGate() {
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="phone-gate-title"
++      style={{
++        // Lift the bottom-anchored sheet above the soft keyboard. 0 when hidden.
++        paddingBottom: keyboardHeight > 0 ? keyboardHeight : undefined,
++        transition: 'padding-bottom 0.22s ease-out',
++      }}
+     >
+       {/* Non-dismissable backdrop - no onClick, no Escape handler. */}
+       <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+ 
+       <div
+-        className="relative w-full sm:max-w-md bg-surface-0 rounded-t-md sm:rounded-md shadow-sm flex flex-col"
+-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.5rem)' }}
++        className="relative w-full sm:max-w-md max-h-full overflow-y-auto bg-surface-0 rounded-t-md sm:rounded-md shadow-sm flex flex-col"
++        style={{
++          // With the keyboard up the home-indicator inset is irrelevant (the
++          // sheet no longer touches the screen bottom); keep a plain gap so the
++          // Save button never hugs the keyboard.
++          paddingBottom: keyboardHeight > 0
++            ? '1.5rem'
++            : 'max(env(safe-area-inset-bottom, 0px), 1.5rem)',
++        }}
+       >
+         <div className="px-6 pt-7 pb-6 space-y-5">
+           <div className="flex flex-col items-center text-center gap-3">
+@@ -107,6 +135,13 @@ export function PhoneGate() {
+             label="Mobile number"
+             value={phone}
+             onChange={(e) => { setPhone(e.target.value); if (error) setError(null) }}
++            onFocus={(e) => {
++              // Belt-and-braces: if the keyboard-height signal lags (some
++              // WebViews fire visualViewport resize late), still nudge the field
++              // into view inside the scrollable sheet once the keyboard settles.
++              const el = e.currentTarget
++              setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 150)
++            }}
+             placeholder="0400 000 000"
+             inputMode="tel"
+             autoComplete="tel"
