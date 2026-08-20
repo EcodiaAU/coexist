@@ -31,7 +31,7 @@ const SLUG_COORDS: Record<string, [number, number]> = {
 const AUS_CENTER: L.LatLngExpression = [-27.5, 134.0]
 const AUS_ZOOM = 4.0
 const PIN = '#2d3220'
-const PIN_ACTIVE = '#475c34'
+const PIN_ACTIVE = '#f4f3ec'
 
 function icon(active = false): L.DivIcon {
   const s = active ? 30 : 22
@@ -42,21 +42,25 @@ function icon(active = false): L.DivIcon {
 }
 
 const STYLE_ID = 'cx-collective-map-styles'
+
+function getTokenValue(token: string): string {
+  if (typeof document === 'undefined') return ''
+  return getComputedStyle(document.documentElement).getPropertyValue(token).trim()
+}
+
 function injectStyles() {
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return
   const s = document.createElement('style')
   s.id = STYLE_ID
-  // Map water/bg matches canvas cream #f4f3ec so it dissolves into the page.
-  // Zoom controls and count pill use flat squared brand idiom: no shadows, olive hairline, cream fill.
   s.textContent = `
     .cx-pin{background:none!important;border:none!important}
-    .cx-cmap,.cx-cmap.leaflet-container{background:#f4f3ec!important;cursor:grab}
+    .cx-cmap,.cx-cmap.leaflet-container{background:var(--color-olive-950)!important;cursor:grab}
     .cx-cmap .leaflet-control-attribution{display:none!important}
-    .cx-cmap .leaflet-control-zoom{border:1px solid #474f2f!important;border-radius:0!important;overflow:hidden;box-shadow:none!important}
-    .cx-cmap .leaflet-control-zoom a{width:32px!important;height:32px!important;line-height:32px!important;color:#2d3220!important;background:#f4f3ec!important;border-bottom:1px solid #474f2f!important;border-radius:0!important;box-shadow:none!important;font-size:16px!important}
+    .cx-cmap .leaflet-control-zoom{border:1px solid rgba(244,243,236,0.2)!important;border-radius:0!important;overflow:hidden;box-shadow:none!important}
+    .cx-cmap .leaflet-control-zoom a{width:32px!important;height:32px!important;line-height:32px!important;color:#f4f3ec!important;background:var(--color-olive-900)!important;border-bottom:1px solid rgba(244,243,236,0.12)!important;border-radius:0!important;box-shadow:none!important;font-size:16px!important}
     .cx-cmap .leaflet-control-zoom a:last-child{border-bottom:none!important}
-    .cx-cmap .leaflet-control-zoom a:hover{background:#e5eec1!important}
-    .cx-cmap-label{background:none!important;border:none!important;box-shadow:none!important;font-family:var(--font-body),sans-serif!important;font-size:11px!important;font-weight:600!important;color:#2d3220!important;white-space:nowrap!important}
+    .cx-cmap .leaflet-control-zoom a:hover{background:var(--color-olive-800)!important}
+    .cx-cmap-label{background:none!important;border:none!important;box-shadow:none!important;font-family:var(--font-body),sans-serif!important;font-size:11px!important;font-weight:600!important;color:#f4f3ec!important;white-space:nowrap!important}
     .cx-cmap-label::before{display:none!important}
   `
   document.head.appendChild(s)
@@ -76,6 +80,11 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
   useEffect(() => {
     if (!ref.current || mapRef.current) return
     injectStyles()
+
+    // Read token values for the GeoJSON land fill/stroke
+    const landFill = getTokenValue('--color-olive-700') || '#434a2d'
+    const landStroke = getTokenValue('--color-olive-600') || '#535c37'
+
     const map = L.map(ref.current, {
       center: AUS_CENTER,
       zoom: AUS_ZOOM,
@@ -85,21 +94,20 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
       minZoom: 3.5,
       maxZoom: 12,
       scrollWheelZoom: false,
-      // Tighter maxBounds: clips dead ocean, keeps all Australian land masses
       maxBounds: L.latLngBounds([-45, 110], [-9, 155]),
       maxBoundsViscosity: 0.85,
     })
     map.zoomControl.setPosition('bottomright')
     L.geoJSON(australiaGeoJson as GeoJSON.FeatureCollection, {
-      style: { fillColor: '#aeb98a', fillOpacity: 1, color: '#869e62', weight: 1.5, opacity: 0.7 },
+      style: { fillColor: landFill, fillOpacity: 1, color: landStroke, weight: 1, opacity: 0.5 },
       interactive: false,
     }).addTo(map)
 
     for (const { c, pos } of pinned) {
       const m = L.marker(pos as L.LatLngExpression, { icon: icon(false) })
-      // Hover/active tooltips only (permanent: false)
       m.bindTooltip(c.name, { permanent: false, direction: 'right', offset: [10, -12], className: 'cx-cmap-label' })
-      m.on('click', () => { setSelected(c); map.flyTo(pos as L.LatLngExpression, 8, { duration: 0.9 }) })
+      // Gentle zoom on click: 5.5 instead of 8 so the user still sees surrounding context
+      m.on('click', () => { setSelected(c); map.flyTo(pos as L.LatLngExpression, 5.5, { duration: 0.9 }) })
       m.addTo(map)
     }
     mapRef.current = map
@@ -112,34 +120,34 @@ export function CollectiveMap({ collectives, className = '' }: { collectives: Co
     <div data-eos-id="web/components/collective-map.tsx#0" data-eos-v="2" className={`relative isolate overflow-hidden ${className}`}>
       <div data-eos-id="web/components/collective-map.tsx#1" ref={ref} className="cx-cmap h-full w-full" style={{ zIndex: 0 }} />
 
-      {/* Grain overlay over the map container */}
+      {/* Grain overlay */}
       <div data-eos-id="web/components/collective-map.tsx#2" className="grain-layer pointer-events-none absolute inset-0" style={{ zIndex: 1 }} />
 
-      {/* Count pill: flat squared, olive hairline, cream fill, no shadow */}
-      <div data-eos-id="web/components/collective-map.tsx#3" className="absolute left-4 top-4 z-[500] border border-olive-700 bg-cream px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-olive-800">
+      {/* Count pill: sleek dark */}
+      <div data-eos-id="web/components/collective-map.tsx#3" className="absolute left-4 top-4 z-[500] bg-olive-900/90 px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-oncream/90">
         {collectives.length} collectives across Australia
       </div>
 
-      {/* Selected card: flat, squared, olive hairline, cream fill, no shadow, no rounded */}
+      {/* Selected card: dark, sleek, minimal */}
       {selected && (
-        <div data-eos-id="web/components/collective-map.tsx#4" className="absolute inset-x-4 bottom-4 z-[500] overflow-hidden border border-olive-700 bg-cream">
+        <div data-eos-id="web/components/collective-map.tsx#4" className="absolute inset-x-4 bottom-4 z-[500] overflow-hidden bg-olive-900/95 backdrop-blur-sm sm:inset-x-auto sm:bottom-6 sm:left-6 sm:max-w-md">
           <div data-eos-id="web/components/collective-map.tsx#5" className="flex items-stretch">
             {selected.cover_image_url && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="web/components/collective-map.tsx#6" src={selected.cover_image_url} alt={selected.name} className="hidden h-auto w-40 shrink-0 object-cover sm:block" />
+              <img data-eos-src="dynamic" data-eos-src-label="Cover image url" data-eos-id="web/components/collective-map.tsx#6" src={selected.cover_image_url} alt={selected.name} className="hidden h-auto w-36 shrink-0 object-cover sm:block" />
             )}
             <div data-eos-id="web/components/collective-map.tsx#7" className="flex-1 p-5">
               <div data-eos-id="web/components/collective-map.tsx#8" className="flex items-start justify-between">
                 <div data-eos-id="web/components/collective-map.tsx#9">
-                  <h3 data-eos-id="web/components/collective-map.tsx#10" data-eos-var="selected.name" data-eos-var-label="Name" data-eos-var-scope="prop" className="text-xl tracking-[-0.02em] text-neutral-900">{selected.name}</h3>
-                  {selected.state && <p data-eos-id="web/components/collective-map.tsx#11" data-eos-var="selected.state" data-eos-var-label="State" data-eos-var-scope="prop" className="mt-0.5 text-xs uppercase tracking-[0.1em] text-neutral-500">{selected.state}</p>}
+                  <h3 data-eos-id="web/components/collective-map.tsx#10" data-eos-var="selected.name" data-eos-var-label="Name" data-eos-var-scope="prop" className="text-xl tracking-[-0.02em] text-oncream">{selected.name}</h3>
+                  {selected.state && <p data-eos-id="web/components/collective-map.tsx#11" data-eos-var="selected.state" data-eos-var-label="State" data-eos-var-scope="prop" className="mt-0.5 text-xs uppercase tracking-[0.1em] text-oncream/60">{selected.state}</p>}
                 </div>
-                <button data-eos-id="web/components/collective-map.tsx#12" onClick={() => setSelected(null)} aria-label="Close" className="text-neutral-400 hover:text-neutral-700">✕</button>
+                <button data-eos-id="web/components/collective-map.tsx#12" onClick={() => setSelected(null)} aria-label="Close" className="text-oncream/50 hover:text-oncream">&#x2715;</button>
               </div>
-              {selected.description && <p data-eos-id="web/components/collective-map.tsx#13" data-eos-var="selected.description" data-eos-var-label="Description" data-eos-var-scope="prop" className="mt-2 line-clamp-2 text-sm text-neutral-500">{selected.description}</p>}
+              {selected.description && <p data-eos-id="web/components/collective-map.tsx#13" data-eos-var="selected.description" data-eos-var-label="Description" data-eos-var-scope="prop" className="mt-2 line-clamp-2 text-sm text-oncream/70">{selected.description}</p>}
               <button data-eos-id="web/components/collective-map.tsx#14"
                 onClick={() => router.push(`/collectives/${selected.slug}`)}
-                className="mt-4 border border-olive-700 bg-olive-700 px-6 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-oncream hover:bg-olive-800"
+                className="mt-4 bg-oncream px-6 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-olive-900 hover:bg-oncream/90"
               >
                 View collective
               </button>
