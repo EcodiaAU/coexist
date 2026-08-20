@@ -25,6 +25,16 @@ const DESKTOP_BREAKPOINT = 640
 const DISMISS_VELOCITY = 0.35  // px/ms
 const DISMISS_DISTANCE = 0.25  // fraction of sheet height
 
+// Single source of truth for the mobile sheet's transition. Referenced BOTH in
+// the React style prop and imperatively in onTouchEnd. They must match exactly:
+// after a drag we clear the transition to 'none' for instant finger-tracking,
+// then restore this same string so the dismiss / snap-back ANIMATES instead of
+// jumping (a bare '' reset left the transform change with no transition = a hard
+// snap, and desynced from React's declarative value so later opens/closes lost
+// their animation too).
+const SHEET_TRANSITION = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), bottom 0.25s ease-out, max-height 0.25s ease-out'
+const SHEET_ANIM_MS = 300
+
 const instantTransition = { duration: 0 }
 
 function useIsDesktop() {
@@ -183,15 +193,17 @@ function MobileSheet({
     const velocity = dt > 0 ? dy / dt : 0
     dragState.current = null
 
-    // Re-enable transition
-    sheetRef.current.style.transition = ''
+    // Restore the exact transition React uses so the release ANIMATES (dismiss
+    // or snap-back) rather than jumping, and stays in sync with React's
+    // declarative style for every subsequent open/close.
+    sheetRef.current.style.transition = SHEET_TRANSITION
 
     if (velocity > DISMISS_VELOCITY || dy > maxHeight * DISMISS_DISTANCE) {
       // Dismiss
       sheetRef.current.style.transform = 'translateY(100%)'
       if (backdropRef.current) backdropRef.current.style.opacity = '0'
-      // Wait for transition then close
-      setTimeout(onClose, 250)
+      // Wait for the slide-down to finish before unmounting.
+      setTimeout(onClose, SHEET_ANIM_MS)
     } else {
       // Snap back
       sheetRef.current.style.transform = 'translateY(0)'
@@ -255,7 +267,7 @@ function MobileSheet({
           maxHeight: keyboardHeight > 0 ? maxHeight - keyboardHeight : maxHeight,
           bottom: keyboardHeight > 0 ? keyboardHeight : 0,
           transform: visible ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), bottom 0.25s ease-out, max-height 0.25s ease-out',
+          transition: SHEET_TRANSITION,
         }}
         onTransitionEnd={onTransitionEnd}
       >
@@ -268,8 +280,13 @@ function MobileSheet({
           className={cn(
             'flex justify-center cursor-grab active:cursor-grabbing select-none',
             bare
-              ? 'absolute top-0 left-1/2 -translate-x-1/2 z-20 px-10 pt-2.5 pb-5'
-              : 'py-3 shrink-0',
+              // Bigger grab zone for the drag. Grown DOWNWARD (pt-4 pb-8) into
+              // the free hero space rather than wider: the width is held so the
+              // centred zone clears the page's own top controls (back button at
+              // the left, Share button at the right, which sits close to centre
+              // - a wider zone overlapped its left edge and stole the tap).
+              ? 'absolute top-0 left-1/2 -translate-x-1/2 z-20 px-10 pt-4 pb-8'
+              : 'py-4 shrink-0',
           )}
           style={bare
             ? { touchAction: 'none' }
@@ -280,11 +297,11 @@ function MobileSheet({
           onTouchCancel={onTouchEnd}
         >
           {bare ? (
-            <div className="rounded-full bg-black/20 backdrop-blur-md px-2.5 py-1 shadow-sm">
-              <div className="h-1 w-8 rounded-full bg-white/90" aria-hidden="true" />
+            <div className="rounded-full bg-black/20 backdrop-blur-md px-3 py-1.5 shadow-sm">
+              <div className="h-1.5 w-10 rounded-full bg-white/90" aria-hidden="true" />
             </div>
           ) : (
-            <div data-eos-id="src/components/bottom-sheet.tsx#4" className="h-1 w-10 rounded-full bg-primary-200" aria-hidden="true" />
+            <div data-eos-id="src/components/bottom-sheet.tsx#4" className="h-1.5 w-12 rounded-full bg-primary-200" aria-hidden="true" />
           )}
         </div>
 

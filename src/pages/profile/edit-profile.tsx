@@ -388,7 +388,15 @@ export default function EditProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           className="relative -mx-4 lg:-mx-6 overflow-hidden"
         >
-          <div className="relative py-8">
+          {/* Top padding clears the safe-area inset (camera notch / dynamic
+              island) PLUS a little breathing room, so the avatar + cover-photo
+              button never sit under the notch. The hero is pulled up under the
+              transparent sticky header (-mb-14 above), so the cover image still
+              bleeds to the very top; only the interactive content is inset. */}
+          <div
+            className="relative pb-8"
+            style={{ paddingTop: 'calc(var(--safe-top, 0px) + 1.5rem)' }}
+          >
             {/* Cover photo banner - the member's own hero image (or their
                 collective landscape / moss fallback when unset). Tappable to
                 replace. */}
@@ -404,13 +412,13 @@ export default function EditProfilePage() {
             {/* Legibility scrim over the cover so the avatar + controls read. */}
             <div className="absolute inset-0 bg-black/25" aria-hidden="true" />
 
-            {/* Change cover - top offset respects the safe-area inset so the
-                control clears the iOS status bar / dynamic island on native
-                (a flat top-2 sat under the notch and was untappable). */}
+            {/* Change cover - top offset clears the safe-area inset (via the
+                app's canonical --safe-top var) so the control sits below the
+                camera notch / dynamic island on native. */}
             <button
               onClick={handleCoverChange}
               disabled={cameraLoading || coverUploading}
-              style={{ top: 'max(env(safe-area-inset-top, 0px), 0.5rem)' }}
+              style={{ top: 'calc(var(--safe-top, 0px) + 0.5rem)' }}
               className="absolute right-2 z-50 inline-flex items-center gap-1.5 rounded-full bg-black/40 backdrop-blur-sm px-3 h-9 text-white text-xs font-semibold hover:bg-black/55 active:scale-[0.98] transition-[colors,transform] duration-150 disabled:opacity-50"
               aria-label="Change cover photo"
             >

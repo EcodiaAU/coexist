@@ -268,17 +268,6 @@ export default function ProfilePage() {
           {/* Legibility gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/15" aria-hidden="true" />
 
-          {/* Settings button */}
-          <div className="absolute top-3 right-4 z-10">
-            <button
-              onClick={() => navigate('/settings')}
-              className="flex items-center justify-center w-11 h-11 rounded-full bg-white/15 backdrop-blur-sm text-white hover:bg-white/25 active:scale-[0.98] transition-[colors,transform] duration-150"
-              aria-label="Settings"
-            >
-              <Settings size={18} />
-            </button>
-          </div>
-
           {/* Profile identity, overlaid at the bottom over the image */}
           <motion.div
             className="absolute inset-x-0 bottom-0 z-10 flex items-end gap-4 p-5"

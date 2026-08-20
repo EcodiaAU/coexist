@@ -22,9 +22,11 @@ export function RouteSheet({ children }: { children: ReactNode }) {
 
   const close = useCallback(() => {
     // Play the slide-down, then pop the history entry so the background list
-    // (still mounted underneath) is restored with its scroll intact.
+    // (still mounted underneath) is restored with its scroll intact. The delay
+    // matches the sheet's 300ms transform transition so the animation finishes
+    // before the sheet unmounts (a shorter wait clipped the last frames = a snap).
     setOpen(false)
-    window.setTimeout(() => navigate(-1), 260)
+    window.setTimeout(() => navigate(-1), 300)
   }, [navigate])
 
   return (
