@@ -24,14 +24,14 @@ const ROLES = [
   {
     title: 'Volunteer your skills',
     body: 'Photography, social, design, event support, fundraising. If you have a skill and a few hours, we have somewhere it makes a real difference.',
-    href: '/contact',
+    href: '/contact?topic=Volunteer+your+skills',
     cta: 'Get in touch',
     external: false,
   },
   {
     title: 'Help run the movement',
     body: 'We are always looking for committed people to help coordinate collectives, support leaders and grow Co-Exist across the country.',
-    href: '/contact',
+    href: '/contact?topic=Help+run+the+movement',
     cta: 'Register interest',
     external: false,
   },
@@ -50,7 +50,7 @@ export default function TeamPage() {
       {/* Why join - full-bleed split */}
       <section data-eos-id="web/app/get-involved/team/page.tsx#2" className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal data-eos-id="web/app/get-involved/team/page.tsx#3" className="relative order-1 min-h-[54vh] overflow-hidden md:order-2">
-          <Image data-eos-id="web/app/get-involved/team/page.tsx#4" src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill quality={88} sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/nature.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          <Image data-eos-id="web/app/get-involved/team/page.tsx#4" src="/images/nature.webp" alt="Young people on a Co-Exist conservation day" fill quality={88} sizes="(max-width:768px) 100vw, 50vw" blurDataURL={BLUR['/images/nature.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
           {/* olive-900/15 tint + grain to match hero grade */}
           <div data-eos-id="web/app/get-involved/team/page.tsx#5" className="absolute inset-0 bg-olive-900/15" />
           <div data-eos-id="web/app/get-involved/team/page.tsx#6" className="grain-layer" />
@@ -97,7 +97,7 @@ export default function TeamPage() {
                       </div>
                       <span data-eos-id="web/app/get-involved/team/page.tsx#26" data-eos-var="r.cta" data-eos-var-label="Cta" data-eos-var-scope="item" data-eos-var-src="literal" className="flex shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">
                         {r.cta}
-                        <span data-eos-id="web/app/get-involved/team/page.tsx#27" className="transition-transform duration-300 group-hover/role:translate-x-1">→</span>
+                        <span data-eos-id="web/app/get-involved/team/page.tsx#27" className="transition-transform duration-300 group-hover/role:translate-x-1">&rarr;</span>
                       </span>
                     </div>
                   </Wrap>
