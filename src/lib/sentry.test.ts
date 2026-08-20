@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { Event } from '@sentry/capacitor'
-import { isInjectedThirdPartyBridgeError } from './sentry'
+import {
+  isBenignAbortError,
+  isInjectedThirdPartyBridgeError,
+  isWalletExtensionNoise,
+} from './sentry'
 
 /*
  * Fixture is the real production event COEXIST-H (Sentry issue 7609288753,
@@ -91,5 +95,68 @@ describe('isInjectedThirdPartyBridgeError', () => {
 
   it('keeps an event that carries no stack frames', () => {
     expect(isInjectedThirdPartyBridgeError({ message: 'boom' })).toBe(false)
+  })
+})
+
+describe('isWalletExtensionNoise', () => {
+  it('drops "Failed to connect to MetaMask" (COEXIST-18)', () => {
+    const event: Event = {
+      exception: { values: [{ type: 'Error', value: 'Failed to connect to MetaMask' }] },
+    }
+    expect(isWalletExtensionNoise(event)).toBe(true)
+  })
+
+  it('drops "send was called before connect" (COEXIST-15)', () => {
+    const event: Event = {
+      exception: {
+        values: [{ type: 'Error', value: 'MetaMask: send was called before connect' }],
+      },
+    }
+    expect(isWalletExtensionNoise(event)).toBe(true)
+  })
+
+  /* Negative control: Co-Exist has no web3 feature, so no real event should match,
+   * but prove a genuine app error is not swallowed. */
+  it('keeps a genuine Co-Exist application error', () => {
+    const event: Event = {
+      exception: {
+        values: [{ type: 'TypeError', value: "Cannot read properties of undefined (reading 'ticketId')" }],
+      },
+    }
+    expect(isWalletExtensionNoise(event)).toBe(false)
+  })
+})
+
+describe('isBenignAbortError', () => {
+  it('drops "AbortError: The operation was aborted." (COEXIST-16)', () => {
+    const event: Event = {
+      exception: { values: [{ type: 'AbortError', value: 'The operation was aborted.' }] },
+    }
+    expect(isBenignAbortError(event)).toBe(true)
+  })
+
+  it('drops an AbortError surfaced only in the message', () => {
+    const event: Event = {
+      exception: { values: [{ type: 'Error', value: 'AbortError: signal is aborted without reason' }] },
+    }
+    expect(isBenignAbortError(event)).toBe(true)
+  })
+
+  /* Negative controls. A real network failure is a TypeError, not an AbortError,
+   * and must survive. */
+  it('keeps a real fetch failure (TypeError: Failed to fetch)', () => {
+    const event: Event = {
+      exception: { values: [{ type: 'TypeError', value: 'Failed to fetch' }] },
+    }
+    expect(isBenignAbortError(event)).toBe(false)
+  })
+
+  it('keeps a genuine Co-Exist application error', () => {
+    const event: Event = {
+      exception: {
+        values: [{ type: 'TypeError', value: "Cannot read properties of undefined (reading 'eventId')" }],
+      },
+    }
+    expect(isBenignAbortError(event)).toBe(false)
   })
 })

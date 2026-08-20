@@ -94,6 +94,37 @@ export function isBenignNavigatorLockAbort(event: Sentry.Event): boolean {
   return false
 }
 
+// Browser wallet extensions (MetaMask and other EIP-1193 providers) inject a
+// content script into every page and probe it, then throw into our global
+// handlers when their own connect sequence is out of order: "Failed to connect
+// to MetaMask" (COEXIST-18) and "send was called before connect" (COEXIST-15).
+// Co-Exist has NO web3/wallet feature - confirmed 2026-08-20 by grepping src for
+// metamask|ethereum|web3|walletconnect|window.ethereum (zero matches) - so an
+// event carrying these messages did not come from our code and is pure noise.
+// Matched on the wallet-specific message strings, which no Co-Exist code emits.
+const WALLET_EXTENSION_SIGNATURE = /MetaMask|send was called before connect/i
+
+export function isWalletExtensionNoise(event: Sentry.Event): boolean {
+  const values = event.exception?.values ?? []
+  return values.some((value) => WALLET_EXTENSION_SIGNATURE.test(value.value ?? ''))
+}
+
+// AbortError ("The operation was aborted.", COEXIST-16) is raised whenever an
+// in-flight fetch or navigation is cancelled: a route change mid-request, a
+// component unmount that aborts its AbortController, a tab teardown. It is
+// benign by construction and never actionable - a real network failure surfaces
+// as TypeError "Failed to fetch", not AbortError - so the whole class is noise
+// that buries real regressions. This generalises the earlier lock-scoped abort
+// filter (isBenignNavigatorLockAbort) to the class the brief identified.
+export function isBenignAbortError(event: Sentry.Event): boolean {
+  const values = event.exception?.values ?? []
+  return values.some((value) => {
+    const type = value.type ?? ''
+    const message = value.value ?? ''
+    return type === 'AbortError' || /\bAbortError\b|The operation was aborted/.test(message)
+  })
+}
+
 let initialised = false
 
 export function initSentry() {
@@ -130,6 +161,12 @@ export function initSentry() {
         // (COEXIST-J/R class) - auth-js recovers from these every time; they are
         // never actionable and only bury real regressions.
         if (isBenignNavigatorLockAbort(event)) return null
+        // Drop browser wallet-extension injected errors (COEXIST-15/18). Co-Exist
+        // has no web3 feature, so these are never ours.
+        if (isWalletExtensionNoise(event)) return null
+        // Drop benign fetch/navigation AbortError noise (COEXIST-16). Cancelled
+        // in-flight requests are expected and never actionable.
+        if (isBenignAbortError(event)) return null
         // Strip PII from breadcrumbs if needed
         return event
       },
