@@ -5,6 +5,7 @@ import { SITE_URL } from '@/lib/env'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import './globals.css'
+import './section-fix.css'
 import Script from 'next/script';
 
 const montserrat = Montserrat({

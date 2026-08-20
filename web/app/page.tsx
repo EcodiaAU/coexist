@@ -4,6 +4,7 @@ import { getPublicImpactStats, type PublicImpactStats } from '@/lib/public-stats
 import { getSiteContent, getPartners } from '@/lib/queries'
 import { Reveal } from '@/components/reveal'
 import { ParallaxImage } from '@/components/parallax-image'
+import { ImpactStats, type StatTile } from '@/components/impact-stats'
 import { BLUR } from '@/lib/blur'
 
 export const revalidate = 1800
@@ -24,8 +25,6 @@ async function loadStats(): Promise<PublicImpactStats> {
   }
 }
 
-const fmt = (n: number) => new Intl.NumberFormat('en-AU').format(n)
-
 export default async function HomePage() {
   const [stats, content, partners] = await Promise.all([loadStats(), getSiteContent(), getPartners()])
   const heroTitle = content.home_hero_title || 'Explore. Connect. Protect.'
@@ -33,12 +32,12 @@ export default async function HomePage() {
     content.home_hero_subtitle ||
     'Young people gathering to preserve and protect their local environment.'
 
-  const tiles = [
-    { value: fmt(stats.rubbishKg), unit: 'kg', label: 'Litter removed' },
-    { value: fmt(stats.plants), unit: '', label: 'Natives planted' },
-    { value: fmt(stats.collectives), unit: '', label: 'Collectives across Australia' },
-    { value: fmt(stats.volunteers), unit: '', label: 'Young volunteers' },
-    { value: fmt(stats.events), unit: '', label: 'Meetups' },
+  const tiles: StatTile[] = [
+    { value: stats.rubbishKg, suffix: 'kg', label: 'Litter removed' },
+    { value: stats.plants, suffix: '', label: 'Natives planted' },
+    { value: stats.collectives, suffix: '', label: 'Collectives across Australia' },
+    { value: stats.volunteers, suffix: '', label: 'Young volunteers' },
+    { value: stats.events, suffix: '', label: 'Meetups' },
   ]
 
   // Partner band: drop Bloomberg + GreenCollar; all funders in one row at full
@@ -53,17 +52,17 @@ export default async function HomePage() {
 
   return (
     <main data-eos-id="web/app/page.tsx#0" data-eos-v="2">
-      {/* Hero - parallax retained, content mirrors coexistaus.org (clean: title + subtitle + CTAs) */}
-      <section data-eos-id="web/app/page.tsx#1" className="relative isolate flex min-h-[90vh] flex-col items-center justify-center overflow-hidden">
+      {/* Hero */}
+      <section data-eos-id="web/app/page.tsx#1" className="relative isolate flex min-h-[92vh] flex-col items-center justify-center overflow-hidden">
         <ParallaxImage data-eos-id="web/app/page.tsx#2" src="/images/hero.webp" priority blurDataURL={BLUR['/images/hero.webp']} />
         <div data-eos-id="web/app/page.tsx#3" className="grain-layer absolute inset-0 z-0" />
-        <div data-eos-id="web/app/page.tsx#4" className="absolute inset-0 z-0 bg-black/25" />
+        <div data-eos-id="web/app/page.tsx#4" className="absolute inset-0 z-0 bg-black/30" />
 
         <div data-eos-id="web/app/page.tsx#5" className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-6 py-32 text-center">
-          <p data-eos-id="web/app/page.tsx#6" className="eyebrow text-oncream/70">Co-Exist Australia</p>
-          <h1 data-eos-id="web/app/page.tsx#7" className="display-tight mx-auto mt-8 max-w-4xl text-[4.2rem] font-bold leading-[0.88] tracking-tight text-oncream sm:text-[9rem] text-[#f4f3ec] drop-shadow-[0_4px_32px_rgba(0,0,0,0.45)]">{heroTitle}</h1>
-          <p data-eos-id="web/app/page.tsx#8" className="mx-auto mt-8 max-w-md text-base text-oncream/85">{heroSubtitle}</p>
-          <div data-eos-id="web/app/page.tsx#9" className="mt-9 flex flex-wrap justify-center gap-3">
+          <p data-eos-id="web/app/page.tsx#6" className="text-[11px] font-semibold uppercase tracking-[0.22em] text-oncream/70">Co-Exist Australia</p>
+          <h1 data-eos-id="web/app/page.tsx#7" className="display-tight mx-auto mt-6 max-w-3xl text-[2.8rem] font-bold leading-[0.92] tracking-tight text-[#f4f3ec] drop-shadow-[0_4px_32px_rgba(0,0,0,0.45)] sm:text-[5.5rem]">{heroTitle}</h1>
+          <p data-eos-id="web/app/page.tsx#8" className="mx-auto mt-7 max-w-lg text-[16px] leading-relaxed text-oncream/90">{heroSubtitle}</p>
+          <div data-eos-id="web/app/page.tsx#9" className="mt-10 flex flex-wrap justify-center gap-3">
             <Link data-eos-href="static" data-eos-id="web/app/page.tsx#10" href="/collectives" className="rounded-full bg-oncream px-7 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-olive-900 transition-all duration-300 hover:px-9">
               Join a collective
             </Link>
@@ -74,7 +73,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* About Co-Exist - copy mirrors coexistaus.org; Australia map on the LEFT for laptops */}
+      {/* About Co-Exist */}
       <section data-eos-id="web/app/page.tsx#12" className="grid items-center md:grid-cols-2 bg-[#ffffff]">
         <Reveal data-eos-id="web/app/page.tsx#13" className="order-1 flex items-center justify-center px-6 py-14 md:order-1 md:py-24">
           <Image data-eos-id="web/app/page.tsx#14" src="/images/map.webp" alt="Map of Co-Exist collectives across Australia" width={520} height={620} className="h-auto max-w-md object-contain border-[#16170f] w-[448px]" />
@@ -106,7 +105,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Imagine what we could achieve together - impact stats (dedicated section, mirrors original) */}
+      {/* Impact stats with count-up animation */}
       <section data-eos-id="web/app/page.tsx#23" className="bg-olive-800 text-oncream">
         <div data-eos-id="web/app/page.tsx#24" className="mx-auto max-w-6xl px-6 py-24 text-center">
           <Reveal data-eos-id="web/app/page.tsx#25">
@@ -122,24 +121,14 @@ export default async function HomePage() {
               Here is what we have achieved so far
             </p>
           </Reveal>
-          <div data-eos-id="web/app/page.tsx#29" className="mt-12 grid grid-cols-2 gap-y-10 sm:grid-cols-5">
-            {tiles.map((t, i) => (
-              <Reveal data-eos-id="web/app/page.tsx#30" key={t.label} delay={i * 80} className={`text-center ${i > 0 ? 'sm:border-l sm:border-oncream/15' : ''}`}>
-                <div data-eos-id="web/app/page.tsx#31" data-eos-var="t.value" data-eos-var-label="Value" data-eos-var-scope="item" className="text-[3.25rem] font-semibold leading-none tracking-[-0.06em] text-oncream tabular-nums">
-                  {t.value}
-                  {t.unit && <span data-eos-id="web/app/page.tsx#32" data-eos-var="t.unit" data-eos-var-label="Unit" data-eos-var-scope="item" data-eos-var-src="literal" className="text-2xl">{t.unit}</span>}
-                </div>
-                <div data-eos-id="web/app/page.tsx#33" data-eos-var="t.label" data-eos-var-label="Label" data-eos-var-scope="item" data-eos-var-src="literal" className="mx-auto mt-2 max-w-[12ch] text-[11px] font-semibold uppercase tracking-[0.18em] text-oncream/70">{t.label}</div>
-              </Reveal>
-            ))}
-          </div>
+          <ImpactStats tiles={tiles} />
         </div>
       </section>
 
-      {/* What's a Collective? - mirrors original copy + activity list */}
+      {/* Join a collective */}
       <section data-eos-id="web/app/page.tsx#34" className="grid items-stretch bg-white md:grid-cols-2">
         <Reveal data-eos-id="web/app/page.tsx#35" className="relative order-1 min-h-[56vh] overflow-hidden">
-          <Image data-eos-id="web/app/page.tsx#36" src="/images/gather.webp" alt="A local Co-Exist collective gathering" fill sizes="(max-width:768px) 100vw, 50vw" placeholder="blur" blurDataURL={BLUR['/images/gather.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
+          <Image data-eos-id="web/app/page.tsx#36" src="/images/gather.webp" alt="A local Co-Exist collective gathering" fill sizes="(max-width:768px) 100vw, 50vw" blurDataURL={BLUR['/images/gather.webp']} className="object-cover transition-transform duration-[1.2s] hover:scale-105" />
           <div data-eos-id="web/app/page.tsx#37" className="absolute inset-0 bg-olive-900/15 mix-blend-multiply" />
           <div data-eos-id="web/app/page.tsx#38" className="grain-layer absolute inset-0" />
         </Reveal>
@@ -190,7 +179,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Supported by - all funders in one full-opacity row, VFFF in the middle */}
+      {/* Supported by */}
       {orderedPartners.length > 0 && (
         <section data-eos-id="web/app/page.tsx#57" className="bg-white">
           <div data-eos-id="web/app/page.tsx#58" className="mx-auto max-w-6xl px-6 py-16 text-center">

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { PageHeader } from '@/components/page-header'
 import { ContactForm } from '@/components/contact-form'
 import { WordSwap } from '@/components/word-swap'
@@ -55,7 +56,9 @@ export default function ContactPage() {
           </div>
         </div>
 
-        <ContactForm data-eos-id="web/app/contact/page.tsx#17" />
+        <Suspense fallback={null}>
+          <ContactForm data-eos-id="web/app/contact/page.tsx#17" />
+        </Suspense>
       </section>
     </main>
   )

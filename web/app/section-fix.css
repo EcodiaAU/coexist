@@ -1,0 +1,16 @@
+/* Eliminate sub-pixel white lines between adjacent full-bleed sections.
+   Each main > section overlaps its predecessor by 1px so there is never a gap
+   between two touching backgrounds (the body bg shows through at fractional
+   pixels without this). */
+main > section + section {
+  margin-top: -1px;
+  position: relative;
+}
+
+/* Prevent inline image gap (images are inline by default, leaving a small
+   descender gap below). Sections with a fill image need display:block on
+   their images or min-height covers it, but the grid split sections can
+   show it at certain viewports. */
+main > section img {
+  display: block;
+}
