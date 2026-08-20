@@ -1,14 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 type State = 'idle' | 'submitting' | 'done' | 'error'
 
-const TOPICS = ['General enquiry', 'Partnership', 'Volunteering', 'Media', 'Something else']
+const TOPICS = ['General enquiry', 'Lead a collective', 'Volunteer your skills', 'Help run the movement', 'Partnership', 'Media', 'Something else']
 
 export function ContactForm() {
+  const searchParams = useSearchParams()
   const [state, setState] = useState<State>('idle')
   const [form, setForm] = useState({ name: '', email: '', topic: TOPICS[0], message: '' })
+
+  // Pre-fill topic from URL query param (e.g. /contact?topic=Volunteer+your+skills)
+  useEffect(() => {
+    const topicParam = searchParams.get('topic')
+    if (topicParam) {
+      const match = TOPICS.find((t) => t.toLowerCase() === topicParam.toLowerCase())
+      if (match) {
+        setForm((f) => ({ ...f, topic: match }))
+      }
+    }
+  }, [searchParams])
 
   function set<K extends keyof typeof form>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }))
@@ -31,7 +44,7 @@ export function ContactForm() {
 
   if (state === 'done') {
     return (
-      <div data-eos-id="web/components/contact-form.tsx#0" data-eos-v="2" className="border-t border-neutral-200 py-8 text-center">
+      <div data-eos-id="web/components/contact-form.tsx#0" data-eos-v="2" className="py-8 text-center">
         <p data-eos-id="web/components/contact-form.tsx#1" className="text-lg font-normal text-neutral-900">Thanks for reaching out</p>
         <p data-eos-id="web/components/contact-form.tsx#2" className="mt-2 text-neutral-600">We have got your message and will be in touch soon.</p>
       </div>
@@ -42,7 +55,7 @@ export function ContactForm() {
     'w-full border-0 border-b border-neutral-300 bg-transparent rounded-none px-0 py-2.5 text-sm outline-none focus:border-olive-700 transition-colors'
 
   return (
-    <form data-eos-id="web/components/contact-form.tsx#3" onSubmit={onSubmit} className="space-y-6 border-t border-neutral-200 pt-6">
+    <form data-eos-id="web/components/contact-form.tsx#3" onSubmit={onSubmit} className="space-y-6 pt-2">
       <div data-eos-id="web/components/contact-form.tsx#4" className="grid gap-6 sm:grid-cols-2">
         <label data-eos-id="web/components/contact-form.tsx#5" className="block">
           <span data-eos-id="web/components/contact-form.tsx#6" className="text-xs font-semibold text-neutral-600">Name</span>
@@ -76,7 +89,7 @@ export function ContactForm() {
         disabled={state === 'submitting'}
         className="w-full rounded-none bg-olive-700 px-7 py-3 text-sm font-medium text-white transition-colors hover:bg-olive-800 disabled:opacity-60"
       >
-        {state === 'submitting' ? 'Sending…' : 'Send message'}
+        {state === 'submitting' ? 'Sending...' : 'Send message'}
       </button>
       {state === 'error' && (
         <p data-eos-id="web/components/contact-form.tsx#19" className="text-sm text-error-500">Something went wrong. Please email hello@coexistaus.org directly.</p>
