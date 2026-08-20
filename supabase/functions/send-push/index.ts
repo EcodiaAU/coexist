@@ -13,6 +13,8 @@ interface PushPayload {
   userIds?: string[]
   /** Target all members of a collective */
   collectiveId?: string
+  /** Target all members of a chat channel (staff / campout / carpool group chat) */
+  channelId?: string
   /** Notification content */
   title: string
   body: string
@@ -270,6 +272,11 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
         status: 400, headers: JSON_HEADERS,
       })
     }
+    if (payload.channelId && !UUID_RE.test(payload.channelId)) {
+      return new Response(JSON.stringify({ error: 'Invalid channelId', sent: 0 }), {
+        status: 400, headers: JSON_HEADERS,
+      })
+    }
 
     // Init Supabase with service role
     const supabaseAdmin = createClient(
@@ -291,6 +298,20 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
         .eq('collective_id', payload.collectiveId)
         .eq('status', 'active')
       targetUserIds = (members ?? []).map((m: { user_id: string }) => m.user_id)
+    } else if (payload.channelId) {
+      // Resolve channel members SERVER-SIDE (service role bypasses RLS). This is
+      // the ONLY way campout / carpool group-chat push reaches everyone: the
+      // chat_channel_members SELECT policy is (user_id = auth.uid() OR
+      // is_admin_or_staff), so a ticket-holder participant sender can read only
+      // their OWN membership row client-side and would resolve an empty
+      // recipient set. Exclude the sender from their own push below.
+      const { data: members } = await supabaseAdmin
+        .from('chat_channel_members')
+        .select('user_id')
+        .eq('channel_id', payload.channelId)
+      targetUserIds = (members ?? [])
+        .map((m: { user_id: string }) => m.user_id)
+        .filter((id: string) => id !== callerUid)
     }
 
     // ── Authorization (end-user callers only) ──
@@ -321,36 +342,59 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
           })
         }
 
-        const { data: myCols } = await supabaseAdmin
-          .from('collective_members')
-          .select('collective_id')
-          .eq('user_id', callerUid)
-          .eq('status', 'active')
-        const myColIds = (myCols ?? []).map((c: { collective_id: string }) => c.collective_id)
-
-        if (payload.collectiveId && !myColIds.includes(payload.collectiveId)) {
-          return new Response(JSON.stringify({ error: 'Forbidden', sent: 0 }), {
-            status: 403, headers: JSON_HEADERS,
-          })
-        }
-
-        const others = targetUserIds.filter((id) => id !== callerUid)
-        if (others.length > 0) {
-          let reachable = new Set<string>()
-          if (myColIds.length > 0) {
-            const { data: shared } = await supabaseAdmin
-              .from('collective_members')
-              .select('user_id')
-              .eq('status', 'active')
-              .in('collective_id', myColIds)
-              .in('user_id', others)
-            reachable = new Set((shared ?? []).map((r: { user_id: string }) => r.user_id))
-          }
-          const unreachable = others.filter((id) => !reachable.has(id))
-          if (unreachable.length > 0) {
-            return new Response(JSON.stringify({ error: 'Forbidden: targets outside your collectives', sent: 0 }), {
+        if (payload.channelId) {
+          // Channel push (staff / campout / carpool group chat): authorize by
+          // MEMBERSHIP in that channel, not by shared collective. Campout &
+          // carpool channels are cross-collective by design (their members are
+          // ticket holders drawn from many regions - live data: a single campout
+          // channel spans 14-16 distinct collectives), so the shared-collective
+          // check below would 403 every participant-sent campout message. Targets
+          // are resolved server-side from chat_channel_members, so a member can
+          // only notify the channel they belong to - no arbitrary-recipient
+          // injection. The /admin route guard above still applies.
+          const { data: myMembership } = await supabaseAdmin
+            .from('chat_channel_members')
+            .select('user_id')
+            .eq('channel_id', payload.channelId)
+            .eq('user_id', callerUid)
+            .maybeSingle()
+          if (!myMembership) {
+            return new Response(JSON.stringify({ error: 'Forbidden: not a member of this channel', sent: 0 }), {
               status: 403, headers: JSON_HEADERS,
             })
+          }
+        } else {
+          const { data: myCols } = await supabaseAdmin
+            .from('collective_members')
+            .select('collective_id')
+            .eq('user_id', callerUid)
+            .eq('status', 'active')
+          const myColIds = (myCols ?? []).map((c: { collective_id: string }) => c.collective_id)
+
+          if (payload.collectiveId && !myColIds.includes(payload.collectiveId)) {
+            return new Response(JSON.stringify({ error: 'Forbidden', sent: 0 }), {
+              status: 403, headers: JSON_HEADERS,
+            })
+          }
+
+          const others = targetUserIds.filter((id) => id !== callerUid)
+          if (others.length > 0) {
+            let reachable = new Set<string>()
+            if (myColIds.length > 0) {
+              const { data: shared } = await supabaseAdmin
+                .from('collective_members')
+                .select('user_id')
+                .eq('status', 'active')
+                .in('collective_id', myColIds)
+                .in('user_id', others)
+              reachable = new Set((shared ?? []).map((r: { user_id: string }) => r.user_id))
+            }
+            const unreachable = others.filter((id) => !reachable.has(id))
+            if (unreachable.length > 0) {
+              return new Response(JSON.stringify({ error: 'Forbidden: targets outside your collectives', sent: 0 }), {
+                status: 403, headers: JSON_HEADERS,
+              })
+            }
           }
         }
       }
