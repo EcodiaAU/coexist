@@ -39,6 +39,7 @@ import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { bentoMixedTheme } from '@/components/bento-stats-themes'
 import { cn } from '@/lib/cn'
 import { prettyInterestLabel } from '@/lib/interests'
+import { calculateAge } from '@/lib/date-format'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -197,7 +198,10 @@ export default function ProfilePage() {
     year: 'numeric',
   })
 
-  const hasDetails = profile.first_name || profile.email || profile.phone || profile.age || profile.postcode || profile.gender
+  // Age derives from date_of_birth so it auto-updates each year; fall back to
+  // the stored age for legacy profiles that predate the birthday migration.
+  const displayAge = calculateAge(profile.date_of_birth) ?? profile.age
+  const hasDetails = profile.first_name || profile.email || profile.phone || displayAge || profile.postcode || profile.gender
 
   // Lead the profile with full-bleed imagery, matching the homepage events
   // sections. The hero background is a landscape (a cover from a collective the
@@ -410,11 +414,11 @@ export default function ProfilePage() {
                 {profile.phone && (
                   <DetailRow icon={<Phone size={14} />} label="Phone" value={profile.phone} tint="moss" />
                 )}
-                {(profile.age || profile.gender) && (
+                {(displayAge || profile.gender) && (
                   <DetailRow
                     icon={<Calendar size={14} />}
                     label="Age / Gender"
-                    value={[profile.age && `Age ${profile.age}`, profile.gender].filter(Boolean).join(' · ')}
+                    value={[displayAge && `Age ${displayAge}`, profile.gender].filter(Boolean).join(' · ')}
                     tint="sprout"
                   />
                 )}

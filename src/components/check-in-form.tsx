@@ -10,6 +10,8 @@ import { useProfile, useUpdateProfile } from '@/hooks/use-profile'
 import { useOffline } from '@/hooks/use-offline'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
+import { DateInput } from '@/components/date-input'
+import { calculateAge } from '@/lib/date-format'
 
 /* ------------------------------------------------------------------ */
 /*  Profile Details Form                                               */
@@ -26,7 +28,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [age, setAge] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
   const [gender, setGender] = useState('')
   const [email, setEmail] = useState('')
   const [emergencyName, setEmergencyName] = useState('')
@@ -38,7 +40,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
     if (profileData) {
       setFirstName(profileData.first_name ?? '')
       setLastName(profileData.last_name ?? '')
-      setAge(profileData.age != null ? String(profileData.age) : '')
+      setDateOfBirth(profileData.date_of_birth ?? '')
       setGender(profileData.gender ?? '')
       setEmail(profileData.email ?? '')
       setEmergencyName(profileData.emergency_contact_name ?? '')
@@ -54,7 +56,8 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
       await updateProfile.mutateAsync({
         first_name: firstName || null,
         last_name: lastName || null,
-        age: age ? parseInt(age, 10) : null,
+        date_of_birth: dateOfBirth || null,
+        age: calculateAge(dateOfBirth),
         gender: gender || null,
         email: email || null,
         emergency_contact_name: emergencyName || null,
@@ -66,7 +69,7 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
     } catch {
       // Stay on details step
     }
-  }, [firstName, lastName, age, gender, email, emergencyName, emergencyPhone, emergencyRelationship, updateProfile, onComplete])
+  }, [firstName, lastName, dateOfBirth, gender, email, emergencyName, emergencyPhone, emergencyRelationship, updateProfile, onComplete])
 
   return (
     <motion.div data-eos-id="src/components/check-in-form.tsx#0" data-eos-v="2"
@@ -116,13 +119,11 @@ export function ProfileDetails({ onComplete }: ProfileDetailsProps) {
               />
             </div>
             <div data-eos-id="src/components/check-in-form.tsx#15" className="grid grid-cols-2 gap-2.5">
-              <Input data-eos-id="src/components/check-in-form.tsx#16"
-                label="Age"
-                value={age}
-                onChange={(e) => setAge(e.target.value.replace(/\D/g, ''))}
-                placeholder="Age"
-                type="number"
-                maxLength={3}
+              <DateInput data-eos-id="src/components/check-in-form.tsx#16"
+                label="Date of Birth"
+                value={dateOfBirth}
+                onChange={setDateOfBirth}
+                max={new Date().toISOString().split('T')[0]}
                 className="[&_input]:bg-surface-3"
               />
               <Input data-eos-id="src/components/check-in-form.tsx#17"
