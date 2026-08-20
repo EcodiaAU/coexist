@@ -14,20 +14,24 @@ export const metadata: Metadata = {
 
 const WEB_URL = 'https://app.coexistaus.org'
 
-// Current App Store listing screenshots (app version 2.0.2, de-cartoonified),
-// served from Apple's mzstatic CDN.
+// Current app screenshots, matched to the live coexistaus.org/app page
+// (rewritten 2026-08-19), served from the Co-Exist Supabase Storage
+// app-images bucket. Same order and imagery as the Squarespace page.
 const SHOTS = [
   {
-    src: 'https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/71/4a/33/714a33cd-1cdd-037b-f2be-7710a64002ec/Simulator_Screenshot_-_iPhone_17_Pro_-_2026-04-22_at_14.29.01.png/590x1277bb.jpg',
-    caption: 'Find a collective near you',
+    src: 'https://tjutlbzekfouwsiaplbr.supabase.co/storage/v1/object/public/app-images/download-page/home-v3.png',
+    caption: 'See your next event',
+    alt: 'Co-Exist app home showing your next conservation event',
   },
   {
-    src: 'https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/f7/01/c4/f701c452-e526-0ff1-d4e3-290df5b38319/Simulator_Screenshot_-_iPhone_17_Pro_-_2026-04-22_at_14.28.17.png/590x1277bb.jpg',
+    src: 'https://tjutlbzekfouwsiaplbr.supabase.co/storage/v1/object/public/app-images/download-page/explore-v4.png',
+    caption: 'Find your local collective',
+    alt: 'Find your local Co-Exist collective in the app',
+  },
+  {
+    src: 'https://tjutlbzekfouwsiaplbr.supabase.co/storage/v1/object/public/app-images/download-page/impact.png',
     caption: 'Track your impact',
-  },
-  {
-    src: 'https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/cc/b1/38/ccb138ab-71fb-20f2-07ec-254d1368b492/Simulator_Screenshot_-_iPhone_17_Pro_-_2026-04-22_at_14.29.26.png/590x1277bb.jpg',
-    caption: 'Gear up and support',
+    alt: "Track Co-Exist's collective conservation impact",
   },
 ]
 
@@ -64,7 +68,7 @@ export default function DownloadPage() {
           {SHOTS.map((s) => (
             <Reveal data-eos-id="web/app/get-involved/download/page.tsx#9" key={s.caption} className="w-56">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img data-eos-src="literal" data-eos-src-label="Src" data-eos-src-binding="src" data-eos-id="web/app/get-involved/download/page.tsx#10" src={s.src} alt={s.caption} loading="lazy" className="w-full rounded-3xl border border-neutral-200 shadow-[0_18px_42px_rgba(71,79,47,0.18)]" />
+              <img data-eos-src="literal" data-eos-src-label="Src" data-eos-src-binding="src" data-eos-id="web/app/get-involved/download/page.tsx#10" src={s.src} alt={s.alt} loading="lazy" className="w-full rounded-3xl border border-neutral-200 shadow-[0_18px_42px_rgba(71,79,47,0.18)]" />
               <p data-eos-id="web/app/get-involved/download/page.tsx#11" data-eos-var="s.caption" data-eos-var-label="Caption" data-eos-var-scope="item" data-eos-var-src="literal" className="mt-4 text-center text-sm font-medium text-neutral-600">{s.caption}</p>
             </Reveal>
           ))}
