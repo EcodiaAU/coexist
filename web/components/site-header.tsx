@@ -34,11 +34,11 @@ export function SiteHeader() {
   }, [open])
 
   return (
-    <header data-eos-id="web/components/site-header.tsx#2" className="sticky top-0 z-50 border-b border-neutral-200/70 bg-cream/85 backdrop-blur bg-[#b33a3a] text-[#16170f] bg-[#ffffff]">
-      <div data-eos-id="web/components/site-header.tsx#3" className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 sm:h-24 sm:px-6">
+    <header data-eos-id="web/components/site-header.tsx#2" className="sticky top-0 z-50 border-b border-neutral-200/70 bg-cream/85 backdrop-blur bg-[#ffffff]">
+      <div data-eos-id="web/components/site-header.tsx#3" className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:h-18 sm:px-6">
         <Link data-eos-href="static" data-eos-id="web/components/site-header.tsx#4" href="/" className="flex items-center" aria-label="Co-Exist Australia home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img data-eos-src="static" data-eos-id="web/components/site-header.tsx#5" src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-10 w-auto sm:h-11" />
+          <img data-eos-src="static" data-eos-id="web/components/site-header.tsx#5" src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-12 w-auto sm:h-14" />
         </Link>
 
         {/* Desktop nav */}
@@ -111,9 +111,9 @@ export function SiteHeader() {
           role="dialog"
           aria-modal="true"
         >
-          <div data-eos-id="web/components/site-header.tsx#22" className="flex h-20 shrink-0 items-center justify-between border-b border-neutral-200 px-5">
+          <div data-eos-id="web/components/site-header.tsx#22" className="flex h-16 shrink-0 items-center justify-between border-b border-neutral-200 px-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img data-eos-src="static" data-eos-id="web/components/site-header.tsx#23" src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-9 w-auto" />
+            <img data-eos-src="static" data-eos-id="web/components/site-header.tsx#23" src="/images/logo-olive.png" alt="Co-Exist Australia" className="h-10 w-auto" />
             <button data-eos-id="web/components/site-header.tsx#24" className="-mr-1 p-1 text-neutral-800" aria-label="Close menu" onClick={() => setOpen(false)}>
               <svg data-eos-id="web/components/site-header.tsx#25" width="28" height="28" viewBox="0 0 24 24" fill="none">
                 <path data-eos-id="web/components/site-header.tsx#26" d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
