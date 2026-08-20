@@ -48,10 +48,10 @@ export default async function CollectivesPage() {
         image="/images/collective.webp"
       />
 
-      {/* Full-bleed interactive map (ported from the app), flush to hero + grid */}
-      <CollectiveMapClient data-eos-id="web/app/collectives/page.tsx#2" collectives={collectives} className="h-[78vh] min-h-[540px] w-full" />
+      {/* Full-bleed interactive map - taller on laptop (lg:h-[88vh]) */}
+      <CollectiveMapClient data-eos-id="web/app/collectives/page.tsx#2" collectives={collectives} className="h-[70vh] min-h-[540px] w-full lg:h-[88vh]" />
 
-      {/* Full-bleed flush bento - flat bottom (CTA is the last tile, fills its row) */}
+      {/* Full-bleed flush bento */}
       <section data-eos-id="web/app/collectives/page.tsx#3">
         {collectives.length === 0 ? (
           <p data-eos-id="web/app/collectives/page.tsx#4" className="py-16 text-center text-neutral-500">Collectives are loading. Check back shortly.</p>
@@ -74,8 +74,7 @@ export default async function CollectivesPage() {
               </BentoTile>
             ))}
 
-            {/* CTA tile: tinted background image + grain so it reads as content, not a hole.
-                Flat-bottom bento math (bentoSpans) is preserved. */}
+            {/* CTA tile */}
             <a data-eos-href="dynamic" data-eos-href-label="Value" data-eos-href-scope="prop" data-eos-id="web/app/collectives/page.tsx#9"
               href={`${APP_URL}/lead-a-collective`}
               className={`group relative flex flex-col items-center justify-center overflow-hidden p-5 text-center ${spans[n - 1]}`}
@@ -85,7 +84,7 @@ export default async function CollectivesPage() {
                 backgroundPosition: 'center',
               }}
             >
-              {/* Flat black scrim matching PageHeader/BentoTile convention */}
+              {/* Flat black scrim */}
               <div data-eos-id="web/app/collectives/page.tsx#10" className="absolute inset-0 bg-black/55" />
               {/* Grain over the CTA tile */}
               <div data-eos-id="web/app/collectives/page.tsx#11" className="grain-layer pointer-events-none absolute inset-0" />
