@@ -53,6 +53,7 @@ import {
     useCreateAnnouncement,
     useBroadcastLog,
     useSendBroadcastNotification,
+    useSendChannelBroadcastNotification,
     type ChatMessageWithSender,
 } from '@/hooks/use-chat'
 import {
@@ -330,6 +331,7 @@ export default function ChatRoomPage() {
   const broadcastCollectiveId = isLeaderOrAbove ? effectiveCollectiveId : undefined
   const { data: broadcastLog = [] } = useBroadcastLog(broadcastCollectiveId)
   const sendBroadcast = useSendBroadcastNotification()
+  const sendChannelBroadcast = useSendChannelBroadcastNotification()
 
   /* ---- Camera / upload ---- */
   const { pickFromGallery } = useCamera()
@@ -852,6 +854,21 @@ export default function ChatRoomPage() {
 
   /* ---- Broadcast ---- */
   const handleBroadcast = (data: { title: string; body: string }) => {
+    // Channel broadcast (campout / carpool): recipients are the channel members,
+    // resolved server-side by send-push. Campout channels have no collective, so
+    // the collective path below cannot serve them - route to the channel path.
+    if (isChannel && channelId) {
+      setShowBroadcastSheet(false)
+      toast.info('Sending notification...')
+      sendChannelBroadcast.mutate(
+        { channelId, ...data },
+        {
+          onSuccess: (result) => toast.success(`Notification sent to ${result?.sent ?? 0} members`),
+          onError: () => toast.error('Failed to send notification'),
+        },
+      )
+      return
+    }
     const bcCollectiveId = effectiveCollectiveId
     if (!bcCollectiveId) {
       toast.error('Broadcast notifications require a collective')

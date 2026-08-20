@@ -22,6 +22,16 @@ interface PushPayload {
   data?: Record<string, string>
   /** Silent notification (data-only, no alert) */
   silent?: boolean
+  /**
+   * Broadcast mode: also write an in-app notification feed row for every
+   * resolved recipient (service role, RLS-safe). Used by the leader broadcast
+   * in campout / carpool channels, where the client cannot read the channel
+   * membership (chat_channel_members RLS) to build the rows itself. The push
+   * itself is pref/quiet-hours filtered; the in-app feed row is written for
+   * every recipient (minus sender / blockers), matching the collective
+   * broadcast which inserts feed rows for all members regardless of push prefs.
+   */
+  inApp?: { type: string }
 }
 
 interface PushToken {
@@ -417,6 +427,23 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
       if (blockers.size > 0) {
         targetUserIds = targetUserIds.filter((id) => !blockers.has(id))
       }
+    }
+
+    // Broadcast in-app feed rows (service role, RLS-safe). Written for EVERY
+    // resolved recipient before the push token/pref filter, so a channel
+    // broadcast lands in the in-app feed even for members with no push token or
+    // push disabled - the same guarantee the collective broadcast gives by
+    // inserting notification rows client-side. Only when the caller asked for it.
+    if (payload.inApp && typeof payload.inApp.type === 'string' && targetUserIds.length > 0) {
+      await supabaseAdmin.from('notifications').insert(
+        targetUserIds.map((uid: string) => ({
+          user_id: uid,
+          type: payload.inApp!.type,
+          title: payload.title,
+          body: payload.body,
+          data: payload.data ?? {},
+        })),
+      )
     }
 
     if (targetUserIds.length === 0) {

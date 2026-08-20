@@ -132,7 +132,7 @@ export function BroadcastNotificationSheet({
 
         {/* Warning */}
         <p data-eos-id="src/components/broadcast-notification-sheet.tsx#23" className="text-[11px] text-neutral-500 mb-3 bg-primary-50 rounded-sm px-3 py-2">
-          This will send a push notification to <strong data-eos-id="src/components/broadcast-notification-sheet.tsx#24">all registered members</strong> of this collective who have notifications enabled. Use sparingly.
+          This will send a push notification to <strong data-eos-id="src/components/broadcast-notification-sheet.tsx#24">all registered members</strong> of this chat who have notifications enabled. Use sparingly.
         </p>
 
         {/* Send */}

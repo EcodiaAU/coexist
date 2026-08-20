@@ -16,6 +16,7 @@ import { Header } from '@/components/header'
 import { Avatar } from '@/components/avatar'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
+import { DateInput } from '@/components/date-input'
 import { Chip } from '@/components/chip'
 import { Skeleton } from '@/components/skeleton'
 import { UploadProgress } from '@/components/upload-progress'
@@ -28,6 +29,7 @@ import { useCamera } from '@/hooks/use-camera'
 import { useImageUpload } from '@/hooks/use-image-upload'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { PlaceAutocomplete } from '@/components/place-autocomplete'
+import { calculateAge } from '@/lib/date-format'
 
 const INTEREST_OPTIONS = [
   'Tree Planting',
@@ -139,7 +141,7 @@ export default function EditProfilePage() {
   // New fields
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [age, setAge] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
   const [postcode, setPostcode] = useState('')
   const [gender, setGender] = useState('')
   const [email, setEmail] = useState('')
@@ -165,7 +167,7 @@ export default function EditProfilePage() {
     setInterests(profile.interests ?? [])
     setFirstName(profile.first_name ?? '')
     setLastName(profile.last_name ?? '')
-    setAge(profile.age != null ? String(profile.age) : '')
+    setDateOfBirth(profile.date_of_birth ?? '')
     setPostcode(profile.postcode ?? '')
     setGender(profile.gender ?? '')
     setEmail(profile.email ?? '')
@@ -280,7 +282,8 @@ export default function EditProfilePage() {
         interests,
         first_name: firstName || null,
         last_name: lastName || null,
-        age: age ? parseInt(age, 10) : null,
+        date_of_birth: dateOfBirth || null,
+        age: calculateAge(dateOfBirth),
         postcode: postcode || null,
         gender: gender || null,
         email: email || null,
@@ -320,7 +323,7 @@ export default function EditProfilePage() {
       sortedInterests(interests) !== sortedInterests(profile?.interests ?? []) ||
       firstName !== (profile?.first_name ?? '') ||
       lastName !== (profile?.last_name ?? '') ||
-      age !== (profile?.age != null ? String(profile.age) : '') ||
+      dateOfBirth !== (profile?.date_of_birth ?? '') ||
       postcode !== (profile?.postcode ?? '') ||
       gender !== (profile?.gender ?? '') ||
       email !== (profile?.email ?? '') ||
@@ -507,13 +510,11 @@ export default function EditProfilePage() {
                 className={inputStyle}
               />
               <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="Age"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Age"
-                  type="number"
-                  maxLength={3}
+                <DateInput
+                  label="Date of Birth"
+                  value={dateOfBirth}
+                  onChange={setDateOfBirth}
+                  max={new Date().toISOString().split('T')[0]}
                   className={inputStyle}
                 />
                 <Input

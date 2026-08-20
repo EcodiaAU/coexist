@@ -7,11 +7,13 @@ import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
+import { DateInput } from '@/components/date-input'
 import { Chip } from '@/components/chip'
 import { useToast } from '@/components/toast'
 import { useAuth } from '@/hooks/use-auth'
 import { useProfile, useUpdateProfile } from '@/hooks/use-profile'
 import { supabase } from '@/lib/supabase'
+import { calculateAge } from '@/lib/date-format'
 import { isCampoutActivity } from '@/lib/dietary'
 import type { Tables } from '@/types/database.types'
 
@@ -67,7 +69,7 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
 
   const [firstName, setFirstName] = useState(profile?.first_name ?? '')
   const [lastName, setLastName] = useState(profile?.last_name ?? '')
-  const [age, setAge] = useState(profile?.age != null ? String(profile.age) : '')
+  const [dateOfBirth, setDateOfBirth] = useState(profile?.date_of_birth ?? '')
   const [postcode, setPostcode] = useState(profile?.postcode ?? '')
   const [gender, setGender] = useState(profile?.gender ?? '')
   const [email, setEmail] = useState(profile?.email ?? '')
@@ -130,9 +132,9 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
       return
     }
     setEmailError(null)
-    const ageNum = age ? parseInt(age, 10) : null
-    if (ageNum != null && (ageNum < 5 || ageNum > 120)) {
-      setAgeError('Enter an age between 5 and 120')
+    const derivedAge = dateOfBirth ? calculateAge(dateOfBirth) : null
+    if (derivedAge != null && (derivedAge < 5 || derivedAge > 120)) {
+      setAgeError('Enter a valid date of birth')
       return
     }
     setAgeError(null)
@@ -140,7 +142,8 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
       await updateProfile.mutateAsync({
         first_name: firstName || null,
         last_name: lastName || null,
-        age: age ? parseInt(age, 10) : null,
+        date_of_birth: dateOfBirth || null,
+        age: derivedAge,
         postcode: postcode || null,
         gender: gender || null,
         email: email || null,
@@ -254,13 +257,11 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
               className="[&_input]:bg-surface-3"
             />
             <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="Age"
-                value={age}
-                onChange={(e) => { setAge(e.target.value.replace(/\D/g, '')); if (ageError) setAgeError(null) }}
-                placeholder="Age"
-                type="number"
-                maxLength={3}
+              <DateInput
+                label="Date of Birth"
+                value={dateOfBirth}
+                onChange={(iso) => { setDateOfBirth(iso); if (ageError) setAgeError(null) }}
+                max={new Date().toISOString().split('T')[0]}
                 error={ageError ?? undefined}
                 className="[&_input]:bg-surface-3"
               />

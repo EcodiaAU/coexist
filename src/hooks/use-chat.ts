@@ -1293,6 +1293,50 @@ export function useSendBroadcastNotification() {
   })
 }
 
+/*
+ * Channel broadcast (campout / carpool group chats). The collective broadcast
+ * above cannot serve these: a campout channel has NO collective_id (all live
+ * campout channels have collective_id = NULL) and its members are ticket
+ * holders drawn from many collectives, so there is no single collective to
+ * resolve recipients from. Recipients + push authorization + the in-app feed
+ * rows are ALL resolved server-side by send-push from the channel membership
+ * (service role, bypassing the chat_channel_members RLS that would otherwise
+ * hide the roster from the client). The broadcaster is always staff/admin
+ * (channel-mode leader gate), so send-push authorizes them via its privileged
+ * path. No chat_broadcast_log row is written: that table requires a non-null
+ * collective_id and its only reader (useBroadcastLog) is collective-scoped, so
+ * a campout broadcast would never surface there anyway.
+ */
+export function useSendChannelBroadcastNotification() {
+  const { user } = useAuth()
+
+  return useMutation({
+    mutationFn: async ({
+      channelId,
+      title,
+      body,
+    }: {
+      channelId: string
+      title: string
+      body: string
+    }) => {
+      if (!user) throw new Error('Not authenticated')
+
+      const { data: pushResult, error } = await supabase.functions.invoke('send-push', {
+        body: {
+          channelId,
+          title,
+          body,
+          data: { type: 'chat_announcement', channel_id: channelId },
+          inApp: { type: 'chat_announcement' },
+        },
+      })
+      if (error) throw error
+      return pushResult as { sent?: number } | null
+    },
+  })
+}
+
 /* ------------------------------------------------------------------ */
 /*  Upload chat image                                                  */
 /* ------------------------------------------------------------------ */
