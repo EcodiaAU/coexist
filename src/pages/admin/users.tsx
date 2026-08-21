@@ -16,6 +16,7 @@ import {
     X,
     ChevronDown,
     ChevronUp,
+    ChevronRight,
     CheckCircle,
     XCircle,
     Sparkles,
@@ -31,7 +32,6 @@ import { Dropdown } from '@/components/dropdown'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
-import { BottomSheet } from '@/components/bottom-sheet'
 import { ConfirmationSheet } from '@/components/confirmation-sheet'
 import { Avatar } from '@/components/avatar'
 import { Toggle } from '@/components/toggle'
@@ -194,16 +194,15 @@ const COLLECTIVE_ROLE_SURFACE: Record<string, string> = {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Unified User Settings Sheet                                        */
+/*  Admin controls - folded into the unified user detail modal         */
+/*  (rendered inside ProfileModal via its adminSection slot)           */
 /* ------------------------------------------------------------------ */
 
-function UserSettingsSheet({
+function UserAdminControls({
   user,
-  open,
   onClose,
 }: {
   user: AdminUserRow
-  open: boolean
   onClose: () => void
 }) {
   const { user: currentUser, isSuperAdmin } = useAuth()
@@ -443,25 +442,24 @@ function UserSettingsSheet({
 
   return (
     <>
-      <BottomSheet open={open} onClose={onClose} snapPoints={[0.92]}>
-        <div className="space-y-5 pb-6">
-          {/* User header */}
-          <div className="flex items-center gap-4 p-4 -mx-1 rounded-md bg-white border border-neutral-100">
-            <Avatar src={user.avatar_url} name={user.display_name ?? ''} size="lg" />
-            <div className="flex-1 min-w-0">
-              <p className="text-lg font-bold text-neutral-900 truncate">{user.display_name}</p>
-              <p className="text-sm text-neutral-500 truncate">{user.email}</p>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', roleBadgeColors[user.role])}>
-                  {formatRole(user.role ?? 'participant')}
-                </span>
-                {user.is_suspended && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-error-200 text-error-800">
-                    Suspended
-                  </span>
-                )}
-              </div>
+      <div className="mt-6 pt-5 border-t border-neutral-200/70 space-y-5 pb-6">
+          {/* Admin controls heading. ProfileModal above already renders the
+              identity block (avatar / name / member since), so this fold drops
+              the duplicate header and keeps only the admin-relevant role +
+              suspension state alongside the section title. */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-sm bg-neutral-800 text-white flex items-center justify-center shrink-0">
+              <UserCog size={16} />
             </div>
+            <h3 className="font-heading text-base font-semibold text-neutral-900">Admin controls</h3>
+            <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full ml-auto', roleBadgeColors[user.role])}>
+              {formatRole(user.role ?? 'participant')}
+            </span>
+            {user.is_suspended && (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-error-200 text-error-800">
+                Suspended
+              </span>
+            )}
           </div>
 
           {/* Quick actions - touch-optimised row */}
@@ -923,8 +921,7 @@ function UserSettingsSheet({
               </AnimatePresence>
             </div>
           )}
-        </div>
-      </BottomSheet>
+      </div>
 
       {/* Delete confirmation */}
       <ConfirmationSheet
@@ -948,8 +945,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
   const [roleFilter, setRoleFilter] = useState('all')
-  const [settingsUser, setSettingsUser] = useState<AdminUserRow | null>(null)
-  const [profileUserId, setProfileUserId] = useState<string | null>(null)
+  // One detail modal serves both the row tap and the chevron affordance.
+  const [detailUser, setDetailUser] = useState<AdminUserRow | null>(null)
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
   const [bulkSuspendOpen, setBulkSuspendOpen] = useState(false)
   const [bulkReason, setBulkReason] = useState('')
@@ -1144,7 +1141,7 @@ export default function AdminUsersPage() {
               {/* Avatar + info  tappable to open profile */}
               <button
                 type="button"
-                onClick={() => setProfileUserId(user.id)}
+                onClick={() => setDetailUser(user)}
                 className="flex items-center gap-3 flex-1 min-w-0 text-left active:opacity-70 transition-opacity cursor-pointer"
               >
                 <Avatar src={user.avatar_url} name={user.display_name ?? ''} size="sm" />
@@ -1171,14 +1168,17 @@ export default function AdminUsersPage() {
                 </div>
               </button>
 
-              {/* Single settings button */}
+              {/* Chevron affordance - opens the same unified detail modal as the
+                  row tap. A muted right-chevron reads as "open details", not as a
+                  separate settings destination (the gear implied a second modal). */}
               <button
                 type="button"
-                onClick={() => setSettingsUser(user)}
-                className="p-2.5 rounded-sm bg-neutral-50 text-neutral-500 active:bg-neutral-200 active:text-neutral-700 transition-colors shrink-0"
-                title="User settings"
+                onClick={() => setDetailUser(user)}
+                className="p-2.5 -mr-0.5 rounded-sm text-neutral-300 active:bg-neutral-100 active:text-neutral-600 transition-colors shrink-0"
+                title="Open details"
+                aria-label={`Open details for ${user.display_name ?? 'user'}`}
               >
-                <Settings size={18} />
+                <ChevronRight size={20} />
               </button>
             </StaggeredItem>
           ))}
@@ -1200,11 +1200,16 @@ export default function AdminUsersPage() {
       )}
       </motion.div>
 
-      {/* Unified user settings sheet */}
-      {settingsUser && <UserSettingsSheet user={settingsUser} open onClose={() => setSettingsUser(null)} />}
-
-      {/* Profile detail modal */}
-      <ProfileModal userId={profileUserId} open={!!profileUserId} onClose={() => setProfileUserId(null)} />
+      {/* Unified detail modal - both the row tap and the chevron open this one
+          sheet. ProfileModal renders the identity + profile; the admin controls
+          are folded in below via adminSection so no capability the gear used to
+          give is lost. */}
+      <ProfileModal
+        userId={detailUser?.id ?? null}
+        open={!!detailUser}
+        onClose={() => setDetailUser(null)}
+        adminSection={detailUser ? <UserAdminControls user={detailUser} onClose={() => setDetailUser(null)} /> : null}
+      />
     </motion.div>
   )
 }
