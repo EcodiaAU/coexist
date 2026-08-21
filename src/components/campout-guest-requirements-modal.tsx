@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
-import { createPortal } from 'react-dom'
 import { Tent } from 'lucide-react'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
+import { Modal } from '@/components/modal'
 import { NO_DIETARY_SENTINEL, NO_MEDICAL_SENTINEL } from '@/lib/dietary'
 
 /* ------------------------------------------------------------------ */
@@ -49,21 +49,12 @@ export function CampoutGuestRequirementsModal({ open, submitting, isCampout, onC
     onSubmit({ dietary: dietaryValue, medical: medicalValue })
   }, [dietary, medical, onSubmit])
 
-  if (!open) return null
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="campout-guest-reqs-title"
+  return (
+    <Modal
+      open={open}
+      onClose={() => { if (!submitting) onClose() }}
+      ariaLabel={isCampout ? 'Before you book this camp-out' : 'Before you book your ticket'}
     >
-      <div className="fixed inset-0 bg-black/60" aria-hidden="true" onClick={submitting ? undefined : onClose} />
-
-      <div
-        className="relative w-full sm:max-w-md max-h-full overflow-y-auto bg-white rounded-t-md sm:rounded-md shadow-sm flex flex-col"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.5rem)' }}
-      >
         <div className="px-6 pt-7 pb-6 space-y-5">
           <div className="flex flex-col items-center text-center gap-3">
             <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
@@ -130,8 +121,6 @@ export function CampoutGuestRequirementsModal({ open, submitting, isCampout, onC
             </Button>
           </div>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </Modal>
   )
 }
