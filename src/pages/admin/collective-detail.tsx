@@ -1377,7 +1377,8 @@ export default function AdminCollectiveDetailPage() {
   // Raw isLoading folded into the guard so the shell owns the whole in-flight
   // window - otherwise `!detail` flashes "Collective not found" during the
   // first ~1s before the query resolves.
-  if (showLoading || isLoading) {
+  if (isLoading) {
+    if (!showLoading) return null
     return (
       <div data-eos-id="src/pages/admin/collective-detail.tsx#211" className="space-y-4 p-6">
         <Skeleton data-eos-id="src/pages/admin/collective-detail.tsx#212" className="h-8 w-32 rounded-sm" />

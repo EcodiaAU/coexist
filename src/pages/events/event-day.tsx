@@ -761,7 +761,8 @@ export default function EventDayPage() {
 
   // Raw isLoading folded into the guard so the shell owns the whole in-flight
   // window - otherwise `!event` flashes "Event not found" during the first ~1s.
-  if (showLoading || isLoading) {
+  if (isLoading) {
+    if (!showLoading) return null
     return (
       <Page swipeBack header={<Header title="Event Day" back />}>
         <div className="pt-4 space-y-4">

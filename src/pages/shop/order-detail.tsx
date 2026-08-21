@@ -102,7 +102,8 @@ export default function OrderDetailPage() {
   // Fold raw isLoading into the guard so the shell owns the whole in-flight
   // window - otherwise `!order` fires during the first ~1s and flashes
   // "Order not found" before the query has resolved.
-  if (showLoading || isLoading) {
+  if (isLoading) {
+    if (!showLoading) return null
     return (
       <Page swipeBack header={<Header title="Order" back />}>
         <div className="py-4 space-y-4">

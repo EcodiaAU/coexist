@@ -156,7 +156,8 @@ export default function PublicCollectivePage() {
   /* ── Loading ── (raw isLoading folded in so the shell owns the whole
      in-flight window; the error/not-found branch below only runs once the
      query has settled, so an error still reaches its real branch) */
-  if (showLoading || isLoading) {
+  if (isLoading) {
+    if (!showLoading) return null
     return (
       <div className="min-h-dvh bg-white">
         <div className="h-56 animate-pulse bg-moss-100" />

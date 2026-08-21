@@ -477,7 +477,7 @@ export default function ProductDetailPage() {
 
   // Show the shell for the whole in-flight window, not just after the delay -
   // otherwise `!product` fires during the first ~1s and flashes "not found".
-  if (showLoading || isLoading) return <ProductDetailSkeleton />
+  if (isLoading) return showLoading ? <ProductDetailSkeleton /> : null
   if (!product) {
     return (
       <Page swipeBack header={<Header title="Product" back />}>
