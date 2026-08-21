@@ -35,6 +35,12 @@ interface MultiSelectProps {
   disabled?: boolean
   className?: string
   triggerClassName?: string
+  /** 'sm' renders a compact, content-hugging pill (filter-row use). */
+  size?: 'default' | 'sm'
+  /** Fills the trigger with the accent colour to signal an applied filter. */
+  active?: boolean
+  /** Small icon rendered inside the trigger, left of the value. */
+  leadingIcon?: ReactNode
 }
 
 function useIsMobile() {
@@ -68,6 +74,9 @@ export function MultiSelect({
   disabled = false,
   className,
   triggerClassName,
+  size = 'default',
+  active = false,
+  leadingIcon,
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false)
   const isMobile = useIsMobile()
@@ -197,27 +206,40 @@ export function MultiSelect({
       aria-labelledby={label ? labelId : undefined}
       aria-label={!label ? allLabel : undefined}
       className={cn(
-        'flex items-center justify-between w-full h-11 rounded-full px-4 bg-surface-3',
-        'text-[16px] sm:text-sm leading-normal text-left',
+        'flex items-center justify-between rounded-full leading-normal text-left',
         'cursor-pointer select-none transition-colors duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
         'disabled:opacity-50 disabled:cursor-not-allowed',
+        size === 'sm'
+          ? 'h-9 px-3.5 gap-1.5 w-auto text-[13px]'
+          : 'h-11 px-4 w-full text-[16px] sm:text-sm',
+        active
+          ? 'bg-primary-600 border border-primary-600 text-white hover:bg-primary-700'
+          // White ground + hairline border matches Dropdown's finished-control look
+          // (the old bg-surface-3 grey read as a wireframe placeholder).
+          : 'bg-white border border-neutral-200 hover:border-neutral-300',
         open ? 'ring-2 ring-primary-500' : '',
         triggerClassName,
       )}
     >
       <span data-eos-id="src/components/multi-select.tsx#1"
         className={cn(
-          'truncate min-w-0',
-          selectedOptions.length > 0 ? 'text-neutral-900' : 'text-neutral-500',
+          'flex items-center gap-1.5 truncate min-w-0',
+          active ? 'text-white' : selectedOptions.length > 0 ? 'text-neutral-900' : 'text-neutral-500',
         )}
       >
-        {triggerLabel}
+        {leadingIcon && (
+          <span data-eos-id="src/components/multi-select.tsx#23" className="shrink-0 flex items-center" aria-hidden="true">
+            {leadingIcon}
+          </span>
+        )}
+        <span data-eos-id="src/components/multi-select.tsx#24" className="truncate min-w-0">{triggerLabel}</span>
       </span>
       <ChevronDown data-eos-id="src/components/multi-select.tsx#2"
-        size={18}
+        size={size === 'sm' ? 15 : 18}
         className={cn(
-          'shrink-0 ml-2 text-neutral-400 transition-transform duration-150',
+          'shrink-0 ml-1.5 transition-transform duration-150',
+          active ? 'text-white/90' : 'text-neutral-400',
           open && 'rotate-180',
         )}
         aria-hidden="true"

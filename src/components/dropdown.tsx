@@ -33,6 +33,12 @@ interface DropdownProps {
   triggerClassName?: string
   /** Use 'dark' when rendered on a dark/hero background */
   tone?: 'default' | 'dark'
+  /** 'sm' renders a compact, content-hugging pill (filter-row use). */
+  size?: 'default' | 'sm'
+  /** Fills the trigger with the accent colour to signal an applied filter. */
+  active?: boolean
+  /** Small icon rendered inside the trigger, left of the value. */
+  leadingIcon?: ReactNode
 }
 
 function useIsMobile() {
@@ -62,6 +68,9 @@ export function Dropdown({
   className,
   triggerClassName,
   tone = 'default',
+  size = 'default',
+  active = false,
+  leadingIcon,
 }: DropdownProps) {
   const [open, setOpen] = useState(false)
   const isMobile = useIsMobile()
@@ -184,17 +193,21 @@ export function Dropdown({
       aria-describedby={error ? errorId : undefined}
       aria-label={!label ? placeholder : undefined}
       className={cn(
-        'flex items-center justify-between w-full h-11 rounded-full px-4',
-        tone === 'dark'
-          ? 'bg-white/20 backdrop-blur-md border border-white/20'
-          // White ground + hairline border reads as a finished control; the old
-          // bg-surface-3 grey fill read as a wireframe placeholder (review #9).
-          : 'bg-white border border-neutral-200 hover:border-neutral-300',
-        'text-[16px] sm:text-sm leading-normal text-left',
-        'cursor-pointer select-none',
-        'transition-colors duration-150',
+        'flex items-center justify-between rounded-full leading-normal text-left',
+        'cursor-pointer select-none transition-colors duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
         'disabled:opacity-50 disabled:cursor-not-allowed',
+        size === 'sm'
+          ? 'h-9 px-3.5 gap-1.5 w-auto text-[13px]'
+          : 'h-11 px-4 w-full text-[16px] sm:text-sm',
+        active
+          // Applied-filter fill. Wins over tone/default grounds.
+          ? 'bg-primary-600 border border-primary-600 text-white hover:bg-primary-700'
+          : tone === 'dark'
+            ? 'bg-white/20 backdrop-blur-md border border-white/20'
+            // White ground + hairline border reads as a finished control; the old
+            // bg-surface-3 grey fill read as a wireframe placeholder (review #9).
+            : 'bg-white border border-neutral-200 hover:border-neutral-300',
         error
           ? 'ring-2 ring-error'
           : open
@@ -205,32 +218,41 @@ export function Dropdown({
     >
       <span data-eos-id="src/components/dropdown.tsx#1"
         className={cn(
-          'truncate min-w-0',
-          tone === 'dark'
-            ? selectedOption ? 'text-white' : 'text-white/70'
-            : selectedOption ? 'text-neutral-900' : 'text-neutral-500',
+          'flex items-center gap-1.5 truncate min-w-0',
+          active
+            ? 'text-white'
+            : tone === 'dark'
+              ? selectedOption ? 'text-white' : 'text-white/70'
+              : selectedOption ? 'text-neutral-900' : 'text-neutral-500',
         )}
       >
-        {selectedOption ? (
-          selectedOption.icon ? (
-            <span data-eos-id="src/components/dropdown.tsx#2" className="flex items-center gap-2 min-w-0">
-              <span data-eos-id="src/components/dropdown.tsx#3" data-eos-var="selectedOption.icon" data-eos-var-label="Icon" data-eos-var-scope="prop" className="shrink-0" aria-hidden="true">
-                {selectedOption.icon}
-              </span>
-              <span data-eos-id="src/components/dropdown.tsx#4" data-eos-var="selectedOption.label" data-eos-var-label="Label" data-eos-var-scope="prop" className="truncate">{selectedOption.label}</span>
-            </span>
-          ) : (
-            selectedOption.label
-          )
-        ) : (
-          placeholder
+        {leadingIcon && (
+          <span data-eos-id="src/components/dropdown.tsx#23" className="shrink-0 flex items-center" aria-hidden="true">
+            {leadingIcon}
+          </span>
         )}
+        <span data-eos-id="src/components/dropdown.tsx#24" className="truncate min-w-0">
+          {selectedOption ? (
+            selectedOption.icon ? (
+              <span data-eos-id="src/components/dropdown.tsx#2" className="flex items-center gap-2 min-w-0">
+                <span data-eos-id="src/components/dropdown.tsx#3" data-eos-var="selectedOption.icon" data-eos-var-label="Icon" data-eos-var-scope="prop" className="shrink-0" aria-hidden="true">
+                  {selectedOption.icon}
+                </span>
+                <span data-eos-id="src/components/dropdown.tsx#4" data-eos-var="selectedOption.label" data-eos-var-label="Label" data-eos-var-scope="prop" className="truncate">{selectedOption.label}</span>
+              </span>
+            ) : (
+              selectedOption.label
+            )
+          ) : (
+            placeholder
+          )}
+        </span>
       </span>
       <ChevronDown data-eos-id="src/components/dropdown.tsx#5"
-        size={18}
+        size={size === 'sm' ? 15 : 18}
         className={cn(
-          'shrink-0 ml-2 transition-transform duration-150',
-          tone === 'dark' ? 'text-white/70' : 'text-neutral-400',
+          'shrink-0 ml-1.5 transition-transform duration-150',
+          active ? 'text-white/90' : tone === 'dark' ? 'text-white/70' : 'text-neutral-400',
           open && 'rotate-180',
         )}
         aria-hidden="true"
