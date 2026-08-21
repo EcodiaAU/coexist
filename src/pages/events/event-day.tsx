@@ -759,7 +759,9 @@ export default function EventDayPage() {
   const isLoading = eventLoading || rosterLoading || roleLoading
   const showLoading = useDelayedLoading(isLoading)
 
-  if (showLoading) {
+  // Raw isLoading folded into the guard so the shell owns the whole in-flight
+  // window - otherwise `!event` flashes "Event not found" during the first ~1s.
+  if (showLoading || isLoading) {
     return (
       <Page swipeBack header={<Header title="Event Day" back />}>
         <div className="pt-4 space-y-4">
