@@ -1,11 +1,10 @@
 import { useState, useMemo, useCallback } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
     MessageSquareText,
     User,
     Calendar,
     ChevronDown,
-    ChevronUp,
     Star,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -17,7 +16,7 @@ import { EmptyState } from '@/components/empty-state'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { parseSurveyQuestions, type SurveyQuestion } from '@/components/survey-questions-utils'
-import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
+import { adminStagger as stagger, fadeUp, expandCollapse } from '@/lib/admin-motion'
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -316,86 +315,114 @@ export default function LeaderFeedbackPage() {
                           </span>
                         </div>
                       </div>
-                      {eventOpen ? (
-                        <ChevronUp size={16} className="text-neutral-300 shrink-0" />
-                      ) : (
-                        <ChevronDown size={16} className="text-neutral-300 shrink-0" />
-                      )}
+                      <ChevronDown
+                        size={16}
+                        className={cn(
+                          'text-neutral-300 shrink-0',
+                          !rm && 'transition-transform duration-300 ease-out',
+                          eventOpen && 'rotate-180',
+                        )}
+                      />
                     </div>
                   </button>
 
                   {/* Responses */}
-                  {eventOpen && (
-                    <div className="px-3 pb-3 space-y-2 border-t border-neutral-100 pt-3">
-                      {group.responses.map((response) => {
-                        const responseOpen = expandedResponses.has(response.id)
-                        const rating = ratingFor(response)
-                        return (
-                          <div
-                            key={response.id}
-                            className="rounded-sm bg-neutral-50/60 overflow-hidden"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => toggleResponse(response.id)}
-                              className="w-full text-left p-3 cursor-pointer active:bg-neutral-100 transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 shrink-0">
-                                  <User size={14} className="text-primary-500" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-neutral-900 truncate">
-                                    {response.respondent ?? 'Attendee'}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-0.5 text-xs text-neutral-400">
-                                    {rating != null && (
-                                      <span className="flex items-center gap-0.5 text-bark-500">
-                                        <Star size={11} fill="currentColor" />
-                                        {rating}
-                                      </span>
-                                    )}
-                                    {response.submitted_at && (
-                                      <span>{formatDate(response.submitted_at)}</span>
-                                    )}
+                  <AnimatePresence initial={false}>
+                    {eventOpen && (
+                      <motion.div
+                        key="event-body"
+                        variants={rm ? undefined : expandCollapse}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="overflow-hidden"
+                      >
+                        <div className="px-3 pb-3 space-y-2 border-t border-neutral-100 pt-3">
+                          {group.responses.map((response) => {
+                            const responseOpen = expandedResponses.has(response.id)
+                            const rating = ratingFor(response)
+                            return (
+                              <div
+                                key={response.id}
+                                className="rounded-sm bg-neutral-50/60 overflow-hidden"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => toggleResponse(response.id)}
+                                  className="w-full text-left p-3 cursor-pointer active:bg-neutral-100 transition-colors"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 shrink-0">
+                                      <User size={14} className="text-primary-500" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-neutral-900 truncate">
+                                        {response.respondent ?? 'Attendee'}
+                                      </p>
+                                      <div className="flex items-center gap-2 mt-0.5 text-xs text-neutral-400">
+                                        {rating != null && (
+                                          <span className="flex items-center gap-0.5 text-bark-500">
+                                            <Star size={11} fill="currentColor" />
+                                            {rating}
+                                          </span>
+                                        )}
+                                        {response.submitted_at && (
+                                          <span>{formatDate(response.submitted_at)}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <ChevronDown
+                                      size={14}
+                                      className={cn(
+                                        'text-neutral-300 shrink-0',
+                                        !rm && 'transition-transform duration-300 ease-out',
+                                        responseOpen && 'rotate-180',
+                                      )}
+                                    />
                                   </div>
-                                </div>
-                                {responseOpen ? (
-                                  <ChevronUp size={14} className="text-neutral-300 shrink-0" />
-                                ) : (
-                                  <ChevronDown size={14} className="text-neutral-300 shrink-0" />
-                                )}
-                              </div>
-                            </button>
+                                </button>
 
-                            {responseOpen && (
-                              <div className="px-3 pb-3 space-y-2.5 border-t border-neutral-100 pt-2.5">
-                                {response.questions.length > 0 ? (
-                                  response.questions.map((q) => (
-                                    <div key={q.id}>
-                                      <p className="text-xs font-medium text-neutral-500">{q.text}</p>
-                                      <p className="text-sm text-neutral-900 mt-0.5 whitespace-pre-wrap">
-                                        {formatAnswer(response.answers[q.id])}
-                                      </p>
-                                    </div>
-                                  ))
-                                ) : (
-                                  Object.entries(response.answers).map(([key, val]) => (
-                                    <div key={key}>
-                                      <p className="text-xs font-medium text-neutral-500">{key}</p>
-                                      <p className="text-sm text-neutral-900 mt-0.5 whitespace-pre-wrap">
-                                        {formatAnswer(val)}
-                                      </p>
-                                    </div>
-                                  ))
-                                )}
+                                <AnimatePresence initial={false}>
+                                  {responseOpen && (
+                                    <motion.div
+                                      key="response-body"
+                                      variants={rm ? undefined : expandCollapse}
+                                      initial="hidden"
+                                      animate="visible"
+                                      exit="exit"
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="px-3 pb-3 space-y-2.5 border-t border-neutral-100 pt-2.5">
+                                        {response.questions.length > 0 ? (
+                                          response.questions.map((q) => (
+                                            <div key={q.id}>
+                                              <p className="text-xs font-medium text-neutral-500">{q.text}</p>
+                                              <p className="text-sm text-neutral-900 mt-0.5 whitespace-pre-wrap">
+                                                {formatAnswer(response.answers[q.id])}
+                                              </p>
+                                            </div>
+                                          ))
+                                        ) : (
+                                          Object.entries(response.answers).map(([key, val]) => (
+                                            <div key={key}>
+                                              <p className="text-xs font-medium text-neutral-500">{key}</p>
+                                              <p className="text-sm text-neutral-900 mt-0.5 whitespace-pre-wrap">
+                                                {formatAnswer(val)}
+                                              </p>
+                                            </div>
+                                          ))
+                                        )}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
                               </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
+                            )
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )
             })}
