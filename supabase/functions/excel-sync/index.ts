@@ -63,6 +63,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { generate as uuidv5 } from 'https://deno.land/std@0.224.0/uuid/v5.ts'
 import { withSentry } from '../_shared/sentry.ts'
 import { timingSafeEqual } from '../_shared/d3-guards.ts'
+import { normaliseCollectiveName, resolveCollectiveId } from '../_shared/collective-match.ts'
 
 // ---- Config ----
 const GRAPH_TENANT_ID = Deno.env.get('GRAPH_TENANT_ID') ?? ''
@@ -96,23 +97,14 @@ const SYNC_CUTOFF_DATE = '2026-05-04'
 // causes duplicate rows on the next sync run.
 const FORMS_NAMESPACE_UUID = '6b9c8f4a-2e3d-5c7a-8b1f-4a9e6d2c1b0f'
 
-// ---- Collective aliases ----
-// Legacy / divergent collective names on the Forms sheet that should resolve to a
-// different canonical collective_id on reverse-sync. Key = lowercase + trimmed
-// legacy name as it appears in sheet col-3. Value = canonical collective UUID
-// in the DB.
-//
-// Adding a new alias is a coordinated change:
-//   1. Add the row in `clients/coexist.md` "Collective Aliases" table (doctrine).
-//   2. Add the entry below.
-//   3. Redeploy this Edge Function.
-//   4. Plan the data migration if the alias has its own row with events.
-//
-// See ~/ecodiaos/patterns/excel-sync-collectives-migration.md "Collective aliases".
-const COLLECTIVE_ALIASES: Record<string, string> = {
-  'byron bay': '9a2f9919-26b9-420d-b6f5-ddeb9a37b1b3', // -> Northern Rivers
-  'melbourne city': 'b6cae731-d6bf-4bf1-9640-0117feaa3755', // -> Melbourne
-}
+// ---- Collective aliases + name matching ----
+// Legacy / divergent collective names on the Forms sheet resolve to their
+// canonical collective_id via ../_shared/collective-match.ts. That module holds
+// the alias registry (COLLECTIVE_ALIASES) and the normaliser (lowercase, fold
+// hyphens / punctuation to a space, collapse whitespace) so the sheet value, the
+// alias keys, and the DB-name lookup all compare on the same footing. Adding an
+// alias is a coordinated change - see the header of collective-match.ts and
+// ~/ecodiaos/patterns/excel-sync-collectives-migration.md.
 
 // ---- Title aliases ----
 // Token-level expansions applied during fuzzy title matching. The classic case
@@ -1440,7 +1432,7 @@ async function syncFromExcel(
       .from('collectives')
       .select('id, name, forms_migrated_at')
     for (const c of (collectives ?? []) as { id: string; name: string; forms_migrated_at: string | null }[]) {
-      collectiveNameToId.set(c.name.trim().toLowerCase(), c.id)
+      collectiveNameToId.set(normaliseCollectiveName(c.name), c.id)
       collectiveMigratedAt.set(c.id, c.forms_migrated_at)
     }
   } catch (err) {
@@ -1539,15 +1531,15 @@ async function syncFromExcel(
         // for events that were never created in the app still land cleanly.
         const rowLabel = `Row ${i + 1} (Forms ID ${excelId})`
 
-        // Resolve collective from col 3. Check the alias map FIRST so legacy
-        // / divergent sheet names (e.g. "Byron Bay" -> Northern Rivers,
-        // "Melbourne City" -> Melbourne) map to their canonical UUID even when
-        // the alias row no longer exists in the collectives table. Fall back
-        // to the name-to-id lookup built from the collectives table.
+        // Resolve collective from col 3. resolveCollectiveId normalises the
+        // sheet value (lowercase, fold hyphens / punctuation to a space, collapse
+        // whitespace) and checks the alias map FIRST so legacy / divergent sheet
+        // names (e.g. "Melbourne" -> Melbourne City, "North-East Victoria" ->
+        // North East Victoria, "Byron Bay" -> Northern Rivers) resolve to their
+        // canonical UUID, then falls back to the normalised name-to-id lookup
+        // built from the collectives table.
         const collectiveName = String(row[3] ?? '').trim()
-        const collectiveNameLc = collectiveName.toLowerCase()
-        const collectiveId =
-          COLLECTIVE_ALIASES[collectiveNameLc] ?? collectiveNameToId.get(collectiveNameLc)
+        const collectiveId = resolveCollectiveId(collectiveName, collectiveNameToId)
         if (!collectiveId) {
           errors.push(`${rowLabel}: no collective match for "${collectiveName}" - skipped`)
           skippedNoCollective++
