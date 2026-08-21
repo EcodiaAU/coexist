@@ -18,7 +18,6 @@ import {
     RefreshCw,
     AlertTriangle,
     Bird,
-    ChevronDown,
     Sparkles,
     Users,
     Timer,
@@ -51,6 +50,7 @@ import {
     Header,
     Button,
     Input,
+    Dropdown,
     Skeleton,
     EmptyState,
     UploadProgress,
@@ -356,19 +356,17 @@ function WildlifeSightingTracker({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative">
-                <select
-                  value={s.confidence}
-                  onChange={(e) => updateSighting(i, { confidence: e.target.value as WildlifeSighting['confidence'] })}
-                  className="appearance-none rounded-sm bg-white border border-sky-200 pl-2.5 pr-7 py-1.5 text-xs font-medium text-neutral-700 focus:outline-none focus:ring-2 focus:ring-sky-400 cursor-pointer"
-                  aria-label={`Confidence for ${s.species_name}`}
-                >
-                  {CONFIDENCE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-                <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
-              </div>
+              {/* Shared Dropdown primitive (adopt-and-restyle). Keeps the sky
+                  hairline of the sighting sub-form via triggerClassName. */}
+              <Dropdown
+                value={s.confidence}
+                onChange={(v) => updateSighting(i, { confidence: v as WildlifeSighting['confidence'] })}
+                options={CONFIDENCE_OPTIONS}
+                placeholder="Confidence"
+                size="sm"
+                className="w-auto"
+                triggerClassName="border-sky-200 hover:border-sky-300"
+              />
               <input
                 type="text"
                 placeholder="Scientific name (optional)"
