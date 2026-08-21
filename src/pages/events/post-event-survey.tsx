@@ -232,7 +232,9 @@ export default function PostEventSurveyPage() {
   const isLoading = eventLoading || surveyLoading || attendanceLoading
   const showLoading = useDelayedLoading(isLoading)
 
-  if (showLoading) {
+  // Raw isLoading folded into the guard so the shell owns the whole in-flight
+  // window - otherwise `!event` flashes "Event not found" during the first ~1s.
+  if (showLoading || isLoading) {
     return (
       <Page swipeBack header={<Header title="Survey" back />}>
         <div className="p-4 space-y-4">

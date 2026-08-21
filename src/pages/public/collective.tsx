@@ -153,19 +153,24 @@ export default function PublicCollectivePage() {
   })
   const showLoading = useDelayedLoading(isLoading)
 
-  /* ── Loading ── */
-  if (showLoading) {
+  /* ── Loading ── (raw isLoading folded in so the shell owns the whole
+     in-flight window; the error/not-found branch below only runs once the
+     query has settled, so an error still reaches its real branch) */
+  if (showLoading || isLoading) {
     return (
       <div className="min-h-dvh bg-white">
         <div className="h-56 animate-pulse bg-moss-100" />
-        <div className="mx-auto max-w-2xl p-6 space-y-4">
-          <Skeleton variant="title" />
-          <Skeleton variant="text" count={3} />
+        <div className="mx-auto max-w-2xl p-6 space-y-6">
+          <div className="space-y-4">
+            <Skeleton variant="title" />
+            <Skeleton variant="text" count={3} />
+          </div>
+          <Skeleton variant="list-item" count={4} />
         </div>
       </div>
     )
   }
-  /* ── Error ── */
+  /* ── Error / not found ── */
   if (error || !collective) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-moss-50 to-white p-6 text-center">
