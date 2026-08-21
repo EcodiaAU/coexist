@@ -4,7 +4,6 @@ import { motion, useReducedMotion, useInView } from 'framer-motion'
 import { useParallaxLayers } from '@/hooks/use-parallax-scroll'
 import {
     ChevronRight,
-    ChevronDown,
     Calendar,
     Users,
     TreePine,
@@ -36,6 +35,7 @@ import type { MyCollectiveSummary } from '@/hooks/use-home-feed'
 import { useNationalImpact, useCollectiveImpact } from '@/hooks/use-impact'
 import type { CanonicalImpact } from '@/hooks/use-impact'
 import { usePendingSurveys } from '@/hooks/use-auto-survey'
+import { Dropdown } from '@/components/dropdown'
 import {
     Page, Button,
     CheckInSheet,
@@ -1079,19 +1079,22 @@ function UpdatesSection({ rm }: { rm: boolean }) {
 function HomeImpactSection({
   collectives,
   rm,
-  showCollectiveToggle,
 }: {
   collectives: MyCollectiveSummary[]
   rm: boolean
-  showCollectiveToggle?: boolean
 }) {
-  const hasCollectives = collectives.length > 0 || !!showCollectiveToggle
-  const hasMultiple = collectives.length > 1
   const [scope, setScope] = useState<'national' | 'collective'>('national')
   const [selectedCollectiveId, setSelectedCollectiveId] = useState<string | undefined>(collectives[0]?.id)
-  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [timeRange, setTimeRange] = useState<'all-time' | 'current-year'>('all-time')
-  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Scope switcher options: National + each of the user's collectives, rendered
+  // as a single-select on the shared Dropdown primitive (this was a hand-rolled
+  // pill toggle + outside-click menu before the 2026-08-21 UI-primitives rollout).
+  const scopeOptions = [
+    { value: 'national', label: 'National', icon: <Globe size={13} /> },
+    ...collectives.map((c) => ({ value: c.id, label: c.name, icon: <MapPin size={13} /> })),
+  ]
+  const scopeValue = scope === 'national' ? 'national' : selectedCollectiveId
 
   // Set default collective once data loads (for staff whose initial list is empty)
   useEffect(() => {
@@ -1099,18 +1102,6 @@ function HomeImpactSection({
       setSelectedCollectiveId(collectives[0].id)
     }
   }, [collectives, selectedCollectiveId])
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!dropdownOpen) return
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [dropdownOpen])
 
   const activeCollectiveId = scope === 'collective' ? selectedCollectiveId : undefined
   const selectedCollective = collectives.find((c) => c.id === selectedCollectiveId)
@@ -1166,76 +1157,36 @@ function HomeImpactSection({
               scaling down and end up hitting the right side of the green outter
               card". gap-y-2 keeps vertical breathing room when wrapped. */}
           <div className="flex items-center gap-x-2 gap-y-2 mb-6 flex-wrap min-w-0">
-            {/* Scope toggle: National / Collective (with dropdown if multiple) */}
-            <div className="flex rounded-full bg-[#f4f2ec]/15 p-0.5">
-              <button
-                type="button"
-                onClick={() => setScope('national')}
-                className={cn(
-                  'px-3.5 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
-                  scope === 'national'
-                    ? 'bg-white/90 text-primary-900 shadow-sm'
-                    : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
-                )}
-              >
-                <Globe size={11} className="inline mr-1 -mt-0.5" />
-                National
-              </button>
-              {hasCollectives && (
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (scope !== 'collective') {
-                        setScope('collective')
-                        if (hasMultiple) setDropdownOpen(true)
-                      } else if (hasMultiple) {
-                        setDropdownOpen((o) => !o)
-                      }
-                    }}
-                    className={cn(
-                      'px-3.5 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none flex items-center gap-1 max-w-[160px]',
-                      scope === 'collective'
-                        ? 'bg-white/90 text-primary-900 shadow-sm'
-                        : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
-                    )}
-                  >
-                    <MapPin size={11} className="-mt-0.5 shrink-0" />
-                    <span className="truncate">
-                      {hasMultiple && scope === 'collective' && selectedCollective
-                        ? selectedCollective.name
-                        : 'Collective'}
-                    </span>
-                    {hasMultiple && <ChevronDown size={11} className={cn('shrink-0 transition-transform duration-200', dropdownOpen && 'rotate-180')} />}
-                  </button>
-
-                  {/* Dropdown for multiple collectives */}
-                  {hasMultiple && dropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1.5 min-w-[180px] max-h-[240px] overflow-y-auto rounded-sm bg-white shadow-sm border border-neutral-100 z-50">
-                      {collectives.map((c) => (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedCollectiveId(c.id)
-                            setScope('collective')
-                            setDropdownOpen(false)
-                          }}
-                          className={cn(
-                            'w-full px-4 py-2.5 text-left text-xs font-medium transition-colors duration-100 cursor-pointer',
-                            c.id === selectedCollectiveId
-                              ? 'bg-primary-50 text-primary-800 font-semibold'
-                              : 'text-neutral-700 hover:bg-neutral-50',
-                          )}
-                        >
-                          {c.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            {/* Scope switcher: National + collectives on the shared Dropdown
+                primitive (single-select). Was a hand-rolled pill toggle plus an
+                outside-click menu before the 2026-08-21 UI-primitives rollout. */}
+            {scopeOptions.length > 1 ? (
+              <Dropdown
+                options={scopeOptions}
+                value={scopeValue}
+                onChange={(v) => {
+                  if (v === 'national') {
+                    setScope('national')
+                  } else {
+                    setSelectedCollectiveId(v)
+                    setScope('collective')
+                  }
+                }}
+                tone="dark"
+                size="sm"
+                className="w-auto"
+                triggerClassName="h-11 max-w-[200px]"
+              />
+            ) : (
+              /* No collectives to scope to: a static National pill, matching the
+                 prior no-collective look exactly. */
+              <div className="flex rounded-full bg-[#f4f2ec]/15 p-0.5">
+                <span className="px-3.5 min-h-11 flex items-center rounded-full text-[11px] font-semibold bg-white/90 text-primary-900 shadow-sm select-none whitespace-nowrap">
+                  <Globe size={11} className="inline mr-1 -mt-0.5" />
+                  National
+                </span>
+              </div>
+            )}
 
             {/* Time range toggle */}
             <div className="flex rounded-full bg-[#f4f2ec]/15 p-0.5">
@@ -1392,7 +1343,7 @@ export default function HomePage() {
   const shouldReduceMotion = useReducedMotion()
   const rm = !!shouldReduceMotion
   const queryClient = useQueryClient()
-  const { profile, user, isStaff } = useAuth()
+  const { profile, user } = useAuth()
 
   const myCollective = useMyCollective()
   const myCollectives = useMyCollectives()
@@ -1512,7 +1463,6 @@ export default function HomePage() {
             <HomeImpactSection
               collectives={myCollectives.data ?? []}
               rm={rm}
-              showCollectiveToggle={isStaff || (myCollectives.data ?? []).length > 1}
             />
 
             {/* 6. Donate + Shop CTA cards */}
