@@ -35,6 +35,18 @@ describe('isBenignNavigatorLockAbort', () => {
     ).toBe(true)
   })
 
+  // COEXIST-J live wording (Chrome >=142, no stack frames): when auth-js steals a
+  // held lock with {steal:true}, the displaced holder's AbortSignal rejects with
+  // this exact DOMException message. Frameless unhandledrejection, so only the
+  // message string can classify it. Sentry issue 7616268242: 3 events, 0 users.
+  it("drops the frameless Chrome steal-abort 'Lock broken by another request with the steal option'", () => {
+    expect(
+      isBenignNavigatorLockAbort(
+        ev([{ type: 'AbortError', value: "Lock broken by another request with the 'steal' option." }]),
+      ),
+    ).toBe(true)
+  })
+
   it('drops an error flagged via isAcquireTimeout signature in the message', () => {
     expect(
       isBenignNavigatorLockAbort(

@@ -125,6 +125,17 @@
         // recovery stands down, and the overlay paints as before.
         var CHUNK_ERR = /Importing a module script failed|dynamically imported module|Loading chunk|Unable to preload CSS/i;
         var CHUNK_GUARD_KEY = 'coexist-chunk-reload-attempted';
+        // COEXIST-J: a benign @supabase/auth-js lock-steal recovery. auth-js drives
+        // token refresh through navigator.locks and recovers a stuck lock with
+        // {steal:true}; the displaced holder's AbortSignal rejects with Chromium's
+        // "Lock broken by another request with the 'steal' option." (older wordings
+        // below). On an authed deep route it can fire as an unhandledrejection inside
+        // the 5s boot window and before __APP_MOUNTED - slipping past BOTH paint
+        // guards - which would paint the diagnostic overlay over a working app (the
+        // same failure the post-mount/5s guards exist to prevent). It is not a boot
+        // failure: log it, never paint. Sentry drops it at beforeSend too
+        // (src/lib/sentry.tsx LOCK_SIGNATURE). Sentry issue 7616268242.
+        var BENIGN_LOCK = /Navigator LockManager|navigatorLock|LockAcquireTimeout|another request stole it|Lock broken by another request/i;
         function chunkRecover(payload) {
           try {
             var msg = typeof payload === 'string' ? payload : (payload && payload.message) || '';
@@ -137,6 +148,10 @@
         }
         function paint(label, payload) {
           if (chunkRecover(payload)) return;
+          try {
+            var lockMsg = typeof payload === 'string' ? payload : (payload && (payload.message || payload.name)) || '';
+            if (BENIGN_LOCK.test(lockMsg)) { try { console.error('[boot-error:benign-lock-skip]', label, lockMsg); } catch (e) { /* ignore */ } return; }
+          } catch (e) { /* fall through to normal handling */ }
           var headForLog = '';
           try {
             if (typeof payload === 'string') headForLog = payload;
