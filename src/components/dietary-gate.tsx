@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useCallback } from 'react'
 import { UtensilsCrossed } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
@@ -7,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { useToast } from '@/components/toast'
+import { Modal } from '@/components/modal'
 import {
   DIETARY_GATE_QUERY_KEY,
   NO_DIETARY_SENTINEL,
@@ -48,7 +48,6 @@ export function DietaryGate() {
   const [medical, setMedical] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [viewport, setViewport] = useState<{ height: number; offsetTop: number } | null>(null)
 
   const dietaryEmpty = !(profile?.dietary_requirements ?? '').trim()
   const medicalEmpty = !(profile?.medical_requirements ?? '').trim()
@@ -106,30 +105,10 @@ export function DietaryGate() {
   const needMedical = !!eligibility?.ticketed && medicalEmpty
   const show = candidate && (needDietary || needMedical)
 
-  // Lock body scroll while the gate is up.
-  useEffect(() => {
-    if (!show) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
-  }, [show])
-
-  // Keyboard-aware sizing via the visual viewport, same mechanism as
-  // PhoneGate: anchor the sheet to the visible area above the on-screen
-  // keyboard so the fields and buttons are never occluded.
-  useEffect(() => {
-    if (!show) return
-    const vv = window.visualViewport
-    if (!vv) return
-    const sync = () => setViewport({ height: vv.height, offsetTop: vv.offsetTop })
-    sync()
-    vv.addEventListener('resize', sync)
-    vv.addEventListener('scroll', sync)
-    return () => {
-      vv.removeEventListener('resize', sync)
-      vv.removeEventListener('scroll', sync)
-    }
-  }, [show])
+  // Body scroll-lock and keyboard avoidance are now owned by the Modal
+  // primitive (Vaul + `keyboardAware` via useKeyboardHeight - the canonical
+  // Capacitor signal that also works under Keyboard.resize:'none', which the
+  // old visualViewport-only path missed on native).
 
   const handleSave = useCallback(async () => {
     if (!user) return
@@ -168,27 +147,21 @@ export function DietaryGate() {
     }
   }, [user, needDietary, needMedical, dietary, medical, refreshProfile, toast])
 
-  if (!show) return null
-
-  return createPortal(
-    <div data-eos-id="src/components/dietary-gate.tsx#0" data-eos-v="2"
-      className="fixed left-0 right-0 z-[200] flex items-end sm:items-center justify-center"
-      style={
-        viewport
-          ? { top: viewport.offsetTop, height: viewport.height }
-          : { top: 0, height: '100dvh' }
+  // Blocking gate: `dismissible={false}` = no backdrop tap, no Escape, no drag.
+  return (
+    <Modal
+      open={show}
+      onClose={() => {}}
+      dismissible={false}
+      keyboardAware
+      ariaLabel={
+        needDietary && needMedical
+          ? 'A couple of details for your event'
+          : needMedical
+            ? 'Any medical needs or allergies?'
+            : 'Any dietary requirements?'
       }
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="dietary-gate-title"
     >
-      {/* Non-dismissable backdrop - no onClick, no Escape handler. */}
-      <div data-eos-id="src/components/dietary-gate.tsx#1" className="fixed inset-0 bg-black/60" aria-hidden="true" />
-
-      <div data-eos-id="src/components/dietary-gate.tsx#2"
-        className="relative w-full sm:max-w-md max-h-full overflow-y-auto bg-surface-0 rounded-t-md sm:rounded-md shadow-sm flex flex-col"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.5rem)' }}
-      >
         <div data-eos-id="src/components/dietary-gate.tsx#3" className="px-6 pt-7 pb-6 space-y-5">
           <div data-eos-id="src/components/dietary-gate.tsx#4" className="flex flex-col items-center text-center gap-3">
             <div data-eos-id="src/components/dietary-gate.tsx#5" className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
@@ -263,8 +236,6 @@ export function DietaryGate() {
             Save and continue
           </Button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </Modal>
   )
 }
