@@ -79,9 +79,13 @@ interface ProfileModalProps {
   userId: string | null
   open: boolean
   onClose: () => void
+  /** Optional admin controls rendered inside the same sheet, below the profile.
+   *  Only the admin users page passes this; other consumers (chat, event day)
+   *  leave it undefined so their profile view is unchanged. */
+  adminSection?: ReactNode
 }
 
-export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
+export function ProfileModal({ userId, open, onClose, adminSection }: ProfileModalProps) {
   const { data: profile, isLoading, isError, isFetched } = useProfile(userId ?? undefined)
   const showLoading = useDelayedLoading(isLoading && !!userId)
   const { data: collectives } = useProfileCollectives(userId ?? undefined)
@@ -376,6 +380,8 @@ export function ProfileModal({ userId, open, onClose }: ProfileModalProps) {
           })()}
         </motion.div>
       )}
+
+      {adminSection}
     </BottomSheet>
   )
 }
