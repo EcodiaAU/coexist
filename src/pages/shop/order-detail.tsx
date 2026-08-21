@@ -99,12 +99,15 @@ export default function OrderDetailPage() {
     }
   }, [orderId, returnReason, requestReturn, toast])
 
-  if (showLoading) {
+  // Fold raw isLoading into the guard so the shell owns the whole in-flight
+  // window - otherwise `!order` fires during the first ~1s and flashes
+  // "Order not found" before the query has resolved.
+  if (showLoading || isLoading) {
     return (
       <Page swipeBack header={<Header title="Order" back />}>
-        <div className="py-4 space-y-3">
-          <Skeleton variant="title" />
-          <Skeleton variant="text" count={4} />
+        <div className="py-4 space-y-4">
+          <Skeleton variant="title" className="w-1/2" />
+          <Skeleton variant="list-item" count={3} />
           <Skeleton variant="card" />
         </div>
       </Page>

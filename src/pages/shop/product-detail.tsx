@@ -254,7 +254,22 @@ function Divider() {
 
 function ProductDetailSkeleton() {
   return (
-    <Page swipeBack header={<Header title="" back />}>
+    <Page
+      swipeBack
+      header={<Header title="" back />}
+      footer={
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex items-center justify-center gap-3 sm:justify-start">
+            <Skeleton variant="text" className="w-20 h-6" />
+            <Skeleton variant="text" className="w-24 h-11 rounded-sm" />
+          </div>
+          <div className="flex gap-2 flex-1">
+            <Skeleton variant="text" className="flex-1 h-11 rounded-sm" />
+            <Skeleton variant="text" className="flex-1 h-11 rounded-sm" />
+          </div>
+        </div>
+      }
+    >
       <div className="-mx-4 lg:mx-0">
         <Skeleton variant="image" className="rounded-none lg:rounded-md aspect-[4/5] sm:aspect-square" />
       </div>
@@ -460,7 +475,9 @@ export default function ProductDetailPage() {
     }
   }, [product, activeVariant, quantity, addItem, navigate, reserve, toast])
 
-  if (showLoading) return <ProductDetailSkeleton />
+  // Show the shell for the whole in-flight window, not just after the delay -
+  // otherwise `!product` fires during the first ~1s and flashes "not found".
+  if (showLoading || isLoading) return <ProductDetailSkeleton />
   if (!product) {
     return (
       <Page swipeBack header={<Header title="Product" back />}>
