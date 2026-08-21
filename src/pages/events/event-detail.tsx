@@ -86,6 +86,7 @@ import { cn } from '@/lib/cn'
 import { attendeeName } from '@/lib/attendee-name'
 import { parseLocationPoint } from '@/lib/geo'
 import { isEventSoldOut } from '@/lib/event-sold-out'
+import { computeSpotsTaken } from '@/lib/event-capacity'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { IssueTicketSheet } from '@/components/issue-ticket-sheet'
@@ -665,7 +666,19 @@ export default function EventDetailPage() {
   const { data: geocodedPos } = useGeocodeAddress(event?.address, !savedPos)
   const mapPos = savedPos ?? geocodedPos ?? null
   const past = event ? isPastEvent(event) : false
-  const isAtCapacity = event?.capacity ? event.registration_count >= event.capacity : false
+  // Canonical seats filled: for a ticketed event this is valid tickets
+  // (event.spots_taken, the same buying-layer count the leader sales panel
+  // shows), for a non-ticketed event it is going registrations. This keeps the
+  // capacity banner in agreement with the ticket-sales panel instead of showing
+  // the RSVP count (which for a ticketed event is a different population).
+  const spotsFilled = event
+    ? computeSpotsTaken({
+        isTicketed: event.is_ticketed ?? false,
+        ticketSpotsTaken: event.spots_taken,
+        registrationsGoing: event.registration_count,
+      })
+    : 0
+  const isAtCapacity = event?.capacity ? spotsFilled >= event.capacity : false
 
   // Event is "active" if it started (or starts within the check-in window) and hasn't ended
   const rawCheckinWindow = (event as unknown as Record<string, unknown>)?.checkin_window_minutes as number | null | undefined
@@ -697,14 +710,14 @@ export default function EventDetailPage() {
 
   const capacityText = useMemo(() => {
     if (!event) return ''
-    if (!event.capacity) return `${event.registration_count} going`
-    return `${event.registration_count}/${event.capacity} spots filled`
-  }, [event])
+    if (!event.capacity) return `${spotsFilled} going`
+    return `${spotsFilled}/${event.capacity} spots filled`
+  }, [event, spotsFilled])
 
   const capacityPercent = useMemo(() => {
     if (!event?.capacity) return 0
-    return Math.min(100, (event.registration_count / event.capacity) * 100)
-  }, [event])
+    return Math.min(100, (spotsFilled / event.capacity) * 100)
+  }, [event, spotsFilled])
 
   const handleRegister = useCallback(() => {
     if (!event) return

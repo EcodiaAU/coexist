@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { queueOfflineAction } from '@/lib/offline-sync'
 import { DIETARY_GATE_QUERY_KEY } from '@/lib/dietary'
+import { SPOT_TAKING_TICKET_STATUSES } from '@/lib/event-capacity'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -603,8 +604,13 @@ export function useTicketSalesSummary(eventId: string | undefined) {
       let totalCheckedIn = 0
       const byType: Record<string, { sold: number; revenue: number }> = {}
 
+      // "Sold" = seats a valid ticket occupies (confirmed + checked_in), the
+      // canonical spot-taking set from @/lib/event-capacity. The event banner
+      // renders the same count (event.spots_taken via the event_spots_taken
+      // RPC) for a ticketed event, so this panel and the banner cannot diverge.
+      const spotTaking = new Set<string>(SPOT_TAKING_TICKET_STATUSES)
       for (const t of tickets) {
-        if (t.status === 'confirmed' || t.status === 'checked_in') {
+        if (spotTaking.has(t.status)) {
           totalRevenue += t.price_cents
           totalSold += t.quantity
           if (t.status === 'checked_in') totalCheckedIn += t.quantity

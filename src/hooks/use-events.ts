@@ -33,7 +33,14 @@ export interface EventWithCollective extends Event {
 
 export interface EventDetailData extends Event {
   collectives: Pick<Collective, 'id' | 'name' | 'cover_image_url' | 'slug' | 'region' | 'state' | 'timezone'> | null
+  /** Going registrations (RSVP layer). Drives "spots filled" for non-ticketed events. */
   registration_count: number
+  /**
+   * Canonical seats occupied (event_spots_taken RPC): valid tickets for a
+   * ticketed event, else going registrations. This is what the capacity banner
+   * must show so it agrees with the leader ticket-sales panel.
+   */
+  spots_taken: number
   user_registration: EventRegistration | null
   attendees: Pick<Profile, 'id' | 'display_name' | 'first_name' | 'last_name' | 'avatar_url'>[]
   impact: EventImpact | null
@@ -322,12 +329,19 @@ export function useEventDetail(eventId: string | undefined) {
       if (!event) return null
 
       // Parallelize all independent queries
-      const [regCountRes, userRegRes, attendeeRes, impactRes, collabRes, inviteRes] = await Promise.all([
+      const [regCountRes, spotsRes, userRegRes, attendeeRes, impactRes, collabRes, inviteRes] = await Promise.all([
         // Total going count via SECURITY DEFINER RPC (RLS-independent), so it
         // stays accurate for non-registrants and still counts profile-hidden
         // members, even though the row-select policy now hides both from the
         // per-row reads below.
         supabase.rpc('event_going_count', { p_event_id: eventId }),
+        // Canonical spots-taken via SECURITY DEFINER RPC. For a ticketed event
+        // this is valid tickets (confirmed + checked_in), which is what the
+        // leader sales panel also counts, so the banner and the sales panel can
+        // never diverge. For a non-ticketed event it equals the going count.
+        // SECURITY DEFINER because event_tickets SELECT is RLS-restricted to
+        // own/staff/admin, so a member could not aggregate it client-side.
+        supabase.rpc('event_spots_taken', { p_event_id: eventId }),
         // User's registration
         user
           ? supabase
@@ -372,6 +386,7 @@ export function useEventDetail(eventId: string | undefined) {
       return {
         ...event,
         registration_count: (regCountRes.data as number | null) ?? 0,
+        spots_taken: (spotsRes.data as number | null) ?? 0,
         user_registration: userRegRes.data as EventRegistration | null,
         attendees,
         impact: impactRes.data,
@@ -414,9 +429,13 @@ export function prefetchEventDetail(
       // because prefetch writes the SAME cache key ['event', eventId, userId]
       // with a 2min staleTime, that wrong count would win on the home "next
       // event" swipe path (useEventDetail sees fresh cache and does not refetch).
-      const { data: regCount } = await supabase.rpc('event_going_count', {
-        p_event_id: eventId,
-      })
+      const [{ data: regCount }, { data: spotsTaken }] = await Promise.all([
+        supabase.rpc('event_going_count', { p_event_id: eventId }),
+        // Canonical spots-taken (ticketed -> valid tickets, else going count),
+        // matching useEventDetail so the prefetched cache entry renders the same
+        // banner number the live fetch would.
+        supabase.rpc('event_spots_taken', { p_event_id: eventId }),
+      ])
 
       const { data: userRegData } = await supabase
         .from('event_registrations')
@@ -462,6 +481,7 @@ export function prefetchEventDetail(
       return {
         ...event,
         registration_count: (regCount as number | null) ?? 0,
+        spots_taken: (spotsTaken as number | null) ?? 0,
         user_registration: userRegData,
         attendees,
         impact,
