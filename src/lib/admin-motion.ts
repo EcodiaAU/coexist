@@ -85,6 +85,33 @@ export const expandCollapse: Variants = {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Floating dock enter/exit (AnimatePresence)                          */
+/*                                                                     */
+/*  Slide up + fade on mount, reverse on unmount. Positioning (fixed +  */
+/*  any layout translate such as md:-translate-x-1/2 centering) must    */
+/*  live on a STATIC wrapper: framer writes the transform inline for    */
+/*  `y`, which would otherwise clobber a Tailwind translate class.      */
+/*  Always defined (even reduced) so AnimatePresence exit still runs;   */
+/*  reduced-motion degrades to a short opacity fade with no slide.      */
+/* ------------------------------------------------------------------ */
+
+export const dockIn = (reduced: boolean): Variants => ({
+  hidden: { opacity: 0, y: reduced ? 0 : 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: reduced
+      ? { duration: 0.15 }
+      : { type: 'spring', stiffness: 380, damping: 32, mass: 0.8 },
+  },
+  exit: {
+    opacity: 0,
+    y: reduced ? 0 : 16,
+    transition: { duration: 0.18, ease: [0.4, 0, 1, 1] },
+  },
+})
+
+/* ------------------------------------------------------------------ */
 /*  Tab-switch cross-fade (AnimatePresence mode="wait")                */
 /* ------------------------------------------------------------------ */
 
@@ -118,6 +145,7 @@ export function motionVariants(reducedMotion: boolean) {
     fadeUp: reducedMotion ? undefined : fadeUp,
     fadeOnly: reducedMotion ? undefined : fadeOnly,
     expandCollapse: reducedMotion ? undefined : expandCollapse,
+    dockIn: dockIn(reducedMotion),
   } as const
 }
 

@@ -17,7 +17,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { Database } from '@/types/database.types'
-import { motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import {
   CalendarDays, Users, UserCheck, Repeat, Clock, Leaf, TreePine, Trash2,
@@ -869,21 +869,34 @@ export default function AdminInsightsPage() {
           small screens) via bottom-24, then drops to bottom-6 from md
           where the layout uses the sidebar and there is no tab bar.
           Extra safe-area padding clears the home indicator. */}
-      {selected.size > 0 && (
-        <div data-eos-id="src/pages/admin/insights.tsx#200"
-          className="fixed bottom-[88px] md:bottom-6 left-3 right-3 md:left-1/2 md:right-auto md:-translate-x-1/2 z-40 flex items-center justify-between md:justify-start gap-2 px-3 py-2.5 rounded-md bg-white text-neutral-900 ring-1 ring-neutral-200 shadow-sm"
-          style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}
-        >
-          <span data-eos-id="src/pages/admin/insights.tsx#201" data-eos-var="selected.size" data-eos-var-label="Size" data-eos-var-scope="prop" className="text-sm font-semibold tabular-nums text-neutral-900 whitespace-nowrap shrink-0 pl-1">{selected.size} selected</span>
-          <div data-eos-id="src/pages/admin/insights.tsx#202" className="flex items-center gap-1.5 shrink-0">
-            <button data-eos-id="src/pages/admin/insights.tsx#203" type="button" onClick={copySelected} className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-semibold px-3 py-2 rounded-sm bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all cursor-pointer">
-              {copied === 'sel' ? <Check data-eos-id="src/pages/admin/insights.tsx#204" size={15} /> : <Copy data-eos-id="src/pages/admin/insights.tsx#205" size={15} />}<span data-eos-id="src/pages/admin/insights.tsx#206">{copied === 'sel' ? 'Copied' : 'Copy table'}</span>
-            </button>
-            <button data-eos-id="src/pages/admin/insights.tsx#207" type="button" onClick={csvSelected} aria-label="Download CSV" className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium px-3 py-2 rounded-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer"><Download data-eos-id="src/pages/admin/insights.tsx#208" size={15} />CSV</button>
-            <button data-eos-id="src/pages/admin/insights.tsx#209" type="button" onClick={clearSel} aria-label="Clear selection" className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 active:scale-[0.98] transition-all cursor-pointer shrink-0"><X data-eos-id="src/pages/admin/insights.tsx#210" size={16} /></button>
+      {/* AnimatePresence drives the enter/exit; the static wrapper owns fixed
+          positioning + md centering so the animation transform (framer `y`)
+          never clobbers the `md:-translate-x-1/2` centering translate. */}
+      <AnimatePresence>
+        {selected.size > 0 && (
+          <div
+            className="fixed bottom-[88px] md:bottom-6 left-3 right-3 md:left-1/2 md:right-auto md:-translate-x-1/2 z-40 pointer-events-none"
+            style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          >
+            <motion.div data-eos-id="src/pages/admin/insights.tsx#200"
+              variants={v.dockIn}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="pointer-events-auto flex items-center justify-between md:justify-start gap-2 px-3 py-2.5 rounded-md bg-white text-neutral-900 ring-1 ring-neutral-200 shadow-sm"
+            >
+              <span data-eos-id="src/pages/admin/insights.tsx#201" data-eos-var="selected.size" data-eos-var-label="Size" data-eos-var-scope="prop" className="text-sm font-semibold tabular-nums text-neutral-900 whitespace-nowrap shrink-0 pl-1">{selected.size} selected</span>
+              <div data-eos-id="src/pages/admin/insights.tsx#202" className="flex items-center gap-1.5 shrink-0">
+                <button data-eos-id="src/pages/admin/insights.tsx#203" type="button" onClick={copySelected} className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-semibold px-3 py-2 rounded-sm bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all cursor-pointer">
+                  {copied === 'sel' ? <Check data-eos-id="src/pages/admin/insights.tsx#204" size={15} /> : <Copy data-eos-id="src/pages/admin/insights.tsx#205" size={15} />}<span data-eos-id="src/pages/admin/insights.tsx#206">{copied === 'sel' ? 'Copied' : 'Copy table'}</span>
+                </button>
+                <button data-eos-id="src/pages/admin/insights.tsx#207" type="button" onClick={csvSelected} aria-label="Download CSV" className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium px-3 py-2 rounded-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer"><Download data-eos-id="src/pages/admin/insights.tsx#208" size={15} />CSV</button>
+                <button data-eos-id="src/pages/admin/insights.tsx#209" type="button" onClick={clearSel} aria-label="Clear selection" className="p-2 rounded-sm text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 active:scale-[0.98] transition-all cursor-pointer shrink-0"><X data-eos-id="src/pages/admin/insights.tsx#210" size={16} /></button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
