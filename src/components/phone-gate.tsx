@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { Phone } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { useAuth } from '@/hooks/use-auth'
@@ -7,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { useToast } from '@/components/toast'
+import { Modal } from '@/components/modal'
 import { isValidPhone } from '@/lib/validation'
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height'
 
@@ -45,7 +45,6 @@ export function PhoneGate() {
   // a visualViewport fallback for web/Android). BottomSheet and chat-room
   // already offset with it; the gate now does the same.
   const keyboardHeight = useKeyboardHeight()
-  const cardRef = useRef<HTMLDivElement | null>(null)
   const [inputFocused, setInputFocused] = useState(false)
   const blurTimer = useRef<number | undefined>(undefined)
 
@@ -83,26 +82,10 @@ export function PhoneGate() {
     profile.onboarding_completed === true &&
     !(profile.phone ?? '').trim()
 
-  // Lock body scroll while the gate is up.
-  useEffect(() => {
-    if (!show) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
-  }, [show])
-
-  // When the keyboard opens the container above it can be shorter than the
-  // card; the card scrolls internally (overflow-y-auto) and defaults to its
-  // TOP, which would hide the field + Save at the bottom. Pin the scroll to
-  // the bottom so the interactive elements stay visible above the keypad.
-  useEffect(() => {
-    if (!show || keyboardInset <= 0) return
-    const raf = requestAnimationFrame(() => {
-      const card = cardRef.current
-      if (card) card.scrollTop = card.scrollHeight
-    })
-    return () => cancelAnimationFrame(raf)
-  }, [show, keyboardInset])
+  // Body scroll-lock is owned by the Modal primitive (Vaul). The whole sheet
+  // is lifted above the keypad by `keyboardInset` (passed to Modal below), so
+  // the field + Save button stay visible without an internal scroll-pin - the
+  // sheet content is short and fits above the keyboard once lifted.
 
   const handleSave = useCallback(async () => {
     if (!user) return
@@ -134,37 +117,20 @@ export function PhoneGate() {
     }
   }, [user, phone, refreshProfile, toast])
 
-  if (!show) return null
-
-  return createPortal(
-    <div data-eos-id="src/components/phone-gate.tsx#0" data-eos-v="2"
-      className="fixed left-0 right-0 top-0 z-[200] flex items-end sm:items-center justify-center"
-      // Lift the container's bottom edge above the keyboard. keyboardHeight
-      // comes from the Capacitor Keyboard plugin on native (the only signal
-      // that works with Keyboard.resize:'none', where visualViewport / dvh
-      // never change) and from visualViewport on web/Android. When the
-      // keyboard is closed this is bottom:0 = the previous full-screen gate.
-      // On web iOS Safari the hook reports 0, and Safari itself scrolls the
-      // focused field into view (verified iOS 26.5 sim), so no offset needed.
-      style={{ bottom: keyboardInset }}
-      data-phone-gate="kb-aware-v2"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="phone-gate-title"
+  // Blocking gate: `dismissible={false}` = no backdrop tap, no Escape, no drag.
+  // The Modal lifts the whole mobile sheet above the keypad via `keyboardInset`
+  // (the Capacitor plugin signal + estimate fallback computed above - the only
+  // path that works under Keyboard.resize:'none', where visualViewport / dvh
+  // never change; RCA 2026-07-06).
+  return (
+    <Modal
+      open={show}
+      onClose={() => {}}
+      dismissible={false}
+      keyboardInset={keyboardInset}
+      ariaLabel="Add your mobile number"
     >
-      {/* Non-dismissable backdrop - no onClick, no Escape handler. Covers the
-          whole layout viewport (including behind the keyboard). */}
-      <div data-eos-id="src/components/phone-gate.tsx#1" className="fixed inset-0 bg-black/60" aria-hidden="true" />
-
-      <div data-eos-id="src/components/phone-gate.tsx#2"
-        ref={cardRef}
-        className="relative w-full sm:max-w-md max-h-full overflow-y-auto bg-surface-0 rounded-t-md sm:rounded-md shadow-sm flex flex-col"
-        style={{
-          paddingBottom:
-            keyboardHeight > 0 ? '0.75rem' : 'max(env(safe-area-inset-bottom, 0px), 1.5rem)',
-        }}
-      >
-        <div data-eos-id="src/components/phone-gate.tsx#3" className="px-6 pt-7 pb-6 space-y-5">
+        <div data-eos-id="src/components/phone-gate.tsx#3" data-phone-gate="kb-aware-v3-modal" className="px-6 pt-7 pb-6 space-y-5">
           <div data-eos-id="src/components/phone-gate.tsx#4" className="flex flex-col items-center text-center gap-3">
             <div data-eos-id="src/components/phone-gate.tsx#5" className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
               <Phone data-eos-id="src/components/phone-gate.tsx#6" size={22} className="text-primary-800" />
@@ -211,8 +177,6 @@ export function PhoneGate() {
             Save and continue
           </Button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </Modal>
   )
 }
