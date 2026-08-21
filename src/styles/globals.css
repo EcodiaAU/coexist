@@ -877,7 +877,7 @@ body.scanner-active .scanner-show {
   --border: var(--color-neutral-200);            /* #e5e5e5            */
   --input: var(--color-neutral-200);
   --ring: var(--color-primary-400);              /* #869e62 brand ring */
-  --radius: var(--radius-lg);                     /* 0.75rem           */
+  --radius: 0.75rem;                              /* literal = the app --radius-lg. NOT var(--radius-lg): that was circular with the @theme inline block below and invalidated the whole --radius-* scale (full-rectangles bug). */
 }
 
 /* shadcn v4 reads utilities (bg-background, text-muted-foreground, etc.) from
@@ -901,10 +901,12 @@ body.scanner-active .scanner-show {
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* NOTE: the app's own @theme block already defines --radius-sm/md/lg/xl/2xl
+     as literal values (0.375/0.5/0.75/1/1.25rem). Do NOT redefine them here:
+     the previous shadcn calc-overrides referenced var(--radius) which is itself
+     var(--radius-lg), a circular reference that invalidated the entire radius
+     scale and squared every rounded-* in the app. shadcn primitives use the
+     app's radius scale via the rounded-* utilities, which is what we want. */
 }
 
 /* shadcn base layer - default border + ring behaviour for adopted primitives.

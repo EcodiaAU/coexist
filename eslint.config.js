@@ -67,4 +67,13 @@ export default defineConfig([
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
+  {
+    // shadcn/ui primitives are generated leaf components that export the component
+    // plus its cva variants const from one file (export { Button, buttonVariants }).
+    // That re-export form trips react-refresh/only-export-components (its
+    // allowConstantExport option only recognises inline `export const`). Fast-refresh
+    // is irrelevant for these leaf primitives, so scope the rule off for the ui dir.
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ])
