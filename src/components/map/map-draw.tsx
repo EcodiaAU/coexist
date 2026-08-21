@@ -34,6 +34,52 @@ import 'leaflet-draw'
   return areaStr
 }
 
+/* leaflet-draw 1.0.4's L.Draw.Polyline._updateGuide (inherited by the polygon
+   tool this overlay enables) resolves the moving guide endpoint as
+     newPos = newPos || this._map.latLngToLayerPoint(this._currentLatLng)
+   _currentLatLng is only ever assigned inside _onMouseMove. A touch device
+   (iOS WKWebView) never fires mousemove, so after the first polygon vertex is
+   TAPPED _currentLatLng is still undefined. _onZoomEnd then calls _updateGuide()
+   with no argument on the next zoom (a programmatic setView/flyTo, a pinch, a
+   double-tap zoom), leaflet projects `undefined` and reads `.lat` deep in
+   project() -> "TypeError: undefined is not an object (evaluating 'e.lat')"
+   (Sentry COEXIST-Y 7661723303, iPhone14,2 / iOS 26.5.2, release coexist@1.0.0).
+   The DB-marker path was already coord-guarded in map-markers.tsx (commit
+   cc4f870b, 2026-08-10) yet the crash still fired: it is the draw-guide state,
+   not our marker data, that is undefined. Override with a strict-safe copy of
+   the same routine that bails when the endpoint or the anchor vertex cannot be
+   resolved to a real point, instead of projecting undefined. */
+interface DrawGuideCtx {
+  _markers: Array<{ getLatLng?: () => L.LatLng }> | null
+  _currentLatLng?: L.LatLng
+  _map: L.Map
+  _clearGuides: () => void
+  _drawGuide: (pointA: L.Point, pointB: L.Point) => void
+}
+
+;(L as unknown as {
+  Draw: { Polyline: { prototype: { _updateGuide: (this: DrawGuideCtx, newPos?: L.Point) => void } } }
+}).Draw.Polyline.prototype._updateGuide = function _updateGuide(this: DrawGuideCtx, newPos) {
+  const markerCount = this._markers ? this._markers.length : 0
+  if (markerCount === 0) return
+
+  // Endpoint: the caller-supplied point, else project the last known pointer
+  // position. On touch that position is never set, so bail rather than project
+  // undefined (the COEXIST-Y crash) - the guide line is a live drag nicety and
+  // simply not drawing it for one frame is invisible to the user.
+  const endpoint = newPos
+    ?? (this._currentLatLng ? this._map.latLngToLayerPoint(this._currentLatLng) : null)
+  if (!endpoint) return
+
+  // Anchor: the last placed vertex. Guard its latlng too so a partially
+  // constructed marker can never reach project() either.
+  const anchorLatLng = this._markers?.[markerCount - 1]?.getLatLng?.()
+  if (!anchorLatLng) return
+
+  this._clearGuides()
+  this._drawGuide(this._map.latLngToLayerPoint(anchorLatLng), endpoint)
+}
+
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
