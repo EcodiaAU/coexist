@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  Calendar, MapPin, Users, Filter,
+  Calendar, MapPin, Users, Clock, Tag,
   ArrowRight, ExternalLink, Search, X,
 } from 'lucide-react'
 import {
@@ -312,80 +312,94 @@ export default function ExplorePage() {
                       action={{ label: 'My Events', onClick: () => navigate('/events/mine') }}
                     />
 
-                    {/* Keyword search */}
-                    <div className="relative mb-3">
-                      <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                      <input
-                        type="search"
-                        inputMode="search"
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        placeholder="Search events by name or place"
-                        aria-label="Search events"
-                        className="w-full h-11 rounded-full bg-white ring-1 ring-neutral-200 pl-9 pr-9 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                      />
-                      {searchInput && (
-                        <button
-                          type="button"
-                          onClick={() => setSearchInput('')}
-                          aria-label="Clear search"
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-neutral-400 hover:bg-neutral-100 cursor-pointer select-none"
-                        >
-                          <X size={15} />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* When quick-filter chips */}
-                    <div className="flex gap-1.5 mb-3 overflow-x-auto hide-scrollbar -mx-1 px-1 py-1.5">
-                      {WHEN_OPTIONS.map((opt) => {
-                        const chipActive = whenFilter === opt.value
-                        return (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => setWhenFilter(opt.value)}
-                            aria-pressed={chipActive}
-                            className={cn(
-                              'shrink-0 min-h-9 px-3.5 rounded-full text-[13px] font-semibold transition-colors cursor-pointer select-none',
-                              chipActive
-                                ? 'bg-primary-600 text-white shadow-sm'
-                                : 'bg-white text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-50',
-                            )}
-                          >
-                            {opt.label}
-                          </button>
-                        )
-                      })}
-                    </div>
-
-                    {/* Type / state / collective filters */}
-                    <div className="flex flex-wrap items-center gap-2 mb-4">
-                      <Filter size={14} className="text-neutral-400 shrink-0" />
-                      <Dropdown
-                        value={activityFilter}
-                        onChange={(v) => setActivityFilter(v as ActivityType | '')}
-                        options={[{ value: '', label: 'All types' }, ...ACTIVITY_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
-                        placeholder="Filter by type"
-                        className="flex-1 min-w-[8rem]"
-                      />
-                      {stateOptions.length > 0 && (
-                        <Dropdown
-                          value={stateFilter}
-                          onChange={(v) => setStateFilter(v as string)}
-                          options={[{ value: '', label: 'All states' }, ...stateOptions.map((s) => ({ value: s, label: s }))]}
-                          placeholder="State"
-                          className="flex-1 min-w-[7rem]"
+                    {/* ── Search + filter pills ──
+                        One search row, then a single horizontal-scroll row of
+                        consistent filter pills. Each pill shows its live value,
+                        opens a menu (popover on desktop, sheet on mobile), and
+                        fills green when applied. Replaces the old three stacked
+                        rows (search + When chip strip + wrapping dropdown trio)
+                        that ate ~4 lines and wrapped awkwardly on phones. */}
+                    <div className="mb-4 space-y-2.5">
+                      {/* Keyword search */}
+                      <div className="relative">
+                        <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                        <input
+                          type="search"
+                          inputMode="search"
+                          value={searchInput}
+                          onChange={(e) => setSearchInput(e.target.value)}
+                          placeholder="Search events by name or place"
+                          aria-label="Search events"
+                          className="w-full h-11 rounded-full bg-white ring-1 ring-neutral-200 pl-10 pr-10 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
                         />
-                      )}
-                      <MultiSelect
-                        value={collectiveIds}
-                        onChange={setCollectiveIds}
-                        options={collectiveOptions}
-                        allLabel="All collectives"
-                        countLabel={(n) => `${n} collectives`}
-                        className="flex-1 min-w-[9rem]"
-                      />
+                        {searchInput && (
+                          <button
+                            type="button"
+                            onClick={() => setSearchInput('')}
+                            aria-label="Clear search"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-neutral-400 hover:bg-neutral-100 cursor-pointer select-none"
+                          >
+                            <X size={15} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Filter pills */}
+                      <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar -mx-4 px-4 lg:-mx-6 lg:px-6 py-0.5">
+                        <Dropdown
+                          size="sm"
+                          leadingIcon={<Clock size={14} />}
+                          value={whenFilter}
+                          onChange={(v) => setWhenFilter(v as DiscoverWhen)}
+                          options={WHEN_OPTIONS}
+                          placeholder="Any time"
+                          active={whenFilter !== 'any'}
+                          className="w-auto shrink-0"
+                        />
+                        <Dropdown
+                          size="sm"
+                          leadingIcon={<Tag size={14} />}
+                          value={activityFilter}
+                          onChange={(v) => setActivityFilter(v as ActivityType | '')}
+                          options={[{ value: '', label: 'All types' }, ...ACTIVITY_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
+                          placeholder="All types"
+                          active={!!activityFilter}
+                          className="w-auto shrink-0"
+                        />
+                        {stateOptions.length > 0 && (
+                          <Dropdown
+                            size="sm"
+                            leadingIcon={<MapPin size={14} />}
+                            value={stateFilter}
+                            onChange={(v) => setStateFilter(v as string)}
+                            options={[{ value: '', label: 'All states' }, ...stateOptions.map((s) => ({ value: s, label: s }))]}
+                            placeholder="All states"
+                            active={!!stateFilter}
+                            className="w-auto shrink-0"
+                          />
+                        )}
+                        <MultiSelect
+                          size="sm"
+                          leadingIcon={<Users size={14} />}
+                          value={collectiveIds}
+                          onChange={setCollectiveIds}
+                          options={collectiveOptions}
+                          allLabel="All collectives"
+                          countLabel={(n) => `${n} collectives`}
+                          active={collectiveIds.length > 0}
+                          className="w-auto shrink-0"
+                        />
+                        {hasActiveFilters && (
+                          <button
+                            type="button"
+                            onClick={clearFilters}
+                            aria-label="Clear all filters"
+                            className="shrink-0 inline-flex items-center gap-1 h-9 px-3 rounded-full text-[13px] font-semibold text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer select-none"
+                          >
+                            <X size={14} /> Clear
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {discoverLoading ? (
