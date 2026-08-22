@@ -15,6 +15,7 @@ import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { Skeleton } from '@/components/skeleton'
 import { TabBar } from '@/components/tab-bar'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useEmailMarketingStats } from './shared'
 import { QuickSendTab } from './quick-send-tab'
 import { CampaignsTab } from './campaigns-tab'
@@ -38,16 +39,20 @@ export default function AdminEmailPage() {
   const [activeTab, setActiveTab] = useState('quick-send')
   const { data: stats, isLoading: statsLoading } = useEmailMarketingStats()
   const shouldReduceMotion = useReducedMotion()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showStatsLoading = useDelayedLoading(statsLoading)
 
   const heroStats = useMemo(
     () =>
       statsLoading ? (
+        showStatsLoading ? (
         <div data-eos-id="src/pages/admin/email/index.tsx#7" className="flex items-center gap-2 sm:gap-3">
           <Skeleton data-eos-id="src/pages/admin/email/index.tsx#8" variant="stat-card" />
           <Skeleton data-eos-id="src/pages/admin/email/index.tsx#9" variant="stat-card" />
           <Skeleton data-eos-id="src/pages/admin/email/index.tsx#10" variant="stat-card" />
           <Skeleton data-eos-id="src/pages/admin/email/index.tsx#11" variant="stat-card" />
         </div>
+        ) : null
       ) : stats ? (
         <AdminHeroStatRow data-eos-id="src/pages/admin/email/index.tsx#12">
           <AdminHeroStat data-eos-id="src/pages/admin/email/index.tsx#13" value={stats.subscribers} label="Subscribers" icon={<Users data-eos-id="src/pages/admin/email/index.tsx#14" size={18} />} color="primary" delay={0} reducedMotion={!!shouldReduceMotion} />
@@ -63,7 +68,7 @@ export default function AdminEmailPage() {
           <Skeleton data-eos-id="src/pages/admin/email/index.tsx#25" variant="stat-card" />
         </div>
       ),
-    [stats, statsLoading, shouldReduceMotion],
+    [stats, statsLoading, showStatsLoading, shouldReduceMotion],
   )
 
   useAdminHeader('Email Marketing', { heroContent: heroStats })

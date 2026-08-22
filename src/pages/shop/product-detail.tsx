@@ -254,7 +254,22 @@ function Divider() {
 
 function ProductDetailSkeleton() {
   return (
-    <Page swipeBack header={<Header title="" back />}>
+    <Page
+      swipeBack
+      header={<Header title="" back />}
+      footer={
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex items-center justify-center gap-3 sm:justify-start">
+            <Skeleton variant="text" className="w-20 h-6" />
+            <Skeleton variant="text" className="w-24 h-11 rounded-sm" />
+          </div>
+          <div className="flex gap-2 flex-1">
+            <Skeleton variant="text" className="flex-1 h-11 rounded-sm" />
+            <Skeleton variant="text" className="flex-1 h-11 rounded-sm" />
+          </div>
+        </div>
+      }
+    >
       <div className="-mx-4 lg:mx-0">
         <Skeleton variant="image" className="rounded-none lg:rounded-md aspect-[4/5] sm:aspect-square" />
       </div>
@@ -460,7 +475,9 @@ export default function ProductDetailPage() {
     }
   }, [product, activeVariant, quantity, addItem, navigate, reserve, toast])
 
-  if (showLoading) return <ProductDetailSkeleton />
+  // Show the shell for the whole in-flight window, not just after the delay -
+  // otherwise `!product` fires during the first ~1s and flashes "not found".
+  if (isLoading) return showLoading ? <ProductDetailSkeleton /> : null
   if (!product) {
     return (
       <Page swipeBack header={<Header title="Product" back />}>
@@ -633,12 +650,17 @@ export default function ProductDetailPage() {
                         whileTap={anyInSize ? { scale: 0.93 } : undefined}
                         title={anyInSize && !comboAvailable ? 'Available in another colour' : undefined}
                         className={cn(
-                          'relative px-5 py-2.5 min-h-11 min-w-[3.5rem] rounded-sm text-sm font-semibold',
+                          // Unified onto the Chip filter-pill family (rounded-full,
+                          // green-selected) so the variant selector reads as one
+                          // system with the rest of the app. The availability states
+                          // (dashed = in another combo, line-through = OOS) are kept -
+                          // a flex-1 SegmentedControl cannot express them.
+                          'relative px-5 py-2.5 min-h-11 min-w-[3.5rem] rounded-full text-sm font-semibold',
                           'transition-transform duration-200 cursor-pointer select-none',
                           isSelected
-                            ? 'bg-neutral-900 text-white shadow-sm'
+                            ? 'bg-primary-600 text-white ring-2 ring-primary-300 shadow-sm'
                             : comboAvailable
-                              ? 'bg-white border border-neutral-100 text-neutral-900 shadow-sm'
+                              ? 'bg-white border border-neutral-200 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 shadow-sm'
                               : anyInSize
                                 ? 'bg-white border border-dashed border-neutral-300 text-neutral-500 shadow-sm'
                                 : 'bg-neutral-50 text-neutral-300 cursor-not-allowed line-through',
@@ -685,12 +707,13 @@ export default function ProductDetailPage() {
                         whileTap={anyInColour ? { scale: 0.93 } : undefined}
                         title={anyInColour && !comboAvailable ? 'Available in another size' : undefined}
                         className={cn(
-                          'relative px-5 py-2.5 min-h-11 rounded-sm text-sm font-semibold',
+                          // Same Chip filter-pill family as the Size selector above.
+                          'relative px-5 py-2.5 min-h-11 rounded-full text-sm font-semibold',
                           'transition-transform duration-200 cursor-pointer select-none',
                           isSelected
-                            ? 'bg-neutral-900 text-white shadow-sm'
+                            ? 'bg-primary-600 text-white ring-2 ring-primary-300 shadow-sm'
                             : comboAvailable
-                              ? 'bg-white border border-neutral-100 text-neutral-900 shadow-sm'
+                              ? 'bg-white border border-neutral-200 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 shadow-sm'
                               : anyInColour
                                 ? 'bg-white border border-dashed border-neutral-300 text-neutral-500 shadow-sm'
                                 : 'bg-neutral-50 text-neutral-300 cursor-not-allowed line-through',

@@ -45,6 +45,7 @@ import {
     useUpdateImpactFormConfig,
 } from '@/hooks/use-auto-survey'
 import { ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import type { Json } from '@/types/database.types'
 
 /* ------------------------------------------------------------------ */
@@ -152,6 +153,9 @@ export default function AdminSurveysPage() {
   const { data: surveys, isLoading } = useSurveys()
   const { data: results } = useSurveyResults(selectedSurvey)
   const { data: autoConfig, isLoading: autoConfigLoading, isError: autoConfigError, refetch: refetchAutoConfig } = useAutoSurveyConfig()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
+  const showAutoConfigLoading = useDelayedLoading(autoConfigLoading)
   const updateAutoConfig = useUpdateAutoSurveyConfig()
   const { data: impactFormConfig } = useImpactFormConfig()
   const updateImpactFormConfig = useUpdateImpactFormConfig()
@@ -352,7 +356,7 @@ export default function AdminSurveysPage() {
           </div>
 
           {isLoading ? (
-            <Skeleton variant="list-item" count={4} />
+            showLoading ? <Skeleton variant="list-item" count={4} /> : null
           ) : !surveys?.length ? (
             <EmptyState
               illustration="empty"
@@ -760,9 +764,11 @@ export default function AdminSurveysPage() {
               action={{ label: 'Retry', onClick: () => refetchAutoConfig() }}
             />
           ) : autoConfigLoading ? (
-            <div className="p-5 rounded-sm bg-white shadow-sm">
-              <Skeleton variant="list-item" count={3} />
-            </div>
+            showAutoConfigLoading ? (
+              <div className="p-5 rounded-sm bg-white shadow-sm">
+                <Skeleton variant="list-item" count={3} />
+              </div>
+            ) : null
           ) : null}
         </motion.div>
       )}

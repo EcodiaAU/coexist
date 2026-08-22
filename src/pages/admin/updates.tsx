@@ -39,6 +39,7 @@ import { cn } from '@/lib/cn'
 import { formatDateLong, formatRelative } from '@/lib/date-format'
 import { useCollectives } from '@/hooks/use-collective'
 import { useImageUpload } from '@/hooks/use-image-upload'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import {
     useAdminUpdates,
     useCreateUpdate,
@@ -1019,6 +1020,8 @@ export default function AdminUpdatesPage() {
 
   const { data: updates, isLoading } = useAdminUpdates()
   const deleteMutation = useDeleteUpdate()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
 
   // Filter
   const filtered = useMemo(() => {
@@ -1150,7 +1153,7 @@ export default function AdminUpdatesPage() {
               activeUpdate ? 'w-full lg:w-1/2 xl:w-[45%]' : 'w-full',
             )}>
               {isLoading ? (
-                <Skeleton variant="list-item" count={5} />
+                showLoading ? <Skeleton variant="list-item" count={5} /> : null
               ) : !filtered.length ? (
                 <EmptyState
                   illustration="empty"

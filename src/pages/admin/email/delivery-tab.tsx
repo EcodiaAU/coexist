@@ -4,12 +4,16 @@ import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { cn } from '@/lib/cn'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useEmailBounces, useEmailComplaints, formatDate } from './shared'
 
 export function DeliveryTab() {
   const [subTab, setSubTab] = useState<'bounces' | 'complaints'>('bounces')
   const { data: bounces, isLoading: bouncesLoading } = useEmailBounces()
   const { data: complaints, isLoading: complaintsLoading } = useEmailComplaints()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showBouncesLoading = useDelayedLoading(bouncesLoading)
+  const showComplaintsLoading = useDelayedLoading(complaintsLoading)
 
   return (
     <>
@@ -37,7 +41,7 @@ export function DeliveryTab() {
       {subTab === 'bounces' && (
         <>
           {bouncesLoading ? (
-            <Skeleton data-eos-id="src/pages/admin/email/delivery-tab.tsx#5" variant="list-item" count={5} />
+            showBouncesLoading ? <Skeleton data-eos-id="src/pages/admin/email/delivery-tab.tsx#5" variant="list-item" count={5} /> : null
           ) : !bounces?.length ? (
             <EmptyState data-eos-id="src/pages/admin/email/delivery-tab.tsx#6" illustration="empty" title="No bounces" description="Email bounces from Resend will appear here" />
           ) : (
@@ -64,7 +68,7 @@ export function DeliveryTab() {
       {subTab === 'complaints' && (
         <>
           {complaintsLoading ? (
-            <Skeleton data-eos-id="src/pages/admin/email/delivery-tab.tsx#15" variant="list-item" count={5} />
+            showComplaintsLoading ? <Skeleton data-eos-id="src/pages/admin/email/delivery-tab.tsx#15" variant="list-item" count={5} /> : null
           ) : !complaints?.length ? (
             <EmptyState data-eos-id="src/pages/admin/email/delivery-tab.tsx#16" illustration="empty" title="No complaints" description="Spam complaints from Resend will appear here" />
           ) : (

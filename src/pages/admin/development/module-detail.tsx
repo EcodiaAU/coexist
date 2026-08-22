@@ -6,6 +6,7 @@ import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { ContentBlockRenderer } from '@/components/development/content-block-renderer'
 import { cn } from '@/lib/cn'
 import { useDevModule, useDevModuleContent, useDevAnalytics } from '@/hooks/use-admin-development'
@@ -25,6 +26,8 @@ export default function AdminModuleDetailPage() {
   const completedCount = moduleProgress.filter((p: Record<string, unknown>) => p.status === 'completed').length
   const assignedCount = moduleProgress.length
   const isLoading = moduleLoading || blocksLoading
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
 
   useAdminHeader('Module Detail', {
     heroContent: module ? (
@@ -43,7 +46,7 @@ export default function AdminModuleDetailPage() {
     ) : undefined,
   })
 
-  if (isLoading) return <div data-eos-id="src/pages/admin/development/module-detail.tsx#10" className="max-w-3xl mx-auto space-y-6"><Skeleton data-eos-id="src/pages/admin/development/module-detail.tsx#11" className="h-8 w-48 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/module-detail.tsx#12" className="h-32 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/module-detail.tsx#13" className="h-64 rounded-md" /></div>
+  if (isLoading) return showLoading ? <div data-eos-id="src/pages/admin/development/module-detail.tsx#10" className="max-w-3xl mx-auto space-y-6"><Skeleton data-eos-id="src/pages/admin/development/module-detail.tsx#11" className="h-8 w-48 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/module-detail.tsx#12" className="h-32 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/module-detail.tsx#13" className="h-64 rounded-md" /></div> : null
 
   if (!module) {
     return (

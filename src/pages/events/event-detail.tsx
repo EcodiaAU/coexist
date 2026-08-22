@@ -868,7 +868,7 @@ export default function EventDetailPage() {
   }, [event])
 
   // CRITICAL: Don't show "not found" while still loading
-  if (showLoading || isLoading) return <EventDetailSkeleton />
+  if (isLoading) return showLoading ? <EventDetailSkeleton /> : null
   // Show "Something went wrong" ONLY when we have no event data at all.
   // If the cached/stale event is present, render it - a background refetch
   // failure shouldn't replace a working page with an error EmptyState.

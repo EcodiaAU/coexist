@@ -14,6 +14,7 @@ import { TabBar } from '@/components/tab-bar'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import type { MembershipPlan } from '@/hooks/use-membership'
 
 /* ------------------------------------------------------------------ */
@@ -90,6 +91,9 @@ export default function AdminMembershipsPage() {
 
   const { data: plans, isLoading: plansLoading } = useAdminPlans()
   const { data: members, isLoading: membersLoading } = useAdminMemberships()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showPlansLoading = useDelayedLoading(plansLoading)
+  const showMembersLoading = useDelayedLoading(membersLoading)
 
   const activeCount = useMemo(
     () => (members ?? []).filter((m) => m.status === 'active' || m.status === 'trialing').length,
@@ -183,7 +187,7 @@ export default function AdminMembershipsPage() {
             <Plus size={15} /> New plan
           </Button>
           {plansLoading ? (
-            <Skeleton className="h-24 rounded-md" />
+            showPlansLoading ? <Skeleton className="h-24 rounded-md" /> : null
           ) : !plans?.length ? (
             <EmptyState illustration="empty" title="No plans yet" description="Create a membership plan to get started." />
           ) : (
@@ -231,7 +235,7 @@ export default function AdminMembershipsPage() {
       {activeTab === 'members' && (
         <div className="space-y-3">
           {membersLoading ? (
-            <Skeleton className="h-24 rounded-md" />
+            showMembersLoading ? <Skeleton className="h-24 rounded-md" /> : null
           ) : !members?.length ? (
             <EmptyState illustration="empty" title="No members yet" description="Paid members will appear here once the join flow is live." />
           ) : (

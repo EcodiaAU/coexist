@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { Loader2 } from 'lucide-react'
+import { Modal } from '@/components/modal'
 import type { EventTicketQuestion, TicketAnswers } from '@/hooks/use-event-ticket-questions'
 
 interface Props {
@@ -33,23 +33,18 @@ export function TicketQuestionsModal({ open, questions, submitting, onClose, onS
     [questions, answers],
   )
 
-  if (!open) return null
-
   const set = (id: string, value: TicketAnswers[string]) => setAnswers((a) => ({ ...a, [id]: value }))
   const toggleMulti = (id: string, opt: string) => {
     const cur = Array.isArray(answers[id]) ? (answers[id] as string[]) : []
     set(id, cur.includes(opt) ? cur.filter((o) => o !== opt) : [...cur, opt])
   }
 
-  return createPortal(
-    <div data-eos-id="src/components/ticket-questions-modal.tsx#0" data-eos-v="2" className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div data-eos-id="src/components/ticket-questions-modal.tsx#1" className="fixed inset-0 bg-black/60" aria-hidden="true" onClick={submitting ? undefined : onClose} />
-      <div data-eos-id="src/components/ticket-questions-modal.tsx#2"
-        role="dialog"
-        aria-modal="true"
-        aria-label="A few questions before you book"
-        className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[85vh] overflow-y-auto"
-      >
+  return (
+    <Modal
+      open={open}
+      onClose={() => { if (!submitting) onClose() }}
+      ariaLabel="A few questions before you book"
+    >
         <div data-eos-id="src/components/ticket-questions-modal.tsx#3" className="px-5 pt-5 pb-3">
           <h2 data-eos-id="src/components/ticket-questions-modal.tsx#4" className="text-base font-semibold text-neutral-900">A few questions before you book</h2>
           <p data-eos-id="src/components/ticket-questions-modal.tsx#5" className="text-xs text-neutral-500 mt-0.5">The organiser needs these for this event.</p>
@@ -155,8 +150,6 @@ export function TicketQuestionsModal({ open, questions, submitting, onClose, onS
             Continue to payment
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </Modal>
   )
 }

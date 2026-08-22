@@ -16,6 +16,7 @@ import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { Avatar } from '@/components/avatar'
 import { cn } from '@/lib/cn'
 import { supabase, escapeIlike } from '@/lib/supabase'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 
 interface AuditLogEntry {
   id: string
@@ -144,6 +145,8 @@ export default function AdminAuditLogPage() {
   const [page, setPage] = useState(0)
 
   const { data, isLoading } = useAuditLog(search, actionFilter, page)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const pageSize = 25
   const totalPages = data ? Math.ceil(data.total / pageSize) : 0
 
@@ -189,7 +192,7 @@ export default function AdminAuditLogPage() {
         {/* Log list */}
         <motion.div data-eos-id="src/pages/admin/audit-log.tsx#8" variants={fadeUp}>
         {isLoading ? (
-          <Skeleton data-eos-id="src/pages/admin/audit-log.tsx#9" variant="list-item" count={8} />
+          showLoading ? <Skeleton data-eos-id="src/pages/admin/audit-log.tsx#9" variant="list-item" count={8} /> : null
         ) : !data?.logs.length ? (
           <EmptyState data-eos-id="src/pages/admin/audit-log.tsx#10"
             illustration="empty"

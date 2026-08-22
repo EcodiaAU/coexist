@@ -9,6 +9,7 @@ import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
 import { Skeleton } from '@/components/skeleton'
 import { useToast } from '@/components/toast'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useDevModule, useDevModuleContent, useUpdateModule, useSaveModuleContent, type DevCategory, type ContentBlockInput } from '@/hooks/use-admin-development'
 import { BlockEditor, generateBlockKey } from '@/components/development/block-editor'
 import { AudiencePicker } from '@/components/development/audience-picker'
@@ -31,6 +32,8 @@ export default function AdminEditModulePage() {
 
   const { data: module, isLoading: moduleLoading } = useDevModule(moduleId)
   const { data: existingBlocks = [], isLoading: blocksLoading } = useDevModuleContent(moduleId)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(moduleLoading || blocksLoading)
   const updateModule = useUpdateModule()
   const saveContent = useSaveModuleContent()
 
@@ -62,7 +65,7 @@ export default function AdminEditModulePage() {
     } catch { toast.error('Failed to update module') }
   }, [moduleId, title, description, category, estimatedMinutes, thumbnailUrl, targetRoles, blocks, updateModule, saveContent, toast])
 
-  if (moduleLoading || blocksLoading) return <div data-eos-id="src/pages/admin/development/edit-module.tsx#0" data-eos-v="2" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#1" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#2" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#3" className="h-32 rounded-md" /></div>
+  if (moduleLoading || blocksLoading) return showLoading ? <div data-eos-id="src/pages/admin/development/edit-module.tsx#0" data-eos-v="2" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#1" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#2" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-module.tsx#3" className="h-32 rounded-md" /></div> : null
 
   if (saved) {
     return (

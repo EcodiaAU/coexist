@@ -4,6 +4,7 @@ import { BottomSheet } from '@/components/bottom-sheet'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { SearchBar } from '@/components/search-bar'
+import { SegmentedControl, type Segment } from '@/components/segmented-control'
 import { Avatar } from '@/components/avatar'
 import { cn } from '@/lib/cn'
 import { useCollectiveEvents, type EventWithCollective } from '@/hooks/use-events'
@@ -345,14 +346,19 @@ export function CreateAnnouncementSheet({
   // "Event Invite" already renders RSVP buttons inline (see chat-bubble.tsx),
   // so the standalone "RSVP Request" option was a duplicate path. Keep
   // historical rsvp rows rendering correctly, but stop creating new ones.
-  const typeOptions = [
-    { value: 'announcement' as const, label: 'Announcement', icon: Megaphone, desc: 'Share news with your collective' },
-    { value: 'event_invite' as const, label: 'Event Invite', icon: CalendarPlus, desc: 'Invite members to an event (with RSVP)' },
+  // Typed to the full announcement-type union (incl. legacy 'rsvp') so setType
+  // slots straight into onChange without a widening cast.
+  const typeSegments: Segment<'announcement' | 'event_invite' | 'rsvp'>[] = [
+    { id: 'announcement', label: 'Announcement', icon: <Megaphone size={15} /> },
+    { id: 'event_invite', label: 'Event Invite', icon: <CalendarPlus size={15} /> },
   ]
 
   return (
     <BottomSheet data-eos-id="src/components/create-announcement-sheet.tsx#30" open={open} onClose={onClose}>
-      <div data-eos-id="src/components/create-announcement-sheet.tsx#31" className="pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
+      {/* px-1 gives focus-visible rings on the fields breathing room so they are
+          not clipped by this scroll container's overflow (the ring offset would
+          otherwise be cut at the left/right edges). */}
+      <div data-eos-id="src/components/create-announcement-sheet.tsx#31" className="px-1 pb-4 max-h-[80vh] overflow-y-auto overscroll-contain">
         {/* Header */}
         <div data-eos-id="src/components/create-announcement-sheet.tsx#32" className="flex items-center gap-2.5 mb-4">
           <div data-eos-id="src/components/create-announcement-sheet.tsx#33" className="flex h-10 w-10 items-center justify-center rounded-sm bg-accent-100 text-accent-600">
@@ -364,28 +370,18 @@ export function CreateAnnouncementSheet({
           </div>
         </div>
 
-        {/* Type selector */}
+        {/* Type selector - shared SegmentedControl (sliding olive pill, centred,
+            animated). Was a pair of hand-rolled flex-1 cards with no layout-shift
+            animation. */}
         <div data-eos-id="src/components/create-announcement-sheet.tsx#38" className="mb-4">
           <label data-eos-id="src/components/create-announcement-sheet.tsx#39" className="text-xs font-semibold text-neutral-900 mb-1.5 block">Type</label>
-          <div data-eos-id="src/components/create-announcement-sheet.tsx#40" className="flex gap-2">
-            {typeOptions.map((opt) => (
-              <button data-eos-id="src/components/create-announcement-sheet.tsx#41"
-                key={opt.value}
-                type="button"
-                onClick={() => setType(opt.value)}
-                className={cn(
-                  'flex-1 rounded-sm py-2.5 px-2 text-center transition-transform duration-150 min-h-11',
-                  'active:scale-[0.98] cursor-pointer select-none',
-                  type === opt.value
-                    ? 'bg-primary-600 text-white shadow-sm'
-                    : 'bg-primary-50 text-primary-600 ring-1 ring-primary-200/60',
-                )}
-              >
-                <opt.icon data-eos-id="src/components/create-announcement-sheet.tsx#42" size={16} className="mx-auto mb-0.5" />
-                <span data-eos-id="src/components/create-announcement-sheet.tsx#43" data-eos-var="opt.label" data-eos-var-label="Label" data-eos-var-scope="item" data-eos-var-src="literal" className="text-[11px] font-semibold block">{opt.label}</span>
-              </button>
-            ))}
-          </div>
+          <SegmentedControl data-eos-id="src/components/create-announcement-sheet.tsx#40"
+            variant="pill"
+            segments={typeSegments}
+            value={type}
+            onChange={setType}
+            aria-label="Announcement type"
+          />
         </div>
 
         {/* Event picker (for event invites) */}

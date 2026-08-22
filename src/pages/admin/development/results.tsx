@@ -6,6 +6,7 @@ import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useDevAnalytics, useDevModules, useDevQuizzes } from '@/hooks/use-admin-development'
 
 function downloadCsv(filename: string, headers: string[], rows: string[][]) {
@@ -28,6 +29,8 @@ export default function AdminDevelopmentResultsPage() {
   const rm = !!shouldReduceMotion
   const { stagger, fadeUp } = adminVariants(rm)
   const { data: analytics, isLoading } = useDevAnalytics()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const { data: modules = [] } = useDevModules()
   const { data: quizzes = [] } = useDevQuizzes()
 
@@ -66,7 +69,7 @@ export default function AdminDevelopmentResultsPage() {
 
   return (
     <motion.div data-eos-id="src/pages/admin/development/results.tsx#15" variants={stagger} initial="hidden" animate="visible" className="space-y-8">
-      {isLoading ? <div data-eos-id="src/pages/admin/development/results.tsx#16" className="space-y-3"><Skeleton data-eos-id="src/pages/admin/development/results.tsx#17" className="h-16 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/results.tsx#18" className="h-16 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/results.tsx#19" className="h-16 rounded-md" /></div> : (
+      {isLoading ? (showLoading ? <div data-eos-id="src/pages/admin/development/results.tsx#16" className="space-y-3"><Skeleton data-eos-id="src/pages/admin/development/results.tsx#17" className="h-16 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/results.tsx#18" className="h-16 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/results.tsx#19" className="h-16 rounded-md" /></div> : null) : (
         <>
           <motion.section data-eos-id="src/pages/admin/development/results.tsx#20" variants={fadeUp} className="space-y-3">
             <SectionHeader data-eos-id="src/pages/admin/development/results.tsx#21" icon={<BookOpen data-eos-id="src/pages/admin/development/results.tsx#22" size={14} />} label="Module Performance" action={moduleStats.length > 0 ? { label: 'CSV', onClick: () => downloadCsv('module-results.csv', ['Module','Category','Assigned','Completed','Rate','Avg Time'], moduleStats.map((m) => [m.title, m.category, String(m.assigned), String(m.completed), `${m.completionRate}%`, String(m.avgTimeMin)])) } : undefined} />

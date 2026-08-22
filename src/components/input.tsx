@@ -204,7 +204,16 @@ export const Input = forwardRef<
   // with the picker glyph.
   const isPicker = isDate || isTime || isDateTime
   const isCompact = compact && !label
-  const isFloating = focused || filled || isPicker
+  // Float the label whenever the field actually holds a value. `filled` (React
+  // state) tracks uncontrolled typing but desyncs from the `value` prop on async
+  // loads, number values (value.length is undefined), and remounts, which left the
+  // label sitting ON TOP of a pre-filled value (e.g. shipping-config prices). The
+  // value/defaultValue prop is the source of truth for a controlled field, so read
+  // it directly. String() handles number values; !== '' keeps 0 counted as filled.
+  const hasValueProp =
+    (value != null && String(value) !== '') ||
+    (defaultValue != null && String(defaultValue) !== '')
+  const isFloating = focused || filled || hasValueProp || isPicker
   const isTextarea = type === 'textarea'
   const isSearch = type === 'search'
   const isPassword = type === 'password'

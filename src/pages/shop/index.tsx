@@ -26,6 +26,7 @@ import { useLayout } from '@/hooks/use-layout'
 import { Header } from '@/components/header'
 import { WaveTransition } from '@/components/wave-transition'
 import { cn } from '@/lib/cn'
+import { Chip } from '@/components/chip'
 
 /* ------------------------------------------------------------------ */
 /*  Animations                                                         */
@@ -94,41 +95,32 @@ function CategoryPills({
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-white to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-4 bg-gradient-to-r from-white to-transparent" />
       <div
-        className="flex gap-2 overflow-x-auto px-5 lg:px-6 pb-1 scrollbar-none snap-x snap-proximity"
+        // py-2 (not just pb-1): overflow-x-auto also clips the vertical axis, so
+        // the selected Chip's ring-2 + active-scale top was getting cut flat.
+        className="flex gap-2 overflow-x-auto px-5 lg:px-6 py-2 scrollbar-none snap-x snap-proximity"
         style={{ WebkitOverflowScrolling: 'touch' }}
+        role="listbox"
+        aria-label="Filter products by category"
       >
-        <button
-          type="button"
-          onClick={() => onChange(CATEGORY_ALL)}
-          className={cn(
-            'shrink-0 snap-start px-4 h-10 rounded-md text-sm font-semibold transition-transform duration-200 select-none cursor-pointer',
-            'flex items-center gap-1.5 active:scale-[0.98]',
-            active === CATEGORY_ALL
-              ? 'bg-neutral-900 text-white shadow-sm'
-              : 'bg-white text-neutral-600 hover:bg-neutral-50 border border-neutral-100 shadow-sm',
-          )}
-        >
-          <Package size={14} />
-          All
-        </button>
+        {/* Shared filter-pill (Chip) prim, horizontal-scroll row - matches the
+            explore + contacts category filters. Dynamic category set, so Chips
+            (scrollable) rather than a fixed SegmentedControl. */}
+        <Chip
+          label="All"
+          icon={<Package size={14} />}
+          selected={active === CATEGORY_ALL}
+          onSelect={() => onChange(CATEGORY_ALL)}
+          className="shrink-0 snap-start"
+        />
         {categories.map((cat) => (
-          <button
+          <Chip
             key={cat}
-            type="button"
-            onClick={() => onChange(cat)}
-            className={cn(
-              'shrink-0 snap-start px-4 h-10 rounded-md text-sm font-semibold capitalize transition-transform duration-200 select-none cursor-pointer whitespace-nowrap',
-              'flex items-center gap-1.5 active:scale-[0.98]',
-              active === cat
-                ? 'bg-neutral-900 text-white shadow-sm'
-                : 'bg-white text-neutral-600 hover:bg-neutral-50 border border-neutral-100 shadow-sm',
-            )}
-          >
-            {CATEGORY_ICONS[cat.toLowerCase()] && (
-              CATEGORY_ICONS[cat.toLowerCase()]
-            )}
-            {cat}
-          </button>
+            label={cat}
+            icon={CATEGORY_ICONS[cat.toLowerCase()]}
+            selected={active === cat}
+            onSelect={() => onChange(cat)}
+            className="shrink-0 snap-start capitalize"
+          />
         ))}
       </div>
     </div>

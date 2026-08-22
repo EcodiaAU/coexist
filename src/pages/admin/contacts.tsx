@@ -21,6 +21,8 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
 import { SearchBar } from '@/components/search-bar'
+import { FilterPillRow, type FilterOption } from '@/components/filter-pill-row'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { BottomSheet } from '@/components/bottom-sheet'
@@ -263,6 +265,11 @@ function ContactFormModal({
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
+const CATEGORY_OPTIONS: FilterOption[] = [
+  { id: '', label: 'All' },
+  ...CONTACT_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
+]
+
 export default function AdminContactsPage() {
   const shouldReduceMotion = useReducedMotion()
   const [search, setSearch] = useState('')
@@ -273,6 +280,8 @@ export default function AdminContactsPage() {
   const { toast } = useToast()
 
   const { data: contacts, isLoading } = useAdminContacts({ search, category: categoryFilter })
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const deleteMutation = useDeleteContact()
 
   const handleDelete = async () => {
@@ -361,43 +370,22 @@ export default function AdminContactsPage() {
             compact
             className="flex-1"
           />
-          <div data-eos-id="src/pages/admin/contacts.tsx#41" className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5 overflow-x-auto">
-            <button data-eos-id="src/pages/admin/contacts.tsx#42"
-              type="button"
-              onClick={() => setCategoryFilter('')}
-              className={cn(
-                'px-3 min-h-11 rounded-sm text-sm font-semibold whitespace-nowrap',
-                'transition-colors duration-150 cursor-pointer select-none',
-                !categoryFilter
-                  ? 'bg-neutral-100 text-neutral-900'
-                  : 'text-neutral-400 hover:text-neutral-600',
-              )}
-            >
-              All
-            </button>
-            {CONTACT_CATEGORIES.map((cat) => (
-              <button data-eos-id="src/pages/admin/contacts.tsx#43" data-eos-var="cat.label" data-eos-var-label="Label" data-eos-var-scope="item"
-                key={cat.id}
-                type="button"
-                onClick={() => setCategoryFilter(cat.id)}
-                className={cn(
-                  'px-3 min-h-11 rounded-sm text-sm font-semibold whitespace-nowrap',
-                  'transition-colors duration-150 cursor-pointer select-none',
-                  categoryFilter === cat.id
-                    ? 'bg-neutral-100 text-neutral-900'
-                    : 'text-neutral-500 hover:text-neutral-700',
-                )}
-              >
-                {cat.label.split(' ')[0]}
-              </button>
-            ))}
-          </div>
+          {/* Category filter: shared FilterPillRow (auto-width scrollable Chips) -
+              same control as collectives/events/shop. Handles the 7-wide category
+              set without bunching; a fixed SegmentedControl cannot. */}
+          <FilterPillRow
+            options={CATEGORY_OPTIONS}
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            aria-label="Filter contacts by category"
+            className="-mx-4 sm:mx-0 sm:shrink-0"
+          />
         </motion.div>
 
         {/* Contact list */}
         <motion.div data-eos-id="src/pages/admin/contacts.tsx#44" variants={fadeUp}>
           {isLoading ? (
-            <Skeleton data-eos-id="src/pages/admin/contacts.tsx#45" variant="list-item" count={8} />
+            showLoading ? <Skeleton data-eos-id="src/pages/admin/contacts.tsx#45" variant="list-item" count={8} /> : null
           ) : !grouped.length ? (
             <EmptyState data-eos-id="src/pages/admin/contacts.tsx#46"
               illustration="empty"

@@ -16,6 +16,7 @@ import {
     X,
     ChevronDown,
     ChevronUp,
+    ChevronRight,
     CheckCircle,
     XCircle,
     Sparkles,
@@ -31,7 +32,6 @@ import { Dropdown } from '@/components/dropdown'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
-import { BottomSheet } from '@/components/bottom-sheet'
 import { ConfirmationSheet } from '@/components/confirmation-sheet'
 import { Avatar } from '@/components/avatar'
 import { Toggle } from '@/components/toggle'
@@ -39,6 +39,7 @@ import { ProfileModal } from '@/components/profile-modal'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/use-auth'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { supabase } from '@/lib/supabase'
 import { logAudit } from '@/lib/audit'
 import {
@@ -194,16 +195,15 @@ const COLLECTIVE_ROLE_SURFACE: Record<string, string> = {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Unified User Settings Sheet                                        */
+/*  Admin controls - folded into the unified user detail modal         */
+/*  (rendered inside ProfileModal via its adminSection slot)           */
 /* ------------------------------------------------------------------ */
 
-function UserSettingsSheet({
+function UserAdminControls({
   user,
-  open,
   onClose,
 }: {
   user: AdminUserRow
-  open: boolean
   onClose: () => void
 }) {
   const { user: currentUser, isSuperAdmin } = useAuth()
@@ -212,6 +212,9 @@ function UserSettingsSheet({
 
   const { data: collectiveRoles, isLoading: rolesLoading } = useUserCollectiveRoles(user?.id)
   const { data: capsData, isLoading: capsLoading } = useUserResolvedCapabilities(user?.id)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showRolesLoading = useDelayedLoading(rolesLoading)
+  const showCapsLoading = useDelayedLoading(capsLoading)
   const { data: allCollectives } = useAllCollectives()
   const assignRole = useAdminAssignCollectiveRole()
   const removeFromCollective = useAdminRemoveFromCollective()
@@ -443,25 +446,24 @@ function UserSettingsSheet({
 
   return (
     <>
-      <BottomSheet open={open} onClose={onClose} snapPoints={[0.92]}>
-        <div className="space-y-5 pb-6">
-          {/* User header */}
-          <div className="flex items-center gap-4 p-4 -mx-1 rounded-md bg-white border border-neutral-100">
-            <Avatar src={user.avatar_url} name={user.display_name ?? ''} size="lg" />
-            <div className="flex-1 min-w-0">
-              <p className="text-lg font-bold text-neutral-900 truncate">{user.display_name}</p>
-              <p className="text-sm text-neutral-500 truncate">{user.email}</p>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', roleBadgeColors[user.role])}>
-                  {formatRole(user.role ?? 'participant')}
-                </span>
-                {user.is_suspended && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-error-200 text-error-800">
-                    Suspended
-                  </span>
-                )}
-              </div>
+      <div className="mt-6 pt-5 border-t border-neutral-200/70 space-y-5 pb-6">
+          {/* Admin controls heading. ProfileModal above already renders the
+              identity block (avatar / name / member since), so this fold drops
+              the duplicate header and keeps only the admin-relevant role +
+              suspension state alongside the section title. */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-sm bg-neutral-800 text-white flex items-center justify-center shrink-0">
+              <UserCog size={16} />
             </div>
+            <h3 className="font-heading text-base font-semibold text-neutral-900">Admin controls</h3>
+            <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full ml-auto', roleBadgeColors[user.role])}>
+              {formatRole(user.role ?? 'participant')}
+            </span>
+            {user.is_suspended && (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-error-200 text-error-800">
+                Suspended
+              </span>
+            )}
           </div>
 
           {/* Quick actions - touch-optimised row */}
@@ -683,7 +685,7 @@ function UserSettingsSheet({
             </AnimatePresence>
 
             {rolesLoading ? (
-              <Skeleton variant="list-item" count={2} />
+              showRolesLoading ? <Skeleton variant="list-item" count={2} /> : null
             ) : !activeRoles.length ? (
               <div className="py-4 px-3 rounded-sm bg-neutral-50 ring-1 ring-neutral-200/40 text-center">
                 <Users size={20} className="text-neutral-400 mx-auto mb-1" />
@@ -850,9 +852,11 @@ function UserSettingsSheet({
                     className="overflow-hidden"
                   >
                     {capsLoading ? (
-                      <div className="mt-3">
-                        <Skeleton variant="list-item" count={4} />
-                      </div>
+                      showCapsLoading ? (
+                        <div className="mt-3">
+                          <Skeleton variant="list-item" count={4} />
+                        </div>
+                      ) : null
                     ) : (
                       <div className="mt-3 space-y-4">
                         <p className="text-[11px] text-neutral-500 px-1">
@@ -923,8 +927,7 @@ function UserSettingsSheet({
               </AnimatePresence>
             </div>
           )}
-        </div>
-      </BottomSheet>
+      </div>
 
       {/* Delete confirmation */}
       <ConfirmationSheet
@@ -948,8 +951,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
   const [roleFilter, setRoleFilter] = useState('all')
-  const [settingsUser, setSettingsUser] = useState<AdminUserRow | null>(null)
-  const [profileUserId, setProfileUserId] = useState<string | null>(null)
+  // One detail modal serves both the row tap and the chevron affordance.
+  const [detailUser, setDetailUser] = useState<AdminUserRow | null>(null)
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
   const [bulkSuspendOpen, setBulkSuspendOpen] = useState(false)
   const [bulkReason, setBulkReason] = useState('')
@@ -959,6 +962,8 @@ export default function AdminUsersPage() {
   const { toast } = useToast()
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useAdminUsers(debouncedSearch, roleFilter)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const users = useMemo(() => data?.pages.flatMap((p) => p) ?? [], [data])
 
   // Fill the olive hero band with real member counts. An empty hero (title over
@@ -1110,7 +1115,7 @@ export default function AdminUsersPage() {
       {/* User list */}
       <motion.div variants={fadeUp}>
       {isLoading ? (
-        <Skeleton variant="list-item" count={8} />
+        showLoading ? <Skeleton variant="list-item" count={8} /> : null
       ) : !users?.length ? (
         <EmptyState
           illustration="search"
@@ -1144,7 +1149,7 @@ export default function AdminUsersPage() {
               {/* Avatar + info  tappable to open profile */}
               <button
                 type="button"
-                onClick={() => setProfileUserId(user.id)}
+                onClick={() => setDetailUser(user)}
                 className="flex items-center gap-3 flex-1 min-w-0 text-left active:opacity-70 transition-opacity cursor-pointer"
               >
                 <Avatar src={user.avatar_url} name={user.display_name ?? ''} size="sm" />
@@ -1171,14 +1176,17 @@ export default function AdminUsersPage() {
                 </div>
               </button>
 
-              {/* Single settings button */}
+              {/* Chevron affordance - opens the same unified detail modal as the
+                  row tap. A muted right-chevron reads as "open details", not as a
+                  separate settings destination (the gear implied a second modal). */}
               <button
                 type="button"
-                onClick={() => setSettingsUser(user)}
-                className="p-2.5 rounded-sm bg-neutral-50 text-neutral-500 active:bg-neutral-200 active:text-neutral-700 transition-colors shrink-0"
-                title="User settings"
+                onClick={() => setDetailUser(user)}
+                className="p-2.5 -mr-0.5 rounded-sm text-neutral-300 active:bg-neutral-100 active:text-neutral-600 transition-colors shrink-0"
+                title="Open details"
+                aria-label={`Open details for ${user.display_name ?? 'user'}`}
               >
-                <Settings size={18} />
+                <ChevronRight size={20} />
               </button>
             </StaggeredItem>
           ))}
@@ -1200,11 +1208,16 @@ export default function AdminUsersPage() {
       )}
       </motion.div>
 
-      {/* Unified user settings sheet */}
-      {settingsUser && <UserSettingsSheet user={settingsUser} open onClose={() => setSettingsUser(null)} />}
-
-      {/* Profile detail modal */}
-      <ProfileModal userId={profileUserId} open={!!profileUserId} onClose={() => setProfileUserId(null)} />
+      {/* Unified detail modal - both the row tap and the chevron open this one
+          sheet. ProfileModal renders the identity + profile; the admin controls
+          are folded in below via adminSection so no capability the gear used to
+          give is lost. */}
+      <ProfileModal
+        userId={detailUser?.id ?? null}
+        open={!!detailUser}
+        onClose={() => setDetailUser(null)}
+        adminSection={detailUser ? <UserAdminControls user={detailUser} onClose={() => setDetailUser(null)} /> : null}
+      />
     </motion.div>
   )
 }

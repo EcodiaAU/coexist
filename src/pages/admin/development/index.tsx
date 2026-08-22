@@ -20,6 +20,7 @@ import { SearchBar } from '@/components/search-bar'
 import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { cn } from '@/lib/cn'
 import {
   useDevModules,
@@ -360,6 +361,8 @@ export default function AdminDevelopmentPage() {
   const q = search.toLowerCase()
 
   const isLoading = modulesLoading || sectionsLoading || quizzesLoading || smLoading
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
 
   /* ── Hero stats ── */
   // Suppressed until at least one module/section/quiz exists, so a row of four
@@ -453,12 +456,12 @@ export default function AdminDevelopmentPage() {
           newTo="/admin/development/sections/new"
           newLabel="New"
         />
-        {isLoading ? (
+        {isLoading ? (showLoading ? (
           <div data-eos-id="src/pages/admin/development/index.tsx#97" className="space-y-2">
             <Skeleton data-eos-id="src/pages/admin/development/index.tsx#98" className="h-[68px] rounded-md" />
             <Skeleton data-eos-id="src/pages/admin/development/index.tsx#99" className="h-[68px] rounded-md" />
           </div>
-        ) : filteredSections.length === 0 ? (
+        ) : null) : filteredSections.length === 0 ? (
           <EmptyRow data-eos-id="src/pages/admin/development/index.tsx#100"
             icon={<Layers data-eos-id="src/pages/admin/development/index.tsx#101" size={20} strokeWidth={1.5} />}
             label="No sections yet"
@@ -512,12 +515,12 @@ export default function AdminDevelopmentPage() {
           newTo="/admin/development/quizzes/new"
           newLabel="New"
         />
-        {isLoading ? (
+        {isLoading ? (showLoading ? (
           <div data-eos-id="src/pages/admin/development/index.tsx#113" className="space-y-2">
             <Skeleton data-eos-id="src/pages/admin/development/index.tsx#114" className="h-[68px] rounded-md" />
             <Skeleton data-eos-id="src/pages/admin/development/index.tsx#115" className="h-[68px] rounded-md" />
           </div>
-        ) : filteredQuizzes.length === 0 ? (
+        ) : null) : filteredQuizzes.length === 0 ? (
           <EmptyRow data-eos-id="src/pages/admin/development/index.tsx#116"
             icon={<CircleDot data-eos-id="src/pages/admin/development/index.tsx#117" size={20} strokeWidth={1.5} />}
             label="No quizzes yet"

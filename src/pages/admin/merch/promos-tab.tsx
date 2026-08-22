@@ -7,6 +7,7 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Toggle } from '@/components/toggle'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { BottomSheet } from '@/components/bottom-sheet'
@@ -235,12 +236,14 @@ function PromoFormSheet({
 
 export default function PromosTab() {
   const { data: promos, isLoading } = useAdminPromoCodes()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const shouldReduceMotion = useReducedMotion()
   const [formOpen, setFormOpen] = useState(false)
   const [editPromo, setEditPromo] = useState<PromoCode | undefined>()
 
   if (isLoading) {
-    return <Skeleton variant="text" count={5} />
+    return showLoading ? <Skeleton variant="text" count={5} /> : null
   }
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 

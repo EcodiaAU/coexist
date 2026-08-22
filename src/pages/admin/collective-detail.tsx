@@ -1374,7 +1374,11 @@ export default function AdminCollectiveDetailPage() {
 
   useAdminHeader(detail?.name ?? 'Collective', { actions: heroActions, fullBleed: true })
 
-  if (showLoading) {
+  // Raw isLoading folded into the guard so the shell owns the whole in-flight
+  // window - otherwise `!detail` flashes "Collective not found" during the
+  // first ~1s before the query resolves.
+  if (isLoading) {
+    if (!showLoading) return null
     return (
       <div data-eos-id="src/pages/admin/collective-detail.tsx#211" className="space-y-4 p-6">
         <Skeleton data-eos-id="src/pages/admin/collective-detail.tsx#212" className="h-8 w-32 rounded-sm" />
@@ -1382,6 +1386,11 @@ export default function AdminCollectiveDetailPage() {
         <div data-eos-id="src/pages/admin/collective-detail.tsx#214" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton data-eos-id="src/pages/admin/collective-detail.tsx#215" key={i} className="h-32 rounded-md" />
+          ))}
+        </div>
+        <div className="flex gap-2 pt-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-24 rounded-sm" />
           ))}
         </div>
       </div>

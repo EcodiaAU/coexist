@@ -24,6 +24,7 @@ import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { logAudit } from '@/lib/audit'
 import { useAuth } from '@/hooks/use-auth'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import type { Tables, Enums } from '@/types/database.types'
 
 type ContentReport = Tables<'content_reports'>
@@ -165,6 +166,8 @@ function ReportCard({
   const config = contentTypeConfig[report.content_type] ?? contentTypeConfig.photo
   const TypeIcon = config.icon
   const { data: reportedMessage, isLoading: messageLoading } = useReportedMessage(report)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showMessageLoading = useDelayedLoading(messageLoading)
 
   const isChatMessage = report.content_type === 'chat_message'
   // The 'removed' status only hides content for chat_message reports (the
@@ -241,7 +244,7 @@ function ReportCard({
         {isChatMessage && (
           <div className="mx-4 mb-2 rounded-sm border border-neutral-200 bg-neutral-50 px-3 py-2">
             {messageLoading ? (
-              <Skeleton variant="text" count={1} />
+              showMessageLoading ? <Skeleton variant="text" count={1} /> : null
             ) : !reportedMessage ? (
               <p className="text-xs italic text-neutral-400">Reported message not found (may already be deleted).</p>
             ) : (
@@ -329,6 +332,8 @@ export default function ModerationQueuePage() {
   const { toast } = useToast()
   const [activeStatus, setActiveStatus] = useState<Enums<'report_status'>>('pending')
   const { data: reports, isLoading, refetch } = useModerationQueue(activeStatus)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const reviewReport = useReviewReport()
 
   const handleAction = (reportId: string, action: Enums<'report_status'>) => {
@@ -367,11 +372,13 @@ export default function ModerationQueuePage() {
 
       <motion.div variants={fadeUp}>
       {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton variant="card" />
-          <Skeleton variant="card" />
-          <Skeleton variant="card" />
-        </div>
+        showLoading ? (
+          <div className="space-y-4">
+            <Skeleton variant="card" />
+            <Skeleton variant="card" />
+            <Skeleton variant="card" />
+          </div>
+        ) : null
       ) : isEmpty ? (
         <EmptyState
           illustration="empty"

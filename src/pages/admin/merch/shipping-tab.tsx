@@ -4,12 +4,15 @@ import { adminVariants } from '@/lib/admin-motion'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useToast } from '@/components/toast'
 import { useShippingConfig } from '@/hooks/use-merch'
 import { useUpdateShippingConfig } from '@/hooks/use-admin-merch'
 
 export default function ShippingTab() {
   const { data: config, isLoading } = useShippingConfig()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const updateConfig = useUpdateShippingConfig()
   const { toast } = useToast()
 
@@ -56,7 +59,7 @@ export default function ShippingTab() {
   }, [canSave, flat, threshold, updateConfig, toast])
 
   if (isLoading) {
-    return <Skeleton variant="text" count={3} />
+    return showLoading ? <Skeleton variant="text" count={3} /> : null
   }
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 

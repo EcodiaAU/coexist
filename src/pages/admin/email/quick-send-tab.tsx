@@ -46,10 +46,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/button'
 import { ProgressBar } from '@/components/progress-bar'
 import { Input } from '@/components/input'
+import { Dropdown } from '@/components/dropdown'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useAdminEventPhotos, type AdminEventPhoto } from '@/hooks/use-event-photos'
 import {
   useTags,
@@ -137,6 +139,8 @@ export function QuickSendTab() {
   const { data: recentPhotos, isLoading: photosLoading } = useAdminEventPhotos(
     showPhotoPicker ? { limit: 60 } : { limit: 0 },
   )
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showPhotosLoading = useDelayedLoading(photosLoading)
 
   async function handleHeroUpload(file: File) {
     if (!file.type.startsWith('image/')) {
@@ -679,11 +683,13 @@ export function QuickSendTab() {
                 </button>
               </div>
               {photosLoading ? (
+                showPhotosLoading ? (
                 <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#35" className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#36" key={i} className="aspect-square rounded-sm bg-neutral-100 animate-pulse" />
                   ))}
                 </div>
+                ) : null
               ) : !recentPhotos?.length ? (
                 <p data-eos-id="src/pages/admin/email/quick-send-tab.tsx#37" className="text-xs text-neutral-500 py-6 text-center">
                   No event photos yet. Upload one instead.
@@ -895,18 +901,17 @@ export function QuickSendTab() {
               <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#79" className="flex flex-wrap items-center gap-2">
                 <UserCircle2 data-eos-id="src/pages/admin/email/quick-send-tab.tsx#80" size={14} className="text-primary-700" />
                 <span data-eos-id="src/pages/admin/email/quick-send-tab.tsx#81" className="text-xs font-semibold text-neutral-900">See it as</span>
-                <select data-eos-id="src/pages/admin/email/quick-send-tab.tsx#82"
-                  value={previewSubId}
-                  onChange={(e) => setPreviewSubId(e.target.value)}
-                  className="text-xs rounded-sm border border-neutral-200 bg-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-300"
-                >
-                  <option data-eos-id="src/pages/admin/email/quick-send-tab.tsx#83" value="">Pick a subscriber...</option>
-                  {sampleSubs!.map((s) => (
-                    <option data-eos-id="src/pages/admin/email/quick-send-tab.tsx#84" data-eos-var="s.first_name" data-eos-var-label="First name" data-eos-var-scope="item" key={s.id} value={s.id}>
-                      {s.first_name || s.display_name || s.email}
-                    </option>
-                  ))}
-                </select>
+                <Dropdown
+                  value={previewSubId || undefined}
+                  onChange={setPreviewSubId}
+                  placeholder="Pick a subscriber..."
+                  size="sm"
+                  className="w-auto"
+                  options={sampleSubs!.map((s) => ({
+                    value: s.id,
+                    label: s.first_name || s.display_name || s.email || '',
+                  }))}
+                />
                 {previewSubId && (
                   <button data-eos-id="src/pages/admin/email/quick-send-tab.tsx#85"
                     type="button"

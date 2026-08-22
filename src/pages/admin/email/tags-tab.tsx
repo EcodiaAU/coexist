@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Tag, Plus, Trash2, GitMerge, Loader2, ArrowRight } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { Button } from '@/components/button'
@@ -39,6 +40,8 @@ function MergeDuplicatesSheet({ open, onClose }: { open: boolean; onClose: () =>
       return (data ?? []) as DedupGroup[]
     },
   })
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
 
   // Merge a group into its first tag (the canonical keeper). Every other
   // tag in the group is folded in via merge_email_tags, which moves the
@@ -75,7 +78,7 @@ function MergeDuplicatesSheet({ open, onClose }: { open: boolean; onClose: () =>
       </p>
 
       {isLoading ? (
-        <Skeleton data-eos-id="src/pages/admin/email/tags-tab.tsx#3" variant="list-item" count={3} />
+        showLoading ? <Skeleton data-eos-id="src/pages/admin/email/tags-tab.tsx#3" variant="list-item" count={3} /> : null
       ) : !groups?.length ? (
         <div data-eos-id="src/pages/admin/email/tags-tab.tsx#4" className="py-10 text-center">
           <div data-eos-id="src/pages/admin/email/tags-tab.tsx#5" className="flex items-center justify-center w-12 h-12 rounded-full bg-green-50 text-green-600 mx-auto mb-3">
@@ -240,6 +243,8 @@ function TagManagerSheet({
 
 export function TagsTab() {
   const { data: tags, isLoading } = useTags()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [showCreate, setShowCreate] = useState(false)
@@ -284,7 +289,7 @@ export function TagsTab() {
       </div>
 
       {isLoading ? (
-        <Skeleton data-eos-id="src/pages/admin/email/tags-tab.tsx#34" variant="list-item" count={4} />
+        showLoading ? <Skeleton data-eos-id="src/pages/admin/email/tags-tab.tsx#34" variant="list-item" count={4} /> : null
       ) : !tags?.length ? (
         <EmptyState data-eos-id="src/pages/admin/email/tags-tab.tsx#35"
           illustration="empty"
