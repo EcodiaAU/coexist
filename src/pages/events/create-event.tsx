@@ -1314,15 +1314,14 @@ function StepTicketing({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <select
+                    <Dropdown
                       value={q.question_type}
-                      onChange={(e) => updateQuestion(q.id, { question_type: e.target.value as TicketQuestionType })}
-                      className="h-10 px-3 rounded-sm bg-surface-3 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                    >
-                      {QUESTION_TYPE_LABELS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => updateQuestion(q.id, { question_type: v as TicketQuestionType })}
+                      options={QUESTION_TYPE_LABELS}
+                      placeholder="Question type"
+                      size="sm"
+                      className="w-auto"
+                    />
                     <label className="flex items-center gap-2 text-xs font-medium text-neutral-500 ml-auto">
                       Required
                       <Toggle checked={q.required} onChange={(checked) => updateQuestion(q.id, { required: checked })} />
