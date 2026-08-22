@@ -46,6 +46,7 @@ import { Card } from '@/components/card'
 import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
 import { prefetchEventDetail, useRegisterForEvent } from '@/hooks/use-events'
 import { cn } from '@/lib/cn'
+import { SegmentedControl } from '@/components/segmented-control'
 import { isSignInButtonVisible, wallClockNow } from '@/lib/date-format'
 import { ProximityCheckInBanner } from '@/components/proximity-check-in-banner'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
@@ -1188,33 +1189,20 @@ function HomeImpactSection({
               </div>
             )}
 
-            {/* Time range toggle */}
-            <div className="flex rounded-full bg-[#f4f2ec]/15 p-0.5">
-              <button
-                type="button"
-                onClick={() => setTimeRange('all-time')}
-                className={cn(
-                  'px-3 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
-                  timeRange === 'all-time'
-                    ? 'bg-white/90 text-primary-900 shadow-sm'
-                    : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
-                )}
-              >
-                All Time
-              </button>
-              <button
-                type="button"
-                onClick={() => setTimeRange('current-year')}
-                className={cn(
-                  'px-3 min-h-11 rounded-full text-[11px] font-semibold transition-transform duration-200 active:scale-[0.98] cursor-pointer select-none whitespace-nowrap',
-                  timeRange === 'current-year'
-                    ? 'bg-white/90 text-primary-900 shadow-sm'
-                    : 'text-[#f4f2ec]/70 hover:text-[#f4f2ec]',
-                )}
-              >
-                {new Date().getFullYear()}
-              </button>
-            </div>
+            {/* Time range toggle - shared SegmentedControl (dark variant) so it
+                gets the sliding-pill animation + centred labels, matching the
+                switcher family. Was a hand-rolled two-button pill row. */}
+            <SegmentedControl
+              variant="dark"
+              segments={[
+                { id: 'all-time', label: 'All Time' },
+                { id: 'current-year', label: String(new Date().getFullYear()) },
+              ]}
+              value={timeRange}
+              onChange={setTimeRange}
+              aria-label="Impact time range"
+              className="w-[176px] shrink-0"
+            />
           </div>
 
           {/* Content - bento card grid */}

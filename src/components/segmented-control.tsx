@@ -12,13 +12,13 @@ export interface Segment<T extends string = string> {
   icon?: ReactNode
 }
 
-type SegmentedControlVariant = 'filled' | 'pill'
+type SegmentedControlVariant = 'filled' | 'pill' | 'dark'
 
 interface SegmentedControlProps<T extends string = string> {
   segments: Segment<T>[]
   value: T
   onChange: (id: T) => void
-  /** 'filled' = search-family grey track + white sliding pill (default). 'pill' = solid-olive sliding pill, for a single high-emphasis toggle. */
+  /** 'filled' = search-family grey track + white sliding pill (default). 'pill' = solid-olive sliding pill. 'dark' = translucent-white track + white sliding pill, for switchers ON a dark/coloured surface (e.g. the home impact card). */
   variant?: SegmentedControlVariant
   /** Hide labels on mobile, show icon-only. Labels appear at sm: breakpoint. */
   compact?: boolean
@@ -50,6 +50,15 @@ const VARIANT_STYLES: Record<
     indicator: 'bg-primary-600 shadow-sm',
     active: 'text-white',
     inactive: 'text-primary-700 hover:text-primary-800',
+  },
+  // For switchers sitting ON a dark / coloured surface (home impact card, dark
+  // modals). Translucent-white track + solid-white sliding pill; dark active text
+  // on the pill, translucent-white inactive text on the surface.
+  dark: {
+    track: 'bg-white/15 rounded-full p-1',
+    indicator: 'bg-white shadow-sm',
+    active: 'text-primary-900',
+    inactive: 'text-white/70 hover:text-white',
   },
 }
 
