@@ -21,7 +21,7 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
 import { SearchBar } from '@/components/search-bar'
-import { Chip } from '@/components/chip'
+import { FilterPillRow, type FilterOption } from '@/components/filter-pill-row'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
@@ -265,6 +265,11 @@ function ContactFormModal({
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
+const CATEGORY_OPTIONS: FilterOption[] = [
+  { id: '', label: 'All' },
+  ...CONTACT_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
+]
+
 export default function AdminContactsPage() {
   const shouldReduceMotion = useReducedMotion()
   const [search, setSearch] = useState('')
@@ -365,29 +370,16 @@ export default function AdminContactsPage() {
             compact
             className="flex-1"
           />
-          {/* Category filter: dynamic 7-wide category set, so the shared filter-pill
-              (Chip) treatment in a horizontal-scroll row - matches shop categories +
-              explore. A fixed SegmentedControl cannot hold 7 long labels on mobile. */}
-          <div data-eos-id="src/pages/admin/contacts.tsx#41" className="relative -mx-4 sm:mx-0 sm:shrink-0">
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-neutral-50 to-transparent sm:hidden" />
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none px-4 sm:px-0 py-0.5" role="listbox" aria-label="Filter contacts by category">
-              <Chip
-                label="All"
-                selected={!categoryFilter}
-                onSelect={() => setCategoryFilter('')}
-                className="shrink-0"
-              />
-              {CONTACT_CATEGORIES.map((cat) => (
-                <Chip
-                  key={cat.id}
-                  label={cat.label}
-                  selected={categoryFilter === cat.id}
-                  onSelect={() => setCategoryFilter(cat.id)}
-                  className="shrink-0"
-                />
-              ))}
-            </div>
-          </div>
+          {/* Category filter: shared FilterPillRow (auto-width scrollable Chips) -
+              same control as collectives/events/shop. Handles the 7-wide category
+              set without bunching; a fixed SegmentedControl cannot. */}
+          <FilterPillRow
+            options={CATEGORY_OPTIONS}
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            aria-label="Filter contacts by category"
+            className="-mx-4 sm:mx-0 sm:shrink-0"
+          />
         </motion.div>
 
         {/* Contact list */}

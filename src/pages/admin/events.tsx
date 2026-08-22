@@ -16,7 +16,7 @@ import {
 import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { SearchBar } from '@/components/search-bar'
-import { SegmentedControl, type Segment } from '@/components/segmented-control'
+import { FilterPillRow, type FilterOption } from '@/components/filter-pill-row'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
@@ -40,7 +40,7 @@ interface CollectiveGroup {
 
 type StatusFilter = 'upcoming' | 'past' | 'all' | 'draft' | 'cancelled'
 
-const STATUS_SEGMENTS: Segment<StatusFilter>[] = [
+const STATUS_OPTIONS: FilterOption<StatusFilter>[] = [
   { id: 'upcoming', label: 'Upcoming' },
   { id: 'past', label: 'Past' },
   { id: 'draft', label: 'Draft' },
@@ -547,11 +547,12 @@ export default function AdminEventsPage() {
               className="flex-1"
             />
 
-            <SegmentedControl data-eos-id="src/pages/admin/events.tsx#99"
-              segments={STATUS_SEGMENTS}
+            <FilterPillRow
+              options={STATUS_OPTIONS}
               value={statusFilter}
               onChange={setStatusFilter}
               aria-label="Filter events by status"
+              className="-mx-4 sm:mx-0 sm:shrink-0"
             />
           </motion.div>
 

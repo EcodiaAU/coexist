@@ -95,7 +95,9 @@ function CategoryPills({
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-white to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-4 bg-gradient-to-r from-white to-transparent" />
       <div
-        className="flex gap-2 overflow-x-auto px-5 lg:px-6 pb-1 scrollbar-none snap-x snap-proximity"
+        // py-2 (not just pb-1): overflow-x-auto also clips the vertical axis, so
+        // the selected Chip's ring-2 + active-scale top was getting cut flat.
+        className="flex gap-2 overflow-x-auto px-5 lg:px-6 py-2 scrollbar-none snap-x snap-proximity"
         style={{ WebkitOverflowScrolling: 'touch' }}
         role="listbox"
         aria-label="Filter products by category"

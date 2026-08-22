@@ -22,7 +22,7 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
 import { SearchBar } from '@/components/search-bar'
-import { SegmentedControl, type Segment } from '@/components/segmented-control'
+import { FilterPillRow, type FilterOption } from '@/components/filter-pill-row'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { BottomSheet } from '@/components/bottom-sheet'
@@ -44,7 +44,7 @@ import {
 
 type StatusFilter = 'all' | 'active' | 'archived'
 
-const STATUS_SEGMENTS: Segment<StatusFilter>[] = [
+const STATUS_OPTIONS: FilterOption<StatusFilter>[] = [
   { id: 'active', label: 'Active' },
   { id: 'archived', label: 'Archived' },
   { id: 'all', label: 'All' },
@@ -251,12 +251,12 @@ export default function AdminCollectivesPage() {
               compact
               className="flex-1"
             />
-            <SegmentedControl data-eos-id="src/pages/admin/collectives.tsx#17"
-              segments={STATUS_SEGMENTS}
+            <FilterPillRow
+              options={STATUS_OPTIONS}
               value={statusFilter}
               onChange={setStatusFilter}
               aria-label="Filter collectives by status"
-              className="sm:w-auto"
+              className="-mx-4 sm:mx-0 sm:shrink-0"
             />
           </motion.div>
 
