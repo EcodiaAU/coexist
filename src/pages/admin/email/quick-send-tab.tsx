@@ -51,6 +51,7 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useAdminEventPhotos, type AdminEventPhoto } from '@/hooks/use-event-photos'
 import {
   useTags,
@@ -138,6 +139,8 @@ export function QuickSendTab() {
   const { data: recentPhotos, isLoading: photosLoading } = useAdminEventPhotos(
     showPhotoPicker ? { limit: 60 } : { limit: 0 },
   )
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showPhotosLoading = useDelayedLoading(photosLoading)
 
   async function handleHeroUpload(file: File) {
     if (!file.type.startsWith('image/')) {
@@ -680,11 +683,13 @@ export function QuickSendTab() {
                 </button>
               </div>
               {photosLoading ? (
+                showPhotosLoading ? (
                 <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#35" className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div data-eos-id="src/pages/admin/email/quick-send-tab.tsx#36" key={i} className="aspect-square rounded-sm bg-neutral-100 animate-pulse" />
                   ))}
                 </div>
+                ) : null
               ) : !recentPhotos?.length ? (
                 <p data-eos-id="src/pages/admin/email/quick-send-tab.tsx#37" className="text-xs text-neutral-500 py-6 text-center">
                   No event photos yet. Upload one instead.

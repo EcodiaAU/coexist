@@ -16,6 +16,8 @@ import {
 import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
 import { SearchBar } from '@/components/search-bar'
+import { SegmentedControl, type Segment } from '@/components/segmented-control'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { OptimizedImage } from '@/components/optimized-image'
@@ -37,6 +39,14 @@ interface CollectiveGroup {
 }
 
 type StatusFilter = 'upcoming' | 'past' | 'all' | 'draft' | 'cancelled'
+
+const STATUS_SEGMENTS: Segment<StatusFilter>[] = [
+  { id: 'upcoming', label: 'Upcoming' },
+  { id: 'past', label: 'Past' },
+  { id: 'draft', label: 'Draft' },
+  { id: 'cancelled', label: 'Cancelled' },
+  { id: 'all', label: 'All' },
+]
 
 /* ------------------------------------------------------------------ */
 /*  Activity type styling                                              */
@@ -419,6 +429,8 @@ export default function AdminEventsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('upcoming')
 
   const { data, isLoading, isError } = useAdminEventsData()
+  // White until the 1s delay, then the skeleton shell; never flash on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
 
   const heroStats = useMemo(() => (
     <AdminHeroStatRow data-eos-id="src/pages/admin/events.tsx#74">
@@ -479,6 +491,7 @@ export default function AdminEventsPage() {
   const { stagger, fadeUp } = adminVariants(rm)
 
   if (isLoading) {
+    if (!showLoading) return null
     return (
       <div data-eos-id="src/pages/admin/events.tsx#81" className="space-y-4">
         <div data-eos-id="src/pages/admin/events.tsx#82" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -534,28 +547,12 @@ export default function AdminEventsPage() {
               className="flex-1"
             />
 
-            <div data-eos-id="src/pages/admin/events.tsx#99" className="flex items-center gap-2">
-              {/* Status toggle */}
-              <div data-eos-id="src/pages/admin/events.tsx#100" className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5 overflow-x-auto">
-                {(['upcoming', 'past', 'draft', 'cancelled', 'all'] as const).map((s) => (
-                  <button data-eos-id="src/pages/admin/events.tsx#101"
-                    key={s}
-                    type="button"
-                    onClick={() => setStatusFilter(s)}
-                    className={cn(
-                      'px-3.5 min-h-11 rounded-sm text-sm font-semibold capitalize',
-                      'active:scale-[0.98] transition-[colors,transform] duration-150 cursor-pointer select-none',
-                      statusFilter === s
-                        ? 'bg-neutral-100 text-neutral-900'
-                        : 'text-neutral-400 hover:text-neutral-600',
-                    )}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-
-            </div>
+            <SegmentedControl data-eos-id="src/pages/admin/events.tsx#99"
+              segments={STATUS_SEGMENTS}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              aria-label="Filter events by status"
+            />
           </motion.div>
 
           {/* ── Event list ── */}

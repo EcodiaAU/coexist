@@ -28,6 +28,7 @@ import { TabBar } from '@/components/tab-bar'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 
 /* ------------------------------------------------------------------ */
 /*  Data hooks                                                         */
@@ -117,6 +118,9 @@ export default function AdminPartnersPage() {
   const { toast } = useToast()
   const { data: organisations, isLoading: orgsLoading } = useOrganisations()
   const { data: offers, isLoading: offersLoading } = usePartnerOffers()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showOrgsLoading = useDelayedLoading(orgsLoading)
+  const showOffersLoading = useDelayedLoading(offersLoading)
 
   const heroStats = useMemo(() => (
     <AdminHeroStatRow>
@@ -309,7 +313,7 @@ export default function AdminPartnersPage() {
           </div>
 
           {orgsLoading ? (
-            <Skeleton variant="list-item" count={4} />
+            showOrgsLoading ? <Skeleton variant="list-item" count={4} /> : null
           ) : !organisations?.length ? (
             <EmptyState
               illustration="empty"
@@ -399,7 +403,7 @@ export default function AdminPartnersPage() {
           </div>
 
           {offersLoading ? (
-            <Skeleton variant="list-item" count={4} />
+            showOffersLoading ? <Skeleton variant="list-item" count={4} /> : null
           ) : !offers?.length ? (
             <EmptyState
               illustration="empty"

@@ -37,6 +37,7 @@ import { TabBar } from '@/components/tab-bar'
 import { Toggle } from '@/components/toggle'
 import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
+import { SearchBar } from '@/components/search-bar'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
@@ -796,26 +797,19 @@ export default function AdminApplicationsPage() {
         <>
           {/* Filters */}
           <motion.div data-eos-id="src/pages/admin/applications.tsx#129" variants={fadeUp} className="space-y-3">
-            {/* Search + dropdown row */}
-            <div data-eos-id="src/pages/admin/applications.tsx#130" className="flex gap-2 flex-wrap">
-              <div data-eos-id="src/pages/admin/applications.tsx#131" className="flex-1 min-w-[200px]">
-                <Input data-eos-id="src/pages/admin/applications.tsx#132"
-                  type="search"
-                  placeholder="Search by name, email, suburb..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Dropdown data-eos-id="src/pages/admin/applications.tsx#133"
-                options={STATUS_FILTERS}
-                value={statusFilter}
-                onChange={setStatusFilter}
-                placeholder="Status"
-                triggerClassName="!w-auto min-w-[140px]"
-              />
-            </div>
+            {/* Search - shared SearchBar prim (was a plain Input type=search). */}
+            <SearchBar data-eos-id="src/pages/admin/applications.tsx#132"
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search by name, email, suburb..."
+              aria-label="Search applications"
+              compact
+            />
 
-            {/* Quick-filter pills */}
+            {/* Status filter - the single consolidated control. The redundant
+                status Dropdown was removed (it drove the same statusFilter as
+                these pills); the pills win because they carry live counts +
+                per-status colour. */}
             <div data-eos-id="src/pages/admin/applications.tsx#134" className="flex items-center gap-2 overflow-x-auto pb-0.5 -mb-0.5">
               {STATUS_FILTERS.map(f => {
                 const count = f.value === 'all' ? (applications ?? []).length

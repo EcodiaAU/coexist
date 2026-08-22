@@ -9,6 +9,7 @@ import { Input } from '@/components/input'
 import { Toggle } from '@/components/toggle'
 import { Skeleton } from '@/components/skeleton'
 import { useToast } from '@/components/toast'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useDevQuiz, useDevQuizQuestions, useUpdateQuiz, useSaveQuizQuestions, type QuizQuestionInput } from '@/hooks/use-admin-development'
 import { QuestionBuilder } from '@/components/development/question-builder'
 import { SaveSuccessBanner } from '@/components/development/save-success-banner'
@@ -24,6 +25,8 @@ export default function AdminEditQuizPage() {
 
   const { data: quiz, isLoading: quizLoading } = useDevQuiz(quizId)
   const { data: existingQuestions = [], isLoading: questionsLoading } = useDevQuizQuestions(quizId)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(quizLoading || questionsLoading)
   const updateQuiz = useUpdateQuiz()
   const saveQuestions = useSaveQuizQuestions()
 
@@ -53,7 +56,7 @@ export default function AdminEditQuizPage() {
     } catch { toast.error('Failed to update quiz') }
   }, [quizId, title, description, passScore, randomize, timeLimit, maxAttempts, questions, updateQuiz, saveQuestions, toast])
 
-  if (quizLoading || questionsLoading) return <div data-eos-id="src/pages/admin/development/edit-quiz.tsx#0" data-eos-v="2" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#1" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#2" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#3" className="h-32 rounded-md" /></div>
+  if (quizLoading || questionsLoading) return showLoading ? <div data-eos-id="src/pages/admin/development/edit-quiz.tsx#0" data-eos-v="2" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#1" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#2" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-quiz.tsx#3" className="h-32 rounded-md" /></div> : null
 
   if (saved) {
     return (

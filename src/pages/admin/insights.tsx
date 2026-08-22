@@ -41,6 +41,7 @@ import {
   useImpactObservations, useYearOverYear, type ObservationFilters,
 } from '@/hooks/use-admin-impact-observations'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import type { ImpactMetricDef } from '@/lib/impact-metrics'
 import { dateRangeOptions, getDateRangeStart, useTrendData, type DateRange } from '@/hooks/use-admin-dashboard'
 import { nationalHistoricalRemainder } from '@/lib/impact-query'
@@ -230,6 +231,8 @@ export default function AdminInsightsPage() {
   }), [dateRange, collectiveIds, activityType, search, customStart, customEnd])
 
   const { data: obs, isLoading: obsLoading } = useImpactObservations(filters, activeDefs)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showObsLoading = useDelayedLoading(obsLoading)
   const { data: yoy } = useYearOverYear(activeDefs)
   const { data: trends } = useTrendData()
 
@@ -496,6 +499,7 @@ export default function AdminInsightsPage() {
   // keeps the previous data visible with no skeleton flash. Layout mirrors the
   // sticky filter bar + the Overview and Impact stat-card rows below it.
   if (obsLoading) {
+    if (!showObsLoading) return null
     return (
       <div className="pb-28">
         <div

@@ -24,6 +24,7 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { formatRelative } from '@/lib/date-format'
 import { useImageUpload } from '@/hooks/use-image-upload'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { AnnouncementModalContent } from '@/components/announcement-modal'
 import {
   useAdminAnnouncements,
@@ -139,6 +140,8 @@ export default function AdminAnnouncementPage() {
   const { toast } = useToast()
 
   const { data: announcements, isLoading } = useAdminAnnouncements()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const upsert = useUpsertAnnouncement()
   const setActive = useSetAnnouncementActive()
   const deleteAnnouncement = useDeleteAnnouncement()
@@ -498,7 +501,7 @@ export default function AdminAnnouncementPage() {
             All announcements
           </h2>
           {isLoading ? (
-            <Skeleton variant="list-item" count={3} />
+            showLoading ? <Skeleton variant="list-item" count={3} /> : null
           ) : !announcements || announcements.length === 0 ? (
             <EmptyState
               illustration="empty"

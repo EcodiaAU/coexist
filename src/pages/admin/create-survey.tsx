@@ -33,6 +33,7 @@ import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { ACTIVITY_TYPE_OPTIONS, ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -1130,6 +1131,8 @@ export default function CreateSurveyPage() {
     enabled: !!surveyId,
     staleTime: 30 * 1000,
   })
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(loadingSurvey)
 
   // Pre-load template if ?template=index was passed
   const templateIndex = searchParams.get('template')
@@ -1291,6 +1294,7 @@ export default function CreateSurveyPage() {
 
   // Show loading skeleton while fetching survey for edit
   if (isEdit && loadingSurvey) {
+    if (!showLoading) return null
     return (
       <div data-eos-id="src/pages/admin/create-survey.tsx#171" className="max-w-4xl mx-auto pb-8">
         <div data-eos-id="src/pages/admin/create-survey.tsx#172" className="mb-8">

@@ -13,6 +13,7 @@ import { Dropdown } from '@/components/dropdown'
 import { Skeleton } from '@/components/skeleton'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useDevSection, useDevSectionModules, useUpdateSection, useSaveSectionModules, useDevModules, useDevSections, type DevCategory, type DevModule } from '@/hooks/use-admin-development'
 
 const CATEGORY_OPTIONS = [
@@ -53,6 +54,8 @@ export default function AdminEditSectionPage() {
 
   const { data: section, isLoading: sectionLoading } = useDevSection(sectionId)
   const { data: existingSectionModules = [], isLoading: smLoading } = useDevSectionModules(sectionId)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(sectionLoading || smLoading)
   const updateSection = useUpdateSection()
   const saveSectionModules = useSaveSectionModules()
   const { data: allModules = [] } = useDevModules()
@@ -87,7 +90,7 @@ export default function AdminEditSectionPage() {
     } catch { toast.error('Failed to update section') }
   }, [sectionId, title, description, category, thumbnailUrl, prerequisiteId, moduleItems, updateSection, saveSectionModules, toast, navigate])
 
-  if (sectionLoading || smLoading) return <div data-eos-id="src/pages/admin/development/edit-section.tsx#11" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-section.tsx#12" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-section.tsx#13" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-section.tsx#14" className="h-32 rounded-md" /></div>
+  if (sectionLoading || smLoading) return showLoading ? <div data-eos-id="src/pages/admin/development/edit-section.tsx#11" className="max-w-3xl mx-auto space-y-6 py-4"><Skeleton data-eos-id="src/pages/admin/development/edit-section.tsx#12" className="h-10 w-32 rounded-sm" /><Skeleton data-eos-id="src/pages/admin/development/edit-section.tsx#13" className="h-48 rounded-md" /><Skeleton data-eos-id="src/pages/admin/development/edit-section.tsx#14" className="h-32 rounded-md" /></div> : null
 
   return (
     <motion.div data-eos-id="src/pages/admin/development/edit-section.tsx#15" variants={stagger} initial="hidden" animate="visible" className="max-w-3xl mx-auto space-y-6">

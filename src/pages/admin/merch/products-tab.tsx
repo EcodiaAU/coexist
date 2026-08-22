@@ -10,6 +10,7 @@ import { SearchBar } from '@/components/search-bar'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { ConfirmationSheet } from '@/components/confirmation-sheet'
@@ -790,6 +791,8 @@ const STATUS_DOT: Record<ProductStatus, string> = {
 
 export default function ProductsTab() {
   const { data: products, isLoading } = useAdminProducts()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const updateProduct = useUpdateProduct()
   const { toast } = useToast()
   const [formOpen, setFormOpen] = useState(false)
@@ -830,13 +833,13 @@ export default function ProductsTab() {
   }, [archiveTarget, updateProduct, toast])
 
   if (isLoading) {
-    return (
+    return showLoading ? (
       <div className="space-y-2">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} variant="list-item" />
         ))}
       </div>
-    )
+    ) : null
   }
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 

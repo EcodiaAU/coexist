@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   Calendar, MapPin, Users, Clock, Tag,
-  ArrowRight, ExternalLink, Search, X,
+  ArrowRight, ExternalLink, X,
 } from 'lucide-react'
 import {
   useMyEvents,
@@ -31,6 +31,7 @@ import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 import { OfflineIndicator } from '@/components/offline-indicator'
 import { PendingSyncBadge } from '@/components/pending-sync-badge'
 import { CollectiveMap } from '@/components/collective-map'
+import { SearchBar } from '@/components/search-bar'
 
 type ActivityType = Database['public']['Enums']['activity_type']
 
@@ -320,29 +321,15 @@ export default function ExplorePage() {
                         rows (search + When chip strip + wrapping dropdown trio)
                         that ate ~4 lines and wrapped awkwardly on phones. */}
                     <div className="mb-4 space-y-2.5">
-                      {/* Keyword search */}
-                      <div className="relative">
-                        <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-                        <input
-                          type="search"
-                          inputMode="search"
-                          value={searchInput}
-                          onChange={(e) => setSearchInput(e.target.value)}
-                          placeholder="Search events by name or place"
-                          aria-label="Search events"
-                          className="w-full h-11 rounded-full bg-white ring-1 ring-neutral-200 pl-10 pr-10 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                        />
-                        {searchInput && (
-                          <button
-                            type="button"
-                            onClick={() => setSearchInput('')}
-                            aria-label="Clear search"
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-neutral-400 hover:bg-neutral-100 cursor-pointer select-none"
-                          >
-                            <X size={15} />
-                          </button>
-                        )}
-                      </div>
+                      {/* Keyword search - shared SearchBar prim (unified with the
+                          rest of the app; was a hand-rolled type=search input). */}
+                      <SearchBar
+                        value={searchInput}
+                        onChange={setSearchInput}
+                        placeholder="Search events by name or place"
+                        aria-label="Search events"
+                        compact
+                      />
 
                       {/* Filter pills */}
                       <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar -mx-4 px-4 lg:-mx-6 lg:px-6 py-0.5">
@@ -607,17 +594,14 @@ export default function ExplorePage() {
                         collective by name a single query, not a scrub of the
                         horizontal chip strip. */}
                     <div className="mb-3 space-y-2.5">
-                      <div className="relative">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                        <input
-                          type="text"
-                          value={collectiveSearch}
-                          onChange={(e) => setCollectiveSearch(e.target.value)}
-                          placeholder="Search collectives by name..."
-                          aria-label="Search collectives by name"
-                          className="w-full pl-9 pr-3 py-2.5 rounded-sm bg-white border border-neutral-200 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                        />
-                      </div>
+                      {/* Shared SearchBar prim (was a hand-rolled input). */}
+                      <SearchBar
+                        value={collectiveSearch}
+                        onChange={setCollectiveSearch}
+                        placeholder="Search collectives by name..."
+                        aria-label="Search collectives by name"
+                        compact
+                      />
                       {collectiveStates.length > 1 && (
                         <div className="flex gap-2 overflow-x-auto pretty-scrollbar -mx-4 px-4 lg:-mx-6 lg:px-6 pb-1">
                           <button

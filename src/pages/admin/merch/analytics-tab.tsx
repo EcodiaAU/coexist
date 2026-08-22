@@ -5,6 +5,7 @@ import { DollarSign, ShoppingBag, TrendingUp } from 'lucide-react'
 import { TabBar } from '@/components/tab-bar'
 import { StatCard } from '@/components/stat-card'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { useSalesAnalytics } from '@/hooks/use-admin-merch'
 import { formatPrice } from '@/types/merch'
@@ -27,18 +28,20 @@ const PRODUCT_ICON_STYLES = [
 export default function AnalyticsTab() {
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month')
   const { data: analytics, isLoading } = useSalesAnalytics(period)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const shouldReduceMotion = useReducedMotion()
 
   // Instant skeleton on first ever load; global keepPreviousData keeps prior
   // rows on period tab switches so it never re-flashes.
   if (isLoading && !analytics) {
-    return (
+    return showLoading ? (
       <div className="space-y-3">
         <Skeleton variant="card" />
         <Skeleton variant="card" />
         <Skeleton variant="card" />
       </div>
-    )
+    ) : null
   }
 
   if (!analytics) {

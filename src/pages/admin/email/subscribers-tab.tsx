@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { Button } from '@/components/button'
@@ -167,6 +168,8 @@ export function SubscribersTab() {
   const queryClient = useQueryClient()
   const { data: tags } = useTags()
   const { data: subscribers, isLoading } = useSubscribers(search, tagFilter)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const [syncing, setSyncing] = useState(false)
 
   const [taggingProfile, setTaggingProfile] = useState<{
@@ -247,7 +250,7 @@ export function SubscribersTab() {
       </div>
 
       {isLoading ? (
-        <Skeleton data-eos-id="src/pages/admin/email/subscribers-tab.tsx#27" variant="list-item" count={8} />
+        showLoading ? <Skeleton data-eos-id="src/pages/admin/email/subscribers-tab.tsx#27" variant="list-item" count={8} /> : null
       ) : !subscribers?.length ? (
         <EmptyState data-eos-id="src/pages/admin/email/subscribers-tab.tsx#28"
           illustration="empty"

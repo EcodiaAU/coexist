@@ -39,6 +39,7 @@ import { ProfileModal } from '@/components/profile-modal'
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/use-auth'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { supabase } from '@/lib/supabase'
 import { logAudit } from '@/lib/audit'
 import {
@@ -211,6 +212,9 @@ function UserAdminControls({
 
   const { data: collectiveRoles, isLoading: rolesLoading } = useUserCollectiveRoles(user?.id)
   const { data: capsData, isLoading: capsLoading } = useUserResolvedCapabilities(user?.id)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showRolesLoading = useDelayedLoading(rolesLoading)
+  const showCapsLoading = useDelayedLoading(capsLoading)
   const { data: allCollectives } = useAllCollectives()
   const assignRole = useAdminAssignCollectiveRole()
   const removeFromCollective = useAdminRemoveFromCollective()
@@ -681,7 +685,7 @@ function UserAdminControls({
             </AnimatePresence>
 
             {rolesLoading ? (
-              <Skeleton variant="list-item" count={2} />
+              showRolesLoading ? <Skeleton variant="list-item" count={2} /> : null
             ) : !activeRoles.length ? (
               <div className="py-4 px-3 rounded-sm bg-neutral-50 ring-1 ring-neutral-200/40 text-center">
                 <Users size={20} className="text-neutral-400 mx-auto mb-1" />
@@ -848,9 +852,11 @@ function UserAdminControls({
                     className="overflow-hidden"
                   >
                     {capsLoading ? (
-                      <div className="mt-3">
-                        <Skeleton variant="list-item" count={4} />
-                      </div>
+                      showCapsLoading ? (
+                        <div className="mt-3">
+                          <Skeleton variant="list-item" count={4} />
+                        </div>
+                      ) : null
                     ) : (
                       <div className="mt-3 space-y-4">
                         <p className="text-[11px] text-neutral-500 px-1">
@@ -956,6 +962,8 @@ export default function AdminUsersPage() {
   const { toast } = useToast()
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useAdminUsers(debouncedSearch, roleFilter)
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const users = useMemo(() => data?.pages.flatMap((p) => p) ?? [], [data])
 
   // Fill the olive hero band with real member counts. An empty hero (title over
@@ -1107,7 +1115,7 @@ export default function AdminUsersPage() {
       {/* User list */}
       <motion.div variants={fadeUp}>
       {isLoading ? (
-        <Skeleton variant="list-item" count={8} />
+        showLoading ? <Skeleton variant="list-item" count={8} /> : null
       ) : !users?.length ? (
         <EmptyState
           illustration="search"

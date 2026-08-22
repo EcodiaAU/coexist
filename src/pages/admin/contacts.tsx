@@ -21,6 +21,8 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
 import { SearchBar } from '@/components/search-bar'
+import { Chip } from '@/components/chip'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { BottomSheet } from '@/components/bottom-sheet'
@@ -273,6 +275,8 @@ export default function AdminContactsPage() {
   const { toast } = useToast()
 
   const { data: contacts, isLoading } = useAdminContacts({ search, category: categoryFilter })
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const deleteMutation = useDeleteContact()
 
   const handleDelete = async () => {
@@ -361,43 +365,35 @@ export default function AdminContactsPage() {
             compact
             className="flex-1"
           />
-          <div data-eos-id="src/pages/admin/contacts.tsx#41" className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5 overflow-x-auto">
-            <button data-eos-id="src/pages/admin/contacts.tsx#42"
-              type="button"
-              onClick={() => setCategoryFilter('')}
-              className={cn(
-                'px-3 min-h-11 rounded-sm text-sm font-semibold whitespace-nowrap',
-                'transition-colors duration-150 cursor-pointer select-none',
-                !categoryFilter
-                  ? 'bg-neutral-100 text-neutral-900'
-                  : 'text-neutral-400 hover:text-neutral-600',
-              )}
-            >
-              All
-            </button>
-            {CONTACT_CATEGORIES.map((cat) => (
-              <button data-eos-id="src/pages/admin/contacts.tsx#43" data-eos-var="cat.label" data-eos-var-label="Label" data-eos-var-scope="item"
-                key={cat.id}
-                type="button"
-                onClick={() => setCategoryFilter(cat.id)}
-                className={cn(
-                  'px-3 min-h-11 rounded-sm text-sm font-semibold whitespace-nowrap',
-                  'transition-colors duration-150 cursor-pointer select-none',
-                  categoryFilter === cat.id
-                    ? 'bg-neutral-100 text-neutral-900'
-                    : 'text-neutral-500 hover:text-neutral-700',
-                )}
-              >
-                {cat.label.split(' ')[0]}
-              </button>
-            ))}
+          {/* Category filter: dynamic 7-wide category set, so the shared filter-pill
+              (Chip) treatment in a horizontal-scroll row - matches shop categories +
+              explore. A fixed SegmentedControl cannot hold 7 long labels on mobile. */}
+          <div data-eos-id="src/pages/admin/contacts.tsx#41" className="relative -mx-4 sm:mx-0 sm:shrink-0">
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-neutral-50 to-transparent sm:hidden" />
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none px-4 sm:px-0 py-0.5" role="listbox" aria-label="Filter contacts by category">
+              <Chip
+                label="All"
+                selected={!categoryFilter}
+                onSelect={() => setCategoryFilter('')}
+                className="shrink-0"
+              />
+              {CONTACT_CATEGORIES.map((cat) => (
+                <Chip
+                  key={cat.id}
+                  label={cat.label}
+                  selected={categoryFilter === cat.id}
+                  onSelect={() => setCategoryFilter(cat.id)}
+                  className="shrink-0"
+                />
+              ))}
+            </div>
           </div>
         </motion.div>
 
         {/* Contact list */}
         <motion.div data-eos-id="src/pages/admin/contacts.tsx#44" variants={fadeUp}>
           {isLoading ? (
-            <Skeleton data-eos-id="src/pages/admin/contacts.tsx#45" variant="list-item" count={8} />
+            showLoading ? <Skeleton data-eos-id="src/pages/admin/contacts.tsx#45" variant="list-item" count={8} /> : null
           ) : !grouped.length ? (
             <EmptyState data-eos-id="src/pages/admin/contacts.tsx#46"
               illustration="empty"

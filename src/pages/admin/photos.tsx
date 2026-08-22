@@ -16,6 +16,7 @@ import { formatDate } from '@/lib/date-format'
 import { formatActivityType } from '@/lib/activity-types'
 import { cn } from '@/lib/cn'
 import { downloadAsZip, saveToCameraRoll } from '@/lib/photo-download'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 
 const ACTIVITY_OPTIONS = [
   { value: '', label: 'All activity types' },
@@ -117,6 +118,8 @@ export default function AdminPhotosPage() {
     attendedByUserId: attendedByUserId || null,
     limit: 1000,
   })
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
 
   const groups = useMemo(() => {
     const allGroups = groupByEvent(photos)
@@ -414,11 +417,13 @@ export default function AdminPhotosPage() {
 
             {/* Event cards - each is a thumbnail strip of that event's photos */}
             {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-40 rounded-md bg-neutral-100 animate-pulse" />
-                ))}
-              </div>
+              showLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-40 rounded-md bg-neutral-100 animate-pulse" />
+                  ))}
+                </div>
+              ) : null
             ) : groups.length === 0 ? (
               <EmptyState illustration="empty" title="No photos match these filters" description="Clear filters or expand the date range." />
             ) : (

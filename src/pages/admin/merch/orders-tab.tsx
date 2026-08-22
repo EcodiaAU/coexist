@@ -21,6 +21,7 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { SearchBar } from '@/components/search-bar'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { ConfirmationSheet } from '@/components/confirmation-sheet'
@@ -306,6 +307,8 @@ function ReturnsBanner({ orderId }: { orderId: string }) {
 
 function AllReturnsList() {
   const { data: returns, isLoading } = useAdminReturns()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const updateReturn = useUpdateReturnStatus()
   const { toast } = useToast()
 
@@ -321,7 +324,7 @@ function AllReturnsList() {
     [updateReturn, toast],
   )
 
-  if (isLoading) return <Skeleton variant="text" count={3} />
+  if (isLoading) return showLoading ? <Skeleton variant="text" count={3} /> : null
   if (!returns || returns.length === 0) return null
 
   const pending = returns.filter((r) => r.status === 'pending')
@@ -412,6 +415,8 @@ export default function OrdersTab() {
   const { data: orders, isLoading } = useAdminOrders(
     statusFilter === 'all' ? undefined : statusFilter,
   )
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const updateStatus = useUpdateOrderStatus()
   const refundOrder = useRefundOrder()
   const updateNotes = useUpdateOrderNotes()
@@ -495,7 +500,7 @@ export default function OrdersTab() {
   // Instant skeleton on first ever load; keepPreviousData holds rows on
   // tab/filter switches so it never re-flashes.
   if (isLoading && !orders) {
-    return (
+    return showLoading ? (
       <div className="space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -506,7 +511,7 @@ export default function OrdersTab() {
           <Skeleton key={i} variant="card" />
         ))}
       </div>
-    )
+    ) : null
   }
 
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)

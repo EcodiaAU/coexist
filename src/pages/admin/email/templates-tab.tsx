@@ -11,6 +11,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Header } from '@/components/header'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { Button } from '@/components/button'
@@ -356,6 +357,8 @@ function TemplateEditor({
 
 export function TemplatesTab() {
   const { data: templates, isLoading } = useTemplates()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [editing, setEditing] = useState<EmailTemplate | null | undefined>(undefined)
@@ -402,7 +405,7 @@ export function TemplatesTab() {
       </div>
 
       {isLoading ? (
-        <Skeleton data-eos-id="src/pages/admin/email/templates-tab.tsx#43" variant="list-item" count={4} />
+        showLoading ? <Skeleton data-eos-id="src/pages/admin/email/templates-tab.tsx#43" variant="list-item" count={4} /> : null
       ) : !templates?.length ? (
         <EmptyState data-eos-id="src/pages/admin/email/templates-tab.tsx#44"
           illustration="empty"

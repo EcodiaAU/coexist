@@ -22,6 +22,8 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Dropdown } from '@/components/dropdown'
 import { SearchBar } from '@/components/search-bar'
+import { SegmentedControl, type Segment } from '@/components/segmented-control'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { ConfirmationSheet } from '@/components/confirmation-sheet'
@@ -41,6 +43,12 @@ import {
 /* ------------------------------------------------------------------ */
 
 type StatusFilter = 'all' | 'active' | 'archived'
+
+const STATUS_SEGMENTS: Segment<StatusFilter>[] = [
+  { id: 'active', label: 'Active' },
+  { id: 'archived', label: 'Archived' },
+  { id: 'all', label: 'All' },
+]
 
 /* ------------------------------------------------------------------ */
 /* ------------------------------------------------------------------ */
@@ -181,6 +189,9 @@ export default function AdminCollectivesPage() {
     status: statusFilter,
   })
   const archiveMutation = useArchiveCollective()
+  // White until the 1s delay, then the skeleton grid; never flash a shell on a
+  // fast load (canonical useDelayedLoading guard, matching the 7 detail pages).
+  const showLoading = useDelayedLoading(isLoading)
 
   const heroActions = useMemo(() => (
     <Button data-eos-id="src/pages/admin/collectives.tsx#11"
@@ -240,34 +251,25 @@ export default function AdminCollectivesPage() {
               compact
               className="flex-1"
             />
-            <div data-eos-id="src/pages/admin/collectives.tsx#17" className="flex items-center gap-0.5 rounded-sm shadow-sm bg-white p-0.5">
-              {(['active', 'archived', 'all'] as const).map((s) => (
-                <button data-eos-id="src/pages/admin/collectives.tsx#18"
-                  key={s}
-                  type="button"
-                  onClick={() => setStatusFilter(s)}
-                  className={cn(
-                    'px-3.5 min-h-11 rounded-sm text-sm font-semibold capitalize',
-                    'transition-colors duration-150 cursor-pointer select-none',
-                    statusFilter === s
-                      ? 'bg-neutral-100 text-neutral-900'
-                      : 'text-neutral-400 hover:text-neutral-600',
-                  )}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl data-eos-id="src/pages/admin/collectives.tsx#17"
+              segments={STATUS_SEGMENTS}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              aria-label="Filter collectives by status"
+              className="sm:w-auto"
+            />
           </motion.div>
 
           {/* List */}
           <motion.div data-eos-id="src/pages/admin/collectives.tsx#19" variants={fadeUp}>
           {isLoading ? (
-            <div data-eos-id="src/pages/admin/collectives.tsx#20" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {Array.from({ length: 6 }, (_, i) => (
-                <div key={i} className="aspect-[4/3] rounded-md bg-neutral-100 animate-pulse" />
-              ))}
-            </div>
+            showLoading ? (
+              <div data-eos-id="src/pages/admin/collectives.tsx#20" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <div key={i} className="aspect-[4/3] rounded-md bg-neutral-100 animate-pulse" />
+                ))}
+              </div>
+            ) : null
           ) : !collectives?.length ? (
             <EmptyState data-eos-id="src/pages/admin/collectives.tsx#21"
               illustration="empty"

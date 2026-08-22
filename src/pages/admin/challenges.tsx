@@ -26,6 +26,7 @@ import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { logAudit } from '@/lib/audit'
 import { makeOptimistic, patchItem, prependItem, removeItem } from '@/lib/optimistic'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 
 // Loose shape for optimistic cache patches. The generated challenges row type
 // omits `status` (rows are cast to read it below), so we carry a local shape
@@ -71,6 +72,8 @@ export default function AdminChallengesPage() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { data: challenges, isLoading } = useChallenges()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
 
   const heroActions = useMemo(() => (
     <Button data-eos-id="src/pages/admin/challenges.tsx#0" data-eos-v="2"
@@ -212,7 +215,7 @@ export default function AdminChallengesPage() {
         <motion.div data-eos-id="src/pages/admin/challenges.tsx#8" variants={stagger} initial="hidden" animate="visible">
           <motion.div data-eos-id="src/pages/admin/challenges.tsx#9" variants={fadeUp}>
           {isLoading ? (
-            <Skeleton data-eos-id="src/pages/admin/challenges.tsx#10" variant="list-item" count={4} />
+            showLoading ? <Skeleton data-eos-id="src/pages/admin/challenges.tsx#10" variant="list-item" count={4} /> : null
           ) : !challenges?.length ? (
             <EmptyState data-eos-id="src/pages/admin/challenges.tsx#11"
               illustration="empty"

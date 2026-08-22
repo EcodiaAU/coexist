@@ -37,6 +37,7 @@ import { BottomSheet } from '@/components/bottom-sheet'
 import { Input } from '@/components/input'
 import { Toggle } from '@/components/toggle'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { TabBar } from '@/components/tab-bar'
@@ -807,6 +808,8 @@ function KpiDashboard() {
     collectiveId: collectiveFilter || undefined,
     dateFrom,
   })
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
 
   const collectiveOptions = useMemo(() => [
     { value: '', label: 'All Collectives' },
@@ -824,7 +827,7 @@ function KpiDashboard() {
       />
 
       {isLoading ? (
-        <Skeleton variant="list-item" count={4} />
+        showLoading ? <Skeleton variant="list-item" count={4} /> : null
       ) : !data ? (
         <EmptyState illustration="empty" title="No data" description="No task instances found for this period" />
       ) : (
@@ -932,6 +935,8 @@ export default function AdminWorkflowsPage() {
     scheduleType: scheduleFilter || undefined,
     search: search || undefined,
   })
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
 
   const toggleMutation = useAdminToggleTemplate()
   const deleteMutation = useAdminDeleteTemplate()
@@ -1028,7 +1033,7 @@ export default function AdminWorkflowsPage() {
           {/* Template list */}
           <motion.div variants={fadeUp}>
             {isLoading ? (
-              <Skeleton variant="list-item" count={6} />
+              showLoading ? <Skeleton variant="list-item" count={6} /> : null
             ) : !templates?.length ? (
               <EmptyState
                 illustration="empty"

@@ -9,6 +9,7 @@ import { TabBar } from '@/components/tab-bar'
 import { SearchBar } from '@/components/search-bar'
 import { Button } from '@/components/button'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { EmptyState } from '@/components/empty-state'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { useToast } from '@/components/toast'
@@ -404,6 +405,8 @@ function ProductGroup({
 
 export default function InventoryTab() {
   const { data: products, isLoading } = useAdminProducts()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const shouldReduceMotion = useReducedMotion()
   const adjustStock = useAdjustStock()
 
@@ -511,7 +514,7 @@ export default function InventoryTab() {
   const { stagger, fadeUp } = adminVariants(!!shouldReduceMotion)
 
   if (isLoading) {
-    return (
+    return showLoading ? (
       <div className="space-y-3">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -522,7 +525,7 @@ export default function InventoryTab() {
           <Skeleton key={i} variant="card" />
         ))}
       </div>
-    )
+    ) : null
   }
   return (
     <motion.div

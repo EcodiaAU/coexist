@@ -10,6 +10,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Header } from '@/components/header'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
@@ -652,6 +653,8 @@ function SystemTemplateEditor({
 
 export function SystemTemplatesTab() {
   const { data: overrides, isLoading } = useSystemOverrides()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showLoading = useDelayedLoading(isLoading)
   const [editing, setEditing] = useState<TemplateInfo | null>(null)
 
   const overrideMap = useMemo(() => {
@@ -684,7 +687,7 @@ export function SystemTemplatesTab() {
       </div>
 
       {isLoading ? (
-        <Skeleton data-eos-id="src/pages/admin/email/system-templates-tab.tsx#48" variant="list-item" count={6} />
+        showLoading ? <Skeleton data-eos-id="src/pages/admin/email/system-templates-tab.tsx#48" variant="list-item" count={6} /> : null
       ) : (
         <>
           <TemplateGroup data-eos-id="src/pages/admin/email/system-templates-tab.tsx#49"

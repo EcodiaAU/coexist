@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useAdminHeader } from '@/components/admin-layout'
 import { Skeleton } from '@/components/skeleton'
+import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { cn } from '@/lib/cn'
 import { useAdminTaskTemplates } from '@/hooks/use-admin-tasks'
 import { useCreateSummary } from '@/hooks/use-admin-create'
@@ -202,6 +203,8 @@ export default function AdminCreatePage() {
   useAdminHeader('Create')
 
   const { data: summary, isLoading: summaryLoading } = useCreateSummary()
+  // White until the 1s delay, then the skeleton; never flash a shell on a fast load.
+  const showSummaryLoading = useDelayedLoading(summaryLoading)
   const { data: templates } = useAdminTaskTemplates()
   const activeTemplates = useMemo(() => templates?.filter((t) => t.is_active)?.length ?? 0, [templates])
   const totalTemplates = templates?.length ?? 0
@@ -284,12 +287,14 @@ export default function AdminCreatePage() {
         </SectionHeading>
 
         {summaryLoading ? (
+          showSummaryLoading ? (
           <div data-eos-id="src/pages/admin/create.tsx#39" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
             <Skeleton data-eos-id="src/pages/admin/create.tsx#40" className="h-52 rounded-md" />
             <Skeleton data-eos-id="src/pages/admin/create.tsx#41" className="h-52 rounded-md" />
             <Skeleton data-eos-id="src/pages/admin/create.tsx#42" className="h-52 rounded-md" />
             <Skeleton data-eos-id="src/pages/admin/create.tsx#43" className="h-52 rounded-md" />
           </div>
+          ) : null
         ) : (
           <div data-eos-id="src/pages/admin/create.tsx#44" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
             <SectionCard data-eos-id="src/pages/admin/create.tsx#45"
