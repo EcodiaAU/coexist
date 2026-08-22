@@ -20,6 +20,10 @@ export type ActivityType = Database['public']['Enums']['activity_type']
 
 export interface EventExtras {
   meeting_point: string
+  /** Public URL of a photo of the physical meeting spot, so an arriving
+   *  attendee can visually recognise where to gather. Stored in the
+   *  events.event_extras jsonb (no dedicated column). '' when unset. */
+  meeting_spot_photo_url: string
   what_to_bring: string
   what_to_wear: string
   terrain: string
@@ -30,6 +34,7 @@ export interface EventExtras {
 
 export const INITIAL_EXTRAS: EventExtras = {
   meeting_point: '',
+  meeting_spot_photo_url: '',
   what_to_bring: '',
   what_to_wear: '',
   terrain: '',
@@ -142,6 +147,20 @@ export function useEventForm({ mode, initial }: UseEventFormOptions) {
     pathPrefix: 'covers',
   })
 
+  /* Meeting-spot photo upload. Separate uploader instance so its progress
+   * state never collides with the cover-image uploader (both can be touched
+   * in the same session). Reuses the same bucket + RLS (path is prefixed
+   * with the user id by buildStoragePath, matching the storage policy). */
+  const {
+    upload: uploadMeetingSpot,
+    progress: meetingSpotProgress,
+    uploading: meetingSpotUploading,
+    error: meetingSpotError,
+  } = useImageUpload({
+    bucket: 'event-images',
+    pathPrefix: 'meeting-spots',
+  })
+
   const handleUploadFromGallery = useCallback(async () => {
     const result = await pickFromGallery()
     if (!result) return
@@ -199,6 +218,58 @@ export function useEventForm({ mode, initial }: UseEventFormOptions) {
     }))
   }, [])
 
+  /* Meeting-spot photo helpers.
+   *
+   * captureMeetingSpotPhoto is the low-level primitive: it opens the camera
+   * or gallery, uploads, and RETURNS the URL (or null). It does not touch
+   * form state, so the create wizard (which keeps extras in its own local
+   * state) can wire the returned URL into its own store. The handle-upload
+   * and remove wrappers below write into fields.extras for the edit form,
+   * which drives its state through this hook. */
+  const captureMeetingSpotPhoto = useCallback(
+    async (source: 'camera' | 'gallery'): Promise<string | null> => {
+      const result = source === 'camera' ? await capture() : await pickFromGallery()
+      if (!result) return null
+      try {
+        const uploaded = await uploadMeetingSpot(result.blob)
+        return uploaded.url
+      } catch (err) {
+        console.error('[event-form] meeting-spot upload failed:', err)
+        const msg = err instanceof Error ? err.message : 'unknown'
+        toast.error(`Photo upload failed: ${msg}`)
+        return null
+      }
+    },
+    [capture, pickFromGallery, uploadMeetingSpot, toast],
+  )
+
+  const handleUploadMeetingSpotFromGallery = useCallback(async () => {
+    const url = await captureMeetingSpotPhoto('gallery')
+    if (url) {
+      setFields((prev) => ({
+        ...prev,
+        extras: { ...prev.extras, meeting_spot_photo_url: url },
+      }))
+    }
+  }, [captureMeetingSpotPhoto])
+
+  const handleUploadMeetingSpotFromCamera = useCallback(async () => {
+    const url = await captureMeetingSpotPhoto('camera')
+    if (url) {
+      setFields((prev) => ({
+        ...prev,
+        extras: { ...prev.extras, meeting_spot_photo_url: url },
+      }))
+    }
+  }, [captureMeetingSpotPhoto])
+
+  const removeMeetingSpotPhoto = useCallback(() => {
+    setFields((prev) => ({
+      ...prev,
+      extras: { ...prev.extras, meeting_spot_photo_url: '' },
+    }))
+  }, [])
+
   /* Validation: minimum required fields */
   const isBasicsValid = fields.title.trim().length > 0 && fields.activity_type !== ''
   const isDateValid = fields.date_start !== null
@@ -241,6 +312,15 @@ export function useEventForm({ mode, initial }: UseEventFormOptions) {
     handleUploadFromCamera,
     removeCoverImage,
     setCoverImagePosition,
+
+    // Meeting-spot photo upload
+    meetingSpotUploading,
+    meetingSpotProgress,
+    meetingSpotError,
+    captureMeetingSpotPhoto,
+    handleUploadMeetingSpotFromGallery,
+    handleUploadMeetingSpotFromCamera,
+    removeMeetingSpotPhoto,
 
     // Validation
     isBasicsValid,

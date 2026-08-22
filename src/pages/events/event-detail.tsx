@@ -85,6 +85,7 @@ import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { attendeeName } from '@/lib/attendee-name'
 import { parseLocationPoint } from '@/lib/geo'
+import { getMediumUrl } from '@/lib/image-utils'
 import { isEventSoldOut } from '@/lib/event-sold-out'
 import { computeSpotsTaken } from '@/lib/event-capacity'
 import { useQueryClient } from '@tanstack/react-query'
@@ -1704,6 +1705,7 @@ export default function EventDetailPage() {
             what_to_bring?: string
             what_to_wear?: string
             meeting_point?: string
+            meeting_spot_photo_url?: string
             terrain?: string
             difficulty?: keyof typeof difficultyConfig
             wheelchair_access?: boolean
@@ -1714,8 +1716,9 @@ export default function EventDetailPage() {
           // explicit moderate/challenging pick does count. When the section
           // renders for other reasons, the difficulty pill shows regardless.
           const hasText = !!(ext.what_to_bring || ext.what_to_wear || ext.meeting_point || ext.terrain)
+          const hasMeetingPhoto = !!ext.meeting_spot_photo_url
           const explicitDifficulty = !!ext.difficulty && ext.difficulty !== 'easy' && !!difficultyConfig[ext.difficulty]
-          if (!hasText && !explicitDifficulty && !ext.wheelchair_access) return null
+          if (!hasText && !hasMeetingPhoto && !explicitDifficulty && !ext.wheelchair_access) return null
           return (
             <motion.div
               variants={shouldReduceMotion ? undefined : fadeUp}
@@ -1723,12 +1726,23 @@ export default function EventDetailPage() {
             >
               <h3 className="text-sm font-bold mb-3 text-neutral-900">Good to know</h3>
               <div className="space-y-3">
-                {ext.meeting_point && (
+                {(ext.meeting_point || ext.meeting_spot_photo_url) && (
                   <div className="flex items-start gap-2.5">
                     <MapPin size={15} className={cn('shrink-0 mt-0.5', accent.text)} />
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="text-[11px] uppercase tracking-wider font-semibold text-neutral-400">Meeting point</p>
-                      <p className="text-sm font-medium text-neutral-700">{ext.meeting_point}</p>
+                      {ext.meeting_point && (
+                        <p className="text-sm font-medium text-neutral-700">{ext.meeting_point}</p>
+                      )}
+                      {ext.meeting_spot_photo_url && (
+                        <img
+                          src={getMediumUrl(ext.meeting_spot_photo_url)}
+                          alt="Photo of the meeting spot"
+                          loading="lazy"
+                          className="mt-2 w-full max-w-xs rounded-md border border-neutral-100 object-cover"
+                          style={{ aspectRatio: '4/3' }}
+                        />
+                      )}
                     </div>
                   </div>
                 )}

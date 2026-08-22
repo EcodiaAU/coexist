@@ -316,10 +316,14 @@ export function ExtrasFields({
   extras,
   onChange,
   disabled,
+  meetingSpotPhoto,
 }: {
   extras: EventExtras
   onChange: (updates: Partial<EventExtras>) => void
   disabled?: boolean
+  /** When provided, renders a "photo of the meeting spot" control directly
+   *  under the Meeting Point text input. Omitted callers just get the text. */
+  meetingSpotPhoto?: Omit<MeetingSpotPhotoFieldProps, 'photoUrl' | 'disabled'>
 }) {
   return (
     <div className="space-y-4">
@@ -330,6 +334,13 @@ export function ExtrasFields({
         onChange={(e) => onChange({ meeting_point: e.target.value })}
         disabled={disabled}
       />
+      {meetingSpotPhoto && (
+        <MeetingSpotPhotoField
+          photoUrl={extras.meeting_spot_photo_url}
+          disabled={disabled}
+          {...meetingSpotPhoto}
+        />
+      )}
       <Input
         type="textarea"
         label="What to bring"
@@ -380,6 +391,121 @@ export function ExtrasFields({
         onChange={(e) => onChange({ partner_name: e.target.value })}
         disabled={disabled}
       />
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Meeting-spot photo (add-or-take a photo of the physical meet point) */
+/* ------------------------------------------------------------------ */
+
+export interface MeetingSpotPhotoFieldProps {
+  photoUrl: string
+  /** Pick an existing photo from the library / file picker. */
+  onUploadGallery: () => void
+  /** Open the camera and take a photo. */
+  onUploadCamera: () => void
+  onRemove: () => void
+  uploading: boolean
+  cameraLoading: boolean
+  uploadProgress: number | null
+  uploadError: string | null
+  disabled?: boolean
+}
+
+/**
+ * A single-photo control for the event meeting spot. Offers both "add a
+ * photo" (gallery / file picker) and "take a photo" (camera) so an organiser
+ * can capture the spot on the day it is scouted. 4:3 preview with a remove
+ * affordance. Mirrors the cover-image upload flow but without the focal-point
+ * picker (a recognition photo does not need one).
+ */
+export function MeetingSpotPhotoField({
+  photoUrl,
+  onUploadGallery,
+  onUploadCamera,
+  onRemove,
+  uploading,
+  cameraLoading,
+  uploadProgress,
+  uploadError,
+  disabled,
+}: MeetingSpotPhotoFieldProps) {
+  const busy = uploading || cameraLoading
+  return (
+    <div className="space-y-3">
+      {photoUrl ? (
+        <div className="relative rounded-sm overflow-hidden max-w-xs">
+          <img
+            src={photoUrl}
+            alt="Photo of the meeting spot"
+            className="w-full object-cover"
+            style={{ aspectRatio: '4/3' }}
+          />
+          {!disabled && (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="absolute top-2 right-2 min-w-11 min-h-11 rounded-full bg-black/50 text-white flex items-center justify-center cursor-pointer select-none active:scale-[0.97] transition-transform duration-150"
+              aria-label="Remove meeting-spot photo"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onUploadGallery}
+          disabled={disabled || busy}
+          className={cn(
+            'w-full min-h-11 py-8 rounded-sm border-2 border-dashed border-primary-200 hover:border-primary-400',
+            'cursor-pointer select-none',
+            'active:scale-[0.98] transition-transform duration-150',
+            'flex flex-col items-center justify-center gap-1',
+            'text-neutral-500 hover:text-neutral-600',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+          )}
+          aria-label="Add a photo of the meeting spot"
+        >
+          <MapPin size={26} />
+          <p className="text-sm font-medium mt-1">Add a photo of the meeting spot</p>
+          <p className="text-caption text-neutral-400">
+            Helps people recognise where to gather
+          </p>
+        </button>
+      )}
+
+      {!disabled && (
+        <>
+          <UploadProgress
+            progress={uploadProgress}
+            uploading={uploading}
+            error={uploadError}
+            variant="bar"
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Image size={14} />}
+              onClick={onUploadGallery}
+              disabled={busy}
+            >
+              {photoUrl ? 'Replace' : 'Choose Photo'}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Camera size={14} />}
+              onClick={onUploadCamera}
+              disabled={busy}
+            >
+              Take Photo
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

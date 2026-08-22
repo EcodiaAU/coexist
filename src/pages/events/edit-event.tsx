@@ -483,6 +483,15 @@ export default function EditEventPage() {
             extras={form.fields.extras}
             onChange={form.updateExtras}
             disabled={isDayOfMode}
+            meetingSpotPhoto={{
+              onUploadGallery: form.handleUploadMeetingSpotFromGallery,
+              onUploadCamera: form.handleUploadMeetingSpotFromCamera,
+              onRemove: form.removeMeetingSpotPhoto,
+              uploading: form.meetingSpotUploading,
+              cameraLoading: form.cameraLoading,
+              uploadProgress: form.meetingSpotProgress,
+              uploadError: form.meetingSpotError,
+            }}
           />
         </motion.div>
 

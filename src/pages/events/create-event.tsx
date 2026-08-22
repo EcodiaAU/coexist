@@ -51,7 +51,9 @@ import { wallClockNow } from '@/lib/date-format'
 import {
     DateTimeFields,
     LocationFields,
+    MeetingSpotPhotoField,
 } from './components/event-form-fields'
+import type { MeetingSpotPhotoFieldProps } from './components/event-form-fields'
 import { CoverImageFocalPointPicker } from '@/components/cover-image-focal-point-picker'
 import { coverImagePositionStyle } from '@/lib/cover-image'
 import {
@@ -137,6 +139,7 @@ interface CreateExtraFields {
   recurring_count: number
   what_to_bring: string
   meeting_point: string
+  meeting_spot_photo_url: string
   wheelchair_access: boolean
   terrain: string
   difficulty: 'easy' | 'moderate' | 'challenging'
@@ -156,6 +159,7 @@ const INITIAL_EXTRA: CreateExtraFields = {
   recurring_count: 4,
   what_to_bring: '',
   meeting_point: '',
+  meeting_spot_photo_url: '',
   wheelchair_access: false,
   terrain: '',
   difficulty: 'easy',
@@ -637,12 +641,14 @@ function StepLocation({
   extra,
   onExtraChange,
   bias,
+  meetingSpot,
 }: {
   fields: EventFormFields
   onChange: (updates: Partial<EventFormFields>) => void
   extra: CreateExtraFields
   onExtraChange: (updates: Partial<CreateExtraFields>) => void
   bias?: MapCenter | null
+  meetingSpot: Omit<MeetingSpotPhotoFieldProps, 'photoUrl'>
 }) {
   return (
     <div className="space-y-4">
@@ -662,6 +668,9 @@ function StepLocation({
           value={extra.meeting_point}
           onChange={(e) => onExtraChange({ meeting_point: e.target.value })}
         />
+        <div className="mt-4">
+          <MeetingSpotPhotoField photoUrl={extra.meeting_spot_photo_url} {...meetingSpot} />
+        </div>
       </StepCard>
     </div>
   )
@@ -2076,6 +2085,7 @@ export default function CreateEventPage() {
           // schema change later.
           event_extras: {
             meeting_point: extra.meeting_point || '',
+            meeting_spot_photo_url: extra.meeting_spot_photo_url || '',
             what_to_bring: extra.what_to_bring || '',
             what_to_wear: extra.what_to_wear || '',
             terrain: extra.terrain || '',
@@ -2326,7 +2336,30 @@ export default function CreateEventPage() {
         required: true,
         valid: sectionStatus.location,
         summary: form.fields.address || '',
-        content: <StepLocation fields={form.fields} onChange={form.updateFields} extra={extra} onExtraChange={updateExtra} bias={geoBias} />,
+        content: (
+          <StepLocation
+            fields={form.fields}
+            onChange={form.updateFields}
+            extra={extra}
+            onExtraChange={updateExtra}
+            bias={geoBias}
+            meetingSpot={{
+              onUploadGallery: async () => {
+                const url = await form.captureMeetingSpotPhoto('gallery')
+                if (url) updateExtra({ meeting_spot_photo_url: url })
+              },
+              onUploadCamera: async () => {
+                const url = await form.captureMeetingSpotPhoto('camera')
+                if (url) updateExtra({ meeting_spot_photo_url: url })
+              },
+              onRemove: () => updateExtra({ meeting_spot_photo_url: '' }),
+              uploading: form.meetingSpotUploading,
+              cameraLoading: form.cameraLoading,
+              uploadProgress: form.meetingSpotProgress,
+              uploadError: form.meetingSpotError,
+            }}
+          />
+        ),
       },
       {
         key: 'details',
