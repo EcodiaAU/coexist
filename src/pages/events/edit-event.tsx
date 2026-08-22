@@ -27,6 +27,7 @@ import {
     DetailsFields,
     CoverImageFields,
     ExtrasFields,
+    MeetingSpotPhotoField,
 } from './components/event-form-fields'
 import { useActivityTypeDefaults } from '@/hooks/use-activity-defaults'
 import { INITIAL_EXTRAS, type EventExtras } from '@/hooks/use-event-form'
@@ -167,7 +168,10 @@ export default function EditEventPage() {
 
     try {
     if (isDayOfMode) {
-      // Day-of mode: only update time and address
+      // Day-of mode: time, address/pin, and the meeting-spot photo (a leader
+      // at the spot on the day takes it and it shows to attendees). extras is
+      // hydrated whole from the event on load, so writing it back preserves
+      // the other preparation fields and only lands the new photo URL.
       if (!form.fields.date_start) return
       await updateEvent.mutateAsync({
         eventId,
@@ -175,7 +179,8 @@ export default function EditEventPage() {
         date_end: form.fields.date_end?.toISOString() ?? null,
         address: form.fields.address || null,
         ...locationPatch,
-      })
+        event_extras: form.fields.extras,
+      } as unknown as Parameters<typeof updateEvent.mutateAsync>[0])
     } else {
       if (!form.isBasicsValid || !form.isDateValid) return
       const cover = resolveCoverFields()
@@ -425,6 +430,24 @@ export default function EditEventPage() {
                 : null
             }
           />
+          {/* Meeting-spot photo lives with Location so it stays editable in
+              day-of mode: a leader at the spot on the day can take the photo
+              and it shows to attendees on the event page. */}
+          <div className="pt-1">
+            <p className="text-caption text-neutral-500 mb-2">
+              Photo of the meeting spot
+            </p>
+            <MeetingSpotPhotoField
+              photoUrl={form.fields.extras.meeting_spot_photo_url}
+              onUploadGallery={form.handleUploadMeetingSpotFromGallery}
+              onUploadCamera={form.handleUploadMeetingSpotFromCamera}
+              onRemove={form.removeMeetingSpotPhoto}
+              uploading={form.meetingSpotUploading}
+              cameraLoading={form.cameraLoading}
+              uploadProgress={form.meetingSpotProgress}
+              uploadError={form.meetingSpotError}
+            />
+          </div>
         </motion.div>
 
         {/* Details */}
@@ -483,15 +506,6 @@ export default function EditEventPage() {
             extras={form.fields.extras}
             onChange={form.updateExtras}
             disabled={isDayOfMode}
-            meetingSpotPhoto={{
-              onUploadGallery: form.handleUploadMeetingSpotFromGallery,
-              onUploadCamera: form.handleUploadMeetingSpotFromCamera,
-              onRemove: form.removeMeetingSpotPhoto,
-              uploading: form.meetingSpotUploading,
-              cameraLoading: form.cameraLoading,
-              uploadProgress: form.meetingSpotProgress,
-              uploadError: form.meetingSpotError,
-            }}
           />
         </motion.div>
 
