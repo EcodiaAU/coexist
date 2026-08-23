@@ -38,7 +38,6 @@ export default function ClaimTransferPage() {
   const attempted = useRef(false)
 
   useEffect(() => {
-    let cancelled = false
     async function run() {
       if (isLoading || !token) return
 
@@ -48,16 +47,21 @@ export default function ClaimTransferPage() {
         return
       }
 
+      // Once-only guard. Deliberately NOT paired with a `cancelled` flag from
+      // this effect's cleanup: `user` changes identity when auth hydrates, so
+      // the effect re-runs, the first pass's cleanup sets cancelled, its result
+      // is thrown away, and the second pass returns here on the ref. The page
+      // then spins on "Claiming your ticket..." forever. Caught on the deployed
+      // build 2026-08-24. The ref alone guarantees one attempt; the result must
+      // always be allowed to land.
       if (attempted.current) return
       attempted.current = true
 
       clearPendingClaim()
       try {
         const res = await claim.mutateAsync({ token })
-        if (cancelled) return
         setState({ kind: 'done', eventId: res?.event_id ?? '' })
       } catch (err) {
-        if (cancelled) return
         setState({
           kind: 'error',
           message: err instanceof Error ? err.message : 'We could not claim that ticket.',
@@ -65,7 +69,6 @@ export default function ClaimTransferPage() {
       }
     }
     run()
-    return () => { cancelled = true }
     // `claim` is a stable mutation object and is deliberately not a dependency:
     // re-running this effect on it would attempt a second claim.
     // eslint-disable-next-line react-hooks/exhaustive-deps
