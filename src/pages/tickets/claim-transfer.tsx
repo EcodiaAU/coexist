@@ -116,7 +116,7 @@ export default function ClaimTransferPage() {
             It is on your tickets now, and you are in the group chat.
           </p>
           <div className="mt-6 space-y-2">
-            <Button variant="primary" size="lg" fullWidth onClick={() => navigate('/tickets')}>
+            <Button variant="primary" size="lg" fullWidth onClick={() => navigate('/profile/tickets')}>
               View my tickets
             </Button>
             {state.eventId && (
