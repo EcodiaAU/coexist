@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { queueOfflineAction } from '@/lib/offline-sync'
 import { DIETARY_GATE_QUERY_KEY } from '@/lib/dietary'
-import { SPOT_TAKING_TICKET_STATUSES } from '@/lib/event-capacity'
+import { SPOT_TAKING_TICKET_STATUSES, summariseTicketSales } from '@/lib/event-capacity'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -605,31 +605,10 @@ export function useTicketSalesSummary(eventId: string | undefined) {
         .eq('event_id', eventId)
 
       if (error) throw error
-      if (!tickets?.length) return { totalRevenue: 0, totalSold: 0, totalCheckedIn: 0, byType: {} as Record<string, { sold: number; revenue: number }> }
-
-      let totalRevenue = 0
-      let totalSold = 0
-      let totalCheckedIn = 0
-      const byType: Record<string, { sold: number; revenue: number }> = {}
-
-      // "Sold" = seats a valid ticket occupies (confirmed + checked_in), the
-      // canonical spot-taking set from @/lib/event-capacity. The event banner
-      // renders the same count (event.spots_taken via the event_spots_taken
-      // RPC) for a ticketed event, so this panel and the banner cannot diverge.
-      const spotTaking = new Set<string>(SPOT_TAKING_TICKET_STATUSES)
-      for (const t of tickets) {
-        if (spotTaking.has(t.status)) {
-          totalRevenue += t.price_cents
-          totalSold += t.quantity
-          if (t.status === 'checked_in') totalCheckedIn += t.quantity
-
-          if (!byType[t.ticket_type_id]) byType[t.ticket_type_id] = { sold: 0, revenue: 0 }
-          byType[t.ticket_type_id].sold += t.quantity
-          byType[t.ticket_type_id].revenue += t.price_cents
-        }
-      }
-
-      return { totalRevenue, totalSold, totalCheckedIn, byType }
+      // SOLD and REVENUE are different questions over different status sets: a
+      // `reserved` seat is occupied but unpaid. Both live in one place so this
+      // panel, the banner and the tests cannot drift apart.
+      return summariseTicketSales(tickets)
     },
     enabled: !!eventId,
     staleTime: 30 * 1000,

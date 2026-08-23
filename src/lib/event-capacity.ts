@@ -102,3 +102,57 @@ export function computeSpotsTaken(input: {
 }): number {
   return input.isTicketed ? input.ticketSpotsTaken : input.registrationsGoing
 }
+
+/** A ticket row as the leader sales panel reads it. */
+type SalesRow = TicketRow & { price_cents: number | null; ticket_type_id: string }
+
+export interface TicketSalesSummary {
+  /** Money actually taken: PAID statuses only. An unpaid hold is not revenue. */
+  totalRevenue: number
+  /** Seats occupied: SPOT_TAKING, matching the banner and event_spots_taken. */
+  totalSold: number
+  /** Of those seats, the ones held for someone who has not paid yet. */
+  totalHeld: number
+  totalCheckedIn: number
+  byType: Record<string, { sold: number; revenue: number }>
+}
+
+/**
+ * The leader ticket-sales panel, computed in one place.
+ *
+ * SOLD and REVENUE answer different questions and therefore use different
+ * status sets. A `reserved` seat is occupied (so it counts as sold, and the
+ * banner agrees) but unpaid (so it must NOT count as revenue). Summing
+ * price_cents over the spot-taking set instead of the paid set overstates
+ * takings by the full price of every outstanding hold.
+ */
+export function summariseTicketSales(rows: readonly SalesRow[] | null | undefined): TicketSalesSummary {
+  const empty: TicketSalesSummary = { totalRevenue: 0, totalSold: 0, totalHeld: 0, totalCheckedIn: 0, byType: {} }
+  if (!rows?.length) return empty
+
+  const spotTaking = new Set<string>(SPOT_TAKING_TICKET_STATUSES)
+  const paid = new Set<string>(PAID_TICKET_STATUSES)
+  const held = new Set<string>(HELD_TICKET_STATUSES)
+
+  const out: TicketSalesSummary = { totalRevenue: 0, totalSold: 0, totalHeld: 0, totalCheckedIn: 0, byType: {} }
+  for (const row of rows) {
+    const status = row.status
+    if (status == null || !spotTaking.has(status)) continue
+
+    const qty = row.quantity ?? 1
+    const cents = row.price_cents ?? 0
+
+    out.totalSold += qty
+    if (status === 'checked_in') out.totalCheckedIn += qty
+    if (held.has(status)) out.totalHeld += qty
+
+    if (!out.byType[row.ticket_type_id]) out.byType[row.ticket_type_id] = { sold: 0, revenue: 0 }
+    out.byType[row.ticket_type_id].sold += qty
+
+    if (paid.has(status)) {
+      out.totalRevenue += cents
+      out.byType[row.ticket_type_id].revenue += cents
+    }
+  }
+  return out
+}

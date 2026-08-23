@@ -5,6 +5,7 @@ import {
   ticketSpotsHeld,
   ticketInventoryHeld,
   computeSpotsTaken,
+  summariseTicketSales,
   SPOT_TAKING_TICKET_STATUSES,
   INVENTORY_HOLD_TICKET_STATUSES,
   GOING_REGISTRATION_STATUSES,
@@ -140,5 +141,54 @@ describe('reserved holds', () => {
       { status: 'pending', quantity: 1 },
     ]
     expect(ticketSpotsTaken(rows)).toBe(ticketSpotsPaid(rows) + ticketSpotsHeld(rows))
+  })
+})
+
+/**
+ * The leader sales panel reports SOLD and REVENUE off the same rows. They are
+ * different questions: a held seat is occupied but unpaid. Summing price_cents
+ * over the spot-taking set (rather than the paid set) silently told an organiser
+ * they had earned the full price of every outstanding hold. Pinned here so the
+ * money question can never quietly re-adopt the occupancy set.
+ */
+describe('summariseTicketSales', () => {
+  const rows = [
+    { status: 'confirmed', quantity: 1, price_cents: 8000, ticket_type_id: 'std' },
+    { status: 'checked_in', quantity: 1, price_cents: 8000, ticket_type_id: 'std' },
+    { status: 'reserved', quantity: 1, price_cents: 8000, ticket_type_id: 'std' },
+    { status: 'cancelled', quantity: 1, price_cents: 8000, ticket_type_id: 'std' },
+    { status: 'pending', quantity: 1, price_cents: 8000, ticket_type_id: 'std' },
+  ]
+
+  it('excludes the unpaid hold from revenue but counts its seat', () => {
+    const s = summariseTicketSales(rows)
+    expect(s.totalRevenue).toBe(16000)
+    expect(s.totalSold).toBe(3)
+    expect(s.totalHeld).toBe(1)
+    expect(s.totalCheckedIn).toBe(1)
+  })
+
+  it('applies the same split per ticket type', () => {
+    const s = summariseTicketSales(rows)
+    expect(s.byType.std).toEqual({ sold: 3, revenue: 16000 })
+  })
+
+  it('totalSold matches the canonical ticketSpotsTaken helper', () => {
+    expect(summariseTicketSales(rows).totalSold).toBe(ticketSpotsTaken(rows))
+  })
+
+  it('revenue matches paid seats, never taken seats', () => {
+    const s = summariseTicketSales(rows)
+    expect(s.totalRevenue).toBe(ticketSpotsPaid(rows) * 8000)
+    expect(s.totalRevenue).not.toBe(ticketSpotsTaken(rows) * 8000)
+  })
+
+  it('handles no rows', () => {
+    expect(summariseTicketSales([])).toEqual({
+      totalRevenue: 0, totalSold: 0, totalHeld: 0, totalCheckedIn: 0, byType: {},
+    })
+    expect(summariseTicketSales(null)).toEqual({
+      totalRevenue: 0, totalSold: 0, totalHeld: 0, totalCheckedIn: 0, byType: {},
+    })
   })
 })

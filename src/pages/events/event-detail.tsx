@@ -378,6 +378,16 @@ function TicketSalesSection({
         </div>
       </div>
 
+      {/* Held spots are counted in Sold (the seat is taken) but deliberately NOT
+          in Revenue (nobody has paid yet). Saying so here is what stops the two
+          numbers looking like they disagree. */}
+      {summary.totalHeld > 0 && (
+        <p className="text-[11px] text-warning-700 bg-warning-50 rounded-sm px-2.5 py-1.5">
+          {summary.totalHeld === 1 ? '1 seat is held' : `${summary.totalHeld} seats are held`} for
+          someone who has not paid yet. Held seats count as sold, not as revenue.
+        </p>
+      )}
+
       {/* Ticket holders */}
       {tickets && tickets.length > 0 && (
         <div className="space-y-1.5">
