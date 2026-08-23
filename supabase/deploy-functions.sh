@@ -8,6 +8,8 @@ PROJECT_REF="tjutlbzekfouwsiaplbr"
 
 FUNCTIONS=(
   create-checkout
+  reserve-event-spot
+  self-service-ticket
   stripe-webhook
   manage-membership-plan
   delete-user

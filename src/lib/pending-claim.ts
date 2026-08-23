@@ -3,8 +3,16 @@
  * has to survive the whole login -> sign-up -> onboarding -> TOS detour, which
  * drops React Router's `from` state. We stash the target path here and resume
  * it once the user is authed and onboarded.
+ *
+ * The same is true of a person-to-person ticket transfer link
+ * (/tickets/claim-transfer/:token, 2026-08-24): the recipient is very often
+ * someone who has never used the app, so they ALWAYS take the signed-out
+ * detour. Both prefixes are resumable; nothing else is, so a stashed value can
+ * never be used as an open redirect.
  */
 const KEY = 'coexist_pending_claim'
+
+const RESUMABLE_PREFIXES = ['/claim/', '/tickets/claim-transfer/'] as const
 
 export function setPendingClaim(path: string): void {
   try { localStorage.setItem(KEY, path) } catch { /* storage may be unavailable */ }
@@ -15,7 +23,7 @@ export function takePendingClaim(): string | null {
   try {
     const v = localStorage.getItem(KEY)
     if (v) localStorage.removeItem(KEY)
-    return v && v.startsWith('/claim/') ? v : null
+    return v && RESUMABLE_PREFIXES.some((prefix) => v.startsWith(prefix)) ? v : null
   } catch { return null }
 }
 

@@ -587,6 +587,19 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
           .maybeSingle()
         if (dupTicket) return json({ error: 'You already have a ticket for this event' }, 409)
 
+        // ---- Does this buyer already hold a RESERVED spot on this event? ----
+        // An organiser held them a seat (possibly over capacity) and asked them
+        // to pay. That row IS their seat: re-reserving would run the capacity
+        // check and tell them "Sold out" on the very spot being held for them,
+        // which is the bug this flow exists to fix. So reuse the row instead.
+        const { data: heldTicket } = await supabase
+          .from('event_tickets')
+          .select('id, price_cents, quantity, ticket_type_id, ticket_code')
+          .eq('event_id', body.event_id)
+          .eq('user_id', body.user_id)
+          .eq('status', 'reserved')
+          .maybeSingle()
+
         // ---- Optional promo code (ONE code system for every discount) ----
         // Codes are native Stripe promotion codes, entered in-app and validated +
         // applied server-side. A code that zeroes the total COMPS the ticket here,
@@ -635,20 +648,37 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
         }
         const netCents = Math.max(0, grossCents - discountCents)
 
-        // Reserve ticket atomically via RPC (checks capacity with FOR UPDATE)
-        const { data: ticketId, error: reserveErr } = await supabase.rpc('reserve_event_ticket', {
-          p_event_id: body.event_id,
-          p_ticket_type_id: body.ticket_type_id,
-          p_user_id: body.user_id,
-          p_quantity: qty,
-          p_answers: (body.answers && typeof body.answers === 'object') ? body.answers : null,
-        })
+        // Reserve the seat. A held spot is already a seat, so paying for one
+        // reuses that row (keeping its over-capacity hold and its ticket code)
+        // instead of burning a fresh reservation through the capacity gate.
+        let ticketId: string
+        if (heldTicket) {
+          ticketId = heldTicket.id
+          // Keep the held row consistent with what is actually being charged:
+          // the invitee may pay on a different tier than the one held for them.
+          const heldPatch: Record<string, unknown> = { updated_at: new Date().toISOString() }
+          if (heldTicket.ticket_type_id !== body.ticket_type_id) {
+            heldPatch.ticket_type_id = body.ticket_type_id
+          }
+          if ((heldTicket.quantity ?? 1) !== qty) heldPatch.quantity = qty
+          if (body.answers && typeof body.answers === 'object') heldPatch.custom_answers = body.answers
+          await supabase.from('event_tickets').update(heldPatch).eq('id', ticketId)
+        } else {
+          const { data: reservedId, error: reserveErr } = await supabase.rpc('reserve_event_ticket', {
+            p_event_id: body.event_id,
+            p_ticket_type_id: body.ticket_type_id,
+            p_user_id: body.user_id,
+            p_quantity: qty,
+            p_answers: (body.answers && typeof body.answers === 'object') ? body.answers : null,
+          })
 
-        if (reserveErr) {
-          const msg = reserveErr.message
-          if (msg.includes('Sold out')) return json({ error: msg }, 409)
-          if (msg.includes('not on sale')) return json({ error: msg }, 400)
-          return json({ error: 'Failed to reserve ticket' }, 500)
+          if (reserveErr) {
+            const msg = reserveErr.message
+            if (msg.includes('Sold out')) return json({ error: msg }, 409)
+            if (msg.includes('not on sale')) return json({ error: msg }, 400)
+            return json({ error: 'Failed to reserve ticket' }, 500)
+          }
+          ticketId = String(reservedId)
         }
 
         // ---- Full comp (100% code, or amount_off covers the whole ticket) ----
@@ -661,7 +691,7 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
             .from('event_tickets')
             .update({ status: 'confirmed', price_cents: 0, updated_at: new Date().toISOString() })
             .eq('id', ticketId)
-            .eq('status', 'pending')
+            .in('status', ['pending', 'reserved'])
 
           await supabase
             .from('event_registrations')

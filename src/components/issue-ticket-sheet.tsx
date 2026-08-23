@@ -1,21 +1,30 @@
 /**
- * IssueTicketSheet - managers/admins issue a free ticket ahead of time.
+ * IssueTicketSheet - managers/admins put someone on an event ahead of time.
  *
- * Like the day-of WalkInSheet, but it grants a confirmed ticket (not a day-of
- * walk-in): the recipient gets a $0 ticket, is registered, and auto-joins the
- * campout group chat via the sync_campout_chat_membership trigger. Two ways in:
+ * TWO modes, because "comp someone" was never one thing:
+ *
+ *   FREE   - grant-event-ticket. A $0 confirmed ticket: they are in, they owe
+ *            nothing, they join the campout chat immediately.
+ *   HOLD   - reserve-event-spot. The seat is HELD for them, over capacity if
+ *            the event is full, and they are emailed a pay-to-confirm link.
+ *            They do not join the chat until the money lands.
+ *
+ * The HOLD mode is the gap Angelica hit twice in one week (2026-08-24): her own
+ * Wild Mountains ticket once the event filled, and comping Max Sonderman. The
+ * only lever was a full freebie, so holding a spot for someone who was still
+ * going to pay was impossible.
+ *
+ * Either mode takes two ways in:
  *   1. Search an existing app user and issue to them.
  *   2. No match - type a name + email; we provision a shell account and email
- *      them a magic-link ticket so they can get in.
- *
- * Calls the grant-event-ticket edge function (manager/admin gated server-side).
+ *      them a magic link so they can get in.
  */
 import { useEffect, useRef, useState } from 'react'
 import { useToast } from '@/components/toast'
 import { supabase } from '@/lib/supabase'
 import { BottomSheet, Button } from '@/components'
 import { Avatar } from '@/components/avatar'
-import { Ticket, Search as SearchIcon, Send } from 'lucide-react'
+import { Ticket, Search as SearchIcon, Send, Clock } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useImeSafeOnChange } from '@/hooks/use-ime-safe-on-change'
 
@@ -56,6 +65,10 @@ export function IssueTicketSheet({
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  // 'free' grants a $0 confirmed ticket; 'hold' reserves the seat and asks them
+  // to pay. Two genuinely different promises, so the organiser picks explicitly.
+  const [mode, setMode] = useState<'free' | 'hold'>('free')
+  const [holdUntil, setHoldUntil] = useState('')
 
   const searchProps = useImeSafeOnChange<HTMLInputElement>(setSearchQuery)
   const nameProps = useImeSafeOnChange<HTMLInputElement>(setName)
@@ -90,17 +103,40 @@ export function IssueTicketSheet({
     setSearchResults([])
     setName('')
     setEmail('')
+    setHoldUntil('')
   }
 
   async function grant(payload: { user_id?: string; email?: string; name?: string }, label: string) {
-    const { data, error } = await supabase.functions.invoke('grant-event-ticket', {
-      body: { event_id: eventId, notify: true, ...payload },
+    const isHold = mode === 'hold'
+    const fn = isHold ? 'reserve-event-spot' : 'grant-event-ticket'
+    const { data, error } = await supabase.functions.invoke(fn, {
+      body: {
+        event_id: eventId,
+        notify: true,
+        ...(isHold && holdUntil
+          // End of the chosen day, so a hold "until the 30th" lasts all of it.
+          ? { hold_expires_at: new Date(`${holdUntil}T23:59:59`).toISOString() }
+          : {}),
+        ...payload,
+      },
     })
     const result = (data ?? {}) as { ticket_id?: string; already?: boolean; error?: string }
     if (error || result.error) {
-      throw new Error(result.error || error?.message || 'Could not issue the ticket')
+      let msg = result.error || error?.message
+      const ctx = (error as { context?: Response } | null)?.context
+      if (!result.error && ctx && typeof ctx.clone === 'function') {
+        try {
+          const bodyJson = await ctx.clone().json() as { error?: string }
+          if (bodyJson?.error) msg = bodyJson.error
+        } catch { /* not JSON: keep what we have */ }
+      }
+      throw new Error(msg || (isHold ? 'Could not hold the spot' : 'Could not issue the ticket'))
     }
-    toast.success(result.already ? `${label} already had a ticket` : `Ticket issued to ${label}`)
+    if (result.already) {
+      toast.success(`${label} already had a spot on this event`)
+    } else {
+      toast.success(isHold ? `Spot held for ${label}, payment requested` : `Ticket issued to ${label}`)
+    }
     reset()
     onSuccess()
     onClose()
@@ -137,13 +173,55 @@ export function IssueTicketSheet({
     <BottomSheet data-eos-id="src/components/issue-ticket-sheet.tsx#0" data-eos-v="2" open={open} onClose={onClose} snapPoints={[0.85]}>
       <div data-eos-id="src/components/issue-ticket-sheet.tsx#1" className="space-y-5 pb-2">
         <div data-eos-id="src/components/issue-ticket-sheet.tsx#2" className="flex items-center gap-2">
-          <Ticket data-eos-id="src/components/issue-ticket-sheet.tsx#3" size={18} className="text-primary-500" />
-          <h2 data-eos-id="src/components/issue-ticket-sheet.tsx#4" className="text-base font-bold text-neutral-900">Issue a ticket</h2>
+          {mode === 'hold'
+            ? <Clock size={18} className="text-warning-500" />
+            : <Ticket data-eos-id="src/components/issue-ticket-sheet.tsx#3" size={18} className="text-primary-500" />}
+          <h2 data-eos-id="src/components/issue-ticket-sheet.tsx#4" className="text-base font-bold text-neutral-900">
+            {mode === 'hold' ? 'Hold a spot' : 'Issue a ticket'}
+          </h2>
         </div>
+
+        {/* Two different promises, so the organiser chooses one on purpose. */}
+        <div className="grid grid-cols-2 gap-1 p-1 rounded-sm bg-neutral-100">
+          {(['free', 'hold'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={cn(
+                'py-2 rounded-sm text-xs font-semibold transition-colors duration-150',
+                mode === m ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500',
+              )}
+            >
+              {m === 'free' ? 'Free ticket' : 'Hold, they pay'}
+            </button>
+          ))}
+        </div>
+
         <p data-eos-id="src/components/issue-ticket-sheet.tsx#5" className="text-xs text-neutral-500 leading-relaxed">
-          Give someone a free ticket ahead of time. They get a confirmed ticket and join the
-          group chat. Search an existing member, or add them by email.
+          {mode === 'hold'
+            ? 'Holds a spot for someone even when the event is full, and emails them a link to pay. The seat is theirs until the hold runs out; they join the group chat once they have paid.'
+            : 'Give someone a free ticket ahead of time. They get a confirmed ticket and join the group chat. Search an existing member, or add them by email.'}
         </p>
+
+        {mode === 'hold' && (
+          <div className="space-y-1.5">
+            <label htmlFor="hold-until" className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+              Hold until (optional)
+            </label>
+            <input
+              id="hold-until"
+              type="date"
+              value={holdUntil}
+              min={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setHoldUntil(e.target.value)}
+              className={inputCls}
+            />
+            <p className="text-[11px] text-neutral-400">
+              Leave blank to hold the spot until the event.
+            </p>
+          </div>
+        )}
 
         {/* Search existing users */}
         <div data-eos-id="src/components/issue-ticket-sheet.tsx#6" className="space-y-2">
@@ -200,8 +278,10 @@ export function IssueTicketSheet({
             disabled={submitting || !email.trim()}
             onClick={handleIssueByEmail}
           >
-            <Ticket data-eos-id="src/components/issue-ticket-sheet.tsx#23" size={16} className="mr-1.5" />
-            Issue ticket
+            {mode === 'hold'
+              ? <Clock size={16} className="mr-1.5" />
+              : <Ticket data-eos-id="src/components/issue-ticket-sheet.tsx#23" size={16} className="mr-1.5" />}
+            {mode === 'hold' ? 'Hold the spot' : 'Issue ticket'}
           </Button>
         </div>
       </div>

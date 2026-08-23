@@ -431,7 +431,10 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             break
           }
 
-          if (ticket.status !== 'pending') {
+          // 'reserved' is a live, unpaid organiser hold that the invitee has now
+          // paid for. It confirms exactly like a pending row; only the route in
+          // differs (the seat was held ahead of checkout, possibly over capacity).
+          if (ticket.status !== 'pending' && ticket.status !== 'reserved') {
             console.log('Ticket already processed, skipping:', ticketId, ticket.status)
             break
           }
@@ -445,7 +448,7 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
               updated_at: new Date().toISOString(),
             })
             .eq('id', ticketId)
-            .eq('status', 'pending') // optimistic lock
+            .in('status', ['pending', 'reserved']) // optimistic lock
 
           if (confirmErr) {
             console.error('Failed to confirm ticket:', confirmErr.message)

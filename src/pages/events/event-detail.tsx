@@ -96,6 +96,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useGeocodeAddress } from '@/hooks/use-geocode-address'
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { useEventTicketTypes, useMyEventTicket, useCreateTicketCheckout, useCancelPendingTicket, useTicketSalesSummary, useEventTickets } from '@/hooks/use-event-tickets'
+import { ticketTermsCopy } from '@/lib/ticket-terms'
 import { CampoutRequirementsModal } from '@/components/campout-requirements-modal'
 import { TicketQuestionsModal } from '@/components/ticket-questions-modal'
 import { useEventTicketQuestions, type TicketAnswers } from '@/hooks/use-event-ticket-questions'
@@ -250,7 +251,7 @@ function InfoChip({
 /*  Ticket Sales Section (leaders/admins only)                         */
 /* ------------------------------------------------------------------ */
 
-const LIVE_TICKET_STATUSES = ['pending', 'confirmed', 'checked_in']
+const LIVE_TICKET_STATUSES = ['pending', 'confirmed', 'checked_in', 'reserved']
 
 function TicketSalesSection({
   eventId,
@@ -1090,6 +1091,43 @@ export default function EventDetailPage() {
     // bare RSVP, register, waitlist, or "Cancel Registration" control. Runs
     // BEFORE the registration-status branches above (Tate 2026-08-17).
     if (isTicketed) {
+      // ── A spot is HELD for this person but not paid for ──
+      // An organiser reserved the seat (possibly over capacity) and asked them
+      // to pay. This outranks every other state: it is the only thing they can
+      // usefully act on, and the seat lapses if they do not.
+      // Origin: Angelica 2026-08-24 (Wild Mountains + Max Sonderman).
+      if (myTicket && myTicket.status === 'reserved') {
+        const holdEnds = myTicket.hold_expires_at ? new Date(myTicket.hold_expires_at) : null
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-md text-sm font-bold bg-warning-50 text-warning-700 border border-warning-200/50">
+              <Clock size={18} />
+              <div className="flex-1 min-w-0">
+                <p>A spot is held for you</p>
+                <p className="text-xs font-medium opacity-80 mt-0.5">
+                  {holdEnds
+                    ? `Pay by ${holdEnds.toLocaleDateString('en-AU', { day: 'numeric', month: 'long' })} to confirm it.`
+                    : 'Pay to confirm it.'}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              onClick={() => beginTicketCheckout(myTicket.ticket_type_id)}
+              loading={ticketCheckout.isPending}
+              className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
+            >
+              {`Pay $${(myTicket.price_cents / 100).toFixed(2)} and confirm`}
+            </Button>
+            <p className="text-[11px] text-neutral-400 text-center px-4 leading-relaxed">
+              {ticketTermsCopy('heldSpot')}
+            </p>
+          </div>
+        )
+      }
+
       if (myTicket && (myTicket.status === 'confirmed' || myTicket.status === 'checked_in')) {
         // Check-in lives on the ticket now, not a separate "registered" CTA.
         // checked_in ticket OR an attended registration row both mean present.

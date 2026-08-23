@@ -122,6 +122,20 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     subject: (d) => `Your ticket has moved to ${d.event_title}`,
   },
 
+  // A spot is HELD for this person on a (possibly full) event, but they have
+  // not paid. Distinct from ticket_confirmation: nothing is confirmed yet and
+  // the whole point of the email is the pay-to-confirm link.
+  ticket_spot_held: {
+    category: 'transactional',
+    description: 'Organiser held a spot; recipient must pay to confirm. Data: { name, event_title, event_date, event_location, amount, currency, hold_expires, pay_url, reserved_by_name }',
+    subject: (d) => `A spot is held for you: ${d.event_title}`,
+  },
+  ticket_transfer_offer: {
+    category: 'transactional',
+    description: 'Someone is transferring their ticket to you. Data: { name, from_name, event_title, event_date, event_location, claim_url, expires }',
+    subject: (d) => `${d.from_name} is passing you their ticket to ${d.event_title}`,
+  },
+
   collective_application: {
     category: 'transactional',
     description: 'New collective application notification. Data: { applicant_name, applicant_email, roles, location }',
@@ -524,6 +538,48 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
         ['Paid', `$${d.amount} ${d.currency || 'AUD'}`],
       ]) +
       ctaButton('View your ticket', (d.ticket_url as string) || APP_URL),
+    footerCta: { label: 'Open the App', url: APP_URL },
+  }),
+
+  // A spot is HELD but unpaid. The hero must not read like a receipt: nothing
+  // is confirmed until they pay, and the hold can lapse.
+  ticket_spot_held: (d) => emailShell({
+    heroTitle: 'A spot is held for you',
+    heroSubtitle: d.event_title as string,
+    overline: 'Payment needed to confirm',
+    ...heroFromData(d),
+    body: greeting(d.name) +
+      p(d.reserved_by_name
+        ? `${d.reserved_by_name} has held a spot for you at <strong>${d.event_title}</strong>. It is yours as soon as you pay, even though the event is otherwise full.`
+        : `A spot has been held for you at <strong>${d.event_title}</strong>. It is yours as soon as you pay, even though the event is otherwise full.`) +
+      infoCard([
+        ['Event', d.event_title],
+        ['Date', d.event_date],
+        ['Location', d.event_location],
+        ['To pay', `$${d.amount} ${d.currency || 'AUD'}`],
+        ['Held until', d.hold_expires || 'the event'],
+      ]) +
+      ctaButton('Pay and confirm your spot', (d.pay_url as string) || APP_URL) +
+      p('Your spot is held until then. If you can no longer make it, just ignore this and it will be released for someone else.'),
+    footerCta: { label: 'Open the App', url: APP_URL },
+  }),
+
+  // Person-to-person ticket handover. No money moves: the same ticket and the
+  // same original payment travel to the new holder.
+  ticket_transfer_offer: (d) => emailShell({
+    heroTitle: 'A ticket is being passed to you',
+    heroSubtitle: d.event_title as string,
+    overline: 'Claim your ticket',
+    ...heroFromData(d),
+    body: greeting(d.name) +
+      p(`${d.from_name || 'Someone'} is passing you their ticket to <strong>${d.event_title}</strong>. Tap below to claim it. There is nothing to pay: the original ticket transfers to you as it is.`) +
+      infoCard([
+        ['Event', d.event_title],
+        ['Date', d.event_date],
+        ['Location', d.event_location],
+        ['Claim before', d.expires],
+      ]) +
+      ctaButton('Claim this ticket', (d.claim_url as string) || APP_URL),
     footerCta: { label: 'Open the App', url: APP_URL },
   }),
 

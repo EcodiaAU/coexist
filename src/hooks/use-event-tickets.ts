@@ -31,13 +31,17 @@ export interface EventTicket {
   event_id: string
   ticket_type_id: string
   user_id: string
-  status: 'pending' | 'confirmed' | 'cancelled' | 'refunded' | 'checked_in'
+  status: 'pending' | 'confirmed' | 'cancelled' | 'refunded' | 'checked_in' | 'reserved'
   price_cents: number
   quantity: number
   ticket_code: string | null
   stripe_checkout_session_id: string | null
   checked_in_at: string | null
   created_at: string
+  /** status=reserved only: when the organiser hold lapses (null = until the event) */
+  hold_expires_at?: string | null
+  reserved_by?: string | null
+  reserved_note?: string | null
   /** Joined */
   ticket_type_name?: string
   event_title?: string
@@ -117,7 +121,9 @@ export function useMyEventTicket(eventId: string | undefined, opts?: { poll?: bo
         .select('*, event_ticket_types(name)')
         .eq('event_id', eventId)
         .eq('user_id', user.id)
-        .in('status', ['pending', 'confirmed', 'checked_in'])
+        // 'reserved' included: an invitee must be able to SEE the spot held for
+        // them and the pay-to-confirm CTA, not just a confirmed ticket.
+        .in('status', ['pending', 'confirmed', 'checked_in', 'reserved'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -162,7 +168,9 @@ export function useMyTickets() {
         .from('event_tickets')
         .select('*, event_ticket_types(name), events(title, date_start, address, cover_image_url)')
         .eq('user_id', user.id)
-        .in('status', ['confirmed', 'checked_in'])
+        // A held (reserved) spot belongs on My Tickets: it is the surface where
+        // the invitee finds it and pays for it.
+        .in('status', ['confirmed', 'checked_in', 'reserved'])
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -625,5 +633,173 @@ export function useTicketSalesSummary(eventId: string | undefined) {
     },
     enabled: !!eventId,
     staleTime: 30 * 1000,
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/*  Member self-service: what can I do with MY ticket?                 */
+/* ------------------------------------------------------------------ */
+
+export interface TicketSelfService {
+  found: boolean
+  ticket_id?: string
+  status?: string
+  price_cents?: number
+  is_paid?: boolean
+  hold_expires_at?: string | null
+  can_refund?: boolean
+  can_transfer?: boolean
+  refund_cutoff_at?: string | null
+  refund_enabled_for_event?: boolean
+  transfer_enabled_for_event?: boolean
+  blocked_reason?: string | null
+}
+
+/**
+ * The server decides what a holder may do with their ticket (ownership, status,
+ * the per-event enable flags, the refund cutoff). The UI asks; it never derives
+ * the policy itself, so the button and the edge function can never disagree.
+ */
+export function useTicketSelfService(ticketId: string | undefined) {
+  const { user } = useAuth()
+
+  return useQuery({
+    queryKey: ['ticket-self-service', ticketId, user?.id],
+    queryFn: async (): Promise<TicketSelfService> => {
+      if (!ticketId) return { found: false }
+      const { data, error } = await supabase.rpc('get_my_ticket_self_service', {
+        p_ticket_id: ticketId,
+      })
+      if (error) throw error
+      return (data ?? { found: false }) as TicketSelfService
+    },
+    enabled: !!ticketId && !!user,
+    staleTime: 30 * 1000,
+  })
+}
+
+/** My outstanding transfer offers for a ticket. */
+export function useMyTicketTransfers(ticketId: string | undefined) {
+  const { user } = useAuth()
+
+  return useQuery({
+    queryKey: ['ticket-transfers', ticketId, user?.id],
+    queryFn: async () => {
+      if (!ticketId) return []
+      const { data, error } = await supabase
+        .from('event_ticket_transfers')
+        .select('id, to_email, status, expires_at, created_at')
+        .eq('ticket_id', ticketId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!ticketId && !!user,
+    staleTime: 30 * 1000,
+  })
+}
+
+function invalidateTicketSurfaces(queryClient: ReturnType<typeof useQueryClient>, eventId?: string) {
+  queryClient.invalidateQueries({ queryKey: ['my-tickets'] })
+  queryClient.invalidateQueries({ queryKey: ['ticket-self-service'] })
+  queryClient.invalidateQueries({ queryKey: ['ticket-transfers'] })
+  if (eventId) {
+    queryClient.invalidateQueries({ queryKey: ['my-event-ticket', eventId] })
+    queryClient.invalidateQueries({ queryKey: ['event-ticket-types', eventId] })
+    queryClient.invalidateQueries({ queryKey: ['event', eventId] })
+  }
+  queryClient.invalidateQueries({ queryKey: DIETARY_GATE_QUERY_KEY })
+}
+
+/** Read the edge function's own human message off a non-2xx response. */
+async function selfServiceError(error: unknown, fallback: string): Promise<Error> {
+  const ctx = (error as { context?: Response }).context
+  if (ctx && typeof ctx.status === 'number' && typeof ctx.clone === 'function') {
+    try {
+      const parsed = await ctx.clone().json() as { error?: string }
+      if (typeof parsed?.error === 'string' && parsed.error.trim()) return new Error(parsed.error.trim())
+    } catch {
+      /* not JSON: fall through */
+    }
+  }
+  return new Error(fallback)
+}
+
+/** Refund my own ticket. */
+export function useSelfRefundTicket() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ ticketId }: { ticketId: string; eventId?: string }) => {
+      const { data, error } = await supabase.functions.invoke('self-service-ticket', {
+        body: { action: 'refund', ticket_id: ticketId },
+      })
+      if (error) {
+        captureException(error, { extra: { ticketId, action: 'refund' } })
+        throw await selfServiceError(error, 'We could not refund that ticket. Nothing has changed.')
+      }
+      const result = data as { ok?: boolean; action?: string; error?: string }
+      if (result?.error) throw new Error(result.error)
+      return result
+    },
+    onSuccess: (_, { eventId }) => invalidateTicketSurfaces(queryClient, eventId),
+  })
+}
+
+/** Offer my ticket to someone else by email. */
+export function useStartTicketTransfer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ ticketId, toEmail }: { ticketId: string; toEmail: string; eventId?: string }) => {
+      const { data, error } = await supabase.functions.invoke('self-service-ticket', {
+        body: { action: 'transfer_start', ticket_id: ticketId, to_email: toEmail },
+      })
+      if (error) {
+        captureException(error, { extra: { ticketId, action: 'transfer_start' } })
+        throw await selfServiceError(error, 'We could not start that transfer.')
+      }
+      const result = data as { ok?: boolean; error?: string }
+      if (result?.error) throw new Error(result.error)
+      return result
+    },
+    onSuccess: (_, { eventId }) => invalidateTicketSurfaces(queryClient, eventId),
+  })
+}
+
+/** Withdraw a transfer offer I made. */
+export function useCancelTicketTransfer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ transferId }: { transferId: string; eventId?: string }) => {
+      const { data, error } = await supabase.functions.invoke('self-service-ticket', {
+        body: { action: 'transfer_cancel', transfer_id: transferId },
+      })
+      if (error) throw await selfServiceError(error, 'We could not withdraw that transfer.')
+      const result = data as { ok?: boolean; error?: string }
+      if (result?.error) throw new Error(result.error)
+      return result
+    },
+    onSuccess: (_, { eventId }) => invalidateTicketSurfaces(queryClient, eventId),
+  })
+}
+
+/** Claim a ticket someone transferred to me. */
+export function useClaimTicketTransfer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ token }: { token: string }) => {
+      const { data, error } = await supabase.functions.invoke('self-service-ticket', {
+        body: { action: 'transfer_claim', token },
+      })
+      if (error) throw await selfServiceError(error, 'We could not claim that ticket.')
+      const result = data as { ok?: boolean; ticket_id?: string; event_id?: string; error?: string }
+      if (result?.error) throw new Error(result.error)
+      return result
+    },
+    onSuccess: (result) => invalidateTicketSurfaces(queryClient, result?.event_id),
   })
 }

@@ -65,6 +65,7 @@ const OnboardingPage = lazy(() => import('@/pages/onboarding/onboarding'))
 const LeaderWelcomePage = lazy(() => import('@/pages/onboarding/leader-welcome'))
 const WelcomeBackPage = lazy(() => import('@/pages/onboarding/welcome-back'))
 const ClaimTicketPage = lazy(() => import('@/pages/claim-ticket'))
+const ClaimTransferPage = lazy(() => import('@/pages/tickets/claim-transfer'))
 
 // Main app
 const HomePage = lazy(() => import('@/pages/home'))
@@ -653,6 +654,17 @@ function App() {
           element={
             <AppShell data-eos-id="src/App.tsx#328" bare>
               <ClaimTicketPage data-eos-id="src/App.tsx#329" />
+            </AppShell>
+          }
+        />
+        {/* Person-to-person ticket transfer claim. Public for the same reason as
+            /claim: the recipient is usually brand new, so the page has to greet
+            a signed-out visitor and resume after sign-up. */}
+        <Route
+          path="/tickets/claim-transfer/:token"
+          element={
+            <AppShell bare>
+              <ClaimTransferPage />
             </AppShell>
           }
         />

@@ -3,7 +3,7 @@
  * every surface must agree with.
  *
  * Co-Exist tracks event participation across two tables with two status enums:
- *   - event_tickets.status    = pending | confirmed | cancelled | refunded | checked_in   (the BUYING layer)
+ *   - event_tickets.status    = pending | confirmed | cancelled | refunded | checked_in | reserved   (the BUYING layer)
  *   - event_registrations.status = invited | registered | attended | cancelled            (the RSVP layer)
  *
  * The banner ("X/Y spots filled") historically counted the RSVP layer (via the
@@ -24,8 +24,23 @@
  * written down in exactly one place.
  */
 
-/** Ticket statuses that OCCUPY a seat: what the banner and sales panel display. */
-export const SPOT_TAKING_TICKET_STATUSES = ['confirmed', 'checked_in'] as const
+/**
+ * Ticket statuses that OCCUPY a seat: what the banner and sales panel display.
+ *
+ * `reserved` is in here because an organiser hold IS a taken seat. The whole
+ * point of holding a spot for someone on a full event (Angelica, 2026-08-24) is
+ * that nobody else can buy it out from under them, so it has to read as filled
+ * everywhere the confirmed seats do. It is NOT paid revenue: see
+ * `PAID_TICKET_STATUSES` for the money question, which is answered against
+ * Stripe and never inferred from a status column.
+ */
+export const SPOT_TAKING_TICKET_STATUSES = ['confirmed', 'checked_in', 'reserved'] as const
+
+/** Statuses where the seat is occupied AND money has actually been taken. */
+export const PAID_TICKET_STATUSES = ['confirmed', 'checked_in'] as const
+
+/** An organiser hold: seat taken, payment still owed. */
+export const HELD_TICKET_STATUSES = ['reserved'] as const
 
 /**
  * Ticket statuses that HOLD inventory during checkout. Includes `pending` so a
@@ -33,7 +48,7 @@ export const SPOT_TAKING_TICKET_STATUSES = ['confirmed', 'checked_in'] as const
  * a superset of SPOT_TAKING (the displayed count) and is used only for the
  * per-ticket-type `remaining` calculation, never for the "spots filled" display.
  */
-export const INVENTORY_HOLD_TICKET_STATUSES = ['pending', 'confirmed', 'checked_in'] as const
+export const INVENTORY_HOLD_TICKET_STATUSES = ['pending', 'confirmed', 'checked_in', 'reserved'] as const
 
 /** Registration statuses that count as "going" for a non-ticketed event. */
 export const GOING_REGISTRATION_STATUSES = ['registered', 'attended'] as const
@@ -53,9 +68,19 @@ function sumQuantityForStatuses(
   return n
 }
 
-/** Seats occupied by valid tickets (confirmed + checked_in), summing quantity. */
+/** Seats occupied by valid tickets (confirmed + checked_in + reserved holds). */
 export function ticketSpotsTaken(rows: readonly TicketRow[] | null | undefined): number {
   return sumQuantityForStatuses(rows, SPOT_TAKING_TICKET_STATUSES)
+}
+
+/** Seats that have actually been PAID for (excludes unpaid organiser holds). */
+export function ticketSpotsPaid(rows: readonly TicketRow[] | null | undefined): number {
+  return sumQuantityForStatuses(rows, PAID_TICKET_STATUSES)
+}
+
+/** Seats currently held for an invitee who has not paid yet. */
+export function ticketSpotsHeld(rows: readonly TicketRow[] | null | undefined): number {
+  return sumQuantityForStatuses(rows, HELD_TICKET_STATUSES)
 }
 
 /** Tickets holding inventory (pending + confirmed + checked_in), summing quantity. */

@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   ticketSpotsTaken,
+  ticketSpotsPaid,
+  ticketSpotsHeld,
   ticketInventoryHeld,
   computeSpotsTaken,
   SPOT_TAKING_TICKET_STATUSES,
@@ -24,12 +26,12 @@ const myallTickets = [
 
 describe('event-capacity canonical count', () => {
   it('status sets are the agreed vocabulary', () => {
-    expect(SPOT_TAKING_TICKET_STATUSES).toEqual(['confirmed', 'checked_in'])
-    expect(INVENTORY_HOLD_TICKET_STATUSES).toEqual(['pending', 'confirmed', 'checked_in'])
+    expect(SPOT_TAKING_TICKET_STATUSES).toEqual(['confirmed', 'checked_in', 'reserved'])
+    expect(INVENTORY_HOLD_TICKET_STATUSES).toEqual(['pending', 'confirmed', 'checked_in', 'reserved'])
     expect(GOING_REGISTRATION_STATUSES).toEqual(['registered', 'attended'])
   })
 
-  it('ticketSpotsTaken counts confirmed + checked_in, excludes cancelled/refunded/pending', () => {
+  it('ticketSpotsTaken counts confirmed + checked_in + reserved, excludes cancelled/refunded/pending', () => {
     // Myall: 22 confirmed occupy seats; the 8 cancelled + 1 refunded do not.
     expect(ticketSpotsTaken(myallTickets)).toBe(22)
   })
@@ -94,5 +96,49 @@ describe('event-capacity canonical count', () => {
     const salesPanelSold = ticketSpotsTaken(myallTickets)
     expect(bannerNumber).toBe(salesPanelSold)
     expect(bannerNumber).toBe(22)
+  })
+})
+
+/**
+ * Organiser holds (status='reserved') - Angelica 2026-08-24.
+ *
+ * A held spot is a TAKEN seat (nobody else may buy it) but it is NOT paid
+ * revenue. These two facts pulling apart is exactly what made the old
+ * "comp = free ticket" model wrong, so they get pinned separately here.
+ */
+describe('reserved holds', () => {
+  it('a hold occupies a seat', () => {
+    expect(ticketSpotsTaken([{ status: 'reserved', quantity: 1 }])).toBe(1)
+  })
+
+  it('a hold is NOT counted as paid', () => {
+    expect(ticketSpotsPaid([{ status: 'reserved', quantity: 1 }])).toBe(0)
+    expect(ticketSpotsPaid([{ status: 'confirmed', quantity: 2 }])).toBe(2)
+  })
+
+  it('ticketSpotsHeld isolates unpaid holds', () => {
+    const rows = [
+      { status: 'confirmed', quantity: 3 },
+      { status: 'reserved', quantity: 2 },
+      { status: 'cancelled', quantity: 5 },
+    ]
+    expect(ticketSpotsHeld(rows)).toBe(2)
+    expect(ticketSpotsTaken(rows)).toBe(5)
+    expect(ticketSpotsPaid(rows)).toBe(3)
+  })
+
+  it('a hold holds inventory so it cannot be resold', () => {
+    expect(ticketInventoryHeld([{ status: 'reserved', quantity: 1 }])).toBe(1)
+  })
+
+  it('taken always equals paid plus held', () => {
+    const rows = [
+      { status: 'confirmed', quantity: 4 },
+      { status: 'checked_in', quantity: 1 },
+      { status: 'reserved', quantity: 3 },
+      { status: 'refunded', quantity: 2 },
+      { status: 'pending', quantity: 1 },
+    ]
+    expect(ticketSpotsTaken(rows)).toBe(ticketSpotsPaid(rows) + ticketSpotsHeld(rows))
   })
 })
