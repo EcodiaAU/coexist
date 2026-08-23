@@ -156,3 +156,42 @@ export function summariseTicketSales(rows: readonly SalesRow[] | null | undefine
   }
   return out
 }
+
+/** Every value of the `event_tickets.status` enum, in schema order. */
+export const TICKET_STATUSES = ['pending', 'confirmed', 'cancelled', 'refunded', 'checked_in', 'reserved'] as const
+export type TicketStatus = (typeof TICKET_STATUSES)[number]
+
+/**
+ * How one ticket status reads in the leader panel: its short label and its
+ * badge treatment.
+ *
+ * This exists as a pure, tested function for the same reason
+ * `summariseTicketSales` does. The panel used to switch on status inline with a
+ * three-branch ternary falling through to `bg-error-100 text-error-700`, so
+ * when `reserved` was added as a sixth status it landed in that fallback and a
+ * deliberate, live organiser hold rendered in the exact red of a CANCELLED
+ * ticket, one line under a banner announcing the seat was held. Observed on the
+ * deployed app 2026-08-24 with a real hold in place.
+ *
+ * A hold is amber, not red: seat taken, money still owed, which is the same
+ * thing `pending` means and the same amber the member sees on "A spot is held
+ * for you". Red is reserved for statuses where the seat is GONE.
+ */
+export function ticketStatusBadge(status: string | null | undefined): { label: string; className: string } {
+  switch (status) {
+    case 'confirmed':
+      return { label: 'confirmed', className: 'bg-success-100 text-success-700' }
+    case 'checked_in':
+      return { label: 'In', className: 'bg-moss-100 text-moss-700' }
+    case 'pending':
+      return { label: 'pending', className: 'bg-warning-100 text-warning-700' }
+    case 'reserved':
+      return { label: 'Held', className: 'bg-warning-100 text-warning-700' }
+    case 'cancelled':
+      return { label: 'cancelled', className: 'bg-error-100 text-error-700' }
+    case 'refunded':
+      return { label: 'refunded', className: 'bg-error-100 text-error-700' }
+    default:
+      return { label: String(status ?? 'unknown'), className: 'bg-neutral-100 text-neutral-600' }
+  }
+}

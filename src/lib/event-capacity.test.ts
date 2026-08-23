@@ -9,6 +9,8 @@ import {
   SPOT_TAKING_TICKET_STATUSES,
   INVENTORY_HOLD_TICKET_STATUSES,
   GOING_REGISTRATION_STATUSES,
+  TICKET_STATUSES,
+  ticketStatusBadge,
 } from '@/lib/event-capacity'
 
 /**
@@ -190,5 +192,52 @@ describe('summariseTicketSales', () => {
     expect(summariseTicketSales(null)).toEqual({
       totalRevenue: 0, totalSold: 0, totalHeld: 0, totalCheckedIn: 0, byType: {},
     })
+  })
+})
+
+/**
+ * The badge treatment, which is where the sixth status went wrong a second time.
+ *
+ * `summariseTicketSales` fixed the money question; the panel still switched on
+ * status inline for the badge, with `bg-error-100 text-error-700` as the
+ * fall-through. `reserved` therefore rendered in the identical red as
+ * `cancelled` on the deployed app (observed 2026-08-24 with a live hold in
+ * place: computed style rgb(252,225,225) on rgb(149,44,44) for both).
+ */
+describe('ticketStatusBadge', () => {
+  it('does not paint a live hold in the dead-ticket red', () => {
+    const held = ticketStatusBadge('reserved')
+    const cancelled = ticketStatusBadge('cancelled')
+    const refunded = ticketStatusBadge('refunded')
+    expect(held.className).not.toBe(cancelled.className)
+    expect(held.className).not.toBe(refunded.className)
+    expect(held.className).not.toContain('error')
+  })
+
+  it('reads a hold as seat-taken-money-owed, the same as pending', () => {
+    expect(ticketStatusBadge('reserved').className).toBe(ticketStatusBadge('pending').className)
+    expect(ticketStatusBadge('reserved').label).toBe('Held')
+  })
+
+  it('keeps the treatments the panel already shipped', () => {
+    expect(ticketStatusBadge('confirmed').className).toContain('success')
+    expect(ticketStatusBadge('checked_in').className).toContain('moss')
+    expect(ticketStatusBadge('checked_in').label).toBe('In')
+    expect(ticketStatusBadge('cancelled').className).toContain('error')
+    expect(ticketStatusBadge('refunded').className).toContain('error')
+  })
+
+  /**
+   * The guard that would have caught the original defect: a status added to the
+   * enum without visiting this function falls to the neutral default and fails
+   * here, instead of silently inheriting whatever the last branch happened to be.
+   */
+  it('gives every ticket status an explicit treatment', () => {
+    const fallback = ticketStatusBadge('a-status-that-does-not-exist')
+    for (const status of TICKET_STATUSES) {
+      const badge = ticketStatusBadge(status)
+      expect(badge.className, `${status} has no explicit badge treatment`).not.toBe(fallback.className)
+      expect(badge.label.length).toBeGreaterThan(0)
+    }
   })
 })

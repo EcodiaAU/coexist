@@ -87,7 +87,7 @@ import { attendeeName } from '@/lib/attendee-name'
 import { parseLocationPoint } from '@/lib/geo'
 import { getMediumUrl } from '@/lib/image-utils'
 import { isEventSoldOut } from '@/lib/event-sold-out'
-import { computeSpotsTaken } from '@/lib/event-capacity'
+import { computeSpotsTaken, ticketStatusBadge } from '@/lib/event-capacity'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { IssueTicketSheet } from '@/components/issue-ticket-sheet'
@@ -414,12 +414,9 @@ function TicketSalesSection({
                   </div>
                   <span className={cn(
                     'text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase',
-                    t.status === 'confirmed' ? 'bg-success-100 text-success-700'
-                      : t.status === 'checked_in' ? 'bg-moss-100 text-moss-700'
-                      : t.status === 'pending' ? 'bg-warning-100 text-warning-700'
-                      : 'bg-error-100 text-error-700',
+                    ticketStatusBadge(t.status as string).className,
                   )}>
-                    {t.status === 'checked_in' ? 'In' : t.status}
+                    {ticketStatusBadge(t.status as string).label}
                   </span>
                   {canManageTickets && (t.status === 'confirmed' || t.status === 'checked_in') && (
                     <button
