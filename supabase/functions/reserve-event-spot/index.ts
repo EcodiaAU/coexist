@@ -92,7 +92,7 @@ Deno.serve(withSentry('reserve-event-spot', async (req: Request) => {
     // ---- Event must be a live ticketed event ----
     const { data: evt } = await supabase
       .from('events')
-      .select('id, title, date_start, address, is_ticketed, status, cover_image_url')
+      .select('id, title, date_start, address, is_ticketed, status, cover_image_url, capacity')
       .eq('id', body.event_id)
       .single()
     if (!evt) return json({ error: 'Event not found' }, 404)
@@ -149,6 +149,17 @@ Deno.serve(withSentry('reserve-event-spot', async (req: Request) => {
     }
 
     // ---- Notify: pay-to-confirm link (magic link for a brand-new account) ----
+    // Is the event genuinely at capacity? Uses the same canonical count every
+    // other surface reads, so the email cannot disagree with the event page.
+    let isFull = false
+    try {
+      const { data: takenRaw } = await supabase.rpc('event_spots_taken', { p_event_id: body.event_id })
+      const taken = typeof takenRaw === 'number' ? takenRaw : 0
+      isFull = typeof evt.capacity === 'number' && evt.capacity > 0 && taken >= evt.capacity
+    } catch (err) {
+      console.error('[reserve-spot] capacity probe failed, defaulting to not-full:', (err as Error).message)
+    }
+
     if (notify && result.status === 'reserved') {
       const payPath = `/events/${body.event_id}?pay_ticket=${result.ticket_id}`
       let payUrl = `${APP_URL}${payPath}`
@@ -182,6 +193,10 @@ Deno.serve(withSentry('reserve-event-spot', async (req: Request) => {
                 ? new Date(holdExpiresAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
                 : '',
               reserved_by_name: callerProfile?.display_name ?? '',
+              // Only claim the event is full when it actually is. The template
+              // used to assert it unconditionally, which reads as a lie on an
+              // event that still has room (Murbpook, 9 of 15 taken).
+              event_is_full: isFull,
               pay_url: payUrl,
               cover_image_url: evt.cover_image_url ?? '',
             },

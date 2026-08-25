@@ -78,6 +78,13 @@ Deno.serve(withSentry('guest-ticket-checkout', async (req: Request) => {
     // request shape; hard-enforced below for every ticketed event).
     const dietaryIn = typeof body.dietary === 'string' ? body.dietary.trim().slice(0, 500) : ''
     const medicalIn = typeof body.medical === 'string' ? body.medical.trim().slice(0, 500) : ''
+    // Emergency contact. Kurt 2026-08-25: "half of the people don't have their
+    // emergency contacts on there so I'm having to email many people
+    // individually". Dietary + medical were already gated here; the emergency
+    // contact was the one piece of the retreat safety set nobody was asked for.
+    const emergencyNameIn = typeof body.emergency_name === 'string' ? body.emergency_name.trim().slice(0, 120) : ''
+    const emergencyPhoneIn = typeof body.emergency_phone === 'string' ? body.emergency_phone.trim().slice(0, 40) : ''
+    const emergencyRelIn = typeof body.emergency_relationship === 'string' ? body.emergency_relationship.trim().slice(0, 80) : ''
 
     // ---- Verify event ----
     const { data: evt, error: evtErr } = await supabase
@@ -144,7 +151,8 @@ Deno.serve(withSentry('guest-ticket-checkout', async (req: Request) => {
     }
 
     // ---- Ticket safety gate (server-side choke-point) ----
-    // Dietary + medical/allergy info is a hard pre-checkout requirement for
+    // Dietary + medical/allergy info + emergency contact are a hard
+    // pre-checkout requirement for
     // EVERY ticketed event (Angelica, 2026-07-08 for camp-outs; broadened to
     // all ticketed events 2026-08-12 so leaders always hold safety + catering
     // data for every ticket holder). The authed flow gates on it via
@@ -156,17 +164,33 @@ Deno.serve(withSentry('guest-ticket-checkout', async (req: Request) => {
     {
       const { data: prof } = await supabase
         .from('profiles')
-        .select('dietary_requirements, medical_requirements')
+        .select('dietary_requirements, medical_requirements, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship')
         .eq('id', userId)
         .maybeSingle()
       const needDietary = !(prof?.dietary_requirements ?? '').trim()
       const needMedical = !(prof?.medical_requirements ?? '').trim()
+      // An emergency contact is only useful if we can actually reach them, so
+      // name AND phone are both required; relationship is a nice-to-have.
+      const needEmergency = !(prof?.emergency_contact_name ?? '').trim()
+        || !(prof?.emergency_contact_phone ?? '').trim()
       if ((needDietary && !dietaryIn) || (needMedical && !medicalIn)) {
         return json({ error: 'We need your dietary and medical/allergy info before you can book.' }, 400)
       }
-      const profUpdates: { dietary_requirements?: string; medical_requirements?: string } = {}
+      if (needEmergency && (!emergencyNameIn || !emergencyPhoneIn)) {
+        return json({ error: 'We need an emergency contact name and phone before you can book.' }, 400)
+      }
+      const profUpdates: {
+        dietary_requirements?: string
+        medical_requirements?: string
+        emergency_contact_name?: string
+        emergency_contact_phone?: string
+        emergency_contact_relationship?: string
+      } = {}
       if (needDietary && dietaryIn) profUpdates.dietary_requirements = dietaryIn
       if (needMedical && medicalIn) profUpdates.medical_requirements = medicalIn
+      if (needEmergency && emergencyNameIn) profUpdates.emergency_contact_name = emergencyNameIn
+      if (needEmergency && emergencyPhoneIn) profUpdates.emergency_contact_phone = emergencyPhoneIn
+      if (needEmergency && emergencyRelIn) profUpdates.emergency_contact_relationship = emergencyRelIn
       if (Object.keys(profUpdates).length > 0) {
         const { error: profErr } = await supabase.from('profiles').update(profUpdates).eq('id', userId)
         if (profErr) {

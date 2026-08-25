@@ -127,14 +127,14 @@ export default function PublicEventPage() {
   const [buyError, setBuyError] = useState<string | null>(null)
   const [showGuestQuestions, setShowGuestQuestions] = useState(false)
   const [showCampoutReqs, setShowCampoutReqs] = useState(false)
-  const [campoutReqs, setCampoutReqs] = useState<{ dietary: string; medical: string } | null>(null)
+  const [campoutReqs, setCampoutReqs] = useState<{ dietary: string; medical: string; emergencyName: string; emergencyPhone: string; emergencyRelationship: string } | null>(null)
   const { data: ticketQuestions = [] } = useEventTicketQuestions(id)
 
   const activeTypeId = selectedType ?? ticketTypes?.[0]?.id ?? null
   const activeType = ticketTypes?.find((t) => t.id === activeTypeId) ?? null
   const isCampout = isCampoutActivity((event as { activity_type?: string } | undefined)?.activity_type)
 
-  async function doGuestCheckout(answers?: TicketAnswers, reqs?: { dietary: string; medical: string } | null) {
+  async function doGuestCheckout(answers?: TicketAnswers, reqs?: { dietary: string; medical: string; emergencyName: string; emergencyPhone: string; emergencyRelationship: string } | null) {
     if (!activeTypeId) return
     const safety = reqs ?? campoutReqs
     setBuying(true)
@@ -154,7 +154,15 @@ export default function PublicEventPage() {
           name: buyName.trim(),
           quantity: 1,
           answers: answers ?? null,
-          ...(safety ? { dietary: safety.dietary, medical: safety.medical } : {}),
+          ...(safety
+            ? {
+                dietary: safety.dietary,
+                medical: safety.medical,
+                emergency_name: safety.emergencyName,
+                emergency_phone: safety.emergencyPhone,
+                emergency_relationship: safety.emergencyRelationship,
+              }
+            : {}),
         }),
       })
       const out = await res.json()
@@ -168,7 +176,7 @@ export default function PublicEventPage() {
 
   // After the camp-out dietary/medical step, continue to custom questions (if
   // any) or straight to checkout, carrying the just-collected answers.
-  function continueAfterCampoutReqs(reqs: { dietary: string; medical: string }) {
+  function continueAfterCampoutReqs(reqs: { dietary: string; medical: string; emergencyName: string; emergencyPhone: string; emergencyRelationship: string }) {
     setCampoutReqs(reqs)
     setShowCampoutReqs(false)
     if (ticketQuestions.length > 0) {
@@ -184,9 +192,12 @@ export default function PublicEventPage() {
       setBuyError('Please enter a valid email address')
       return
     }
-    // Dietary + medical/allergy info is mandatory for every ticketed event
-    // (this buy path is only reachable for ticketed events). Collect it first
-    // (server also enforces). Then custom questions, then pay.
+    // Dietary + medical/allergy info AND an emergency contact are mandatory for
+    // every ticketed event (this buy path is only reachable for ticketed
+    // events). Collect them first (guest-ticket-checkout also enforces
+    // server-side, so no buy surface can skip it). Then custom questions, then
+    // pay. Emergency contact added 2026-08-26 on Kurt's ask: leaders were
+    // chasing it by hand after the fact for every retreat.
     if (!campoutReqs) {
       setShowCampoutReqs(true)
       return

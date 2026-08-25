@@ -127,7 +127,7 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
   // the whole point of the email is the pay-to-confirm link.
   ticket_spot_held: {
     category: 'transactional',
-    description: 'Organiser held a spot; recipient must pay to confirm. Data: { name, event_title, event_date, event_location, amount, currency, hold_expires, pay_url, reserved_by_name }',
+    description: 'Organiser held a spot; recipient must pay to confirm. Data: { name, event_title, event_date, event_location, amount, currency, hold_expires, pay_url, reserved_by_name, event_is_full }',
     subject: (d) => `A spot is held for you: ${d.event_title}`,
   },
   ticket_transfer_offer: {
@@ -549,9 +549,20 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     overline: 'Payment needed to confirm',
     ...heroFromData(d),
     body: greeting(d.name) +
-      p(d.reserved_by_name
-        ? `${d.reserved_by_name} has held a spot for you at <strong>${d.event_title}</strong>. It is yours as soon as you pay, even though the event is otherwise full.`
-        : `A spot has been held for you at <strong>${d.event_title}</strong>. It is yours as soon as you pay, even though the event is otherwise full.`) +
+      // "even though the event is otherwise full" was asserted unconditionally.
+      // True for the case this template was built for (holding a seat on a sold
+      // out camp-out) and FALSE whenever an organiser holds a spot on an event
+      // that still has room, which is exactly the Murbpook situation. Saying an
+      // event is full when it is not is the kind of small lie that costs a
+      // client trust, so it is now gated on `event_is_full`.
+      p([
+        d.reserved_by_name
+          ? `${d.reserved_by_name} has held a spot for you at <strong>${d.event_title}</strong>.`
+          : `A spot has been held for you at <strong>${d.event_title}</strong>.`,
+        d.event_is_full
+          ? 'It is yours as soon as you pay, even though the event is otherwise full.'
+          : 'It is yours as soon as you pay.',
+      ].join(' ')) +
       infoCard([
         ['Event', d.event_title],
         ['Date', d.event_date],

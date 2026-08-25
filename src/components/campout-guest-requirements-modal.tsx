@@ -26,17 +26,33 @@ interface Props {
   submitting: boolean
   isCampout: boolean
   onClose: () => void
-  onSubmit: (values: { dietary: string; medical: string }) => void
+  onSubmit: (values: {
+    dietary: string
+    medical: string
+    emergencyName: string
+    emergencyPhone: string
+    emergencyRelationship: string
+  }) => void
 }
 
 export function CampoutGuestRequirementsModal({ open, submitting, isCampout, onClose, onSubmit }: Props) {
   const [dietary, setDietary] = useState('')
   const [medical, setMedical] = useState('')
+  // Emergency contact. Kurt 2026-08-25: "half of the people don't have their
+  // emergency contacts on there so I'm having to email many people
+  // individually". There is no "None" escape here, unlike dietary and medical:
+  // a remote camp-out with no way to reach anyone is the one gap that cannot be
+  // answered with a shrug.
+  const [emergencyName, setEmergencyName] = useState('')
+  const [emergencyPhone, setEmergencyPhone] = useState('')
+  const [emergencyRelationship, setEmergencyRelationship] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const handleContinue = useCallback(() => {
     const dietaryValue = dietary.trim()
     const medicalValue = medical.trim()
+    const emName = emergencyName.trim()
+    const emPhone = emergencyPhone.trim()
     if (!dietaryValue) {
       setError('Tell us your dietary requirements, or tap "None"')
       return
@@ -45,9 +61,23 @@ export function CampoutGuestRequirementsModal({ open, submitting, isCampout, onC
       setError('Tell us your medical / allergy info, or tap "None"')
       return
     }
+    if (!emName) {
+      setError('Give us an emergency contact name')
+      return
+    }
+    if (!emPhone) {
+      setError('Give us a phone number for your emergency contact')
+      return
+    }
     setError(null)
-    onSubmit({ dietary: dietaryValue, medical: medicalValue })
-  }, [dietary, medical, onSubmit])
+    onSubmit({
+      dietary: dietaryValue,
+      medical: medicalValue,
+      emergencyName: emName,
+      emergencyPhone: emPhone,
+      emergencyRelationship: emergencyRelationship.trim(),
+    })
+  }, [dietary, medical, emergencyName, emergencyPhone, emergencyRelationship, onSubmit])
 
   return (
     <Modal
@@ -65,8 +95,8 @@ export function CampoutGuestRequirementsModal({ open, submitting, isCampout, onC
             </h2>
             <p className="text-sm text-neutral-500 leading-relaxed">
               {isCampout
-                ? 'Camp-outs are catered and remote, so our leaders need your dietary and medical/allergy info before you book. Only event leaders can see it.'
-                : 'Our leaders need your dietary and medical/allergy info before you book, so we can cater safely and be ready for allergies. Only event leaders can see it.'}
+                ? 'Camp-outs are catered and remote, so our leaders need your dietary and medical/allergy info and an emergency contact before you book. Only event leaders can see it.'
+                : 'Our leaders need your dietary and medical/allergy info and an emergency contact before you book, so we can cater safely, be ready for allergies, and reach someone if we have to. Only event leaders can see it.'}
             </p>
           </div>
 
@@ -108,6 +138,34 @@ export function CampoutGuestRequirementsModal({ open, submitting, isCampout, onC
             >
               No medical needs or allergies
             </button>
+          </div>
+
+          <div className="space-y-2.5 rounded-md border border-neutral-100 bg-neutral-50/60 p-3.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+              Emergency contact
+            </p>
+            <Input
+              label="Their name"
+              value={emergencyName}
+              onChange={(e) => { setEmergencyName(e.target.value); if (error) setError(null) }}
+              placeholder="e.g. Sam Rivers"
+              maxLength={120}
+            />
+            <Input
+              type="tel"
+              label="Their phone"
+              value={emergencyPhone}
+              onChange={(e) => { setEmergencyPhone(e.target.value); if (error) setError(null) }}
+              placeholder="e.g. 0400 000 000"
+              maxLength={40}
+            />
+            <Input
+              label="Relationship (optional)"
+              value={emergencyRelationship}
+              onChange={(e) => { setEmergencyRelationship(e.target.value); if (error) setError(null) }}
+              placeholder="e.g. Partner, parent, friend"
+              maxLength={80}
+            />
           </div>
 
           {error && <p className="text-xs text-error-500">{error}</p>}

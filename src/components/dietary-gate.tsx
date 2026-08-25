@@ -46,11 +46,21 @@ export function DietaryGate() {
   const { toast } = useToast()
   const [dietary, setDietary] = useState('')
   const [medical, setMedical] = useState('')
+  // Emergency contact. Kurt 2026-08-25: "half of the people don't have their
+  // emergency contacts on there so I'm having to email many people
+  // individually". Unlike dietary and medical there is NO "None" quick-fill:
+  // a remote camp-out with nobody to call is not a valid answer.
+  const [emName, setEmName] = useState('')
+  const [emPhone, setEmPhone] = useState('')
+  const [emRel, setEmRel] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   const dietaryEmpty = !(profile?.dietary_requirements ?? '').trim()
   const medicalEmpty = !(profile?.medical_requirements ?? '').trim()
+  // Both name and phone are needed for the contact to be reachable at all.
+  const emergencyEmpty = !(profile?.emergency_contact_name ?? '').trim()
+    || !(profile?.emergency_contact_phone ?? '').trim()
 
   // Candidate = onboarded user, phone already on file (PhoneGate precedence:
   // that gate handles phone-less users and the two must never stack), and at
@@ -62,7 +72,7 @@ export function DietaryGate() {
     !!profile &&
     profile.onboarding_completed === true &&
     !!(profile.phone ?? '').trim() &&
-    (dietaryEmpty || medicalEmpty)
+    (dietaryEmpty || medicalEmpty || emergencyEmpty)
 
   // Does this user hold a live ticket OR registration to an upcoming ticketed
   // event? Both tables are checked because a ticketed event can carry either
@@ -103,7 +113,8 @@ export function DietaryGate() {
 
   const needDietary = !!eligibility?.ticketed && dietaryEmpty
   const needMedical = !!eligibility?.ticketed && medicalEmpty
-  const show = candidate && (needDietary || needMedical)
+  const needEmergency = !!eligibility?.ticketed && emergencyEmpty
+  const show = candidate && (needDietary || needMedical || needEmergency)
 
   // Body scroll-lock and keyboard avoidance are now owned by the Modal
   // primitive (Vaul + `keyboardAware` via useKeyboardHeight - the canonical
@@ -124,10 +135,31 @@ export function DietaryGate() {
       setError('Tell us your medical / allergy info, or tap "None"')
       return
     }
+    const emNameValue = emName.trim()
+    const emPhoneValue = emPhone.trim()
+    if (needEmergency && !emNameValue) {
+      setError('Give us an emergency contact name')
+      return
+    }
+    if (needEmergency && !emPhoneValue) {
+      setError('Give us a phone number for your emergency contact')
+      return
+    }
 
-    const updates: { dietary_requirements?: string; medical_requirements?: string } = {}
+    const updates: {
+      dietary_requirements?: string
+      medical_requirements?: string
+      emergency_contact_name?: string
+      emergency_contact_phone?: string
+      emergency_contact_relationship?: string
+    } = {}
     if (needDietary) updates.dietary_requirements = dietaryValue
     if (needMedical) updates.medical_requirements = medicalValue
+    if (needEmergency) {
+      updates.emergency_contact_name = emNameValue
+      updates.emergency_contact_phone = emPhoneValue
+      if (emRel.trim()) updates.emergency_contact_relationship = emRel.trim()
+    }
 
     setError(null)
     setSaving(true)
@@ -145,7 +177,7 @@ export function DietaryGate() {
     } finally {
       setSaving(false)
     }
-  }, [user, needDietary, needMedical, dietary, medical, refreshProfile, toast])
+  }, [user, needDietary, needMedical, needEmergency, dietary, medical, emName, emPhone, emRel, refreshProfile, toast])
 
   // Blocking gate: `dismissible={false}` = no backdrop tap, no Escape, no drag.
   return (
@@ -177,7 +209,8 @@ export function DietaryGate() {
             <p data-eos-id="src/components/dietary-gate.tsx#8" className="text-sm text-neutral-500 leading-relaxed">
               You have a ticket to an upcoming event. We cater for camp-outs and
               ticketed events, and our leaders need to know about allergies,
-              medical needs and dietary requirements to keep everyone safe.
+              medical needs, dietary requirements and who to call in an
+              emergency to keep everyone safe.
             </p>
           </div>
 
@@ -222,6 +255,36 @@ export function DietaryGate() {
               >
                 No medical needs or allergies
               </button>
+            </div>
+          )}
+
+          {needEmergency && (
+            <div className="space-y-2.5 rounded-md border border-neutral-100 bg-neutral-50/60 p-3.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                Emergency contact
+              </p>
+              <Input
+                label="Their name"
+                value={emName}
+                onChange={(e) => { setEmName(e.target.value); if (error) setError(null) }}
+                placeholder="e.g. Sam Rivers"
+                maxLength={120}
+              />
+              <Input
+                type="tel"
+                label="Their phone"
+                value={emPhone}
+                onChange={(e) => { setEmPhone(e.target.value); if (error) setError(null) }}
+                placeholder="e.g. 0400 000 000"
+                maxLength={40}
+              />
+              <Input
+                label="Relationship (optional)"
+                value={emRel}
+                onChange={(e) => { setEmRel(e.target.value); if (error) setError(null) }}
+                placeholder="e.g. Partner, parent, friend"
+                maxLength={80}
+              />
             </div>
           )}
 
