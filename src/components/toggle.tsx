@@ -96,7 +96,8 @@ export function Toggle({
         <span data-eos-id="src/components/toggle.tsx#5"
           className={cn(
             'relative inline-flex shrink-0 rounded-full',
-            'transition-colors duration-150',
+            // track colour flips on the shared motion contract; thumb spring stays framer-driven
+            'transition-colors [transition-timing-function:var(--ease-out)] [transition-duration:var(--dur-fast)]',
             config.track,
             checked ? 'bg-primary-500' : 'bg-primary-200',
           )}

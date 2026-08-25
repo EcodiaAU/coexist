@@ -225,7 +225,8 @@ const ToastCard = memo(function ToastCard({
       }}
       className={cn(
         'pointer-events-auto w-full max-w-sm gpu-panel',
-        'flex items-center gap-3 rounded-sm px-4 py-3 shadow-sm',
+        // Float on the shared @ecodia/motion elevation ladder (a whisper, not a slab).
+        'flex items-center gap-3 rounded-sm px-4 py-3 shadow-[var(--ec-sh-2)]',
         config.bgClass,
       )}
     >

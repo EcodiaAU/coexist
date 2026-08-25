@@ -126,7 +126,8 @@ export function SegmentedControl<T extends string = string>({
                 'relative flex-1 flex items-center justify-center gap-1.5',
                 'min-h-11 rounded-full text-sm font-semibold',
                 'cursor-pointer select-none',
-                'transition-colors duration-200',
+                // active/inactive label colour moves on the shared motion contract
+                'transition-colors [transition-timing-function:var(--ease-out)] [transition-duration:var(--dur-base)]',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1',
                 isActive ? styles.active : styles.inactive,
               )}

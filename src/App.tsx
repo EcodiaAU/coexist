@@ -38,6 +38,7 @@ const PublicCheckInPage = lazy(() => import('@/pages/public/check-in'))
 
 // Design showcase (dev only)
 const EventEditorialShowcase = lazy(() => import('@/pages/design/event-editorial'))
+const MotionShowcase = lazy(() => import('@/pages/design/motion'))
 
 // Legal
 const TermsOfServicePage = lazy(() => import('@/pages/legal/terms'))
@@ -727,6 +728,7 @@ function App() {
 
         {/* Design showcase (dev only) */}
         <Route data-eos-id="src/App.tsx#351" path="/design/events" element={<EventEditorialShowcase data-eos-id="src/App.tsx#352" />} />
+        <Route path="/design/motion" element={<MotionShowcase />} />
 
         {/* Catch-all: authed users get a friendly 404 (QA P3-4 - they used
             to see the logged-out Welcome screen); visitors get Welcome. */}

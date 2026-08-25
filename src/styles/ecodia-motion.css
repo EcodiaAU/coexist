@@ -1,0 +1,65 @@
+/* ===========================================================================
+   @ecodia/motion - the fleet motion contract.
+   One importable stylesheet: easing + duration tokens plus the shared keyframes
+   every Ecodia app animates on, so the whole fleet moves the same way. Brand-
+   neutral: no colour, no layout. Import once in the app's global CSS.
+
+   Source of truth: derived from Studio's original motion vocabulary
+   (ecosphere/apps/studio globals.css). Distributed via registry.ecodia.au so it
+   is a pull, not a per-repo copy.
+   =========================================================================== */
+
+:root {
+  /* easing */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);      /* the default: settles, never bounces past */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);     /* symmetric moves: theme flips, colour fades */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* overshoot: thumbs, pills, dialogs */
+
+  /* duration */
+  --dur-fast: 0.16s;   /* press, hover, focus ring */
+  --dur-base: 0.22s;   /* the workhorse: most state changes */
+  --dur-slow: 0.34s;   /* entrances, layout, sliding indicators */
+}
+
+/* Shared keyframes. Named with an ec- prefix so they never collide with an
+   app's own animations. Components reference these by name. */
+@keyframes ec-fade-up   { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes ec-fade-in   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ec-scale-in  { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes ec-spin      { to { transform: rotate(360deg); } }
+@keyframes ec-draw      { to { stroke-dashoffset: 0; } }
+@keyframes ec-toast-in  { from { opacity: 0; transform: translateX(30px) scale(0.9); } to { opacity: 1; transform: none; } }
+@keyframes ec-toast-out { to { opacity: 0; transform: translateX(30px) scale(0.9); } }
+@keyframes ec-shimmer   { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Opt-in utility classes for the common cases (a component can also just read
+   the tokens directly). */
+.ec-animate-in    { animation: ec-fade-up var(--dur-slow) var(--ease-out); }
+.ec-animate-fade  { animation: ec-fade-in var(--dur-base) var(--ease-out); }
+.ec-spin          { animation: ec-spin 0.7s linear infinite; }
+
+/* The elevation ladder that pairs with the motion (a card is a hairline and a
+   whisper, never a drop-shadowed slab). Tinted, theme-agnostic alphas. */
+:root {
+  --ec-sh-1: 0 1px 2px rgba(20, 20, 18, 0.05), 0 1px 3px rgba(20, 20, 18, 0.05);
+  --ec-sh-2: 0 2px 6px rgba(20, 20, 18, 0.05), 0 8px 22px rgba(20, 20, 18, 0.07);
+  --ec-sh-3: 0 18px 44px rgba(20, 20, 18, 0.14), 0 4px 12px rgba(20, 20, 18, 0.08);
+}
+[data-theme="dark"] {
+  --ec-sh-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --ec-sh-2: 0 2px 8px rgba(0, 0, 0, 0.36), 0 10px 26px rgba(0, 0, 0, 0.32);
+  --ec-sh-3: 0 22px 54px rgba(0, 0, 0, 0.55), 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Accessibility: one place, honoured fleet-wide. Any surface importing the
+   motion contract inherits the reduced-motion guard for free. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

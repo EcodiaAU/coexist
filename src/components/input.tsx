@@ -230,7 +230,8 @@ export const Input = forwardRef<
     inputClassName ?? 'bg-surface-3',
     'text-[16px] leading-normal text-neutral-900',
     'placeholder:text-neutral-400',
-    'outline-none transition-colors duration-150',
+    // focus border/ring colour moves on the shared motion contract
+    'outline-none transition-colors [transition-timing-function:var(--ease-out)] [transition-duration:var(--dur-fast)]',
     'disabled:opacity-50 disabled:cursor-not-allowed',
     (isSearch || icon) && 'pl-10',
     isPassword && 'pr-12',

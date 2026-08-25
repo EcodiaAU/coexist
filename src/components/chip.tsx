@@ -50,7 +50,8 @@ export function Chip({
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full px-3 min-h-11',
         'text-sm font-medium cursor-pointer select-none',
-        'transition-colors duration-150',
+        // selected/unselected colour moves on the shared motion contract
+        'transition-colors [transition-timing-function:var(--ease-out)] [transition-duration:var(--dur-fast)]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1',
         selected ? styles.selected : styles.unselected,
         className,
