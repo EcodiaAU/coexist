@@ -6,7 +6,7 @@ const variantStyles = {
   primary:
     'bg-primary-800 text-white hover:bg-primary-950 focus-visible:ring-primary-400',
   secondary:
-    'bg-primary-100 text-primary-800 shadow-sm hover:bg-primary-200 focus-visible:ring-primary-400',
+    'bg-primary-100 text-primary-800 hover:bg-primary-200 focus-visible:ring-primary-400',
   ghost:
     'bg-transparent text-primary-800 hover:bg-primary-50 focus-visible:ring-primary-400',
   danger:
@@ -14,6 +14,15 @@ const variantStyles = {
   auth:
     'bg-primary-800 text-white hover:bg-primary-950 focus-visible:ring-primary-400 rounded-md h-[54px] text-[15px] font-bold',
 } as const
+
+// The elevation ladder from the shared @ecodia/motion contract. Applied only to
+// the raised variants so a card is a hairline at rest and lifts to a whisper on
+// hover, never a drop-shadowed slab. Ghost/danger stay flat.
+const variantShadow: Partial<Record<ButtonVariant, string>> = {
+  primary: 'shadow-[var(--ec-sh-1)] hover:shadow-[var(--ec-sh-2)]',
+  secondary: 'shadow-[var(--ec-sh-1)] hover:shadow-[var(--ec-sh-2)]',
+  auth: 'shadow-[var(--ec-sh-1)] hover:shadow-[var(--ec-sh-2)]',
+}
 
 const sizeStyles = {
   sm: 'min-h-11 px-4 text-sm gap-1.5',
@@ -29,6 +38,13 @@ export interface ButtonProps {
   size?: ButtonSize
   icon?: ReactNode
   loading?: boolean
+  /**
+   * Async success state. Flip `loading` -> `success` after a submit resolves and
+   * the button morphs the spinner into a drawn check (the signed-off prototype
+   * interaction, `ec-draw` from the shared motion contract). Backward compatible:
+   * defaults to false, so nothing changes for callers that never set it.
+   */
+  success?: boolean
   disabled?: boolean
   fullWidth?: boolean
   onClick?: React.MouseEventHandler<HTMLButtonElement>
@@ -67,6 +83,34 @@ function Spinner({ className }: { className?: string }) {
   )
 }
 
+// Drawn check: the stroke draws itself in over --dur-slow with the shared ease.
+// One-shot on mount, so it fires exactly when the button flips into `success`.
+function DrawnCheck({ className }: { className?: string }) {
+  return (
+    <svg
+      className={cn('shrink-0', className)}
+      width="18"
+      height="18"
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M4 10.5l4 4 8-9"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          strokeDasharray: 20,
+          strokeDashoffset: 20,
+          animation: 'ec-draw var(--dur-slow) var(--ease-out) forwards',
+        }}
+      />
+    </svg>
+  )
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(
     {
@@ -74,6 +118,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       size = 'md',
       icon,
       loading = false,
+      success = false,
       disabled = false,
       fullWidth = false,
       onClick,
@@ -87,6 +132,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ) {
     const shouldReduceMotion = useReducedMotion()
     const isDisabled = disabled || loading
+    // success takes precedence over loading for what is rendered.
+    const state: 'success' | 'loading' | 'idle' = success
+      ? 'success'
+      : loading
+        ? 'loading'
+        : 'idle'
+    // The raised variants also lift on hover; flat variants (ghost/danger) do not.
+    const lifts = variant === 'primary' || variant === 'secondary' || variant === 'auth'
 
     return (
       <motion.button data-eos-id="src/components/button.tsx#3"
@@ -98,6 +151,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         aria-label={ariaLabel}
         aria-busy={loading}
         aria-disabled={isDisabled}
+        whileHover={
+          isDisabled || shouldReduceMotion || !lifts ? undefined : { y: -1 }
+        }
         whileTap={
           isDisabled || shouldReduceMotion ? undefined : { scale: 0.975 }
         }
@@ -105,21 +161,38 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           'relative inline-flex items-center justify-center font-heading font-semibold',
           'rounded-sm cursor-pointer select-none',
-          'transition-colors duration-150',
+          // Colour + elevation move on the shared motion contract (--ease-out /
+          // --dur-fast); transform (hover-lift, press-scale) stays framer-driven.
+          'transition-[color,background-color,border-color,box-shadow,opacity]',
+          '[transition-timing-function:var(--ease-out)] [transition-duration:var(--dur-fast)]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
           variantStyles[variant],
+          variantShadow[variant],
           sizeStyles[size],
+          // On success, morph the surface to the success token.
+          state === 'success' && '!bg-success !text-white',
           fullWidth && 'w-full',
           isDisabled && 'opacity-50 cursor-not-allowed pointer-events-none',
           className,
         )}
       >
-        {loading ? (
+        {state === 'loading' ? (
           <>
             <Spinner data-eos-id="src/components/button.tsx#4"
               className={cn(
                 size === 'sm' && 'w-3.5 h-3.5',
                 size === 'md' && 'w-4 h-4',
+                size === 'lg' && 'w-5 h-5',
+              )}
+            />
+            {children && <span data-eos-id="src/components/button.tsx#5">{children}</span>}
+          </>
+        ) : state === 'success' ? (
+          <>
+            <DrawnCheck
+              className={cn(
+                size === 'sm' && 'w-4 h-4',
+                size === 'md' && 'w-[18px] h-[18px]',
                 size === 'lg' && 'w-5 h-5',
               )}
             />
