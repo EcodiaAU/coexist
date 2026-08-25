@@ -1,6 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* shared motion contract, mirrors @ecodia/motion (registry.ecodia.au). Additive
+   only: it brings the ec-* keyframes, the ease + duration tokens, and the
+   --ec-sh-* elevation ladder that the whole fleet moves on.
+   COLLISION CHECK (2026-08-25): Co-Exist defines none of these token or keyframe
+   names, so nothing is overridden. The app keyframe named shimmer (a translateX
+   sweep) has a DIFFERENT name from the contract keyframe ec-shimmer and is kept
+   verbatim. The contract dark-theme shadow block is INERT here: Co-Exist is
+   LIGHT-ONLY and never sets data-theme, so only the light ladder ever resolves. */
+@import "./ecodia-motion.css";
+
 /* shadcn/ui: this app is LIGHT-ONLY. Bind the `dark:` variant to an explicit
    `.dark` ancestor (never present here) so adopted shadcn primitives cannot
    flip to their dark palette under the OS prefers-color-scheme. */
