@@ -82,6 +82,21 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
     mutationFn: async (eventId: string) => {
       if (!user) throw new Error('Not authenticated')
       setRsvpingEvent(eventId)
+      // A ticketed event cannot be joined by a bare RSVP: the ticket is the
+      // only way in, and the registration is derived from it. This raw insert
+      // bypassed the guarded useRegisterForEvent hook entirely, so onboarding
+      // was a second door into the "registered, never paid" state the leader
+      // roster then counted as going. The database now refuses it
+      // (trg_enforce_ticket_backed_registration); we surface it as a nudge to
+      // open the event rather than a failed tap.
+      const { data: evt } = await supabase
+        .from('events')
+        .select('is_ticketed')
+        .eq('id', eventId)
+        .maybeSingle()
+      if (evt?.is_ticketed) {
+        throw new Error('TICKETED')
+      }
       const { error } = await supabase
         .from('event_registrations')
         .insert({ event_id: eventId, user_id: user.id, status: 'registered' })
@@ -97,8 +112,12 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
       queryClient.invalidateQueries({ queryKey: ['onboarding-events'] })
       queryClient.invalidateQueries({ queryKey: ['onboarding-registrations', user?.id] })
     },
-    onError: () => {
+    onError: (err) => {
       setRsvpingEvent(null)
+      if ((err as Error)?.message === 'TICKETED') {
+        toast.error('This one needs a ticket. Open it after onboarding to grab a spot.')
+        return
+      }
       toast.error("Couldn't RSVP right now. Please try again.")
     },
   })

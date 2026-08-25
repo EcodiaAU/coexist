@@ -554,7 +554,7 @@ export function useEventGoing(eventId: string | undefined, enabled: boolean) {
 /*  Ticket-aware deduped roster (leader event-day screen)              */
 /* ------------------------------------------------------------------ */
 
-export type RosterScenario = 'checkedIn' | 'expected' | 'waitlist' | 'notAttending'
+export type RosterScenario = 'checkedIn' | 'expected' | 'waitlist' | 'notAttending' | 'noTicket'
 
 export interface RosterPerson extends AttendeeWithStatus {
   /** confirmed + checked_in tickets this person holds (dupes counted) */
@@ -573,13 +573,24 @@ export interface EventRoster {
     expected: RosterPerson[]
     waitlist: RosterPerson[]
     notAttending: RosterPerson[]
+    /**
+     * Ticketed events only: an active registration with no ticket of any kind.
+     * These people are NOT counted in `going` (the going number is tickets, and
+     * only tickets), but they are NOT hidden either. Silently counting them is
+     * what produced Kurt's 28 against a limit of 25; silently dropping them
+     * would take real names off Hannah's catering list. So they get named and
+     * the organiser decides: comp them a spot, or take them off.
+     */
+    noTicket: RosterPerson[]
   }
   counts: {
-    /** distinct people coming (checked in + expected) */
+    /** distinct people coming (checked in + expected). Ticket-backed only. */
     going: number
     checkedIn: number
     waitlist: number
     notAttending: number
+    /** registered but holding no ticket: needs an organiser decision */
+    noTicket: number
     /** total valid tickets across everyone, dupes included */
     ticketsSold: number
     /** extra tickets beyond one-per-person */
@@ -602,8 +613,8 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
     queryKey: ['event-roster', eventId, isTicketed],
     queryFn: async (): Promise<EventRoster> => {
       const empty: EventRoster = {
-        groups: { checkedIn: [], expected: [], waitlist: [], notAttending: [] },
-        counts: { going: 0, checkedIn: 0, waitlist: 0, notAttending: 0, ticketsSold: 0, dupes: 0 },
+        groups: { checkedIn: [], expected: [], waitlist: [], notAttending: [], noTicket: [] },
+        counts: { going: 0, checkedIn: 0, waitlist: 0, notAttending: 0, noTicket: 0, ticketsSold: 0, dupes: 0 },
         isTicketed,
       }
       if (!eventId) return empty
@@ -665,7 +676,7 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
         agg.set(t.user_id, a)
       }
 
-      const groups: EventRoster['groups'] = { checkedIn: [], expected: [], waitlist: [], notAttending: [] }
+      const groups: EventRoster['groups'] = { checkedIn: [], expected: [], waitlist: [], notAttending: [], noTicket: [] }
       let ticketsSold = 0
       let peopleWithValid = 0
 
@@ -704,17 +715,26 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
           // roster now collapses to just ticket holders + checked-in (2026-08-17).
           // Non-ticketed already hid cancelled rows - unchanged.
           continue
+        } else if (isTicketed) {
+          // Active registration, no ticket of any kind, on a TICKETED event.
+          //
+          // This branch used to return 'expected', i.e. the registration was
+          // treated as the attendance record of truth and the person counted as
+          // going. That single line is what put Kurt's roster at 28 on an event
+          // limited to 25: 26 ticket holders plus 2 people who had registered
+          // through the chat "Going" button without ever buying (Murbpook was
+          // worse, 14 on the roster against 9 tickets). The grandfathering was
+          // written for a one-off Eventbrite import and then silently absorbed
+          // every ghost RSVP the unguarded write paths created.
+          //
+          // Going is now tickets, and only tickets, exactly as it reads on the
+          // public page and the event page. These people still appear, in their
+          // own group, so the organiser can comp them in or take them off
+          // instead of finding out at the gate.
+          scenario = 'noTicket'
+          reason = 'no ticket'
         } else {
-          // Active registration (registered/attended) with no valid ticket. On a
-          // ticketed event this is a grandfathered / legacy attendee (e.g. the
-          // Eventbrite import for the Myall Park campout) or a registration whose
-          // ticket lapsed but who is still expected. The registration is the
-          // attendance record of truth, so they are GOING - which keeps the
-          // event-day "going" count consistent with the event-detail count (both
-          // registration-based) instead of dropping grandfathered attendees into
-          // a confusing "not attending / no ticket" bucket. ticketsSold still
-          // counts only valid tickets, so a leader still sees the payment gap
-          // (e.g. 17 going vs 13 tickets) without a false "8 not attending".
+          // Non-ticketed event: the registration IS the attendance record.
           scenario = 'expected'
         }
 
@@ -732,10 +752,15 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
       return {
         groups,
         counts: {
+          // Ticket-backed only. noTicket is deliberately excluded so this
+          // agrees with event_spots_taken / event_going_count on the server and
+          // with the public event page, which is the whole point of the
+          // 2026-08-25 unification.
           going: groups.checkedIn.length + groups.expected.length,
           checkedIn: groups.checkedIn.length,
           waitlist: groups.waitlist.length,
           notAttending: groups.notAttending.length,
+          noTicket: groups.noTicket.length,
           ticketsSold,
           dupes,
         },
