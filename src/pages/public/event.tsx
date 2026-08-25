@@ -65,8 +65,47 @@ export default function PublicEventPage() {
 
   // Guest ticket purchase (no account needed) for public ticketed events.
   const isTicketed = !!(event as { is_ticketed?: boolean } | undefined)?.is_ticketed
-  // Sold out externally (e.g. Eventbrite): close native guest sales.
+
+  // The SAME number the app, the leader roster and the buy gate read.
+  //
+  // Until 2026-08-25 this page read no availability at all: `soldOut` was ONLY
+  // the manual event_extras.sold_out flag for events that sold out on
+  // Eventbrite. So the public page happily advertised "25 spots" and an active
+  // Get Ticket button for Wild Mountains while 26 tickets were already sold
+  // against a capacity of 25, and the purchase then blew up server-side in
+  // reserve_event_ticket with "Sold out". Both RPCs are SECURITY DEFINER and
+  // granted to anon precisely so this page can tell the truth to a logged-out
+  // visitor, which is the authed/non-authed parity Tate asked for.
+  const { data: spotsTaken } = useQuery({
+    queryKey: ['public-event-spots', id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('event_spots_taken', { p_event_id: id! })
+      if (error) throw error
+      return (data as number | null) ?? 0
+    },
+    enabled: !!id,
+    staleTime: 30 * 1000,
+  })
+  const { data: availability } = useQuery({
+    queryKey: ['public-event-availability', id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_event_ticket_availability', { p_event_id: id! })
+      if (error) throw error
+      return (data ?? []) as { ticket_type_id: string; capacity: number | null; sold: number; remaining: number | null }[]
+    },
+    enabled: !!id && isTicketed,
+    staleTime: 30 * 1000,
+  })
+
+  const capacity = (event as { capacity?: number | null } | undefined)?.capacity ?? null
+  const spotsLeft = capacity != null && spotsTaken != null ? Math.max(0, capacity - spotsTaken) : null
+  const everyTypeFull = !!availability?.length
+    && availability.every((a) => a.remaining !== null && a.remaining <= 0)
+  // Sold out = the manual external flag, OR the event is genuinely at capacity,
+  // OR every active ticket type has no inventory left.
   const soldOut = isEventSoldOut(event)
+    || (capacity != null && spotsTaken != null && spotsTaken >= capacity)
+    || everyTypeFull
   const { data: ticketTypes } = useQuery({
     queryKey: ['public-event-tickets', id],
     queryFn: async () => {
@@ -336,7 +375,13 @@ export default function PublicEventPage() {
           {event.capacity && (
             <div className="flex items-start gap-3">
               <Users size={20} className="mt-0.5 shrink-0 text-primary-500" />
-              <p className="text-neutral-900">{event.capacity} spots</p>
+              <p className="text-neutral-900">
+                {spotsLeft === null
+                  ? `${event.capacity} spots`
+                  : spotsLeft === 0
+                    ? `${event.capacity} spots - full`
+                    : `${spotsLeft} of ${event.capacity} spots left`}
+              </p>
             </div>
           )}
         </motion.div>
@@ -386,8 +431,8 @@ export default function PublicEventPage() {
               <h2 className="font-heading text-lg font-semibold text-neutral-900">Sold out</h2>
             </div>
             <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
-              Tickets for this campout have sold out. If the organisers sent you a claim link,
-              open it to grab your free app ticket and join the group chat.
+              Every spot for this campout has been taken. If the organisers sent you a claim
+              link, open it to grab your free app ticket and join the group chat.
             </p>
           </motion.div>
         )}
