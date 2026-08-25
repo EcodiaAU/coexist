@@ -195,3 +195,65 @@ export function ticketStatusBadge(status: string | null | undefined): { label: s
       return { label: String(status ?? 'unknown'), className: 'bg-neutral-100 text-neutral-600' }
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Attendance classification: the one rule for "is this person going" */
+/* ------------------------------------------------------------------ */
+
+/** Where one person lands on the leader roster. 'hidden' = not rendered. */
+export type AttendanceScenario =
+  | 'checkedIn'
+  | 'expected'
+  | 'waitlist'
+  | 'notAttending'
+  | 'noTicket'
+  | 'hidden'
+
+/**
+ * Decide how one registration reads on the roster, given the tickets that
+ * person actually holds.
+ *
+ * Extracted as a pure function on 2026-08-25 because this decision WAS the bug.
+ * It lived inline in useEventRoster's query callback, untestable, and one
+ * branch of it ("active registration, no valid ticket, on a ticketed event")
+ * returned 'expected', i.e. counted as going. That branch was written to
+ * grandfather a one-off Eventbrite import and then silently absorbed every
+ * ghost RSVP the unguarded chat "Going" button created, which is how Wild
+ * Mountains read 28 going against a limit of 25 while only 26 tickets existed
+ * and only 16 had been paid for.
+ *
+ * The rule now: on a ticketed event, GOING MEANS HOLDING A TICKET. Nothing else
+ * counts, so the leader roster, the event page and the public page cannot
+ * disagree. Someone registered without a ticket is neither counted nor hidden;
+ * they surface as 'noTicket' for the organiser to comp in or remove.
+ */
+export function classifyAttendance(input: {
+  isTicketed: boolean
+  /** event_registrations.status */
+  registrationStatus: string | null
+  /** confirmed + checked_in tickets this person holds */
+  validTicketCount: number
+  /** any ticket of theirs is checked_in */
+  ticketCheckedIn: boolean
+}): AttendanceScenario {
+  const { isTicketed, registrationStatus, validTicketCount, ticketCheckedIn } = input
+
+  // Physically present is ground truth and outranks every ticket question.
+  if (registrationStatus === 'attended' || ticketCheckedIn) return 'checkedIn'
+
+  // A valid ticket seats the person even if their registration row still says
+  // waitlisted. Someone who paid must never sit on the waitlist below capacity
+  // (the Kieren case, Angelica 2026-07-09).
+  if (validTicketCount > 0) return 'expected'
+
+  if (registrationStatus === 'waitlisted') {
+    // Ticketed events have no RSVP waitlist: the ticket is the only model, so a
+    // waitlisted row with no ticket is noise on the leader roster.
+    return isTicketed ? 'hidden' : 'waitlist'
+  }
+
+  if (registrationStatus === 'cancelled') return 'hidden'
+
+  // Active registration, no ticket at all.
+  return isTicketed ? 'noTicket' : 'expected'
+}

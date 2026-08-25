@@ -516,7 +516,7 @@ export default function EventDayPage() {
   // Search filters across every group by full name + display_name so leaders
   // can search by surname to disambiguate shared first names.
   const filteredGroups = useMemo(() => {
-    const empty = { checkedIn: [] as RosterPerson[], expected: [] as RosterPerson[], waitlist: [] as RosterPerson[], notAttending: [] as RosterPerson[] }
+    const empty = { checkedIn: [] as RosterPerson[], expected: [] as RosterPerson[], waitlist: [] as RosterPerson[], notAttending: [] as RosterPerson[], noTicket: [] as RosterPerson[] }
     if (!roster) return empty
     const q = searchQuery.trim().toLowerCase()
     if (!q) return roster.groups
@@ -527,6 +527,7 @@ export default function EventDayPage() {
       expected: roster.groups.expected.filter(match),
       waitlist: roster.groups.waitlist.filter(match),
       notAttending: roster.groups.notAttending.filter(match),
+      noTicket: roster.groups.noTicket.filter(match),
     }
   }, [roster, searchQuery])
 
@@ -535,13 +536,14 @@ export default function EventDayPage() {
   // remount between FitText and truncate while a leader is typing a search.
   const lightRoster = !!roster && (
     roster.groups.checkedIn.length + roster.groups.expected.length +
-    roster.groups.waitlist.length + roster.groups.notAttending.length
+    roster.groups.waitlist.length + roster.groups.notAttending.length +
+    roster.groups.noTicket.length
   ) > ROSTER_LIGHT_THRESHOLD
 
   // Walk-ins are recorded outside event_registrations, so fold them into the
   // headline attendance tallies (they came through the gate).
   const walkInCount = walkIns.length
-  const c = roster?.counts ?? { going: 0, checkedIn: 0, waitlist: 0, notAttending: 0, ticketsSold: 0, dupes: 0 }
+  const c = roster?.counts ?? { going: 0, checkedIn: 0, waitlist: 0, notAttending: 0, noTicket: 0, ticketsSold: 0, dupes: 0 }
   const goingCount = c.going + walkInCount
   const checkedInCount = c.checkedIn + walkInCount
 
@@ -1025,7 +1027,7 @@ export default function EventDayPage() {
             {/* Grouped roster: Expected / Checked in / Waitlist. Each section
                 only renders when it has people, with a count in its header so
                 the scenarios stay visually separated. */}
-            {(filteredGroups.expected.length + filteredGroups.checkedIn.length + filteredGroups.waitlist.length + filteredGroups.notAttending.length) === 0 ? (
+            {(filteredGroups.expected.length + filteredGroups.checkedIn.length + filteredGroups.waitlist.length + filteredGroups.notAttending.length + filteredGroups.noTicket.length) === 0 ? (
               <motion.div variants={fadeUp}>
                 <EmptyState
                   illustration="search"
@@ -1135,6 +1137,29 @@ export default function EventDayPage() {
                     )
                   })}
                 </div>
+              </motion.div>
+            )}
+
+            {/* Registered but never bought a ticket. On a ticketed event these
+                people are NOT in the going count (that number is tickets, and
+                agrees with the public page), but they are real names who think
+                they are coming, so the organiser has to see them and decide.
+                This group is the visible form of the bug Kurt reported on
+                2026-08-25: 28 on the roster against a limit of 25. */}
+            {filteredGroups.noTicket.length > 0 && (
+              <motion.div variants={fadeUp} className="mt-6">
+                <div className="mb-2 px-1 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-warning-700 flex items-center gap-1.5">
+                    <Ban size={14} className="text-warning-500" /> Registered, no ticket
+                  </h3>
+                  <span className="text-xs font-semibold text-warning-600">
+                    {filteredGroups.noTicket.length}
+                  </span>
+                </div>
+                <p className="mb-2 px-1 text-xs text-neutral-500">
+                  Not counted in the {goingCount} going. Comp them a spot or remove them.
+                </p>
+                <div className="space-y-0">{filteredGroups.noTicket.map(renderRosterRow)}</div>
               </motion.div>
             )}
 

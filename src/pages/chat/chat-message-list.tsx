@@ -198,6 +198,23 @@ function InlineAnnouncement({
   const userResponse = announcement.responses?.find((r) => r.user_id === user?.id)?.response ?? null
 
   const handleRespond = async (response: string) => {
+    // A ticketed event is joined by buying a ticket, never by a bare RSVP.
+    // This "Going" button used to upsert event_registrations directly with no
+    // is_ticketed check, bypassing the guarded useRegisterForEvent hook. That is
+    // how the ghost RSVPs on the Sep-2026 campouts were created: the invite
+    // engine seeded an 'invited' row, one tap here upgraded it to 'registered'
+    // with no ticket, and the leader roster then counted people who had paid
+    // nothing (Kurt: "Is 28 not too many people?", 2026-08-25). The database now
+    // refuses the write outright (trg_enforce_ticket_backed_registration); this
+    // branch exists so the member is sent to checkout instead of hitting a raw
+    // constraint error.
+    if (response === 'going' && isEventType && eventId && eventDetail?.is_ticketed) {
+      respond.mutate({ announcementId, response })
+      toast.info('This campout needs a ticket. Opening it now.')
+      navigate(`/events/${eventId}`)
+      return
+    }
+
     respond.mutate({ announcementId, response })
 
     if (isEventType && eventId) {
