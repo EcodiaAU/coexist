@@ -1,0 +1,16 @@
+# Normalise line endings in the index. Added 2026-08-24 after a Python
+# read-modify-write on two CRLF files rewrote them as LF, turning a 12-line
+# change into a 756-insertion/744-deletion diff that nobody could review.
+# The tool was the trigger; the absence of this file was the cause.
+* text=auto eol=lf
+
+# Binaries and lockfiles keep their bytes.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.jks binary
+*.keystore binary
