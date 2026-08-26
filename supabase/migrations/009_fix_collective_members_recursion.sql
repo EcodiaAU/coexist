@@ -18,12 +18,18 @@ CREATE OR REPLACE FUNCTION is_fellow_collective_member(
   target_collective_id uuid
 )
 RETURNS boolean AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM collective_members
-    WHERE collective_id = target_collective_id
-      AND user_id = caller_uid
-      AND status = 'active'
-  );
+  -- guard: this definer takes a uid, so a bare body answers role questions
+  -- about third parties to anon. See 20260826090000.
+  SELECT CASE
+    WHEN caller_uid IS NULL THEN false
+    WHEN caller_uid IS NOT DISTINCT FROM auth.uid() OR public.is_trusted_backend_caller() THEN EXISTS (
+      SELECT 1 FROM collective_members
+      WHERE collective_id = target_collective_id
+        AND user_id = caller_uid
+        AND status = 'active'
+    )
+    ELSE false
+  END;
 $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
 -- 2. Drop the recursive policy

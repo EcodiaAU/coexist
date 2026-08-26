@@ -329,18 +329,30 @@ $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
 CREATE OR REPLACE FUNCTION is_collective_leader_or_above(uid uuid, cid uuid)
 RETURNS boolean AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM collective_members
-    WHERE user_id = uid AND collective_id = cid AND role IN ('leader', 'co_leader')
-  );
+  -- guard: this definer takes a uid, so a bare body answers role questions
+  -- about third parties to anon. See 20260826090000.
+  SELECT CASE
+    WHEN uid IS NULL THEN false
+    WHEN uid IS NOT DISTINCT FROM auth.uid() OR public.is_trusted_backend_caller() THEN EXISTS (
+      SELECT 1 FROM collective_members
+      WHERE user_id = uid AND collective_id = cid AND role IN ('leader', 'co_leader')
+    )
+    ELSE false
+  END;
 $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
 CREATE OR REPLACE FUNCTION is_collective_member(uid uuid, cid uuid)
 RETURNS boolean AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM collective_members
-    WHERE user_id = uid AND collective_id = cid AND status = 'active'
-  );
+  -- guard: this definer takes a uid, so a bare body answers role questions
+  -- about third parties to anon. See 20260826090000.
+  SELECT CASE
+    WHEN uid IS NULL THEN false
+    WHEN uid IS NOT DISTINCT FROM auth.uid() OR public.is_trusted_backend_caller() THEN EXISTS (
+      SELECT 1 FROM collective_members
+      WHERE user_id = uid AND collective_id = cid AND status = 'active'
+    )
+    ELSE false
+  END;
 $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
 CREATE OR REPLACE FUNCTION award_points(

@@ -103,12 +103,18 @@ CREATE INDEX idx_chat_messages_type ON chat_messages(message_type);
 -- Helper: includes assist_leader (broader than is_collective_leader_or_above)
 CREATE OR REPLACE FUNCTION is_collective_staff(uid uuid, cid uuid)
 RETURNS boolean AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM collective_members
-    WHERE user_id = uid AND collective_id = cid
-      AND status = 'active'
-      AND role IN ('leader', 'co_leader', 'assist_leader')
-  );
+  -- guard: this definer takes a uid, so a bare body answers role questions
+  -- about third parties to anon. See 20260826090000.
+  SELECT CASE
+    WHEN uid IS NULL THEN false
+    WHEN uid IS NOT DISTINCT FROM auth.uid() OR public.is_trusted_backend_caller() THEN EXISTS (
+      SELECT 1 FROM collective_members
+      WHERE user_id = uid AND collective_id = cid
+        AND status = 'active'
+        AND role IN ('leader', 'co_leader', 'assist_leader')
+    )
+    ELSE false
+  END;
 $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
 -- ============================================================

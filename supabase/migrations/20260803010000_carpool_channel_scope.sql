@@ -42,11 +42,17 @@ CREATE OR REPLACE FUNCTION public.is_channel_member(p_user_id uuid, p_channel_id
 RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.chat_channel_members ccm
-    WHERE ccm.channel_id = p_channel_id
-      AND ccm.user_id = p_user_id
-  );
+  -- guard: this definer takes a uid, so a bare body answers role questions
+  -- about third parties to anon. See 20260826090000.
+  SELECT CASE
+    WHEN p_user_id IS NULL THEN false
+    WHEN p_user_id IS NOT DISTINCT FROM auth.uid() OR public.is_trusted_backend_caller() THEN EXISTS (
+      SELECT 1 FROM public.chat_channel_members ccm
+      WHERE ccm.channel_id = p_channel_id
+        AND ccm.user_id = p_user_id
+    )
+    ELSE false
+  END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.is_channel_member(uuid, uuid) TO authenticated;

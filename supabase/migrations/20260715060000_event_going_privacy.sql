@@ -28,11 +28,17 @@
 
 CREATE OR REPLACE FUNCTION public.is_registered_for_event(p_user uuid, p_event uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM event_registrations
-    WHERE event_id = p_event AND user_id = p_user
-      AND status IN ('registered','attended','waitlisted')
-  );
+  -- guard: this definer takes a uid, so a bare body answers role questions
+  -- about third parties to anon. See 20260826090000.
+  SELECT CASE
+    WHEN p_user IS NULL THEN false
+    WHEN p_user IS NOT DISTINCT FROM auth.uid() OR public.is_trusted_backend_caller() THEN EXISTS (
+      SELECT 1 FROM event_registrations
+      WHERE event_id = p_event AND user_id = p_user
+        AND status IN ('registered','attended','waitlisted')
+    )
+    ELSE false
+  END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.is_profile_visible(p_user uuid)

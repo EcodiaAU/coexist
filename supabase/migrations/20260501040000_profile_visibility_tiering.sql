@@ -44,18 +44,24 @@
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION is_collective_staff_or_above(uid uuid)
 RETURNS boolean AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM profiles
-    WHERE id = uid
-      AND role IN (
-        'assist_leader',
-        'co_leader',
-        'leader',
-        'national_leader',
-        'manager',
-        'admin'
-      )
-  );
+  -- guard: this definer takes a uid, so a bare body answers role questions
+  -- about third parties to anon. See 20260826090000.
+  SELECT CASE
+    WHEN uid IS NULL THEN false
+    WHEN uid IS NOT DISTINCT FROM auth.uid() OR public.is_trusted_backend_caller() THEN EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = uid
+        AND role IN (
+          'assist_leader',
+          'co_leader',
+          'leader',
+          'national_leader',
+          'manager',
+          'admin'
+        )
+    )
+    ELSE false
+  END;
 $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
 GRANT EXECUTE ON FUNCTION is_collective_staff_or_above(uuid) TO authenticated;

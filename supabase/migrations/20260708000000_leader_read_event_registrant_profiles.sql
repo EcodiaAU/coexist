@@ -71,13 +71,19 @@ CREATE OR REPLACE FUNCTION public.is_event_registrant_of_led_collective(viewer u
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
-  SELECT EXISTS (
-    SELECT 1
-    FROM event_registrations er
-    JOIN events e ON e.id = er.event_id
-    WHERE er.user_id = target
-      AND is_collective_staff(viewer, e.collective_id)
-  );
+  -- guard: this definer takes a uid, so a bare body answers role questions
+  -- about third parties to anon. See 20260826090000.
+  SELECT CASE
+    WHEN viewer IS NULL THEN false
+    WHEN viewer IS NOT DISTINCT FROM auth.uid() OR public.is_trusted_backend_caller() THEN EXISTS (
+      SELECT 1
+      FROM event_registrations er
+      JOIN events e ON e.id = er.event_id
+      WHERE er.user_id = target
+        AND is_collective_staff(viewer, e.collective_id)
+    )
+    ELSE false
+  END;
 $function$;
 
 -- ============================================================

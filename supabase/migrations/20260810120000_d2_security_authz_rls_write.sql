@@ -221,12 +221,18 @@ stable
 security definer
 set search_path = public
 as $$
-  select exists (
-    select 1 from public.collective_members
-    where user_id = uid
-      and status = 'active'
-      and role in ('leader', 'co_leader', 'assist_leader')
-  );
+  -- guard: this definer takes a uid, so a bare body answers role questions
+  -- about third parties to anon. See 20260826090000.
+  select case
+    when uid is null then false
+    when uid is not distinct from auth.uid() or public.is_trusted_backend_caller() then exists (
+      select 1 from public.collective_members
+      where user_id = uid
+        and status = 'active'
+        and role in ('leader', 'co_leader', 'assist_leader')
+    )
+    else false
+  end;
 $$;
 
 alter policy "updates_select_authenticated" on public.updates
