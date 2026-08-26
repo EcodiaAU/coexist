@@ -291,6 +291,7 @@ async function sendReminders(
 
     const displayName = (reg as any).profiles?.display_name ?? 'there'
     const { error: emailErr } = await supabase.functions.invoke('send-email', {
+          headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}` },
       body: {
         type: 'event_reminder',
         userId: reg.user_id,

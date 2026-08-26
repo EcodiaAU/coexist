@@ -32,6 +32,7 @@ async function sendTemplateEmail(
 ) {
   try {
     await supabase.functions.invoke('send-email', {
+          headers: { Authorization: `Bearer ${supabaseServiceKey}` },
       body: { type, userId, data },
     })
   } catch (err) {

@@ -32,6 +32,7 @@ async function sendTemplateEmail(
 ) {
   try {
     await supabase.functions.invoke('send-email', {
+          headers: { Authorization: `Bearer ${supabaseServiceKey}` },
       body: { type, userId, data },
     })
   } catch (err) {
@@ -87,6 +88,7 @@ async function sendDonationReceipt(
   if (!opts.userId && !opts.toEmail) return
   try {
     await supabase.functions.invoke('send-email', {
+          headers: { Authorization: `Bearer ${supabaseServiceKey}` },
       body: {
         type: 'donation_receipt',
         ...(opts.userId ? { userId: opts.userId } : {}),

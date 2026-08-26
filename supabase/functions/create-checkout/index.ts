@@ -707,6 +707,7 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
               .eq('id', ticketId)
               .single()
             await supabase.functions.invoke('send-email', {
+          headers: { Authorization: `Bearer ${supabaseServiceKey}` },
               body: {
                 type: 'ticket_confirmation',
                 userId: body.user_id,

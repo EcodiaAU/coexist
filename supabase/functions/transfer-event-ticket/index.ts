@@ -179,6 +179,7 @@ Deno.serve(withSentry('transfer-event-ticket', async (req: Request) => {
             fromTitle = (fromEvt?.title as string) ?? ''
           }
           await supabase.functions.invoke('send-email', {
+          headers: { Authorization: `Bearer ${supabaseServiceKey}` },
             body: {
               type: 'ticket_transferred',
               userId: r.user_id,

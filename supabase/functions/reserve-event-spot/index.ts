@@ -15,6 +15,7 @@
  * registration status 'invited' until the payment lands.
  *
  * Input:  { event_id, user_id? | email?, name?, hold_expires_at?, note?,
+ *           attribute_to_name?,
  *           ticket_type_id?, notify? }
  * Auth:   caller JWT; caller's role must be manager|admin (same gate as grant).
  * Returns:{ ok, ticket_id, already, status, user_id, price_cents, created_account }
@@ -149,6 +150,8 @@ Deno.serve(withSentry('reserve-event-spot', async (req: Request) => {
     }
 
     // ---- Notify: pay-to-confirm link (magic link for a brand-new account) ----
+    let notifySent = false
+    let notifyError: string | null = null
     // Is the event genuinely at capacity? Uses the same canonical count every
     // other surface reads, so the email cannot disagree with the event page.
     let isFull = false
@@ -176,7 +179,8 @@ Deno.serve(withSentry('reserve-event-spot', async (req: Request) => {
         }
       }
       try {
-        await supabase.functions.invoke('send-email', {
+        const { error: mailErr } = await supabase.functions.invoke('send-email', {
+          headers: { Authorization: `Bearer ${supabaseServiceKey}` },
           body: {
             type: 'ticket_spot_held',
             userId,
@@ -192,7 +196,16 @@ Deno.serve(withSentry('reserve-event-spot', async (req: Request) => {
               hold_expires: holdExpiresAt
                 ? new Date(holdExpiresAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
                 : '',
-              reserved_by_name: callerProfile?.display_name ?? '',
+              // Who the member is told held the spot. Defaults to the caller,
+              // which is right when a Co-Exist organiser clicks "Hold a spot"
+              // in the app. An optional override exists because a hold made
+              // centrally (by the platform account, on the organisers' behalf)
+              // should NOT tell a member that "Ecodia" held their spot: they
+              // have never heard of Ecodia. Passing an empty string falls the
+              // template through to "A spot has been held for you at X".
+              reserved_by_name: typeof body.attribute_to_name === 'string'
+                ? body.attribute_to_name
+                : (callerProfile?.display_name ?? ''),
               // Only claim the event is full when it actually is. The template
               // used to assert it unconditionally, which reads as a lie on an
               // event that still has room (Murbpook, 9 of 15 taken).
@@ -202,12 +215,32 @@ Deno.serve(withSentry('reserve-event-spot', async (req: Request) => {
             },
           },
         })
+        // functions.invoke RESOLVES on a non-2xx: it returns { data, error }
+        // rather than throwing, so the old bare `await` swallowed every mail
+        // failure and the caller was told the hold succeeded with no hint that
+        // the pay-to-confirm link never went out. Surface it.
+        if (mailErr) {
+          notifyError = mailErr.message || String(mailErr)
+          // FunctionsHttpError carries the real Response on .context; without
+          // reading it every mail failure collapses to the useless string
+          // "Edge Function returned a non-2xx status code" (which is exactly
+          // what Sentry COEXIST-1B has been reporting).
+          const ctx = (mailErr as unknown as { context?: Response }).context
+          if (ctx && typeof ctx.text === 'function') {
+            try { notifyError = `${ctx.status}: ${(await ctx.text()).slice(0, 300)}` } catch { /* keep base */ }
+          }
+          console.error('[reserve-spot] send-email returned an error:', notifyError)
+        } else {
+          notifySent = true
+        }
       } catch (err) {
-        console.error('[reserve-spot] send-email failed:', (err as Error).message)
+        notifyError = (err as Error).message
+        console.error('[reserve-spot] send-email threw:', notifyError)
       }
     }
 
-    return json({ ...result, user_id: userId, created_account: createdAccount })
+    return json({ ...result, user_id: userId, created_account: createdAccount,
+                  notify_sent: notifySent, notify_error: notifyError })
   } catch (err) {
     console.error('[reserve-spot] error:', (err as Error).message)
     return json({ error: 'Something went wrong' }, 500)

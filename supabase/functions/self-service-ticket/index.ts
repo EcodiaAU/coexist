@@ -175,6 +175,7 @@ Deno.serve(withSentry('self-service-ticket', async (req: Request) => {
       // userId-keyed send-email path. Address it to the raw email instead.
       try {
         await service.functions.invoke('send-email', {
+          headers: { Authorization: `Bearer ${supabaseServiceKey}` },
           body: {
             type: 'ticket_transfer_offer',
             // The recipient may have no account yet, so the userId-keyed single
@@ -236,6 +237,7 @@ Deno.serve(withSentry('self-service-ticket', async (req: Request) => {
         const { data: evt } = await service
           .from('events').select('title, date_start, address').eq('id', claimed.event_id).single()
         await service.functions.invoke('send-email', {
+          headers: { Authorization: `Bearer ${supabaseServiceKey}` },
           body: {
             type: 'ticket_transferred',
             userId: claimed.from_user_id,

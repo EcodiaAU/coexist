@@ -207,6 +207,7 @@ Deno.serve(withSentry('grant-event-ticket', async (req: Request) => {
       }
       try {
         await supabase.functions.invoke('send-email', {
+          headers: { Authorization: `Bearer ${supabaseServiceKey}` },
           body: {
             type: 'ticket_confirmation',
             userId,
