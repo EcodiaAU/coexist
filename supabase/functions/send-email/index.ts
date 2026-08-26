@@ -130,6 +130,11 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     description: 'Organiser held a spot; recipient must pay to confirm. Data: { name, event_title, event_date, event_location, amount, currency, hold_expires, pay_url, reserved_by_name, event_is_full }',
     subject: (d) => `A spot is held for you: ${d.event_title}`,
   },
+  event_spot_released: {
+    category: 'transactional',
+    description: 'A registration could not be honoured (no ticket was ever bought) and the spot is not held. Data: { name, event_title, event_date, event_location, next_events_url }',
+    subject: (d) => `About your spot at ${d.event_title}`,
+  },
   ticket_transfer_offer: {
     category: 'transactional',
     description: 'Someone is transferring their ticket to you. Data: { name, from_name, event_title, event_date, event_location, claim_url, expires }',
@@ -577,6 +582,30 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
 
   // Person-to-person ticket handover. No money moves: the same ticket and the
   // same original payment travel to the new holder.
+  // Sent when someone shows as registered for a ticketed event but never held a
+  // ticket, and the event is full so the spot cannot be honoured. Written to be
+  // read once and understood: what happened, that it was our fault, that no
+  // money was taken, and where to go next. No hedging, no blame on the reader.
+  event_spot_released: (d) => emailShell({
+    heroTitle: 'About your spot',
+    heroSubtitle: d.event_title as string,
+    overline: 'Please read',
+    ...heroFromData(d),
+    body: greeting(d.name) +
+      p(`You are showing as registered for <strong>${d.event_title}</strong>, but a fault in our app let that registration through without a ticket ever being bought.`) +
+      p('The campout is now full, so we are not able to hold the spot for you. We are genuinely sorry. This one is on us, not on you.') +
+      infoCard([
+        ['Event', d.event_title],
+        ['When', d.event_date],
+        ['Where', d.event_location],
+        ['Charged to you', 'Nothing'],
+      ]) +
+      p('You have not been charged, and there is nothing you need to do.') +
+      p('We have fixed the fault so it cannot happen again. We would love to have you on one of the next campouts, and we would be glad to see you there.') +
+      ctaButton('See the next campouts', (d.next_events_url as string) || `${APP_URL}/explore`),
+    footerCta: { label: 'Open the app', url: APP_URL },
+  }),
+
   ticket_transfer_offer: (d) => emailShell({
     heroTitle: 'A ticket is being passed to you',
     heroSubtitle: d.event_title as string,
