@@ -431,7 +431,17 @@ export default function PublicEventPage() {
           </motion.div>
         )}
 
-        {/* Sold out (e.g. on Eventbrite): native guest sales closed. */}
+        {/* Sold out: native guest sales closed.
+            This panel is ALSO what a held-spot invitee sees, and that is the
+            trap it has to defuse. Their own reserved seat counts toward
+            capacity, so an event that is "full" is often full BECAUSE of them.
+            This page is anonymous (no auth context here at all), so it cannot
+            identify them and silently let them through the way the in-app
+            event page does. What it can do is stop being a dead end and name
+            the route. Origin 2026-08-26: five Murbpook invitees were told a
+            spot was held for them, landed here logged out, read "Sold out",
+            and one emailed the office saying the page "will not allow me to
+            select a ticket". */
         {isBuyable && isTicketed && soldOut && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
@@ -444,6 +454,12 @@ export default function PublicEventPage() {
             <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
               Every spot for this campout has been taken. If the organisers sent you a claim
               link, open it to grab your free app ticket and join the group chat.
+            </p>
+            <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
+              Been told a spot is held for you? It still is, and this page will say sold out
+              either way, because your spot is one of the ones counted here. Open the
+              pay-to-confirm link from your email, or sign in to the app and open this
+              campout, and you can pay for it there.
             </p>
           </motion.div>
         )}
