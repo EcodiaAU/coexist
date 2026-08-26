@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useEventDetail, formatEventDate, formatEventTime } from '@/hooks/use-events'
 import { useMyEventTicket } from '@/hooks/use-event-tickets'
+import { isResolvingTicketStatus, ticketStatusText } from '@/lib/event-capacity'
 import {
   Page,
   Header,
@@ -93,13 +94,19 @@ export default function TicketConfirmationPage() {
     )
   }
 
-  const isPending = ticket.status === 'pending'
+  // Still moving toward a final state: the webhook has not settled the row yet.
+  // Read from the canonical resolving set, NOT `status === 'pending'`, so a
+  // member who paid for an organiser hold (status `reserved` until the webhook
+  // flips it) gets the same confirming treatment instead of a success animation
+  // announcing a ticket they have not been given yet.
+  const isResolving = isResolvingTicketStatus(ticket.status)
+  const statusLine = ticketStatusText(ticket.status)
 
   return (
     <Page swipeBack header={<Header title="Your Ticket" back />}>
       <div className="p-6 space-y-6 pb-12">
         {/* Success animation */}
-        {!isPending && (
+        {!isResolving && (
           <motion.div
             initial={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -118,7 +125,7 @@ export default function TicketConfirmationPage() {
           </motion.div>
         )}
 
-        {isPending && (
+        {isResolving && (
           <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-warning-50 border border-warning-200/40">
             <Clock size={18} className="text-warning-600 shrink-0" />
             <div>
@@ -158,7 +165,7 @@ export default function TicketConfirmationPage() {
 
           {/* On the day, your collective leader checks you in - the QR and
               check-in code are a leader-side tool, not shown to attendees. */}
-          {!isPending && (
+          {!isResolving && (
             <div className="flex flex-col items-center text-center py-6 px-5">
               <div className="w-12 h-12 rounded-full flex items-center justify-center bg-success-50">
                 <CheckCircle2 size={24} className="text-success-600" />
@@ -190,24 +197,15 @@ export default function TicketConfirmationPage() {
             </div>
             <div className="flex items-center justify-between py-2 border-t border-neutral-100">
               <span className="text-xs text-neutral-500">Status</span>
-              <span className={cn(
-                'text-sm font-semibold',
-                ticket.status === 'confirmed' ? 'text-success-600'
-                  : ticket.status === 'checked_in' ? 'text-success-600'
-                  : ticket.status === 'pending' ? 'text-warning-600'
-                  : 'text-error-600',
-              )}>
-                {ticket.status === 'confirmed' ? 'Confirmed'
-                  : ticket.status === 'checked_in' ? 'Checked In'
-                  : ticket.status === 'pending' ? 'Pending'
-                  : ticket.status}
+              <span className={cn('text-sm font-semibold', statusLine.className)}>
+                {statusLine.label}
               </span>
             </div>
           </div>
         </motion.div>
 
         {/* What's next */}
-        {!isPending && (
+        {!isResolving && (
           <WhatsNext
             suggestions={[
               {

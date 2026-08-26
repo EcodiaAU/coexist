@@ -157,43 +157,161 @@ export function summariseTicketSales(rows: readonly SalesRow[] | null | undefine
   return out
 }
 
+/* ------------------------------------------------------------------ */
+/*  Ticket status presentation: ONE table, every surface derives       */
+/* ------------------------------------------------------------------ */
+
 /** Every value of the `event_tickets.status` enum, in schema order. */
 export const TICKET_STATUSES = ['pending', 'confirmed', 'cancelled', 'refunded', 'checked_in', 'reserved'] as const
 export type TicketStatus = (typeof TICKET_STATUSES)[number]
 
 /**
- * How one ticket status reads in the leader panel: its short label and its
- * badge treatment.
+ * The visual family a status belongs to. `error` is for statuses where the seat
+ * is GONE. Nothing else is allowed to render red.
+ */
+export type TicketStatusTone = 'success' | 'checkedIn' | 'warning' | 'error' | 'unknown'
+
+/** The seat is gone. The only statuses permitted the error tone. */
+export const TERMINAL_GONE_TICKET_STATUSES = ['cancelled', 'refunded'] as const
+
+/**
+ * Statuses still moving toward a final state, so a surface watching a ticket
+ * has to keep watching.
  *
- * This exists as a pure, tested function for the same reason
- * `summariseTicketSales` does. The panel used to switch on status inline with a
- * three-branch ternary falling through to `bg-error-100 text-error-700`, so
- * when `reserved` was added as a sixth status it landed in that fallback and a
- * deliberate, live organiser hold rendered in the exact red of a CANCELLED
- * ticket, one line under a banner announcing the seat was held. Observed on the
- * deployed app 2026-08-24 with a real hold in place.
+ * `reserved` sits here beside `pending` because a member who has just paid for
+ * an organiser hold stays on `reserved` until the Stripe webhook flips the row
+ * in place (stripe-webhook confirms `.in(['pending', 'reserved'])`), which is
+ * the identical redirect race `pending` already covered.
+ */
+export const RESOLVING_TICKET_STATUSES = ['pending', 'reserved'] as const
+
+interface TicketStatusPresentation {
+  /** Dense label for a badge pill (leader panel, ticket cards). */
+  badgeLabel: string
+  /** Human label for a member-facing status line. */
+  label: string
+  tone: TicketStatusTone
+}
+
+/**
+ * The single status table.
  *
- * A hold is amber, not red: seat taken, money still owed, which is the same
- * thing `pending` means and the same amber the member sees on "A spot is held
- * for you". Red is reserved for statuses where the seat is GONE.
+ * Typed as a TOTAL Record over TicketStatus, so adding a seventh status to the
+ * enum fails the build right here instead of silently landing in a fallback
+ * branch on some page nobody remembered to visit.
+ *
+ * That is the entire point. `reserved` was added as a sixth status on
+ * 2026-08-24 and FIVE sites switched on ticket status without being revisited:
+ * the leader badge (a live hold in dead-ticket red), the member confirmation
+ * page status line (raw red string "reserved" one line under "Total paid
+ * $80.00 AUD"), that page's success animation ("You are going, your ticket is
+ * confirmed" over an unpaid hold), its "You are all set" block, and its poll
+ * predicate, which returned false for anything but `pending` so the page
+ * stopped polling instantly and never self-resolved without a manual refresh.
+ * Presentation is derived from here now, never re-implemented at a call site.
+ *
+ * A hold is amber, not red: seat taken, money still owed, which is what
+ * `pending` already means.
+ */
+const TICKET_STATUS_PRESENTATION: Record<TicketStatus, TicketStatusPresentation> = {
+  pending: { badgeLabel: 'pending', label: 'Pending', tone: 'warning' },
+  confirmed: { badgeLabel: 'confirmed', label: 'Confirmed', tone: 'success' },
+  cancelled: { badgeLabel: 'cancelled', label: 'Cancelled', tone: 'error' },
+  refunded: { badgeLabel: 'refunded', label: 'Refunded', tone: 'error' },
+  checked_in: { badgeLabel: 'In', label: 'Checked In', tone: 'checkedIn' },
+  reserved: { badgeLabel: 'Held', label: 'Spot held', tone: 'warning' },
+}
+
+/** An unrecognised status reads neutral. It must never fall through to red. */
+const UNKNOWN_PRESENTATION: TicketStatusPresentation = { badgeLabel: 'unknown', label: 'Unknown', tone: 'unknown' }
+
+const BADGE_CLASS: Record<TicketStatusTone, string> = {
+  success: 'bg-success-100 text-success-700',
+  checkedIn: 'bg-moss-100 text-moss-700',
+  warning: 'bg-warning-100 text-warning-700',
+  error: 'bg-error-100 text-error-700',
+  unknown: 'bg-neutral-100 text-neutral-600',
+}
+
+const TEXT_CLASS: Record<TicketStatusTone, string> = {
+  success: 'text-success-600',
+  checkedIn: 'text-success-600',
+  warning: 'text-warning-600',
+  error: 'text-error-600',
+  unknown: 'text-neutral-600',
+}
+
+function presentationFor(status: string | null | undefined): TicketStatusPresentation {
+  // hasOwnProperty, not `in`: `'toString' in obj` is true through the prototype
+  // and would hand back undefined.
+  if (status != null && Object.prototype.hasOwnProperty.call(TICKET_STATUS_PRESENTATION, status)) {
+    return TICKET_STATUS_PRESENTATION[status as TicketStatus]
+  }
+  return UNKNOWN_PRESENTATION
+}
+
+/**
+ * Everything a surface needs to render one ticket status, resolved from the one
+ * table. Every rendering helper below is a thin projection of this; no call site
+ * re-implements the mapping.
+ */
+export interface ResolvedTicketStatus {
+  /** Dense label for a leader-panel pill. */
+  badgeLabel: string
+  /** Human label for anything a member reads. */
+  label: string
+  tone: TicketStatusTone
+  /** Pill treatment: background plus foreground. */
+  badgeClassName: string
+  /** Plain text treatment. */
+  textClassName: string
+  /** Still moving toward a final state. */
+  resolving: boolean
+}
+
+export function ticketStatusPresentation(status: string | null | undefined): ResolvedTicketStatus {
+  const p = presentationFor(status)
+  const raw = String(status ?? 'unknown')
+  const known = p !== UNKNOWN_PRESENTATION
+  return {
+    badgeLabel: known ? p.badgeLabel : raw,
+    label: known ? p.label : raw,
+    tone: p.tone,
+    badgeClassName: BADGE_CLASS[p.tone],
+    textClassName: TEXT_CLASS[p.tone],
+    resolving: isResolvingTicketStatus(status),
+  }
+}
+
+/** The tone a status renders in, on any surface. Exported so tests lock the class. */
+export function ticketStatusTone(status: string | null | undefined): TicketStatusTone {
+  return presentationFor(status).tone
+}
+
+/**
+ * How one ticket status reads as a dense BADGE pill: the leader ticket panel.
  */
 export function ticketStatusBadge(status: string | null | undefined): { label: string; className: string } {
-  switch (status) {
-    case 'confirmed':
-      return { label: 'confirmed', className: 'bg-success-100 text-success-700' }
-    case 'checked_in':
-      return { label: 'In', className: 'bg-moss-100 text-moss-700' }
-    case 'pending':
-      return { label: 'pending', className: 'bg-warning-100 text-warning-700' }
-    case 'reserved':
-      return { label: 'Held', className: 'bg-warning-100 text-warning-700' }
-    case 'cancelled':
-      return { label: 'cancelled', className: 'bg-error-100 text-error-700' }
-    case 'refunded':
-      return { label: 'refunded', className: 'bg-error-100 text-error-700' }
-    default:
-      return { label: String(status ?? 'unknown'), className: 'bg-neutral-100 text-neutral-600' }
-  }
+  const p = ticketStatusPresentation(status)
+  return { label: p.badgeLabel, className: p.badgeClassName }
+}
+
+/**
+ * How one ticket status reads as a member-facing TEXT line: the ticket
+ * confirmation page. Same table, different projection, so the two surfaces
+ * cannot disagree about what a status means.
+ */
+export function ticketStatusText(status: string | null | undefined): { label: string; className: string } {
+  const p = ticketStatusPresentation(status)
+  return { label: p.label, className: p.textClassName }
+}
+
+/**
+ * Is this ticket still resolving toward a final state? A surface polling for a
+ * settled ticket keeps polling while this is true; the caller bounds the window.
+ */
+export function isResolvingTicketStatus(status: string | null | undefined): boolean {
+  return status != null && (RESOLVING_TICKET_STATUSES as readonly string[]).includes(status)
 }
 
 /* ------------------------------------------------------------------ */

@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { queueOfflineAction } from '@/lib/offline-sync'
 import { DIETARY_GATE_QUERY_KEY } from '@/lib/dietary'
-import { SPOT_TAKING_TICKET_STATUSES, summariseTicketSales } from '@/lib/event-capacity'
+import { SPOT_TAKING_TICKET_STATUSES, isResolvingTicketStatus, summariseTicketSales } from '@/lib/event-capacity'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -140,13 +140,19 @@ export function useMyEventTicket(eventId: string | undefined, opts?: { poll?: bo
     staleTime: 30 * 1000,
     // On the Stripe-redirect confirmation page the buyer can return before the
     // payment webhook has written/confirmed the ticket row. Poll every 3s while
-    // the row is missing or still pending so the page self-resolves instead of
+    // the row is missing or still RESOLVING so the page self-resolves instead of
     // dead-ending on "Ticket not found" / a stuck "Payment processing" banner.
     // The caller bounds the window (see ticket-confirmation.tsx) so this stops.
+    //
+    // The resolving set is read from event-capacity, not spelled out here. This
+    // predicate used to test `status === 'pending'` literally, so a member who
+    // paid for an organiser hold landed on a `reserved` row, polling returned
+    // false on the first tick, and the page sat on a red raw "reserved" until
+    // they refreshed by hand.
     refetchInterval: opts?.poll
       ? (query) => {
           const d = query.state.data as EventTicket | null | undefined
-          return !d || d.status === 'pending' ? 3000 : false
+          return !d || isResolvingTicketStatus(d.status) ? 3000 : false
         }
       : false,
   })

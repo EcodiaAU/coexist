@@ -5,6 +5,7 @@ import { Ticket, Calendar, MapPin, ChevronRight, Clock, Settings2 } from 'lucide
 import { useMyTickets, type EventTicket } from '@/hooks/use-event-tickets'
 import { TicketSelfServiceSheet } from '@/components/ticket-self-service-sheet'
 import { formatEventDate, formatEventTime } from '@/hooks/use-events'
+import { ticketStatusPresentation } from '@/lib/event-capacity'
 import {
   Page,
   Header,
@@ -20,6 +21,11 @@ function TicketCard({ ticket, onManage }: { ticket: EventTicket; onManage: (t: E
   // A held spot is not a ticket yet: an organiser has reserved the seat and the
   // holder still has to pay. It must not read like a confirmed ticket.
   const isHeld = ticket.status === 'reserved'
+  // Label and colour come from the canonical status table, never from an inline
+  // ternary here. This card used to fall through to amber for anything that was
+  // not confirmed/checked_in, which quietly painted a cancelled or refunded
+  // ticket the same as a live hold.
+  const statusPill = ticketStatusPresentation(ticket.status)
 
   return (
     <StaggeredItem
@@ -94,13 +100,9 @@ function TicketCard({ ticket, onManage }: { ticket: EventTicket; onManage: (t: E
             )}
             <span className={cn(
               'text-[10px] font-semibold px-1.5 py-0.5 rounded-md uppercase tracking-wide',
-              ticket.status === 'confirmed' || ticket.status === 'checked_in'
-                ? 'bg-success-100 text-success-700'
-                : 'bg-warning-100 text-warning-700',
+              statusPill.badgeClassName,
             )}>
-              {ticket.status === 'checked_in' ? 'Checked In'
-                : isHeld ? 'Spot held'
-                : ticket.status}
+              {statusPill.label}
             </span>
             {ticket.ticket_code && !isHeld && (
               <span className="font-mono text-[10px] text-neutral-400">{ticket.ticket_code}</span>

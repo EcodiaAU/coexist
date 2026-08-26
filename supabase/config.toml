@@ -1,0 +1,132 @@
+# Supabase project config for Co-Exist.
+#
+# WHY THIS FILE EXISTS (2026-08-26): with no config.toml, a bare
+# `supabase functions deploy <slug>` applies the CLI DEFAULT verify_jwt=true.
+# On 2026-08-26T02:27Z that silently flipped stripe-webhook to true and every
+# live Stripe delivery was rejected 401 at the gateway before the function body
+# ran, so purchases took money and wrote no ticket. Pinning every function here
+# makes the deploy flag-independent: the declared value below always wins.
+#
+# This project issues ES256 asymmetric JWTs that the Supabase API gateway does
+# not verify correctly, so functions do their own auth (see scripts/deploy-fn.sh).
+# Third-party callbacks MUST stay false - Stripe and Resend cannot present a JWT;
+# they authenticate by signature instead (stripe-webhook: constructEventAsync).
+
+project_id = "tjutlbzekfouwsiaplbr"
+
+[functions.cancel-event]
+verify_jwt = true
+
+[functions.carpool-archive-sweep]
+verify_jwt = false
+
+[functions.carpool-cancel-seat]
+verify_jwt = false
+
+[functions.carpool-create-widget]
+verify_jwt = true
+
+[functions.carpool-save-seat]
+verify_jwt = true
+
+[functions.carpool-update-widget]
+verify_jwt = true
+
+[functions.claim-event-ticket]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.create-checkout-test]
+verify_jwt = true
+
+[functions.data-export]
+verify_jwt = true
+
+[functions.delete-user]
+verify_jwt = false
+
+[functions.delete-user-data]
+verify_jwt = false
+
+[functions.event-day-notify]
+verify_jwt = true
+
+[functions.event-post-impact-log-invite]
+verify_jwt = false
+
+[functions.event-post-photo-invite]
+verify_jwt = false
+
+[functions.event-post-survey-invite]
+verify_jwt = false
+
+[functions.event-reminders]
+verify_jwt = true
+
+[functions.excel-sync]
+verify_jwt = true
+
+[functions.generate-email]
+verify_jwt = false
+
+[functions.generate-pdf]
+verify_jwt = false
+
+[functions.grant-event-ticket]
+verify_jwt = true
+
+[functions.guest-ticket-checkout]
+verify_jwt = true
+
+[functions.notify-application]
+verify_jwt = true
+
+[functions.notify-report]
+verify_jwt = true
+
+[functions.onedrive-mirror]
+verify_jwt = false
+
+[functions.public-checkout]
+verify_jwt = false  # third-party callback: signature-authenticated, never JWT
+
+[functions.public-event-check-in]
+verify_jwt = false
+
+[functions.refund-order]
+verify_jwt = false
+
+[functions.resend-webhook]
+verify_jwt = false  # third-party callback: signature-authenticated, never JWT
+
+[functions.reserve-event-spot]
+verify_jwt = true
+
+[functions.revoke-event-ticket]
+verify_jwt = true
+
+[functions.self-service-ticket]
+verify_jwt = true
+
+[functions.send-campaign]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = true
+
+[functions.send-push]
+verify_jwt = false
+
+[functions.stats-drift-check]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false  # third-party callback: signature-authenticated, never JWT
+
+[functions.stripe-webhook-test]
+verify_jwt = false  # third-party callback: signature-authenticated, never JWT
+
+[functions.transfer-event-ticket]
+verify_jwt = true
