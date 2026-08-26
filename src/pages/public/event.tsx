@@ -441,7 +441,7 @@ export default function PublicEventPage() {
             the route. Origin 2026-08-26: five Murbpook invitees were told a
             spot was held for them, landed here logged out, read "Sold out",
             and one emailed the office saying the page "will not allow me to
-            select a ticket". */
+            select a ticket". */}
         {isBuyable && isTicketed && soldOut && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
