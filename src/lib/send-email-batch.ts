@@ -12,14 +12,22 @@
  * call site discarded its error the admin saw a clean run. The same send through
  * this path is ceil(N/100) calls.
  *
- * THE DEPLOY-ORDER HAZARD, AND WHY THE FALLBACK IS HERE. A send-email deployed
- * before batch recipient resolution requires a literal `to` on every recipient
- * and silently drops the rest, answering { success: true, sent: 0 }. Shipping
- * this client ahead of that function would turn every cancellation and invite
- * into a clean-looking no-op, which is worse than the fan-out it replaces. So
- * the batch response is treated as a capability probe: a deployment that
- * understands userId-only recipients echoes `resolved`, and one that does not
- * gets the per-recipient fan-out instead. Correct in either deploy order.
+ * DEPLOY ORDER IS A HARD CONSTRAINT, NOT A PREFERENCE. send-email MUST be
+ * deployed before or with this client. A send-email deployed before batch
+ * recipient resolution requires a literal `to` on every recipient and silently
+ * drops the rest, and its batch return carried no CORS headers because no
+ * browser had ever reached it, so from a browser that response is not merely
+ * wrong, it is unreadable: the fetch is blocked before any body arrives and
+ * `functions.invoke` yields a FunctionsFetchError rather than the payload the
+ * capability probe below needs. See
+ * patterns/supabase-edge-function-needs-cors-for-capacitor-webview-2026-06-16.
+ *
+ * The `resolved` capability probe therefore covers a send-email that answers
+ * readably without understanding userId-only recipients. It CANNOT rescue a
+ * pre-CORS deployment reached from a browser, and it deliberately does not fall
+ * back on a transport error, because a 502 from the batch endpoint can mean some
+ * chunks were already delivered and re-sending those people is the worse
+ * outcome.
  */
 import { supabase } from '@/lib/supabase'
 import { invokeAndReport, reportInvokeError } from '@/lib/invoke-report'

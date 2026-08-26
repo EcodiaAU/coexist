@@ -1113,7 +1113,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       const templateDef = EMAIL_TEMPLATES[type]
       if (!templateDef) {
         return new Response(JSON.stringify({ success: false, error: `Unknown email type: ${type}` }), {
-          status: 400, headers: { 'Content-Type': 'application/json' },
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
       const supabaseAdmin = createClient(
@@ -1224,7 +1224,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
           skipped: payload.recipients.length - emails.length,
           error: batchError,
         }),
-        { status: batchError ? 502 : 200, headers: { 'Content-Type': 'application/json' } },
+        { status: batchError ? 502 : 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
@@ -1263,7 +1263,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
     if (!toEmail) {
       return new Response(
         JSON.stringify({ success: false, error: 'No recipient email' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } },
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
@@ -1292,7 +1292,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
     if (!templateDef) {
       return new Response(
         JSON.stringify({ success: false, error: `Unknown email type: ${type}` }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } },
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
@@ -1301,7 +1301,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       if (!payload.userId) {
         return new Response(
           JSON.stringify({ success: false, error: 'userId required for marketing emails' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } },
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
       }
       const supabaseAdmin = createClient(
@@ -1318,7 +1318,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       if (!profile || profile.marketing_opt_in === false) {
         return new Response(
           JSON.stringify({ success: false, error: 'User opted out of marketing or not found' }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
       }
     }
@@ -1426,7 +1426,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
     console.error('[send-email] Error:', err)
     return new Response(
       JSON.stringify({ success: false, error: 'Internal error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   }
 }))
