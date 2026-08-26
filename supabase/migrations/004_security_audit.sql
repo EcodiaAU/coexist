@@ -126,6 +126,13 @@ RETURNS jsonb AS $$
 DECLARE
   p profiles;
 BEGIN
+  -- Guard added 2026-08-26: this is SECURITY DEFINER, so without it any caller
+  -- could read another user's moderation state. Kept here (not only in the later
+  -- guard migration) so replaying this file alone cannot silently revert the fix.
+  IF NOT (uid = auth.uid() OR public.is_admin_or_staff(auth.uid())) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
   SELECT * INTO p FROM profiles WHERE id = uid;
   IF p.is_suspended THEN
     -- Check if suspension has expired

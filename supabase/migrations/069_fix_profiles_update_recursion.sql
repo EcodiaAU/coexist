@@ -15,6 +15,10 @@ RETURNS TABLE(is_suspended boolean, role user_role) AS $$
   SELECT p.is_suspended, p.role
   FROM profiles p
   WHERE p.id = uid
+    -- Guard added 2026-08-26: filter (never RAISE) because this runs inside the
+    -- profiles_update_own_safe WITH CHECK, where an exception is a hard write
+    -- failure. Self-calls, the only real caller, always match.
+    AND (uid = auth.uid() OR public.is_admin_or_staff(auth.uid()))
   LIMIT 1;
 $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
