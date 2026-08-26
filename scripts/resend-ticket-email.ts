@@ -117,13 +117,38 @@ async function callSendEmail(payload: {
   return { status: res.status, body }
 }
 
+/**
+ * The ticket holder's own address, so that addressing --to AT the member is
+ * treated as the real send it is. Without this, `--to <their address>` skipped
+ * the claim and ledgered as a test, so re-running it mailed them again every
+ * time. Best-effort: a lookup miss leaves the override as a test send, which is
+ * the safe direction to fail (a probe that does not consume the notification).
+ */
+async function resolveHolderEmail(): Promise<string | undefined> {
+  const { data: ticket } = await supabase
+    .from('event_tickets')
+    .select('user_id')
+    .eq('id', ticketId)
+    .maybeSingle()
+  const holderId = (ticket as { user_id?: string } | null)?.user_id
+  if (!holderId) return undefined
+  const { data } = await supabase.auth.admin.getUserById(holderId)
+  return data?.user?.email ?? undefined
+}
+
 try {
+  const holderEmail = toOverride ? await resolveHolderEmail() : undefined
+  if (toOverride && holderEmail && holderEmail.toLowerCase() === toOverride.toLowerCase()) {
+    console.log(
+      'note: --to matches the ticket holder, so this is a REAL send and will be claimed and ledgered as one.',
+    )
+  }
   const result = await resendTicketEmail(
     {
       db: supabase as unknown as ResendClient,
       sendEmail: callSendEmail,
     },
-    { ticketId, template, toOverride, releaseClaim, nowIso },
+    { ticketId, template, toOverride, releaseClaim, holderEmail, nowIso },
   )
   console.log(JSON.stringify({ ...result, dryRun }, null, 2))
   if (result.outcome === 'already_sent') {

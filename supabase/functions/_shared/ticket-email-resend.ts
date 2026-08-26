@@ -114,8 +114,23 @@ export interface ResendArgs {
   ticketId: string
   /** send-email template key. Defaults to the one implied by the ticket status. */
   template?: string
-  /** Explicit recipient. Present means this is a TEST send: no claim, ledger row marked test_recipient. */
+  /**
+   * Explicit recipient. An address that is NOT the ticket holder's makes this a
+   * TEST send: no claim, ledger row marked test_recipient, so a probe cannot
+   * consume the member's one notification.
+   */
   toOverride?: string
+  /**
+   * The ticket holder's own address, when the caller can resolve it.
+   *
+   * Without this, addressing the override AT the member was scored as a test:
+   * the claim was skipped and the ledger row said test_recipient, so re-running
+   * that exact command mailed them again every time. It happened live on
+   * 2026-08-26 at 10:02:02Z, when the real refund send to the member was
+   * recorded as a test. An override that equals the holder IS a real send and
+   * has to be claimed and ledgered like one.
+   */
+  holderEmail?: string
   /**
    * Clear the shared claim column before claiming it, for a ticket the
    * migration backfill stamped as notified.
@@ -221,7 +236,13 @@ export async function resendTicketEmail(
   args: ResendArgs,
 ): Promise<ResendResult> {
   const tickets = () => deps.db.from('event_tickets')
-  const isTest = typeof args.toOverride === 'string' && args.toOverride.length > 0
+  const hasOverride = typeof args.toOverride === 'string' && args.toOverride.length > 0
+  // Addressing the override AT the ticket holder is a REAL send. Only an
+  // address that is somebody else's gets the test treatment.
+  const overrideIsHolder = hasOverride &&
+    typeof args.holderEmail === 'string' &&
+    args.holderEmail.trim().toLowerCase() === (args.toOverride as string).trim().toLowerCase()
+  const isTest = hasOverride && !overrideIsHolder
 
   // 1. Read the ticket. A missing ticket is an operator typo, and quietly
   //    doing nothing about a typo is how the six days happened.

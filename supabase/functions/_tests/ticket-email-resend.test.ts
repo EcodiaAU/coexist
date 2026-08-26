@@ -390,6 +390,76 @@ Deno.test('a test send exercises the transport without consuming the member noti
   assertEquals(sent[1].userId, USER_ID)
 })
 
+// ---- Addressing the override AT the member is a real send, not a test ----
+
+Deno.test('an override that equals the ticket holder is a REAL send, claimed and ledgered', async () => {
+  const { db, sent, deps } = freshWorld()
+  const HOLDER = 'holder@example.org'
+
+  const result = await resendTicketEmail(deps, {
+    ...ARGS,
+    toOverride: HOLDER,
+    holderEmail: HOLDER,
+  })
+
+  // Live on 2026-08-26 at 10:02:02Z this exact shape recorded the real refund
+  // send to the member as test_recipient:true, which skipped the claim and left
+  // the command re-sendable without limit.
+  assertEquals(result.outcome, 'sent')
+  assertEquals(result.recipientOverride, null)
+  assertEquals(db.tickets.get(TICKET_ID)?.refund_notified_at, ARGS.nowIso)
+  const ledger = db.audit.filter((r) => r.action === 'ticket_email_resent')
+  assertEquals(ledger.length, 1)
+  assertEquals(ledger[0].details.test_recipient, false)
+  // Addressed by userId so the greeting name backfill still works.
+  assertEquals(sent[0].userId, USER_ID)
+  assertEquals(sent[0].to, undefined)
+})
+
+Deno.test('re-running an override addressed at the member does NOT send twice', async () => {
+  const { sent, deps } = freshWorld()
+  const HOLDER = 'holder@example.org'
+  const args = { ...ARGS, toOverride: HOLDER, holderEmail: HOLDER }
+
+  await resendTicketEmail(deps, args)
+  const second = await resendTicketEmail(deps, { ...args, nowIso: '2026-08-26T10:05:00.000Z' })
+
+  assertEquals(second.outcome, 'already_sent')
+  assertEquals(sent.length, 1)
+})
+
+Deno.test('case and padding do not turn a real send back into a test', async () => {
+  const { db, deps } = freshWorld()
+  const result = await resendTicketEmail(deps, {
+    ...ARGS,
+    toOverride: '  Holder@Example.ORG ',
+    holderEmail: 'holder@example.org',
+  })
+  assertEquals(result.outcome, 'sent')
+  assertEquals(db.tickets.get(TICKET_ID)?.refund_notified_at, ARGS.nowIso)
+})
+
+Deno.test('an override for somebody else is still a test send with no claim', async () => {
+  const { db, sent, deps } = freshWorld()
+  const probe = await resendTicketEmail(deps, {
+    ...ARGS,
+    toOverride: PROBE,
+    holderEmail: 'holder@example.org',
+  })
+  assertEquals(probe.outcome, 'test_sent')
+  assertEquals(sent[0].to, PROBE)
+  assertEquals(db.tickets.get(TICKET_ID)?.refund_notified_at, null)
+})
+
+Deno.test('an unresolvable holder address leaves the override a test send, which is the safe direction', async () => {
+  const { db, deps } = freshWorld()
+  // holderEmail omitted, standing in for a failed lookup. Failing towards
+  // "test" costs a probe; failing towards "real" would mail the member.
+  const probe = await resendTicketEmail(deps, { ...ARGS, toOverride: PROBE })
+  assertEquals(probe.outcome, 'test_sent')
+  assertEquals(db.tickets.get(TICKET_ID)?.refund_notified_at, null)
+})
+
 // ---- The migration backfill, and getting past it deliberately ----
 
 Deno.test('a ticket the migration backfill stamped is blocked until the claim is released', async () => {
