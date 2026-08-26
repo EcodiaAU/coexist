@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { invokeAndReport } from '@/lib/invoke-report'
 import type { Database } from '@/types/database.types'
 import { formatEventLong } from '@/lib/date-format'
 
@@ -421,7 +422,10 @@ async function processPromoteWaitlist(action: OfflineAction): Promise<{ ok: bool
       supabase.from('profiles').select('display_name').eq('id', userId).single(),
     ])
     if (event) {
-      await supabase.functions.invoke('send-email', {
+      // `await invoke(...)` inside try/catch swallows the failure twice over:
+      // invoke RESOLVES on a non-2xx so the catch never runs, and the returned
+      // { error } was dropped. The send stays best-effort; the failure does not.
+      await invokeAndReport('offlineSync.waitlistPromotion', 'send-email', {
         body: {
           type: 'waitlist_promoted',
           userId,
@@ -433,7 +437,7 @@ async function processPromoteWaitlist(action: OfflineAction): Promise<{ ok: bool
             event_url: `https://app.coexistaus.org/events/${eventId}`,
           },
         },
-      })
+      }, supabase)
     }
   } catch { /* best-effort */ }
   return { ok: true }

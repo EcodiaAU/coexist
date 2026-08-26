@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { invokeAndReport } from '@/lib/invoke-report'
 import { useAuth } from '@/hooks/use-auth'
 
 /* ------------------------------------------------------------------ */
@@ -323,14 +324,14 @@ export function useTriggerSurveyNotifications() {
       if (notifError) throw notifError
 
       // Send push notifications
-      supabase.functions.invoke('send-push', {
+      void invokeAndReport('autoSurvey', 'send-push', {
         body: {
           userIds: pendingUsers,
           title,
           body,
           data: { type: 'survey_request', event_id: eventId },
         },
-      }).catch(console.error)
+      }, supabase)
 
       return { sent: pendingUsers.length }
     },

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { invokeAndReport } from '@/lib/invoke-report'
 import { subscribeWithReconnect } from '@/lib/realtime'
 import { useAuth } from '@/hooks/use-auth'
 import type { Tables } from '@/types/database.types'
@@ -460,7 +461,7 @@ export function useSendChannelMessage() {
           ? `${senderName} - ${channelName}`
           : senderName
 
-      supabase.functions.invoke('send-push', {
+      void invokeAndReport('sendStaffChannelMessage', 'send-push', {
         body: {
           channelId: variables.channelId,
           title,
@@ -471,7 +472,7 @@ export function useSendChannelMessage() {
             collective_id: variables.collectiveId ?? '',
           },
         },
-      })
+      }, supabase)
     },
     onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ['channel-messages', variables.channelId] })

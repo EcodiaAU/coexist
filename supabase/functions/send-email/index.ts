@@ -1140,7 +1140,44 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
         }
       }
 
+      // Resolve a recipient given only a userId, exactly as the single-send path
+      // does. Without this the batch path silently DROPS every recipient that
+      // does not carry a literal `to`, answers { success: true, sent: 0 } and
+      // looks like a clean run: the same silent-success shape the callers of
+      // this function have been bitten by twice. It also means a client caller
+      // never has to know a member's address to email them, and never has to
+      // reimplement the Apple-relay preference in _shared/recipient-email.ts.
+      const needLookup = payload.recipients
+        .filter((r) => !r.to && r.userId)
+        .map((r) => r.userId as string)
+      const resolvedById = new Map<string, string>()
+      if (needLookup.length > 0) {
+        const { data: emailProfiles } = await supabaseAdmin
+          .from('profiles')
+          .select('id, email')
+          .in('id', needLookup)
+        const profileEmail = new Map(
+          (emailProfiles ?? []).map((p) => [p.id as string, (p as { email?: string | null }).email ?? null]),
+        )
+        // One auth lookup per recipient, which is what the single path already
+        // costs N times. The fan-out that mattered was the one against Resend,
+        // and this exists to remove it.
+        const looked = await Promise.all(
+          needLookup.map(async (id) => {
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(id)
+            return [id, resolveRecipientEmail(userData?.user?.email ?? null, profileEmail.get(id) ?? null)] as const
+          }),
+        )
+        for (const [id, r] of looked) {
+          if (r.email) resolvedById.set(id, r.email)
+          if (r.reason !== 'auth') {
+            console.log('[send-email] batch recipient resolved via', r.reason, 'for user', id)
+          }
+        }
+      }
+
       const emails = payload.recipients
+        .map((r) => (r.to ? r : { ...r, to: r.userId ? resolvedById.get(r.userId) ?? '' : '' }))
         .filter((r) => r.to && !(r.userId && optedOut.has(r.userId)))
         .map((r) => {
           const d = { ...(r.data ?? {}), __recipientEmail: r.to }
@@ -1176,7 +1213,17 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       }
 
       return new Response(
-        JSON.stringify({ success: !batchError, sent, skipped: payload.recipients.length - emails.length, error: batchError }),
+        JSON.stringify({
+          success: !batchError,
+          sent,
+          // `resolved` is a CAPABILITY MARKER as much as a count. A deployment
+          // that predates recipient resolution cannot emit it, so a caller can
+          // tell "this send-email understands a userId-only batch" from "this
+          // one silently delivered to nobody" without guessing from counts.
+          resolved: emails.length,
+          skipped: payload.recipients.length - emails.length,
+          error: batchError,
+        }),
         { status: batchError ? 502 : 200, headers: { 'Content-Type': 'application/json' } },
       )
     }

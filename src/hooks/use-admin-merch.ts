@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import type { Database } from '@/types/database.types'
 import { supabase } from '@/lib/supabase'
+import { invokeAndReport } from '@/lib/invoke-report'
 import { escapeCsvCell } from '@/lib/csv-safe'
 import type {
   Product,
@@ -252,7 +253,7 @@ export function useUpdateOrderStatus() {
           .single()
 
         if (order?.user_id) {
-          supabase.functions.invoke('send-email', {
+          void invokeAndReport('markOrderShipped', 'send-email', {
             body: {
               type: 'order_shipped',
               userId: order.user_id,
@@ -265,7 +266,7 @@ export function useUpdateOrderStatus() {
                   : '',
               },
             },
-          }).catch(console.error)
+          }, supabase)
         }
       }
     },

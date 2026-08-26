@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
 import { SocialLogin } from '@capgo/capacitor-social-login'
 import { supabase } from '@/lib/supabase'
+import { invokeAndReport } from '@/lib/invoke-report'
 import { removeCurrentDeviceToken } from '@/hooks/use-push'
 import { resolveCapabilities } from '@/lib/capabilities'
 import { CURRENT_TOS_VERSION, GLOBAL_ROLE_RANK, COLLECTIVE_ROLE_RANK } from '@/lib/constants'
@@ -779,7 +780,7 @@ export function useAuthProvider(): AuthContextValue {
 
     // Send welcome email on successful signup
     if (!error && data?.user) {
-      supabase.functions.invoke('send-email', {
+      void invokeAndReport('signUp', 'send-email', {
         body: {
           type: 'welcome',
           to: email,
@@ -788,7 +789,7 @@ export function useAuthProvider(): AuthContextValue {
             app_url: 'https://app.coexistaus.org',
           },
         },
-      }).catch(console.error)
+      }, supabase)
     }
 
     // When the project has `mailer_autoconfirm` enabled, signUp returns a

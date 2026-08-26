@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { invokeAndReport } from '@/lib/invoke-report'
 import { subscribeWithReconnect } from '@/lib/realtime'
 import { MAX_MESSAGE_LENGTH as _IMPORTED_MAX_LEN } from '@/lib/validation'
 import { useAuth } from '@/hooks/use-auth'
@@ -524,7 +525,7 @@ export function useSendMessage() {
               .filter((id: string) => id !== user.id)
 
             if (recipientIds.length > 0) {
-              supabase.functions.invoke('send-push', {
+              void invokeAndReport('sendChatMessage', 'send-push', {
                 body: {
                   userIds: recipientIds,
                   title: pushTitle,
@@ -534,7 +535,7 @@ export function useSendMessage() {
                     collective_id: input.collectiveId,
                   },
                 },
-              })
+              }, supabase)
             }
           })
       }

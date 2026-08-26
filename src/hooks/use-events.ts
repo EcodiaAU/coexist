@@ -1,5 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { invokeAndReport } from '@/lib/invoke-report'
+import { sendEmailToMany } from '@/lib/send-email-batch'
 import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { useToast } from '@/components/toast'
@@ -1067,7 +1069,7 @@ export function useRegisterForEvent() {
           .maybeSingle()
 
         if (event) {
-          supabase.functions.invoke('send-email', {
+          void invokeAndReport('registerForEvent', 'send-email', {
             body: {
               type: 'event_confirmation',
               userId: user.id,
@@ -1081,7 +1083,7 @@ export function useRegisterForEvent() {
                 event_url: `https://app.coexistaus.org/events/${eventId}`,
               },
             },
-          }).catch(console.error)
+          }, supabase)
         }
       }
     },
@@ -1717,21 +1719,19 @@ export function useCancelEvent() {
         // Floating local time: stored wall-clock is the wall-clock.
         const eventDate = formatEventLong(event.date_start)
 
-        for (const reg of registrations) {
-          const displayName = (reg as unknown as { profiles?: { display_name: string | null } }).profiles?.display_name ?? 'there'
-          supabase.functions.invoke('send-email', {
-            body: {
-              type: 'event_cancelled',
-              userId: reg.user_id,
-              data: {
-                name: displayName,
-                event_title: event.title,
-                event_date: eventDate,
-                reason: reason ?? '',
-              },
-            },
-          }).catch(console.error)
-        }
+        // ONE batched call, not one call per attendee. A cancellation on a
+        // large event used to fan out N sends and blow through Resend's 10 req/s
+        // limit; on 19 August that shape lost 1,281 of 3,213 calls in 18 minutes
+        // and every error was discarded at the call site.
+        await sendEmailToMany('cancelEvent', 'event_cancelled', registrations.map((reg) => ({
+          userId: reg.user_id,
+          data: {
+            name: (reg as unknown as { profiles?: { display_name: string | null } }).profiles?.display_name ?? 'there',
+            event_title: event.title,
+            event_date: eventDate,
+            reason: reason ?? '',
+          },
+        })))
       }
 
       return cancelRes
@@ -1886,14 +1886,14 @@ async function triggerSurveyNotifications(eventId: string, eventTitle: string) {
   )
 
   // Send push notifications
-  supabase.functions.invoke('send-push', {
+  void invokeAndReport('requestSurveys', 'send-push', {
     body: {
       userIds: pendingUsers,
       title,
       body,
       data: { type: 'survey_request', event_id: eventId },
     },
-  }).catch(console.error)
+  }, supabase)
 }
 
 /* ------------------------------------------------------------------ */
@@ -2156,32 +2156,28 @@ export function useInviteCollective() {
           .in('id', invitedUserIds)
         const nameMap = new Map((invitedProfiles ?? []).map((p) => [p.id, p.display_name]))
 
-        // Send invite emails
-        for (const reg of registrations) {
-          supabase.functions.invoke('send-email', {
-            body: {
-              type: 'event_invite',
-              userId: reg.user_id,
-              data: {
-                name: nameMap.get(reg.user_id) ?? 'there',
-                inviter_name: inviterName,
-                event_title: event.title,
-                event_date: eventDate,
-                event_url: `https://app.coexistaus.org/events/${eventId}`,
-              },
-            },
-          }).catch(console.error)
-        }
+        // Send invite emails in ONE batched call. Invite-all is the other
+        // action that used to fan out one send per person.
+        await sendEmailToMany('inviteAll', 'event_invite', registrations.map((reg) => ({
+          userId: reg.user_id,
+          data: {
+            name: nameMap.get(reg.user_id) ?? 'there',
+            inviter_name: inviterName,
+            event_title: event.title,
+            event_date: eventDate,
+            event_url: `https://app.coexistaus.org/events/${eventId}`,
+          },
+        })))
 
         // Send push notifications
-        supabase.functions.invoke('send-push', {
+        void invokeAndReport('inviteAll', 'send-push', {
           body: {
             userIds: invitedUserIds,
             title: `You're invited!`,
             body: `${inviterName} invited you to ${event.title} on ${eventDate}`,
             data: { type: 'event_invite', event_id: eventId },
           },
-        }).catch(console.error)
+        }, supabase)
 
         // In-app notifications
         const notifications = invitedUserIds.map((uid) => ({
@@ -2245,7 +2241,7 @@ export function usePromoteFromWaitlist() {
       ])
 
       if (event) {
-        supabase.functions.invoke('send-email', {
+        void invokeAndReport('promoteFromWaitlist', 'send-email', {
           body: {
             type: 'waitlist_promoted',
             userId,
@@ -2257,7 +2253,7 @@ export function usePromoteFromWaitlist() {
               event_url: `https://app.coexistaus.org/events/${eventId}`,
             },
           },
-        }).catch(console.error)
+        }, supabase)
       }
     },
     onMutate: async ({ eventId, userId }) => {
