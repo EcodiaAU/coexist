@@ -15,6 +15,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { withSentry } from '../_shared/sentry.ts'
+import {
+  notifyTicketRefund,
+  type RefundNotifyClient,
+} from '../_shared/ticket-refund-notify.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY_TEST')!, {
   apiVersion: '2024-04-10',
@@ -24,19 +28,29 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 // ── Helpers ──
 
+/** Mirrors stripe-webhook: report the outcome instead of swallowing it. */
 async function sendTemplateEmail(
   supabase: ReturnType<typeof createClient>,
   type: string,
   userId: string,
   data: Record<string, unknown>,
-) {
+): Promise<{ ok: boolean; suppressed: boolean }> {
   try {
-    await supabase.functions.invoke('send-email', {
+    const { data: res, error } = await supabase.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
       body: { type, userId, data },
     })
+    if (error) {
+      console.error(`[stripe-webhook] send-email (${type}) failed:`, (error as Error).message)
+      return { ok: false, suppressed: false }
+    }
+    const body = res as { success?: boolean; skipped?: boolean } | null
+    if (body?.success === true) return { ok: true, suppressed: false }
+    console.warn(`[stripe-webhook] send-email (${type}) did not send:`, JSON.stringify(body))
+    return { ok: false, suppressed: true }
   } catch (err) {
     console.error(`[stripe-webhook] send-email (${type}) failed:`, (err as Error).message)
+    return { ok: false, suppressed: false }
   }
 }
 
@@ -519,32 +533,43 @@ Deno.serve(withSentry('stripe-webhook-test', async (req: Request) => {
         // Try event ticket refund first
         const { data: refundTicket } = await supabase
           .from('event_tickets')
-          .select('id, event_id, user_id')
+          .select('id, event_id, user_id, ticket_code')
           .eq('stripe_payment_intent_id', paymentIntentId)
           .maybeSingle()
 
         if (refundTicket) {
-          await supabase
-            .from('event_tickets')
-            .update({ status: 'refunded', updated_at: new Date().toISOString() })
-            .eq('id', refundTicket.id)
-
-          // Cancel the event registration
+          // KNOWN DIVERGENCE, deliberately left alone here: the blind
+          // event_registrations write below is the dupe bug that live
+          // stripe-webhook removed in favour of reconcile_ticket_membership
+          // (migration 20260628000000_ticket_membership_enforcement). It is a
+          // separate fix from the refund notification and is not in scope of
+          // this change.
           await supabase
             .from('event_registrations')
             .update({ status: 'cancelled' })
             .eq('event_id', refundTicket.event_id)
             .eq('user_id', refundTicket.user_id)
 
-          const refundAmount = (charge.amount_refunded ?? 0) / 100
-          await sendTemplateEmail(supabase, 'refund_confirmation', refundTicket.user_id, {
-            name: '',
-            order_id: refundTicket.id.slice(0, 8),
-            refund_amount: refundAmount.toFixed(2),
-            currency: 'AUD',
-          })
+          // Same notification path as live stripe-webhook. Test mode still
+          // sends a REAL email through Resend, so the wrong copy and the
+          // missing idempotence guard were real here too.
+          const notified = await notifyTicketRefund(
+            {
+              db: supabase as unknown as RefundNotifyClient,
+              sendEmail: (email) =>
+                sendTemplateEmail(supabase, email.type, email.userId, email.data),
+            },
+            {
+              ticketId: refundTicket.id,
+              eventId: refundTicket.event_id,
+              userId: refundTicket.user_id,
+              ticketCode: (refundTicket.ticket_code as string | null) ?? null,
+              amountRefundedCents: charge.amount_refunded ?? 0,
+              nowIso: new Date().toISOString(),
+            },
+          )
 
-          console.log('Event ticket refunded:', refundTicket.id)
+          console.log('Event ticket refunded:', refundTicket.id, 'notify:', notified.outcome)
           break
         }
 
