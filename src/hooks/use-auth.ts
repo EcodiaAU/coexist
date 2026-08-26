@@ -778,8 +778,24 @@ export function useAuthProvider(): AuthContextValue {
       return { error: toFriendlyAuthError(err), hasSession: false }
     }
 
-    // Send welcome email on successful signup
+    // Send welcome email on successful signup.
+    //
+    // The token is passed EXPLICITLY instead of being left to the client's own
+    // header, because leaving it there loses a race. supabase-js attaches a new
+    // session to its FunctionsClient off the SIGNED_IN broadcast, which is
+    // asynchronous, so an invoke fired in the same tick as signUp can still
+    // carry the anon key. The gateway ACCEPTS that key (it is a validly signed
+    // project JWT, so verify_jwt passes and the isolate boots) and send-email's
+    // own guard then fails it at GoTrue /auth/v1/user, returning 401
+    // {"success":false,"error":"Invalid token"}. signUp already hands back the
+    // session, so the correct token is in scope right here.
+    //
+    // Measured: the member whose auth row was created at 2026-08-26T10:51:28.099Z
+    // had a confirmed session at 10:51:28.189Z and still got a 401 at
+    // 10:51:38.945Z, ten seconds later. Two other signups either side of it, one
+    // on the same email provider, succeeded 0.6s after their preflight.
     if (!error && data?.user) {
+      const accessToken = data.session?.access_token
       void invokeAndReport('signUp', 'send-email', {
         body: {
           type: 'welcome',
@@ -789,6 +805,7 @@ export function useAuthProvider(): AuthContextValue {
             app_url: 'https://app.coexistaus.org',
           },
         },
+        ...(accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {}),
       }, supabase)
     }
 

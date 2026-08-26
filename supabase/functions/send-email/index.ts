@@ -2,6 +2,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
 import { resolveRecipientEmail } from '../_shared/recipient-email.ts'
+import { suppressedRecipientIds, type SuppressionProfile } from '../_shared/recipient-suppression.ts'
 
 /** Resend tag values allow ASCII alnum, underscore and dash only. */
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
@@ -1121,23 +1122,37 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       )
 
-      // Per-recipient opt-out gate for marketing types: marketing_opt_in AND the
-      // mapped notification-preference key (mirrors the single-send gate).
-      const optedOut = new Set<string>()
-      if (templateDef.category === 'marketing') {
-        const ids = payload.recipients.map((r) => r.userId).filter((x): x is string => !!x)
-        if (ids.length > 0) {
-          const { data: profs } = await supabaseAdmin
-            .from('profiles')
-            .select('id, marketing_opt_in, notification_preferences')
-            .in('id', ids)
-          const prefKey = TYPE_TO_PREF_KEY[type]
-          for (const p of profs ?? []) {
-            const prefs = (p.notification_preferences ?? {}) as Record<string, unknown>
-            if (p.marketing_opt_in === false) optedOut.add(p.id as string)
-            else if (prefKey && prefs[prefKey] === false) optedOut.add(p.id as string)
-          }
-        }
+      // Per-recipient suppression, mirroring the single-send gate EXACTLY.
+      //
+      // The single path runs TWO independent gates and this one used to carry
+      // only the first, so routing a caller from the single path to the batch
+      // path silently re-enabled mail for members who had switched it off:
+      //
+      //   1. marketing types honour marketing_opt_in (and a missing profile
+      //      suppresses, because the single path's `!profile` arm does too)
+      //   2. EVERY type with a mapped preference key honours that key AND the
+      //      email_enabled channel master, TRANSACTIONAL INCLUDED
+      //
+      // Gate 2 is the one that was missing. event_cancelled and event_invite are
+      // both `transactional` and both sit in TYPE_TO_PREF_KEY, so a member who
+      // had turned off event-cancellation mail, or turned off the email channel
+      // outright, would have started receiving it again the moment cancelEvent
+      // and inviteAll moved onto this path.
+      let optedOut = new Set<string>()
+      const batchPrefKey = TYPE_TO_PREF_KEY[type]
+      const isMarketing = templateDef.category === 'marketing'
+      const batchIds = payload.recipients.map((r) => r.userId).filter((x): x is string => !!x)
+      if (batchIds.length > 0 && (isMarketing || batchPrefKey)) {
+        const { data: profs } = await supabaseAdmin
+          .from('profiles')
+          .select('id, marketing_opt_in, notification_preferences')
+          .in('id', batchIds)
+        optedOut = suppressedRecipientIds({
+          ids: batchIds,
+          profiles: (profs ?? []) as SuppressionProfile[],
+          isMarketing,
+          prefKey: batchPrefKey,
+        })
       }
 
       // Resolve a recipient given only a userId, exactly as the single-send path
