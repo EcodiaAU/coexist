@@ -166,16 +166,34 @@ Deno.serve(withSentry('reserve-event-spot', async (req: Request) => {
     if (notify && result.status === 'reserved') {
       const payPath = `/events/${body.event_id}?pay_ticket=${result.ticket_id}`
       let payUrl = `${APP_URL}${payPath}`
-      if (createdAccount) {
+      // Magic link for EVERY recipient, not only a brand-new account.
+      //
+      // This used to be gated on `createdAccount`. That looked right and was
+      // wrong for the commonest case: a person whose account already exists but
+      // who has NEVER signed in (auto-provisioned by a registration import, so
+      // last_sign_in_at == created_at). They are not new, so they got a bare
+      // app URL, arrived logged OUT, and hit the public event page, which shows
+      // "Sold out" because their own held seat counts toward capacity. Five
+      // Murbpook invitees were deadlocked exactly this way on 2026-08-26: told
+      // to pay, then shown a sold-out page with no way to select a ticket.
+      // The recipient of a pay-to-confirm link needs a session to pay, whether
+      // or not we just created their account, so always mint one when we can.
+      {
         const { data: u } = await supabase.auth.admin.getUserById(userId)
         const recipientEmail = u?.user?.email
         if (recipientEmail) {
-          const { data: magic } = await supabase.auth.admin.generateLink({
+          const { data: magic, error: magicErr } = await supabase.auth.admin.generateLink({
             type: 'magiclink',
             email: recipientEmail,
             options: { redirectTo: `${APP_URL}${payPath}` },
           })
-          if (magic?.properties?.action_link) payUrl = magic.properties.action_link
+          if (magic?.properties?.action_link) {
+            payUrl = magic.properties.action_link
+          } else if (magicErr) {
+            // Non-fatal: fall back to the bare app URL rather than dropping the
+            // invite, but make the degraded link visible in the logs.
+            console.error('[reserve-spot] magic link generation failed, sending bare app URL:', magicErr.message)
+          }
         }
       }
       try {
