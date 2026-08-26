@@ -111,9 +111,24 @@ Deno.serve(withSentry('revoke-event-ticket', async (req: Request) => {
     }
 
     // ---- Free/comp ticket: cancel directly (reconciler handles chat removal) ----
-    await supabase.from('event_tickets')
+    // Compare-and-swap on the status we actually branched on. `ticket` was read
+    // at the top of this handler, and between that read and this write the Stripe
+    // webhook can confirm a `reserved` hold into `confirmed`. We would then cancel
+    // a seat the member has just PAID for, with no refund.
+    //
+    // `.in('status', LIVE_TICKET_STATUSES)` does NOT close this: LIVE is
+    // ['pending','confirmed','checked_in','reserved'], so `confirmed` passes it and
+    // the paid seat is still cancelled. The guard has to be the value we read.
+    const { data: cancelled } = await supabase.from('event_tickets')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', ticket.id)
+      .eq('status', ticket.status)
+      .select('id')
+    if (!cancelled || cancelled.length === 0) {
+      // Someone settled this ticket underneath us. Refuse rather than report a
+      // cancellation that did not happen.
+      return json({ error: 'Ticket changed while being revoked. Reload and retry.' }, 409)
+    }
     await supabase.rpc('reconcile_ticket_membership', { p_event: ticket.event_id, p_user: ticket.user_id })
     return json({ ok: true, action: 'cancelled', ticket_id: ticket.id })
   } catch (err) {
