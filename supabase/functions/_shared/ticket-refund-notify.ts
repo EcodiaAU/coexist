@@ -29,6 +29,15 @@
  *      row-locks that statement, so two concurrent deliveries cannot both
  *      claim it, and the guard survives a cold function instance.
  *
+ * A BOUNCE ALSO RELEASES THE CLAIM, AND IT CANNOT DO SO FROM HERE. Resend
+ * answers 200 the moment it accepts the message; the bounce arrives seconds
+ * later on the resend-webhook. In the grounded case the gap was 13 seconds:
+ * 09:59:22 sent=true and refund_notified_at stamped, 09:59:35 email.bounced.
+ * Synchronous code cannot see that, so the release is a COMPENSATING write in
+ * resend-webhook, keyed off the `ticket_id` tag threaded through below and
+ * scoped to claims no newer than the send that bounced. That scoping is what
+ * stops an old bounce from unmarking a member a later send already reached.
+ *
  * A FAILED SEND RELEASES THE CLAIM. Consuming the one notification on a
  * transient Resend failure would silently cost the member their only telling,
  * so the marker goes back to NULL and the next Stripe retry tries again. A
@@ -67,6 +76,13 @@ export interface RefundEmail {
   type: string
   userId: string
   data: Record<string, unknown>
+  /**
+   * Threaded down to Resend as a `ticket_id` tag so an ASYNCHRONOUS bounce can
+   * be read back to the ticket whose one notification it consumed. Without it
+   * the bounce webhook knows an address failed and nothing about who is now
+   * wrongly marked as told. See resend-webhook.
+   */
+  ticketId?: string
 }
 
 export interface RefundNotifyArgs {
@@ -143,6 +159,7 @@ export async function notifyTicketRefund(
   const result = await deps.sendEmail({
     type: 'ticket_refunded',
     userId: args.userId,
+    ticketId: args.ticketId,
     data: {
       name: '',
       event_title: (ev?.title as string | undefined) ?? 'your event',

@@ -1,6 +1,7 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import { resolveRecipientEmail } from '../_shared/recipient-email.ts'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -328,10 +329,21 @@ Deno.serve(withSentry('notify-application', async (req: Request) => {
 
     let emailsSent = 0
     if (emailRecipientIds.length > 0) {
-      // Look up emails from auth.users
+      // Look up emails. auth.users.email is NOT automatically deliverable: a
+      // staff member who signed in with Apple carries an
+      // @privaterelay.appleid.com forwarding address there, and every send to
+      // one of those bounces (68 of 68 measured 2026-08-26). This path builds
+      // its own `to` rather than passing userId to send-email, so it does not
+      // inherit the resolver there and has to do the same thing itself.
       const emailPromises = emailRecipientIds.map(async (userId) => {
-        const { data } = await supabaseAdmin.auth.admin.getUserById(userId)
-        return data?.user?.email
+        const [{ data }, { data: profileRow }] = await Promise.all([
+          supabaseAdmin.auth.admin.getUserById(userId),
+          supabaseAdmin.from('profiles').select('email').eq('id', userId).maybeSingle(),
+        ])
+        return resolveRecipientEmail(
+          data?.user?.email ?? null,
+          (profileRow as { email?: string | null } | null)?.email ?? null,
+        ).email || undefined
       })
       const emails = (await Promise.all(emailPromises)).filter(Boolean) as string[]
 

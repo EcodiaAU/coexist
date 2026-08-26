@@ -45,11 +45,12 @@ async function sendTemplateEmail(
   type: string,
   userId: string,
   data: Record<string, unknown>,
+  ticketId?: string,
 ): Promise<{ ok: boolean; suppressed: boolean }> {
   try {
     const { data: res, error } = await supabase.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
-      body: { type, userId, data },
+      body: ticketId ? { type, userId, data, ticketId } : { type, userId, data },
     })
     if (error) {
       console.error(`[stripe-webhook] send-email (${type}) failed:`, (error as Error).message)
@@ -915,7 +916,7 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             {
               db: supabase as unknown as RefundNotifyClient,
               sendEmail: (email) =>
-                sendTemplateEmail(supabase, email.type, email.userId, email.data),
+                sendTemplateEmail(supabase, email.type, email.userId, email.data, email.ticketId),
             },
             {
               ticketId: refundTicket.id,

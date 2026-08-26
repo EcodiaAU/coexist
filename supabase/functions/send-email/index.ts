@@ -1,6 +1,10 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import { resolveRecipientEmail } from '../_shared/recipient-email.ts'
+
+/** Resend tag values allow ASCII alnum, underscore and dash only. */
+const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
 
 /* ------------------------------------------------------------------ */
 /*  Resend Configuration                                               */
@@ -231,6 +235,15 @@ interface SendEmailPayload {
   /** For internal requests (e.g. data export) */
   userId?: string
   email?: string
+  /**
+   * Optional correlation id for a ticket-scoped transactional send. Emitted to
+   * Resend as a `ticket_id` tag and echoed back on every delivery event, which
+   * is how resend-webhook maps an asynchronous bounce to the ticket whose
+   * notification claim it must release. Resend tag values accept only ASCII
+   * letters, digits, underscores and dashes, so a UUID is passed straight
+   * through and anything else is dropped rather than failing the send.
+   */
+  ticketId?: string
   /**
    * Batch send: many personalised emails of the same `type` in ONE call.
    * Sent via Resend's /emails/batch endpoint (up to 100 per request), so N
@@ -1171,14 +1184,33 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
     // Resolve recipient
     let toEmail = payload.to || payload.email || ''
 
-    // If userId provided but no email, look it up
+    // If userId provided but no email, look it up.
+    //
+    // auth.users.email is NOT automatically the deliverable address. A member
+    // who signed in with Apple carries an @privaterelay.appleid.com forwarding
+    // address there, and on this project every single send to one of those has
+    // bounced (68 sends, 43 addresses, 0 deliveries, measured 2026-08-26).
+    // profiles.email holds what the member actually typed, so it is preferred
+    // when the auth address is a relay and the profile address is not.
+    // See _shared/recipient-email.ts for the measurement and the limits.
     if (!toEmail && payload.userId) {
       const supabaseAdmin = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       )
-      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(payload.userId)
-      toEmail = userData?.user?.email ?? ''
+      const [{ data: userData }, { data: profileRow }] = await Promise.all([
+        supabaseAdmin.auth.admin.getUserById(payload.userId),
+        supabaseAdmin.from('profiles').select('email').eq('id', payload.userId).maybeSingle(),
+      ])
+      const resolved = resolveRecipientEmail(
+        userData?.user?.email ?? null,
+        (profileRow as { email?: string | null } | null)?.email ?? null,
+      )
+      toEmail = resolved.email
+      if (resolved.reason !== 'auth') {
+        // Logged so a later bounce can be read back to the decision that made it.
+        console.log('[send-email] recipient resolved via', resolved.reason, 'for user', payload.userId)
+      }
     }
 
     if (!toEmail) {
@@ -1319,14 +1351,24 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       ? buildOverrideHtml(override, data)
       : buildEmailHtml(type, data))
 
+    const tags = [
+      { name: 'category', value: templateDef.category },
+      { name: 'type', value: type },
+    ]
+    // A malformed tag value makes Resend reject the whole send, so a caller
+    // passing junk must never cost a member their email. Only a well-formed
+    // UUID rides along.
+    if (typeof payload.ticketId === 'string' && UUID_RE.test(payload.ticketId)) {
+      tags.push({ name: 'ticket_id', value: payload.ticketId })
+    } else if (payload.ticketId) {
+      console.warn('[send-email] ignoring malformed ticketId tag')
+    }
+
     const result = await sendViaResend(
       toEmail,
       subject,
       html,
-      [
-        { name: 'category', value: templateDef.category },
-        { name: 'type', value: type },
-      ],
+      tags,
     )
 
     return new Response(JSON.stringify(result), {

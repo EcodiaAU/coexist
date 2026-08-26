@@ -14,6 +14,7 @@
 // with no handler, so delivered/bounced/opened were invisible.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { refundReleaseTarget } from '../_shared/refund-bounce-release.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -101,6 +102,32 @@ Deno.serve(async (req: Request) => {
     reason,
     payload: evt,
   })
+
+  // A refund notification that BOUNCED must give its claim back. The claim is
+  // taken before the send and Resend answers 200 on acceptance, so without this
+  // a bounce leaves the member marked as told, undelivered, and unretryable.
+  // Scoped by `refund_notified_at <= the bouncing send's created_at` so a late
+  // bounce cannot unmark a member a later send actually reached. Releasing does
+  // not resend: refund emails fire only from charge.refunded.
+  // See _shared/refund-bounce-release.ts.
+  const release = refundReleaseTarget(evt)
+  if (release) {
+    const { data: released, error: releaseErr } = await admin
+      .from('event_tickets')
+      .update({ refund_notified_at: null })
+      .eq('id', release.ticketId)
+      .not('refund_notified_at', 'is', null)
+      .lte('refund_notified_at', release.sentAtIso)
+      .select('id')
+    if (releaseErr) {
+      console.error('[resend-webhook] refund claim release failed:', release.ticketId, releaseErr.message)
+    } else if (released && released.length > 0) {
+      console.log('[resend-webhook] refund notification bounced, claim released:', release.ticketId)
+    } else {
+      // Either already released, or a newer claim from a send that did land.
+      console.log('[resend-webhook] refund bounce released nothing (newer claim or already open):', release.ticketId)
+    }
+  }
 
   if (msgId) {
     const nowIso = new Date().toISOString()
