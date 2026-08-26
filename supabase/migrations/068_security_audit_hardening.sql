@@ -53,20 +53,59 @@ CREATE POLICY "contact_submissions_insert_authenticated"
 
 -- --- Core helper functions (from 001) ---
 
+-- Guard helper added 2026-08-26 (role oracle). Defined here so this migration is
+-- correct STANDALONE: the guard below references it, and LANGUAGE sql bodies are
+-- validated at creation time, so ordering would otherwise decide whether a replay
+-- of this file succeeds. CREATE OR REPLACE makes the repetition harmless.
+-- Not SECURITY DEFINER and not search_path-pinned so the planner can inline it;
+-- current_setting is pg_catalog-qualified so it cannot be shadowed instead.
+CREATE OR REPLACE FUNCTION public.is_trusted_backend_caller()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $trusted$
+  SELECT coalesce(pg_catalog.current_setting('role', true), 'none')
+         IN ('service_role', 'postgres', 'supabase_admin', 'none');
+$trusted$;
+
 CREATE OR REPLACE FUNCTION is_admin_or_staff(uid uuid)
 RETURNS boolean AS $$
-  SELECT EXISTS (
+  -- Guard added 2026-08-26 (role oracle): these definer helpers took a uid
+  -- ARGUMENT with PUBLIC EXECUTE, so anon could ask "is this uuid staff" about
+  -- ANY user. Answer only for self, or for a trusted backend (service_role /
+  -- direct postgres), where auth.uid() is NULL and cancel-event authorizes a
+  -- third party. FILTER, never RAISE: this runs inside RLS, where an exception
+  -- is a hard query failure. IS NOT DISTINCT FROM keeps every branch boolean,
+  -- because a NULL return would itself separate staff from non-staff.
+  SELECT CASE
+    WHEN uid IS NULL THEN false
+    WHEN uid IS NOT DISTINCT FROM auth.uid() OR public.is_trusted_backend_caller()
+    THEN EXISTS (
     SELECT 1 FROM profiles
     WHERE id = uid AND role IN ('national_staff', 'national_admin', 'super_admin')
-  );
+    )
+    ELSE false
+  END;
 $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
 CREATE OR REPLACE FUNCTION is_super_admin(uid uuid)
 RETURNS boolean AS $$
-  SELECT EXISTS (
+  -- Guard added 2026-08-26 (role oracle): these definer helpers took a uid
+  -- ARGUMENT with PUBLIC EXECUTE, so anon could ask "is this uuid staff" about
+  -- ANY user. Answer only for self, or for a trusted backend (service_role /
+  -- direct postgres), where auth.uid() is NULL and cancel-event authorizes a
+  -- third party. FILTER, never RAISE: this runs inside RLS, where an exception
+  -- is a hard query failure. IS NOT DISTINCT FROM keeps every branch boolean,
+  -- because a NULL return would itself separate staff from non-staff.
+  SELECT CASE
+    WHEN uid IS NULL THEN false
+    WHEN uid IS NOT DISTINCT FROM auth.uid() OR public.is_trusted_backend_caller()
+    THEN EXISTS (
     SELECT 1 FROM profiles
     WHERE id = uid AND role = 'super_admin'
-  );
+    )
+    ELSE false
+  END;
 $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
 CREATE OR REPLACE FUNCTION is_collective_leader_or_above(uid uuid, cid uuid)
