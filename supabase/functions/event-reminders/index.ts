@@ -242,6 +242,10 @@ async function sendReminders(
   // functions.invoke returns { error } on a non-2xx rather than throwing, so the
   // result must be inspected.
   const { error: pushError } = await supabase.functions.invoke('send-push', {
+    // supabase-js >= 2.112.2 drops the Authorization header when the project
+    // key is new-format (sb_secret_), so send-push answers a silent 401. Set it
+    // explicitly. patterns/unpinned-cdn-import-plus-key-format-migration-is-a-two-input-latent-bug-2026-08-26.md
+    headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}` },
     body: {
       userIds: pendingUserIds,
       title: push.pushTitle,
@@ -291,7 +295,7 @@ async function sendReminders(
 
     const displayName = (reg as any).profiles?.display_name ?? 'there'
     const { error: emailErr } = await supabase.functions.invoke('send-email', {
-          headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}` },
+      headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}` },
       body: {
         type: 'event_reminder',
         userId: reg.user_id,

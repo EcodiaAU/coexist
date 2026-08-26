@@ -153,6 +153,10 @@ Deno.serve(withSentry('notify-report', async (req) => {
     // Also send push notifications to staff
     try {
       await supabase.functions.invoke('send-push', {
+        // supabase-js >= 2.112.2 drops the Authorization header when the project
+        // key is new-format (sb_secret_), so send-push answers a silent 401. Set it
+        // explicitly. patterns/unpinned-cdn-import-plus-key-format-migration-is-a-two-input-latent-bug-2026-08-26.md
+        headers: { Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
         body: {
           userIds: staffIds,
           title: 'Content Report',

@@ -223,6 +223,10 @@ async function notifyAttendees(
   // recorded in event_day_notifications_sent, so it was lost and never retried.
   const pushType = notifType === 'starting_soon' ? 'event_reminder' : 'event_updated'
   const { error: pushError } = await supabase.functions.invoke('send-push', {
+    // supabase-js >= 2.112.2 drops the Authorization header when the project
+    // key is new-format (sb_secret_), so send-push answers a silent 401. Set it
+    // explicitly. patterns/unpinned-cdn-import-plus-key-format-migration-is-a-two-input-latent-bug-2026-08-26.md
+    headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}` },
     body: {
       userIds: toNotify,
       title,
