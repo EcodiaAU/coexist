@@ -8,7 +8,8 @@
  *
  * On a confirmed ticket the sync_campout_chat_membership trigger adds them to
  * the campout group chat; we also create the event_registration. Idempotent:
- * if the user already holds a live ticket for the event, returns it.
+ * if the user already holds a LIVE ticket for the event (including an unpaid
+ * organiser hold), it is reused and settled rather than duplicated.
  *
  * Input: { event_id, token }. Auth: caller's JWT in Authorization.
  * Returns: { ticket_id, already }.
@@ -16,6 +17,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import {
+  LIVE_TICKET_STATUSES,
+  UNSETTLED_TICKET_STATUSES,
+  isUnsettledTicketStatus,
+  pickTicketToReuse,
+} from '../_shared/ticket-status.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -80,18 +87,41 @@ Deno.serve(withSentry('claim-event-ticket', async (req: Request) => {
     const expected = tokRow?.token
     if (!expected || claimToken !== expected) return json({ error: 'This claim link is not valid' }, 403)
 
-    // ---- Idempotency: reuse an existing live ticket ----
-    const { data: existing } = await supabase
+    // ---- Idempotency: reuse an existing LIVE ticket ----
+    // LIVE, not the inline `['pending', 'confirmed', 'checked_in']` this
+    // replaces. That list predates `reserved`, so a member already holding an
+    // organiser hold did not match, was treated as having no ticket, and got a
+    // SECOND comp row inserted. Both rows are spot-taking, so that person
+    // occupied two seats and the hold was never cleared.
+    //
+    // No `.maybeSingle()`: it returns an ERROR rather than a row when two match,
+    // this call site dropped that error, and the fall-through was to INSERT,
+    // which would add a third seat to anyone the bug above already doubled.
+    // Choosing deterministically heals the duplicate instead of compounding it.
+    const { data: liveTickets } = await supabase
       .from('event_tickets')
       .select('id, status')
       .eq('event_id', body.event_id)
       .eq('user_id', caller.id)
-      .in('status', ['pending', 'confirmed', 'checked_in'])
-      .maybeSingle()
+      .in('status', LIVE_TICKET_STATUSES)
+    const existing = pickTicketToReuse(liveTickets)
     if (existing) {
-      // Make sure a pending one is confirmed (so chat + registration apply).
-      if (existing.status === 'pending') {
-        await supabase.from('event_tickets').update({ status: 'confirmed', price_cents: 0, updated_at: new Date().toISOString() }).eq('id', existing.id)
+      // Settle an UNSETTLED seat, which is `pending` (mid-checkout) and
+      // `reserved` (an organiser hold) alike. Following a claim link is an
+      // explicit decision to hand this person a free ticket, so leaving a hold
+      // in place would keep My Tickets demanding payment for a seat that has
+      // just been comped, and would keep them outside the campout chat, since
+      // sync_campout_chat_membership fires on `confirmed`.
+      //
+      // The `.in()` on the UPDATE is an optimistic lock, and it is load-bearing:
+      // without it, a Stripe webhook confirming this row between the select and
+      // the update would be overwritten to price_cents 0, destroying the record
+      // of a payment the member actually made.
+      if (isUnsettledTicketStatus(existing.status)) {
+        await supabase.from('event_tickets')
+          .update({ status: 'confirmed', price_cents: 0, updated_at: new Date().toISOString() })
+          .eq('id', existing.id)
+          .in('status', UNSETTLED_TICKET_STATUSES)
       }
       await supabase.from('event_registrations').upsert({ event_id: body.event_id, user_id: caller.id, status: 'registered' }, { onConflict: 'event_id,user_id' })
       return json({ ticket_id: existing.id, already: true })

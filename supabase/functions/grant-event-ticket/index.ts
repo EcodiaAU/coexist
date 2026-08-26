@@ -17,6 +17,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import {
+  LIVE_TICKET_STATUSES,
+  UNSETTLED_TICKET_STATUSES,
+  isUnsettledTicketStatus,
+  pickTicketToReuse,
+} from '../_shared/ticket-status.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -128,14 +134,23 @@ Deno.serve(withSentry('grant-event-ticket', async (req: Request) => {
     }
     if (!userId) return json({ error: 'Could not resolve the recipient' }, 500)
 
-    // ---- Idempotency: reuse an existing live ticket ----
-    const { data: existing } = await supabase
+    // ---- Idempotency: reuse an existing LIVE ticket ----
+    // LIVE, not the inline `['pending', 'confirmed', 'checked_in']` this
+    // replaces. That list predates `reserved`, so comping someone who already
+    // held an organiser hold did not match, and a SECOND row was inserted.
+    // Both rows are spot-taking, so the recipient occupied two seats on an
+    // event the hold existed to keep them a single seat on.
+    //
+    // No `.maybeSingle()`: it errors rather than returning a row when two match,
+    // the error was dropped here, and the fall-through was to INSERT, adding a
+    // third seat to anyone the bug above already doubled.
+    const { data: liveTickets } = await supabase
       .from('event_tickets')
       .select('id, status, ticket_code')
       .eq('event_id', body.event_id)
       .eq('user_id', userId)
-      .in('status', ['pending', 'confirmed', 'checked_in'])
-      .maybeSingle()
+      .in('status', LIVE_TICKET_STATUSES)
+    const existing = pickTicketToReuse(liveTickets)
 
     let ticketId: string | null = null
     let ticketCodeValue: string | null = null
@@ -145,10 +160,27 @@ Deno.serve(withSentry('grant-event-ticket', async (req: Request) => {
       already = true
       ticketId = existing.id
       ticketCodeValue = existing.ticket_code
-      if (existing.status === 'pending') {
+      // Settle an UNSETTLED seat: `pending` (mid-checkout) and `reserved` (an
+      // organiser hold) alike. A staff comp is an unambiguous decision to give
+      // this person a free seat, so leaving the hold would keep them owing the
+      // full price on a ticket the organiser believes they have just been given.
+      //
+      // The `.in()` on the UPDATE is an optimistic lock, and it is load-bearing:
+      // without it, a Stripe webhook confirming this row between the select and
+      // the update would be overwritten to price_cents 0, erasing the record of
+      // a payment the recipient actually made.
+      //
+      // DELIBERATE NON-CHANGE: `notify` still fires only when a ticket was
+      // newly created (`notify && !already`), so promoting a hold sends no
+      // email. Emailing on promotion is arguably right (their outstanding
+      // balance just vanished) but that is an outbound-comms product decision,
+      // not part of this double-seat fix, and it would mail real members on the
+      // first deploy. Recorded as a follow-up rather than smuggled in here.
+      if (isUnsettledTicketStatus(existing.status)) {
         await supabase.from('event_tickets')
           .update({ status: 'confirmed', price_cents: 0, updated_at: new Date().toISOString() })
           .eq('id', existing.id)
+          .in('status', UNSETTLED_TICKET_STATUSES)
       }
     } else {
       // ---- Insert a free confirmed ticket (bypasses capacity, like the claim flow) ----

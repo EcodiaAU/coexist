@@ -185,6 +185,34 @@ export const TERMINAL_GONE_TICKET_STATUSES = ['cancelled', 'refunded'] as const
  */
 export const RESOLVING_TICKET_STATUSES = ['pending', 'reserved'] as const
 
+/**
+ * The same set under its SERVER-side reading: live, but the money is not in.
+ *
+ * `RESOLVING` names what a watching surface does (keep polling). `UNSETTLED`
+ * names what is true of the seat (taken, unpaid), which is what a server
+ * decision turns on: this is the set a comp may promote to confirmed, and the
+ * set the Stripe webhook confirms in place. One array, two readings, so the two
+ * halves of the codebase cannot drift apart over which statuses are unpaid.
+ */
+export const UNSETTLED_TICKET_STATUSES = RESOLVING_TICKET_STATUSES
+
+/**
+ * A ticket that still EXISTS for this person on this event: not terminal.
+ *
+ * DERIVED from `TICKET_STATUSES` minus `TERMINAL_GONE_TICKET_STATUSES` rather
+ * than spelled out, so a seventh status is live unless explicitly declared
+ * gone. The failure direction is deliberate: an unrecognised status counts as
+ * "they already hold a ticket", so an idempotency lookup reuses the row instead
+ * of inserting a second seat.
+ *
+ * The Deno twin at `supabase/functions/_shared/ticket-status.ts` derives this
+ * identically, and `src/test/ticket-status-query-sets.test.ts` fails the build
+ * if the two ever disagree.
+ */
+export const LIVE_TICKET_STATUSES = TICKET_STATUSES.filter(
+  (s): s is TicketStatus => !(TERMINAL_GONE_TICKET_STATUSES as readonly string[]).includes(s),
+)
+
 interface TicketStatusPresentation {
   /** Dense label for a badge pill (leader panel, ticket cards). */
   badgeLabel: string

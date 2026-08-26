@@ -16,7 +16,8 @@
  *          issue a Stripe refund. The existing charge.refunded webhook then sets
  *          status='refunded', reconciles registration + campout chat, and emails
  *          a refund confirmation. We also defensively mark it refunded + reconcile.
- *        - free / comp / pending: mark 'cancelled' and reconcile.
+ *        - unpaid (free, comp, pending, or a reserved organiser hold):
+ *          mark 'cancelled' and reconcile.
  *   The per-attendee "event cancelled" email is still sent by the caller
  *   (useCancelEvent) so registered attendees who never held a ticket are told too.
  *
@@ -28,6 +29,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { withSentry } from '../_shared/sentry.ts'
+import { LIVE_TICKET_STATUSES } from '../_shared/ticket-status.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2024-04-10' })
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -94,18 +96,33 @@ Deno.serve(withSentry('cancel-event', async (req: Request) => {
       }
     }
 
-    // ---- Refund paid / cancel free for every live ticket ----
+    // ---- Refund paid / cancel unpaid for every LIVE ticket ----
+    // LIVE, not a hand-written list. The inline
+    // `['pending', 'confirmed', 'checked_in']` this replaces was written before
+    // `reserved` existed, so cancelling an event left every organiser hold
+    // untouched: the seat stayed counted against capacity,
+    // `reconcile_ticket_membership` never ran for that person, and My Tickets
+    // kept telling them "Spot held for you. Pay $X to confirm." for an event
+    // that no longer exists.
     const { data: tickets } = await supabase
       .from('event_tickets')
       .select('id, status, price_cents, stripe_payment_intent_id, user_id')
       .eq('event_id', evt.id)
-      .in('status', ['pending', 'confirmed', 'checked_in'])
+      .in('status', LIVE_TICKET_STATUSES)
 
     let refunded = 0
     let cancelled = 0
     let failed = 0
 
     for (const t of tickets ?? []) {
+      // A `reserved` hold is priced but UNPAID, so it belongs on the cancel
+      // branch and there is nothing to refund. That is structural, not an
+      // assumption: `stripe_payment_intent_id` is written by the SAME update
+      // that flips the row off `reserved` (stripe-webhook confirms
+      // `.in(['pending', 'reserved'])` and sets the intent in that one write),
+      // and create-checkout's held-row reuse patches only ticket_type/quantity/
+      // answers. A row cannot be `reserved` AND carry an intent. Probed
+      // 2026-08-26: all 4 live reserved rows are priced at $70 with 0 intents.
       const isPaid = !!t.stripe_payment_intent_id && (t.price_cents ?? 0) > 0 &&
         (t.status === 'confirmed' || t.status === 'checked_in')
       try {
@@ -119,14 +136,14 @@ Deno.serve(withSentry('cancel-event', async (req: Request) => {
           await supabase.from('event_tickets')
             .update({ status: 'refunded', updated_at: new Date().toISOString() })
             .eq('id', t.id)
-            .in('status', ['confirmed', 'checked_in', 'pending'])
+            .in('status', LIVE_TICKET_STATUSES) // optimistic lock: skip a row that already settled
           await supabase.rpc('reconcile_ticket_membership', { p_event: evt.id, p_user: t.user_id })
           refunded++
         } else {
           await supabase.from('event_tickets')
             .update({ status: 'cancelled', updated_at: new Date().toISOString() })
             .eq('id', t.id)
-            .in('status', ['pending', 'confirmed', 'checked_in'])
+            .in('status', LIVE_TICKET_STATUSES) // optimistic lock: skip a row that already settled
           await supabase.rpc('reconcile_ticket_membership', { p_event: evt.id, p_user: t.user_id })
           cancelled++
         }
