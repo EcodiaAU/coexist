@@ -28,6 +28,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { withSentry } from '../_shared/sentry.ts'
+import { reportInvokeError } from '../_shared/invoke-report.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2024-04-10' })
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -174,7 +175,7 @@ Deno.serve(withSentry('self-service-ticket', async (req: Request) => {
       // The recipient may not have an account yet, so this cannot go through the
       // userId-keyed send-email path. Address it to the raw email instead.
       try {
-        await service.functions.invoke('send-email', {
+        const { error: invokeErr } = await service.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
           body: {
             type: 'ticket_transfer_offer',
@@ -198,6 +199,7 @@ Deno.serve(withSentry('self-service-ticket', async (req: Request) => {
             }],
           },
         })
+        await reportInvokeError('self-service-ticket', 'send-email', invokeErr)
       } catch (err) {
         console.error('[self-service] transfer offer email failed:', (err as Error).message)
       }
@@ -236,7 +238,7 @@ Deno.serve(withSentry('self-service-ticket', async (req: Request) => {
       try {
         const { data: evt } = await service
           .from('events').select('title, date_start, address').eq('id', claimed.event_id).single()
-        await service.functions.invoke('send-email', {
+        const { error: invokeErr } = await service.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
           body: {
             type: 'ticket_transferred',
@@ -252,6 +254,7 @@ Deno.serve(withSentry('self-service-ticket', async (req: Request) => {
             },
           },
         })
+        await reportInvokeError('self-service-ticket', 'send-email', invokeErr)
       } catch (err) {
         console.error('[self-service] handover notice failed:', (err as Error).message)
       }

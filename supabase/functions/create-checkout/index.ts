@@ -15,6 +15,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { withSentry } from '../_shared/sentry.ts'
+import { reportInvokeError } from '../_shared/invoke-report.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   apiVersion: '2024-04-10',
@@ -706,7 +707,7 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
               .select('ticket_code, quantity')
               .eq('id', ticketId)
               .single()
-            await supabase.functions.invoke('send-email', {
+            const { error: invokeErr } = await supabase.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
               body: {
                 type: 'ticket_confirmation',
@@ -726,6 +727,7 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
                 },
               },
             })
+            await reportInvokeError('create-checkout', 'send-email', invokeErr)
           } catch (err) {
             console.error('[create-checkout] comp confirmation email failed:', (err as Error).message)
           }

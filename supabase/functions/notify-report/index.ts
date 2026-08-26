@@ -2,6 +2,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
 import { sanitizeReportReason } from '../_shared/d3-guards.ts'
+import { reportInvokeError } from '../_shared/invoke-report.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -152,8 +153,7 @@ Deno.serve(withSentry('notify-report', async (req) => {
 
     // Also send push notifications to staff
     try {
-      await supabase.functions.invoke('send-push', {
-    headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}` },
+      const { error: invokeErr } = await supabase.functions.invoke('send-push', {
         // supabase-js >= 2.112.2 drops the Authorization header when the project
         // key is new-format (sb_secret_), so send-push answers a silent 401. Set it
         // explicitly. patterns/unpinned-cdn-import-plus-key-format-migration-is-a-two-input-latent-bug-2026-08-26.md
@@ -165,6 +165,7 @@ Deno.serve(withSentry('notify-report', async (req) => {
           data: { type: 'report_alert', route: '/admin/moderation' },
         },
       })
+      await reportInvokeError('notify-report', 'send-push', invokeErr)
     } catch (pushErr) {
       // Push is best-effort - don't fail the function
       console.error('Push notification failed:', pushErr)

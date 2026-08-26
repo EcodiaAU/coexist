@@ -17,6 +17,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import { reportInvokeError } from '../_shared/invoke-report.ts'
 import {
   LIVE_TICKET_STATUSES,
   UNSETTLED_TICKET_STATUSES,
@@ -238,7 +239,7 @@ Deno.serve(withSentry('grant-event-ticket', async (req: Request) => {
         }
       }
       try {
-        await supabase.functions.invoke('send-email', {
+        const { error: invokeErr } = await supabase.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
           body: {
             type: 'ticket_confirmation',
@@ -258,6 +259,7 @@ Deno.serve(withSentry('grant-event-ticket', async (req: Request) => {
             },
           },
         })
+        await reportInvokeError('grant-event-ticket', 'send-email', invokeErr)
       } catch (err) {
         console.error('[grant] send-email failed:', (err as Error).message)
       }

@@ -15,6 +15,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { withSentry } from '../_shared/sentry.ts'
+import { reportInvokeError } from '../_shared/invoke-report.ts'
 import {
   notifyTicketRefund,
   type RefundNotifyClient,
@@ -111,7 +112,7 @@ async function sendDonationReceipt(
 ) {
   if (!opts.userId && !opts.toEmail) return
   try {
-    await supabase.functions.invoke('send-email', {
+    const { error: invokeErr } = await supabase.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
       body: {
         type: 'donation_receipt',
@@ -120,6 +121,7 @@ async function sendDonationReceipt(
         data: opts.data,
       },
     })
+    await reportInvokeError('stripe-webhook', 'send-email', invokeErr)
   } catch (err) {
     console.error('[stripe-webhook] donation receipt email failed:', (err as Error).message)
   }

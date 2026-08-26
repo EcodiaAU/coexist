@@ -33,6 +33,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import { reportInvokeError } from '../_shared/invoke-report.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -178,7 +179,7 @@ Deno.serve(withSentry('transfer-event-ticket', async (req: Request) => {
               .from('events').select('title').eq('id', r.from_event_id).maybeSingle()
             fromTitle = (fromEvt?.title as string) ?? ''
           }
-          await supabase.functions.invoke('send-email', {
+          const { error: invokeErr } = await supabase.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
             body: {
               type: 'ticket_transferred',
@@ -194,6 +195,7 @@ Deno.serve(withSentry('transfer-event-ticket', async (req: Request) => {
               },
             },
           })
+          await reportInvokeError('transfer-event-ticket', 'send-email', invokeErr)
         } catch (err) {
           // A failed email must not roll back a completed move.
           console.error('[transfer] send-email failed:', (err as Error).message)
