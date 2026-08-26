@@ -141,6 +141,16 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     subject: (d) => `${d.from_name} is passing you their ticket to ${d.event_title}`,
   },
 
+  // A ticket refund is not a merch refund. `refund_confirmation` says
+  // "order #45e658d2" and never names the event, which is what a refunded
+  // member actually needs to recognise. Kept OUT of TYPE_TO_PREF_KEY on
+  // purpose: money moving is operational, not a notification preference.
+  ticket_refunded: {
+    category: 'transactional',
+    description: 'Event ticket refunded. Data: { name, event_title, event_date, event_location, ticket_code, refund_amount, currency }',
+    subject: (d) => `Refund processed: ${d.event_title}`,
+  },
+
   collective_application: {
     category: 'transactional',
     description: 'New collective application notification. Data: { applicant_name, applicant_email, roles, location }',
@@ -186,7 +196,8 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
  * is respected on every delivery channel rather than push only.
  *
  * Types absent from this map (welcome, password_reset, donation_receipt,
- * order_confirmation, order_shipped, refund_confirmation, payment_failed,
+ * order_confirmation, order_shipped, refund_confirmation, ticket_refunded,
+ * payment_failed,
  * subscription_cancelled, data-export-request, collective_application) are
  * operational and always send. Marketing-category types are gated separately
  * by profiles.marketing_opt_in further down.
@@ -782,6 +793,22 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
       p('Your recurring donation has been cancelled. Thank you for the support you\'ve given - every contribution made a real impact.') +
       p('If you\'d ever like to support us again, even a one-time donation makes a difference.'),
     footerCta: { label: 'Make a Donation', url: d.donate_url as string || `${APP_URL}/donate` },
+  }),
+
+  ticket_refunded: (d) => emailShell({
+    heroTitle: 'Refund processed',
+    heroSubtitle: d.event_title as string,
+    body: greeting(d.name) +
+      p(`Your ticket to <strong>${d.event_title}</strong> has been refunded.`) +
+      infoCard([
+        ['Event', d.event_title],
+        ...(d.event_date ? [['Date', d.event_date] as [string, unknown]] : []),
+        ...(d.event_location ? [['Location', d.event_location] as [string, unknown]] : []),
+        ...(d.ticket_code ? [['Ticket code', d.ticket_code] as [string, unknown]] : []),
+        ['Refunded', `${d.refund_amount} ${d.currency || 'AUD'}`],
+      ]) +
+      p('The money goes back to the card you paid with. Banks usually show it within 5 to 10 business days.') +
+      p('Your spot has been released and you are no longer on the list for this one. If that is not what you expected, reply to this email and we will look into it.'),
   }),
 
   refund_confirmation: (d) => emailShell({

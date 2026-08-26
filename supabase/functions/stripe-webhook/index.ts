@@ -15,6 +15,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { withSentry } from '../_shared/sentry.ts'
+import {
+  notifyTicketRefund,
+  type RefundNotifyClient,
+} from '../_shared/ticket-refund-notify.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   apiVersion: '2024-04-10',
@@ -24,19 +28,39 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 // ── Helpers ──
 
+/**
+ * Invoke send-email and REPORT what happened. It used to swallow every outcome
+ * and return void, so a caller could not tell a delivered email from a 401 and
+ * had no basis to retry. send-email answers in three shapes:
+ *   - non-2xx (invoke sets `error`)            -> a real failure, retryable.
+ *   - 200 { success: true }                    -> delivered.
+ *   - 200 { success: false } / { skipped }     -> a DELIBERATE non-send
+ *     (opt-out, preference off, admin-disabled template). Not retryable.
+ * Collapsing the last two into one boolean is how a suppressed send becomes an
+ * infinite retry, and how a failed send becomes a silent success.
+ */
 async function sendTemplateEmail(
   supabase: ReturnType<typeof createClient>,
   type: string,
   userId: string,
   data: Record<string, unknown>,
-) {
+): Promise<{ ok: boolean; suppressed: boolean }> {
   try {
-    await supabase.functions.invoke('send-email', {
+    const { data: res, error } = await supabase.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
       body: { type, userId, data },
     })
+    if (error) {
+      console.error(`[stripe-webhook] send-email (${type}) failed:`, (error as Error).message)
+      return { ok: false, suppressed: false }
+    }
+    const body = res as { success?: boolean; skipped?: boolean; reason?: string } | null
+    if (body?.success === true) return { ok: true, suppressed: false }
+    console.warn(`[stripe-webhook] send-email (${type}) did not send:`, JSON.stringify(body))
+    return { ok: false, suppressed: true }
   } catch (err) {
     console.error(`[stripe-webhook] send-email (${type}) failed:`, (err as Error).message)
+    return { ok: false, suppressed: false }
   }
 }
 
@@ -865,32 +889,43 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
         // Try event ticket refund first
         const { data: refundTicket } = await supabase
           .from('event_tickets')
-          .select('id, event_id, user_id')
+          .select('id, event_id, user_id, ticket_code')
           .eq('stripe_payment_intent_id', paymentIntentId)
           .maybeSingle()
 
         if (refundTicket) {
-          await supabase
-            .from('event_tickets')
-            .update({ status: 'refunded', updated_at: new Date().toISOString() })
-            .eq('id', refundTicket.id)
-
           // Registration + campout chat membership are reconciled by the
           // reconcile_ticket_membership DB trigger on event_tickets (dupe-aware:
           // it only cancels the registration / removes from chat when NO valid
           // ticket remains). Doing it here as well caused the dupe bug where
           // refunding one of a buyer's duplicate tickets evicted them entirely.
           // Migration 20260628000000_ticket_membership_enforcement.
+          //
+          // The member is told HERE and nowhere else. revoke-event-ticket (the
+          // organiser button), self-service-ticket (the member refunding their
+          // own) and a refund issued by hand in the Stripe dashboard all end up
+          // at charge.refunded, and this is the only one of those points where
+          // Stripe has CONFIRMED the money moved rather than us having asked.
+          // Idempotence lives in event_tickets.refund_notified_at, claimed by a
+          // conditional UPDATE, so a Stripe retry cannot double-send.
+          // See _shared/ticket-refund-notify.ts.
+          const notified = await notifyTicketRefund(
+            {
+              db: supabase as unknown as RefundNotifyClient,
+              sendEmail: (email) =>
+                sendTemplateEmail(supabase, email.type, email.userId, email.data),
+            },
+            {
+              ticketId: refundTicket.id,
+              eventId: refundTicket.event_id,
+              userId: refundTicket.user_id,
+              ticketCode: (refundTicket.ticket_code as string | null) ?? null,
+              amountRefundedCents: charge.amount_refunded ?? 0,
+              nowIso: new Date().toISOString(),
+            },
+          )
 
-          const refundAmount = (charge.amount_refunded ?? 0) / 100
-          await sendTemplateEmail(supabase, 'refund_confirmation', refundTicket.user_id, {
-            name: '',
-            order_id: refundTicket.id.slice(0, 8),
-            refund_amount: refundAmount.toFixed(2),
-            currency: 'AUD',
-          })
-
-          console.log('Event ticket refunded:', refundTicket.id)
+          console.log('Event ticket refunded:', refundTicket.id, 'notify:', notified.outcome)
           break
         }
 
