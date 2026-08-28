@@ -94,14 +94,14 @@ export function DietaryGate() {
           .eq('user_id', user.id)
           // Which statuses count as a live seat is defined once in @/lib/dietary
           // (LIVE_TICKET_STATUSES) so this gate and its test cannot drift apart.
-          .in('status', LIVE_TICKET_STATUSES as unknown as string[])
+          .in('status', LIVE_TICKET_STATUSES)
           .eq('events.is_ticketed', true)
           .gte('events.date_start', nowIso),
         supabase
           .from('event_registrations')
           .select('id, events!inner(id)')
           .eq('user_id', user.id)
-          .in('status', LIVE_REGISTRATION_STATUSES as unknown as string[])
+          .in('status', LIVE_REGISTRATION_STATUSES)
           .eq('events.is_ticketed', true)
           .gte('events.date_start', nowIso),
       ])
