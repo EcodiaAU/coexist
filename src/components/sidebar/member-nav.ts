@@ -8,6 +8,8 @@ import {
   MessageCircle,
   Home,
   Sparkles,
+  HeartHandshake,
+  Sprout,
 } from 'lucide-react'
 import { createElement } from 'react'
 import { FEATURE_MEMBERSHIPS } from '@/lib/flags'
@@ -38,6 +40,11 @@ export const memberNavCategories: NavCategory[] = [
       ...(FEATURE_MEMBERSHIPS
         ? [{ label: 'Membership', path: '/membership', icon: icon(Sparkles) }]
         : []),
+      // Feel Good / Do Good (Kurt Jones framing, 2026-08-27): look after
+      // yourself, then go and do something. They sit above Shop/Donate because
+      // they cost the member nothing.
+      { label: 'Feel Good', path: '/feel-good', icon: icon(HeartHandshake) },
+      { label: 'Do Good', path: '/do-good', icon: icon(Sprout) },
       { label: 'Shop', path: '/shop', icon: icon(ShoppingBag) },
       { label: 'Donate', path: '/donate', icon: icon(Heart) },
       { label: 'Leadership Opportunities', path: '/leadership', icon: icon(Users) },

@@ -628,7 +628,7 @@ export function CollectiveMap({ className }: CollectiveMapProps) {
             exit={{ y: 30, opacity: 0 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
-            <div data-eos-id="src/components/collective-map.tsx#46" className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
+            <div data-eos-id="src/components/collective-map.tsx#46" className="flex gap-2 overflow-x-auto hide-scrollbar pb-0.5">
               {collectives.map((c) => (
                 <button data-eos-id="src/components/collective-map.tsx#47"
                   key={c.id}

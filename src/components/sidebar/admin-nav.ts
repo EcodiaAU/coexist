@@ -15,6 +15,7 @@ import {
   Leaf,
   Image as ImageIcon,
   Sparkles,
+  HeartHandshake,
 } from 'lucide-react'
 import { createElement } from 'react'
 import { FEATURE_MEMBERSHIPS } from '@/lib/flags'
@@ -74,6 +75,9 @@ export const adminNavCategories: NavCategory[] = [
     labelColor: 'text-secondary-700',
     dotColor: 'bg-secondary-600',
     items: [
+      // Feel Good (support lines) + Do Good (other orgs to get involved with).
+      // Staff-editable content, so it sits in Settings next to the other CMS.
+      { label: 'Feel Good & Do Good', path: '/admin/good', icon: icon(HeartHandshake), capability: 'manage_system' },
       { label: 'Organisational Policies', path: '/admin/legal-pages', icon: icon(FileText), capability: 'manage_system' },
       { label: 'Applications', path: '/admin/applications', icon: icon(ClipboardList), capability: 'manage_users' },
       // Partners admin config hidden until the public partners page is back.

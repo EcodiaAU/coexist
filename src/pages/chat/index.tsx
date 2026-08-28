@@ -67,15 +67,19 @@ function cleanChannelName(name: string): string {
 }
 
 /* ------------------------------------------------------------------ */
-/*  ChatTile - full-bleed image tile (matches the homepage events cards) */
+/*  ChatRow - compact list row                                         */
 /* ------------------------------------------------------------------ */
 
-/** A single conversation rendered as a full-bleed tile: cover imagery (or a
-    colour-coded nature gradient when the entity carries no image) fills the
-    tile, a dark bottom-up gradient keeps text legible, and the title + meta
-    sit over the image. This is the same composition as Card.Overlay on the
-    homepage events sections, so chat reads as imagery-first, not a UI list. */
-function ChatTile({
+/** A single conversation as a LIST ROW, not a card and not a tile.
+ *
+ *  History (Tate 2026-08-27): this list started as bordered white cards, became
+ *  full-bleed square image tiles (707b8eb1), and is now rows again at roughly
+ *  the original height. The format is deliberately NOT the original card: no
+ *  per-row box, border or shadow, a rounded-square cover thumbnail instead of a
+ *  small avatar, hairline dividers doing the separating, and the unread count
+ *  pulled out to the right edge where a messaging list expects it. Imagery is
+ *  kept from the tile era, just scaled down to a thumbnail. */
+function ChatRow({
   to,
   ariaLabel,
   image,
@@ -83,10 +87,12 @@ function ChatTile({
   positionX,
   positionY,
   gradientClass,
-  watermark,
+  fallbackIcon,
   hasUnread,
-  badge,
-  children,
+  unread,
+  locked,
+  title,
+  meta,
 }: {
   to: string
   ariaLabel: string
@@ -95,10 +101,12 @@ function ChatTile({
   positionX?: number | null
   positionY?: number | null
   gradientClass?: string
-  watermark?: ReactNode
+  fallbackIcon?: ReactNode
   hasUnread?: boolean
-  badge?: ReactNode
-  children: ReactNode
+  unread?: number
+  locked?: boolean
+  title: string
+  meta?: ReactNode
 }) {
   const shouldReduceMotion = useReducedMotion()
 
@@ -108,49 +116,72 @@ function ChatTile({
         to={to}
         aria-label={ariaLabel}
         className={cn(
-          'group relative block w-full overflow-hidden rounded-md shadow-sm',
-          'aspect-square transition-transform duration-200 active:scale-[0.98]',
-          hasUnread && 'ring-2 ring-primary-400',
+          'group flex items-center gap-3.5 py-3 px-1',
+          'transition-colors duration-150 active:bg-neutral-50',
         )}
       >
-        {image ? (
-          <OptimizedImage
-            src={image}
-            alt={imageAlt ?? ''}
-            aspectRatio="1/1"
-            wrapperClassName="absolute inset-0"
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="absolute inset-0"
-            imgStyle={coverImagePositionStyle(positionX, positionY)}
-          />
-        ) : (
-          <div className={cn('absolute inset-0', gradientClass ?? 'bg-gradient-to-br from-primary-600 to-moss-700')} aria-hidden="true" />
-        )}
-
-        {/* Large low-opacity nature mark for image-less tiles */}
-        {!image && watermark && (
-          <div className="absolute -right-4 -top-4 text-white/10 pointer-events-none" aria-hidden="true">
-            {watermark}
-          </div>
-        )}
-
-        {/* Legibility gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" aria-hidden="true" />
-
-        {/* Top-right badge slot (unread count / lock) */}
-        {badge && (
-          <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
-            {badge}
-          </div>
-        )}
-
-        {/* Bottom overlay content (title + meta) */}
-        <div className="absolute inset-0 flex flex-col justify-end p-4">
-          {children}
+        {/* Cover thumbnail. Rounded square, not a circle: these are places, not
+            people, and the square keeps the cover photography readable. */}
+        <div className="relative h-[52px] w-[52px] shrink-0 overflow-hidden rounded-lg">
+          {image ? (
+            <OptimizedImage
+              src={image}
+              alt={imageAlt ?? ''}
+              aspectRatio="1/1"
+              wrapperClassName="absolute inset-0"
+              sizes="52px"
+              className="absolute inset-0"
+              imgStyle={coverImagePositionStyle(positionX, positionY)}
+            />
+          ) : (
+            <div
+              className={cn(
+                'absolute inset-0 flex items-center justify-center',
+                gradientClass ?? 'bg-gradient-to-br from-primary-600 to-moss-700',
+              )}
+              aria-hidden="true"
+            >
+              {fallbackIcon}
+            </div>
+          )}
+          {locked && (
+            <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-tl-md bg-black/55">
+              <Lock size={9} strokeWidth={2.5} className="text-white" />
+            </span>
+          )}
         </div>
+
+        {/* Title + meta */}
+        <div className="min-w-0 flex-1">
+          <p
+            className={cn(
+              'truncate text-[15px] leading-snug',
+              hasUnread ? 'font-bold text-neutral-900' : 'font-semibold text-neutral-800',
+            )}
+          >
+            {title}
+          </p>
+          {meta && (
+            <div className="mt-0.5 flex items-center gap-2 text-[12px] font-medium text-neutral-500">
+              {meta}
+            </div>
+          )}
+        </div>
+
+        {/* Unread, at the right edge where a messaging list puts it */}
+        {hasUnread && (
+          <span className="ml-1 flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-primary-600 px-1.5 text-[11px] font-bold tabular-nums text-white">
+            {(unread ?? 0) > 99 ? '99+' : unread}
+          </span>
+        )}
       </Link>
     </motion.div>
   )
+}
+
+/** Dot separator between meta fragments. */
+function MetaDot() {
+  return <span className="h-1 w-1 shrink-0 rounded-full bg-neutral-300" aria-hidden="true" />
 }
 
 /* ------------------------------------------------------------------ */
@@ -164,7 +195,7 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
   // Campout chats are open to ticket holders, not staff-gated, so they skip
   // the lock badge and the "Staff only" caption the staff channels carry.
   const isCampout = channel.type === 'campout'
-  // Campout cards show WHEN the campout is (Tate 2026-08-17) so members can tell
+  // Campout rows show WHEN the campout is (Tate 2026-08-17) so members can tell
   // them apart at a glance. Multi-day campouts render a start-to-end range;
   // single-day render just the day. Dates are the event's stored wall-clock, so
   // they go through the floating-local date-format helpers. Staff/carpool
@@ -178,49 +209,33 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
       : null
 
   return (
-    <ChatTile
+    <ChatRow
       to={`/chat/channel/${channel.id}`}
       ariaLabel={channel.name}
       image={channel.cover_image_url}
       positionX={channel.cover_image_position_x}
       positionY={channel.cover_image_position_y}
       gradientClass={config.grad}
-      watermark={<Icon size={132} strokeWidth={1} />}
+      fallbackIcon={<Icon size={22} strokeWidth={1.8} className="text-white/85" />}
       hasUnread={hasUnread}
-      badge={
+      unread={unread}
+      locked={!isCampout}
+      title={cleanChannelName(channel.name)}
+      meta={
         <>
-          {!isCampout && (
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-              <Lock size={12} strokeWidth={2} className="text-white" />
+          <span className="shrink-0">{config.label}</span>
+          <MetaDot />
+          {campoutDate ? (
+            <span className="flex min-w-0 items-center gap-1 truncate">
+              <Calendar size={11} strokeWidth={2} className="shrink-0" />
+              {campoutDate}
             </span>
-          )}
-          {hasUnread && (
-            <span className="flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-white px-2 text-xs font-bold text-primary-700">
-              {unread > 99 ? '99+' : unread}
-            </span>
+          ) : (
+            <span className="truncate">{isCampout ? 'Group chat' : 'Staff only'}</span>
           )}
         </>
       }
-    >
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="inline-flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm px-2 py-0.5 text-[11px] font-semibold text-white">
-          <Icon size={11} strokeWidth={2} />
-          {config.label}
-        </span>
-        <span className="text-[11px] font-medium text-white/75">
-          {isCampout ? 'Group chat' : 'Staff only'}
-        </span>
-      </div>
-      <h3 className="font-heading text-lg font-bold text-white leading-tight drop-shadow-sm line-clamp-2">
-        {cleanChannelName(channel.name)}
-      </h3>
-      {campoutDate && (
-        <div className="flex items-center gap-1.5 mt-1.5 text-white/85">
-          <Calendar size={12} strokeWidth={2} className="shrink-0" />
-          <span className="text-xs font-medium">{campoutDate}</span>
-        </div>
-      )}
-    </ChatTile>
+    />
   )
 }
 
@@ -247,40 +262,37 @@ function CollectiveChatRow({
   index: number
 }) {
   const hasUnread = unread > 0
+  const place = collective.region ?? collective.state
 
   return (
-    <ChatTile
+    <ChatRow
       to={`/chat/${collectiveId}`}
       ariaLabel={collective.name}
       image={collective.cover_image_url}
       imageAlt={collective.name}
       gradientClass="bg-gradient-to-br from-primary-600 to-moss-700"
-      watermark={<Leaf size={132} strokeWidth={1} />}
+      fallbackIcon={<Leaf size={22} strokeWidth={1.8} className="text-white/85" />}
       hasUnread={hasUnread}
-      badge={
-        hasUnread ? (
-          <span className="flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-white px-2 text-xs font-bold text-primary-700">
-            {unread > 99 ? '99+' : unread}
+      unread={unread}
+      title={collective.name}
+      meta={
+        <>
+          <span className="flex shrink-0 items-center gap-1">
+            <Users size={11} strokeWidth={2} className="shrink-0" />
+            {collective.member_count}
           </span>
-        ) : null
+          {place && (
+            <>
+              <MetaDot />
+              <span className="flex min-w-0 items-center gap-1 truncate">
+                <MapPin size={11} strokeWidth={2} className="shrink-0" />
+                {place}
+              </span>
+            </>
+          )}
+        </>
       }
-    >
-      <h3 className="font-heading text-lg font-bold text-white leading-tight drop-shadow-sm line-clamp-2">
-        {collective.name}
-      </h3>
-      <div className="flex items-center gap-3 mt-1.5 text-white/85">
-        <span className="flex items-center gap-1 text-xs font-medium">
-          <Users size={12} strokeWidth={2} className="shrink-0" />
-          {collective.member_count}
-        </span>
-        {(collective.region || collective.state) && (
-          <span className="flex items-center gap-1 text-xs font-medium truncate">
-            <MapPin size={12} strokeWidth={2} className="shrink-0" />
-            {collective.region ?? collective.state}
-          </span>
-        )}
-      </div>
-    </ChatTile>
+    />
   )
 }
 
@@ -371,9 +383,15 @@ export default function ChatListPage() {
   if (showLoading) {
     return (
       <Page noBackground className="!px-0 bg-white">
-        <div className="px-4 lg:px-6 pt-14 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {Array.from({ length: 6 }, (_, i) => (
-            <div key={i} className="aspect-square rounded-md bg-neutral-100 animate-pulse" />
+        <div className="px-4 lg:px-6 pt-14 pb-4 max-w-2xl divide-y divide-neutral-100">
+          {Array.from({ length: 7 }, (_, i) => (
+            <div key={i} className="flex items-center gap-3.5 py-3 px-1">
+              <div className="h-[52px] w-[52px] shrink-0 rounded-lg bg-neutral-100 animate-pulse" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3.5 w-2/5 rounded bg-neutral-100 animate-pulse" />
+                <div className="h-3 w-1/4 rounded bg-neutral-100 animate-pulse" />
+              </div>
+            </div>
           ))}
         </div>
       </Page>
@@ -414,8 +432,8 @@ export default function ChatListPage() {
   }
 
   return (
-    <Page noBackground className="!px-0 bg-white">
-        <div className="px-4 lg:px-6">
+    <Page noBackground className="!px-0 bg-white" onRefresh={handleRefresh}>
+        <div className="px-4 lg:px-6 max-w-2xl">
             <motion.div
               className="pt-14 pb-6 space-y-6"
               variants={shouldReduceMotion ? undefined : stagger}
@@ -428,7 +446,7 @@ export default function ChatListPage() {
                 <motion.div variants={fadeUp}>
                   <SectionDivider icon={Tent} label="Campouts" />
                   <motion.div
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+                    className="divide-y divide-neutral-100"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"
@@ -450,7 +468,7 @@ export default function ChatListPage() {
                 <motion.div variants={fadeUp}>
                   <SectionDivider icon={Lock} label="Staff Channels" />
                   <motion.div
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+                    className="divide-y divide-neutral-100"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"
@@ -472,7 +490,7 @@ export default function ChatListPage() {
                 <motion.div variants={fadeUp}>
                   <SectionDivider icon={MessageCircle} label="Collectives" />
                   <motion.div
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+                    className="divide-y divide-neutral-100"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"
@@ -509,7 +527,7 @@ export default function ChatListPage() {
                 <motion.div variants={fadeUp}>
                   <SectionDivider icon={Shield} label="All Collectives" />
                   <motion.div
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+                    className="divide-y divide-neutral-100"
                     variants={shouldReduceMotion ? undefined : stagger}
                     initial="hidden"
                     animate="visible"

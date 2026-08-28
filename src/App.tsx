@@ -165,6 +165,7 @@ const AdminWorkflowsPage = lazy(() => import('@/pages/admin/workflows'))
 const AdminCreatePage = lazy(() => import('@/pages/admin/create'))
 const DevToolsPage = lazy(() => import('@/pages/admin/dev-tools'))
 const AdminPartnersPage = lazy(() => import('@/pages/admin/partners'))
+const AdminGoodPage = lazy(() => import('@/pages/admin/good'))
 const AdminChallengesPage = lazy(() => import('@/pages/admin/challenges'))
 const ModerationQueuePage = lazy(() => import('@/pages/admin/moderation/index'))
 const AdminContactsPage = lazy(() => import('@/pages/admin/contacts'))
@@ -189,6 +190,11 @@ const ContactPage = lazy(() => import('@/pages/contact'))
 const PartnersPage = lazy(() => import('@/pages/partners'))
 const LeadershipPage = lazy(() => import('@/pages/leadership'))
 const LeadACollectivePage = lazy(() => import('@/pages/lead-a-collective'))
+
+// Feel Good (mental-health support lines) + Do Good (other orgs to get involved
+// with). Kurt Jones framing, 2026-08-27.
+const FeelGoodPage = lazy(() => import('@/pages/feel-good'))
+const DoGoodPage = lazy(() => import('@/pages/do-good'))
 
 // Leader Dashboard & sub-pages
 const LeaderDashboardPage = lazy(() => import('@/pages/leader/index'))
@@ -483,6 +489,8 @@ function App() {
           <Route data-eos-id="src/App.tsx#129" path="/partners" element={<PartnersPage data-eos-id="src/App.tsx#130" />} />
           <Route data-eos-id="src/App.tsx#131" path="/leadership" element={<LeadershipPage data-eos-id="src/App.tsx#132" />} />
           <Route data-eos-id="src/App.tsx#133" path="/lead-a-collective" element={<LeadACollectivePage data-eos-id="src/App.tsx#134" />} />
+          <Route path="/feel-good" element={<FeelGoodPage />} />
+          <Route path="/do-good" element={<DoGoodPage />} />
           {FEATURE_MEMBERSHIPS && MembershipPage && (
             <Route path="/membership" element={<MembershipPage />} />
           )}
@@ -550,6 +558,7 @@ function App() {
             <Route data-eos-id="src/App.tsx#247" path="exports" element={<Navigate data-eos-id="src/App.tsx#248" to="/admin/insights#reports" replace />} />
             <Route data-eos-id="src/App.tsx#249" path="photos" element={<RequireCapability data-eos-id="src/App.tsx#250" cap="view_reports"><AdminPhotosPage data-eos-id="src/App.tsx#251" /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#252" path="shop" element={<RequireCapability data-eos-id="src/App.tsx#253" cap="manage_merch"><AdminMerchPage data-eos-id="src/App.tsx#254" /></RequireCapability>} />
+            <Route path="good" element={<RequireCapability cap="manage_system"><AdminGoodPage /></RequireCapability>} />
             <Route data-eos-id="src/App.tsx#255" path="partners" element={<RequireCapability data-eos-id="src/App.tsx#256" cap="manage_partners"><AdminPartnersPage data-eos-id="src/App.tsx#257" /></RequireCapability>} />
             {FEATURE_MEMBERSHIPS && AdminMembershipsPage && (
               <Route path="memberships" element={<RequireCapability cap="manage_membership"><AdminMembershipsPage /></RequireCapability>} />
