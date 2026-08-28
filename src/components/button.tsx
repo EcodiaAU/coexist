@@ -185,7 +185,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 size === 'lg' && 'w-5 h-5',
               )}
             />
-            {children && <span data-eos-id="src/components/button.tsx#5">{children}</span>}
+            {children && <span data-eos-id="src/components/button.tsx#5" className="whitespace-nowrap">{children}</span>}
           </>
         ) : state === 'success' ? (
           <>
@@ -196,7 +196,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 size === 'lg' && 'w-5 h-5',
               )}
             />
-            {children && <span data-eos-id="src/components/button.tsx#5">{children}</span>}
+            {children && <span data-eos-id="src/components/button.tsx#5" className="whitespace-nowrap">{children}</span>}
           </>
         ) : (
           <>
@@ -205,7 +205,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 {icon}
               </span>
             )}
-            {children && <span data-eos-id="src/components/button.tsx#7">{children}</span>}
+            {children && <span data-eos-id="src/components/button.tsx#7" className="whitespace-nowrap">{children}</span>}
           </>
         )}
       </motion.button>

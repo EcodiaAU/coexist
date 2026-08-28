@@ -481,8 +481,8 @@ export default function AdminGoodPage() {
         <Button
           onClick={() => { setEditing(null); setSheetOpen(true) }}
           className="w-full mb-4"
+          icon={<Plus size={15} />}
         >
-          <Plus size={15} />
           Add to {surface.label}
         </Button>
 
