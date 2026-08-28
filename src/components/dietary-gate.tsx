@@ -14,6 +14,7 @@ import {
   LIVE_TICKET_STATUSES,
   NO_DIETARY_SENTINEL,
   NO_MEDICAL_SENTINEL,
+  safetyGateHeading,
 } from '@/lib/dietary'
 
 /* ------------------------------------------------------------------ */
@@ -119,6 +120,9 @@ export function DietaryGate() {
   const needMedical = !!eligibility?.ticketed && medicalEmpty
   const needEmergency = !!eligibility?.ticketed && emergencyEmpty
   const show = candidate && (needDietary || needMedical || needEmergency)
+  // Named once and used for both the visible heading and the ariaLabel, so the
+  // screen-reader announcement and the heading can never disagree.
+  const heading = safetyGateHeading({ dietary: needDietary, medical: needMedical, emergency: needEmergency })
 
   // Body scroll-lock and keyboard avoidance are now owned by the Modal
   // primitive (Vaul + `keyboardAware` via useKeyboardHeight - the canonical
@@ -190,13 +194,7 @@ export function DietaryGate() {
       onClose={() => {}}
       dismissible={false}
       keyboardAware
-      ariaLabel={
-        needDietary && needMedical
-          ? 'A couple of details for your event'
-          : needMedical
-            ? 'Any medical needs or allergies?'
-            : 'Any dietary requirements?'
-      }
+      ariaLabel={heading}
     >
         <div data-eos-id="src/components/dietary-gate.tsx#3" className="px-6 pt-7 pb-6 space-y-5">
           <div data-eos-id="src/components/dietary-gate.tsx#4" className="flex flex-col items-center text-center gap-3">
@@ -204,11 +202,7 @@ export function DietaryGate() {
               <UtensilsCrossed data-eos-id="src/components/dietary-gate.tsx#6" size={22} className="text-primary-800" />
             </div>
             <h2 data-eos-id="src/components/dietary-gate.tsx#7" id="dietary-gate-title" className="font-heading text-xl font-bold text-neutral-900">
-              {needDietary && needMedical
-                ? 'A couple of details for your event'
-                : needMedical
-                  ? 'Any medical needs or allergies?'
-                  : 'Any dietary requirements?'}
+              {heading}
             </h2>
             <p data-eos-id="src/components/dietary-gate.tsx#8" className="text-sm text-neutral-500 leading-relaxed">
               You have a ticket to an upcoming event. We cater for camp-outs and

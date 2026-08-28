@@ -72,3 +72,68 @@ export const CAMPOUT_ACTIVITY_TYPE = 'camp_out'
 export function isCampoutActivity(activityType: string | null | undefined): boolean {
   return activityType === CAMPOUT_ACTIVITY_TYPE
 }
+
+/** The retreat safety set as the PUBLIC (guest) booking modal collects it.
+ *
+ *  One home for the shape, because TypeScript cannot catch the thing that
+ *  broke here. A handler typed `(r: {dietary, medical}) => void` is
+ *  structurally assignable to `onSubmit: (r: GuestSafetyAnswers) => void`:
+ *  accepting fewer properties than you are handed is legal. So 65646d56 added
+ *  the emergency contact to the modal and to event.tsx, campout-type.tsx kept
+ *  its two-field `book(reqs)` signature, the compiler stayed silent, and every
+ *  camp-out page booking posted an empty emergency contact into a server that
+ *  hard-requires one. The buyer filled the form, the server said it was blank,
+ *  and there was no way through. */
+export interface GuestSafetyAnswers {
+  dietary: string
+  medical: string
+  emergencyName: string
+  emergencyPhone: string
+  emergencyRelationship: string
+}
+
+/** Map collected answers onto the snake_case keys guest-ticket-checkout reads.
+ *
+ *  EVERY caller of that function builds its safety fields through here. The
+ *  point is that adding a field to the server gate is one edit in one place
+ *  instead of a hunt through call sites, and a caller that forgets cannot
+ *  compile a half-payload by hand. Pinned by safety-gate-coverage.test.ts,
+ *  which reads the page sources and fails if a fetch site builds these keys
+ *  itself. */
+export function guestSafetyPayload(answers: GuestSafetyAnswers) {
+  return {
+    dietary: answers.dietary,
+    medical: answers.medical,
+    emergency_name: answers.emergencyName,
+    emergency_phone: answers.emergencyPhone,
+    emergency_relationship: answers.emergencyRelationship,
+  }
+}
+
+/** Heading for the app-open safety gate, naming only what is actually asked.
+ *
+ *  The gate renders one to three field groups (dietary, medical, emergency
+ *  contact) and the heading has to match the body, because a heading that
+ *  names a field the body does not show reads as a broken form and teaches
+ *  people to distrust the prompt.
+ *
+ *  The case this exists for is emergency-contact-only. Measured 2026-08-28,
+ *  8 of the 10 upcoming-overnight seats with nobody to call had already
+ *  answered dietary and medical, so the single most common way this gate can
+ *  ever open is with the emergency-contact group alone. The heading it
+ *  previously fell through to was "Any dietary requirements?" over a body
+ *  holding no dietary field at all.
+ *
+ *  Shared with the ariaLabel so the screen-reader announcement and the
+ *  visible heading can never disagree. */
+export function safetyGateHeading(need: {
+  dietary: boolean
+  medical: boolean
+  emergency: boolean
+}): string {
+  const count = Number(need.dietary) + Number(need.medical) + Number(need.emergency)
+  if (count > 1) return 'A couple of details for your event'
+  if (need.emergency) return 'Who should we call in an emergency?'
+  if (need.medical) return 'Any medical needs or allergies?'
+  return 'Any dietary requirements?'
+}

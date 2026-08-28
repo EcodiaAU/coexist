@@ -100,7 +100,7 @@ import { ticketTermsCopy } from '@/lib/ticket-terms'
 import { CampoutRequirementsModal } from '@/components/campout-requirements-modal'
 import { TicketQuestionsModal } from '@/components/ticket-questions-modal'
 import { useEventTicketQuestions, type TicketAnswers } from '@/hooks/use-event-ticket-questions'
-import { hasEmergencyContact, isCampoutActivity } from '@/lib/dietary'
+import { hasEmergencyContact, isCampoutActivity, LIVE_TICKET_STATUSES } from '@/lib/dietary'
 import { useEventCarpools, type EventCarpoolBreakout } from '@/hooks/use-event-carpools'
 import { useSaveSeat } from '@/hooks/use-carpool'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
@@ -251,8 +251,6 @@ function InfoChip({
 /*  Ticket Sales Section (leaders/admins only)                         */
 /* ------------------------------------------------------------------ */
 
-const LIVE_TICKET_STATUSES = ['pending', 'confirmed', 'checked_in', 'reserved']
-
 function TicketSalesSection({
   eventId,
   accent,
@@ -283,7 +281,7 @@ function TicketSalesSection({
   const liveCountByUser = useMemo(() => {
     const m = new Map<string, number>()
     for (const t of tickets ?? []) {
-      if (LIVE_TICKET_STATUSES.includes(t.status as string)) {
+      if ((LIVE_TICKET_STATUSES as readonly string[]).includes(t.status as string)) {
         m.set(t.user_id as string, (m.get(t.user_id as string) ?? 0) + 1)
       }
     }
@@ -396,7 +394,7 @@ function TicketSalesSection({
             {tickets.map((t) => {
               const profile = t.profiles as unknown as { display_name: string; first_name: string | null; last_name: string | null; email: string } | null
               const label = attendeeName(profile, profile?.email ?? 'Unknown')
-              const isLive = LIVE_TICKET_STATUSES.includes(t.status as string)
+              const isLive = (LIVE_TICKET_STATUSES as readonly string[]).includes(t.status as string)
               const isDuplicate = isLive && (liveCountByUser.get(t.user_id as string) ?? 0) > 1
               const isPaid = !!(t as { stripe_payment_intent_id?: string | null }).stripe_payment_intent_id && (t.price_cents ?? 0) > 0
               return (
