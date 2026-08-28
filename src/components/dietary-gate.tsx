@@ -9,6 +9,9 @@ import { useToast } from '@/components/toast'
 import { Modal } from '@/components/modal'
 import {
   DIETARY_GATE_QUERY_KEY,
+  hasEmergencyContact,
+  LIVE_REGISTRATION_STATUSES,
+  LIVE_TICKET_STATUSES,
   NO_DIETARY_SENTINEL,
   NO_MEDICAL_SENTINEL,
 } from '@/lib/dietary'
@@ -59,8 +62,7 @@ export function DietaryGate() {
   const dietaryEmpty = !(profile?.dietary_requirements ?? '').trim()
   const medicalEmpty = !(profile?.medical_requirements ?? '').trim()
   // Both name and phone are needed for the contact to be reachable at all.
-  const emergencyEmpty = !(profile?.emergency_contact_name ?? '').trim()
-    || !(profile?.emergency_contact_phone ?? '').trim()
+  const emergencyEmpty = !hasEmergencyContact(profile)
 
   // Candidate = onboarded user, phone already on file (PhoneGate precedence:
   // that gate handles phone-less users and the two must never stack), and at
@@ -89,14 +91,16 @@ export function DietaryGate() {
           .from('event_tickets')
           .select('id, events!inner(id)')
           .eq('user_id', user.id)
-          .in('status', ['pending', 'confirmed', 'checked_in'])
+          // Which statuses count as a live seat is defined once in @/lib/dietary
+          // (LIVE_TICKET_STATUSES) so this gate and its test cannot drift apart.
+          .in('status', LIVE_TICKET_STATUSES as unknown as string[])
           .eq('events.is_ticketed', true)
           .gte('events.date_start', nowIso),
         supabase
           .from('event_registrations')
           .select('id, events!inner(id)')
           .eq('user_id', user.id)
-          .in('status', ['registered', 'attended'])
+          .in('status', LIVE_REGISTRATION_STATUSES as unknown as string[])
           .eq('events.is_ticketed', true)
           .gte('events.date_start', nowIso),
       ])

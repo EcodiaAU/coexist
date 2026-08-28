@@ -100,7 +100,7 @@ import { ticketTermsCopy } from '@/lib/ticket-terms'
 import { CampoutRequirementsModal } from '@/components/campout-requirements-modal'
 import { TicketQuestionsModal } from '@/components/ticket-questions-modal'
 import { useEventTicketQuestions, type TicketAnswers } from '@/hooks/use-event-ticket-questions'
-import { isCampoutActivity } from '@/lib/dietary'
+import { hasEmergencyContact, isCampoutActivity } from '@/lib/dietary'
 import { useEventCarpools, type EventCarpoolBreakout } from '@/hooks/use-event-carpools'
 import { useSaveSeat } from '@/hooks/use-carpool'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
@@ -559,8 +559,15 @@ export default function EventDetailPage() {
   const isCampoutEvent = isCampoutActivity(event?.activity_type ?? null)
   const dietaryMissing = !(profile?.dietary_requirements ?? '').trim()
   const medicalMissing = !(profile?.medical_requirements ?? '').trim()
+  // Emergency contact sits alongside dietary + medical in the pre-checkout gate.
+  // 65646d56 made it mandatory on the guest paths and in the app-open backstop
+  // but left this, the signed-in member's buy path, asking only for the other
+  // two, so a member could still reach Stripe with nobody to call. Both name
+  // and phone are needed for the contact to be reachable at all.
+  const emergencyMissing = !hasEmergencyContact(profile)
   const ticketNeedsDietary = isTicketed && dietaryMissing
   const ticketNeedsMedical = isTicketed && medicalMissing
+  const ticketNeedsEmergency = isTicketed && emergencyMissing
   const [showCampoutReqs, setShowCampoutReqs] = useState(false)
   const [showQuestionsModal, setShowQuestionsModal] = useState(false)
   const [pendingTicketTypeId, setPendingTicketTypeId] = useState<string | null>(null)
@@ -609,13 +616,13 @@ export default function EventDetailPage() {
   }, [ticketQuestions, doTicketCheckout])
 
   const beginTicketCheckout = useCallback((ticketTypeId: string) => {
-    if (user && (ticketNeedsDietary || ticketNeedsMedical)) {
+    if (user && (ticketNeedsDietary || ticketNeedsMedical || ticketNeedsEmergency)) {
       setPendingTicketTypeId(ticketTypeId)
       setShowCampoutReqs(true)
       return
     }
     proceedToCheckout(ticketTypeId)
-  }, [user, ticketNeedsDietary, ticketNeedsMedical, proceedToCheckout])
+  }, [user, ticketNeedsDietary, ticketNeedsMedical, ticketNeedsEmergency, proceedToCheckout])
 
   const [showCancelSheet, setShowCancelSheet] = useState(false)
   const [showCalendarSheet, setShowCalendarSheet] = useState(false)
@@ -2370,12 +2377,14 @@ export default function EventDetailPage() {
         />
       )}
 
-      {/* Camp-out dietary + medical capture, shown before checkout when the
-          buyer is missing either field. Blocks the purchase until answered. */}
+      {/* Dietary + medical + emergency-contact capture, shown before checkout
+          when the buyer is missing any of them. Blocks the purchase until
+          answered. */}
       <CampoutRequirementsModal
         open={showCampoutReqs}
         needDietary={ticketNeedsDietary}
         needMedical={ticketNeedsMedical}
+        needEmergency={ticketNeedsEmergency}
         isCampout={isCampoutEvent}
         onClose={() => { setShowCampoutReqs(false); setPendingTicketTypeId(null) }}
         onSaved={() => {

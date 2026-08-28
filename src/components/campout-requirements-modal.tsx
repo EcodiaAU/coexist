@@ -12,7 +12,7 @@ import { NO_DIETARY_SENTINEL, NO_MEDICAL_SENTINEL } from '@/lib/dietary'
 /*  Ticket requirements modal (captured at purchase)                   */
 /*                                                                     */
 /*  Shown before ANY ticket checkout when the buyer is missing         */
-/*  dietary and/or medical info. Dietary + medical/allergy info is     */
+/*  dietary, medical, and/or emergency-contact info. All three are     */
 /*  mandatory for every ticketed event (not just camp-outs) so leaders */
 /*  always have safety + catering data on file. It BLOCKS the purchase:*/
 /*  the buyer cannot reach Stripe checkout until every required field  */
@@ -29,16 +29,24 @@ interface Props {
   open: boolean
   needDietary: boolean
   needMedical: boolean
+  needEmergency: boolean
   isCampout: boolean
   onClose: () => void
   onSaved: () => void
 }
 
-export function CampoutRequirementsModal({ open, needDietary, needMedical, isCampout, onClose, onSaved }: Props) {
+export function CampoutRequirementsModal({ open, needDietary, needMedical, needEmergency, isCampout, onClose, onSaved }: Props) {
   const { user, refreshProfile } = useAuth()
   const { toast } = useToast()
   const [dietary, setDietary] = useState('')
   const [medical, setMedical] = useState('')
+  // Emergency contact. Deliberately NO "None" quick-fill, unlike dietary and
+  // medical: those have a legitimate none, a remote camp-out with nobody to
+  // call does not. Name AND phone are both required, because a contact you
+  // cannot ring is not a contact.
+  const [emName, setEmName] = useState('')
+  const [emPhone, setEmPhone] = useState('')
+  const [emRel, setEmRel] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -54,10 +62,31 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, isCam
       setError('Tell us your medical / allergy info, or tap "None"')
       return
     }
+    const emNameValue = emName.trim()
+    const emPhoneValue = emPhone.trim()
+    if (needEmergency && !emNameValue) {
+      setError('Give us an emergency contact name')
+      return
+    }
+    if (needEmergency && !emPhoneValue) {
+      setError('Give us a phone number for your emergency contact')
+      return
+    }
 
-    const updates: { dietary_requirements?: string; medical_requirements?: string } = {}
+    const updates: {
+      dietary_requirements?: string
+      medical_requirements?: string
+      emergency_contact_name?: string
+      emergency_contact_phone?: string
+      emergency_contact_relationship?: string
+    } = {}
     if (needDietary) updates.dietary_requirements = dietaryValue
     if (needMedical) updates.medical_requirements = medicalValue
+    if (needEmergency) {
+      updates.emergency_contact_name = emNameValue
+      updates.emergency_contact_phone = emPhoneValue
+      if (emRel.trim()) updates.emergency_contact_relationship = emRel.trim()
+    }
 
     setError(null)
     setSaving(true)
@@ -73,7 +102,15 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, isCam
       toast.error('Could not save. Please try again.')
       setSaving(false)
     }
-  }, [user, needDietary, needMedical, dietary, medical, refreshProfile, onSaved, toast])
+  }, [user, needDietary, needMedical, needEmergency, dietary, medical, emName, emPhone, emRel, refreshProfile, onSaved, toast])
+
+  // Name only the fields actually being asked for, so a buyer who already has
+  // dietary and medical on file is not told we need them again.
+  const neededLabel = [
+    needDietary && 'dietary',
+    needMedical && 'medical/allergy',
+    needEmergency && 'emergency contact',
+  ].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' info'
 
   return (
     <Modal
@@ -91,8 +128,8 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, isCam
             </h2>
             <p data-eos-id="src/components/campout-requirements-modal.tsx#8" className="text-sm text-neutral-500 leading-relaxed">
               {isCampout
-                ? 'Camp-outs are catered and remote, so our leaders need your dietary and medical/allergy info before you book. Only event leaders can see it.'
-                : 'Our leaders need your dietary and medical/allergy info before you book, so we can cater safely and be ready for allergies. Only event leaders can see it.'}
+                ? `Camp-outs are catered and remote, so our leaders need your ${neededLabel} before you book. Only event leaders can see it.`
+                : `Our leaders need your ${neededLabel} before you book, so we can cater safely and be ready in an emergency. Only event leaders can see it.`}
             </p>
           </div>
 
@@ -137,6 +174,33 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, isCam
               >
                 No medical needs or allergies
               </button>
+            </div>
+          )}
+
+          {needEmergency && (
+            <div data-eos-id="src/components/campout-requirements-modal.tsx#19" className="space-y-2.5">
+              <Input data-eos-id="src/components/campout-requirements-modal.tsx#20"
+                label="Emergency contact name"
+                value={emName}
+                onChange={(e) => { setEmName(e.target.value); if (error) setError(null) }}
+                placeholder="Who should we call?"
+                maxLength={120}
+              />
+              <Input data-eos-id="src/components/campout-requirements-modal.tsx#21"
+                type="tel"
+                label="Emergency contact phone"
+                value={emPhone}
+                onChange={(e) => { setEmPhone(e.target.value); if (error) setError(null) }}
+                placeholder="Their phone number"
+                maxLength={40}
+              />
+              <Input data-eos-id="src/components/campout-requirements-modal.tsx#22"
+                label="Relationship (optional)"
+                value={emRel}
+                onChange={(e) => { setEmRel(e.target.value); if (error) setError(null) }}
+                placeholder="e.g. Mum, partner, housemate"
+                maxLength={60}
+              />
             </div>
           )}
 
