@@ -522,18 +522,26 @@ export default function AdminGoodPage() {
                   )}
                 </div>
 
+                {/* The NAME wraps, the meta line truncates.
+                    Measured on the deployed page at 390px: a thumbnail, three
+                    action buttons and a Crisis chip left the text column about
+                    150px, so `truncate` cut every longer service to "Kids
+                    Helplin..." and "Suicide Call ...". A staff member cannot
+                    pick a row they cannot read, and the name is the only field
+                    that identifies it, so the name gets two lines and the
+                    number underneath keeps the single clipped line. */}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14px] font-semibold text-neutral-900">
-                    {String(row.name)}
+                  <p className="text-[14px] font-semibold leading-snug text-neutral-900">
+                    <span className="line-clamp-2">{String(row.name)}</span>
                     {surface.id === 'feel_good' && row.is_crisis ? (
-                      <span className="ml-2 rounded-full bg-coral-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-coral-600">
+                      <span className="mt-0.5 inline-block rounded-full bg-coral-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-coral-600">
                         Crisis
                       </span>
                     ) : null}
                   </p>
-                  <p className="truncate text-[12px] text-neutral-500 flex items-center gap-1">
-                    {surface.id === 'feel_good' ? <Phone size={10} /> : <LinkIcon size={10} />}
-                    {surface.subtitle(row)}
+                  <p className="mt-0.5 flex items-center gap-1 truncate text-[12px] text-neutral-500">
+                    {surface.id === 'feel_good' ? <Phone size={10} className="shrink-0" /> : <LinkIcon size={10} className="shrink-0" />}
+                    <span className="truncate">{surface.subtitle(row)}</span>
                   </p>
                 </div>
 
