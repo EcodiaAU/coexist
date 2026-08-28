@@ -11,6 +11,7 @@ import { OGMeta } from '@/components/og-meta'
 import { formatTime } from '@/lib/date-format'
 import { WebFooter } from '@/components/web-footer'
 import { CampoutGuestRequirementsModal } from '@/components/campout-guest-requirements-modal'
+import { guestSafetyPayload, type GuestSafetyAnswers } from '@/lib/dietary'
 import { type CampoutEvent, resolveCampoutGroup, flagshipConfig } from '@/lib/campout-groups'
 
 interface DateRow {
@@ -92,10 +93,13 @@ export default function CampoutTypePage() {
   const selected = rows.find((r) => r.id === selectedId) ?? null
   const cover = rows.find((r) => r.cover_image_url)?.cover_image_url ?? null
 
-  // Every event on this page is a camp-out, so dietary + medical are mandatory
-  // before checkout. The Book button opens the requirements modal; its answers
-  // flow into book(). guest-ticket-checkout is the server-side choke-point that
-  // also enforces + persists them.
+  // Every event on this page is a camp-out, so the whole retreat safety set
+  // (dietary, medical, AND a reachable emergency contact) is mandatory before
+  // checkout. The Book button opens the requirements modal; its answers flow
+  // into book(), which forwards ALL of them via guestSafetyPayload.
+  // guest-ticket-checkout is the server-side choke-point that also enforces +
+  // persists them, so dropping a field here is not a lax client, it is a dead
+  // end: the server rejects the booking and the buyer cannot fix it.
   function startBooking() {
     if (!selected?.ticket_type_id || selected.sold_out) return
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setErr('Please enter a valid email address'); return }
@@ -103,14 +107,14 @@ export default function CampoutTypePage() {
     setShowReqs(true)
   }
 
-  async function book(reqs: { dietary: string; medical: string }) {
+  async function book(reqs: GuestSafetyAnswers) {
     if (!selected?.ticket_type_id || selected.sold_out) return
     setBusy(true); setErr(null)
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/guest-ticket-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: import.meta.env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
-        body: JSON.stringify({ event_id: selected.id, ticket_type_id: selected.ticket_type_id, email: email.trim(), name: name.trim(), quantity: 1, dietary: reqs.dietary, medical: reqs.medical }),
+        body: JSON.stringify({ event_id: selected.id, ticket_type_id: selected.ticket_type_id, email: email.trim(), name: name.trim(), quantity: 1, ...guestSafetyPayload(reqs) }),
       })
       const out = await res.json()
       if (!res.ok || !out.url) throw new Error(out.error || 'Could not start checkout')

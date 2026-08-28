@@ -3,7 +3,7 @@ import { Tent } from 'lucide-react'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { Modal } from '@/components/modal'
-import { NO_DIETARY_SENTINEL, NO_MEDICAL_SENTINEL } from '@/lib/dietary'
+import { NO_DIETARY_SENTINEL, NO_MEDICAL_SENTINEL, type GuestSafetyAnswers } from '@/lib/dietary'
 
 /* ------------------------------------------------------------------ */
 /*  Guest ticket requirements modal (public booking, no account)       */
@@ -26,13 +26,7 @@ interface Props {
   submitting: boolean
   isCampout: boolean
   onClose: () => void
-  onSubmit: (values: {
-    dietary: string
-    medical: string
-    emergencyName: string
-    emergencyPhone: string
-    emergencyRelationship: string
-  }) => void
+  onSubmit: (values: GuestSafetyAnswers) => void
 }
 
 export function CampoutGuestRequirementsModal({ open, submitting, isCampout, onClose, onSubmit }: Props) {

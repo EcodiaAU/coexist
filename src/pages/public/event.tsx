@@ -16,7 +16,7 @@ import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 import { TicketQuestionsModal } from '@/components/ticket-questions-modal'
 import { useEventTicketQuestions, type TicketAnswers } from '@/hooks/use-event-ticket-questions'
 import { CampoutGuestRequirementsModal } from '@/components/campout-guest-requirements-modal'
-import { isCampoutActivity } from '@/lib/dietary'
+import { isCampoutActivity, guestSafetyPayload, type GuestSafetyAnswers } from '@/lib/dietary'
 
 function formatDate(date: string, _legacyTz?: string) {
   // Floating local time (Tate 2026-05-25): stored wall-clock is the
@@ -127,14 +127,14 @@ export default function PublicEventPage() {
   const [buyError, setBuyError] = useState<string | null>(null)
   const [showGuestQuestions, setShowGuestQuestions] = useState(false)
   const [showCampoutReqs, setShowCampoutReqs] = useState(false)
-  const [campoutReqs, setCampoutReqs] = useState<{ dietary: string; medical: string; emergencyName: string; emergencyPhone: string; emergencyRelationship: string } | null>(null)
+  const [campoutReqs, setCampoutReqs] = useState<GuestSafetyAnswers | null>(null)
   const { data: ticketQuestions = [] } = useEventTicketQuestions(id)
 
   const activeTypeId = selectedType ?? ticketTypes?.[0]?.id ?? null
   const activeType = ticketTypes?.find((t) => t.id === activeTypeId) ?? null
   const isCampout = isCampoutActivity((event as { activity_type?: string } | undefined)?.activity_type)
 
-  async function doGuestCheckout(answers?: TicketAnswers, reqs?: { dietary: string; medical: string; emergencyName: string; emergencyPhone: string; emergencyRelationship: string } | null) {
+  async function doGuestCheckout(answers?: TicketAnswers, reqs?: GuestSafetyAnswers | null) {
     if (!activeTypeId) return
     const safety = reqs ?? campoutReqs
     setBuying(true)
@@ -154,15 +154,7 @@ export default function PublicEventPage() {
           name: buyName.trim(),
           quantity: 1,
           answers: answers ?? null,
-          ...(safety
-            ? {
-                dietary: safety.dietary,
-                medical: safety.medical,
-                emergency_name: safety.emergencyName,
-                emergency_phone: safety.emergencyPhone,
-                emergency_relationship: safety.emergencyRelationship,
-              }
-            : {}),
+          ...(safety ? guestSafetyPayload(safety) : {}),
         }),
       })
       const out = await res.json()
@@ -176,7 +168,7 @@ export default function PublicEventPage() {
 
   // After the camp-out dietary/medical step, continue to custom questions (if
   // any) or straight to checkout, carrying the just-collected answers.
-  function continueAfterCampoutReqs(reqs: { dietary: string; medical: string; emergencyName: string; emergencyPhone: string; emergencyRelationship: string }) {
+  function continueAfterCampoutReqs(reqs: GuestSafetyAnswers) {
     setCampoutReqs(reqs)
     setShowCampoutReqs(false)
     if (ticketQuestions.length > 0) {
