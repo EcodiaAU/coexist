@@ -11,6 +11,8 @@ import { OGMeta } from '@/components/og-meta'
 import { formatTime } from '@/lib/date-format'
 import { WebFooter } from '@/components/web-footer'
 import { CampoutGuestRequirementsModal } from '@/components/campout-guest-requirements-modal'
+import { TicketQuestionsModal } from '@/components/ticket-questions-modal'
+import { useEventTicketQuestions, type TicketAnswers } from '@/hooks/use-event-ticket-questions'
 import { guestSafetyPayload, type GuestSafetyAnswers } from '@/lib/dietary'
 import { type CampoutEvent, resolveCampoutGroup, flagshipConfig } from '@/lib/campout-groups'
 
@@ -85,12 +87,21 @@ export default function CampoutTypePage() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [showReqs, setShowReqs] = useState(false)
+  const [showQuestions, setShowQuestions] = useState(false)
+  // The safety answers are collected in the FIRST modal and only spent once
+  // the (optional) questions step is done, so they have to survive in between.
+  const [safety, setSafety] = useState<GuestSafetyAnswers | null>(null)
 
   const group = data?.group ?? null
   const rows = data?.rows ?? []
   // Effective header copy: the loaded group, else the synchronous flagship copy.
   const cfg = group ?? staticCfg
   const selected = rows.find((r) => r.id === selectedId) ?? null
+  // Custom ticket questions belong to the DATE the buyer picked, not to the
+  // camp-out group, so this refetches as the selection changes. Anon can read
+  // them: RLS opens event_ticket_questions for public+published+ticketed events
+  // precisely so guest checkout can render them.
+  const { data: ticketQuestions = [] } = useEventTicketQuestions(selected?.id)
   const cover = rows.find((r) => r.cover_image_url)?.cover_image_url ?? null
 
   // Every event on this page is a camp-out, so the whole retreat safety set
@@ -107,14 +118,14 @@ export default function CampoutTypePage() {
     setShowReqs(true)
   }
 
-  async function book(reqs: GuestSafetyAnswers) {
+  async function book(reqs: GuestSafetyAnswers, answers?: TicketAnswers) {
     if (!selected?.ticket_type_id || selected.sold_out) return
     setBusy(true); setErr(null)
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/guest-ticket-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: import.meta.env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
-        body: JSON.stringify({ event_id: selected.id, ticket_type_id: selected.ticket_type_id, email: email.trim(), name: name.trim(), quantity: 1, ...guestSafetyPayload(reqs) }),
+        body: JSON.stringify({ event_id: selected.id, ticket_type_id: selected.ticket_type_id, email: email.trim(), name: name.trim(), quantity: 1, answers: answers ?? null, ...guestSafetyPayload(reqs) }),
       })
       const out = await res.json()
       if (!res.ok || !out.url) throw new Error(out.error || 'Could not start checkout')
@@ -123,6 +134,7 @@ export default function CampoutTypePage() {
       setErr(e instanceof Error ? e.message : 'Could not start checkout')
       setBusy(false)
       setShowReqs(false)
+      setShowQuestions(false)
     }
   }
 
@@ -303,7 +315,28 @@ export default function CampoutTypePage() {
         submitting={busy}
         isCampout={true}
         onClose={() => { if (!busy) setShowReqs(false) }}
-        onSubmit={(vals) => { void book(vals) }}
+        onSubmit={(vals) => {
+          // Safety set collected. If the organiser also set custom questions on
+          // this date, they are a HARD server requirement (validate_ticket_answers
+          // raises 23514 and reserve_event_ticket fails), so ask them before
+          // spending the answers on a checkout that cannot succeed.
+          setSafety(vals)
+          setShowReqs(false)
+          if (ticketQuestions.length > 0) { setShowQuestions(true); return }
+          void book(vals)
+        }}
+      />
+
+      <TicketQuestionsModal
+        open={showQuestions}
+        questions={ticketQuestions}
+        submitting={busy}
+        onClose={() => { if (!busy) setShowQuestions(false) }}
+        onSubmit={(answers) => {
+          if (!safety) return
+          setShowQuestions(false)
+          void book(safety, answers)
+        }}
       />
 
       <WebFooter />
