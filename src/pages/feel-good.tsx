@@ -267,7 +267,7 @@ export default function FeelGoodPage() {
             </motion.div>
           )}
 
-          <p className="mx-auto mt-10 max-w-[36ch] text-center text-[11px] leading-relaxed text-neutral-400">
+          <p className="mx-auto mt-10 max-w-[36ch] text-center text-[11px] leading-relaxed text-neutral-500">
             Co-Exist is not a counselling service. Everyone listed here is, and
             talking to them costs nothing.
           </p>

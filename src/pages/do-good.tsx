@@ -236,7 +236,7 @@ export default function DoGoodPage() {
             </>
           )}
 
-          <p className="mx-auto mt-10 max-w-[38ch] text-center text-[11px] leading-relaxed text-neutral-400">
+          <p className="mx-auto mt-10 max-w-[38ch] text-center text-[11px] leading-relaxed text-neutral-500">
             These organisations run their own programs. Links open outside the app.
           </p>
         </div>
