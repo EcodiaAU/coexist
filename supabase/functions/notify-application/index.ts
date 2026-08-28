@@ -2,6 +2,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
 import { resolveRecipientEmail } from '../_shared/recipient-email.ts'
+import {
+  isEmailSuppressed,
+  makeSuppressionFetcher,
+  type SuppressionFetcher,
+  type SuppressionQueryable,
+} from '../_shared/egress-suppression.ts'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -39,6 +45,34 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'hello@coexistaus.org'
 const FROM_NAME = Deno.env.get('RESEND_FROM_NAME') ?? 'Co-Exist'
 
+/* ------------------------------------------------------------------ */
+/*  Dead-address gate (public.email_suppressions)                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Both senders below build their own `to` and POST Resend directly, so neither
+ * inherits the gate in send-email. This function is what they share instead.
+ *
+ * It covers the staff notification as much as the applicant mail: a staff
+ * address that hard-bounces keeps being retried on every application otherwise,
+ * and the bounces land on the same sending domain that carries member mail.
+ *
+ * Fails CLOSED. A lookup error propagates, and the caller's existing try/catch
+ * records a failed send rather than an unchecked one.
+ * Audit and reasoning: _shared/egress-suppression.ts.
+ */
+let suppressionFetcher: SuppressionFetcher | null = null
+async function isSuppressedAddress(toEmail: string): Promise<boolean> {
+  if (!suppressionFetcher) {
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+    suppressionFetcher = makeSuppressionFetcher(admin as unknown as SuppressionQueryable)
+  }
+  return await isEmailSuppressed(suppressionFetcher, toEmail)
+}
+
 async function sendEmailNotification(
   toEmail: string,
   applicantName: string,
@@ -46,6 +80,11 @@ async function sendEmailNotification(
   roles: string[],
   location: string,
 ): Promise<boolean> {
+  if (await isSuppressedAddress(toEmail)) {
+    console.log('[notify-application] refused a suppressed staff address')
+    return false
+  }
+
   const roleList = roles.map(r => ROLE_LABELS[r] ?? r).join(', ')
 
   // Sanitise all user-supplied values before embedding in HTML
@@ -121,6 +160,11 @@ async function sendApplicantEmail(
   applicantName: string,
   kind: 'submitted' | 'accepted' | 'rejected',
 ): Promise<boolean> {
+  if (await isSuppressedAddress(toEmail)) {
+    console.log('[notify-application] refused a suppressed applicant address for kind', kind)
+    return false
+  }
+
   const safeName = sanitizeHtml(applicantName)
   const firstName = safeName.split(' ')[0] || 'there'
 

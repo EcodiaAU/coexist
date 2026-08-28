@@ -3,6 +3,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
 import { resolveRecipientEmail } from '../_shared/recipient-email.ts'
 import { suppressedRecipientIds, type SuppressionProfile } from '../_shared/recipient-suppression.ts'
+import {
+  makeSuppressionFetcher,
+  normaliseEmail,
+  suppressedEmailSet,
+  type SuppressionQueryable,
+} from '../_shared/egress-suppression.ts'
 
 /** Resend tag values allow ASCII alnum, underscore and dash only. */
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
@@ -1191,9 +1197,27 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
         }
       }
 
-      const emails = payload.recipients
+      const addressed = payload.recipients
         .map((r) => (r.to ? r : { ...r, to: r.userId ? resolvedById.get(r.userId) ?? '' : '' }))
         .filter((r) => r.to && !(r.userId && optedOut.has(r.userId)))
+
+      // ── Dead-address gate (public.email_suppressions) ──
+      // Consent suppression above answers "did they switch this off". This
+      // answers "is the mailbox gone or has it reported us for spam", which is
+      // a property of the ADDRESS and applies to transactional mail too. One
+      // lookup for the whole chunk. See _shared/egress-suppression.ts for the
+      // 2026-08-28 audit that found five of the six Resend egress points
+      // running without it.
+      const deadAddresses = await suppressedEmailSet(
+        makeSuppressionFetcher(supabaseAdmin as unknown as SuppressionQueryable),
+        addressed.map((r) => r.to as string),
+      )
+      if (deadAddresses.size > 0) {
+        console.log('[send-email] batch dropped', deadAddresses.size, 'suppressed address(es)')
+      }
+
+      const emails = addressed
+        .filter((r) => !deadAddresses.has(normaliseEmail(r.to as string)))
         .map((r) => {
           const d = { ...(r.data ?? {}), __recipientEmail: r.to }
           const subject = payload.subject ?? templateDef.subject(d)
@@ -1424,6 +1448,33 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       tags.push({ name: 'ticket_id', value: payload.ticketId })
     } else if (payload.ticketId) {
       console.warn('[send-email] ignoring malformed ticketId tag')
+    }
+
+    // ── Dead-address gate (public.email_suppressions) ──
+    // Last check before the address goes on the wire. Distinct from the
+    // preference gates above: those honour a choice the member made, this one
+    // refuses a mailbox that hard-bounced or reported us for spam, and that
+    // holds for transactional mail as much as marketing. Three "Reminder: <event>
+    // is coming up" sends went out through this exact line on 2026-08-28 to
+    // addresses that were suppressed at the time.
+    //
+    // Answered as a 200 with skipped:true, matching the preference gates above,
+    // because the caller asked for something that was correctly declined rather
+    // than something that failed.
+    const deadCheckClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+    const suppressed = await suppressedEmailSet(
+      makeSuppressionFetcher(deadCheckClient as unknown as SuppressionQueryable),
+      [toEmail],
+    )
+    if (suppressed.has(normaliseEmail(toEmail))) {
+      console.log('[send-email] refused a suppressed address for type', type)
+      return new Response(
+        JSON.stringify({ success: false, skipped: true, reason: 'Address is on the suppression list (bounce or complaint)' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
     }
 
     const result = await sendViaResend(

@@ -2,6 +2,12 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import {
+  makeSuppressionFetcher,
+  normaliseEmail,
+  suppressedEmailSet,
+  type SuppressionQueryable,
+} from '../_shared/egress-suppression.ts'
 
 /* ------------------------------------------------------------------ */
 /*  Resend bulk campaign sender                                        */
@@ -263,6 +269,26 @@ Deno.serve(withSentry('send-campaign', async (req: Request) => {
         if (rows.length < page) break
       }
       audience = aErr ? null : all
+    }
+
+    // ── Dead-address gate (public.email_suppressions) ──
+    // resolve_campaign_audience already carries a NOT EXISTS against this table,
+    // so for the RPC arm this is defence in depth and normally drops nothing.
+    // The test-send arm above is the one that needed it: it bypasses the
+    // resolver entirely, so an admin previewing a campaign at a hard-bounced or
+    // complaining address mailed it with no check at all. Applied to both arms
+    // rather than the test arm alone, because a gate that only guards the path
+    // someone remembered is how the other five egress points ended up without
+    // one (audit 2026-08-28, _shared/egress-suppression.ts).
+    if (!aErr && audience?.length) {
+      const dead = await suppressedEmailSet(
+        makeSuppressionFetcher(supabaseAdmin as unknown as SuppressionQueryable),
+        audience.map((a) => a.email),
+      )
+      if (dead.size > 0) {
+        console.log('[send-campaign] dropped', dead.size, 'suppressed address(es) from the audience')
+        audience = audience.filter((a) => !dead.has(normaliseEmail(a.email)))
+      }
     }
 
     if (aErr) {
