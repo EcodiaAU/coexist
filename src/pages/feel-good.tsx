@@ -8,7 +8,6 @@ import { coverImagePositionStyle } from '@/lib/cover-image'
 import { cn } from '@/lib/cn'
 import {
   useSupportResources,
-  useCategoryImages,
   dialString,
   externalUrl,
   type SupportResource,
@@ -34,15 +33,20 @@ const CATEGORY_LABELS: Record<string, string> = {
   general: 'Support',
 }
 
+/** One crop for every card. Crisis lines still read as louder through the type
+ *  size and the filled number pill; the height no longer varies, because an
+ *  uneven grid reads as an accident rather than as emphasis (Tate, 2026-08-28). */
+const CARD_ASPECT = 'aspect-[4/5]'
+
 /* ------------------------------------------------------------------ */
 /*  Resource card                                                      */
 /* ------------------------------------------------------------------ */
 
 /** Full-bleed photographic card. The image carries the mood, the overlay
  *  carries the words, and the NUMBER sits on top as a solid pill so it stays
- *  readable over any photo. Crisis lines get the taller crop and the filled
- *  pill; the rest get a shorter crop and a glass pill, which is what separates
- *  "call this right now" from "worth knowing about". */
+ *  readable over any photo. Crisis lines get the bigger type and the filled
+ *  pill; the rest get a glass pill, which is what separates "call this right
+ *  now" from "worth knowing about". */
 function ResourceCard({ resource, lead }: { resource: SupportResource; lead: boolean }) {
   const rm = useReducedMotion()
   const dial = resource.phone ? dialString(resource.phone) : null
@@ -52,14 +56,14 @@ function ResourceCard({ resource, lead }: { resource: SupportResource; lead: boo
       variants={rm ? undefined : rise}
       className={cn(
         'relative overflow-hidden rounded-2xl bg-plum-900 shadow-lg shadow-plum-900/10',
-        lead ? 'aspect-[4/5]' : 'aspect-square',
+        CARD_ASPECT,
       )}
     >
       {resource.cover && (
         <OptimizedImage
           src={resource.cover}
           alt=""
-          aspectRatio={lead ? '4/5' : '1/1'}
+          aspectRatio="4/5"
           wrapperClassName="absolute inset-0"
           className="absolute inset-0"
           sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
@@ -91,7 +95,7 @@ function ResourceCard({ resource, lead }: { resource: SupportResource; lead: boo
         <h3
           className={cn(
             'font-heading font-bold text-white leading-[0.98] tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]',
-            lead ? 'text-[2rem]' : 'text-[1.5rem]',
+            lead ? 'text-[2rem]' : 'text-[1.55rem]',
           )}
         >
           {resource.name}
@@ -112,7 +116,7 @@ function ResourceCard({ resource, lead }: { resource: SupportResource; lead: boo
               'transition-transform duration-150 active:scale-[0.985]',
               lead
                 ? 'bg-white text-plum-900 shadow-lg shadow-black/25'
-                : 'bg-white/15 text-white ring-1 ring-white/35 backdrop-blur-md',
+                : 'bg-white/15 text-white backdrop-blur-md',
             )}
           >
             <Phone size={17} strokeWidth={2.4} className="shrink-0" />
@@ -160,8 +164,8 @@ function ResourceCard({ resource, lead }: { resource: SupportResource; lead: boo
 function FeelGoodSkeleton() {
   return (
     <div className="space-y-4 pb-10">
-      <div className="aspect-[4/5] w-full animate-pulse rounded-2xl bg-neutral-200/70" />
-      <div className="aspect-square w-full animate-pulse rounded-2xl bg-neutral-200/70" />
+      <div className={cn('w-full animate-pulse rounded-2xl bg-neutral-200/70', CARD_ASPECT)} />
+      <div className={cn('w-full animate-pulse rounded-2xl bg-neutral-200/70', CARD_ASPECT)} />
     </div>
   )
 }
@@ -173,121 +177,101 @@ function FeelGoodSkeleton() {
 export default function FeelGoodPage() {
   const rm = useReducedMotion()
   const { data: resources, isLoading, isError } = useSupportResources()
-  const { data: covers } = useCategoryImages()
 
   const crisis = (resources ?? []).filter((r) => r.is_crisis)
   const rest = (resources ?? []).filter((r) => !r.is_crisis)
-  const heroImage = covers?.['feel_good:crisis'] ?? covers?.['feel_good:general'] ?? null
 
   return (
     <Page
       swipeBack
       noBackground
-      className="!px-0 bg-plum-900"
+      className="!px-0 bg-white"
       stickyOverlay={<Header title="Feel Good" back transparent className="collapse-header" />}
     >
-      {/* Full-bleed photographic hero */}
-      <div className="relative min-h-[62vh] overflow-hidden bg-plum-900">
-        {heroImage && (
-          <OptimizedImage
-            src={heroImage}
-            alt=""
-            priority
-            quality={74}
-            sizes="100vw"
-            srcSetWidths={[640, 960, 1280]}
-            wrapperClassName="absolute inset-0"
-            className="absolute inset-0"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-plum-900 via-plum-900/55 to-black/25" aria-hidden="true" />
-
+      <div style={{ paddingTop: '3.5rem' }}>
+        {/* Centred title block on the white ground. The photographs live on the
+            cards, which is where they earn their place. */}
         <motion.div
-          className="absolute inset-x-0 bottom-0 p-6 pb-9"
-          initial={rm ? false : { opacity: 0, y: 20 }}
+          className="px-6 pb-8 pt-8 text-center"
+          initial={rm ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/60">Co-Exist</p>
-          <h1 className="mt-3 font-heading text-[3rem] font-bold uppercase leading-[0.88] tracking-tight text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.5)]">
+          <h1 className="font-heading text-[3rem] font-bold uppercase leading-[0.88] tracking-tight text-plum-900">
             Feel
             <br />
             Good
           </h1>
-          <p className="mt-4 max-w-[30ch] text-[14px] leading-relaxed text-white/75">
+          <p className="mx-auto mt-4 max-w-[30ch] text-[14px] leading-relaxed text-neutral-600">
             Looking after the planet starts with looking after yourself. Everyone
             here is trained, free, and answering right now.
           </p>
         </motion.div>
-      </div>
 
-      {/* Emergency. Pinned directly under the hero, never CMS-editable, so it
-          cannot be reordered below the fold or edited away. */}
-      <a
-        href="tel:000"
-        className="flex items-center gap-4 bg-coral-600 px-5 py-4 transition-transform duration-150 active:scale-[0.995]"
-      >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15">
-          <ShieldAlert size={20} className="text-white" strokeWidth={2.2} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-heading text-[15px] font-bold text-white">
-            If a life is in danger, call 000
+        {/* Emergency. Pinned directly under the hero, never CMS-editable, so it
+            cannot be reordered below the fold or edited away. */}
+        <a
+          href="tel:000"
+          className="flex items-center gap-4 bg-coral-600 px-5 py-4 transition-transform duration-150 active:scale-[0.995]"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15">
+            <ShieldAlert size={20} className="text-white" strokeWidth={2.2} />
           </span>
-          <span className="block text-[12px] text-white/75">Police, fire and ambulance. Tap to dial.</span>
-        </span>
-        <Phone size={17} className="shrink-0 text-white/80" strokeWidth={2.2} />
-      </a>
+          <span className="min-w-0 flex-1">
+            <span className="block font-heading text-[15px] font-bold text-white">
+              If a life is in danger, call 000
+            </span>
+            <span className="block text-[12px] text-white/75">Police, fire and ambulance. Tap to dial.</span>
+          </span>
+          <Phone size={17} className="shrink-0 text-white/80" strokeWidth={2.2} />
+        </a>
 
-      <div className="bg-plum-900 px-4 pb-14 pt-8">
-        {isLoading ? (
-          <FeelGoodSkeleton />
-        ) : isError ? (
-          <div className="rounded-2xl bg-white/95 p-1">
+        <div className="px-4 pb-14 pt-8">
+          {isLoading ? (
+            <FeelGoodSkeleton />
+          ) : isError ? (
             <EmptyState
               illustration="error"
               title="Couldn't load support services"
               description="Something went wrong. The 000 line above still works, and Lifeline is 13 11 14."
             />
-          </div>
-        ) : !resources?.length ? (
-          <div className="rounded-2xl bg-white/95 p-1">
+          ) : !resources?.length ? (
             <EmptyState
               illustration="empty"
               title="Nothing listed yet"
               description="Support services are being added. In the meantime, Lifeline is 13 11 14, any hour."
             />
-          </div>
-        ) : (
-          <motion.div initial="hidden" animate="visible" variants={rm ? undefined : stagger}>
-            {crisis.length > 0 && (
-              <>
-                <SectionLabel>If you need someone now</SectionLabel>
-                <div className="mb-10 space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 lg:grid-cols-3">
-                  {crisis.map((r) => (
-                    <ResourceCard key={r.id} resource={r} lead />
-                  ))}
-                </div>
-              </>
-            )}
+          ) : (
+            <motion.div initial="hidden" animate="visible" variants={rm ? undefined : stagger}>
+              {crisis.length > 0 && (
+                <>
+                  <SectionLabel>If you need someone now</SectionLabel>
+                  <div className="mb-10 space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 lg:grid-cols-3">
+                    {crisis.map((r) => (
+                      <ResourceCard key={r.id} resource={r} lead />
+                    ))}
+                  </div>
+                </>
+              )}
 
-            {rest.length > 0 && (
-              <>
-                <SectionLabel>More support</SectionLabel>
-                <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 lg:grid-cols-3">
-                  {rest.map((r) => (
-                    <ResourceCard key={r.id} resource={r} lead={false} />
-                  ))}
-                </div>
-              </>
-            )}
-          </motion.div>
-        )}
+              {rest.length > 0 && (
+                <>
+                  <SectionLabel>More support</SectionLabel>
+                  <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 lg:grid-cols-3">
+                    {rest.map((r) => (
+                      <ResourceCard key={r.id} resource={r} lead={false} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          )}
 
-        <p className="mx-auto mt-10 max-w-[36ch] text-center text-[11px] leading-relaxed text-white/40">
-          Co-Exist is not a counselling service. Everyone listed here is, and
-          talking to them costs nothing.
-        </p>
+          <p className="mx-auto mt-10 max-w-[36ch] text-center text-[11px] leading-relaxed text-neutral-400">
+            Co-Exist is not a counselling service. Everyone listed here is, and
+            talking to them costs nothing.
+          </p>
+        </div>
       </div>
     </Page>
   )
@@ -296,8 +280,8 @@ export default function FeelGoodPage() {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-4 flex items-center gap-3 px-1">
-      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/50">{children}</p>
-      <div className="h-px flex-1 bg-white/12" />
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-neutral-500">{children}</p>
+      <div className="h-px flex-1 bg-neutral-200" />
     </div>
   )
 }

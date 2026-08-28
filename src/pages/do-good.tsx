@@ -5,11 +5,11 @@ import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { EmptyState } from '@/components/empty-state'
 import { OptimizedImage } from '@/components/optimized-image'
+import { FilterPillRow, type FilterOption } from '@/components/filter-pill-row'
 import { coverImagePositionStyle } from '@/lib/cover-image'
 import { cn } from '@/lib/cn'
 import {
   useDoGoodOrganisations,
-  useCategoryImages,
   externalUrl,
   type DoGoodOrganisation,
 } from '@/hooks/use-good'
@@ -34,19 +34,21 @@ const CATEGORY_LABELS: Record<string, string> = {
   youth: 'Youth',
 }
 
+/** One crop for every card. A taller lead tile reads as an accident rather than
+ *  as emphasis once the page ground is white and the cards are the only colour,
+ *  so the grid stays uniform (Tate, 2026-08-28). */
+const CARD_ASPECT = 'aspect-[4/5]'
+
 /* ------------------------------------------------------------------ */
 /*  Organisation card                                                  */
 /* ------------------------------------------------------------------ */
 
 /** Full-bleed photographic card. The OPPORTUNITY is the headline, because the
  *  question someone is holding on this page is "what can I go and do", and the
- *  organisation answers "with whom". Every card is one tap to their own page.
- *  The first card in the list gets a taller crop so the page opens on an image
- *  rather than on a row of equal tiles. */
-function OrgCard({ org, lead }: { org: DoGoodOrganisation; lead: boolean }) {
+ *  organisation answers "with whom". Every card is one tap to their own page. */
+function OrgCard({ org }: { org: DoGoodOrganisation }) {
   const rm = useReducedMotion()
   const href = org.url ? externalUrl(org.url) : null
-  const ratio = lead ? '4/5' : '1/1'
 
   const inner = (
     <>
@@ -54,7 +56,7 @@ function OrgCard({ org, lead }: { org: DoGoodOrganisation; lead: boolean }) {
         <OptimizedImage
           src={org.cover}
           alt=""
-          aspectRatio={ratio}
+          aspectRatio="4/5"
           wrapperClassName="absolute inset-0"
           className="absolute inset-0"
           sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
@@ -79,12 +81,7 @@ function OrgCard({ org, lead }: { org: DoGoodOrganisation; lead: boolean }) {
 
       <div className="absolute inset-x-0 bottom-0 p-5">
         {org.opportunity && (
-          <h3
-            className={cn(
-              'font-heading font-bold leading-[1.02] tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]',
-              lead ? 'text-[1.75rem] line-clamp-4' : 'text-[1.35rem] line-clamp-3',
-            )}
-          >
+          <h3 className="font-heading text-[1.55rem] font-bold leading-[1.02] tracking-tight text-white line-clamp-4 drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]">
             {org.opportunity}
           </h3>
         )}
@@ -119,7 +116,7 @@ function OrgCard({ org, lead }: { org: DoGoodOrganisation; lead: boolean }) {
 
   const shell = cn(
     'relative block overflow-hidden rounded-2xl bg-moss-900 shadow-lg shadow-moss-900/10',
-    lead ? 'aspect-[4/5]' : 'aspect-square',
+    CARD_ASPECT,
   )
 
   return (
@@ -148,10 +145,9 @@ function OrgCard({ org, lead }: { org: DoGoodOrganisation; lead: boolean }) {
 export default function DoGoodPage() {
   const rm = useReducedMotion()
   const { data: orgs, isLoading, isError } = useDoGoodOrganisations()
-  const { data: covers } = useCategoryImages()
-  const [filter, setFilter] = useState<string | null>(null)
+  const [filter, setFilter] = useState<string>('all')
 
-  // Chips are derived from what is actually listed, so a category with nothing
+  // Pills are derived from what is actually listed, so a category with nothing
   // in it never renders an empty filter.
   const categories = useMemo(() => {
     const seen: string[] = []
@@ -159,128 +155,92 @@ export default function DoGoodPage() {
     return seen
   }, [orgs])
 
-  const visible = filter ? (orgs ?? []).filter((o) => o.category === filter) : (orgs ?? [])
-  const heroImage = covers?.['do_good:conservation'] ?? covers?.['do_good:marine'] ?? null
+  const filterOptions = useMemo<FilterOption[]>(
+    () => [
+      { id: 'all', label: 'All' },
+      ...categories.map((c) => ({ id: c, label: CATEGORY_LABELS[c] ?? c })),
+    ],
+    [categories],
+  )
+
+  const visible =
+    filter === 'all' ? (orgs ?? []) : (orgs ?? []).filter((o) => o.category === filter)
 
   return (
     <Page
       swipeBack
       noBackground
-      className="!px-0 bg-moss-900"
+      className="!px-0 bg-white"
       stickyOverlay={<Header title="Do Good" back transparent className="collapse-header" />}
     >
-      {/* Full-bleed photographic hero */}
-      <div className="relative min-h-[62vh] overflow-hidden bg-moss-900">
-        {heroImage && (
-          <OptimizedImage
-            src={heroImage}
-            alt=""
-            priority
-            quality={74}
-            sizes="100vw"
-            srcSetWidths={[640, 960, 1280]}
-            wrapperClassName="absolute inset-0"
-            className="absolute inset-0"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-moss-900 via-moss-900/55 to-black/25" aria-hidden="true" />
-
+      <div style={{ paddingTop: '3.5rem' }}>
+        {/* Centred title block on the white ground. The photographs live on the
+            cards, which is where they earn their place. */}
         <motion.div
-          className="absolute inset-x-0 bottom-0 p-6 pb-9"
-          initial={rm ? false : { opacity: 0, y: 20 }}
+          className="px-6 pb-8 pt-8 text-center"
+          initial={rm ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/60">Co-Exist</p>
-          <h1 className="mt-3 font-heading text-[3rem] font-bold uppercase leading-[0.88] tracking-tight text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.5)]">
+          <h1 className="font-heading text-[3rem] font-bold uppercase leading-[0.88] tracking-tight text-moss-900">
             Do
             <br />
             Good
           </h1>
-          <p className="mt-4 max-w-[30ch] text-[14px] leading-relaxed text-white/75">
+          <p className="mx-auto mt-4 max-w-[30ch] text-[14px] leading-relaxed text-neutral-600">
             Co-Exist is not the only mob doing this work. Here is where else you
             can put your hands to it.
           </p>
         </motion.div>
-      </div>
 
-      <div className="bg-moss-900 px-4 pb-14 pt-6">
-        {isLoading ? (
-          <div className="space-y-4">
-            <div className="aspect-[4/5] w-full animate-pulse rounded-2xl bg-white/10" />
-            <div className="aspect-square w-full animate-pulse rounded-2xl bg-white/10" />
-          </div>
-        ) : isError ? (
-          <div className="rounded-2xl bg-white/95 p-1">
+        <div className="px-4 pb-14">
+          {isLoading ? (
+            <div className="space-y-4">
+              <div className={cn('w-full animate-pulse rounded-2xl bg-neutral-200/70', CARD_ASPECT)} />
+              <div className={cn('w-full animate-pulse rounded-2xl bg-neutral-200/70', CARD_ASPECT)} />
+            </div>
+          ) : isError ? (
             <EmptyState
               illustration="error"
               title="Couldn't load organisations"
               description="Something went wrong loading the directory. Please try again shortly."
             />
-          </div>
-        ) : !orgs?.length ? (
-          <div className="rounded-2xl bg-white/95 p-1">
+          ) : !orgs?.length ? (
             <EmptyState
               illustration="empty"
               title="Nothing listed yet"
               description="We're building this directory of other organisations to get involved with. Check back soon."
             />
-          </div>
-        ) : (
-          <>
-            {categories.length > 1 && (
-              <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 hide-scrollbar">
-                <FilterChip active={filter === null} onClick={() => setFilter(null)}>All</FilterChip>
-                {categories.map((c) => (
-                  <FilterChip key={c} active={filter === c} onClick={() => setFilter(c)}>
-                    {CATEGORY_LABELS[c] ?? c}
-                  </FilterChip>
+          ) : (
+            <>
+              {categories.length > 1 && (
+                <FilterPillRow
+                  options={filterOptions}
+                  value={filter}
+                  onChange={setFilter}
+                  aria-label="Filter organisations by category"
+                  className="-mx-4 mb-3 px-4"
+                />
+              )}
+
+              <motion.div
+                className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 lg:grid-cols-3"
+                initial="hidden"
+                animate="visible"
+                variants={rm ? undefined : stagger}
+              >
+                {visible.map((org) => (
+                  <OrgCard key={org.id} org={org} />
                 ))}
-              </div>
-            )}
+              </motion.div>
+            </>
+          )}
 
-            <motion.div
-              className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 lg:grid-cols-3"
-              initial="hidden"
-              animate="visible"
-              variants={rm ? undefined : stagger}
-            >
-              {visible.map((org, i) => (
-                <OrgCard key={org.id} org={org} lead={i === 0} />
-              ))}
-            </motion.div>
-          </>
-        )}
-
-        <p className="mx-auto mt-10 max-w-[38ch] text-center text-[11px] leading-relaxed text-white/40">
-          These organisations run their own programs. Links open outside the app.
-        </p>
+          <p className="mx-auto mt-10 max-w-[38ch] text-center text-[11px] leading-relaxed text-neutral-400">
+            These organisations run their own programs. Links open outside the app.
+          </p>
+        </div>
       </div>
     </Page>
-  )
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'shrink-0 rounded-full px-4 py-2 text-[12px] font-bold transition-colors',
-        active
-          ? 'bg-white text-moss-900'
-          : 'bg-white/10 text-white/75 ring-1 ring-white/15 hover:text-white',
-      )}
-    >
-      {children}
-    </button>
   )
 }
