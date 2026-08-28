@@ -587,6 +587,18 @@ select:focus-visible {
   display: none;
 }
 
+/* Alias. FilterPillRow (and anything else copied from a Tailwind-plugin
+   codebase) asks for .scrollbar-none, which this app never defined, so the
+   pill row shipped with a live native scrollbar painted under it on Do Good
+   and on every admin filter row. Same rule as .hide-scrollbar. */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* Pretty horizontal scrollbar for carousels/scroll containers */
 .pretty-scrollbar {
   scrollbar-width: thin;
