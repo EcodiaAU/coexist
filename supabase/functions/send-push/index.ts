@@ -616,10 +616,27 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
       (_, i) => results[i].status === 'fulfilled' && (results[i] as PromiseFulfilledResult<string>).value === 'invalid',
     )
     if (invalidTokens.length > 0) {
-      await supabaseAdmin
-        .from('push_tokens')
-        .delete()
-        .in('token', invalidTokens.map((t) => t.token))
+      // The fifth instance of the same class, and the densest: an FCM token runs
+      // ~163 characters against a UUID's 36, so 20 tokens already weigh about
+      // what 100 UUIDs do. Chunked at 20 to match that budget. The error is
+      // LOGGED and never returned: the pushes have already gone out by this
+      // point, so a failed cleanup is a stale row to sweep later, not a reason
+      // to tell the caller the send failed. Exposure on a DELETE is unproven
+      // (a prod DELETE is not something to probe for curiosity), but the rule
+      // this function now follows is chunk any .in() built from a list that
+      // scales with the data, and this is one.
+      const { error: cleanupErr } = await selectInChunks<never>(
+        invalidTokens.map((t) => t.token),
+        (batch) =>
+          supabaseAdmin
+            .from('push_tokens')
+            .delete()
+            .in('token', batch) as unknown as PromiseLike<{ data: never[] | null; error: unknown }>,
+        20,
+      )
+      if (cleanupErr) {
+        console.error('[send-push] invalid-token cleanup failed:', cleanupErr)
+      }
     }
 
     return new Response(JSON.stringify({ sent, total: filteredTokens.length }), {
