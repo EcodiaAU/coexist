@@ -1968,6 +1968,21 @@ Deno.serve(withSentry('excel-sync', async (req: Request) => {
         skippedNoImpact?: number; weakDedupWarnings?: unknown[]; errors?: string[]
       }
       const sheetRows = (fromEx as any)?._sheetRows ?? null // hook for future surfacing
+
+      // The `errors` array is a MIXED log, not an error list: layers 3-4 of the
+      // activity-type resolver, the skipped-append path and the from-excel
+      // migrated/linked paths all push lines prefixed `INFO `. Counting its raw
+      // length wrote every one of those into to_excel_error_count, so a healthy
+      // run reported 49 errors and 136,178 lifetime "errors" accumulated with no
+      // failure behind them. Measured 2026-08-30 on the 17:02:20Z run: 46 of 49
+      // were literally `INFO ... skipped append`, the other 3 were correct
+      // duplicate-signature skips, and the true failure count was 0. A metric
+      // that reads red on a healthy run is a metric nobody reads, which is how
+      // a real excel-sync failure would go unnoticed. Count only the lines that
+      // are NOT informational; the full mixed log is still written verbatim to
+      // `summary`, so nothing is lost.
+      const realErrors = (arr?: string[]) =>
+        (arr ?? []).filter((e) => !String(e).startsWith('INFO ')).length
       await supabase.from('excel_sync_runs').insert({
         run_at: new Date().toISOString(),
         direction,
@@ -1976,13 +1991,13 @@ Deno.serve(withSentry('excel-sync', async (req: Request) => {
         from_excel_forms_rows_synced: fromEx?.syncedFormsRows ?? null,
         from_excel_skipped_no_collective: fromEx?.skippedNoCollective ?? null,
         from_excel_skipped_legacy: fromEx?.skippedLegacy ?? null,
-        from_excel_error_count: (fromEx?.errors ?? []).length,
+        from_excel_error_count: realErrors(fromEx?.errors),
         to_excel_appended: toEx?.appended ?? null,
         to_excel_updated: toEx?.updated ?? null,
         to_excel_skipped: toEx?.skipped ?? null,
         to_excel_skipped_duplicates: toEx?.skippedDuplicates ?? null,
         to_excel_weak_dedup_warning_count: (toEx?.weakDedupWarnings ?? []).length,
-        to_excel_error_count: (toEx?.errors ?? []).length,
+        to_excel_error_count: realErrors(toEx?.errors),
         summary: {
           fromExcel: fromEx,
           toExcel: toEx,
