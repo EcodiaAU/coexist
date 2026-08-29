@@ -21,6 +21,7 @@ import { Capacitor } from '@capacitor/core'
 // layers share a single @sentry/core hub (a version split breaks reporting).
 import * as Sentry from '@sentry/capacitor'
 import * as SentryReact from '@sentry/react'
+import { WEB_BUNDLE_VERSION } from '@/lib/web-bundle-version'
 import { Button } from '@/components/button'
 
 /* ------------------------------------------------------------------ */
@@ -174,7 +175,18 @@ export function initSentry() {
     {
       dsn,
       environment: import.meta.env.MODE,
-      release: `coexist@${import.meta.env.VITE_APP_VERSION || '1.0.0'}`,
+      // Release comes from WEB_BUNDLE_VERSION, the one version stamp that
+      // actually moves: scripts/ship-web-ota.sh bumps it on every OTA and a
+      // store build carries it baked in. It read VITE_APP_VERSION until
+      // 2026-08-30, and that env var sat fossilised at 2.2.7 in .env.production
+      // with NOTHING bumping it, so every Co-Exist event for months arrived
+      // tagged coexist@2.2.7 no matter which bundle or binary produced it.
+      // All 16 events of the COEXIST-19 WatchdogTermination cluster carried it
+      // while live native was 2.2.9 and the shipped bundle was 2.3.x, which
+      // makes regression tracking impossible: a fix can never be seen to land
+      // because the release never changes. Bumped by the OTA script, so it can
+      // never fossilise again the way a hand-edited env value did.
+      release: `coexist@${WEB_BUNDLE_VERSION}`,
       // dist distinguishes the native binary crash surface (dist:native) from
       // the web bundle (dist:web) so native crashes are filterable in the one
       // project. On native, @sentry/capacitor stamps this on native events too.
@@ -216,6 +228,22 @@ export function initSentry() {
   // Tag platform (applies to JS events; native events already carry dist).
   Sentry.setTag('platform', Capacitor.getPlatform())
   Sentry.setTag('is_native', String(isNative))
+  // The NATIVE binary version, as a second axis beside the release. `release`
+  // now tracks the web bundle, which is the layer that changes on almost every
+  // ship; a native crash still needs to say which binary it came from. Set
+  // asynchronously so it never delays init, and guarded so a plain web build
+  // (no @capacitor/app native layer) is a silent no-op.
+  if (isNative) {
+    void (async () => {
+      try {
+        const { App } = await import('@capacitor/app')
+        const info = await App.getInfo()
+        Sentry.setTag('native_version', `${info.version} (${info.build})`)
+      } catch {
+        /* native app info unavailable - the web-bundle release still stands */
+      }
+    })()
+  }
   initialised = true
 
   // NATIVE-crash trigger for the native-capture verify gate and the standing

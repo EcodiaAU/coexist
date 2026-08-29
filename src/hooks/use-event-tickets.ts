@@ -234,7 +234,6 @@ export function useCreateTicketCheckout() {
         // No charge has occurred at this point - the Stripe session was
         // never created/returned.
         console.error('[create-ticket-checkout] edge function error:', error)
-        captureException(error, { extra: { eventId, ticketTypeId, quantity } })
         // supabase.functions.invoke maps ANY non-2xx to `error`
         // (FunctionsHttpError) with null data, so the edge function's own
         // human messages ("This campout is sold out", "You already have a
@@ -252,6 +251,21 @@ export function useCreateTicketCheckout() {
           } catch {
             /* body was not JSON - fall through to the generic message */
           }
+        }
+        // Report only a GENUINE fault. A 4xx that carried a human message the
+        // member was then shown ("This campout is sold out", "That code is
+        // invalid or has expired", "One or more items are out of stock") is a
+        // business outcome working exactly as designed, not a production error,
+        // and reporting it buried real regressions under ordinary checkout
+        // traffic: Sentry COEXIST-17 (create-checkout 409 insufficient_stock)
+        // and COEXIST-1F (400 validation) are both nothing but that. This is
+        // the same noise class the beforeSend filters in src/lib/sentry.tsx
+        // exist for, caught at the call site where the discriminator (did we
+        // get a human message?) is actually available. A 5xx or a failure with
+        // no readable body still reports, because then nobody was told anything
+        // useful and something really is wrong.
+        if (!serverMsg) {
+          captureException(error, { extra: { eventId, ticketTypeId, quantity } })
         }
         throw new Error(
           serverMsg || 'Payment could not start. Nothing was charged - try again or contact us.',

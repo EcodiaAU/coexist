@@ -1,6 +1,7 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import { selectInChunks } from '../_shared/select-in-chunks.ts'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -391,13 +392,37 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
           if (others.length > 0) {
             let reachable = new Set<string>()
             if (myColIds.length > 0) {
-              const { data: shared } = await supabaseAdmin
-                .from('collective_members')
-                .select('user_id')
-                .eq('status', 'active')
-                .in('collective_id', myColIds)
-                .in('user_id', others)
-              reachable = new Set((shared ?? []).map((r: { user_id: string }) => r.user_id))
+              // CHUNKED, and the error is READ. Until 2026-08-30 this was one
+              // `.in('user_id', others)` carrying every co-member's UUID, and
+              // PostgREST echoes the whole filter back in a `content-location`
+              // response header: at ~400 recipients that header alone was 15.6KB
+              // and the response headers totalled 16.5KB, past Deno's 16KiB cap,
+              // so the fetch THREW. The error was discarded, `reachable` stayed
+              // empty, every co-member read as unreachable, and the sender got
+              // 403 "targets outside your collectives". Chat push was dead for
+              // Perth (398 members) and Melbourne City (660). Sentry COEXIST-1D.
+              const { rows: shared, error } = await selectInChunks<{ user_id: string }>(
+                others,
+                (batch) =>
+                  supabaseAdmin
+                    .from('collective_members')
+                    .select('user_id')
+                    .eq('status', 'active')
+                    .in('collective_id', myColIds)
+                    .in('user_id', batch),
+              )
+              if (error) {
+                // A membership check that did not complete is NOT a finding that
+                // the recipients are strangers. Fail closed (nothing is sent) but
+                // say so distinguishably, so this can never again be read as an
+                // authorization verdict against the sender.
+                console.error('[send-push] membership check failed:', error)
+                return new Response(
+                  JSON.stringify({ error: 'push_authorization_check_failed', sent: 0 }),
+                  { status: 503, headers: JSON_HEADERS },
+                )
+              }
+              reachable = new Set(shared.map((r) => r.user_id))
             }
             const unreachable = others.filter((id) => !reachable.has(id))
             if (unreachable.length > 0) {
@@ -418,12 +443,27 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
     // Only applies to a personal sender (callerUid); service-role / system
     // broadcasts have no sender to have been blocked.
     if (callerUid && targetUserIds.length > 0) {
-      const { data: blockedBy } = await supabaseAdmin
-        .from('user_blocks')
-        .select('blocker_id')
-        .eq('blocked_id', callerUid)
-        .in('blocker_id', targetUserIds)
-      const blockers = new Set((blockedBy ?? []).map((b: { blocker_id: string }) => b.blocker_id))
+      // Chunked for the same header-echo reason as the membership check above.
+      // Unread, this query's failure silently decided nobody had blocked the
+      // sender, which pushes a blocked user a notification from the very person
+      // they blocked. Fail closed: send nothing rather than send to a blocker.
+      const { rows: blockedBy, error: blockErr } = await selectInChunks<{ blocker_id: string }>(
+        targetUserIds,
+        (batch) =>
+          supabaseAdmin
+            .from('user_blocks')
+            .select('blocker_id')
+            .eq('blocked_id', callerUid)
+            .in('blocker_id', batch),
+      )
+      if (blockErr) {
+        console.error('[send-push] block check failed:', blockErr)
+        return new Response(
+          JSON.stringify({ error: 'push_block_check_failed', sent: 0 }),
+          { status: 503, headers: JSON_HEADERS },
+        )
+      }
+      const blockers = new Set(blockedBy.map((b) => b.blocker_id))
       if (blockers.size > 0) {
         targetUserIds = targetUserIds.filter((id) => !blockers.has(id))
       }
@@ -452,11 +492,24 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
       })
     }
 
-    // Fetch push tokens for target users
-    const { data: tokens } = await supabaseAdmin
-      .from('push_tokens')
-      .select('token, platform, user_id')
-      .in('user_id', targetUserIds)
+    // Fetch push tokens for target users. Chunked for the header-echo reason
+    // above; unread, a failure here returned a cheerful sent:0 for a collective
+    // whose members all have devices.
+    const { rows: tokens, error: tokenErr } = await selectInChunks<PushToken>(
+      targetUserIds,
+      (batch) =>
+        supabaseAdmin
+          .from('push_tokens')
+          .select('token, platform, user_id')
+          .in('user_id', batch),
+    )
+    if (tokenErr) {
+      console.error('[send-push] push_tokens lookup failed:', tokenErr)
+      return new Response(
+        JSON.stringify({ error: 'push_token_lookup_failed', sent: 0 }),
+        { status: 503, headers: JSON_HEADERS },
+      )
+    }
 
     if (!tokens || tokens.length === 0) {
       return new Response(JSON.stringify({ sent: 0 }), {
@@ -464,11 +517,26 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
       })
     }
 
-    // Check notification preferences + quiet hours
-    const { data: profiles } = await supabaseAdmin
-      .from('profiles')
-      .select('id, notification_preferences')
-      .in('id', targetUserIds)
+    // Check notification preferences + quiet hours. Chunked for the header-echo
+    // reason above; unread, a failure here emptied prefsMap, which reads as
+    // "nobody set a preference" and pushes every member through quiet hours.
+    const { rows: profiles, error: prefsErr } = await selectInChunks<
+      { id: string; notification_preferences: unknown }
+    >(
+      targetUserIds,
+      (batch) =>
+        supabaseAdmin
+          .from('profiles')
+          .select('id, notification_preferences')
+          .in('id', batch),
+    )
+    if (prefsErr) {
+      console.error('[send-push] preferences lookup failed:', prefsErr)
+      return new Response(
+        JSON.stringify({ error: 'push_preferences_lookup_failed', sent: 0 }),
+        { status: 503, headers: JSON_HEADERS },
+      )
+    }
 
     const prefsMap = new Map<string, Record<string, unknown>>()
     for (const p of profiles ?? []) {
