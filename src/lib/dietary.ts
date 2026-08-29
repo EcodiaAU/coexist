@@ -61,6 +61,23 @@ export function hasEmergencyContact(
     && !!(profile?.emergency_contact_phone ?? '').trim()
 }
 
+/** True when a profile has ANSWERED the four-wheel-drive question.
+ *
+ *  The column is nullable on purpose and the three states are load-bearing:
+ *  NULL means never asked, `true` and `false` are both real answers. A plain
+ *  truthiness check would read "answered: no 4WD" as "never answered" and
+ *  re-ask that person on every app open forever, which is how a well-meaning
+ *  gate becomes a nag people learn to dismiss without reading.
+ *
+ *  Shared by the onboarding step, the pre-checkout gate and the app-open
+ *  backstop so the three can never disagree about what "answered" means, the
+ *  same reason hasEmergencyContact lives here. */
+export function hasFourWheelDriveAnswer(
+  profile: { has_four_wheel_drive?: boolean | null } | null | undefined,
+): boolean {
+  return profile?.has_four_wheel_drive === true || profile?.has_four_wheel_drive === false
+}
+
 /** The activity_type enum value that classifies an event as a camp-out.
  *  Camp-outs are multi-day / overnight and the only ticketed event class
  *  today; medical requirements are mandated at purchase for these events
@@ -130,10 +147,13 @@ export function safetyGateHeading(need: {
   dietary: boolean
   medical: boolean
   emergency: boolean
+  fourWheelDrive?: boolean
 }): string {
-  const count = Number(need.dietary) + Number(need.medical) + Number(need.emergency)
+  const count =
+    Number(need.dietary) + Number(need.medical) + Number(need.emergency) + Number(!!need.fourWheelDrive)
   if (count > 1) return 'A couple of details for your event'
   if (need.emergency) return 'Who should we call in an emergency?'
   if (need.medical) return 'Any medical needs or allergies?'
-  return 'Any dietary requirements?'
+  if (need.dietary) return 'Any dietary requirements?'
+  return 'Do you have a four-wheel drive?'
 }

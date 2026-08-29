@@ -5540,6 +5540,7 @@ export type Database = {
           emergency_contact_relationship: string | null
           first_name: string | null
           gender: string | null
+          has_four_wheel_drive: boolean | null
           id: string
           instagram_handle: string | null
           interests: string[] | null
@@ -5586,6 +5587,7 @@ export type Database = {
           emergency_contact_relationship?: string | null
           first_name?: string | null
           gender?: string | null
+          has_four_wheel_drive?: boolean | null
           id: string
           instagram_handle?: string | null
           interests?: string[] | null
@@ -5632,6 +5634,7 @@ export type Database = {
           emergency_contact_relationship?: string | null
           first_name?: string | null
           gender?: string | null
+          has_four_wheel_drive?: boolean | null
           id?: string
           instagram_handle?: string | null
           interests?: string[] | null

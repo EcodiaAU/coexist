@@ -4,8 +4,10 @@ import path from 'node:path'
 import {
   guestSafetyPayload,
   hasEmergencyContact,
+  hasFourWheelDriveAnswer,
   LIVE_REGISTRATION_STATUSES,
   LIVE_TICKET_STATUSES,
+  safetyGateHeading,
 } from '@/lib/dietary'
 
 /* ------------------------------------------------------------------ */
@@ -185,5 +187,130 @@ describe('guest checkout safety payload', () => {
     })
     expect(out.emergency_name.trim()).toBe('')
     expect(out.emergency_phone.trim()).toBe('')
+  })
+})
+
+/* ------------------------------------------------------------------ */
+/*  Four-wheel drive: the fourth member of the set                     */
+/*                                                                     */
+/*  Added 2026-08-30 on Tate's direction that all four things are      */
+/*  asked at ONE point. The column is nullable and the third state is  */
+/*  the whole mechanism, so the tests below are about telling          */
+/*  "answered: no" apart from "never asked".                           */
+/* ------------------------------------------------------------------ */
+
+describe('hasFourWheelDriveAnswer', () => {
+  it('treats an explicit no as answered', () => {
+    // The defect this exists to stop. A truthiness check reads `false` as
+    // unanswered, so every member without a 4WD would be re-asked on every
+    // app open forever and would learn to dismiss the prompt unread.
+    expect(hasFourWheelDriveAnswer({ has_four_wheel_drive: false })).toBe(true)
+  })
+
+  it('treats an explicit yes as answered', () => {
+    expect(hasFourWheelDriveAnswer({ has_four_wheel_drive: true })).toBe(true)
+  })
+
+  it('treats null and undefined as never asked', () => {
+    expect(hasFourWheelDriveAnswer({ has_four_wheel_drive: null })).toBe(false)
+    expect(hasFourWheelDriveAnswer({})).toBe(false)
+    expect(hasFourWheelDriveAnswer(null)).toBe(false)
+    expect(hasFourWheelDriveAnswer(undefined)).toBe(false)
+  })
+})
+
+describe('safetyGateHeading', () => {
+  // The heading has to name what the body actually shows. The gate can open
+  // on any one of four fields, so each single-field case gets its own
+  // heading and anything plural falls through to the generic one.
+  it('names the single field being asked', () => {
+    expect(safetyGateHeading({ dietary: false, medical: false, emergency: true })).toBe('Who should we call in an emergency?')
+    expect(safetyGateHeading({ dietary: false, medical: true, emergency: false })).toBe('Any medical needs or allergies?')
+    expect(safetyGateHeading({ dietary: true, medical: false, emergency: false })).toBe('Any dietary requirements?')
+    expect(safetyGateHeading({ dietary: false, medical: false, emergency: false, fourWheelDrive: true }))
+      .toBe('Do you have a four-wheel drive?')
+  })
+
+  it('goes generic once more than one field is shown', () => {
+    expect(safetyGateHeading({ dietary: true, medical: false, emergency: false, fourWheelDrive: true }))
+      .toBe('A couple of details for your event')
+  })
+
+  it('does not call a 4WD-only gate a dietary one', () => {
+    // Before fourWheelDrive was counted, a gate open on 4WD alone fell
+    // through to the dietary heading over a body with no dietary field,
+    // which is the exact shape that made the emergency-only gate read as
+    // broken in August.
+    expect(safetyGateHeading({ dietary: false, medical: false, emergency: false, fourWheelDrive: true }))
+      .not.toBe('Any dietary requirements?')
+  })
+})
+
+/* ------------------------------------------------------------------ */
+/*  Intake-surface coverage                                            */
+/*                                                                     */
+/*  The set has drifted THREE times by a surface being missed rather   */
+/*  than a rule being wrong: 65646d56 added the emergency contact to   */
+/*  two of three surfaces, campout-type.tsx silently dropped three     */
+/*  fields while type-checking clean, and the app-open backstop        */
+/*  filtered organiser holds out of its own eligibility. So the guard  */
+/*  is a source scan of the surfaces themselves, not of the rule.      */
+/* ------------------------------------------------------------------ */
+
+describe('every signed-in intake surface asks the whole set', () => {
+  const ROOT = path.resolve(__dirname, '../..')
+
+  // The three points a SIGNED-IN member can be asked. The guest path is
+  // deliberately absent: a guest has no profile row to write to, and their
+  // 4WD is collected by the organiser-authored per-event question instead.
+  const SURFACES = [
+    'src/pages/onboarding/steps/step-safety.tsx',
+    'src/components/campout-requirements-modal.tsx',
+    'src/components/dietary-gate.tsx',
+  ]
+
+  it.each(SURFACES)('%s renders the shared 4WD field', (file) => {
+    const body = fs.readFileSync(path.join(ROOT, file), 'utf8')
+    expect(body).toContain('FourWheelDriveField')
+  })
+
+  it.each(SURFACES)('%s does not hand-roll the 4WD control', (file) => {
+    const body = fs.readFileSync(path.join(ROOT, file), 'utf8')
+    // A surface that builds its own yes/no is how the copy, the help text and
+    // the null-vs-false handling drift apart across three screens.
+    expect(body).not.toContain('four-wheel drive?</label>')
+  })
+
+  it.each(SURFACES.slice(1))('%s reads the shared answered-predicate', (file) => {
+    // The two GATES must decide "already answered" through the shared
+    // predicate. The onboarding step is exempt: it asks unconditionally and
+    // holds no opinion about whether the answer already exists.
+    const body = fs.readFileSync(path.join(ROOT, file), 'utf8')
+    expect(body).toMatch(/hasFourWheelDriveAnswer|needFourWheelDrive/)
+  })
+
+  // Where each surface's answer is actually PERSISTED. The onboarding step is
+  // a controlled input that lifts its value; the single write for the whole
+  // flow lives in onboarding.tsx, so that is the file the guard must read.
+  // Naming the writer rather than the renderer is the point: a surface can
+  // render the field perfectly and still throw the answer away, which is
+  // precisely what campout-type.tsx did with three fields on 2026-08-28.
+  const WRITERS = [
+    'src/pages/onboarding/onboarding.tsx',
+    'src/components/campout-requirements-modal.tsx',
+    'src/components/dietary-gate.tsx',
+  ]
+
+  it.each(WRITERS)('%s writes the answer to the profile column', (file) => {
+    const body = fs.readFileSync(path.join(ROOT, file), 'utf8')
+    expect(body).toContain('has_four_wheel_drive')
+  })
+
+  it.each(WRITERS)('%s does not launder a null answer into a false one', (file) => {
+    // `false` is a real answer and `null` means never asked. A writer that
+    // coerces (`?? false`, `!!value`, `Boolean(...)`) permanently answers "no
+    // 4WD" for someone who skipped, and no later gate can ever tell.
+    const body = fs.readFileSync(path.join(ROOT, file), 'utf8')
+    expect(body).not.toMatch(/has_four_wheel_drive\s*[:=]\s*(!!|Boolean\(|.*\?\?\s*false)/)
   })
 })

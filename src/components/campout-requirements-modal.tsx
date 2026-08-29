@@ -7,14 +7,16 @@ import { Input } from '@/components/input'
 import { useToast } from '@/components/toast'
 import { Modal } from '@/components/modal'
 import { NO_DIETARY_SENTINEL, NO_MEDICAL_SENTINEL } from '@/lib/dietary'
+import { FourWheelDriveField, FOUR_WHEEL_DRIVE_HELP } from '@/components/four-wheel-drive-field'
 
 /* ------------------------------------------------------------------ */
 /*  Ticket requirements modal (captured at purchase)                   */
 /*                                                                     */
 /*  Shown before ANY ticket checkout when the buyer is missing         */
-/*  dietary, medical, and/or emergency-contact info. All three are     */
-/*  mandatory for every ticketed event (not just camp-outs) so leaders */
-/*  always have safety + catering data on file. It BLOCKS the purchase:*/
+/*  dietary, medical, emergency-contact and/or four-wheel-drive info.  */
+/*  All four are mandatory for every ticketed event (not just          */
+/*  camp-outs) so leaders always have safety + catering + transport    */
+/*  data on file. It BLOCKS the purchase:                              */
 /*  the buyer cannot reach Stripe checkout until every required field  */
 /*  is answered (an explicit "None" is a valid answer, a blank is not).*/
 /*  On save it persists to the buyer's profile and invokes onSaved,    */
@@ -30,12 +32,13 @@ interface Props {
   needDietary: boolean
   needMedical: boolean
   needEmergency: boolean
+  needFourWheelDrive: boolean
   isCampout: boolean
   onClose: () => void
   onSaved: () => void
 }
 
-export function CampoutRequirementsModal({ open, needDietary, needMedical, needEmergency, isCampout, onClose, onSaved }: Props) {
+export function CampoutRequirementsModal({ open, needDietary, needMedical, needEmergency, needFourWheelDrive, isCampout, onClose, onSaved }: Props) {
   const { user, refreshProfile } = useAuth()
   const { toast } = useToast()
   const [dietary, setDietary] = useState('')
@@ -47,6 +50,10 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, needE
   const [emName, setEmName] = useState('')
   const [emPhone, setEmPhone] = useState('')
   const [emRel, setEmRel] = useState('')
+  // null = not yet answered in this modal. There is no default, because a
+  // pre-selected Yes or No would let the buyer through having answered
+  // nothing, and false is a real answer we need to be able to tell apart.
+  const [fourWheelDrive, setFourWheelDrive] = useState<boolean | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -72,6 +79,10 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, needE
       setError('Give us a phone number for your emergency contact')
       return
     }
+    if (needFourWheelDrive && fourWheelDrive === null) {
+      setError('Let us know whether you have a four-wheel drive')
+      return
+    }
 
     const updates: {
       dietary_requirements?: string
@@ -79,6 +90,7 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, needE
       emergency_contact_name?: string
       emergency_contact_phone?: string
       emergency_contact_relationship?: string
+      has_four_wheel_drive?: boolean
     } = {}
     if (needDietary) updates.dietary_requirements = dietaryValue
     if (needMedical) updates.medical_requirements = medicalValue
@@ -87,6 +99,7 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, needE
       updates.emergency_contact_phone = emPhoneValue
       if (emRel.trim()) updates.emergency_contact_relationship = emRel.trim()
     }
+    if (needFourWheelDrive && fourWheelDrive !== null) updates.has_four_wheel_drive = fourWheelDrive
 
     setError(null)
     setSaving(true)
@@ -102,7 +115,7 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, needE
       toast.error('Could not save. Please try again.')
       setSaving(false)
     }
-  }, [user, needDietary, needMedical, needEmergency, dietary, medical, emName, emPhone, emRel, refreshProfile, onSaved, toast])
+  }, [user, needDietary, needMedical, needEmergency, needFourWheelDrive, dietary, medical, emName, emPhone, emRel, fourWheelDrive, refreshProfile, onSaved, toast])
 
   // Name only the fields actually being asked for, so a buyer who already has
   // dietary and medical on file is not told we need them again.
@@ -110,6 +123,7 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, needE
     needDietary && 'dietary',
     needMedical && 'medical/allergy',
     needEmergency && 'emergency contact',
+    needFourWheelDrive && '4WD',
   ].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' info'
 
   return (
@@ -202,6 +216,15 @@ export function CampoutRequirementsModal({ open, needDietary, needMedical, needE
                 maxLength={60}
               />
             </div>
+          )}
+
+          {needFourWheelDrive && (
+            <FourWheelDriveField
+              value={fourWheelDrive}
+              onChange={(v) => { setFourWheelDrive(v); if (error) setError(null) }}
+              disabled={saving}
+              helpText={FOUR_WHEEL_DRIVE_HELP}
+            />
           )}
 
           {error && <p data-eos-id="src/components/campout-requirements-modal.tsx#15" className="text-xs text-error-500">{error}</p>}

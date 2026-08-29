@@ -100,7 +100,7 @@ import { ticketTermsCopy } from '@/lib/ticket-terms'
 import { CampoutRequirementsModal } from '@/components/campout-requirements-modal'
 import { TicketQuestionsModal } from '@/components/ticket-questions-modal'
 import { useEventTicketQuestions, type TicketAnswers } from '@/hooks/use-event-ticket-questions'
-import { hasEmergencyContact, isCampoutActivity, LIVE_TICKET_STATUSES } from '@/lib/dietary'
+import { hasEmergencyContact, hasFourWheelDriveAnswer, isCampoutActivity, LIVE_TICKET_STATUSES } from '@/lib/dietary'
 import { useEventCarpools, type EventCarpoolBreakout } from '@/hooks/use-event-carpools'
 import { useSaveSeat } from '@/hooks/use-carpool'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
@@ -563,9 +563,16 @@ export default function EventDetailPage() {
   // two, so a member could still reach Stripe with nobody to call. Both name
   // and phone are needed for the contact to be reachable at all.
   const emergencyMissing = !hasEmergencyContact(profile)
+  // Four-wheel drive joined the set on Tate's 2026-08-30 direction: leaders
+  // plan lifts and gear runs off it, and asking it here rather than only as a
+  // per-event question means it is on file once instead of per booking.
+  // `false` is a real answer, so this reads the predicate rather than
+  // truthiness (see hasFourWheelDriveAnswer).
+  const fourWheelDriveMissing = !hasFourWheelDriveAnswer(profile)
   const ticketNeedsDietary = isTicketed && dietaryMissing
   const ticketNeedsMedical = isTicketed && medicalMissing
   const ticketNeedsEmergency = isTicketed && emergencyMissing
+  const ticketNeedsFourWheelDrive = isTicketed && fourWheelDriveMissing
   const [showCampoutReqs, setShowCampoutReqs] = useState(false)
   const [showQuestionsModal, setShowQuestionsModal] = useState(false)
   const [pendingTicketTypeId, setPendingTicketTypeId] = useState<string | null>(null)
@@ -614,13 +621,13 @@ export default function EventDetailPage() {
   }, [ticketQuestions, doTicketCheckout])
 
   const beginTicketCheckout = useCallback((ticketTypeId: string) => {
-    if (user && (ticketNeedsDietary || ticketNeedsMedical || ticketNeedsEmergency)) {
+    if (user && (ticketNeedsDietary || ticketNeedsMedical || ticketNeedsEmergency || ticketNeedsFourWheelDrive)) {
       setPendingTicketTypeId(ticketTypeId)
       setShowCampoutReqs(true)
       return
     }
     proceedToCheckout(ticketTypeId)
-  }, [user, ticketNeedsDietary, ticketNeedsMedical, ticketNeedsEmergency, proceedToCheckout])
+  }, [user, ticketNeedsDietary, ticketNeedsMedical, ticketNeedsEmergency, ticketNeedsFourWheelDrive, proceedToCheckout])
 
   const [showCancelSheet, setShowCancelSheet] = useState(false)
   const [showCalendarSheet, setShowCalendarSheet] = useState(false)
@@ -2375,14 +2382,15 @@ export default function EventDetailPage() {
         />
       )}
 
-      {/* Dietary + medical + emergency-contact capture, shown before checkout
-          when the buyer is missing any of them. Blocks the purchase until
-          answered. */}
+      {/* Dietary + medical + emergency-contact + 4WD capture, shown before
+          checkout when the buyer is missing any of them. Blocks the purchase
+          until answered. */}
       <CampoutRequirementsModal
         open={showCampoutReqs}
         needDietary={ticketNeedsDietary}
         needMedical={ticketNeedsMedical}
         needEmergency={ticketNeedsEmergency}
+        needFourWheelDrive={ticketNeedsFourWheelDrive}
         isCampout={isCampoutEvent}
         onClose={() => { setShowCampoutReqs(false); setPendingTicketTypeId(null) }}
         onSaved={() => {

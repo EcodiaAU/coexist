@@ -7,9 +7,11 @@ import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { useToast } from '@/components/toast'
 import { Modal } from '@/components/modal'
+import { FourWheelDriveField, FOUR_WHEEL_DRIVE_HELP } from '@/components/four-wheel-drive-field'
 import {
   DIETARY_GATE_QUERY_KEY,
   hasEmergencyContact,
+  hasFourWheelDriveAnswer,
   LIVE_REGISTRATION_STATUSES,
   LIVE_TICKET_STATUSES,
   NO_DIETARY_SENTINEL,
@@ -57,6 +59,10 @@ export function DietaryGate() {
   const [emName, setEmName] = useState('')
   const [emPhone, setEmPhone] = useState('')
   const [emRel, setEmRel] = useState('')
+  // Four-wheel drive. Tate 2026-08-30: the safety set is four things asked at
+  // one point, and this is the fourth. null = unanswered in this session; there
+  // is no default because `false` is a real answer we have to be able to store.
+  const [fourWheelDrive, setFourWheelDrive] = useState<boolean | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -64,6 +70,9 @@ export function DietaryGate() {
   const medicalEmpty = !(profile?.medical_requirements ?? '').trim()
   // Both name and phone are needed for the contact to be reachable at all.
   const emergencyEmpty = !hasEmergencyContact(profile)
+  // Reads the predicate, not truthiness: has_four_wheel_drive === false is an
+  // answer, and treating it as empty would re-ask that person forever.
+  const fourWheelDriveEmpty = !hasFourWheelDriveAnswer(profile)
 
   // Candidate = onboarded user, phone already on file (PhoneGate precedence:
   // that gate handles phone-less users and the two must never stack), and at
@@ -75,7 +84,7 @@ export function DietaryGate() {
     !!profile &&
     profile.onboarding_completed === true &&
     !!(profile.phone ?? '').trim() &&
-    (dietaryEmpty || medicalEmpty || emergencyEmpty)
+    (dietaryEmpty || medicalEmpty || emergencyEmpty || fourWheelDriveEmpty)
 
   // Does this user hold a live ticket OR registration to an upcoming ticketed
   // event? Both tables are checked because a ticketed event can carry either
@@ -119,10 +128,11 @@ export function DietaryGate() {
   const needDietary = !!eligibility?.ticketed && dietaryEmpty
   const needMedical = !!eligibility?.ticketed && medicalEmpty
   const needEmergency = !!eligibility?.ticketed && emergencyEmpty
-  const show = candidate && (needDietary || needMedical || needEmergency)
+  const needFourWheelDrive = !!eligibility?.ticketed && fourWheelDriveEmpty
+  const show = candidate && (needDietary || needMedical || needEmergency || needFourWheelDrive)
   // Named once and used for both the visible heading and the ariaLabel, so the
   // screen-reader announcement and the heading can never disagree.
-  const heading = safetyGateHeading({ dietary: needDietary, medical: needMedical, emergency: needEmergency })
+  const heading = safetyGateHeading({ dietary: needDietary, medical: needMedical, emergency: needEmergency, fourWheelDrive: needFourWheelDrive })
 
   // Body scroll-lock and keyboard avoidance are now owned by the Modal
   // primitive (Vaul + `keyboardAware` via useKeyboardHeight - the canonical
@@ -153,6 +163,10 @@ export function DietaryGate() {
       setError('Give us a phone number for your emergency contact')
       return
     }
+    if (needFourWheelDrive && fourWheelDrive === null) {
+      setError('Let us know whether you have a four-wheel drive')
+      return
+    }
 
     const updates: {
       dietary_requirements?: string
@@ -160,6 +174,7 @@ export function DietaryGate() {
       emergency_contact_name?: string
       emergency_contact_phone?: string
       emergency_contact_relationship?: string
+      has_four_wheel_drive?: boolean
     } = {}
     if (needDietary) updates.dietary_requirements = dietaryValue
     if (needMedical) updates.medical_requirements = medicalValue
@@ -168,6 +183,7 @@ export function DietaryGate() {
       updates.emergency_contact_phone = emPhoneValue
       if (emRel.trim()) updates.emergency_contact_relationship = emRel.trim()
     }
+    if (needFourWheelDrive && fourWheelDrive !== null) updates.has_four_wheel_drive = fourWheelDrive
 
     setError(null)
     setSaving(true)
@@ -185,7 +201,7 @@ export function DietaryGate() {
     } finally {
       setSaving(false)
     }
-  }, [user, needDietary, needMedical, needEmergency, dietary, medical, emName, emPhone, emRel, refreshProfile, toast])
+  }, [user, needDietary, needMedical, needEmergency, needFourWheelDrive, dietary, medical, emName, emPhone, emRel, fourWheelDrive, refreshProfile, toast])
 
   // Blocking gate: `dismissible={false}` = no backdrop tap, no Escape, no drag.
   return (
@@ -207,8 +223,8 @@ export function DietaryGate() {
             <p data-eos-id="src/components/dietary-gate.tsx#8" className="text-sm text-neutral-500 leading-relaxed">
               You have a ticket to an upcoming event. We cater for camp-outs and
               ticketed events, and our leaders need to know about allergies,
-              medical needs, dietary requirements and who to call in an
-              emergency to keep everyone safe.
+              medical needs, dietary requirements, who to call in an emergency
+              and who can get in on unsealed roads.
             </p>
           </div>
 
@@ -284,6 +300,15 @@ export function DietaryGate() {
                 maxLength={80}
               />
             </div>
+          )}
+
+          {needFourWheelDrive && (
+            <FourWheelDriveField
+              value={fourWheelDrive}
+              onChange={(v) => { setFourWheelDrive(v); if (error) setError(null) }}
+              disabled={saving}
+              helpText={FOUR_WHEEL_DRIVE_HELP}
+            />
           )}
 
           {error && <p data-eos-id="src/components/dietary-gate.tsx#15" className="text-xs text-error-500">{error}</p>}

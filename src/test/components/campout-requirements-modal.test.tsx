@@ -39,6 +39,7 @@ const baseProps = {
   needDietary: false,
   needMedical: false,
   needEmergency: true,
+  needFourWheelDrive: false,
   isCampout: true,
   onClose: vi.fn(),
   onSaved: vi.fn(),

@@ -8,10 +8,12 @@ import { useUserLocation } from '@/hooks/use-nearby'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/button'
 import { takePendingClaim } from '@/lib/pending-claim'
+import { hasEmergencyContact, hasFourWheelDriveAnswer } from '@/lib/dietary'
 
 import { StepNameHandle } from './steps/step-name-handle'
 import { StepLocation } from './steps/step-location'
 import { StepPhone } from './steps/step-phone'
+import { StepSafety, type SafetyIntake } from './steps/step-safety'
 import { StepCollective } from './steps/step-collective'
 import { StepFirstEvent } from './steps/step-first-event'
 import { StepCelebration } from './steps/step-celebration'
@@ -21,7 +23,7 @@ import { StepCelebration } from './steps/step-celebration'
 // name" so we still ask once, but never re-ask a user who gave a real name.
 const NEW_USER_FALLBACK = 'New User'
 
-type StepId = 'name' | 'location' | 'phone' | 'collective' | 'event'
+type StepId = 'name' | 'location' | 'phone' | 'safety' | 'collective' | 'event'
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
@@ -45,6 +47,16 @@ export default function OnboardingPage() {
   const existingName = (profile?.display_name ?? '').trim()
   const hasRealName = existingName.length > 0 && existingName !== NEW_USER_FALLBACK
   const existingPhone = (profile?.phone ?? '').trim()
+  // The combined safety intake (Tate 2026-08-30). Shown unless the profile
+  // already carries the WHOLE set, which is the case for a returning user who
+  // answered at a checkout before this step existed. Asking again for a set
+  // they have complete is the post-onboarding ambush the phone step was folded
+  // in here to kill.
+  const hasWholeSafetySet =
+    !!(profile?.dietary_requirements ?? '').trim() &&
+    !!(profile?.medical_requirements ?? '').trim() &&
+    hasEmergencyContact(profile) &&
+    hasFourWheelDriveAnswer(profile)
 
   const [stepOrder] = useState<StepId[]>(
     () =>
@@ -52,6 +64,7 @@ export default function OnboardingPage() {
         hasRealName ? null : 'name',
         'location',
         existingPhone ? null : 'phone',
+        hasWholeSafetySet ? null : 'safety',
         'collective',
         'event',
       ].filter(Boolean) as StepId[],
@@ -73,6 +86,14 @@ export default function OnboardingPage() {
     location: '',
     locationPoint: null as { lat: number; lng: number } | null,
     collectiveId: null as string | null,
+    safety: {
+      dietary: '',
+      medical: '',
+      emergencyName: '',
+      emergencyPhone: '',
+      emergencyRelationship: '',
+      fourWheelDrive: null,
+    } as SafetyIntake,
   })
 
   const updateData = useCallback(
@@ -104,6 +125,26 @@ export default function OnboardingPage() {
       // never trips the legacy PhoneGate backstop (which only shows when a
       // fully-onboarded profile has no phone on file).
       if (data.phone) profilePayload.phone = data.phone
+
+      // The combined safety intake. Each field is written INDEPENDENTLY: a
+      // user who answered dietary and skipped the rest keeps their dietary
+      // answer, and the later gates then ask only for what is still missing.
+      // Writing a blank would be worse than writing nothing, because an empty
+      // string is what those gates read as "never answered".
+      const safety = data.safety
+      if (safety.dietary.trim()) profilePayload.dietary_requirements = safety.dietary.trim()
+      if (safety.medical.trim()) profilePayload.medical_requirements = safety.medical.trim()
+      // Name and phone go together or not at all: half a contact reads as
+      // answered on a leader's roster and cannot be rung.
+      if (safety.emergencyName.trim() && safety.emergencyPhone.trim()) {
+        profilePayload.emergency_contact_name = safety.emergencyName.trim()
+        profilePayload.emergency_contact_phone = safety.emergencyPhone.trim()
+        if (safety.emergencyRelationship.trim()) {
+          profilePayload.emergency_contact_relationship = safety.emergencyRelationship.trim()
+        }
+      }
+      // `false` is a real answer, so this checks for null rather than falsiness.
+      if (safety.fourWheelDrive !== null) profilePayload.has_four_wheel_drive = safety.fourWheelDrive
 
       const { error: profileError } = await supabase
         .from('profiles')
@@ -227,6 +268,17 @@ export default function OnboardingPage() {
             phone={data.phone}
             onChange={(phone) => updateData({ phone })}
             onNext={goNext}
+          />
+        )
+      case 'safety':
+        return (
+          <StepSafety
+            value={data.safety}
+            onChange={(patch) => setData((prev) => ({ ...prev, safety: { ...prev.safety, ...patch } }))}
+            onNext={goNext}
+            // Skip advances without clearing what was typed: a user who filled
+            // one field then tapped skip still has that one field saved.
+            onSkip={goNext}
           />
         )
       case 'collective':
