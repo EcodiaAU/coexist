@@ -28,7 +28,25 @@ export interface MapMarker {
 // light_all, whose near-white land + grey water needed a green hue-rotate that
 // left land whiteish and swung the ocean garish green. Voyager needs no colour
 // trickery: land reads as land, water as water. {r} + detectRetina = @2x tiles.
-export const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+// CARTO started requiring an API key on the raster basemaps in Aug 2026. Without
+// one every tile comes back stamped with a diagonal "API KEY REQUIRED" watermark
+// (the tiles still render, so nothing 404s and nothing throws; the map just looks
+// broken). The key below is the free non-profit tier issued to code@ecodia.au on
+// 2026-08-30 for app.coexistaus.org: 5 million tile requests a calendar month,
+// conditional on the CARTO + OpenStreetMap attribution staying visible, which is
+// what TILE_ATTR and attributionControl:true below are for. Do not remove them.
+//
+// It is a literal rather than a VITE_ env var on purpose. This value is public by
+// design (it rides in the query string of every tile request in every user's
+// browser), so an env var buys no secrecy, and it would add a silent failure mode
+// across three separate build paths (Vercel prod, Vercel preview, and the local
+// Capacitor build that feeds Capgo OTA plus the native binaries). A missing env
+// var there brings the watermark back with no error anywhere.
+//
+// Raster is on CARTO's retirement path and vector is the successor; the same key
+// already covers vector for when that move happens.
+export const CARTO_BASEMAP_KEY = 'cb1_2jzf_1_d42f31f30177aa13aa9d5ca7'
+export const TILE_URL = `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_BASEMAP_KEY}`
 export const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
 /** Centre of Australia - sensible fallback instead of defaulting to Sydney */
