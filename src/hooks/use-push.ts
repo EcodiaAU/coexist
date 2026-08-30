@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { resolveNotificationRoute } from '@/hooks/use-notifications'
 import { scheduleIdle } from '@/lib/defer'
+import { isApnsShapedToken, shouldReplaceStoredToken } from '@/lib/push-token'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -169,6 +170,50 @@ export async function removeCurrentDeviceToken(userId: string): Promise<void> {
   try {
     await Preferences.remove({ key: CURRENT_PUSH_TOKEN_KEY })
   } catch { /* best-effort */ }
+}
+
+/**
+ * Replace an APNs-shaped row in push_tokens with the real FCM token.
+ *
+ * THE BUG THIS FIXES. The FCM token used to be picked up by ONE 30-second poll
+ * that ran inside the 'registration' listener, and that listener returns early
+ * whenever the APNs token is unchanged, which it always is after the first
+ * event of a process. So a device got exactly one 30-second window per cold
+ * launch to see a value Firebase mints over the network, and a miss left an
+ * undeliverable APNs token in the database with nothing but a console.warn.
+ * Nothing retried, nothing surfaced, and send-push answered 200 {sent:0}.
+ *
+ * This runs on mount and on EVERY resume, is idempotent, and is deliberately
+ * independent of the registration event, because by the time a device is in the
+ * degraded state the registration event no longer carries new information: the
+ * FCM token is already sitting in UserDefaults, written by
+ * AppDelegate.messaging(_:didReceiveRegistrationToken:).
+ *
+ * Returns true when it healed a row.
+ */
+export async function healIosPushToken(userId: string): Promise<boolean> {
+  if (Capacitor.getPlatform() !== 'ios') return false
+  try {
+    const fcm = (await Preferences.get({ key: 'fcmToken' }))?.value ?? null
+    if (!fcm || isApnsShapedToken(fcm)) return false
+
+    let claimed = currentDeviceToken
+    if (!claimed) {
+      claimed = (await Preferences.get({ key: CURRENT_PUSH_TOKEN_KEY }))?.value ?? null
+    }
+    if (!shouldReplaceStoredToken(claimed, fcm)) return false
+
+    console.info('[push] healing token: claimed', (claimed ?? 'none').slice(0, 12), 'to fcm', fcm.slice(0, 12))
+    const stored = await storeToken(userId, fcm, 'ios')
+    if (!stored) return false
+    // Drop the old row only after the FCM row is safely claimed, so a failure
+    // here can never leave the device with no token at all.
+    if (claimed && claimed !== fcm) await removeToken(userId, claimed)
+    return true
+  } catch (err) {
+    console.warn('[push] heal failed:', err)
+    return false
+  }
 }
 
 async function clearBadgeCount() {
@@ -378,9 +423,13 @@ export function usePushRegistration() {
           const t = token as PushNotificationToken
           console.info('[push] token received:', t.value.slice(0, 12) + '…')
 
-          // Skip if we already stored this exact token (rapid resume dedup)
+          // Skip the STORE if we already claimed this exact token (rapid resume
+          // dedup), but never skip the FCM reconcile: an unchanged APNs token is
+          // exactly the state a degraded device is stuck in, and returning here
+          // is what made the bridge a one-shot-per-launch gamble.
           if (tokenRef.current === t.value) {
-            console.info('[push] token unchanged - skipping store')
+            console.info('[push] token unchanged - skipping store, still reconciling FCM')
+            if (platform === 'ios') void healIosPushToken(user!.id)
             return
           }
           tokenRef.current = t.value
@@ -402,27 +451,25 @@ export function usePushRegistration() {
           // the FCM token, so it usually arrives 1-5s after this 'registration' event.
           if (platform === 'ios') {
             try {
-              const apnsToken = t.value
               const startedAt = Date.now()
               const pollIntervalMs = 1000
-              const totalBudgetMs = 30000
+              // 30s was too tight for a cold launch on a slow network: Firebase
+              // has to set apnsToken, round-trip to its backend and write
+              // UserDefaults before the value exists. The budget is now 120s and,
+              // more importantly, a miss is no longer terminal - healIosPushToken
+              // runs again on every resume.
+              const totalBudgetMs = 120000
               const poll = async () => {
                 if (!mounted) return
-                const got = await Preferences.get({ key: 'fcmToken' })
-                if (got?.value && got.value !== apnsToken) {
-                  console.info('[push] fcm token resolved:', got.value.slice(0, 12) + '…')
-                  // Replace the APNs row in push_tokens with the FCM row, then drop the
-                  // stale APNs row so the edge function only sees the FCM token.
-                  tokenRef.current = got.value
-                  await storeToken(user!.id, got.value, platform)
-                  await removeToken(user!.id, apnsToken)
+                if (await healIosPushToken(user!.id)) {
+                  tokenRef.current = currentDeviceToken
                   return
                 }
                 if (Date.now() - startedAt < totalBudgetMs && mounted) {
                   const tNext = setTimeout(poll, pollIntervalMs)
                   timersRef.current.push(tNext)
                 } else if (mounted) {
-                  console.warn('[push] FCM token did not arrive within budget; APNs token stays in push_tokens (degraded)')
+                  console.warn('[push] FCM token did not arrive within budget; retrying on next resume')
                 }
               }
               const t1 = setTimeout(poll, pollIntervalMs)
@@ -571,6 +618,11 @@ export function usePushRegistration() {
 
       listenersRef.current = [regListener, errListener, receivedListener, actionListener, { remove: unregisterConsumer }]
 
+      // Heal FIRST, before registering. A device already carrying a minted FCM
+      // token in UserDefaults is repaired on this launch without waiting for a
+      // registration event that may never bring anything new.
+      void healIosPushToken(user!.id)
+
       // Register - listeners are already attached so the token callback will fire.
       // promptIfNeeded=false: never cold-fire the OS permission dialog on first
       // authed entry. If already granted we register silently; otherwise the
@@ -616,6 +668,9 @@ export function usePushRegistration() {
               if (!mounted) return
               clearBadgeCount()
               void (async () => {
+                // Repair a degraded row on every resume. This is the retry the
+                // one-shot poll never had.
+                if (mounted) await healIosPushToken(user!.id)
                 await ensurePushPlugin()
                 const plugin = getPushPlugin()
                 if (plugin && mounted) {

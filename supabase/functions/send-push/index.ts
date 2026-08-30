@@ -200,6 +200,27 @@ async function sendFcmMessage(
   return 'sent'
 }
 
+/**
+ * An APNs device token is 64 hex characters. An FCM registration token is
+ * ~140-190 characters and never pure hex, so the shapes cannot collide.
+ *
+ * FCM HTTP v1 `messages:send` only accepts an FCM registration token. Handed an
+ * APNs token it answers 400 INVALID_ARGUMENT, which this function then treats as
+ * a permanently invalid token and deletes. That is CORRECT and it is also why
+ * the failure was invisible for months: the caller sees a 200 with sent:0, the
+ * row disappears, and the iOS client re-creates it on the next launch. Nothing
+ * ever said "this device cannot be reached".
+ *
+ * Measured 2026-08-30: 217 of 1,020 surviving iOS rows were APNs-shaped, and
+ * iOS FCM-row refreshes had fallen to 0.12-0.18 per Android refresh against an
+ * installed base roughly twice Android's. Rather than spend an FCM round trip to
+ * be told what the shape already says, skip it and REPORT it, so the count is
+ * visible to callers and to the health canary.
+ */
+function isApnsShapedToken(token: string): boolean {
+  return /^[0-9a-fA-F]{64}$/.test(token)
+}
+
 /* ------------------------------------------------------------------ */
 /*  Main handler                                                       */
 /* ------------------------------------------------------------------ */
@@ -594,9 +615,27 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
       return true
     })
 
-    // Send to all filtered tokens in parallel
+    // Split off tokens that cannot be delivered by SHAPE before spending an FCM
+    // call on them. These are iOS devices whose Firebase bridge never resolved,
+    // so push_tokens holds the raw APNs token. Counting them in `total` while
+    // FCM silently rejected each one is what let a fifth of the iOS fleet go
+    // unreachable without a single failing check.
+    const undeliverableByShape = filteredTokens.filter(
+      (t) => t.platform === 'ios' && isApnsShapedToken(t.token),
+    )
+    const deliverableTokens = filteredTokens.filter(
+      (t) => !(t.platform === 'ios' && isApnsShapedToken(t.token)),
+    )
+    if (undeliverableByShape.length > 0) {
+      console.warn(
+        `[send-push] ${undeliverableByShape.length} iOS token(s) are raw APNs device tokens, not FCM registration tokens; those devices are unreachable until their app heals the row. users=`,
+        [...new Set(undeliverableByShape.map((t) => t.user_id))].join(','),
+      )
+    }
+
+    // Send to all deliverable tokens in parallel
     const results = await Promise.allSettled(
-      filteredTokens.map((t) =>
+      deliverableTokens.map((t) =>
         sendFcmMessage(
           t.token,
           payload.title,
@@ -612,7 +651,7 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
     ).length
 
     // Only clean up tokens that are permanently invalid (UNREGISTERED), not transient failures
-    const invalidTokens = filteredTokens.filter(
+    const invalidTokens = deliverableTokens.filter(
       (_, i) => results[i].status === 'fulfilled' && (results[i] as PromiseFulfilledResult<string>).value === 'invalid',
     )
     if (invalidTokens.length > 0) {
@@ -639,9 +678,17 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
       }
     }
 
-    return new Response(JSON.stringify({ sent, total: filteredTokens.length }), {
-      headers: JSON_HEADERS,
-    })
+    // `total` stays the whole audience so existing callers read the same number.
+    // `undeliverable_apns_shape` is the new signal: a non-zero value means those
+    // users hold a device the push system cannot reach at all.
+    return new Response(
+      JSON.stringify({
+        sent,
+        total: filteredTokens.length,
+        undeliverable_apns_shape: undeliverableByShape.length,
+      }),
+      { headers: JSON_HEADERS },
+    )
   } catch (err) {
     console.error('[send-push] Error:', err)
     // Return 200 to prevent retries
