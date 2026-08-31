@@ -26,6 +26,12 @@ const RESUME_REFRESH_PREFIXES = new Set([
   'updates-unread',
   'my-events',
   'my-tasks',
+  // Event-day is the live check-in gate. A leader who backgrounds the app
+  // mid-event and comes back must not be shown the roster and walk-in tallies
+  // from before they left, which is what happened at the Darwin East Point
+  // Beach Clean Up on 2026-08-30.
+  'event-roster',
+  'event-walk-ins',
 ])
 
 /** A resume that takes at least this long to settle is the COEXIST-K signature. */

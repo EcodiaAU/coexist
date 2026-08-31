@@ -1381,7 +1381,10 @@ export default function EventDayPage() {
           open={showWalkIn}
           onClose={() => setShowWalkIn(false)}
           onSuccess={() => {
-            // Attendee list re-queries via event-roster invalidation
+            // WalkInSheet invalidates ['event-walk-ins', eventId] itself, which
+            // is what moves walkInCount and reveals the walk-in list section.
+            // This comment used to claim event-roster invalidation covered it;
+            // it never did, because a walk-in is not an event_registrations row.
           }}
           onAddExistingUser={handleAddAndCheckIn}
         />

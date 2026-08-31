@@ -1427,6 +1427,13 @@ export function useEventWalkIns(eventId: string | undefined) {
     },
     enabled: !!eventId,
     staleTime: 30 * 1000,
+    // The event-day screen is a live gate: several staff check people in from
+    // their own phones at once, and a walk-in recorded on one device reaches
+    // another only by a refetch. Nothing here is window-focus driven on a
+    // native build, so poll while the screen is mounted. Only event-day reads
+    // this hook, so the poll is scoped to the door and stops when it unmounts.
+    refetchInterval: 20 * 1000,
+    refetchOnWindowFocus: true,
   })
 }
 

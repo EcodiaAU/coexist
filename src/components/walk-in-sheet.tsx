@@ -12,6 +12,7 @@
  * optional.
  */
 import { useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/components/toast'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase'
@@ -80,6 +81,7 @@ const inputCls = cn(
 export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUser }: WalkInSheetProps) {
   const { profile } = useAuth()
   const { toast } = useToast()
+  const queryClient = useQueryClient()
 
   /* ------------------------------ search ------------------------------ */
   const [searchQuery, setSearchQuery] = useState('')
@@ -223,6 +225,17 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
         toast.error(error.message || 'Failed to record walk-in')
         return
       }
+
+      // This insert is a raw supabase call, not a react-query mutation, so
+      // nothing invalidated ['event-walk-ins', eventId] and the day screen's
+      // walkIns array stayed frozen at whatever it held when the screen
+      // mounted. useDeleteWalkIn invalidated it, the insert never did, so the
+      // headline "Checked In" (roster.counts.checkedIn + walkIns.length) only
+      // ever moved by registered check-ins and the walk-in list section, which
+      // renders behind `walkIns.length > 0`, never appeared at all.
+      // Kurt Jones hit this live at the Darwin East Point Beach Clean Up on
+      // 2026-08-30: 9 walk-ins recorded and saved, screen still reading 11.
+      await queryClient.invalidateQueries({ queryKey: ['event-walk-ins', eventId] })
 
       toast.success('Walk-in recorded.')
       resetForm()

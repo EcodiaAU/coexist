@@ -26,6 +26,7 @@ import {
     useEventDetail,
     useEventImpact,
     useEventAttendees,
+    useEventWalkIns,
     useLogImpact,
     ACTIVITY_TYPE_LABELS,
     getEventDuration,
@@ -612,6 +613,7 @@ export default function LogImpactPage() {
   const { data: event, isLoading: eventLoading } = useEventDetail(eventId)
   const { data: existingImpact, isLoading: impactLoading } = useEventImpact(eventId)
   const { data: attendees } = useEventAttendees(eventId)
+  const { data: walkIns } = useEventWalkIns(eventId)
   const logImpact = useLogImpact()
   const { isAssistLeader, isLoading: roleLoading } = useCollectiveRole(event?.collective_id)
   // GLOBAL staff who can edit ANY event's impact stats, matching the backend
@@ -878,9 +880,18 @@ export default function LogImpactPage() {
     }
   }
 
+  // Attendance is registered check-ins plus walk-ins, the same union the
+  // canonical coexist_attendance_metrics() engine uses and the same fold
+  // event-day applies to its headline. useEventAttendees reads
+  // event_registrations only, so counting it alone under-reported real turnout
+  // by exactly the number of people who walked up on the day, and that number
+  // is the default written to event_impact.attendees and divided into the
+  // hours total. Darwin East Point 2026-08-30 was 14 registered + 9 walk-ins.
   const checkedInCount = useMemo(
-    () => (attendees ?? []).filter((a) => a.status === 'attended').length,
-    [attendees],
+    () =>
+      (attendees ?? []).filter((a) => a.status === 'attended').length +
+      (walkIns ?? []).length,
+    [attendees, walkIns],
   )
 
   // Editable participant count: defaults to live signed-in count but the
@@ -1220,13 +1231,16 @@ export default function LogImpactPage() {
         animate="visible"
         className="pt-4 pb-8 space-y-4"
       >
-        {/* Event hero */}
+        {/* Event hero. The denominator folds walk-ins for the same reason the
+            numerator does, so the ratio cannot read as more people present
+            than the event ever expected. Matches event-day's
+            goingCount = c.going + walkInCount. */}
         <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
           <EventHeroBanner
             title={event.title}
             activityType={event.activity_type}
             checkedInCount={checkedInCount}
-            registrationCount={event.registration_count}
+            registrationCount={(event.registration_count ?? 0) + (walkIns ?? []).length}
             dateStart={event.date_start}
             dateEnd={event.date_end}
           />
