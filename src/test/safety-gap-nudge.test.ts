@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import {
@@ -546,8 +546,19 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
 
     const claimToSend = fn.slice(claimAt, sendAt)
 
-    // 1. The claim asks for its inserted rows back.
-    expect(claimToSend).toMatch(/\.select\(/)
+    // 1. The claim asks for its inserted rows back, and the ask is part of the
+    //    CLAIM'S OWN chain. Scoping this to the whole claim-to-send region was
+    //    itself a hole, found by negative control on 2026-09-01: delete the
+    //    `.select()` from the upsert AND add an unrelated
+    //    `.from('profiles').select('id, email')` lookup between the claim and
+    //    the send, and all 76 tests stayed green with the permit gone. That is
+    //    the same silent total kill this test was written to catch, reachable
+    //    by an ordinary future edit. The claim statement ends at the first
+    //    blank line, so a `.select` borrowed from a later query cannot satisfy
+    //    it, and requiring `.upsert(` before it pins the order within the chain.
+    const claimStmtEnd = fn.indexOf('\n\n', claimAt)
+    expect(claimStmtEnd).toBeGreaterThan(claimAt)
+    expect(fn.slice(claimAt, claimStmtEnd)).toMatch(/\.upsert\([\s\S]*\.select\(/)
 
     // 2. The claim's returned data is bound to a name.
     const dataBinding = fn.slice(0, claimAt).match(/const \{\s*data:\s*(\w+)[^}]*\}\s*=\s*await\s*$|const \{\s*data:\s*(\w+)[^}]*\}\s*=\s*await[\s\S]{0,80}$/)
@@ -588,6 +599,28 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     expect(fn).toContain('TZ_PADDING_HOURS')
     expect(fn).toMatch(/NUDGE_WINDOW_MIN_HOURS - TZ_PADDING_HOURS/)
     expect(fn).toMatch(/NUDGE_WINDOW_MAX_HOURS \+ TZ_PADDING_HOURS/)
+
+    // The padding VALUE has to cover the widest audience offset or the SQL
+    // stops being a superset of the accurate window and events fall out before
+    // the accurate test can judge them. Hobart in DST is +11. Pinning only the
+    // EXPRESSIONS was a hole: a negative control set the constant to 0 and
+    // every assertion above stayed green, while for a +10 audience the top ten
+    // hours of the fourteen-day window went dark.
+    const padding = Number(fn.match(/const TZ_PADDING_HOURS = (\d+)/)?.[1])
+    expect(padding).toBeGreaterThanOrEqual(11)
+
+    // And the audience tz is actually READ off the event and its collective.
+    // Another negative control replaced the body of audienceTzFor with a bare
+    // 'Australia/Brisbane' and stayed green, which would judge Perth (+8) two
+    // hours out and Hobart in DST (+11) one hour out. Measured 2026-09-01: all
+    // 18 collectives carry a real IANA zone spanning +8 to +11, all 468 events
+    // carry timezone NULL, and Murbpook (Adelaide, +9:30, 2026-09-19) is a
+    // live ticketed event. Not theoretical.
+    const tzFnAt = fn.indexOf('function audienceTzFor')
+    expect(tzFnAt).toBeGreaterThan(-1)
+    const tzFn = fn.slice(tzFnAt, fn.indexOf('\n}', tzFnAt))
+    expect(tzFn).toMatch(/event\.timezone/)
+    expect(tzFn).toMatch(/collectives\?\.timezone/)
   })
 
   it('keeps the cadence on the real clock, not the audience clock', () => {
@@ -602,6 +635,13 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     )
     expect(cohortCall).toContain('now,')
     expect(cohortCall).not.toContain('wallClockNowInTz')
+
+    // And the real now is what reaches nudgeEvent in the first place. Pinning
+    // only the cohort call was a hole: a negative control passed
+    // wallClockNowInTz at THIS call site and every assertion above stayed
+    // green, while each 48h gap moved by the audience offset (down to 38h for
+    // a +10 audience), so the cadence would nudge earlier than it promises.
+    expect(fn).toMatch(/nudgeEvent\(\s*supabase,\s*event,\s*now\s*\)/)
   })
 
   it('the 12h floor is 12h before the REAL start for a +10 audience', () => {
@@ -625,6 +665,105 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // The naive frame keeps nudging until only 2h remain before the real start.
     const twoHoursOut = new Date(realStart.getTime() - 2 * 3600 * 1000)
     expect(isEventInNudgeWindow(storedStart, twoHoursOut)).toBe(true)
+  })
+
+  it('wallClockNowInTz converts the real clock, and survives a DST boundary', () => {
+    // Until now wallClockNowInTz and audienceTzFor had ZERO executable
+    // coverage: every assertion about them was a text match on this file,
+    // which proves the source contains a string and nothing whatever about
+    // what it computes. That is the weakest possible guard on the one helper
+    // that decides whether a safety email goes out.
+    //
+    // This executes THE REAL SOURCE, lifted out of index.ts, so it cannot pass
+    // against a drifted copy. The function is pure and closes over nothing but
+    // Intl and Date, which is what makes lifting it honest rather than a
+    // re-implementation.
+    const fn = fs.readFileSync(FN, 'utf8')
+    const at = fn.indexOf('function wallClockNowInTz')
+    expect(at).toBeGreaterThan(-1)
+    // The lifted source is TypeScript, and new Function parses JavaScript, so
+    // the annotations come off. Deliberately a strip and not a transpile: if
+    // the helper ever grows a construct that needs real compilation, this
+    // throws and the test reds, which is the safe direction.
+    const src = fn.slice(at, fn.indexOf('\n}', at) + 2).replace(/:\s*(?:string|Date)\b/g, '')
+    const wallClockNowInTz = new Function(`${src}; return wallClockNowInTz`)() as (tz: string) => Date
+
+    vi.useFakeTimers()
+    try {
+      // Australian DST starts at 2am on the first Sunday in October, which in
+      // 2026 is the 4th. Hobart is +10 the day before and +11 the day after,
+      // and the 12h padding has to cover that wider one.
+      vi.setSystemTime(new Date('2026-10-03T00:00:00.000Z'))
+      expect(wallClockNowInTz('Australia/Hobart').toISOString()).toBe('2026-10-03T10:00:00.000Z')
+      vi.setSystemTime(new Date('2026-10-05T00:00:00.000Z'))
+      expect(wallClockNowInTz('Australia/Hobart').toISOString()).toBe('2026-10-05T11:00:00.000Z')
+
+      // Brisbane never shifts, and Perth is the other end of the AU spread.
+      expect(wallClockNowInTz('Australia/Brisbane').toISOString()).toBe('2026-10-05T10:00:00.000Z')
+      expect(wallClockNowInTz('Australia/Perth').toISOString()).toBe('2026-10-05T08:00:00.000Z')
+      // Adelaide is the half-hour zone, which a naive integer-offset
+      // implementation would round away.
+      expect(wallClockNowInTz('Australia/Adelaide').toISOString()).toBe('2026-10-05T10:30:00.000Z')
+
+      // Midnight is the hour-24 footgun the helper explicitly guards. The date
+      // must not slide a day either way.
+      vi.setSystemTime(new Date('2026-09-03T14:00:00.000Z'))
+      expect(wallClockNowInTz('Australia/Brisbane').toISOString()).toBe('2026-09-04T00:00:00.000Z')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('the hour-24 midnight guard keeps the date on the same day', () => {
+    // The last branch of wallClockNowInTz that nothing else can reach. Node's
+    // ICU answers '00' for midnight, so on this runtime the guard is dead code
+    // and the DST test above cannot exercise it. Deno's ICU is a different
+    // build, and older ICU famously answered '24' with the date of the day the
+    // midnight BEGINS. If the guard mapped that to the wrong day the window
+    // would swing a full 24 hours on a safety send, so pin the direction by
+    // feeding the helper the '24' its guard exists for.
+    const fn = fs.readFileSync(FN, 'utf8')
+    const at = fn.indexOf('function wallClockNowInTz')
+    const src = fn.slice(at, fn.indexOf('\n}', at) + 2).replace(/:\s*(?:string|Date)\b/g, '')
+
+    const parts = [
+      { type: 'year', value: '2026' }, { type: 'month', value: '09' },
+      { type: 'day', value: '04' }, { type: 'hour', value: '24' },
+      { type: 'minute', value: '00' }, { type: 'second', value: '00' },
+    ]
+    const FakeIntl = { DateTimeFormat: class { formatToParts() { return parts } } }
+    const lifted = new Function('Intl', `${src}; return wallClockNowInTz`)(FakeIntl) as (
+      tz: string,
+    ) => Date
+
+    // Hour 24 on the 4th is midnight that STARTS the 4th, so the date must not
+    // move to the 3rd or the 5th.
+    expect(lifted('Australia/Brisbane').toISOString()).toBe('2026-09-04T00:00:00.000Z')
+  })
+
+  it('an event already in progress is never nudged, though the padded SQL admits it', () => {
+    // The SQL lower bound is NUDGE_WINDOW_MIN_HOURS - TZ_PADDING_HOURS, which
+    // is 0, so the pre-filter is `date_start >= now`. Because date_start is
+    // stored wall-clock-as-UTC, that admits an event which really began up to
+    // the audience offset ago: ten hours, for Brisbane. The per-event
+    // predicate is then the ONLY thing standing between an in-progress event
+    // and a safety email, so pin it directly rather than trusting the SQL.
+    const OFFSET_H = 10
+    const storedStart = new Date('2026-09-04T14:00:00.000Z')
+    const realStart = new Date(storedStart.getTime() - OFFSET_H * 3600 * 1000)
+    const wallAt = (real: Date) => new Date(real.getTime() + OFFSET_H * 3600 * 1000)
+
+    // A minute after the event really began.
+    expect(
+      isEventInNudgeWindow(storedStart, wallAt(new Date(realStart.getTime() + 60_000))),
+    ).toBe(false)
+    // And the worst case the padded SQL still lets through: date_start exactly
+    // equal to real now, which is ten hours into the event.
+    expect(isEventInNudgeWindow(storedStart, wallAt(storedStart))).toBe(false)
+    // The hour before it starts is rejected too; the floor is 12h, not 0.
+    expect(
+      isEventInNudgeWindow(storedStart, wallAt(new Date(realStart.getTime() - 3600 * 1000))),
+    ).toBe(false)
   })
 
   it('sends a type send-email actually knows', () => {
