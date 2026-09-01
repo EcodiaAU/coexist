@@ -520,6 +520,52 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     expect(fn.slice(0, claimAt)).not.toContain("functions.invoke('send-email'")
   })
 
+  it('mails only the rows its own claim returned', () => {
+    // Found by negative control, 2026-09-01, on this very file: DELETING the
+    // `.select(...)` from the claim left all 64 files / 759 tests green. That
+    // one line is the whole permit. Without it supabase-js sends no
+    // `return=representation`, `data` comes back null, the claim result is
+    // empty, and the sweep mails NOBODY for ever while still answering
+    // success:true with emails_sent 0. A silent total kill, uncaught.
+    //
+    // The sibling assertion above pins the ORDER of claim and send. Nothing
+    // pinned that the claim's RESULT is what gates the loop, and the order is
+    // only half the mechanism: a claim nobody reads is a log line, not a
+    // permit. Iterating the COHORT instead would re-mail every eligible person
+    // on every hourly fire, which is the duplicate storm the ledger exists to
+    // stop.
+    //
+    // Anchored structurally rather than on identifier names, for the same
+    // reason the assertion above is anchored on the call and not the table
+    // name: a guard that a rename can silently satisfy is not a guard.
+    const fn = fs.readFileSync(FN, 'utf8')
+    const claimAt = fn.search(/\.from\('event_safety_nudges_sent'\)\s*\n\s*\.upsert\(/)
+    const sendAt = fn.indexOf("functions.invoke('send-email'")
+    expect(claimAt).toBeGreaterThan(-1)
+    expect(sendAt).toBeGreaterThan(-1)
+
+    const claimToSend = fn.slice(claimAt, sendAt)
+
+    // 1. The claim asks for its inserted rows back.
+    expect(claimToSend).toMatch(/\.select\(/)
+
+    // 2. The claim's returned data is bound to a name.
+    const dataBinding = fn.slice(0, claimAt).match(/const \{\s*data:\s*(\w+)[^}]*\}\s*=\s*await\s*$|const \{\s*data:\s*(\w+)[^}]*\}\s*=\s*await[\s\S]{0,80}$/)
+    expect(dataBinding, 'the claim does not bind its returned data').not.toBeNull()
+    const claimData = (dataBinding![1] ?? dataBinding![2]) as string
+
+    // 3. The send loop iterates a value derived from that data, not the cohort.
+    const loop = claimToSend.match(/for \(const (\w+) of (\w+)\)/)
+    expect(loop, 'no send loop between the claim and the send').not.toBeNull()
+    const rowVar = loop![1]
+    const sourceVar = loop![2]
+    const derives = new RegExp(`(const|let)\\s+${sourceVar}\\s*=[^\\n]*\\b${claimData}\\b`)
+    expect(claimToSend).toMatch(derives)
+
+    // 4. And the address it mails comes off that claimed row.
+    expect(fn.slice(sendAt, sendAt + 800)).toContain(`${rowVar}.user_id`)
+  })
+
   it('sends a type send-email actually knows', () => {
     // send-email 400s on an unknown type, so a template that is registered in
     // one file and named in another is a silent no-send.
