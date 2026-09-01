@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
+import ts from 'typescript'
 import {
   hasEmergencyContact as appHasEmergencyContact,
   LIVE_REGISTRATION_STATUSES as APP_LIVE_REGISTRATION_STATUSES,
@@ -467,20 +468,11 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
   const FN = path.join(ROOT, 'supabase/functions/event-safety-gap-nudge/index.ts')
   const GATE = path.join(ROOT, 'src/components/dietary-gate.tsx')
 
-  // A slash opens a regex literal only where a division operator would be a
-  // syntax error. Everything here is such a position; anything else (an
-  // identifier, a number, a closed literal, `)` or `]`) is division.
-  const REGEX_MAY_FOLLOW = new Set('(,=:[!&|?;{}+-*%^~<>'.split(''))
-  const REGEX_KEYWORDS = new Set([
-    'return', 'typeof', 'instanceof', 'in', 'of', 'new', 'delete', 'void',
-    'case', 'do', 'else', 'yield', 'await',
-  ])
-
   /**
-   * ONE left-to-right pass over index.ts, blanking the CONTENT of every
-   * comment to spaces (and, when `literals` is set, of every string and
-   * template literal too). Byte offsets and newlines are preserved, so every
-   * indexOf and slice below means exactly what it would on the raw source.
+   * ONE parse of index.ts, blanking the CONTENT of every comment to spaces
+   * (and, when `literals` is set, of every string, template and regex literal
+   * too). Byte offsets and newlines are preserved, so every indexOf and slice
+   * below means exactly what it would on the raw source.
    *
    * Every source-text guard in this file was once satisfiable by a COMMENT,
    * and the comment is the one a developer writes while making the very change
@@ -499,62 +491,46 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
    *   - add `{ head: true }` to the claim, which keeps the `.select(` the
    *     guard greps for and suppresses the response body anyway.
    *
-   * WHY A SCANNER AND NOT REGEXES. Two chained regexes have to pick an order,
-   * and BOTH orders are wrong in one direction, which cost this file two
-   * commits to learn:
-   *   - block-comments-first (d0909791): a `/*` written inside a `//` comment
-   *     opens a block the author never opened, and the blank runs to the next
+   * WHY THE PARSER AND NOT A HAND-ROLLED READER. Five independent passes each
+   * found a hole in a reader that decided for itself where a comment starts,
+   * and every fix was correct and opened the next question:
+   *   - two chained regexes have to pick an order, and BOTH orders are wrong.
+   *     Block-comments-first: a slash-star written inside a line comment opens
+   *     a block the author never opened, and the blank runs to the next
    *     terminator anywhere below, taking real code with it.
-   *   - line-comments-first (e927f442): the mirror image. A `//` inside a
-   *     block comment whose terminator sits on the SAME line eats that
-   *     terminator, so the block never closes and the blank cascades exactly
-   *     as before. Measured 2026-09-01: adding `{ head: true }` to the claim
-   *     behind a block comment carrying a slash-slash, with the block's own
-   *     terminator on that same line and a short closing comment underneath,
-   *     left all 81 tests GREEN with the silent total kill live. The exact
-   *     sample is pinned in the reader self-test below rather than quoted
-   *     here, because writing it out needs a terminator this comment cannot
-   *     carry.
-   * Neither direction is safe, because an assertion built on `not.toContain`
-   * passes happily against code that has been blanked out of existence, so the
-   * guard goes green on the very mutation it exists to catch. A single pass
-   * where the FIRST delimiter wins has no order to get wrong.
+   *     Line-comments-first: the mirror image. A slash-slash inside a block
+   *     comment whose terminator sits on the SAME line eats that terminator,
+   *     so the block never closes and the blank cascades exactly as before.
+   *   - a single left-to-right pass where the first delimiter wins has no
+   *     order to get wrong, and still knew only two of the three literals
+   *     JavaScript has. A regex is the commonest literal that CARRIES both
+   *     comment delimiters: a host test ends in a bare slash-slash, and a
+   *     character class holding a slash and a star opens a block.
+   *   - reading the regex needs a rule for where a slash may open one, and
+   *     that rule is the part a reader cannot get right on its own. Anchoring
+   *     it on the last significant code character is exact after an operator
+   *     or a keyword and a GUESS after `)`, because only a parser knows
+   *     whether that paren closed an `if` head (statement position, so a
+   *     regex) or a call (expression position, so division). Measured
+   *     2026-09-01, deno-clean and eslint-clean, all 81 tests GREEN with the
+   *     guess live: an `if (preview) /^https?:\/\//.test(...)` placed AHEAD of
+   *     the claim, wrapping a real send-email invoke in its argument, mails
+   *     before the permit exists on every fire, and the guard that bans a
+   *     send ahead of the claim went green because the reader took the
+   *     regex's own slash-slash for a line comment and wiped the invoke off
+   *     the line. The matched control without the regex reds two tests.
    *
-   * It also makes the reader string-aware, which is the real answer to the
-   * `https://` problem the old lookbehind only approximated: a `//` inside a
-   * string was never a comment, and a `(?<!:)` guard bought that one case
-   * while leaving a genuine `ignoreDuplicates:// ...` line comment unblanked
-   * and its borrowed tokens readable (measured 2026-09-01).
-   *
-   * AND REGEX-AWARE, which is the third literal JavaScript has and the one a
-   * comment-and-string scanner silently gets wrong. A regex is the commonest
-   * literal that CARRIES both comment delimiters: `/^https?:\/\//` ends in a
-   * bare slash-slash and `/[/*]+$/` opens a block inside a character class.
-   * Read as code, the first eats the rest of its line and the second cascades
-   * to the next terminator or the end of the file. Measured 2026-09-01, both
-   * deno-clean and eslint-clean, all 81 tests GREEN with the defect live:
-   *   - spreading `{ now: wallClockNowInTz(audienceTzFor(event)) }` over the
-   *     cohort call behind `.../^\/\//.test(event.id) ? {} : ...`, which
-   *     moves every 48h cadence gap by the audience offset, down to 38h at
-   *     +10. That is an end-to-end kill, not merely a defeated guard.
-   *   - `{ head: true }` on the claim behind a same-line regex, the silent
-   *     total kill again (deno REJECTS the two payloads found for that one,
-   *     so it is a defeated guard rather than a proven kill; the reader hole
-   *     is the same either way).
-   *
-   * WHERE A SLASH IS AMBIGUOUS. Division and a regex open with the same
-   * character, so the scanner decides on the last significant CODE character
-   * it passed, tracked forward rather than searched backward (searching back
-   * would read blanked comment text). After `( , = : [ ! & | ? ; { } + - * %
-   * ^ ~ < >` or one of `return typeof instanceof in of new delete void case
-   * do else yield await`, a division would be a syntax error, so a slash there
-   * is a regex and the call is exact. After an identifier, a number, a closed
-   * literal, `)` or `]` it is division. Two residuals, both named rather than
-   * guessed at: a regex directly after `)` (`if (x) /re/.test(y)`) reads as
-   * division, which is exactly the behaviour before this change and no worse;
-   * and any misfire is bounded by the EOL bail below, because a JavaScript
-   * regex cannot span a raw newline, so an unclosed scan reclassifies itself
-   * as division instead of eating the file.
+   * So the reader stops guessing. TypeScript parses the file, and the parse
+   * answers the only question a reader ever needed: which byte ranges are
+   * TOKENS. Everything between two consecutive tokens is trivia, and trivia
+   * holds nothing but whitespace and comments, so a slash there is
+   * unambiguously a comment opener and there is no ambiguity left to resolve.
+   * A regex literal is a token the parser hands back already delimited, which
+   * is the third-literal problem gone rather than approximated. Proof this is
+   * the same instrument and not merely a new one: on the real index.ts it is
+   * BYTE-IDENTICAL to the reader it replaces in both modes, and it differs
+   * only on the adversarial shapes pinned below, where the old reader was
+   * wrong.
    */
   const scanSource = (t: string, literals: boolean) => {
     const out = t.split('')
@@ -564,78 +540,36 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       }
     }
 
-    // A template literal. Its `${}` bodies are CODE, not text, so they are
-    // walked as code rather than swallowed whole. That is what makes a nested
-    // backtick pair with the right partner: the old regex paired the opening
-    // backtick with the one after `${`, so the inner literal's text fell
-    // OUTSIDE both matches and survived into `codeOnly` as if it were code.
-    // Measured 2026-09-01: console.log(`${`nudgeEvent(supabase, event, now)`}`)
-    // satisfied the cadence pin while the real call site took the wall clock.
-    const template = (start: number): number => {
-      let i = start + 1
-      let chunk = i
-      while (i < t.length) {
-        const c = t[i]
-        if (c === '\\') { i += 2; continue }
-        if (c === '`') { if (literals) wipe(chunk, i); return i + 1 }
-        if (c === '$' && t[i + 1] === '{') {
-          if (literals) wipe(chunk, i)
-          i = Math.min(code(i + 2, true) + 1, t.length)
-          chunk = i
-          continue
-        }
-        i++
-      }
-      if (literals) wipe(chunk, i)
-      return i
-    }
+    const sf = ts.createSourceFile('read.ts', t, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
 
-    // A regex literal, entered only from a position where a `/` cannot be a
-    // division operator. Inside `[...]` a slash is an ordinary character,
-    // which is the whole of the `/[/*]+$/` shape. Returns the index after the
-    // closing delimiter, or -1 when the line ends first: a regex literal
-    // cannot span a raw newline, so that is the proof this was not one, and
-    // the caller falls back to treating the slash as division.
-    const regex = (start: number): number => {
-      let i = start + 1
-      let inClass = false
-      while (i < t.length) {
-        const c = t[i]
-        if (c === '\n') return -1
-        if (c === '\\') { i += 2; continue }
-        if (inClass) { if (c === ']') inClass = false; i++; continue }
-        if (c === '[') { inClass = true; i++; continue }
-        if (c === '/') { if (literals) wipe(start, i + 1); return i + 1 }
-        i++
-      }
-      return -1
+    // Leaf tokens, in source order. JSDoc is skipped rather than walked, so a
+    // doc comment attached to a declaration stays trivia and is blanked with
+    // every other comment instead of being read as a run of tokens.
+    const isJsDoc = (n: ts.Node) =>
+      n.kind >= ts.SyntaxKind.FirstJSDocNode && n.kind <= ts.SyntaxKind.LastJSDocNode
+    const tokens: ts.Node[] = []
+    const collect = (n: ts.Node) => {
+      if (isJsDoc(n)) return
+      const kids = n.getChildren(sf)
+      if (!kids.length) tokens.push(n)
+      else for (const k of kids) collect(k)
     }
+    collect(sf)
 
-    // Code. `untilBrace` means this is a `${}` body and ends at its matching
-    // brace.
-    const code = (start: number, untilBrace: boolean): number => {
-      let i = start
-      let depth = 0
-      // The last significant code character, and the word ending on it.
-      // Comments never update either, so a slash on the line below a comment
-      // is judged on the code before that comment, not on its prose.
-      let prev = ''
-      let word = ''
-      const mark = (c: string) => { prev = c; word = /[A-Za-z0-9_$]/.test(c) ? word + c : '' }
-      const closed = () => { prev = ']'; word = '' }
-      while (i < t.length) {
-        const c = t[i]
-        if (untilBrace && c === '}' && depth === 0) return i
-        if (c === '{') { depth++; mark(c); i++; continue }
-        if (c === '}') { depth--; mark(c); i++; continue }
-        if (c === '/' && t[i + 1] === '/') {
+    let cursor = 0
+    for (const tok of tokens) {
+      const start = tok.getStart(sf)
+      // The gap before this token. Whitespace and comments only.
+      let i = cursor
+      while (i < start) {
+        if (t[i] === '/' && t[i + 1] === '/') {
           let j = i + 2
-          while (j < t.length && t[j] !== '\n') j++
+          while (j < start && t[j] !== '\n') j++
           wipe(i, j)
           i = j
           continue
         }
-        if (c === '/' && t[i + 1] === '*') {
+        if (t[i] === '/' && t[i + 1] === '*') {
           let j = i + 2
           while (j < t.length && !(t[j] === '*' && t[j + 1] === '/')) j++
           const end = Math.min(j + 2, t.length)
@@ -643,27 +577,36 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
           i = end
           continue
         }
-        if (c === '/' && (prev === '' || REGEX_MAY_FOLLOW.has(prev) || REGEX_KEYWORDS.has(word))) {
-          const end = regex(i)
-          if (end > -1) { i = end; closed(); continue }
-        }
-        if (c === "'" || c === '"') {
-          let j = i + 1
-          while (j < t.length && t[j] !== c && t[j] !== '\n') j += t[j] === '\\' ? 2 : 1
-          const end = Math.min(j + 1, t.length)
-          if (literals) wipe(i, end)
-          i = end
-          closed()
-          continue
-        }
-        if (c === '`') { i = template(i); closed(); continue }
-        if (!/\s/.test(c)) mark(c)
         i++
       }
-      return i
+      cursor = Math.max(cursor, tok.getEnd())
+
+      if (!literals) continue
+      const a = start
+      const b = tok.getEnd()
+      switch (tok.kind) {
+        // A string and a regex go entirely, delimiters included.
+        case ts.SyntaxKind.StringLiteral:
+        case ts.SyntaxKind.RegularExpressionLiteral:
+          wipe(a, b)
+          break
+        // A template keeps its delimiters, because its `${}` bodies are CODE
+        // and the offsets around them have to stay readable. Only the text
+        // between them goes. That is what makes a nested backtick pair with
+        // the right partner: a reader that swallowed the whole literal left
+        // the inner text outside every match and it survived into `codeOnly`
+        // as if it were code.
+        case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+        case ts.SyntaxKind.TemplateTail:
+          wipe(a + 1, b - 1)
+          break
+        case ts.SyntaxKind.TemplateHead:
+        case ts.SyntaxKind.TemplateMiddle:
+          wipe(a + 1, b - 2)
+          break
+      }
     }
 
-    code(0, false)
     return out.join('')
   }
 
@@ -1210,21 +1153,54 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // And a `${}` body is code, so it inherits the same rule for free.
     expect(blankComments('const u = `a${x.replace(/\\/\\//, "")}b`, keepE = 5')).toContain('keepE = 5')
 
-    // The other direction, and the reason the rule is anchored on the last
-    // significant code character rather than on the slash alone: a division
-    // must stay a division, or the reader would blank from one slash to the
-    // next and lose real code the opposite way.
+    // The other direction, and the reason a reader cannot simply blank from
+    // one slash to the next: a division must stay a division, or it loses
+    // real code the opposite way.
     const withDivision = blankComments('  const rate = sent / seats, keepC = 3')
     expect(withDivision).toContain('sent / seats')
     expect(withDivision).toContain('keepC = 3')
 
-    // A regex cannot span a raw newline, so a scan that reaches one gives up
-    // and the slash reverts to division. That bail is what bounds every
-    // misfire of the ambiguity rule: `{}` is a position where a regex may
-    // legally follow, and here it does not.
+    // `{}` is a position where a regex may legally follow and here it does
+    // not, which is the case a reader anchored on the previous character has
+    // to guess at and the parser simply knows.
     const bailed = blankComments(['  const r = ({} / 2)', '  const keepD = 4'].join('\n'))
     expect(bailed).toContain('/ 2)')
     expect(bailed).toContain('const keepD = 4')
+
+    // THE POSITION THAT DECIDED THE INSTRUMENT. A `)` closes a call in
+    // expression position, where a slash after it is division, and it closes
+    // an `if` head in statement position, where the same slash opens a regex.
+    // Nothing short of a parse tells those apart, and guessing division was a
+    // reachable production kill rather than the bounded residual it was filed
+    // as. Measured 2026-09-01, deno-clean and eslint-clean, all 81 tests
+    // GREEN: an `if (preview) /^https?:\/\//.test(String(await
+    // supabase.functions.invoke('send-email', ...)))` placed AHEAD of the
+    // claim mails on every fire before the permit exists, and the guard that
+    // bans a send ahead of the claim went green because the reader took the
+    // regex's own slash-slash for a line comment and wiped the invoke off the
+    // line. The matched control without the regex reds two tests.
+    const ifHead = blankComments(
+      '  if (preview) /^https?:\\/\\//.test(String(send("send-email"))); const keepF = 6',
+    )
+    expect(ifHead).toContain('send("send-email")')
+    expect(ifHead).toContain('keepF = 6')
+
+    // And the class-opening shape in the same position, which under a guess
+    // of division cascaded a block comment to the next terminator or, in this
+    // file, to the end of it.
+    const ifHeadClass = blankComments(
+      ['  if (dbg) /[/*]+$/.test(mark)', '  const keepG = 7', '  const keepH = 8'].join('\n'),
+    )
+    expect(ifHeadClass).toContain('const keepG = 7')
+    expect(ifHeadClass).toContain('const keepH = 8')
+
+    // The control that makes the pair above mean something: the SAME `)`
+    // closing a CALL still reads as division. A reader that answered the
+    // if-head case by calling every `)` a regex position would pass both
+    // pins above and blank from here to the next slash instead.
+    const callDivision = blankComments('  const per = total(seats) / seats.length, keepI = 9')
+    expect(callDivision).toContain('total(seats) / seats.length')
+    expect(callDivision).toContain('keepI = 9')
   })
 
   it('sends a type send-email actually knows', () => {
