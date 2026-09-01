@@ -781,6 +781,141 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       (n) => ts.isCallExpression(n) && ts.isIdentifier(n.expression) && n.expression.text === name,
     ) as ts.CallExpression[]
 
+  /**
+   * The DIRECT links of a call chain, outermost call inward.
+   *
+   * `hasCallWithArgs` and `methodCalls` walk the WHOLE subtree of whatever
+   * they are given, so an argument is a place a decoy can hide. Measured
+   * 2026-09-02 against 1a627cd2: a dead ternary arm inside the events query's
+   * own `.lte()` argument, carrying
+   * `.eq('status','published').eq('is_ticketed', true).neq('collectives.slug','test')`
+   * on an unrelated table, satisfied all three filter pins with all three real
+   * filters DELETED, at `deno check` RC 0, eslint clean and 84 of 84 GREEN.
+   * The sweep then reads 30 published events instead of 4 ticketed ones.
+   *
+   * Reading only the spine makes that impossible by construction: a filter has
+   * to be a link of the chain that runs, not merely a call somewhere beneath
+   * it. Casts, parens, non-null assertions and `await` are stepped through, so
+   * the ordinary ways of writing the same chain still resolve.
+   */
+  const spineCalls = (top: ts.Node): ts.CallExpression[] => {
+    const out: ts.CallExpression[] = []
+    let n: ts.Node = top
+    for (;;) {
+      if (
+        ts.isAwaitExpression(n) ||
+        ts.isParenthesizedExpression(n) ||
+        ts.isAsExpression(n) ||
+        ts.isNonNullExpression(n)
+      ) {
+        n = n.expression
+        continue
+      }
+      if (ts.isCallExpression(n)) {
+        out.push(n)
+        n = n.expression
+        continue
+      }
+      if (ts.isPropertyAccessExpression(n) || ts.isElementAccessExpression(n)) {
+        n = n.expression
+        continue
+      }
+      break
+    }
+    return out
+  }
+
+  /** The method a spine link calls, written `.m()` or `['m']()`. */
+  const linkName = (c: ts.CallExpression): string | undefined =>
+    ts.isPropertyAccessExpression(c.expression)
+      ? c.expression.name.text
+      : ts.isElementAccessExpression(c.expression) &&
+          ts.isStringLiteralLike(c.expression.argumentExpression)
+        ? c.expression.argumentExpression.text
+        : undefined
+
+  /** Spine links calling `method`, optionally narrowed to a first string argument. */
+  const spineLinks = (spine: ts.CallExpression[], method: string, arg?: string) =>
+    spine.filter(
+      (c) =>
+        linkName(c) === method &&
+        (arg === undefined ||
+          (c.arguments.length > 0 &&
+            ts.isStringLiteral(c.arguments[0]) &&
+            c.arguments[0].text === arg)),
+    )
+
+  /** A DIRECT link whose method and ARGUMENT SOURCE TEXTS match exactly. */
+  const hasSpineCall = (
+    sf: ts.SourceFile,
+    spine: ts.CallExpression[],
+    method: string,
+    args: string[],
+  ) =>
+    spineLinks(spine, method).some(
+      (c) =>
+        c.arguments.length === args.length &&
+        c.arguments.every((a, i) => a.getText(sf) === args[i]),
+    )
+
+  /**
+   * An argument with casts, parens and non-null assertions stripped, as text.
+   *
+   * `.getText()` plus `toContain` reads a NAME as a VALUE. Measured 2026-09-02
+   * against 1a627cd2: `.in('status', LIVE_TICKET_STATUSES.slice(0, 1) as
+   * unknown as string[])` names the constant, passes a containment pin and
+   * narrows the seat sweep to one status anyway, deno RC 0, eslint clean, 84
+   * of 84 GREEN. That is the 2026-08-28 reserved-hold defect back.
+   */
+  const bareArg = (sf: ts.SourceFile, a: ts.Node) => {
+    let n = a
+    while (
+      ts.isAsExpression(n) ||
+      ts.isParenthesizedExpression(n) ||
+      ts.isNonNullExpression(n)
+    ) {
+      n = n.expression
+    }
+    return ts.isIdentifier(n) ? n.text : n.getText(sf)
+  }
+
+  /**
+   * A PostgREST column list as its members.
+   *
+   * `emergency_contact_phone` is a SUBSTRING of
+   * `emergency_contact_phone_verified`, so a containment pin read a select
+   * that had dropped the real column as green: deno RC 0, eslint clean, 84 of
+   * 84 GREEN on 2026-09-02, with every profile then reading as unreachable and
+   * every seat holder nudged.
+   */
+  const columnList = (lit: ts.StringLiteral) => lit.text.split(',').map((c) => c.trim())
+
+  /**
+   * The spine of the chain a single-expression callback actually RETURNS.
+   *
+   * Positional containment only proved a chain sat somewhere inside the call.
+   * Measured 2026-09-02 against 1a627cd2: putting the pinned profiles chain on
+   * the dead arm of a ternary and running `.from('profiles_v2').select('id')`
+   * was deno RC 0, eslint clean and 84 of 84 GREEN.
+   */
+  const callbackSpine = (call: ts.CallExpression) => {
+    const cb = call.arguments.find(
+      (a) => ts.isArrowFunction(a) || ts.isFunctionExpression(a),
+    ) as ts.ArrowFunction | ts.FunctionExpression | undefined
+    expect(cb, 'the helper is not given a function to run').toBeDefined()
+    const returned: ts.Node | undefined =
+      ts.isArrowFunction(cb!) && !ts.isBlock(cb!.body)
+        ? cb!.body
+        : (
+            nodesIn(
+              cb!,
+              (n) => ts.isReturnStatement(n) && !!(n as ts.ReturnStatement).expression,
+            )[0] as ts.ReturnStatement | undefined
+          )?.expression
+    expect(returned, 'the callback returns no query').toBeDefined()
+    return spineCalls(returned!)
+  }
+
   /** The whole `a.b(...).c(...).d(...)` chain a call sits in. */
   const chainOf = (n: ts.Node) => {
     let top: ts.Node = n
@@ -850,9 +985,20 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       (n) => ts.isForOfStatement(n) && plainCalls(n, 'nudgeEvent').length > 0,
     ) as ts.ForOfStatement[]
     expect(loops.length, 'expected exactly one sweep loop running nudgeEvent').toBe(1)
-    const iterated = nodesIn(loops[0].expression, (n) => ts.isIdentifier(n)).map(
-      (n) => (n as ts.Identifier).text,
-    )
+    // VALUE positions only. `((events ?? []) as unknown) as EventRow[]` carries
+    // the TYPE name `EventRow` as an identifier too, so a decoy bound to
+    // `const { data: EventRow }` was the only `data:` binding this reader could
+    // see once the real rows arrived through `const events = eventsRes.data`.
+    // Measured 2026-09-02 against 1a627cd2: deno check RC 0, eslint clean, 84
+    // of 84 GREEN, with `is_ticketed`, `status` and the test-collective filter
+    // all gone from the query that actually runs.
+    const iterated: string[] = []
+    const walkValue = (n: ts.Node) => {
+      if (ts.isTypeNode(n)) return
+      if (ts.isIdentifier(n)) iterated.push(n.text)
+      n.forEachChild(walkValue)
+    }
+    walkValue(loops[0].expression)
     const decls = nodesIn(
       sf,
       (n) =>
@@ -860,10 +1006,12 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
         ts.isObjectBindingPattern(n.name) &&
         n.name.elements.some(
           (e) =>
-            !!e.propertyName &&
-            ts.isIdentifier(e.propertyName) &&
-            e.propertyName.text === 'data' &&
             ts.isIdentifier(e.name) &&
+            // `{ data: rows }`, and the equally ordinary `{ data }` shorthand,
+            // which used to red loudly on a refactor that changes nothing.
+            (e.propertyName
+              ? ts.isIdentifier(e.propertyName) && e.propertyName.text === 'data'
+              : e.name.text === 'data') &&
             iterated.includes(e.name.text),
         ),
     ) as ts.VariableDeclaration[]
@@ -871,21 +1019,87 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       decls.length,
       'expected exactly one `const { data: <rows> } = await <query>` feeding the sweep loop',
     ).toBe(1)
-    let expr: ts.Node = decls[0].initializer!
-    while (
-      ts.isAwaitExpression(expr) ||
-      ts.isParenthesizedExpression(expr) ||
-      ts.isAsExpression(expr) ||
-      ts.isNonNullExpression(expr)
-    ) {
-      expr = expr.expression
-    }
-    const froms = methodCalls(expr, 'from', 'events')
+    // The SPINE of that query, not its whole subtree: every pin below has to
+    // read a link of the chain that runs rather than any call beneath it.
+    const spine = spineCalls(decls[0].initializer!)
+    const froms = spineLinks(spine, 'from', 'events')
     expect(
       froms.length,
       "the sweep's own query is not rooted in a literal .from('events')",
     ).toBe(1)
-    return { sf, call: froms[0], chain: expr, loop: loops[0] }
+    return { sf, call: froms[0], spine, loop: loops[0] }
+  }
+
+  /**
+   * Does the HANDLER ITSELF refuse with `status` when `test` matches, before
+   * the service client is built?
+   *
+   * Two deno-clean, eslint-clean, 84-of-84-GREEN kills on 2026-09-02 against
+   * 1a627cd2 are the reason each clause is here, and this is the worst pin in
+   * the file to get wrong: past it sits a body that reads every attendee's
+   * emergency contact and can trigger live mail to members.
+   *
+   *   OWNERSHIP. `nodesIn` walks NESTED functions, so lifting these very
+   *   checks into a `const authFailure = (): Response | null => { ... }`
+   *   declared INSIDE the handler and calling it for its side effect left both
+   *   `if`s "inside the handler", both returning the right status, both ending
+   *   before `serviceClient()`. The previous fix moved an extract-a-function
+   *   slip one level in rather than closing it. So the `if` has to BELONG to
+   *   the handler: its nearest function-like ancestor is the handler itself.
+   *   `try { }` is not function-like, so the real guards still qualify.
+   *
+   *   THE STATUS AS A NUMBER. `return refuse401()` contains the digits `401`
+   *   and can answer 200. So the refusal has to carry the status as a numeric
+   *   literal in the returned expression, not merely spell it.
+   */
+  const handlerRefuses = (src: string, test: RegExp, status: string) => {
+    const sf = parseOf(src)
+    const svc = plainCalls(sf, 'serviceClient')
+    expect(svc.length, 'expected exactly one serviceClient() call').toBe(1)
+    const wrapped = plainCalls(sf, 'withSentry')
+    expect(wrapped.length, 'expected exactly one withSentry() handler').toBe(1)
+    const handler = wrapped[0].arguments.find(
+      (a) => ts.isArrowFunction(a) || ts.isFunctionExpression(a),
+    )
+    expect(handler, 'withSentry does not take a function handler').toBeDefined()
+    const ownedByHandler = (n: ts.Node) => {
+      let p: ts.Node | undefined = n.parent
+      while (p && !ts.isFunctionLike(p)) p = p.parent
+      return p === handler
+    }
+    return (nodesIn(handler!, (n) => ts.isIfStatement(n)) as ts.IfStatement[]).some(
+      (g) =>
+        test.test(g.expression.getText(sf)) &&
+        ownedByHandler(g) &&
+        nodesIn(g.thenStatement, (n) => ts.isReturnStatement(n)).some(
+          (r) => nodesIn(r, (n) => ts.isNumericLiteral(n) && n.text === status).length > 0,
+        ) &&
+        g.getEnd() < svc[0].getStart(sf),
+    )
+  }
+
+  /**
+   * The property names of an `interface <name>`, as the code declares them.
+   *
+   * Pinning only the tz columns left the rest of the select unpinned, and
+   * `date_start` is the one that decides everything: measured 2026-09-02
+   * against 1a627cd2, selecting `'id, timezone, collectives!inner(timezone,
+   * slug)'` was deno check RC 0, eslint clean and 87 of 87 GREEN, and
+   * `new Date(undefined)` makes `hoursUntil` NaN, so both window comparisons
+   * are false and the sweep nudges NOBODY, for ever, answering success:true.
+   * Dropping `title` or `address` instead puts `undefined` into mail that goes
+   * to members. Reading the interface means a column added to `EventRow` has
+   * to be selected too, rather than a hand-kept list drifting away from it.
+   */
+  const interfaceProps = (sf: ts.SourceFile, name: string) => {
+    const decls = nodesIn(
+      sf,
+      (n) => ts.isInterfaceDeclaration(n) && n.name.text === name,
+    ) as ts.InterfaceDeclaration[]
+    expect(decls.length, `expected exactly one interface ${name}`).toBe(1)
+    return decls[0].members
+      .filter((m): m is ts.PropertySignature => ts.isPropertySignature(m) && !!m.name)
+      .map((m) => (ts.isIdentifier(m.name!) ? m.name!.text : (m.name as ts.StringLiteral).text))
   }
 
   /** A top-level `function <name>` declaration, as a node. */
@@ -935,7 +1149,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // whole region moved onto the decoy.
     const events = eventsQuery(fn)
     expect(
-      hasCallWithArgs(events.sf, events.chain, 'eq', ["'is_ticketed'", 'true']),
+      hasSpineCall(events.sf, events.spine, 'eq', ["'is_ticketed'", 'true']),
       "the events query has no .eq('is_ticketed', true)",
     ).toBe(true)
   })
@@ -946,7 +1160,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // passed with the filter gone, which sweeps drafts and unpublished events.
     const events = eventsQuery(readSource())
     expect(
-      hasCallWithArgs(events.sf, events.chain, 'eq', ["'status'", "'published'"]),
+      hasSpineCall(events.sf, events.spine, 'eq', ["'status'", "'published'"]),
       "the events query has no .eq('status', 'published')",
     ).toBe(true)
   })
@@ -960,7 +1174,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // deleted) nor one sitting inside the chain can stand in for the call.
     const events = eventsQuery(fn)
     expect(
-      hasCallWithArgs(events.sf, events.chain, 'neq', ["'collectives.slug'", "'test'"]),
+      hasSpineCall(events.sf, events.spine, 'neq', ["'collectives.slug'", "'test'"]),
       "the events query has no .neq('collectives.slug', 'test')",
     ).toBe(true)
 
@@ -1012,23 +1226,32 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     const chunked = plainCalls(sf, 'selectInChunks')
     expect(chunked.length, 'the profiles read is not chunked through selectInChunks').toBe(1)
 
-    const profileFroms = methodCalls(sf, 'from', 'profiles')
-    expect(profileFroms.length, "expected exactly one .from('profiles') call").toBe(1)
+    // The query the helper RUNS, read off the spine of the callback it is
+    // given. Positional containment only proved a chain sat somewhere inside
+    // the call: measured 2026-09-02 against 1a627cd2, putting this chain on the
+    // dead arm of a ternary and running `.from('profiles_v2').select('id')` was
+    // deno check RC 0, eslint clean and 84 of 84 GREEN, and every profile then
+    // reads as having no contact at all.
+    const spine = callbackSpine(chunked[0])
+    const profileFroms = spineLinks(spine, 'from', 'profiles')
     expect(
-      profileFroms[0].getStart(sf) > chunked[0].getStart(sf) &&
-        profileFroms[0].getEnd() < chunked[0].getEnd(),
-      'the profiles query does not run inside selectInChunks',
-    ).toBe(true)
+      profileFroms.length,
+      "the query selectInChunks runs is not rooted in .from('profiles')",
+    ).toBe(1)
 
-    const cols = methodCalls(chainOf(profileFroms[0]), 'select')
+    const cols = spineLinks(spine, 'select')
     expect(cols.length, 'the profiles query has no .select()').toBe(1)
     const list = cols[0].arguments[0]
     expect(
       !!list && ts.isStringLiteral(list),
       'the profiles select does not take a literal column list',
     ).toBe(true)
+    // Members of the list, not substrings of it. `emergency_contact_phone` is a
+    // substring of `emergency_contact_phone_verified`, and selecting the latter
+    // instead was deno RC 0, eslint clean and 84 of 84 GREEN on 2026-09-02.
+    const named = columnList(list as ts.StringLiteral)
     for (const col of ['id', 'emergency_contact_name', 'emergency_contact_phone']) {
-      expect((list as ts.StringLiteral).text, `the profiles select drops ${col}`).toContain(col)
+      expect(named, `the profiles select drops ${col}`).toContain(col)
     }
   })
 
@@ -1050,17 +1273,22 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     ] as const) {
       const froms = methodCalls(sf, 'from', table)
       expect(froms.length, `expected exactly one .from('${table}') call`).toBe(1)
-      const chain = chainOf(froms[0])
-      const statusFilters = methodCalls(chain, 'in').filter(
+      const spine = spineCalls(chainOf(froms[0]))
+      const statusFilters = spineLinks(spine, 'in').filter(
         (c) => c.arguments.length === 2 && c.arguments[0].getText(sf) === "'status'",
       )
       expect(statusFilters.length, `the ${table} read does not filter on status`).toBe(1)
+      // The BARE constant, cast stripped. A containment pin was satisfied by
+      // `LIVE_TICKET_STATUSES.slice(0, 1) as unknown as string[]`, which names
+      // the constant and narrows the sweep to one status anyway: deno RC 0,
+      // eslint clean, 84 of 84 GREEN on 2026-09-02, which is the 2026-08-28
+      // reserved-hold defect back with the constant still in the source.
       expect(
-        statusFilters[0].arguments[1].getText(sf),
+        bareArg(sf, statusFilters[0].arguments[1]),
         `the ${table} read does not take its statuses from ${statuses}`,
-      ).toContain(statuses)
+      ).toBe(statuses)
       expect(
-        hasCallWithArgs(sf, chain, 'eq', ["'event_id'", 'event.id']),
+        hasSpineCall(sf, spine, 'eq', ["'event_id'", 'event.id']),
         `the ${table} read is not scoped to this event`,
       ).toBe(true)
     }
@@ -1183,28 +1411,18 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // test is the check and whose then-branch RETURNS the refusal. A helper
     // above the handler is then not inside it, and a helper whose result is
     // discarded returns nothing here.
-    const authSf = parseOf(fn)
-    const svc = plainCalls(authSf, 'serviceClient')
-    expect(svc.length, 'expected exactly one serviceClient() call').toBe(1)
-    const wrapped = plainCalls(authSf, 'withSentry')
-    expect(wrapped.length, 'expected exactly one withSentry() handler').toBe(1)
-    const handler = wrapped[0].arguments.find(
-      (a) => ts.isArrowFunction(a) || ts.isFunctionExpression(a),
-    )
-    expect(handler, 'withSentry does not take a function handler').toBeDefined()
-    const guards = nodesIn(handler!, (n) => ts.isIfStatement(n)) as ts.IfStatement[]
-    const refuses = (g: ts.IfStatement, test: RegExp, status: string) =>
-      test.test(g.expression.getText(authSf)) &&
-      nodesIn(g.thenStatement, (n) => ts.isReturnStatement(n)).some((r) =>
-        r.getText(authSf).includes(status),
-      ) &&
-      g.getEnd() < svc[0].getStart(authSf)
+    //
+    // AND THE `if` HAS TO BELONG TO THE HANDLER. Reading every `if` beneath it
+    // walked into nested functions, so the same slip declared one level in was
+    // deno check RC 0, eslint clean and 84 of 84 GREEN on 2026-09-02 with an
+    // anonymous caller reaching the body. `handlerRefuses` carries the rule and
+    // is pinned by its own fixtures below.
     expect(
-      guards.some((g) => refuses(g, /authHeader\?\.startsWith\(/, '401')),
+      handlerRefuses(fn, /authHeader\?\.startsWith\(/, '401'),
       'the handler has no Bearer-prefix check that returns 401 before the service client',
     ).toBe(true)
     expect(
-      guards.some((g) => refuses(g, /authHeader\.replace\([^)]*\) !== serviceRoleKey/, '403')),
+      handlerRefuses(fn, /authHeader\.replace\([^)]*\) !== serviceRoleKey/, '403'),
       'the handler has no service-role key comparison that returns 403 before the service client',
     ).toBe(true)
   })
@@ -1324,7 +1542,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // the parse. Scoped to the statement by text search a decoy literal above
     // the query satisfied this with the columns dropped, deno RC 0, 81 of 81.
     const events = eventsQuery(fn)
-    const selects = methodCalls(events.chain, 'select')
+    const selects = spineLinks(events.spine, 'select')
     expect(selects.length, 'the events query has no .select()').toBe(1)
     const cols = selects[0].arguments[0]
     expect(
@@ -1334,6 +1552,17 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     expect((cols as ts.StringLiteral).text).toContain(
       'timezone, collectives!inner(timezone, slug)',
     )
+    // AND EVERY OTHER COLUMN THE ROWS ARE READ FOR. `EventRow` is what the
+    // result is cast to, so each of its plain properties has to be selected or
+    // the field arrives undefined. Measured 2026-09-02: dropping `date_start`
+    // was deno RC 0, eslint clean, 87 of 87 GREEN, and it stops the sweep
+    // nudging anybody at all (NaN fails both window comparisons); dropping
+    // `title` or `address` instead ships `undefined` to a member's inbox.
+    const selected = columnList(cols as ts.StringLiteral)
+    for (const prop of interfaceProps(events.sf, 'EventRow')) {
+      if (prop === 'collectives') continue
+      expect(selected, `the events select drops ${prop}`).toContain(prop)
+    }
     fnDecl(events.sf, 'audienceTzFor')
     fnDecl(events.sf, 'wallClockNowInTz')
 
@@ -1394,7 +1623,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       ['gte', 'windowStart'],
       ['lte', 'windowEnd'],
     ] as const) {
-      for (const c of methodCalls(events.chain, method)) {
+      for (const c of spineLinks(events.spine, method)) {
         if (c.arguments.length !== 2) continue
         if (c.arguments[0].getText(events.sf) !== "'date_start'") continue
         expect(
@@ -2073,7 +2302,7 @@ const alsoDecoy = "type: 'safety_contact_missing'"
     ].join('\n')
     const hijackedQ = eventsQuery(hijacked)
     expect(
-      hasCallWithArgs(hijackedQ.sf, hijackedQ.chain, 'eq', ["'is_ticketed'", 'true']),
+      hasSpineCall(hijackedQ.sf, hijackedQ.spine, 'eq', ["'is_ticketed'", 'true']),
       'a decoy chain beside the real query satisfied an events pin',
     ).toBe(false)
 
@@ -2088,9 +2317,186 @@ const alsoDecoy = "type: 'safety_contact_missing'"
     ].join('\n')
     const honestQ = eventsQuery(honest)
     expect(
-      hasCallWithArgs(honestQ.sf, honestQ.chain, 'eq', ["'is_ticketed'", 'true']),
+      hasSpineCall(honestQ.sf, honestQ.spine, 'eq', ["'is_ticketed'", 'true']),
       'eventsQuery did not resolve to the query the sweep loop consumes',
     ).toBe(true)
+
+    // A DECOY BOUND TO A TYPE NAME. `iterated` used to collect every identifier
+    // in the loop header, type positions included, so binding the dead chain to
+    // `const { data: EventRow }` made it the only `data:` binding the reader
+    // could see while the real rows came through `eventsRes.data`. Measured
+    // 2026-09-02 against 1a627cd2: deno RC 0, eslint clean, 84 of 84 GREEN.
+    const typeNameDecoy = [
+      "const eventsRes = await supabase.from('events').select('id')",
+      'const events = eventsRes.data',
+      "const { data: EventRow } = await supabase.from('events').select('id').eq('is_ticketed', true)",
+      'console.log(EventRow?.length ?? 0)',
+      'for (const event of ((events ?? []) as unknown) as EventRow[]) { await nudgeEvent(supabase, event, now) }',
+    ].join('\n')
+    expect(
+      () => eventsQuery(typeNameDecoy),
+      'a decoy bound to a name used only as a TYPE became the sweep query',
+    ).toThrow(/expected exactly one `const \{ data/)
+
+    // MATCHED CONTROL. The ordinary `const { data } = ...` shorthand is not a
+    // decoy and has to resolve, or this reader reds a refactor that changes
+    // nothing about which rows the sweep mails.
+    const shorthand = [
+      "const { data } = await supabase.from('events').select('id').eq('is_ticketed', true)",
+      'for (const event of (data ?? [])) { await nudgeEvent(supabase, event, now) }',
+    ].join('\n')
+    const shorthandQ = eventsQuery(shorthand)
+    expect(
+      hasSpineCall(shorthandQ.sf, shorthandQ.spine, 'eq', ["'is_ticketed'", 'true']),
+      'the ordinary `const { data }` shorthand did not resolve to the sweep query',
+    ).toBe(true)
+
+    // A DECOY NESTED INSIDE AN ARGUMENT. `hasCallWithArgs` walked the whole
+    // subtree, so a dead ternary arm inside the query's own `.lte()` argument
+    // supplied every filter pin with the real filters deleted: deno RC 0,
+    // eslint clean, 84 of 84 GREEN on 2026-09-02.
+    const nestedArg = [
+      "const { data: events } = await supabase.from('events').select('id')",
+      "  .lte('date_start', LEGACY ? String(audit.eq('is_ticketed', true)) : windowEnd.toISOString())",
+      'for (const event of events) { await nudgeEvent(supabase, event, now) }',
+    ].join('\n')
+    const nestedQ = eventsQuery(nestedArg)
+    expect(
+      hasSpineCall(nestedQ.sf, nestedQ.spine, 'eq', ["'is_ticketed'", 'true']),
+      'a decoy nested inside an argument satisfied a spine pin',
+    ).toBe(false)
+    // MATCHED CONTROL: written as a direct link of the same chain it is found.
+    const directLink = [
+      "const { data: events } = await supabase.from('events').select('id').eq('is_ticketed', true)",
+      'for (const event of events) { await nudgeEvent(supabase, event, now) }',
+    ].join('\n')
+    const directQ = eventsQuery(directLink)
+    expect(
+      hasSpineCall(directQ.sf, directQ.spine, 'eq', ["'is_ticketed'", 'true']),
+      'a direct link of the chain was not found on the spine',
+    ).toBe(true)
+  })
+
+  it('reads an auth guard the handler itself runs, refusing with a real status', () => {
+    // The two measured kills of 2026-09-02, as fixtures. Both were deno check
+    // RC 0, eslint clean and 84 of 84 GREEN against 1a627cd2, and both leave an
+    // anonymous caller reading every attendee's emergency contact.
+    const shell = (guard: string, extra = '') =>
+      [
+        extra,
+        "Deno.serve(withSentry('f', async (req: Request) => {",
+        "  const authHeader = req.headers.get('Authorization')",
+        guard,
+        '  const supabase = serviceClient()',
+        "  return new Response(JSON.stringify({ ok: true, supabase }))",
+        '}))',
+      ].join('\n')
+
+    const honest = shell(
+      "  if (!authHeader?.startsWith('Bearer ')) { return new Response('no', { status: 401 }) }",
+    )
+    expect(
+      handlerRefuses(honest, /authHeader\?\.startsWith\(/, '401'),
+      'the handler that does refuse was not read as refusing',
+    ).toBe(true)
+
+    // A HELPER DECLARED INSIDE THE HANDLER, called for its side effect. Every
+    // `if` is still "inside the handler" to a subtree walk, still returns 401,
+    // still ends before serviceClient(). Nothing refuses anybody.
+    const nested = shell(
+      [
+        '  const authFailure = (): Response | null => {',
+        "    if (!authHeader?.startsWith('Bearer ')) { return new Response('no', { status: 401 }) }",
+        '    return null',
+        '  }',
+        '  authFailure()',
+      ].join('\n'),
+    )
+    expect(
+      handlerRefuses(nested, /authHeader\?\.startsWith\(/, '401'),
+      'a guard declared inside a nested function satisfied the handler auth pin',
+    ).toBe(false)
+
+    // A REFUSAL THAT ONLY SPELLS THE STATUS. `return refuse401()` carries the
+    // digits and the helper answers 200.
+    const named = shell(
+      "  if (!authHeader?.startsWith('Bearer ')) { return refuse401() }",
+      "function refuse401(): Response { return new Response('ok', { status: 200 }) }",
+    )
+    expect(
+      handlerRefuses(named, /authHeader\?\.startsWith\(/, '401'),
+      'a helper NAME carrying the digits satisfied the status pin',
+    ).toBe(false)
+
+    // MATCHED CONTROL for that one: the same helper shape, given the status as
+    // a real argument, still refuses and has to stay green.
+    const passed = shell(
+      "  if (!authHeader?.startsWith('Bearer ')) { return refuse('no', 401) }",
+      "function refuse(b: string, status: number): Response { return new Response(b, { status }) }",
+    )
+    expect(
+      handlerRefuses(passed, /authHeader\?\.startsWith\(/, '401'),
+      'a refusal that passes the status as a number was not read as refusing',
+    ).toBe(true)
+  })
+
+  it('reads a column list and a status constant as values, not as substrings', () => {
+    // `emergency_contact_phone` is a substring of
+    // `emergency_contact_phone_verified`, and `LIVE_TICKET_STATUSES` is a
+    // substring of `LIVE_TICKET_STATUSES.slice(0, 1)`. Both were deno-clean,
+    // eslint-clean, 84-of-84-GREEN kills against 1a627cd2 on 2026-09-02: the
+    // first makes every profile read as unreachable, the second is the
+    // 2026-08-28 reserved-hold defect back.
+    const listOf = (src: string) =>
+      columnList(methodCalls(parseOf(src), 'select')[0].arguments[0] as ts.StringLiteral)
+    expect(
+      listOf("q.select('id, emergency_contact_name, emergency_contact_phone_verified')"),
+      'a longer column name satisfied a column pin',
+    ).not.toContain('emergency_contact_phone')
+    expect(
+      listOf("q.select('id, emergency_contact_name, emergency_contact_phone')"),
+      'the real column list did not read as containing its own column',
+    ).toContain('emergency_contact_phone')
+
+    const statusArg = (src: string) => {
+      const sf = parseOf(src)
+      return bareArg(sf, methodCalls(sf, 'in')[0].arguments[1])
+    }
+    expect(
+      statusArg("q.in('status', LIVE_TICKET_STATUSES.slice(0, 1) as unknown as string[])"),
+      'a narrowed status list satisfied a constant pin',
+    ).not.toBe('LIVE_TICKET_STATUSES')
+    expect(
+      statusArg("q.in('status', LIVE_TICKET_STATUSES as unknown as string[])"),
+      'the real cast the repo writes stopped reading as the bare constant',
+    ).toBe('LIVE_TICKET_STATUSES')
+  })
+
+  it('reads the query a chunking helper actually runs', () => {
+    // Positional containment said only that a chain sat somewhere inside the
+    // call. Measured 2026-09-02 against 1a627cd2: the pinned chain on the dead
+    // arm of a ternary, with `.from('profiles_v2').select('id')` running, was
+    // deno RC 0, eslint clean and 84 of 84 GREEN.
+    const call = (src: string) => plainCalls(parseOf(src), 'selectInChunks')[0]
+    const deadArm = call(
+      "const r = await selectInChunks(ids, (chunk) => flag " +
+        "? supabase.from('profiles').select('id, emergency_contact_phone').in('id', chunk) " +
+        ": supabase.from('profiles_v2').select('id').in('id', chunk))",
+    )
+    expect(
+      spineLinks(callbackSpine(deadArm), 'from', 'profiles').length,
+      'a chain on the arm that never runs satisfied the chunked-query pin',
+    ).toBe(0)
+
+    // MATCHED CONTROL: the shape the file actually writes still resolves.
+    const honest = call(
+      "const r = await selectInChunks(ids, (chunk) => " +
+        "supabase.from('profiles').select('id, emergency_contact_phone').in('id', chunk))",
+    )
+    expect(
+      spineLinks(callbackSpine(honest), 'from', 'profiles').length,
+      'the query the helper runs was not found on the callback spine',
+    ).toBe(1)
   })
 
   it('sends a type send-email actually knows', () => {
