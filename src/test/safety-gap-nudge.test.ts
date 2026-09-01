@@ -468,38 +468,133 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
   const GATE = path.join(ROOT, 'src/components/dietary-gate.tsx')
 
   /**
-   * index.ts with the CONTENT of every comment blanked to spaces, byte offsets
-   * preserved so every indexOf and slice below behaves exactly as it would on
-   * the raw source.
+   * ONE left-to-right pass over index.ts, blanking the CONTENT of every
+   * comment to spaces (and, when `literals` is set, of every string and
+   * template literal too). Byte offsets and newlines are preserved, so every
+   * indexOf and slice below means exactly what it would on the raw source.
    *
-   * Every source-text guard in this file was satisfiable by a COMMENT, and the
-   * comment is the one a developer writes while making the very change the
-   * guard exists to catch. Four negative controls, 2026-09-01, each left all
+   * Every source-text guard in this file was once satisfiable by a COMMENT,
+   * and the comment is the one a developer writes while making the very change
+   * the guard exists to catch. Six negative controls, 2026-09-01, each left all
    * 79 tests green with the mechanism broken:
    *   - delete the claim's .select() and leave "the .select( ask was moved out
    *     of this chain" as a comment. That is the silent total kill: no
    *     return=representation, `claimed` empty, the sweep mails NOBODY for
-   *     ever and still answers success:true. One comment past the guard added
-   *     hours earlier to stop exactly it.
+   *     ever and still answers success:true.
+   *   - the same kill with the token hidden inside a console.log string.
    *   - pass the wall clock at the nudgeEvent call site and leave the old call
    *     behind as a "was:" comment.
    *   - set TZ_PADDING_HOURS to 0 and mention the old declaration in the doc
    *     comment ABOVE it, which .match reaches first.
    *   - hardcode audienceTzFor and leave the old body commented out inside it.
-   * Blanking rather than deleting is what keeps the offsets honest, and the
-   * lookbehind keeps a "https://" inside a string from reading as a comment.
+   *   - add `{ head: true }` to the claim, which keeps the `.select(` the
+   *     guard greps for and suppresses the response body anyway.
+   *
+   * WHY A SCANNER AND NOT REGEXES. Two chained regexes have to pick an order,
+   * and BOTH orders are wrong in one direction, which cost this file two
+   * commits to learn:
+   *   - block-comments-first (d0909791): a `/*` written inside a `//` comment
+   *     opens a block the author never opened, and the blank runs to the next
+   *     terminator anywhere below, taking real code with it.
+   *   - line-comments-first (e927f442): the mirror image. A `//` inside a
+   *     block comment whose terminator sits on the SAME line eats that
+   *     terminator, so the block never closes and the blank cascades exactly
+   *     as before. Measured 2026-09-01: adding `{ head: true }` to the claim
+   *     behind a block comment carrying a slash-slash, with the block's own
+   *     terminator on that same line and a short closing comment underneath,
+   *     left all 81 tests GREEN with the silent total kill live. The exact
+   *     sample is pinned in the reader self-test below rather than quoted
+   *     here, because writing it out needs a terminator this comment cannot
+   *     carry.
+   * Neither direction is safe, because an assertion built on `not.toContain`
+   * passes happily against code that has been blanked out of existence, so the
+   * guard goes green on the very mutation it exists to catch. A single pass
+   * where the FIRST delimiter wins has no order to get wrong.
+   *
+   * It also makes the reader string-aware, which is the real answer to the
+   * `https://` problem the old lookbehind only approximated: a `//` inside a
+   * string was never a comment, and a `(?<!:)` guard bought that one case
+   * while leaving a genuine `ignoreDuplicates:// ...` line comment unblanked
+   * and its borrowed tokens readable (measured 2026-09-01).
    */
-  const blankComments = (t: string) =>
-    t
-      // Line comments FIRST. A `/*` written inside a `//` comment would
-      // otherwise open a block the author never opened, and the blank would run
-      // to the next `*/` anywhere below, swallowing real code on the way. That
-      // direction is not safe: an assertion built on `not.toContain` passes
-      // happily against blanked-out code, so the guard would go green on the
-      // very mutation it exists to catch. Doing lines first also disarms a
-      // stray `*/` sitting in a line comment.
-      .replace(/(?<!:)\/\/[^\n]*/g, (m) => ' '.repeat(m.length))
-      .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+  const scanSource = (t: string, literals: boolean) => {
+    const out = t.split('')
+    const wipe = (from: number, to: number) => {
+      for (let k = Math.max(0, from); k < Math.min(to, out.length); k++) {
+        if (out[k] !== '\n') out[k] = ' '
+      }
+    }
+
+    // A template literal. Its `${}` bodies are CODE, not text, so they are
+    // walked as code rather than swallowed whole. That is what makes a nested
+    // backtick pair with the right partner: the old regex paired the opening
+    // backtick with the one after `${`, so the inner literal's text fell
+    // OUTSIDE both matches and survived into `codeOnly` as if it were code.
+    // Measured 2026-09-01: console.log(`${`nudgeEvent(supabase, event, now)`}`)
+    // satisfied the cadence pin while the real call site took the wall clock.
+    const template = (start: number): number => {
+      let i = start + 1
+      let chunk = i
+      while (i < t.length) {
+        const c = t[i]
+        if (c === '\\') { i += 2; continue }
+        if (c === '`') { if (literals) wipe(chunk, i); return i + 1 }
+        if (c === '$' && t[i + 1] === '{') {
+          if (literals) wipe(chunk, i)
+          i = Math.min(code(i + 2, true) + 1, t.length)
+          chunk = i
+          continue
+        }
+        i++
+      }
+      if (literals) wipe(chunk, i)
+      return i
+    }
+
+    // Code. `untilBrace` means this is a `${}` body and ends at its matching
+    // brace.
+    const code = (start: number, untilBrace: boolean): number => {
+      let i = start
+      let depth = 0
+      while (i < t.length) {
+        const c = t[i]
+        if (untilBrace && c === '}' && depth === 0) return i
+        if (c === '{') { depth++; i++; continue }
+        if (c === '}') { depth--; i++; continue }
+        if (c === '/' && t[i + 1] === '/') {
+          let j = i + 2
+          while (j < t.length && t[j] !== '\n') j++
+          wipe(i, j)
+          i = j
+          continue
+        }
+        if (c === '/' && t[i + 1] === '*') {
+          let j = i + 2
+          while (j < t.length && !(t[j] === '*' && t[j + 1] === '/')) j++
+          const end = Math.min(j + 2, t.length)
+          wipe(i, end)
+          i = end
+          continue
+        }
+        if (c === "'" || c === '"') {
+          let j = i + 1
+          while (j < t.length && t[j] !== c && t[j] !== '\n') j += t[j] === '\\' ? 2 : 1
+          const end = Math.min(j + 1, t.length)
+          if (literals) wipe(i, end)
+          i = end
+          continue
+        }
+        if (c === '`') { i = template(i); continue }
+        i++
+      }
+      return i
+    }
+
+    code(0, false)
+    return out.join('')
+  }
+
+  const blankComments = (t: string) => scanSource(t, false)
 
   const readSource = () => blankComments(fs.readFileSync(FN, 'utf8'))
 
@@ -512,11 +607,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
    * literals on purpose, because there the literal IS the thing being pinned
    * (the column list, the conflict target, the is_ticketed filter).
    */
-  const codeOnly = (t: string) =>
-    t
-      .replace(/'(?:[^'\\\n]|\\.)*'/g, (m) => ' '.repeat(m.length))
-      .replace(/"(?:[^"\\\n]|\\.)*"/g, (m) => ' '.repeat(m.length))
-      .replace(/`(?:[^`\\]|\\.)*`/g, (m) => m.replace(/[^\n]/g, ' '))
+  const codeOnly = (t: string) => scanSource(t, true)
 
   it('filters on is_ticketed, as the gate does', () => {
     // Measured 2026-09-01: ticketed-only is 4 events / 60 seats / 6 gaps.
@@ -739,7 +830,11 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // wallClockNowInTz at THIS call site and every assertion above stayed
     // green, while each 48h gap moved by the audience offset (down to 38h for
     // a +10 audience), so the cadence would nudge earlier than it promises.
-    expect(codeOnly(fn)).toMatch(/nudgeEvent\(\s*supabase,\s*event,\s*now\s*\)/)
+    // Anchored on the AWAITED call, not merely on the shape appearing
+    // somewhere: a decoy `nudgeEvent(supabase, event, now)` written into a log
+    // line would otherwise satisfy a bare shape match while the call that
+    // actually runs took the wall clock.
+    expect(codeOnly(fn)).toMatch(/await nudgeEvent\(\s*supabase,\s*event,\s*now\s*\)/)
   })
 
   it('the 12h floor is 12h before the REAL start for a +10 audience', () => {
@@ -879,16 +974,51 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       raw.indexOf('function wallClockNowInTz'),
     )
 
-    // Comment prose is gone.
-    expect(raw).toContain('THE HOLE THIS CLOSES')
-    expect(stripped).not.toContain('THE HOLE THIS CLOSES')
-    expect(raw).toContain('Two clocks, two jobs')
-    expect(stripped).not.toContain('Two clocks, two jobs')
+    // Comment prose is gone. The samples are DERIVED from the file rather than
+    // hardcoded, because a hardcoded quote couples this test to prose it does
+    // not own: reword the comment it samples, or rename the table, and the
+    // reader test reds while the reader is fine. A first cut of this test
+    // sampled the `onConflict` string and did exactly that. A guard that fires
+    // on something other than its own subject is the same defect one level up
+    // from the one this whole file exists to close.
+    const firstPhraseIn = (text: string, open: string, close: string) => {
+      let at = text.indexOf(open)
+      while (at > -1) {
+        // Skip a `://` when LOCATING a sample. This is the opposite of the
+        // blanking rule: skipping here can only make the test pick a different
+        // sample, whereas skipping while blanking left borrowed tokens
+        // readable, which is the hole the scanner above closes. A sample drawn
+        // from a string by accident reds this test loudly rather than passing
+        // it, so the failure direction is safe either way.
+        if (open === '//' && at > 0 && text[at - 1] === ':') {
+          at = text.indexOf(open, at + open.length)
+          continue
+        }
+        const end = text.indexOf(close, at + open.length)
+        const body = text.slice(at + open.length, end === -1 ? text.length : end)
+        const words = body.replace(/[*/]/g, ' ').split(/\s+/).filter((w) => /^[A-Za-z]{3,}$/.test(w))
+        for (let k = 0; k + 4 <= words.length; k++) {
+          const phrase = words.slice(k, k + 4).join(' ')
+          if (text.split(phrase).length === 2) return phrase
+        }
+        at = text.indexOf(open, at + open.length)
+      }
+      return ''
+    }
+    const blockProse = firstPhraseIn(raw, '/*', '*/')
+    const lineProse = firstPhraseIn(raw, '//', '\n')
+    expect(blockProse, 'no unique block-comment phrase to sample').not.toBe('')
+    expect(lineProse, 'no unique line-comment phrase to sample').not.toBe('')
+    expect(raw).toContain(blockProse)
+    expect(stripped).not.toContain(blockProse)
+    expect(raw).toContain(lineProse)
+    expect(stripped).not.toContain(lineProse)
 
-    // Code is untouched, including the two `https://` that a naive line-comment
-    // rule would eat.
-    expect(stripped).toContain("import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'")
-    expect(stripped).toContain('https://app.coexistaus.org/events/')
+    // Code is untouched, including every `https://` a naive line-comment rule
+    // would eat. Derived the same way: whatever URLs the file actually holds.
+    const urls = raw.match(/https:\/\/[^'`\s]+/g) ?? []
+    expect(urls.length).toBeGreaterThan(0)
+    for (const url of urls) expect(stripped).toContain(url)
     expect(stripped).toContain('Deno.serve(')
 
     // A `/*` inside a line comment must not open a block. Left to the block
@@ -921,12 +1051,65 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       ].join('\n').length,
     )
 
+    // The MIRROR hazard, and the one that cost this file a third commit. A
+    // `//` inside a block comment whose terminator sits on the SAME line ate
+    // that terminator under line-comments-first, so the block never closed and
+    // the blank cascaded down the file exactly as it did under
+    // block-comments-first. Measured 2026-09-01: `{ head: true }` on the claim,
+    // wrapped this way, left all 81 tests green with the silent total kill live.
+    const sandwich = blankComments(
+      ['  const before = 1', '  const x = f(a, /* note ' + '// */ { head: true })', '  /* close */', '  const after = 2'].join('\n'),
+    )
+    expect(sandwich).toContain('const before = 1')
+    expect(sandwich).toContain('const after = 2')
+    expect(sandwich).toContain('head: true')
+    expect(sandwich).not.toContain('note')
+
+    // A line comment is a line comment wherever it starts. The old reader
+    // carried a `(?<!:)` lookbehind to spare `https://` inside a string, and it
+    // spared a genuine `ignoreDuplicates:// ...` comment along with it, leaving
+    // every token borrowed inside that comment readable to the guards above.
+    const afterColon = blankComments(
+      ['  ignoreDuplicates:' + '// the .select( ask moved to the caller', '    true,'].join('\n'),
+    )
+    expect(afterColon).not.toContain('.select(')
+    expect(afterColon).toContain('true,')
+
+    // And the reader is string-aware, which is what makes the lookbehind
+    // unnecessary rather than merely replaced: a comment delimiter inside a
+    // string literal was never a comment.
+    const inStrings = blankComments(
+      ["  const a = 'https://esm.sh/x'", "  const b = '/* not a comment'", "  const c = 'a */ b'", '  const kept = 3'].join('\n'),
+    )
+    expect(inStrings).toContain("'https://esm.sh/x'")
+    expect(inStrings).toContain('const kept = 3')
+
     // And codeOnly additionally empties the literals, without moving anything.
     const code = codeOnly(stripped)
     expect(code.length).toBe(raw.length)
     expect(code).toContain('.upsert(')
     expect(code).toContain('.select(')
-    expect(code).not.toContain('event_safety_nudges_sent')
+    // Derived rather than hardcoded, for the same reason: a table rename must
+    // not red the reader test.
+    const literal = raw.match(/\.from\('([a-z_]{8,})'\)/)?.[1] ?? ''
+    expect(literal, 'no table literal to sample').not.toBe('')
+    expect(stripped).toContain(literal)
+    expect(code).not.toContain(literal)
+
+    // A nested backtick inside a `${}` paired wrongly under the old regex: the
+    // opening backtick matched the one after `${`, so the INNER literal's text
+    // fell outside both matches and survived into `codeOnly` as if it were
+    // code. Measured 2026-09-01 as a live kill of the cadence pin above.
+    expect(codeOnly('console.log(`${`await nudgeEvent(supabase, event, now)`}`)')).not.toContain(
+      'nudgeEvent(',
+    )
+    // The real call still reads as code, or the pin above would be vacuous.
+    expect(codeOnly('const outcome = await nudgeEvent(supabase, event, now)')).toContain(
+      'await nudgeEvent(supabase, event, now)',
+    )
+    // Interpolated CODE is code, and a string inside it is still a string.
+    expect(codeOnly('const u = `a${event.id}b`')).toContain('event.id')
+    expect(codeOnly("const u = `a${get('year')}b`")).not.toContain('year')
   })
 
   it('sends a type send-email actually knows', () => {
