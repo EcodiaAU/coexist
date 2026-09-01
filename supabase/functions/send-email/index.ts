@@ -162,6 +162,18 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     subject: (d) => `Refund processed: ${d.event_title}`,
   },
 
+  // The emergency contact somebody with a live seat still has not given us.
+  // Sent by event-safety-gap-nudge, which exists because both existing gates
+  // only fire on app open and a member who bought a seat and never came back
+  // was chased by nothing. Kept OUT of TYPE_TO_PREF_KEY on purpose: this is
+  // duty of care for a named person on a real roster, not a notification
+  // preference, the same reason ticket_refunded is absent.
+  safety_contact_missing: {
+    category: 'transactional',
+    description: 'Emergency contact missing for an upcoming ticketed event. Data: { name, event_title, event_date, event_location, event_url, follow_up_number, nudges_total }',
+    subject: (d) => `Before ${d.event_title}: who should we call?`,
+  },
+
   collective_application: {
     category: 'transactional',
     description: 'New collective application notification. Data: { applicant_name, applicant_email, roles, location }',
@@ -690,6 +702,26 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
       ]) +
       p('Bring water, sunscreen, and a hat. We supply the rest.'),
     footerCta: { label: 'View event', url: d.event_url as string || APP_URL },
+  }),
+
+  // One ask, one button. The app-open gate already does the capture, so the
+  // only job of this email is to get the person back into the app; asking them
+  // to reply with the details here would create a second intake path that
+  // writes to nothing.
+  safety_contact_missing: (d) => emailShell({
+    heroTitle: 'Who should we call?',
+    heroSubtitle: d.event_title as string,
+    overline: 'Before you go',
+    ...heroFromData(d),
+    body: greeting(d.name) +
+      p(`You have a spot at <strong>${d.event_title}</strong> and we do not have an emergency contact for you yet.`) +
+      p('It is one name and one phone number, and it is the first thing our team reaches for if something goes wrong on the day. Tap below and the app will ask you for it.') +
+      infoCard([
+        ['Event', d.event_title],
+        ['When', d.event_date],
+        ['Where', d.event_location],
+      ]),
+    footerCta: { label: 'Add my emergency contact', url: d.event_url as string || APP_URL },
   }),
 
   event_cancelled: (d) => emailShell({

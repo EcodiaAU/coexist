@@ -62,6 +62,9 @@ verify_jwt = false
 [functions.event-post-survey-invite]
 verify_jwt = false
 
+[functions.event-safety-gap-nudge]
+verify_jwt = false
+
 [functions.event-reminders]
 verify_jwt = true
 
