@@ -762,8 +762,12 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       root,
       (n) =>
         ts.isCallExpression(n) &&
-        ts.isPropertyAccessExpression(n.expression) &&
-        n.expression.name.text === method &&
+        // `x['from'](...)` is the same call as `x.from(...)` at runtime and was
+        // invisible here, which let a decoy chain hold the only counted call.
+        ((ts.isPropertyAccessExpression(n.expression) && n.expression.name.text === method) ||
+          (ts.isElementAccessExpression(n.expression) &&
+            ts.isStringLiteralLike(n.expression.argumentExpression) &&
+            n.expression.argumentExpression.text === method)) &&
         (arg === undefined ||
           (n.arguments.length > 0 &&
             ts.isStringLiteral(n.arguments[0]) &&
@@ -815,16 +819,73 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
         n.initializer.getText(sf) === value,
     ).length > 0
 
-  /** The sole `<x>.from('<table>')` call, and the chain it belongs to. */
-  const soleFrom = (src: string, table: string) => {
+  /**
+   * The chain that ACTUALLY produces the rows the sweep iterates.
+   *
+   * `soleFrom` scoped every events pin to "the one `.from('events')` call in
+   * the file", and a COUNT is not an identity. Two deno-clean, eslint-clean,
+   * 81-of-81-GREEN kills used that, measured 2026-09-02 against fb2b1206:
+   * write the real query as `supabase['from']('events')` (element access, which
+   * `methodCalls` did not match) or reach it through a one-line helper
+   * `(db, t) => db.from(t)` (the table name is then an identifier, not a
+   * literal), and leave a dead `supabase.from('events')` chain beside it
+   * carrying every filter. The count comes back to exactly one, every pin reads
+   * the decoy, and the query that runs has lost `is_ticketed`, `status` and the
+   * test-collective filter: 4 ticketed events becomes 30 published ones, drafts
+   * included.
+   *
+   * So the anchor is the DATA PATH, not a population count. The sweep loop is
+   * the only thing that can mail a member; whatever it iterates is bound by a
+   * `const { data: <rows> } = await <query>`, and that query has to bottom out
+   * in a literal `.from('events')`. A decoy elsewhere in the file is then
+   * simply not the query, however many of them there are. This is the same
+   * shape the claim side already had (it pins that the send loop iterates the
+   * claim's OWN returned data), and its absence here is why the claim survived
+   * this attack and the events query did not.
+   */
+  const eventsQuery = (src: string) => {
     const sf = parseOf(src)
-    const hits = methodCalls(sf, 'from', table)
+    const loops = nodesIn(
+      sf,
+      (n) => ts.isForOfStatement(n) && plainCalls(n, 'nudgeEvent').length > 0,
+    ) as ts.ForOfStatement[]
+    expect(loops.length, 'expected exactly one sweep loop running nudgeEvent').toBe(1)
+    const iterated = nodesIn(loops[0].expression, (n) => ts.isIdentifier(n)).map(
+      (n) => (n as ts.Identifier).text,
+    )
+    const decls = nodesIn(
+      sf,
+      (n) =>
+        ts.isVariableDeclaration(n) &&
+        ts.isObjectBindingPattern(n.name) &&
+        n.name.elements.some(
+          (e) =>
+            !!e.propertyName &&
+            ts.isIdentifier(e.propertyName) &&
+            e.propertyName.text === 'data' &&
+            ts.isIdentifier(e.name) &&
+            iterated.includes(e.name.text),
+        ),
+    ) as ts.VariableDeclaration[]
     expect(
-      hits.length,
-      `expected exactly one .from('${table}') call in the parse, found ${hits.length}; ` +
-        'a second one moves every pin scoped to it',
+      decls.length,
+      'expected exactly one `const { data: <rows> } = await <query>` feeding the sweep loop',
     ).toBe(1)
-    return { sf, call: hits[0], chain: chainOf(hits[0]) }
+    let expr: ts.Node = decls[0].initializer!
+    while (
+      ts.isAwaitExpression(expr) ||
+      ts.isParenthesizedExpression(expr) ||
+      ts.isAsExpression(expr) ||
+      ts.isNonNullExpression(expr)
+    ) {
+      expr = expr.expression
+    }
+    const froms = methodCalls(expr, 'from', 'events')
+    expect(
+      froms.length,
+      "the sweep's own query is not rooted in a literal .from('events')",
+    ).toBe(1)
+    return { sf, call: froms[0], chain: expr, loop: loops[0] }
   }
 
   /** A top-level `function <name>` declaration, as a node. */
@@ -872,7 +933,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // top-level template literal placed ABOVE it, measured 2026-09-02, deno
     // check RC 0 and 81 of 81: the literal became the first match and the
     // whole region moved onto the decoy.
-    const events = soleFrom(fn, 'events')
+    const events = eventsQuery(fn)
     expect(
       hasCallWithArgs(events.sf, events.chain, 'eq', ["'is_ticketed'", 'true']),
       "the events query has no .eq('is_ticketed', true)",
@@ -883,7 +944,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // The same parse read as the filter above, for the same measured reason:
     // a decoy literal placed above the query stole the text anchor and this
     // passed with the filter gone, which sweeps drafts and unpublished events.
-    const events = soleFrom(readSource(), 'events')
+    const events = eventsQuery(readSource())
     expect(
       hasCallWithArgs(events.sf, events.chain, 'eq', ["'status'", "'published'"]),
       "the events query has no .eq('status', 'published')",
@@ -897,7 +958,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // Read off the parse, so neither a decoy above the query (which stole the
     // text anchor, measured 2026-09-02, deno RC 0 and 81 of 81 with the filter
     // deleted) nor one sitting inside the chain can stand in for the call.
-    const events = soleFrom(fn, 'events')
+    const events = eventsQuery(fn)
     expect(
       hasCallWithArgs(events.sf, events.chain, 'neq', ["'collectives.slug'", "'test'"]),
       "the events query has no .neq('collectives.slug', 'test')",
@@ -931,6 +992,78 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       plainCalls(sweepLoops[0], 'isTestEvent').length,
       'the sweep loop never calls isTestEvent',
     ).toBeGreaterThan(0)
+  })
+
+  it('reads every column the contact rule needs, and reads it in chunks', () => {
+    // Dropping a column from this select is the quietest mass-mis-mail in the
+    // file: with `emergency_contact_phone` gone every profile reads as having
+    // no reachable contact, so every seat holder is nudged including the ones
+    // who answered months ago. Measured 2026-09-02 against fb2b1206, deno
+    // check RC 0, eslint clean, 81 of 81 GREEN, and nothing in this file
+    // looked at the column list at all.
+    const fn = readSource()
+    const sf = parseOf(fn)
+
+    // Chunked on purpose. PostgREST echoes the whole `.in()` filter back in a
+    // content-location header and a one-shot list blows Deno's 16KiB cap
+    // (Sentry COEXIST-1D). Collapsing the helper back to a single query was
+    // also deno-clean and GREEN, and it fails as a silent bail on the largest
+    // cohorts rather than on the ones anybody tests with.
+    const chunked = plainCalls(sf, 'selectInChunks')
+    expect(chunked.length, 'the profiles read is not chunked through selectInChunks').toBe(1)
+
+    const profileFroms = methodCalls(sf, 'from', 'profiles')
+    expect(profileFroms.length, "expected exactly one .from('profiles') call").toBe(1)
+    expect(
+      profileFroms[0].getStart(sf) > chunked[0].getStart(sf) &&
+        profileFroms[0].getEnd() < chunked[0].getEnd(),
+      'the profiles query does not run inside selectInChunks',
+    ).toBe(true)
+
+    const cols = methodCalls(chainOf(profileFroms[0]), 'select')
+    expect(cols.length, 'the profiles query has no .select()').toBe(1)
+    const list = cols[0].arguments[0]
+    expect(
+      !!list && ts.isStringLiteral(list),
+      'the profiles select does not take a literal column list',
+    ).toBe(true)
+    for (const col of ['id', 'emergency_contact_name', 'emergency_contact_phone']) {
+      expect((list as ts.StringLiteral).text, `the profiles select drops ${col}`).toContain(col)
+    }
+  })
+
+  it('sweeps both seat artefacts on the shared status sets', () => {
+    // A seat is a live ticket OR a live registration, and WHICH statuses count
+    // is decided once, in the shared modules, because it has been got wrong
+    // before: the 2026-08-28 defect excluded a `reserved` organiser hold, a
+    // named person on a real roster who is the only source of their own
+    // emergency contact, and those holders were never once asked. The twin
+    // tests at the top of this file pin the CONSTANTS. Nothing pinned that the
+    // QUERY reads them, so hardcoding `.in('status', ['completed'])` was deno
+    // check RC 0, eslint clean and 81 of 81 GREEN on 2026-09-02 while silently
+    // narrowing who gets swept.
+    const fn = readSource()
+    const sf = parseOf(fn)
+    for (const [table, statuses] of [
+      ['event_tickets', 'LIVE_TICKET_STATUSES'],
+      ['event_registrations', 'LIVE_REGISTRATION_STATUSES'],
+    ] as const) {
+      const froms = methodCalls(sf, 'from', table)
+      expect(froms.length, `expected exactly one .from('${table}') call`).toBe(1)
+      const chain = chainOf(froms[0])
+      const statusFilters = methodCalls(chain, 'in').filter(
+        (c) => c.arguments.length === 2 && c.arguments[0].getText(sf) === "'status'",
+      )
+      expect(statusFilters.length, `the ${table} read does not filter on status`).toBe(1)
+      expect(
+        statusFilters[0].arguments[1].getText(sf),
+        `the ${table} read does not take its statuses from ${statuses}`,
+      ).toContain(statuses)
+      expect(
+        hasCallWithArgs(sf, chain, 'eq', ["'event_id'", 'event.id']),
+        `the ${table} read is not scoped to this event`,
+      ).toBe(true)
+    }
   })
 
   it('reads the shared predicate rather than hand-rolling the rule', () => {
@@ -996,11 +1129,25 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // it is step 1, the unique index swallows the repeat claim, and the person
     // gets one nudge instead of three. Silent: no error, success:true, and
     // every other assertion here stayed green under that mutation.
+    const cadence = readChains.filter(
+      (c) => methodCalls(c, 'select', 'user_id, follow_up_number, sent_at').length > 0,
+    )
     expect(
-      readChains.some(
-        (c) => methodCalls(c, 'select', 'user_id, follow_up_number, sent_at').length > 0,
-      ),
+      cadence.length,
       'no event_safety_nudges_sent READ selects user_id, follow_up_number, sent_at',
+    ).toBe(1)
+
+    // And that read is scoped to THIS event. Unscoped it returns every event's
+    // ledger rows, so a person nudged for one event reads as already at step 1
+    // (or already capped) for a different one and is never asked about the
+    // event they are actually attending. Measured 2026-09-02: deleting the
+    // `.eq('event_id', event.id)` is deno check RC 0, eslint clean and was
+    // 81 of 81 GREEN. The pure-function twin of this ("does not let one
+    // person's ledger silence another") passes either way, because it feeds
+    // the predicate rows the query would never have returned.
+    expect(
+      hasCallWithArgs(sf, cadence[0], 'eq', ["'event_id'", 'event.id']),
+      'the cadence read is not scoped to this event',
     ).toBe(true)
   })
 
@@ -1020,18 +1167,46 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // attendee's emergency contact and triggering live mail. The regexes
     // carry no string literal for the same reason `codeOnly` can be used at
     // all: blanking literals must not blank the thing being pinned.
+    //
+    // READING A REGION WAS STILL NOT ENOUGH, and this is the worst hole this
+    // file has had. `codeOnly` blanks STRING decoys and does not blank a CODE
+    // one, and the region ran from byte zero, so anything written above the
+    // handler counted. Measured 2026-09-02 against fb2b1206, deno check RC 0,
+    // eslint clean, 81 of 81 GREEN: lift these very checks into a helper
+    // `function authFailure(req): Response | null`, then call it at the top of
+    // the handler and DROP THE RETURN. That is an ordinary extract-a-function
+    // slip, it reads as tidier than the code it replaces, and it leaves an
+    // anonymous caller reading every attendee's emergency contact and able to
+    // trigger live mail to members.
+    //
+    // So the guard is pinned as STRUCTURE: an `if` INSIDE the handler whose
+    // test is the check and whose then-branch RETURNS the refusal. A helper
+    // above the handler is then not inside it, and a helper whose result is
+    // discarded returns nothing here.
     const authSf = parseOf(fn)
     const svc = plainCalls(authSf, 'serviceClient')
     expect(svc.length, 'expected exactly one serviceClient() call').toBe(1)
-    const body = codeOnly(fn).slice(0, svc[0].getStart(authSf))
-    expect(body, 'no Bearer-prefix check before the service client').toMatch(
-      /authHeader\?\.startsWith\(/,
+    const wrapped = plainCalls(authSf, 'withSentry')
+    expect(wrapped.length, 'expected exactly one withSentry() handler').toBe(1)
+    const handler = wrapped[0].arguments.find(
+      (a) => ts.isArrowFunction(a) || ts.isFunctionExpression(a),
     )
-    expect(body, 'no service-role key comparison before the service client').toMatch(
-      /authHeader\.replace\([^)]*\) !== serviceRoleKey/,
-    )
-    expect(body).toContain('401')
-    expect(body).toContain('403')
+    expect(handler, 'withSentry does not take a function handler').toBeDefined()
+    const guards = nodesIn(handler!, (n) => ts.isIfStatement(n)) as ts.IfStatement[]
+    const refuses = (g: ts.IfStatement, test: RegExp, status: string) =>
+      test.test(g.expression.getText(authSf)) &&
+      nodesIn(g.thenStatement, (n) => ts.isReturnStatement(n)).some((r) =>
+        r.getText(authSf).includes(status),
+      ) &&
+      g.getEnd() < svc[0].getStart(authSf)
+    expect(
+      guards.some((g) => refuses(g, /authHeader\?\.startsWith\(/, '401')),
+      'the handler has no Bearer-prefix check that returns 401 before the service client',
+    ).toBe(true)
+    expect(
+      guards.some((g) => refuses(g, /authHeader\.replace\([^)]*\) !== serviceRoleKey/, '403')),
+      'the handler has no service-role key comparison that returns 403 before the service client',
+    ).toBe(true)
   })
 
   it('mails only the rows its own claim returned', () => {
@@ -1148,7 +1323,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // The column list is the events select's own literal ARGUMENT, read off
     // the parse. Scoped to the statement by text search a decoy literal above
     // the query satisfied this with the columns dropped, deno RC 0, 81 of 81.
-    const events = soleFrom(fn, 'events')
+    const events = eventsQuery(fn)
     const selects = methodCalls(events.chain, 'select')
     expect(selects.length, 'the events query has no .select()').toBe(1)
     const cols = selects[0].arguments[0]
@@ -1165,23 +1340,69 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // The window test takes the converted clock, pinned as the CALL rather
     // than as a run of text: a template literal carrying this exact call, with
     // the real argument replaced by real `now`, was deno RC 0 and 81 of 81.
+    // Scoped to the sweep LOOP, and counted. `.some` over the whole file asked
+    // only whether the shape existed SOMEWHERE, which a decoy written in CODE
+    // supplies: measured 2026-09-02, an `export function _windowShape` carrying
+    // this exact call, with the real in-loop call given real `now`, was deno
+    // check RC 0, eslint clean and 81 of 81 GREEN. That is the +10 audience
+    // defect back, every 48h gap judged in the wrong frame. Blanking literals
+    // never blanks a decoy written as code, so the fix is to read the call that
+    // actually runs rather than to ask whether one like it exists.
+    const inLoop = plainCalls(events.loop, 'isEventInNudgeWindow')
     expect(
-      plainCalls(events.sf, 'isEventInNudgeWindow').some(
-        (c) =>
-          c.arguments.length === 2 &&
-          c.arguments[0].getText(events.sf) === 'event.date_start' &&
-          c.arguments[1].getText(events.sf) === 'wallClockNowInTz(audienceTzFor(event))',
-      ),
+      inLoop.length,
+      'expected exactly one isEventInNudgeWindow call in the sweep loop',
+    ).toBe(1)
+    expect(
+      inLoop[0].arguments.map((a) => a.getText(events.sf)),
       'isEventInNudgeWindow is not called with the audience wall clock',
-    ).toBe(true)
+    ).toEqual(['event.date_start', 'wallClockNowInTz(audienceTzFor(event))'])
 
     // And the SQL pre-filter is WIDER than the window, or an event is dropped
     // before the accurate test can judge it.
     // Read as CODE, so a literal carrying the arithmetic cannot supply it.
-    const code = codeOnly(fn)
-    expect(code).toContain('TZ_PADDING_HOURS')
-    expect(code).toMatch(/NUDGE_WINDOW_MIN_HOURS - TZ_PADDING_HOURS/)
-    expect(code).toMatch(/NUDGE_WINDOW_MAX_HOURS \+ TZ_PADDING_HOURS/)
+    // Read off the two DECLARATIONS, not off the file. As a codeOnly match over
+    // the whole source this was satisfied by a decoy written in code: measured
+    // 2026-09-02, an `export function _paddedWindow` carrying both expressions,
+    // with the real windowStart and windowEnd narrowed to the exact window, was
+    // deno check RC 0, eslint clean and 81 of 81 GREEN. The SQL then stops
+    // being a superset and for a +10 audience the top ten hours of the window
+    // go dark before the accurate test ever sees the event.
+    const winDecl = (name: string) => {
+      const hits = nodesIn(
+        events.sf,
+        (n) => ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.name.text === name,
+      ) as ts.VariableDeclaration[]
+      expect(hits.length, `expected exactly one ${name} declaration`).toBe(1)
+      return codeOnly(hits[0].getText(events.sf))
+    }
+    expect(winDecl('windowStart'), 'windowStart drops the tz padding').toMatch(
+      /NUDGE_WINDOW_MIN_HOURS - TZ_PADDING_HOURS/,
+    )
+    expect(winDecl('windowEnd'), 'windowEnd drops the tz padding').toMatch(
+      /NUDGE_WINDOW_MAX_HOURS \+ TZ_PADDING_HOURS/,
+    )
+
+    // And a date_start bound on the query, IF the query carries one, is that
+    // padded value. Carrying no SQL bound at all is deliberately left GREEN:
+    // the pre-filter is only a cheap narrowing and dropping it widens the
+    // candidate set, which the accurate per-event test then judges. Narrowing
+    // is the only direction that loses an event, so narrowing is the only
+    // direction pinned. Probed 2026-09-02: with both bounds removed the sweep
+    // mails exactly the same people, one query slower.
+    for (const [method, bound] of [
+      ['gte', 'windowStart'],
+      ['lte', 'windowEnd'],
+    ] as const) {
+      for (const c of methodCalls(events.chain, method)) {
+        if (c.arguments.length !== 2) continue
+        if (c.arguments[0].getText(events.sf) !== "'date_start'") continue
+        expect(
+          c.arguments[1].getText(events.sf),
+          `the events query bounds date_start on something other than ${bound}`,
+        ).toContain(bound)
+      }
+    }
 
     // The padding VALUE has to cover the widest audience offset or the SQL
     // stops being a superset of the accurate window and events fall out before
@@ -1825,6 +2046,51 @@ const alsoDecoy = "type: 'safety_contact_missing'"
       hasProperty(propDecoy, propDecoy, 'type', "'safety_contact_missing'"),
       'a string satisfied a property pin',
     ).toBe(false)
+    // An element-access call is the SAME call at runtime. Matched only as a
+    // property access, `supabase['from']('events')` vanishes from every count,
+    // which is half of how a dead decoy chain took over the events pins on
+    // 2026-09-02 at deno RC 0 and 81 of 81.
+    const elemAccess = parseOf(`const a = s['from']('events').select('id')`)
+    expect(
+      methodCalls(elemAccess, 'from', 'events').length,
+      "an element-access .from('events') was not counted",
+    ).toBe(1)
+  })
+
+  it('reads the events query the sweep runs, not one that merely looks right', () => {
+    // The measured kill, as a fixture. A COUNT is not an identity: hide the
+    // real query behind element access (or behind a `(db, t) => db.from(t)`
+    // helper, where the table name stops being a literal) and leave a dead
+    // fully-filtered chain beside it, and a reader that scopes its pins to
+    // "the one `.from('events')` call in the file" reads the decoy while the
+    // query that runs has lost every filter. Measured 2026-09-02 against
+    // fb2b1206: deno check RC 0, eslint clean, 81 of 81 GREEN, with
+    // `is_ticketed`, `status` and the test-collective filter all gone.
+    const hijacked = [
+      "const _decoy = supabase.from('events').select('id').eq('is_ticketed', true)",
+      "const { data: events } = await supabase['from']('events').select('id')",
+      'for (const event of events) { await nudgeEvent(supabase, event, now) }',
+    ].join('\n')
+    const hijackedQ = eventsQuery(hijacked)
+    expect(
+      hasCallWithArgs(hijackedQ.sf, hijackedQ.chain, 'eq', ["'is_ticketed'", 'true']),
+      'a decoy chain beside the real query satisfied an events pin',
+    ).toBe(false)
+
+    // MATCHED CONTROL. The same two chains with the roles swapped: the query
+    // the loop consumes carries the filter and the decoy does not. This reds a
+    // fix that simply refuses every file with two events chains, which would
+    // pass the assertion above for the wrong reason.
+    const honest = [
+      "const _decoy = supabase.from('events').select('id')",
+      "const { data: events } = await supabase.from('events').select('id').eq('is_ticketed', true)",
+      'for (const event of events) { await nudgeEvent(supabase, event, now) }',
+    ].join('\n')
+    const honestQ = eventsQuery(honest)
+    expect(
+      hasCallWithArgs(honestQ.sf, honestQ.chain, 'eq', ["'is_ticketed'", 'true']),
+      'eventsQuery did not resolve to the query the sweep loop consumes',
+    ).toBe(true)
   })
 
   it('sends a type send-email actually knows', () => {
