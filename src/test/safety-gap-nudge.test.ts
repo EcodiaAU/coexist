@@ -540,6 +540,27 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       }
     }
 
+    // Deno strips a byte order mark BEFORE it strips the shebang, and the
+    // TypeScript parser accepts `#!` only at offset zero, so one BOM makes the
+    // parser read the whole shebang line as CODE and every token on it
+    // survives into the answer. That is the line-no-token-covers hole one
+    // variant along, and it is live: measured 2026-09-01 on this subject, a
+    // file opening `\uFEFF#!/usr/bin/env -S deno run .eq('is_ticketed', true)`
+    // with the real filter deleted is `deno check` RC 0 and 81 of 81 GREEN,
+    // and `deno check` is the ONLY compile gate here because the root
+    // tsconfig resolves zero supabase/functions files. So the line is blanked
+    // up front on Deno's own rule instead of inside the gap walk, where the
+    // parser has already claimed those bytes as tokens and there is no gap
+    // left to scan. At most one BOM, because two is TS18026 and a space or a
+    // newline before the `#!` is a SyntaxError, so none of those can ship.
+    const bomWidth = t.charCodeAt(0) === 0xfeff ? 1 : 0
+    let shebangEnd = 0
+    if (t[bomWidth] === '#' && t[bomWidth + 1] === '!') {
+      shebangEnd = bomWidth + 2
+      while (shebangEnd < t.length && t[shebangEnd] !== '\n') shebangEnd++
+      wipe(0, shebangEnd)
+    }
+
     const sf = ts.createSourceFile('read.ts', t, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
 
     // Leaf tokens, in source order. JSDoc is skipped rather than walked, so a
@@ -579,19 +600,13 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       // The gap before this token. Whitespace and comments only.
       let i = cursor
       while (i < start) {
-        // A shebang is trivia the runtime strips before the parser ever sees
-        // it, so it is a line of the file that no token covers and that no
-        // comment rule matches. Measured 2026-09-01 against the real subject
-        // and against the hand-rolled reader this one replaces, so this one is
-        // older than the parse: deleting `.eq('is_ticketed', true)` and
-        // opening the file with `#!/usr/bin/env -S deno run
-        // .eq('is_ticketed', true)` was deno-clean and 81 of 81 GREEN under
-        // both. Only at offset zero, because `#!` anywhere else is not one.
-        if (i === 0 && t[0] === '#' && t[1] === '!') {
-          let j = 2
-          while (j < t.length && t[j] !== '\n') j++
-          wipe(0, j)
-          i = j
+        // The shebang line is already blanked above, on the rule the runtime
+        // uses rather than the one the parser uses. Step over it so the
+        // comment rules below never read inside it: a shebang may legally
+        // carry `//` or `/*` in an argument, and letting the block-comment
+        // branch open there would blank forward into real code.
+        if (i < shebangEnd) {
+          i = shebangEnd
           continue
         }
         if (t[i] === '/' && t[i + 1] === '/') {
@@ -1311,10 +1326,40 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // reds a reader that blanks line one on principle.
     expect(blankComments('const keepL = 12\nconst b = 2')).toContain('const keepL = 12')
 
-    // The `i === 0` guard on that branch carries no assertion of its own: `#!`
-    // cannot legally appear anywhere but offset zero, so no reader that drops
-    // the guard can be told apart from one that keeps it, and a pin here would
-    // be decoration rather than a control.
+    // THE SAME LINE, ONE BYTE ALONG. The rule above was written as
+    // `i === 0 && t[0] === '#'` on the reasoning that `#!` cannot legally
+    // appear anywhere but offset zero. That reasoning is false, because the
+    // runtime and the parser disagree about where offset zero is: Deno strips
+    // a byte order mark first and accepts the shebang behind it, while the
+    // TypeScript parser requires position zero exactly and so reads the line
+    // as ordinary code. Measured 2026-09-01, the mutation below is `deno
+    // check` RC 0 and was 81 of 81 GREEN, with `deno check` the only compile
+    // gate on this file. Deno's bound is exactly one BOM: two is TS18026, and
+    // a space or a newline ahead of the `#!` is a SyntaxError.
+    const bomShebang = blankComments(
+      ['\ufeff' + "#!/usr/bin/env -S deno run .eq('is_ticketed', true)", 'const a = 1'].join('\n'),
+    )
+    expect(bomShebang).not.toContain('is_ticketed')
+
+    // CONTROL. A byte order mark on its own does not make line one a shebang,
+    // which reds a reader that blanks the first line whenever the file opens
+    // with a BOM instead of testing for the `#!` behind it.
+    expect(blankComments('\ufeff' + 'const keepM = 13\nconst c = 3')).toContain('const keepM = 13')
+
+    // CONTROL. The blanking stops at the end of the shebang line and not at
+    // the end of the file, which reds a reader that answers this case by
+    // wiping from zero to EOF and takes the whole module with it, and equally
+    // one that runs a byte past the line end. Written with CRLF, because a
+    // shebang line scanned to `\n` leaves the `\r` behind and the byte after
+    // that is the first byte of real code. A matching `not.toContain` on this
+    // same fixture was written and then CUT: scored against a family of
+    // deliberately wrong readers it red exactly the set the LF detector above
+    // already reds, which makes it a second copy of that detector rather than
+    // a control.
+    const bomShebangCrlf = blankComments(
+      '\ufeff' + "#!/usr/bin/env -S deno run .eq('is_ticketed', true)\r\nconst keepN = 14\r\n",
+    )
+    expect(bomShebangCrlf).toContain('const keepN = 14')
   })
 
   it('sends a type send-email actually knows', () => {
