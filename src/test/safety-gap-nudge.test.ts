@@ -880,15 +880,48 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
   }
 
   /**
-   * A PostgREST column list as its members.
+   * A PostgREST column list as the columns it selects AT THE TOP LEVEL.
    *
    * `emergency_contact_phone` is a SUBSTRING of
    * `emergency_contact_phone_verified`, so a containment pin read a select
    * that had dropped the real column as green: deno RC 0, eslint clean, 84 of
    * 84 GREEN on 2026-09-02, with every profile then reading as unreachable and
    * every seat holder nudged.
+   *
+   * SPLITTING ON EVERY COMMA WAS THE NEXT HOLE, and it is the same shape one
+   * level in: a column named inside an EMBEDDED resource is not selected on
+   * this row, and a plain `,`-split hands it back as a member anyway. Measured
+   * 2026-09-02 against 91c50fdd, three deno-clean, eslint-clean, 87-of-87-GREEN
+   * kills used exactly that. Selecting
+   * `'id, title, address, timezone, collectives!inner(timezone, slug),
+   * series:event_series!inner(id, date_start, name)'` drops top-level
+   * `date_start` and supplies the token from inside the second embed, so
+   * `new Date(undefined)` makes `hoursUntil` NaN, BOTH window comparisons are
+   * false, and the sweep nudges NOBODY for ever while answering success:true.
+   * The same move on `title` ships `undefined` into a member's inbox, and on
+   * the profiles select it drops `emergency_contact_phone` so every profile
+   * reads as unreachable and every seat holder is nudged.
+   *
+   * So the split respects parentheses and an embed is not a column: the depth
+   * counter is what makes a member mean "selected on this row".
    */
-  const columnList = (lit: ts.StringLiteral) => lit.text.split(',').map((c) => c.trim())
+  const columnList = (lit: ts.StringLiteral) => {
+    const out: string[] = []
+    let depth = 0
+    let cur = ''
+    for (const ch of lit.text) {
+      if (ch === '(') depth++
+      if (ch === ')') depth--
+      if (ch === ',' && depth === 0) {
+        out.push(cur.trim())
+        cur = ''
+        continue
+      }
+      cur += ch
+    }
+    out.push(cur.trim())
+    return out.filter((c) => c.length > 0 && !c.includes('('))
+  }
 
   /**
    * The spine of the chain a single-expression callback actually RETURNS.
@@ -903,17 +936,63 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       (a) => ts.isArrowFunction(a) || ts.isFunctionExpression(a),
     ) as ts.ArrowFunction | ts.FunctionExpression | undefined
     expect(cb, 'the helper is not given a function to run').toBeDefined()
-    const returned: ts.Node | undefined =
-      ts.isArrowFunction(cb!) && !ts.isBlock(cb!.body)
-        ? cb!.body
-        : (
-            nodesIn(
-              cb!,
-              (n) => ts.isReturnStatement(n) && !!(n as ts.ReturnStatement).expression,
-            )[0] as ts.ReturnStatement | undefined
-          )?.expression
+    let returned: ts.Node | undefined
+    if (ts.isArrowFunction(cb!) && !ts.isBlock(cb!.body)) {
+      returned = cb!.body
+    } else {
+      // TAKING THE FIRST RETURN WAS A HOLE, because a block body can return
+      // from more than one place and only one of them runs. Measured
+      // 2026-09-02 against 91c50fdd: `(chunk) => { if (!chunk.length) return
+      // <the pinned profiles chain>; return supabase.from('profiles_v2')
+      // .select('id').in('id', chunk) }` is deno RC 0, eslint clean and 87 of
+      // 87 GREEN, and the arm that actually runs reads no contact columns at
+      // all, so every profile is unreachable and every seat holder is nudged.
+      // A callback with two returns does not DECIDE which query runs here, so
+      // it is refused rather than guessed at.
+      const returns = nodesIn(
+        cb!,
+        (n) => ts.isReturnStatement(n) && !!(n as ts.ReturnStatement).expression,
+      ) as ts.ReturnStatement[]
+      expect(
+        returns.length,
+        'the callback returns a query from more than one place, so which one runs is not pinned here',
+      ).toBe(1)
+      returned = returns[0].expression
+    }
     expect(returned, 'the callback returns no query').toBeDefined()
     return spineCalls(returned!)
+  }
+
+  /**
+   * The name the claim's returned `data` is bound to, read off the PARSE.
+   *
+   * As a regex over `fn.slice(0, claimAt)` this was the last text read on the
+   * claim side, and a text read truncated at an offset is stealable from the
+   * front: the pattern takes the LEFTMOST `const { data: X } = await` ending
+   * within 80 characters of the cut, so any such binding written above the
+   * claim supplies the name instead. Measured 2026-09-02 against 91c50fdd, one
+   * `const { data: seatRows } = await ticketsRes` above the claim was deno RC
+   * 0, eslint clean and 87 of 87 GREEN with the send loop iterating `seatRows`
+   * rather than the claim result: every ticket holder mailed on every hourly
+   * fire, the duplicate storm the ledger exists to stop. A comment-borne decoy
+   * was already dead because `readSource` blanks comments, which is exactly why
+   * the surviving one had to be written as code.
+   */
+  const claimDataName = (sf: ts.SourceFile, claim: ts.Node) => {
+    const decls = nodesIn(
+      sf,
+      (n) => ts.isVariableDeclaration(n) && !!n.initializer && spineCalls(n.initializer)[0] === claim,
+    ) as ts.VariableDeclaration[]
+    expect(decls.length, 'the claim chain is not bound to a variable declaration').toBe(1)
+    const binding = decls[0].name
+    expect(ts.isObjectBindingPattern(binding), 'the claim does not destructure its result').toBe(true)
+    const el = (binding as ts.ObjectBindingPattern).elements.find((e) =>
+      e.propertyName
+        ? ts.isIdentifier(e.propertyName) && e.propertyName.text === 'data'
+        : ts.isIdentifier(e.name) && e.name.text === 'data',
+    )
+    expect(el, 'the claim does not bind its returned data').toBeDefined()
+    return (el!.name as ts.Identifier).text
   }
 
   /** The whole `a.b(...).c(...).d(...)` chain a call sits in. */
@@ -1051,6 +1130,18 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
    *   THE STATUS AS A NUMBER. `return refuse401()` contains the digits `401`
    *   and can answer 200. So the refusal has to carry the status as a numeric
    *   literal in the returned expression, not merely spell it.
+   *
+   *   AND THE CONDITION IS THE CHECK, NOTHING WIDER. `test` is a SEARCH over
+   *   the condition text, so an added conjunct left the check spelled out and
+   *   the refusal conditional on something else. Two deno-clean, eslint-clean,
+   *   87-of-87-GREEN kills on 2026-09-02 against 91c50fdd:
+   *   `if (authHeader.replace('Bearer ', '') !== serviceRoleKey &&
+   *   authHeader.replace('Bearer ', '') !== anonKey)` authorises the PUBLIC
+   *   anon key, and `... && !req.url.includes('debug')` lets any bearer token
+   *   through on one query string. Past either sits every attendee's emergency
+   *   contact and live mail to members. A guard condition carrying `&&`, `||`
+   *   or `??` is therefore refused: the refusal has to depend on the check
+   *   alone, and widening it is a decision somebody has to make deliberately.
    */
   const handlerRefuses = (src: string, test: RegExp, status: string) => {
     const sf = parseOf(src)
@@ -1062,6 +1153,21 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       (a) => ts.isArrowFunction(a) || ts.isFunctionExpression(a),
     )
     expect(handler, 'withSentry does not take a function handler').toBeDefined()
+    const hasLogical = (n: ts.Node): boolean => {
+      if (
+        ts.isBinaryExpression(n) &&
+        (n.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken ||
+          n.operatorToken.kind === ts.SyntaxKind.BarBarToken ||
+          n.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken)
+      ) {
+        return true
+      }
+      let found = false
+      n.forEachChild((c) => {
+        if (!found && hasLogical(c)) found = true
+      })
+      return found
+    }
     const ownedByHandler = (n: ts.Node) => {
       let p: ts.Node | undefined = n.parent
       while (p && !ts.isFunctionLike(p)) p = p.parent
@@ -1070,6 +1176,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     return (nodesIn(handler!, (n) => ts.isIfStatement(n)) as ts.IfStatement[]).some(
       (g) =>
         test.test(g.expression.getText(sf)) &&
+        !hasLogical(g.expression) &&
         ownedByHandler(g) &&
         nodesIn(g.thenStatement, (n) => ts.isReturnStatement(n)).some(
           (r) => nodesIn(r, (n) => ts.isNumericLiteral(n) && n.text === status).length > 0,
@@ -1090,6 +1197,15 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
    * Dropping `title` or `address` instead puts `undefined` into mail that goes
    * to members. Reading the interface means a column added to `EventRow` has
    * to be selected too, rather than a hand-kept list drifting away from it.
+   *
+   * PLAIN properties only, decided by the property's TYPE rather than by its
+   * name. An object-typed property is an embedded resource, which PostgREST
+   * selects as `collectives!inner(...)` and never as a plain column, so
+   * requiring it as one would red a legitimate join. Excluding `collectives`
+   * BY NAME did that job and was the same hand-kept list this helper exists to
+   * replace: probed 2026-09-02, adding an ordinary second join to `EventRow`
+   * red the events-select pin under the name-exclusion and passes under this
+   * one, while dropping `date_start` or `title` still reds either way.
    */
   const interfaceProps = (sf: ts.SourceFile, name: string) => {
     const decls = nodesIn(
@@ -1099,6 +1215,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     expect(decls.length, `expected exactly one interface ${name}`).toBe(1)
     return decls[0].members
       .filter((m): m is ts.PropertySignature => ts.isPropertySignature(m) && !!m.name)
+      .filter((m) => !m.type || nodesIn(m.type, (n) => ts.isTypeLiteralNode(n)).length === 0)
       .map((m) => (ts.isIdentifier(m.name!) ? m.name!.text : (m.name as ts.StringLiteral).text))
   }
 
@@ -1287,6 +1404,27 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
         bareArg(sf, statusFilters[0].arguments[1]),
         `the ${table} read does not take its statuses from ${statuses}`,
       ).toBe(statuses)
+      // And that NAME is the shared import, not a local of the same name.
+      // Reading an identifier's text says what it is spelled, never what it
+      // resolves to. Measured 2026-09-02 against 91c50fdd: one
+      // `const LIVE_TICKET_STATUSES = ['completed']` declared at the top of
+      // nudgeEvent is deno RC 0, eslint clean and 87 of 87 GREEN, shadows the
+      // import for the whole function, and narrows the seat sweep to a single
+      // status. That is the 2026-08-28 reserved-hold defect back with the
+      // constant still named in the source and the twin tests at the top of
+      // this file still passing, because they pin the shared module and this
+      // file no longer reads it.
+      expect(
+        nodesIn(
+          sf,
+          (n) => ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.name.text === statuses,
+        ).length,
+        `${statuses} is shadowed by a local declaration, so the query does not read the shared set`,
+      ).toBe(0)
+      expect(
+        nodesIn(sf, (n) => ts.isImportSpecifier(n) && n.name.text === statuses).length,
+        `${statuses} is not imported from the shared module`,
+      ).toBe(1)
       expect(
         hasSpineCall(sf, spine, 'eq', ["'event_id'", 'event.id']),
         `the ${table} read is not scoped to this event`,
@@ -1511,10 +1649,22 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       'the claim upsert does not conflict on the whole unique key',
     ).toBe(true)
 
-    // 2. The claim's returned data is bound to a name.
-    const dataBinding = fn.slice(0, claimAt).match(/const \{\s*data:\s*(\w+)[^}]*\}\s*=\s*await\s*$|const \{\s*data:\s*(\w+)[^}]*\}\s*=\s*await[\s\S]{0,80}$/)
-    expect(dataBinding, 'the claim does not bind its returned data').not.toBeNull()
-    const claimData = (dataBinding![1] ?? dataBinding![2]) as string
+    // 2. The claim's returned data is bound to a name, read off the PARSE as
+    //    the declaration whose initializer IS this claim chain.
+    //
+    //    As a regex over `fn.slice(0, claimAt)` this was the last text read on
+    //    the claim side, and it was hijackable: the pattern takes the LEFTMOST
+    //    `const { data: X } = await` that ends within 80 characters of the
+    //    truncation, so any such binding written above the claim supplies the
+    //    name instead. Measured 2026-09-02 against 91c50fdd, one
+    //    `const { data: seatRows } = await ticketsRes` above the claim is deno
+    //    RC 0, eslint clean and 87 of 87 GREEN with the send loop iterating
+    //    `seatRows` rather than the claim result: every ticket holder for the
+    //    event is mailed on every hourly fire, which is exactly the duplicate
+    //    storm the ledger exists to stop. A comment-borne decoy is already dead
+    //    here because `readSource` blanks comments, and that is precisely why
+    //    the surviving one had to be written as code.
+    const claimData = claimDataName(mailSf, mailClaim)
 
     // 3. The send loop iterates a value derived from that data, not the cohort.
     const loop = claimToSend.match(/for \(const (\w+) of (\w+)\)/)
@@ -1560,7 +1710,6 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // `title` or `address` instead ships `undefined` to a member's inbox.
     const selected = columnList(cols as ts.StringLiteral)
     for (const prop of interfaceProps(events.sf, 'EventRow')) {
-      if (prop === 'collectives') continue
       expect(selected, `the events select drops ${prop}`).toContain(prop)
     }
     fnDecl(events.sf, 'audienceTzFor')
@@ -2377,6 +2526,35 @@ const alsoDecoy = "type: 'safety_contact_missing'"
     ).toBe(true)
   })
 
+  it('reads the claim binding off the claim, not off the text above it', () => {
+    // A decoy binding written ABOVE the claim used to supply the name the send
+    // loop is checked against, because the read was a regex over the source
+    // truncated at the claim. Measured 2026-09-02 against 91c50fdd: deno RC 0,
+    // eslint clean, 87 of 87 GREEN, with every ticket holder mailed hourly.
+    const withDecoy = [
+      "const { data: seatRows } = await ticketsRes",
+      "const { data: claimedRows, error: claimErr } = await supabase",
+      "  .from('event_safety_nudges_sent')",
+      '  .upsert(rows, { onConflict: k, ignoreDuplicates: true })',
+      "  .select('user_id, follow_up_number')",
+    ].join('\n')
+    const sf = parseOf(withDecoy)
+    const claim = chainOf(methodCalls(sf, 'from', 'event_safety_nudges_sent')[0])
+    expect(
+      claimDataName(sf, claim),
+      'a binding written above the claim supplied the claimed-rows name',
+    ).toBe('claimedRows')
+
+    // MATCHED CONTROL: the shape this file actually writes, with nothing above
+    // it, still resolves to the same name.
+    const plain = withDecoy.split('\n').slice(1).join('\n')
+    const plainSf = parseOf(plain)
+    expect(
+      claimDataName(plainSf, chainOf(methodCalls(plainSf, 'from', 'event_safety_nudges_sent')[0])),
+      'the ordinary claim binding stopped resolving',
+    ).toBe('claimedRows')
+  })
+
   it('reads an auth guard the handler itself runs, refusing with a real status', () => {
     // The two measured kills of 2026-09-02, as fixtures. Both were deno check
     // RC 0, eslint clean and 84 of 84 GREEN against 1a627cd2, and both leave an
@@ -2438,6 +2616,28 @@ const alsoDecoy = "type: 'safety_contact_missing'"
       handlerRefuses(passed, /authHeader\?\.startsWith\(/, '401'),
       'a refusal that passes the status as a number was not read as refusing',
     ).toBe(true)
+
+    // A CONDITION WIDER THAN THE CHECK. `test` searches the condition text, so
+    // an added conjunct leaves the check spelled out and makes the refusal
+    // depend on something else. Both shapes below were deno-clean, eslint-clean
+    // and 87 of 87 GREEN against 91c50fdd on 2026-09-02, and both put an
+    // unauthorised caller in front of every attendee's emergency contact.
+    const orAnon = shell(
+      "  if (!authHeader?.startsWith('Bearer ') || authHeader === anonHeader) " +
+        "{ return new Response('no', { status: 401 }) }",
+    )
+    expect(
+      handlerRefuses(orAnon, /authHeader\?\.startsWith\(/, '401'),
+      'a guard widened with a logical operator satisfied the handler auth pin',
+    ).toBe(false)
+    const andBypass = shell(
+      "  if (!authHeader?.startsWith('Bearer ') && !req.url.includes('debug')) " +
+        "{ return new Response('no', { status: 401 }) }",
+    )
+    expect(
+      handlerRefuses(andBypass, /authHeader\?\.startsWith\(/, '401'),
+      'a guard given a bypass conjunct satisfied the handler auth pin',
+    ).toBe(false)
   })
 
   it('reads a column list and a status constant as values, not as substrings', () => {
@@ -2470,6 +2670,68 @@ const alsoDecoy = "type: 'safety_contact_missing'"
       statusArg("q.in('status', LIVE_TICKET_STATUSES as unknown as string[])"),
       'the real cast the repo writes stopped reading as the bare constant',
     ).toBe('LIVE_TICKET_STATUSES')
+
+    // AN EMBEDDED RESOURCE IS NOT A COLUMN ON THIS ROW. Splitting on every
+    // comma handed a column named inside a join back as a top-level member.
+    // Three deno-clean, eslint-clean, 87-of-87-GREEN kills used that against
+    // 91c50fdd on 2026-09-02: dropping `date_start` and re-supplying the token
+    // from inside a second embed makes `hoursUntil` NaN so the sweep nudges
+    // NOBODY for ever, and the same move on the profiles select drops
+    // `emergency_contact_phone` so every seat holder is nudged.
+    expect(
+      listOf(
+        "q.select('id, title, address, timezone, collectives!inner(timezone, slug), " +
+          "series:event_series!inner(id, date_start, name)')",
+      ),
+      'a column named inside an embedded resource satisfied a top-level column pin',
+    ).not.toContain('date_start')
+    // MATCHED CONTROL: the real list still reads as its own columns, and the
+    // embed itself is simply not one of them.
+    const real = listOf(
+      "q.select('id, title, date_start, address, timezone, collectives!inner(timezone, slug)')",
+    )
+    for (const col of ['id', 'title', 'date_start', 'address', 'timezone']) {
+      expect(real, `the real events column list stopped reading as containing ${col}`).toContain(col)
+    }
+    expect(real, 'the embed was counted as a selected column').not.toContain('collectives')
+
+    // AND A JOIN IS TOLD FROM A COLUMN BY ITS TYPE, not by its name. Excluding
+    // `collectives` by name was the same hand-kept list `interfaceProps` exists
+    // to replace, and it red an ordinary second join added to the row type.
+    const props = (src: string) => interfaceProps(parseOf(src), 'R')
+    expect(
+      props(
+        'interface R { id: string; title: string; ' +
+          'collectives: { slug: string | null } | null; organiser: { id: string } | null }',
+      ),
+      'an object-typed property was required as a plain column',
+    ).toEqual(['id', 'title'])
+    expect(
+      props('interface R { id: string; date_start: string; address: string | null }'),
+      'a plain column stopped being required',
+    ).toEqual(['id', 'date_start', 'address'])
+
+    // AND A LOCAL OF THE SAME NAME IS NOT THE IMPORT. `bareArg` reads how an
+    // identifier is spelled, never what it resolves to, so one
+    // `const LIVE_TICKET_STATUSES = ['completed']` inside nudgeEvent was deno
+    // RC 0, eslint clean and 87 of 87 GREEN while narrowing the seat sweep to
+    // one status: the 2026-08-28 reserved-hold defect back.
+    const shadows = (src: string) =>
+      nodesIn(
+        parseOf(src),
+        (n) =>
+          ts.isVariableDeclaration(n) &&
+          ts.isIdentifier(n.name) &&
+          n.name.text === 'LIVE_TICKET_STATUSES',
+      ).length
+    expect(
+      shadows("const LIVE_TICKET_STATUSES = ['completed']\nq.in('status', LIVE_TICKET_STATUSES)"),
+      'a local declaration shadowing the shared status set was not seen',
+    ).toBe(1)
+    expect(
+      shadows("import { LIVE_TICKET_STATUSES } from './x.ts'\nq.in('status', LIVE_TICKET_STATUSES)"),
+      'the shared import read as a local shadow',
+    ).toBe(0)
   })
 
   it('reads the query a chunking helper actually runs', () => {
@@ -2496,6 +2758,30 @@ const alsoDecoy = "type: 'safety_contact_missing'"
     expect(
       spineLinks(callbackSpine(honest), 'from', 'profiles').length,
       'the query the helper runs was not found on the callback spine',
+    ).toBe(1)
+
+    // A BLOCK BODY THAT RETURNS FROM TWO PLACES does not decide which query
+    // runs, and taking the first return read the arm that does not. Measured
+    // 2026-09-02 against 91c50fdd: deno RC 0, eslint clean, 87 of 87 GREEN,
+    // with `profiles_v2` running and every profile reading as unreachable.
+    const twoReturns = call(
+      'const r = await selectInChunks(ids, (chunk) => { if (!chunk.length) ' +
+        "{ return supabase.from('profiles').select('id, emergency_contact_phone').in('id', chunk) } " +
+        "return supabase.from('profiles_v2').select('id').in('id', chunk) })",
+    )
+    expect(
+      () => callbackSpine(twoReturns),
+      'a callback returning a query from two places satisfied the chunked-query pin',
+    ).toThrow()
+
+    // MATCHED CONTROL: an ordinary block body with one return still resolves.
+    const oneReturn = call(
+      'const r = await selectInChunks(ids, (chunk) => { ' +
+        "return supabase.from('profiles').select('id, emergency_contact_phone').in('id', chunk) })",
+    )
+    expect(
+      spineLinks(callbackSpine(oneReturn), 'from', 'profiles').length,
+      'a single-return block body stopped resolving to the query it runs',
     ).toBe(1)
   })
 
