@@ -550,6 +550,23 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     const tokens: ts.Node[] = []
     const collect = (n: ts.Node) => {
       if (isJsDoc(n)) return
+      // The end-of-file token is a leaf, and it is the one leaf the generic
+      // has-children test loses. `getChildren` on it answers with its ATTACHED
+      // JSDoc when a file ends in a doc comment, so it reads as a branch, the
+      // walk recurses, the only child is JSDoc and is skipped, and the token
+      // is never pushed. Nothing then follows the last real token, so the gap
+      // that holds every trailing comment is never scanned and the whole tail
+      // of the file stays readable. Measured 2026-09-01 on this very subject:
+      // deleting `.eq('is_ticketed', true)` and appending a trailing
+      // `/** .eq('is_ticketed', true) */` was deno-clean and 81 of 81 GREEN,
+      // while the same mutation with a plain `/*` terminator RED, and both
+      // RED under the hand-rolled reader this one replaced. One asterisk was
+      // the whole difference, and the defect it hid widens the sweep from 4
+      // ticketed events to every published one.
+      if (n.kind === ts.SyntaxKind.EndOfFileToken) {
+        tokens.push(n)
+        return
+      }
       const kids = n.getChildren(sf)
       if (!kids.length) tokens.push(n)
       else for (const k of kids) collect(k)
@@ -562,6 +579,21 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       // The gap before this token. Whitespace and comments only.
       let i = cursor
       while (i < start) {
+        // A shebang is trivia the runtime strips before the parser ever sees
+        // it, so it is a line of the file that no token covers and that no
+        // comment rule matches. Measured 2026-09-01 against the real subject
+        // and against the hand-rolled reader this one replaces, so this one is
+        // older than the parse: deleting `.eq('is_ticketed', true)` and
+        // opening the file with `#!/usr/bin/env -S deno run
+        // .eq('is_ticketed', true)` was deno-clean and 81 of 81 GREEN under
+        // both. Only at offset zero, because `#!` anywhere else is not one.
+        if (i === 0 && t[0] === '#' && t[1] === '!') {
+          let j = 2
+          while (j < t.length && t[j] !== '\n') j++
+          wipe(0, j)
+          i = j
+          continue
+        }
         if (t[i] === '/' && t[i + 1] === '/') {
           let j = i + 2
           while (j < start && t[j] !== '\n') j++
@@ -1201,6 +1233,88 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     const callDivision = blankComments('  const per = total(seats) / seats.length, keepI = 9')
     expect(callDivision).toContain('total(seats) / seats.length')
     expect(callDivision).toContain('keepI = 9')
+
+    // And the same control in the mode that can actually SEE the mistake.
+    // Measured 2026-09-01: a reader that answers the if-head case by calling
+    // every `)` a regex position reds NOTHING in the two checks above, and
+    // nothing anywhere else in this test either, because a wrong regex
+    // decision blanks no bytes while `literals` is false. It only shows once
+    // the literal bodies go, and that is the mode guarding the claim chain, so
+    // a division misread there eats a `.select(` and the permit with it.
+    const codeDivision = codeOnly('const per = total(seats) / seats.length / 2')
+    expect(codeDivision).toContain('total(seats) / seats.length / 2')
+
+    // THE TAIL OF THE FILE. A parser answers which bytes are tokens, and every
+    // byte between two of them is trivia, but the LAST gap has no token after
+    // it to trigger the scan. `getChildren` on the end-of-file token answers
+    // with its attached JSDoc when a file ends in a doc comment, so the token
+    // reads as a branch, the walk recurses, its only child is JSDoc and is
+    // skipped, and the token is never pushed. Everything past the last real
+    // token then stays readable. Measured 2026-09-01 against the real subject:
+    // deleting `.eq('is_ticketed', true)` and appending a trailing doc comment
+    // carrying that same text was deno-clean and 81 of 81 GREEN, while the
+    // identical mutation behind a plain `/*` opener RED, and both RED under
+    // the hand-rolled reader this one replaced. One asterisk was the whole
+    // difference, and the defect it hid widens the sweep from 4 ticketed
+    // events to every published one, 108 of 148 gaps on a two-hour beach
+    // clean-up alone.
+    const tailDoc = blankComments(
+      ["const a = 1", "/** trailing doc .eq('is_ticketed', true) */"].join('\n'),
+    )
+    expect(tailDoc).not.toContain('is_ticketed')
+
+    // Once that gap goes unscanned it takes every later comment with it, so a
+    // line comment after the doc block is readable too.
+    const tailDocThenLine = blankComments(
+      ["const a = 1", '/** doc */', "// then a line .eq('is_ticketed', true)"].join('\n'),
+    )
+    expect(tailDocThenLine).not.toContain('is_ticketed')
+
+    // CONTROL. A plain trailing block comment was blanked before this fix and
+    // is blanked after it, which reds a tail handler that recognises only a
+    // `/**` opener and leaves the ordinary one readable.
+    const tailPlain = blankComments(
+      ["const a = 1", "/* trailing plain .eq('is_ticketed', true) */"].join('\n'),
+    )
+    expect(tailPlain).not.toContain('is_ticketed')
+
+    // CONTROL. Real code before the tail survives, which reds the off-by-one
+    // that blanks to end of file from the last token's START rather than its
+    // end and takes the last statement with it.
+    const tailKeepsCode = blankComments(
+      ["const keepJ = 10", '/** trailing doc */'].join('\n'),
+    )
+    expect(tailKeepsCode).toContain('const keepJ = 10')
+
+    // CONTROL. The end-of-file token is a special case in the walk, and JSDoc
+    // generally is not: a doc comment mid-file is still trivia, and the
+    // declaration it documents is still whole. The first of these reds a walk
+    // that stops skipping JSDoc and reads a doc comment as a run of tokens;
+    // the second reds a fix that blanks the doc through the declaration under
+    // it.
+    const midDoc = blankComments(
+      ['/** doc for f */', 'function f() {}', 'const keepK = 11'].join('\n'),
+    )
+    expect(midDoc).not.toContain('doc for f')
+    expect(midDoc).toContain('function f() {}')
+
+    // THE LINE NO TOKEN COVERS. A shebang is stripped before parsing, so it is
+    // neither a token nor a comment, and a reader that blanks only comments
+    // hands its whole line to any assertion reading the file. This one is
+    // older than the parse: the hand-rolled reader had it too.
+    const shebang = blankComments(
+      ["#!/usr/bin/env -S deno run .eq('is_ticketed', true)", 'const a = 1'].join('\n'),
+    )
+    expect(shebang).not.toContain('is_ticketed')
+
+    // CONTROL. The first line survives when it is code, so the rule above
+    // reds a reader that blanks line one on principle.
+    expect(blankComments('const keepL = 12\nconst b = 2')).toContain('const keepL = 12')
+
+    // The `i === 0` guard on that branch carries no assertion of its own: `#!`
+    // cannot legally appear anywhere but offset zero, so no reader that drops
+    // the guard can be told apart from one that keeps it, and a pin here would
+    // be decoration rather than a control.
   })
 
   it('sends a type send-email actually knows', () => {
