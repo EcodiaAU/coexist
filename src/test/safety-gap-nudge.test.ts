@@ -717,38 +717,146 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
   }
 
   /**
-   * The STATEMENT a pinned literal lives in. The THIRD read mode, for the
-   * assertions that pin a string VALUE.
+   * THE PARSE IS THE ANCHOR NOW, because a text anchor is a hole by
+   * construction.
    *
-   * Those cannot read through `codeOnly`, because there the pinned text IS a
-   * string literal in the source and blanking literals would blank the very
-   * thing being pinned. Read over the whole file instead, every one of them is
-   * open to a decoy: delete the real call and re-supply the same text as a
-   * top-level `const _hist = "..."`, and the assertion is satisfied with the
-   * mechanism gone.
+   * `statementHolding` scoped each string-value pin to its own statement, and
+   * found that statement by SEARCHING the source for an anchor regex. The
+   * search surface is `blankComments`, where string and template literals
+   * SURVIVE on purpose, so a literal placed EARLIER in the file simply becomes
+   * the first match and the whole region moves to it. The battery that was
+   * supposed to catch this only ever appended its decoy at the END of the
+   * file, where `String.prototype.search` never reaches. Measured 2026-09-02
+   * against 7f8fb1fd, one top-level template literal carrying the query text,
+   * inserted after the imports, was `deno check` RC 0 and 81 of 81 GREEN with
+   * ALL FOUR events-query filters deleted: the sweep widens from 4 ticketed
+   * events and 6 gaps to 30 published events and 279, test-collective events
+   * mail real members, and the tz columns the audience-frame test reads are
+   * gone. The same steal killed the `isTestEvent` call, the send-email type,
+   * the wall-clock window call, the cadence read's table, the real clock into
+   * `nudgeEvent`, the tz padding and the body of `audienceTzFor`: fourteen
+   * deno-clean cells, each with a matched-pair control that reds.
    *
-   * That went unseen for nine passes because the hide-a-literal battery
-   * deleted the LITERAL rather than the CALL. Deleting `'is_ticketed', true`
-   * leaves `.eq()` with no arguments, so 56 of its 77 cells were `deno check`
-   * RC 1 and never reached an assertion at all; the cells read RED and the
-   * guard behind them was never exercised. Deleting the whole CALL is
-   * deno-clean, and re-run that way on 2026-09-02 the battery was 37 RED and
-   * FIVE survivors: the is_ticketed filter, the published filter, the
-   * test-collective filter, the selected tz columns and the email type. The
-   * is_ticketed one alone widens the sweep from 4 ticketed events and 6 gaps
-   * to 30 published events and 279, most of them people at a two-hour beach
-   * clean-up who were never asked for a contact.
-   *
-   * Scoping each pin to its own statement shuts all five: a top-level decoy is
-   * outside it by construction. A missing anchor returns the empty string, so
-   * a rename reds loudly rather than passing quietly.
+   * So nothing below searches text for a place to look. Every anchor is a node
+   * in the parse, and a string literal can never BE a CallExpression, an
+   * ImportDeclaration or a FunctionDeclaration. The pins read argument nodes
+   * rather than region text for the same reason: a decoy string sitting INSIDE
+   * the right region would otherwise satisfy a substring match.
    */
-  const statementHolding = (t: string, anchor: RegExp) => {
-    const at = t.search(anchor)
-    return at < 0 ? '' : claimRegion(t, at)
+  const parseOf = (src: string) =>
+    ts.createSourceFile('probe.ts', src, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+
+  const nodesIn = (root: ts.Node, pick: (n: ts.Node) => boolean): ts.Node[] => {
+    const out: ts.Node[] = []
+    const walk = (n: ts.Node) => {
+      if (pick(n)) out.push(n)
+      n.forEachChild(walk)
+    }
+    walk(root)
+    return out
   }
-  const EVENTS_QUERY = /\.from\('events'\)\s*\n\s*\.select\(/
-  const SEND_INVOKE = /functions\.invoke\('send-email'/
+
+  /** `<x>.<method>(...)` calls, optionally narrowed to a first string argument. */
+  const methodCalls = (root: ts.Node, method: string, arg?: string) =>
+    nodesIn(
+      root,
+      (n) =>
+        ts.isCallExpression(n) &&
+        ts.isPropertyAccessExpression(n.expression) &&
+        n.expression.name.text === method &&
+        (arg === undefined ||
+          (n.arguments.length > 0 &&
+            ts.isStringLiteral(n.arguments[0]) &&
+            n.arguments[0].text === arg)),
+    ) as ts.CallExpression[]
+
+  /** `<name>(...)` calls on a bare identifier. */
+  const plainCalls = (root: ts.Node, name: string) =>
+    nodesIn(
+      root,
+      (n) => ts.isCallExpression(n) && ts.isIdentifier(n.expression) && n.expression.text === name,
+    ) as ts.CallExpression[]
+
+  /** The whole `a.b(...).c(...).d(...)` chain a call sits in. */
+  const chainOf = (n: ts.Node) => {
+    let top: ts.Node = n
+    while (
+      top.parent &&
+      (ts.isPropertyAccessExpression(top.parent) ||
+        (ts.isCallExpression(top.parent) && top.parent.expression === top))
+    ) {
+      top = top.parent
+    }
+    return top
+  }
+
+  /**
+   * A call inside `root` whose method name and ARGUMENT SOURCE TEXTS match
+   * exactly. Comparing argument nodes rather than region text is what shuts the
+   * decoy one level in: a `.eq('title', "'is_ticketed', true")` sitting inside
+   * the right chain satisfies a substring match on the region and cannot
+   * satisfy this.
+   */
+  const hasCallWithArgs = (sf: ts.SourceFile, root: ts.Node, method: string, args: string[]) =>
+    methodCalls(root, method).some(
+      (c) =>
+        c.arguments.length === args.length &&
+        c.arguments.every((a, i) => a.getText(sf) === args[i]),
+    )
+
+  /** A `<name>: <literal>` property inside `root`, read off the parse. */
+  const hasProperty = (sf: ts.SourceFile, root: ts.Node, name: string, value: string) =>
+    nodesIn(
+      root,
+      (n) =>
+        ts.isPropertyAssignment(n) &&
+        (ts.isIdentifier(n.name) || ts.isStringLiteral(n.name)) &&
+        n.name.text === name &&
+        n.initializer.getText(sf) === value,
+    ).length > 0
+
+  /** The sole `<x>.from('<table>')` call, and the chain it belongs to. */
+  const soleFrom = (src: string, table: string) => {
+    const sf = parseOf(src)
+    const hits = methodCalls(sf, 'from', table)
+    expect(
+      hits.length,
+      `expected exactly one .from('${table}') call in the parse, found ${hits.length}; ` +
+        'a second one moves every pin scoped to it',
+    ).toBe(1)
+    return { sf, call: hits[0], chain: chainOf(hits[0]) }
+  }
+
+  /** A top-level `function <name>` declaration, as a node. */
+  const fnDecl = (sf: ts.SourceFile, name: string) => {
+    const hits = nodesIn(
+      sf,
+      (n) => ts.isFunctionDeclaration(n) && !!n.name && n.name.text === name,
+    ) as ts.FunctionDeclaration[]
+    expect(hits.length, `expected exactly one function ${name}, found ${hits.length}`).toBe(1)
+    return hits[0]
+  }
+
+  /**
+   * The ledger's three parts, all off the parse: the chain that CLAIMS (the
+   * upsert), the chains that only READ it, and the sole send-email invoke.
+   * `event_safety_nudges_sent` is queried twice, so the two are told apart by
+   * what they DO rather than by which one a text search happens to reach first.
+   */
+  const ledgerParts = (src: string) => {
+    const sf = parseOf(src)
+    const chains = methodCalls(sf, 'from', 'event_safety_nudges_sent').map((c) => chainOf(c))
+    const claims = chains.filter((c) => methodCalls(c, 'upsert').length > 0)
+    expect(claims.length, 'expected exactly one event_safety_nudges_sent upsert chain').toBe(1)
+    const sends = methodCalls(sf, 'invoke', 'send-email')
+    expect(sends.length, "expected exactly one functions.invoke('send-email')").toBe(1)
+    return {
+      sf,
+      claimChain: claims[0],
+      readChains: chains.filter((c) => methodCalls(c, 'upsert').length === 0),
+      sendCall: sends[0],
+    }
+  }
 
   it('filters on is_ticketed, as the gate does', () => {
     // Measured 2026-09-01: ticketed-only is 4 events / 60 seats / 6 gaps.
@@ -758,54 +866,91 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     const fn = readSource()
     const gate = fs.readFileSync(GATE, 'utf8')
     expect(gate).toContain('is_ticketed')
-    // Scoped to the events query's own statement. Read over the whole file
-    // this passed with the filter DELETED and the text re-supplied as a
-    // top-level string, measured 2026-09-02, deno check RC 0 and 81 of 81.
-    expect(statementHolding(fn, EVENTS_QUERY)).toContain("'is_ticketed', true")
+    // Read off the PARSE as the sole `.from('events')` chain's own `.eq` call
+    // with those exact argument NODES. Scoped to that chain by TEXT search
+    // this passed with the filter DELETED and the query text re-supplied as a
+    // top-level template literal placed ABOVE it, measured 2026-09-02, deno
+    // check RC 0 and 81 of 81: the literal became the first match and the
+    // whole region moved onto the decoy.
+    const events = soleFrom(fn, 'events')
+    expect(
+      hasCallWithArgs(events.sf, events.chain, 'eq', ["'is_ticketed'", 'true']),
+      "the events query has no .eq('is_ticketed', true)",
+    ).toBe(true)
   })
 
   it('only looks at published events', () => {
-    // Scoped to the events query's own statement, for the same reason as the
-    // filter above: over the whole file a top-level decoy string satisfied it
-    // with the filter gone, and a sweep over unpublished events mails from
-    // drafts.
-    expect(statementHolding(readSource(), EVENTS_QUERY)).toContain("'status', 'published'")
+    // The same parse read as the filter above, for the same measured reason:
+    // a decoy literal placed above the query stole the text anchor and this
+    // passed with the filter gone, which sweeps drafts and unpublished events.
+    const events = soleFrom(readSource(), 'events')
+    expect(
+      hasCallWithArgs(events.sf, events.chain, 'eq', ["'status'", "'published'"]),
+      "the events query has no .eq('status', 'published')",
+    ).toBe(true)
   })
 
   it('keeps the test collective out', () => {
     // The null-safe second line of defence, mirroring event-reminders. A test
     // event firing live mail at real members is the failure this stops.
     const fn = readSource()
-    // Scoped to the events query's own statement: over the whole file this
-    // passed with `.neq('collectives.slug', 'test')` DELETED and the text
-    // re-supplied as a top-level string, deno check RC 0 and 81 of 81.
-    expect(statementHolding(fn, EVENTS_QUERY)).toContain("collectives.slug")
+    // Read off the parse, so neither a decoy above the query (which stole the
+    // text anchor, measured 2026-09-02, deno RC 0 and 81 of 81 with the filter
+    // deleted) nor one sitting inside the chain can stand in for the call.
+    const events = soleFrom(fn, 'events')
+    expect(
+      hasCallWithArgs(events.sf, events.chain, 'neq', ["'collectives.slug'", "'test'"]),
+      "the events query has no .neq('collectives.slug', 'test')",
+    ).toBe(true)
 
     // Naming the function is not the same as it deciding anything. Stubbed to
     // `return false` the whole second line of defence goes away silently, and
     // every assertion above stayed green under exactly that mutation.
-    const testFnAt = fn.indexOf('function isTestEvent')
-    expect(testFnAt).toBeGreaterThan(-1)
-    expect(fn.slice(testFnAt, fn.indexOf('\n}', testFnAt))).toMatch(
+    // The declaration comes from the parse too: anchored on
+    // `fn.indexOf('function isTestEvent')` a decoy literal above it stole the
+    // slice and the stub behind it read green.
+    expect(fnDecl(events.sf, 'isTestEvent').getText(events.sf)).toMatch(
       /collectives\?\.slug === 'test'/,
     )
 
     // And HAVING the function is not the same as CALLING it, which is the same
     // lesson one step out. Deleting the whole `if (isTestEvent(event)) continue`
-    // line is `deno check` RC 0 and left all 81 GREEN, measured 2026-09-02,
-    // because a name read over the whole file is satisfied by the surviving
-    // DECLARATION. So the call is pinned inside the sweep loop, which begins
-    // after the declaration, and read as code so no string can stand in for it.
-    const loopAt = fn.indexOf('for (const event of')
-    expect(loopAt).toBeGreaterThan(-1)
-    expect(codeOnly(fn.slice(loopAt))).toMatch(/isTestEvent\(/)
+    // line is `deno check` RC 0 and left all 81 GREEN, because a name read over
+    // the whole file is satisfied by the surviving DECLARATION. Bounding that
+    // read at `fn.indexOf('for (const event of')` was the next hole and fell
+    // the same way: measured 2026-09-02, a template literal carrying that text
+    // above the loop stole the index and the deleted call read green. So the
+    // loop is a node in the parse, identified by the work it does, and the
+    // call is a CallExpression inside it.
+    const sweepLoops = nodesIn(
+      events.sf,
+      (n) => ts.isForOfStatement(n) && plainCalls(n, 'nudgeEvent').length > 0,
+    )
+    expect(sweepLoops.length, 'expected exactly one sweep loop running nudgeEvent').toBe(1)
+    expect(
+      plainCalls(sweepLoops[0], 'isTestEvent').length,
+      'the sweep loop never calls isTestEvent',
+    ).toBeGreaterThan(0)
   })
 
   it('reads the shared predicate rather than hand-rolling the rule', () => {
     // Three surfaces have drifted before by re-deciding what "has a contact"
     // means at the call site. This one imports it.
     const fn = readSource()
-    expect(fn).toContain("from '../_shared/safety-contact.ts'")
+    // The import is an ImportDeclaration in the parse, not a run of text: read
+    // over the whole file a top-level string carrying the same specifier
+    // satisfies it, which is the shape every other pin in this file fell to.
+    const importSf = parseOf(fn)
+    expect(
+      nodesIn(
+        importSf,
+        (n) =>
+          ts.isImportDeclaration(n) &&
+          ts.isStringLiteral(n.moduleSpecifier) &&
+          n.moduleSpecifier.text === '../_shared/safety-contact.ts',
+      ).length,
+      'the sweep does not import the shared safety-contact module',
+    ).toBeGreaterThan(0)
     expect(fn).not.toMatch(/emergency_contact_name\s*\?\?\s*''/)
   })
 
@@ -821,10 +966,12 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // ABOVE the real claim passed it. A source guard anchored on prose is not
     // a guard, it is a comment that throws.
     const fn = readSource()
-    const claimAt = fn.search(/\.from\('event_safety_nudges_sent'\)\s*\n\s*\.upsert\(/)
-    const sendAt = fn.indexOf("functions.invoke('send-email'")
-    expect(claimAt).toBeGreaterThan(-1)
-    expect(sendAt).toBeGreaterThan(-1)
+    // Both offsets come from the parse. As text searches each was stealable by
+    // a literal placed earlier in the file, which is how the send-email type
+    // pin below was defeated on 2026-09-02 at deno RC 0 and 81 of 81.
+    const { sf, claimChain, sendCall, readChains } = ledgerParts(fn)
+    const claimAt = claimChain.getStart(sf)
+    const sendAt = sendCall.getStart(sf)
     // Read as CODE. `ignoreDuplicates` is an object property rather than a
     // pinned string value, so blanking string literals costs this assertion
     // nothing and shuts the one channel it was open to: a decoy literal
@@ -836,7 +983,10 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // the ledger stops being a permit and becomes a duplicate storm. Its two
     // sibling residues cannot move the same way, because there the pinned text
     // IS a string in the source and `codeOnly` would blank the thing it pins.
-    expect(codeOnly(fn)).toContain('ignoreDuplicates: true')
+    expect(
+      hasProperty(sf, claimChain, 'ignoreDuplicates', 'true'),
+      'the claim upsert does not set ignoreDuplicates: true',
+    ).toBe(true)
     expect(claimAt).toBeLessThan(sendAt)
     // And nothing mails ahead of the claim by another route.
     expect(fn.slice(0, claimAt)).not.toContain("functions.invoke('send-email'")
@@ -846,9 +996,12 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // it is step 1, the unique index swallows the repeat claim, and the person
     // gets one nudge instead of three. Silent: no error, success:true, and
     // every other assertion here stayed green under that mutation.
-    expect(fn).toMatch(
-      /\.from\('event_safety_nudges_sent'\)\s*\n\s*\.select\('user_id, follow_up_number, sent_at'\)/,
-    )
+    expect(
+      readChains.some(
+        (c) => methodCalls(c, 'select', 'user_id, follow_up_number, sent_at').length > 0,
+      ),
+      'no event_safety_nudges_sent READ selects user_id, follow_up_number, sent_at',
+    ).toBe(true)
   })
 
   it('refuses a caller that does not hold the service-role key', () => {
@@ -858,9 +1011,25 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // with `if (false)` and all 79 tests stayed green, which left an
     // unauthenticated sweep one edit away.
     const fn = readSource()
-    const body = fn.slice(0, fn.indexOf('const supabase = serviceClient()'))
-    expect(body).toMatch(/authHeader\?\.startsWith\('Bearer '\)/)
-    expect(body).toMatch(/authHeader\.replace\('Bearer ', ''\) !== serviceRoleKey/)
+    // The region ends at the `serviceClient()` CALL in the parse, and is read
+    // as CODE. Sliced to `fn.indexOf('const supabase = serviceClient()')` and
+    // matched over the raw text this was the worst hole in the file: measured
+    // 2026-09-02, one template literal above the handler carrying these two
+    // shapes left the comparison replaced by `if (false)` at deno check RC 0
+    // and 81 of 81 GREEN, which is an anonymous caller reading every
+    // attendee's emergency contact and triggering live mail. The regexes
+    // carry no string literal for the same reason `codeOnly` can be used at
+    // all: blanking literals must not blank the thing being pinned.
+    const authSf = parseOf(fn)
+    const svc = plainCalls(authSf, 'serviceClient')
+    expect(svc.length, 'expected exactly one serviceClient() call').toBe(1)
+    const body = codeOnly(fn).slice(0, svc[0].getStart(authSf))
+    expect(body, 'no Bearer-prefix check before the service client').toMatch(
+      /authHeader\?\.startsWith\(/,
+    )
+    expect(body, 'no service-role key comparison before the service client').toMatch(
+      /authHeader\.replace\([^)]*\) !== serviceRoleKey/,
+    )
     expect(body).toContain('401')
     expect(body).toContain('403')
   })
@@ -884,10 +1053,11 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // reason the assertion above is anchored on the call and not the table
     // name: a guard that a rename can silently satisfy is not a guard.
     const fn = readSource()
-    const claimAt = fn.search(/\.from\('event_safety_nudges_sent'\)\s*\n\s*\.upsert\(/)
-    const sendAt = fn.indexOf("functions.invoke('send-email'")
-    expect(claimAt).toBeGreaterThan(-1)
-    expect(sendAt).toBeGreaterThan(-1)
+    // Parse-derived for the same reason as the sibling test: a literal above
+    // either one stole the offset and moved every slice below it.
+    const { sf: mailSf, claimChain: mailClaim, sendCall: mailSend } = ledgerParts(fn)
+    const claimAt = mailClaim.getStart(mailSf)
+    const sendAt = mailSend.getStart(mailSf)
 
     const claimToSend = fn.slice(claimAt, sendAt)
 
@@ -943,7 +1113,10 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // The conflict target has to be the WHOLE unique key. Narrowed to
     // (event_id, user_id) it matches no unique index, PostgREST rejects every
     // claim, and the function sends nothing at all for ever.
-    expect(claimStmt).toContain("onConflict: 'event_id,user_id,follow_up_number'")
+    expect(
+      hasProperty(mailSf, mailClaim, 'onConflict', "'event_id,user_id,follow_up_number'"),
+      'the claim upsert does not conflict on the whole unique key',
+    ).toBe(true)
 
     // 2. The claim's returned data is bound to a name.
     const dataBinding = fn.slice(0, claimAt).match(/const \{\s*data:\s*(\w+)[^}]*\}\s*=\s*await\s*$|const \{\s*data:\s*(\w+)[^}]*\}\s*=\s*await[\s\S]{0,80}$/)
@@ -972,23 +1145,43 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     const fn = readSource()
 
     // The tz columns have to be SELECTED or the helper has nothing to read.
-    // Scoped to the events query's own statement: over the whole file a
-    // top-level decoy string satisfied this with the columns dropped from the
-    // select, deno check RC 0 and 81 of 81, measured 2026-09-02.
-    expect(statementHolding(fn, EVENTS_QUERY)).toContain(
+    // The column list is the events select's own literal ARGUMENT, read off
+    // the parse. Scoped to the statement by text search a decoy literal above
+    // the query satisfied this with the columns dropped, deno RC 0, 81 of 81.
+    const events = soleFrom(fn, 'events')
+    const selects = methodCalls(events.chain, 'select')
+    expect(selects.length, 'the events query has no .select()').toBe(1)
+    const cols = selects[0].arguments[0]
+    expect(
+      !!cols && ts.isStringLiteral(cols),
+      'the events select does not take a literal column list',
+    ).toBe(true)
+    expect((cols as ts.StringLiteral).text).toContain(
       'timezone, collectives!inner(timezone, slug)',
     )
-    expect(fn).toContain('function audienceTzFor')
-    expect(fn).toContain('function wallClockNowInTz')
+    fnDecl(events.sf, 'audienceTzFor')
+    fnDecl(events.sf, 'wallClockNowInTz')
 
-    // The window test takes the converted clock.
-    expect(fn).toMatch(/isEventInNudgeWindow\(\s*event\.date_start,\s*wallClockNowInTz\(audienceTzFor\(event\)\)\s*\)/)
+    // The window test takes the converted clock, pinned as the CALL rather
+    // than as a run of text: a template literal carrying this exact call, with
+    // the real argument replaced by real `now`, was deno RC 0 and 81 of 81.
+    expect(
+      plainCalls(events.sf, 'isEventInNudgeWindow').some(
+        (c) =>
+          c.arguments.length === 2 &&
+          c.arguments[0].getText(events.sf) === 'event.date_start' &&
+          c.arguments[1].getText(events.sf) === 'wallClockNowInTz(audienceTzFor(event))',
+      ),
+      'isEventInNudgeWindow is not called with the audience wall clock',
+    ).toBe(true)
 
     // And the SQL pre-filter is WIDER than the window, or an event is dropped
     // before the accurate test can judge it.
-    expect(fn).toContain('TZ_PADDING_HOURS')
-    expect(fn).toMatch(/NUDGE_WINDOW_MIN_HOURS - TZ_PADDING_HOURS/)
-    expect(fn).toMatch(/NUDGE_WINDOW_MAX_HOURS \+ TZ_PADDING_HOURS/)
+    // Read as CODE, so a literal carrying the arithmetic cannot supply it.
+    const code = codeOnly(fn)
+    expect(code).toContain('TZ_PADDING_HOURS')
+    expect(code).toMatch(/NUDGE_WINDOW_MIN_HOURS - TZ_PADDING_HOURS/)
+    expect(code).toMatch(/NUDGE_WINDOW_MAX_HOURS \+ TZ_PADDING_HOURS/)
 
     // The padding VALUE has to cover the widest audience offset or the SQL
     // stops being a superset of the accurate window and events fall out before
@@ -996,7 +1189,16 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // EXPRESSIONS was a hole: a negative control set the constant to 0 and
     // every assertion above stayed green, while for a +10 audience the top ten
     // hours of the fourteen-day window went dark.
-    const padding = Number(fn.match(/const TZ_PADDING_HOURS = (\d+)/)?.[1])
+    // The VALUE comes off the declaration node. Matched out of the text, a
+    // decoy literal carrying `const TZ_PADDING_HOURS = 12` above the real one
+    // read 12 while the real constant was 0, deno RC 0 and 81 of 81.
+    const padDecls = nodesIn(
+      events.sf,
+      (n) =>
+        ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.name.text === 'TZ_PADDING_HOURS',
+    ) as ts.VariableDeclaration[]
+    expect(padDecls.length, 'expected exactly one TZ_PADDING_HOURS declaration').toBe(1)
+    const padding = Number(padDecls[0].initializer?.getText(events.sf))
     expect(padding).toBeGreaterThanOrEqual(11)
 
     // And the audience tz is actually READ off the event and its collective.
@@ -1006,9 +1208,10 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // 18 collectives carry a real IANA zone spanning +8 to +11, all 468 events
     // carry timezone NULL, and Murbpook (Adelaide, +9:30, 2026-09-19) is a
     // live ticketed event. Not theoretical.
-    const tzFnAt = fn.indexOf('function audienceTzFor')
-    expect(tzFnAt).toBeGreaterThan(-1)
-    const tzFn = fn.slice(tzFnAt, fn.indexOf('\n}', tzFnAt))
+    // The BODY comes off the declaration node: sliced out of the text, a decoy
+    // literal above it stole the slice and the stubbed real function read
+    // green, deno RC 0 and 81 of 81, which judges Perth two hours out.
+    const tzFn = fnDecl(events.sf, 'audienceTzFor').getText(events.sf)
     expect(tzFn).toMatch(/event\.timezone/)
     expect(tzFn).toMatch(/collectives\?\.timezone/)
   })
@@ -1019,11 +1222,18 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // shifted by the audience offset would move every gap by that offset. The
     // cohort call must receive the REAL now.
     const fn = readSource()
-    const cohortCall = fn.slice(
-      fn.indexOf('selectSafetyGapCohort({'),
-      fn.indexOf('selectSafetyGapCohort({') + 220,
-    )
-    expect(cohortCall).toContain('now,')
+    // The call is a node, not a 220-character slice off a text index: a decoy
+    // literal above it stole the index and the audience clock went through,
+    // deno RC 0 and 81 of 81, moving every 48h gap to 38h for a +10 audience.
+    const sf = parseOf(fn)
+    const cohorts = plainCalls(sf, 'selectSafetyGapCohort')
+    expect(cohorts.length, 'expected exactly one selectSafetyGapCohort call').toBe(1)
+    const cohortCall = cohorts[0].getText(sf)
+    expect(
+      nodesIn(cohorts[0], (n) => ts.isShorthandPropertyAssignment(n) && n.name.text === 'now')
+        .length > 0 || hasProperty(sf, cohorts[0], 'now', 'now'),
+      'the cohort call does not take the real now',
+    ).toBe(true)
     expect(cohortCall).not.toContain('wallClockNowInTz')
 
     // And the real now is what reaches nudgeEvent in the first place. Pinning
@@ -1035,7 +1245,17 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // somewhere: a decoy `nudgeEvent(supabase, event, now)` written into a log
     // line would otherwise satisfy a bare shape match while the call that
     // actually runs took the wall clock.
-    expect(codeOnly(fn)).toMatch(/await nudgeEvent\(\s*supabase,\s*event,\s*now\s*\)/)
+    // Read off the parse as the awaited CALL and its argument nodes. Over the
+    // whole file, even read as code, a top-level function carrying the same
+    // awaited call satisfied this with the real call given the audience clock,
+    // deno RC 0 and 81 of 81: blanking literals does not blank a decoy written
+    // in code.
+    const awaited = plainCalls(sf, 'nudgeEvent').filter((c) => ts.isAwaitExpression(c.parent))
+    expect(awaited.length, 'expected exactly one awaited nudgeEvent call').toBe(1)
+    expect(
+      awaited[0].arguments.map((a) => a.getText(sf)),
+      'the awaited nudgeEvent call does not take the real now',
+    ).toEqual(['supabase', 'event', 'now'])
   })
 
   it('the 12h floor is 12h before the REAL start for a +10 audience', () => {
@@ -1073,13 +1293,19 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // Intl and Date, which is what makes lifting it honest rather than a
     // re-implementation.
     const fn = fs.readFileSync(FN, 'utf8')
-    const at = fn.indexOf('function wallClockNowInTz')
-    expect(at).toBeGreaterThan(-1)
+    // Lifted by NODE BOUNDS, not by a text index. Taken with
+    // `fn.indexOf('function wallClockNowInTz')` over the RAW source, a comment
+    // or a template literal carrying a correct copy above the real one was
+    // lifted INSTEAD of it: measured 2026-09-02 with the real helper stubbed
+    // to ignore the timezone, deno RC 0, and this test passed on the decoy.
+    // The subject of a test that executes source has to come from the parse.
     // The lifted source is TypeScript, and new Function parses JavaScript, so
     // the annotations come off. Deliberately a strip and not a transpile: if
     // the helper ever grows a construct that needs real compilation, this
     // throws and the test reds, which is the safe direction.
-    const src = fn.slice(at, fn.indexOf('\n}', at) + 2).replace(/:\s*(?:string|Date)\b/g, '')
+    const src = fnDecl(parseOf(fn), 'wallClockNowInTz')
+      .getText(parseOf(fn))
+      .replace(/:\s*(?:string|Date)\b/g, '')
     const wallClockNowInTz = new Function(`${src}; return wallClockNowInTz`)() as (tz: string) => Date
 
     vi.useFakeTimers()
@@ -1117,8 +1343,10 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // would swing a full 24 hours on a safety send, so pin the direction by
     // feeding the helper the '24' its guard exists for.
     const fn = fs.readFileSync(FN, 'utf8')
-    const at = fn.indexOf('function wallClockNowInTz')
-    const src = fn.slice(at, fn.indexOf('\n}', at) + 2).replace(/:\s*(?:string|Date)\b/g, '')
+    // Lifted by node bounds, for the reason the sibling test above records.
+    const src = fnDecl(parseOf(fn), 'wallClockNowInTz')
+      .getText(parseOf(fn))
+      .replace(/:\s*(?:string|Date)\b/g, '')
 
     const parts = [
       { type: 'year', value: '2026' }, { type: 'month', value: '09' },
@@ -1540,6 +1768,63 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     expect(regionOf(caseStmt), 'a case clause widened the region').not.toContain("from('profiles')")
     expect(regionOf(caseExpr), 'a case expression widened the region').not.toContain("from('profiles')")
     expect(regionOf(ifCond), 'an if condition widened the region').not.toContain("from('profiles')")
+
+    // AND THE PARSE READERS THEMSELVES, because every bound this file has
+    // chosen became the next hole and these are the newest. Each fixture is a
+    // decoy of exactly the shape that defeated the TEXT reader they replace,
+    // measured 2026-09-02 at deno check RC 0 and 81 of 81 GREEN: a literal
+    // carrying the call, a literal carrying the whole query, a literal
+    // carrying the property. If any of these three reds, a parse read has
+    // quietly become a text read again.
+    const decoyed = `
+const _hist = \`
+      .from('events')
+      .select('id, timezone, collectives!inner(timezone, slug)')
+      .eq('is_ticketed', true)
+\`
+const real = supabase.from('events').select('id').eq('status', 'published')
+const body = { type: 'safety_contact_missing' }
+const alsoDecoy = "type: 'safety_contact_missing'"
+`
+    const dSf = parseOf(decoyed)
+    expect(
+      methodCalls(dSf, 'from', 'events').length,
+      'a literal was counted as a from() call',
+    ).toBe(1)
+    expect(
+      hasCallWithArgs(dSf, dSf, 'eq', ["'is_ticketed'", 'true']),
+      'a literal satisfied an argument-node call pin',
+    ).toBe(false)
+    expect(
+      hasCallWithArgs(dSf, dSf, 'eq', ["'status'", "'published'"]),
+      'a real call was missed by the argument-node pin',
+    ).toBe(true)
+    expect(
+      hasProperty(dSf, dSf, 'type', "'safety_contact_missing'"),
+      'the real property was missed',
+    ).toBe(true)
+    // And an argument whose TEXT carries the pin is not the pin. This is the
+    // decoy one level in: inside the right chain, and still not the call.
+    const inChain = parseOf(`const q = supabase.from('events').eq('title', "'is_ticketed', true")`)
+    expect(
+      hasCallWithArgs(inChain, inChain, 'eq', ["'is_ticketed'", 'true']),
+      'a string argument carrying the pin satisfied the call pin',
+    ).toBe(false)
+    // The table name is the first ARGUMENT NODE, not text anywhere in the
+    // call. Loosened to a text read, `from(pick('events'))` counts as a second
+    // events query and `soleFrom` stops being sole.
+    const indirect = parseOf(`const a = s.from('events').select('id')\nconst b = s.from(pick('events')).select('id')`)
+    expect(
+      methodCalls(indirect, 'from', 'events').length,
+      'an indirect from() was counted by its text',
+    ).toBe(1)
+    // And a property is a PropertyAssignment, not a run of text that looks
+    // like one. This is the shape that satisfied the send-email type pin.
+    const propDecoy = parseOf(`const s = "type: 'safety_contact_missing'"`)
+    expect(
+      hasProperty(propDecoy, propDecoy, 'type', "'safety_contact_missing'"),
+      'a string satisfied a property pin',
+    ).toBe(false)
   })
 
   it('sends a type send-email actually knows', () => {
@@ -1547,11 +1832,18 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // one file and named in another is a silent no-send.
     const sender = fs.readFileSync(path.join(ROOT, 'supabase/functions/send-email/index.ts'), 'utf8')
     const fn = readSource()
-    // Scoped to the invoke's own statement. Over the whole file this passed
-    // with the `type` property DELETED from the body and the text re-supplied
-    // as a top-level string, deno check RC 0 and 81 of 81, and send-email 400s
-    // on a body with no type: a silent no-send.
-    expect(statementHolding(fn, SEND_INVOKE)).toContain("type: 'safety_contact_missing'")
+    // The property comes off the parse. Scoped to the invoke's statement by
+    // text search, a decoy literal placed between the claim and the real
+    // invoke stole the anchor and this passed with the `type` DELETED from the
+    // body, deno RC 0 and 81 of 81, and send-email 400s on a body with no
+    // type: a silent no-send.
+    const typeSf = parseOf(fn)
+    const typeSends = methodCalls(typeSf, 'invoke', 'send-email')
+    expect(typeSends.length, "expected exactly one functions.invoke('send-email')").toBe(1)
+    expect(
+      hasProperty(typeSf, typeSends[0], 'type', "'safety_contact_missing'"),
+      "the send-email invoke does not set type: 'safety_contact_missing'",
+    ).toBe(true)
     expect(sender).toContain('safety_contact_missing: {')
     expect(sender).toContain('safety_contact_missing: (d) => emailShell({')
   })
