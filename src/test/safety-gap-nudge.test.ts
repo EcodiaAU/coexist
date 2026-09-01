@@ -728,7 +728,18 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     const sendAt = fn.indexOf("functions.invoke('send-email'")
     expect(claimAt).toBeGreaterThan(-1)
     expect(sendAt).toBeGreaterThan(-1)
-    expect(fn).toContain('ignoreDuplicates: true')
+    // Read as CODE. `ignoreDuplicates` is an object property rather than a
+    // pinned string value, so blanking string literals costs this assertion
+    // nothing and shuts the one channel it was open to: a decoy literal
+    // carrying the same text elsewhere in the file. Measured 2026-09-01,
+    // deleting the real option and re-supplying it as a top-level
+    // `const _hist = "ignoreDuplicates: true"` is `deno check` RC 0 and was
+    // 81 of 81 GREEN against the raw read. Without the option the upsert
+    // UPDATES on conflict, `.select()` hands every row back on every fire, and
+    // the ledger stops being a permit and becomes a duplicate storm. Its two
+    // sibling residues cannot move the same way, because there the pinned text
+    // IS a string in the source and `codeOnly` would blank the thing it pins.
+    expect(codeOnly(fn)).toContain('ignoreDuplicates: true')
     expect(claimAt).toBeLessThan(sendAt)
     // And nothing mails ahead of the claim by another route.
     expect(fn.slice(0, claimAt)).not.toContain("functions.invoke('send-email'")
@@ -790,12 +801,44 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     //    `.from('profiles').select('id, email')` lookup between the claim and
     //    the send, and all 76 tests stayed green with the permit gone. That is
     //    the same silent total kill this test was written to catch, reachable
-    //    by an ordinary future edit. The claim statement ends at the first
-    //    blank line, so a `.select` borrowed from a later query cannot satisfy
-    //    it, and requiring `.upsert(` before it pins the order within the chain.
-    const claimStmtEnd = fn.indexOf('\n\n', claimAt)
-    expect(claimStmtEnd).toBeGreaterThan(claimAt)
-    const claimStmt = fn.slice(claimAt, claimStmtEnd)
+    //    by an ordinary future edit.
+    //
+    //    The first repair bounded the region at the next BLANK LINE, and that
+    //    bound was itself the hole one edit along. A blank line is a layout
+    //    choice, not a syntax boundary: delete the empty line under the claim
+    //    and put an ordinary `supabase.from('profiles').select('id')` lookup
+    //    directly beneath it, and the region grows over that neighbour and
+    //    borrows its `.select(`. Measured 2026-09-01 on this subject: with the
+    //    claim's own `.select()` DELETED that mutation is `deno check` RC 0
+    //    and 81 of 81 GREEN, while the identical mutation with the blank line
+    //    LEFT IN reds this test. One empty line was the whole difference, and
+    //    the defect it hides is the total kill above: no `return=representation`,
+    //    `claimedRows` null, `claimed` empty, and the sweep mails NOBODY for
+    //    ever while still answering success:true.
+    //
+    //    So the region is the claim's own STATEMENT, taken from the parse. The
+    //    enclosing statement is exactly the chain the claim is written as, a
+    //    neighbouring statement is outside it by construction, and no amount of
+    //    reformatting moves the boundary.
+    const claimSf = ts.createSourceFile('claim.ts', fn, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+    const deepestAt = (n: ts.Node): ts.Node => {
+      for (const k of n.getChildren(claimSf)) {
+        if (k.getStart(claimSf) <= claimAt && claimAt < k.getEnd()) return deepestAt(k)
+      }
+      return n
+    }
+    let claimNode: ts.Node = deepestAt(claimSf)
+    while (
+      claimNode.parent &&
+      !ts.isBlock(claimNode.parent) &&
+      !ts.isSourceFile(claimNode.parent) &&
+      !ts.isModuleBlock(claimNode.parent)
+    ) {
+      claimNode = claimNode.parent
+    }
+    expect(ts.isSourceFile(claimNode), 'the claim is not inside a statement').toBe(false)
+    const claimStmt = fn.slice(claimNode.getStart(claimSf), claimNode.getEnd())
+    expect(claimStmt).toContain('.upsert(')
     expect(codeOnly(claimStmt)).toMatch(/\.upsert\([\s\S]*\.select\(/)
 
     // And the ask has to actually RETURN the rows. `{ head: true }` is real
@@ -1360,6 +1403,25 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
       '\ufeff' + "#!/usr/bin/env -S deno run .eq('is_ticketed', true)\r\nconst keepN = 14\r\n",
     )
     expect(bomShebangCrlf).toContain('const keepN = 14')
+
+    // CONTROL, BOTH HALVES. Blanking the shebang line up front is only half
+    // the rule; the gap walk then has to STEP OVER that region rather than
+    // read inside it. A shebang may legally carry `//` or `/*` in an argument
+    // and stays `deno check` RC 0 with it, so a walk that reads there opens a
+    // comment the author never opened and blanks forward into real code. That
+    // direction fails SILENTLY, because a `not.toContain` passes happily on
+    // code that is gone. Scored against readers that differ in exactly one
+    // decision, these two are the only assertions in this file that red a
+    // reader with no step-over at all, and each is the sole one to red a
+    // step-over gated to the wrong half: the LF case alone reds one that only
+    // steps over when a BOM is present, the BOM case alone reds one that only
+    // steps over when it is absent.
+    expect(blankComments('#!/usr/bin/env -S deno run /*\nconst keepO = 15\n')).toContain(
+      'const keepO = 15',
+    )
+    expect(
+      blankComments('\ufeff' + '#!/usr/bin/env -S deno run /*\nconst keepP = 16\n'),
+    ).toContain('const keepP = 16')
   })
 
   it('sends a type send-email actually knows', () => {
