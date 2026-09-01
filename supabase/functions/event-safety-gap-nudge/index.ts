@@ -88,7 +88,54 @@ interface EventRow {
   title: string
   date_start: string
   address: string | null
-  collectives: { slug: string | null } | null
+  timezone: string | null
+  collectives: { timezone: string | null; slug: string | null } | null
+}
+
+/**
+ * Widest AU UTC offset the SQL pre-filter has to cover, +8 (Perth) to +11
+ * (Hobart in DST). Twinned from event-reminders, and load-bearing for the same
+ * reason: the exact boundary is decided per event in the audience's own frame,
+ * so the SQL either side of it must be WIDER than the real window or an event
+ * gets dropped before the accurate test ever sees it.
+ */
+const TZ_PADDING_HOURS = 12
+
+/**
+ * Effective audience IANA timezone. Twin of the helper in event-reminders and
+ * event-day-notify: the floating-local model leaves `events.timezone` NULL or
+ * 'UTC' on new events, so the collective's tz is the meaningful one.
+ */
+function audienceTzFor(event: EventRow): string {
+  const eTz = event.timezone
+  if (eTz && eTz !== 'UTC') return eTz
+  return event.collectives?.timezone || 'Australia/Brisbane'
+}
+
+/**
+ * A Date whose UTC slice equals the current WALL-CLOCK time in `tz`.
+ *
+ * This is not decoration. `events.date_start` is stored wall-clock-as-UTC
+ * (floating-local, since 2026-05-26), so comparing it against real UTC `now`
+ * measures a gap that is wrong by the audience's own offset. Measured on Wild
+ * Mountains (2026-09-04 14:00 local, +10): comparing against real now, the 12h
+ * floor below stops the sweep 2.0 hours before the event actually starts, not
+ * 12. That is precisely the collision with the 2h reminder the floor exists to
+ * avoid, and event-reminders documents the same trap ("would fire the
+ * audience-offset hours late, 10h for AEST").
+ */
+function wallClockNowInTz(tz: string): Date {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date())
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || '00'
+  const hour = get('hour') === '24' ? '00' : get('hour')
+  return new Date(
+    `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}.000Z`,
+  )
 }
 
 /**
@@ -131,12 +178,20 @@ Deno.serve(withSentry('event-safety-gap-nudge', async (req: Request) => {
     // Pre-filter in SQL on the same window the pure predicate enforces. The
     // exact boundary is re-checked per event by isEventInNudgeWindow so the
     // rule lives in one place and the SQL is only a cheap narrowing.
-    const windowStart = new Date(now.getTime() + NUDGE_WINDOW_MIN_HOURS * 3600 * 1000)
-    const windowEnd = new Date(now.getTime() + NUDGE_WINDOW_MAX_HOURS * 3600 * 1000)
+    // Padded on BOTH sides: the accurate test below runs in the audience's own
+    // wall-clock frame, which can sit up to TZ_PADDING_HOURS either side of
+    // real UTC. Narrowing here to the exact window would drop an event before
+    // the accurate test could judge it.
+    const windowStart = new Date(
+      now.getTime() + (NUDGE_WINDOW_MIN_HOURS - TZ_PADDING_HOURS) * 3600 * 1000,
+    )
+    const windowEnd = new Date(
+      now.getTime() + (NUDGE_WINDOW_MAX_HOURS + TZ_PADDING_HOURS) * 3600 * 1000,
+    )
 
     const { data: events, error: eventsErr } = await supabase
       .from('events')
-      .select('id, title, date_start, address, collectives!inner(slug)')
+      .select('id, title, date_start, address, timezone, collectives!inner(timezone, slug)')
       .eq('status', 'published')
       .eq('is_ticketed', true)
       .neq('collectives.slug', 'test')
@@ -154,7 +209,12 @@ Deno.serve(withSentry('event-safety-gap-nudge', async (req: Request) => {
     for (const event of ((events ?? []) as unknown) as EventRow[]) {
       results.events_considered++
       if (isTestEvent(event)) continue
-      if (!isEventInNudgeWindow(event.date_start, now)) continue
+      // The window is judged in the AUDIENCE's wall-clock frame, because
+      // date_start is stored in that frame. The cadence below is deliberately
+      // NOT: `event_safety_nudges_sent.sent_at` defaults to the database's real
+      // now(), so measuring the 48h gap against a shifted clock would move
+      // every gap by the audience offset. Two clocks, two jobs.
+      if (!isEventInNudgeWindow(event.date_start, wallClockNowInTz(audienceTzFor(event)))) continue
       results.events_in_window++
 
       const outcome = await nudgeEvent(supabase, event, now)

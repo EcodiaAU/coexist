@@ -566,6 +566,67 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     expect(fn.slice(sendAt, sendAt + 800)).toContain(`${rowVar}.user_id`)
   })
 
+  it('judges the window in the audience wall-clock frame, not real UTC', () => {
+    // `events.date_start` is stored wall-clock-as-UTC (floating-local, since
+    // 2026-05-26). Comparing it against real UTC `now` measures a gap wrong by
+    // the audience offset, which event-reminders documents ("would fire the
+    // audience-offset hours late, 10h for AEST") and solves with
+    // wallClockNowInTz. The first cut of this sweep did not, and the arithmetic
+    // below is what that cost.
+    const fn = fs.readFileSync(FN, 'utf8')
+
+    // The tz columns have to be SELECTED or the helper has nothing to read.
+    expect(fn).toContain('timezone, collectives!inner(timezone, slug)')
+    expect(fn).toContain('function audienceTzFor')
+    expect(fn).toContain('function wallClockNowInTz')
+
+    // The window test takes the converted clock.
+    expect(fn).toMatch(/isEventInNudgeWindow\(\s*event\.date_start,\s*wallClockNowInTz\(audienceTzFor\(event\)\)\s*\)/)
+
+    // And the SQL pre-filter is WIDER than the window, or an event is dropped
+    // before the accurate test can judge it.
+    expect(fn).toContain('TZ_PADDING_HOURS')
+    expect(fn).toMatch(/NUDGE_WINDOW_MIN_HOURS - TZ_PADDING_HOURS/)
+    expect(fn).toMatch(/NUDGE_WINDOW_MAX_HOURS \+ TZ_PADDING_HOURS/)
+  })
+
+  it('keeps the cadence on the real clock, not the audience clock', () => {
+    // Two clocks, two jobs. `event_safety_nudges_sent.sent_at` defaults to the
+    // database's real now(), so measuring the 48h gap against a wall-clock
+    // shifted by the audience offset would move every gap by that offset. The
+    // cohort call must receive the REAL now.
+    const fn = fs.readFileSync(FN, 'utf8')
+    const cohortCall = fn.slice(
+      fn.indexOf('selectSafetyGapCohort({'),
+      fn.indexOf('selectSafetyGapCohort({') + 220,
+    )
+    expect(cohortCall).toContain('now,')
+    expect(cohortCall).not.toContain('wallClockNowInTz')
+  })
+
+  it('the 12h floor is 12h before the REAL start for a +10 audience', () => {
+    // The measured defect, 2026-09-01, on Wild Mountains (2026-09-04 14:00
+    // local, +10): judged against real UTC now the sweep stopped 2.0h before
+    // the event actually began, landing on top of the 2h reminder the floor
+    // exists to stay clear of. This pins the arithmetic rather than the source.
+    const OFFSET_H = 10
+    const storedStart = new Date('2026-09-04T14:00:00.000Z') // wall-clock-as-UTC
+    const realStart = new Date(storedStart.getTime() - OFFSET_H * 3600 * 1000)
+
+    // Wall-clock now in the audience tz, at the instant the floor should bite.
+    const realNowAtFloor = new Date(realStart.getTime() - NUDGE_WINDOW_MIN_HOURS * 3600 * 1000)
+    const wallClockAtFloor = new Date(realNowAtFloor.getTime() + OFFSET_H * 3600 * 1000)
+
+    // Correct frame: exactly on the floor, so still in the window.
+    expect(isEventInNudgeWindow(storedStart, wallClockAtFloor)).toBe(true)
+    // One minute later it has closed.
+    expect(isEventInNudgeWindow(storedStart, new Date(wallClockAtFloor.getTime() + 60_000))).toBe(false)
+
+    // The naive frame keeps nudging until only 2h remain before the real start.
+    const twoHoursOut = new Date(realStart.getTime() - 2 * 3600 * 1000)
+    expect(isEventInNudgeWindow(storedStart, twoHoursOut)).toBe(true)
+  })
+
   it('sends a type send-email actually knows', () => {
     // send-email 400s on an unknown type, so a template that is registered in
     // one file and named in another is a silent no-send.
