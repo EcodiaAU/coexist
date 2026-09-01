@@ -489,11 +489,19 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
    * Blanking rather than deleting is what keeps the offsets honest, and the
    * lookbehind keeps a "https://" inside a string from reading as a comment.
    */
-  const readSource = () =>
-    fs
-      .readFileSync(FN, 'utf8')
-      .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+  const blankComments = (t: string) =>
+    t
+      // Line comments FIRST. A `/*` written inside a `//` comment would
+      // otherwise open a block the author never opened, and the blank would run
+      // to the next `*/` anywhere below, swallowing real code on the way. That
+      // direction is not safe: an assertion built on `not.toContain` passes
+      // happily against blanked-out code, so the guard would go green on the
+      // very mutation it exists to catch. Doing lines first also disarms a
+      // stray `*/` sitting in a line comment.
       .replace(/(?<!:)\/\/[^\n]*/g, (m) => ' '.repeat(m.length))
+      .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+
+  const readSource = () => blankComments(fs.readFileSync(FN, 'utf8'))
 
   /**
    * Blanks string and template literals too, for the two assertions that pin a
@@ -882,6 +890,36 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     expect(stripped).toContain("import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'")
     expect(stripped).toContain('https://app.coexistaus.org/events/')
     expect(stripped).toContain('Deno.serve(')
+
+    // A `/*` inside a line comment must not open a block. Left to the block
+    // rule first, the blank would run to the next `*/` below and take real code
+    // with it, and every `not.toContain` assertion in this file would then be
+    // green against code that is no longer there to be found.
+    const blanked = blankComments(
+      [
+        '  const keep = 1',
+        '  // note /* opens nothing',
+        '  const alsoKeep = 2',
+        '  /* a real block */',
+        '  const third = 3',
+        "  const url = 'https://example.test/x'",
+      ].join('\n'),
+    )
+    expect(blanked).toContain('const alsoKeep = 2')
+    expect(blanked).toContain('const third = 3')
+    expect(blanked).not.toContain('opens nothing')
+    expect(blanked).not.toContain('a real block')
+    expect(blanked).toContain("'https://example.test/x'")
+    expect(blanked.length).toBe(
+      [
+        '  const keep = 1',
+        '  // note /* opens nothing',
+        '  const alsoKeep = 2',
+        '  /* a real block */',
+        '  const third = 3',
+        "  const url = 'https://example.test/x'",
+      ].join('\n').length,
+    )
 
     // And codeOnly additionally empties the literals, without moving anything.
     const code = codeOnly(stripped)
