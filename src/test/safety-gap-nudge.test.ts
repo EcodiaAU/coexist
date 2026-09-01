@@ -672,6 +672,84 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
    */
   const codeOnly = (t: string) => scanSource(t, true)
 
+  /**
+   * The claim's own EXPRESSION, taken from the parse.
+   *
+   * Every bound this guard has picked for itself became the next hole. It was
+   * first the whole claim-to-send slice, which a neighbouring
+   * `.from('profiles').select('id, email')` satisfied. Then it was the next
+   * BLANK LINE, and deleting one empty line put that neighbour back inside it.
+   * Then it was the enclosing STATEMENT, reached by walking up until the
+   * PARENT was a Block, and that is the bound this replaces: a statement in an
+   * unbraced `case` clause has a CaseClause for a parent, not a Block, so the
+   * walk ran on to the whole `switch` and borrowed a `.select(` from a sibling
+   * statement. Measured 2026-09-01 on this subject, with the claim moved into
+   * a `default:` clause, its own `.select()` DELETED and an ordinary
+   * `supabase.from('profiles').select('id')` beside it: `deno check` RC 0 and
+   * 81 of 81 GREEN, the same silent total kill as every bound before it.
+   *
+   * So the walk stops the moment the PARENT stops being part of an expression.
+   * Scored over 18 shapes, the Block bound borrowed a neighbour in 7 of them
+   * and this one in 0. `isSourceFile` and `isModuleBlock` are terminators
+   * rather than boundaries: a top-level statement IS a statement, so the walk
+   * stops one level below them and neither is reachable here. They red 0 of 9
+   * fixtures, so nothing pins them and nothing can.
+   */
+  const claimRegion = (src: string, at: number) => {
+    const sf = ts.createSourceFile('claim.ts', src, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+    const deepestAt = (n: ts.Node): ts.Node => {
+      for (const k of n.getChildren(sf)) {
+        if (k.getStart(sf) <= at && at < k.getEnd()) return deepestAt(k)
+      }
+      return n
+    }
+    let node: ts.Node = deepestAt(sf)
+    while (
+      node.parent &&
+      !ts.isStatement(node.parent) &&
+      !ts.isCaseOrDefaultClause(node.parent) &&
+      !ts.isSourceFile(node.parent) &&
+      !ts.isModuleBlock(node.parent)
+    ) {
+      node = node.parent
+    }
+    return src.slice(node.getStart(sf), node.getEnd())
+  }
+
+  /**
+   * The STATEMENT a pinned literal lives in. The THIRD read mode, for the
+   * assertions that pin a string VALUE.
+   *
+   * Those cannot read through `codeOnly`, because there the pinned text IS a
+   * string literal in the source and blanking literals would blank the very
+   * thing being pinned. Read over the whole file instead, every one of them is
+   * open to a decoy: delete the real call and re-supply the same text as a
+   * top-level `const _hist = "..."`, and the assertion is satisfied with the
+   * mechanism gone.
+   *
+   * That went unseen for nine passes because the hide-a-literal battery
+   * deleted the LITERAL rather than the CALL. Deleting `'is_ticketed', true`
+   * leaves `.eq()` with no arguments, so 56 of its 77 cells were `deno check`
+   * RC 1 and never reached an assertion at all; the cells read RED and the
+   * guard behind them was never exercised. Deleting the whole CALL is
+   * deno-clean, and re-run that way on 2026-09-02 the battery was 37 RED and
+   * FIVE survivors: the is_ticketed filter, the published filter, the
+   * test-collective filter, the selected tz columns and the email type. The
+   * is_ticketed one alone widens the sweep from 4 ticketed events and 6 gaps
+   * to 30 published events and 279, most of them people at a two-hour beach
+   * clean-up who were never asked for a contact.
+   *
+   * Scoping each pin to its own statement shuts all five: a top-level decoy is
+   * outside it by construction. A missing anchor returns the empty string, so
+   * a rename reds loudly rather than passing quietly.
+   */
+  const statementHolding = (t: string, anchor: RegExp) => {
+    const at = t.search(anchor)
+    return at < 0 ? '' : claimRegion(t, at)
+  }
+  const EVENTS_QUERY = /\.from\('events'\)\s*\n\s*\.select\(/
+  const SEND_INVOKE = /functions\.invoke\('send-email'/
+
   it('filters on is_ticketed, as the gate does', () => {
     // Measured 2026-09-01: ticketed-only is 4 events / 60 seats / 6 gaps.
     // Every upcoming published event is 30 events / 279 gaps, of which Merri
@@ -680,19 +758,28 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     const fn = readSource()
     const gate = fs.readFileSync(GATE, 'utf8')
     expect(gate).toContain('is_ticketed')
-    expect(fn).toContain("'is_ticketed', true")
+    // Scoped to the events query's own statement. Read over the whole file
+    // this passed with the filter DELETED and the text re-supplied as a
+    // top-level string, measured 2026-09-02, deno check RC 0 and 81 of 81.
+    expect(statementHolding(fn, EVENTS_QUERY)).toContain("'is_ticketed', true")
   })
 
   it('only looks at published events', () => {
-    expect(readSource()).toContain("'status', 'published'")
+    // Scoped to the events query's own statement, for the same reason as the
+    // filter above: over the whole file a top-level decoy string satisfied it
+    // with the filter gone, and a sweep over unpublished events mails from
+    // drafts.
+    expect(statementHolding(readSource(), EVENTS_QUERY)).toContain("'status', 'published'")
   })
 
   it('keeps the test collective out', () => {
     // The null-safe second line of defence, mirroring event-reminders. A test
     // event firing live mail at real members is the failure this stops.
     const fn = readSource()
-    expect(fn).toContain("collectives.slug")
-    expect(fn).toContain('isTestEvent')
+    // Scoped to the events query's own statement: over the whole file this
+    // passed with `.neq('collectives.slug', 'test')` DELETED and the text
+    // re-supplied as a top-level string, deno check RC 0 and 81 of 81.
+    expect(statementHolding(fn, EVENTS_QUERY)).toContain("collectives.slug")
 
     // Naming the function is not the same as it deciding anything. Stubbed to
     // `return false` the whole second line of defence goes away silently, and
@@ -702,6 +789,16 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     expect(fn.slice(testFnAt, fn.indexOf('\n}', testFnAt))).toMatch(
       /collectives\?\.slug === 'test'/,
     )
+
+    // And HAVING the function is not the same as CALLING it, which is the same
+    // lesson one step out. Deleting the whole `if (isTestEvent(event)) continue`
+    // line is `deno check` RC 0 and left all 81 GREEN, measured 2026-09-02,
+    // because a name read over the whole file is satisfied by the surviving
+    // DECLARATION. So the call is pinned inside the sweep loop, which begins
+    // after the declaration, and read as code so no string can stand in for it.
+    const loopAt = fn.indexOf('for (const event of')
+    expect(loopAt).toBeGreaterThan(-1)
+    expect(codeOnly(fn.slice(loopAt))).toMatch(/isTestEvent\(/)
   })
 
   it('reads the shared predicate rather than hand-rolling the rule', () => {
@@ -816,28 +913,21 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     //    `claimedRows` null, `claimed` empty, and the sweep mails NOBODY for
     //    ever while still answering success:true.
     //
-    //    So the region is the claim's own STATEMENT, taken from the parse. The
-    //    enclosing statement is exactly the chain the claim is written as, a
-    //    neighbouring statement is outside it by construction, and no amount of
-    //    reformatting moves the boundary.
-    const claimSf = ts.createSourceFile('claim.ts', fn, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
-    const deepestAt = (n: ts.Node): ts.Node => {
-      for (const k of n.getChildren(claimSf)) {
-        if (k.getStart(claimSf) <= claimAt && claimAt < k.getEnd()) return deepestAt(k)
-      }
-      return n
-    }
-    let claimNode: ts.Node = deepestAt(claimSf)
-    while (
-      claimNode.parent &&
-      !ts.isBlock(claimNode.parent) &&
-      !ts.isSourceFile(claimNode.parent) &&
-      !ts.isModuleBlock(claimNode.parent)
-    ) {
-      claimNode = claimNode.parent
-    }
-    expect(ts.isSourceFile(claimNode), 'the claim is not inside a statement').toBe(false)
-    const claimStmt = fn.slice(claimNode.getStart(claimSf), claimNode.getEnd())
+    //    Bounding it at the enclosing STATEMENT was the bound after that, and
+    //    it fell the same way. Reached by walking up until the PARENT was a
+    //    Block, that walk goes straight past an unbraced `case` clause to the
+    //    whole `switch`. Measured 2026-09-01 with the claim in a `default:`
+    //    clause and its own `.select()` deleted: `deno check` RC 0 and 81 of
+    //    81 GREEN, permit gone, sweep silent. So the region is the claim's own
+    //    EXPRESSION, and `claimRegion` stops the walk the moment the parent
+    //    stops being part of one.
+    const claimStmt = claimRegion(fn, claimAt)
+    // Over-widening tripwire, on the SUBJECT rather than on a fixture. The
+    // claim's own expression ends long before the send, and every widening
+    // this guard has suffered swallowed the send loop, so this one line reds
+    // each of them on the real file.
+    expect(claimStmt).not.toContain("functions.invoke('send-email'")
+    // Over-narrowing tripwire: the claim chain has to still be inside it.
     expect(claimStmt).toContain('.upsert(')
     expect(codeOnly(claimStmt)).toMatch(/\.upsert\([\s\S]*\.select\(/)
 
@@ -882,7 +972,12 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     const fn = readSource()
 
     // The tz columns have to be SELECTED or the helper has nothing to read.
-    expect(fn).toContain('timezone, collectives!inner(timezone, slug)')
+    // Scoped to the events query's own statement: over the whole file a
+    // top-level decoy string satisfied this with the columns dropped from the
+    // select, deno check RC 0 and 81 of 81, measured 2026-09-02.
+    expect(statementHolding(fn, EVENTS_QUERY)).toContain(
+      'timezone, collectives!inner(timezone, slug)',
+    )
     expect(fn).toContain('function audienceTzFor')
     expect(fn).toContain('function wallClockNowInTz')
 
@@ -1422,6 +1517,29 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     expect(
       blankComments('\ufeff' + '#!/usr/bin/env -S deno run /*\nconst keepP = 16\n'),
     ).toContain('const keepP = 16')
+
+    // THE REGION WALK HAS A BOUND TOO, and this file's whole history is bounds
+    // that read as boundaries and were not. These fixtures pin the two stop
+    // decisions that do any work, scored against walks differing in exactly
+    // ONE decision. The `case` EXPRESSION fixture is the SOLE catcher of a
+    // walk that drops `isCaseOrDefaultClause`. The `if` CONDITION fixture is
+    // the ordinary shape that reds a walk stopping at a Block instead of at a
+    // statement, and it also reds one that tests the NODE rather than its
+    // PARENT. The `case` STATEMENT fixture is the shape measured live on
+    // 2026-09-01 (deno check RC 0, 81 of 81 GREEN with the permit gone); it is
+    // a duplicate of the other two against that family and is kept as the
+    // regression pin for the bound that actually shipped.
+    const claimChain =
+      "await supabase\n      .from('event_safety_nudges_sent')\n      .upsert(payload, { onConflict: 'a,b,c' })"
+    const neighbour = "const { data: _probe } = await supabase.from('profiles').select('id')"
+    const regionOf = (src: string) =>
+      claimRegion(src, src.search(/\.from\('event_safety_nudges_sent'\)\s*\n\s*\.upsert\(/))
+    const caseStmt = `async function f(){\n  switch(k){\n    case 1:\n      const { data: claimedRows } = ${claimChain}\n      ${neighbour}\n  }\n}\n`
+    const caseExpr = `async function f(){\n  switch(k){\n    case (${claimChain}):\n      ${neighbour}\n  }\n}\n`
+    const ifCond = `async function f(){\n  if((${claimChain})) { ${neighbour} }\n}\n`
+    expect(regionOf(caseStmt), 'a case clause widened the region').not.toContain("from('profiles')")
+    expect(regionOf(caseExpr), 'a case expression widened the region').not.toContain("from('profiles')")
+    expect(regionOf(ifCond), 'an if condition widened the region').not.toContain("from('profiles')")
   })
 
   it('sends a type send-email actually knows', () => {
@@ -1429,7 +1547,11 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // one file and named in another is a silent no-send.
     const sender = fs.readFileSync(path.join(ROOT, 'supabase/functions/send-email/index.ts'), 'utf8')
     const fn = readSource()
-    expect(fn).toContain("type: 'safety_contact_missing'")
+    // Scoped to the invoke's own statement. Over the whole file this passed
+    // with the `type` property DELETED from the body and the text re-supplied
+    // as a top-level string, deno check RC 0 and 81 of 81, and send-email 400s
+    // on a body with no type: a silent no-send.
+    expect(statementHolding(fn, SEND_INVOKE)).toContain("type: 'safety_contact_missing'")
     expect(sender).toContain('safety_contact_missing: {')
     expect(sender).toContain('safety_contact_missing: (d) => emailShell({')
   })
