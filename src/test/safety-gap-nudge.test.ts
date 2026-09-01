@@ -467,33 +467,85 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
   const FN = path.join(ROOT, 'supabase/functions/event-safety-gap-nudge/index.ts')
   const GATE = path.join(ROOT, 'src/components/dietary-gate.tsx')
 
+  /**
+   * index.ts with the CONTENT of every comment blanked to spaces, byte offsets
+   * preserved so every indexOf and slice below behaves exactly as it would on
+   * the raw source.
+   *
+   * Every source-text guard in this file was satisfiable by a COMMENT, and the
+   * comment is the one a developer writes while making the very change the
+   * guard exists to catch. Four negative controls, 2026-09-01, each left all
+   * 79 tests green with the mechanism broken:
+   *   - delete the claim's .select() and leave "the .select( ask was moved out
+   *     of this chain" as a comment. That is the silent total kill: no
+   *     return=representation, `claimed` empty, the sweep mails NOBODY for
+   *     ever and still answers success:true. One comment past the guard added
+   *     hours earlier to stop exactly it.
+   *   - pass the wall clock at the nudgeEvent call site and leave the old call
+   *     behind as a "was:" comment.
+   *   - set TZ_PADDING_HOURS to 0 and mention the old declaration in the doc
+   *     comment ABOVE it, which .match reaches first.
+   *   - hardcode audienceTzFor and leave the old body commented out inside it.
+   * Blanking rather than deleting is what keeps the offsets honest, and the
+   * lookbehind keeps a "https://" inside a string from reading as a comment.
+   */
+  const readSource = () =>
+    fs
+      .readFileSync(FN, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+      .replace(/(?<!:)\/\/[^\n]*/g, (m) => ' '.repeat(m.length))
+
+  /**
+   * Blanks string and template literals too, for the two assertions that pin a
+   * SHAPE rather than a value. Those are the ones a borrowed token can satisfy:
+   * a negative control that deleted the claim's `.select()` and left the text
+   * `.select(` inside a console.log string passed the chain assertion below
+   * with the permit dead. Everything else in this file reads the raw string
+   * literals on purpose, because there the literal IS the thing being pinned
+   * (the column list, the conflict target, the is_ticketed filter).
+   */
+  const codeOnly = (t: string) =>
+    t
+      .replace(/'(?:[^'\\\n]|\\.)*'/g, (m) => ' '.repeat(m.length))
+      .replace(/"(?:[^"\\\n]|\\.)*"/g, (m) => ' '.repeat(m.length))
+      .replace(/`(?:[^`\\]|\\.)*`/g, (m) => m.replace(/[^\n]/g, ' '))
+
   it('filters on is_ticketed, as the gate does', () => {
     // Measured 2026-09-01: ticketed-only is 4 events / 60 seats / 6 gaps.
     // Every upcoming published event is 30 events / 279 gaps, of which Merri
     // Mornings alone is 108 of 148 - people at a two-hour beach clean-up who
     // were never asked for a contact and do not need to be.
-    const fn = fs.readFileSync(FN, 'utf8')
+    const fn = readSource()
     const gate = fs.readFileSync(GATE, 'utf8')
     expect(gate).toContain('is_ticketed')
     expect(fn).toContain("'is_ticketed', true")
   })
 
   it('only looks at published events', () => {
-    expect(fs.readFileSync(FN, 'utf8')).toContain("'status', 'published'")
+    expect(readSource()).toContain("'status', 'published'")
   })
 
   it('keeps the test collective out', () => {
     // The null-safe second line of defence, mirroring event-reminders. A test
     // event firing live mail at real members is the failure this stops.
-    const fn = fs.readFileSync(FN, 'utf8')
+    const fn = readSource()
     expect(fn).toContain("collectives.slug")
     expect(fn).toContain('isTestEvent')
+
+    // Naming the function is not the same as it deciding anything. Stubbed to
+    // `return false` the whole second line of defence goes away silently, and
+    // every assertion above stayed green under exactly that mutation.
+    const testFnAt = fn.indexOf('function isTestEvent')
+    expect(testFnAt).toBeGreaterThan(-1)
+    expect(fn.slice(testFnAt, fn.indexOf('\n}', testFnAt))).toMatch(
+      /collectives\?\.slug === 'test'/,
+    )
   })
 
   it('reads the shared predicate rather than hand-rolling the rule', () => {
     // Three surfaces have drifted before by re-deciding what "has a contact"
     // means at the call site. This one imports it.
-    const fn = fs.readFileSync(FN, 'utf8')
+    const fn = readSource()
     expect(fn).toContain("from '../_shared/safety-contact.ts'")
     expect(fn).not.toMatch(/emergency_contact_name\s*\?\?\s*''/)
   })
@@ -509,7 +561,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // above any code. A negative control that inserted a send-email invoke
     // ABOVE the real claim passed it. A source guard anchored on prose is not
     // a guard, it is a comment that throws.
-    const fn = fs.readFileSync(FN, 'utf8')
+    const fn = readSource()
     const claimAt = fn.search(/\.from\('event_safety_nudges_sent'\)\s*\n\s*\.upsert\(/)
     const sendAt = fn.indexOf("functions.invoke('send-email'")
     expect(claimAt).toBeGreaterThan(-1)
@@ -518,6 +570,29 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     expect(claimAt).toBeLessThan(sendAt)
     // And nothing mails ahead of the claim by another route.
     expect(fn.slice(0, claimAt)).not.toContain("functions.invoke('send-email'")
+
+    // The cadence READ has to come off the same ledger the claim WRITES.
+    // Pointed at any other table the read returns nothing, every fire thinks
+    // it is step 1, the unique index swallows the repeat claim, and the person
+    // gets one nudge instead of three. Silent: no error, success:true, and
+    // every other assertion here stayed green under that mutation.
+    expect(fn).toMatch(
+      /\.from\('event_safety_nudges_sent'\)\s*\n\s*\.select\('user_id, follow_up_number, sent_at'\)/,
+    )
+  })
+
+  it('refuses a caller that does not hold the service-role key', () => {
+    // This function reads every attendee's contact details and can trigger
+    // live mail to members, so the key comparison is the only thing between an
+    // anonymous caller and both. A negative control replaced the comparison
+    // with `if (false)` and all 79 tests stayed green, which left an
+    // unauthenticated sweep one edit away.
+    const fn = readSource()
+    const body = fn.slice(0, fn.indexOf('const supabase = serviceClient()'))
+    expect(body).toMatch(/authHeader\?\.startsWith\('Bearer '\)/)
+    expect(body).toMatch(/authHeader\.replace\('Bearer ', ''\) !== serviceRoleKey/)
+    expect(body).toContain('401')
+    expect(body).toContain('403')
   })
 
   it('mails only the rows its own claim returned', () => {
@@ -538,7 +613,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // Anchored structurally rather than on identifier names, for the same
     // reason the assertion above is anchored on the call and not the table
     // name: a guard that a rename can silently satisfy is not a guard.
-    const fn = fs.readFileSync(FN, 'utf8')
+    const fn = readSource()
     const claimAt = fn.search(/\.from\('event_safety_nudges_sent'\)\s*\n\s*\.upsert\(/)
     const sendAt = fn.indexOf("functions.invoke('send-email'")
     expect(claimAt).toBeGreaterThan(-1)
@@ -558,7 +633,22 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     //    it, and requiring `.upsert(` before it pins the order within the chain.
     const claimStmtEnd = fn.indexOf('\n\n', claimAt)
     expect(claimStmtEnd).toBeGreaterThan(claimAt)
-    expect(fn.slice(claimAt, claimStmtEnd)).toMatch(/\.upsert\([\s\S]*\.select\(/)
+    const claimStmt = fn.slice(claimAt, claimStmtEnd)
+    expect(codeOnly(claimStmt)).toMatch(/\.upsert\([\s\S]*\.select\(/)
+
+    // And the ask has to actually RETURN the rows. `{ head: true }` is real
+    // supabase-js: it keeps the `.select(` the assertion above looks for and
+    // suppresses the response body anyway, so `claimedRows` comes back null,
+    // `claimed` is empty, and the sweep mails nobody for ever while still
+    // answering success:true. Same silent total kill, different route, and it
+    // passed every assertion in this file until a negative control on
+    // 2026-09-01 went looking for it.
+    expect(claimStmt).not.toMatch(/head:\s*true/)
+
+    // The conflict target has to be the WHOLE unique key. Narrowed to
+    // (event_id, user_id) it matches no unique index, PostgREST rejects every
+    // claim, and the function sends nothing at all for ever.
+    expect(claimStmt).toContain("onConflict: 'event_id,user_id,follow_up_number'")
 
     // 2. The claim's returned data is bound to a name.
     const dataBinding = fn.slice(0, claimAt).match(/const \{\s*data:\s*(\w+)[^}]*\}\s*=\s*await\s*$|const \{\s*data:\s*(\w+)[^}]*\}\s*=\s*await[\s\S]{0,80}$/)
@@ -584,7 +674,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // audience-offset hours late, 10h for AEST") and solves with
     // wallClockNowInTz. The first cut of this sweep did not, and the arithmetic
     // below is what that cost.
-    const fn = fs.readFileSync(FN, 'utf8')
+    const fn = readSource()
 
     // The tz columns have to be SELECTED or the helper has nothing to read.
     expect(fn).toContain('timezone, collectives!inner(timezone, slug)')
@@ -628,7 +718,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // database's real now(), so measuring the 48h gap against a wall-clock
     // shifted by the audience offset would move every gap by that offset. The
     // cohort call must receive the REAL now.
-    const fn = fs.readFileSync(FN, 'utf8')
+    const fn = readSource()
     const cohortCall = fn.slice(
       fn.indexOf('selectSafetyGapCohort({'),
       fn.indexOf('selectSafetyGapCohort({') + 220,
@@ -641,7 +731,7 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     // wallClockNowInTz at THIS call site and every assertion above stayed
     // green, while each 48h gap moved by the audience offset (down to 38h for
     // a +10 audience), so the cadence would nudge earlier than it promises.
-    expect(fn).toMatch(/nudgeEvent\(\s*supabase,\s*event,\s*now\s*\)/)
+    expect(codeOnly(fn)).toMatch(/nudgeEvent\(\s*supabase,\s*event,\s*now\s*\)/)
   })
 
   it('the 12h floor is 12h before the REAL start for a +10 audience', () => {
@@ -766,11 +856,46 @@ describe('the sweep asks exactly who the app-open gate would ask', () => {
     ).toBe(false)
   })
 
+  it('the source readers blank what they promise and move nothing else', () => {
+    // These two helpers are now load-bearing for eight assertions, so pin them
+    // directly. A reader that silently stopped blanking would hand every guard
+    // above back the comment hole it was built to close, and every one of them
+    // would still be green.
+    const raw = fs.readFileSync(FN, 'utf8')
+    const stripped = readSource()
+
+    // Offsets are preserved exactly, which is what lets the indexOf and slice
+    // arithmetic above run on the stripped text and mean the same thing.
+    expect(stripped.length).toBe(raw.length)
+    expect(stripped.indexOf('function wallClockNowInTz')).toBe(
+      raw.indexOf('function wallClockNowInTz'),
+    )
+
+    // Comment prose is gone.
+    expect(raw).toContain('THE HOLE THIS CLOSES')
+    expect(stripped).not.toContain('THE HOLE THIS CLOSES')
+    expect(raw).toContain('Two clocks, two jobs')
+    expect(stripped).not.toContain('Two clocks, two jobs')
+
+    // Code is untouched, including the two `https://` that a naive line-comment
+    // rule would eat.
+    expect(stripped).toContain("import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'")
+    expect(stripped).toContain('https://app.coexistaus.org/events/')
+    expect(stripped).toContain('Deno.serve(')
+
+    // And codeOnly additionally empties the literals, without moving anything.
+    const code = codeOnly(stripped)
+    expect(code.length).toBe(raw.length)
+    expect(code).toContain('.upsert(')
+    expect(code).toContain('.select(')
+    expect(code).not.toContain('event_safety_nudges_sent')
+  })
+
   it('sends a type send-email actually knows', () => {
     // send-email 400s on an unknown type, so a template that is registered in
     // one file and named in another is a silent no-send.
     const sender = fs.readFileSync(path.join(ROOT, 'supabase/functions/send-email/index.ts'), 'utf8')
-    const fn = fs.readFileSync(FN, 'utf8')
+    const fn = readSource()
     expect(fn).toContain("type: 'safety_contact_missing'")
     expect(sender).toContain('safety_contact_missing: {')
     expect(sender).toContain('safety_contact_missing: (d) => emailShell({')
