@@ -1029,8 +1029,11 @@ export function useRegisterForEvent() {
         throw new Error('This event needs a ticket. Open the event to get one.')
       }
 
-      // Check capacity before registering (prevents race condition when
-      // multiple users register simultaneously for the last spot)
+      // A pre-flight count so the intent we send matches what the member was
+      // shown. It is a HINT, never the enforcement: two people racing for the
+      // last spot both read the same count. Capacity is enforced by the
+      // event_registrations BEFORE INSERT OR UPDATE trigger, which serialises
+      // per event and demotes an over-capacity claim to 'waitlisted'.
       if (!asWaitlist) {
         const [{ data: eventData }, { count: regCount }] = await Promise.all([
           supabase.from('events').select('capacity').eq('id', eventId).maybeSingle(),
@@ -1047,7 +1050,11 @@ export function useRegisterForEvent() {
 
       // Use upsert to handle re-registration after cancellation
       // (the cancelled row still exists with the unique event_id+user_id constraint)
-      const { error } = await supabase
+      //
+      // Read the written row back: the database is the authority on whether the
+      // seat was actually taken. Trusting the client's own count is how a member
+      // could be told "You're registered!" while the row on disk says waitlisted.
+      const { data: written, error } = await supabase
         .from('event_registrations')
         .upsert(
           {
@@ -1058,7 +1065,12 @@ export function useRegisterForEvent() {
           },
           { onConflict: 'event_id,user_id' },
         )
+        .select('status')
+        .single()
       if (error) throw error
+
+      const settledWaitlisted = written?.status === 'waitlisted'
+      asWaitlist = settledWaitlisted
 
       // Send confirmation email (only for registered, not waitlisted)
       if (!asWaitlist) {
@@ -1086,6 +1098,10 @@ export function useRegisterForEvent() {
           }, supabase)
         }
       }
+
+      // Callers decide what to say to the member from THIS, not from a count
+      // they read before the write.
+      return { waitlisted: settledWaitlisted }
     },
     onMutate: async ({ eventId, asWaitlist }) => {
       await queryClient.cancelQueries({ queryKey: ['event', eventId] })

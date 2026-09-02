@@ -509,6 +509,15 @@ function NextEventCard({
                 registerMutation.mutate(
                   { eventId: fallbackEvent.id },
                   {
+                    onSuccess: (result) => {
+                      // The feed card carries no capacity state, so a full
+                      // event comes back waitlisted. Drop the success flourish
+                      // and send them to the event rather than implying a spot.
+                      if (result?.waitlisted) {
+                        setJustRegistered(null)
+                        navigate(`/events/${fallbackEvent.id}`)
+                      }
+                    },
                     onError: () => {
                       setJustRegistered(null)
                       navigate(`/events/${fallbackEvent.id}`)

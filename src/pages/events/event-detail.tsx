@@ -745,12 +745,16 @@ export default function EventDetailPage() {
     registerMutation.mutate(
       { eventId: event.id, asWaitlist: isAtCapacity },
       {
-        onSuccess: () => {
-          toast.success(isAtCapacity ? 'Added to waitlist' : "You're registered!")
+        onSuccess: (result) => {
+          // The database decides, not the count this page happened to hold.
+          // isAtCapacity is computed from a cached spotsFilled, so on a full
+          // event it can say "registered" while the row on disk is waitlisted.
+          const waitlisted = result?.waitlisted ?? isAtCapacity
+          toast.success(waitlisted ? 'Added to waitlist' : "You're registered!")
           // Flag the transient burst animation. Don't fire on waitlist (that
           // path doesn't morph to the "You're going" CTA so the burst would
           // play over the wrong UI).
-          if (!isAtCapacity && !shouldReduceMotion) {
+          if (!waitlisted && !shouldReduceMotion) {
             setRegisteredJustNow(true)
             window.setTimeout(() => setRegisteredJustNow(false), 700)
           }

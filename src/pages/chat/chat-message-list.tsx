@@ -253,14 +253,23 @@ function InlineAnnouncement({
 
       try {
         if (response === 'going') {
-          const { error } = await supabase
+          // Read the row back. On a full event the capacity trigger demotes
+          // this write to 'waitlisted', and saying "You're registered!" anyway
+          // is how a member ends up believing they have a spot they never got.
+          const { data: written, error } = await supabase
             .from('event_registrations')
             .upsert(
               { event_id: eventId, user_id: user!.id, status: 'registered' as const, registered_at: new Date().toISOString() },
               { onConflict: 'event_id,user_id' },
             )
+            .select('status')
+            .single()
           if (error) throw error
-          toast.success("You're registered!")
+          if (written?.status === 'waitlisted') {
+            toast.info("That event is full - you're on the waitlist")
+          } else {
+            toast.success("You're registered!")
+          }
         } else if (response === 'not_going') {
           const { error } = await supabase
             .from('event_registrations')
