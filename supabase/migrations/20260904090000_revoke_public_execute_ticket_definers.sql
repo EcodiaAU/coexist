@@ -1,0 +1,69 @@
+-- ============================================================================
+-- 20260904090000: revoke the residual PUBLIC EXECUTE grant on the two ticket
+-- SECURITY DEFINER functions, which left them callable by anon.
+--
+-- Origin: found 2026-09-04 while verifying the migration-ledger classification.
+-- Board row: 91963648-b4a3-40fe-a705-e473bbbeba41
+-- Doctrine: backend/patterns/a-revoke-naming-roles-leaves-public-executing-2026-09-04.md
+-- Template: 20260826001000_lock_mass_send_runners_to_service_role.sql
+--
+-- THE DEFECT. 20260713000000_ticket_transfer.sql lines 106 and 289 wrote
+--   revoke execute on function ... from anon, authenticated;
+-- Postgres grants EXECUTE on a new function to PUBLIC by default, and a revoke
+-- that names roles does nothing to that default. anon is a member of PUBLIC, so
+-- both functions stayed anon-callable for 53 days. The live ACL was
+--   =X/postgres | postgres=X/postgres | service_role=X/postgres
+-- where the leading =X/ is the PUBLIC entry. There is no anon= entry in that
+-- string, which is exactly what a CORRECT revoke also looks like, so every
+-- detector that asks "does the ACL name anon" read both functions as locked.
+-- has_function_privilege resolves role membership and is the probe that asks the
+-- real question.
+--
+-- WHY IT MATTERED. Both functions are SECURITY DEFINER and neither body carries
+-- an auth.uid(), is_admin, is_staff or is_trusted_backend_caller check, and both
+-- sit in schema public so PostgREST exposes them as RPC to any holder of the anon
+-- key. transfer_event_ticket moves a confirmed ticket to another event and ticket
+-- type and accepts p_override_capacity. reconcile_ticket_membership writes
+-- chat_channel_members and event_registrations from ticket state. Proven live on
+-- 2026-09-04 inside a rolled-back transaction: as role anon, a call with four
+-- all-zero UUIDs reached line 12 of the body and raised "Ticket not found", which
+-- is the body executing rather than a permission failure.
+--
+-- WHY REVOKING FROM PUBLIC IS SAFE HERE. Neither function carries an explicit
+-- authenticated grant either, so both roles reached these functions only through
+-- PUBLIC and this statement cuts both off. That is the end state the original
+-- migration intended. service_role keeps its own explicit service_role=X/postgres
+-- entry, which a PUBLIC revoke does not touch, and every application caller is a
+-- Supabase Edge Function holding SUPABASE_SERVICE_ROLE_KEY (transfer-event-ticket,
+-- self-service-ticket, cancel-event, revoke-event-ticket, stripe-webhook).
+--
+-- THE IN-DATABASE CALLERS, which a repo grep cannot see. Five Postgres functions
+-- call reconcile_ticket_membership from inside their own bodies:
+-- cancel_my_pending_ticket, enforce_ticket_backed_registration, release_ticket_hold,
+-- reserve_spot_for_user, and the trigger function trg_reconcile_event_ticket_state.
+-- Three of the five are callable by authenticated. All five are SECURITY DEFINER
+-- owned by postgres, so privilege checks inside their bodies run as postgres, which
+-- keeps its explicit grant. That was proven with three rolled-back probes before
+-- this statement was applied: a postgres-owned SECURITY DEFINER wrapper invoked as
+-- authenticated still reached the body with the revoke in place; the same wrapper
+-- as SECURITY INVOKER got 42501 permission denied, proving the probe can detect a
+-- break; and that INVOKER wrapper without the revoke reached the body, isolating
+-- the revoke as the cause. A SECURITY INVOKER in-DB caller would have broken
+-- silently on a change whose repo-side analysis reads completely clean.
+--
+-- APPLIED to production tjutlbzekfouwsiaplbr on 2026-09-04 via the Management API
+-- (the project route is apply, read back, then record the version). Verified after:
+-- anon EXECUTE false on both, authenticated EXECUTE false on both, service_role
+-- EXECUTE true on both, control function get_user_profile_v1 still anon true, and
+-- the behavioural leg flipped from "P0001 Ticket not found" to
+-- "42501 permission denied for function". The pattern file's class sweep returned
+-- zero rows afterwards, down from exactly 2 of 921 public functions.
+-- ============================================================================
+
+REVOKE EXECUTE ON FUNCTION public.reconcile_ticket_membership(uuid, uuid) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.transfer_event_ticket(uuid, uuid, uuid, boolean) FROM PUBLIC, anon, authenticated;
+
+-- Idempotent and order-independent on a fresh db reset: service_role is the only
+-- intended caller tier and already holds an explicit grant on production.
+GRANT EXECUTE ON FUNCTION public.reconcile_ticket_membership(uuid, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.transfer_event_ticket(uuid, uuid, uuid, boolean) TO service_role;
