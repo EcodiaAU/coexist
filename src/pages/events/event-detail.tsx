@@ -104,6 +104,8 @@ import { hasEmergencyContact, hasFourWheelDriveAnswer, isCampoutActivity, LIVE_T
 import { useEventCarpools, type EventCarpoolBreakout } from '@/hooks/use-event-carpools'
 import { useSaveSeat } from '@/hooks/use-carpool'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
+import { Toggle } from '@/components/toggle'
+import { describeReminderOutcome } from '@/lib/event-reminder-audience'
 import { useEventCampoutChannel } from '@/hooks/use-staff-channels'
 import { MapView } from '@/components'
 import { activityAccent, defaultAccent } from '@/lib/activity-types'
@@ -642,6 +644,12 @@ export default function EventDetailPage() {
   const [registeredJustNow, setRegisteredJustNow] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [inviteMessage, setInviteMessage] = useState('')
+  // Reminder delivery channels. Both default on, so a host who never opens
+  // these gets the email AND the chat post - the email being silently absent
+  // is the thing being fixed here, and a default-off email would read as
+  // still broken.
+  const [remindByEmail, setRemindByEmail] = useState(true)
+  const [remindInChat, setRemindInChat] = useState(true)
   const [descriptionExpanded, setDescriptionExpanded] = useState(false)
   // Floating-local: store now as wall-clock-as-UTC ms so we can compare
   // against event.date_start (also wall-clock-as-UTC).
@@ -865,22 +873,41 @@ export default function EventDetailPage() {
       ? `Don't miss out! Register now for ${event.title}.`
       : `You're all invited! Tap to view and register.`,
     )
+    setRemindByEmail(true)
+    setRemindInChat(true)
     setShowInviteSheet(true)
   }, [event, alreadyInvited])
 
   const handleSendInvite = useCallback(() => {
     if (!event?.collective_id) return
+    if (alreadyInvited && !remindByEmail && !remindInChat) return
     inviteCollectiveMutation.mutate(
-      { eventId: event.id, collectiveId: event.collective_id, customMessage: inviteMessage || undefined },
+      {
+        eventId: event.id,
+        collectiveId: event.collective_id,
+        customMessage: inviteMessage || undefined,
+        channels: { email: remindByEmail, chat: remindInChat },
+      },
       {
         onSuccess: (data) => {
-          toast.success(data?.reminded ? 'Reminder posted to collective chat!' : 'All members invited & notified!')
+          if (!data?.reminded) {
+            toast.success('All members invited & notified!')
+          } else {
+            // Report each channel on its own. The old toast said the reminder
+            // was posted to chat no matter what happened, which is how a
+            // send that reached nobody still read as a success.
+            toast.success(describeReminderOutcome({
+              emailed: data.emailed ?? 0,
+              chatPosted: data.chatPosted ?? false,
+              chatSkippedReason: data.chatSkippedReason,
+            }))
+          }
           setShowInviteSheet(false)
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to send'),
       },
     )
-  }, [event, inviteCollectiveMutation, toast, inviteMessage])
+  }, [event, inviteCollectiveMutation, toast, inviteMessage, alreadyInvited, remindByEmail, remindInChat])
 
   // Share = open the EventShareSheet (3 Instagram-ready PNGs with app store
   // badges). Replaces the previous bare-URL navigator.share path - per Tate
@@ -2304,7 +2331,7 @@ export default function EventDetailPage() {
             </div>
             <p className="text-caption text-neutral-500 mt-1">
               {alreadyInvited
-                ? 'This will post a rich event card to the collective chat as a reminder.'
+                ? 'Choose how the reminder reaches your members.'
                 : 'This will invite all members, send notifications, and post to the collective chat.'}
             </p>
           </div>
@@ -2328,6 +2355,31 @@ export default function EventDetailPage() {
             </div>
           </div>
 
+          {/* Delivery channels - reminder only. The first invite has always
+              emailed, pushed and posted, and making that optional was not what
+              anyone asked for. */}
+          {alreadyInvited && (
+            <div className="rounded-sm border border-neutral-100 p-3.5 space-y-1">
+              <Toggle
+                checked={remindByEmail}
+                onChange={setRemindByEmail}
+                label="Email members directly"
+                description="Sends the reminder to each member's inbox, and a phone notification with it."
+                className="py-2"
+              />
+              <Toggle
+                checked={remindInChat}
+                onChange={setRemindInChat}
+                label="Post in collective chat"
+                description="Drops an event card into the collective's group chat."
+                className="py-2"
+              />
+              {!remindByEmail && !remindInChat && (
+                <p className="text-caption text-red-500 pt-1">Pick at least one way to send it.</p>
+              )}
+            </div>
+          )}
+
           {/* Custom message */}
           <Input
             type="textarea"
@@ -2350,6 +2402,7 @@ export default function EventDetailPage() {
               variant="primary"
               className={cn('flex-1 bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
               loading={inviteCollectiveMutation.isPending}
+              disabled={alreadyInvited && !remindByEmail && !remindInChat}
               onClick={handleSendInvite}
               icon={alreadyInvited ? <Bell size={15} /> : <Send size={15} />}
             >

@@ -72,6 +72,15 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     description: '24h event reminder. Data: { name, event_title, event_date, event_location, event_url }',
     subject: (d) => `Reminder: ${d.event_title} is coming up`,
   },
+  event_host_reminder: {
+    category: 'transactional',
+    description:
+      "Host-initiated 'register/come along' nudge for one event, carrying the host's own message. "
+      + 'Distinct from event_reminder, which is the automated 24h cron voice and has no place for a '
+      + 'written message. Data: { name, inviter_name, event_title, event_date, event_location, '
+      + 'event_url, custom_message }',
+    subject: (d) => `Reminder: ${d.event_title}`,
+  },
   event_cancelled: {
     category: 'transactional',
     description: 'Event cancelled notification. Data: { name, event_title, event_date, reason }',
@@ -216,6 +225,10 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
 const TYPE_TO_PREF_KEY: Record<string, string> = {
   event_confirmation: 'registration_confirmed',
   event_reminder: 'event_reminder',
+  // A host pressing Send Reminder is the same promise to the member as the
+  // automated one, so it answers to the same toggle. A member who turned event
+  // reminders off does not get one because a human pressed the button.
+  event_host_reminder: 'event_reminder',
   event_cancelled: 'event_cancelled',
   event_invite: 'event_invite',
   waitlist_promoted: 'waitlist_promotion',
@@ -455,6 +468,22 @@ function greeting(name: unknown): string {
 }
 
 /** Body paragraph */
+/**
+ * Escape a value that a person typed, before it is interpolated into the HTML
+ * body of a mail that goes to a whole collective. The host's reminder message
+ * is the only genuinely free-text field this function broadcasts, so an
+ * unclosed angle bracket in it would otherwise eat the rest of the email for
+ * every recipient.
+ */
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function p(text: string): string {
   return `<p class="ex-text" style="margin:0 0 16px;font-size:15px;color:${C.text};line-height:1.65;">${text}</p>`
 }
@@ -689,6 +718,26 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
         ['Where', d.event_location],
       ]) +
       p('Bring water, sunscreen, and a hat. We supply the rest.'),
+    footerCta: { label: 'View event', url: d.event_url as string || APP_URL },
+  }),
+
+  event_host_reminder: (d) => emailShell({
+    heroTitle: 'A reminder from your host',
+    heroSubtitle: d.event_title as string,
+    overline: 'Reminder',
+    ...heroFromData(d),
+    body: greeting(d.name) +
+      p(
+        `<strong>${escapeHtml(d.inviter_name) || 'Your event host'}</strong> sent a reminder about `
+        + `<strong>${escapeHtml(d.event_title)}</strong>.`,
+      ) +
+      (d.custom_message ? p(`"${escapeHtml(d.custom_message)}"`) : '') +
+      infoCard([
+        ['Event', d.event_title],
+        ['When', d.event_date],
+        ['Where', d.event_location],
+      ]) +
+      p('Tap below to register or check the details.'),
     footerCta: { label: 'View event', url: d.event_url as string || APP_URL },
   }),
 

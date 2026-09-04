@@ -2,6 +2,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type QueryClie
 import { supabase } from '@/lib/supabase'
 import { invokeAndReport } from '@/lib/invoke-report'
 import { sendEmailToMany } from '@/lib/send-email-batch'
+import { buildReminderAudience } from '@/lib/event-reminder-audience'
 import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { useToast } from '@/components/toast'
@@ -2037,7 +2038,18 @@ export function useInviteCollective() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ eventId, collectiveId, customMessage }: { eventId: string; collectiveId: string; customMessage?: string }) => {
+    mutationFn: async ({ eventId, collectiveId, customMessage, channels }: {
+      eventId: string
+      collectiveId: string
+      customMessage?: string
+      /**
+       * Which channels a REMINDER goes out on. Absent means both, which is the
+       * behaviour a host who never opens the toggles should get. The first
+       * invite ignores this: it has always emailed, pushed, notified and
+       * posted, and nobody asked for that to become optional.
+       */
+      channels?: { email?: boolean; chat?: boolean }
+    }) => {
       if (!user) throw new Error('Must be signed in')
 
       // Check if this collective has already been invited to this event
@@ -2068,45 +2080,142 @@ export function useInviteCollective() {
       const eventDate = formatEventLong(event.date_start)
 
       if (isReminder) {
-        // ── Remind flow: 24h cooldown, post rich announcement to chat ──
+        // ── Remind flow: email the members, post to chat, or both ──
+        //
+        // This branch used to do ONE thing: drop an announcement in the
+        // collective chat. The first-invite branch below it emails, pushes and
+        // notifies, so the same button quietly changed medium on its second
+        // press and hosts read that as the email being taken away (Kurt Jones,
+        // Co-Exist, 2026-09-05: "used to send a direct email whereas now it
+        // sends it to the collective chat"). Email is restored here as a
+        // first-class channel rather than bolted on: the host picks the
+        // channels, and each one reports its own outcome.
+        const wantEmail = channels?.email !== false
+        const wantChat = channels?.chat !== false
 
-        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-        const { data: recentReminders } = await supabase
-          .from('chat_messages')
-          .select('created_at')
-          .eq('collective_id', collectiveId)
-          .eq('message_type', 'announcement')
-          .gte('created_at', twentyFourHoursAgo)
-          .limit(5)
-        if (recentReminders && recentReminders.length >= 3) {
-          throw new Error('Too many announcements in the last 24h - try again later')
+        let emailed = 0
+        let chatPosted = false
+        let chatSkippedReason: string | null = null
+
+        if (wantEmail) {
+          const { data: members } = await supabase
+            .from('collective_members')
+            .select('user_id')
+            .eq('collective_id', collectiveId)
+            .eq('status', 'active')
+
+          const { data: regs } = await supabase
+            .from('event_registrations')
+            .select('user_id, status')
+            .eq('event_id', eventId)
+
+          const audience = buildReminderAudience(members, regs, user.id)
+
+          if (audience.length > 0) {
+            const { data: audienceProfiles } = await supabase
+              .from('profiles')
+              .select('id, display_name')
+              .in('id', audience)
+            const nameMap = new Map((audienceProfiles ?? []).map((pr) => [pr.id, pr.display_name]))
+
+            // ONE batched send, not a per-person fan-out. A collective can be
+            // hundreds of people and looping send-email is what blew Resend's
+            // rate limit on 19 August (see send-email-batch.ts).
+            const outcome = await sendEmailToMany('remindCollective', 'event_host_reminder', audience.map((uid) => ({
+              userId: uid,
+              data: {
+                name: nameMap.get(uid) ?? 'there',
+                inviter_name: inviterName,
+                event_title: event.title,
+                event_date: eventDate,
+                event_location: event.address ?? '',
+                event_url: `https://app.coexistaus.org/events/${eventId}`,
+                custom_message: customMessage ?? '',
+              },
+            })))
+            emailed = outcome.sent
+
+            // Push rides with the email rather than being its own toggle: it is
+            // the same promise on the phone, it is already pref-gated in
+            // send-push, and it costs nothing. It is also the closest free
+            // stand-in for the SMS the host asked about.
+            void invokeAndReport('remindCollective', 'send-push', {
+              body: {
+                userIds: audience,
+                title: `Reminder: ${event.title}`,
+                body: customMessage || `${inviterName} sent a reminder about ${event.title} on ${eventDate}`,
+                data: { type: 'event_reminder', event_id: eventId },
+              },
+            }, supabase)
+
+            const reminderNotifications = audience.map((uid) => ({
+              user_id: uid,
+              type: 'event_reminder',
+              title: `Reminder: ${event.title}`,
+              body: customMessage || `${inviterName} sent a reminder about ${event.title} on ${eventDate}`,
+              data: { event_id: eventId },
+              read: false,
+            }))
+            supabase.from('notifications')
+              .insert(reminderNotifications as Database['public']['Tables']['notifications']['Insert'][])
+              .then(({ error: notifErr }) => {
+                if (notifErr) console.error('[remind-collective] notification insert error:', notifErr)
+              })
+          }
         }
 
-        // Create a rich announcement in the chat
-        const { data: announcement, error: annErr } = await supabase
-          .from('chat_announcements')
-          .insert({
-            collective_id: collectiveId,
-            created_by: user.id,
-            type: 'event_invite',
-            title: `Reminder: ${event.title}`,
-            body: customMessage || `Don't miss out! Register now for ${event.title}.`,
-            metadata: { event_id: eventId },
-          })
-          .select()
-          .single()
-        if (annErr) throw annErr
+        if (wantChat) {
+          // The 24h announcement cap belongs to the CHAT channel and now only
+          // skips the chat post. It used to throw, which aborted the whole
+          // mutation - so once a collective hit the cap, the email the host
+          // actually asked for was refused on behalf of a channel they may not
+          // even have selected.
+          const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+          const { data: recentReminders } = await supabase
+            .from('chat_messages')
+            .select('created_at')
+            .eq('collective_id', collectiveId)
+            .eq('message_type', 'announcement')
+            .gte('created_at', twentyFourHoursAgo)
+            .limit(5)
 
-        // Post announcement message to chat
-        await supabase.from('chat_messages').insert({
-          collective_id: collectiveId,
-          user_id: user.id,
-          content: announcement.title,
-          message_type: 'announcement',
-          announcement_id: announcement.id,
-        })
+          if (recentReminders && recentReminders.length >= 3) {
+            chatSkippedReason = 'Chat post skipped - 3 announcements already in the last 24h.'
+          } else {
+            const { data: announcement, error: annErr } = await supabase
+              .from('chat_announcements')
+              .insert({
+                collective_id: collectiveId,
+                created_by: user.id,
+                type: 'event_invite',
+                title: `Reminder: ${event.title}`,
+                body: customMessage || `Don't miss out! Register now for ${event.title}.`,
+                metadata: { event_id: eventId },
+              })
+              .select()
+              .single()
+            if (annErr) {
+              // Only the caller's chosen channels can fail the whole action. If
+              // the email already went out, a chat failure is reported, not
+              // thrown, because throwing here would tell the host nothing was
+              // sent while hundreds of emails were already in flight.
+              if (!wantEmail) throw annErr
+              console.error('[remind-collective] announcement insert error:', annErr)
+              chatSkippedReason = 'Chat post failed.'
+            } else {
+              await supabase.from('chat_messages').insert({
+                collective_id: collectiveId,
+                user_id: user.id,
+                content: announcement.title,
+                message_type: 'announcement',
+                announcement_id: announcement.id,
+              })
+              chatPosted = true
+            }
+          }
+        }
 
-        return { reminded: true }
+        return { reminded: true, emailed, chatPosted, chatSkippedReason }
       }
 
       // ── First invite flow: create registrations + rich announcement ──
