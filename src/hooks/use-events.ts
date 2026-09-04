@@ -2154,7 +2154,6 @@ export function useInviteCollective() {
               title: `Reminder: ${event.title}`,
               body: customMessage || `${inviterName} sent a reminder about ${event.title} on ${eventDate}`,
               data: { event_id: eventId },
-              read: false,
             }))
             supabase.from('notifications')
               .insert(reminderNotifications as Database['public']['Tables']['notifications']['Insert'][])
@@ -2311,14 +2310,21 @@ export function useInviteCollective() {
           },
         }, supabase)
 
-        // In-app notifications
+        // In-app notifications.
+        //
+        // There is no `read` column. Unread is `read_at IS NULL`, which is the
+        // default, so the flag is simply left out. Both inserts carried
+        // `read: false` and PostgREST rejected the whole batch with PGRST204
+        // "Could not find the 'read' column", console.error'd and discarded,
+        // so invite-all has been posting no in-app notification at all. The
+        // `as ...['Insert'][]` cast below is what hid it: an excess property is
+        // an error on a plain object literal and silent through an assertion.
         const notifications = invitedUserIds.map((uid) => ({
           user_id: uid,
           type: 'event_invite',
           title: `You're invited to ${event.title}`,
           body: `${inviterName} invited your collective to ${event.title} on ${eventDate}`,
           data: { event_id: eventId },
-          read: false,
         }))
         supabase.from('notifications').insert(notifications as Database['public']['Tables']['notifications']['Insert'][]).then(({ error: notifErr }) => {
           if (notifErr) console.error('[invite-all] notification insert error:', notifErr)
