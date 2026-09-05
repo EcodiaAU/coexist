@@ -31,6 +31,7 @@ import {
   Copy,
   Share2,
   Maximize2,
+  Instagram,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import {
@@ -331,6 +332,28 @@ function AttendeeSafetySheet({
               <p className="text-xs font-semibold text-primary-500 uppercase tracking-wider">Phone</p>
               <a href={`tel:${p.phone}`} className="text-sm font-medium text-neutral-900 underline">
                 {p.phone}
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Instagram. Hosts asked to be able to reach an RSVPer on the handle
+            they already put on their own profile, for tagging and follow-up
+            after the day. Link shape matches profile-modal.tsx: strip a
+            leading @ for the URL, show one in the label. */}
+        {p.instagram_handle && (
+          <div className="flex items-start gap-3 p-3 rounded-sm bg-neutral-50">
+            <Instagram size={16} className="text-primary-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-primary-500 uppercase tracking-wider">Instagram</p>
+              <a
+                href={`https://instagram.com/${p.instagram_handle.replace('@', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Visit ${p.instagram_handle} on Instagram`}
+                className="text-sm font-medium text-neutral-900 underline"
+              >
+                {p.instagram_handle.startsWith('@') ? p.instagram_handle : `@${p.instagram_handle}`}
               </a>
             </div>
           </div>
