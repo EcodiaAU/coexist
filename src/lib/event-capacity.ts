@@ -395,6 +395,13 @@ export function classifyAttendance(input: {
   if (registrationStatus === 'waitlisted') {
     // Ticketed events have no RSVP waitlist: the ticket is the only model, so a
     // waitlisted row with no ticket is noise on the leader roster.
+    //
+    // STILL TRUE after the ticketed waitlist shipped on 2026-09-05. That queue
+    // lives in its own `event_waitlist` table precisely so this rule holds: a
+    // ticketed waitlister writes no registration row, reaches no roster, and
+    // is counted nowhere near the going number. The organiser sees them in
+    // TicketWaitlistPanel instead. A `waitlisted` REGISTRATION on a ticketed
+    // event remains what it always was, a ghost RSVP, and stays hidden.
     return isTicketed ? 'hidden' : 'waitlist'
   }
 
