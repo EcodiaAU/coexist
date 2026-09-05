@@ -465,6 +465,7 @@ export default function PublicEventPage() {
                 ticketTypeId={activeType?.id ?? null}
                 source="public"
                 variant="public"
+                embedded
                 className="mt-4"
               />
             )}

@@ -35,6 +35,12 @@ interface WaitlistJoinProps {
   source?: 'app' | 'public'
   /** Compact treatment for the in-app card, roomier for the public page. */
   variant?: 'app' | 'public'
+  /**
+   * The host surface already renders its own "Sold out" heading and held-spot
+   * note (the public event page does). Suppresses both here so the panel does
+   * not say "Sold out" twice, one nested inside the other.
+   */
+  embedded?: boolean
   className?: string
 }
 
@@ -47,6 +53,7 @@ export function WaitlistJoin({
   ticketTypeId,
   source = 'app',
   variant = 'app',
+  embedded = false,
   className,
 }: WaitlistJoinProps) {
   // A guest's address only exists in this component's state, so remember what
@@ -132,14 +139,24 @@ export function WaitlistJoin({
 
   /* -------- join -------- */
   return (
-    <div className={cn('rounded-md border border-neutral-200 bg-neutral-50', pad, className)}>
-      <div className="flex items-center gap-2">
-        <Ticket size={18} className="text-neutral-400" />
-        <p className="font-heading text-base font-semibold text-neutral-900">Sold out</p>
-      </div>
-      <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-        Every spot has been taken. Join the waitlist and we will email you if a ticket comes back,
-        in the order people joined.
+    <div
+      className={cn(
+        embedded
+          ? 'border-t border-neutral-200 pt-4'
+          : cn('rounded-md border border-neutral-200 bg-neutral-50', pad),
+        className,
+      )}
+    >
+      {!embedded && (
+        <div className="flex items-center gap-2">
+          <Ticket size={18} className="text-neutral-400" />
+          <p className="font-heading text-base font-semibold text-neutral-900">Sold out</p>
+        </div>
+      )}
+      <p className={cn('text-sm leading-relaxed text-neutral-600', !embedded && 'mt-2')}>
+        {embedded
+          ? 'Join the waitlist and we will email you if a ticket comes back, in the order people joined.'
+          : 'Every spot has been taken. Join the waitlist and we will email you if a ticket comes back, in the order people joined.'}
       </p>
 
       {!authedEmail && (
@@ -180,11 +197,13 @@ export function WaitlistJoin({
 
       {error && <p className="mt-2 text-xs text-error-600">{error}</p>}
 
-      <p className="mt-3 text-xs leading-relaxed text-neutral-500">
-        Been told a spot is held for you? It still is, and this page says sold out either way
-        because your spot is one of the ones counted here. Open the pay-to-confirm link from your
-        email, or sign in and open this event, and you can pay for it there.
-      </p>
+      {!embedded && (
+        <p className="mt-3 text-xs leading-relaxed text-neutral-500">
+          Been told a spot is held for you? It still is, and this page says sold out either way
+          because your spot is one of the ones counted here. Open the pay-to-confirm link from your
+          email, or sign in and open this event, and you can pay for it there.
+        </p>
+      )}
     </div>
   )
 }
