@@ -670,7 +670,7 @@ export function useTicketSelfService(ticketId: string | undefined) {
         p_ticket_id: ticketId,
       })
       if (error) throw error
-      return (data ?? { found: false }) as TicketSelfService
+      return (data ?? { found: false }) as unknown as TicketSelfService
     },
     enabled: !!ticketId && !!user,
     staleTime: 30 * 1000,

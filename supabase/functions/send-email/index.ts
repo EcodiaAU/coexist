@@ -96,6 +96,21 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     description: 'Promoted from waitlist. Data: { name, event_title, event_date, event_url }',
     subject: (d) => `You're in! Spot available for ${d.event_title}`,
   },
+  // The ticketed-event waitlist (2026-09-05). Distinct from waitlist_promoted,
+  // which is the FREE-event path where the organiser has already moved the
+  // person into a confirmed seat. On a ticketed event nobody is seated by
+  // being promoted: a spot opened and they now have to buy it, first come
+  // first served, so the subject and the CTA both have to say so.
+  waitlist_joined: {
+    category: 'transactional',
+    description: 'Joined the waitlist for a sold-out ticketed event. Data: { name, event_title, event_date, position, event_url }',
+    subject: (d) => `You're on the waitlist for ${d.event_title}`,
+  },
+  waitlist_spot_open: {
+    category: 'transactional',
+    description: 'A ticket freed up on a sold-out event. Data: { name, event_title, event_date, event_url, hours_to_claim }',
+    subject: (d) => `A spot just opened for ${d.event_title}`,
+  },
   password_reset: {
     category: 'transactional',
     description: 'Password reset. Data: { name, reset_url }',
@@ -232,6 +247,11 @@ const TYPE_TO_PREF_KEY: Record<string, string> = {
   event_cancelled: 'event_cancelled',
   event_invite: 'event_invite',
   waitlist_promoted: 'waitlist_promotion',
+  // One toggle governs the whole waitlist feature. Someone who switched
+  // waitlist mail off should not start receiving it because the ticketed path
+  // happens to be a different code path from the free one.
+  waitlist_joined: 'waitlist_promotion',
+  waitlist_spot_open: 'waitlist_promotion',
   // Marketing digest, but honour the same toggle as the push nudge so a
   // member who turned off "New Events" gets neither channel.
   upcoming_in_collective: 'new_event_in_collective',
@@ -770,6 +790,36 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
         ['Date', d.event_date],
       ]) +
       p('Your registration is confirmed. See you there!'),
+    footerCta: { label: 'View Event', url: d.event_url as string || APP_URL },
+  }),
+
+  waitlist_joined: (d) => emailShell({
+    heroTitle: 'You\'re on the list',
+    heroSubtitle: d.event_title as string,
+    body: greeting(d.name) +
+      p(`<strong>${d.event_title}</strong> is sold out, so we have put you on the waitlist.`) +
+      infoCard([
+        ['Event', d.event_title],
+        ['Date', d.event_date],
+        ['Your place', `#${d.position}`],
+      ]) +
+      p('If a ticket frees up we will email you straight away with a link to buy it. Spots are offered in the order people joined, and you get 24 hours before it passes to the next person.') +
+      p(`<span style="font-size:13px;color:${C.textMuted};">You can leave the waitlist any time from the event page.</span>`),
+    footerCta: { label: 'View Event', url: d.event_url as string || APP_URL },
+  }),
+
+  waitlist_spot_open: (d) => emailShell({
+    heroTitle: 'A spot opened up',
+    heroSubtitle: d.event_title as string,
+    body: greeting(d.name) +
+      p(`A ticket has just come back for <strong>${d.event_title}</strong>, and you are next on the waitlist.`) +
+      infoCard([
+        ['Event', d.event_title],
+        ['Date', d.event_date],
+      ]) +
+      p(`This spot is held for you for the next ${d.hours_to_claim || 24} hours. After that it passes to the next person waiting.`) +
+      ctaButton('Get your ticket', d.event_url as string || APP_URL) +
+      p(`<span style="font-size:13px;color:${C.textMuted};">The ticket is not yours until checkout is complete.</span>`),
     footerCta: { label: 'View Event', url: d.event_url as string || APP_URL },
   }),
 

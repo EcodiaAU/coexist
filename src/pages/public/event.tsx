@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/skeleton'
 import { OGMeta, SITE_URL } from '@/components/og-meta'
 import { APP_NAME } from '@/lib/constants'
 import { isEventSoldOut } from '@/lib/event-sold-out'
+import { WaitlistJoin } from '@/components/waitlist-join'
 import { formatTime } from '@/lib/date-format'
 import { WebFooter } from '@/components/web-footer'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
@@ -453,6 +454,20 @@ export default function PublicEventPage() {
               pay-to-confirm link from your email, or sign in to the app and open this
               campout, and you can pay for it there.
             </p>
+
+            {/* The panel stopped being a dead end on 2026-09-05 (Jess: "with
+                tickets being sold out does it generate a waitlist?"). This page
+                is anonymous, so the form collects a name and an email; joining
+                does not create an account. */}
+            {id && (
+              <WaitlistJoin
+                eventId={id}
+                ticketTypeId={activeType?.id ?? null}
+                source="public"
+                variant="public"
+                className="mt-4"
+              />
+            )}
           </motion.div>
         )}
 

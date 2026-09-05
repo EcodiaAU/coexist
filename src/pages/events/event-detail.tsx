@@ -87,6 +87,7 @@ import { attendeeName } from '@/lib/attendee-name'
 import { parseLocationPoint } from '@/lib/geo'
 import { getMediumUrl } from '@/lib/image-utils'
 import { isEventSoldOut } from '@/lib/event-sold-out'
+import { WaitlistJoin } from '@/components/waitlist-join'
 import { computeSpotsTaken, ticketStatusBadge } from '@/lib/event-capacity'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
@@ -1308,17 +1309,32 @@ export default function EventDetailPage() {
       // Sold out (e.g. on Eventbrite): close native sales. Eventbrite buyers
       // still get in via their claim link (it bypasses this entirely), and any
       // already-confirmed/pending holder is handled by the branches above.
+      // Sold out is no longer a dead end (Jess, 2026-09-05: "with tickets being
+      // sold out does it generate a waitlist?"). A signed-in member joins with
+      // one tap, since we already hold their email.
       if (soldOut) {
         return (
-          <div className="flex items-start gap-2.5 px-5 py-4 rounded-md bg-neutral-50 text-neutral-700 text-sm border border-neutral-200">
-            <Ticket size={18} className="mt-0.5 shrink-0 text-neutral-400" />
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-neutral-900">Sold out</p>
-              <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-                Tickets for this campout have sold out. If the organisers sent you a claim
-                link, open it to grab your free app ticket and join the group chat.
-              </p>
+          <div className="space-y-3">
+            <div className="flex items-start gap-2.5 px-5 py-4 rounded-md bg-neutral-50 text-neutral-700 text-sm border border-neutral-200">
+              <Ticket size={18} className="mt-0.5 shrink-0 text-neutral-400" />
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-neutral-900">Sold out</p>
+                <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                  Tickets for this campout have sold out. If the organisers sent you a claim
+                  link, open it to grab your free app ticket and join the group chat.
+                </p>
+              </div>
             </div>
+            {id && user?.email && (
+              <WaitlistJoin
+                eventId={id}
+                authedEmail={user.email}
+                authedName={profile?.display_name ?? null}
+                ticketTypeId={(ticketTypes ?? [])[0]?.id ?? null}
+                source="app"
+                variant="app"
+              />
+            )}
           </div>
         )
       }
@@ -1327,6 +1343,24 @@ export default function EventDetailPage() {
       // too (their invitation to a ticketed event still needs a ticket), so keep
       // the invite context visible above the selector rather than dropping them
       // into a bare "pick a ticket" screen with no explanation.
+      // Every active type at zero is the same dead end as the event-level flag,
+      // reached by a different branch: the selector renders with every row
+      // disabled and no action. Offer the waitlist here too.
+      const allTypesSoldOut = !!(ticketTypes ?? []).length
+        && (ticketTypes ?? []).every((tt) => tt.remaining !== null && tt.remaining <= 0)
+      if (allTypesSoldOut && id && user?.email) {
+        return (
+          <WaitlistJoin
+            eventId={id}
+            authedEmail={user.email}
+            authedName={profile?.display_name ?? null}
+            ticketTypeId={(ticketTypes ?? [])[0]?.id ?? null}
+            source="app"
+            variant="app"
+          />
+        )
+      }
+
       return (
         <div className="space-y-3">
           {userStatus === 'invited' && (

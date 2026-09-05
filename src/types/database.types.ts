@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.4"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -2654,6 +2654,60 @@ export type Database = {
           },
         ]
       }
+      do_good_organisations: {
+        Row: {
+          blurb: string | null
+          category: string
+          created_at: string
+          id: string
+          image_position_x: number | null
+          image_position_y: number | null
+          image_url: string | null
+          is_published: boolean
+          location: string | null
+          logo_url: string | null
+          name: string
+          opportunity: string | null
+          sort_order: number
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          blurb?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          image_position_x?: number | null
+          image_position_y?: number | null
+          image_url?: string | null
+          is_published?: boolean
+          location?: string | null
+          logo_url?: string | null
+          name: string
+          opportunity?: string | null
+          sort_order?: number
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          blurb?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          image_position_x?: number | null
+          image_position_y?: number | null
+          image_url?: string | null
+          is_published?: boolean
+          location?: string | null
+          logo_url?: string | null
+          name?: string
+          opportunity?: string | null
+          sort_order?: number
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       donation_projects: {
         Row: {
           created_at: string | null
@@ -3832,6 +3886,105 @@ export type Database = {
           },
         ]
       }
+      event_ticket_transfers: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          event_id: string
+          expires_at: string
+          from_user_id: string
+          id: string
+          status: string
+          ticket_id: string
+          to_email: string
+          to_user_id: string | null
+          token: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          event_id: string
+          expires_at?: string
+          from_user_id: string
+          id?: string
+          status?: string
+          ticket_id: string
+          to_email: string
+          to_user_id?: string | null
+          token: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          event_id?: string
+          expires_at?: string
+          from_user_id?: string
+          id?: string
+          status?: string
+          ticket_id?: string
+          to_email?: string
+          to_user_id?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_ticket_transfers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_ticket_transfers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_ticket_transfers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_ticket_transfers_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_ticket_transfers_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_ticket_transfers_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "event_tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_ticket_transfers_to_user_id_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_ticket_transfers_to_user_id_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_ticket_types: {
         Row: {
           capacity: number | null
@@ -3905,9 +4058,13 @@ export type Database = {
           created_at: string | null
           custom_answers: Json
           event_id: string
+          hold_expires_at: string | null
           id: string
           price_cents: number
           quantity: number
+          refund_notified_at: string | null
+          reserved_by: string | null
+          reserved_note: string | null
           status: string
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
@@ -3921,9 +4078,13 @@ export type Database = {
           created_at?: string | null
           custom_answers?: Json
           event_id: string
+          hold_expires_at?: string | null
           id?: string
           price_cents: number
           quantity?: number
+          refund_notified_at?: string | null
+          reserved_by?: string | null
+          reserved_note?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -3937,9 +4098,13 @@ export type Database = {
           created_at?: string | null
           custom_answers?: Json
           event_id?: string
+          hold_expires_at?: string | null
           id?: string
           price_cents?: number
           quantity?: number
+          refund_notified_at?: string | null
+          reserved_by?: string | null
+          reserved_note?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -3971,6 +4136,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "event_tickets_reserved_by_fkey"
+            columns: ["reserved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_tickets_reserved_by_fkey"
+            columns: ["reserved_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "event_tickets_ticket_type_id_fkey"
             columns: ["ticket_type_id"]
             isOneToOne: false
@@ -3986,6 +4165,114 @@ export type Database = {
           },
           {
             foreignKeyName: "event_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_waitlist: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          email: string
+          event_id: string
+          id: string
+          name: string | null
+          notified_at: string | null
+          notify_count: number
+          quantity: number
+          removed_at: string | null
+          removed_by: string | null
+          source: string
+          ticket_type_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          email: string
+          event_id: string
+          id?: string
+          name?: string | null
+          notified_at?: string | null
+          notify_count?: number
+          quantity?: number
+          removed_at?: string | null
+          removed_by?: string | null
+          source?: string
+          ticket_type_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          email?: string
+          event_id?: string
+          id?: string
+          name?: string | null
+          notified_at?: string | null
+          notify_count?: number
+          quantity?: number
+          removed_at?: string | null
+          removed_by?: string | null
+          source?: string
+          ticket_type_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_waitlist_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_a_id"]
+          },
+          {
+            foreignKeyName: "event_waitlist_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_potential_duplicates"
+            referencedColumns: ["event_b_id"]
+          },
+          {
+            foreignKeyName: "event_waitlist_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_waitlist_removed_by_fkey"
+            columns: ["removed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_waitlist_removed_by_fkey"
+            columns: ["removed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_waitlist_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "event_ticket_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_waitlist_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_waitlist_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
@@ -4149,6 +4436,10 @@ export type Database = {
           onedrive_folder_url: string | null
           public_check_in_enabled: boolean
           public_check_in_token: string | null
+          registrations_closed: boolean
+          self_service_refund_cutoff_hours: number
+          self_service_refund_enabled: boolean
+          self_service_transfer_enabled: boolean
           series_id: string | null
           status: Database["public"]["Enums"]["event_status"] | null
           timezone: string | null
@@ -4182,6 +4473,10 @@ export type Database = {
           onedrive_folder_url?: string | null
           public_check_in_enabled?: boolean
           public_check_in_token?: string | null
+          registrations_closed?: boolean
+          self_service_refund_cutoff_hours?: number
+          self_service_refund_enabled?: boolean
+          self_service_transfer_enabled?: boolean
           series_id?: string | null
           status?: Database["public"]["Enums"]["event_status"] | null
           timezone?: string | null
@@ -4215,6 +4510,10 @@ export type Database = {
           onedrive_folder_url?: string | null
           public_check_in_enabled?: boolean
           public_check_in_token?: string | null
+          registrations_closed?: boolean
+          self_service_refund_cutoff_hours?: number
+          self_service_refund_enabled?: boolean
+          self_service_transfer_enabled?: boolean
           series_id?: string | null
           status?: Database["public"]["Enums"]["event_status"] | null
           timezone?: string | null
@@ -4309,6 +4608,30 @@ export type Database = {
           to_excel_skipped_duplicates?: number | null
           to_excel_updated?: number | null
           to_excel_weak_dedup_warning_count?: number | null
+        }
+        Relationships: []
+      }
+      good_category_images: {
+        Row: {
+          category: string
+          id: string
+          image_url: string
+          surface: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          id?: string
+          image_url: string
+          surface: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          image_url?: string
+          surface?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -6206,6 +6529,66 @@ export type Database = {
           },
         ]
       }
+      support_resources: {
+        Row: {
+          category: string
+          created_at: string
+          hours: string | null
+          id: string
+          image_position_x: number | null
+          image_position_y: number | null
+          image_url: string | null
+          is_crisis: boolean
+          is_published: boolean
+          name: string
+          phone: string | null
+          phone_note: string | null
+          sms_number: string | null
+          sort_order: number
+          tagline: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          hours?: string | null
+          id?: string
+          image_position_x?: number | null
+          image_position_y?: number | null
+          image_url?: string | null
+          is_crisis?: boolean
+          is_published?: boolean
+          name: string
+          phone?: string | null
+          phone_note?: string | null
+          sms_number?: string | null
+          sort_order?: number
+          tagline?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          hours?: string | null
+          id?: string
+          image_position_x?: number | null
+          image_position_y?: number | null
+          image_url?: string | null
+          is_crisis?: boolean
+          is_published?: boolean
+          name?: string
+          phone?: string | null
+          phone_note?: string | null
+          sms_number?: string | null
+          sort_order?: number
+          tagline?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       survey_responses: {
         Row: {
           answers: Json
@@ -7350,6 +7733,10 @@ export type Database = {
         Args: { p_ticket_id: string }
         Returns: boolean
       }
+      cancel_my_ticket_transfer: {
+        Args: { p_transfer_id: string }
+        Returns: boolean
+      }
       check_channel_rate_limit: {
         Args: { p_channel_id: string; p_user_id: string }
         Returns: boolean
@@ -7363,6 +7750,7 @@ export type Database = {
         Args: { p_device_info?: Json; p_platform: string; p_token: string }
         Returns: undefined
       }
+      claim_ticket_transfer: { Args: { p_token: string }; Returns: Json }
       cleanup_deleted_accounts: { Args: never; Returns: number }
       cleanup_expired_reservations: { Args: never; Returns: number }
       coexist_attendance_metrics: {
@@ -7467,12 +7855,21 @@ export type Database = {
         }[]
       }
       enablelongtransactions: { Args: never; Returns: string }
+      ensure_campout_chat_channel: {
+        Args: { p_event_id: string }
+        Returns: string
+      }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      event_attendance_reconciliation: {
+        Args: { p_event_id: string }
+        Returns: Json
+      }
       event_digest_run: { Args: { p_dry_run?: boolean }; Returns: Json }
       event_effective_timezone: {
         Args: { p_event_id: string }
         Returns: string
       }
+      event_free_seats: { Args: { p_event_id: string }; Returns: number }
       event_going_count: { Args: { p_event_id: string }; Returns: number }
       event_going_members: {
         Args: { p_event_id: string }
@@ -7486,6 +7883,8 @@ export type Database = {
       event_host_count: { Args: { p_event_id: string }; Returns: number }
       event_reengagement_run: { Args: { p_dry_run?: boolean }; Returns: Json }
       event_spots_taken: { Args: { p_event_id: string }; Returns: number }
+      event_waitlist_summary: { Args: { p_event_id: string }; Returns: Json }
+      expire_lapsed_ticket_holds: { Args: never; Returns: number }
       expire_stale_pending_tickets: { Args: never; Returns: number }
       generate_event_check_in_code: { Args: never; Returns: string }
       generate_public_check_in_token: { Args: never; Returns: string }
@@ -7680,6 +8079,10 @@ export type Database = {
           onedrive_folder_url: string | null
           public_check_in_enabled: boolean
           public_check_in_token: string | null
+          registrations_closed: boolean
+          self_service_refund_cutoff_hours: number
+          self_service_refund_enabled: boolean
+          self_service_transfer_enabled: boolean
           series_id: string | null
           status: Database["public"]["Enums"]["event_status"] | null
           timezone: string | null
@@ -7702,6 +8105,10 @@ export type Database = {
           total_points: number
           user_id: string
         }[]
+      }
+      get_my_ticket_self_service: {
+        Args: { p_ticket_id: string }
+        Returns: Json
       }
       get_national_stats: { Args: never; Returns: Json }
       get_platform_impact_stats: { Args: never; Returns: Json }
@@ -7805,12 +8212,36 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { uid: string }; Returns: boolean }
+      is_trusted_backend_caller: { Args: never; Returns: boolean }
+      join_event_waitlist: {
+        Args: {
+          p_email: string
+          p_event_id: string
+          p_name?: string
+          p_quantity?: number
+          p_source?: string
+          p_ticket_type_id?: string
+        }
+        Returns: Json
+      }
+      leave_event_waitlist: {
+        Args: { p_email?: string; p_event_id: string }
+        Returns: boolean
+      }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      mark_waitlist_notified: {
+        Args: { p_waitlist_ids: string[] }
+        Returns: number
+      }
       merge_email_tags: {
         Args: { p_canonical_id: string; p_deprecated_id: string }
         Returns: number
       }
       my_capabilities: { Args: never; Returns: string[] }
+      my_event_waitlist_state: {
+        Args: { p_email?: string; p_event_id: string }
+        Returns: Json
+      }
       next_donation_receipt_number: { Args: never; Returns: string }
       notify_chat_mentions: {
         Args: { p_mentioned_user_ids: string[]; p_message_id: string }
@@ -7896,6 +8327,7 @@ export type Database = {
         Args: { p_user_id: string; p_variant_key: string }
         Returns: undefined
       }
+      release_ticket_hold: { Args: { p_ticket_id: string }; Returns: boolean }
       reserve_event_ticket: {
         Args: {
           p_answers?: Json
@@ -7906,6 +8338,17 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      reserve_spot_for_user: {
+        Args: {
+          p_event_id: string
+          p_hold_expires_at?: string
+          p_note?: string
+          p_reserved_by: string
+          p_ticket_type_id?: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       reserve_stock: {
         Args: {
@@ -8535,6 +8978,10 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
+      start_my_ticket_transfer: {
+        Args: { p_ticket_id: string; p_to_email: string }
+        Returns: Json
+      }
       sync_auto_tags: { Args: never; Returns: undefined }
       sync_variant_inventory: {
         Args: { p_product_id: string }
@@ -8572,6 +9019,21 @@ export type Database = {
       validate_ticket_answers: {
         Args: { p_answers: Json; p_event_id: string }
         Returns: undefined
+      }
+      waitlist_drain_candidates: {
+        Args: { p_event_id?: string; p_force?: boolean }
+        Returns: {
+          date_start: string
+          email: string
+          event_id: string
+          event_title: string
+          free_seats: number
+          name: string
+          quantity: number
+          queue_position: number
+          user_id: string
+          waitlist_id: string
+        }[]
       }
     }
     Enums: {
@@ -8658,12 +9120,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -8687,11 +9149,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -8712,11 +9174,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -8737,11 +9199,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -8754,11 +9216,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

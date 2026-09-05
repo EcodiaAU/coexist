@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { TicketWaitlistPanel } from '@/components/ticket-waitlist-panel'
 import { useToast } from '@/components/toast'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
@@ -977,6 +978,12 @@ export default function EventDayPage() {
             </div>
           )}
         </motion.div>
+
+        {/* The ticketed waitlist. Its members hold neither a registration nor
+            a ticket, so they never appear on the roster below (that is
+            classifyAttendance working as intended); this panel is the only
+            place they are visible, and the only place the unmet demand is. */}
+        {isTicketed && eventId && <TicketWaitlistPanel eventId={eventId} />}
 
         {/* Live count bar - checked in / going */}
         {goingCount > 0 && (

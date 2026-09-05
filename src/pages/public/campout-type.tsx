@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useReducedMotion } from 'framer-motion'
 import { MapPin, ChevronLeft, Tent, Check } from 'lucide-react'
+import { WaitlistJoin } from '@/components/waitlist-join'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/button'
@@ -26,6 +27,8 @@ interface DateRow {
   price_cents: number | null
   ticket_type_id: string | null
   sold_out: boolean
+  /** NULL = unbounded. Drives the waitlist offer on a full date. */
+  free_seats?: number | null
 }
 
 function formatDate(date: string): string {
@@ -62,8 +65,23 @@ export default function CampoutTypePage() {
         const cur = ttByEvent[t.event_id as string]
         if (!cur || (t.price_cents as number) < cur.price_cents) ttByEvent[t.event_id as string] = { id: t.id as string, price_cents: t.price_cents as number }
       }
+      // Real availability, not just the manual Eventbrite flag. Until
+      // 2026-09-05 this page read event_extras.sold_out alone, so a date that
+      // was genuinely at capacity rendered as bookable, took the buyer through
+      // the whole safety-requirements flow, and only then failed in
+      // reserve_event_ticket with "Sold out". Same display-versus-gate drift
+      // the public event page was fixed for on 2026-08-25. event_free_seats is
+      // SECURITY DEFINER and granted to anon precisely so this page can tell a
+      // logged-out visitor the truth.
+      const freeByEvent: Record<string, number | null> = {}
+      await Promise.all(mine.map(async (e) => {
+        const { data: free } = await supabase.rpc('event_free_seats', { p_event_id: e.id })
+        freeByEvent[e.id] = (free as number | null) ?? null
+      }))
+
       const rows = mine.map((e) => {
         const ex = e.event_extras as Record<string, unknown> | null
+        const free = freeByEvent[e.id]
         return {
           id: e.id,
           title: e.title,
@@ -73,7 +91,9 @@ export default function CampoutTypePage() {
           cover_image_url: e.cover_image_url,
           price_cents: ttByEvent[e.id]?.price_cents ?? null,
           ticket_type_id: ttByEvent[e.id]?.id ?? null,
-          sold_out: !!(ex && typeof ex === 'object' && ex.sold_out === true),
+          free_seats: free,
+          sold_out: !!(ex && typeof ex === 'object' && ex.sold_out === true)
+            || (free !== null && free <= 0),
         }
       }) as DateRow[]
       return { group, rows }
@@ -240,7 +260,7 @@ export default function CampoutTypePage() {
                 <div className="mt-4 space-y-2.5">
                   {rows.map((r) => {
                     const soldOut = r.sold_out
-                    const active = selectedId === r.id && !soldOut
+                    const active = selectedId === r.id
                     const d = new Date(r.date_start)
                     const wd = d.toLocaleDateString('en-AU', { weekday: 'short', timeZone: 'UTC' })
                     const day = d.toLocaleDateString('en-AU', { day: 'numeric', timeZone: 'UTC' })
@@ -250,13 +270,11 @@ export default function CampoutTypePage() {
                       <button
                         key={r.id}
                         type="button"
-                        disabled={soldOut}
-                        aria-disabled={soldOut}
-                        onClick={() => { if (soldOut) return; setSelectedId(active ? null : r.id); setErr(null) }}
+                        onClick={() => { setSelectedId(selectedId === r.id ? null : r.id); setErr(null) }}
                         className={cn(
                           'flex w-full items-center gap-3.5 rounded-md border px-3 py-3 text-left transition-all duration-150',
-                          soldOut
-                            ? 'border-neutral-200 bg-neutral-50 cursor-not-allowed'
+                          soldOut && !active
+                            ? 'border-neutral-200 bg-neutral-50'
                             : active
                               ? 'border-primary-600 bg-primary-50 ring-1 ring-primary-600'
                               : 'border-neutral-200 bg-white hover:border-primary-300 hover:bg-primary-50/40',
@@ -291,7 +309,17 @@ export default function CampoutTypePage() {
 
               {/* Booking form, revealed once a date is chosen */}
               <motion.div initial={false} animate={{ height: selected ? 'auto' : 0, opacity: selected ? 1 : 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.25 }} className="overflow-hidden">
-                {selected && (
+                {selected && selected.sold_out && (
+                  <div className="pt-4">
+                    <WaitlistJoin
+                      eventId={selected.id}
+                      ticketTypeId={selected.ticket_type_id}
+                      source="public"
+                      variant="public"
+                    />
+                  </div>
+                )}
+                {selected && !selected.sold_out && (
                   <div className="pt-4">
                     <div className="space-y-2.5">
                       <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name (optional)" className="w-full rounded-md border border-neutral-200 px-4 py-3 text-neutral-900 outline-none focus:border-primary-500" />

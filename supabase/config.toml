@@ -128,5 +128,11 @@ verify_jwt = false  # third-party callback: signature-authenticated, never JWT
 [functions.stripe-webhook-test]
 verify_jwt = false  # third-party callback: signature-authenticated, never JWT
 
+[functions.waitlist-notify]
+# Called by pg_cron with the service-role bearer, and by an organiser from the
+# app with their own JWT for the manual "email everyone waiting" blast. Both
+# carry a valid JWT, so the gateway check stays on.
+verify_jwt = true
+
 [functions.transfer-event-ticket]
 verify_jwt = true
