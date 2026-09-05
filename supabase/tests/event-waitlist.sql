@@ -143,8 +143,26 @@ BEGIN
   WHERE event_id = v_event AND lower(email) = 'guest.one@example.test';
 
   -- ---- 14: p_force reaches everyone still waiting ------------------
+  -- Force must reach the ALREADY-NOTIFIED too. Both guests are still waiting
+  -- here: guest.one was offered a spot and has not bought, guest.two never got
+  -- a turn. An organiser pressing "Email everyone waiting" means everyone.
   SELECT COUNT(*) INTO v_n FROM public.waitlist_drain_candidates(v_event, true);
-  INSERT INTO wl_results VALUES (14, CASE WHEN v_n = 1 THEN 'PASS' ELSE 'FAIL' END, format('force offers everyone still waiting (got %s, expected 1 un-notified)', v_n));
+  INSERT INTO wl_results VALUES (14,
+    CASE WHEN v_n = 2 THEN 'PASS' ELSE 'FAIL' END,
+    format('force reaches everyone waiting, previously-offered included (got %s, expected 2)', v_n));
+
+  -- 14b: a lapsed offer does not put that person back at the FRONT. guest.one
+  -- had their turn; guest.two has not had one, so guest.two goes first even
+  -- though guest.one joined earlier.
+  UPDATE event_waitlist SET notified_at = now() - interval '25 hours'
+  WHERE event_id = v_event AND lower(email) = 'guest.one@example.test';
+  SELECT email INTO v_txt FROM public.waitlist_drain_candidates(v_event, false)
+  ORDER BY queue_position LIMIT 1;
+  INSERT INTO wl_results VALUES (141,
+    CASE WHEN v_txt = 'guest.two@example.test' THEN 'PASS' ELSE 'FAIL' END,
+    format('a lapsed offer goes behind someone who never had a turn (first offer to %s)', v_txt));
+  UPDATE event_waitlist SET notified_at = now()
+  WHERE event_id = v_event AND lower(email) = 'guest.one@example.test';
 
   -- ---- 15: buying retires the entry --------------------------------
   INSERT INTO event_tickets (event_id, ticket_type_id, user_id, status, price_cents, quantity, ticket_code)

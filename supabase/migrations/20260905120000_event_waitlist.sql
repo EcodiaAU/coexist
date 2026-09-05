@@ -135,8 +135,11 @@ CREATE TABLE IF NOT EXISTS public.event_waitlist (
   quantity      integer NOT NULL DEFAULT 1 CHECK (quantity BETWEEN 1 AND 10),
   source        text NOT NULL DEFAULT 'app' CHECK (source IN ('app', 'public')),
   created_at    timestamptz NOT NULL DEFAULT now(),
-  -- Last time we told them a spot opened. Set, not incremented, so a second
-  -- opening re-notifies; notify_count is the audit trail.
+  -- Last time we told them a spot opened. OVERWRITTEN on each new offer, never
+  -- treated as a one-way door: eligibility below is "not offered in the last
+  -- 24h", so a lapsed offer puts the person BEHIND everyone who has not had a
+  -- turn rather than dropping them out of the queue forever. notify_count is
+  -- the audit trail of how many turns they have had.
   notified_at   timestamptz,
   notify_count  integer NOT NULL DEFAULT 0,
   -- Stamped by the sweep once a live ticket exists for this email on this
@@ -524,7 +527,9 @@ BEGIN
       AND EXISTS (
         SELECT 1 FROM public.event_waitlist w
         WHERE w.event_id = e.id AND w.removed_at IS NULL AND w.converted_at IS NULL
-          AND w.notified_at IS NULL
+          AND (p_force
+               OR w.notified_at IS NULL
+               OR w.notified_at <= now() - INTERVAL '24 hours')
       )
   ),
   ranked AS (
@@ -536,13 +541,36 @@ BEGIN
            w.email,
            w.name,
            w.quantity,
-           ROW_NUMBER() OVER (PARTITION BY a.id ORDER BY w.created_at ASC)::int AS queue_position,
+           -- TURNS FIRST, then join order. Everyone gets a first turn before
+           -- anyone gets a second, and within the same number of turns the
+           -- person who joined earliest goes first. So a lapsed offer moves
+           -- that person BEHIND everyone still waiting for a first turn and
+           -- then back into rotation, rather than monopolising the front of
+           -- the queue or silently dropping out of it.
+           --
+           -- notify_count, NOT a timestamp. Ordering by
+           -- COALESCE(notified_at, created_at) looks equivalent and is not: it
+           -- compares "when they joined" against "when they were last offered",
+           -- two different kinds of instant, so a 25-hour-old offer sorts ahead
+           -- of someone who joined an hour ago and the person who already had a
+           -- turn keeps taking every turn. Case 141 of the battery caught
+           -- exactly that.
+           ROW_NUMBER() OVER (
+             PARTITION BY a.id
+             ORDER BY w.notify_count ASC, w.created_at ASC
+           )::int AS queue_position,
            COALESCE(a.free, 0) AS free_seats
     FROM avail a
     JOIN public.event_waitlist w ON w.event_id = a.id
     WHERE w.removed_at IS NULL
       AND w.converted_at IS NULL
-      AND w.notified_at IS NULL
+      -- p_force reaches EVERYONE still waiting, previously offered included.
+      -- Without that clause the organiser's "Email everyone waiting" button
+      -- silently skipped every person who had already had an offer, so a
+      -- second press a week later reached nobody who most needed telling.
+      AND (p_force
+           OR w.notified_at IS NULL
+           OR w.notified_at <= now() - INTERVAL '24 hours')
       AND (p_force OR COALESCE(a.free, 0) > 0)
   )
   SELECT r.waitlist_id, r.event_id, r.event_title, r.date_start,
