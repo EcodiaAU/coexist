@@ -22,6 +22,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { withSentry } from '../_shared/sentry.ts'
+import { routeReserveError } from '../_shared/reserve-error.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   apiVersion: '2024-04-10',
@@ -230,11 +231,11 @@ Deno.serve(withSentry('guest-ticket-checkout', async (req: Request) => {
       p_answers: (body.answers && typeof body.answers === 'object') ? body.answers : null,
     })
     if (reserveErr) {
-      const msg = reserveErr.message ?? ''
-      if (msg.includes('Sold out')) return json({ error: msg }, 409)
-      if (msg.toLowerCase().includes('sale')) return json({ error: msg }, 400)
-      console.error('[guest-checkout] reserve failed:', msg)
-      return json({ error: 'Could not reserve a ticket' }, 500)
+      const route = routeReserveError(reserveErr)
+      if (route.unmapped) {
+        console.error('[guest-checkout] reserve_event_ticket failed:', reserveErr.code, reserveErr.message)
+      }
+      return json({ error: route.message }, route.status)
     }
 
     // ---- Single-use magic link to the ticket page = instant login on return ----

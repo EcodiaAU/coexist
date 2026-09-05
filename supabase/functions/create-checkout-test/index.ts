@@ -15,6 +15,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { withSentry } from '../_shared/sentry.ts'
+import { routeReserveError } from '../_shared/reserve-error.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY_TEST')!, {
   apiVersion: '2024-04-10',
@@ -455,10 +456,11 @@ Deno.serve(withSentry('create-checkout-test', async (req: Request) => {
         })
 
         if (reserveErr) {
-          const msg = reserveErr.message
-          if (msg.includes('Sold out')) return json({ error: msg }, 409)
-          if (msg.includes('not on sale')) return json({ error: msg }, 400)
-          return json({ error: 'Failed to reserve ticket' }, 500)
+          const route = routeReserveError(reserveErr)
+          if (route.unmapped) {
+            console.error('[create-checkout-test] reserve_event_ticket failed:', reserveErr.code, reserveErr.message)
+          }
+          return json({ error: route.message }, route.status)
         }
 
         const customerEmail = await getUserEmail(body.user_id)

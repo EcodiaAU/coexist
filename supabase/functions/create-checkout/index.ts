@@ -16,6 +16,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { withSentry } from '../_shared/sentry.ts'
 import { reportInvokeError } from '../_shared/invoke-report.ts'
+import { routeReserveError } from '../_shared/reserve-error.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   apiVersion: '2024-04-10',
@@ -674,10 +675,15 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
           })
 
           if (reserveErr) {
-            const msg = reserveErr.message
-            if (msg.includes('Sold out')) return json({ error: msg }, 409)
-            if (msg.includes('not on sale')) return json({ error: msg }, 400)
-            return json({ error: 'Failed to reserve ticket' }, 500)
+            // Every RAISE the RPC can make is routed here, not just the two
+            // this used to test for. A missing required answer is a 400 that
+            // carries the question's own name, because a 500 is the one status
+            // the client hook will not read a body from.
+            const route = routeReserveError(reserveErr)
+            if (route.unmapped) {
+              console.error('[create-checkout] reserve_event_ticket failed:', reserveErr.code, reserveErr.message)
+            }
+            return json({ error: route.message }, route.status)
           }
           ticketId = String(reservedId)
         }
