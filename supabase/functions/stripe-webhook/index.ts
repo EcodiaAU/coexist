@@ -23,6 +23,7 @@ import {
 import {
   buildTicketConfirmation,
   classifySendResult,
+  isNotSendable,
   type ContentClient,
 } from '../_shared/ticket-confirmation-content.ts'
 
@@ -169,15 +170,20 @@ async function attemptOutboxSend(
     return classified
   } catch (err) {
     const detail = (err as Error).message
+    // A refunded, cancelled or revoked ticket is a TERMINAL non-send, not a
+    // failure to retry. This is the branch a Stripe replay on a voided ticket
+    // lands in, and 'retry' there would queue a confirmation for a ticket that
+    // no longer exists.
+    const outcome = isNotSendable(err) ? 'suppressed' : 'retry'
     try {
       await supabase.rpc('settle_transactional_email', {
-        p_id: outboxId, p_outcome: 'retry', p_error: detail,
+        p_id: outboxId, p_outcome: outcome, p_error: detail,
       })
     } catch (settleErr) {
       console.error('[stripe-webhook] could not settle the outbox row:', settleErr)
     }
     console.error(`[stripe-webhook] confirmation attempt threw for ${ticketId}: ${detail}`)
-    return { outcome: 'threw', detail }
+    return { outcome, detail }
   }
 }
 

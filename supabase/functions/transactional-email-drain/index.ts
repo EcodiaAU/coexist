@@ -4,6 +4,7 @@ import { withSentry } from '../_shared/sentry.ts'
 import {
   buildTicketConfirmation,
   classifySendResult,
+  isNotSendable,
   type ContentClient,
 } from '../_shared/ticket-confirmation-content.ts'
 
@@ -175,10 +176,15 @@ Deno.serve(withSentry('transactional-email-drain', async (req: Request) => {
       })
     } catch (err) {
       const detail = (err as Error).message
+      // A ticket that is refunded, cancelled or revoked must never receive a
+      // confirmation, and that is a TERMINAL non-send rather than a failure to
+      // retry. Routing it through 'retry' would burn six attempts and land the
+      // row in 'failed', which reads to an operator as a broken sender.
+      const outcome = isNotSendable(err) ? 'suppressed' : 'retry'
       await supabase.rpc('settle_transactional_email', {
-        p_id: row.id, p_outcome: 'retry', p_error: detail,
+        p_id: row.id, p_outcome: outcome, p_error: detail,
       })
-      results.push({ id: row.id, template: row.template, outcome: 'threw', detail })
+      results.push({ id: row.id, template: row.template, outcome, detail })
     }
   }
 

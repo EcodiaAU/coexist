@@ -140,5 +140,23 @@ verify_jwt = true
 # check stays on and there is no app-side caller.
 verify_jwt = true
 
+[functions.transactional-email-drain]
+# Called only by pg_cron with the service-role bearer
+# (cron_transactional_email_drain), exactly like free-waitlist-promote above,
+# and safe to invoke by hand with the same key. There is no app-side caller and
+# the outbox RPCs it drives are EXECUTE-revoked from anon/authenticated, so the
+# gateway check stays on.
+#
+# DECLARED 2026-09-12 by the W2 verification pass. It shipped in a75eb017
+# undeclared, which is the one shape this file exists to prevent: an undeclared
+# function takes whatever the CLI defaults to, and scripts/deploy-fn.sh refuses
+# to deploy it at all (exit 5, "will not guess"), so the project's own guarded
+# deploy path could not redeploy the drainer. true is also what the bare deploy
+# already applied, so declaring it changes no live behaviour and restores the
+# guarded path. Live evidence the bearer authenticates: 208 pg_net cron calls to
+# edge functions in the 48h to 2026-09-12T05:50Z returned HTTP 200 and zero 401.
+
+verify_jwt = true
+
 [functions.transfer-event-ticket]
 verify_jwt = true

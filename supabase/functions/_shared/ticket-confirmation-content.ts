@@ -18,6 +18,47 @@
  * from drifting between the two paths: there is one builder, not two.
  */
 
+/**
+ * A send that must NOT happen, as distinct from one that failed.
+ *
+ * The outbox has three outcomes and the difference between two of them is
+ * decided here. A confirmation we cannot render RIGHT NOW is a `retry`; a
+ * confirmation that must never be sent at all is a `suppressed`, and routing
+ * the second through the first is how a row burns six attempts and lands in
+ * `failed` for an operator to investigate a non-problem.
+ */
+export class TicketNotSendableError extends Error {
+  readonly suppress = true
+  constructor(message: string) {
+    super(message)
+    this.name = 'TicketNotSendableError'
+  }
+}
+
+/** True when the throw means "never send this", not "could not send it yet". */
+export function isNotSendable(err: unknown): boolean {
+  return !!err && typeof err === 'object' && (err as { suppress?: unknown }).suppress === true
+}
+
+/**
+ * The only ticket state a confirmation may be sent for.
+ *
+ * WHY THIS GUARD EXISTS (added 2026-09-12 by the W2 verification pass). The
+ * builder already SELECTed `status` and never read it, and no cancel, refund or
+ * revoke path touches the outbox: `transactional_email_outbox` is referenced by
+ * exactly two files, stripe-webhook and transactional-email-drain. So an owed
+ * confirmation on a ticket that is refunded, cancelled or revoked before the
+ * drainer reaches it still sent "your ticket is confirmed". `cancel-event`
+ * makes that a bulk event: cancel an event holding N owed confirmations and N
+ * people are told their ticket is confirmed for the event just cancelled.
+ *
+ * The mechanism derives CONTENT at send time for exactly this reason (an event
+ * can change under a queued row). Eligibility is the same argument and was
+ * missing: what was true when the intent was recorded is not what is true when
+ * it drains.
+ */
+const SENDABLE_TICKET_STATUSES = new Set(['confirmed'])
+
 export interface ContentClient {
   from(table: string): {
     select(columns: string): {
@@ -108,6 +149,17 @@ export async function buildTicketConfirmation(
 
   const userId = (ticket.user_id as string | null) ?? null
   if (!userId) throw new Error(`ticket ${args.ticketId} has no holder`)
+
+  // Eligibility at SEND time, for the same reason content is built at send
+  // time: the ticket may have been refunded, cancelled or revoked since the
+  // intent was recorded. This is a deliberate non-send, never a retry.
+  const ticketStatus = (ticket.status as string | null) ?? ''
+  if (!SENDABLE_TICKET_STATUSES.has(ticketStatus)) {
+    throw new TicketNotSendableError(
+      `ticket ${args.ticketId} is '${ticketStatus || 'unknown'}', not confirmed; ` +
+        'a confirmation for a voided ticket is a deliberate non-send',
+    )
+  }
 
   const { data: ev } = await db
     .from('events')
