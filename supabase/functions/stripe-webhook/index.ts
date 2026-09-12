@@ -20,6 +20,11 @@ import {
   notifyTicketRefund,
   type RefundNotifyClient,
 } from '../_shared/ticket-refund-notify.ts'
+import {
+  buildTicketConfirmation,
+  classifySendResult,
+  type ContentClient,
+} from '../_shared/ticket-confirmation-content.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   apiVersion: '2024-04-10',
@@ -63,6 +68,116 @@ async function sendTemplateEmail(
   } catch (err) {
     console.error(`[stripe-webhook] send-email (${type}) failed:`, (err as Error).message)
     return { ok: false, suppressed: false }
+  }
+}
+
+/**
+ * Attempt the send for ONE outbox row, and settle the row from what actually
+ * happened.
+ *
+ * This is the whole difference between the old path and the new one. The old
+ * code sent and moved on; this claims, sends, and records. A row that is not
+ * claimed here is a row somebody else owns or has already finished, and doing
+ * nothing is the correct response to that.
+ *
+ * IT NEVER THROWS. A confirmation that cannot be sent right now must not fail
+ * the Stripe delivery: the payment is recorded and the ticket is confirmed, and
+ * telling Stripe to retry would re-run all of that to fix an email. The email
+ * is already durable in the outbox, so the correct behaviour is to leave it
+ * owed and let the drainer carry it. That is exactly the opposite of the
+ * original defect, where a swallowed failure meant the email was gone: here a
+ * swallowed failure means the email is queued.
+ */
+/**
+ * The slice of the client this helper needs, declared structurally so the new
+ * outbox RPCs typecheck. The generated database types predate these functions,
+ * so `supabase.rpc('claim_transactional_email', {...})` types its own arguments
+ * as `undefined`. Same idiom as the structural ResendClient in
+ * _shared/ticket-email-resend.ts, and it makes the helper fakeable in a test.
+ */
+interface OutboxSendClient {
+  rpc(fn: string, args?: Record<string, unknown>): PromiseLike<{ data: unknown; error: { message: string } | null }>
+  functions: {
+    invoke(
+      fn: string,
+      opts: { headers?: Record<string, string>; body?: unknown },
+    ): PromiseLike<{ data: unknown; error: unknown }>
+  }
+}
+
+async function attemptOutboxSend(
+  supabase: OutboxSendClient & ContentClient,
+  outboxId: string,
+  ticketId: string,
+  guest: boolean,
+): Promise<{ outcome: string; detail?: string }> {
+  if (!outboxId) return { outcome: 'no_row' }
+
+  try {
+    // One conditional UPDATE decides the winner between this handler and the
+    // cron drainer. Zero rows back means it is not ours to send.
+    const { data: claimedRows, error: claimErr } = await supabase.rpc(
+      'claim_transactional_email',
+      { p_id: outboxId },
+    )
+    if (claimErr) {
+      console.error('[stripe-webhook] outbox claim failed:', claimErr.message)
+      return { outcome: 'claim_error', detail: claimErr.message }
+    }
+    const claimed = Array.isArray(claimedRows) ? claimedRows : []
+    if (claimed.length === 0) {
+      // Already sent, already suppressed, or in flight elsewhere. Not a
+      // failure, and the case a replay is supposed to land in.
+      console.log('[stripe-webhook] confirmation not owed (already settled or in flight):', ticketId)
+      return { outcome: 'not_owed' }
+    }
+
+    const payload = await buildTicketConfirmation(supabase, {
+      ticketId,
+      appUrl: Deno.env.get('APP_URL') ?? 'https://app.coexistaus.org',
+      guest,
+    })
+
+    // Addressed by userId rather than a literal `to`, so send-email applies the
+    // member's notification preferences, the marketing opt-out and the
+    // email_suppressions dead-address gate.
+    const { data: sendBody, error: sendErr } = await supabase.functions.invoke('send-email', {
+      headers: { Authorization: `Bearer ${supabaseServiceKey}` },
+      body: {
+        type: payload.type,
+        userId: payload.userId,
+        ticketId: payload.ticketId,
+        data: payload.data,
+      },
+    })
+
+    // functions.invoke RESOLVES on a non-2xx and sets `error` instead of
+    // throwing. Reading that as anything but a failure is the original 401.
+    const classified = sendErr
+      ? { outcome: 'retry' as const, detail: `invoke error: ${(sendErr as Error).message}` }
+      : classifySendResult(200, sendBody as Record<string, unknown> | null)
+
+    await supabase.rpc('settle_transactional_email', {
+      p_id: outboxId,
+      p_outcome: classified.outcome,
+      p_error: classified.outcome === 'sent' ? null : classified.detail,
+    })
+
+    if (classified.outcome === 'retry') {
+      console.error(`[stripe-webhook] confirmation for ${ticketId} is still owed: ${classified.detail}`)
+    }
+    return classified
+  } catch (err) {
+    const detail = (err as Error).message
+    try {
+      await supabase.rpc('settle_transactional_email', {
+        p_id: outboxId, p_outcome: 'retry', p_error: detail,
+      })
+    } catch (settleErr) {
+      console.error('[stripe-webhook] could not settle the outbox row:', settleErr)
+    }
+    console.error(`[stripe-webhook] confirmation attempt threw for ${ticketId}: ${detail}`)
+    return { outcome: 'threw', detail }
   }
 }
 
@@ -463,8 +578,65 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           // 'reserved' is a live, unpaid organiser hold that the invitee has now
           // paid for. It confirms exactly like a pending row; only the route in
           // differs (the seat was held ahead of checkout, possibly over capacity).
-          if (ticket.status !== 'pending' && ticket.status !== 'reserved') {
-            console.log('Ticket already processed, skipping:', ticketId, ticket.status)
+          //
+          // THIS IS NO LONGER A `break`, AND THAT IS THE FIX. It used to return
+          // here, which meant the FIRST delivery consumed the idempotency token
+          // for the whole handler: the status flip to 'confirmed' happened below
+          // and BEFORE the email, so every Stripe retry and every manual replay
+          // read 'confirmed' and returned before it ever reached the send. Seven
+          // Murbpook buyers paid AU$70 and were never told, and no retry could
+          // ever have helped them, because the guard that made the money safe to
+          // replay also made the email impossible to replay. A per-order guard
+          // cannot resume a per-step failure.
+          //
+          // Now the guard only skips the STATE MUTATION, which is the part that
+          // must happen once. Whether the email is still owed is a separate
+          // question with its own claim, asked below.
+          const alreadySettled = ticket.status !== 'pending' && ticket.status !== 'reserved'
+          if (alreadySettled) {
+            console.log('Ticket already confirmed; re-checking the email claim:', ticketId, ticket.status)
+          }
+
+          // Record the INTENT TO EMAIL before touching any state, so a crash,
+          // timeout or deploy anywhere below this line leaves the confirmation
+          // owed rather than lost. Keyed on the ticket, so a duplicate delivery
+          // converges on this same row instead of creating a second one.
+          //
+          // A ticket that already has a 'sent' row gets that row's id back and
+          // the claim below refuses it, so a replay cannot double-send.
+          const { data: outboxId, error: enqueueErr } = await supabase.rpc(
+            'enqueue_transactional_email',
+            {
+              p_dedupe_key: `ticket_confirmation:${ticketId}`,
+              p_template: 'ticket_confirmation',
+              p_user_id: ticket.user_id,
+              p_to_email: null,
+              p_ticket_id: ticketId,
+              // Guest-ness lives ONLY in this Stripe metadata; there is no
+              // persisted column for it. Recorded here so a retry minutes or
+              // hours later still builds the right CTA.
+              p_context: {
+                event_id: ticket.event_id,
+                guest: metadata.guest === 'true',
+                source: 'stripe-webhook',
+              },
+            },
+          )
+          if (enqueueErr) {
+            // The durable record is the whole mechanism. If it cannot be
+            // written, fail the delivery so Stripe retries, rather than
+            // proceeding into the shape that lost seven emails.
+            console.error('[stripe-webhook] could not enqueue ticket confirmation:', enqueueErr.message)
+            return new Response('Could not record the confirmation email', { status: 500 })
+          }
+
+          if (alreadySettled) {
+            // State is already correct; only the email might still be owed.
+            await attemptOutboxSend(
+              supabase as unknown as OutboxSendClient & ContentClient,
+              outboxId as string, ticketId, metadata.guest === 'true',
+            )
+            console.log('Event ticket replay handled (email claim re-checked):', ticketId)
             break
           }
 
@@ -507,47 +679,23 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             })
           }
 
-          // 4. Send ticket confirmation email.
-          const { data: ticketEvent } = await supabase
-            .from('events')
-            .select('title, date_start, address')
-            .eq('id', ticket.event_id)
-            .single()
-
-          // The plain ticket page is auth-gated, so a guest (who has only a
-          // shell account, no password) can only reach it via a magic link.
-          // For guests, make the email CTA a fresh single-use magic link that
-          // signs them in and lands on the ticket (backup to the success
-          // redirect). Members keep the normal direct link.
-          const ticketPath = `/events/${ticket.event_id}/ticket-confirmation?ticket_id=${ticketId}`
-          let ticketUrl = `https://app.coexistaus.org${ticketPath}`
-          if (metadata.guest === 'true') {
-            const appUrl = Deno.env.get('APP_URL') ?? 'https://app.coexistaus.org'
-            const { data: linkData } = await supabase.auth.admin.getUserById(ticket.user_id)
-            const guestEmail = linkData?.user?.email
-            if (guestEmail) {
-              const { data: magic } = await supabase.auth.admin.generateLink({
-                type: 'magiclink',
-                email: guestEmail,
-                options: { redirectTo: `${appUrl}${ticketPath}` },
-              })
-              if (magic?.properties?.action_link) ticketUrl = magic.properties.action_link
-            }
-          }
-
-          await sendTemplateEmail(supabase, 'ticket_confirmation', ticket.user_id, {
-            name: '',
-            event_title: ticketEvent?.title ?? 'Event',
-            event_date: ticketEvent?.date_start
-              ? new Date(ticketEvent.date_start).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-              : '',
-            event_location: ticketEvent?.address ?? '',
-            ticket_code: ticket.ticket_code ?? '',
-            quantity: ticket.quantity,
-            amount: amountDollars.toFixed(2),
-            currency: 'AUD',
-            ticket_url: ticketUrl,
-          })
+          // 4. Send the ticket confirmation, and RECORD WHAT HAPPENED.
+          //
+          // Still attempted inline, because a buyer should have their ticket in
+          // seconds rather than on the next cron tick. What changed is that the
+          // outcome is now written to the outbox row: a failure here leaves the
+          // email owed on a backoff and transactional-email-drain sends it
+          // within five minutes. The old code awaited sendTemplateEmail and
+          // discarded its {ok, suppressed} return, so a failed confirmation
+          // reached a console nobody reads and no row anywhere recorded it.
+          //
+          // Content is built inside attemptOutboxSend from the one shared
+          // builder the drainer also uses, so the copy cannot drift between the
+          // fast path and the retry path.
+          await attemptOutboxSend(
+              supabase as unknown as OutboxSendClient & ContentClient,
+              outboxId as string, ticketId, metadata.guest === 'true',
+            )
 
           console.log('Event ticket confirmed:', ticketId, `$${amountDollars}`, `code: ${ticket.ticket_code}`)
         }
