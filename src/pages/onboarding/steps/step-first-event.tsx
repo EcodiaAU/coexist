@@ -17,19 +17,24 @@ import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 type Event = Database['public']['Tables']['events']['Row']
 
 interface StepFirstEventProps {
-  collectiveId: string | null
+  /** Every collective picked on the previous step (multi-select). */
+  collectiveIds: string[]
   onNext: () => void
   onSkip: () => void
 }
 
-export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventProps) {
+export function StepFirstEvent({ collectiveIds, onNext, onSkip }: StepFirstEventProps) {
   const { user } = useAuth()
   const shouldReduceMotion = useReducedMotion()
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
+  // Order-independent so tapping A then B and B then A share one cache entry
+  // (same shape as the discover-events key in use-events.ts).
+  const collectiveKey = collectiveIds.slice().sort().join(',')
+
   const { data: events, isLoading, error } = useQuery({
-    queryKey: ['onboarding-events', collectiveId],
+    queryKey: ['onboarding-events', collectiveKey],
     queryFn: async () => {
       let query = supabase
         .from('events')
@@ -55,8 +60,11 @@ export function StepFirstEvent({ collectiveId, onNext, onSkip }: StepFirstEventP
         .order('date_start', { ascending: true })
         .limit(5)
 
-      if (collectiveId) {
-        query = query.eq('collective_id', collectiveId)
+      // Every collective they joined, not just one: the first-event suggestion
+      // has to span the whole selection or it silently hides the events of the
+      // other collectives they just joined.
+      if (collectiveIds.length > 0) {
+        query = query.in('collective_id', collectiveIds)
       }
 
       const { data } = await query

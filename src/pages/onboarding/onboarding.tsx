@@ -9,6 +9,7 @@ import { cn } from '@/lib/cn'
 import { Button } from '@/components/button'
 import { takePendingClaim } from '@/lib/pending-claim'
 import { hasEmergencyContact, hasFourWheelDriveAnswer } from '@/lib/dietary'
+import { toggleCollectiveSelection, collectivesToJoin } from '@/lib/onboarding-collectives'
 
 import { StepNameHandle } from './steps/step-name-handle'
 import { StepLocation } from './steps/step-location'
@@ -85,7 +86,7 @@ export default function OnboardingPage() {
     phone: existingPhone,
     location: '',
     locationPoint: null as { lat: number; lng: number } | null,
-    collectiveId: null as string | null,
+    collectiveIds: [] as string[],
     safety: {
       dietary: '',
       medical: '',
@@ -166,12 +167,12 @@ export default function OnboardingPage() {
         .limit(1)
         .maybeSingle()
 
-      const collectiveIds = [
-        ...(data.collectiveId ? [data.collectiveId] : []),
-        ...(nationalCollective?.id && nationalCollective.id !== data.collectiveId
-          ? [nationalCollective.id]
-          : []),
-      ]
+      // Every collective the user picked, plus the national one. The step is
+      // multi-select (Tate 2026-09-14, from a user at a Co-Exist event who
+      // picked the three Queensland collectives and was joined only to one):
+      // whatever they selected is what they get joined to, so the events of
+      // ALL of them reach their home feed instead of only one collective's.
+      const collectiveIds = collectivesToJoin(data.collectiveIds, nationalCollective?.id)
 
       for (const cId of collectiveIds) {
         const { error: memberError } = await supabase
@@ -284,9 +285,14 @@ export default function OnboardingPage() {
       case 'collective':
         return (
           <StepCollective
-            selectedId={data.collectiveId}
+            selectedIds={data.collectiveIds}
             locationPoint={data.locationPoint}
-            onSelect={(id) => updateData({ collectiveId: id })}
+            onToggle={(id) =>
+              setData((prev) => ({
+                ...prev,
+                collectiveIds: toggleCollectiveSelection(prev.collectiveIds, id),
+              }))
+            }
             onNext={goNext}
             onSkip={goNext}
           />
@@ -294,7 +300,7 @@ export default function OnboardingPage() {
       case 'event':
         return (
           <StepFirstEvent
-            collectiveId={data.collectiveId}
+            collectiveIds={data.collectiveIds}
             onNext={goNext}
             onSkip={goNext}
           />

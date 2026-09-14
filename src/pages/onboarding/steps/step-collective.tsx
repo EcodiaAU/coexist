@@ -19,14 +19,24 @@ type Collective = Database['public']['Tables']['collectives']['Row']
 const DEFAULT_VISIBLE = 12
 
 interface StepCollectiveProps {
-  selectedId: string | null
+  /**
+   * Every collective the user has picked so far. MULTI-select by design: a
+   * user who lives between two towns, or who works across a whole state,
+   * joins all of them in one pass (Tate 2026-09-14, reported by a user at a
+   * Co-Exist event who tapped the three Queensland collectives and was joined
+   * only to one, so the Brisbane event never reached his home feed). This was
+   * a single `selectedId: string | null` and each tap REPLACED the last, which
+   * is silent data loss the user cannot see: the check badge simply moves.
+   */
+  selectedIds: string[]
   /**
    * Location the user entered on the previous onboarding step (the suburb/city
    * autocomplete). Preferred signal for proximity ordering since it's exactly
    * where they said they're based. Falls back to browser geolocation.
    */
   locationPoint?: { lat: number; lng: number } | null
-  onSelect: (id: string | null) => void
+  /** Add the collective if it is not selected, remove it if it is. */
+  onToggle: (id: string) => void
   onNext: () => void
   onSkip: () => void
 }
@@ -38,9 +48,9 @@ function formatDistance(km: number): string {
 }
 
 export function StepCollective({
-  selectedId,
+  selectedIds,
   locationPoint,
-  onSelect,
+  onToggle,
   onNext,
   onSkip,
 }: StepCollectiveProps) {
@@ -156,12 +166,12 @@ export function StepCollective({
         animate="visible"
       >
         <motion.h2 variants={fadeUp} className="font-heading text-2xl font-bold text-neutral-900">
-          Join a Collective
+          Join your Collectives
         </motion.h2>
         <motion.p variants={fadeUp} className="mt-2 text-neutral-500 leading-relaxed">
           {userLocation
-            ? 'Collectives are local volunteer groups. The closest ones to you are shown first.'
-            : 'Collectives are local volunteer groups. Join one to find events near you.'}
+            ? 'Collectives are local volunteer groups. Pick as many as you like - the closest ones to you are shown first.'
+            : 'Collectives are local volunteer groups. Pick as many as you like to find events near you.'}
         </motion.p>
 
         <motion.div variants={fadeUp} className="mt-5 relative">
@@ -196,13 +206,14 @@ export function StepCollective({
             </p>
           ) : visible.length > 0 ? (
             visible.map(({ collective, distanceKm }) => {
-              const isSelected = selectedId === collective.id
+              const isSelected = selectedIds.includes(collective.id)
               return (
                 <motion.div key={collective.id} variants={fadeUp}>
                   <Card
                     variant="collective"
-                    onClick={() => onSelect(isSelected ? null : collective.id)}
+                    onClick={() => onToggle(collective.id)}
                     aria-label={collective.name}
+                    aria-pressed={isSelected}
                     className={cn(
                       'transition-shadow duration-150',
                       isSelected ? 'ring-2 ring-primary-500 shadow-md' : 'shadow-sm',
@@ -256,8 +267,14 @@ export function StepCollective({
         className="py-6 space-y-3"
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
       >
-        <Button variant="primary" size="lg" fullWidth onClick={onNext} disabled={!selectedId}>
-          Join & Continue
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
+          onClick={onNext}
+          disabled={selectedIds.length === 0}
+        >
+          {selectedIds.length > 1 ? `Join ${selectedIds.length} & Continue` : 'Join & Continue'}
         </Button>
         <Button variant="ghost" size="lg" fullWidth onClick={onSkip}>
           Skip for now

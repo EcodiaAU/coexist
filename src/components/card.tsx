@@ -87,12 +87,27 @@ interface CardRootProps {
   className?: string
   onClick?: React.MouseEventHandler<HTMLDivElement>
   'aria-label'?: string
+  /**
+   * Selected state for a card used as a multi-select option (the onboarding
+   * collective step). Without it a selected card is conveyed by a check badge
+   * alone, which no screen reader announces, so a user relying on one cannot
+   * tell how many collectives they have picked.
+   */
+  'aria-pressed'?: boolean
   /** Activity type for nature watermark decoration */
   watermark?: string | boolean
 }
 
 const CardRoot = forwardRef<HTMLDivElement, CardRootProps>(function CardRoot(
-  { variant = 'event', children, className, onClick, 'aria-label': ariaLabel, watermark },
+  {
+    variant = 'event',
+    children,
+    className,
+    onClick,
+    'aria-label': ariaLabel,
+    'aria-pressed': ariaPressed,
+    watermark,
+  },
   ref,
 ) {
   const shouldReduceMotion = useReducedMotion()
@@ -110,6 +125,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardRootProps>(function CardRoot(
         role={isInteractive ? 'button' : 'article'}
         tabIndex={isInteractive ? 0 : undefined}
         aria-label={ariaLabel}
+        aria-pressed={ariaPressed}
         onClick={onClick}
         onKeyDown={
           isInteractive
