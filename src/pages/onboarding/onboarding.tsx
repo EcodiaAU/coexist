@@ -340,7 +340,16 @@ export default function OnboardingPage() {
             animate="center"
             exit={shouldReduceMotion ? undefined : 'exit'}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="absolute inset-0 flex flex-col"
+            // overscroll-contain + overflow-y-auto: the step content is the ONLY
+            // scroll container in onboarding. Every ancestor is overflow-hidden
+            // (h-dvh outer, flex-1 relative step viewport), so before this the
+            // tallest step could not be scrolled to at all. StepSafety measures
+            // 1164px of content against a 590px viewport in mobile Safari and a
+            // 770px one in the native WebView, which put BOTH its "Continue" and
+            // "I'll do this later" buttons permanently off-screen with no way to
+            // reach them short of pinch-zooming out. Onboarding completion fell
+            // from ~96% to ~87% the week that step shipped (2026-08-30).
+            className="absolute inset-0 flex flex-col overflow-y-auto overscroll-contain"
           >
             {renderStep(stepOrder[step])}
           </motion.div>
