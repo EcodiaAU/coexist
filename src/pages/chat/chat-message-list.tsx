@@ -327,6 +327,7 @@ function InlineAnnouncement({
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
     }
   }

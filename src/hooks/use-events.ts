@@ -745,6 +745,79 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
 }
 
 /* ------------------------------------------------------------------ */
+/*  ONE attendance number (both event cards)                           */
+/* ------------------------------------------------------------------ */
+
+export interface EventAttendanceCounts {
+  /** Distinct people actually present: attended registrations UNION attended
+   *  walk-ins, deduped by email / linked user. */
+  checkedIn: number
+  /** The same set widened to registered-but-not-yet-arrived. The denominator
+   *  for "X of Y here so far". */
+  hereTotal: number
+  /** Walk-ins who add a person the registration list does not already hold.
+   *  Added to the ticket-aware roster "going" so that card stays ticket-aware
+   *  while still counting the people who walked up. */
+  walkinExtra: number
+  /** Walk-in rows folded away as duplicates of each other. */
+  walkinDuplicatesSuppressed: number
+}
+
+const EMPTY_ATTENDANCE_COUNTS: EventAttendanceCounts = {
+  checkedIn: 0,
+  hereTotal: 0,
+  walkinExtra: 0,
+  walkinDuplicatesSuppressed: 0,
+}
+
+/**
+ * The single source of truth for "how many people are checked in at this event".
+ *
+ * Tate, mid-event 2026-09-14: "the here so far card on the event day page and
+ * the checked in cards are showing different numbers right now at the coexist
+ * event 37 vs 39". They disagreed because they were two different sums. The
+ * leader card was roster.counts.checkedIn + walkIns.length while the
+ * participant-visible "here so far" card counted attended registrations alone
+ * and never read event_walk_ins at all, so the gap was exactly the walk-in
+ * count.
+ *
+ * The number is computed SERVER-SIDE by event_attendance_counts (SECURITY
+ * DEFINER) rather than by a shared client function, because RLS on
+ * event_walk_ins is staff-only. A client-side counter would hand every
+ * participant zero walk-ins and leave their card quietly wrong while looking
+ * correct to a staff tester. The RPC returns counts and no PII.
+ *
+ * Deduplication happens in that function: event_walk_ins has no unique
+ * constraint, so the same person can appear twice, or appear as both a walk-in
+ * and a registration.
+ */
+export function useEventAttendanceCounts(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['event-attendance-counts', eventId],
+    queryFn: async (): Promise<EventAttendanceCounts> => {
+      if (!eventId) return EMPTY_ATTENDANCE_COUNTS
+      const { data, error } = await supabase.rpc('event_attendance_counts', {
+        p_event_id: eventId,
+      })
+      if (error) throw error
+      // The RPC RETURNS TABLE, so PostgREST hands back an array of one row.
+      const row = (Array.isArray(data) ? data[0] : data) as
+        | { checked_in: number; here_total: number; walkin_extra: number; walkin_duplicates_suppressed: number }
+        | undefined
+      if (!row) return EMPTY_ATTENDANCE_COUNTS
+      return {
+        checkedIn: row.checked_in ?? 0,
+        hereTotal: row.here_total ?? 0,
+        walkinExtra: row.walkin_extra ?? 0,
+        walkinDuplicatesSuppressed: row.walkin_duplicates_suppressed ?? 0,
+      }
+    },
+    enabled: !!eventId,
+    staleTime: 30 * 1000,
+  })
+}
+
+/* ------------------------------------------------------------------ */
 /*  Queries - Event Waitlist                                           */
 /* ------------------------------------------------------------------ */
 
@@ -1163,6 +1236,7 @@ export function useRegisterForEvent() {
       queryClient.invalidateQueries({ queryKey: DIETARY_GATE_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
       queryClient.invalidateQueries({ queryKey: ['discover-events'] })
@@ -1245,6 +1319,7 @@ export function useCancelRegistration() {
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
       queryClient.invalidateQueries({ queryKey: ['discover-events'] })
@@ -1349,6 +1424,7 @@ export function useCheckIn() {
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
@@ -1403,6 +1479,7 @@ export function useUncheckIn() {
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
@@ -1488,9 +1565,11 @@ export function useDeleteWalkIn() {
     },
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-walk-ins', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
     },
   })
 }
@@ -1535,6 +1614,7 @@ export function useBulkCheckIn() {
     onSettled: (_, __, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
@@ -2349,6 +2429,7 @@ export function useInviteCollective() {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['chat-messages', collectiveId] })
       // Invited users' my-events (invited tab) should update
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
@@ -2422,6 +2503,7 @@ export function usePromoteFromWaitlist() {
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       // The promoted user's my-events and home feed should update
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
@@ -2461,6 +2543,7 @@ export function useRemoveFromEvent() {
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
     },

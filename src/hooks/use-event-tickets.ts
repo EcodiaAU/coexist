@@ -503,6 +503,7 @@ export function useCodeCheckIn() {
           },
         )
         queryClient.invalidateQueries({ queryKey: ['event-attendees', result.eventId] })
+        queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', result.eventId] })
         queryClient.invalidateQueries({ queryKey: ['event', result.eventId] })
         queryClient.invalidateQueries({ queryKey: ['my-events'] })
         queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })

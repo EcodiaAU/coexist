@@ -55,7 +55,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import {
     useEventDetail,
-    useEventAttendees,
+    useEventAttendanceCounts,
     useRegisterForEvent,
     useCancelRegistration,
     useCancelEvent,
@@ -304,6 +304,7 @@ function TicketSalesSection({
     queryClient.invalidateQueries({ queryKey: ['event-ticket-types', eventId] })
     queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
     queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+    queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
   }
 
   async function handleRevoke(ticketId: string, isPaid: boolean, label: string) {
@@ -517,15 +518,15 @@ export default function EventDetailPage() {
     (event as { collectives?: { timezone?: string | null } | null } | undefined)?.collectives?.timezone ??
     'Australia/Sydney'
   const isEventTodayForLive = isEventToday(event?.date_start, eventTz)
-  const { data: liveAttendees } = useEventAttendees(isEventTodayForLive ? id : undefined)
-  const liveCheckedIn = useMemo(
-    () => liveAttendees?.filter((a) => a.status === 'attended').length ?? 0,
-    [liveAttendees],
-  )
-  const liveRegistered = useMemo(
-    () => liveAttendees?.filter((a) => a.status === 'registered' || a.status === 'attended').length ?? 0,
-    [liveAttendees],
-  )
+  // ONE number, shared with the leader event-day screen. This used to count
+  // event_registrations here and event_registrations + walk-ins over there,
+  // which is why Tate saw 37 on this card and 39 on that one mid-event on
+  // 2026-09-14: the gap was exactly the walk-in count. The RPC is SECURITY
+  // DEFINER on purpose, because event_walk_ins RLS is staff-only and a
+  // participant reading that table directly gets zero rows.
+  const { data: liveCounts } = useEventAttendanceCounts(isEventTodayForLive ? id : undefined)
+  const liveCheckedIn = liveCounts?.checkedIn ?? 0
+  const liveRegistered = liveCounts?.hereTotal ?? 0
 
   // Ticketed events
   const isTicketed = event?.is_ticketed ?? false
@@ -1607,7 +1608,7 @@ export default function EventDetailPage() {
 
         {/* ── Live "X of Y here so far" - visible on event day for everyone.
             Reads from cached event-attendees so it survives flaky network. */}
-        {isEventTodayForLive && liveAttendees && liveAttendees.length > 0 && (
+        {isEventTodayForLive && liveRegistered > 0 && (
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <div className="flex items-center gap-3 rounded-sm bg-white p-3 shadow-sm border border-success-100">
               <div className="flex items-center justify-center w-9 h-9 rounded-full bg-success-50">

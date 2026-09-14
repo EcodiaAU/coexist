@@ -4,6 +4,12 @@
  * Two modes inside one sheet (Tate spec 2026-05-18):
  *   1. Search for an existing app user and add them as a walk-in (registers
  *      them + checks them in via handleAddAndCheckIn fed from the parent).
+ *      The search RPC reports each person's attendance_state, so somebody who
+ *      is already here renders as checked in with no button. Before 2026-09-14
+ *      every result carried an unconditional Check In button, and pressing it
+ *      for an already-present person dead-ended on UNIQUE (event_id, user_id).
+ *      Tate, mid-event: "searching their name up again should show checked in,
+ *      not show the check in button then an error".
  *   2. If no existing user, fill out the manual form below the search box -
  *      same 12-field profile shape as before. Inserts into event_walk_ins
  *      with created_via='leader_adhoc'.
@@ -20,6 +26,7 @@ import { BottomSheet, Button, Skeleton } from '@/components'
 import { Avatar } from '@/components/avatar'
 import { UserPlus, AlertTriangle, Search as SearchIcon, UserCheck } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { walkInSearchOffersCheckIn, type SearchAttendanceState } from '@/lib/event-capacity'
 import { useImeSafeOnChange } from '@/hooks/use-ime-safe-on-change'
 
 /* ------------------------------------------------------------------ */
@@ -37,11 +44,20 @@ interface WalkInSheetProps {
   onAddExistingUser: (userId: string, displayName: string | null) => Promise<void>
 }
 
+/** What the event already knows about this person.
+ *  'checked_in'  they are already here, via an attended registration OR an
+ *                attended walk-in that matches them. Nothing to press.
+ *  'registered'  on the roster but not yet arrived. The button checks them in
+ *                by updating that existing row.
+ *  'none'        no record for this event yet. The button creates one.
+ *  Optional because an older bundle can be talking to the newer RPC or the
+ *  reverse; an unknown state falls back to the old unconditional button. */
 interface SearchResult {
   id: string
   display_name: string | null
   avatar_url: string | null
   email: string | null
+  attendance_state?: SearchAttendanceState | null
 }
 
 /* ------------------------------------------------------------------ */
@@ -236,6 +252,7 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
       // Kurt Jones hit this live at the Darwin East Point Beach Clean Up on
       // 2026-08-30: 9 walk-ins recorded and saved, screen still reading 11.
       await queryClient.invalidateQueries({ queryKey: ['event-walk-ins', eventId] })
+      await queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
 
       toast.success('Walk-in recorded.')
       resetForm()
@@ -306,15 +323,24 @@ export function WalkInSheet({ eventId, open, onClose, onSuccess, onAddExistingUs
                           <p data-eos-id="src/components/walk-in-sheet.tsx#24" data-eos-var="u.email" data-eos-var-label="Email" data-eos-var-scope="item" className="text-[11px] text-neutral-500 truncate">{u.email}</p>
                         )}
                       </div>
-                      <Button data-eos-id="src/components/walk-in-sheet.tsx#25"
-                        variant="secondary"
-                        size="sm"
-                        icon={<UserCheck data-eos-id="src/components/walk-in-sheet.tsx#26" size={13} />}
-                        loading={addingId === u.id}
-                        onClick={() => handleAddExisting(u)}
-                      >
-                        Check In
-                      </Button>
+                      {!walkInSearchOffersCheckIn(u.attendance_state) ? (
+                        <span data-eos-id="src/components/walk-in-sheet.tsx#67"
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-success-50 text-success-700 text-xs font-semibold shrink-0"
+                        >
+                          <UserCheck data-eos-id="src/components/walk-in-sheet.tsx#68" size={13} />
+                          Checked in
+                        </span>
+                      ) : (
+                        <Button data-eos-id="src/components/walk-in-sheet.tsx#25"
+                          variant="secondary"
+                          size="sm"
+                          icon={<UserCheck data-eos-id="src/components/walk-in-sheet.tsx#26" size={13} />}
+                          loading={addingId === u.id}
+                          onClick={() => handleAddExisting(u)}
+                        >
+                          Check In
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>

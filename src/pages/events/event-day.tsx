@@ -38,6 +38,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import {
   useEventDetail,
   useEventRoster,
+  useEventAttendanceCounts,
   useEventImpact,
   useEventWalkIns,
   useDeleteWalkIn,
@@ -56,6 +57,7 @@ import { isNativePlatform, shareLinkNative, isShareCancellation } from '@/lib/na
 import { isCheckInOpenForLeader, localDateIn } from '@/lib/date-format'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import { useAuth } from '@/hooks/use-auth'
+import { composeEventDayCounts } from '@/lib/event-capacity'
 import type { AttendeeWithStatus } from '@/hooks/use-events'
 import {
   Page,
@@ -462,6 +464,9 @@ export default function EventDayPage() {
   const { data: event, isLoading: eventLoading } = useEventDetail(eventId)
   const isTicketed = (event as { is_ticketed?: boolean } | undefined)?.is_ticketed ?? false
   const { data: roster, isLoading: rosterLoading } = useEventRoster(eventId, isTicketed)
+  // One shared definition of checked-in, also read by the event-detail
+  // "here so far" card. See useEventAttendanceCounts.
+  const { data: attendanceCounts } = useEventAttendanceCounts(eventId)
   // Existence of an event_impact row is the canonical "impact logged" signal -
   // it closes the post-event check-in backfill window (matches the BE triggers
   // in 20260520000000_post_event_checkin_backfill.sql).
@@ -589,10 +594,26 @@ export default function EventDayPage() {
 
   // Walk-ins are recorded outside event_registrations, so fold them into the
   // headline attendance tallies (they came through the gate).
-  const walkInCount = walkIns.length
+  //
+  // The checked-in headline comes from event_attendance_counts, the SAME RPC
+  // the participant-facing "here so far" card reads. Those two cards used to be
+  // two different sums and Tate caught them disagreeing mid-event on
+  // 2026-09-14, 37 against 39. This page was the high one because it added
+  // walkIns.length; the other card never read walk-ins at all.
+  //
+  // The RPC also dedupes, which a raw walkIns.length cannot: event_walk_ins has
+  // no unique constraint, so the same person can be recorded twice or be
+  // recorded as a walk-in while already holding a registration. walkinExtra is
+  // the walk-ins who add somebody the roster does not already hold, which keeps
+  // the going tally ticket-aware (from the roster) without double counting.
   const c = roster?.counts ?? { going: 0, checkedIn: 0, waitlist: 0, notAttending: 0, noTicket: 0, ticketsSold: 0, dupes: 0 }
-  const goingCount = c.going + walkInCount
-  const checkedInCount = c.checkedIn + walkInCount
+  const walkInCount = walkIns.length
+  const { going: goingCount, checkedIn: checkedInCount } = composeEventDayCounts({
+    rosterGoing: c.going,
+    rosterCheckedIn: c.checkedIn,
+    walkInRowCount: walkInCount,
+    server: attendanceCounts,
+  })
 
   const handleCheckIn = useCallback(
     (userId: string) => {
@@ -729,23 +750,46 @@ export default function EventDayPage() {
       }
       setAddingMemberId(userId)
       try {
-        const { error } = await supabase.from('event_registrations').insert({
+        const nowIso = new Date().toISOString()
+        let { error } = await supabase.from('event_registrations').insert({
           event_id: eventId,
           user_id: userId,
           status: 'attended',
-          checked_in_at: new Date().toISOString(),
+          checked_in_at: nowIso,
         })
-        if (error) {
-          if (error.code === '23505') {
-            toast.info(`${displayName ?? 'User'} is already registered.`)
+
+        // They already hold a row for this event (UNIQUE event_id, user_id).
+        // That is the ordinary case for anyone who registered ahead of the day,
+        // and it used to dead-end here on "already registered" while leaving
+        // them NOT checked in. Flip the existing row instead, which is the same
+        // update the roster check-in button performs. 'cancelled' is left out
+        // so an explicit user-side cancellation is not silently overridden.
+        if (error?.code === '23505') {
+          const { data: updated, error: updateError } = await supabase
+            .from('event_registrations')
+            .update({ status: 'attended', checked_in_at: nowIso })
+            .eq('event_id', eventId)
+            .eq('user_id', userId)
+            .in('status', ['registered', 'invited', 'waitlisted', 'attended'])
+            .select('id')
+          if (updateError) {
+            error = updateError
+          } else if (!updated || updated.length === 0) {
+            toast.info(`${displayName ?? 'User'} has cancelled their spot. Record them as a new walk-in.`)
+            return
           } else {
-            toast.error(error.message || 'Failed to add attendee')
+            error = null
           }
+        }
+
+        if (error) {
+          toast.error(error.message || 'Failed to add attendee')
         } else {
           toast.success(`Checked in ${displayName ?? 'user'}`)
           // Invalidate attendees query so the new row appears
           queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
           queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+          queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
         }
       } finally {
         setAddingMemberId(null)

@@ -410,3 +410,71 @@ export function classifyAttendance(input: {
   // Active registration, no ticket at all.
   return isTicketed ? 'noTicket' : 'expected'
 }
+
+/* ------------------------------------------------------------------ */
+/*  Event-day headline counts - ONE number across both cards           */
+/* ------------------------------------------------------------------ */
+
+/** What event_attendance_counts (SECURITY DEFINER, migration 20260914120000)
+ *  reports for an event. Undefined while the RPC is in flight or if it fails. */
+export interface ServerAttendanceCounts {
+  checkedIn: number
+  hereTotal: number
+  walkinExtra: number
+  walkinDuplicatesSuppressed: number
+}
+
+/**
+ * Compose the two headline numbers on the leader event-day screen.
+ *
+ * Tate caught these disagreeing with the participant-facing "here so far" card
+ * mid-event on 2026-09-14, 37 against 39. The cause was two different sums:
+ * this screen added `walkIns.length` to the roster tally while the other card
+ * counted attended registrations alone and never read walk-ins.
+ *
+ * `checkedIn` now comes straight from the server so BOTH cards read one number.
+ * `going` stays ticket-aware (it is built from classifyAttendance on the
+ * roster) and takes only `walkinExtra`, the walk-ins who add a person the
+ * roster does not already hold. Adding raw `walkIns.length` there would double
+ * count anyone recorded as both a walk-in and a registration.
+ *
+ * The fallback is the OLD arithmetic, used only while the RPC has not answered.
+ * It can over-count duplicates, which is exactly why it is not the answer.
+ */
+export function composeEventDayCounts(input: {
+  rosterGoing: number
+  rosterCheckedIn: number
+  walkInRowCount: number
+  server: ServerAttendanceCounts | null | undefined
+}): { going: number; checkedIn: number } {
+  const { rosterGoing, rosterCheckedIn, walkInRowCount, server } = input
+  if (!server) {
+    return { going: rosterGoing + walkInRowCount, checkedIn: rosterCheckedIn + walkInRowCount }
+  }
+  return { going: rosterGoing + server.walkinExtra, checkedIn: server.checkedIn }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Walk-in search: what the leader may do with a search result        */
+/* ------------------------------------------------------------------ */
+
+/** attendance_state as reported by search_app_users_for_event. */
+export type SearchAttendanceState = 'checked_in' | 'registered' | 'none'
+
+/**
+ * Whether a walk-in search result offers a Check In button.
+ *
+ * Tate, mid-event 2026-09-14: "When someone is already checked in as a walk-in
+ * for a coexist event, then going back into add a walk in and searching their
+ * name up again should show checked in, not show the check in button then an
+ * error." The button used to render unconditionally because the search RPC
+ * returned profile columns and nothing about the event, so pressing it for
+ * somebody already present hit UNIQUE (event_id, user_id) and dead-ended.
+ *
+ * An unknown or missing state falls back to offering the button: an older
+ * installed bundle talking to the newer RPC, or the reverse, must keep working
+ * rather than silently refusing to check anyone in.
+ */
+export function walkInSearchOffersCheckIn(state: SearchAttendanceState | null | undefined): boolean {
+  return state !== 'checked_in'
+}
