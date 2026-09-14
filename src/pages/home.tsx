@@ -69,7 +69,13 @@ function Section({
 }) {
   return (
     <section className={cn(className)} aria-label={title}>
-      <div className="flex items-center justify-between gap-3 mb-4">
+      {/* Editorial indent (full-bleed pass 2026-09-14): the band below runs
+          edge to edge, so the title is the only thing left holding the page's
+          left rail. It stays inset on the same 16px rail as the greeting, and
+          its pt/pb is now the ONLY vertical rhythm between bands - the body
+          container dropped space-y so the last carousel can meet the impact
+          band with no seam. */}
+      <div className="flex items-center justify-between gap-3 px-4 pt-10 pb-3">
         {/* text-[11px] sm:text-sm + tracking-wider keeps long titles like
             "UPCOMING EVENTS" from truncating on narrow Android (<=360dp).
             Tracking-widest with text-sm was the prior cause of truncation -
@@ -105,11 +111,20 @@ function HScroll({
   className?: string
 }) {
   return (
-    <div className="relative -mx-6">
+    <div className="relative">
+      {/* Full bleed, zero inter-card gap (Tate 2026-09-14). The old shape was
+          `-mx-6` against a `px-6` container plus `gap-3 pl-8 pr-6`, which on
+          mobile overshot by 8px each side because the container is actually
+          px-4 - the row sat at left:-8 width:406 on a 390 viewport. The
+          container now carries no padding at all, so the row needs no negative
+          margin and lands exactly on the viewport. Cards butt, and each one
+          carries its own hairline right rule so the band still reads as tiles.
+          pb-4 went with the scrollbar: a 16px reservation under the last
+          carousel is exactly the gap Tate asked to remove. */}
       <div
         className={cn(
-          'flex gap-3 overflow-x-auto pl-8 pr-6 pb-4',
-          'pretty-scrollbar snap-x snap-proximity',
+          'flex overflow-x-auto scrollbar-none',
+          'snap-x snap-proximity',
           'scroll-smooth',
           className,
         )}
@@ -120,6 +135,22 @@ function HScroll({
     </div>
   )
 }
+
+/* ------------------------------------------------------------------ */
+/*  Full-bleed band tokens                                             */
+/* ------------------------------------------------------------------ */
+
+/* Square corners and no shadow. A drop shadow says "this object floats above
+   the page", which is the opposite of what an edge-to-edge band is claiming,
+   and at zero gap the shadow of card N paints onto card N+1. */
+const BAND_CARD = 'rounded-none shadow-none'
+
+/* Hairline separator. With the gap gone, two photographs sitting flush read as
+   one smeared image, so every card carries a 1px rule on its right edge and the
+   last one drops it. Tone is picked per row: light over photography, dark over
+   the light Updates cards. */
+const RULE_ON_PHOTO = 'border-r border-white/25 last:border-r-0'
+const RULE_ON_LIGHT = 'border-r border-black/10 last:border-r-0'
 
 /* ------------------------------------------------------------------ */
 /*  Format helpers                                                     */
@@ -394,8 +425,8 @@ function NextEventCard({
     return (
       <motion.div variants={rm ? undefined : fadeUp}>
         <Section title="You're going">
-          <div className="sm:max-w-lg">
-            <div className="relative rounded-md overflow-hidden bg-primary-700 shadow-sm px-6 py-12 flex flex-col items-center text-center">
+          <div>
+            <div className="relative overflow-hidden bg-primary-700 px-6 py-12 flex flex-col items-center text-center">
               {!rm && (
                 <motion.span
                   className="absolute w-24 h-24 rounded-full bg-white/15"
@@ -438,7 +469,7 @@ function NextEventCard({
 
   if (isLoading) {
     return (
-      <div className="rounded-md bg-surface-1 shadow-sm p-6 animate-pulse space-y-3">
+      <div className="bg-surface-1 p-6 animate-pulse space-y-3">
         <div className="h-3 w-28 rounded-full bg-primary-100" />
         <div className="h-6 w-3/4 rounded-sm bg-primary-50" />
         <div className="h-4 w-1/2 rounded-full bg-primary-50" />
@@ -537,18 +568,18 @@ function NextEventCard({
 
       return (
         <motion.div variants={rm ? undefined : fadeUp}>
-          <div className="px-1 pt-1 pb-4">
+          <div className="px-4 pt-2 pb-4">
             <p className="font-heading text-4xl sm:text-5xl font-normal display-tight text-neutral-900">
               {getGreeting(firstName)}
             </p>
           </div>
           <Section title="Coming up in your collective">
-            <div className="sm:max-w-lg">
+            <div>
               {fallbackEvent.cover_image_url ? (
                 <Card
                   variant="event"
                   watermark={fallbackEvent.activity_type}
-                  className="shadow-sm"
+                  className={BAND_CARD}
                   onClick={() => navigate(`/events/${fallbackEvent.id}`)}
                   aria-label={fallbackEvent.title}
                 >
@@ -564,7 +595,7 @@ function NextEventCard({
                 </Card>
               ) : (
                 <div
-                  className="relative rounded-md overflow-hidden active:scale-[0.98] transition-transform duration-150 cursor-pointer bg-primary-800 shadow-sm p-6"
+                  className="relative overflow-hidden active:scale-[0.98] transition-transform duration-150 cursor-pointer bg-primary-800 p-6"
                   onClick={() => navigate(`/events/${fallbackEvent.id}`)}
                   role="button"
                   tabIndex={0}
@@ -715,16 +746,18 @@ function NextEventCard({
   return (
     <motion.div variants={rm ? undefined : fadeUp}>
       <Section title="Your Next Event">
-        <div className="sm:max-w-lg">
+        <div>
         {nextEvent.cover_image_url ? (
           /* Full-bleed overlay card when cover image exists */
           <Card
             variant="event"
             watermark={nextEvent.activity_type}
             className={cn(
-              happeningNow
-                ? 'ring-2 ring-primary-400/60 shadow-sm'
-                : 'shadow-sm',
+              BAND_CARD,
+              /* happening-now used an outset ring; at full bleed the ring's
+                 left and right edges fall off-screen, so the emphasis moves to
+                 an inset ring that stays wholly visible. */
+              happeningNow && 'ring-2 ring-inset ring-primary-400/70',
             )}
             onClick={() => navigate(`/events/${nextEvent.id}`)}
             aria-label={nextEvent.title}
@@ -743,11 +776,11 @@ function NextEventCard({
           /* Gradient card when no cover image */
           <div
             className={cn(
-              'relative rounded-md overflow-hidden',
+              'relative overflow-hidden',
               'active:scale-[0.98] transition-transform duration-150 cursor-pointer',
               happeningNow
-                ? 'bg-primary-700 ring-2 ring-primary-400/60 shadow-sm'
-                : 'bg-primary-800 shadow-sm',
+                ? 'bg-primary-700 ring-2 ring-inset ring-primary-400/70'
+                : 'bg-primary-800',
             )}
             onClick={() => navigate(`/events/${nextEvent.id}`)}
             role="button"
@@ -783,14 +816,14 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
 
   if (collectiveEvents.isLoading) {
     return (
-      <div className="space-y-3">
-        <div className="h-3 w-36 rounded-full bg-primary-100 animate-pulse" />
-        <div className="relative -mx-6">
-          <div className="flex gap-3 px-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="shrink-0 w-56 h-32 rounded-md bg-surface-1 shadow-sm animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
-            ))}
-          </div>
+      <div>
+        <div className="px-4 pt-10 pb-3">
+          <div className="h-3 w-36 rounded-full bg-primary-100 animate-pulse" />
+        </div>
+        <div className="flex overflow-hidden">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="shrink-0 w-[70vw] max-w-[300px] aspect-[4/3] bg-surface-1 border-r border-white/25 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+          ))}
         </div>
       </div>
     )
@@ -820,7 +853,7 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
                 key={event.id}
                 variant="event"
                 watermark={event.activity_type}
-                className="shrink-0 w-56 snap-start shadow-sm"
+                className={cn('shrink-0 w-[70vw] max-w-[300px] snap-start', BAND_CARD, RULE_ON_PHOTO)}
                 onClick={() => navigate(`/events/${event.id}`)}
                 aria-label={event.title}
               >
@@ -933,7 +966,7 @@ function NationalEventsSection({ rm }: { rm: boolean }) {
                 key={event.id}
                 variant="event"
                 watermark={event.activity_type}
-                className="shrink-0 w-64 snap-start shadow-sm"
+                className={cn('shrink-0 w-[80vw] max-w-[360px] snap-start', BAND_CARD, RULE_ON_PHOTO)}
                 onClick={() => navigate(`/events/${event.id}`)}
                 aria-label={event.title}
               >
@@ -997,14 +1030,14 @@ function UpdatesSection({ rm }: { rm: boolean }) {
 
   if (updates.isLoading) {
     return (
-      <div className="space-y-3">
-        <div className="h-3 w-28 rounded-full bg-primary-100 animate-pulse" />
-        <div className="relative -mx-6">
-          <div className="flex gap-3 px-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="shrink-0 w-64 h-28 rounded-md bg-surface-1 shadow-sm animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
-            ))}
-          </div>
+      <div>
+        <div className="px-4 pt-10 pb-3">
+          <div className="h-3 w-28 rounded-full bg-primary-100 animate-pulse" />
+        </div>
+        <div className="flex overflow-hidden">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="shrink-0 w-[62vw] max-w-[270px] h-56 bg-surface-1 border-r border-black/10 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+          ))}
         </div>
       </div>
     )
@@ -1025,7 +1058,11 @@ function UpdatesSection({ rm }: { rm: boolean }) {
               type="button"
               onClick={() => navigate('/updates')}
               aria-label={item.title}
-              className="shrink-0 w-56 snap-start text-left rounded-md overflow-hidden bg-bark-50 shadow-sm active:scale-[0.98] transition-transform duration-150 flex flex-col"
+              className={cn(
+                'shrink-0 w-[62vw] max-w-[270px] snap-start text-left overflow-hidden bg-bark-50',
+                'active:scale-[0.98] transition-transform duration-150 flex flex-col',
+                RULE_ON_LIGHT,
+              )}
             >
               {/* Image - fixed 4/3 ratio, only rendered when present */}
               {item.image_url && (
@@ -1132,10 +1169,17 @@ function HomeImpactSection({
   const inView = useInView(sectionRef, { once: true, margin: '-60px' })
 
   return (
-    <motion.div variants={rm ? undefined : fadeUp} className="-mx-2 sm:-mx-3">
-      <div ref={sectionRef} className="relative overflow-hidden bg-[#5a6e40] rounded-md">
+    /* Full-bleed impact band (Tate 2026-09-14). Was a rounded card floated on
+       white behind `-mx-2 sm:-mx-3`, which only half-escaped the container. The
+       olive now runs the full viewport width and butts directly against the
+       Updates carousel above it: that hard tonal step from white page to deep
+       olive IS what makes the seam read as a designed transition rather than a
+       missing margin. Inner gutter moved px-5 -> px-4 so the band's own header
+       sits on the same 16px rail as every section title. */
+    <motion.div variants={rm ? undefined : fadeUp}>
+      <div ref={sectionRef} className="relative overflow-hidden bg-[#5a6e40]">
 
-        <div className="relative px-5 sm:px-7 pt-14 pb-16 sm:pt-16 sm:pb-20">
+        <div className="relative px-4 sm:px-7 pt-14 pb-16 sm:pt-16 sm:pb-20">
           {/* Header - editorial style */}
           <motion.div
             className="mb-8"
@@ -1287,11 +1331,14 @@ function CtaCards({ rm }: { rm: boolean }) {
   // Solid colour cards (Tate spec 2026-05-18). No images, no gradients.
   // Donate = primary green, Merch = bark brown. Type stays white.
   return (
-    <motion.div variants={rm ? undefined : fadeUp} className="grid grid-cols-2 gap-3">
+    /* Closer band: two solid blocks butted against each other and against the
+       impact band above, so the page ends on continuous colour instead of two
+       rounded cards floating on white under a full-bleed band. */
+    <motion.div variants={rm ? undefined : fadeUp} className="grid grid-cols-2 gap-0">
       {/* Donate */}
       <button
         onClick={() => navigate('/donate')}
-        className="relative h-44 rounded-md overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 bg-primary-600"
+        className="relative h-44 overflow-hidden border-t border-r border-white/15 active:scale-[0.97] transition-transform duration-150 bg-primary-600"
         aria-label="Donate"
       >
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
@@ -1311,7 +1358,7 @@ function CtaCards({ rm }: { rm: boolean }) {
       {/* Shop merch */}
       <button
         onClick={() => navigate('/shop')}
-        className="relative h-44 rounded-md overflow-hidden shadow-md active:scale-[0.97] transition-transform duration-150 bg-bark-600"
+        className="relative h-44 overflow-hidden border-t border-white/15 active:scale-[0.97] transition-transform duration-150 bg-bark-600"
         aria-label="Shop merch"
       >
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
@@ -1401,17 +1448,26 @@ export default function HomePage() {
 
           {/* Body sections */}
           <motion.div
-            className="px-4 sm:px-6 lg:px-8 space-y-10 pb-24 mt-4"
+            /* No horizontal padding and no space-y (full-bleed pass
+               2026-09-14). Every content band now runs the full viewport width
+               and owns its own gutter; vertical rhythm comes from each
+               Section's own pt-10, which is what lets the Updates carousel and
+               the impact band meet with no seam. Utility banners that are NOT
+               content bands keep an explicit px-4 below. */
+            className="pb-24 mt-4"
             initial="hidden"
             animate="visible"
             variants={rm ? undefined : stagger}
           >
-            {/* Proximity check-in banner */}
-            <ProximityCheckInBanner />
+            {/* Proximity check-in banner - a utility banner, not a content
+                band, so it keeps the 16px rail. */}
+            <div className="px-4 pt-4 empty:hidden">
+              <ProximityCheckInBanner />
+            </div>
 
             {/* Pending survey banners */}
             {pendingSurveys.data && pendingSurveys.data.length > 0 && (
-              <motion.div variants={rm ? undefined : fadeUp} className="space-y-2">
+              <motion.div variants={rm ? undefined : fadeUp} className="space-y-2 px-4 pt-4">
                 {pendingSurveys.data.map((survey) => (
                   <div
                     key={survey.event_id}
