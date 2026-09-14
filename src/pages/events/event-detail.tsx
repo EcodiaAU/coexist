@@ -2406,8 +2406,16 @@ export default function EventDetailPage() {
               </h3>
             </div>
             <p className="text-caption text-neutral-500 mt-1">
+              {/* The reminder subtitle used to read "Choose how the reminder
+                  reaches your members", which never said that one of those ways
+                  IS the collective chat. Jess asked twice for a way to share an
+                  event to her group chat while standing on this exact button:
+                  the tile is a bell labelled "Remind" and the top-right Share
+                  makes Instagram images, so nothing on the path named the chat
+                  until she opened the toggles below. Name both channels up
+                  front. */}
               {alreadyInvited
-                ? 'Choose how the reminder reaches your members.'
+                ? 'Posts an event card in the collective chat and emails your members. Pick either or both below.'
                 : 'This will invite all members, send notifications, and post to the collective chat.'}
             </p>
           </div>
