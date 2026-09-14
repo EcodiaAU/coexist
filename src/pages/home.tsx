@@ -248,7 +248,7 @@ const HERO_PAIRS: Array<{ bg: string; fg: string; alt: string; fgLayout: HeroFgL
 
 const HERO_ROTATE_MS = 6000
 
-function HomeHero({ rm }: { rm: boolean }) {
+function HomeHero({ rm, greeting }: { rm: boolean; greeting?: string }) {
   const isTouchDevice = useIsCoarsePointer()
   const disableParallax = rm || isTouchDevice
   const { bgRef, fgRef, textRef } = useParallaxLayers({ withScale: !disableParallax })
@@ -363,8 +363,25 @@ function HomeHero({ rm }: { rm: boolean }) {
           })}
         </div>
 
+        {/* Contrast scrim (Tate 2026-09-14: "make sure it's always contrasted,
+            like the text is the right colour so that it doesn't just
+            disappear"). The hero crossfades through several photographs and
+            some of them are bright sky or sand, so a drop shadow alone is a
+            per-image gamble. This is the guarantee: a soft top-down darkening
+            that sits above the background and below the text, so white type
+            holds on every pair without dimming the whole image. z-[1] keeps it
+            under the text (z-[2]) and under the foreground silhouettes
+            (z-[3]), which live at the bottom of the hero anyway. */}
+        <div
+          className="absolute inset-x-0 top-0 h-[62%] z-[1] bg-gradient-to-b from-black/55 via-black/25 to-transparent pointer-events-none"
+          aria-hidden="true"
+        />
+
         {/* Hero text - fastest parallax, recedes behind fg. Wordmark NEVER
-            animates with the carousel - it's the persistent identity layer. */}
+            animates with the carousel - it's the persistent identity layer.
+            The greeting joined it here on 2026-09-14; it used to sit on white
+            below the hero, which read as a stray line once the sections went
+            full bleed. */}
         <div
           ref={disableParallax ? undefined : textRef}
           className={cn('absolute inset-x-0 top-[18%] sm:top-[7%] z-[2] flex flex-col items-center px-6', wcTransform)}
@@ -380,6 +397,39 @@ function HomeHero({ rm }: { rm: boolean }) {
             }}
           />
         </div>
+
+        {/* Greeting, pinned to the foot of the hero (Tate 2026-09-14: put it in
+            the hero and "make sure it's always contrasted ... so that it
+            doesn't just disappear"). THE OCCLUDER IS THE FOREGROUND LAYER, NOT
+            THE PHOTOGRAPH. Sitting it under the wordmark at z-[2] put it
+            directly behind the cut-out silhouettes at z-[3], and at 390x844 the
+            name was unreadable behind a person's arm. So it lives in its own
+            layer ABOVE the foreground, at the foot of the hero where the
+            composition is quietest, on the same 16px rail as every section
+            title below. z-10 clears the foreground and still passes under the
+            wave, which owns z-20. pb-14 clears the wave itself.
+
+            Three independent guarantees of contrast, because the hero
+            crossfades through photographs we do not control: its own bottom-up
+            scrim, a text shadow for a blown-out highlight landing behind a
+            letterform, and white type that never changes colour. */}
+        {greeting && (
+          <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none">
+            <div
+              className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/30 to-transparent"
+              aria-hidden="true"
+            />
+            <motion.p
+              initial={rm ? undefined : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="relative px-4 pb-14 font-heading text-3xl sm:text-4xl font-normal display-tight text-white [text-wrap:balance]"
+              style={{ textShadow: '0 2px 10px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.5)' }}
+            >
+              {greeting}
+            </motion.p>
+          </div>
+        )}
 
       </div>
 
@@ -568,11 +618,6 @@ function NextEventCard({
 
       return (
         <motion.div variants={rm ? undefined : fadeUp}>
-          <div className="px-4 pt-2 pb-4">
-            <p className="font-heading text-4xl sm:text-5xl font-normal display-tight text-neutral-900">
-              {getGreeting(firstName)}
-            </p>
-          </div>
           <Section title="Coming up in your collective">
             <div>
               {fallbackEvent.cover_image_url ? (
@@ -610,15 +655,18 @@ function NextEventCard({
       )
     }
 
-    // No registered event AND no collective event to surface: greeting lead + CTA.
+    // No registered event AND no collective event to surface. The greeting
+    // used to lead this block; it now lives in the hero, so this is the empty
+    // state alone. px-1 became px-4 because the body container no longer
+    // supplies a gutter, and 4px would have put type on the screen edge.
     return (
       <motion.div variants={rm ? undefined : fadeUp}>
-        <div className="px-1 pt-1 pb-1">
-          <p className="font-heading text-4xl sm:text-5xl font-normal display-tight text-neutral-900">
-            {getGreeting(firstName)}
+        <div className="px-4 pt-8 pb-1">
+          <p className="font-heading text-2xl sm:text-3xl font-normal display-tight text-neutral-900">
+            Nothing on your calendar yet
           </p>
           <p className="text-sm text-neutral-500 mt-2 mb-5">
-            No events on your calendar yet.
+            Find a clean-up, a planting or a hike near you.
           </p>
           <Button
             variant="primary"
@@ -1328,8 +1376,15 @@ function HomeImpactSection({
 function CtaCards({ rm }: { rm: boolean }) {
   const navigate = useNavigate()
 
-  // Solid colour cards (Tate spec 2026-05-18). No images, no gradients.
-  // Donate = primary green, Merch = bark brown. Type stays white.
+  // Solid colour blocks. No images, no gradients (Tate spec 2026-05-18).
+  // Recoloured 2026-09-14 on Tate's call: "make them slightly different
+  // colours so that one's not brown and one's not pretty much the same colour
+  // as the impact section". Donate was primary-600 #5d7340, three points off
+  // the impact band's #5a6e40, so the seam between them barely read. Merch was
+  // bark-600 #846540, the brown. Now moss-600 #2f7646 (a deeper, more
+  // saturated forest green that steps clearly down from the olive) and
+  // info-600 #396c65 (a coastal teal, which is on-brand for an org whose work
+  // is half beach clean-ups). Type stays white on both.
   return (
     /* Closer band: two solid blocks butted against each other and against the
        impact band above, so the page ends on continuous colour instead of two
@@ -1338,7 +1393,7 @@ function CtaCards({ rm }: { rm: boolean }) {
       {/* Donate */}
       <button
         onClick={() => navigate('/donate')}
-        className="relative h-44 overflow-hidden border-t border-r border-white/15 active:scale-[0.97] transition-transform duration-150 bg-primary-600"
+        className="relative h-44 overflow-hidden border-t border-r border-white/15 active:scale-[0.97] transition-transform duration-150 bg-moss-600"
         aria-label="Donate"
       >
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
@@ -1358,7 +1413,7 @@ function CtaCards({ rm }: { rm: boolean }) {
       {/* Shop merch */}
       <button
         onClick={() => navigate('/shop')}
-        className="relative h-44 overflow-hidden border-t border-white/15 active:scale-[0.97] transition-transform duration-150 bg-bark-600"
+        className="relative h-44 overflow-hidden border-t border-white/15 active:scale-[0.97] transition-transform duration-150 bg-info-600"
         aria-label="Shop merch"
       >
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
@@ -1417,23 +1472,13 @@ export default function HomePage() {
         {/* -- Content -- */}
         <div className="relative z-10">
 {/* 1. Parallax layered hero */}
-          <HomeHero rm={rm} />
+          <HomeHero rm={rm} greeting={getGreeting(firstName)} />
 
-          {/* Greeting - only when there is an upcoming event. When there is
-              not, the greeting leads the empty NextEventCard instead, so the two
-              do not stack and clash. (Tate 2026-06-23.) */}
-          {myEvents.data && myEvents.data.length > 0 && (
-            <div className="px-4 pt-6 mb-2">
-              <motion.p
-                initial={rm ? {} : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="font-heading text-4xl sm:text-5xl font-normal display-tight text-neutral-900"
-              >
-                {getGreeting(firstName)}
-              </motion.p>
-            </div>
-          )}
+          {/* The greeting moved INTO the hero on 2026-09-14 (Tate). It used
+              to render here on white, and only when an upcoming event existed,
+              with a second copy inside NextEventCard's no-event branch so the
+              slot was never empty. One copy over the hero photograph replaces
+              both, and the hero's contrast scrim is what keeps it legible. */}
 
           {/* Error fallback */}
           {initialError && (
@@ -1454,7 +1499,7 @@ export default function HomePage() {
                Section's own pt-10, which is what lets the Updates carousel and
                the impact band meet with no seam. Utility banners that are NOT
                content bands keep an explicit px-4 below. */
-            className="pb-24 mt-4"
+            className="pb-24"
             initial="hidden"
             animate="visible"
             variants={rm ? undefined : stagger}
