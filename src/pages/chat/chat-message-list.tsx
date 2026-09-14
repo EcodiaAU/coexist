@@ -29,6 +29,7 @@ import {
 } from '@/hooks/use-chat'
 import type { ChannelMessageWithSender } from '@/hooks/use-staff-channels'
 import { eventRequiresSafetySet } from '@/lib/dietary'
+import { isExternallyBooked } from '@/lib/event-capacity'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useEventDetail, type EventDetailData } from '@/hooks/use-events'
@@ -223,6 +224,19 @@ function InlineAnnouncement({
       if (eventDetail.is_ticketed) {
         respond.mutate({ announcementId, response })
         toast.info('This campout needs a ticket. Opening it now.')
+        navigate(`/events/${eventId}`)
+        return
+      }
+
+      // The seats belong to a partner (Humanitix / Eventbrite / a volunteer
+      // portal), so the raw upsert below would take an app seat that reserves
+      // nothing physical and count it against a capacity the app does not own.
+      // That is the fourth door onto the same bug the comment above describes,
+      // and it is the one that oversold Riverfest to 45/45 against about 20
+      // real bookings (2026-09-14). Send them to the page holding the link.
+      if (isExternallyBooked(eventDetail)) {
+        respond.mutate({ announcementId, response })
+        toast.info('Spots for this one are booked on the partner site. Opening it now.')
         navigate(`/events/${eventId}`)
         return
       }

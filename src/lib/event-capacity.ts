@@ -478,3 +478,35 @@ export type SearchAttendanceState = 'checked_in' | 'registered' | 'none'
 export function walkInSearchOffersCheckIn(state: SearchAttendanceState | null | undefined): boolean {
   return state !== 'checked_in'
 }
+
+/* ------------------------------------------------------------------ */
+/*  Externally-booked events: the app is not the booking channel       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Whether the seats for this event are sold somewhere else.
+ *
+ * WHAT WAS BROKEN (measured on tjutlbzekfouwsiaplbr 2026-09-14). An event that
+ * carries an `external_registration_url` is one physical event ticketed by a
+ * partner (Humanitix, Eventbrite, the CVA volunteer portal). The app happily
+ * took its OWN registrations against its OWN `capacity` number beside it, so
+ * two independent booking channels sold the same seats and neither could see
+ * the other. "Riverfest: Yarra River Clean Up & Kayak" (Jess, 17 Oct 2026,
+ * capacity 45) read 45/45 filled with a 37-person waitlist in-app while only
+ * about 20 people had actually booked on Humanitix: the app had invented 25
+ * seats, hidden the real ones behind a "full" banner, and queued 37 more.
+ *
+ * The URL is the predicate, NOT `is_external_collaboration`. The flag means
+ * "we are running this with another org", which is true of 25 events that take
+ * their bookings in-app perfectly correctly and must keep the normal RSVP
+ * flow. Only a URL says "the seats live over there".
+ *
+ * Where this is true the app must not create, queue, or count a seat: no bare
+ * registration, no waitlist, no capacity meter. It sends the member to the
+ * partner and shows nothing that reads as holding a spot.
+ */
+export function isExternallyBooked(
+  event: { external_registration_url?: string | null } | null | undefined,
+): boolean {
+  return !!event?.external_registration_url?.trim()
+}

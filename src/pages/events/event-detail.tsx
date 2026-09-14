@@ -88,7 +88,7 @@ import { parseLocationPoint } from '@/lib/geo'
 import { getMediumUrl } from '@/lib/image-utils'
 import { isEventSoldOut } from '@/lib/event-sold-out'
 import { WaitlistJoin } from '@/components/waitlist-join'
-import { computeSpotsTaken, ticketStatusBadge } from '@/lib/event-capacity'
+import { computeSpotsTaken, isExternallyBooked, ticketStatusBadge } from '@/lib/event-capacity'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { IssueTicketSheet } from '@/components/issue-ticket-sheet'
@@ -735,7 +735,13 @@ export default function EventDetailPage() {
         registrationsGoing: event.registration_count,
       })
     : 0
-  const isAtCapacity = event?.capacity ? spotsFilled >= event.capacity : false
+  // An externally-booked event has no in-app capacity to be at: the partner
+  // owns the seats, so the app's own `capacity` number describes nothing real.
+  // Reading it as full is what hid Riverfest's genuinely available Humanitix
+  // places behind a "45/45 spots filled" banner and pushed 37 people onto a
+  // waitlist the app could never honour (2026-09-14).
+  const externallyBooked = isExternallyBooked(event)
+  const isAtCapacity = !externallyBooked && event?.capacity ? spotsFilled >= event.capacity : false
 
   // Event is "active" if it started (or starts within the check-in window) and hasn't ended
   const rawCheckinWindow = (event as unknown as Record<string, unknown>)?.checkin_window_minutes as number | null | undefined
@@ -767,14 +773,19 @@ export default function EventDetailPage() {
 
   const capacityText = useMemo(() => {
     if (!event) return ''
+    // Never quote a spots-filled fraction for an event the app does not sell.
+    // The in-app number is not the real one and stating it as a limit is the
+    // whole bug; how many are going is still true and still worth showing.
+    if (externallyBooked) return `${spotsFilled} going via the app`
     if (!event.capacity) return `${spotsFilled} going`
     return `${spotsFilled}/${event.capacity} spots filled`
-  }, [event, spotsFilled])
+  }, [event, spotsFilled, externallyBooked])
 
   const capacityPercent = useMemo(() => {
+    if (externallyBooked) return 0
     if (!event?.capacity) return 0
     return Math.min(100, (spotsFilled / event.capacity) * 100)
-  }, [event, spotsFilled])
+  }, [event, spotsFilled, externallyBooked])
 
   // The registration itself, with the gate already satisfied or not required.
   const doRegister = useCallback((asWaitlist: boolean) => {
@@ -1139,6 +1150,22 @@ export default function EventDetailPage() {
             <AlertCircle size={18} />
             You're on the waitlist
           </div>
+          {/* An in-app waitlist on an externally-booked event can never drain:
+              the seats are the partner's to release and the promotion sweep
+              deliberately skips these events, so the queue would sit forever.
+              Riverfest had 37 people waiting on one. Give them the real door. */}
+          {externallyBooked && event.external_registration_url && (
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              onClick={() => window.open(event.external_registration_url as string, '_blank', 'noopener,noreferrer')}
+              icon={<ExternalLink size={18} />}
+              className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
+            >
+              Book on Partner Site
+            </Button>
+          )}
           <Button
             variant="ghost"
             fullWidth
@@ -1146,6 +1173,36 @@ export default function EventDetailPage() {
           >
             Leave Waitlist
           </Button>
+        </div>
+      )
+    }
+
+    // ── Externally-booked events: the partner owns the seats ──
+    // Runs BEFORE the invited branch deliberately. This block used to sit below
+    // it (and below the free-RSVP branch), so an invited member on an external
+    // event was shown "Accept & Register" and NEVER the partner link at all.
+    // Riverfest carried 500 invited rows and filled to 45/45 in-app against
+    // about 20 real Humanitix bookings exactly that way (2026-09-14). The
+    // already-holding states above (registered / waitlisted / attended) stay
+    // ahead of this one so nobody loses their status or their cancel control;
+    // they get the partner link added inside their own branch instead.
+    if (externallyBooked && !isTicketed) {
+      const extUrl = event.external_registration_url as string
+      return (
+        <div className="space-y-2">
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onClick={() => window.open(extUrl, '_blank', 'noopener,noreferrer')}
+            icon={<ExternalLink size={18} />}
+            className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
+          >
+            Register on Partner Site
+          </Button>
+          <p className="px-1 text-center text-[11px] text-neutral-500">
+            Spots for this one are booked on the partner site, so registering here would not hold you a place.
+          </p>
         </div>
       )
     }
@@ -1483,35 +1540,6 @@ export default function EventDetailPage() {
             {selectedTicketType
               ? `Get Ticket - $${((ticketTypes?.find((t) => t.id === selectedTicketType)?.price_cents ?? 0) / 100).toFixed(2)}`
               : 'Select a ticket'}
-          </Button>
-        </div>
-      )
-    }
-
-    // ── External collaboration: show external registration link ──
-    if (event.external_registration_url) {
-      const extUrl = event.external_registration_url
-      return (
-        <div className="space-y-2">
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            onClick={() => window.open(extUrl, '_blank', 'noopener,noreferrer')}
-            icon={<ExternalLink size={18} />}
-            className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
-          >
-            Register on Partner Site
-          </Button>
-          {/* Also allow in-app registration */}
-          <Button
-            variant="secondary"
-            size="md"
-            fullWidth
-            loading={registerMutation.isPending}
-            onClick={() => handleRegister()}
-          >
-            {isAtCapacity ? 'Join Waitlist' : 'Also Register In-App'}
           </Button>
         </div>
       )

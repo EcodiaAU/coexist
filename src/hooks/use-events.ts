@@ -10,7 +10,7 @@ import { queueOfflineAction } from '@/lib/offline-sync'
 import { fetchEventIdsForCollective, fetchEventIdsForCollectives } from '@/lib/collective-event-ids'
 import { formatEventLong, wallClockNow } from '@/lib/date-format'
 import { DIETARY_GATE_QUERY_KEY } from '@/lib/dietary'
-import { classifyAttendance } from '@/lib/event-capacity'
+import { classifyAttendance, isExternallyBooked } from '@/lib/event-capacity'
 import { isNativePlatform, shareBlobNative, isShareCancellation } from '@/lib/native-share'
 import type {
   Database,
@@ -1097,11 +1097,24 @@ export function useRegisterForEvent() {
       // (Angelica 2026-07-09).
       const { data: evt } = await supabase
         .from('events')
-        .select('is_ticketed')
+        .select('is_ticketed, external_registration_url')
         .eq('id', eventId)
         .maybeSingle()
       if (evt?.is_ticketed) {
         throw new Error('This event needs a ticket. Open the event to get one.')
+      }
+
+      // The seats for this event are sold by a partner, so the app must not
+      // create one. Registering here used to take a spot against the app's own
+      // capacity number, independent of the partner's, which oversold the
+      // physical event and then hid the real remaining seats behind a "full"
+      // banner (Riverfest, 45/45 in-app against ~20 real bookings, 2026-09-14).
+      // Guarded at the mutation rather than only at the button because three
+      // other entry points reach it: the invitation "Accept & Register" CTA,
+      // the home fallback-event card, and any older installed bundle still
+      // rendering the removed button while Capgo catches up.
+      if (isExternallyBooked(evt)) {
+        throw new Error('Registration for this event is handled on the partner site. Open the event to book your spot.')
       }
 
       // A pre-flight count so the intent we send matches what the member was
