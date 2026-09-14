@@ -17,13 +17,19 @@ export interface UserCollectiveRole {
   role: CollectiveRole
   status: string
   joined_at: string
+  /**
+   * NULLABLE on purpose. PostgREST returns null for the embedded row when the
+   * parent collective is gone (hard-deleted, or unreadable under RLS), so a
+   * non-null type here is a lie the renderer then trusts with
+   * `membership.collective.name`. Consumers must use optional access.
+   */
   collective: {
     id: string
     name: string
     slug: string
     state: string | null
     region: string | null
-  }
+  } | null
 }
 
 /* ------------------------------------------------------------------ */
@@ -48,7 +54,7 @@ export function useUserCollectiveRoles(userId: string | undefined) {
         role: row.role as CollectiveRole,
         status: row.status,
         joined_at: row.joined_at,
-        collective: row.collectives as UserCollectiveRole['collective'],
+        collective: (row.collectives ?? null) as UserCollectiveRole['collective'],
       })) as UserCollectiveRole[]
     },
     enabled: !!userId,
