@@ -72,6 +72,41 @@ if [ "$VERSION" = "$NATIVE_MAX" ] || [ "$HIGHEST" != "$VERSION" ]; then
 fi
 echo "==> native floor OK: web $VERSION > native $NATIVE_MAX (iOS ${IOS_NATIVE:-?} / Android ${AND_NATIVE:-?})"
 
+# CHANNEL FLOOR GUARD. The native floor above is NOT enough, and on 2026-09-14
+# that gap nearly shipped a dead bundle. This script auto-bumps off the VERSION
+# FILE, but the file drifts below the live channel whenever a bundle is shipped
+# without its bump commit landing in the repo. That day the file read 2.3.13
+# while production served 2.3.16, so a default run would have uploaded 2.3.14:
+# above every native version, so the native guard passed it, accepted by the
+# upload, and served to NOBODY because the channel already had something newer.
+# A dead push looks exactly like a successful one from the CLI output, which is
+# why this has to be a hard gate rather than a warning.
+CHANNEL_LIVE=$(curl -s --max-time 20 "https://api.capgo.app/channel?app_id=$APP_ID" \
+  -H "authorization: $CAPGO_APIKEY" -H "Content-Type: application/json" 2>/dev/null \
+  | python3 -c "
+import json,sys
+try: d=json.load(sys.stdin)
+except Exception: sys.exit(0)
+rows = d if isinstance(d,list) else [d]
+for c in rows:
+    if c.get('name') == '$CHANNEL':
+        v = c.get('version')
+        print(v.get('name') if isinstance(v,dict) else (v or ''))
+        break
+" 2>/dev/null)
+if [ -n "${CHANNEL_LIVE:-}" ]; then
+  CH_HIGHEST=$(printf '%s\n%s\n' "$VERSION" "$CHANNEL_LIVE" | sort -V | tail -1)
+  if [ "$VERSION" = "$CHANNEL_LIVE" ] || [ "$CH_HIGHEST" != "$VERSION" ]; then
+    echo "FATAL: web bundle $VERSION is not greater than what channel '$CHANNEL' already serves ($CHANNEL_LIVE)." >&2
+    echo "       The upload would succeed and reach ZERO devices (silent dead push)." >&2
+    echo "       The version file has drifted below the channel. Set WEB_BUNDLE_VERSION above $CHANNEL_LIVE and retry." >&2
+    exit 1
+  fi
+  echo "==> channel floor OK: web $VERSION > channel '$CHANNEL' live $CHANNEL_LIVE"
+else
+  echo "==> WARN: could not read live channel version - shipping without the channel floor check" >&2
+fi
+
 # Sentry source-map upload for the OTA bundle. The native app has no server.url,
 # so it serves THIS bundled dist locally - its JS crash stacks (e.g. COEXIST-N
 # "Maximum update depth" in the admin bundle) only resolve to real file/line if
