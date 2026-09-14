@@ -94,6 +94,19 @@ function Section({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Full-bleed wrapper                                                 */
+/* ------------------------------------------------------------------ */
+
+/* Cancels the body container's horizontal padding so a section's cards run
+   edge to edge. The offsets MUST mirror the body wrapper in HomePage
+   (px-4 sm:px-6 lg:px-8) - a mismatch over- or under-shoots the screen edge,
+   which is what the old hardcoded -mx-6 in HScroll did on mobile (the wrapper
+   is px-4 there, so it over-bled by 8px a side). */
+function Bleed({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn('-mx-4 sm:-mx-6 lg:-mx-8', className)}>{children}</div>
+}
+
+/* ------------------------------------------------------------------ */
 /*  Horizontal scroll (no gradient fade edges)                         */
 /* ------------------------------------------------------------------ */
 
@@ -105,10 +118,10 @@ function HScroll({
   className?: string
 }) {
   return (
-    <div className="relative -mx-6">
+    <Bleed className="relative">
       <div
         className={cn(
-          'flex gap-3 overflow-x-auto pl-8 pr-6 pb-4',
+          'flex gap-0 overflow-x-auto pb-4',
           'pretty-scrollbar snap-x snap-proximity',
           'scroll-smooth',
           className,
@@ -117,7 +130,7 @@ function HScroll({
       >
         {children}
       </div>
-    </div>
+    </Bleed>
   )
 }
 
@@ -394,8 +407,8 @@ function NextEventCard({
     return (
       <motion.div variants={rm ? undefined : fadeUp}>
         <Section title="You're going">
-          <div className="sm:max-w-lg">
-            <div className="relative rounded-md overflow-hidden bg-primary-700 shadow-sm px-6 py-12 flex flex-col items-center text-center">
+          <Bleed className="sm:max-w-lg">
+            <div className="relative rounded-none overflow-hidden bg-primary-700 shadow-sm px-6 py-12 flex flex-col items-center text-center">
               {!rm && (
                 <motion.span
                   className="absolute w-24 h-24 rounded-full bg-white/15"
@@ -430,7 +443,7 @@ function NextEventCard({
                 See you at {justRegistered}
               </motion.p>
             </div>
-          </div>
+          </Bleed>
         </Section>
       </motion.div>
     )
@@ -543,12 +556,12 @@ function NextEventCard({
             </p>
           </div>
           <Section title="Coming up in your collective">
-            <div className="sm:max-w-lg">
+            <Bleed className="sm:max-w-lg">
               {fallbackEvent.cover_image_url ? (
                 <Card
                   variant="event"
                   watermark={fallbackEvent.activity_type}
-                  className="shadow-sm"
+                  className="rounded-none shadow-sm"
                   onClick={() => navigate(`/events/${fallbackEvent.id}`)}
                   aria-label={fallbackEvent.title}
                 >
@@ -564,7 +577,7 @@ function NextEventCard({
                 </Card>
               ) : (
                 <div
-                  className="relative rounded-md overflow-hidden active:scale-[0.98] transition-transform duration-150 cursor-pointer bg-primary-800 shadow-sm p-6"
+                  className="relative rounded-none overflow-hidden active:scale-[0.98] transition-transform duration-150 cursor-pointer bg-primary-800 shadow-sm p-6"
                   onClick={() => navigate(`/events/${fallbackEvent.id}`)}
                   role="button"
                   tabIndex={0}
@@ -573,7 +586,7 @@ function NextEventCard({
                   {fbContent}
                 </div>
               )}
-            </div>
+            </Bleed>
           </Section>
         </motion.div>
       )
@@ -715,13 +728,14 @@ function NextEventCard({
   return (
     <motion.div variants={rm ? undefined : fadeUp}>
       <Section title="Your Next Event">
-        <div className="sm:max-w-lg">
+        <Bleed className="sm:max-w-lg">
         {nextEvent.cover_image_url ? (
           /* Full-bleed overlay card when cover image exists */
           <Card
             variant="event"
             watermark={nextEvent.activity_type}
             className={cn(
+              'rounded-none',
               happeningNow
                 ? 'ring-2 ring-primary-400/60 shadow-sm'
                 : 'shadow-sm',
@@ -743,7 +757,7 @@ function NextEventCard({
           /* Gradient card when no cover image */
           <div
             className={cn(
-              'relative rounded-md overflow-hidden',
+              'relative rounded-none overflow-hidden',
               'active:scale-[0.98] transition-transform duration-150 cursor-pointer',
               happeningNow
                 ? 'bg-primary-700 ring-2 ring-primary-400/60 shadow-sm'
@@ -759,7 +773,7 @@ function NextEventCard({
             </div>
           </div>
         )}
-        </div>
+        </Bleed>
       </Section>
 
       <CheckInSheet
@@ -820,7 +834,7 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
                 key={event.id}
                 variant="event"
                 watermark={event.activity_type}
-                className="shrink-0 w-56 snap-start shadow-sm"
+                className="shrink-0 w-56 snap-start rounded-none shadow-sm"
                 onClick={() => navigate(`/events/${event.id}`)}
                 aria-label={event.title}
               >
@@ -933,7 +947,7 @@ function NationalEventsSection({ rm }: { rm: boolean }) {
                 key={event.id}
                 variant="event"
                 watermark={event.activity_type}
-                className="shrink-0 w-64 snap-start shadow-sm"
+                className="shrink-0 w-64 snap-start rounded-none shadow-sm"
                 onClick={() => navigate(`/events/${event.id}`)}
                 aria-label={event.title}
               >
@@ -1025,7 +1039,7 @@ function UpdatesSection({ rm }: { rm: boolean }) {
               type="button"
               onClick={() => navigate('/updates')}
               aria-label={item.title}
-              className="shrink-0 w-56 snap-start text-left rounded-md overflow-hidden bg-bark-50 shadow-sm active:scale-[0.98] transition-transform duration-150 flex flex-col"
+              className="shrink-0 w-56 snap-start text-left rounded-none overflow-hidden bg-bark-50 shadow-sm active:scale-[0.98] transition-transform duration-150 flex flex-col"
             >
               {/* Image - fixed 4/3 ratio, only rendered when present */}
               {item.image_url && (
@@ -1132,8 +1146,11 @@ function HomeImpactSection({
   const inView = useInView(sectionRef, { once: true, margin: '-60px' })
 
   return (
-    <motion.div variants={rm ? undefined : fadeUp} className="-mx-2 sm:-mx-3">
-      <div ref={sectionRef} className="relative overflow-hidden bg-[#5a6e40] rounded-md">
+    /* -mt-10 cancels the body's space-y-10 above this band only, so the green
+       runs straight off the bottom of the events carousel instead of floating
+       as a card with air around it. */
+    <motion.div variants={rm ? undefined : fadeUp} className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-10">
+      <div ref={sectionRef} className="relative overflow-hidden bg-[#5a6e40] rounded-none">
 
         <div className="relative px-5 sm:px-7 pt-14 pb-16 sm:pt-16 sm:pb-20">
           {/* Header - editorial style */}
