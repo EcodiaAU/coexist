@@ -183,6 +183,7 @@ export function ChatLeaderPanel({
   isCollective,
   isLeaderOrAbove,
   collectiveId,
+  channelCollectiveId,
   collectiveName,
   channelName,
 
@@ -225,7 +226,7 @@ export function ChatLeaderPanel({
         onInviteCollectives={isCollective ? onInviteCollectives : undefined}
         loading={announcementLoading}
         defaultType={announcementType}
-        collectiveId={isCollective ? collectiveId : undefined}
+        collectiveId={isCollective ? collectiveId : (channelCollectiveId ?? undefined)}
       />
 
       {/* Broadcast notification sheet */}

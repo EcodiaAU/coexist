@@ -396,9 +396,17 @@ export function CreateAnnouncementSheet({
               onSelect={setEventId}
               isLoading={eventsLoading}
             />
+            {/* Two different causes, and conflating them sent a leader off to
+                create an event that already existed. No collectiveId means this
+                chat is not scoped to a collective (a state-wide or national
+                staff channel), so there is nothing to list and creating an
+                event would not help. An empty list WITH a collective is the
+                real "nothing upcoming" case. */}
             {!eventsLoading && upcomingEvents.length === 0 && (
               <p data-eos-id="src/components/create-announcement-sheet.tsx#47" className="text-[11px] text-warning-600 mt-1">
-                No upcoming events found. Create an event first, then invite from here.
+                {collectiveId
+                  ? 'No upcoming events found. Create an event first, then invite from here.'
+                  : 'This chat is not tied to a single collective, so there are no events to invite to. Post the invite from your collective chat or a collective staff chat instead.'}
               </p>
             )}
           </div>
