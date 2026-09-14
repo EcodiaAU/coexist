@@ -1194,6 +1194,16 @@ function UpdatesSection({ rm }: { rm: boolean }) {
 
 const BAND_GROUND = '#5a6e40'
 const BAND_INK = '#f4f2ec'
+/* Supporting type on the band is FULL ink, not a tint. The band ground
+   #5a6e40 is light enough that #f4f2ec tops out at 5.02:1 against it, so the
+   alpha floor for 4.5:1 body text is about 0.93 and there is no muted tint
+   left to spend: the first pass ran labels at 0.70 (3.38:1), the hero
+   description at 0.55 (2.67:1) and the kg/hrs units at 0.60 (2.90:1), all
+   below AA and all a regression on the cream cards this lattice replaced,
+   which measured 7.81:1 and 4.74:1 on production. Hierarchy is carried by
+   size, weight and tracking instead, which is a 6x ratio between a 60px hero
+   number and a 10px label and does not need help from opacity. */
+const BAND_INK_SOFT = BAND_INK
 
 function BandStat({
   value,
@@ -1225,7 +1235,14 @@ function BandStat({
       viewport={{ once: true, margin: '-40px' }}
       transition={rm ? { duration: 0 } : { duration: 0.4, delay: 0.06 + delay * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        'flex flex-col justify-end',
+        // justify-START, not end. The cells stretch to their grid row, so with
+        // justify-end a label that wraps to two lines lifts its own number
+        // while its siblings stay put: at 768 the bottom row read 675/660/675
+        // and three numbers sat on three baselines inside a lattice whose
+        // whole argument is alignment. Anchoring the top pins every number to
+        // one line and moves the slack to the bottom of the cell, where it is
+        // invisible against continuous ground.
+        'flex flex-col justify-start',
         hero ? 'px-4 sm:px-7 pt-8 pb-9 sm:pt-10 sm:pb-11' : 'px-4 sm:px-7 pt-6 pb-7',
       )}
       style={{ backgroundColor: BAND_GROUND }}
@@ -1233,8 +1250,16 @@ function BandStat({
     >
       <p
         className={cn(
-          'font-heading font-extrabold tabular-nums leading-[0.9] tracking-tight',
+          // The size classes come FIRST and the leading LAST on purpose.
+          // cn() is twMerge(clsx(...)), and tailwind-merge treats `text-[60px]`
+          // as a font-size, which its conflict map says overrides `leading-*`
+          // (Tailwind's named text sizes carry a line-height, so the merge
+          // cannot tell a bracket size from `text-lg`). With the leading
+          // written first it was silently dropped and every number rendered at
+          // the 1.5 default: the 76px hero measured a 114px box instead of 68px.
+          // Verified on the deployed preview 2026-09-15 before and after.
           hero ? 'text-[60px] sm:text-[76px]' : 'text-[30px] sm:text-[34px]',
+          'font-heading font-extrabold tabular-nums tracking-tight leading-[0.9]',
         )}
         style={{ color: BAND_INK }}
       >
@@ -1242,7 +1267,7 @@ function BandStat({
         {unit && (
           <span
             className={cn('font-bold ml-1', hero ? 'text-2xl' : 'text-base')}
-            style={{ color: `${BAND_INK}99` }}
+            style={{ color: BAND_INK_SOFT }}
           >
             {unit}
           </span>
@@ -1254,7 +1279,7 @@ function BandStat({
           'font-heading font-bold uppercase',
           hero ? 'mt-3 text-[11px] tracking-[0.2em]' : 'mt-2 text-[10px] tracking-[0.18em]',
         )}
-        style={{ color: `${BAND_INK}b3` }}
+        style={{ color: BAND_INK_SOFT }}
       >
         {label}
       </p>
@@ -1262,7 +1287,7 @@ function BandStat({
       {hero && description && (
         <p
           className="mt-3 text-[13px] leading-relaxed max-w-[320px]"
-          style={{ color: `${BAND_INK}8c` }}
+          style={{ color: BAND_INK_SOFT }}
         >
           {description}
         </p>
@@ -1432,13 +1457,25 @@ function HomeImpactSection({
           {isInitialLoading ? (
             /* Skeleton mirrors the lattice, not the retired cards: same
                full-bleed break, same hairlines, same cell heights, so the
-               band does not visibly reflow when the data lands. */
+               band does not visibly reflow when the data lands.
+
+               The heights are the LOADED heights, measured on the deployed
+               preview rather than estimated. The first pass estimated them
+               from the intended tight leading while the build was silently
+               dropping `leading-[0.9]` (see BandStat), so the skeleton drew a
+               503px lattice and the data landed a 604px one: a 101px jump on
+               every cold load. With the leading actually applied a mobile
+               cell is 102px and a hero with a two-line description is 205px;
+               at sm they are 106px and 235px. The hero breathes a little with
+               the description's line count, and the skeleton only ever shows
+               on the National / All Time first load, so it is sized for that
+               case rather than for the scoped views. */
             <div className="-mx-4 sm:-mx-7 grid grid-cols-2 sm:grid-cols-3 gap-px bg-[#f4f2ec]/15">
-              <div className="col-span-2 sm:col-span-3 h-[188px] bg-[#5a6e40]">
+              <div className="col-span-2 sm:col-span-3 h-[205px] sm:h-[235px] bg-[#5a6e40]">
                 <div className="h-full w-full bg-[#f4f2ec]/10 animate-pulse" />
               </div>
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-[104px] bg-[#5a6e40]">
+                <div key={i} className="h-[102px] sm:h-[106px] bg-[#5a6e40]">
                   <div className="h-full w-full bg-[#f4f2ec]/[0.07] animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
                 </div>
               ))}
@@ -1472,8 +1509,18 @@ function HomeImpactSection({
                 unit: 'kg',
                 description: `Every kilo of litter Co-Exist volunteers have cleared ${collectiveLabel}.`,
               }
-              const hero = treesValue > 0 ? trees : litter
-              const second = treesValue > 0 ? litter : trees
+              // Lead with the first stat that actually has a number. Asking
+              // only `treesValue > 0` and falling back to litter still opens
+              // the band on a giant 0 whenever BOTH are zero, which is not a
+              // hypothetical: Darwin on the 2026 range renders trees 0, litter
+              // 0, attendees 0, events 0 and hours 0 on live data, and the
+              // preview headlined it "0kg". Trees keeps the lead whenever it
+              // has a value, litter is still next, and an all-zero collective
+              // falls back to trees so a brand-new collective reads as "0
+              // Trees Planted" rather than "0kg Litter Removed".
+              const heroOrder = [trees, litter]
+              const hero = heroOrder.find((s) => s.value > 0) ?? trees
+              const second = hero === trees ? litter : trees
               const rest = [
                 second,
                 { key: 'attendees', value: data?.eventsAttended ?? 0, label: 'Attendees' },
@@ -1544,10 +1591,18 @@ function CtaCards({ rm }: { rm: boolean }) {
   // background or on the person standing behind.
   //
   // Khaki is a LIGHT ground, so the merch block carries dark ink (#1e1f14,
-  // 4.9:1 against the khaki) instead of white, which would have measured
-  // 3.4:1 and turned the 11px sub-copy to mush. The deep olive block keeps the
-  // cream #f4f2ec the impact band already uses, at 7.9:1. The pair now reads
-  // as the merch colourway: one light, one dark, both real.
+  // 4.88:1 against the khaki measured on the deployed preview) instead of
+  // white, which would have measured 3.4:1 and turned the 11px sub-copy to
+  // mush. The deep olive block keeps the cream #f4f2ec the impact band
+  // already uses, at 7.93:1. The pair now reads as the merch colourway: one
+  // light, one dark, both real.
+  //
+  // The sub-copy carries FULL ink, not /75. That reasoning above was done on
+  // the 20px heading and the 11px line underneath it was left on an alpha,
+  // which measured 3.37:1 on the deployed preview: the exact mush the comment
+  // was written to avoid, one element below where it was checked. Khaki is
+  // light enough that #1e1f14 tops out at 4.88:1, so an 11px line has no
+  // alpha to spend. Measure the smallest type in a block, not the largest.
   return (
     /* Closer band: two solid blocks butted against each other and against the
        impact band above, so the page ends on continuous colour instead of two
@@ -1585,7 +1640,7 @@ function CtaCards({ rm }: { rm: boolean }) {
           </span>
           <div>
             <p className="font-heading text-xl font-bold text-[#1e1f14] leading-tight">Merch</p>
-            <p className="text-[11px] text-[#1e1f14]/75 mt-0.5 leading-snug">Wear the movement</p>
+            <p className="text-[11px] text-[#1e1f14] mt-0.5 leading-snug">Wear the movement</p>
             <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-[#1e1f14] mt-2">
               Shop <ChevronRight size={13} />
             </span>
