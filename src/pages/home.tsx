@@ -416,7 +416,7 @@ function HomeHero({ rm, greeting }: { rm: boolean; greeting?: string }) {
         {greeting && (
           <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none">
             <div
-              className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/30 to-transparent"
+              className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/85 via-black/45 to-transparent"
               aria-hidden="true"
             />
             <motion.p
