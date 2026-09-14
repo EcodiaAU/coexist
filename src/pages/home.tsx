@@ -1,15 +1,12 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, useReducedMotion, useInView } from 'framer-motion'
 import { useParallaxLayers } from '@/hooks/use-parallax-scroll'
 import {
     ChevronRight,
     Calendar,
-    Users,
-    TreePine,
     Megaphone,
     Clock,
-    Trash2,
     Globe,
     MapPin,
     Heart,
@@ -17,7 +14,6 @@ import {
     Hash,
     Camera,
     CheckCircle2,
-    GraduationCap,
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
@@ -43,7 +39,7 @@ import {
     WaveTransition
 } from '@/components'
 import { Card } from '@/components/card'
-import { BentoStatCard, BentoStatGrid } from '@/components/bento-stats'
+import { useCountUp } from '@/components/stat-card'
 import { prefetchEventDetail, useRegisterForEvent } from '@/hooks/use-events'
 import { cn } from '@/lib/cn'
 import { SegmentedControl } from '@/components/segmented-control'
@@ -1162,6 +1158,132 @@ function UpdatesSection({ rm }: { rm: boolean }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Impact band stat lattice                                           */
+/* ------------------------------------------------------------------ */
+/*
+   Redesigned 2026-09-14 (Tate: the stat cards "look like leftovers").
+   They did, and the reason was structural rather than decorative: the rest of
+   the page had already gone full-bleed - square corners, edge-to-edge, gap-0,
+   hairline dividers in white/15 (see CtaCards below) - while the impact stats
+   were still cream rounded-md cards with gap-3 and a drop shadow, floating on
+   the olive. That is the PREVIOUS design language sitting inside the new one,
+   which is exactly what reads as an afterthought.
+
+   Three moves, no more than that:
+
+   1. COMMITTED GROUND. The cream card fills are gone. The numbers now sit
+      directly on the band's olive and are separated by 1px hairlines, the same
+      white/15 the CTA pair below uses. The lattice is built with `gap-px` over
+      a white/15 parent so the gaps THEMSELVES render as the rules - no
+      borders to misalign at the corners.
+   2. REAL TYPE SCALE. The hero number was text-4xl against text-2xl siblings,
+      which is a step too small to be a hierarchy. It is now 60/76px against
+      30/34px, so the headline stat carries the band and the rest support it.
+   3. FULL BLEED. The lattice breaks the band's own px-4 gutter and runs edge
+      to edge, so it butts against the CTA blocks underneath with no seam. The
+      section header stays on the 16px rail, which is what keeps the break
+      reading as deliberate rather than as a missing margin.
+
+   Deliberately NOT done: no icon chips, no card shadows, no badge pills, no
+   second accent colour. The band is one ground with type on it.
+
+   This is local to the home band on purpose. BentoStatCard/BentoStatGrid stay
+   exactly as they are for profile, leader and collective-detail, which render
+   on white and still want cards.
+*/
+
+const BAND_GROUND = '#5a6e40'
+const BAND_INK = '#f4f2ec'
+
+function BandStat({
+  value,
+  label,
+  unit,
+  description,
+  hero = false,
+  delay = 0,
+  rm,
+}: {
+  value: number
+  label: string
+  unit?: string
+  description?: string
+  hero?: boolean
+  delay?: number
+  rm: boolean
+}) {
+  // Impact stats can arrive fractional (litter kg, volunteer hours); ceil so
+  // the band never renders a decimal. Same rule the bento cards carry.
+  const numeric = Math.ceil(value)
+  const display = useCountUp(numeric, 1200, !rm)
+  const shown = numeric > 0 ? display.toLocaleString() : '0'
+
+  return (
+    <motion.div
+      initial={rm ? { opacity: 1 } : { opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={rm ? { duration: 0 } : { duration: 0.4, delay: 0.06 + delay * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className={cn(
+        'flex flex-col justify-end',
+        hero ? 'px-4 sm:px-7 pt-8 pb-9 sm:pt-10 sm:pb-11' : 'px-4 sm:px-7 pt-6 pb-7',
+      )}
+      style={{ backgroundColor: BAND_GROUND }}
+      aria-label={`${label}: ${numeric}${unit ? ` ${unit}` : ''}`}
+    >
+      <p
+        className={cn(
+          'font-heading font-extrabold tabular-nums leading-[0.9] tracking-tight',
+          hero ? 'text-[60px] sm:text-[76px]' : 'text-[30px] sm:text-[34px]',
+        )}
+        style={{ color: BAND_INK }}
+      >
+        {shown}
+        {unit && (
+          <span
+            className={cn('font-bold ml-1', hero ? 'text-2xl' : 'text-base')}
+            style={{ color: `${BAND_INK}99` }}
+          >
+            {unit}
+          </span>
+        )}
+      </p>
+
+      <p
+        className={cn(
+          'font-heading font-bold uppercase',
+          hero ? 'mt-3 text-[11px] tracking-[0.2em]' : 'mt-2 text-[10px] tracking-[0.18em]',
+        )}
+        style={{ color: `${BAND_INK}b3` }}
+      >
+        {label}
+      </p>
+
+      {hero && description && (
+        <p
+          className="mt-3 text-[13px] leading-relaxed max-w-[320px]"
+          style={{ color: `${BAND_INK}8c` }}
+        >
+          {description}
+        </p>
+      )}
+    </motion.div>
+  )
+}
+
+/* The lattice itself. gap-px over a white/15 parent draws every rule, so the
+   cells never disagree about who owns a shared edge. -mx-4 sm:-mx-7 cancels
+   the band's gutter so the grid runs the full viewport width; the negative
+   margin is matched to the padding on HomeImpactSection's inner div. */
+function BandStatLattice({ children }: { children: ReactNode }) {
+  return (
+    <div className="-mx-4 sm:-mx-7 grid grid-cols-2 sm:grid-cols-3 gap-px bg-[#f4f2ec]/15">
+      {children}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Impact section with scope + time toggles                           */
 /* ------------------------------------------------------------------ */
 
@@ -1308,13 +1430,18 @@ function HomeImpactSection({
 
           {/* Content - bento card grid */}
           {isInitialLoading ? (
-            <div className="space-y-3">
-              <div className="h-36 rounded-md bg-white/20 animate-pulse" />
-              <div className="grid grid-cols-2 gap-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-24 rounded-md bg-white/15 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
-                ))}
+            /* Skeleton mirrors the lattice, not the retired cards: same
+               full-bleed break, same hairlines, same cell heights, so the
+               band does not visibly reflow when the data lands. */
+            <div className="-mx-4 sm:-mx-7 grid grid-cols-2 sm:grid-cols-3 gap-px bg-[#f4f2ec]/15">
+              <div className="col-span-2 sm:col-span-3 h-[188px] bg-[#5a6e40]">
+                <div className="h-full w-full bg-[#f4f2ec]/10 animate-pulse" />
               </div>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-[104px] bg-[#5a6e40]">
+                  <div className="h-full w-full bg-[#f4f2ec]/[0.07] animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+                </div>
+              ))}
             </div>
           ) : (
             (() => {
@@ -1328,37 +1455,56 @@ function HomeImpactSection({
               const collectiveLabel = scope === 'collective' && selectedCollective?.name
                 ? `in ${selectedCollective.name}`
                 : 'across the country'
-              const treesCard = (
-                <BentoStatCard
-                  key="trees"
-                  value={treesValue}
-                  label="Trees Planted"
-                  icon={<TreePine size={20} />}
-                  description={`Every tree planted by Co-Exist volunteers ${collectiveLabel}.`}
-                />
-              )
-              const litterCard = (
-                <BentoStatCard
-                  key="litter"
-                  value={litterValue}
-                  label="Litter Removed"
-                  icon={<Trash2 size={18} />}
-                  unit="kg"
-                  description={`Every kilo of litter Co-Exist volunteers have cleared ${collectiveLabel}.`}
-                />
-              )
-              const heroFirst = treesValue > 0 ? treesCard : litterCard
-              const heroSecond = treesValue > 0 ? litterCard : treesCard
+              // The hero stat spans the lattice; the other six sit under it in
+              // a 2-up (mobile) / 3-up (sm) rhythm. Trees leads unless it is
+              // zero, in which case Litter takes the headline so the band never
+              // opens on a 0.
+              const trees = {
+                key: 'trees',
+                value: treesValue,
+                label: 'Trees Planted',
+                description: `Every tree planted by Co-Exist volunteers ${collectiveLabel}.`,
+              }
+              const litter = {
+                key: 'litter',
+                value: litterValue,
+                label: 'Litter Removed',
+                unit: 'kg',
+                description: `Every kilo of litter Co-Exist volunteers have cleared ${collectiveLabel}.`,
+              }
+              const hero = treesValue > 0 ? trees : litter
+              const second = treesValue > 0 ? litter : trees
+              const rest = [
+                second,
+                { key: 'attendees', value: data?.eventsAttended ?? 0, label: 'Attendees' },
+                { key: 'events', value: totalEvents, label: 'Events' },
+                { key: 'hours', value: data?.volunteerHours ?? 0, label: 'Vol. Hours', unit: 'hrs' },
+                { key: 'leaders', value: data?.leadersEmpowered ?? 0, label: 'Leaders Empowered' },
+                { key: 'collectives', value: data?.collectivesCount ?? 0, label: 'Collectives' },
+              ]
               return (
-                <BentoStatGrid>
-                  {heroFirst}
-                  <BentoStatCard value={data?.eventsAttended ?? 0} label="Attendees" icon={<Users size={18} />} />
-                  <BentoStatCard value={totalEvents} label="Events" icon={<Calendar size={18} />} />
-                  <BentoStatCard value={data?.volunteerHours ?? 0} label="Vol. Hours" icon={<Clock size={18} />} unit="hrs" />
-                  {heroSecond}
-                  <BentoStatCard value={data?.leadersEmpowered ?? 0} label="Leaders Empowered" icon={<GraduationCap size={18} />} />
-                  <BentoStatCard value={data?.collectivesCount ?? 0} label="Collectives" icon={<MapPin size={18} />} />
-                </BentoStatGrid>
+                <BandStatLattice>
+                  <div className="col-span-2 sm:col-span-3">
+                    <BandStat
+                      hero
+                      rm={rm}
+                      value={hero.value}
+                      label={hero.label}
+                      unit={hero.unit}
+                      description={hero.description}
+                    />
+                  </div>
+                  {rest.map((s, i) => (
+                    <BandStat
+                      key={s.key}
+                      rm={rm}
+                      delay={i}
+                      value={s.value}
+                      label={s.label}
+                      unit={s.unit}
+                    />
+                  ))}
+                </BandStatLattice>
               )
             })()
           )}
@@ -1377,14 +1523,31 @@ function CtaCards({ rm }: { rm: boolean }) {
   const navigate = useNavigate()
 
   // Solid colour blocks. No images, no gradients (Tate spec 2026-05-18).
-  // Recoloured 2026-09-14 on Tate's call: "make them slightly different
-  // colours so that one's not brown and one's not pretty much the same colour
-  // as the impact section". Donate was primary-600 #5d7340, three points off
-  // the impact band's #5a6e40, so the seam between them barely read. Merch was
-  // bark-600 #846540, the brown. Now moss-600 #2f7646 (a deeper, more
-  // saturated forest green that steps clearly down from the olive) and
-  // info-600 #396c65 (a coastal teal, which is on-brand for an org whose work
-  // is half beach clean-ups). Type stays white on both.
+  // Recoloured 2026-09-14, second pass, on Tate's call: make these the ACTUAL
+  // colours of the Co-Exist merch tees. The first pass invented moss-600
+  // #2f7646 and info-600 #396c65, which were merely different from each other
+  // rather than drawn from anything real.
+  //
+  // The Community Tee ships in five colourways and two of them are literally
+  // named Khaki and Deep Olive (merch_products.variants, coexist DB
+  // tjutlbzekfouwsiaplbr). No hex is stored against a variant, so the values
+  // below were SAMPLED off the real product photography rather than guessed:
+  // the tee shots are lifestyle frames under a forest canopy, so raw pixels
+  // carry the dappled light, not the garment. Each shirt wears its own white
+  // CO-EXIST print, which is an in-scene neutral under the same illuminant, so
+  // the fabric was divided by that print's white point (a von Kries
+  // correction) to recover the cloth under neutral light.
+  //   Khaki      raw #8b7058  ->  corrected #9e8771
+  //   Deep Olive raw #363522  ->  corrected #4c4b36
+  // Verified by rendering the RAW swatch beside the actual photo crop: they
+  // match, which is what proves the sample region sat on fabric and not on the
+  // background or on the person standing behind.
+  //
+  // Khaki is a LIGHT ground, so the merch block carries dark ink (#1e1f14,
+  // 4.9:1 against the khaki) instead of white, which would have measured
+  // 3.4:1 and turned the 11px sub-copy to mush. The deep olive block keeps the
+  // cream #f4f2ec the impact band already uses, at 7.9:1. The pair now reads
+  // as the merch colourway: one light, one dark, both real.
   return (
     /* Closer band: two solid blocks butted against each other and against the
        impact band above, so the page ends on continuous colour instead of two
@@ -1393,17 +1556,17 @@ function CtaCards({ rm }: { rm: boolean }) {
       {/* Donate */}
       <button
         onClick={() => navigate('/donate')}
-        className="relative h-44 overflow-hidden border-t border-r border-white/15 active:scale-[0.97] transition-transform duration-150 bg-moss-600"
+        className="relative h-44 overflow-hidden border-t border-r border-white/15 active:scale-[0.97] transition-transform duration-150 bg-[#4c4b36]"
         aria-label="Donate"
       >
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
-          <span className="flex items-center justify-center w-11 h-11 rounded-md bg-white/20 text-white shadow-sm">
+          <span className="flex items-center justify-center w-11 h-11 rounded-md bg-[#f4f2ec]/15 text-[#f4f2ec]">
             <Heart size={20} strokeWidth={2.4} />
           </span>
           <div>
-            <p className="font-heading text-xl font-bold text-white leading-tight">Donate</p>
-            <p className="text-[11px] text-white/85 mt-0.5 leading-snug">Fund grassroots conservation</p>
-            <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-white mt-2">
+            <p className="font-heading text-xl font-bold text-[#f4f2ec] leading-tight">Donate</p>
+            <p className="text-[11px] text-[#f4f2ec]/80 mt-0.5 leading-snug">Fund grassroots conservation</p>
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-[#f4f2ec] mt-2">
               Give <ChevronRight size={13} />
             </span>
           </div>
@@ -1413,17 +1576,17 @@ function CtaCards({ rm }: { rm: boolean }) {
       {/* Shop merch */}
       <button
         onClick={() => navigate('/shop')}
-        className="relative h-44 overflow-hidden border-t border-white/15 active:scale-[0.97] transition-transform duration-150 bg-info-600"
+        className="relative h-44 overflow-hidden border-t border-[#1e1f14]/15 active:scale-[0.97] transition-transform duration-150 bg-[#9e8771]"
         aria-label="Shop merch"
       >
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
-          <span className="flex items-center justify-center w-11 h-11 rounded-md bg-white/20 text-white shadow-sm">
+          <span className="flex items-center justify-center w-11 h-11 rounded-md bg-[#1e1f14]/12 text-[#1e1f14]">
             <ShoppingBag size={20} strokeWidth={2.4} />
           </span>
           <div>
-            <p className="font-heading text-xl font-bold text-white leading-tight">Merch</p>
-            <p className="text-[11px] text-white/85 mt-0.5 leading-snug">Wear the movement</p>
-            <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-white mt-2">
+            <p className="font-heading text-xl font-bold text-[#1e1f14] leading-tight">Merch</p>
+            <p className="text-[11px] text-[#1e1f14]/75 mt-0.5 leading-snug">Wear the movement</p>
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-[#1e1f14] mt-2">
               Shop <ChevronRight size={13} />
             </span>
           </div>
