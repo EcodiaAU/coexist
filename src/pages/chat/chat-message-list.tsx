@@ -1119,7 +1119,7 @@ export function ChatMessageList({
         <div
           role="button"
           tabIndex={0}
-          aria-label={`Message options for ${msg.profiles?.display_name}`}
+          aria-label={msg.profiles?.display_name ? `Message options for ${msg.profiles.display_name}` : 'Message options'}
           onKeyDown={(e) => {
             if (e.key === 'Enter') onMessageLongPress(msg)
           }}
