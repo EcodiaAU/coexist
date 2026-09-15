@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Mail } from 'lucide-react'
+import { Mail, Clock } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { safeNextPath, stripAuthLinkError, type AuthLinkError } from '@/lib/auth-link-error'
 import { useOffline } from '@/hooks/use-offline'
 import { OGMeta } from '@/components/og-meta'
 import { Button } from '@/components/button'
@@ -23,7 +24,27 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
+  const routerState = location.state as
+    | { from?: { pathname: string; search?: string }; linkError?: AuthLinkError | null }
+    | null
+  const from = routerState?.from?.pathname || '/'
+  // RequireAuth lifts these out of the URL fragment before redirecting here,
+  // because `<Navigate to="/login">` carries no hash and would drop them.
+  const linkError = routerState?.linkError ?? null
+  // Resending has to aim at the ORIGINAL destination including its query, or a
+  // member whose ticket link aged out gets a working link that lands on the
+  // home feed and still cannot find their ticket. `ticket_id` lives in the
+  // search string, so it is preserved here.
+  const resendTarget = safeNextPath(
+    routerState?.from ? `${routerState.from.pathname}${routerState.from.search ?? ''}` : null,
+  )
+
+  // Once the reason is in component state the fragment has done its job. Clear
+  // it so a refresh of /login does not resurrect a notice already acted on.
+  useEffect(() => {
+    if (linkError) stripAuthLinkError()
+  }, [linkError])
+
   useEffect(() => {
     if (user && !isLoading) {
       navigate(from, { replace: true })
@@ -80,7 +101,7 @@ export default function LoginPage() {
       return
     }
     setError(null)
-    const { error: authError } = await signInWithMagicLink(email)
+    const { error: authError } = await signInWithMagicLink(email, resendTarget)
     if (authError) {
       setError(authError.message)
     } else {
@@ -228,6 +249,32 @@ export default function LoginPage() {
                 </Link>
               </div>
             </div>
+
+            {/* Expired emailed link. Shown ABOVE the generic error slot because
+                it is not a mistake the member made and it has its own next
+                step: their email is already the right one, they just need a
+                fresh link to it. Before this they got an unexplained sign-in
+                form and read it as a broken ticket. */}
+            {linkError && !magicLinkSent && (
+              <motion.div
+                initial={rm ? false : { opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 px-4 py-3 bg-warning-50 border border-warning-200/60 rounded-sm text-sm text-neutral-700"
+                role="status"
+              >
+                <p className="flex items-center gap-1.5 font-semibold text-neutral-900">
+                  <Clock size={14} className="text-warning-600 shrink-0" />
+                  {linkError.isExpired ? 'That link has expired' : "That link couldn't be used"}
+                </p>
+                <p className="mt-1 leading-relaxed">
+                  {linkError.message}
+                  {resendTarget && ' Your booking is safe, and the new link will take you straight back to it.'}
+                </p>
+                <p className="mt-1.5 text-xs text-neutral-500">
+                  Enter your email above and tap Magic link, or sign in with your password.
+                </p>
+              </motion.div>
+            )}
 
             {/* Error */}
             {error && (

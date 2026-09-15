@@ -272,7 +272,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null; emailUnconfirmed?: boolean }>
   signInWithGoogle: () => Promise<{ error: AuthError | null }>
   signInWithApple: () => Promise<{ error: AuthError | null }>
-  signInWithMagicLink: (email: string) => Promise<{ error: AuthError | null }>
+  signInWithMagicLink: (email: string, nextPath?: string | null) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>
   updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>
@@ -884,11 +884,21 @@ export function useAuthProvider(): AuthContextValue {
     return { error: error ? toFriendlyAuthError(error) : null }
   }, [])
 
-  const signInWithMagicLink = useCallback(async (email: string) => {
+  const signInWithMagicLink = useCallback(async (email: string, nextPath?: string | null) => {
     try {
+      // `nextPath` is where the member was headed when an earlier emailed link
+      // died (their ticket, usually). Routing the fresh link through
+      // /auth/callback keeps one place that settles the session, and the
+      // callback forwards to `next` once it has. Without this the resend works
+      // and still drops them on the home feed, which reads as the ticket
+      // being gone. safeNextPath at the call site has already refused anything
+      // that is not a same-origin app path, so this cannot become an open
+      // redirect.
+      const base = `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback`
+      const emailRedirectTo = nextPath ? `${base}?next=${encodeURIComponent(nextPath)}` : base
       const { error } = await withAuthTimeout(supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback` },
+        options: { emailRedirectTo },
       }))
       return { error: error ? toFriendlyAuthError(error) : null }
     } catch (err) {

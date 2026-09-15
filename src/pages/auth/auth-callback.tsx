@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { motion, useReducedMotion } from 'framer-motion'
 import { CheckCircle, AlertCircle, Loader2, Smartphone } from 'lucide-react'
@@ -7,6 +7,11 @@ import { supabase } from '@/lib/supabase'
 import { OGMeta } from '@/components/og-meta'
 import { Button } from '@/components/button'
 import { useAuth } from '@/hooks/use-auth'
+import {
+  readAuthLinkErrorFromWindow,
+  safeNextPath,
+  type AuthLinkError,
+} from '@/lib/auth-link-error'
 
 type CallbackState = 'processing' | 'success' | 'error'
 
@@ -20,9 +25,26 @@ export default function AuthCallbackPage() {
   const { isLoading: authLoading, authError } = useAuth()
   const [state, setState] = useState<CallbackState>('processing')
   const [errorMsg, setErrorMsg] = useState('')
+  const [searchParams] = useSearchParams()
+  // Where a resent link was aimed. Set by signInWithMagicLink when the member
+  // is recovering from a link that aged out, so they land back on the ticket
+  // they were trying to open rather than the home feed.
+  const nextPath = safeNextPath(searchParams.get('next'))
+  const [linkError, setLinkError] = useState<AuthLinkError | null>(null)
 
   useEffect(() => {
     let active = true
+    // Supabase reports a spent link in the fragment and establishes no session,
+    // so no auth event will ever arrive. Reading it up front turns a 30 second
+    // wait that ends in a guess ("may have expired") into an immediate, correct
+    // answer with a way out.
+    const failed = readAuthLinkErrorFromWindow()
+    if (failed) {
+      setLinkError(failed)
+      setErrorMsg(failed.message)
+      setState('error')
+      return
+    }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
         setState('success')
@@ -71,9 +93,9 @@ export default function AuthCallbackPage() {
     }
 
     if (!isMobileBrowser()) {
-      navigate('/', { replace: true })
+      navigate(nextPath ?? '/', { replace: true })
     }
-  }, [state, authLoading, authError, navigate])
+  }, [state, authLoading, authError, navigate, nextPath])
 
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center px-6 bg-white">
@@ -124,7 +146,7 @@ export default function AuthCallbackPage() {
                 variant="ghost"
                 size="lg"
                 fullWidth
-                onClick={() => navigate('/', { replace: true })}
+                onClick={() => navigate(nextPath ?? '/', { replace: true })}
               >
                 Continue on web
               </Button>
@@ -145,17 +167,34 @@ export default function AuthCallbackPage() {
             <AlertCircle className="w-10 h-10 text-error" />
           </div>
           <h1 className="mt-6 font-heading text-2xl font-bold text-neutral-900">
-            Something went wrong
+            {linkError?.isExpired ? 'That link has expired' : 'Something went wrong'}
           </h1>
           <p className="mt-2 text-neutral-500">{errorMsg}</p>
+          {linkError?.isExpired && (
+            <p className="mt-2 text-sm text-neutral-400">
+              Nothing is wrong with your account or your booking. Sign in below and we can send
+              you a fresh link.
+            </p>
+          )}
           <div className="mt-8 w-full space-y-3">
             <Button
               variant="primary"
               size="lg"
               fullWidth
-              onClick={() => navigate('/login', { replace: true })}
+              onClick={() =>
+                // Hand the reason forward so login explains it rather than
+                // showing a bare form, and keep the destination so the fresh
+                // link returns them to where the dead one was pointing.
+                navigate('/login', {
+                  replace: true,
+                  state: {
+                    linkError,
+                    ...(nextPath ? { from: { pathname: nextPath, search: '' } } : {}),
+                  },
+                })
+              }
             >
-              Go to login
+              {linkError?.isExpired ? 'Get a fresh link' : 'Go to login'}
             </Button>
           </div>
         </motion.div>
