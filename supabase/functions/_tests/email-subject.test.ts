@@ -94,3 +94,49 @@ Deno.test('a placeholder with no matching data renders empty, never the literal'
   assertEquals(interpolate('A: {{missing}}', { other: 'x' }), 'A: {{missing}}')
   assertEquals(interpolate('A: {{missing}}', { missing: null }), 'A: ')
 })
+
+/* ------------------------------------------------------------------ */
+/*  Anti-drift: both send paths must keep USING the shared resolver     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The bug was never in the precedence logic. It was that one of the two send
+ * paths did not consult the override table at all, which no test of the
+ * resolver can see. These read the source and assert the wiring, so removing a
+ * call, or adding a THIRD send path that computes its own subject, goes red
+ * instead of shipping silently for another year.
+ */
+const SEND_EMAIL_SRC = await Deno.readTextFile(
+  new URL('../send-email/index.ts', import.meta.url),
+)
+
+Deno.test('every subject in send-email comes from the shared resolver', () => {
+  // Two call sites: the batch path and the single path.
+  const calls = SEND_EMAIL_SRC.match(/resolveSubject\(/g) ?? []
+  assertEquals(calls.length, 2, 'expected resolveSubject at both send paths')
+  // And nobody computes one locally any more.
+  assertEquals(
+    /const subject = payload\.subject\s*(\?\?|\|\|)/.test(SEND_EMAIL_SRC),
+    false,
+    'a send path is building its own subject precedence again',
+  )
+})
+
+Deno.test('the batch path loads the override and honours the kill switch', () => {
+  assertEquals(
+    SEND_EMAIL_SRC.includes('const batchOverride = await loadTemplateOverride('),
+    true,
+    'batch path no longer loads the admin override',
+  )
+  assertEquals(
+    SEND_EMAIL_SRC.includes('if (batchOverride && !batchOverride.enabled)'),
+    true,
+    'batch path no longer honours enabled = false',
+  )
+  // A refusal without `resolved` makes sendEmailToMany fan out per recipient,
+  // which is the 19-Aug 3,213-call incident wearing a kill switch.
+  const refusal = SEND_EMAIL_SRC.slice(
+    SEND_EMAIL_SRC.indexOf('if (batchOverride && !batchOverride.enabled)'),
+  ).slice(0, 700)
+  assertEquals(refusal.includes('resolved: 0'), true, 'disabled-template refusal omits `resolved`')
+})
