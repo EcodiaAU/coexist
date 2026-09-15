@@ -140,3 +140,78 @@ Deno.test('the batch path loads the override and honours the kill switch', () =>
   ).slice(0, 700)
   assertEquals(refusal.includes('resolved: 0'), true, 'disabled-template refusal omits `resolved`')
 })
+
+/* ------------------------------------------------------------------ */
+/*  Anti-drift: the admin screen must offer EVERY template, unchanged   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The admin screen keeps a SECOND copy of each template's default subject, and
+ * an admin who opens a template and saves without editing writes that copy back
+ * as a real override row. So a stale copy does not merely display wrong, it
+ * reinstates old wording the moment anybody touches that screen. Measured
+ * 2026-09-15: payment_failed's admin default carried an em-dash the code
+ * default never had, and ELEVEN of send-email's templates had no admin row at
+ * all, so they could not be reworded. The absence was invisible: the screen
+ * showed a full-looking list and simply had no entry for them.
+ */
+const ADMIN_TAB_SRC = await Deno.readTextFile(
+  new URL('../../../src/pages/admin/email/system-templates-tab.tsx', import.meta.url),
+)
+
+/** send-email's subject convention is ${d.x}; the admin screen's is {{x}}. */
+function normaliseSubject(s: string, fromCode: boolean): string {
+  if (fromCode) {
+    s = s.replace(/\$\{d\.([A-Za-z_]+)\}/g, '{{$1}}').replace(/\$\{[^}]*\}/g, '{{EXPR}}')
+  }
+  return s.replace(/\\'/g, "'").trim()
+}
+
+function codeSubjects(): Map<string, string> {
+  const out = new Map<string, string>()
+  for (const m of SEND_EMAIL_SRC.matchAll(/^ {2}'?([a-z0-9_-]+)'?:\s*\{/gm)) {
+    const tail = SEND_EMAIL_SRC.slice(m.index! + m[0].length, m.index! + m[0].length + 1400)
+    const s = tail.match(/subject:\s*\([^)]*\)\s*=>\s*(`|')([\s\S]*?)\1/)
+    if (s) out.set(m[1], normaliseSubject(s[2], true))
+  }
+  return out
+}
+
+function adminSubjects(): Map<string, string> {
+  const out = new Map<string, string>()
+  for (const m of ADMIN_TAB_SRC.matchAll(/type:\s*'([a-z0-9_-]+)',/g)) {
+    const tail = ADMIN_TAB_SRC.slice(m.index! + m[0].length, m.index! + m[0].length + 1400)
+    const s = tail.match(/defaultSubject:\s*(['"])([\s\S]*?)\1/)
+    if (s) out.set(m[1], normaliseSubject(s[2], false))
+  }
+  return out
+}
+
+Deno.test('every send-email template is editable from the admin screen', () => {
+  const missing = [...codeSubjects().keys()].filter((t) => !adminSubjects().has(t))
+  assertEquals(missing, [], `templates with no admin row: ${missing.join(', ')}`)
+})
+
+Deno.test('no admin default has drifted from the code default', () => {
+  const code = codeSubjects()
+  const admin = adminSubjects()
+  // donation_receipt's code subject branches on is_recurring, which a static
+  // default cannot express. Deliberate approximation, documented at the entry.
+  const EXPECTED_DIVERGENCE = new Set(['donation_receipt'])
+  const drifted: string[] = []
+  for (const [type, want] of code) {
+    if (EXPECTED_DIVERGENCE.has(type)) continue
+    const got = admin.get(type)
+    if (got !== undefined && got !== want) drifted.push(`${type}: admin ${got} !== code ${want}`)
+  }
+  assertEquals(drifted, [])
+})
+
+Deno.test('no admin default carries an em-dash', () => {
+  // U+2014 by codepoint, so the assertion cannot itself be defeated by the
+  // character being pasted back in.
+  const hits = [...ADMIN_TAB_SRC.matchAll(/defaultSubject:\s*(['"])([\s\S]*?)\1/g)]
+    .map((m) => m[2])
+    .filter((s) => s.includes('—') || s.includes('\\u2014'))
+  assertEquals(hits, [])
+})
