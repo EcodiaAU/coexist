@@ -155,4 +155,30 @@ describe('the invite-scope wiring is present in source', () => {
     expect(src).toContain('not tied to a single collective')
     expect(src).toContain('No upcoming events found')
   })
+
+  /* Giving a channel chat a collectiveId made a SECOND control reachable that
+     the same commit deliberately left unwired. The co-host picker renders on
+     `collectiveId`, but handleSubmit needs `onInviteCollectives`, which the
+     panel withholds outside collective mode. Measured on live prod 2026-09-15
+     in the Perth Staff channel: ticking Darwin relabelled the submit button to
+     "Post Invite & Invite 1 Collective" and invited nobody. Source-bound on
+     purpose - this is a render gate, so a mirrored-logic test cannot fail on a
+     revert and the minified bundle gains no new string to grep for. */
+  it('the co-host picker is gated on the handler, not only on collectiveId', () => {
+    const src = read('components/create-announcement-sheet.tsx')
+    expect(src).toContain(
+      "{type === 'event_invite' && eventId && collectiveId && onInviteCollectives && (",
+    )
+    expect(src).not.toContain("{type === 'event_invite' && eventId && collectiveId && (")
+  })
+
+  it('handleSubmit still requires the handler, so the gate matches the guard', () => {
+    const src = read('components/create-announcement-sheet.tsx')
+    expect(src).toContain('inviteCollectiveIds.length > 0 && onInviteCollectives')
+  })
+
+  it('the panel still withholds co-hosting outside collective mode', () => {
+    const src = read('pages/chat/chat-leader-panel.tsx')
+    expect(src).toContain('onInviteCollectives={isCollective ? onInviteCollectives : undefined}')
+  })
 })

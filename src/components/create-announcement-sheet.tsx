@@ -436,8 +436,16 @@ export function CreateAnnouncementSheet({
           />
         </div>
 
-        {/* Invite other collectives to collaborate (event invites only) */}
-        {type === 'event_invite' && eventId && collectiveId && (
+        {/* Invite other collectives to collaborate (event invites only).
+            GATED ON THE HANDLER, not just on collectiveId. handleSubmit drops
+            inviteCollectiveIds on the floor when onInviteCollectives is absent,
+            and the parent withholds it outside collective mode on purpose
+            (co-hosting from a staff channel is a behaviour change, not a bug).
+            Before 2f8b4f8d a channel chat had no collectiveId, so this section
+            could never render there; giving the event picker its scope made a
+            dead control reachable. Ticking one relabelled the submit button to
+            "Post Invite & Invite 1 Collective" and then invited nobody. */}
+        {type === 'event_invite' && eventId && collectiveId && onInviteCollectives && (
           <div data-eos-id="src/components/create-announcement-sheet.tsx#52" className="mb-4">
             <div data-eos-id="src/components/create-announcement-sheet.tsx#53" className="flex items-center gap-2 mb-1.5">
               <Users2 data-eos-id="src/components/create-announcement-sheet.tsx#54" size={14} className="text-primary-500" />
