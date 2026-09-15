@@ -2688,6 +2688,45 @@ export function useOutgoingCollaborations(collectiveId: string | undefined) {
   })
 }
 
+/**
+ * How many people the "Invite All Collective Members" toggle will actually
+ * reach, across the collectives selected in the create-event wizard.
+ *
+ * Added 2026-09-15. That toggle said "All active members of each selected
+ * collective will be notified when you publish" and the review step said
+ * "Invite all members", with no number anywhere, while the largest active
+ * collective holds 776 active members (counted live that day, 2,776 across all
+ * collectives). One toggle, one publish, and a host had no way to know whether
+ * that meant nine people or several hundred emails plus the same number of
+ * push notifications.
+ *
+ * DISTINCT rather than summed, because a person in two selected collectives is
+ * still one person and is deduped by the invite audience rule. The host
+ * themself is excluded here for the same reason buildInviteAudience excludes
+ * them. Registrations are not subtracted: on a brand new event there are none,
+ * and this runs before the event exists.
+ */
+export function useInviteAudienceSize(collectiveIds: string[]) {
+  const { user } = useAuth()
+  const key = [...collectiveIds].sort().join(',')
+  return useQuery({
+    queryKey: ['invite-audience-size', key, user?.id],
+    enabled: collectiveIds.length > 0,
+    staleTime: 60_000,
+    queryFn: async (): Promise<number> => {
+      const { data, error } = await supabase
+        .from('collective_members')
+        .select('user_id')
+        .in('collective_id', collectiveIds)
+        .eq('status', 'active')
+      if (error) throw error
+      const ids = new Set((data ?? []).map((r) => r.user_id as string))
+      if (user) ids.delete(user.id)
+      return ids.size
+    },
+  })
+}
+
 export function useInviteCollaborator() {
   const queryClient = useQueryClient()
 
