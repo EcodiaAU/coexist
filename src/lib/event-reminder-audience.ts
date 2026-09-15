@@ -1,7 +1,10 @@
 /**
  * event-reminder-audience.ts
  *
- * Who receives a host-initiated event reminder.
+ * Who receives a host-initiated event send, and what the host is told
+ * afterwards.
+ *
+ * History, because the rule is the scar tissue:
  *
  * The reminder branch of useInviteCollective used to have no audience at all,
  * because it only posted an announcement into the collective chat and a chat
@@ -11,14 +14,16 @@
  * capability looked like it had been taken away rather than never extended to
  * the second press.
  *
- * Kept pure and separate from the mutation so the rule is testable without a
- * Supabase client. The rule itself:
+ * 2026-09-15 (Tate): the host action unified on ONE semantic. The tile is
+ * always "Invite", a paper plane, and every press picks its own channels -
+ * collective chat, email, push - so there is no longer a first-invite audience
+ * and a separate reminder audience. There is one rule for every press:
  *
  *   - every ACTIVE member of the collective, which is the same population the
  *     first invite emailed, so a host gets what they remember
- *   - minus the host doing the sending, who does not need reminding
+ *   - minus the host doing the sending, who does not need inviting
  *   - minus anyone who cancelled their registration, because cancelling is a
- *     member saying no and a reminder is not the answer to that
+ *     member saying no and another send is not the answer to that
  *
  * Somebody already registered still gets one: the host's words are "remind
  * people to register/come", and the come half is aimed exactly at them.
@@ -41,7 +46,7 @@ export interface ReminderMember {
 /** Statuses that mean this member has opted out of the event. */
 export const REMINDER_EXCLUDED_STATUSES = ['cancelled'] as const
 
-export function buildReminderAudience(
+export function buildInviteAudience(
   members: ReminderMember[] | null | undefined,
   registrations: ReminderRegistration[] | null | undefined,
   senderId: string,
@@ -65,27 +70,53 @@ export function buildReminderAudience(
   return audience
 }
 
+/** Join a list in prose: "a", "a and b", "a, b and c". */
+function joinParts(parts: string[]): string {
+  if (parts.length <= 1) return parts[0] ?? ''
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
+}
+
+function plural(n: number, word: string): string {
+  return `${n} ${word}${n === 1 ? '' : 's'}`
+}
+
 /**
  * What the host is told after the send. Built here rather than inline in the
  * component so the wording stays honest about each channel independently: a
  * chat post that was skipped for cooldown must not be reported as sent, which
  * is the failure the old single-sentence toast made easy.
+ *
+ * `invited` is the count of members newly marked invited on the event, which
+ * only a first press produces. It leads the sentence when it is non-zero,
+ * because "Invited 40 members" is the thing the host wants confirmed and the
+ * channels are how it reached them.
  */
-export function describeReminderOutcome(outcome: {
+export function describeInviteOutcome(outcome: {
   emailed: number
+  pushed?: number
   chatPosted: boolean
   chatSkippedReason?: string | null
+  invited?: number
 }): string {
   const parts: string[] = []
-  if (outcome.emailed > 0) {
-    parts.push(`Emailed ${outcome.emailed} member${outcome.emailed === 1 ? '' : 's'}`)
-  }
-  if (outcome.chatPosted) {
-    parts.push(parts.length ? 'and posted to the collective chat' : 'Posted to the collective chat')
-  }
+  if (outcome.emailed > 0) parts.push(`emailed ${plural(outcome.emailed, 'member')}`)
+  if ((outcome.pushed ?? 0) > 0) parts.push(`sent ${plural(outcome.pushed ?? 0, 'push notification')}`)
+  if (outcome.chatPosted) parts.push('posted to the collective chat')
+
+  const invited = outcome.invited ?? 0
+  const lead = invited > 0 ? `Invited ${plural(invited, 'member')}` : ''
+
+  const withSkip = (sentence: string) =>
+    outcome.chatSkippedReason ? `${sentence} ${outcome.chatSkippedReason}` : sentence
+
   if (parts.length === 0) {
-    return outcome.chatSkippedReason ?? 'Nothing was sent - nobody to remind'
+    if (lead) return withSkip(`${lead}.`)
+    return outcome.chatSkippedReason ?? 'Nothing was sent - nobody to invite'
   }
-  const sentence = `${parts.join(' ')}.`
-  return outcome.chatSkippedReason ? `${sentence} ${outcome.chatSkippedReason}` : sentence
+
+  const joined = joinParts(parts)
+  const sentence = lead
+    ? `${lead}, ${joined}.`
+    : `${joined.charAt(0).toUpperCase()}${joined.slice(1)}.`
+  return withSkip(sentence)
 }

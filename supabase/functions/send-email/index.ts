@@ -88,7 +88,7 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
   },
   event_invite: {
     category: 'transactional',
-    description: 'Invited to an event. Data: { name, inviter_name, event_title, event_url }',
+    description: 'Invited to an event. Data: { name, inviter_name, event_title, event_date, event_location, event_url, custom_message, event_image }',
     subject: (d) => `${d.inviter_name} invited you to ${d.event_title}`,
   },
   waitlist_promoted: {
@@ -771,11 +771,29 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     footerCta: { label: 'Browse Events', url: `${APP_URL}/events` },
   }),
 
+  // Brought level with event_host_reminder on 2026-09-15, when the host action
+  // unified on one Invite button. The host writes one message in one sheet, so
+  // it has to survive on both presses: this template dropped custom_message on
+  // the floor, and the reminder rendered it, which meant the same typed sentence
+  // reached members on a second press and vanished on the first. Date, place and
+  // the cover image were missing here for the same reason - nobody had rebuilt
+  // this renderer since the shell grew them.
   event_invite: (d) => emailShell({
     heroTitle: 'You\'re Invited!',
     heroSubtitle: d.event_title as string,
+    overline: 'Invitation',
+    ...heroFromData(d),
     body: greeting(d.name) +
-      p(`<strong>${d.inviter_name}</strong> has invited you to join <strong>${d.event_title}</strong>.`) +
+      p(
+        `<strong>${escapeHtml(d.inviter_name) || 'A leader'}</strong> has invited you to join `
+        + `<strong>${escapeHtml(d.event_title)}</strong>.`,
+      ) +
+      (d.custom_message ? p(`"${escapeHtml(d.custom_message)}"`) : '') +
+      infoCard(([
+        ['Event', d.event_title],
+        d.event_date ? ['When', d.event_date] : null,
+        d.event_location ? ['Where', d.event_location] : null,
+      ].filter(Boolean)) as [string, unknown][]) +
       p('Tap below to check it out and register.'),
     footerCta: { label: 'View Invitation', url: d.event_url as string || APP_URL },
   }),
