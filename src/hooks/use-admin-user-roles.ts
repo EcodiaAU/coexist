@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { logAudit } from '@/lib/audit'
+import { applyLeaderTransition } from '@/lib/collective-leader-transition'
 import { resolveCapabilities } from '@/lib/capabilities'
 import type { Database } from '@/types/database.types'
 
@@ -91,22 +92,9 @@ export function useAdminAssignCollectiveRole() {
         )
       if (error) throw error
 
-      if (role === 'leader') {
-        // Demote any existing leaders in this collective to co_leader
-        const { error: demoteError } = await supabase
-          .from('collective_members')
-          .update({ role: 'co_leader' })
-          .eq('collective_id', collectiveId)
-          .eq('role', 'leader')
-          .neq('user_id', userId)
-        if (demoteError) throw demoteError
-
-        const { error: leaderError } = await supabase
-          .from('collectives')
-          .update({ leader_id: userId })
-          .eq('id', collectiveId)
-        if (leaderError) throw leaderError
-      }
+      // Both halves of the leader seat live in one helper now: the demotion is
+      // audited and the leader_id pointer is never left naming a non-leader.
+      await applyLeaderTransition(collectiveId, userId, role)
       await logAudit({ action: 'member_role_changed', target_type: 'collective_member', target_id: userId, details: { collective_id: collectiveId, new_role: role } })
     },
     onMutate: async (variables) => {

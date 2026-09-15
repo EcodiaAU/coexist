@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { supabase, escapeIlike } from '@/lib/supabase'
 import { fetchCanonicalImpactRows, composeSummaryMetrics } from '@/lib/impact-query'
 import { logAudit } from '@/lib/audit'
+import { applyLeaderTransition } from '@/lib/collective-leader-transition'
 import { STATUS_FILTERS } from '@/lib/query-builders'
 import { wallClockNow } from '@/lib/date-format'
 import type {
@@ -615,23 +616,9 @@ export function useAdminUpdateMemberRole() {
         .eq('user_id', userId)
       if (error) throw error
 
-      // If promoting to leader, demote the old leader and update collectives.leader_id
-      if (role === 'leader') {
-        // Demote any existing leaders in this collective to co_leader
-        const { error: demoteError } = await supabase
-          .from('collective_members')
-          .update({ role: 'co_leader' as CollectiveRole })
-          .eq('collective_id', collectiveId)
-          .eq('role', 'leader')
-          .neq('user_id', userId)
-        if (demoteError) throw demoteError
-
-        const { error: leaderError } = await supabase
-          .from('collectives')
-          .update({ leader_id: userId })
-          .eq('id', collectiveId)
-        if (leaderError) throw leaderError
-      }
+      // Both halves of the leader seat live in one helper now: the demotion is
+      // audited and the leader_id pointer is never left naming a non-leader.
+      await applyLeaderTransition(collectiveId, userId, role)
       await logAudit({ action: 'member_role_changed', target_type: 'collective_member', target_id: userId, details: { collective_id: collectiveId, new_role: role } })
     },
     // Optimistic role flip across both status-filter variants of the members
