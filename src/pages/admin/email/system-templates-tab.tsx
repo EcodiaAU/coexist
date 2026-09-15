@@ -81,9 +81,9 @@ const SYSTEM_TEMPLATES: TemplateInfo[] = [
   },
   {
     type: 'event_reminder',
-    label: 'Event Reminder',
+    label: 'Event Reminder (automatic)',
     category: 'transactional',
-    description: '24h / 2h before event',
+    description: 'Sent automatically 24h and 2h before the event. Nobody presses anything.',
     defaultSubject: 'Reminder: {{event_title}} is coming up',
     defaultEmoji: '\u{23F0}',
     defaultHeroTitle: 'Coming up soon!',
@@ -109,7 +109,7 @@ const SYSTEM_TEMPLATES: TemplateInfo[] = [
     type: 'event_invite',
     label: 'Event Invite',
     category: 'transactional',
-    description: 'Invited to an event',
+    description: 'The Invite button on an event, FIRST press for that event',
     // Must track send-email's own event_invite subject. An admin who opens this
     // template and saves without editing writes defaultSubject back as a real
     // override row, so a stale default here silently reinstates the old
@@ -313,7 +313,7 @@ const SYSTEM_TEMPLATES: TemplateInfo[] = [
     type: 'event_host_reminder',
     label: 'Event Reminder (host-sent)',
     category: 'transactional',
-    description: "A host's own nudge about one event, carrying their message",
+    description: 'The same Invite button, every press AFTER the first',
     defaultSubject: 'Reminder: {{event_title}}',
     defaultEmoji: '\u{1F514}',
     defaultHeroTitle: 'Reminder',
