@@ -2271,7 +2271,10 @@ export function useInviteCollective() {
       // What members are told. The button is one thing; the message still says
       // which press this is, because "You're invited" to somebody invited last
       // week reads as a bug to the person receiving it.
-      const notifyTitle = isFirstInvite ? `You're invited!` : `Reminder: ${event.title}`
+      // Both halves name the event. A bare "You're invited!" in a notification
+      // list tells a member nothing about WHICH event, the same defect Kurt
+      // reported on the invite email's subject on 2026-09-15.
+      const notifyTitle = isFirstInvite ? `You're invited: ${event.title}` : `Reminder: ${event.title}`
       const notifyBody = customMessage || (isFirstInvite
         ? `${inviterName} invited you to ${event.title} on ${eventDate}`
         : `${inviterName} sent a reminder about ${event.title} on ${eventDate}`)

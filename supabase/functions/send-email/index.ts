@@ -9,6 +9,11 @@ import {
   suppressedEmailSet,
   type SuppressionQueryable,
 } from '../_shared/egress-suppression.ts'
+import {
+  interpolate,
+  resolveSubject,
+  type TemplateOverride,
+} from '../_shared/email-subject.ts'
 
 /** Resend tag values allow ASCII alnum, underscore and dash only. */
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
@@ -86,10 +91,18 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
     description: 'Event cancelled notification. Data: { name, event_title, event_date, reason }',
     subject: (d) => `Event cancelled: ${d.event_title}`,
   },
+  // The EVENT leads the subject, not the inviter. It used to read
+  // "{inviter} invited you to {title}", which spends the first ~26 characters
+  // on a person's display name; an inbox list truncates around 35, so on a
+  // phone a member saw "KJ invited you to Captain B..." and could not tell
+  // which event it was without opening it (Kurt Jones, 2026-09-15). Every
+  // sibling here already leads with a short prefix and then the title
+  // ("You're registered:", "You're going:", "Reminder:"), so this follows the
+  // house shape. The inviter is still named in the hero and the body line.
   event_invite: {
     category: 'transactional',
     description: 'Invited to an event. Data: { name, inviter_name, event_title, event_date, event_location, event_url, custom_message, event_image }',
-    subject: (d) => `${d.inviter_name} invited you to ${d.event_title}`,
+    subject: (d) => `You're invited: ${d.event_title}`,
   },
   waitlist_promoted: {
     category: 'transactional',
@@ -1042,13 +1055,46 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   }),
 }
 
-/** Substitute {{variable}} placeholders against the template data dict. */
-function interpolate(input: string, data: Record<string, unknown>): string {
-  let out = input
-  for (const [key, value] of Object.entries(data)) {
-    out = out.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value ?? ''))
+/**
+ * Read the admin override for one template type, or null when there is none.
+ *
+ * Shared by BOTH send paths on purpose. The batch path used to skip this
+ * lookup entirely, so an admin who edited a subject in
+ * /admin/email saw it honoured on a single send and silently ignored on every
+ * collective invite and reminder, which are the only sends that go through the
+ * batch endpoint. The same gap disabled the `enabled = false` kill switch for
+ * exactly those sends. Found 2026-09-15 while changing the event_invite
+ * subject; a code-side default is not a substitute for the admin control,
+ * because the next subject Kurt wants to change should not need a deploy.
+ *
+ * Non-fatal by contract: a lookup failure falls back to the built-in template
+ * rather than refusing the send.
+ */
+/**
+ * The client parameter is loose on purpose, and the two tighter shapes were
+ * both tried first. A hand-written structural type (`from -> select -> eq ->
+ * maybeSingle`) reads correctly and fails to typecheck, because postgrest's
+ * builders are thenables carrying a deep generic chain: TS2589 "excessively
+ * deep" plus an assignability error at each call site. `ReturnType<typeof
+ * createClient>` resolves the DEFAULT generics while this file calls
+ * createClient with no Database type, so that mismatches too. Deno has no
+ * generated Database types wired here, so this stays loose until it does.
+ */
+async function loadTemplateOverride(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client: { from: (t: string) => any },
+  type: string,
+): Promise<TemplateOverride | null> {
+  try {
+    const { data: row } = await client
+      .from('system_email_overrides')
+      .select('hero_title, hero_subtitle, hero_emoji, body_html, subject, cta_label, cta_url, enabled')
+      .eq('template_type', type)
+      .maybeSingle()
+    return row ? (row as TemplateOverride) : null
+  } catch {
+    return null
   }
-  return out
 }
 
 /** Build email HTML from admin override fields */
@@ -1245,6 +1291,30 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       )
 
+      // ── Admin overrides, mirroring the single-send path ──
+      // ONE lookup for the whole batch; the subject and body are interpolated
+      // per recipient below, because the placeholders read that recipient's own
+      // data. Live predicate count at the time of writing: the table holds 1
+      // row (event_reminder), so this matches on a real row rather than an
+      // empty set.
+      const batchOverride = await loadTemplateOverride(supabaseAdmin, type)
+      if (batchOverride && !batchOverride.enabled) {
+        // An admin switched this template off. The single path already refused;
+        // this one used to send anyway. `resolved` is present so the client's
+        // batch-capability probe reads a deliberate refusal rather than an old
+        // deployment, which would make it fan out to every recipient singly.
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Template disabled by admin',
+            sent: 0,
+            resolved: 0,
+            skipped: payload.recipients.length,
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+
       // Per-recipient suppression, mirroring the single-send gate EXACTLY.
       //
       // The single path runs TWO independent gates and this one used to carry
@@ -1337,12 +1407,14 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
         .filter((r) => !deadAddresses.has(normaliseEmail(r.to as string)))
         .map((r) => {
           const d = { ...(r.data ?? {}), __recipientEmail: r.to }
-          const subject = payload.subject ?? templateDef.subject(d)
+          const subject = resolveSubject(payload.subject, batchOverride, templateDef.subject, d)
           return {
             from: `${FROM_NAME} <${FROM_EMAIL}>`,
             to: [r.to],
             subject,
-            html: buildEmailHtml(type, d),
+            html: batchOverride?.body_html
+              ? buildOverrideHtml(batchOverride, d)
+              : buildEmailHtml(type, d),
             headers: {
               'List-Unsubscribe': `<mailto:unsubscribe@coexistaus.org?subject=Unsubscribe>, <https://app.coexistaus.org/unsubscribe?email=${encodeURIComponent(r.to)}>`,
               'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
@@ -1508,31 +1580,13 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
     }
 
     // ── Load admin overrides from DB (if any) ──
-    interface TemplateOverride {
-      hero_title: string | null
-      hero_subtitle: string | null
-      hero_emoji: string | null
-      body_html: string | null
-      subject: string | null
-      cta_label: string | null
-      cta_url: string | null
-      enabled: boolean
-    }
-    let override: TemplateOverride | null = null
-    try {
-      const overrideClient = createClient(
+    const override = await loadTemplateOverride(
+      createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      )
-      const { data: row } = await overrideClient
-        .from('system_email_overrides')
-        .select('hero_title, hero_subtitle, hero_emoji, body_html, subject, cta_label, cta_url, enabled')
-        .eq('template_type', type)
-        .maybeSingle()
-      if (row) override = row as TemplateOverride
-    } catch {
-      // Non-fatal: fall back to defaults if override lookup fails
-    }
+      ),
+      type,
+    )
 
     // If override exists but is disabled, skip sending
     if (override && !override.enabled) {
@@ -1542,9 +1596,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       )
     }
 
-    const subject = payload.subject
-      || (override?.subject ? interpolate(override.subject, data) : null)
-      || templateDef.subject(data)
+    const subject = resolveSubject(payload.subject, override, templateDef.subject, data)
     // Thread recipient down so emailShell can build the unsubscribe link
     // with ?email=... per recipient.
     if (data && typeof data === 'object' && toEmail) {

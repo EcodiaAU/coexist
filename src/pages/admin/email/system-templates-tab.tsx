@@ -110,7 +110,11 @@ const SYSTEM_TEMPLATES: TemplateInfo[] = [
     label: 'Event Invite',
     category: 'transactional',
     description: 'Invited to an event',
-    defaultSubject: '{{inviter_name}} invited you to {{event_title}}',
+    // Must track send-email's own event_invite subject. An admin who opens this
+    // template and saves without editing writes defaultSubject back as a real
+    // override row, so a stale default here silently reinstates the old
+    // inviter-first subject the edge function moved away from on 2026-09-15.
+    defaultSubject: "You're invited: {{event_title}}",
     defaultEmoji: '\u{1F389}',
     defaultHeroTitle: "You're Invited!",
     defaultHeroSubtitle: '{{event_title}}',
