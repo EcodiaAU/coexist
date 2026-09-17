@@ -22,6 +22,7 @@ import {
   type SuppressionFetcher,
   type SuppressionQueryable,
 } from '../_shared/egress-suppression.ts'
+import { IN_CHUNK_SIZE } from '../_shared/select-in-chunks.ts'
 
 /** A fetcher over a fixed suppression table, matching the way Postgres would. */
 function tableOf(rows: string[]): SuppressionFetcher {
@@ -136,4 +137,62 @@ Deno.test('an empty candidate list short-circuits the fetcher before it builds a
   }
   assertEquals(await makeSuppressionFetcher(spy)([]), [])
   assertEquals(touched, false)
+})
+
+// ── The chunking added 2026-09-17 ────────────────────────────────────────────
+//
+// WHY: this fetcher built ONE `in.(...)` filter from every candidate address,
+// and it fails closed, so when the query became too big to answer the throw
+// killed the whole send. Measured live: Kurt Jones invited Melbourne City (768
+// active members) at 2026-09-17T10:57:24Z and send-email died on exactly this
+// query with `TypeError: error sending request ... /rest/v1/email_suppressions
+// ?select=email&email=in.%28...`. Zero of 768 emails went out while the in-app
+// notification rows were still written, so every surface but the inbox showed
+// the invite as sent.
+
+Deno.test('the fetcher issues one request per chunk, never one giant filter', async () => {
+  const addresses = Array.from({ length: 450 }, (_, i) => `member${i}@example.com`)
+  const seen: string[][] = []
+  const admin = {
+    from: () => ({
+      select: () => ({
+        in: (_col: string, values: string[]) => {
+          seen.push(values)
+          return Promise.resolve({ data: [], error: null })
+        },
+      }),
+    }),
+  }
+  await makeSuppressionFetcher(admin as never)(addresses)
+
+  // Every request is inside the cap...
+  assertEquals(seen.every((s) => s.length <= IN_CHUNK_SIZE), true)
+  // ...more than one was made, which is the part a non-chunking implementation
+  // fails. Without this arm the assertion above passes trivially on the old
+  // single-request code, since one request of 450 is not <= 100 but one of 50
+  // would be: assert the SPLIT happened, not merely that something was small.
+  assertEquals(seen.length > 1, true, `expected several chunks, got ${seen.length}`)
+  // ...and nothing was lost or duplicated on the way through.
+  assertEquals(seen.flat().length, 450)
+  assertEquals(new Set(seen.flat()).size, 450)
+})
+
+Deno.test('a failing chunk still fails CLOSED, and does not report a partial answer as complete', async () => {
+  const addresses = Array.from({ length: 250 }, (_, i) => `m${i}@example.com`)
+  let call = 0
+  const admin = {
+    from: () => ({
+      select: () => ({
+        in: (_col: string, _values: string[]) => {
+          call++
+          // The second chunk is the one that breaks, so the first chunk's rows
+          // exist and would be the tempting thing to return.
+          return call === 2
+            ? Promise.resolve({ data: null, error: new Error('fetch failed') })
+            : Promise.resolve({ data: [{ email: 'm0@example.com' }], error: null })
+        },
+      }),
+    }),
+  }
+  await assertRejects(() => makeSuppressionFetcher(admin as never)(addresses), Error, 'fetch failed')
 })

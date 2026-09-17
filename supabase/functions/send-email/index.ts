@@ -3,6 +3,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
 import { resolveRecipientEmail } from '../_shared/recipient-email.ts'
 import { suppressedRecipientIds, type SuppressionProfile } from '../_shared/recipient-suppression.ts'
+import { selectInChunks } from '../_shared/select-in-chunks.ts'
+import { ADMIN_LOOKUP_CONCURRENCY, mapWithConcurrency } from '../_shared/batch-lookup.ts'
 import {
   makeSuppressionFetcher,
   normaliseEmail,
@@ -98,7 +100,18 @@ const EMAIL_TEMPLATES: Record<string, TemplateDefinition> = {
   // which event it was without opening it (Kurt Jones, 2026-09-15). Every
   // sibling here already leads with a short prefix and then the title
   // ("You're registered:", "You're going:", "Reminder:"), so this follows the
-  // house shape. The inviter is still named in the hero and the body line.
+  // house shape.
+  //
+  // THE INVITER IS NO LONGER NAMED ANYWHERE IN THIS EMAIL, nor in
+  // event_host_reminder (Tate, 2026-09-17, on reading the Perth coastal
+  // festival send: "it still says KJ invited me which I don't want it to, it
+  // should just say the person is invited"). A member reads this as mail from
+  // Co-Exist about an event, not as a personal message from whichever leader
+  // happened to press the button, and on a collective send the leader is
+  // usually a name they do not know. `inviter_name` is still accepted in the
+  // payload rather than removed: the single-send callers and the template
+  // description are shared, and an unused key costs nothing while ripping it
+  // out of every call site risks a caller nobody re-read.
   event_invite: {
     category: 'transactional',
     description: 'Invited to an event. Data: { name, inviter_name, event_title, event_date, event_location, event_url, custom_message, event_image }',
@@ -755,15 +768,12 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
   }),
 
   event_host_reminder: (d) => emailShell({
-    heroTitle: 'A reminder from your host',
+    heroTitle: 'A reminder',
     heroSubtitle: d.event_title as string,
     overline: 'Reminder',
     ...heroFromData(d),
     body: greeting(d.name) +
-      p(
-        `<strong>${escapeHtml(d.inviter_name) || 'Your event host'}</strong> sent a reminder about `
-        + `<strong>${escapeHtml(d.event_title)}</strong>.`,
-      ) +
+      p(`Just a reminder about <strong>${escapeHtml(d.event_title)}</strong>.`) +
       (d.custom_message ? p(`"${escapeHtml(d.custom_message)}"`) : '') +
       infoCard([
         ['Event', d.event_title],
@@ -797,10 +807,7 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     overline: 'Invitation',
     ...heroFromData(d),
     body: greeting(d.name) +
-      p(
-        `<strong>${escapeHtml(d.inviter_name) || 'A leader'}</strong> has invited you to join `
-        + `<strong>${escapeHtml(d.event_title)}</strong>.`,
-      ) +
+      p(`You're invited to <strong>${escapeHtml(d.event_title)}</strong>.`) +
       (d.custom_message ? p(`"${escapeHtml(d.custom_message)}"`) : '') +
       infoCard(([
         ['Event', d.event_title],
@@ -1331,18 +1338,48 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       // had turned off event-cancellation mail, or turned off the email channel
       // outright, would have started receiving it again the moment cancelEvent
       // and inviteAll moved onto this path.
+      //
+      // CHUNKED, AND THE ERROR IS NOT DISCARDED. This lookup used to send every
+      // recipient id in one `in.(...)` filter and read the result with a bare
+      // `const { data: profs } = await ...`. Past roughly 25KB of request line
+      // the edge proxy refuses the GET (measured 2026-09-17: 650 uuids 200,
+      // 700 uuids 400), and the discarded error left `profs` undefined, which
+      // `?? []` turned into "no profile said no" and therefore "suppress
+      // nobody". A collective large enough to break the URL silently mailed
+      // every member who had switched this type, or the email channel itself,
+      // off. tate@ecodia.au carries email_enabled:false and received the
+      // 10:52Z Perth reminder that way.
+      //
+      // A consent lookup that cannot answer is not permission to send, so a
+      // failure here refuses the batch rather than widening it.
       let optedOut = new Set<string>()
       const batchPrefKey = TYPE_TO_PREF_KEY[type]
       const isMarketing = templateDef.category === 'marketing'
       const batchIds = payload.recipients.map((r) => r.userId).filter((x): x is string => !!x)
       if (batchIds.length > 0 && (isMarketing || batchPrefKey)) {
-        const { data: profs } = await supabaseAdmin
-          .from('profiles')
-          .select('id, marketing_opt_in, notification_preferences')
-          .in('id', batchIds)
+        const { rows: profs, error: profsError } = await selectInChunks<SuppressionProfile>(
+          batchIds,
+          (slice) => supabaseAdmin
+            .from('profiles')
+            .select('id, marketing_opt_in, notification_preferences')
+            .in('id', slice),
+        )
+        if (profsError) {
+          console.error('[send-email] batch consent lookup failed, refusing send:', profsError)
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'Consent lookup failed; nothing was sent',
+              sent: 0,
+              resolved: 0,
+              skipped: payload.recipients.length,
+            }),
+            { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          )
+        }
         optedOut = suppressedRecipientIds({
           ids: batchIds,
-          profiles: (profs ?? []) as SuppressionProfile[],
+          profiles: profs,
           isMarketing,
           prefKey: batchPrefKey,
         })
@@ -1360,22 +1397,36 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
         .map((r) => r.userId as string)
       const resolvedById = new Map<string, string>()
       if (needLookup.length > 0) {
-        const { data: emailProfiles } = await supabaseAdmin
-          .from('profiles')
-          .select('id, email')
-          .in('id', needLookup)
-        const profileEmail = new Map(
-          (emailProfiles ?? []).map((p) => [p.id as string, (p as { email?: string | null }).email ?? null]),
+        // Chunked for the same URL-length reason as the consent lookup above.
+        // A failure here is NOT fatal: it costs the profile half of
+        // resolveRecipientEmail, and the auth address below still resolves
+        // most members. Losing the profile address only downgrades an Apple
+        // relay that had a better alternative, which is worth logging rather
+        // than refusing a whole collective's mail over.
+        const profileEmail = new Map<string, string | null>()
+        const { rows: emailProfiles, error: emailProfilesError } = await selectInChunks<
+          { id: string; email?: string | null }
+        >(
+          needLookup,
+          (slice) => supabaseAdmin.from('profiles').select('id, email').in('id', slice),
         )
+        if (emailProfilesError) {
+          console.error('[send-email] batch profile-email lookup failed, falling back to auth only:', emailProfilesError)
+        }
+        for (const p of emailProfiles) profileEmail.set(p.id, p.email ?? null)
         // One auth lookup per recipient, which is what the single path already
         // costs N times. The fan-out that mattered was the one against Resend,
         // and this exists to remove it.
-        const looked = await Promise.all(
-          needLookup.map(async (id) => {
-            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(id)
-            return [id, resolveRecipientEmail(userData?.user?.email ?? null, profileEmail.get(id) ?? null)] as const
-          }),
-        )
+        //
+        // BOUNDED. This was `Promise.all(needLookup.map(...))`, so a 768-member
+        // collective opened 768 concurrent GoTrue admin requests out of one
+        // isolate; that burst is what left recipients "resolved via none" and
+        // reported the admin database as out of connections. Order is
+        // preserved, so the zip below is unchanged.
+        const looked = await mapWithConcurrency(needLookup, ADMIN_LOOKUP_CONCURRENCY, async (id) => {
+          const { data: userData } = await supabaseAdmin.auth.admin.getUserById(id)
+          return [id, resolveRecipientEmail(userData?.user?.email ?? null, profileEmail.get(id) ?? null)] as const
+        })
         for (const [id, r] of looked) {
           if (r.email) resolvedById.set(id, r.email)
           if (r.reason !== 'auth') {
@@ -1432,7 +1483,18 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
           body: JSON.stringify(chunk),
         })
         if (resp.ok) {
-          sent += chunk.length
+          // Count what Resend says it accepted, not what we handed it. A 200
+          // carries `{ data: [{ id }, ...] }`, and a partial accept would
+          // otherwise be reported to the host as a full one.
+          let accepted = chunk.length
+          try {
+            const body = await resp.json()
+            if (Array.isArray(body?.data)) accepted = body.data.length
+          } catch { /* a 200 with an unreadable body still accepted the chunk */ }
+          if (accepted !== chunk.length) {
+            console.error('[send-email] batch chunk partially accepted:', accepted, 'of', chunk.length)
+          }
+          sent += accepted
         } else {
           batchError = await resp.text()
           console.error('[send-email] batch send failed:', batchError)

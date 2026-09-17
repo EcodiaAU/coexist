@@ -47,6 +47,8 @@
  * mixed-case row cannot reopen the hole.
  */
 
+import { IN_CHUNK_SIZE, chunkValues } from './select-in-chunks.ts'
+
 /** lower(trim()). The one normal form both sides of the compare are put into. */
 export function normaliseEmail(email: string | null | undefined): string {
   return typeof email === 'string' ? email.trim().toLowerCase() : ''
@@ -81,12 +83,34 @@ export function makeSuppressionFetcher(admin: SuppressionQueryable): Suppression
   return async (candidates: string[]) => {
     if (candidates.length === 0) return []
     const variants = [...new Set(candidates.flatMap((c) => [c, normaliseEmail(c)]).filter(Boolean))]
-    const { data, error } = await admin
-      .from('email_suppressions')
-      .select('email')
-      .in('email', variants)
-    if (error) throw error
-    return (data ?? []).map((r) => r.email)
+    // CHUNKED, at the size select-in-chunks.ts already chose for this exact
+    // failure on 2026-08-30. This is a GET, so every address rides in the
+    // request line AND comes back echoed in PostgREST's `content-location`
+    // response header, and the variant expansion above can nearly double the
+    // list before either happens. Two independent caps sit on that, both
+    // measured: Deno's 16KiB response-header limit, which is what makes the
+    // fetch THROW rather than return a status (see select-in-chunks.ts), and
+    // Supabase's edge proxy refusing a request line past roughly 25KB (probed
+    // 2026-09-17 against tjutlbzekfouwsiaplbr with curl: 650 uuids -> 200,
+    // 700 uuids -> 400 Bad Request).
+    //
+    // The cost of overrunning it was not a slow send, it was no send: this
+    // gate fails CLOSED by contract, so the thrown request error killed the
+    // whole invocation. Kurt Jones invited Melbourne City (768 active members)
+    // to the Healesville planting at 2026-09-17T10:57:24Z and the function
+    // died here, delivering zero of 768 while every other surface recorded the
+    // invite as having gone out. The fail-closed contract is correct and is
+    // unchanged; what was wrong was asking one question too big to answer.
+    const rows: { email: string }[] = []
+    for (const slice of chunkValues(variants, IN_CHUNK_SIZE)) {
+      const { data, error } = await admin
+        .from('email_suppressions')
+        .select('email')
+        .in('email', slice)
+      if (error) throw error
+      rows.push(...(data ?? []))
+    }
+    return rows.map((r) => r.email)
   }
 }
 

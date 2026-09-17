@@ -2298,9 +2298,16 @@ export function useInviteCollective() {
       // a cleared field falls back to the default rather than mailing out an
       // empty subject line.
       const notifyTitle = customHeader || (isFirstInvite ? `You're invited: ${event.title}` : `Reminder: ${event.title}`)
+      // The inviter is NOT named. Tate, 2026-09-17, reading the Perth coastal
+      // festival send: "it still says KJ invited me which I don't want it to,
+      // it should just say the person is invited". The email templates dropped
+      // the name in the same change, and push plus the in-app row read this
+      // string, so leaving it here would have fixed one surface of three.
+      // `inviterName` is still resolved above because the email payload still
+      // carries it for any template that wants it.
       const notifyBody = customMessage || (isFirstInvite
-        ? `${inviterName} invited you to ${event.title} on ${eventDate}`
-        : `${inviterName} sent a reminder about ${event.title} on ${eventDate}`)
+        ? `You're invited to ${event.title} on ${eventDate}`
+        : `A reminder about ${event.title} on ${eventDate}`)
 
       let chatPosted = false
       let chatSkippedReason: string | null = null
