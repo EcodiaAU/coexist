@@ -317,6 +317,26 @@ interface SendEmailPayload {
    * rate limit. Marketing types are opt-in gated per recipient by userId.
    */
   recipients?: Array<{ userId?: string; to: string; data?: Record<string, unknown> }>
+
+  /**
+   * Batch only. Run every lookup, gate and template render, then report what
+   * WOULD be sent and hand back nothing to Resend.
+   *
+   * This exists because the 2026-09-17 failure could not be reproduced without
+   * mailing a real collective. Melbourne City's invite died in the suppression
+   * lookup at 768 recipients, and the only paths that reach that code are a
+   * live press on a real event or a batch of real userIds, both of which
+   * deliver. A probe that substitutes fake ids proves nothing: the query that
+   * broke is built from the ADDRESSES those ids resolve to, so fake ids
+   * resolve to no addresses, skip the query entirely and return a clean
+   * success. That false pass is what a verification would have recorded.
+   *
+   * It is also the pre-flight a host wants before mailing several hundred
+   * people: resolved is how many will actually receive it, skipped is how many
+   * will not, and the difference is answerable BEFORE the send rather than
+   * after.
+   */
+  dryRun?: boolean
 }
 
 /* ------------------------------------------------------------------ */
@@ -1472,6 +1492,23 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
             },
           }
         })
+
+      // Every lookup and every render above has now run. A dry run stops
+      // exactly here: the only thing it skips is the wire.
+      if (payload.dryRun) {
+        console.log('[send-email] DRY RUN:', emails.length, 'of', payload.recipients.length, 'would send')
+        return new Response(
+          JSON.stringify({
+            success: true,
+            dryRun: true,
+            sent: 0,
+            resolved: emails.length,
+            skipped: payload.recipients.length - emails.length,
+            sampleSubject: emails[0]?.subject,
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
 
       let sent = 0
       let batchError: string | undefined
