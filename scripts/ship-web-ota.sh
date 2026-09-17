@@ -81,9 +81,25 @@ echo "==> native floor OK: web $VERSION > native $NATIVE_MAX (iOS ${IOS_NATIVE:-
 # upload, and served to NOBODY because the channel already had something newer.
 # A dead push looks exactly like a successful one from the CLI output, which is
 # why this has to be a hard gate rather than a warning.
-CHANNEL_LIVE=$(curl -s --max-time 20 "https://api.capgo.app/channel?app_id=$APP_ID" \
-  -H "authorization: $CAPGO_APIKEY" -H "Content-Type: application/json" 2>/dev/null \
-  | python3 -c "
+# The read RETRIES. A single transient makes this guard degrade to a warning and
+# ship unguarded on a run that looks completely normal: observed 2026-09-17, one
+# read returned an empty parse while three reads a minute later all returned the
+# live version. One flaky HTTP call must not be able to silently disable the only
+# check standing between us and a dead push.
+# CAPGO_CHANNEL_API_BASE exists so the FAILURE path is testable without editing
+# this file: point it at an unroutable host and the read cannot succeed.
+CAPGO_CHANNEL_API_BASE="${CAPGO_CHANNEL_API_BASE:-https://api.capgo.app}"
+# Deliberately NOT a pipeline. Under `set -euo pipefail` a failed curl inside a
+# pipeline aborts the whole script at the assignment, so the retry, the
+# diagnostic and the override below were all dead code on a network failure: the
+# script exited 7 with no explanation. Split into two guarded steps so a failed
+# read RETURNS EMPTY and the logic below gets to run.
+read_channel_version() {
+  local raw=""
+  raw=$(curl -s --max-time 20 "$CAPGO_CHANNEL_API_BASE/channel?app_id=$APP_ID" \
+    -H "authorization: $CAPGO_APIKEY" -H "Content-Type: application/json" 2>/dev/null) || raw=""
+  [ -n "$raw" ] || return 0
+  printf '%s' "$raw" | python3 -c "
 import json,sys
 try: d=json.load(sys.stdin)
 except Exception: sys.exit(0)
@@ -93,7 +109,14 @@ for c in rows:
         v = c.get('version')
         print(v.get('name') if isinstance(v,dict) else (v or ''))
         break
-" 2>/dev/null)
+" 2>/dev/null || return 0
+}
+CHANNEL_LIVE=""
+for attempt in 1 2 3; do
+  CHANNEL_LIVE=$(read_channel_version)
+  [ -n "${CHANNEL_LIVE:-}" ] && break
+  [ "$attempt" -lt 3 ] && { echo "==> channel read attempt $attempt returned nothing, retrying" >&2; sleep 2; }
+done
 if [ -n "${CHANNEL_LIVE:-}" ]; then
   CH_HIGHEST=$(printf '%s\n%s\n' "$VERSION" "$CHANNEL_LIVE" | sort -V | tail -1)
   if [ "$VERSION" = "$CHANNEL_LIVE" ] || [ "$CH_HIGHEST" != "$VERSION" ]; then
@@ -104,7 +127,20 @@ if [ -n "${CHANNEL_LIVE:-}" ]; then
   fi
   echo "==> channel floor OK: web $VERSION > channel '$CHANNEL' live $CHANNEL_LIVE"
 else
-  echo "==> WARN: could not read live channel version - shipping without the channel floor check" >&2
+  # FAIL CLOSED. This used to warn and ship on, which meant the guard was absent
+  # exactly when the network was flaky and told you so in a line easy to miss in
+  # several hundred lines of vite output. An unreadable channel is an UNKNOWN
+  # floor, and shipping against an unknown floor is the dead push this guard
+  # exists to prevent.
+  echo "FATAL: could not read live '$CHANNEL' channel version after 3 attempts." >&2
+  echo "       The channel floor is UNKNOWN, so this upload could be a silent dead push." >&2
+  echo "       Check connectivity and CAPGO_APIKEY, then retry." >&2
+  echo "       Deliberately shipping without the check: ALLOW_UNGUARDED_CHANNEL=1 $0" >&2
+  if [ -n "${ALLOW_UNGUARDED_CHANNEL:-}" ]; then
+    echo "==> ALLOW_UNGUARDED_CHANNEL set: proceeding WITHOUT the channel floor check" >&2
+  else
+    exit 1
+  fi
 fi
 
 # Sentry source-map upload for the OTA bundle. The native app has no server.url,
