@@ -68,6 +68,7 @@ import {
 } from '@/hooks/use-events'
 import { useOffline } from '@/hooks/use-offline'
 import { usePendingSync } from '@/hooks/use-pending-sync'
+import { resolveInviteHeader, buildInvitePrefilledHeader } from '@/lib/invite-header'
 import { triggerManualSync } from '@/lib/offline-sync'
 import { isEventToday, wallClockNow } from '@/lib/date-format'
 import {
@@ -954,9 +955,7 @@ export default function EventDetailPage() {
     // than a syntax to learn. These two strings ARE the current defaults: they
     // match the built-in `event_invite` / `event_host_reminder` email subjects
     // and the push title exactly, so the box shows what would send anyway.
-    const header = alreadyInvited
-      ? `Reminder: ${event.title}`
-      : `You're invited: ${event.title}`
+    const header = buildInvitePrefilledHeader(event.title, alreadyInvited)
     setInviteHeader(header)
     setInvitePrefilledHeader(header)
     setInviteInChat(true)
@@ -966,7 +965,7 @@ export default function EventDetailPage() {
   }, [event, alreadyInvited])
 
   const noChannelPicked = !inviteInChat && !inviteByEmail && !inviteByPush
-  const headerEdited = inviteHeader.trim() !== '' && inviteHeader.trim() !== invitePrefilledHeader
+  const resolvedHeader = resolveInviteHeader(inviteHeader, invitePrefilledHeader)
 
   const handleSendInvite = useCallback(() => {
     if (!event?.collective_id) return
@@ -979,7 +978,7 @@ export default function EventDetailPage() {
         // Only an edited, non-blank header travels. Untouched or cleared sends
         // undefined, and every channel falls back to exactly what it sent
         // before this field existed.
-        customHeader: headerEdited ? inviteHeader.trim() : undefined,
+        customHeader: resolvedHeader,
         channels: { email: inviteByEmail, chat: inviteInChat, push: inviteByPush },
       },
       {
@@ -1000,7 +999,7 @@ export default function EventDetailPage() {
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to send'),
       },
     )
-  }, [event, inviteCollectiveMutation, toast, inviteMessage, headerEdited, inviteHeader, noChannelPicked, inviteByEmail, inviteInChat, inviteByPush])
+  }, [event, inviteCollectiveMutation, toast, inviteMessage, resolvedHeader, noChannelPicked, inviteByEmail, inviteInChat, inviteByPush])
 
   // Share = open the EventShareSheet (3 Instagram-ready PNGs with app store
   // badges). Replaces the previous bare-URL navigator.share path - per Tate
