@@ -127,12 +127,16 @@ function wrapper({ children }: { children: React.ReactNode }) {
   return React.createElement(QueryClientProvider, { client }, children)
 }
 
-async function invite(channels?: { email?: boolean; chat?: boolean; push?: boolean }) {
+async function invite(
+  channels?: { email?: boolean; chat?: boolean; push?: boolean },
+  customHeader?: string,
+) {
   const { result } = renderHook(() => useInviteCollective(), { wrapper })
   return result.current.mutateAsync({
     eventId: EVENT,
     collectiveId: COLLECTIVE,
     customMessage: 'Bring gloves',
+    customHeader,
     channels,
   })
 }
@@ -262,5 +266,74 @@ describe('a repeat press is the same button, not a different one', () => {
     expect(did('chat_announcements', 'insert')).toBe(true)
     expect(out.chatPosted).toBe(true)
     expect(out.chatSkippedReason).toBe(null)
+  })
+})
+
+/**
+ * Kurt 2026-09-16, relayed by Tate: the header members read first has to be
+ * editable by the host pressing Invite, not only by an admin editing a template
+ * in /admin/email. One plain string, no variable syntax, and it has to reach
+ * ALL of email, push and the collective chat invite.
+ *
+ * The pair that matters is edited-versus-untouched. An untouched press must be
+ * byte-identical to what the button sent before this field existed, because the
+ * four channels do NOT share one default (the chat card is the bare event
+ * title, the in-app row says "invited to", push and email say "invited:"), and
+ * because passing a subject at all overrides the admin's own /admin/email row.
+ */
+describe('the host-typed header reaches every channel', () => {
+  it('sets the email subject, the push title, the chat heading and the in-app title', async () => {
+    await invite(undefined, 'Last chance: Beach Clean this Saturday')
+
+    expect(payloadOf('fn:send-email', 'invoke').subject).toBe('Last chance: Beach Clean this Saturday')
+    expect(payloadOf('fn:send-push', 'invoke').title).toBe('Last chance: Beach Clean this Saturday')
+    expect(payloadOf('chat_announcements', 'insert').title).toBe('Last chance: Beach Clean this Saturday')
+    expect(payloadOf('notifications', 'insert')[0].title).toBe('Last chance: Beach Clean this Saturday')
+  })
+
+  it('leaves the BODY alone - the header is a separate field from the message', async () => {
+    await invite(undefined, 'Last chance: Beach Clean this Saturday')
+
+    expect(payloadOf('fn:send-push', 'invoke').body).toBe('Bring gloves')
+    expect(payloadOf('chat_announcements', 'insert').body).toBe('Bring gloves')
+    expect(payloadOf('fn:send-email', 'invoke').recipients[0].data.custom_message).toBe('Bring gloves')
+  })
+
+  it('overrides the header on a REPEAT press too, not just the first', async () => {
+    existingInviteCount = 1
+    await invite(undefined, 'Two sleeps to go')
+
+    expect(payloadOf('fn:send-push', 'invoke').title).toBe('Two sleeps to go')
+    expect(payloadOf('chat_announcements', 'insert').title).toBe('Two sleeps to go')
+    expect(payloadOf('fn:send-email', 'invoke').subject).toBe('Two sleeps to go')
+  })
+})
+
+describe('no header means exactly the behaviour that existed before the field', () => {
+  it('sends NO subject, so the /admin/email override still decides it', async () => {
+    await invite()
+
+    expect(payloadOf('fn:send-email', 'invoke').subject).toBeUndefined()
+  })
+
+  it('keeps each channel default, and they are not the same string', async () => {
+    await invite()
+
+    // Push names the event with the colon form...
+    expect(payloadOf('fn:send-push', 'invoke').title).toBe("You're invited: Beach Clean")
+    // ...the chat card is the bare event title...
+    expect(payloadOf('chat_announcements', 'insert').title).toBe('Beach Clean')
+    // ...and the in-app row says "invited to". Three different defaults: this is
+    // why an untouched press must send nothing rather than one shared string.
+    expect(payloadOf('notifications', 'insert')[0].title).toBe("You're invited to Beach Clean")
+  })
+
+  it('keeps the repeat-press defaults too', async () => {
+    existingInviteCount = 1
+    await invite()
+
+    expect(payloadOf('fn:send-push', 'invoke').title).toBe('Reminder: Beach Clean')
+    expect(payloadOf('chat_announcements', 'insert').title).toBe('Reminder: Beach Clean')
+    expect(payloadOf('fn:send-email', 'invoke').subject).toBeUndefined()
   })
 })

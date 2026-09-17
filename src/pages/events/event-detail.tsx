@@ -671,6 +671,20 @@ export default function EventDetailPage() {
   const [registeredJustNow, setRegisteredJustNow] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [inviteMessage, setInviteMessage] = useState('')
+  // The header line members read first: the email subject, the push title, the
+  // collective chat card's heading and the in-app notification title. Kurt
+  // asked for it on 2026-09-16 because the only way to change that line was to
+  // edit a template in /admin/email, which the host sending the invite cannot
+  // reach and which changes it for every event at once.
+  //
+  // `invitePrefilledHeader` is the exact string the box was opened with. It is
+  // what makes "untouched" mean untouched: a press whose header still equals
+  // the prefill sends no header at all, so every channel keeps the default it
+  // had before this field existed, the /admin/email override included. Without
+  // that comparison a host who never looked at the box would silently overwrite
+  // the admin's subject on every send.
+  const [inviteHeader, setInviteHeader] = useState('')
+  const [invitePrefilledHeader, setInvitePrefilledHeader] = useState('')
   // Invite delivery channels. All three default on, so a host who never opens
   // the toggles gets the chat post AND the email AND the push, which is what
   // the action did before any of them existed. A default-off channel would
@@ -933,6 +947,18 @@ export default function EventDetailPage() {
       ? `Don't miss out! Register now for ${event.title}.`
       : `You're all invited! Tap to view and register.`,
     )
+    // Pre-filled with the event's real name already written into it, not with a
+    // {{event_title}} placeholder. Tate's constraint on 2026-09-16 was that this
+    // cannot rely on typed variables and the event name still has to be usable,
+    // so the host is handed finished text they can keep, edit or clear rather
+    // than a syntax to learn. These two strings ARE the current defaults: they
+    // match the built-in `event_invite` / `event_host_reminder` email subjects
+    // and the push title exactly, so the box shows what would send anyway.
+    const header = alreadyInvited
+      ? `Reminder: ${event.title}`
+      : `You're invited: ${event.title}`
+    setInviteHeader(header)
+    setInvitePrefilledHeader(header)
     setInviteInChat(true)
     setInviteByEmail(true)
     setInviteByPush(true)
@@ -940,6 +966,7 @@ export default function EventDetailPage() {
   }, [event, alreadyInvited])
 
   const noChannelPicked = !inviteInChat && !inviteByEmail && !inviteByPush
+  const headerEdited = inviteHeader.trim() !== '' && inviteHeader.trim() !== invitePrefilledHeader
 
   const handleSendInvite = useCallback(() => {
     if (!event?.collective_id) return
@@ -949,6 +976,10 @@ export default function EventDetailPage() {
         eventId: event.id,
         collectiveId: event.collective_id,
         customMessage: inviteMessage || undefined,
+        // Only an edited, non-blank header travels. Untouched or cleared sends
+        // undefined, and every channel falls back to exactly what it sent
+        // before this field existed.
+        customHeader: headerEdited ? inviteHeader.trim() : undefined,
         channels: { email: inviteByEmail, chat: inviteInChat, push: inviteByPush },
       },
       {
@@ -969,7 +1000,7 @@ export default function EventDetailPage() {
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to send'),
       },
     )
-  }, [event, inviteCollectiveMutation, toast, inviteMessage, noChannelPicked, inviteByEmail, inviteInChat, inviteByPush])
+  }, [event, inviteCollectiveMutation, toast, inviteMessage, headerEdited, inviteHeader, noChannelPicked, inviteByEmail, inviteInChat, inviteByPush])
 
   // Share = open the EventShareSheet (3 Instagram-ready PNGs with app store
   // badges). Replaces the previous bare-URL navigator.share path - per Tate
@@ -2504,6 +2535,19 @@ export default function EventDetailPage() {
               <p className="text-caption text-red-500 pt-1">Pick at least one way to send it.</p>
             )}
           </div>
+
+          {/* Header - one plain line, pre-filled with the event's real name.
+              It is the email subject, the push title, the chat card heading and
+              the in-app notification title, all at once. Deliberately a plain
+              string with no variable syntax: the name is already in the box. */}
+          <Input
+            type="text"
+            label="Header"
+            value={inviteHeader}
+            onChange={(e) => setInviteHeader(e.target.value)}
+            placeholder={event ? `You're invited: ${event.title}` : 'Header'}
+            maxLength={120}
+          />
 
           {/* Custom message */}
           <Input

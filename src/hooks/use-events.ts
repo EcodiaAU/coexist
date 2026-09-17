@@ -2160,10 +2160,29 @@ export function useInviteCollective() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ eventId, collectiveId, customMessage, channels }: {
+    mutationFn: async ({ eventId, collectiveId, customMessage, customHeader, channels }: {
       eventId: string
       collectiveId: string
       customMessage?: string
+      /**
+       * The header line the host typed in the invite sheet: the email subject,
+       * the push title, the collective chat card's heading and the in-app
+       * notification title, all from one plain string.
+       *
+       * Kurt asked for this on 2026-09-16: the header used to come only from
+       * the built-in template (or an admin override edited in /admin/email),
+       * so the person actually sending the invite could not change the line
+       * their members read first.
+       *
+       * It is a plain string on purpose. No {{variables}}, nothing to learn:
+       * the sheet pre-fills it with the event's real name already written in,
+       * and whatever is left in the box is what goes out.
+       *
+       * Undefined means the host did not touch it, and then EVERY channel
+       * keeps the exact default it had before this field existed, admin
+       * override included. That is why the sheet sends it only when edited.
+       */
+      customHeader?: string
       /**
        * Which channels this press goes out on. Absent means all three, which
        * is what a host who never opens the toggles should get.
@@ -2274,7 +2293,11 @@ export function useInviteCollective() {
       // Both halves name the event. A bare "You're invited!" in a notification
       // list tells a member nothing about WHICH event, the same defect Kurt
       // reported on the invite email's subject on 2026-09-15.
-      const notifyTitle = isFirstInvite ? `You're invited: ${event.title}` : `Reminder: ${event.title}`
+      // One header, every channel. `customHeader` is already trimmed and
+      // non-blank by the time it gets here; a blank box is sent as undefined so
+      // a cleared field falls back to the default rather than mailing out an
+      // empty subject line.
+      const notifyTitle = customHeader || (isFirstInvite ? `You're invited: ${event.title}` : `Reminder: ${event.title}`)
       const notifyBody = customMessage || (isFirstInvite
         ? `${inviterName} invited you to ${event.title} on ${eventDate}`
         : `${inviterName} sent a reminder about ${event.title} on ${eventDate}`)
@@ -2315,7 +2338,7 @@ export function useInviteCollective() {
               collective_id: collectiveId,
               created_by: user.id,
               type: 'event_invite',
-              title: isFirstInvite ? event.title : `Reminder: ${event.title}`,
+              title: customHeader || (isFirstInvite ? event.title : `Reminder: ${event.title}`),
               body: customMessage || (isFirstInvite
                 ? `You're all invited! Tap to view and register.`
                 : `Don't miss out! Register now for ${event.title}.`),
@@ -2372,6 +2395,7 @@ export function useInviteCollective() {
                 custom_message: customMessage ?? '',
               },
             })),
+            customHeader,
           )
           emailed = outcome.sent
         }
@@ -2413,7 +2437,7 @@ export function useInviteCollective() {
           const notifications = audience.map((uid) => ({
             user_id: uid,
             type: isFirstInvite ? 'event_invite' : 'event_reminder',
-            title: isFirstInvite ? `You're invited to ${event.title}` : `Reminder: ${event.title}`,
+            title: customHeader || (isFirstInvite ? `You're invited to ${event.title}` : `Reminder: ${event.title}`),
             body: notifyBody,
             data: { event_id: eventId },
           }))
