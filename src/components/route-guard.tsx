@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
+import { readAuthLinkErrorFromWindow } from '@/lib/auth-link-error'
 import type { Database } from '@/types/database.types'
 import { GLOBAL_ROLE_RANK as _GLOBAL_RANK } from '@/lib/constants'
 import { EmptyState } from '@/components/empty-state'
@@ -50,7 +51,24 @@ export function RequireAuth({ children }: RequireAuthProps) {
   }
 
   if (!user) {
-    return <Navigate data-eos-id="src/components/route-guard.tsx#3" to="/login" state={{ from: location }} replace />
+    // An emailed link that has aged out lands HERE, not on /auth/callback: the
+    // ticket confirmation email points `redirect_to` straight at the deep link,
+    // so Supabase redirects to this guarded route with the failure in the URL
+    // fragment and no session attached. `to="/login"` is a plain string and
+    // carries no hash, so unless the reason is lifted into router state it is
+    // discarded on this line and the member gets an unexplained sign-in form
+    // (Chelsea Gray, paid Wild Mountains seat, 2026-09-12). Carry both the
+    // diagnosis and where they were headed so login can explain it and the
+    // resend can land them back on their ticket.
+    const linkError = readAuthLinkErrorFromWindow()
+    return (
+      <Navigate
+        data-eos-id="src/components/route-guard.tsx#3"
+        to="/login"
+        state={{ from: location, linkError }}
+        replace
+      />
+    )
   }
 
   if (isSuspended) {

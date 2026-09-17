@@ -29,6 +29,7 @@ import {
 } from '@/hooks/use-chat'
 import type { ChannelMessageWithSender } from '@/hooks/use-staff-channels'
 import { eventRequiresSafetySet } from '@/lib/dietary'
+import { isExternallyBooked } from '@/lib/event-capacity'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useEventDetail, type EventDetailData } from '@/hooks/use-events'
@@ -227,6 +228,19 @@ function InlineAnnouncement({
         return
       }
 
+      // The seats belong to a partner (Humanitix / Eventbrite / a volunteer
+      // portal), so the raw upsert below would take an app seat that reserves
+      // nothing physical and count it against a capacity the app does not own.
+      // That is the fourth door onto the same bug the comment above describes,
+      // and it is the one that oversold Riverfest to 45/45 against about 20
+      // real bookings (2026-09-14). Send them to the page holding the link.
+      if (isExternallyBooked(eventDetail)) {
+        respond.mutate({ announcementId, response })
+        toast.info('Spots for this one are booked on the partner site. Opening it now.')
+        navigate(`/events/${eventId}`)
+        return
+      }
+
       // A non-ticketed event that still carries duty of care (a free camp-out)
       // was joined here by the raw upsert below, which no safety surface can
       // see: this handler never calls useRegisterForEvent, so the gated helper
@@ -327,6 +341,7 @@ function InlineAnnouncement({
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
     }
   }
@@ -1104,7 +1119,7 @@ export function ChatMessageList({
         <div
           role="button"
           tabIndex={0}
-          aria-label={`Message options for ${msg.profiles?.display_name}`}
+          aria-label={msg.profiles?.display_name ? `Message options for ${msg.profiles.display_name}` : 'Message options'}
           onKeyDown={(e) => {
             if (e.key === 'Enter') onMessageLongPress(msg)
           }}

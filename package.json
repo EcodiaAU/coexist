@@ -1,7 +1,7 @@
 {
   "name": "coexist",
   "private": true,
-  "version": "2.3.0",
+  "version": "2.3.16",
   "type": "module",
   "scripts": {
     "postinstall": "patch-package",
@@ -14,8 +14,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "cap:sync": "npx cap sync",
-    "build:android": "CAPACITOR_BUILD=true npm run build && npx cap sync android",
-    "build:ios": "CAPACITOR_BUILD=true npm run build && npx cap sync ios"
+    "build:android": "scripts/check-native-floor.sh && CAPACITOR_BUILD=true npm run build && npx cap sync android",
+    "build:ios": "scripts/check-native-floor.sh && CAPACITOR_BUILD=true npm run build && npx cap sync ios"
   },
   "dependencies": {
     "@capacitor-community/media": "^9.1.0",

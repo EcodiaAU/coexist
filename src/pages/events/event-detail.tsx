@@ -31,7 +31,6 @@ import {
     Zap,
     Pencil,
     ClipboardList,
-    Bell,
     Ticket,
     ExternalLink,
     Car,
@@ -55,7 +54,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import {
     useEventDetail,
-    useEventAttendees,
+    useEventAttendanceCounts,
     useRegisterForEvent,
     useCancelRegistration,
     useCancelEvent,
@@ -88,7 +87,7 @@ import { parseLocationPoint } from '@/lib/geo'
 import { getMediumUrl } from '@/lib/image-utils'
 import { isEventSoldOut } from '@/lib/event-sold-out'
 import { WaitlistJoin } from '@/components/waitlist-join'
-import { computeSpotsTaken, ticketStatusBadge } from '@/lib/event-capacity'
+import { computeSpotsTaken, isExternallyBooked, ticketStatusBadge } from '@/lib/event-capacity'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { IssueTicketSheet } from '@/components/issue-ticket-sheet'
@@ -106,7 +105,7 @@ import { useEventCarpools, type EventCarpoolBreakout } from '@/hooks/use-event-c
 import { useSaveSeat } from '@/hooks/use-carpool'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import { Toggle } from '@/components/toggle'
-import { describeReminderOutcome } from '@/lib/event-reminder-audience'
+import { describeInviteOutcome } from '@/lib/event-reminder-audience'
 import { useEventCampoutChannel } from '@/hooks/use-staff-channels'
 import { MapView } from '@/components'
 import { activityAccent, defaultAccent } from '@/lib/activity-types'
@@ -304,6 +303,7 @@ function TicketSalesSection({
     queryClient.invalidateQueries({ queryKey: ['event-ticket-types', eventId] })
     queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
     queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+    queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
   }
 
   async function handleRevoke(ticketId: string, isPaid: boolean, label: string) {
@@ -517,15 +517,15 @@ export default function EventDetailPage() {
     (event as { collectives?: { timezone?: string | null } | null } | undefined)?.collectives?.timezone ??
     'Australia/Sydney'
   const isEventTodayForLive = isEventToday(event?.date_start, eventTz)
-  const { data: liveAttendees } = useEventAttendees(isEventTodayForLive ? id : undefined)
-  const liveCheckedIn = useMemo(
-    () => liveAttendees?.filter((a) => a.status === 'attended').length ?? 0,
-    [liveAttendees],
-  )
-  const liveRegistered = useMemo(
-    () => liveAttendees?.filter((a) => a.status === 'registered' || a.status === 'attended').length ?? 0,
-    [liveAttendees],
-  )
+  // ONE number, shared with the leader event-day screen. This used to count
+  // event_registrations here and event_registrations + walk-ins over there,
+  // which is why Tate saw 37 on this card and 39 on that one mid-event on
+  // 2026-09-14: the gap was exactly the walk-in count. The RPC is SECURITY
+  // DEFINER on purpose, because event_walk_ins RLS is staff-only and a
+  // participant reading that table directly gets zero rows.
+  const { data: liveCounts } = useEventAttendanceCounts(isEventTodayForLive ? id : undefined)
+  const liveCheckedIn = liveCounts?.checkedIn ?? 0
+  const liveRegistered = liveCounts?.hereTotal ?? 0
 
   // Ticketed events
   const isTicketed = event?.is_ticketed ?? false
@@ -671,12 +671,27 @@ export default function EventDetailPage() {
   const [registeredJustNow, setRegisteredJustNow] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [inviteMessage, setInviteMessage] = useState('')
-  // Reminder delivery channels. Both default on, so a host who never opens
-  // these gets the email AND the chat post - the email being silently absent
-  // is the thing being fixed here, and a default-off email would read as
-  // still broken.
-  const [remindByEmail, setRemindByEmail] = useState(true)
-  const [remindInChat, setRemindInChat] = useState(true)
+  // The header line members read first: the email subject, the push title, the
+  // collective chat card's heading and the in-app notification title. Kurt
+  // asked for it on 2026-09-16 because the only way to change that line was to
+  // edit a template in /admin/email, which the host sending the invite cannot
+  // reach and which changes it for every event at once.
+  //
+  // `invitePrefilledHeader` is the exact string the box was opened with. It is
+  // what makes "untouched" mean untouched: a press whose header still equals
+  // the prefill sends no header at all, so every channel keeps the default it
+  // had before this field existed, the /admin/email override included. Without
+  // that comparison a host who never looked at the box would silently overwrite
+  // the admin's subject on every send.
+  const [inviteHeader, setInviteHeader] = useState('')
+  const [invitePrefilledHeader, setInvitePrefilledHeader] = useState('')
+  // Invite delivery channels. All three default on, so a host who never opens
+  // the toggles gets the chat post AND the email AND the push, which is what
+  // the action did before any of them existed. A default-off channel would
+  // read as the capability having been taken away.
+  const [inviteInChat, setInviteInChat] = useState(true)
+  const [inviteByEmail, setInviteByEmail] = useState(true)
+  const [inviteByPush, setInviteByPush] = useState(true)
   const [descriptionExpanded, setDescriptionExpanded] = useState(false)
   // Floating-local: store now as wall-clock-as-UTC ms so we can compare
   // against event.date_start (also wall-clock-as-UTC).
@@ -734,7 +749,13 @@ export default function EventDetailPage() {
         registrationsGoing: event.registration_count,
       })
     : 0
-  const isAtCapacity = event?.capacity ? spotsFilled >= event.capacity : false
+  // An externally-booked event has no in-app capacity to be at: the partner
+  // owns the seats, so the app's own `capacity` number describes nothing real.
+  // Reading it as full is what hid Riverfest's genuinely available Humanitix
+  // places behind a "45/45 spots filled" banner and pushed 37 people onto a
+  // waitlist the app could never honour (2026-09-14).
+  const externallyBooked = isExternallyBooked(event)
+  const isAtCapacity = !externallyBooked && event?.capacity ? spotsFilled >= event.capacity : false
 
   // Event is "active" if it started (or starts within the check-in window) and hasn't ended
   const rawCheckinWindow = (event as unknown as Record<string, unknown>)?.checkin_window_minutes as number | null | undefined
@@ -766,14 +787,19 @@ export default function EventDetailPage() {
 
   const capacityText = useMemo(() => {
     if (!event) return ''
+    // Never quote a spots-filled fraction for an event the app does not sell.
+    // The in-app number is not the real one and stating it as a limit is the
+    // whole bug; how many are going is still true and still worth showing.
+    if (externallyBooked) return `${spotsFilled} going via the app`
     if (!event.capacity) return `${spotsFilled} going`
     return `${spotsFilled}/${event.capacity} spots filled`
-  }, [event, spotsFilled])
+  }, [event, spotsFilled, externallyBooked])
 
   const capacityPercent = useMemo(() => {
+    if (externallyBooked) return 0
     if (!event?.capacity) return 0
     return Math.min(100, (spotsFilled / event.capacity) * 100)
-  }, [event, spotsFilled])
+  }, [event, spotsFilled, externallyBooked])
 
   // The registration itself, with the gate already satisfied or not required.
   const doRegister = useCallback((asWaitlist: boolean) => {
@@ -912,45 +938,69 @@ export default function EventDetailPage() {
 
   const handleOpenInviteSheet = useCallback(() => {
     if (!event) return
+    // The DRAFT message still knows which press this is - "Don't miss out" is a
+    // better starting point on a second send and the host can edit it either
+    // way. The BUTTON does not: it is always Invite. Splitting the button on
+    // this flag is what showed a bell labelled "Remind" on one surface and a
+    // paper plane labelled "Invite" on another for the same event.
     setInviteMessage(alreadyInvited
       ? `Don't miss out! Register now for ${event.title}.`
       : `You're all invited! Tap to view and register.`,
     )
-    setRemindByEmail(true)
-    setRemindInChat(true)
+    // Pre-filled with the event's real name already written into it, not with a
+    // {{event_title}} placeholder. Tate's constraint on 2026-09-16 was that this
+    // cannot rely on typed variables and the event name still has to be usable,
+    // so the host is handed finished text they can keep, edit or clear rather
+    // than a syntax to learn. These two strings ARE the current defaults: they
+    // match the built-in `event_invite` / `event_host_reminder` email subjects
+    // and the push title exactly, so the box shows what would send anyway.
+    const header = alreadyInvited
+      ? `Reminder: ${event.title}`
+      : `You're invited: ${event.title}`
+    setInviteHeader(header)
+    setInvitePrefilledHeader(header)
+    setInviteInChat(true)
+    setInviteByEmail(true)
+    setInviteByPush(true)
     setShowInviteSheet(true)
   }, [event, alreadyInvited])
 
+  const noChannelPicked = !inviteInChat && !inviteByEmail && !inviteByPush
+  const headerEdited = inviteHeader.trim() !== '' && inviteHeader.trim() !== invitePrefilledHeader
+
   const handleSendInvite = useCallback(() => {
     if (!event?.collective_id) return
-    if (alreadyInvited && !remindByEmail && !remindInChat) return
+    if (noChannelPicked) return
     inviteCollectiveMutation.mutate(
       {
         eventId: event.id,
         collectiveId: event.collective_id,
         customMessage: inviteMessage || undefined,
-        channels: { email: remindByEmail, chat: remindInChat },
+        // Only an edited, non-blank header travels. Untouched or cleared sends
+        // undefined, and every channel falls back to exactly what it sent
+        // before this field existed.
+        customHeader: headerEdited ? inviteHeader.trim() : undefined,
+        channels: { email: inviteByEmail, chat: inviteInChat, push: inviteByPush },
       },
       {
         onSuccess: (data) => {
-          if (!data?.reminded) {
-            toast.success('All members invited & notified!')
-          } else {
-            // Report each channel on its own. The old toast said the reminder
-            // was posted to chat no matter what happened, which is how a
-            // send that reached nobody still read as a success.
-            toast.success(describeReminderOutcome({
-              emailed: data.emailed ?? 0,
-              chatPosted: data.chatPosted ?? false,
-              chatSkippedReason: data.chatSkippedReason,
-            }))
-          }
+          // Report each channel on its own, on EVERY press. The first invite
+          // used to answer with a flat "All members invited & notified!" that
+          // was printed before any channel had reported, so a send that reached
+          // nobody still read as a success.
+          toast.success(describeInviteOutcome({
+            emailed: data?.emailed ?? 0,
+            pushed: data?.pushed ?? 0,
+            chatPosted: data?.chatPosted ?? false,
+            chatSkippedReason: data?.chatSkippedReason,
+            invited: data?.invited ?? 0,
+          }))
           setShowInviteSheet(false)
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to send'),
       },
     )
-  }, [event, inviteCollectiveMutation, toast, inviteMessage, alreadyInvited, remindByEmail, remindInChat])
+  }, [event, inviteCollectiveMutation, toast, inviteMessage, headerEdited, inviteHeader, noChannelPicked, inviteByEmail, inviteInChat, inviteByPush])
 
   // Share = open the EventShareSheet (3 Instagram-ready PNGs with app store
   // badges). Replaces the previous bare-URL navigator.share path - per Tate
@@ -1138,6 +1188,22 @@ export default function EventDetailPage() {
             <AlertCircle size={18} />
             You're on the waitlist
           </div>
+          {/* An in-app waitlist on an externally-booked event can never drain:
+              the seats are the partner's to release and the promotion sweep
+              deliberately skips these events, so the queue would sit forever.
+              Riverfest had 37 people waiting on one. Give them the real door. */}
+          {externallyBooked && event.external_registration_url && (
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              onClick={() => window.open(event.external_registration_url as string, '_blank', 'noopener,noreferrer')}
+              icon={<ExternalLink size={18} />}
+              className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
+            >
+              Book on Partner Site
+            </Button>
+          )}
           <Button
             variant="ghost"
             fullWidth
@@ -1145,6 +1211,36 @@ export default function EventDetailPage() {
           >
             Leave Waitlist
           </Button>
+        </div>
+      )
+    }
+
+    // ── Externally-booked events: the partner owns the seats ──
+    // Runs BEFORE the invited branch deliberately. This block used to sit below
+    // it (and below the free-RSVP branch), so an invited member on an external
+    // event was shown "Accept & Register" and NEVER the partner link at all.
+    // Riverfest carried 500 invited rows and filled to 45/45 in-app against
+    // about 20 real Humanitix bookings exactly that way (2026-09-14). The
+    // already-holding states above (registered / waitlisted / attended) stay
+    // ahead of this one so nobody loses their status or their cancel control;
+    // they get the partner link added inside their own branch instead.
+    if (externallyBooked && !isTicketed) {
+      const extUrl = event.external_registration_url as string
+      return (
+        <div className="space-y-2">
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onClick={() => window.open(extUrl, '_blank', 'noopener,noreferrer')}
+            icon={<ExternalLink size={18} />}
+            className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
+          >
+            Register on Partner Site
+          </Button>
+          <p className="px-1 text-center text-[11px] text-neutral-500">
+            Spots for this one are booked on the partner site, so registering here would not hold you a place.
+          </p>
         </div>
       )
     }
@@ -1487,35 +1583,6 @@ export default function EventDetailPage() {
       )
     }
 
-    // ── External collaboration: show external registration link ──
-    if (event.external_registration_url) {
-      const extUrl = event.external_registration_url
-      return (
-        <div className="space-y-2">
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            onClick={() => window.open(extUrl, '_blank', 'noopener,noreferrer')}
-            icon={<ExternalLink size={18} />}
-            className={cn('bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
-          >
-            Register on Partner Site
-          </Button>
-          {/* Also allow in-app registration */}
-          <Button
-            variant="secondary"
-            size="md"
-            fullWidth
-            loading={registerMutation.isPending}
-            onClick={() => handleRegister()}
-          >
-            {isAtCapacity ? 'Join Waitlist' : 'Also Register In-App'}
-          </Button>
-        </div>
-      )
-    }
-
     // ── Free events: regular registration ──
     return (
       <Button
@@ -1607,7 +1674,7 @@ export default function EventDetailPage() {
 
         {/* ── Live "X of Y here so far" - visible on event day for everyone.
             Reads from cached event-attendees so it survives flaky network. */}
-        {isEventTodayForLive && liveAttendees && liveAttendees.length > 0 && (
+        {isEventTodayForLive && liveRegistered > 0 && (
           <motion.div variants={shouldReduceMotion ? undefined : fadeUp}>
             <div className="flex items-center gap-3 rounded-sm bg-white p-3 shadow-sm border border-success-100">
               <div className="flex items-center justify-center w-9 h-9 rounded-full bg-success-50">
@@ -1734,13 +1801,17 @@ export default function EventDetailPage() {
                   onClick={handleOpenInviteSheet}
                   className="group flex flex-col items-center gap-1.5 rounded-sm bg-white shadow-sm border border-neutral-100 p-3 active:scale-[0.98] transition-transform duration-150 cursor-pointer select-none"
                 >
-                  <div className={cn(
-                    'w-9 h-9 rounded-sm flex items-center justify-center group-hover:scale-105 transition-transform',
-                    alreadyInvited ? 'bg-sky-50' : 'bg-bark-50',
-                  )}>
-                    {alreadyInvited ? <Bell size={16} className="text-sky-600" /> : <Send size={16} className="text-bark-600" />}
+                  {/* ONE semantic, one button (Tate 2026-09-15). This tile used
+                      to become a blue bell labelled "Remind" once the collective
+                      had been invited, so the app and the browser showed two
+                      different buttons for the same event whenever their cached
+                      invite count disagreed. It is always a yellow paper plane
+                      labelled Invite; which press it is belongs in the sheet's
+                      draft message and in what members receive, not here. */}
+                  <div className="w-9 h-9 rounded-sm bg-warning-50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Send size={16} className="text-warning-600" />
                   </div>
-                  <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">{alreadyInvited ? 'Remind' : 'Invite'}</span>
+                  <span className="text-[10px] font-semibold text-neutral-700 leading-tight text-center">Invite</span>
                 </button>
               )}
               {isLeaderOrAbove && event.status !== 'cancelled' && (
@@ -2386,7 +2457,7 @@ export default function EventDetailPage() {
         </div>
       </BottomSheet>
 
-      {/* Invite / Remind sheet */}
+      {/* Invite sheet */}
       <BottomSheet
         open={showInviteSheet}
         onClose={() => setShowInviteSheet(false)}
@@ -2395,20 +2466,22 @@ export default function EventDetailPage() {
         <div className="space-y-4">
           <div>
             <div className="flex items-center gap-2.5 mb-1">
-              <div className={cn(
-                'w-8 h-8 rounded-sm flex items-center justify-center shadow-sm bg-gradient-to-br',
-                alreadyInvited ? 'from-moss-500 to-moss-600' : 'from-sprout-500 to-sprout-600',
-              )}>
-                {alreadyInvited ? <Bell size={15} className="text-white" /> : <Send size={15} className="text-white" />}
+              <div className="w-8 h-8 rounded-sm flex items-center justify-center shadow-sm bg-gradient-to-br from-warning-400 to-warning-500">
+                <Send size={15} className="text-white" />
               </div>
               <h3 className="font-heading text-base font-semibold text-neutral-900">
-                {alreadyInvited ? 'Send Reminder' : 'Invite Collective'}
+                Invite Collective
               </h3>
             </div>
             <p className="text-caption text-neutral-500 mt-1">
-              {alreadyInvited
-                ? 'Choose how the reminder reaches your members.'
-                : 'This will invite all members, send notifications, and post to the collective chat.'}
+              {/* Name every channel up front. The subtitle used to read "Choose
+                  how the reminder reaches your members", which never said that
+                  one of those ways IS the collective chat. Jess asked twice for
+                  a way to share an event to her group chat while standing on
+                  this exact button, because nothing on the path named the chat
+                  until she opened the toggles below. */}
+              Posts an event card in the collective chat, emails your members and
+              buzzes their phones. Pick any of the three below.
             </p>
           </div>
 
@@ -2431,30 +2504,50 @@ export default function EventDetailPage() {
             </div>
           </div>
 
-          {/* Delivery channels - reminder only. The first invite has always
-              emailed, pushed and posted, and making that optional was not what
-              anyone asked for. */}
-          {alreadyInvited && (
-            <div className="rounded-sm border border-neutral-100 p-3.5 space-y-1">
-              <Toggle
-                checked={remindByEmail}
-                onChange={setRemindByEmail}
-                label="Email members directly"
-                description="Sends the reminder to each member's inbox, and a phone notification with it."
-                className="py-2"
-              />
-              <Toggle
-                checked={remindInChat}
-                onChange={setRemindInChat}
-                label="Post in collective chat"
-                description="Drops an event card into the collective's group chat."
-                className="py-2"
-              />
-              {!remindByEmail && !remindInChat && (
-                <p className="text-caption text-red-500 pt-1">Pick at least one way to send it.</p>
-              )}
-            </div>
-          )}
+          {/* Delivery channels, on EVERY press. These used to appear only once
+              the collective had already been invited: the first invite emailed,
+              pushed and posted with no say in it, and push was welded to the
+              email toggle with no switch of its own. Three channels, three
+              switches, same on press one as on press five. */}
+          <div className="rounded-sm border border-neutral-100 p-3.5 space-y-1">
+            <Toggle
+              checked={inviteInChat}
+              onChange={setInviteInChat}
+              label="Post in collective chat"
+              description="Drops an event card into the collective's group chat."
+              className="py-2"
+            />
+            <Toggle
+              checked={inviteByEmail}
+              onChange={setInviteByEmail}
+              label="Email members directly"
+              description="Sends it to each member's inbox."
+              className="py-2"
+            />
+            <Toggle
+              checked={inviteByPush}
+              onChange={setInviteByPush}
+              label="Send a push notification"
+              description="Buzzes the phone of every member with the app installed."
+              className="py-2"
+            />
+            {noChannelPicked && (
+              <p className="text-caption text-red-500 pt-1">Pick at least one way to send it.</p>
+            )}
+          </div>
+
+          {/* Header - one plain line, pre-filled with the event's real name.
+              It is the email subject, the push title, the chat card heading and
+              the in-app notification title, all at once. Deliberately a plain
+              string with no variable syntax: the name is already in the box. */}
+          <Input
+            type="text"
+            label="Header"
+            value={inviteHeader}
+            onChange={(e) => setInviteHeader(e.target.value)}
+            placeholder={event ? `You're invited: ${event.title}` : 'Header'}
+            maxLength={120}
+          />
 
           {/* Custom message */}
           <Input
@@ -2478,11 +2571,11 @@ export default function EventDetailPage() {
               variant="primary"
               className={cn('flex-1 bg-gradient-to-r shadow-sm', accent.gradient, accent.glow)}
               loading={inviteCollectiveMutation.isPending}
-              disabled={alreadyInvited && !remindByEmail && !remindInChat}
+              disabled={noChannelPicked}
               onClick={handleSendInvite}
-              icon={alreadyInvited ? <Bell size={15} /> : <Send size={15} />}
+              icon={<Send size={15} />}
             >
-              {alreadyInvited ? 'Send Reminder' : 'Invite All'}
+              Send Invite
             </Button>
           </div>
         </div>

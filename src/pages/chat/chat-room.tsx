@@ -66,7 +66,7 @@ import {
 } from '@/hooks/use-staff-channels'
 import { supabase } from '@/lib/supabase'
 import { useBlockedUsers } from '@/hooks/use-user-blocks'
-import { useInviteCollaborator } from '@/hooks/use-events'
+import { useInviteCollaborator, useEventDetail } from '@/hooks/use-events'
 import { useCreateCarpool } from '@/hooks/use-carpool'
 import { CreateCarpoolSheet, type CreateCarpoolSubmitData } from '@/components/create-carpool-sheet'
 import { useTyping } from '@/hooks/use-typing'
@@ -282,6 +282,22 @@ export default function ChatRoomPage() {
     : (isStaff || isAdmin || isSuperAdmin)
 
   const effectiveCollectiveId = isCollective ? collectiveId : (channel?.collective_id ?? undefined)
+
+  /* ---- Collective an "Event Invite" should list events from ----
+     A channel is NOT collective mode, but most channels still belong to a
+     collective: staff_collective and carpool_breakout carry collective_id
+     directly, and a campout channel carries the event it was spun up for, whose
+     collective we can read. Without this the event picker was handed undefined,
+     came back empty, and told the leader "No upcoming events found. Create an
+     event first" while the event sat published in their own collective. That is
+     what blocked the Perth staff chat from inviting anyone to the 19 Sep
+     screening. staff_state and staff_national genuinely span no single
+     collective, so they resolve to undefined and get an honest empty state. */
+  const campoutEvent = useEventDetail(
+    isCampoutChannel && !channel?.collective_id ? (channel?.event_id ?? undefined) : undefined,
+  )
+  const inviteScopeCollectiveId =
+    effectiveCollectiveId ?? (campoutEvent.data?.collective_id ?? undefined)
 
   /* ---- Messages ---- */
   const collectiveMessages = useChatMessages(isCollective ? collectiveId : undefined)
@@ -1237,6 +1253,7 @@ export default function ChatRoomPage() {
         isCollective={isCollective}
         isLeaderOrAbove={isLeaderOrAbove}
         collectiveId={collectiveId}
+        channelCollectiveId={inviteScopeCollectiveId}
         collectiveName={collective?.name}
         channelName={channel?.name}
         showPollSheet={showPollSheet}

@@ -72,6 +72,77 @@ if [ "$VERSION" = "$NATIVE_MAX" ] || [ "$HIGHEST" != "$VERSION" ]; then
 fi
 echo "==> native floor OK: web $VERSION > native $NATIVE_MAX (iOS ${IOS_NATIVE:-?} / Android ${AND_NATIVE:-?})"
 
+# CHANNEL FLOOR GUARD. The native floor above is NOT enough, and on 2026-09-14
+# that gap nearly shipped a dead bundle. This script auto-bumps off the VERSION
+# FILE, but the file drifts below the live channel whenever a bundle is shipped
+# without its bump commit landing in the repo. That day the file read 2.3.13
+# while production served 2.3.16, so a default run would have uploaded 2.3.14:
+# above every native version, so the native guard passed it, accepted by the
+# upload, and served to NOBODY because the channel already had something newer.
+# A dead push looks exactly like a successful one from the CLI output, which is
+# why this has to be a hard gate rather than a warning.
+# The read RETRIES. A single transient makes this guard degrade to a warning and
+# ship unguarded on a run that looks completely normal: observed 2026-09-17, one
+# read returned an empty parse while three reads a minute later all returned the
+# live version. One flaky HTTP call must not be able to silently disable the only
+# check standing between us and a dead push.
+# CAPGO_CHANNEL_API_BASE exists so the FAILURE path is testable without editing
+# this file: point it at an unroutable host and the read cannot succeed.
+CAPGO_CHANNEL_API_BASE="${CAPGO_CHANNEL_API_BASE:-https://api.capgo.app}"
+# Deliberately NOT a pipeline. Under `set -euo pipefail` a failed curl inside a
+# pipeline aborts the whole script at the assignment, so the retry, the
+# diagnostic and the override below were all dead code on a network failure: the
+# script exited 7 with no explanation. Split into two guarded steps so a failed
+# read RETURNS EMPTY and the logic below gets to run.
+read_channel_version() {
+  local raw=""
+  raw=$(curl -s --max-time 20 "$CAPGO_CHANNEL_API_BASE/channel?app_id=$APP_ID" \
+    -H "authorization: $CAPGO_APIKEY" -H "Content-Type: application/json" 2>/dev/null) || raw=""
+  [ -n "$raw" ] || return 0
+  printf '%s' "$raw" | python3 -c "
+import json,sys
+try: d=json.load(sys.stdin)
+except Exception: sys.exit(0)
+rows = d if isinstance(d,list) else [d]
+for c in rows:
+    if c.get('name') == '$CHANNEL':
+        v = c.get('version')
+        print(v.get('name') if isinstance(v,dict) else (v or ''))
+        break
+" 2>/dev/null || return 0
+}
+CHANNEL_LIVE=""
+for attempt in 1 2 3; do
+  CHANNEL_LIVE=$(read_channel_version)
+  [ -n "${CHANNEL_LIVE:-}" ] && break
+  [ "$attempt" -lt 3 ] && { echo "==> channel read attempt $attempt returned nothing, retrying" >&2; sleep 2; }
+done
+if [ -n "${CHANNEL_LIVE:-}" ]; then
+  CH_HIGHEST=$(printf '%s\n%s\n' "$VERSION" "$CHANNEL_LIVE" | sort -V | tail -1)
+  if [ "$VERSION" = "$CHANNEL_LIVE" ] || [ "$CH_HIGHEST" != "$VERSION" ]; then
+    echo "FATAL: web bundle $VERSION is not greater than what channel '$CHANNEL' already serves ($CHANNEL_LIVE)." >&2
+    echo "       The upload would succeed and reach ZERO devices (silent dead push)." >&2
+    echo "       The version file has drifted below the channel. Set WEB_BUNDLE_VERSION above $CHANNEL_LIVE and retry." >&2
+    exit 1
+  fi
+  echo "==> channel floor OK: web $VERSION > channel '$CHANNEL' live $CHANNEL_LIVE"
+else
+  # FAIL CLOSED. This used to warn and ship on, which meant the guard was absent
+  # exactly when the network was flaky and told you so in a line easy to miss in
+  # several hundred lines of vite output. An unreadable channel is an UNKNOWN
+  # floor, and shipping against an unknown floor is the dead push this guard
+  # exists to prevent.
+  echo "FATAL: could not read live '$CHANNEL' channel version after 3 attempts." >&2
+  echo "       The channel floor is UNKNOWN, so this upload could be a silent dead push." >&2
+  echo "       Check connectivity and CAPGO_APIKEY, then retry." >&2
+  echo "       Deliberately shipping without the check: ALLOW_UNGUARDED_CHANNEL=1 $0" >&2
+  if [ -n "${ALLOW_UNGUARDED_CHANNEL:-}" ]; then
+    echo "==> ALLOW_UNGUARDED_CHANNEL set: proceeding WITHOUT the channel floor check" >&2
+  else
+    exit 1
+  fi
+fi
+
 # Sentry source-map upload for the OTA bundle. The native app has no server.url,
 # so it serves THIS bundled dist locally - its JS crash stacks (e.g. COEXIST-N
 # "Maximum update depth" in the admin bundle) only resolve to real file/line if

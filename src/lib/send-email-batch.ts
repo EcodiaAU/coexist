@@ -53,15 +53,26 @@ interface BatchResponse {
   error?: string
 }
 
+/**
+ * `subject` is an explicit subject line for THIS send, and it is the highest
+ * tier of send-email's subject precedence (see _shared/email-subject.ts):
+ * explicit payload subject, then the admin override row, then the built-in
+ * template subject. It exists so the host who presses Invite can type the
+ * header their members will actually read, without an admin editing
+ * /admin/email and without a deploy. Leave it undefined and the admin override
+ * chain is untouched, which is why the invite sheet passes it only when the
+ * host has actually edited the field.
+ */
 export async function sendEmailToMany(
   caller: string,
   type: string,
   recipients: BatchRecipient[],
+  subject?: string,
 ): Promise<BatchOutcome> {
   if (recipients.length === 0) return { sent: 0, fellBack: false }
 
   const { data, error } = await supabase.functions.invoke('send-email', {
-    body: { type, recipients },
+    body: { type, recipients, ...(subject ? { subject } : {}) },
   })
   const detail = await reportInvokeError(caller, 'send-email', error, data)
   const body = (data ?? null) as BatchResponse | null
@@ -95,7 +106,7 @@ export async function sendEmailToMany(
     const out = await invokeAndReport(
       caller,
       'send-email',
-      { body: { type, userId: r.userId, to: r.to, data: r.data } },
+      { body: { type, userId: r.userId, to: r.to, data: r.data, ...(subject ? { subject } : {}) } },
       supabase,
     )
     if (out.ok) sent += 1

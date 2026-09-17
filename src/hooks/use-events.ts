@@ -1,8 +1,8 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { invokeAndReport } from '@/lib/invoke-report'
+import { invokeAndReport, reportInvokeError } from '@/lib/invoke-report'
 import { sendEmailToMany } from '@/lib/send-email-batch'
-import { buildReminderAudience } from '@/lib/event-reminder-audience'
+import { buildInviteAudience } from '@/lib/event-reminder-audience'
 import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { useToast } from '@/components/toast'
@@ -10,7 +10,7 @@ import { queueOfflineAction } from '@/lib/offline-sync'
 import { fetchEventIdsForCollective, fetchEventIdsForCollectives } from '@/lib/collective-event-ids'
 import { formatEventLong, wallClockNow } from '@/lib/date-format'
 import { DIETARY_GATE_QUERY_KEY } from '@/lib/dietary'
-import { classifyAttendance } from '@/lib/event-capacity'
+import { classifyAttendance, isExternallyBooked } from '@/lib/event-capacity'
 import { isNativePlatform, shareBlobNative, isShareCancellation } from '@/lib/native-share'
 import type {
   Database,
@@ -745,6 +745,79 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
 }
 
 /* ------------------------------------------------------------------ */
+/*  ONE attendance number (both event cards)                           */
+/* ------------------------------------------------------------------ */
+
+export interface EventAttendanceCounts {
+  /** Distinct people actually present: attended registrations UNION attended
+   *  walk-ins, deduped by email / linked user. */
+  checkedIn: number
+  /** The same set widened to registered-but-not-yet-arrived. The denominator
+   *  for "X of Y here so far". */
+  hereTotal: number
+  /** Walk-ins who add a person the registration list does not already hold.
+   *  Added to the ticket-aware roster "going" so that card stays ticket-aware
+   *  while still counting the people who walked up. */
+  walkinExtra: number
+  /** Walk-in rows folded away as duplicates of each other. */
+  walkinDuplicatesSuppressed: number
+}
+
+const EMPTY_ATTENDANCE_COUNTS: EventAttendanceCounts = {
+  checkedIn: 0,
+  hereTotal: 0,
+  walkinExtra: 0,
+  walkinDuplicatesSuppressed: 0,
+}
+
+/**
+ * The single source of truth for "how many people are checked in at this event".
+ *
+ * Tate, mid-event 2026-09-14: "the here so far card on the event day page and
+ * the checked in cards are showing different numbers right now at the coexist
+ * event 37 vs 39". They disagreed because they were two different sums. The
+ * leader card was roster.counts.checkedIn + walkIns.length while the
+ * participant-visible "here so far" card counted attended registrations alone
+ * and never read event_walk_ins at all, so the gap was exactly the walk-in
+ * count.
+ *
+ * The number is computed SERVER-SIDE by event_attendance_counts (SECURITY
+ * DEFINER) rather than by a shared client function, because RLS on
+ * event_walk_ins is staff-only. A client-side counter would hand every
+ * participant zero walk-ins and leave their card quietly wrong while looking
+ * correct to a staff tester. The RPC returns counts and no PII.
+ *
+ * Deduplication happens in that function: event_walk_ins has no unique
+ * constraint, so the same person can appear twice, or appear as both a walk-in
+ * and a registration.
+ */
+export function useEventAttendanceCounts(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['event-attendance-counts', eventId],
+    queryFn: async (): Promise<EventAttendanceCounts> => {
+      if (!eventId) return EMPTY_ATTENDANCE_COUNTS
+      const { data, error } = await supabase.rpc('event_attendance_counts', {
+        p_event_id: eventId,
+      })
+      if (error) throw error
+      // The RPC RETURNS TABLE, so PostgREST hands back an array of one row.
+      const row = (Array.isArray(data) ? data[0] : data) as
+        | { checked_in: number; here_total: number; walkin_extra: number; walkin_duplicates_suppressed: number }
+        | undefined
+      if (!row) return EMPTY_ATTENDANCE_COUNTS
+      return {
+        checkedIn: row.checked_in ?? 0,
+        hereTotal: row.here_total ?? 0,
+        walkinExtra: row.walkin_extra ?? 0,
+        walkinDuplicatesSuppressed: row.walkin_duplicates_suppressed ?? 0,
+      }
+    },
+    enabled: !!eventId,
+    staleTime: 30 * 1000,
+  })
+}
+
+/* ------------------------------------------------------------------ */
 /*  Queries - Event Waitlist                                           */
 /* ------------------------------------------------------------------ */
 
@@ -1024,11 +1097,24 @@ export function useRegisterForEvent() {
       // (Angelica 2026-07-09).
       const { data: evt } = await supabase
         .from('events')
-        .select('is_ticketed')
+        .select('is_ticketed, external_registration_url')
         .eq('id', eventId)
         .maybeSingle()
       if (evt?.is_ticketed) {
         throw new Error('This event needs a ticket. Open the event to get one.')
+      }
+
+      // The seats for this event are sold by a partner, so the app must not
+      // create one. Registering here used to take a spot against the app's own
+      // capacity number, independent of the partner's, which oversold the
+      // physical event and then hid the real remaining seats behind a "full"
+      // banner (Riverfest, 45/45 in-app against ~20 real bookings, 2026-09-14).
+      // Guarded at the mutation rather than only at the button because three
+      // other entry points reach it: the invitation "Accept & Register" CTA,
+      // the home fallback-event card, and any older installed bundle still
+      // rendering the removed button while Capgo catches up.
+      if (isExternallyBooked(evt)) {
+        throw new Error('Registration for this event is handled on the partner site. Open the event to book your spot.')
       }
 
       // A pre-flight count so the intent we send matches what the member was
@@ -1163,6 +1249,7 @@ export function useRegisterForEvent() {
       queryClient.invalidateQueries({ queryKey: DIETARY_GATE_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
       queryClient.invalidateQueries({ queryKey: ['discover-events'] })
@@ -1245,6 +1332,7 @@ export function useCancelRegistration() {
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
       queryClient.invalidateQueries({ queryKey: ['discover-events'] })
@@ -1349,6 +1437,7 @@ export function useCheckIn() {
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
@@ -1403,6 +1492,7 @@ export function useUncheckIn() {
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
@@ -1488,9 +1578,11 @@ export function useDeleteWalkIn() {
     },
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-walk-ins', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
     },
   })
 }
@@ -1535,6 +1627,7 @@ export function useBulkCheckIn() {
     onSettled: (_, __, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'my-upcoming-events'] })
@@ -2041,35 +2134,92 @@ export function useLogImpact() {
 /*  Mutations - Invite Collective                                      */
 /* ------------------------------------------------------------------ */
 
+/**
+ * The outcome of ONE press of the host's Invite action, reported per channel.
+ *
+ * One shape for every press. It used to be `{ reminded: true, emailed, ... }`
+ * on a repeat and a bare `{ reminded: false }` on the first invite, so the
+ * toast could only tell the truth per channel on a reminder and said
+ * "All members invited & notified!" on a first press no matter what went out.
+ */
+export interface InviteCollectiveOutcome {
+  /** True when this press created the invite record for the collective. */
+  firstInvite: boolean
+  /** Members newly marked invited on the event. Only a first press invites. */
+  invited: number
+  /** Members the email batch actually sent to. */
+  emailed: number
+  /** Members the push batch actually delivered to. */
+  pushed: number
+  chatPosted: boolean
+  chatSkippedReason: string | null
+}
+
 export function useInviteCollective() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ eventId, collectiveId, customMessage, channels }: {
+    mutationFn: async ({ eventId, collectiveId, customMessage, customHeader, channels }: {
       eventId: string
       collectiveId: string
       customMessage?: string
       /**
-       * Which channels a REMINDER goes out on. Absent means both, which is the
-       * behaviour a host who never opens the toggles should get. The first
-       * invite ignores this: it has always emailed, pushed, notified and
-       * posted, and nobody asked for that to become optional.
+       * The header line the host typed in the invite sheet: the email subject,
+       * the push title, the collective chat card's heading and the in-app
+       * notification title, all from one plain string.
+       *
+       * Kurt asked for this on 2026-09-16: the header used to come only from
+       * the built-in template (or an admin override edited in /admin/email),
+       * so the person actually sending the invite could not change the line
+       * their members read first.
+       *
+       * It is a plain string on purpose. No {{variables}}, nothing to learn:
+       * the sheet pre-fills it with the event's real name already written in,
+       * and whatever is left in the box is what goes out.
+       *
+       * Undefined means the host did not touch it, and then EVERY channel
+       * keeps the exact default it had before this field existed, admin
+       * override included. That is why the sheet sends it only when edited.
        */
-      channels?: { email?: boolean; chat?: boolean }
-    }) => {
+      customHeader?: string
+      /**
+       * Which channels this press goes out on. Absent means all three, which
+       * is what a host who never opens the toggles should get.
+       *
+       * 2026-09-15 (Tate): unified. EVERY press honours the channels, the
+       * first invite included, and push is its own toggle. Until now the first
+       * invite ignored `channels` entirely and push was welded to email, so
+       * the same button offered different control on its second press than on
+       * its first. That split is what this change removes.
+       */
+      channels?: { email?: boolean; chat?: boolean; push?: boolean }
+    }): Promise<InviteCollectiveOutcome> => {
       if (!user) throw new Error('Must be signed in')
 
-      // Check if this collective has already been invited to this event
+      const wantEmail = channels?.email !== false
+      const wantChat = channels?.chat !== false
+      const wantPush = channels?.push !== false
+      // The in-app notification row is the bell inside the app. It rides with
+      // EITHER direct channel rather than with email alone: a host who pushes
+      // without emailing still wants the notification to exist in the app, and
+      // one who emails still gets exactly what they always got.
+      const wantInAppNotification = wantEmail || wantPush
+
+      // Has this collective been invited to this event before? This decides the
+      // DATA side effect (invite record + invited registrations) and the wording
+      // of the message members receive. It no longer decides what the BUTTON
+      // says: the tile used to flip to a bell labelled "Remind" on this flag,
+      // which is how two surfaces reading a count that is cached for two minutes
+      // showed two different buttons for the same event.
       const { count: existingCount } = await supabase
         .from('event_invites')
         .select('id', { count: 'exact', head: true })
         .eq('event_id', eventId)
         .eq('collective_id', collectiveId)
 
-      const isReminder = (existingCount ?? 0) > 0
+      const isFirstInvite = (existingCount ?? 0) === 0
 
-      // Fetch event details
       const { data: event } = await supabase
         .from('events')
         .select('title, date_start, date_end, address, cover_image_url, activity_type')
@@ -2086,97 +2236,87 @@ export function useInviteCollective() {
       const inviterName = inviterProfile?.display_name ?? 'A leader'
       // Floating local time: stored wall-clock is the wall-clock.
       const eventDate = formatEventLong(event.date_start)
+      const eventUrl = `https://app.coexistaus.org/events/${eventId}`
 
-      if (isReminder) {
-        // ── Remind flow: email the members, post to chat, or both ──
-        //
-        // This branch used to do ONE thing: drop an announcement in the
-        // collective chat. The first-invite branch below it emails, pushes and
-        // notifies, so the same button quietly changed medium on its second
-        // press and hosts read that as the email being taken away (Kurt Jones,
-        // Co-Exist, 2026-09-05: "used to send a direct email whereas now it
-        // sends it to the collective chat"). Email is restored here as a
-        // first-class channel rather than bolted on: the host picks the
-        // channels, and each one reports its own outcome.
-        const wantEmail = channels?.email !== false
-        const wantChat = channels?.chat !== false
+      // ── Audience: ONE rule for every press ──
+      // Active members, minus the host, minus anyone who cancelled. The first
+      // invite used to email every active member with no cancelled-check,
+      // because there were usually no registrations yet; on a public event
+      // somebody can already have registered and cancelled, and a collective
+      // invite is not the answer to a no.
+      const [{ data: members }, { data: regs }] = await Promise.all([
+        supabase
+          .from('collective_members')
+          .select('user_id')
+          .eq('collective_id', collectiveId)
+          .eq('status', 'active'),
+        supabase
+          .from('event_registrations')
+          .select('user_id, status')
+          .eq('event_id', eventId),
+      ])
+      const audience = buildInviteAudience(members, regs, user.id)
 
-        let emailed = 0
-        let chatPosted = false
-        let chatSkippedReason: string | null = null
+      // ── Data side effect: only a first press creates the invite ──
+      let invited = 0
+      if (isFirstInvite) {
+        const { error: inviteErr } = await supabase
+          .from('event_invites')
+          .insert({
+            event_id: eventId,
+            collective_id: collectiveId,
+            invited_by: user.id,
+          })
+        if (inviteErr) throw inviteErr
 
-        if (wantEmail) {
-          const { data: members } = await supabase
-            .from('collective_members')
-            .select('user_id')
-            .eq('collective_id', collectiveId)
-            .eq('status', 'active')
-
-          const { data: regs } = await supabase
+        if (audience.length > 0) {
+          const registrations = audience.map((uid) => ({
+            event_id: eventId,
+            user_id: uid,
+            status: 'invited' as const,
+            invited_at: new Date().toISOString(),
+          }))
+          // ignoreDuplicates leaves an existing registration alone, so the
+          // returned rows are exactly the people this press newly invited.
+          const { data: insertedRows, error } = await supabase
             .from('event_registrations')
-            .select('user_id, status')
-            .eq('event_id', eventId)
-
-          const audience = buildReminderAudience(members, regs, user.id)
-
-          if (audience.length > 0) {
-            const { data: audienceProfiles } = await supabase
-              .from('public_profiles')
-              .select('id, display_name')
-              .in('id', audience)
-            const nameMap = new Map((audienceProfiles ?? []).map((pr) => [pr.id, pr.display_name]))
-
-            // ONE batched send, not a per-person fan-out. A collective can be
-            // hundreds of people and looping send-email is what blew Resend's
-            // rate limit on 19 August (see send-email-batch.ts).
-            const outcome = await sendEmailToMany('remindCollective', 'event_host_reminder', audience.map((uid) => ({
-              userId: uid,
-              data: {
-                name: nameMap.get(uid) ?? 'there',
-                inviter_name: inviterName,
-                event_title: event.title,
-                event_date: eventDate,
-                event_location: event.address ?? '',
-                event_url: `https://app.coexistaus.org/events/${eventId}`,
-                custom_message: customMessage ?? '',
-              },
-            })))
-            emailed = outcome.sent
-
-            // Push rides with the email rather than being its own toggle: it is
-            // the same promise on the phone, it is already pref-gated in
-            // send-push, and it costs nothing. It is also the closest free
-            // stand-in for the SMS the host asked about.
-            void invokeAndReport('remindCollective', 'send-push', {
-              body: {
-                userIds: audience,
-                title: `Reminder: ${event.title}`,
-                body: customMessage || `${inviterName} sent a reminder about ${event.title} on ${eventDate}`,
-                data: { type: 'event_reminder', event_id: eventId },
-              },
-            }, supabase)
-
-            const reminderNotifications = audience.map((uid) => ({
-              user_id: uid,
-              type: 'event_reminder',
-              title: `Reminder: ${event.title}`,
-              body: customMessage || `${inviterName} sent a reminder about ${event.title} on ${eventDate}`,
-              data: { event_id: eventId },
-            }))
-            supabase.from('notifications')
-              .insert(reminderNotifications as Database['public']['Tables']['notifications']['Insert'][])
-              .then(({ error: notifErr }) => {
-                if (notifErr) console.error('[remind-collective] notification insert error:', notifErr)
-              })
-          }
+            .upsert(registrations, { onConflict: 'event_id,user_id', ignoreDuplicates: true })
+            .select('user_id')
+          if (error) console.error('[invite-collective] registration upsert error:', error)
+          else invited = insertedRows?.length ?? 0
         }
+      }
 
-        if (wantChat) {
-          // The 24h announcement cap belongs to the CHAT channel and now only
-          // skips the chat post. It used to throw, which aborted the whole
-          // mutation - so once a collective hit the cap, the email the host
-          // actually asked for was refused on behalf of a channel they may not
-          // even have selected.
+      // What members are told. The button is one thing; the message still says
+      // which press this is, because "You're invited" to somebody invited last
+      // week reads as a bug to the person receiving it.
+      // Both halves name the event. A bare "You're invited!" in a notification
+      // list tells a member nothing about WHICH event, the same defect Kurt
+      // reported on the invite email's subject on 2026-09-15.
+      // One header, every channel. `customHeader` is already trimmed and
+      // non-blank by the time it gets here; a blank box is sent as undefined so
+      // a cleared field falls back to the default rather than mailing out an
+      // empty subject line.
+      const notifyTitle = customHeader || (isFirstInvite ? `You're invited: ${event.title}` : `Reminder: ${event.title}`)
+      const notifyBody = customMessage || (isFirstInvite
+        ? `${inviterName} invited you to ${event.title} on ${eventDate}`
+        : `${inviterName} sent a reminder about ${event.title} on ${eventDate}`)
+
+      let chatPosted = false
+      let chatSkippedReason: string | null = null
+      let emailed = 0
+      let pushed = 0
+
+      // ── Channel: collective chat ──
+      if (wantChat) {
+        // The 24h announcement cap belongs to the CHAT channel and only skips
+        // the chat post. It used to throw, which aborted the whole mutation, so
+        // once a collective hit the cap the email the host actually asked for
+        // was refused on behalf of a channel they may not have selected. The
+        // cap is not applied to a first invite: that happens once per collective
+        // per event and is the announcement the cap exists to protect.
+        let capped = false
+        if (!isFirstInvite) {
           const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
           const { data: recentReminders } = await supabase
             .from('chat_messages')
@@ -2185,161 +2325,131 @@ export function useInviteCollective() {
             .eq('message_type', 'announcement')
             .gte('created_at', twentyFourHoursAgo)
             .limit(5)
-
           if (recentReminders && recentReminders.length >= 3) {
+            capped = true
             chatSkippedReason = 'Chat post skipped - 3 announcements already in the last 24h.'
-          } else {
-            const { data: announcement, error: annErr } = await supabase
-              .from('chat_announcements')
-              .insert({
-                collective_id: collectiveId,
-                created_by: user.id,
-                type: 'event_invite',
-                title: `Reminder: ${event.title}`,
-                body: customMessage || `Don't miss out! Register now for ${event.title}.`,
-                metadata: { event_id: eventId },
-              })
-              .select()
-              .single()
-            if (annErr) {
-              // Only the caller's chosen channels can fail the whole action. If
-              // the email already went out, a chat failure is reported, not
-              // thrown, because throwing here would tell the host nothing was
-              // sent while hundreds of emails were already in flight.
-              if (!wantEmail) throw annErr
-              console.error('[remind-collective] announcement insert error:', annErr)
-              chatSkippedReason = 'Chat post failed.'
-            } else {
-              await supabase.from('chat_messages').insert({
-                collective_id: collectiveId,
-                user_id: user.id,
-                content: announcement.title,
-                message_type: 'announcement',
-                announcement_id: announcement.id,
-              })
-              chatPosted = true
-            }
           }
         }
 
-        return { reminded: true, emailed, chatPosted, chatSkippedReason }
+        if (!capped) {
+          const { data: announcement, error: annErr } = await supabase
+            .from('chat_announcements')
+            .insert({
+              collective_id: collectiveId,
+              created_by: user.id,
+              type: 'event_invite',
+              title: customHeader || (isFirstInvite ? event.title : `Reminder: ${event.title}`),
+              body: customMessage || (isFirstInvite
+                ? `You're all invited! Tap to view and register.`
+                : `Don't miss out! Register now for ${event.title}.`),
+              metadata: { event_id: eventId },
+            })
+            .select()
+            .single()
+          if (annErr || !announcement) {
+            // Only a press with no other channel can fail outright. If the
+            // email or push is still going, a chat failure is reported rather
+            // than thrown, because throwing would tell the host nothing was
+            // sent while hundreds of emails were already in flight.
+            if (!wantEmail && !wantPush) throw annErr ?? new Error('Chat post failed')
+            console.error('[invite-collective] announcement insert error:', annErr)
+            chatSkippedReason = 'Chat post failed.'
+          } else {
+            await supabase.from('chat_messages').insert({
+              collective_id: collectiveId,
+              user_id: user.id,
+              content: announcement.title,
+              message_type: 'announcement',
+              announcement_id: announcement.id,
+            })
+            chatPosted = true
+          }
+        }
       }
 
-      // ── First invite flow: create registrations + rich announcement ──
+      if (audience.length > 0) {
+        // ── Channel: email ──
+        if (wantEmail) {
+          const { data: audienceProfiles } = await supabase
+            .from('public_profiles')
+            .select('id, display_name')
+            .in('id', audience)
+          const nameMap = new Map((audienceProfiles ?? []).map((pr) => [pr.id, pr.display_name]))
 
-      // Create invite record
-      const { error: inviteErr } = await supabase
-        .from('event_invites')
-        .insert({
-          event_id: eventId,
-          collective_id: collectiveId,
-          invited_by: user.id,
-        })
-      if (inviteErr) throw inviteErr
+          // ONE batched send, not a per-person fan-out. A collective can be
+          // hundreds of people and looping send-email is what blew Resend's
+          // rate limit on 19 August (see send-email-batch.ts).
+          const outcome = await sendEmailToMany(
+            isFirstInvite ? 'inviteAll' : 'remindCollective',
+            isFirstInvite ? 'event_invite' : 'event_host_reminder',
+            audience.map((uid) => ({
+              userId: uid,
+              data: {
+                name: nameMap.get(uid) ?? 'there',
+                inviter_name: inviterName,
+                event_title: event.title,
+                event_date: eventDate,
+                event_location: event.address ?? '',
+                event_image: event.cover_image_url ?? '',
+                event_url: eventUrl,
+                custom_message: customMessage ?? '',
+              },
+            })),
+            customHeader,
+          )
+          emailed = outcome.sent
+        }
 
-      // Create a rich announcement in the chat
-      const { data: announcement, error: annErr } = await supabase
-        .from('chat_announcements')
-        .insert({
-          collective_id: collectiveId,
-          created_by: user.id,
-          type: 'event_invite',
-          title: event.title,
-          body: customMessage || `You're all invited! Tap to view and register.`,
-          metadata: { event_id: eventId },
-        })
-        .select()
-        .single()
-      if (annErr) console.error('[invite-all] announcement insert error:', annErr)
+        // ── Channel: push ──
+        // Invoked directly rather than through invokeAndReport so the host is
+        // told how many devices it actually reached. invokeAndReport returns
+        // only ok/detail, and a toast that says "sent 40 push notifications"
+        // off a fire-and-forget call is the same class of lie the per-channel
+        // reporting exists to stop.
+        if (wantPush) {
+          const { data: pushData, error: pushErr } = await supabase.functions.invoke('send-push', {
+            body: {
+              userIds: audience,
+              title: notifyTitle,
+              body: notifyBody,
+              data: { type: isFirstInvite ? 'event_invite' : 'event_reminder', event_id: eventId },
+            },
+          })
+          const pushDetail = await reportInvokeError(
+            isFirstInvite ? 'inviteAll' : 'remindCollective',
+            'send-push',
+            pushErr,
+            pushData,
+          )
+          pushed = pushDetail === null ? Number((pushData as { sent?: number } | null)?.sent ?? 0) : 0
+        }
 
-      if (announcement) {
-        await supabase.from('chat_messages').insert({
-          collective_id: collectiveId,
-          user_id: user.id,
-          content: announcement.title,
-          message_type: 'announcement',
-          announcement_id: announcement.id,
-        }).then(undefined, console.error)
-      }
-
-      // Get all collective members
-      const { data: members } = await supabase
-        .from('collective_members')
-        .select('user_id')
-        .eq('collective_id', collectiveId)
-        .eq('status', 'active')
-
-      if (!members?.length) return { reminded: false }
-
-      // Create registration entries for each member (status: invited)
-      const registrations = members
-        .filter((m) => m.user_id !== user.id)
-        .map((m) => ({
-          event_id: eventId,
-          user_id: m.user_id,
-          status: 'invited' as const,
-          invited_at: new Date().toISOString(),
-        }))
-
-      if (registrations.length > 0) {
-        const { error } = await supabase
-          .from('event_registrations')
-          .upsert(registrations, { onConflict: 'event_id,user_id', ignoreDuplicates: true })
-        if (error) console.error('[invite-all] registration upsert error:', error)
-
-        // Batch-fetch display names for invite emails
-        const invitedUserIds = registrations.map((r) => r.user_id)
-        const { data: invitedProfiles } = await supabase
-          .from('public_profiles')
-          .select('id, display_name')
-          .in('id', invitedUserIds)
-        const nameMap = new Map((invitedProfiles ?? []).map((p) => [p.id, p.display_name]))
-
-        // Send invite emails in ONE batched call. Invite-all is the other
-        // action that used to fan out one send per person.
-        await sendEmailToMany('inviteAll', 'event_invite', registrations.map((reg) => ({
-          userId: reg.user_id,
-          data: {
-            name: nameMap.get(reg.user_id) ?? 'there',
-            inviter_name: inviterName,
-            event_title: event.title,
-            event_date: eventDate,
-            event_url: `https://app.coexistaus.org/events/${eventId}`,
-          },
-        })))
-
-        // Send push notifications
-        void invokeAndReport('inviteAll', 'send-push', {
-          body: {
-            userIds: invitedUserIds,
-            title: `You're invited!`,
-            body: `${inviterName} invited you to ${event.title} on ${eventDate}`,
-            data: { type: 'event_invite', event_id: eventId },
-          },
-        }, supabase)
-
-        // In-app notifications.
+        // ── In-app notification rows ──
         //
         // There is no `read` column. Unread is `read_at IS NULL`, which is the
-        // default, so the flag is simply left out. Both inserts carried
-        // `read: false` and PostgREST rejected the whole batch with PGRST204
-        // "Could not find the 'read' column", console.error'd and discarded,
-        // so invite-all has been posting no in-app notification at all. The
-        // `as ...['Insert'][]` cast below is what hid it: an excess property is
-        // an error on a plain object literal and silent through an assertion.
-        const notifications = invitedUserIds.map((uid) => ({
-          user_id: uid,
-          type: 'event_invite',
-          title: `You're invited to ${event.title}`,
-          body: `${inviterName} invited your collective to ${event.title} on ${eventDate}`,
-          data: { event_id: eventId },
-        }))
-        supabase.from('notifications').insert(notifications as Database['public']['Tables']['notifications']['Insert'][]).then(({ error: notifErr }) => {
-          if (notifErr) console.error('[invite-all] notification insert error:', notifErr)
-        })
+        // default, so the flag is simply left out. Both inserts used to carry
+        // `read: false` and PostgREST rejected the whole batch with PGRST204,
+        // console.error'd and discarded it, so invite-all posted no in-app
+        // notification at all. The `as ...['Insert'][]` cast is what hid it: an
+        // excess property is an error on a plain object literal and silent
+        // through an assertion.
+        if (wantInAppNotification) {
+          const notifications = audience.map((uid) => ({
+            user_id: uid,
+            type: isFirstInvite ? 'event_invite' : 'event_reminder',
+            title: customHeader || (isFirstInvite ? `You're invited to ${event.title}` : `Reminder: ${event.title}`),
+            body: notifyBody,
+            data: { event_id: eventId },
+          }))
+          supabase.from('notifications')
+            .insert(notifications as Database['public']['Tables']['notifications']['Insert'][])
+            .then(({ error: notifErr }) => {
+              if (notifErr) console.error('[invite-collective] notification insert error:', notifErr)
+            })
+        }
       }
 
-      return { reminded: false }
+      return { firstInvite: isFirstInvite, invited, emailed, pushed, chatPosted, chatSkippedReason }
     },
     onMutate: async ({ eventId }) => {
       await queryClient.cancelQueries({ queryKey: ['event', eventId] })
@@ -2349,6 +2459,7 @@ export function useInviteCollective() {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['chat-messages', collectiveId] })
       // Invited users' my-events (invited tab) should update
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
@@ -2422,6 +2533,7 @@ export function usePromoteFromWaitlist() {
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       // The promoted user's my-events and home feed should update
       queryClient.invalidateQueries({ queryKey: ['my-events'] })
@@ -2461,6 +2573,7 @@ export function useRemoveFromEvent() {
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
       queryClient.invalidateQueries({ queryKey: ['event', eventId] })
     },
@@ -2596,6 +2709,45 @@ export function useOutgoingCollaborations(collectiveId: string | undefined) {
     },
     enabled: !!collectiveId,
     staleTime: 2 * 60 * 1000,
+  })
+}
+
+/**
+ * How many people the "Invite All Collective Members" toggle will actually
+ * reach, across the collectives selected in the create-event wizard.
+ *
+ * Added 2026-09-15. That toggle said "All active members of each selected
+ * collective will be notified when you publish" and the review step said
+ * "Invite all members", with no number anywhere, while the largest active
+ * collective holds 776 active members (counted live that day, 2,776 across all
+ * collectives). One toggle, one publish, and a host had no way to know whether
+ * that meant nine people or several hundred emails plus the same number of
+ * push notifications.
+ *
+ * DISTINCT rather than summed, because a person in two selected collectives is
+ * still one person and is deduped by the invite audience rule. The host
+ * themself is excluded here for the same reason buildInviteAudience excludes
+ * them. Registrations are not subtracted: on a brand new event there are none,
+ * and this runs before the event exists.
+ */
+export function useInviteAudienceSize(collectiveIds: string[]) {
+  const { user } = useAuth()
+  const key = [...collectiveIds].sort().join(',')
+  return useQuery({
+    queryKey: ['invite-audience-size', key, user?.id],
+    enabled: collectiveIds.length > 0,
+    staleTime: 60_000,
+    queryFn: async (): Promise<number> => {
+      const { data, error } = await supabase
+        .from('collective_members')
+        .select('user_id')
+        .in('collective_id', collectiveIds)
+        .eq('status', 'active')
+      if (error) throw error
+      const ids = new Set((data ?? []).map((r) => r.user_id as string))
+      if (user) ids.delete(user.id)
+      return ids.size
+    },
   })
 }
 

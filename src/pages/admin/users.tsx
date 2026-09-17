@@ -1,5 +1,10 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { formatRole } from '@/lib/labels-and-enums'
+import {
+    collectiveRoleVisual,
+    collectiveRoleOptions,
+    collectiveRoleOptionsFor,
+} from '@/lib/collective-role-visuals'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { adminVariants, expandCollapse as expandCollapseVariants } from '@/lib/admin-motion'
 import {
@@ -9,9 +14,6 @@ import {
     Trash2,
     KeyRound,
     UserCog,
-    Crown,
-    ShieldCheck,
-    ShieldAlert,
     Plus,
     X,
     ChevronDown,
@@ -166,33 +168,8 @@ const roleBadgeColors: Record<string, string> = {
   admin: 'bg-error-200 text-error-800',
 }
 
-const collectiveRoleOptions: { value: CollectiveRole; label: string }[] = [
-  { value: 'leader', label: 'Leader' },
-  { value: 'co_leader', label: 'Co-Leader' },
-  { value: 'assist_leader', label: 'Assistant Leader' },
-  { value: 'participant', label: 'Participant' },
-]
 
-const COLLECTIVE_ROLE_ICONS: Record<string, typeof Crown> = {
-  leader: Crown,
-  co_leader: ShieldCheck,
-  assist_leader: ShieldAlert,
-  participant: Users,
-}
 
-const COLLECTIVE_ROLE_COLORS: Record<string, string> = {
-  leader: 'bg-warning-200 text-warning-800',
-  co_leader: 'bg-neutral-200 text-neutral-800',
-  assist_leader: 'bg-info-200 text-info-800',
-  participant: 'bg-neutral-200 text-neutral-700',
-}
-
-const COLLECTIVE_ROLE_SURFACE: Record<string, string> = {
-  leader: 'bg-warning-50 ring-1 ring-warning-200/60',
-  co_leader: 'bg-neutral-50 ring-1 ring-neutral-200/60',
-  assist_leader: 'bg-info-50 ring-1 ring-info-200/60',
-  participant: 'bg-white ring-1 ring-primary-100/50',
-}
 
 /* ------------------------------------------------------------------ */
 /*  Admin controls - folded into the unified user detail modal         */
@@ -254,7 +231,7 @@ function UserAdminControls({
     (capKey: string) => {
       if (!capsData || !user) return
       const currentOverrides = { ...capsData.overrides }
-      const isDefault = ROLE_DEFAULT_CAPS[userRole].includes(capKey)
+      const isDefault = (ROLE_DEFAULT_CAPS[userRole] ?? []).includes(capKey)
       const currentValue = capsData.capabilities.has(capKey)
 
       if (currentValue) {
@@ -456,7 +433,7 @@ function UserAdminControls({
               <UserCog size={16} />
             </div>
             <h3 className="font-heading text-base font-semibold text-neutral-900">Admin controls</h3>
-            <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full ml-auto', roleBadgeColors[user.role])}>
+            <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full ml-auto', roleBadgeColors[user.role] ?? 'bg-neutral-100 text-neutral-600')}>
               {formatRole(user.role ?? 'participant')}
             </span>
             {user.is_suspended && (
@@ -694,31 +671,31 @@ function UserAdminControls({
             ) : (
               <div className="space-y-2">
                 {activeRoles.map((membership) => {
-                  const Icon = COLLECTIVE_ROLE_ICONS[membership.role]
+                  const { Icon, color, surface } = collectiveRoleVisual(membership.role)
                   return (
                     <motion.div
                       key={membership.id}
                       layout
                       className={cn(
                         'flex items-center gap-3 p-3 rounded-sm transition-colors duration-200',
-                        COLLECTIVE_ROLE_SURFACE[membership.role],
+                        surface,
                       )}
                     >
                       <div className={cn(
                         'w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
-                        COLLECTIVE_ROLE_COLORS[membership.role],
+                        color,
                       )}>
                         <Icon size={15} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-neutral-900 truncate">{membership.collective.name}</p>
+                        <p className="text-sm font-semibold text-neutral-900 truncate">{membership.collective?.name ?? 'Unknown collective'}</p>
                         <p className="text-[11px] text-neutral-500">
-                          {membership.role.replace(/_/g, ' ')}
-                          {membership.collective.state && ` · ${membership.collective.state}`}
+                          {(membership.role ?? 'unknown').replace(/_/g, ' ')}
+                          {membership.collective?.state && ` · ${membership.collective.state}`}
                         </p>
                       </div>
                       <Dropdown
-                        options={collectiveRoleOptions}
+                        options={collectiveRoleOptionsFor(membership.role)}
                         value={membership.role}
                         onChange={(newCollectiveRole) => {
                           assignRole.mutate(

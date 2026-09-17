@@ -410,3 +410,103 @@ export function classifyAttendance(input: {
   // Active registration, no ticket at all.
   return isTicketed ? 'noTicket' : 'expected'
 }
+
+/* ------------------------------------------------------------------ */
+/*  Event-day headline counts - ONE number across both cards           */
+/* ------------------------------------------------------------------ */
+
+/** What event_attendance_counts (SECURITY DEFINER, migration 20260914120000)
+ *  reports for an event. Undefined while the RPC is in flight or if it fails. */
+export interface ServerAttendanceCounts {
+  checkedIn: number
+  hereTotal: number
+  walkinExtra: number
+  walkinDuplicatesSuppressed: number
+}
+
+/**
+ * Compose the two headline numbers on the leader event-day screen.
+ *
+ * Tate caught these disagreeing with the participant-facing "here so far" card
+ * mid-event on 2026-09-14, 37 against 39. The cause was two different sums:
+ * this screen added `walkIns.length` to the roster tally while the other card
+ * counted attended registrations alone and never read walk-ins.
+ *
+ * `checkedIn` now comes straight from the server so BOTH cards read one number.
+ * `going` stays ticket-aware (it is built from classifyAttendance on the
+ * roster) and takes only `walkinExtra`, the walk-ins who add a person the
+ * roster does not already hold. Adding raw `walkIns.length` there would double
+ * count anyone recorded as both a walk-in and a registration.
+ *
+ * The fallback is the OLD arithmetic, used only while the RPC has not answered.
+ * It can over-count duplicates, which is exactly why it is not the answer.
+ */
+export function composeEventDayCounts(input: {
+  rosterGoing: number
+  rosterCheckedIn: number
+  walkInRowCount: number
+  server: ServerAttendanceCounts | null | undefined
+}): { going: number; checkedIn: number } {
+  const { rosterGoing, rosterCheckedIn, walkInRowCount, server } = input
+  if (!server) {
+    return { going: rosterGoing + walkInRowCount, checkedIn: rosterCheckedIn + walkInRowCount }
+  }
+  return { going: rosterGoing + server.walkinExtra, checkedIn: server.checkedIn }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Walk-in search: what the leader may do with a search result        */
+/* ------------------------------------------------------------------ */
+
+/** attendance_state as reported by search_app_users_for_event. */
+export type SearchAttendanceState = 'checked_in' | 'registered' | 'none'
+
+/**
+ * Whether a walk-in search result offers a Check In button.
+ *
+ * Tate, mid-event 2026-09-14: "When someone is already checked in as a walk-in
+ * for a coexist event, then going back into add a walk in and searching their
+ * name up again should show checked in, not show the check in button then an
+ * error." The button used to render unconditionally because the search RPC
+ * returned profile columns and nothing about the event, so pressing it for
+ * somebody already present hit UNIQUE (event_id, user_id) and dead-ended.
+ *
+ * An unknown or missing state falls back to offering the button: an older
+ * installed bundle talking to the newer RPC, or the reverse, must keep working
+ * rather than silently refusing to check anyone in.
+ */
+export function walkInSearchOffersCheckIn(state: SearchAttendanceState | null | undefined): boolean {
+  return state !== 'checked_in'
+}
+
+/* ------------------------------------------------------------------ */
+/*  Externally-booked events: the app is not the booking channel       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Whether the seats for this event are sold somewhere else.
+ *
+ * WHAT WAS BROKEN (measured on tjutlbzekfouwsiaplbr 2026-09-14). An event that
+ * carries an `external_registration_url` is one physical event ticketed by a
+ * partner (Humanitix, Eventbrite, the CVA volunteer portal). The app happily
+ * took its OWN registrations against its OWN `capacity` number beside it, so
+ * two independent booking channels sold the same seats and neither could see
+ * the other. "Riverfest: Yarra River Clean Up & Kayak" (Jess, 17 Oct 2026,
+ * capacity 45) read 45/45 filled with a 37-person waitlist in-app while only
+ * about 20 people had actually booked on Humanitix: the app had invented 25
+ * seats, hidden the real ones behind a "full" banner, and queued 37 more.
+ *
+ * The URL is the predicate, NOT `is_external_collaboration`. The flag means
+ * "we are running this with another org", which is true of 25 events that take
+ * their bookings in-app perfectly correctly and must keep the normal RSVP
+ * flow. Only a URL says "the seats live over there".
+ *
+ * Where this is true the app must not create, queue, or count a seat: no bare
+ * registration, no waitlist, no capacity meter. It sends the member to the
+ * partner and shows nothing that reads as holding a spot.
+ */
+export function isExternallyBooked(
+  event: { external_registration_url?: string | null } | null | undefined,
+): boolean {
+  return !!event?.external_registration_url?.trim()
+}

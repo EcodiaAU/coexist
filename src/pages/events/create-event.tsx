@@ -39,6 +39,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
     useCreateEvent,
     useInviteCollective,
+    useInviteAudienceSize,
     ACTIVITY_TYPE_OPTIONS,
 } from '@/hooks/use-events'
 import { supabase } from '@/lib/supabase'
@@ -1376,6 +1377,11 @@ function StepInvite({
   extra: CreateExtraFields
   onExtraChange: (updates: Partial<CreateExtraFields>) => void
 }) {
+  // The toggle used to promise "all active members" and show no number. On the
+  // largest collective that is 776 emails and 776 pushes from one switch.
+  const { data: audienceSize, isPending: audiencePending } = useInviteAudienceSize(
+    extra.invite_collective ? extra.selected_collective_ids : [],
+  )
   return (
     <div className="space-y-4">
       <StepCard>
@@ -1406,8 +1412,13 @@ function StepInvite({
                 <Users size={16} className="text-white" />
               </div>
               <p className="text-sm text-moss-700 font-medium">
-                All active members of each selected collective will be notified
-                when you publish.
+                {audiencePending
+                  ? 'Counting who this reaches...'
+                  : audienceSize === undefined
+                    ? 'All active members of each selected collective will be notified when you publish.'
+                    : audienceSize === 0
+                      ? 'No active members to notify yet.'
+                      : `${audienceSize} ${audienceSize === 1 ? 'person' : 'people'} will be emailed and sent a push notification when you publish.`}
               </p>
             </div>
           </motion.div>
@@ -1837,6 +1848,9 @@ export default function CreateEventPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.fields.activity_type, activityDefaults])
   const inviteCollective = useInviteCollective()
+  const { data: inviteAudienceSize } = useInviteAudienceSize(
+    extra.invite_collective ? extra.selected_collective_ids : [],
+  )
   const { toast: toastApi } = useToast()
 
   // Reset everything (used after a successful publish, so that re-entering this
@@ -2416,7 +2430,11 @@ export default function CreateEventPage() {
         step: STEPS[8],
         required: false,
         valid: true,
-        summary: extra.invite_collective ? 'Invite all members' : '',
+        summary: extra.invite_collective
+          ? (inviteAudienceSize === undefined
+              ? 'Invite all members'
+              : `Invite ${inviteAudienceSize} ${inviteAudienceSize === 1 ? 'person' : 'people'}`)
+          : '',
         content: <StepInvite extra={extra} onExtraChange={updateExtra} />,
       },
       {
