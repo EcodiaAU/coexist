@@ -2405,6 +2405,53 @@ export function useInviteCollective() {
             customHeader,
           )
           emailed = outcome.sent
+
+          // ── The host gets a copy of what they just sent ──
+          //
+          // Kurt Jones, relayed by Tate 2026-09-18, on a send that had in fact
+          // reached 753 of 756 members: "kurt says he still didnt get the
+          // emaik". He was right, and no amount of fixing delivery would have
+          // changed it. The host is not in the audience: buildInviteAudience
+          // removes the sender, and Kurt is not even a collective_members row
+          // for Melbourne City, Perth or Mornington (probed 2026-09-18, empty
+          // result). So pressing Invite produced, for him, nothing at all in
+          // any inbox, on every press, forever.
+          //
+          // That is a verification hole, not a delivery bug, and it is the one
+          // that cost the most trust: the person who most needs to know the
+          // send worked is the one person structurally guaranteed to see no
+          // evidence of it. The toast reports counts, but a count is a claim
+          // and the email is the artifact.
+          //
+          // So the host receives the member email, unchanged, addressed to
+          // them. Not a summary and not a "[copy]" variant: the point is to
+          // see exactly what the collective saw, and relabelling it would
+          // defeat the check they are trying to perform.
+          //
+          // Guarded against the host who IS in their own audience (a leader
+          // who is also a member of the collective they are emailing), because
+          // two identical emails reads as the duplicate-send bug this app has
+          // been accused of before.
+          if (!audience.includes(user.id)) {
+            await sendEmailToMany(
+              isFirstInvite ? 'inviteAllHostCopy' : 'remindCollectiveHostCopy',
+              isFirstInvite ? 'event_invite' : 'event_host_reminder',
+              [{
+                userId: user.id,
+                data: {
+                  name: inviterName,
+                  inviter_name: inviterName,
+                  event_title: event.title,
+                  event_date: eventDate,
+                  event_location: event.address ?? '',
+                  event_image: event.cover_image_url ?? '',
+                  event_url: eventUrl,
+                  custom_message: customMessage ?? '',
+                },
+              }],
+              customHeader,
+            )
+          }
         }
 
         // ── Channel: push ──
