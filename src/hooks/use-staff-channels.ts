@@ -90,7 +90,7 @@ export function useMyStaffChannels() {
 
       const { data, error } = await supabase
         .from('chat_channel_members')
-        .select('channel_id, chat_channels(id, type, collective_id, state, event_id, name, created_at, collectives(cover_image_url, cover_image_position_x, cover_image_position_y), events(cover_image_url, cover_image_position_x, cover_image_position_y, date_start, date_end))')
+        .select('channel_id, chat_channels(id, type, collective_id, state, event_id, name, created_at, collectives(cover_image_url, cover_image_position_x, cover_image_position_y), events(title, cover_image_url, cover_image_position_x, cover_image_position_y, date_start, date_end))')
         .eq('user_id', user.id)
 
       if (error) throw error
@@ -99,13 +99,29 @@ export function useMyStaffChannels() {
         .map((row: Record<string, unknown>) => {
           const ch = row.chat_channels as (Omit<StaffChannel, 'cover_image_url' | 'cover_image_position_x' | 'cover_image_position_y' | 'date_start' | 'date_end'> & {
             collectives: { cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null } | null
-            events: { cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null; date_start: string | null; date_end: string | null } | null
+            events: { title: string | null; cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null; date_start: string | null; date_end: string | null } | null
           }) | null
           if (!ch) return null
           const src = ch.events?.cover_image_url ? ch.events : ch.collectives
+          /*
+           * An event-backed chat takes its NAME from the event, not from the
+           * denormalised chat_channels.name. That column is written at channel
+           * creation and only re-synced when someone edits the title, so a
+           * campout renamed before the sync rule existed - or edited through a
+           * PATCH that touched only the image - kept the old generic name
+           * forever. Live case 2026-09-18: the chat read "Wild Mountains
+           * Conservation Campout" while the event read "Birding with Cob &
+           * Co-Exist Retreat - Wild Mountains".
+           *
+           * Deriving here fixes the list, the room header and the push title in
+           * one place, because all three read StaffChannel.name. The DB heal in
+           * 20260918020000 keeps the stored copy honest for anything reading
+           * the table directly; this makes the screen independent of it.
+           */
+          const eventTitle = ch.events?.title?.trim()
           return {
             id: ch.id, type: ch.type, collective_id: ch.collective_id, state: ch.state,
-            event_id: ch.event_id, name: ch.name, created_at: ch.created_at,
+            event_id: ch.event_id, name: eventTitle || ch.name, created_at: ch.created_at,
             cover_image_url: src?.cover_image_url ?? null,
             cover_image_position_x: src?.cover_image_position_x ?? null,
             cover_image_position_y: src?.cover_image_position_y ?? null,

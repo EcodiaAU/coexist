@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
@@ -85,6 +85,49 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
   const [emergencyContactPhone, setEmergencyContactPhone] = useState(profile?.emergency_contact_phone ?? '')
   const [emergencyContactRelationship, setEmergencyContactRelationship] = useState(profile?.emergency_contact_relationship ?? '')
 
+  /*
+   * Validation used to fail SILENTLY from the user's point of view. "Save
+   * Details" lives in a fixed footer, while every error message renders inline
+   * next to its field - the camp-out dietary/medical error at the very bottom
+   * of a long form. Fill dietary, leave medical blank, tap Save: the submit
+   * returned early, the error painted off-screen, and the button read as dead.
+   * Reported by a paid Wild Mountains attendee 2026-09-18 as "it won't scroll
+   * past the dietary step", and 25 camp-out ticket holders were still ahead of
+   * it. There is no escape hatch either - "Skip for now" is hidden for
+   * camp-outs, by design, because leaders need the safety answers.
+   *
+   * So every early return now REVEALS itself: a toast (visible wherever you are
+   * scrolled), the offending field scrolled to centre, and focus moved into it.
+   */
+  const dietaryRef = useRef<HTMLTextAreaElement>(null)
+  const medicalRef = useRef<HTMLTextAreaElement>(null)
+  const emailRef = useRef<HTMLInputElement>(null)
+  // DateInput does not forward a ref, so this one wraps it and revealError
+  // reaches the inner field itself.
+  const dobRef = useRef<HTMLDivElement>(null)
+
+  const revealError = (
+    ref: React.RefObject<HTMLElement | null>,
+    message: string,
+    setError: (m: string) => void,
+  ) => {
+    setError(message)
+    toast.error(message)
+    const el = ref.current
+    if (!el) return
+    // rAF so the error paints before we measure where to scroll.
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: shouldReduceMotion ? 'auto' : 'smooth', block: 'center' })
+      // A container ref (DateInput) has no focus of its own worth taking, so
+      // reach the field inside it.
+      const focusable =
+        el.matches('input, textarea, select')
+          ? el
+          : el.querySelector<HTMLElement>('input, textarea, select')
+      focusable?.focus({ preventScroll: true })
+    })
+  }
+
   // Is the event that triggered this survey a camp-out? Camp-outs need
   // dietary + medical on file for catering and safety, so for those the two
   // fields are required here (empty answers must be an explicit "None"/"Nil",
@@ -119,7 +162,14 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
     // Camp-out safety gate: both fields must be answered. An explicit
     // "None"/"Nil" is fine; a blank is not.
     if (isCampout && (!dietaryRequirements.trim() || !medicalRequirements.trim())) {
-      setReqError('Camp-outs need your dietary and medical/allergy info. Enter "None" if you have none.')
+      // Point at the FIRST blank of the two, not just the block, so the person
+      // lands on the box they still have to fill.
+      const target = !dietaryRequirements.trim() ? dietaryRef : medicalRef
+      revealError(
+        target,
+        'Camp-outs need your dietary and medical/allergy info. Enter "None" if you have none.',
+        setReqError,
+      )
       return
     }
     setReqError(null)
@@ -128,13 +178,13 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
     // sticks silently).
     const trimmedEmail = email.trim()
     if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      setEmailError('Enter a valid email address')
+      revealError(emailRef, 'Enter a valid email address', setEmailError)
       return
     }
     setEmailError(null)
     const derivedAge = dateOfBirth ? calculateAge(dateOfBirth) : null
     if (derivedAge != null && (derivedAge < 5 || derivedAge > 120)) {
-      setAgeError('Enter a valid date of birth')
+      revealError(dobRef, 'Enter a valid date of birth', setAgeError)
       return
     }
     setAgeError(null)
@@ -257,14 +307,16 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
               className="[&_input]:bg-surface-3"
             />
             <div className="grid grid-cols-2 gap-3">
-              <DateInput
-                label="Date of Birth"
-                value={dateOfBirth}
-                onChange={(iso) => { setDateOfBirth(iso); if (ageError) setAgeError(null) }}
-                max={new Date().toISOString().split('T')[0]}
-                error={ageError ?? undefined}
-                className="[&_input]:bg-surface-3"
-              />
+              <div ref={dobRef}>
+                <DateInput
+                  label="Date of Birth"
+                  value={dateOfBirth}
+                  onChange={(iso) => { setDateOfBirth(iso); if (ageError) setAgeError(null) }}
+                  max={new Date().toISOString().split('T')[0]}
+                  error={ageError ?? undefined}
+                  className="[&_input]:bg-surface-3"
+                />
+              </div>
               <Input
                 label="Gender"
                 value={gender}
@@ -275,6 +327,7 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
               />
             </div>
             <Input
+              ref={emailRef}
               label="Email"
               value={email}
               onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null) }}
@@ -335,6 +388,7 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
             Dietary Requirements{isCampout && <span className="text-error-500"> *</span>}
           </h3>
           <Input
+            ref={dietaryRef}
             label="Dietary requirements (vegetarian, vegan, etc.)"
             value={dietaryRequirements}
             onChange={(e) => { setDietaryRequirements(e.target.value); if (reqError) setReqError(null) }}
@@ -358,6 +412,7 @@ function ProfileSurveyForm({ profile }: { profile: Profile | null }) {
             Allergies, conditions or medication our leaders should know about. Only visible to event leaders.
           </p>
           <Input
+            ref={medicalRef}
             label="Medical / allergy info"
             value={medicalRequirements}
             onChange={(e) => { setMedicalRequirements(e.target.value); if (reqError) setReqError(null) }}
