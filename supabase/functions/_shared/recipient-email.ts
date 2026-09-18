@@ -39,11 +39,34 @@ export function isAppleRelay(email: string | null | undefined): boolean {
     email.trim().toLowerCase().endsWith(APPLE_RELAY_DOMAIN)
 }
 
-/** Cheap shape check. A stored profile email can be blank, whitespace, or junk. */
+/**
+ * Cheap shape check. A stored profile email can be blank, whitespace, or junk.
+ *
+ * THE DOMAIN MUST CARRY A DOT-TLD, and that clause is not cosmetic tightening.
+ * Until 2026-09-18 this returned true for anything holding an "@" with no
+ * space, so `hayesabigail@y7mail` (a real Melbourne City member, missing the
+ * `.com`) resolved as a deliverable address and went into a Resend batch.
+ * Resend answers the WHOLE chunk with 422 validation_error "Invalid `to`
+ * field", not just that one address, so a single malformed member silently
+ * cost the other 99 people in its chunk their invite. Measured live that day
+ * re-sending the Healesville invite: 659 of 759 sent, one chunk lost, and the
+ * response still read success:false sent:659 with no way to tell WHO missed
+ * out. The batch helper cannot save this either: a 422 is a deterministic 4xx,
+ * so it is correctly not retried, and retrying it unchanged would fail again.
+ *
+ * So the address has to be rejected BEFORE it reaches the payload. A rejected
+ * address resolves to reason 'none' and is counted as skipped, which is a
+ * truthful "we have no address for this member" rather than an outage for
+ * ninety-nine others.
+ *
+ * Deliberately NOT a full RFC 5322 validator. This is the shape Resend itself
+ * accepts (local@domain.tld); anything stricter starts rejecting real mail.
+ */
+const SENDABLE_RE = /^[^\s@,;:<>"']+@[^\s@,;:<>"']+\.[A-Za-z]{2,}$/
+
 function looksSendable(email: string | null | undefined): boolean {
   if (typeof email !== 'string') return false
-  const t = email.trim()
-  return t.length > 3 && t.includes('@') && !t.includes(' ')
+  return SENDABLE_RE.test(email.trim())
 }
 
 export type RecipientReason =

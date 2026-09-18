@@ -70,3 +70,34 @@ Deno.test('nothing usable resolves to empty so the caller can 400 rather than se
   assertEquals(resolveRecipientEmail(null, null), { email: '', reason: 'none' })
   assertEquals(resolveRecipientEmail('  ', 'junk').email, '')
 })
+
+/* ------------------------------------------------------------------ */
+/*  A domain with no dot-TLD is NOT sendable (2026-09-18)              */
+/*                                                                     */
+/*  Regression cover for the live incident: hayesabigail@y7mail, a     */
+/*  real member address missing its .com, was accepted as deliverable  */
+/*  and Resend answered the WHOLE 100-email chunk with 422, costing    */
+/*  the other 99 members their invite.                                 */
+/* ------------------------------------------------------------------ */
+
+Deno.test('an address with no dot-TLD is refused rather than mailed', () => {
+  // The exact address that took a chunk down.
+  assertEquals(resolveRecipientEmail('hayesabigail@y7mail', null).reason, 'none')
+  assertEquals(resolveRecipientEmail('hayesabigail@y7mail', null).email, '')
+  // and it must not sneak in via the profile side either
+  assertEquals(resolveRecipientEmail(null, 'hayesabigail@y7mail').reason, 'none')
+})
+
+Deno.test('ordinary addresses are unaffected by the TLD rule', () => {
+  assertEquals(resolveRecipientEmail('a@b.com', null).reason, 'auth')
+  assertEquals(resolveRecipientEmail('first.last+tag@sub.example.co.uk', null).reason, 'auth')
+  assertEquals(resolveRecipientEmail(null, 'someone@y7mail.com').reason, 'profile_only')
+})
+
+Deno.test('a relay with only a malformed profile alternative stays on the relay', () => {
+  // profile address is junk, so it must NOT win over the relay: the relay at
+  // least feeds resend_events, which is how the relay problem was found.
+  const r = resolveRecipientEmail('x@privaterelay.appleid.com', 'broken@nodot')
+  assertEquals(r.reason, 'relay_no_alternative')
+  assertEquals(r.email, 'x@privaterelay.appleid.com')
+})
