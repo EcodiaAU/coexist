@@ -823,10 +823,11 @@ export interface EventMissingImpact {
 }
 
 /**
- * Optional scope for useEventsMissingImpact. Omitted = the last 30 days across
- * every collective (the dashboard queue). The insights page passes its own
- * report window and collective filter, so the list is exactly the held events
- * that are MISSING from the figures it is showing.
+ * Optional scope for useEventsMissingImpact. Omitted = every held event with no
+ * impact logged, however long ago, across every collective (the dashboard
+ * queue). The insights page passes its own report window and collective
+ * filter, so the list is exactly the held events that are MISSING from the
+ * figures it is showing.
  */
 export interface MissingImpactScope {
   /** Inclusive lower bound on date_start (wall-clock-as-UTC ISO). null = no floor. */
@@ -848,23 +849,34 @@ export interface MissingImpactScope {
  * leader running them held a legacy role with no Log impact button until
  * 14 Sep. Nothing on the report page said so; this list is what says so.
  */
+/**
+ * The date_start window the missing-impact list reads. Floating-local: both
+ * bounds are wall-clock-as-UTC, like date_start. No sinceIso = no floor.
+ *
+ * The unscoped (dashboard) queue used to floor at 30 days, so an event nobody
+ * logged dropped off /admin a month after it was held while /admin/insights
+ * still listed it: on 18 Sep 2026 the homepage showed 8 of the 14 outstanding
+ * events and hid Perth's 15 Aug Bold Park hike. An overdue event is the one
+ * staff most need to see, so it now stays until a leader logs it.
+ */
+export function missingImpactWindow(
+  scope: MissingImpactScope,
+  wcNow: Date,
+): { floorIso: string | null; ceilingIso: string } {
+  const nowIso = wcNow.toISOString()
+  return {
+    floorIso: scope.sinceIso ?? null,
+    ceilingIso: scope.untilIso && scope.untilIso < nowIso ? scope.untilIso : nowIso,
+  }
+}
+
 export function useEventsMissingImpact(scope: MissingImpactScope = {}) {
   const { sinceIso, untilIso, collectiveIds } = scope
-  const hasWindow = sinceIso !== undefined
   return useQuery({
-    queryKey: ['admin-events-missing-impact', hasWindow ? sinceIso : 'last-30d', untilIso ?? null, collectiveIds ?? []],
+    queryKey: ['admin-events-missing-impact', sinceIso ?? null, untilIso ?? null, collectiveIds ?? []],
     queryFn: async () => {
-      // Floating-local: bounds are wall-clock-as-UTC, like date_start.
       const wcNow = wallClockNow()
-      let floorIso: string | null
-      if (hasWindow) {
-        floorIso = sinceIso ?? null
-      } else {
-        const thirtyDaysAgo = new Date(wcNow.getTime())
-        thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30)
-        floorIso = thirtyDaysAgo.toISOString()
-      }
-      const ceilingIso = untilIso && untilIso < wcNow.toISOString() ? untilIso : wcNow.toISOString()
+      const { floorIso, ceilingIso } = missingImpactWindow(scope, wcNow)
 
       let query = supabase
         .from('events')

@@ -11,7 +11,7 @@ import { useNotifyLeadersForImpactForm } from '@/hooks/use-impact-form-tasks'
 /**
  * Outstanding impact surveys.
  *
- * Lists finished events (published/completed, ended in the last 30 days) that
+ * Lists finished events (published/completed, however long ago) that
  * still have no `event_impact` row - i.e. the impact survey hasn't been
  * submitted. Each row deep-links to the event's impact log and carries a
  * manual "Nudge" that pushes the collective's leadership (the same survey_request
@@ -30,7 +30,7 @@ export function EventsMissingImpactCard({
   /**
    * A report window + collective filter. When set, the card lists the held
    * events inside THAT window with no impact logged, i.e. exactly what the
-   * figures beside it are missing. Omitted = the last 30 days, everywhere.
+   * figures beside it are missing. Omitted = every held event, everywhere.
    */
   scope?: MissingImpactScope
 }) {
@@ -77,7 +77,7 @@ export function EventsMissingImpactCard({
           <p data-eos-id="src/components/events-missing-impact-card.tsx#8" className="text-[11px] text-neutral-400 mt-0.5">
             {scope
               ? 'Held in this window with no impact logged. They are not counted in the figures above until a leader logs them.'
-              : 'Finished in the last 30 days with no impact logged yet.'}
+              : 'Finished with no impact logged yet. Each stays here until a leader logs it.'}
           </p>
         </div>
         <div data-eos-id="src/components/events-missing-impact-card.tsx#9" className="divide-y divide-neutral-100 max-h-[280px] overflow-y-auto">
