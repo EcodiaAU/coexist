@@ -5,6 +5,8 @@ import { resolveRecipientEmail } from '../_shared/recipient-email.ts'
 import { suppressedRecipientIds, type SuppressionProfile } from '../_shared/recipient-suppression.ts'
 import { selectInChunks } from '../_shared/select-in-chunks.ts'
 import { ADMIN_LOOKUP_CONCURRENCY, mapWithConcurrency } from '../_shared/batch-lookup.ts'
+import { partitionRecipients } from '../_shared/recipient-partition.ts'
+import { describeFailures, sendResendBatch } from '../_shared/resend-batch.ts'
 import {
   makeSuppressionFetcher,
   normaliseEmail,
@@ -32,6 +34,8 @@ const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0
  */
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
+/** Resend's many-messages-in-one-request endpoint, up to 100 per call. */
+const RESEND_BATCH_ENDPOINT = 'https://api.resend.com/emails/batch'
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'hello@coexistaus.org'
 const FROM_NAME = Deno.env.get('RESEND_FROM_NAME') ?? 'Co-Exist'
 
@@ -1455,9 +1459,30 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
         }
       }
 
-      const addressed = payload.recipients
-        .map((r) => (r.to ? r : { ...r, to: r.userId ? resolvedById.get(r.userId) ?? '' : '' }))
-        .filter((r) => r.to && !(r.userId && optedOut.has(r.userId)))
+      // Account for every recipient by what actually happened to them. This
+      // used to be one `.filter(r => r.to && !optedOut)`, which gave a member
+      // who asked not to be mailed and a member whose address could not be
+      // found the same exit and the same `skipped` bucket. The second of those
+      // is a LOSS: measured on the Perth Coastal Festival reminder 2026-09-17
+      // 10:52:47Z, 49 of 424 eligible members (11.6%) left without an address,
+      // every one of them holding BOTH an auth and a profile email, and the
+      // send reported a clean success. See _shared/recipient-partition.ts.
+      const partition = partitionRecipients(payload.recipients, resolvedById, optedOut)
+      const addressed = partition.addressed
+      const unresolved = partition.unresolvedIds.length + partition.unaddressable
+      if (partition.unresolvedIds.length > 0) {
+        // Named, not just counted. A count says the send leaked; the ids say
+        // WHO, which is the only form that lets anyone go and fix an account.
+        console.error(
+          '[send-email] batch UNRESOLVED:',
+          partition.unresolvedIds.length,
+          'recipient(s) arrived with a userId and left without an address:',
+          partition.unresolvedIds.join(','),
+        )
+      }
+      if (partition.unaddressable > 0) {
+        console.error('[send-email] batch had', partition.unaddressable, 'recipient(s) with neither an address nor a userId')
+      }
 
       // ── Dead-address gate (public.email_suppressions) ──
       // Consent suppression above answers "did they switch this off". This
@@ -1504,39 +1529,38 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
             sent: 0,
             resolved: emails.length,
             skipped: payload.recipients.length - emails.length,
+            // The three reasons a recipient did not make it, told apart. A
+            // healthy send has unresolved 0; anything above that is people who
+            // wanted this mail and would have got nothing.
+            unresolved,
+            optedOut: partition.optedOut,
+            suppressed: deadAddresses.size,
             sampleSubject: emails[0]?.subject,
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
       }
 
-      let sent = 0
-      let batchError: string | undefined
-      for (let i = 0; i < emails.length; i += 100) {
-        const chunk = emails.slice(i, i + 100)
-        const resp = await fetch('https://api.resend.com/emails/batch', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(chunk),
-        })
-        if (resp.ok) {
-          // Count what Resend says it accepted, not what we handed it. A 200
-          // carries `{ data: [{ id }, ...] }`, and a partial accept would
-          // otherwise be reported to the host as a full one.
-          let accepted = chunk.length
-          try {
-            const body = await resp.json()
-            if (Array.isArray(body?.data)) accepted = body.data.length
-          } catch { /* a 200 with an unreadable body still accepted the chunk */ }
-          if (accepted !== chunk.length) {
-            console.error('[send-email] batch chunk partially accepted:', accepted, 'of', chunk.length)
-          }
-          sent += accepted
-        } else {
-          batchError = await resp.text()
-          console.error('[send-email] batch send failed:', batchError)
-        }
-        if (i + 100 < emails.length) await new Promise((res) => setTimeout(res, 600))
+      // Chunked, RETRIED and counted. This loop used to give up on a chunk the
+      // first time Resend answered 429 (its rate limit is 2 req/s, so a burst
+      // of eight chunks meets it routinely), losing 100 people per failed
+      // chunk while the next chunk went out 600ms later as if nothing had
+      // happened, and keeping only the LAST failure's text in one string. See
+      // _shared/resend-batch.ts for the retry policy and the accounting.
+      const batch = await sendResendBatch(emails, {
+        fetch: (body) =>
+          fetch(RESEND_BATCH_ENDPOINT, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          }),
+        log: (...args) => console.error(...args),
+      })
+      const sent = batch.sent
+      const batchError = describeFailures(batch)
+      if (batchError) console.error('[send-email]', batchError)
+      if (batch.retries > 0) {
+        console.log('[send-email] batch needed', batch.retries, 'retry/retries and still delivered', sent)
       }
 
       return new Response(
@@ -1549,6 +1573,15 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
           // one silently delivered to nobody" without guessing from counts.
           resolved: emails.length,
           skipped: payload.recipients.length - emails.length,
+          unresolved,
+          optedOut: partition.optedOut,
+          suppressed: deadAddresses.size,
+          // Recipients Resend never accepted after retries. Distinct from
+          // `unresolved`, which never reached Resend at all.
+          failedRecipients: batch.failedRecipients,
+          failedChunks: batch.failures.length,
+          notAccepted: batch.notAccepted,
+          retries: batch.retries,
           error: batchError,
         }),
         { status: batchError ? 502 : 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
