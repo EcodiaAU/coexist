@@ -43,7 +43,8 @@ import {
 import { useImpactMetricDefs } from '@/hooks/use-impact-metric-defs'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import type { ImpactMetricDef } from '@/lib/impact-metrics'
-import { dateRangeOptions, getDateRangeStart, useTrendData, type DateRange } from '@/hooks/use-admin-dashboard'
+import { dateRangeOptions, getDateRangeStart, getDateRangeBounds, useTrendData, type DateRange } from '@/hooks/use-admin-dashboard'
+import { EventsMissingImpactCard } from '@/components/events-missing-impact-card'
 import { nationalHistoricalRemainder } from '@/lib/impact-query'
 import { TrendChart } from '@/components/trend-chart'
 import { ACTIVITY_TYPE_FILTER_OPTIONS, ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
@@ -262,11 +263,21 @@ export default function AdminInsightsPage() {
   }, [dateRange, customStart])
   // p_to is inclusive of the day in coexist_attendance_metrics
   // ((date_start AT TIME ZONE 'UTC')::date <= v_to), so a yyyy-mm-dd end date
-  // counts events on that whole day.
-  const toDate = useMemo(
-    () => (dateRange === 'custom' ? (customEnd || todayIso()) : todayIso()),
-    [dateRange, customEnd],
-  )
+  // counts events on that whole day. A closed range (last quarter, a
+  // financial year) ends on its own last day, not today, so the attendance
+  // figures cover the same window as the impact figures above them.
+  const toDate = useMemo(() => {
+    if (dateRange === 'custom') return customEnd || todayIso()
+    const end = getDateRangeBounds(dateRange).end
+    return end ? end.slice(0, 10) : todayIso()
+  }, [dateRange, customEnd])
+  // Same window + collective filter as the figures, so the missing-impact list
+  // names exactly the held events those figures leave out.
+  const missingImpactScope = useMemo(() => {
+    const b = getDateRangeBounds(dateRange, customStart, customEnd)
+    return { sinceIso: b.start, untilIso: b.end, collectiveIds }
+  }, [dateRange, customStart, customEnd, collectiveIds])
+
   const { data: att } = useQuery({
     queryKey: ['insights-attendance', dateRange, collectiveIds, activityType, customStart, customEnd],
     queryFn: async (): Promise<AttendanceMetrics> => {
@@ -648,6 +659,13 @@ export default function AdminInsightsPage() {
               {visibleDefs.length === 0 && !obsLoading && <p data-eos-id="src/pages/admin/insights.tsx#85" className="col-span-full text-sm text-neutral-400 py-4">No impact logged in this window.</p>}
             </AdminHeroStatRow>
           </motion.div>
+          {/* Held events in this window that nobody logged are absent from
+              every figure on this page. Say so beside the figures. */}
+          {customValid && (
+            <motion.div data-eos-id="src/pages/admin/insights.tsx#216" variants={v.fadeUp} className="mt-4">
+              <EventsMissingImpactCard data-eos-id="src/pages/admin/insights.tsx#217" scope={missingImpactScope} />
+            </motion.div>
+          )}
         </div>
 
         {/* ── Attendance & recurrence ── */}

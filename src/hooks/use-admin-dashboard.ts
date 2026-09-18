@@ -19,8 +19,36 @@ import { wallClockNow } from '@/lib/date-format'
 /* ── Date range helpers ── */
 
 export type DateRange =
-  | 'week' | 'month' | 'quarter' | 'year' | 'all' | 'custom'
+  | 'week' | 'month' | 'quarter' | 'past-quarter' | 'year' | 'all' | 'custom'
   | 'current-financial-year' | 'past-financial-year'
+
+/**
+ * The calendar quarter (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec) that CONTAINS
+ * `ref` when offset=0, or that many quarters earlier when offset<0
+ * (offset=-1 => last quarter). `ref` is read through its LOCAL fields, i.e.
+ * the viewer's own calendar.
+ *
+ * Both bounds are calendar dates stamped as UTC, the same convention as the
+ * custom range: event.date_start stores the host's wall-clock as UTC, so
+ * "30 Sep 6pm" is 2026-09-30T18:00Z and must sit inside Q3 on every viewer
+ * timezone. A local-midnight Date.toISOString() would shift the edge by the
+ * viewer's UTC offset.
+ *
+ * This replaced a rolling "1st of the month three months ago" start, which
+ * the dropdown labelled "This Quarter": in September it reported 1 Jun to
+ * today, so a July-September quarterly report silently carried June.
+ */
+export function calendarQuarterBounds(ref: Date, offset = 0): { start: string; end: string } {
+  const qIndex = ref.getFullYear() * 4 + Math.floor(ref.getMonth() / 3) + offset
+  const year = Math.floor(qIndex / 4)
+  const startMonth = (qIndex - year * 4) * 3 // 0, 3, 6 or 9
+  const lastDay = new Date(Date.UTC(year, startMonth + 3, 0)).getUTCDate()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return {
+    start: `${year}-${pad(startMonth + 1)}-01T00:00:00.000Z`,
+    end: `${year}-${pad(startMonth + 3)}-${pad(lastDay)}T23:59:59.999Z`,
+  }
+}
 
 /**
  * Australian financial year runs 1 Jul to 30 Jun. Returns the [start, end]
@@ -42,7 +70,8 @@ export function getDateRangeStart(range: DateRange): string | null {
   switch (range) {
     case 'week':    return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
     case 'month':   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-    case 'quarter': return new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString()
+    case 'quarter': return calendarQuarterBounds(now, 0).start
+    case 'past-quarter': return calendarQuarterBounds(now, -1).start
     case 'year':    return new Date(now.getFullYear(), 0, 1).toISOString()
     case 'current-financial-year': return financialYearBounds(now, 0).start
     case 'past-financial-year':    return financialYearBounds(now, -1).start
@@ -88,6 +117,8 @@ export function getDateRangeBounds(
     const fy = financialYearBounds(new Date(), range === 'past-financial-year' ? -1 : 0)
     return { start: fy.start, end: fy.end }
   }
+  // Last quarter is a closed window; this quarter keeps the open "to now" end.
+  if (range === 'past-quarter') return calendarQuarterBounds(new Date(), -1)
   return { start: getDateRangeStart(range), end: null }
 }
 
@@ -95,6 +126,7 @@ export const dateRangeOptions = [
   { value: 'week',    label: 'This Week' },
   { value: 'month',   label: 'This Month' },
   { value: 'quarter', label: 'This Quarter' },
+  { value: 'past-quarter', label: 'Last Quarter' },
   { value: 'year',    label: 'This Year' },
   { value: 'current-financial-year', label: 'This Financial Year' },
   { value: 'past-financial-year',    label: 'Past Financial Year' },
@@ -181,18 +213,21 @@ async function fetchAdminOverview(dateRange: DateRange, collectiveId?: string): 
               error: r.error,
             }))
         : supabase.from('app_settings').select('value').eq('key', 'leaders_empowered_total').single(),
+      // A closed window (last quarter, a financial year) caps both period
+      // counts at its end; without it they ran on to today.
       rangeStart
-        ? supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', rangeStart)
+        ? supabase.from('profiles').select('id', { count: 'exact', head: true })
+            .gte('created_at', rangeStart).lte('created_at', windowEndIso)
         : Promise.resolve({ count: 0, error: null }),
       rangeStart
         ? (collectiveId
             ? supabase.from('events').select('id', { count: 'exact', head: true })
                 .eq('collective_id', collectiveId)
                 .in('status', ['published', 'completed'])
-                .gte('date_start', rangeStart).lt('date_start', now)
+                .gte('date_start', rangeStart).lte('date_start', windowEndIso).lt('date_start', now)
             : supabase.from('events').select('id', { count: 'exact', head: true })
                 .in('status', ['published', 'completed'])
-                .gte('date_start', rangeStart).lt('date_start', now))
+                .gte('date_start', rangeStart).lte('date_start', windowEndIso).lt('date_start', now))
         : scopedEventsCount,
     ])
 

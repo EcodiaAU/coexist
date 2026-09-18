@@ -823,25 +823,59 @@ export interface EventMissingImpact {
 }
 
 /**
- * Returns completed/published events from the last 30 days that have
- * no event_impact row. Gives admins a clear list of "who hasn't logged".
+ * Optional scope for useEventsMissingImpact. Omitted = the last 30 days across
+ * every collective (the dashboard queue). The insights page passes its own
+ * report window and collective filter, so the list is exactly the held events
+ * that are MISSING from the figures it is showing.
  */
-export function useEventsMissingImpact() {
-  return useQuery({
-    queryKey: ['admin-events-missing-impact'],
-    queryFn: async () => {
-      // Floating-local: thirty days ago in wall-clock-as-UTC space.
-      const wcNow = wallClockNow()
-      const thirtyDaysAgo = new Date(wcNow.getTime())
-      thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30)
+export interface MissingImpactScope {
+  /** Inclusive lower bound on date_start (wall-clock-as-UTC ISO). null = no floor. */
+  sinceIso?: string | null
+  /** Inclusive upper bound on date_start. null/omitted = now. */
+  untilIso?: string | null
+  /** Restrict to these collectives. Empty/omitted = all. */
+  collectiveIds?: string[]
+}
 
-      const { data: events, error } = await supabase
+/**
+ * Returns completed/published events that have finished and have no
+ * event_impact row. Gives admins a clear list of "who hasn't logged".
+ *
+ * Every impact figure in the app is summed from event_impact, so a held event
+ * nobody logged is absent from ALL of them: its attendees, hours, trees and
+ * even its place in the event count. That is how Perth's totals sat still from
+ * 18 Jul to 18 Sep 2026 while 106 people checked in to three Perth events: the
+ * leader running them held a legacy role with no Log impact button until
+ * 14 Sep. Nothing on the report page said so; this list is what says so.
+ */
+export function useEventsMissingImpact(scope: MissingImpactScope = {}) {
+  const { sinceIso, untilIso, collectiveIds } = scope
+  const hasWindow = sinceIso !== undefined
+  return useQuery({
+    queryKey: ['admin-events-missing-impact', hasWindow ? sinceIso : 'last-30d', untilIso ?? null, collectiveIds ?? []],
+    queryFn: async () => {
+      // Floating-local: bounds are wall-clock-as-UTC, like date_start.
+      const wcNow = wallClockNow()
+      let floorIso: string | null
+      if (hasWindow) {
+        floorIso = sinceIso ?? null
+      } else {
+        const thirtyDaysAgo = new Date(wcNow.getTime())
+        thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30)
+        floorIso = thirtyDaysAgo.toISOString()
+      }
+      const ceilingIso = untilIso && untilIso < wcNow.toISOString() ? untilIso : wcNow.toISOString()
+
+      let query = supabase
         .from('events')
         .select('id, title, activity_type, date_end, date_start, status, collective_id, collectives(name)')
         .in('status', ['completed', 'published'])
-        .gte('date_start', thirtyDaysAgo.toISOString())
-        .lte('date_start', wcNow.toISOString())
+        .lte('date_start', ceilingIso)
         .order('date_start', { ascending: false })
+      if (floorIso) query = query.gte('date_start', floorIso)
+      if (collectiveIds && collectiveIds.length) query = query.in('collective_id', collectiveIds)
+
+      const { data: events, error } = await query
 
       if (error) throw error
 
@@ -853,13 +887,19 @@ export function useEventsMissingImpact() {
       })
       if (ended.length === 0) return []
 
+      // Chunked: an all-time window resolves several hundred ids, and an
+      // unbounded in.() list hits the edge proxy's request-line cap. A failed
+      // lookup throws rather than reading as "nothing logged".
       const eventIds = ended.map((e) => e.id)
-      const { data: impacts } = await supabase
-        .from('event_impact')
-        .select('event_id')
-        .in('event_id', eventIds)
-
-      const loggedIds = new Set((impacts ?? []).map((i) => i.event_id))
+      const loggedIds = new Set<string>()
+      for (let i = 0; i < eventIds.length; i += 200) {
+        const { data: impacts, error: impErr } = await supabase
+          .from('event_impact')
+          .select('event_id')
+          .in('event_id', eventIds.slice(i, i + 200))
+        if (impErr) throw impErr
+        for (const row of impacts ?? []) loggedIds.add(row.event_id)
+      }
 
       return ended
         .filter((e) => !loggedIds.has(e.id))

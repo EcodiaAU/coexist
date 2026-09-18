@@ -5,7 +5,7 @@ import { CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useToast } from '@/components/toast'
 import { ACTIVITY_TYPE_LABELS } from '@/hooks/use-events'
-import { useEventsMissingImpact } from '@/hooks/use-admin-impact-observations'
+import { useEventsMissingImpact, type MissingImpactScope } from '@/hooks/use-admin-impact-observations'
 import { useNotifyLeadersForImpactForm } from '@/hooks/use-impact-form-tasks'
 
 /**
@@ -22,13 +22,27 @@ import { useNotifyLeadersForImpactForm } from '@/hooks/use-impact-form-tasks'
  * drift. Renders nothing when the queue is empty unless `showWhenEmpty` is set
  * (the dashboard wants a positive "all caught up" state; the impact page hides).
  */
-export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmpty?: boolean }) {
-  const { data: missingImpact } = useEventsMissingImpact()
+export function EventsMissingImpactCard({
+  showWhenEmpty = false,
+  scope,
+}: {
+  showWhenEmpty?: boolean
+  /**
+   * A report window + collective filter. When set, the card lists the held
+   * events inside THAT window with no impact logged, i.e. exactly what the
+   * figures beside it are missing. Omitted = the last 30 days, everywhere.
+   */
+  scope?: MissingImpactScope
+}) {
+  const { data: missingImpact, isError } = useEventsMissingImpact(scope)
   const notifyLeaders = useNotifyLeadersForImpactForm()
   const { toast } = useToast()
   const [nudgingEvent, setNudgingEvent] = useState<string | null>(null)
 
   const count = missingImpact?.length ?? 0
+
+  // A failed lookup is not an empty queue: never render "all caught up" on it.
+  if (isError) return null
 
   if (count === 0) {
     if (!showWhenEmpty) return null
@@ -61,7 +75,9 @@ export function EventsMissingImpactCard({ showWhenEmpty = false }: { showWhenEmp
             {count} event{count !== 1 ? 's' : ''} awaiting impact
           </h3>
           <p data-eos-id="src/components/events-missing-impact-card.tsx#8" className="text-[11px] text-neutral-400 mt-0.5">
-            Finished in the last 30 days with no impact logged yet.
+            {scope
+              ? 'Held in this window with no impact logged. They are not counted in the figures above until a leader logs them.'
+              : 'Finished in the last 30 days with no impact logged yet.'}
           </p>
         </div>
         <div data-eos-id="src/components/events-missing-impact-card.tsx#9" className="divide-y divide-neutral-100 max-h-[280px] overflow-y-auto">

@@ -3,6 +3,7 @@ import { supabase, escapeIlike } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { COLLECTIVE_ROLE_RANK } from '@/lib/constants'
 import { wallClockNow } from '@/lib/date-format'
+import { pastEventsOrFilter } from '@/hooks/use-events'
 import { fetchCanonicalImpactRows, composeSummaryMetrics } from '@/lib/impact-query'
 import type {
   Database,
@@ -198,10 +199,11 @@ export function useCollectiveEvents(collectiveId: string | undefined, type: 'upc
           .or(`date_start.gte.${now},date_end.gte.${now}`)
           .order('date_start', { ascending: true })
       } else {
-        // Past events: both 'completed' and 'published' events whose end date has passed
+        // Past events: 'completed' and 'published' events that have finished,
+        // INCLUDING ones with no date_end (see pastEventsOrFilter).
         query = query
           .in('status', ['published', 'completed'])
-          .lt('date_end', now)
+          .or(pastEventsOrFilter(wallClockNow()))
           .order('date_start', { ascending: false })
       }
 

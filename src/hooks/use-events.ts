@@ -235,6 +235,23 @@ export function stillActiveStartCutoffIso(now: Date = wallClockNow()): string {
   return new Date(now.getTime() - DEFAULT_EVENT_DURATION_MS).toISOString()
 }
 
+/**
+ * PostgREST `or` filter for "this event has finished", the query-side twin of
+ * isPastEvent. An event with an explicit date_end is past once that passes; an
+ * event with NO date_end (end time is optional on the create form, and most
+ * events since late May 2026 leave it blank) is past once its start plus the
+ * default duration has gone by.
+ *
+ * A bare `.lt('date_end', now)` never matches a NULL date_end, which silently
+ * dropped every end-less event from the collective "Past events" list. Perth's
+ * 15 Aug, 29 Aug and 5 Sep 2026 events vanished that way and the page read as
+ * if nothing had happened since July.
+ */
+export function pastEventsOrFilter(now: Date = wallClockNow()): string {
+  const nowIso = now.toISOString()
+  return `date_end.lt.${nowIso},and(date_end.is.null,date_start.lt.${stillActiveStartCutoffIso(now)})`
+}
+
 /* ------------------------------------------------------------------ */
 /*  Queries - My Events                                                */
 /* ------------------------------------------------------------------ */
