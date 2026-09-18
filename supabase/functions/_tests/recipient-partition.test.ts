@@ -86,6 +86,61 @@ Deno.test('a literal address wins over resolution and is never called unresolved
   assertEquals(p.unresolvedIds.length, 0)
 })
 
+// The address `hayesabigail@y7mail` below is the real Melbourne City member
+// address (minus its .com) that took down a chunk of 100 on 2026-09-18. It is
+// kept verbatim because a synthetic "bad@address" does not reproduce the shape:
+// what made it lethal is that it looks entirely plausible.
+Deno.test('a MALFORMED LITERAL is refused, and cannot take its chunk down', () => {
+  // THE HOLE, found by a peer session against the deployed function on
+  // 2026-09-18: a literal `to` never passes through resolveRecipientEmail, so
+  // the shape check never saw it. A two-recipient batch of
+  // [hayesabigail@y7mail, code@ecodia.au] answered resolved:2 skipped:0 and
+  // HTTP 502, because Resend rejects the WHOLE request over one bad entry, and
+  // the good address received nothing.
+  const sendable = (e: string) => /^[^\s@,;:<>"']+@[^\s@,;:<>"']+\.[A-Za-z]{2,}$/.test(e.trim())
+  const p = partitionRecipients(
+    [{ to: 'hayesabigail@y7mail' }, { to: 'code@ecodia.au' }],
+    new Map(),
+    new Set(),
+    sendable,
+  )
+
+  assertEquals(p.addressed.map((r) => r.to), ['code@ecodia.au'])
+  assertEquals(p.malformed, ['hayesabigail@y7mail'])
+  // It has no userId, so it lands in unaddressable rather than inventing one.
+  assertEquals(p.unaddressable, 1)
+})
+
+Deno.test('CONTROL: without the predicate that same literal sails through', () => {
+  // The mutation arm. Default `isSendable` accepts everything, which is the
+  // pre-2026-09-18 behaviour exactly. If this arm ever stops putting the bad
+  // address into `addressed`, the test above has stopped discriminating.
+  const p = partitionRecipients(
+    [{ to: 'hayesabigail@y7mail' }, { to: 'code@ecodia.au' }],
+    new Map(),
+    new Set(),
+  )
+  assertEquals(p.addressed.length, 2)
+  assertEquals(p.malformed.length, 0)
+})
+
+Deno.test('a malformed RESOLVED address is refused too, and is attributed to its member', () => {
+  // Same refusal, different arrival route. Here the member is known, so the
+  // loss is attributable and appears in unresolvedIds rather than as an
+  // anonymous unaddressable.
+  const sendable = (e: string) => e.includes('.')
+  const p = partitionRecipients(
+    [{ userId: 'm1' }, { userId: 'm2' }],
+    new Map([['m1', 'broken@y7mail'], ['m2', 'fine@example.org']]),
+    new Set(),
+    sendable,
+  )
+  assertEquals(p.addressed.map((r) => r.to), ['fine@example.org'])
+  assertEquals(p.malformed, ['broken@y7mail'])
+  assertEquals(p.unresolvedIds, ['m1'])
+  assertEquals(p.unaddressable, 0)
+})
+
 Deno.test('opt-out is checked only after an address exists', () => {
   // A member who opted out AND has no address is a loss first: fixing their
   // account is what makes the opt-out meaningful. Counting them as opted-out

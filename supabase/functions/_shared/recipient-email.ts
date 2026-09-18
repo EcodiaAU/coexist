@@ -64,7 +64,18 @@ export function isAppleRelay(email: string | null | undefined): boolean {
  */
 const SENDABLE_RE = /^[^\s@,;:<>"']+@[^\s@,;:<>"']+\.[A-Za-z]{2,}$/
 
-function looksSendable(email: string | null | undefined): boolean {
+/**
+ * EXPORTED on 2026-09-18 because resolution is not the only way an address
+ * reaches a Resend payload. The batch path takes a recipient's literal `to`
+ * verbatim and never calls resolveRecipientEmail on it, so a malformed literal
+ * skipped this check entirely and still poisoned its whole chunk. Proven on the
+ * deployed function: a two-recipient batch of [hayesabigail@y7mail,
+ * code@ecodia.au] answered resolved:2 skipped:0 and HTTP 502, and the valid
+ * address got nothing. The app's own sendEmailToMany fallback passes `to`, so
+ * that path is reachable in production. The batch path now runs this predicate
+ * on every address regardless of how it arrived.
+ */
+export function looksSendable(email: string | null | undefined): boolean {
   if (typeof email !== 'string') return false
   return SENDABLE_RE.test(email.trim())
 }

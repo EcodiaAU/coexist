@@ -1,7 +1,7 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
-import { resolveRecipientEmail } from '../_shared/recipient-email.ts'
+import { looksSendable, resolveRecipientEmail } from '../_shared/recipient-email.ts'
 import { suppressedRecipientIds, type SuppressionProfile } from '../_shared/recipient-suppression.ts'
 import { selectInChunks } from '../_shared/select-in-chunks.ts'
 import { ADMIN_LOOKUP_CONCURRENCY, mapWithConcurrency } from '../_shared/batch-lookup.ts'
@@ -1467,9 +1467,27 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       // 10:52:47Z, 49 of 424 eligible members (11.6%) left without an address,
       // every one of them holding BOTH an auth and a profile email, and the
       // send reported a clean success. See _shared/recipient-partition.ts.
-      const partition = partitionRecipients(payload.recipients, resolvedById, optedOut)
+      //
+      // `looksSendable` runs on EVERY address here, including a literal `to`
+      // the caller handed us. A literal never passes through
+      // resolveRecipientEmail, so until 2026-09-18 a malformed one reached the
+      // Resend payload unchecked and took its whole chunk down with it: Resend
+      // answers the entire request 422 for one bad entry. Proven on the
+      // deployed function with [hayesabigail@y7mail, code@ecodia.au], which
+      // returned resolved:2 skipped:0 and HTTP 502 while the good address got
+      // nothing. sendEmailToMany's fallback loop passes `to`, so that was
+      // production reach and not a theoretical one.
+      const partition = partitionRecipients(payload.recipients, resolvedById, optedOut, looksSendable)
       const addressed = partition.addressed
       const unresolved = partition.unresolvedIds.length + partition.unaddressable
+      if (partition.malformed.length > 0) {
+        console.error(
+          '[send-email] batch REFUSED',
+          partition.malformed.length,
+          'malformed address(es) before they could fail their chunk:',
+          partition.malformed.join(','),
+        )
+      }
       if (partition.unresolvedIds.length > 0) {
         // Named, not just counted. A count says the send leaked; the ids say
         // WHO, which is the only form that lets anyone go and fix an account.
@@ -1535,6 +1553,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
             unresolved,
             optedOut: partition.optedOut,
             suppressed: deadAddresses.size,
+            malformed: partition.malformed.length,
             sampleSubject: emails[0]?.subject,
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -1576,6 +1595,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
           unresolved,
           optedOut: partition.optedOut,
           suppressed: deadAddresses.size,
+          malformed: partition.malformed.length,
           // Recipients Resend never accepted after retries. Distinct from
           // `unresolved`, which never reached Resend at all.
           failedRecipients: batch.failedRecipients,
