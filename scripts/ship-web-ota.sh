@@ -163,6 +163,31 @@ fi
 echo "==> building web bundle (CAPACITOR_BUILD=true npm run build)"
 (cd "$APP_ROOT" && CAPACITOR_BUILD=true npm run build)
 
+# ARTIFACT GATE. Checks the dist we are about to upload, not the build's exit
+# code. On 2026-09-18 bundle 2.3.35 was built in a git worktree with no
+# .env.production (gitignored, so a worktree never has it): vite exited 0, left
+# the Supabase placeholders literal in index.html, and every device that took the
+# bundle crashed on open with "supabaseUrl is required". vite.config.ts now
+# refuses that build too; this gate is the second layer, and it also covers a
+# dist built by some other route and re-uploaded by hand (the documented 502
+# recovery re-runs `capgo bundle upload` on an existing dist: run THIS block's
+# two greps first when you do).
+# Production OTA must be built against the production Supabase project.
+EXPECT_SUPABASE_HOST="${EXPECT_SUPABASE_HOST:-tjutlbzekfouwsiaplbr.supabase.co}"
+LEAKED=$(grep -rlF '%VITE_' "$APP_ROOT/dist" 2>/dev/null || true)
+if [ -n "$LEAKED" ]; then
+  echo "FATAL: dist carries unreplaced %VITE_ placeholders (the env was missing at build):" >&2
+  echo "$LEAKED" >&2
+  echo "       Uploading this would crash every device on open. Copy .env.production in and rebuild." >&2
+  exit 1
+fi
+if ! grep -qF "$EXPECT_SUPABASE_HOST" "$APP_ROOT/dist/index.html"; then
+  echo "FATAL: dist/index.html does not carry the Supabase URL ($EXPECT_SUPABASE_HOST)." >&2
+  echo "       The build did not see VITE_SUPABASE_URL for this project. Refusing to upload." >&2
+  exit 1
+fi
+echo "==> artifact gate OK: no %VITE_ placeholder in dist, Supabase host $EXPECT_SUPABASE_HOST present"
+
 echo "==> uploading to Capgo channel '$CHANNEL' as $VERSION"
 (cd "$APP_ROOT" && npx @capgo/cli@latest bundle upload "$APP_ID" \
   --path dist --channel "$CHANNEL" --bundle "$VERSION" --apikey "$CAPGO_APIKEY")

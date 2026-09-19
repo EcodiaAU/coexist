@@ -1,9 +1,14 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 import path from 'path'
 import { readFileSync } from 'fs'
+import {
+  buildEnvProblems,
+  buildEnvFailureMessage,
+  findUnreplacedPlaceholders,
+} from './src/lib/build-env-guard'
 
 // Sentry source-map upload. Gated on SENTRY_AUTH_TOKEN (set as a Vercel
 // PRODUCTION env var). When present we emit HIDDEN source maps (never served
@@ -39,8 +44,46 @@ const pkgVersion = JSON.parse(
 // the document-baseURI dependence. Vercel deep routes already require this
 // for the same reason - symmetric config is intentional.
 
+// Fail the BUILD, never the device. OTA 2.3.35 (2026-09-18) was built in a git
+// worktree with no .env.production; vite exited 0, inlined VITE_SUPABASE_URL as
+// undefined and left %VITE_...% literal in index.html, and every device that took
+// it crashed on open. Two checks, both build-only (dev and vitest untouched):
+//   configResolved  the resolved env (files AND process.env) must carry a real
+//                   Supabase URL + anon key, before any work is done
+//   generateBundle  no %VITE_...% placeholder may survive into ANY emitted file,
+//                   so a new placeholder with a missing var cannot slip past either
+// Logic and rationale: src/lib/build-env-guard.ts (unit-tested).
+function requireBuildEnv(): Plugin {
+  return {
+    name: 'coexist:require-build-env',
+    apply: 'build',
+    enforce: 'post',
+    configResolved(config) {
+      const problems = buildEnvProblems(config.env)
+      if (problems.length > 0) {
+        throw new Error(buildEnvFailureMessage(problems, config.envDir || config.root, config.mode))
+      }
+    },
+    generateBundle(_options, bundle) {
+      for (const [fileName, out] of Object.entries(bundle)) {
+        const text =
+          out.type === 'chunk' ? out.code : typeof out.source === 'string' ? out.source : null
+        if (!text) continue
+        const leaked = findUnreplacedPlaceholders(text)
+        if (leaked.length > 0) {
+          this.error(
+            `Unreplaced env placeholder(s) ${leaked.join(', ')} in ${fileName}. ` +
+              'The variable is not set for this build; this bundle would ship it literally.',
+          )
+        }
+      }
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
+    requireBuildEnv(),
     react(),
     tailwindcss(),
     // Appended LAST so it sees the fully-built output. No-op without the token.

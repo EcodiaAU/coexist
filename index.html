@@ -92,9 +92,12 @@
     -->
     <script>
       (function () {
-        // Build-time env injection via Vite's %VITE_*% replacement.
-        // If undefined, Vite leaves the placeholder literal, which is
-        // exactly the diagnostic we want.
+        // Build-time env injection: Vite replaces the percent-wrapped env
+        // names below at build time. If one is undefined, Vite leaves the
+        // placeholder literal, which is exactly the diagnostic we want.
+        // (Do not write a percent-wrapped VITE_ name in this comment: the
+        // build guard and the OTA artifact gate both fail on any that
+        // survives into dist, and a comment would trip them.)
         window.__DEBUG_BOOT = {
           url: '%VITE_SUPABASE_URL%',
           keyPrefix: '%VITE_SUPABASE_ANON_KEY%'.slice(0, 24),
