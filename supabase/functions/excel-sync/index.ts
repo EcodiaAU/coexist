@@ -65,6 +65,9 @@ import { withSentry } from '../_shared/sentry.ts'
 import { timingSafeEqual } from '../_shared/d3-guards.ts'
 import { normaliseCollectiveName, resolveCollectiveId } from '../_shared/collective-match.ts'
 import { note, realErrors } from '../_shared/run-log.ts'
+// Change detection for to-excel updates: see the header of that file for the
+// 150s gateway / ~201s isolate-kill measurements this exists to stay under.
+import { rowDiffers } from '../_shared/excel-row-diff.ts'
 
 // ---- Config ----
 const GRAPH_TENANT_ID = Deno.env.get('GRAPH_TENANT_ID') ?? ''
@@ -170,6 +173,7 @@ async function getGraphToken(): Promise<string> {
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
 
 // Workbook write endpoints throttle aggressively. The per-event trigger path
 // and the hourly batch overlap and burst Graph PATCHes against the same
@@ -1005,6 +1009,10 @@ async function syncToExcel(
 ): Promise<{
   appended: number
   updated: number
+  /** Rows already byte-identical on the sheet, so no Graph PATCH was spent on them.
+   *  Added 2026-09-21 with change detection. Its PRESENCE in `summary.toExcel`
+   *  is the discriminating proof that a post-2026-09-21 build served the run. */
+  unchanged: number
   skipped: number
   skippedDuplicates: number
   /** Events skipped at the APPEND stage because no impact survey has been submitted yet.
@@ -1018,6 +1026,7 @@ async function syncToExcel(
   const weakDedupWarnings: { eventId: string; collective: string; date: string; title: string; existingFormsTitle: string }[] = []
   let appended = 0
   let updated = 0
+  let unchanged = 0
   let skipped = 0
   let skippedDuplicates = 0
   let skippedNoImpact = 0
@@ -1028,7 +1037,7 @@ async function syncToExcel(
     excelState = await readExcelState(graphToken)
   } catch (err) {
     errors.push(`Failed to read Excel: ${(err as Error).message}`)
-    return { appended, updated, skipped, skippedDuplicates, skippedNoImpact, weakDedupWarnings, errors }
+    return { appended, updated, unchanged, skipped, skippedDuplicates, skippedNoImpact, weakDedupWarnings, errors }
   }
 
   // Build a map of existing event IDs to their row index (1-based)
@@ -1295,12 +1304,20 @@ async function syncToExcel(
   if (newRows.length > 0 || updateRows.length > 0) {
     let freshRowCount = excelState.rowCount
     const freshIdToRowIndex = new Map<string, number>()
+    // Current sheet contents keyed by event id, for the change detection in the
+    // update loop. Deliberately left EMPTY by the catch branch below: if the
+    // pre-write re-read failed we hold no evidence about what the sheet says, so
+    // every row must read as changed and be PATCHed as before.
+    const freshIdToRowValues = new Map<string, unknown[]>()
     try {
       const fresh = await readExcelState(graphToken)
       freshRowCount = fresh.rowCount
       for (let i = 1; i < fresh.rows.length; i++) {
         const id = String(fresh.rows[i][0] ?? '')
-        if (id) freshIdToRowIndex.set(id, i + 1) // +1 -> 1-based Excel row
+        if (id) {
+          freshIdToRowIndex.set(id, i + 1) // +1 -> 1-based Excel row
+          freshIdToRowValues.set(id, fresh.rows[i])
+        }
       }
     } catch (err) {
       // If the pre-write re-read fails, fall back to the top-of-run snapshot for
@@ -1348,6 +1365,15 @@ async function syncToExcel(
         updated--
         continue
       }
+      // Change detection: the sheet already holds exactly these 28 cells, so the
+      // PATCH and its 250ms pace would buy nothing. Skipping is what keeps the
+      // run under the ~201s isolate kill. See rowDiffers() for why the
+      // comparison is normalised rather than ===.
+      if (!rowDiffers(row, freshIdToRowValues.get(eid))) {
+        unchanged++
+        updated--
+        continue
+      }
       try {
         await graphRequest(
           graphToken,
@@ -1358,11 +1384,13 @@ async function syncToExcel(
       } catch (err) {
         errors.push(`Failed to update row ${rowIndex} (${eid}): ${(err as Error).message}`)
       }
+      // Pace only AFTER a real write. Sleeping for skipped rows would leave 108
+      // x 250ms = 27s on the clock and give back most of the saving.
       if (u < updateRows.length - 1) await sleep(250)
     }
   }
 
-  return { appended, updated, skipped, skippedDuplicates, skippedNoImpact, weakDedupWarnings, errors }
+  return { appended, updated, unchanged, skipped, skippedDuplicates, skippedNoImpact, weakDedupWarnings, errors }
 }
 
 // ---- Sync: Excel -> Supabase (Excel is source of truth) ----
@@ -1965,7 +1993,7 @@ Deno.serve(withSentry('excel-sync', async (req: Request) => {
         synced?: number; syncedFormsRows?: number; skippedNoCollective?: number; skippedLegacy?: number; errors?: string[]
       }
       const toEx = (results.toExcel ?? null) as null | {
-        appended?: number; updated?: number; skipped?: number; skippedDuplicates?: number;
+        appended?: number; updated?: number; unchanged?: number; skipped?: number; skippedDuplicates?: number;
         skippedNoImpact?: number; weakDedupWarnings?: unknown[]; errors?: string[]
       }
       const sheetRows = (fromEx as any)?._sheetRows ?? null // hook for future surfacing
