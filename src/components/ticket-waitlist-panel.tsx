@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Clock, Mail, UserMinus, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/button'
+import { ConfirmationSheet } from '@/components/confirmation-sheet'
 import { useToast } from '@/components/toast'
 import {
   useWaitlistSummary,
@@ -27,6 +29,8 @@ export function TicketWaitlistPanel({ eventId }: { eventId: string }) {
   const { data: people } = useWaitlistPeople(eventId, !!summary)
   const remove = useRemoveFromWaitlist()
   const notify = useNotifyWaitlist()
+  // Declared above the early return: a hook may not be skipped on a render.
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   // Not staff on this event, or nobody has ever joined. Either way there is
   // nothing an organiser can act on.
@@ -119,7 +123,7 @@ export function TicketWaitlistPanel({ eventId }: { eventId: string }) {
             className="mt-3"
             icon={<Mail size={16} />}
             loading={notify.isPending}
-            onClick={onNotifyAll}
+            onClick={() => setConfirmOpen(true)}
           >
             Email everyone waiting
           </Button>
@@ -128,6 +132,26 @@ export function TicketWaitlistPanel({ eventId }: { eventId: string }) {
             Spots are offered automatically, oldest first, whenever a ticket comes back. Use this
             only when a spot opened somewhere we cannot see, such as Eventbrite.
           </p>
+
+          {/* One click used to send the blast. An organiser who taps this by
+              accident, or taps it twice, mails the whole queue and there is no
+              recall: the email is already with every person on it. The send is
+              correct and stays one tap away, it just has to be asked for.
+              Count comes from summary.waiting, not people.length, because the
+              people list loads on its own query and may not have arrived. */}
+          <ConfirmationSheet
+            open={confirmOpen}
+            onClose={() => setConfirmOpen(false)}
+            onConfirm={onNotifyAll}
+            variant="warning"
+            title={`Email ${summary.waiting} ${summary.waiting === 1 ? 'person' : 'people'}?`}
+            description={
+              summary.waiting === 1
+                ? 'This emails the one person still waiting for this event to tell them a spot has opened. It sends straight away and cannot be taken back.'
+                : `This emails all ${summary.waiting} people still waiting for this event to tell them a spot has opened. It sends straight away and cannot be taken back.`
+            }
+            confirmLabel="Send the email"
+          />
         </>
       )}
     </div>
