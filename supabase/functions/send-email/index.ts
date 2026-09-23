@@ -907,7 +907,20 @@ const BODY_BUILDERS: Record<string, (d: Record<string, unknown>) => string> = {
     if (receiptNumber) rows.push(['Receipt no.', receiptNumber])
     rows.push(['Amount', `${d.amount} ${d.currency || 'AUD'}`])
     rows.push(['Date', d.date as string])
-    rows.push(['Type', d.is_recurring ? 'Recurring monthly' : 'One-time'])
+    // A recurring gift is not necessarily monthly. This row asserted "Recurring
+    // monthly" on a TAX RECEIPT for gifts that are billed annually, which is the
+    // document a donor keeps. billing_interval comes from the Stripe price; when
+    // it is absent (rows recorded before it was captured) say "Recurring" rather
+    // than name a period we do not know.
+    const intervalWord: Record<string, string> = {
+      day: 'Recurring daily',
+      week: 'Recurring weekly',
+      month: 'Recurring monthly',
+      year: 'Recurring annually',
+    }
+    const recurringLabel =
+      intervalWord[(d.billing_interval as string) || ''] || 'Recurring'
+    rows.push(['Type', d.is_recurring ? recurringLabel : 'One-time'])
     if (abn) rows.push(['ABN', abn])
     const taxLine = taxDeductible
       ? `${charityName}${abn ? ` (ABN ${abn})` : ''} is endorsed as a deductible gift recipient (DGR). This receipt is for a gift of ${d.amount} ${d.currency || 'AUD'}; no goods or services were provided in return. Gifts of $2 or more are tax-deductible. Please retain this receipt for your records.`

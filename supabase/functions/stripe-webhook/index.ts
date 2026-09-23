@@ -891,12 +891,13 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           message: string | null
           project_name: string | null
           on_behalf_of: string | null
+          billing_interval: string | null
         }
         let recurring: RecurringCtx | null = null
         {
           const { data } = await supabase
             .from('recurring_donations')
-            .select('user_id, donor_email, donor_name, is_public, message, project_name, on_behalf_of')
+            .select('user_id, donor_email, donor_name, is_public, message, project_name, on_behalf_of, billing_interval')
             .eq('stripe_subscription_id', subscriptionId)
             .maybeSingle()
           recurring = (data as RecurringCtx | null) ?? null
@@ -919,6 +920,7 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
               message: row.message,
               project_name: row.project_name,
               on_behalf_of: row.on_behalf_of,
+              billing_interval: row.billing_interval,
             }
           } catch (err) {
             console.error('[stripe-webhook] recurring self-heal failed:', (err as Error).message)
@@ -981,6 +983,10 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             message: 'Monthly recurring donation',
             points_earned: points,
             is_recurring: true,
+            // The receipt used to say "Recurring monthly" for every recurring
+            // gift, including the annual ones. This is a tax receipt, so the
+            // period on it has to be the real one.
+            billing_interval: recurring?.billing_interval ?? '',
             receipt_number: receiptNumber || '',
             charity_name: charity.charity_name,
             abn: charity.abn,
