@@ -256,7 +256,7 @@ export default function DonationsPage() {
             {liveRecurring.length > 0 && (
               <div>
                 <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3 px-1">
-                  Monthly giving
+                  Recurring giving
                 </h3>
                 <StaggeredList className="space-y-2">
                   {liveRecurring.map((r) => (
