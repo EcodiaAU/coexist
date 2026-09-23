@@ -153,9 +153,17 @@ const HISTORY_BADGE: Record<Donation['status'], { label: string; className: stri
   refunded: { label: 'Refunded', className: 'bg-neutral-100 text-neutral-500' },
 }
 
+// The webhook writes the charge's OWN cadence into `message` ("Annual recurring
+// donation", "Monthly recurring donation", ...). This test was an exact match on
+// the monthly spelling, which was the only string the webhook ever wrote - so
+// the moment that writer started telling the truth about an annual gift, every
+// annual charge would have lost its "(recurring)" tag. Match the shape, and keep
+// matching the rows already written under the old spelling.
+const RECURRING_MESSAGE_RE = /^(daily|weekly|monthly|annual)?\s*recurring donation$/i
+
 function HistoryRow({ donation }: { donation: Donation }) {
   const badge = HISTORY_BADGE[donation.status]
-  const recurring = donation.message === 'Monthly recurring donation'
+  const recurring = RECURRING_MESSAGE_RE.test((donation.message ?? '').trim())
   return (
     <StaggeredItem className="rounded-md bg-white shadow-sm p-4">
       <div className="flex items-start justify-between gap-3">

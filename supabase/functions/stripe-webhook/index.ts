@@ -49,14 +49,25 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 async function sendTemplateEmail(
   supabase: ReturnType<typeof createClient>,
   type: string,
-  userId: string,
+  userId: string | null,
   data: Record<string, unknown>,
   ticketId?: string,
+  toEmail?: string | null,
 ): Promise<{ ok: boolean; suppressed: boolean }> {
+  // A recurring gift given without an account has a donor_email and no user_id,
+  // and the reconciler backfilled 30 such rows. Passing that null straight to
+  // send-email addresses the message to nobody, so resolve the recipient here
+  // and refuse rather than send into the void. A caller that already holds a
+  // real userId builds exactly the body it built before.
+  const recipient = userId ? { userId } : toEmail ? { to: toEmail } : null
+  if (!recipient) {
+    console.warn(`[stripe-webhook] send-email (${type}) has no recipient, skipping`)
+    return { ok: false, suppressed: true }
+  }
   try {
     const { data: res, error } = await supabase.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
-      body: ticketId ? { type, userId, data, ticketId } : { type, userId, data },
+      body: ticketId ? { type, ...recipient, data, ticketId } : { type, ...recipient, data },
     })
     if (error) {
       console.error(`[stripe-webhook] send-email (${type}) failed:`, (error as Error).message)
@@ -228,6 +239,24 @@ async function mintReceiptNumber(
  * Send a donation receipt to an authenticated donor (by userId) OR an anonymous
  * donor (by email). Anonymous donors previously received no app receipt at all.
  */
+/**
+ * The ledger message written against a recurring charge.
+ *
+ * This was the literal "Monthly recurring donation" for EVERY recurring gift,
+ * including the annual ones - the same wrong-period claim the tax receipt and
+ * the profile card both carried, one surface further down. It is also the
+ * SENTINEL /profile/donations reads to tag a history row "(recurring)", so the
+ * writer and the reader move together or the tag silently disappears.
+ */
+const RECURRING_MESSAGE: Record<string, string> = {
+  day: 'Daily recurring donation',
+  week: 'Weekly recurring donation',
+  month: 'Monthly recurring donation',
+  year: 'Annual recurring donation',
+}
+const recurringMessage = (interval: string | null | undefined) =>
+  RECURRING_MESSAGE[interval ?? ''] ?? 'Recurring donation'
+
 async function sendDonationReceipt(
   supabase: ReturnType<typeof createClient>,
   opts: { userId?: string | null; toEmail?: string | null; data: Record<string, unknown> },
@@ -809,7 +838,7 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
         // trigger covers the case where the account is created later.
         await claimDonationsForEmail(supabase, row.user_id, row.donor_email)
 
-        console.log('Subscription created:', subscription.id, `$${row.amount}/mo`, row.user_id ? '(member)' : '(anon)')
+        console.log('Subscription created:', subscription.id, `$${row.amount}/${row.billing_interval ?? 'recurring'}`, row.user_id ? '(member)' : '(anon)')
         break
       }
 
@@ -927,6 +956,23 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           }
         }
 
+        // A successful charge means the card works again. invoice.payment_failed
+        // writes past_due and NOTHING ever wrote it back, so a donor who fixed
+        // their card kept seeing "Payment failed" and an Update card button
+        // against a gift that was being collected normally. Narrow on purpose:
+        // only a past_due row moves, so a cancelled or paused gift is never
+        // resurrected by a late invoice.
+        {
+          const { error: reviveErr } = await supabase
+            .from('recurring_donations')
+            .update({ status: 'active' })
+            .eq('stripe_subscription_id', subscriptionId)
+            .eq('status', 'past_due')
+          if (reviveErr) {
+            console.error('[stripe-webhook] past_due -> active failed:', reviveErr.message)
+          }
+        }
+
         // Never drop a real charge: fall back to the invoice's own customer email.
         const donorUserId = recurring?.user_id ?? null
         const donorEmail = recurring?.donor_email ?? invoice.customer_email ?? null
@@ -947,7 +993,9 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           currency: 'AUD',
           stripe_payment_id: recurringPaymentId,
           project_name: recurring?.project_name ?? null,
-          message: firstCharge ? (recurring?.message || 'Monthly recurring donation') : 'Monthly recurring donation',
+          message: firstCharge
+            ? (recurring?.message || recurringMessage(recurring?.billing_interval))
+            : recurringMessage(recurring?.billing_interval),
           on_behalf_of: firstCharge ? (recurring?.on_behalf_of ?? null) : null,
           is_public: firstCharge ? (recurring?.is_public ?? false) : false,
           receipt_number: receiptNumber,
@@ -980,7 +1028,7 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             currency: 'AUD',
             date: new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }),
             project_name: recurring?.project_name ?? '',
-            message: 'Monthly recurring donation',
+            message: recurringMessage(recurring?.billing_interval),
             points_earned: points,
             is_recurring: true,
             // The receipt used to say "Recurring monthly" for every recurring
@@ -1023,10 +1071,22 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           })
           .eq('stripe_subscription_id', sub.id)
 
-        // Notify user via template
-        const meta = sub.metadata ?? {}
-        if (meta.user_id) {
-          await sendTemplateEmail(supabase, 'subscription_cancelled', meta.user_id, {
+        // Whom to tell. sub.metadata.user_id is set only on a subscription the
+        // app itself created, and NOT ONE of the historical gifts carries it, so
+        // this branch notified nobody for every donor the reconciler backfilled.
+        // The row knows the owner; read it. Deliberately no anonymous-email
+        // fallback here: a cancellation is a courtesy confirmation rather than a
+        // payment problem, and the account-less rows on this table include the
+        // synthetic addresses from the 2024-11-04 card-testing burst.
+        const { data: cancelledRow } = await supabase
+          .from('recurring_donations')
+          .select('user_id')
+          .eq('stripe_subscription_id', sub.id)
+          .maybeSingle()
+        const notifyUserId =
+          (cancelledRow?.user_id as string | null) ?? (sub.metadata?.user_id ?? null)
+        if (notifyUserId) {
+          await sendTemplateEmail(supabase, 'subscription_cancelled', notifyUserId, {
             name: '',
             donate_url: 'https://app.coexistaus.org/donate',
           })
@@ -1065,12 +1125,20 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           }
         }
 
-        // Mark as past_due
+        // Mark as past_due.
+        //
+        // This lookup used to come back EMPTY for every historical gift, because
+        // no row existed; the reconciler backfilled all 33, so it resolves now -
+        // and 30 of those rows carry a NULL user_id, because the donor never made
+        // an account. Selecting user_id alone therefore notifies nobody at all,
+        // which is the one message that has to land: a card that failed silently
+        // ends the gift. Take the email too. .maybeSingle() because .single()
+        // errors on a row that is genuinely absent.
         const { data: recurring } = await supabase
           .from('recurring_donations')
-          .select('user_id')
+          .select('user_id, donor_email, donor_name')
           .eq('stripe_subscription_id', subscriptionId)
-          .single()
+          .maybeSingle()
 
         // Migration 051 added 'past_due' to the status CHECK specifically so a
         // card failure is distinguishable from a deliberate 'paused'; write it
@@ -1080,14 +1148,21 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           .update({ status: 'past_due' })
           .eq('stripe_subscription_id', subscriptionId)
 
-        // Notify user about failed payment via template
+        // Tell the donor, whether or not they hold an account.
         if (recurring) {
           const failedAmount = (failedInvoice.amount_due ?? 0) / 100
-          await sendTemplateEmail(supabase, 'payment_failed', recurring.user_id, {
-            name: '',
-            amount: failedAmount.toFixed(2),
-            update_url: 'https://app.coexistaus.org/profile/donations',
-          })
+          await sendTemplateEmail(
+            supabase,
+            'payment_failed',
+            recurring.user_id as string | null,
+            {
+              name: recurring.user_id ? '' : ((recurring.donor_name as string) || ''),
+              amount: failedAmount.toFixed(2),
+              update_url: 'https://app.coexistaus.org/profile/donations',
+            },
+            undefined,
+            recurring.user_id ? null : (recurring.donor_email as string | null),
+          )
         }
 
         console.log('Recurring payment failed:', failedInvoice.id)
