@@ -528,6 +528,38 @@ textarea,
   scroll-margin-top: calc(var(--safe-top, 0px) + 24px);
 }
 
+/* ===== h-screen-kb: the ONLY correct height for a clipping full-screen root =====
+
+   Use this instead of `h-dvh` / `h-screen` on any root that pins itself to the
+   viewport AND owns an inner scroll container (the `overflow-hidden` outer +
+   `overflow-y-auto` inner shape).
+
+   WHY. capacitor.config.ts sets `Keyboard: { resize: 'none' }` on purpose, so
+   iOS does NOT shrink the WebView when the soft keyboard opens. 100dvh stays
+   the FULL screen height while the visible area is the screen minus the keypad.
+   A scrollport sized to 100dvh therefore keeps a dead zone exactly --kb-height
+   tall at its bottom: the content is scrolled to the end, the scrollbar is at
+   the bottom, and those last pixels still sit behind the keypad with no scroll
+   left to reach them. Anything living there (a submit button, a footer action)
+   becomes untappable for as long as the keyboard is up.
+
+   Subtracting --kb-height (set on <html> by useKeyboardHeight, mounted in
+   app-shell.tsx for every route including the bare auth/onboarding shells)
+   shrinks the scrollport to the visible area, which grows maxScroll by the same
+   amount and puts the whole form back in reach.
+
+   MEASURED on the deployed app, 2026-09-23, iPhone 14 Pro 393x852 with a 336px
+   keypad, onboarding safety step: with `h-dvh` the scrollport was 778px tall,
+   maxScroll 386, and at MAXIMUM scroll "Continue" sat at y=704 against a
+   keyboard covering everything from y=516 - permanently untappable. With this
+   utility the scrollport is 442px, maxScroll 722, and "Continue" lands at
+   y=368. Reported by Matthew Steele via Co-Exist, who could not finish signup.
+
+   Guarded by src/test/keyboard-safe-viewport.test.ts. */
+@utility h-screen-kb {
+  height: calc(100dvh - var(--kb-height, 0px));
+}
+
 /* Text scaling support - up to 200% (§41 item 57) */
 html {
   font-size: 100%;

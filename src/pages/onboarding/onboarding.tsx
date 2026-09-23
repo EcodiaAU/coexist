@@ -309,7 +309,15 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="h-dvh flex flex-col bg-white overflow-hidden">
+    // h-screen-kb, NOT h-dvh: under Capacitor Keyboard.resize:'none' the WebView
+    // keeps its full height while the keypad covers the bottom of the screen, so a
+    // 100dvh scrollport ends with a dead zone --kb-height tall that no amount of
+    // scrolling can reach. That stranded BOTH "Continue" and "I'll do this later"
+    // on the safety step the moment a keyboard was open, which is a dead end in
+    // signup rather than a cosmetic one (Matthew Steele via Co-Exist, 2026-09-23).
+    // app-shell, sign-up and admin-layout already subtract --kb-height; onboarding
+    // was the one screen root that did not. See globals.css for the measurements.
+    <div className="h-screen-kb flex flex-col bg-white overflow-hidden">
       {/* Progress dots */}
       <div className="flex items-center justify-center gap-2 pt-6 pb-4 px-6">
         {Array.from({ length: totalSteps }, (_, i) => (
@@ -348,7 +356,7 @@ export default function OnboardingPage() {
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             // overscroll-contain + overflow-y-auto: the step content is the ONLY
             // scroll container in onboarding. Every ancestor is overflow-hidden
-            // (h-dvh outer, flex-1 relative step viewport), so before this the
+            // (h-screen-kb outer, flex-1 relative step viewport), so before this the
             // tallest step could not be scrolled to at all. StepSafety measures
             // 1164px of content against a 590px viewport in mobile Safari and a
             // 770px one in the native WebView, which put BOTH its "Continue" and
