@@ -250,6 +250,26 @@ async function sendDonationReceipt(
 }
 
 /**
+ * Link any orphaned donation rows for this email to the confirmed account that
+ * owns it. No-op when the row already carries a user_id, when there is no email,
+ * or when no confirmed account exists yet (the auth.users trigger catches that
+ * case at signup). Failure is logged and never blocks recording the gift.
+ */
+async function claimDonationsForEmail(
+  supabase: ReturnType<typeof createClient>,
+  userId: string | null,
+  donorEmail: string | null,
+) {
+  if (userId || !donorEmail) return
+  try {
+    const { error } = await supabase.rpc('claim_donations_for_email', { p_email: donorEmail })
+    if (error) console.error('[stripe-webhook] claim_donations_for_email failed:', error.message)
+  } catch (err) {
+    console.error('[stripe-webhook] claim_donations_for_email threw:', (err as Error).message)
+  }
+}
+
+/**
  * Build a recurring_donations row from a Stripe subscription's metadata.
  * Handles the anonymous case (public-checkout sends user_id='') by mapping it to
  * NULL and carrying donor_email/donor_name, so invoice.payment_succeeded can
@@ -263,8 +283,38 @@ async function recurringRowFromSubscription(
   subscription: Stripe.Subscription,
 ) {
   const meta = subscription.metadata ?? {}
-  const amount = (subscription.items.data[0]?.price?.unit_amount ?? 0) / 100
+  const price = subscription.items.data[0]?.price
+  const amount = (price?.unit_amount ?? 0) / 100
   const userId = meta.user_id && meta.user_id !== '' ? meta.user_id : null
+
+  // Donor identity falls back to the Stripe CUSTOMER when the subscription
+  // carries no metadata. Subscriptions created before this checkout stamped
+  // metadata have {}, which used to land the row with user_id / donor_email /
+  // donor_name all NULL. RLS on recurring_donations is user_id = auth.uid(), so
+  // such a row is invisible on /profile/donations AND uncancellable there
+  // forever. Measured 2026-09-23: 2 of 2 live rows were orphaned exactly this
+  // way, and Stripe held the donor's email on the customer the whole time.
+  let donorEmail: string | null = meta.donor_email || null
+  let donorName: string | null = meta.donor_name || null
+  if (!donorEmail) {
+    try {
+      const customerId =
+        typeof subscription.customer === 'string'
+          ? subscription.customer
+          : subscription.customer?.id ?? null
+      if (customerId) {
+        const customer = await stripe.customers.retrieve(customerId)
+        if (customer && !(customer as { deleted?: boolean }).deleted) {
+          const c = customer as Stripe.Customer
+          donorEmail = c.email ?? null
+          if (!donorName) donorName = c.name ?? null
+        }
+      }
+    } catch (err) {
+      console.error('[stripe-webhook] customer identity lookup failed:', (err as Error).message)
+    }
+  }
+
   let projectName: string | null = null
   if (meta.project_id) {
     const { data: proj } = await supabase
@@ -280,12 +330,15 @@ async function recurringRowFromSubscription(
     amount,
     currency: 'AUD',
     status: 'active',
-    donor_email: meta.donor_email || null,
-    donor_name: meta.donor_name || null,
+    donor_email: donorEmail,
+    donor_name: donorName,
     is_public: meta.is_public === 'true',
     message: meta.message || null,
     project_name: projectName,
     on_behalf_of: meta.on_behalf_of || null,
+    // The donations card rendered a hardcoded "/ month". Both live gifts are
+    // ANNUAL, so every recurring donor was shown the wrong billing period.
+    billing_interval: price?.recurring?.interval ?? null,
   }
 }
 
@@ -751,6 +804,11 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
           console.error('Failed to insert recurring_donation:', subError.message)
         }
 
+        // A gift given while signed out still belongs to whoever owns that email.
+        // Link it now if a confirmed account already exists; the auth.users
+        // trigger covers the case where the account is created later.
+        await claimDonationsForEmail(supabase, row.user_id, row.donor_email)
+
         console.log('Subscription created:', subscription.id, `$${row.amount}/mo`, row.user_id ? '(member)' : '(anon)')
         break
       }
@@ -852,6 +910,7 @@ Deno.serve(withSentry('stripe-webhook', async (req: Request) => {
             await supabase
               .from('recurring_donations')
               .upsert(row, { onConflict: 'stripe_subscription_id' })
+            await claimDonationsForEmail(supabase, row.user_id, row.donor_email)
             recurring = {
               user_id: row.user_id,
               donor_email: row.donor_email,

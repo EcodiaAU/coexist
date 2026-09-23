@@ -6134,6 +6134,7 @@ export type Database = {
       recurring_donations: {
         Row: {
           amount: number
+          billing_interval: string | null
           cancelled_at: string | null
           created_at: string | null
           currency: string | null
@@ -6151,6 +6152,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          billing_interval?: string | null
           cancelled_at?: string | null
           created_at?: string | null
           currency?: string | null
@@ -6168,6 +6170,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          billing_interval?: string | null
           cancelled_at?: string | null
           created_at?: string | null
           currency?: string | null

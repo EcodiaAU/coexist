@@ -46,6 +46,8 @@ export interface RecurringDonation {
   status: 'active' | 'cancelled' | 'paused' | 'past_due'
   cancelled_at: string | null
   created_at: string
+  /** Stripe price recurring.interval. Null on rows recorded before it was captured. */
+  billing_interval: 'day' | 'week' | 'month' | 'year' | null
 }
 
 export interface DonorWallEntry {

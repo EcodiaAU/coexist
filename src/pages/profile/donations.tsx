@@ -33,6 +33,21 @@ const fmtDate = (iso: string) =>
 const fmtAmount = (amount: number, currency = 'AUD') =>
   `$${Number(amount).toFixed(2)} ${currency}`
 
+// A recurring gift is not necessarily monthly. This card rendered a hardcoded
+// "/ month" against rows that carry a Stripe interval, and every live recurring
+// gift on Co-Exist is ANNUAL, so the amount shown was right and the period was
+// wrong. Rows recorded before billing_interval existed carry null; those fall
+// back to the neutral "recurring" rather than asserting a period we do not know.
+const INTERVAL_LABEL: Record<string, string> = {
+  day: ' / day',
+  week: ' / week',
+  month: ' / month',
+  year: ' / year',
+}
+
+const fmtInterval = (interval: RecurringDonation['billing_interval']) =>
+  (interval && INTERVAL_LABEL[interval]) || ' recurring'
+
 /* ------------------------------------------------------------------ */
 /*  Recurring donation card (active / past_due / paused / cancelled)   */
 /* ------------------------------------------------------------------ */
@@ -76,7 +91,7 @@ function RecurringCard({
           <div className="min-w-0">
             <p className="text-sm font-semibold text-neutral-900">
               {fmtAmount(donation.amount, donation.currency)}
-              <span className="font-normal text-neutral-500"> / month</span>
+              <span className="font-normal text-neutral-500">{fmtInterval(donation.billing_interval)}</span>
             </p>
             <p className="text-[11px] text-neutral-400 mt-0.5">
               Started {fmtDate(donation.created_at)}
@@ -96,7 +111,7 @@ function RecurringCard({
       {donation.status === 'past_due' && (
         <p className="text-[11px] text-error-600 mt-2 flex items-start gap-1">
           <AlertTriangle size={12} className="mt-px shrink-0" />
-          Your last payment did not go through. Update your card to keep your monthly gift going.
+          Your last payment did not go through. Update your card to keep your recurring gift going.
         </p>
       )}
 
@@ -147,7 +162,7 @@ function HistoryRow({ donation }: { donation: Donation }) {
         <div className="min-w-0">
           <p className="text-sm font-semibold text-neutral-900">
             {fmtAmount(donation.amount, donation.currency)}
-            {recurring && <span className="font-normal text-neutral-400"> (monthly)</span>}
+            {recurring && <span className="font-normal text-neutral-400"> (recurring)</span>}
           </p>
           <div className="flex items-center gap-2 mt-1 text-[11px] text-neutral-400">
             <span className="flex items-center gap-1">
@@ -203,7 +218,7 @@ export default function DonationsPage() {
     setConfirmSubId(null)
     try {
       await cancelMutation.mutateAsync(subId)
-      toast.success('Your monthly donation has been cancelled.')
+      toast.success('Your recurring donation has been cancelled.')
     } catch {
       toast.error('We could not cancel that just now. Please try again.')
     }
@@ -214,7 +229,7 @@ export default function DonationsPage() {
       const { url } = await portalMutation.mutateAsync(subId)
       window.location.href = url
     } catch {
-      toast.error('Card management is not available right now. You can restart your monthly gift instead.')
+      toast.error('Card management is not available right now. You can restart your recurring gift instead.')
     }
   }
 
@@ -305,7 +320,7 @@ export default function DonationsPage() {
         open={!!confirmSubId}
         onClose={() => setConfirmSubId(null)}
         onConfirm={handleCancel}
-        title="Cancel monthly donation?"
+        title="Cancel recurring donation?"
         description="Your recurring gift will stop and you will not be charged again. You can start a new one any time."
         confirmLabel="Cancel donation"
         variant="warning"
