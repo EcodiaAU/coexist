@@ -29,16 +29,42 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 // ── Helpers ──
 
 /** Mirrors stripe-webhook: report the outcome instead of swallowing it. */
+/**
+ * Mirrors stripe-webhook: the ledger message carries the REAL billing period.
+ * The monthly spelling used to be written against annual gifts, and it is also
+ * the sentinel /profile/donations matches to tag a row
+ * "(recurring)", so the writer and the reader move together or the tag
+ * disappears. Kept identical to the live function on purpose; parity is
+ * asserted from source by src/test/stripe-webhook-test-parity.test.ts.
+ */
+const RECURRING_MESSAGE: Record<string, string> = {
+  day: 'Daily recurring donation',
+  week: 'Weekly recurring donation',
+  month: 'Monthly recurring donation',
+  year: 'Annual recurring donation',
+}
+const recurringMessage = (interval: string | null | undefined) =>
+  RECURRING_MESSAGE[interval ?? ''] ?? 'Recurring donation'
+
 async function sendTemplateEmail(
   supabase: ReturnType<typeof createClient>,
   type: string,
-  userId: string,
+  userId: string | null,
   data: Record<string, unknown>,
+  toEmail?: string | null,
 ): Promise<{ ok: boolean; suppressed: boolean }> {
+  // A recurring gift given without an account has a donor_email and no user_id.
+  // Passing that null straight to send-email addresses the message to nobody,
+  // so resolve the recipient here and refuse rather than send into the void.
+  const recipient = userId ? { userId } : toEmail ? { to: toEmail } : null
+  if (!recipient) {
+    console.warn(`[stripe-webhook-test] send-email (${type}) has no recipient, skipping`)
+    return { ok: false, suppressed: true }
+  }
   try {
     const { data: res, error } = await supabase.functions.invoke('send-email', {
           headers: { Authorization: `Bearer ${supabaseServiceKey}` },
-      body: { type, userId, data },
+      body: { type, ...recipient, data },
     })
     if (error) {
       console.error(`[stripe-webhook] send-email (${type}) failed:`, (error as Error).message)
@@ -379,17 +405,41 @@ Deno.serve(withSentry('stripe-webhook-test', async (req: Request) => {
             ? invoice.subscription
             : invoice.subscription.id
 
-        // Look up recurring donation to get user_id
+        // Take donor_email and donor_name too: most backfilled rows carry a NULL
+        // user_id because the donor never made an account, and selecting user_id
+        // alone addresses every downstream email to nobody. .maybeSingle() because
+        // .single() errors on a row that is genuinely absent.
         const { data: recurring } = await supabase
           .from('recurring_donations')
-          .select('user_id')
+          .select('user_id, donor_email, donor_name, billing_interval')
           .eq('stripe_subscription_id', subscriptionId)
-          .single()
+          .maybeSingle()
 
         if (!recurring) {
           console.warn('No recurring_donation found for subscription:', subscriptionId)
           break
         }
+
+        // A successful charge means the card works again. payment_failed writes
+        // past_due and nothing ever wrote it back, so a donor who fixed their card
+        // kept seeing "Payment failed". Narrow on purpose: only a past_due row
+        // moves, so a cancelled or paused gift is never resurrected by a late
+        // invoice.
+        {
+          const { error: reviveErr } = await supabase
+            .from('recurring_donations')
+            .update({ status: 'active' })
+            .eq('stripe_subscription_id', subscriptionId)
+            .eq('status', 'past_due')
+          if (reviveErr) {
+            console.error('[stripe-webhook-test] past_due -> active failed:', reviveErr.message)
+          }
+        }
+
+        const donorUserId = (recurring.user_id as string | null) ?? null
+        const donorEmail = (recurring.donor_email as string | null) ?? null
+        const donorName = (recurring.donor_name as string | null) ?? null
+        const ledgerMessage = recurringMessage(recurring.billing_interval as string | null)
 
         const amountDollars = (invoice.amount_paid ?? 0) / 100
 
@@ -408,11 +458,13 @@ Deno.serve(withSentry('stripe-webhook-test', async (req: Request) => {
 
         // Record the charge as a donation
         const { error: recurDonError } = await supabase.from('donations').insert({
-          user_id: recurring.user_id,
+          user_id: donorUserId,
+          donor_email: donorUserId ? null : donorEmail,
+          donor_name: donorUserId ? null : donorName,
           amount: amountDollars,
           currency: 'AUD',
           stripe_payment_id: recurringPaymentId,
-          message: 'Monthly recurring donation',
+          message: ledgerMessage,
           is_public: false,
           status: 'succeeded',
         })
@@ -422,28 +474,37 @@ Deno.serve(withSentry('stripe-webhook-test', async (req: Request) => {
           break
         }
 
-        // Award points
+        // Award points (1 per dollar) - authenticated donors only. Mirrors live:
+        // without the donorUserId guard this RPC is called with a null id on every
+        // account-less gift, which is most of them.
         const points = Math.floor(amountDollars)
-        if (points > 0) {
+        if (points > 0 && donorUserId) {
           await supabase.rpc('award_points', {
-            p_user_id: recurring.user_id,
+            p_user_id: donorUserId,
             p_amount: points,
             p_reason: 'recurring_donation',
           })
         }
 
-        // Send receipt via template
-        await sendTemplateEmail(supabase, 'donation_receipt', recurring.user_id, {
-          name: '',
-          amount: amountDollars.toFixed(2),
-          currency: 'AUD',
-          date: new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }),
-          project_name: '',
-          message: 'Monthly recurring donation',
-          points_earned: points,
-          is_recurring: true,
-          receipt_url: 'https://app.coexistaus.org/profile/donations',
-        })
+        // Receipt to member (by userId) OR anonymous donor (by email).
+        await sendTemplateEmail(
+          supabase,
+          'donation_receipt',
+          donorUserId,
+          {
+            name: donorUserId ? '' : (donorName || ''),
+            amount: amountDollars.toFixed(2),
+            currency: 'AUD',
+            date: new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }),
+            project_name: '',
+            message: ledgerMessage,
+            points_earned: points,
+            is_recurring: true,
+            billing_interval: (recurring.billing_interval as string | null) ?? '',
+            receipt_url: 'https://app.coexistaus.org/profile/donations',
+          },
+          donorUserId ? null : donorEmail,
+        )
 
         console.log('Recurring payment succeeded:', invoice.id, `$${amountDollars}`)
         break
@@ -463,10 +524,20 @@ Deno.serve(withSentry('stripe-webhook-test', async (req: Request) => {
           })
           .eq('stripe_subscription_id', sub.id)
 
-        // Notify user via template
-        const meta = sub.metadata ?? {}
-        if (meta.user_id) {
-          await sendTemplateEmail(supabase, 'subscription_cancelled', meta.user_id, {
+        // Whom to tell. sub.metadata.user_id is set only on a subscription the app
+        // itself created, and NOT ONE historical gift carries it, so this branch
+        // notified nobody for every donor the reconciler backfilled. The row knows
+        // the owner; read it. Deliberately no anonymous-email fallback here, matching
+        // live: a cancellation is a courtesy rather than a payment problem.
+        const { data: cancelledRow } = await supabase
+          .from('recurring_donations')
+          .select('user_id')
+          .eq('stripe_subscription_id', sub.id)
+          .maybeSingle()
+        const notifyUserId =
+          (cancelledRow?.user_id as string | null) ?? (sub.metadata?.user_id ?? null)
+        if (notifyUserId) {
+          await sendTemplateEmail(supabase, 'subscription_cancelled', notifyUserId, {
             name: '',
             donate_url: 'https://app.coexistaus.org/donate',
           })
@@ -488,28 +559,38 @@ Deno.serve(withSentry('stripe-webhook-test', async (req: Request) => {
             ? failedInvoice.subscription
             : failedInvoice.subscription.id
 
-        // Mark as past_due
+        // Take the email too. Most backfilled rows carry a NULL user_id because the
+        // donor never made an account, so selecting user_id alone notifies nobody at
+        // all, and this is the one message that has to land: a card that failed
+        // silently ends the gift.
         const { data: recurring } = await supabase
           .from('recurring_donations')
-          .select('user_id')
+          .select('user_id, donor_email, donor_name')
           .eq('stripe_subscription_id', subscriptionId)
-          .single()
+          .maybeSingle()
 
-        // Update status - the schema CHECK allows 'active', 'cancelled', 'paused'
-        // Use 'paused' to represent past_due since that's closest
+        // Migration 051 added 'past_due' to the status CHECK specifically so a card
+        // failure is distinguishable from a deliberate 'paused'. Write it directly
+        // instead of the old 'paused' proxy.
         await supabase
           .from('recurring_donations')
-          .update({ status: 'paused' })
+          .update({ status: 'past_due' })
           .eq('stripe_subscription_id', subscriptionId)
 
-        // Notify user about failed payment via template
+        // Tell the donor, whether or not they hold an account.
         if (recurring) {
           const failedAmount = (failedInvoice.amount_due ?? 0) / 100
-          await sendTemplateEmail(supabase, 'payment_failed', recurring.user_id, {
-            name: '',
-            amount: failedAmount.toFixed(2),
-            update_url: 'https://app.coexistaus.org/profile/donations',
-          })
+          await sendTemplateEmail(
+            supabase,
+            'payment_failed',
+            recurring.user_id as string | null,
+            {
+              name: recurring.user_id ? '' : ((recurring.donor_name as string) || ''),
+              amount: failedAmount.toFixed(2),
+              update_url: 'https://app.coexistaus.org/profile/donations',
+            },
+            recurring.user_id ? null : (recurring.donor_email as string | null),
+          )
         }
 
         console.log('Recurring payment failed:', failedInvoice.id)
