@@ -810,14 +810,40 @@ Deno.serve(withSentry('create-checkout', async (req: Request) => {
           return json({ error: 'Subscription not found or not owned by you' }, 403)
         }
 
-        await stripe.subscriptions.cancel(body.stripe_subscription_id)
+        // A gift already cancelled AT STRIPE (donor used the emailed receipt or
+        // the billing portal, or a reconcile has not caught up) used to throw
+        // here, 500 the call, and leave the row on `active` forever: the donor
+        // pressed Cancel, saw an error, and kept seeing a live gift they were no
+        // longer being charged for. Stripe agreeing with the request is not a
+        // failure of it, so treat an already-gone subscription as success and
+        // still settle the row.
+        let alreadyGone = false
+        try {
+          await stripe.subscriptions.cancel(body.stripe_subscription_id)
+        } catch (err) {
+          const code = (err as { code?: string; statusCode?: number })?.code
+          const status = (err as { statusCode?: number })?.statusCode
+          const msg = (err as Error)?.message ?? ''
+          alreadyGone =
+            code === 'resource_missing' ||
+            status === 404 ||
+            /no such subscription|already canceled|already cancelled/i.test(msg)
+          if (!alreadyGone) throw err
+          console.log('[create-checkout] subscription already cancelled at Stripe:', body.stripe_subscription_id)
+        }
 
-        await supabase
+        const { error: settleErr } = await supabase
           .from('recurring_donations')
           .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
           .eq('stripe_subscription_id', body.stripe_subscription_id)
 
-        return json({ success: true })
+        // The money stopped either way; failing the call now would tell the donor
+        // their cancellation did not happen when it did.
+        if (settleErr) {
+          console.error('[create-checkout] cancelled at Stripe but row not settled:', body.stripe_subscription_id, settleErr.message)
+        }
+
+        return json({ success: true, already_cancelled: alreadyGone })
       }
 
       /* ---- Stripe billing portal (update card / manage a recurring gift) ---- */
