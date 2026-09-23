@@ -111,6 +111,13 @@ describe('diffRow', () => {
     expect('donor_email' in diffRow(human, desired)).toBe(false)
   })
 
+  it('corrects a start date the app invented on a renewal', () => {
+    // The webhook stamped now() when it first saw a 2024 gift renew in 2026, so
+    // the page told the donor they started giving two years after they did.
+    const current = { ...desired, created_at: '2026-09-09T22:14:03.344Z' }
+    expect(diffRow(current, desired).created_at).toBe(desired.created_at)
+  })
+
   it('does not churn on an equivalent timestamp written in a different format', () => {
     const current = { ...desired, cancelled_at: new Date(1730000000 * 1000).toUTCString() }
     expect('cancelled_at' in diffRow(current, desired)).toBe(false)

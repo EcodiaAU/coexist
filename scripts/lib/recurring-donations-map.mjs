@@ -74,8 +74,15 @@ export function rowFromSubscription(subscription) {
  * Fields Stripe owns outright. Everything else on an existing row is the app's
  * (or a human's) and is only ever filled in when NULL, never overwritten.
  */
-const STRIPE_AUTHORITATIVE = ['status', 'billing_interval', 'cancelled_at', 'amount']
-const FILL_IF_NULL = ['donor_email', 'donor_name', 'currency', 'created_at']
+/**
+ * created_at is Stripe-authoritative, not fill-if-null, because the donations
+ * page renders it as "Started". A row the webhook created on a RENEWAL carried
+ * the date the app first heard about the gift, so a donor giving since 2024 was
+ * told they started in 2026. Stripe's subscription `created` is when the gift
+ * actually began.
+ */
+const STRIPE_AUTHORITATIVE = ['status', 'billing_interval', 'cancelled_at', 'amount', 'created_at']
+const FILL_IF_NULL = ['donor_email', 'donor_name', 'currency']
 
 const sameInstant = (a, b) => {
   if (!a || !b) return a === b
