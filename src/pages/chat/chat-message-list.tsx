@@ -10,7 +10,7 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Lock, Camera, MessageSquareHeart, Tent, Play, Car } from 'lucide-react'
+import { Lock, Camera, MessageSquareHeart, Tent, Play, Car, CalendarDays } from 'lucide-react'
 import { ChatBubble, PollCard, AnnouncementCard, CarpoolCard } from '@/components/chat-bubble'
 import { HtmlChatBubble } from '@/components/html-chat-bubble'
 import { MessageReactions } from '@/components/message-reactions'
@@ -41,6 +41,7 @@ import { useSignedChatImage } from '@/hooks/use-signed-chat-image'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import type { Tables, Json } from '@/types/database.types'
 import { isMessageEdited } from '@/lib/chat-edit'
+import { eventChatCopy } from '@/lib/event-group-chat'
 
 type EventRegistration = Tables<'event_registrations'>
 
@@ -673,6 +674,10 @@ export interface ChatMessageListProps {
   isChannel: boolean
   /** Channel subtype (e.g. 'campout', 'staff_collective') when isChannel */
   channelType?: string
+  /** For a 'campout' channel: the linked event's activity_type. The same
+      channel type is the group chat of any event with the toggle on, so the
+      empty state and aria label follow the event, not the type. */
+  channelActivityType?: string | null
   /** Messages grouped by date */
   messageGroups: { date: string; messages: AnyMessage[] }[]
   allMessages: AnyMessage[]
@@ -721,6 +726,7 @@ export function ChatMessageList({
   isCollective,
   isChannel,
   channelType,
+  channelActivityType,
   messageGroups,
   allMessages,
   memberRoles,
@@ -1172,7 +1178,7 @@ export function ChatMessageList({
         // their own breathing room.
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth px-3 py-1"
         role="log"
-        aria-label={isChannel ? (channelType === 'campout' ? 'Campout chat messages' : channelType === 'carpool_breakout' ? 'Carpool chat messages' : 'Staff chat messages') : 'Chat messages'}
+        aria-label={isChannel ? (channelType === 'campout' ? eventChatCopy(channelActivityType).ariaLabel : channelType === 'carpool_breakout' ? 'Carpool chat messages' : 'Staff chat messages') : 'Chat messages'}
         aria-live="polite"
       >
         {showLoading ? (
@@ -1185,11 +1191,13 @@ export function ChatMessageList({
               <div className="flex items-center justify-center h-full">
                 <div className="text-center py-12">
                   <div className="w-14 h-14 rounded-md bg-primary-50 flex items-center justify-center mx-auto mb-4">
-                    <Tent size={24} strokeWidth={2.5} className="text-primary-500" />
+                    {eventChatCopy(channelActivityType).isCampout
+                      ? <Tent size={24} strokeWidth={2.5} className="text-primary-500" />
+                      : <CalendarDays size={24} strokeWidth={2.5} className="text-primary-500" />}
                   </div>
-                  <p className="text-base font-bold text-neutral-900">Campout group chat</p>
+                  <p className="text-base font-bold text-neutral-900">{eventChatCopy(channelActivityType).title}</p>
                   <p className="text-sm text-neutral-500 mt-1.5">
-                    Say hi to everyone coming to this campout
+                    {eventChatCopy(channelActivityType).emptyBody}
                   </p>
                 </div>
               </div>

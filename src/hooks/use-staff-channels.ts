@@ -5,6 +5,7 @@ import { invokeAndReport } from '@/lib/invoke-report'
 import { subscribeWithReconnect } from '@/lib/realtime'
 import { useAuth } from '@/hooks/use-auth'
 import { applyEditToPages, assertEdited } from '@/lib/chat-edit'
+import { isArchivedEventChat } from '@/lib/event-group-chat'
 import type { Tables } from '@/types/database.types'
 
 type Profile = Tables<'profiles'>
@@ -33,6 +34,11 @@ export interface StaffChannel {
   // staff/carpool channels (no event) and any channel whose event row is gone.
   date_start?: string | null
   date_end?: string | null
+  // The linked event's activity_type. A 'campout' channel is the per-event
+  // group chat for ANY event since 2026-09-24 (events.group_chat_enabled), so
+  // the words on screen come from this, never from the channel type. See
+  // src/lib/event-group-chat.ts.
+  activity_type?: string | null
 }
 
 /*
@@ -93,18 +99,22 @@ export function useMyStaffChannels() {
 
       const { data, error } = await supabase
         .from('chat_channel_members')
-        .select('channel_id, chat_channels(id, type, collective_id, state, event_id, name, created_at, collectives(cover_image_url, cover_image_position_x, cover_image_position_y), events(title, cover_image_url, cover_image_position_x, cover_image_position_y, date_start, date_end))')
+        .select('channel_id, chat_channels(id, type, collective_id, state, event_id, name, created_at, lifecycle_status, collectives(cover_image_url, cover_image_position_x, cover_image_position_y), events(title, cover_image_url, cover_image_position_x, cover_image_position_y, date_start, date_end, activity_type))')
         .eq('user_id', user.id)
 
       if (error) throw error
 
       return (data ?? [])
         .map((row: Record<string, unknown>) => {
-          const ch = row.chat_channels as (Omit<StaffChannel, 'cover_image_url' | 'cover_image_position_x' | 'cover_image_position_y' | 'date_start' | 'date_end'> & {
+          const ch = row.chat_channels as (Omit<StaffChannel, 'cover_image_url' | 'cover_image_position_x' | 'cover_image_position_y' | 'date_start' | 'date_end' | 'activity_type'> & {
+            lifecycle_status?: string | null
             collectives: { cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null } | null
-            events: { title: string | null; cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null; date_start: string | null; date_end: string | null } | null
+            events: { title: string | null; activity_type: string | null; cover_image_url: string | null; cover_image_position_x: number | null; cover_image_position_y: number | null; date_start: string | null; date_end: string | null } | null
           }) | null
           if (!ch) return null
+          // An event chat whose organiser switched the toggle off is archived
+          // by the database (history kept) and hidden here.
+          if (isArchivedEventChat(ch.type, ch.lifecycle_status)) return null
           const src = ch.events?.cover_image_url ? ch.events : ch.collectives
           /*
            * An event-backed chat takes its NAME from the event, not from the
@@ -132,6 +142,7 @@ export function useMyStaffChannels() {
             // collective fallback - a collective has no start/end.
             date_start: ch.events?.date_start ?? null,
             date_end: ch.events?.date_end ?? null,
+            activity_type: ch.events?.activity_type ?? null,
           } as StaffChannel
         })
         // Drop nulls AND any hidden channel type (staff_state - see
@@ -157,10 +168,11 @@ export function useMyStaffChannels() {
 /* ------------------------------------------------------------------ */
 
 /**
- * Returns the campout group-chat channel for an event, or null. RLS only
- * exposes the channel to its members (confirmed ticket holders, added by the
- * sync_campout_chat_membership trigger) and staff/admins, so a non-null result
- * also means "the current user may enter this chat".
+ * Returns the group-chat channel for an event, or null. Camp-outs always have
+ * one; since 2026-09-24 any event with group_chat_enabled does too (same
+ * 'campout' channel type). RLS only exposes the channel to its members and
+ * staff/admins, so a non-null result also means "the current user may enter
+ * this chat". An archived chat (toggle switched off) is not returned.
  */
 export function useEventCampoutChannel(eventId: string | undefined) {
   const { user } = useAuth()
@@ -174,6 +186,7 @@ export function useEventCampoutChannel(eventId: string | undefined) {
         .select('id, name')
         .eq('event_id', eventId)
         .eq('type', 'campout')
+        .eq('lifecycle_status', 'open')
         .maybeSingle()
       if (error) throw error
       return (data as { id: string; name: string } | null) ?? null
@@ -647,7 +660,7 @@ export function useChannelUnreadCounts() {
       // only to drop hidden channels - staff_state - from the unread badge).
       const { data: memberships } = await supabase
         .from('chat_channel_members')
-        .select('channel_id, chat_channels(type, collective_id)')
+        .select('channel_id, chat_channels(type, collective_id, lifecycle_status)')
         .eq('user_id', user.id)
 
       if (!memberships?.length) return {}
@@ -657,9 +670,11 @@ export function useChannelUnreadCounts() {
       // since the channel has no parent collective. Mirrors the write path
       // after migration 20260518030000.
       const channelInfo = new Map<string, { collectiveId: string | null }>()
-      for (const m of memberships as unknown as { channel_id: string; chat_channels: { type: StaffChannel['type']; collective_id: string | null } | null }[]) {
+      for (const m of memberships as unknown as { channel_id: string; chat_channels: { type: StaffChannel['type']; collective_id: string | null; lifecycle_status?: string | null } | null }[]) {
         // Skip hidden channel types (staff_state) so their unread never reaches the badge.
         if (m.chat_channels && HIDDEN_STAFF_CHANNEL_TYPES.has(m.chat_channels.type)) continue
+        // Same for an archived event group chat (toggle switched off).
+        if (m.chat_channels && isArchivedEventChat(m.chat_channels.type, m.chat_channels.lifecycle_status)) continue
         channelInfo.set(m.channel_id, { collectiveId: m.chat_channels?.collective_id ?? null })
       }
 

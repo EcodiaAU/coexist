@@ -2,7 +2,7 @@ import { type ReactNode, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { MessageCircle, Users, Lock, Globe, MapPin, Leaf, Shield, Tent, Calendar } from 'lucide-react'
+import { MessageCircle, Users, Lock, Globe, MapPin, Leaf, Shield, Tent, Calendar, CalendarDays } from 'lucide-react'
 import { Page } from '@/components/page'
 import { EmptyState } from '@/components/empty-state'
 import { OptimizedImage } from '@/components/optimized-image'
@@ -15,6 +15,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { useAuth } from '@/hooks/use-auth'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 import { formatDate, formatDateShort, localDateIn } from '@/lib/date-format'
+import { eventChatCopy } from '@/lib/event-group-chat'
 
 const CHAT_REDIRECTED_KEY = 'coexist-chat-redirected'
 
@@ -191,10 +192,13 @@ function MetaDot() {
 function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: number; index: number }) {
   const hasUnread = unread > 0
   const config = CHANNEL_TYPE_CONFIG[channel.type] ?? CHANNEL_TYPE_CONFIG.staff_collective
-  const Icon = config.icon
   // Campout chats are open to ticket holders, not staff-gated, so they skip
   // the lock badge and the "Staff only" caption the staff channels carry.
+  // Since 2026-09-24 the same channel type is the group chat of ANY event whose
+  // organiser switched it on, so the label and icon follow the event.
   const isCampout = channel.type === 'campout'
+  const eventCopy = isCampout ? eventChatCopy(channel.activity_type) : null
+  const Icon = eventCopy && !eventCopy.isCampout ? CalendarDays : config.icon
   // Campout rows show WHEN the campout is (Tate 2026-08-17) so members can tell
   // them apart at a glance. Multi-day campouts render a start-to-end range;
   // single-day render just the day. Dates are the event's stored wall-clock, so
@@ -223,7 +227,7 @@ function StaffChannelRow({ channel, unread }: { channel: StaffChannel; unread: n
       title={cleanChannelName(channel.name)}
       meta={
         <>
-          <span className="shrink-0">{config.label}</span>
+          <span className="shrink-0">{eventCopy?.rowLabel ?? config.label}</span>
           <MetaDot />
           {campoutDate ? (
             <span className="flex min-w-0 items-center gap-1 truncate">
@@ -374,11 +378,16 @@ export default function ChatListPage() {
   }, [queryClient])
 
   // Campout group chats render in their own section, not under "Staff only".
-  // Everything else (staff_* + carpool) keeps its existing placement.
-  const campoutChannels = (staffChannels ?? []).filter((c) => c.type === 'campout')
+  // Event group chats (any other event with the toggle on) get a section of
+  // their own beside them. Everything else (staff_* + carpool) keeps its
+  // existing placement.
+  const eventGroupChannels = (staffChannels ?? []).filter((c) => c.type === 'campout')
+  const campoutChannels = eventGroupChannels.filter((c) => eventChatCopy(c.activity_type).isCampout)
+  const eventChatChannels = eventGroupChannels.filter((c) => !eventChatCopy(c.activity_type).isCampout)
   const otherChannels = (staffChannels ?? []).filter((c) => c.type !== 'campout')
   const hasStaffChannels = otherChannels.length > 0
   const hasCampoutChannels = campoutChannels.length > 0
+  const hasEventChatChannels = eventChatChannels.length > 0
 
   if (showLoading) {
     return (
@@ -413,7 +422,7 @@ export default function ChatListPage() {
     )
   }
 
-  if (!myCollectives?.length && !hasStaffChannels && !hasCampoutChannels && !isGlobalStaff) {
+  if (!myCollectives?.length && !hasStaffChannels && !hasCampoutChannels && !hasEventChatChannels && !isGlobalStaff) {
     return (
       <Page noBackground className="!px-0 bg-white">
         <div className="px-4 lg:px-6 pt-14">
@@ -452,6 +461,28 @@ export default function ChatListPage() {
                     animate="visible"
                   >
                     {campoutChannels.map((channel) => (
+                      <StaffChannelRow
+                        key={channel.id}
+                        channel={channel}
+                        unread={channelUnreads[channel.id] ?? 0}
+                        index={0}
+                      />
+                    ))}
+                  </motion.div>
+                </motion.div>
+              )}
+
+              {/* Event group chats section (toggle on, not a camp-out) */}
+              {hasEventChatChannels && (
+                <motion.div variants={fadeUp}>
+                  <SectionDivider icon={CalendarDays} label="Event chats" />
+                  <motion.div
+                    className="divide-y divide-neutral-100"
+                    variants={shouldReduceMotion ? undefined : stagger}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    {eventChatChannels.map((channel) => (
                       <StaffChannelRow
                         key={channel.id}
                         channel={channel}

@@ -4430,6 +4430,7 @@ export type Database = {
           description: string | null
           event_extras: Json
           external_registration_url: string | null
+          group_chat_enabled: boolean
           id: string
           is_external_collaboration: boolean | null
           is_public: boolean | null
@@ -4467,6 +4468,7 @@ export type Database = {
           description?: string | null
           event_extras?: Json
           external_registration_url?: string | null
+          group_chat_enabled?: boolean
           id?: string
           is_external_collaboration?: boolean | null
           is_public?: boolean | null
@@ -4504,6 +4506,7 @@ export type Database = {
           description?: string | null
           event_extras?: Json
           external_registration_url?: string | null
+          group_chat_enabled?: boolean
           id?: string
           is_external_collaboration?: boolean | null
           is_public?: boolean | null

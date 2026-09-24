@@ -31,7 +31,8 @@ import {
     HelpCircle,
     Ticket,
     Plus,
-    Trash2
+    Trash2,
+    MessagesSquare,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { GLOBAL_ROLE_RANK } from '@/lib/constants'
@@ -62,6 +63,12 @@ import {
   type CoverImageSuggestion,
 } from '@/hooks/use-cover-image-suggestions'
 import type { Database } from '@/types/database.types'
+import {
+  GROUP_CHAT_TOGGLE_LABEL,
+  effectiveGroupChatEnabled,
+  groupChatToggleDescription,
+  isGroupChatLocked,
+} from '@/lib/event-group-chat'
 import {
     Page,
     Header,
@@ -146,6 +153,8 @@ interface CreateExtraFields {
   difficulty: 'easy' | 'moderate' | 'challenging'
   what_to_wear: string
   invite_collective: boolean
+  /** Organiser toggle: a group chat for everyone registered (events.group_chat_enabled). */
+  group_chat_enabled: boolean
   partner_name: string
   is_ticketed: boolean
   ticket_tiers: TicketTierDraft[]
@@ -166,6 +175,7 @@ const INITIAL_EXTRA: CreateExtraFields = {
   difficulty: 'easy',
   what_to_wear: '',
   invite_collective: false,
+  group_chat_enabled: false,
   partner_name: '',
   is_ticketed: false,
   ticket_tiers: [],
@@ -260,7 +270,7 @@ const STEPS = [
   },
   {
     title: 'Invite',
-    subtitle: 'Spread the word',
+    subtitle: 'Spread the word and set up a group chat',
     icon: <Users size={20} />,
     gradient: 'from-moss-400/15 via-sprout-400/10 to-transparent',
     accentColor: 'text-moss-600',
@@ -1373,10 +1383,14 @@ function StepTicketing({
 function StepInvite({
   extra,
   onExtraChange,
+  activityType,
 }: {
   extra: CreateExtraFields
   onExtraChange: (updates: Partial<CreateExtraFields>) => void
+  activityType: string
 }) {
+  // Camp-outs always get a group chat, so their toggle shows on and locked.
+  const groupChatLocked = isGroupChatLocked(activityType)
   // The toggle used to promise "all active members" and show no number. On the
   // largest collective that is 776 emails and 776 pushes from one switch.
   const { data: audienceSize, isPending: audiencePending } = useInviteAudienceSize(
@@ -1398,6 +1412,23 @@ function StepInvite({
           checked={extra.invite_collective}
           onChange={(checked) => onExtraChange({ invite_collective: checked })}
         />
+      </StepCard>
+
+      {/* Group chat toggle (Tate 2026-09-24). Generalises the camp-out chat:
+          when on, the published event gets a chat for everyone registered plus
+          the host collective's leaders, kept in step as people register or
+          cancel. Stored as events.group_chat_enabled. */}
+      <StepCard>
+        <SectionLabel icon={<MessagesSquare size={14} />}>Group chat</SectionLabel>
+        <div data-testid="event-group-chat-toggle">
+          <Toggle
+            label={GROUP_CHAT_TOGGLE_LABEL}
+            description={groupChatToggleDescription(activityType)}
+            checked={effectiveGroupChatEnabled(activityType, extra.group_chat_enabled)}
+            disabled={groupChatLocked}
+            onChange={(checked) => onExtraChange({ group_chat_enabled: checked })}
+          />
+        </div>
       </StepCard>
 
       <AnimatePresence>
@@ -1656,6 +1687,13 @@ function StepReview({ fields, extra }: { fields: EventFormFields; extra: CreateE
               icon={<Repeat size={15} />}
               label="Recurring"
               value={`${extra.recurring_type}, ${extra.recurring_count} events`}
+            />
+          )}
+          {effectiveGroupChatEnabled(fields.activity_type, extra.group_chat_enabled) && (
+            <SummaryRow
+              icon={<MessagesSquare size={15} />}
+              label="Group chat"
+              value="On, for everyone registered"
             />
           )}
           {extra.invite_collective && (
@@ -1935,6 +1973,7 @@ export default function CreateEventPage() {
           ...(collabs?.map((c) => c.collective_id) ?? []),
         ],
         is_ticketed: source.is_ticketed ?? false,
+        group_chat_enabled: (source as { group_chat_enabled?: boolean | null }).group_chat_enabled ?? false,
         checkin_window_minutes: (source as unknown as { checkin_window_minutes?: number }).checkin_window_minutes ?? 30,
       }))
       // Clear the query string so re-entering the page later doesn't re-prefill
@@ -2083,6 +2122,9 @@ export default function CreateEventPage() {
           is_external_collaboration: form.fields.is_external_collaboration,
           external_registration_url: form.fields.external_registration_url || null,
           checkin_window_minutes: extra.checkin_window_minutes,
+          // Group chat for everyone registered (camp-outs always get one).
+          // Recurring rows spread baseInsert, so every occurrence carries it.
+          group_chat_enabled: effectiveGroupChatEnabled(form.fields.activity_type, extra.group_chat_enabled),
           // Cast keeps the literal type when this object is reused below for
           // recurring-event fan-out - without it the spread loses contextual
           // narrowing and 'status' widens to plain `string`.
@@ -2430,12 +2472,21 @@ export default function CreateEventPage() {
         step: STEPS[8],
         required: false,
         valid: true,
-        summary: extra.invite_collective
-          ? (inviteAudienceSize === undefined
-              ? 'Invite all members'
-              : `Invite ${inviteAudienceSize} ${inviteAudienceSize === 1 ? 'person' : 'people'}`)
-          : '',
-        content: <StepInvite extra={extra} onExtraChange={updateExtra} />,
+        summary: [
+          extra.invite_collective
+            ? (inviteAudienceSize === undefined
+                ? 'Invite all members'
+                : `Invite ${inviteAudienceSize} ${inviteAudienceSize === 1 ? 'person' : 'people'}`)
+            : '',
+          effectiveGroupChatEnabled(form.fields.activity_type, extra.group_chat_enabled) ? 'Group chat on' : '',
+        ].filter(Boolean).join(', '),
+        content: (
+          <StepInvite
+            extra={extra}
+            onExtraChange={updateExtra}
+            activityType={form.fields.activity_type}
+          />
+        ),
       },
       {
         key: 'partner',
