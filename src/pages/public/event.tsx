@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/skeleton'
 import { OGMeta, SITE_URL } from '@/components/og-meta'
 import { APP_NAME } from '@/lib/constants'
 import { isEventSoldOut } from '@/lib/event-sold-out'
+import { isWaitlistHoldError } from '@/lib/event-capacity'
 import { WaitlistJoin } from '@/components/waitlist-join'
 import { formatTime } from '@/lib/date-format'
 import { WebFooter } from '@/components/web-footer'
@@ -529,6 +530,22 @@ export default function PublicEventPage() {
             </div>
 
             {buyError && <p className="mt-2 text-sm text-error-500">{buyError}</p>}
+
+            {/* A live waitlist offer holds a seat this page still shows as open:
+                an anonymous visitor cannot be told apart from the guest it was
+                offered to, so the seat stays visible and checkout refuses it.
+                When that is why checkout said no, offer the queue right here
+                rather than leaving a dead-end error. */}
+            {id && isWaitlistHoldError(buyError) && (
+              <WaitlistJoin
+                eventId={id}
+                ticketTypeId={activeType.id}
+                source="public"
+                variant="public"
+                embedded
+                className="mt-4"
+              />
+            )}
 
             <Button
               variant="primary"

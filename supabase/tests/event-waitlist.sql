@@ -82,6 +82,17 @@ BEGIN
   v_res := public.join_event_waitlist(v_event, 'guest.two@example.test', 'Guest Two', 1, v_type, 'public');
   INSERT INTO wl_results VALUES (6, CASE WHEN (v_res->>'position')::int = 2 THEN 'PASS' ELSE 'FAIL' END, format('second joiner is position 2 (got %s)', v_res->>'position'));
 
+  -- Both joins ran inside this one transaction, so created_at = now() is the
+  -- SAME instant for both, and every "oldest first" case below (12, 131, 141)
+  -- was deciding a tie by physical row order. They passed by luck, and any DDL
+  -- earlier in the transaction could flip them (measured 2026-09-25: prepending
+  -- an unrelated migration turned all three red). Space the joins apart the way
+  -- two real joins always are, so FIFO is actually what is being measured.
+  UPDATE event_waitlist SET created_at = now() - interval '2 minutes'
+  WHERE event_id = v_event AND lower(email) = 'guest.one@example.test';
+  UPDATE event_waitlist SET created_at = now() - interval '1 minute'
+  WHERE event_id = v_event AND lower(email) = 'guest.two@example.test';
+
   -- ---- 7: NEGATIVE CONTROL - a ticket holder cannot join -----------
   BEGIN
     v_res := public.join_event_waitlist(

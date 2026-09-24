@@ -510,3 +510,16 @@ export function isExternallyBooked(
 ): boolean {
   return !!event?.external_registration_url?.trim()
 }
+
+/**
+ * True when checkout was refused because a live waitlist offer holds the seat
+ * (reserve_event_ticket step (d), migration 20260925000000). The public event
+ * page cannot hide a held seat from an anonymous visitor, because that visitor
+ * may be the guest it was offered to, so a walk-up sees the seat, tries to buy
+ * it, and is refused. This is how the page recognises that refusal and offers
+ * the queue instead of a dead-end error. Keyed on the server's own sentence,
+ * so change both together.
+ */
+export function isWaitlistHoldError(message: string | null | undefined): boolean {
+  return !!message && /held for someone on the waitlist/i.test(message)
+}

@@ -11,6 +11,7 @@ import {
   GOING_REGISTRATION_STATUSES,
   TICKET_STATUSES,
   ticketStatusBadge,
+  isWaitlistHoldError,
 } from '@/lib/event-capacity'
 
 /**
@@ -239,5 +240,26 @@ describe('ticketStatusBadge', () => {
       expect(badge.className, `${status} has no explicit badge treatment`).not.toBe(fallback.className)
       expect(badge.label.length).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('isWaitlistHoldError', () => {
+  // The exact sentence reserve_event_ticket raises (migration 20260925000000),
+  // as create-checkout / guest-ticket-checkout hand it back to the page.
+  const LIVE = 'Sold out - this spot is being held for someone on the waitlist. Join the waitlist to be offered the next one.'
+
+  it('recognises the live hold refusal', () => {
+    expect(isWaitlistHoldError(LIVE)).toBe(true)
+  })
+
+  it('does not fire on an ordinary sell-out, which already shows the waitlist panel', () => {
+    expect(isWaitlistHoldError('Sold out - only 0 tickets remaining')).toBe(false)
+  })
+
+  it('does not fire on other checkout failures or on no error', () => {
+    expect(isWaitlistHoldError('Could not start checkout')).toBe(false)
+    expect(isWaitlistHoldError('Please enter a valid email address')).toBe(false)
+    expect(isWaitlistHoldError(null)).toBe(false)
+    expect(isWaitlistHoldError(undefined)).toBe(false)
   })
 })
