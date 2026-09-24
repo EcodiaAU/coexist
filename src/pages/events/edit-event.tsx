@@ -9,6 +9,7 @@ import {
     Plus,
     Trash2,
     Send,
+    MessagesSquare,
 } from 'lucide-react'
 import {
     useEventDetail,
@@ -44,6 +45,12 @@ import {
 import { useToast } from '@/components/toast'
 import { cn } from '@/lib/cn'
 import { parseLocationPoint, COLLECTIVE_SLUG_COORDS } from '@/lib/geo'
+import {
+  GROUP_CHAT_TOGGLE_LABEL,
+  effectiveGroupChatEnabled,
+  groupChatToggleDescription,
+  isGroupChatLocked,
+} from '@/lib/event-group-chat'
 
 /* ------------------------------------------------------------------ */
 /*  Page Component                                                     */
@@ -70,6 +77,10 @@ export default function EditEventPage() {
   const [ticketTiers, setTicketTiers] = useState<TicketTypeDraft[]>([])
   const [removedTierIds, setRemovedTierIds] = useState<string[]>([])
   const [checkinWindowMinutes, setCheckinWindowMinutes] = useState(30)
+  // Group chat toggle (events.group_chat_enabled). Lives in edit as well as
+  // create because the event that asked for it (a leader's clean-up trip)
+  // already existed when the toggle shipped.
+  const [groupChatEnabled, setGroupChatEnabled] = useState(false)
   const ticketsInitialised = useRef(false)
 
   // Pin-drop guard (Merri Mornings class, 2026-07-06): if the stored
@@ -116,6 +127,7 @@ export default function EditEventPage() {
         },
       })
       setIsTicketed(event.is_ticketed ?? false)
+      setGroupChatEnabled((event as { group_chat_enabled?: boolean | null }).group_chat_enabled ?? false)
       setCheckinWindowMinutes((event as unknown as Record<string, unknown>).checkin_window_minutes as number ?? 30)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -201,6 +213,7 @@ export default function EditEventPage() {
         is_external_collaboration: form.fields.is_external_collaboration,
         external_registration_url: form.fields.external_registration_url || null,
         checkin_window_minutes: checkinWindowMinutes,
+        group_chat_enabled: effectiveGroupChatEnabled(form.fields.activity_type, groupChatEnabled),
         // Floating local time: tz column kept on table but always NULL.
         timezone: null,
         event_extras: form.fields.extras,
@@ -219,7 +232,7 @@ export default function EditEventPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not save the event')
     }
-  }, [eventId, isDayOfMode, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, resolveCoverFields, navigate, toast])
+  }, [eventId, isDayOfMode, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, groupChatEnabled, resolveCoverFields, navigate, toast])
 
   // Publish a draft event - saves all fields + flips status to published (fork_mp0so5k9_0d2e77)
   const handlePublish = useCallback(async () => {
@@ -249,6 +262,7 @@ export default function EditEventPage() {
         is_external_collaboration: form.fields.is_external_collaboration,
         external_registration_url: form.fields.external_registration_url || null,
         checkin_window_minutes: checkinWindowMinutes,
+        group_chat_enabled: effectiveGroupChatEnabled(form.fields.activity_type, groupChatEnabled),
         timezone: null,
         status: 'published',
       })
@@ -264,7 +278,7 @@ export default function EditEventPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not publish the event')
     }
-  }, [eventId, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, resolveCoverFields, navigate, toast])
+  }, [eventId, form, updateEvent, saveTickets, isTicketed, ticketTiers, removedTierIds, checkinWindowMinutes, groupChatEnabled, resolveCoverFields, navigate, toast])
 
   const stagger = {
     hidden: {},
@@ -711,6 +725,27 @@ export default function EditEventPage() {
             </>
           )}
         </motion.div>
+
+        {/* Group chat (Tate 2026-09-24): a chat for everyone registered plus the
+            host collective's leaders. Switching it off later archives the chat
+            (history kept), it never deletes messages. */}
+        {!isDayOfMode && (
+          <motion.div variants={fadeUp} className="space-y-3 rounded-md p-4 border bg-white border-neutral-100">
+            <h3 className="text-sm font-semibold flex items-center gap-1.5">
+              <MessagesSquare size={13} className="text-primary-600" />
+              <span className="text-neutral-900">Group chat</span>
+            </h3>
+            <div data-testid="event-group-chat-toggle">
+              <Toggle
+                label={GROUP_CHAT_TOGGLE_LABEL}
+                description={groupChatToggleDescription(form.fields.activity_type)}
+                checked={effectiveGroupChatEnabled(form.fields.activity_type, groupChatEnabled)}
+                disabled={isGroupChatLocked(form.fields.activity_type)}
+                onChange={setGroupChatEnabled}
+              />
+            </div>
+          </motion.div>
+        )}
 
         {/* External Collaboration */}
         {!isDayOfMode && (

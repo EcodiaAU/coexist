@@ -65,6 +65,7 @@ import {
     useEditChannelMessage,
     usePinChannelMessage,
 } from '@/hooks/use-staff-channels'
+import { eventChatCopy } from '@/lib/event-group-chat'
 import { supabase } from '@/lib/supabase'
 import { useBlockedUsers } from '@/hooks/use-user-blocks'
 import { useInviteCollaborator, useEventDetail } from '@/hooks/use-events'
@@ -270,6 +271,9 @@ export default function ChatRoomPage() {
   // Campout group chats are open to ticket holders, not staff-gated, so their
   // copy (empty state, composer placeholder) must not say "staff".
   const isCampoutChannel = isChannel && channel?.type === 'campout'
+  // The same channel type is the group chat of any event with the toggle on
+  // (2026-09-24); the words come from the event, not the type.
+  const eventChat = isCampoutChannel ? eventChatCopy(channel?.activity_type) : null
   // Carpool breakout chats are between the driver and their passengers - never
   // staff. Same member-facing copy rule as campout channels.
   const isCarpoolBreakout = isChannel && channel?.type === 'carpool_breakout'
@@ -1031,6 +1035,7 @@ export default function ChatRoomPage() {
         isCollective={isCollective}
         isChannel={isChannel}
         channelType={channel?.type}
+        channelActivityType={channel?.activity_type ?? null}
         messageGroups={messageGroups}
         allMessages={allMessages}
         memberRoles={memberRoles}
@@ -1164,8 +1169,8 @@ export default function ChatRoomPage() {
               ? 'Edit message...'
               : isOffline && isCollective
                 ? 'Type a message (will send when online)...'
-                : isCampoutChannel
-                  ? 'Message the campout...'
+                : eventChat
+                  ? eventChat.placeholder
                   : isCarpoolBreakout
                     ? 'Message your carpool...'
                     : isChannel

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, Lock, Leaf, Star, Car, Tent } from 'lucide-react'
+import { ChevronDown, Lock, Leaf, Star, Car, Tent, CalendarDays } from 'lucide-react'
+import { eventChatCopy } from '@/lib/event-group-chat'
 import { cn } from '@/lib/cn'
 import { useMyCollectives, useCollectives } from '@/hooks/use-collective'
 import { useMyStaffChannels } from '@/hooks/use-staff-channels'
@@ -54,7 +55,10 @@ export function ChatSwitcherDropdown({
   // actual staff communications (collective/state/national).
   const allChannels = staffChannels ?? []
   const channels = allChannels.filter((c) => (c.type as string) !== 'carpool_breakout' && (c.type as string) !== 'campout')
+  // A 'campout' channel is the group chat of ANY event with the toggle on
+  // (2026-09-24), so the section and icon follow the event's activity type.
   const campoutChats = allChannels.filter((c) => (c.type as string) === 'campout')
+  const allCampouts = campoutChats.every((c) => eventChatCopy(c.activity_type).isCampout)
   const carpoolChats = allChannels.filter((c) => (c.type as string) === 'carpool_breakout')
 
   // Staff/admin: show collectives they're NOT a member of
@@ -200,11 +204,11 @@ export function ChatSwitcherDropdown({
                 </div>
               )}
 
-              {/* Campout group chats - per-event, ticket holders */}
+              {/* Event group chats - camp-outs (ticket holders) and any event with the toggle on */}
               {campoutChats.length > 0 && (
                 <div data-eos-id="src/components/chat-switcher-dropdown.tsx#25">
                   {(collectives.length > 0 || channels.length > 0) && <div data-eos-id="src/components/chat-switcher-dropdown.tsx#26" className="h-px bg-neutral-100 mx-3 my-1" />}
-                  <p data-eos-id="src/components/chat-switcher-dropdown.tsx#27" className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">Campouts</p>
+                  <p data-eos-id="src/components/chat-switcher-dropdown.tsx#27" className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 px-3 pt-1.5 pb-0.5">{allCampouts ? 'Campouts' : 'Event chats'}</p>
                   {campoutChats.map((ch) => (
                     <button data-eos-id="src/components/chat-switcher-dropdown.tsx#28"
                       key={ch.id}
@@ -221,7 +225,9 @@ export function ChatSwitcherDropdown({
                       )}
                     >
                       <div data-eos-id="src/components/chat-switcher-dropdown.tsx#29" className="h-6 w-6 rounded-md bg-primary-600 flex items-center justify-center shrink-0">
-                        <Tent data-eos-id="src/components/chat-switcher-dropdown.tsx#30" size={11} className="text-white" />
+                        {eventChatCopy(ch.activity_type).isCampout
+                          ? <Tent data-eos-id="src/components/chat-switcher-dropdown.tsx#30" size={11} className="text-white" />
+                          : <CalendarDays size={11} className="text-white" />}
                       </div>
                       <span data-eos-id="src/components/chat-switcher-dropdown.tsx#31" data-eos-var="ch.name" data-eos-var-label="Name" data-eos-var-scope="item" className="truncate">{ch.name}</span>
                     </button>

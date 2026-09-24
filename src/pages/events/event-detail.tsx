@@ -40,6 +40,7 @@ import {
     UserPlus,
     Share2,
     Tent,
+    CalendarDays,
     ArrowRightLeft,
 } from 'lucide-react'
 import { EventShareSheet } from '@/components/event-share-sheet'
@@ -108,6 +109,7 @@ import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import { Toggle } from '@/components/toggle'
 import { describeInviteOutcome } from '@/lib/event-reminder-audience'
 import { useEventCampoutChannel } from '@/hooks/use-staff-channels'
+import { eventChatCopy } from '@/lib/event-group-chat'
 import { MapView } from '@/components'
 import { activityAccent, defaultAccent } from '@/lib/activity-types'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
@@ -545,6 +547,9 @@ export default function EventDetailPage() {
   const saveSeat = useSaveSeat()
   // Campout group chat - RLS exposes it only to confirmed ticket holders + staff
   const { data: campoutChannel } = useEventCampoutChannel(id)
+  // A camp-out's chat keeps the tent; any other event's group chat (toggle on)
+  // reads as an event chat.
+  const GroupChatIcon = eventChatCopy(event?.activity_type).isCampout ? Tent : CalendarDays
   const [selectedTicketType, setSelectedTicketType] = useState<string | null>(null)
   // Discount / free-ticket code (native Stripe promotion code). One code system:
   // a 100% code comps the ticket server-side, a partial code discounts the Stripe
@@ -2210,7 +2215,8 @@ export default function EventDetailPage() {
           </motion.div>
         )}
 
-        {/* ── Campout group chat (confirmed ticket holders + staff) ── */}
+        {/* ── Event group chat: a camp-out's (ticket holders + staff), or any
+             event whose organiser switched the group chat toggle on ── */}
         {campoutChannel && (
           <motion.div
             variants={shouldReduceMotion ? undefined : fadeUp}
@@ -2218,7 +2224,7 @@ export default function EventDetailPage() {
           >
             <div className="flex items-center gap-2 mb-2.5">
               <div className="w-6 h-6 rounded-sm bg-primary-50 flex items-center justify-center">
-                <Tent size={11} className="text-primary-600" />
+                <GroupChatIcon size={11} className="text-primary-600" />
               </div>
               <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
                 Group chat
@@ -2230,14 +2236,14 @@ export default function EventDetailPage() {
               className="w-full flex items-center gap-3 min-h-11 p-2 rounded-sm hover:bg-neutral-50 active:scale-[0.98] transition-[opacity,transform] duration-150 text-left cursor-pointer"
             >
               <div className="w-9 h-9 rounded-sm bg-primary-50 flex items-center justify-center shrink-0">
-                <Tent size={15} className="text-primary-600" />
+                <GroupChatIcon size={15} className="text-primary-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-neutral-900 truncate">
                   {campoutChannel.name}
                 </p>
                 <p className="text-[11px] text-neutral-500 truncate">
-                  Chat with everyone coming to this campout
+                  {eventChatCopy(event.activity_type).cardSubtitle}
                 </p>
               </div>
               <ChevronRight size={14} className="ml-auto shrink-0 text-neutral-400" />
