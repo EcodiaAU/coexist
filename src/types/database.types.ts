@@ -1022,6 +1022,7 @@ export type Database = {
           collective_id: string | null
           content: string | null
           created_at: string | null
+          edited_at: string | null
           event_photos_event_id: string | null
           event_survey_event_id: string | null
           id: string
@@ -1045,6 +1046,7 @@ export type Database = {
           collective_id?: string | null
           content?: string | null
           created_at?: string | null
+          edited_at?: string | null
           event_photos_event_id?: string | null
           event_survey_event_id?: string | null
           id?: string
@@ -1068,6 +1070,7 @@ export type Database = {
           collective_id?: string | null
           content?: string | null
           created_at?: string | null
+          edited_at?: string | null
           event_photos_event_id?: string | null
           event_survey_event_id?: string | null
           id?: string

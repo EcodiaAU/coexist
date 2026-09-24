@@ -24,10 +24,6 @@ export interface ActionableMessage {
 /*  MessageActionsSheet                                                */
 /* ------------------------------------------------------------------ */
 
-function canEdit(createdAt: string): boolean {
-  return Date.now() - new Date(createdAt).getTime() < 15 * 60 * 1000
-}
-
 interface MessageActionsProps {
   message: ActionableMessage | null
   isModerator: boolean
@@ -179,7 +175,10 @@ export function MessageActionsSheet({
               Reply
             </button>
 
-            {onEdit && isOwnMessage && message.content && message.created_at && canEdit(message.created_at) && (
+            {/* Eligibility (own, text, within the edit window) is decided by the
+                caller via canEditMessage in src/lib/chat-edit.ts, so every chat
+                shares one rule; onEdit is undefined when the message is not editable. */}
+            {onEdit && isOwnMessage && (
               <button data-eos-id="src/components/message-actions-sheet.tsx#15"
                 type="button"
                 onClick={onEdit}

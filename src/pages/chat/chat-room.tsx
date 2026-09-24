@@ -62,6 +62,7 @@ import {
     useMarkChannelRead,
     useMyStaffChannels,
     useDeleteChannelMessage,
+    useEditChannelMessage,
     usePinChannelMessage,
 } from '@/hooks/use-staff-channels'
 import { supabase } from '@/lib/supabase'
@@ -87,6 +88,7 @@ import {
 import type { Json } from '@/types/database.types'
 
 import { ChatMessageList, type AnyMessage } from './chat-message-list'
+import { canEditMessage, editErrorMessage } from '@/lib/chat-edit'
 import { ChatSearch } from './chat-search'
 import { ChatLeaderPanel } from './chat-leader-panel'
 import { fadeUp } from '@/lib/admin-motion'
@@ -274,6 +276,7 @@ export default function ChatRoomPage() {
   const channelMarkRead = useMarkChannelRead()
   const channelSend = useSendChannelMessage()
   const channelDelete = useDeleteChannelMessage()
+  const channelEdit = useEditChannelMessage()
   const channelPin = usePinChannelMessage()
 
   /* ---- Shared leader check ---- */
@@ -358,7 +361,7 @@ export default function ChatRoomPage() {
 
   /* ---- State ---- */
   const [replyTo, setReplyTo] = useState<AnyMessage | null>(null)
-  const [editingMessage, setEditingMessage] = useState<ChatMessageWithSender | null>(null)
+  const [editingMessage, setEditingMessage] = useState<AnyMessage | null>(null)
   const [editText, setEditText] = useState('')
   const [selectedMessage, setSelectedMessage] = useState<AnyMessage | null>(null)
   const [showSearch, setShowSearch] = useState(false)
@@ -461,24 +464,41 @@ export default function ChatRoomPage() {
   const handleSend = useCallback(async (text: string) => {
     if (!user) return
 
-    if (isCollective) {
-      if (!collectiveId) return
-      if (isCollective) stopTyping()
-
-      if (editingMessage) {
-        if (isOffline) {
-          toast.warning('Cannot edit messages while offline')
-          return
-        }
-        await editMessage.mutateAsync({
-          messageId: editingMessage.id,
-          content: text,
-          collectiveId,
-        })
+    /* Editing works in every chat (Tate 2026-09-24), so it is resolved before
+       the collective / channel split. The DB trigger is the real gate: a
+       refusal comes back as an error here and is shown, never swallowed. */
+    if (editingMessage) {
+      if (isOffline) {
+        toast.warning('Cannot edit messages while offline')
+        return
+      }
+      const next = text.trim()
+      if (!next) {
+        toast.warning('A message cannot be empty. Delete it instead.')
+        return
+      }
+      if (next === (editingMessage.content ?? '').trim()) {
         setEditingMessage(null)
         setEditText('')
         return
       }
+      try {
+        if (isCollective && collectiveId) {
+          await editMessage.mutateAsync({ messageId: editingMessage.id, content: next, collectiveId })
+        } else if (channelId) {
+          await channelEdit.mutateAsync({ messageId: editingMessage.id, channelId, content: next })
+        }
+        setEditingMessage(null)
+        setEditText('')
+      } catch (err) {
+        toast.error(editErrorMessage(err))
+      }
+      return
+    }
+
+    if (isCollective) {
+      if (!collectiveId) return
+      if (isCollective) stopTyping()
 
       removeChatDraft(collectiveId)
 
@@ -530,7 +550,7 @@ export default function ChatRoomPage() {
       })
       setReplyTo(null)
     }
-  }, [user, isCollective, collectiveId, channelId, channel, editingMessage, isOffline, replyTo, stopTyping, editMessage, collectiveSend, channelSend, toast])
+  }, [user, isCollective, collectiveId, channelId, channel, editingMessage, isOffline, replyTo, stopTyping, editMessage, channelEdit, collectiveSend, channelSend, toast])
 
   /* ---- Attach image ----
    *
@@ -637,12 +657,13 @@ export default function ChatRoomPage() {
   )
 
   const handleEdit = useCallback(() => {
-    if (selectedMessage && isCollective) {
-      setEditingMessage(selectedMessage as ChatMessageWithSender)
+    if (selectedMessage && canEditMessage(selectedMessage, user?.id)) {
+      setReplyTo(null)
+      setEditingMessage(selectedMessage)
       setEditText(selectedMessage.content ?? '')
       setSelectedMessage(null)
     }
-  }, [selectedMessage, isCollective])
+  }, [selectedMessage, user?.id])
 
   const handleDelete = useCallback(async () => {
     if (!selectedMessage) return
@@ -1059,35 +1080,33 @@ export default function ChatRoomPage() {
         )}
       </AnimatePresence>
 
-      {/* Edit bar (collective only) */}
-      {isCollective && (
-        <AnimatePresence>
-          {editingMessage && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.15 }}
-              className="shrink-0 bg-warning-50 border-t border-neutral-100 px-4 py-2.5"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center h-7 w-7 rounded-sm bg-warning-50">
-                  <Pencil size={14} className="text-warning-700 shrink-0" />
-                </div>
-                <p className="text-xs font-bold text-warning-700 flex-1">Editing message</p>
-                <button
-                  type="button"
-                  onClick={() => { setEditingMessage(null); setEditText('') }}
-                  aria-label="Cancel edit"
-                  className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
-                >
-                  <X size={16} />
-                </button>
+      {/* Edit bar (every chat) */}
+      <AnimatePresence>
+        {editingMessage && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15 }}
+            className="shrink-0 bg-warning-50 border-t border-neutral-100 px-4 py-2.5"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center h-7 w-7 rounded-sm bg-warning-50">
+                <Pencil size={14} className="text-warning-700 shrink-0" />
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      )}
+              <p className="text-xs font-bold text-warning-700 flex-1">Editing message</p>
+              <button
+                type="button"
+                onClick={() => { setEditingMessage(null); setEditText('') }}
+                aria-label="Cancel edit"
+                className="flex items-center justify-center min-h-11 min-w-11 rounded-full text-neutral-400 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Scroll to bottom button */}
       <AnimatePresence>
@@ -1197,7 +1216,7 @@ export default function ChatRoomPage() {
         isOwnMessage={selectedMessage?.user_id === user?.id}
         onClose={() => setSelectedMessage(null)}
         onReply={handleReply}
-        onEdit={isCollective ? handleEdit : undefined}
+        onEdit={canEditMessage(selectedMessage, user?.id) ? handleEdit : undefined}
         onDelete={handleDelete}
         onPin={handlePin}
         onReact={

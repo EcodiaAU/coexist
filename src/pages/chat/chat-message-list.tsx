@@ -40,6 +40,7 @@ import { isVideoPath } from '@/components/event-photos-section'
 import { useSignedChatImage } from '@/hooks/use-signed-chat-image'
 import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import type { Tables, Json } from '@/types/database.types'
+import { isMessageEdited } from '@/lib/chat-edit'
 
 type EventRegistration = Tables<'event_registrations'>
 
@@ -1099,6 +1100,22 @@ export function ChatMessageList({
           parentId: msg.reply_message.id,
         }
       : undefined
+    /* "(edited)" reads edited_at, stamped only by the DB when the author
+       changes the text. It used to compare updated_at with created_at, and
+       updated_at moves on every update, so pinning a message showed it as
+       edited. Rendered in every chat now, not only collective ones. */
+    const editedLabel = isMessageEdited(msg as { edited_at?: string | null }) ? (
+      <p
+        data-testid="message-edited-label"
+        className={cn(
+          'text-[11px] text-neutral-400 mt-0.5',
+          isSent ? 'text-right pr-2' : 'pl-10',
+        )}
+      >
+        (edited)
+      </p>
+    ) : null
+
     const bubble = (
       <ChatTextOrImageBubble
         msg={msg}
@@ -1125,14 +1142,7 @@ export function ChatMessageList({
           }}
         >
           {bubble}
-          {(msg as unknown as { updated_at?: string }).updated_at && (msg as unknown as { updated_at?: string }).updated_at !== msg.created_at && (
-            <p className={cn(
-              'text-[11px] text-neutral-400 mt-0.5',
-              isSent ? 'text-right pr-2' : 'pl-10',
-            )}>
-              (edited)
-            </p>
-          )}
+          {editedLabel}
           {reactionsEnabled && (
             <MessageReactions
               messageId={msg.id}
@@ -1144,7 +1154,12 @@ export function ChatMessageList({
       )
     }
 
-    return bubble
+    return editedLabel ? (
+      <>
+        {bubble}
+        {editedLabel}
+      </>
+    ) : bubble
   }
 
   return (

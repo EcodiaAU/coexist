@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { invokeAndReport } from '@/lib/invoke-report'
 import { subscribeWithReconnect } from '@/lib/realtime'
 import { useAuth } from '@/hooks/use-auth'
+import { applyEditToPages, assertEdited } from '@/lib/chat-edit'
 import type { Tables } from '@/types/database.types'
 
 type Profile = Tables<'profiles'>
@@ -66,6 +67,8 @@ export interface ChannelMessageWithSender {
   is_pinned: boolean
   is_deleted: boolean
   created_at: string
+  /** Stamped by the DB guard trigger when the author edits the text. */
+  edited_at?: string | null
   message_type?: 'text' | 'image' | 'voice' | 'video' | 'poll' | 'announcement' | 'system' | 'html'
   poll_id?: string | null
   announcement_id?: string | null
@@ -493,6 +496,48 @@ export function useSendChannelMessage() {
     onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ['channel-messages', variables.channelId] })
       queryClient.invalidateQueries({ queryKey: ['channel-unread'] })
+    },
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/*  useEditChannelMessage - author edits their own message             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Channel twin of useEditMessage (collective chats). Editing was
+ * collective-only until 2026-09-24, so campout, staff and carpool chats had no
+ * way to fix a typo. Own-message-only is enforced by the DB trigger
+ * chat_messages_guard_edit; this hook just reports its answer honestly.
+ */
+export function useEditChannelMessage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ messageId, content }: { messageId: string; channelId: string; content: string }) => {
+      if (content.length > 4000) throw new Error('Message too long')
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .update({ content })
+        .eq('id', messageId)
+        .select('id')
+      if (error) throw error
+      assertEdited(data)
+    },
+    onMutate: async ({ messageId, channelId, content }) => {
+      await queryClient.cancelQueries({ queryKey: ['channel-messages', channelId] })
+      const previous = queryClient.getQueryData(['channel-messages', channelId])
+      queryClient.setQueryData<{ pages: ChannelMessageWithSender[][]; pageParams: unknown[] }>(
+        ['channel-messages', channelId],
+        (old) => (old ? { ...old, pages: applyEditToPages(old.pages, messageId, content, new Date().toISOString()) } : old),
+      )
+      return { previous }
+    },
+    onError: (_err, { channelId }, context) => {
+      if (context?.previous) queryClient.setQueryData(['channel-messages', channelId], context.previous)
+    },
+    onSettled: (_data, _err, { channelId }) => {
+      queryClient.invalidateQueries({ queryKey: ['channel-messages', channelId] })
     },
   })
 }

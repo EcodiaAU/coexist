@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useOffline } from '@/hooks/use-offline'
 import { useToast } from '@/components/toast'
 import { queueOfflineAction } from '@/lib/offline-sync'
+import { applyEditToPages, assertEdited } from '@/lib/chat-edit'
 import type { Tables, Json } from '@/types/database.types'
 
 type ChatMessage = Tables<'chat_messages'>
@@ -574,11 +575,15 @@ export function useEditMessage() {
   return useMutation({
     mutationFn: async ({ messageId, content, collectiveId }: { messageId: string; content: string; collectiveId: string }) => {
       if (content.length > MAX_MESSAGE_LENGTH) throw new Error('Message too long')
-      const { error } = await supabase
+      // .select() so an RLS-filtered update (200, zero rows) surfaces as a
+      // refusal instead of reading as saved. See assertEdited.
+      const { data, error } = await supabase
         .from('chat_messages')
         .update({ content })
         .eq('id', messageId)
+        .select('id')
       if (error) throw error
+      assertEdited(data)
       return collectiveId
     },
     onMutate: async ({ messageId, content, collectiveId }) => {
@@ -588,7 +593,7 @@ export function useEditMessage() {
         ['chat-messages', collectiveId],
         (old: { pages: ChatMessageWithSender[][]; pageParams: (string | null)[] } | undefined) => {
           if (!old) return old
-          return { ...old, pages: old.pages.map(page => page.map(msg => msg.id === messageId ? { ...msg, content } : msg)) }
+          return { ...old, pages: applyEditToPages(old.pages, messageId, content, new Date().toISOString()) }
         },
       )
       return { previous }
