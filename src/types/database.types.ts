@@ -7695,6 +7695,23 @@ export type Database = {
           role: string
         }[]
       }
+      admin_unreachable_members: {
+        Args: never
+        Returns: {
+          auth_email: string | null
+          collectives: string[]
+          display_name: string | null
+          judged_email: string | null
+          last_sign_in_at: string | null
+          member_since: string
+          profile_email: string | null
+          reasons: string[]
+          suggested_email: string | null
+          suppressed_at: string | null
+          suppression_reason: string | null
+          user_id: string
+        }[]
+      }
       admin_photos_by_attendee: {
         Args: { p_limit?: number; p_user_id: string }
         Returns: {

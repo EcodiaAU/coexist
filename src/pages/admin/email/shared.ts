@@ -64,10 +64,13 @@ export function useEmailMarketingStats() {
           .from('email_campaigns')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'sent'),
+        // email_events is the dead SendGrid-era table (0 rows on 2026-09-25) and
+        // read 0 here while 45 addresses sat suppressed after a hard bounce.
+        // email_suppressions is what resend-webhook actually writes.
         supabase
-          .from('email_events')
+          .from('email_suppressions')
           .select('id', { count: 'exact', head: true })
-          .eq('event_type', 'bounce'),
+          .eq('reason', 'bounce'),
         supabase
           .from('email_suppressions')
           .select('id', { count: 'exact', head: true }),
@@ -225,14 +228,21 @@ export function useCollectives() {
   })
 }
 
+/**
+ * Bounces and complaints read email_suppressions, the table resend-webhook
+ * writes on a hard bounce or a spam complaint. Until 2026-09-25 they read
+ * email_events, the dead SendGrid-era table, so this tab said "No bounces" while
+ * 45 addresses were suppressed. resend_events holds the raw events but has RLS
+ * with no admin policy, and every row shown here is badged Suppressed anyway.
+ */
 export function useEmailBounces() {
   return useQuery({
     queryKey: ['admin-email-bounces'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('email_events')
-        .select('*')
-        .eq('event_type', 'bounce')
+        .from('email_suppressions')
+        .select('id, email, reason, created_at')
+        .eq('reason', 'bounce')
         .order('created_at', { ascending: false })
         .limit(50)
       if (error) throw error
@@ -247,13 +257,71 @@ export function useEmailComplaints() {
     queryKey: ['admin-email-complaints'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('email_events')
-        .select('*')
-        .eq('event_type', 'complaint')
+        .from('email_suppressions')
+        .select('id, email, reason, created_at')
+        .eq('reason', 'complaint')
         .order('created_at', { ascending: false })
         .limit(50)
       if (error) throw error
       return data ?? []
+    },
+    staleTime: 60 * 1000,
+  })
+}
+
+/**
+ * Why a member cannot receive app email. Computed in the database by
+ * admin_unreachable_members() (migration 20260925120000), which judges the
+ * address the SENDER would use, so this list and the sender cannot disagree.
+ */
+export type UnreachableReason =
+  | 'no_address'
+  | 'no_tld'
+  | 'malformed'
+  | 'bounced'
+  | 'complained'
+  | 'suppressed'
+  | 'typo_domain'
+
+export interface UnreachableMember {
+  user_id: string
+  display_name: string | null
+  auth_email: string | null
+  profile_email: string | null
+  /** The address the sender would use, or the stored one when none is usable. */
+  judged_email: string | null
+  reasons: UnreachableReason[]
+  suppression_reason: string | null
+  suppressed_at: string | null
+  /** A likely intended address. A hint for a human to confirm, never applied. */
+  suggested_email: string | null
+  collectives: string[]
+  member_since: string
+  last_sign_in_at: string | null
+}
+
+export const unreachableReasonLabel: Record<UnreachableReason, string> = {
+  no_address: 'No email on the account',
+  no_tld: 'Address has no ending (.com)',
+  malformed: 'Address is not valid',
+  bounced: 'Bounced, mail is blocked',
+  complained: 'Marked our email as spam',
+  suppressed: 'Mail is blocked',
+  typo_domain: 'Likely a typo',
+}
+
+/**
+ * Members who cannot receive Co-Exist email. Read-only: the RPC never changes an
+ * address, and neither does this page. Gated in the database on
+ * is_admin_or_staff + has_cap('manage_email'), the same gate as this route.
+ */
+export function useUnreachableMembers() {
+  return useQuery({
+    queryKey: ['admin-email-unreachable-members'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_unreachable_members')
+      if (error) throw error
+      return (data ?? []) as UnreachableMember[]
     },
     staleTime: 60 * 1000,
   })
