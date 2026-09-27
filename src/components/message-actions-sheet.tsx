@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Reply, Pencil, Pin, Trash2, Flag, ShieldOff } from 'lucide-react'
+import { Reply, Pencil, Pin, Trash2, Flag, ShieldOff, Copy, Link2 } from 'lucide-react'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { Button } from '@/components/button'
 import { cn } from '@/lib/cn'
@@ -30,6 +30,16 @@ interface MessageActionsProps {
   isOwnMessage: boolean
   onClose: () => void
   onReply: () => void
+  /**
+   * Copy the message text (Fei Castillo via Tate, 2026-09-27). Chat text is
+   * not selectable on mobile (body `user-select: none`, and a selectable
+   * bubble would fight the long-press that opens this sheet), so copying lives
+   * here, the iMessage / WhatsApp pattern. Undefined hides the row.
+   */
+  onCopy?: () => void
+  /** Copy the first link in the message; `copyLinkLabel` names what it is. */
+  onCopyLink?: () => void
+  copyLinkLabel?: string
   onEdit?: () => void
   onDelete: () => void
   onPin?: () => void
@@ -58,6 +68,9 @@ export function MessageActionsSheet({
   isOwnMessage,
   onClose,
   onReply,
+  onCopy,
+  onCopyLink,
+  copyLinkLabel = 'Copy link',
   onEdit,
   onDelete,
   onPin,
@@ -174,6 +187,30 @@ export function MessageActionsSheet({
               <Reply data-eos-id="src/components/message-actions-sheet.tsx#14" size={18} className="text-neutral-400" />
               Reply
             </button>
+
+            {onCopy && (
+              <button
+                type="button"
+                onClick={onCopy}
+                data-testid="message-action-copy"
+                className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+              >
+                <Copy size={18} className="text-neutral-400" />
+                Copy text
+              </button>
+            )}
+
+            {onCopyLink && (
+              <button
+                type="button"
+                onClick={onCopyLink}
+                data-testid="message-action-copy-link"
+                className="flex w-full items-center gap-3 rounded-sm px-4 py-3 min-h-11 text-sm text-neutral-800 hover:bg-neutral-50 active:scale-[0.97] transition-transform duration-150 cursor-pointer select-none"
+              >
+                <Link2 size={18} className="text-neutral-400" />
+                {copyLinkLabel}
+              </button>
+            )}
 
             {/* Eligibility (own, text, within the edit window) is decided by the
                 caller via canEditMessage in src/lib/chat-edit.ts, so every chat

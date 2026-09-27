@@ -6,6 +6,7 @@ import { formatClockTime, formatCardDate, formatCardTime } from '@/lib/date-form
 import { ROLE_COLORS } from '@/lib/constants'
 import { useLongPress } from '@/hooks/use-long-press'
 import { hapticImpact } from '@/lib/haptics'
+import { LinkifiedText } from '@/components/linkified-text'
 
 /**
  * Swipe-right-to-reply gesture (1.8.6 feature 1).
@@ -288,9 +289,10 @@ export function ChatBubble({
 
           {/* Message text */}
           {message && (
-            <p data-eos-id="src/components/chat-bubble.tsx#18" className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[14px] leading-[1.45]">
-              {message}
-            </p>
+            <LinkifiedText data-eos-id="src/components/chat-bubble.tsx#18"
+              text={message}
+              className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[14px] leading-[1.45]"
+            />
           )}
 
           {/* Timestamp */}
@@ -593,7 +595,7 @@ export function AnnouncementCard({
         {/* Content */}
         <h4 data-eos-id="src/components/chat-bubble.tsx#53" className="text-[15px] font-extrabold text-neutral-900 mb-1.5 break-words">{title}</h4>
         {body && (
-          <p data-eos-id="src/components/chat-bubble.tsx#54" className="text-sm text-neutral-600 leading-relaxed mb-2 break-words">{body}</p>
+          <LinkifiedText data-eos-id="src/components/chat-bubble.tsx#54" text={body} className="whitespace-pre-wrap text-sm text-neutral-600 leading-relaxed mb-2 break-words [overflow-wrap:anywhere]" />
         )}
 
         {/* Event details summary */}

@@ -90,6 +90,8 @@ import type { Json } from '@/types/database.types'
 
 import { ChatMessageList, type AnyMessage } from './chat-message-list'
 import { canEditMessage, editErrorMessage } from '@/lib/chat-edit'
+import { canCopyMessage, firstCopyableLink } from '@/lib/chat-links'
+import { copyText } from '@/lib/clipboard'
 import { ChatSearch } from './chat-search'
 import { ChatLeaderPanel } from './chat-leader-panel'
 import { fadeUp } from '@/lib/admin-motion'
@@ -623,6 +625,36 @@ export default function ChatRoomPage() {
       setSelectedMessage(null)
     }
   }, [selectedMessage])
+
+  /* Copy from the actions sheet (Fei Castillo via Tate, 2026-09-27). The
+     clipboard write starts synchronously inside the tap, before any await,
+     because WebKit only honours it during the user gesture. */
+  const copyAndToast = useCallback(
+    (text: string, done: string) => {
+      setSelectedMessage(null)
+      void copyText(text).then((ok) => {
+        if (ok) toast.success(done)
+        else toast.error('Could not copy that. Try again.')
+      })
+    },
+    [toast],
+  )
+
+  const handleCopy = useCallback(() => {
+    const text = selectedMessage?.content
+    if (!text) return
+    copyAndToast(text, 'Message copied')
+  }, [selectedMessage, copyAndToast])
+
+  const selectedLink = useMemo(
+    () => (canCopyMessage(selectedMessage) ? firstCopyableLink(selectedMessage?.content) : null),
+    [selectedMessage],
+  )
+
+  const handleCopyLink = useCallback(() => {
+    if (!selectedLink) return
+    copyAndToast(selectedLink.value, selectedLink.type === 'email' ? 'Email address copied' : 'Link copied')
+  }, [selectedLink, copyAndToast])
 
   /* React from the actions sheet (1.8.5 polish 10 May 2026).
      Replaces the always-visible reaction picker that used to render under
@@ -1221,6 +1253,9 @@ export default function ChatRoomPage() {
         isOwnMessage={selectedMessage?.user_id === user?.id}
         onClose={() => setSelectedMessage(null)}
         onReply={handleReply}
+        onCopy={canCopyMessage(selectedMessage) ? handleCopy : undefined}
+        onCopyLink={selectedLink ? handleCopyLink : undefined}
+        copyLinkLabel={selectedLink?.type === 'email' ? 'Copy email address' : 'Copy link'}
         onEdit={canEditMessage(selectedMessage, user?.id) ? handleEdit : undefined}
         onDelete={handleDelete}
         onPin={handlePin}
