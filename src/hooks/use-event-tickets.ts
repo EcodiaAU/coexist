@@ -6,6 +6,7 @@ import { useOffline } from '@/hooks/use-offline'
 import { queueOfflineAction } from '@/lib/offline-sync'
 import { DIETARY_GATE_QUERY_KEY } from '@/lib/dietary'
 import { SPOT_TAKING_TICKET_STATUSES, isResolvingTicketStatus, summariseTicketSales } from '@/lib/event-capacity'
+import { MY_TICKETS_OR_FILTER } from '@/lib/ticket-release'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -42,6 +43,12 @@ export interface EventTicket {
   hold_expires_at?: string | null
   reserved_by?: string | null
   reserved_note?: string | null
+  /** Release on resale: set when the holder released it inside the cutoff. */
+  released_at?: string | null
+  /** The paid buyer ticket this release was paired with (refund owed). */
+  resold_by_ticket_id?: string | null
+  /** When Stripe accepted the resale refund. */
+  resale_refunded_at?: string | null
   /** Joined */
   ticket_type_name?: string
   event_title?: string
@@ -175,8 +182,10 @@ export function useMyTickets() {
         .select('*, event_ticket_types(name), events(title, date_start, address, cover_image_url)')
         .eq('user_id', user.id)
         // A held (reserved) spot belongs on My Tickets: it is the surface where
-        // the invitee finds it and pays for it.
-        .in('status', ['confirmed', 'checked_in', 'reserved'])
+        // the invitee finds it and pays for it. A RELEASED ticket stays too
+        // (status cancelled/refunded, released_at set), so the member can see
+        // that a refund is waiting on someone buying their spot.
+        .or(MY_TICKETS_OR_FILTER)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -649,6 +658,10 @@ export interface TicketSelfService {
   hold_expires_at?: string | null
   can_refund?: boolean
   can_transfer?: boolean
+  /** Inside the refund cutoff: may release the ticket back on sale instead. */
+  can_release?: boolean
+  released_at?: string | null
+  resale_refunded_at?: string | null
   refund_cutoff_at?: string | null
   refund_enabled_for_event?: boolean
   transfer_enabled_for_event?: boolean
@@ -740,6 +753,31 @@ export function useSelfRefundTicket() {
         throw await selfServiceError(error, 'We could not refund that ticket. Nothing has changed.')
       }
       const result = data as { ok?: boolean; action?: string; error?: string }
+      if (result?.error) throw new Error(result.error)
+      return result
+    },
+    onSuccess: (_, { eventId }) => invalidateTicketSurfaces(queryClient, eventId),
+  })
+}
+
+/**
+ * Release my own ticket inside the refund cutoff. The seat goes back on sale and
+ * I am refunded in full once someone else buys a paid ticket (a $0 ticket is
+ * simply cancelled). The server decides eligibility; this only asks.
+ */
+export function useReleaseMyTicket() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ ticketId }: { ticketId: string; eventId?: string }) => {
+      const { data, error } = await supabase.functions.invoke('self-service-ticket', {
+        body: { action: 'release', ticket_id: ticketId },
+      })
+      if (error) {
+        captureException(error, { extra: { ticketId, action: 'release' } })
+        throw await selfServiceError(error, 'We could not release that ticket. Nothing has changed.')
+      }
+      const result = data as { ok?: boolean; action?: 'released' | 'cancelled'; error?: string }
       if (result?.error) throw new Error(result.error)
       return result
     },

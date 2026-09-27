@@ -4,7 +4,11 @@
  * Before this, a refund or a change meant messaging an organiser and waiting
  * (Angelica, 2026-08-24). Two actions live here, both acting only on the
  * caller's own ticket:
- *   - Refund my ticket (Stripe refund against the original payment).
+ *   - Refund my ticket (Stripe refund against the original payment), before the
+ *     refund cutoff.
+ *   - Release my ticket, INSIDE the cutoff (2026-09-27): the seat goes back on
+ *     sale and the holder is refunded in full once someone else buys a paid
+ *     ticket, or not at all if nobody does. A $0 ticket is simply released.
  *   - Pass my ticket to someone else by email (no refund, no re-buy: the same
  *     ticket and the same original charge move to the new holder).
  *
@@ -13,14 +17,15 @@
  * not re-derive the policy, so the button can never promise what the edge
  * function will refuse.
  *
- * TERMS: the member-facing refund/transfer wording is owed by Angelica + Tate
+ * TERMS: the member-facing refund/transfer wording lives in @/lib/ticket-terms
  * and is NOT invented here. While TICKET_TERMS_PENDING is true the sheet shows
- * the placeholder notice from @/lib/ticket-terms instead of policy text.
+ * the placeholder notice instead of policy text; once it is flipped the sheet
+ * shows the real refund terms (and the transfer terms when transfer is on).
  */
 import { useState } from 'react'
 import { useToast } from '@/components/toast'
 import { BottomSheet, Button } from '@/components'
-import { AlertTriangle, ArrowRightLeft, Info, RotateCcw, X } from 'lucide-react'
+import { AlertTriangle, ArrowRightLeft, Info, RotateCcw, Undo2, X } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useImeSafeOnChange } from '@/hooks/use-ime-safe-on-change'
 import { ticketTermsCopy, TICKET_TERMS_PENDING } from '@/lib/ticket-terms'
@@ -28,6 +33,7 @@ import {
   useTicketSelfService,
   useMyTicketTransfers,
   useSelfRefundTicket,
+  useReleaseMyTicket,
   useStartTicketTransfer,
   useCancelTicketTransfer,
 } from '@/hooks/use-event-tickets'
@@ -40,8 +46,18 @@ const inputCls = cn(
   'focus:border-primary-400 transition-colors duration-150',
 )
 
-/** Plain-language reason the server gave for refusing an action. */
-function blockedCopy(reason: string | null | undefined, refundEnabled: boolean): string | null {
+/**
+ * Plain-language reason the server gave for refusing an action. When release is
+ * on offer, the closed refund window is not a dead end, so it says what to do.
+ */
+export function blockedCopy(
+  reason: string | null | undefined,
+  refundEnabled: boolean,
+  canRelease = false,
+): string | null {
+  if (reason === 'past_refund_cutoff' && canRelease) {
+    return "It's too close to the event to refund directly, but you can release your ticket below."
+  }
   switch (reason) {
     case 'checked_in':
       return "You've already checked in to this event, so it can't be changed here."
@@ -73,10 +89,11 @@ export function TicketSelfServiceSheet({
   const { data: policy, isLoading } = useTicketSelfService(open ? ticketId : undefined)
   const { data: offers } = useMyTicketTransfers(open ? ticketId : undefined)
   const refund = useSelfRefundTicket()
+  const release = useReleaseMyTicket()
   const startTransfer = useStartTicketTransfer()
   const cancelTransfer = useCancelTicketTransfer()
 
-  const [mode, setMode] = useState<'menu' | 'refund' | 'transfer'>('menu')
+  const [mode, setMode] = useState<'menu' | 'refund' | 'release' | 'transfer'>('menu')
   const [email, setEmail] = useState('')
   const emailProps = useImeSafeOnChange<HTMLInputElement>(setEmail)
 
@@ -100,6 +117,20 @@ export function TicketSelfServiceSheet({
     }
   }
 
+  async function handleRelease() {
+    try {
+      const res = await release.mutateAsync({ ticketId, eventId })
+      toast.success(
+        res?.action === 'released'
+          ? "Released. You'll be refunded when someone takes your spot."
+          : 'Your ticket has been released.',
+      )
+      close()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not release that ticket')
+    }
+  }
+
   async function handleTransfer() {
     const trimmed = email.trim().toLowerCase()
     if (!EMAIL_RE.test(trimmed)) {
@@ -117,8 +148,10 @@ export function TicketSelfServiceSheet({
 
   const canRefund = policy?.can_refund === true
   const canTransfer = policy?.can_transfer === true
-  const blocked = blockedCopy(policy?.blocked_reason, policy?.refund_enabled_for_event === true)
-  const nothingAvailable = !isLoading && policy?.found && !canRefund && !canTransfer
+  const canRelease = policy?.can_release === true
+  const blocked = blockedCopy(policy?.blocked_reason, policy?.refund_enabled_for_event === true, canRelease)
+  const nothingAvailable = !isLoading && policy?.found && !canRefund && !canTransfer && !canRelease
+  const anyAction = canRefund || canTransfer || canRelease
 
   return (
     <BottomSheet open={open} onClose={close} snapPoints={[0.7]}>
@@ -130,13 +163,26 @@ export function TicketSelfServiceSheet({
 
         {isLoading && <p className="text-xs text-neutral-400">Checking your options...</p>}
 
-        {/* Terms placeholder. Real wording is owed by Angelica + Tate. */}
-        {TICKET_TERMS_PENDING && (canRefund || canTransfer) && (
+        {/* Terms. A placeholder notice until TICKET_TERMS_PENDING is flipped. */}
+        {anyAction && TICKET_TERMS_PENDING && (
           <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-sm bg-warning-50 border border-warning-200/50">
             <Info size={15} className="text-warning-600 shrink-0 mt-0.5" />
             <p className="text-[11px] text-warning-700 leading-relaxed">
               {ticketTermsCopy('refund')}
             </p>
+          </div>
+        )}
+        {anyAction && !TICKET_TERMS_PENDING && (
+          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-sm bg-neutral-50 border border-neutral-200/60">
+            <Info size={15} className="text-neutral-400 shrink-0 mt-0.5" />
+            <div className="space-y-1.5">
+              {(canRefund || canRelease) && (
+                <p className="text-[11px] text-neutral-600 leading-relaxed">{ticketTermsCopy('refund')}</p>
+              )}
+              {canTransfer && (
+                <p className="text-[11px] text-neutral-600 leading-relaxed">{ticketTermsCopy('transfer')}</p>
+              )}
+            </div>
           </div>
         )}
 
@@ -202,6 +248,38 @@ export function TicketSelfServiceSheet({
                 Refund my ticket
               </Button>
             )}
+            {canRelease && (
+              <Button variant="ghost" size="md" fullWidth onClick={() => setMode('release')}>
+                <Undo2 size={16} className="mr-1.5" />
+                Release my ticket
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* ---- Release (inside the refund cutoff) ---- */}
+        {mode === 'release' && (
+          <div className="space-y-3 border-t border-neutral-100 pt-4">
+            <p className="text-xs text-neutral-500 leading-relaxed">
+              {policy?.is_paid
+                ? "Your spot goes back on sale. When someone else buys a ticket, you're refunded in full, automatically, to the card you paid with. If nobody buys one before the event, you won't be refunded. You can't undo this."
+                : "Your spot goes back on sale for someone else. You can't undo this."}
+            </p>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="md" onClick={() => setMode('menu')}>
+                Keep my ticket
+              </Button>
+              <Button
+                variant="danger"
+                size="md"
+                fullWidth
+                loading={release.isPending}
+                disabled={release.isPending}
+                onClick={handleRelease}
+              >
+                Release my ticket
+              </Button>
+            </div>
           </div>
         )}
 

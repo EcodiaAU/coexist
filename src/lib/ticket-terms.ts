@@ -1,11 +1,12 @@
 /**
- * Member-facing ticket terms: PLACEHOLDER, NOT FINAL WORDING.
+ * Member-facing ticket terms.
  *
  * The refund / transfer / held-spot terms shown to members are legal copy and
- * are OWED BY ANGELICA + TATE. They have not landed as at 2026-08-24. Nothing
- * in this file is real policy and none of it was drafted by EcodiaOS: inventing
- * refund terms and showing them to a paying member would be a live commercial
- * commitment made by a machine.
+ * are OWED BY ANGELICA + TATE. The wording below was supplied on 2026-09-27
+ * with the release-on-resale feature and is WAITING ON TATE'S YES: it is not
+ * live until TICKET_TERMS_PENDING is flipped. Nothing in this file may be
+ * reworded by EcodiaOS on its own: changing refund terms shown to a paying
+ * member is a live commercial commitment made by a machine.
  *
  * While TICKET_TERMS_PENDING is true every member-facing self-service surface
  * renders TICKET_TERMS_PLACEHOLDER as a visible "terms pending" notice instead
@@ -28,14 +29,19 @@ export const TICKET_TERMS_PLACEHOLDER =
   'Ticket terms are being finalised. Your organiser will confirm the exact refund and transfer conditions for this event.'
 
 /**
- * The real terms. EMPTY ON PURPOSE while TICKET_TERMS_PENDING is true.
- * Do not populate these from a guess, a template, or another organisation's
- * policy: they are a commercial commitment to a paying member.
+ * The terms, exactly as supplied (2026-09-27). NOT SHOWN while
+ * TICKET_TERMS_PENDING is true. Do not edit these from a guess, a template, or
+ * another organisation's policy: they are a commercial commitment to a paying
+ * member. `refund` describes BOTH self-service paths: a direct refund before
+ * the cutoff, and release-on-resale inside it.
  */
 export const TICKET_TERMS = {
-  refund: '',
-  transfer: '',
-  heldSpot: '',
+  refund:
+    "Can't make it? Refund your ticket in the app up to 7 days before the event. Inside 7 days you can release it instead: it goes back on sale, and you're refunded in full as soon as someone else buys it. If nobody does, it isn't refunded.",
+  transfer:
+    'You can pass your ticket to a friend any time before the event. They take your spot. Nothing is refunded, so sort payment between you.',
+  heldSpot:
+    "We've held a spot for you. Pay by the date shown to confirm it, or it goes to the next person on the waitlist.",
 } as const
 
 /** The copy a surface should actually render for a given term. */

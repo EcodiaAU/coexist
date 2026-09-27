@@ -8,6 +8,10 @@
  *
  * Actions:
  *   refund          - refund MY confirmed ticket via Stripe (or cancel a $0 comp).
+ *   release         - inside the refund cutoff: put MY ticket back on sale. It is
+ *                     refunded in full once someone else buys a paid ticket
+ *                     (claim_resale_refunds + the waitlist-notify sweep), and
+ *                     not at all if nobody does. A $0 ticket is just cancelled.
  *   transfer_start  - offer MY ticket to someone by email; they get a claim link.
  *   transfer_cancel - withdraw an offer I made.
  *   transfer_claim  - claim a ticket someone offered ME (token-gated).
@@ -22,6 +26,7 @@
  * dark until a human turns them on with real terms in hand.
  *
  * Input:  { action, ticket_id?, to_email?, transfer_id?, token? }
+ *         action 'release' takes ticket_id.
  * Auth:   caller JWT. No role requirement: you may only act on your own ticket.
  */
 
@@ -141,6 +146,28 @@ Deno.serve(withSentry('self-service-ticket', async (req: Request) => {
         .eq('status', 'confirmed')
       await service.rpc('reconcile_ticket_membership', { p_event: ticket.event_id, p_user: ticket.user_id })
       return json({ ok: true, action: 'cancelled', ticket_id: ticket.id })
+    }
+
+    /* ---------------------------------------------------------------- */
+    /*  release - inside the cutoff, put my ticket back on sale          */
+    /* ---------------------------------------------------------------- */
+    if (action === 'release') {
+      if (typeof body.ticket_id !== 'string' || !UUID_RE.test(body.ticket_id)) {
+        return json({ error: 'Invalid ticket' }, 400)
+      }
+
+      // release_my_ticket is owner-scoped (auth.uid()) and re-checks the flag,
+      // the status and the cutoff itself. No money moves here: the refund is
+      // paid by the waitlist-notify sweep once a buyer exists.
+      const { data: released, error: releaseErr } = await asCaller.rpc('release_my_ticket', {
+        p_ticket_id: body.ticket_id,
+      })
+      if (releaseErr) return json({ error: releaseErr.message }, 400)
+      const r = released as { ticket_id: string; event_id: string; action: 'released' | 'cancelled' }
+
+      // Defensive, idempotent with trg_reconcile_event_ticket_state.
+      await service.rpc('reconcile_ticket_membership', { p_event: r.event_id, p_user: caller.id })
+      return json({ ok: true, action: r.action, ticket_id: r.ticket_id, event_id: r.event_id })
     }
 
     /* ---------------------------------------------------------------- */

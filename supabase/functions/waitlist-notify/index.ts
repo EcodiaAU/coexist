@@ -1,6 +1,8 @@
 // Deno Edge Function
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { withSentry } from '../_shared/sentry.ts'
+import { runResaleRefundSweep, type ResaleSweepResult } from '../_shared/resale-refunds.ts'
 
 /**
  * waitlist-notify - scheduled sweep for the ticketed-event waitlist.
@@ -27,6 +29,14 @@ import { withSentry } from '../_shared/sentry.ts'
  * event whose tickets sold out on Eventbrite (`event_extras.sold_out`), where
  * native seats never reopen and the automatic path correctly never fires.
  * Requires the service role or an event organiser.
+ *
+ * RELEASE-ON-RESALE REFUNDS RIDE THIS SWEEP (2026-09-27). A member who released
+ * their ticket inside the refund cutoff is refunded once someone else buys a
+ * paid ticket; claim_resale_refunds() pairs them and _shared/resale-refunds.ts
+ * moves the money. It runs FIRST on every fire and inside its own try/catch, so
+ * a Stripe or pairing failure can never stop a waitlist offer. Every response
+ * carries a `resale` field, which is also how a deploy is proven: a fire whose
+ * body has no `resale` key ran the old build.
  */
 
 const APP_URL = 'https://app.coexistaus.org'
@@ -43,6 +53,41 @@ interface Candidate {
   quantity: number
   queue_position: number
   free_seats: number
+}
+
+/**
+ * Pay out any release-on-resale refund that is now owed. Never throws: the
+ * waitlist offers below matter more than this, and a refund that fails here is
+ * retried by the next fire five minutes later.
+ */
+async function sweepResaleRefunds(supabase: SupabaseClient): Promise<ResaleSweepResult | { error: string }> {
+  try {
+    const key = Deno.env.get('STRIPE_SECRET_KEY')
+    if (!key) return { error: 'STRIPE_SECRET_KEY not set' }
+    const stripe = new Stripe(key, { apiVersion: '2024-04-10' })
+    const result = await runResaleRefundSweep({
+      claim: () => supabase.rpc('claim_resale_refunds', { p_event_id: null }),
+      refund: (paymentIntentId) => stripe.refunds.create({ payment_intent: paymentIntentId }),
+      markRefunded: (ticketId, nowIso) =>
+        supabase.from('event_tickets')
+          .update({ resale_refunded_at: nowIso })
+          .eq('id', ticketId)
+          .is('resale_refunded_at', null),
+      releaseClaim: (ticketId, nowIso) =>
+        supabase.from('event_tickets')
+          .update({ resold_by_ticket_id: null, updated_at: nowIso })
+          .eq('id', ticketId)
+          .is('resale_refunded_at', null),
+    })
+    if (result.claimed > 0 || result.errors.length > 0) {
+      console.log(`[waitlist-notify] resale refunds: ${JSON.stringify(result)}`)
+    }
+    return result
+  } catch (err) {
+    const msg = (err as Error)?.message ?? String(err)
+    console.error('[waitlist-notify] resale refund sweep threw:', msg)
+    return { error: msg }
+  }
 }
 
 /** Wall-clock-as-UTC, matching how the rest of the app formats event dates. */
@@ -71,6 +116,9 @@ Deno.serve(withSentry('waitlist-notify', async (req: Request) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   )
 
+  // Refunds owed on released tickets first. Isolated: it cannot throw.
+  const resale = await sweepResaleRefunds(supabase)
+
   let eventId: string | null = null
   let force = false
   if (req.method === 'POST') {
@@ -87,7 +135,7 @@ Deno.serve(withSentry('waitlist-notify', async (req: Request) => {
   // its own, so it must name one event. A force with no event_id would email
   // every waiting person on every sold-out event at once.
   if (force && !eventId) {
-    return json({ error: 'force requires an event_id' }, 400)
+    return json({ error: 'force requires an event_id', resale }, 400)
   }
 
   const { data, error } = await supabase.rpc('waitlist_drain_candidates', {
@@ -96,12 +144,12 @@ Deno.serve(withSentry('waitlist-notify', async (req: Request) => {
   })
   if (error) {
     console.error('[waitlist-notify] drain query failed:', error.message)
-    return json({ error: error.message }, 500)
+    return json({ error: error.message, resale }, 500)
   }
 
   const candidates = (data ?? []) as Candidate[]
   if (candidates.length === 0) {
-    return json({ ok: true, notified: 0, reason: 'nobody to notify' })
+    return json({ ok: true, notified: 0, reason: 'nobody to notify', resale })
   }
 
   // One batch send per event: N recipients cost ceil(N/100) Resend calls, the
@@ -200,5 +248,5 @@ Deno.serve(withSentry('waitlist-notify', async (req: Request) => {
     }
   }
 
-  return json({ ok: failures.length === 0, notified, events: byEvent.size, failures })
+  return json({ ok: failures.length === 0, notified, events: byEvent.size, failures, resale })
 }))

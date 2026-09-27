@@ -6,6 +6,7 @@ import { useMyTickets, type EventTicket } from '@/hooks/use-event-tickets'
 import { TicketSelfServiceSheet } from '@/components/ticket-self-service-sheet'
 import { formatEventDate, formatEventTime } from '@/hooks/use-events'
 import { ticketStatusPresentation } from '@/lib/event-capacity'
+import { ticketReleaseState, RELEASE_STATE_COPY } from '@/lib/ticket-release'
 import {
   Page,
   Header,
@@ -26,6 +27,10 @@ function TicketCard({ ticket, onManage }: { ticket: EventTicket; onManage: (t: E
   // not confirmed/checked_in, which quietly painted a cancelled or refunded
   // ticket the same as a live hold.
   const statusPill = ticketStatusPresentation(ticket.status)
+  // A released ticket (release on resale) is shown so the member can see the
+  // refund is waiting on someone buying their spot. It is not a live ticket.
+  const releaseState = ticketReleaseState(ticket)
+  const isReleased = releaseState !== null
 
   return (
     <StaggeredItem
@@ -40,7 +45,9 @@ function TicketCard({ ticket, onManage }: { ticket: EventTicket; onManage: (t: E
         onClick={() => navigate(
           isHeld
             ? `/events/${ticket.event_id}?pay_ticket=${ticket.id}`
-            : `/events/${ticket.event_id}/ticket-confirmation?ticket_id=${ticket.id}`,
+            : isReleased
+              ? `/events/${ticket.event_id}`
+              : `/events/${ticket.event_id}/ticket-confirmation?ticket_id=${ticket.id}`,
         )}
         className="w-full flex items-stretch text-left cursor-pointer active:scale-[0.98] transition-transform duration-150"
       >
@@ -92,6 +99,12 @@ function TicketCard({ ticket, onManage }: { ticket: EventTicket; onManage: (t: E
             </p>
           )}
 
+          {releaseState && (
+            <p className="mt-1.5 text-[11px] font-medium text-neutral-600">
+              {RELEASE_STATE_COPY[releaseState]}
+            </p>
+          )}
+
           <div className="flex items-center gap-2 mt-2">
             {ticket.ticket_type_name && (
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-neutral-100 text-neutral-500 uppercase tracking-wide">
@@ -100,11 +113,11 @@ function TicketCard({ ticket, onManage }: { ticket: EventTicket; onManage: (t: E
             )}
             <span className={cn(
               'text-[10px] font-semibold px-1.5 py-0.5 rounded-md uppercase tracking-wide',
-              statusPill.badgeClassName,
+              isReleased ? 'bg-neutral-100 text-neutral-500' : statusPill.badgeClassName,
             )}>
-              {statusPill.label}
+              {isReleased ? 'Released' : statusPill.label}
             </span>
-            {ticket.ticket_code && !isHeld && (
+            {ticket.ticket_code && !isHeld && !isReleased && (
               <span className="font-mono text-[10px] text-neutral-400">{ticket.ticket_code}</span>
             )}
           </div>
