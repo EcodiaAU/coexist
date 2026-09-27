@@ -172,11 +172,13 @@ export function TicketSelfServiceSheet({
             </p>
           </div>
         )}
-        {anyAction && !TICKET_TERMS_PENDING && (
+        {/* Refund terms only on a PAID ticket: on a $0 ticket they would promise
+            a refund that does not exist. */}
+        {anyAction && !TICKET_TERMS_PENDING && (((canRefund || canRelease) && policy?.is_paid === true) || canTransfer) && (
           <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-sm bg-neutral-50 border border-neutral-200/60">
             <Info size={15} className="text-neutral-400 shrink-0 mt-0.5" />
             <div className="space-y-1.5">
-              {(canRefund || canRelease) && (
+              {(canRefund || canRelease) && policy?.is_paid === true && (
                 <p className="text-[11px] text-neutral-600 leading-relaxed">{ticketTermsCopy('refund')}</p>
               )}
               {canTransfer && (

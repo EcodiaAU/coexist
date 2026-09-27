@@ -78,7 +78,7 @@ describe('TicketSelfServiceSheet: release on resale', () => {
     const user = userEvent.setup()
     render(<TicketSelfServiceSheet ticketId="t-1" eventId="e-1" open onClose={vi.fn()} />)
     await openRelease(user)
-    expect(screen.getByText(/goes back on sale/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/goes back on sale/i).length).toBeGreaterThan(0)
     expect(screen.getByText(/refunded in full, automatically/i)).toBeInTheDocument()
     expect(screen.getByText(/if nobody buys one before the event, you won't be refunded/i)).toBeInTheDocument()
     expect(releaseMutateAsync).not.toHaveBeenCalled()
@@ -110,9 +110,16 @@ describe('TicketSelfServiceSheet: release on resale', () => {
     expect(screen.getByText(/handled by the organiser/i)).toBeInTheDocument()
   })
 
-  it('shows the terms placeholder, not the real wording, while terms are pending', () => {
+  it('shows the approved terms on a paid ticket now that they are live', () => {
     render(<TicketSelfServiceSheet ticketId="t-1" eventId="e-1" open onClose={vi.fn()} />)
-    expect(screen.getByText(/ticket terms are being finalised/i)).toBeInTheDocument()
+    expect(screen.getByText(/can't make it\?/i)).toBeInTheDocument()
+    expect(screen.queryByText(/ticket terms are being finalised/i)).toBeNull()
+  })
+
+  it('shows no refund terms on a $0 ticket, even with transfer terms showing', () => {
+    policy = { ...INSIDE_CUTOFF_PAID, is_paid: false, price_cents: 0, can_transfer: true, transfer_enabled_for_event: true }
+    render(<TicketSelfServiceSheet ticketId="t-1" eventId="e-1" open onClose={vi.fn()} />)
+    expect(screen.getByText(/pass your ticket to a friend/i)).toBeInTheDocument()
     expect(screen.queryByText(/can't make it\?/i)).toBeNull()
   })
 })

@@ -86,10 +86,11 @@ describe('ticket terms', () => {
     )
   })
 
-  it('is STILL PENDING: members see the placeholder until Tate says yes', () => {
-    expect(TICKET_TERMS_PENDING).toBe(true)
-    expect(ticketTermsCopy('refund')).toBe(TICKET_TERMS_PLACEHOLDER)
-    expect(ticketTermsCopy('heldSpot')).toBe(TICKET_TERMS_PLACEHOLDER)
+  it('is LIVE: Tate approved the terms 2026-09-27, members see the real wording', () => {
+    expect(TICKET_TERMS_PENDING).toBe(false)
+    expect(ticketTermsCopy('refund')).toBe(TICKET_TERMS.refund)
+    expect(ticketTermsCopy('heldSpot')).toBe(TICKET_TERMS.heldSpot)
+    expect(ticketTermsCopy('refund')).not.toBe(TICKET_TERMS_PLACEHOLDER)
   })
 })
 

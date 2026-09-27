@@ -153,6 +153,41 @@ Deno.serve(withSentry('cancel-event', async (req: Request) => {
       }
     }
 
+    // Released-but-unsold tickets (release on resale). A member who released
+    // inside the refund cutoff is already `cancelled` with their payment kept,
+    // waiting for a buyer. Once the event is cancelled no buyer can come
+    // (claim_resale_refunds never pairs a cancelled event), so refund them
+    // here or they would be the only people who paid and got nothing back.
+    // The charge.refunded webhook then marks the ticket refunded and emails.
+    const { data: released } = await supabase
+      .from('event_tickets')
+      .select('id, stripe_payment_intent_id, price_cents')
+      .eq('event_id', evt.id)
+      .eq('status', 'cancelled')
+      .not('released_at', 'is', null)
+      .is('resale_refunded_at', null)
+      .not('stripe_payment_intent_id', 'is', null)
+      .gt('price_cents', 0)
+
+    for (const r of released ?? []) {
+      try {
+        try {
+          await stripe.refunds.create({ payment_intent: r.stripe_payment_intent_id! })
+        } catch (err) {
+          const msg = (err as Error).message
+          if (!/already been refunded|already refunded/i.test(msg)) throw err
+        }
+        await supabase.from('event_tickets')
+          .update({ resale_refunded_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .eq('id', r.id)
+          .is('resale_refunded_at', null)
+        refunded++
+      } catch (err) {
+        failed++
+        console.error(`[cancel-event] released ticket ${r.id} refund failed:`, (err as Error).message)
+      }
+    }
+
     // Surface a partial-failure so the caller does not report a clean success
     // when a Stripe refund did not go through (the event IS cancelled either way).
     return json({ ok: failed === 0, refunded, cancelled, failed })

@@ -3,8 +3,9 @@
  *
  * The refund / transfer / held-spot terms shown to members are legal copy and
  * are OWED BY ANGELICA + TATE. The wording below was supplied on 2026-09-27
- * with the release-on-resale feature and is WAITING ON TATE'S YES: it is not
- * live until TICKET_TERMS_PENDING is flipped. Nothing in this file may be
+ * with the release-on-resale feature and APPROVED BY TATE the same day ("finish
+ * absolutely everything and push it live"), so TICKET_TERMS_PENDING is false
+ * and the per-event flags default on. Nothing in this file may be
  * reworded by EcodiaOS on its own: changing refund terms shown to a paying
  * member is a live commercial commitment made by a machine.
  *
@@ -22,7 +23,7 @@
  */
 
 /** True until the real wording lands. Gates every member-facing terms surface. */
-export const TICKET_TERMS_PENDING = true
+export const TICKET_TERMS_PENDING = false
 
 /** Shown in place of policy text while the wording is outstanding. */
 export const TICKET_TERMS_PLACEHOLDER =
