@@ -595,7 +595,7 @@ export function AnnouncementCard({
         {/* Content */}
         <h4 data-eos-id="src/components/chat-bubble.tsx#53" className="text-[15px] font-extrabold text-neutral-900 mb-1.5 break-words">{title}</h4>
         {body && (
-          <LinkifiedText data-eos-id="src/components/chat-bubble.tsx#54" text={body} className="whitespace-pre-wrap text-sm text-neutral-600 leading-relaxed mb-2 break-words [overflow-wrap:anywhere]" />
+          <LinkifiedText data-eos-id="src/components/chat-bubble.tsx#54" text={body.trim()} className="whitespace-pre-wrap text-sm text-neutral-600 leading-relaxed mb-2 break-words [overflow-wrap:anywhere]" />
         )}
 
         {/* Event details summary */}

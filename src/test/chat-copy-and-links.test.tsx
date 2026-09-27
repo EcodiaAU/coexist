@@ -276,7 +276,10 @@ describe('wiring', () => {
   it('chat bubbles and announcement bodies render through LinkifiedText', () => {
     const src = read('components/chat-bubble.tsx')
     expect(src).toMatch(/<LinkifiedText[^>]*\n\s*text=\{message\}/)
-    expect(src).toMatch(/<LinkifiedText[^>]*text=\{body\}/)
+    // announcement bodies keep authored line breaks (pre-wrap) but not a
+    // leading or trailing blank line (1 of 101 live bodies started with one)
+    expect(src).toMatch(/<LinkifiedText[^>]*text=\{body\.trim\(\)\}/)
+    expect(src).toMatch(/text=\{body\.trim\(\)\} className="whitespace-pre-wrap/)
   })
 
   it('the actions sheet offers Copy, gated by canCopyMessage', () => {
