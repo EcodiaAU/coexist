@@ -1,8 +1,8 @@
 /**
- * grant-event-ticket - Supabase Edge Function (authed; managers + admins only)
+ * grant-event-ticket - Supabase Edge Function (authed; event ticket-desk staff)
  *
- * Lets a manager or admin issue a FREE confirmed ticket to someone ahead of
- * time - like a day-of walk-in, but before the event. The recipient is
+ * Lets an event's ticket-desk staff issue a FREE confirmed ticket to someone
+ * ahead of time - like a day-of walk-in, but before the event. The recipient is
  * resolved by an existing user_id (picked from search) or provisioned by email
  * (a shell account, same as guest checkout). We insert a $0 confirmed ticket
  * (bypassing capacity, like the claim flow), create the event_registration, and
@@ -11,13 +11,17 @@
  * magic link when we just created their account, so they can actually get in).
  *
  * Input:  { event_id, email?, name?, user_id?, notify? }
- * Auth:   caller's JWT in Authorization; caller's role must be manager|admin.
+ * Auth:   caller's JWT in Authorization; caller must pass
+ *         can_manage_event_tickets(caller, event_id) - a global manager/admin,
+ *         or an active leader/co_leader/assist_leader of a collective that
+ *         hosts the event.
  * Returns:{ ticket_id, already, user_id, created_account }
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
 import { reportInvokeError } from '../_shared/invoke-report.ts'
+import { canManageEventTickets, TICKET_DESK_REFUSAL } from '../_shared/can-manage-tickets.ts'
 import {
   LIVE_TICKET_STATUSES,
   UNSETTLED_TICKET_STATUSES,
@@ -62,20 +66,14 @@ Deno.serve(withSentry('grant-event-ticket', async (req: Request) => {
     if (!gotru.ok) return json({ error: 'Your session expired. Please sign in again.' }, 401)
     const caller = await gotru.json() as { id: string }
 
-    // ---- Authorize: managers + admins only ----
-    const { data: callerProfile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', caller.id)
-      .single()
-    const callerRole = callerProfile?.role
-    if (callerRole !== 'manager' && callerRole !== 'admin') {
-      return json({ error: 'Only managers and admins can issue tickets' }, 403)
-    }
-
-    // ---- Validate input ----
+    // ---- Validate the event id, then authorize against IT ----
     const body = await req.json()
     if (typeof body.event_id !== 'string' || !UUID_RE.test(body.event_id)) return json({ error: 'Invalid event' }, 400)
+
+    // ---- Authorize: this event's leaders (any hosting collective) + admins ----
+    const authorized = await canManageEventTickets(supabase, caller.id, body.event_id)
+    if (!authorized) return json({ error: TICKET_DESK_REFUSAL }, 403)
+
     const givenUserId = typeof body.user_id === 'string' && UUID_RE.test(body.user_id) ? body.user_id : null
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : ''
@@ -264,6 +262,17 @@ Deno.serve(withSentry('grant-event-ticket', async (req: Request) => {
         console.error('[grant] send-email failed:', (err as Error).message)
       }
     }
+
+    // Best-effort: an audit-log failure never blocks a ticket the caller was
+    // just authorised to issue.
+    const { error: auditErr } = await supabase.from('audit_log').insert({
+      user_id: caller.id,
+      action: 'event_ticket_granted',
+      target_type: 'event_ticket',
+      target_id: ticketId,
+      details: { event_id: body.event_id, recipient_user_id: userId, already, created_account: createdAccount },
+    })
+    if (auditErr) console.error('[grant] audit_log insert failed:', auditErr.message)
 
     return json({ ticket_id: ticketId, already, user_id: userId, created_account: createdAccount })
   } catch (err) {

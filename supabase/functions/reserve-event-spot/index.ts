@@ -1,5 +1,5 @@
 /**
- * reserve-event-spot - Supabase Edge Function (authed; managers + admins only)
+ * reserve-event-spot - Supabase Edge Function (authed; event ticket-desk staff)
  *
  * The missing half of the comp story. `grant-event-ticket` gives someone a FREE
  * confirmed ticket; this HOLDS a spot for someone who is still expected to pay.
@@ -17,12 +17,16 @@
  * Input:  { event_id, user_id? | email?, name?, hold_expires_at?, note?,
  *           attribute_to_name?,
  *           ticket_type_id?, notify? }
- * Auth:   caller JWT; caller's role must be manager|admin (same gate as grant).
+ * Auth:   caller JWT; caller must pass can_manage_event_tickets(caller,
+ *         event_id) - same gate as grant-event-ticket: a global manager/admin,
+ *         or an active leader/co_leader/assist_leader of a collective that
+ *         hosts the event.
  * Returns:{ ok, ticket_id, already, status, user_id, price_cents, created_account }
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import { canManageEventTickets, TICKET_DESK_REFUSAL } from '../_shared/can-manage-tickets.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -54,22 +58,24 @@ Deno.serve(withSentry('reserve-event-spot', async (req: Request) => {
     if (!gotru.ok) return json({ error: 'Your session expired. Please sign in again.' }, 401)
     const caller = await gotru.json() as { id: string }
 
-    // ---- Authorize: managers + admins only ----
-    const { data: callerProfile } = await supabase
-      .from('profiles')
-      .select('role, display_name')
-      .eq('id', caller.id)
-      .single()
-    const callerRole = callerProfile?.role
-    if (callerRole !== 'manager' && callerRole !== 'admin') {
-      return json({ error: 'Only managers and admins can hold a spot' }, 403)
-    }
-
-    // ---- Validate input ----
+    // ---- Validate the event id, then authorize against IT ----
     const body = await req.json()
     if (typeof body.event_id !== 'string' || !UUID_RE.test(body.event_id)) {
       return json({ error: 'Invalid event' }, 400)
     }
+
+    // ---- Authorize: this event's leaders (any hosting collective) + admins ----
+    const authorized = await canManageEventTickets(supabase, caller.id, body.event_id)
+    if (!authorized) return json({ error: TICKET_DESK_REFUSAL }, 403)
+
+    // display_name only, for the "held by <name>" email default below - not
+    // used for authorization any more.
+    const { data: callerProfile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', caller.id)
+      .single()
+
     const givenUserId = typeof body.user_id === 'string' && UUID_RE.test(body.user_id) ? body.user_id : null
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : ''
@@ -256,6 +262,17 @@ Deno.serve(withSentry('reserve-event-spot', async (req: Request) => {
         console.error('[reserve-spot] send-email threw:', notifyError)
       }
     }
+
+    // Best-effort: an audit-log failure never blocks a hold the caller was
+    // just authorised to place.
+    const { error: auditErr } = await supabase.from('audit_log').insert({
+      user_id: caller.id,
+      action: 'event_ticket_reserved',
+      target_type: 'event_ticket',
+      target_id: result.ticket_id,
+      details: { event_id: body.event_id, recipient_user_id: userId, already: result.already, created_account: createdAccount },
+    })
+    if (auditErr) console.error('[reserve-spot] audit_log insert failed:', auditErr.message)
 
     return json({ ...result, user_id: userId, created_account: createdAccount,
                   notify_sent: notifySent, notify_error: notifyError })

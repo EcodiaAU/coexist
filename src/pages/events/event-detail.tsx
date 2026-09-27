@@ -90,7 +90,7 @@ import { getMediumUrl } from '@/lib/image-utils'
 import { isEventSoldOut } from '@/lib/event-sold-out'
 import { WaitlistJoin } from '@/components/waitlist-join'
 import { computeSpotsTaken, isExternallyBooked, ticketStatusBadge } from '@/lib/event-capacity'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { IssueTicketSheet } from '@/components/issue-ticket-sheet'
 import { TransferTicketSheet } from '@/components/transfer-ticket-sheet'
@@ -267,10 +267,41 @@ function TicketSalesSection({
 }) {
   const { data: summary } = useTicketSalesSummary(eventId)
   const { data: tickets } = useEventTickets(eventId)
-  const { isManager, isAdmin } = useAuth()
+  const { isManager, isAdmin, user } = useAuth()
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  const canManageTickets = isManager || isAdmin
+
+  // A campout LEADER (active collective_members row, role leader/co_leader/
+  // assist_leader, on any collective this event's hosts) gets the same
+  // ticket-desk power as a manager/admin: issue a free ticket, hold a spot,
+  // remove/refund a holder. Backed by can_manage_event_tickets (migration
+  // 20260927120000), the SAME rpc the three edge functions authorise against,
+  // so the buttons this gates can never disagree with what the server allows.
+  const { data: isEventLeader } = useQuery({
+    queryKey: ['can-manage-event-tickets', eventId, user?.id],
+    queryFn: async () => {
+      if (!user || !eventId) return false
+      const { data, error } = await supabase.rpc('can_manage_event_tickets', {
+        p_uid: user.id,
+        p_event_id: eventId,
+      })
+      if (error) {
+        console.error('[ticket-sales] can_manage_event_tickets rpc failed:', error.message)
+        return false
+      }
+      return data === true
+    },
+    enabled: !isManager && !isAdmin && !!user && !!eventId,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const canManageTickets = isManager || isAdmin || isEventLeader === true
+  // Move-to-another-event is NOT widened: transfer-event-ticket still gates
+  // on profiles.role in ('manager','admin') only, and it is a cross-event,
+  // cross-collective operation this task deliberately leaves untouched. A
+  // widened button here with an unwidened function behind it would just be a
+  // 403 the leader could not explain.
+  const canTransferTickets = isManager || isAdmin
 
   const [issueOpen, setIssueOpen] = useState(false)
   const [revokingId, setRevokingId] = useState<string | null>(null)
@@ -342,9 +373,9 @@ function TicketSalesSection({
           <Ticket size={14} className={accent.text} />
         </div>
         <h3 className="text-sm font-bold text-neutral-900">Ticket Sales</h3>
-        {canManageTickets && (
+        {(canManageTickets || canTransferTickets) && (
           <div className="ml-auto flex items-center gap-1.5">
-            {movableCount > 0 && (
+            {canTransferTickets && movableCount > 0 && (
               <button
                 type="button"
                 onClick={() => setTransfer({ mode: 'bulk' })}
@@ -355,14 +386,16 @@ function TicketSalesSection({
                 Move all
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => setIssueOpen(true)}
-              className={cn('flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-sm', accent.bg, accent.text)}
-            >
-              <UserPlus size={13} />
-              Issue ticket
-            </button>
+            {canManageTickets && (
+              <button
+                type="button"
+                onClick={() => setIssueOpen(true)}
+                className={cn('flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-sm', accent.bg, accent.text)}
+              >
+                <UserPlus size={13} />
+                Issue ticket
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -422,7 +455,7 @@ function TicketSalesSection({
                   )}>
                     {ticketStatusBadge(t.status as string).label}
                   </span>
-                  {canManageTickets && (t.status === 'confirmed' || t.status === 'checked_in') && (
+                  {canTransferTickets && (t.status === 'confirmed' || t.status === 'checked_in') && (
                     <button
                       type="button"
                       onClick={() => setTransfer({ mode: 'single', ticketId: t.id as string, label })}
@@ -459,7 +492,7 @@ function TicketSalesSection({
         />
       )}
 
-      {canManageTickets && transfer && (
+      {canTransferTickets && transfer && (
         <TransferTicketSheet
           eventId={eventId}
           open

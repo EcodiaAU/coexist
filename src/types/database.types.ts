@@ -7755,6 +7755,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_manage_event_tickets: {
+        Args: { p_event_id: string; p_uid: string }
+        Returns: boolean
+      }
       cancel_my_pending_ticket: {
         Args: { p_ticket_id: string }
         Returns: boolean
