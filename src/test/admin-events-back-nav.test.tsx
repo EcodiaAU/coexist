@@ -66,7 +66,8 @@ describe('admin events back-nav wiring', () => {
   })
 
   it('a remounted admin shell paints the hero it last showed on its first frame', () => {
-    expect(layout).toMatch(/useState<AdminHeaderState>\(\s*\(\) => lastHeaderByPath\.get\(location\.pathname\)/)
+    // Seeded from the cache, but the route still decides fullBleed on the first frame.
+    expect(layout).toMatch(/\(\) => \(\{ \.\.\.\(lastHeaderByPath\.get\(location\.pathname\) \?\? \{ title: '' \}\), fullBleed: isFullBleedRoute \}\)/)
     expect(layout).toMatch(/if \(pathRef\.current\.startsWith\('\/admin'\)\) lastHeaderByPath\.set\(pathRef\.current, opts\)/)
   })
 })

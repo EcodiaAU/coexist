@@ -250,7 +250,7 @@ export function AdminLayout() {
     location.pathname === '/admin/shop' ||
     /^\/admin\/collectives\/[^/]+/.test(location.pathname)
   const [header, setHeaderState] = useState<AdminHeaderState>(
-    () => lastHeaderByPath.get(location.pathname) ?? { title: '', fullBleed: isFullBleedRoute },
+    () => ({ ...(lastHeaderByPath.get(location.pathname) ?? { title: '' }), fullBleed: isFullBleedRoute }),
   )
   const scrollRef = useRef<HTMLDivElement>(null)
   const scopeCtx = useAdminCollectiveScopeProvider()
