@@ -23,6 +23,20 @@ import { useLocation, useNavigationType } from 'react-router-dom'
  */
 const store = new Map<string, number>()
 
+/**
+ * Jump, never glide. globals.css gives every .overflow-y-auto container
+ * `scroll-behavior: smooth`, so a plain `el.scrollTop = n` ANIMATES: a back
+ * swipe showed the list at the top and then slid down to where you were, and
+ * a forward admin-to-admin nav slid up to the top (Tate 2026-09-28, admin
+ * events swipe-back must feel continuous). An explicit `behavior: 'instant'`
+ * overrides the CSS. The typeof guard keeps jsdom, which has no
+ * Element.scrollTo, on the plain assignment.
+ */
+function jumpTo(el: HTMLElement, top: number) {
+  if (typeof el.scrollTo === 'function') el.scrollTo({ top, behavior: 'instant' as ScrollBehavior })
+  else el.scrollTop = top
+}
+
 export function useScrollRestoration(ref: RefObject<HTMLElement | null>) {
   const location = useLocation()
   const navType = useNavigationType() // 'POP' | 'PUSH' | 'REPLACE'
@@ -62,7 +76,7 @@ export function useScrollRestoration(ref: RefObject<HTMLElement | null>) {
       const tryRestore = () => {
         const node = ref.current
         if (!node) return
-        node.scrollTop = saved
+        jumpTo(node, saved)
         frames += 1
         if (Math.abs(node.scrollTop - saved) > 2 && frames < 40) {
           requestAnimationFrame(tryRestore)
@@ -70,7 +84,7 @@ export function useScrollRestoration(ref: RefObject<HTMLElement | null>) {
       }
       requestAnimationFrame(tryRestore)
     } else if (navType !== 'POP') {
-      el.scrollTop = 0
+      jumpTo(el, 0)
     }
     // key is the only dependency that should re-run restoration
     // eslint-disable-next-line react-hooks/exhaustive-deps

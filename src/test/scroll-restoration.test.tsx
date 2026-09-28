@@ -72,4 +72,28 @@ describe('useScrollRestoration', () => {
     renderHook(() => useScrollRestoration(refB))
     expect(refB.current.scrollTop).toBe(0)
   })
+
+  it('jumps instantly on both restore and reset, overriding the CSS smooth scroll', () => {
+    // globals.css sets scroll-behavior: smooth on every .overflow-y-auto
+    // container, so anything but an explicit instant jump glides visibly.
+    const calls: ScrollToOptions[] = []
+    const withScrollTo = () => {
+      const el = document.createElement('div')
+      el.scrollTo = ((opts: ScrollToOptions) => { calls.push(opts); el.scrollTop = opts.top ?? 0 }) as typeof el.scrollTo
+      return { current: el }
+    }
+
+    const ref = withScrollTo()
+    mockNavType = 'PUSH'; mockKey = 'instant-list'
+    const first = renderHook(() => useScrollRestoration(ref))
+    scrollTo(ref.current, 720)
+    first.unmount()
+
+    mockNavType = 'POP'; mockKey = 'instant-list'
+    renderHook(() => useScrollRestoration(ref))
+    expect(ref.current.scrollTop).toBe(720)
+
+    expect(calls.map(c => c.top)).toEqual([0, 720])
+    expect(calls.every(c => c.behavior === 'instant')).toBe(true)
+  })
 })
