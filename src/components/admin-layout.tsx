@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { AdminCollectiveScopeContext, useAdminCollectiveScopeProvider } from '@/hooks/use-admin-collective-scope'
 import { AnimatedOutlet } from '@/components/animated-outlet'
+import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 import { WAVE_PATHS } from '@/components/wave-paths'
 
 import {
@@ -253,8 +254,14 @@ export function AdminLayout() {
   // whole hero disappearing.
   useEffect(() => {
     setHeaderState((prev) => ({ ...prev, fullBleed: isFullBleedRoute }))
-    scrollRef.current?.scrollTo({ top: 0, behavior: 'instant' })
   }, [location.pathname, isFullBleedRoute])
+
+  // Admin pages scroll inside THIS container, not a Page, so they need the
+  // per-history-entry restore themselves. Forward navigation starts at the top
+  // (the hook resets on PUSH/REPLACE, replacing the unconditional scrollTo that
+  // used to live in the effect above); swiping back from an event lands where
+  // you were (Tate 2026-09-28).
+  useScrollRestoration(scrollRef)
 
   const setHeader = useCallback((opts: { title: string; actions?: ReactNode; heroContent?: ReactNode; fullBleed?: boolean }) => {
     setHeaderState(opts)

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { adminVariants } from '@/lib/admin-motion'
@@ -28,6 +28,7 @@ import { formatDate, formatTime, daysUntil } from '@/lib/date-format'
 import { ACTIVITY_COLORS, STATUS_BADGE_STYLES } from '@/lib/color-schemes'
 import { formatActivityType } from '@/lib/activity-types'
 import { useAdminEventsData, type AdminEvent } from '@/hooks/use-admin-events'
+import { useHistoryEntryState } from '@/hooks/use-history-entry-state'
 
 interface CollectiveGroup {
   collectiveId: string
@@ -425,8 +426,9 @@ function PastEventRow({ event, index }: { event: AdminEvent; index: number }) {
 
 export default function AdminEventsPage() {
   const navigate = useNavigate()
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('upcoming')
+  // Remembered per history entry: open an event, swipe back, same filters.
+  const [search, setSearch] = useHistoryEntryState('admin-events-search', '')
+  const [statusFilter, setStatusFilter] = useHistoryEntryState<StatusFilter>('admin-events-status', 'upcoming')
 
   const { data, isLoading, isError } = useAdminEventsData()
   // White until the 1s delay, then the skeleton shell; never flash on a fast load.
