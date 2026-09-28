@@ -26,6 +26,14 @@ beforeEach(() => {
   vi.stubGlobal('cancelAnimationFrame', () => {})
 })
 
+// Move the router and the browser's live history entry together, the way a
+// real navigation does (BrowserRouter keeps the entry key in history.state).
+function enter(key: string, nav: 'POP' | 'PUSH' | 'REPLACE') {
+  mockKey = key
+  mockNavType = nav
+  window.history.replaceState({ key }, '')
+}
+
 function scrollTo(el: HTMLElement, top: number) {
   el.scrollTop = top
   el.dispatchEvent(new Event('scroll'))
@@ -36,7 +44,7 @@ describe('useScrollRestoration', () => {
     const ref = { current: document.createElement('div') }
 
     // Enter the list (PUSH): starts at top.
-    mockNavType = 'PUSH'; mockKey = 'list'
+    enter('list', 'PUSH')
     const first = renderHook(() => useScrollRestoration(ref))
     expect(ref.current.scrollTop).toBe(0)
 
@@ -45,7 +53,7 @@ describe('useScrollRestoration', () => {
     first.unmount()
 
     // Back to the list entry (POP, same key): position restored.
-    mockNavType = 'POP'; mockKey = 'list'
+    enter('list', 'POP')
     renderHook(() => useScrollRestoration(ref))
     expect(ref.current.scrollTop).toBe(640)
   })
@@ -54,21 +62,21 @@ describe('useScrollRestoration', () => {
     const ref = { current: document.createElement('div') }
     ref.current.scrollTop = 500 // pretend a prior offset lingers on the element
 
-    mockNavType = 'PUSH'; mockKey = 'fresh-entry'
+    enter('fresh-entry', 'PUSH')
     renderHook(() => useScrollRestoration(ref))
     expect(ref.current.scrollTop).toBe(0)
   })
 
   it('does not cross-restore between different history entries of the same path', () => {
     const refA = { current: document.createElement('div') }
-    mockNavType = 'PUSH'; mockKey = 'entryA'
+    enter('entryA', 'PUSH')
     const a = renderHook(() => useScrollRestoration(refA))
     scrollTo(refA.current, 900)
     a.unmount()
 
     // A second entry for the same route (different key) must not inherit A's 900.
     const refB = { current: document.createElement('div') }
-    mockNavType = 'POP'; mockKey = 'entryB'
+    enter('entryB', 'POP')
     renderHook(() => useScrollRestoration(refB))
     expect(refB.current.scrollTop).toBe(0)
   })
@@ -84,16 +92,84 @@ describe('useScrollRestoration', () => {
     }
 
     const ref = withScrollTo()
-    mockNavType = 'PUSH'; mockKey = 'instant-list'
+    enter('instant-list', 'PUSH')
     const first = renderHook(() => useScrollRestoration(ref))
     scrollTo(ref.current, 720)
     first.unmount()
 
-    mockNavType = 'POP'; mockKey = 'instant-list'
-    renderHook(() => useScrollRestoration(ref))
-    expect(ref.current.scrollTop).toBe(720)
+    enter('instant-list', 'POP')
+    const back = withScrollTo()
+    renderHook(() => useScrollRestoration(back))
+    expect(back.current.scrollTop).toBe(720)
 
     expect(calls.map(c => c.top)).toEqual([0, 720])
     expect(calls.every(c => c.behavior === 'instant')).toBe(true)
+  })
+
+  it('ignores scroll events that land after the browser has left the entry', () => {
+    // Leaving admin events, the exit animation keeps the shell mounted while
+    // the hero grows its back button and scroll anchoring moves the list 56px.
+    const ref = { current: document.createElement('div') }
+    enter('left-list', 'PUSH')
+    const first = renderHook(() => useScrollRestoration(ref))
+    scrollTo(ref.current, 1400)
+
+    window.history.replaceState({ key: 'the-event' }, '') // navigation happened
+    scrollTo(ref.current, 1456) // exit-animation reflow
+    first.unmount()
+
+    const back = { current: document.createElement('div') }
+    enter('left-list', 'POP')
+    renderHook(() => useScrollRestoration(back))
+    expect(back.current.scrollTop).toBe(1400)
+  })
+
+  describe('while the page settles after a back swipe', () => {
+    let frames: FrameRequestCallback[] = []
+    const flush = () => { const run = frames; frames = []; run.forEach((f) => f(0)) }
+    const flushAll = () => { for (let i = 0; i < 100 && frames.length; i++) flush() }
+
+    beforeEach(() => {
+      frames = []
+      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frames.push(cb); return frames.length })
+      vi.stubGlobal('cancelAnimationFrame', () => {})
+    })
+
+    function returnTo(key: string, saved: number) {
+      const ref = { current: document.createElement('div') }
+      enter(key, 'PUSH')
+      const first = renderHook(() => useScrollRestoration(ref))
+      flushAll()
+      scrollTo(ref.current, saved)
+      first.unmount()
+      const back = { current: document.createElement('div') }
+      enter(key, 'POP')
+      renderHook(() => useScrollRestoration(back))
+      return back.current
+    }
+
+    it('holds the saved offset when content lands above it, with anchoring off, then lets go', () => {
+      const el = returnTo('settle-list', 900)
+      expect(el.style.overflowAnchor).toBe('none')
+      flush()
+      expect(el.scrollTop).toBe(900)
+
+      el.scrollTop = 1320 // the admin hero arrives and anchoring drags the offset
+      flush()
+      expect(el.scrollTop).toBe(900)
+
+      flushAll()
+      expect(el.style.overflowAnchor).toBe('')
+    })
+
+    it('hands control straight back when the user touches the list', () => {
+      const el = returnTo('touch-list', 900)
+      flush()
+      el.dispatchEvent(new Event('touchstart'))
+      el.scrollTop = 500 // the user's own scroll
+      flushAll()
+      expect(el.scrollTop).toBe(500)
+      expect(el.style.overflowAnchor).toBe('')
+    })
   })
 })

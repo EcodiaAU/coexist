@@ -37,55 +37,84 @@ function jumpTo(el: HTMLElement, top: number) {
   else el.scrollTop = top
 }
 
+/**
+ * The history entry the browser is on right now. BrowserRouter keeps its entry
+ * key in history.state; the very first entry carries none and the router calls
+ * it 'default'.
+ */
+function liveEntryKey(): string {
+  const state = window.history.state as { key?: string } | null
+  return state?.key ?? 'default'
+}
+
+// Budget for holding a restored position while the page settles (~0.65s).
+const RESTORE_FRAMES = 40
+const USER_SCROLL_EVENTS = ['touchstart', 'wheel', 'pointerdown', 'keydown'] as const
+
 export function useScrollRestoration(ref: RefObject<HTMLElement | null>) {
   const location = useLocation()
   const navType = useNavigationType() // 'POP' | 'PUSH' | 'REPLACE'
   const key = location.key
 
-  // Save: rAF-throttled on scroll, plus a final save on unmount so the very
-  // last position before navigating away is captured.
+  // Save on every scroll event, but ONLY while the browser is still on this
+  // entry. A shell that stays mounted for the route-exit animation keeps
+  // getting scroll events after the navigation: leaving admin events for a
+  // public event page, the admin hero grows its back button (+56px) and scroll
+  // anchoring moves the list to match, which saved an offset 56px past where
+  // you were (Tate 2026-09-28). For the same reason there is no read on
+  // cleanup: by the time it runs the layout has already moved. A Map write per
+  // scroll event is cheap enough to need no throttle.
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    let raf = 0
     const onScroll = () => {
-      if (raf) return
-      raf = requestAnimationFrame(() => {
-        raf = 0
-        if (ref.current) store.set(key, ref.current.scrollTop)
-      })
+      if (liveEntryKey() === key) store.set(key, el.scrollTop)
     }
     el.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      el.removeEventListener('scroll', onScroll)
-      if (raf) cancelAnimationFrame(raf)
-      if (ref.current) store.set(key, ref.current.scrollTop)
-    }
+    return () => el.removeEventListener('scroll', onScroll)
   }, [ref, key])
 
-  // Restore on POP; reset to top otherwise. Content often mounts shorter than
-  // its final height (data/images still loading), so a single scrollTop set
-  // can clamp short. Retry across a few frames until the target is reachable
-  // or a ~0.6s budget elapses.
+  // Restore on POP; reset to top otherwise. The page mounts shorter than it
+  // will be (the admin hero arrives an effect later, data and images load), so
+  // the restore turns scroll anchoring off and HOLDS the saved offset for the
+  // whole settle window rather than stopping at the first frame it fits: with
+  // anchoring on, content arriving above the viewport dragged the offset with
+  // it and the list landed ~420px past the saved spot. The saved offset was
+  // taken against the fully settled layout, so holding it is correct. Any
+  // touch, wheel, pointer or key input hands control straight back.
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
     const saved = store.get(key)
-    if (navType === 'POP' && saved != null && saved > 0) {
-      let frames = 0
-      const tryRestore = () => {
-        const node = ref.current
-        if (!node) return
-        jumpTo(node, saved)
-        frames += 1
-        if (Math.abs(node.scrollTop - saved) > 2 && frames < 40) {
-          requestAnimationFrame(tryRestore)
-        }
-      }
-      requestAnimationFrame(tryRestore)
-    } else if (navType !== 'POP') {
+    if (navType !== 'POP') {
       jumpTo(el, 0)
+      return
     }
+    if (saved == null || saved <= 0) return
+
+    const prevAnchor = el.style.overflowAnchor
+    el.style.overflowAnchor = 'none'
+    let frames = 0
+    let raf = 0
+    let done = false
+    const stop = () => {
+      if (done) return
+      done = true
+      if (raf) cancelAnimationFrame(raf)
+      el.style.overflowAnchor = prevAnchor
+      USER_SCROLL_EVENTS.forEach((t) => el.removeEventListener(t, stop))
+    }
+    USER_SCROLL_EVENTS.forEach((t) => el.addEventListener(t, stop, { passive: true }))
+    const hold = () => {
+      raf = 0
+      if (done) return
+      if (Math.abs(el.scrollTop - saved) > 2) jumpTo(el, saved)
+      frames += 1
+      if (frames < RESTORE_FRAMES) raf = requestAnimationFrame(hold)
+      else stop()
+    }
+    raf = requestAnimationFrame(hold)
+    return stop
     // key is the only dependency that should re-run restoration
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])

@@ -1,4 +1,4 @@
-import { type ReactNode, useState, useEffect, useRef, createContext, useContext, useCallback, useMemo } from 'react'
+import { type ReactNode, useState, useEffect, useLayoutEffect, useRef, createContext, useContext, useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { AdminCollectiveScopeContext, useAdminCollectiveScopeProvider } from '@/hooks/use-admin-collective-scope'
@@ -45,6 +45,15 @@ interface AdminHeaderState {
   heroContent?: ReactNode
   fullBleed?: boolean
 }
+
+// The header each admin path last showed. Swiping back from a public event
+// page remounts the whole admin shell, and without this the hero (419px on
+// admin events) only arrived one effect after the first paint, so the list
+// painted that much higher than where you left it and the back-nav scroll
+// restore was measured against the short layout (Tate 2026-09-28). Seeding
+// the first render from here paints the page as you left it; the page's own
+// useAdminHeader replaces it with fresh content a moment later.
+const lastHeaderByPath = new Map<string, AdminHeaderState>()
 
 interface AdminHeaderContextValue {
   setHeader: (opts: { title: string; subtitle?: string; actions?: ReactNode; heroContent?: ReactNode; fullBleed?: boolean }) => void
@@ -240,7 +249,9 @@ export function AdminLayout() {
   const isFullBleedRoute = location.pathname === '/admin' ||
     location.pathname === '/admin/shop' ||
     /^\/admin\/collectives\/[^/]+/.test(location.pathname)
-  const [header, setHeaderState] = useState<AdminHeaderState>({ title: '', fullBleed: isFullBleedRoute })
+  const [header, setHeaderState] = useState<AdminHeaderState>(
+    () => lastHeaderByPath.get(location.pathname) ?? { title: '', fullBleed: isFullBleedRoute },
+  )
   const scrollRef = useRef<HTMLDivElement>(null)
   const scopeCtx = useAdminCollectiveScopeProvider()
 
@@ -263,7 +274,15 @@ export function AdminLayout() {
   // you were (Tate 2026-09-28).
   useScrollRestoration(scrollRef)
 
+  // setHeader is only ever called by a page's own useAdminHeader, so recording
+  // there (and never from the carried-over state) keeps one page's hero from
+  // being filed under the next path. The ref is set in a layout effect, which
+  // runs before the page's passive effect calls setHeader.
+  const pathRef = useRef(location.pathname)
+  useLayoutEffect(() => { pathRef.current = location.pathname }, [location.pathname])
+
   const setHeader = useCallback((opts: { title: string; actions?: ReactNode; heroContent?: ReactNode; fullBleed?: boolean }) => {
+    if (pathRef.current.startsWith('/admin')) lastHeaderByPath.set(pathRef.current, opts)
     setHeaderState(opts)
   }, [])
 

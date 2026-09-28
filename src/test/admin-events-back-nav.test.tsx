@@ -64,4 +64,9 @@ describe('admin events back-nav wiring', () => {
     expect(page).toMatch(/useHistoryEntryState\('admin-events-search', ''\)/)
     expect(page).toMatch(/useHistoryEntryState<StatusFilter>\('admin-events-status', 'upcoming'\)/)
   })
+
+  it('a remounted admin shell paints the hero it last showed on its first frame', () => {
+    expect(layout).toMatch(/useState<AdminHeaderState>\(\s*\(\) => lastHeaderByPath\.get\(location\.pathname\)/)
+    expect(layout).toMatch(/if \(pathRef\.current\.startsWith\('\/admin'\)\) lastHeaderByPath\.set\(pathRef\.current, opts\)/)
+  })
 })
