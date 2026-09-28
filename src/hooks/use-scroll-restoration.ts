@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useState, type RefObject } from 'react'
 import { useLocation, useNavigationType } from 'react-router-dom'
 
 /**
@@ -56,6 +56,17 @@ export function useScrollRestoration(ref: RefObject<HTMLElement | null>) {
   const navType = useNavigationType() // 'POP' | 'PUSH' | 'REPLACE'
   const key = location.key
 
+  // Do nothing while this page animates out. AnimatedOutlet keys every page
+  // by pathname and keeps the leaving one mounted for its exit fade, still
+  // reading the LIVE location. Without this, the event page you swipe back
+  // from adopted the admin list's entry for that fade: it restored the list's offset onto its own shorter container,
+  // clamped, and saved the clamp over the list's value, so the list came back
+  // hundreds of px short (Tate 2026-09-28). A different pathname can only mean
+  // this instance is leaving; a search-param change on the same pathname is a
+  // real new entry for it.
+  const [mountPath] = useState(location.pathname)
+  const leaving = location.pathname !== mountPath
+
   // Save on every scroll event, but ONLY while the browser is still on this
   // entry. A shell that stays mounted for the route-exit animation keeps
   // getting scroll events after the navigation: leaving admin events for a
@@ -66,13 +77,13 @@ export function useScrollRestoration(ref: RefObject<HTMLElement | null>) {
   // scroll event is cheap enough to need no throttle.
   useEffect(() => {
     const el = ref.current
-    if (!el) return
+    if (!el || leaving) return
     const onScroll = () => {
       if (liveEntryKey() === key) store.set(key, el.scrollTop)
     }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
-  }, [ref, key])
+  }, [ref, key, leaving])
 
   // Restore on POP; reset to top otherwise. The page mounts shorter than it
   // will be (the admin hero arrives an effect later, data and images load), so
@@ -84,7 +95,7 @@ export function useScrollRestoration(ref: RefObject<HTMLElement | null>) {
   // touch, wheel, pointer or key input hands control straight back.
   useLayoutEffect(() => {
     const el = ref.current
-    if (!el) return
+    if (!el || leaving) return
     const saved = store.get(key)
     if (navType !== 'POP') {
       jumpTo(el, 0)
@@ -115,7 +126,7 @@ export function useScrollRestoration(ref: RefObject<HTMLElement | null>) {
     }
     raf = requestAnimationFrame(hold)
     return stop
-    // key is the only dependency that should re-run restoration
+    // a new entry (or leaving) is the only thing that should re-run restoration
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+  }, [key, leaving])
 }

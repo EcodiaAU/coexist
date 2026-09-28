@@ -12,14 +12,16 @@ import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
  */
 
 let mockKey = 'k1'
+let mockPath = '/p'
 let mockNavType: 'POP' | 'PUSH' | 'REPLACE' = 'PUSH'
 
 vi.mock('react-router-dom', () => ({
-  useLocation: () => ({ key: mockKey, pathname: '/p', search: '', hash: '', state: null }),
+  useLocation: () => ({ key: mockKey, pathname: mockPath, search: '', hash: '', state: null }),
   useNavigationType: () => mockNavType,
 }))
 
 beforeEach(() => {
+  mockPath = '/p'
   // Run rAF callbacks synchronously so save-throttle + restore-retry resolve
   // within the test tick.
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { cb(0); return 1 })
@@ -122,6 +124,38 @@ describe('useScrollRestoration', () => {
     enter('left-list', 'POP')
     renderHook(() => useScrollRestoration(back))
     expect(back.current.scrollTop).toBe(1400)
+  })
+
+  it('a page animating out does not adopt the entry the user went back to', () => {
+    // The admin list saved 3200, then the user opened an event.
+    mockPath = '/admin/events'
+    const list = { current: document.createElement('div') }
+    enter('admin-list', 'PUSH')
+    const listHook = renderHook(() => useScrollRestoration(list))
+    scrollTo(list.current, 3200)
+    listHook.unmount()
+
+    // The event page is shorter: its container clamps any jump at 2350.5.
+    mockPath = '/events/e1'
+    const eventEl = document.createElement('div')
+    eventEl.scrollTo = ((opts: ScrollToOptions) => {
+      eventEl.scrollTop = Math.min(opts.top ?? 0, 2350.5)
+      eventEl.dispatchEvent(new Event('scroll'))
+    }) as typeof eventEl.scrollTo
+    const eventRef = { current: eventEl }
+    enter('the-event', 'PUSH')
+    const eventHook = renderHook(() => useScrollRestoration(eventRef))
+
+    // Swipe back: the event page is still mounted for its exit fade and
+    // re-renders with the live location, which is now the list's entry.
+    mockPath = '/admin/events'
+    enter('admin-list', 'POP')
+    eventHook.rerender()
+    expect(eventEl.scrollTop).toBe(0)
+
+    const back = { current: document.createElement('div') }
+    renderHook(() => useScrollRestoration(back))
+    expect(back.current.scrollTop).toBe(3200)
   })
 
   describe('while the page settles after a back swipe', () => {
