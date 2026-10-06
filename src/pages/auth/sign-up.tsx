@@ -12,6 +12,8 @@ import { Checkbox } from '@/components/checkbox'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { calculateAge } from '@/lib/date-format'
+import { CommunityAgeNotice } from '@/components/community-age-notice'
+import { isAtOrOverCommunityAge } from '@/lib/community-age'
 import { adminStagger as stagger, fadeOnly } from '@/lib/admin-motion'
 
 /* ------------------------------------------------------------------ */
@@ -320,6 +322,9 @@ export default function SignUpPage() {
                 helperText="You must be at least 18 years old"
                 error={dateOfBirth && !isAgeValid ? 'You must be at least 18 to create an account' : undefined}
               />
+
+              {/* Heads-up for 30+, never a gate: it does not feed canSubmit. */}
+              {isAgeValid && isAtOrOverCommunityAge(age) && <CommunityAgeNotice />}
             </motion.div>
 
             {/* Terms checkbox */}
