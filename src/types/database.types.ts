@@ -8140,6 +8140,7 @@ export type Database = {
         Args: { p_ticket_id: string }
         Returns: Json
       }
+      get_national_member_count: { Args: never; Returns: number }
       get_national_stats: { Args: never; Returns: Json }
       get_platform_impact_stats: { Args: never; Returns: Json }
       get_product_available_stock: {

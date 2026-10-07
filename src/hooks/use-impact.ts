@@ -47,7 +47,11 @@ export interface CanonicalImpact {
 }
 
 export interface NationalImpact extends CanonicalImpact {
-  totalMembers: number
+  /**
+   * National member count, or null when the count alone could not be read.
+   * Null degrades that one stat; it never fails the whole national query.
+   */
+  totalMembers: number | null
 }
 
 type TimeRange = 'all-time' | 'current-year'
@@ -68,16 +72,25 @@ export function useNationalImpact(timeRange: TimeRange = 'all-time') {
       // function /admin/insights uses, so the homepage / national numbers match
       // insights exactly for the same scope (this replaces the old
       // applyBaselineRemainder total-vs-total math that diverged).
+      //
+      // Members come from an owner-rights RPC, never from a count over
+      // public_profiles. That view answers anon with 401 (no grant since the
+      // 2026-10-07 privacy fix) and a signed-in member with their CO-MEMBERS
+      // only, so a head count there blanked the logged-out /download page and
+      // showed members a collective-sized "national" figure. The RPC returns
+      // one number and no row data.
       const [canonical, baseline, membersRes, collectivesRes, leadersCountRes] =
         await Promise.all([
           fetchCanonicalImpactRows({ effectiveStartIso, windowEndIso }),
           fetchBaselineSettings(),
-          supabase.from('public_profiles').select('id', { count: 'exact', head: true }),
+          supabase.rpc('get_national_member_count'),
           supabase.from('collectives').select('id', { count: 'exact', head: true }).eq('is_active', true).neq('is_national', true),
           supabase.from('app_settings').select('value').eq('key', 'leaders_empowered_total').single(),
         ])
 
-      if (membersRes.error) throw membersRes.error
+      // A failed member count degrades the Volunteers stat alone. Throwing
+      // here would fail the whole query and blank every stat beside it.
+      if (membersRes.error) console.warn('[useNationalImpact] member count unavailable', membersRes.error)
       if (collectivesRes.error) throw collectivesRes.error
 
       const lump = {
@@ -124,7 +137,7 @@ export function useNationalImpact(timeRange: TimeRange = 'all-time') {
         coastlineCleanedM:   Math.round(composed.metrics['coastline_cleaned_m'] ?? 0),
         collectivesCount:    collectivesRes.count ?? 0,
         leadersEmpowered:    (leadersCountRes.data?.value as { count?: number })?.count ?? 0,
-        totalMembers:        membersRes.count ?? 0,
+        totalMembers:        membersRes.error || membersRes.data == null ? null : Number(membersRes.data),
       }
     },
     staleTime: 5 * 60 * 1000,

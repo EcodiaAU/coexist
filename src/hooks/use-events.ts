@@ -1838,11 +1838,17 @@ export function useCancelEvent() {
 
   return useMutation({
     mutationFn: async ({ eventId, reason }: { eventId: string; reason?: string }) => {
-      // Fetch event details and registered attendees before cancelling
+      // Fetch event details and registered attendees before cancelling.
+      // The name embed is a LEFT join on purpose. public_profiles only shows
+      // the cancelling leader their co-members, so an inner join silently
+      // dropped every recipient outside that set (an invited non-member, or a
+      // registrant on an event more than 90 days out) from the cancellation
+      // mail. A recipient whose name is hidden is still mailed, greeted as
+      // "there"; the batch send resolves the address from user_id server-side.
       const [{ data: event }, { data: registrations }] = await Promise.all([
         supabase.from('events').select('title, date_start').eq('id', eventId).single(),
         supabase.from('event_registrations')
-          .select('user_id, profiles:public_profiles!inner(display_name)')
+          .select('user_id, profiles:public_profiles(display_name)')
           .eq('event_id', eventId)
           .in('status', ['registered', 'waitlisted', 'invited']),
       ])

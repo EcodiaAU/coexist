@@ -212,7 +212,8 @@ function NationalStat({
   delay,
 }: {
   icon: React.ReactNode
-  value: number
+  /** null renders a placeholder rather than a false zero */
+  value: number | null
   suffix?: string
   label: string
   style: string
@@ -232,7 +233,7 @@ function NationalStat({
         {icon}
       </div>
       <div className="font-heading text-4xl font-extrabold text-neutral-900 tabular-nums leading-none">
-        <CountUp end={value} duration={2000} suffix={suffix} />
+        {value == null ? <span aria-label="Not available">...</span> : <CountUp end={value} duration={2000} suffix={suffix} />}
       </div>
       <p className="text-[11px] uppercase tracking-[0.15em] text-neutral-500 font-bold mt-2.5">{label}</p>
     </motion.div>
@@ -362,7 +363,7 @@ export default function NationalImpactPage() {
             { label: 'Coastline cleaned (m)', value: fmt(data?.coastlineCleanedM) },
             { label: 'Active collectives', value: fmt(data?.collectivesCount) },
             { label: 'Leaders empowered', value: fmt(data?.leadersEmpowered) },
-            { label: 'Total members', value: fmt(data?.totalMembers) },
+            { label: 'Total members', value: data?.totalMembers == null ? 'n/a' : fmt(data.totalMembers) },
           ],
         },
         {
@@ -554,7 +555,7 @@ export default function NationalImpactPage() {
           />
           <NationalStat
             icon={<Users size={20} strokeWidth={2.5} />}
-            value={data?.totalMembers ?? 0}
+            value={data ? data.totalMembers : 0}
             label="Active Members"
             style="members"
             delay={0.3}
