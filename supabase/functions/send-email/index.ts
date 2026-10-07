@@ -18,6 +18,7 @@ import {
   resolveSubject,
   type TemplateOverride,
 } from '../_shared/email-subject.ts'
+import { batchRecipientData, describeMissing, missingFieldsForSend } from '../_shared/template-data.ts'
 
 /** Resend tag values allow ASCII alnum, underscore and dash only. */
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
@@ -1530,10 +1531,34 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
         console.log('[send-email] batch dropped', deadAddresses.size, 'suppressed address(es)')
       }
 
-      const emails = addressed
-        .filter((r) => !deadAddresses.has(normaliseEmail(r.to as string)))
-        .map((r) => {
-          const d = { ...(r.data ?? {}), __recipientEmail: r.to }
+      // ── Missing-data gate ──
+      // Each recipient's data is the top-level payload.data with their own on
+      // top, which is what the single path has always honoured. Until
+      // 2026-10-08 this line read r.data alone, so a caller using the
+      // top-level shape sent "Reminder: undefined is coming up" (2026-08-28).
+      // A recipient whose subject would still print a missing field is held
+      // back and counted, never sent. See _shared/template-data.ts.
+      const live = addressed.filter((r) => !deadAddresses.has(normaliseEmail(r.to as string)))
+      const incomplete: { missing: string[] }[] = []
+      const ready = live
+        .map((r) => ({ r, d: batchRecipientData(payload.data, r.data, r.to as string) }))
+        .filter(({ d }) => {
+          const missing = missingFieldsForSend(payload.subject, batchOverride, templateDef.subject, d)
+          if (missing.length > 0) incomplete.push({ missing })
+          return missing.length === 0
+        })
+      if (incomplete.length > 0) {
+        const fields = [...new Set(incomplete.flatMap((x) => x.missing))]
+        console.error(
+          '[send-email] batch REFUSED',
+          incomplete.length,
+          'recipient(s) whose subject would print missing data.',
+          describeMissing(type, fields),
+        )
+      }
+
+      const emails = ready
+        .map(({ r, d }) => {
           const subject = resolveSubject(payload.subject, batchOverride, templateDef.subject, d)
           return {
             from: `${FROM_NAME} <${FROM_EMAIL}>`,
@@ -1567,6 +1592,7 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
             optedOut: partition.optedOut,
             suppressed: deadAddresses.size,
             malformed: partition.malformed.length,
+            incomplete: incomplete.length,
             sampleSubject: emails[0]?.subject,
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -1609,6 +1635,9 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
           optedOut: partition.optedOut,
           suppressed: deadAddresses.size,
           malformed: partition.malformed.length,
+          // Recipients held back because their subject would print missing
+          // data. Never sent; distinct from every reason above.
+          incomplete: incomplete.length,
           // Recipients Resend never accepted after retries. Distinct from
           // `unresolved`, which never reached Resend at all.
           failedRecipients: batch.failedRecipients,
@@ -1758,6 +1787,19 @@ Deno.serve(withSentry('send-email', async (req: Request) => {
       return new Response(
         JSON.stringify({ success: false, error: 'Template disabled by admin' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+
+    // ── Missing-data gate ── refuse rather than put "undefined", "null" or a
+    // literal {{placeholder}} in a member's subject line. A 400 makes the
+    // caller's own error log name the gap. See _shared/template-data.ts.
+    const missing = missingFieldsForSend(payload.subject, override, templateDef.subject, data)
+    if (missing.length > 0) {
+      const error = describeMissing(type, missing)
+      console.error('[send-email] REFUSED:', error)
+      return new Response(
+        JSON.stringify({ success: false, error, missing }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
