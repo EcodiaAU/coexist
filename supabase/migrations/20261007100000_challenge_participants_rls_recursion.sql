@@ -24,7 +24,9 @@
 -- authenticated MUST keep EXECUTE: the policy runs the helper as the querying role.
 --
 -- Applied to tjutlbzekfouwsiaplbr through pgq.sh on 2026-10-07 under Tate's
--- db_execute grant b68a839c. Behaviour after: an authenticated read returns rows
+-- db_execute grant 068b173d (target tjutlbzekfouwsiaplbr, iMessage #3693), the grant
+-- the worker ceiling gate cited in logs/capability-decisions.jsonl.
+-- Behaviour after: an authenticated read returns rows
 -- (0 today, the participant surface is not built yet) instead of 42P17.
 
 BEGIN;
