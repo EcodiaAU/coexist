@@ -370,6 +370,11 @@ export function useMyUpcomingEvents() {
         .select('status, events!inner(*, collectives(id, name, timezone))')
         .eq('user_id', user.id)
         .in('status', ['registered', 'waitlisted'])
+        // cancel-event leaves free registrations 'registered', so without this a
+        // cancelled event stays in "Your upcoming events". RLS already hides it
+        // from members; admins still read the row and need the filter. On the
+        // !inner embed it drops the registration, so it never eats the limit.
+        .neq('events.status', 'cancelled')
         .or(`date_end.gte.${endCutoff},and(date_end.is.null,date_start.gte.${startCutoffNoEnd})`, { referencedTable: 'events' })
         .order('date_start', { referencedTable: 'events', ascending: true })
         .limit(5)

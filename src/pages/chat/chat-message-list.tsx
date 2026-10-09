@@ -42,6 +42,7 @@ import { SaveSeatSheet } from '@/components/save-seat-sheet'
 import type { Tables, Json } from '@/types/database.types'
 import { isMessageEdited } from '@/lib/chat-edit'
 import { eventChatCopy } from '@/lib/event-group-chat'
+import { rsvpBlockedForEvent } from '@/lib/cancelled-event'
 
 type EventRegistration = Tables<'event_registrations'>
 
@@ -194,7 +195,7 @@ function InlineAnnouncement({
 
   const eventId = (announcement?.metadata as Record<string, unknown> | undefined)?.event_id as string | undefined
   const isEventType = announcement?.type === 'event_invite' || announcement?.type === 'rsvp'
-  const { data: eventDetail } = useEventDetail(isEventType && eventId ? eventId : undefined)
+  const { data: eventDetail, isSuccess: eventResolved } = useEventDetail(isEventType && eventId ? eventId : undefined)
   const queryClient = useQueryClient()
 
   if (!announcement) return null
@@ -212,6 +213,15 @@ function InlineAnnouncement({
     // refuses the write outright (trg_enforce_ticket_backed_registration); this
     // branch exists so the member is sent to checkout instead of hitting a raw
     // constraint error.
+    // The event is gone: cancelled (admins still read the row) or hidden by RLS
+    // (a cancelled event is admin-only, so for everyone else the lookup resolves
+    // to null). Recording "going" and routing to the event page used to land the
+    // member on "Event not found" with an RSVP for an event that will not run.
+    if (isEventType && eventId && response !== 'not_going' && rsvpBlockedForEvent(eventResolved, eventDetail)) {
+      toast.info('This event was cancelled or is no longer available.')
+      return
+    }
+
     if (response === 'going' && isEventType && eventId) {
       // eventDetail is still in flight. Nothing here can tell whether the event
       // needs a ticket or needs the safety set, and the raw upsert below would

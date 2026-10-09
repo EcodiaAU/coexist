@@ -113,6 +113,7 @@ import { eventChatCopy } from '@/lib/event-group-chat'
 import { MapView } from '@/components'
 import { activityAccent, defaultAccent } from '@/lib/activity-types'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
+import { landingAfterCancel } from '@/lib/cancelled-event'
 
 /* ------------------------------------------------------------------ */
 /*  Difficulty config                                                  */
@@ -512,7 +513,7 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { isStaff: isGlobalStaff, user, profile } = useAuth()
+  const { isStaff: isGlobalStaff, user, profile, role: globalRole } = useAuth()
   const { toast } = useToast()
   const shouldReduceMotion = useReducedMotion()
 
@@ -959,11 +960,16 @@ export default function EventDetailPage() {
             toast.success('Event cancelled')
           }
           setShowCancelEventSheet(false)
+          // A cancelled event is admin-only in RLS, so a collective leader who
+          // just cancelled it can no longer read it and would be left on "Event
+          // not found". Admins stay and see the cancelled banner.
+          const landing = landingAfterCancel(globalRole)
+          if (landing) navigate(landing, { replace: true })
         },
         onError: () => toast.error('Failed to cancel event'),
       },
     )
-  }, [event, cancelReason, cancelEventMutation, toast])
+  }, [event, cancelReason, cancelEventMutation, toast, globalRole, navigate])
 
   const handleDuplicate = useCallback(() => {
     if (!event) return

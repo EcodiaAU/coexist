@@ -15,6 +15,7 @@ import {
 } from '@/components'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { cn } from '@/lib/cn'
+import { splitTicketsByEventDate } from '@/lib/cancelled-event'
 
 function TicketCard({ ticket, onManage }: { ticket: EventTicket; onManage: (t: EventTicket) => void }) {
   const navigate = useNavigate()
@@ -152,8 +153,11 @@ export default function MyTicketsPage() {
   useReducedMotion()
   const [managing, setManaging] = useState<EventTicket | null>(null)
 
-  const upcoming = (tickets ?? []).filter((t) => t.event_date && new Date(t.event_date) >= new Date())
-  const past = (tickets ?? []).filter((t) => t.event_date && new Date(t.event_date) < new Date())
+  // A ticket for a cancelled event has no event_date for a non-admin (RLS hides
+  // the event, so the embed is null) and lands in neither list. The empty state
+  // reads the rendered sets, or a member whose only tickets were for cancelled
+  // events would get a blank page.
+  const { upcoming, past } = splitTicketsByEventDate(tickets)
 
   return (
     <Page swipeBack header={<Header title="My Tickets" back />}>
@@ -164,7 +168,7 @@ export default function MyTicketsPage() {
             <Skeleton className="h-24 rounded-md" />
             <Skeleton className="h-24 rounded-md" />
           </div>
-        ) : !tickets?.length ? (
+        ) : upcoming.length + past.length === 0 ? (
           <EmptyState
             illustration="empty"
             title="No tickets yet"

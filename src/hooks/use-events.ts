@@ -24,6 +24,7 @@ type EventImpact = Tables<'event_impact'>
 type Collective = Tables<'collectives'>
 type Profile = Tables<'profiles'>
 import type { MyUpcomingEvent } from '@/hooks/use-home-feed'
+import { isEventGone } from '@/lib/cancelled-event'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -286,7 +287,9 @@ export function useMyEvents(tab: 'upcoming' | 'invited' | 'past') {
 
       return (data ?? [])
         .filter((r) => {
-          if (!r.events) return false
+          // A cancelled event is hidden from members by RLS (null embed) and
+          // still readable by admins; it belongs in none of these tabs.
+          if (isEventGone(r.events as EventWithCollective | null)) return false
           const evt = r.events as EventWithCollective
           const startMs = new Date(evt.date_start).getTime()
           // Same grace as isPastEvent / stillActiveStartCutoffIso: events

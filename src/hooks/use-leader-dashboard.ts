@@ -432,6 +432,9 @@ export function useEventCalendar(collectiveId: string | undefined, month: Date) 
         .from('events')
         .select('id, title, date_start')
         .in('id', hostedEventIds)
+        // A cancelled event is not on the calendar. RLS hides it from collective
+        // leaders; admins still read it, so filter here too.
+        .neq('status', 'cancelled')
         .gte('date_start', start.toISOString())
         .lte('date_start', end.toISOString())
       if (error) throw error
