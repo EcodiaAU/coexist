@@ -12,6 +12,15 @@
 import { describe, it, expect } from 'vitest'
 import { resolveNotificationRoute } from '@/hooks/use-notifications'
 
+describe('resolveNotificationRoute - cancelled event', () => {
+  it('routes to Explore, because a cancelled event page is admin-only in RLS', () => {
+    expect(resolveNotificationRoute('event_cancelled', { event_id: 'e1' })).toBe('/explore')
+    expect(resolveNotificationRoute('event_cancelled', {})).toBe('/explore')
+    // The other event types still open the event itself.
+    expect(resolveNotificationRoute('event_updated', { event_id: 'e1' })).toBe('/events/e1')
+  })
+})
+
 describe('resolveNotificationRoute - chat channel routing (F3-2)', () => {
   it('routes a campout/staff channel push to the channel room, not the collective main chat', () => {
     // Campout: has BOTH a channel_id and a parent collective_id. channel wins.

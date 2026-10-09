@@ -152,8 +152,12 @@ export function resolveNotificationRoute(
 
   // 2. Canonical type-based resolution.
   switch (type as NotificationType) {
-    case 'event_reminder':
     case 'event_cancelled':
+      // A cancelled event is admin-only in RLS (migration 20261009120000), so
+      // its own page reads "Event not found" for every member and leader. Send
+      // them where the cancellation email's "Browse Events" button goes.
+      return '/explore'
+    case 'event_reminder':
     case 'event_updated':
     case 'registration_confirmed':
     case 'waitlist_promotion':
