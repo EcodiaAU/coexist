@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import type { Tables } from '@/types/database.types'
 import { useAuth } from '@/hooks/use-auth'
 import { useUserLocation } from '@/hooks/use-nearby'
+import { useBlindKeyboardRoom, blindKeyboardRoom } from '@/hooks/use-blind-keyboard-room'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/button'
 import { takePendingClaim } from '@/lib/pending-claim'
@@ -73,6 +74,9 @@ export default function OnboardingPage() {
   const totalSteps = stepOrder.length
 
   const [step, setStep] = useState(0)
+  // Android 10 and older never report the keyboard to the WebView, so
+  // h-screen-kb has nothing to subtract there. See use-blind-keyboard-room.ts.
+  const keyboardRoom = useBlindKeyboardRoom()
   const [direction, setDirection] = useState(1)
   const [showCelebration, setShowCelebration] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -344,7 +348,11 @@ export default function OnboardingPage() {
       )}
 
       {/* Step content with animated transitions */}
-      <div className="flex-1 relative overflow-hidden">
+      <div
+        className="flex-1 relative overflow-hidden"
+        onFocus={keyboardRoom.onFocus}
+        onBlur={keyboardRoom.onBlur}
+      >
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
@@ -364,8 +372,12 @@ export default function OnboardingPage() {
             // reach them short of pinch-zooming out. Onboarding completion fell
             // from ~96% to ~87% the week that step shipped (2026-08-30).
             className="absolute inset-0 flex flex-col overflow-y-auto overscroll-contain"
+            data-kb-room-scroll=""
           >
             {renderStep(stepOrder[step])}
+            {keyboardRoom.active && (
+              <div aria-hidden="true" data-kb-room="" className="shrink-0" style={{ height: blindKeyboardRoom() }} />
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
