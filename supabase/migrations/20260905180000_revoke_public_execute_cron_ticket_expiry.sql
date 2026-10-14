@@ -1,0 +1,43 @@
+-- Close public.expire_stale_pending_tickets() to the browser roles.
+--
+-- WHAT WAS OPEN
+--   proacl on 2026-09-05 read
+--     {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+--   so PUBLIC, anon and authenticated all held EXECUTE. It is pg_cron job 21,
+--   scheduled by 20260713000000_ticket_transfer.sql, and it cancels every
+--   event_tickets row still 'pending' after 15 minutes.
+--
+-- WHY THE SEVERITY IS LOW AND WHY IT IS STILL WRONG
+--   The function is SECURITY INVOKER, so anon calling it runs the UPDATE as
+--   anon. event_tickets has RLS enabled with three policies, all SELECT and
+--   all {authenticated}. With no permissive UPDATE policy the statement
+--   matches zero rows, so the call is inert today and always returns 0.
+--   It is latent, not harmless: the day anyone adds a permissive UPDATE
+--   policy for anon or authenticated, an unauthenticated caller can cancel
+--   every pending ticket on the platform, on demand, with the publishable
+--   key that ships in the web bundle. The grant buys nothing in either case.
+--
+-- WHY THIS IS SAFE
+--   cron.job 21 runs as postgres, which holds its own explicit EXECUTE and is
+--   untouched here. No application code calls it: a repo-wide grep for
+--   expire_stale_pending_tickets finds only migrations, two draft records and
+--   one comment in supabase/functions/waitlist-notify/index.ts. service_role
+--   is deliberately left as it is, so nothing server-side changes either.
+--   Reversible with a single GRANT.
+--
+-- HOW IT WAS FOUND
+--   Not by the canary, which is the point. census.cron_grants selected on
+--   proname LIKE 'cron_%', a naming convention rather than the schedule, and
+--   that prefix saw 10 of the 21 live jobs. This function does not carry the
+--   prefix, so the arm reported "all 11 cron entry point(s) closed" while
+--   this one stood open. The arm now enumerates from cron.job and also
+--   asserts each job's own role retains EXECUTE, so an over-revoke cannot
+--   pass as green either.
+--
+-- VERIFY (expect anon f, authenticated f, postgres t)
+--   SELECT has_function_privilege('anon','public.expire_stale_pending_tickets()','EXECUTE'),
+--          has_function_privilege('authenticated','public.expire_stale_pending_tickets()','EXECUTE'),
+--          has_function_privilege('postgres','public.expire_stale_pending_tickets()','EXECUTE');
+
+REVOKE ALL ON FUNCTION public.expire_stale_pending_tickets() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.expire_stale_pending_tickets() FROM anon, authenticated;
