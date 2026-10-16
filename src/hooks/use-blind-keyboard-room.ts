@@ -72,6 +72,22 @@ export function keyboardInvisibleToLayout(): boolean {
   return window.innerHeight > screenH * 0.75
 }
 
+/**
+ * True when the field scrolls inside its own scroller below the room scroller.
+ * The spacer extends a step whose content scrolls as a whole. A step that owns
+ * its scroller (Join your Collectives: a min-h-0 flex with an overflow list) is
+ * squeezed by it instead: measured on Android 10, typing in the collective
+ * search shrank the list to an 18px viewport, so the results were invisible
+ * while typing. Without the room that list stays visible above the keyboard.
+ */
+export function insideNestedScroller(el: HTMLElement, scroller: HTMLElement | null): boolean {
+  for (let n = el.parentElement; n && n !== scroller; n = n.parentElement) {
+    const y = getComputedStyle(n).overflowY
+    if (y === 'auto' || y === 'scroll') return true
+  }
+  return false
+}
+
 /** Scroll the focused field into the top of the screen if it may sit under the keyboard. */
 export function liftAboveBlindKeyboard(el: HTMLElement, container: HTMLElement | null) {
   const scroller = container ?? el.closest<HTMLElement>('[data-kb-room-scroll]')
@@ -81,8 +97,35 @@ export function liftAboveBlindKeyboard(el: HTMLElement, container: HTMLElement |
   scroller.scrollBy({ top: rect.top - window.innerHeight * 0.2, behavior: 'smooth' })
 }
 
-export function useBlindKeyboardRoom(enabled: boolean = Capacitor.getPlatform() === 'android') {
-  const [active, setActive] = useState(false)
+export interface BlindKeyboardRoomOptions {
+  /** Defaults to Android native. */
+  enabled?: boolean
+  /**
+   * Releases the room whenever it changes. Pass the step (or whatever swaps the
+   * content under the container).
+   *
+   * WHY (2026-10-16). Tapping Continue moves focus to the button, which is
+   * inside the container, so onBlur keeps the room on purpose. The step change
+   * then unmounts that button, and a removed element fires no blur React
+   * delivers. Without this the room outlived its step: proven on an Android 10
+   * emulator, the 444px spacer rode from the location step through phone and
+   * safety into "Join your Collectives", whose min-h-0 layout gave the
+   * collective list an 18px viewport and left the bottom 60% of the screen
+   * blank. Releasing at once is safe because the content under the finger is
+   * being replaced anyway; the 400ms delay only matters within a step. The
+   * room remembers the key it opened under, so it is derived off as soon as the
+   * key moves, and a timer armed on the old step cannot reopen it on the new
+   * one. A field on the new step opens a fresh room under the new key.
+   */
+  resetKey?: unknown
+}
+
+export function useBlindKeyboardRoom({
+  enabled = Capacitor.getPlatform() === 'android',
+  resetKey,
+}: BlindKeyboardRoomOptions = {}) {
+  // The resetKey the room was opened under, or null when closed.
+  const [openFor, setOpenFor] = useState<{ key: unknown } | null>(null)
   const timer = useRef<number | undefined>(undefined)
 
   const clearTimer = () => {
@@ -102,22 +145,24 @@ export function useBlindKeyboardRoom(enabled: boolean = Capacitor.getPlatform() 
         return
       }
       clearTimer()
+      const key = resetKey
       timer.current = window.setTimeout(() => {
         if (document.activeElement !== target) return
-        if (!keyboardInvisibleToLayout()) {
-          setActive(false)
+        const scroller = target.closest<HTMLElement>('[data-kb-room-scroll]')
+        if (!keyboardInvisibleToLayout() || insideNestedScroller(target, scroller)) {
+          setOpenFor(null)
           return
         }
-        setActive(true)
+        setOpenFor({ key })
         // Two frames: one for React to commit the spacer, one for layout.
         requestAnimationFrame(() =>
           requestAnimationFrame(() =>
-            liftAboveBlindKeyboard(target, target.closest<HTMLElement>('[data-kb-room-scroll]')),
+            liftAboveBlindKeyboard(target, scroller),
           ),
         )
       }, ACTIVATE_DELAY_MS)
     },
-    [enabled],
+    [enabled, resetKey],
   )
 
   const onBlur = useCallback(
@@ -130,11 +175,12 @@ export function useBlindKeyboardRoom(enabled: boolean = Capacitor.getPlatform() 
       timer.current = window.setTimeout(() => {
         const now = document.activeElement
         if (now && container.contains(now)) return
-        setActive(false)
+        setOpenFor(null)
       }, RELEASE_DELAY_MS)
     },
     [enabled],
   )
 
-  return { active: enabled && active, onFocus, onBlur }
+  const active = enabled && openFor !== null && Object.is(openFor.key, resetKey)
+  return { active, onFocus, onBlur }
 }

@@ -76,7 +76,8 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0)
   // Android 10 and older never report the keyboard to the WebView, so
   // h-screen-kb has nothing to subtract there. See use-blind-keyboard-room.ts.
-  const keyboardRoom = useBlindKeyboardRoom()
+  // resetKey: the room must not outlive the step it was opened on.
+  const keyboardRoom = useBlindKeyboardRoom({ resetKey: step })
   const [direction, setDirection] = useState(1)
   const [showCelebration, setShowCelebration] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
