@@ -632,12 +632,15 @@ async function fetchEventData(
     .eq('event_id', eventId)
     .single()
 
-  // Get actual check-in count for attendees
-  const { count: checkedInCount } = await supabase
-    .from('event_registrations')
-    .select('id', { count: 'exact', head: true })
-    .eq('event_id', eventId)
-    .eq('checked_in', true)
+  // Headcount for the "Number of Attendees" fallback, from the single count
+  // source (checked-in registrations plus deduped walk-ins). This used to be a
+  // HEAD on event_registrations filtered by `checked_in`, a column that does
+  // not exist (only checked_in_at does), so every call returned 400 and the
+  // sheet got 0 for any impact row without a leader-reported attendees figure.
+  const { data: attendance, error: attendanceErr } = await supabase.rpc('event_attendance_counts', { p_event_id: eventId } as never)
+  if (attendanceErr) console.error(`[excel-sync] attendance count failed for ${eventId}:`, attendanceErr.message)
+  const attendanceRow = (Array.isArray(attendance) ? attendance[0] : attendance) as { here_total?: number } | null
+  const checkedInCount = attendanceRow?.here_total ?? null
 
   let leaderName = creator?.display_name ?? ''
   if (impact?.logged_by && impact.logged_by !== event.created_by) {
