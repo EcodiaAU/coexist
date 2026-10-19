@@ -11,6 +11,7 @@ import { Button } from '@/components/button'
 import { takePendingClaim } from '@/lib/pending-claim'
 import { hasEmergencyContact, hasFourWheelDriveAnswer } from '@/lib/dietary'
 import { toggleCollectiveSelection, collectivesToJoin } from '@/lib/onboarding-collectives'
+import { initialNameParts, isPlaceholderDisplayName, needsNameStep } from '@/lib/onboarding-name'
 
 import { StepNameHandle } from './steps/step-name-handle'
 import { StepLocation } from './steps/step-location'
@@ -19,11 +20,6 @@ import { StepSafety, type SafetyIntake } from './steps/step-safety'
 import { StepCollective } from './steps/step-collective'
 import { StepFirstEvent } from './steps/step-first-event'
 import { StepCelebration } from './steps/step-celebration'
-
-// The profile-bootstrap fallback in use-auth writes this literal when a social
-// signup arrives with no name in its provider metadata. Treat it as "no real
-// name" so we still ask once, but never re-ask a user who gave a real name.
-const NEW_USER_FALLBACK = 'New User'
 
 type StepId = 'name' | 'location' | 'phone' | 'safety' | 'collective' | 'event'
 
@@ -46,8 +42,14 @@ export default function OnboardingPage() {
   // 2026-07-26). The step list is computed ONCE from the settled profile
   // (route-guard guarantees it's loaded before /onboarding mounts) so it never
   // reshuffles mid-flow.
+  // A display name we defaulted (the "New User" fallback, or the email's local
+  // part, which is what every Sign in with Apple member got) is not a name.
+  // The step is asked whenever first or last name is missing: last name is
+  // mandatory for a new account (2026-10-19). See lib/onboarding-name.ts.
   const existingName = (profile?.display_name ?? '').trim()
-  const hasRealName = existingName.length > 0 && existingName !== NEW_USER_FALLBACK
+  const hasRealDisplayName = !isPlaceholderDisplayName(existingName, user?.email)
+  const askName = needsNameStep(profile)
+  const initialName = initialNameParts(profile, user?.email)
   const existingPhone = (profile?.phone ?? '').trim()
   // The combined safety intake (Tate 2026-08-30). Shown unless the profile
   // already carries the WHOLE set, which is the case for a returning user who
@@ -63,7 +65,7 @@ export default function OnboardingPage() {
   const [stepOrder] = useState<StepId[]>(
     () =>
       [
-        hasRealName ? null : 'name',
+        askName ? 'name' : null,
         'location',
         existingPhone ? null : 'phone',
         hasWholeSafetySet ? null : 'safety',
@@ -87,7 +89,8 @@ export default function OnboardingPage() {
   // Shared onboarding data (name + phone prefilled from the profile so a user
   // who already has them never has to re-enter).
   const [data, setData] = useState({
-    displayName: hasRealName ? existingName : '',
+    firstName: initialName.firstName,
+    lastName: initialName.lastName,
     phone: existingPhone,
     location: '',
     locationPoint: null as { lat: number; lng: number } | null,
@@ -125,7 +128,11 @@ export default function OnboardingPage() {
         updated_at: new Date().toISOString(),
       }
 
-      if (data.displayName) profilePayload.display_name = data.displayName
+      // Both halves are required by the name step. The display name the member
+      // chose (or Google sent) is kept; a defaulted one becomes the first name.
+      if (data.firstName.trim()) profilePayload.first_name = data.firstName.trim()
+      if (data.lastName.trim()) profilePayload.last_name = data.lastName.trim()
+      if (!hasRealDisplayName && data.firstName.trim()) profilePayload.display_name = data.firstName.trim()
       if (data.location) profilePayload.location = data.location
       // Persist phone here so a new user who filled it in during onboarding
       // never trips the legacy PhoneGate backstop (which only shows when a
@@ -212,7 +219,7 @@ export default function OnboardingPage() {
     } finally {
       setIsSubmitting(false)
     }
-  }, [user, isSubmitting, data, collectiveRoles, isStaff, markOnboardingComplete, refreshProfile])
+  }, [user, isSubmitting, data, hasRealDisplayName, collectiveRoles, isStaff, markOnboardingComplete, refreshProfile])
 
   const goNext = useCallback(() => {
     if (step < totalSteps - 1) {
@@ -248,8 +255,9 @@ export default function OnboardingPage() {
       case 'name':
         return (
           <StepNameHandle
-            displayName={data.displayName}
-            onChange={(name) => updateData({ displayName: name })}
+            firstName={data.firstName}
+            lastName={data.lastName}
+            onChange={(firstName, lastName) => updateData({ firstName, lastName })}
             onNext={goNext}
           />
         )

@@ -112,7 +112,10 @@ describe('one number: going means holding a ticket', () => {
     ).toBe('hidden')
   })
 
-  it('cancelled registrations are hidden on both event kinds', () => {
+  it('cancelled registrations are visible as not attending on both event kinds', () => {
+    // North Stradbroke Island trip, 2026-10-17: two assist leaders cancelled to
+    // free seats for the waitlist and could not be signed in on the day,
+    // because a hidden row cannot be found on the roster.
     for (const isTicketed of [true, false]) {
       expect(
         classifyAttendance({
@@ -121,8 +124,31 @@ describe('one number: going means holding a ticket', () => {
           validTicketCount: 0,
           ticketCheckedIn: false,
         }),
-      ).toBe('hidden')
+      ).toBe('notAttending')
     }
+  })
+
+  it('a cancelled registration never counts as going', () => {
+    const { going } = countGoing(
+      [
+        { registrationStatus: 'registered', validTicketCount: 0 },
+        { registrationStatus: 'cancelled', validTicketCount: 0 },
+        { registrationStatus: 'cancelled', validTicketCount: 0 },
+      ],
+      false,
+    )
+    expect(going).toBe(1)
+  })
+
+  it('a cancelled registration that still holds a valid ticket is expected, not cancelled', () => {
+    expect(
+      classifyAttendance({
+        isTicketed: true,
+        registrationStatus: 'cancelled',
+        validTicketCount: 1,
+        ticketCheckedIn: false,
+      }),
+    ).toBe('expected')
   })
 
   it('NON-ticketed events are untouched: the registration is still the record', () => {

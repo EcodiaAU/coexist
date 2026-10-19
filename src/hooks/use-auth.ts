@@ -246,6 +246,12 @@ async function restoreProfile(): Promise<Profile | null> {
 /*  Auth context types                                                 */
 /* ------------------------------------------------------------------ */
 
+/** A new account's real name. Both halves are required at sign-up. */
+export interface SignUpName {
+  firstName: string
+  lastName: string
+}
+
 interface AuthContextValue {
   user: User | null
   profile: Profile | null
@@ -268,7 +274,7 @@ interface AuthContextValue {
   isAdmin: boolean
   isSuperAdmin: boolean
   managedCollectiveIds: string[]
-  signUp: (email: string, password: string, displayName: string, dateOfBirth?: string) => Promise<{ error: AuthError | null; hasSession?: boolean }>
+  signUp: (email: string, password: string, name: SignUpName, dateOfBirth?: string) => Promise<{ error: AuthError | null; hasSession?: boolean }>
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null; emailUnconfirmed?: boolean }>
   signInWithGoogle: () => Promise<{ error: AuthError | null }>
   signInWithApple: () => Promise<{ error: AuthError | null }>
@@ -760,7 +766,11 @@ export function useAuthProvider(): AuthContextValue {
   }, [user, loadUserData])
 
   /* ---- auth actions ---- */
-  const signUp = useCallback(async (email: string, password: string, displayName: string, dateOfBirth?: string) => {
+  const signUp = useCallback(async (email: string, password: string, name: SignUpName, dateOfBirth?: string) => {
+    // The display name defaults to the first name; first_name and last_name
+    // ride in the metadata and handle_new_user copies them onto the profile in
+    // the same transaction that creates it (migration 20261019040000).
+    const displayName = name.firstName
     let error: AuthError | null = null
     let data: Awaited<ReturnType<typeof supabase.auth.signUp>>['data'] | null = null
     try {
@@ -768,7 +778,12 @@ export function useAuthProvider(): AuthContextValue {
         email,
         password,
         options: {
-          data: { display_name: displayName, date_of_birth: dateOfBirth },
+          data: {
+            display_name: displayName,
+            first_name: name.firstName,
+            last_name: name.lastName,
+            date_of_birth: dateOfBirth,
+          },
           emailRedirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback`,
         },
       }))

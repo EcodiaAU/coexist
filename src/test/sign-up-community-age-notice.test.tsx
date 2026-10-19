@@ -51,7 +51,8 @@ function typeDob(display: string) {
 }
 
 function fillEverythingButDob() {
-  fireEvent.change(screen.getByLabelText(/Display name/), { target: { value: 'Sam' } })
+  fireEvent.change(screen.getByLabelText(/First name/), { target: { value: 'Sam' } })
+  fireEvent.change(screen.getByLabelText(/Last name/), { target: { value: 'Rivers' } })
   fireEvent.change(screen.getByLabelText(/Email/), { target: { value: 'sam@example.com' } })
   fireEvent.change(screen.getByLabelText(/^Password/), { target: { value: 'Strongpass1!' } })
   fireEvent.click(screen.getByRole('checkbox'))

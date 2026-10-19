@@ -405,7 +405,13 @@ export function classifyAttendance(input: {
     return isTicketed ? 'hidden' : 'waitlist'
   }
 
-  if (registrationStatus === 'cancelled') return 'hidden'
+  // Cancelled is shown, never counted. It used to be 'hidden', which made the
+  // person unfindable on the day: Jess Ditchfield (2026-10-19) asked Brisbane
+  // leaders to unregister from the North Stradbroke Island trip so waitlisters
+  // could take their seats, and on the morning nobody could sign those leaders
+  // in because the roster no longer held them. They now sit in the collapsed
+  // "Not attending" group, where a leader can find and check them in.
+  if (registrationStatus === 'cancelled') return 'notAttending'
 
   // Active registration, no ticket at all.
   return isTicketed ? 'noTicket' : 'expected'

@@ -628,8 +628,9 @@ export interface EventRoster {
  * ticket aggregation. One row per person (dupes collapse, surfaced as
  * validTicketCount). For ticketed events a registrant with no valid ticket
  * (refunded / cancelled / never bought) is moved to the "not attending" group
- * with a reason; for non-ticketed events behaviour matches the registration
- * roster (cancelled rows are hidden). Counts keep dupes in ticketsSold so the
+ * with a reason. On both kinds a cancelled registration lands in "not
+ * attending" (visible, never counted) so a leader can still find and check in
+ * someone who unregistered and then turned up. Counts keep dupes in ticketsSold so the
  * money tally stays right while people-counts stay deduped.
  */
 export function useEventRoster(eventId: string | undefined, isTicketed: boolean) {
@@ -721,12 +722,14 @@ export function useEventRoster(eventId: string | undefined, isTicketed: boolean)
         })
         if (scenarioOrHidden === 'hidden') continue
         const scenario: RosterScenario = scenarioOrHidden
+        // A cancelled REGISTRATION reads "Cancelled" on a free event too,
+        // where there is no ticket to carry the reason.
         const reason: RosterPerson['reason'] =
           scenario === 'noTicket'
             ? 'no ticket'
             : a.refunded
               ? 'refunded'
-              : a.cancelled
+              : a.cancelled || r.status === 'cancelled'
                 ? 'cancelled'
                 : undefined
 
@@ -1365,6 +1368,18 @@ export function useCancelRegistration() {
 /*  Mutations - Check-in                                               */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Registration states a leader may check someone in FROM. 'cancelled' is in
+ * the set on purpose (North Stradbroke Island trip, 2026-10-19): a person who
+ * unregistered and then turned up is physically present, and refusing them
+ * left leaders unable to sign their own co-leaders in.
+ */
+export const LEADER_CHECK_IN_FROM_STATUSES = ['registered', 'invited', 'waitlisted', 'attended', 'cancelled'] as const
+
+/** Shown when the database kept a check-in from landing as 'attended'. */
+export const CHECK_IN_NOT_RECORDED_MESSAGE =
+  "That check-in wasn't recorded because sign-ups are closed for this event. Ask an event leader or Co-Exist staff to check them in."
+
 export function useCheckIn() {
   const queryClient = useQueryClient()
   const { isOffline } = useOffline()
@@ -1418,15 +1433,19 @@ export function useCheckIn() {
         return
       }
 
-      // LEADER check-in path (userId != auth.uid()): widened from the
-      // ('registered','invited')-only gate. Leaders legitimately need to
-      // override on event day for waitlisted walk-ups and for users whose
-      // row is in a non-blocking state. The DB trigger
-      // enforce_event_day_check_in_window() still enforces the date
-      // window + leader role, and 'cancelled' rows are kept out so an
-      // explicit user-side cancellation is not silently overridden.
-      // Must chain .select() so the 0-row guard below can distinguish
-      // "no row" from "row matched".
+      // LEADER check-in path (userId != auth.uid()). Every registration state
+      // is accepted, 'cancelled' included: a leader tapping Check In on a
+      // person standing in front of them is ground truth, and the roster asks
+      // the leader to confirm before checking in someone who cancelled. Until
+      // 2026-10-19 'cancelled' was refused here, which is why the Brisbane
+      // assist leaders who unregistered from the North Stradbroke Island trip
+      // to free waitlist seats could not be signed in on the day. An
+      // 'attended' write is a door walk-in and is not capacity-gated, so this
+      // takes no seat from anyone queued. The DB trigger
+      // enforce_event_day_check_in_window() still enforces the date window +
+      // leader role. Select the status back: a sign-ups-closed event can
+      // demote a write it does not trust to 'waitlisted', and the leader must
+      // be told rather than shown a green tick.
       const { data, error } = await supabase
         .from('event_registrations')
         .update({
@@ -1435,11 +1454,14 @@ export function useCheckIn() {
         })
         .eq('event_id', eventId)
         .eq('user_id', userId)
-        .in('status', ['registered', 'invited', 'waitlisted', 'attended'])
-        .select('id')
+        .in('status', LEADER_CHECK_IN_FROM_STATUSES)
+        .select('id, status')
       if (error) throw error
       if (!data || data.length === 0) {
-        throw new Error("Couldn't check this person in. They may have cancelled, or they aren't registered for this event. Use Add Walk-In to record them.")
+        throw new Error("Couldn't check this person in. They aren't on this event. Use Add Walk-In to record them.")
+      }
+      if (data[0].status !== 'attended') {
+        throw new Error(CHECK_IN_NOT_RECORDED_MESSAGE)
       }
     },
     onMutate: async ({ eventId, userId }) => {
@@ -2649,6 +2671,51 @@ export function useRemoveFromEvent() {
       if (!data || data.length === 0) {
         throw new Error("Couldn't remove this person. They may have already cancelled or checked in.")
       }
+    },
+    onSettled: (_, __, { eventId }) => {
+      queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event-waitlist', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] })
+    },
+  })
+}
+
+/**
+ * Leader puts someone who cancelled back on a free event before the day: the
+ * inverse of useRemoveFromEvent. Jess Ditchfield, 2026-10-19: "people
+ * unregistering for an event and then being able to be added back by us".
+ *
+ * It is a fresh claim on a seat, so it goes through the same capacity and
+ * queue rules as anyone registering (handle_event_registration). On a full
+ * event, or one with people already waiting, the database puts them on the
+ * waitlist instead, which keeps the queue fair to the people already in it.
+ * The returned status is what the caller reports; it is never assumed.
+ *
+ * NON-TICKETED EVENTS ONLY (callers gate on event.is_ticketed): a ticketed
+ * seat is given back by issuing a ticket, never a roster action.
+ */
+export function useReAddToEvent() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ eventId, userId }: { eventId: string; userId: string }): Promise<{ waitlisted: boolean }> => {
+      // registered_at moves to now: the waitlist drains oldest registered_at
+      // first, so keeping the original stamp would put a person who gave up
+      // their seat weeks ago at the head of a queue others joined since.
+      const { data, error } = await supabase
+        .from('event_registrations')
+        .update({ status: 'registered', registered_at: new Date().toISOString() })
+        .eq('event_id', eventId)
+        .eq('user_id', userId)
+        .eq('status', 'cancelled')
+        .select('status')
+      if (error) throw error
+      if (!data || data.length === 0) {
+        throw new Error("Couldn't add this person back. They may already be back on the event.")
+      }
+      return { waitlisted: data[0].status === 'waitlisted' }
     },
     onSettled: (_, __, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })

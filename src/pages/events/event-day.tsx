@@ -46,6 +46,9 @@ import {
   useUncheckIn,
   usePromoteFromWaitlist,
   useRemoveFromEvent,
+  useReAddToEvent,
+  LEADER_CHECK_IN_FROM_STATUSES,
+  CHECK_IN_NOT_RECORDED_MESSAGE,
   formatEventDate,
   type EventWalkIn,
   type RosterPerson,
@@ -234,7 +237,20 @@ function AttendeeRow({
         </p>
       </div>
 
-      {isNotAttending ? (
+      {isNotAttending && checkInOpen ? (
+        // Someone who cancelled can still turn up. The page asks the leader to
+        // confirm before this lands (North Stradbroke Island trip, 2026-10-19).
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={<UserCheck size={14} />}
+          onClick={(e: React.MouseEvent) => { e.stopPropagation(); onCheckIn() }}
+          loading={isPending}
+          aria-label={`Check in ${attendeeName(person.profiles, 'attendee')} anyway`}
+        >
+          Check In
+        </Button>
+      ) : isNotAttending ? (
         <Ban size={16} className="text-neutral-300 shrink-0" aria-hidden />
       ) : isCheckedIn ? (
         <div className="flex items-center gap-2">
@@ -298,6 +314,8 @@ function AttendeeSafetySheet({
   open,
   onClose,
   onRemove,
+  onReAdd,
+  reAdding = false,
 }: {
   attendee: AttendeeWithStatus | null
   open: boolean
@@ -306,6 +324,11 @@ function AttendeeSafetySheet({
       remove confirmation (Anthea Sheriff's ask 2026-09-06: clear no-shows so
       the waitlist can move). */
   onRemove?: () => void
+  /** Leader-only, non-ticketed events, a cancelled row before the event day.
+      The inverse of Remove (Jess Ditchfield 2026-10-19: people who
+      unregistered could not be added back). */
+  onReAdd?: () => void
+  reAdding?: boolean
 }) {
   if (!attendee?.profiles) return null
 
@@ -445,6 +468,21 @@ function AttendeeSafetySheet({
             Remove from event
           </Button>
         )}
+
+        {/* Add back (leader action, free events, before the day). A fresh
+            claim on a seat: on a full event, or one with a queue, they join
+            the waitlist instead. */}
+        {onReAdd && (
+          <Button
+            variant="primary"
+            fullWidth
+            icon={<UserPlus size={16} />}
+            onClick={onReAdd}
+            loading={reAdding}
+          >
+            Add back to event
+          </Button>
+        )}
       </div>
     </BottomSheet>
   )
@@ -491,6 +529,10 @@ export default function EventDayPage() {
   const promote = usePromoteFromWaitlist()
   const removeFromEvent = useRemoveFromEvent()
   const [removeTarget, setRemoveTarget] = useState<AttendeeWithStatus | null>(null)
+  const reAddToEvent = useReAddToEvent()
+  // A person who cancelled, waiting on the leader's confirmation to be
+  // checked in anyway.
+  const [cancelledCheckInTarget, setCancelledCheckInTarget] = useState<RosterPerson | null>(null)
 
   // Mid-event offline visibility - leaders need to know whether actions are
   // queued vs synced. Origin: Tate verbatim 17:11 AEST 9 May 2026.
@@ -709,6 +751,29 @@ export default function EventDayPage() {
     )
   }, [eventId, removeTarget, removeFromEvent, roster, toast])
 
+  // Put someone who unregistered back on a free event before the day. The
+  // database decides whether a seat is free; we report what it decided.
+  const handleReAdd = useCallback(() => {
+    if (!eventId || !selectedAttendee) return
+    const displayName = attendeeName(selectedAttendee.profiles, 'Attendee')
+    reAddToEvent.mutate(
+      { eventId, userId: selectedAttendee.user_id },
+      {
+        onSuccess: ({ waitlisted }) => {
+          if (waitlisted) {
+            toast.info(`The event is full, so ${displayName} is on the waitlist. You can still check them in on the day.`)
+          } else {
+            toast.success(`${displayName} is back on the event`)
+          }
+          setSelectedAttendee(null)
+        },
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : 'Could not add them back')
+        },
+      },
+    )
+  }, [eventId, selectedAttendee, reAddToEvent, toast])
+
   // Sign-ups open/closed (events.registrations_closed). This flag existed in
   // the DB since 2026-09-02 with NO app surface: an organiser lifted Merri
   // Mornings' capacity on 2026-09-06 trying to admit 74 waitlisted people and
@@ -751,46 +816,56 @@ export default function EventDayPage() {
       setAddingMemberId(userId)
       try {
         const nowIso = new Date().toISOString()
-        let { error } = await supabase.from('event_registrations').insert({
-          event_id: eventId,
-          user_id: userId,
-          status: 'attended',
-          checked_in_at: nowIso,
-        })
+        // Every path selects the status back. A sign-ups-closed event can
+        // demote a door check-in to 'waitlisted', and a leader shown "Checked
+        // in" for a person the database kept off the list is the silent
+        // failure this page must never produce.
+        const inserted = await supabase
+          .from('event_registrations')
+          .insert({
+            event_id: eventId,
+            user_id: userId,
+            status: 'attended',
+            checked_in_at: nowIso,
+          })
+          .select('status')
+        let error = inserted.error
+        let landed = inserted.data?.[0]?.status ?? null
 
         // They already hold a row for this event (UNIQUE event_id, user_id).
-        // That is the ordinary case for anyone who registered ahead of the day,
-        // and it used to dead-end here on "already registered" while leaving
-        // them NOT checked in. Flip the existing row instead, which is the same
-        // update the roster check-in button performs. 'cancelled' is left out
-        // so an explicit user-side cancellation is not silently overridden.
+        // That is the ordinary case for anyone who registered ahead of the
+        // day, and for anyone who unregistered: flip the existing row, the
+        // same update the roster check-in button performs. 'cancelled' is
+        // included since 2026-10-19. Refusing it is what stopped leaders
+        // adding back the Brisbane assist leaders who unregistered from the
+        // North Stradbroke Island trip to free seats for the waitlist.
         if (error?.code === '23505') {
           const { data: updated, error: updateError } = await supabase
             .from('event_registrations')
             .update({ status: 'attended', checked_in_at: nowIso })
             .eq('event_id', eventId)
             .eq('user_id', userId)
-            .in('status', ['registered', 'invited', 'waitlisted', 'attended'])
-            .select('id')
-          if (updateError) {
-            error = updateError
-          } else if (!updated || updated.length === 0) {
-            toast.info(`${displayName ?? 'User'} has cancelled their spot. Record them as a new walk-in.`)
+            .in('status', LEADER_CHECK_IN_FROM_STATUSES)
+            .select('status')
+          error = updateError
+          landed = updated?.[0]?.status ?? null
+          if (!updateError && (!updated || updated.length === 0)) {
+            toast.error("Couldn't check them in. Refresh the page and try again.")
             return
-          } else {
-            error = null
           }
         }
 
         if (error) {
           toast.error(error.message || 'Failed to add attendee')
+        } else if (landed !== 'attended') {
+          toast.error(CHECK_IN_NOT_RECORDED_MESSAGE)
         } else {
           toast.success(`Checked in ${displayName ?? 'user'}`)
-          // Invalidate attendees query so the new row appears
-          queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
-          queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
-          queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
         }
+        // Invalidate either way: a demoted write still changed the roster.
+        queryClient.invalidateQueries({ queryKey: ['event-attendees', eventId] })
+        queryClient.invalidateQueries({ queryKey: ['event-roster', eventId] })
+        queryClient.invalidateQueries({ queryKey: ['event-attendance-counts', eventId] })
       } finally {
         setAddingMemberId(null)
       }
@@ -876,7 +951,7 @@ export default function EventDayPage() {
     <AttendeeRow
       key={p.user_id}
       person={p}
-      onCheckIn={() => handleCheckIn(p.user_id)}
+      onCheckIn={() => (p.scenario === 'notAttending' ? setCancelledCheckInTarget(p) : handleCheckIn(p.user_id))}
       onUncheck={() => handleUncheckRequest(p)}
       onPromote={p.scenario === 'waitlist' ? () => handlePromote(p.user_id) : undefined}
       onViewDetails={() => setSelectedAttendee(p)}
@@ -1367,17 +1442,19 @@ export default function EventDayPage() {
                   type="button"
                   onClick={() => setShowNotAttending((v) => !v)}
                   className="w-full flex items-center justify-between mb-2 px-1"
-                  aria-expanded={showNotAttending}
+                  aria-expanded={showNotAttending || searchQuery.trim().length > 0}
                 >
                   <h3 className="text-sm font-semibold text-neutral-500 flex items-center gap-1.5">
                     <Ban size={14} className="text-neutral-400" /> Not attending
                   </h3>
                   <span className="flex items-center gap-1 text-xs font-semibold text-neutral-400">
                     {filteredGroups.notAttending.length}
-                    <ChevronDown size={14} className={cn('transition-transform duration-200', showNotAttending && 'rotate-180')} />
+                    <ChevronDown size={14} className={cn('transition-transform duration-200', (showNotAttending || searchQuery.trim().length > 0) && 'rotate-180')} />
                   </span>
                 </button>
-                {showNotAttending && (
+                {/* A search opens it: a leader typing the name of someone who
+                    unregistered must find them, not a closed section. */}
+                {(showNotAttending || searchQuery.trim().length > 0) && (
                   <div className="space-y-0">{filteredGroups.notAttending.map(renderRosterRow)}</div>
                 )}
               </motion.div>
@@ -1571,6 +1648,31 @@ export default function EventDayPage() {
             ? () => setRemoveTarget(selectedAttendee)
             : undefined
         }
+        onReAdd={
+          !isTicketed &&
+          !checkInOpen &&
+          !isPastEvent &&
+          (isAssistLeader || isStaff) &&
+          selectedAttendee?.status === 'cancelled'
+            ? handleReAdd
+            : undefined
+        }
+        reAdding={reAddToEvent.isPending}
+      />
+
+      {/* Check in someone who cancelled (North Stradbroke Island trip,
+          2026-10-19). A door check-in takes no seat from the waitlist. */}
+      <ConfirmationSheet
+        open={!!cancelledCheckInTarget}
+        onClose={() => setCancelledCheckInTarget(null)}
+        onConfirm={() => {
+          if (cancelledCheckInTarget) handleCheckIn(cancelledCheckInTarget.user_id)
+          setCancelledCheckInTarget(null)
+        }}
+        title="Check them in anyway?"
+        description={`${attendeeName(cancelledCheckInTarget?.profiles, 'This person')} cancelled their spot. If they're here, check them in. Nobody on the waitlist loses a seat.`}
+        confirmLabel="Check in"
+        variant="warning"
       />
 
       {/* Remove-from-event confirmation (Anthea Sheriff ask, 2026-09-06) */}

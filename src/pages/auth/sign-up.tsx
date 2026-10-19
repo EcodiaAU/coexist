@@ -41,7 +41,14 @@ export default function SignUpPage() {
   const { isOffline } = useOffline()
   const shouldReduceMotion = useReducedMotion()
 
-  const [displayName, setDisplayName] = useState('')
+  // First AND last name, both required (Jess Ditchfield via Tate, 2026-10-19:
+  // "can we make last name mandatory when creating an account"). Leaders tell
+  // people apart by full name on the roster (attendeeName), and before this
+  // the form asked only for a display name, so 2,485 of 3,586 profiles had no
+  // last name at all. The display name defaults to the first name and stays
+  // editable in Edit Profile.
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
@@ -73,7 +80,8 @@ export default function SignUpPage() {
   const maxDob = new Date().toISOString().split('T')[0]
 
   const canSubmit =
-    displayName.trim() &&
+    firstName.trim() &&
+    lastName.trim() &&
     email.trim() &&
     isPasswordValid &&
     isAgeValid &&
@@ -83,11 +91,13 @@ export default function SignUpPage() {
   // (A4). Show the first unmet requirement, but only once the user has started
   // filling the form, so a pristine form isn't nagged.
   const hasStarted = Boolean(
-    displayName.trim() || email.trim() || password.length > 0 || dateOfBirth || agreedToTerms,
+    firstName.trim() || lastName.trim() || email.trim() || password.length > 0 || dateOfBirth || agreedToTerms,
   )
-  const unmetRequirement = !displayName.trim()
-    ? 'Add your display name'
-    : !email.trim()
+  const unmetRequirement = !firstName.trim()
+    ? 'Add your first name'
+    : !lastName.trim()
+      ? 'Add your last name'
+      : !email.trim()
       ? 'Add your email'
       : !isPasswordValid
         ? 'Use a password of at least 8 characters, with an uppercase letter, number, or symbol'
@@ -110,7 +120,10 @@ export default function SignUpPage() {
     setIsSubmitting(true)
     setError(null)
 
-    const { error: authError, hasSession } = await signUp(email, password, displayName, dateOfBirth)
+    const { error: authError, hasSession } = await signUp(email, password, {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+    }, dateOfBirth)
 
     setIsSubmitting(false)
     if (authError) {
@@ -256,16 +269,28 @@ export default function SignUpPage() {
               variants={childVariants}
               className="bg-white rounded-md border border-neutral-100 p-5 space-y-4"
             >
-              <Input
-                label="Display name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                autoComplete="name"
-                autoCapitalize="words"
-                enterKeyHint="next"
-                required
-                maxLength={50}
-              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  autoComplete="given-name"
+                  autoCapitalize="words"
+                  enterKeyHint="next"
+                  required
+                  maxLength={50}
+                />
+                <Input
+                  label="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  autoComplete="family-name"
+                  autoCapitalize="words"
+                  enterKeyHint="next"
+                  required
+                  maxLength={50}
+                />
+              </div>
 
               <Input
                 type="email"
