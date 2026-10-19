@@ -214,7 +214,7 @@ export function MessageInput({
       )}
       style={{
         paddingBottom: padForTabBar
-          ? 'calc(3.5rem + var(--safe-bottom, 0px) + 0.75rem)'
+          ? 'calc(var(--tab-bar-space, 3.5rem) + var(--safe-bottom, 0px) + 0.75rem)'
           : 'calc(var(--safe-bottom, 0px) + 0.75rem)',
       }}
     >

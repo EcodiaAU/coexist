@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
 import { BottomTabBar } from '@/components/bottom-tab-bar'
+import { NativeTabBarController, useNativeGlassTabBar } from '@/components/native-tab-bar-controller'
 import { UnifiedSidebar } from '@/components/unified-sidebar'
 import { WebFooter } from '@/components/web-footer'
 import { OfflineBanner } from '@/components/offline-banner'
@@ -105,6 +106,10 @@ function LocationAwareChrome({ showBottomTabs, syncWarning }: { showBottomTabs: 
   const location = useLocation()
   const { openMenu } = useMenuSheet()
   const keyboardOpen = useKeyboardOpen()
+  // iPhone on iOS 26+ with a store build carrying the plugin: the tab bar is
+  // UIKit's own, drawn in Liquid Glass (src/lib/native-tab-bar.ts). null while
+  // the one Device check resolves, during which no bar renders.
+  const nativeTabs = useNativeGlassTabBar()
   const isAdminRoute = location.pathname.startsWith('/admin')
   const isLeaderRoute = location.pathname.startsWith('/leader') && !location.pathname.startsWith('/leaderboard') && !location.pathname.startsWith('/leadership')
   const isChatRoute = location.pathname.startsWith('/chat/')
@@ -130,7 +135,14 @@ function LocationAwareChrome({ showBottomTabs, syncWarning }: { showBottomTabs: 
 
       {/* Bottom tab bar (mobile + native) - hidden on admin/leader pages and when keyboard is open.
           Chat detail (/chat/<id>) keeps the tab bar visible so users can navigate out without back-button hunt. */}
-      {showBottomTabs && !isAdminRoute && !isLeaderRoute && !keyboardOpen && (
+      {showBottomTabs && nativeTabs === true && (
+        <NativeTabBarController
+          visible={!isAdminRoute && !isLeaderRoute && !keyboardOpen}
+          chatBadge={totalUnread}
+          onMorePress={openMenu}
+        />
+      )}
+      {showBottomTabs && nativeTabs === false && !isAdminRoute && !isLeaderRoute && !keyboardOpen && (
         <BottomTabBar data-eos-id="src/components/app-shell.tsx#10" onMorePress={openMenu} chatBadge={totalUnread} syncWarning={syncWarning} />
       )}
     </>

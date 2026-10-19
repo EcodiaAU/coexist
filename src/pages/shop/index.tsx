@@ -592,7 +592,7 @@ export default function ShopPage() {
             type="button"
             onClick={() => navigate('/shop/orders')}
             className="fixed right-5 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white text-neutral-600 shadow-sm active:scale-[0.98] transition-transform cursor-pointer border border-neutral-100"
-            style={{ bottom: hasBottomTabs ? 'calc(9.5rem + var(--safe-bottom, 0px))' : 'calc(6rem + var(--safe-bottom, 0px))' }}
+            style={{ bottom: hasBottomTabs ? 'calc(var(--tab-bar-space, 3.5rem) + 6rem + var(--safe-bottom, 0px))' : 'calc(6rem + var(--safe-bottom, 0px))' }}
             aria-label="My orders"
           >
             <Package size={18} />
@@ -603,7 +603,7 @@ export default function ShopPage() {
             type="button"
             onClick={() => navigate('/shop/cart')}
             className="fixed right-5 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-neutral-900 text-white shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
-            style={{ bottom: hasBottomTabs ? 'calc(4.5rem + var(--safe-bottom, 0px))' : 'calc(1.5rem + var(--safe-bottom, 0px))' }}
+            style={{ bottom: hasBottomTabs ? 'calc(var(--tab-bar-space, 3.5rem) + 1rem + var(--safe-bottom, 0px))' : 'calc(1.5rem + var(--safe-bottom, 0px))' }}
             aria-label={`Cart (${cartCount} items)`}
           >
             <ShoppingBag size={22} />

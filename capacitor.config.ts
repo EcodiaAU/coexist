@@ -107,6 +107,34 @@ const config: CapacitorConfig = {
 
   // ---- Android specific ----
   android: {
+    // Android ships its own plugin set. The iOS-only plugins
+    // (@capgo/capacitor-native-navigation for the Liquid Glass tab bar, and
+    // @capacitor/device for its iOS version gate) are left out on purpose:
+    // native-navigation's Android load() turns on edge-to-edge as soon as it
+    // is registered, before any JS calls it. src/test/android-plugin-set.test.ts
+    // fails if a new plugin is added without a decision here.
+    includePlugins: [
+      '@capacitor-community/media',
+      '@capacitor-mlkit/barcode-scanning',
+      '@capacitor/app',
+      '@capacitor/browser',
+      '@capacitor/camera',
+      '@capacitor/filesystem',
+      '@capacitor/geolocation',
+      '@capacitor/haptics',
+      '@capacitor/keyboard',
+      '@capacitor/local-notifications',
+      '@capacitor/network',
+      '@capacitor/preferences',
+      '@capacitor/push-notifications',
+      '@capacitor/share',
+      '@capacitor/splash-screen',
+      '@capacitor/status-bar',
+      '@capacitor/text-zoom',
+      '@capgo/capacitor-social-login',
+      '@capgo/capacitor-updater',
+      '@sentry/capacitor',
+    ],
     backgroundColor: '#f8f9f5',
     allowMixedContent: false,
     // Permission declarations are in AndroidManifest.xml:

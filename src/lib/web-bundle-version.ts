@@ -14,4 +14,7 @@
 // As of 2026-08-19 live native is iOS 2.2.9 / Android 2.2.8, so the OTA lane
 // jumped 2.2.5 -> 2.2.10 to clear that floor. When cutting a new store build,
 // bump this above the new native version too.
-export const WEB_BUNDLE_VERSION = '2.3.55'
+// 2026-10-19: store build 2.3.56 (96) embeds this bundle at 2.3.56, the same
+// number as its native version, so the next ship-web-ota.sh run (2.3.57)
+// clears the native floor guard with no hand edit.
+export const WEB_BUNDLE_VERSION = '2.3.56'

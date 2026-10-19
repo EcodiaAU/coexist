@@ -63,6 +63,9 @@ export function Page({
   // its 3.5rem tab-bar buffer in that state - that buffer is what was
   // pushing the Save button ~3.5rem above the keyboard top. With keyboard
   // up, paint the footer flush against the keyboard line.
+  // --tab-bar-space is the bar's height above the safe area: 3.5rem for the
+  // web bar, 0 while the native iOS glass bar shows, because UIKit already
+  // counts that bar inside env(safe-area-inset-bottom) (native-tab-bar.ts).
   const tabsVisuallyHidden = hasBottomTabs && keyboardOpen
 
   // Standard header rendered directly in scroll container (takes layout space).
@@ -91,7 +94,7 @@ export function Page({
           paddingBottom: tabsVisuallyHidden
             ? 'var(--safe-bottom)'
             : hasBottomTabs
-              ? 'calc(3.5rem + var(--safe-bottom))'
+              ? 'calc(var(--tab-bar-space, 3.5rem) + var(--safe-bottom))'
               : 'var(--safe-bottom)',
         }}
       >
@@ -163,7 +166,7 @@ export function Page({
             paddingBottom: tabsVisuallyHidden
               ? (fullBleed ? '0px' : '6px')
               : hasBottomTabs
-                ? `calc(3.5rem + var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`
+                ? `calc(var(--tab-bar-space, 3.5rem) + var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`
                 : `calc(var(--safe-bottom)${fullBleed ? '' : ' + 1rem'})`,
           }}
         >
