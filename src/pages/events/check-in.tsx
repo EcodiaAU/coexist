@@ -19,7 +19,7 @@ import { useCodeCheckIn } from '@/hooks/use-event-tickets'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import { useOffline } from '@/hooks/use-offline'
 import { useCheckInValidation } from '@/hooks/use-check-in-validation'
-import { CHECK_IN_ERROR_MESSAGES, isCheckInWindowError, selfCheckInErrorKind, type CheckInErrorKind } from '@/lib/constants/check-in'
+import { CHECK_IN_ERROR_MESSAGES, checkInErrorMessage, isCheckInWindowError, selfCheckInErrorKind, type CheckInErrorKind } from '@/lib/constants/check-in'
 import { queueOfflineCheckIn } from '@/lib/offline-sync'
 import { supabase } from '@/lib/supabase'
 import {
@@ -269,7 +269,7 @@ export default function CheckInPage() {
       setState('success')
       setTimeout(() => setShowCelebration(true), 600)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : ''
+      const msg = checkInErrorMessage(err)
       // Flaky connection (hung request / lost response): queue it instead of
       // failing, so a low-signal check-in still lands. Server replay upserts to
       // 'attended', so re-queuing a request that actually succeeded is safe.
@@ -348,7 +348,7 @@ export default function CheckInPage() {
             setTimeout(() => setShowCelebration(true), 600)
           },
           onError: (err) => {
-            setErrorKind(selfCheckInErrorKind(err instanceof Error ? err.message : ''))
+            setErrorKind(selfCheckInErrorKind(checkInErrorMessage(err)))
             setState('error')
           },
         },

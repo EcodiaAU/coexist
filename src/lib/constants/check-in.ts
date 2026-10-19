@@ -37,3 +37,17 @@ export function selfCheckInErrorKind(message: string): CheckInErrorKind {
   if (isCheckInWindowError(message)) return 'event_not_active'
   return 'generic'
 }
+
+/**
+ * The message of anything a check-in mutation throws. supabase-js returns a
+ * PostgREST error as a plain object, and the hooks rethrow it as-is, so an
+ * `instanceof Error` test read every database refusal (a check-in on the wrong
+ * day included) as '' and showed the generic message.
+ */
+export function checkInErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object' && typeof (err as { message?: unknown }).message === 'string') {
+    return (err as { message: string }).message
+  }
+  return ''
+}

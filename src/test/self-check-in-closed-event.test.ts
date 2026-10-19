@@ -74,7 +74,7 @@ vi.mock('@/lib/sentry', () => ({ captureException: vi.fn() }))
 const { useCheckIn } = await import('@/hooks/use-events')
 const { useCodeCheckIn } = await import('@/hooks/use-event-tickets')
 const offline = await import('@/lib/offline-sync')
-const { CHECK_IN_ERROR_MESSAGES, selfCheckInErrorKind } = await import('@/lib/constants/check-in')
+const { CHECK_IN_ERROR_MESSAGES, checkInErrorMessage, selfCheckInErrorKind } = await import('@/lib/constants/check-in')
 
 const NOT_RECORDED = CHECK_IN_ERROR_MESSAGES.not_recorded
 
@@ -200,6 +200,23 @@ describe('the check-in screens name an unrecorded check-in', () => {
     expect(selfCheckInErrorKind('Check-in is not available before the day of the event. Event date: 2026-10-20, today: 2026-10-19.')).toBe('event_not_active')
     expect(selfCheckInErrorKind('Post-event check-in is available to event leaders and admins only.')).toBe('event_not_active')
     expect(selfCheckInErrorKind('boom')).toBe('generic')
+  })
+
+  it('reads the message of a PostgREST error, which supabase-js returns as a plain object', () => {
+    // Live 2026-10-19: a check-in on the day before a closed event came back
+    // 400 with the window message, and the page said "Something went wrong"
+    // because `err instanceof Error` was false for the plain error object.
+    const plain = { code: '23514', message: 'Check-in is not available before the day of the event. Event date: 2026-10-20, today: 2026-10-19.', details: null, hint: 'Wait until the event date to check attendees in.' }
+    expect(checkInErrorMessage(plain)).toBe(plain.message)
+    expect(selfCheckInErrorKind(checkInErrorMessage(plain))).toBe('event_not_active')
+    expect(checkInErrorMessage(new Error(NOT_RECORDED))).toBe(NOT_RECORDED)
+    expect(checkInErrorMessage(null)).toBe('')
+    const page = readFileSync(resolve(__dirname, '../pages/events/check-in.tsx'), 'utf8')
+    const sheet = readFileSync(resolve(__dirname, '../components/check-in-sheet.tsx'), 'utf8')
+    for (const src of [page, sheet]) {
+      expect(src).not.toMatch(/err instanceof Error \? err\.message/)
+      expect(src.match(/checkInErrorMessage\(err\)/g)?.length).toBeGreaterThanOrEqual(2)
+    }
   })
 
   it('both screens route the read-back failure to its own message', () => {

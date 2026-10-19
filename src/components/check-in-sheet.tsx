@@ -13,7 +13,7 @@ import { useCheckIn } from '@/hooks/use-events'
 import { useCodeCheckIn } from '@/hooks/use-event-tickets'
 import { useOffline } from '@/hooks/use-offline'
 import { useCheckInValidation } from '@/hooks/use-check-in-validation'
-import { CHECK_IN_ERROR_MESSAGES, selfCheckInErrorKind, type CheckInErrorKind } from '@/lib/constants/check-in'
+import { CHECK_IN_ERROR_MESSAGES, checkInErrorMessage, selfCheckInErrorKind, type CheckInErrorKind } from '@/lib/constants/check-in'
 import { queueOfflineCheckIn } from '@/lib/offline-sync'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { Button } from '@/components/button'
@@ -94,7 +94,7 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
             setTimeout(() => setShowCelebration(true), 600)
           },
           onError: (err) => {
-            setErrorKind(selfCheckInErrorKind(err instanceof Error ? err.message : ''))
+            setErrorKind(selfCheckInErrorKind(checkInErrorMessage(err)))
             setStep('error')
           },
         },
@@ -127,7 +127,7 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
           setTimeout(() => setShowCelebration(true), 600)
         },
         onError: (err) => {
-          const msg = err instanceof Error ? err.message : ''
+          const msg = checkInErrorMessage(err)
           if (msg.includes('Already checked in') || msg.includes('already checked in')) {
             setErrorKind('already_checked_in')
           } else if (msg.includes('not found') || msg.includes('No event')) {
