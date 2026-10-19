@@ -25,6 +25,7 @@ type Collective = Tables<'collectives'>
 type Profile = Tables<'profiles'>
 import type { MyUpcomingEvent } from '@/hooks/use-home-feed'
 import { isEventGone } from '@/lib/cancelled-event'
+import { CHECK_IN_ERROR_MESSAGES } from '@/lib/constants/check-in'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -1415,9 +1416,15 @@ export function useCheckIn() {
       // waitlisted self check-ins on the day. Per Tate 2026-05-23
       // Co-Exist incident: "should be able to register and signin on
       // the day".
+      //
+      // Select the status back. On a sign-ups-closed event this upsert used to
+      // land as 'waitlisted' (and demote a registered member's seat) while the
+      // member was shown success; the database now admits it on the day and
+      // refuses it otherwise, and anything that still is not 'attended' is
+      // reported, never shown as a check-in (board 7fc10cdb, 2026-10-19).
       if (user?.id === userId) {
         const nowIso = new Date().toISOString()
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('event_registrations')
           .upsert(
             {
@@ -1429,7 +1436,11 @@ export function useCheckIn() {
             },
             { onConflict: 'event_id,user_id' },
           )
+          .select('status')
         if (error) throw error
+        if (data?.[0]?.status !== 'attended') {
+          throw new Error(CHECK_IN_ERROR_MESSAGES.not_recorded)
+        }
         return
       }
 

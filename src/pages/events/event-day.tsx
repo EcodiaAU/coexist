@@ -628,10 +628,13 @@ export default function EventDayPage() {
   // App Hang guard: switch rows to light rendering past ROSTER_LIGHT_THRESHOLD.
   // Derived from the FULL roster (not the search-filtered view) so rows don't
   // remount between FitText and truncate while a leader is typing a search.
+  // Not attending is left out of the count: it is collapsed by default and is
+  // not part of the windowed live sections, and since cancelled registrations
+  // land in it (2026-10-19) an event with 10 people coming and 25 cancellations
+  // would otherwise have rendered every live name truncated (board 7fc10cdb).
   const lightRoster = !!roster && (
     roster.groups.checkedIn.length + roster.groups.expected.length +
-    roster.groups.waitlist.length + roster.groups.notAttending.length +
-    roster.groups.noTicket.length
+    roster.groups.waitlist.length + roster.groups.noTicket.length
   ) > ROSTER_LIGHT_THRESHOLD
 
   // Walk-ins are recorded outside event_registrations, so fold them into the

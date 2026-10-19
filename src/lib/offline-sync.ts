@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import { invokeAndReport } from '@/lib/invoke-report'
 import type { Database } from '@/types/database.types'
 import { formatEventLong } from '@/lib/date-format'
+import { CHECK_IN_ERROR_MESSAGES } from '@/lib/constants/check-in'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -135,8 +136,13 @@ export function queueOfflineCheckIn(eventId: string, userId: string) {
   saveQueue(queue)
 }
 
-/** Sync all queued check-ins to Supabase. Returns number successfully synced. */
-export async function syncOfflineCheckIns(): Promise<number> {
+/**
+ * Sync all queued check-ins to Supabase. Returns number successfully synced.
+ * A check-in the database will never record (refused for the day, or read
+ * back as anything but 'attended') is dropped and reported into `conflicts`
+ * rather than retried forever or counted as synced.
+ */
+export async function syncOfflineCheckIns(conflicts?: string[]): Promise<number> {
   const queue = getQueue()
   if (queue.length === 0) return 0
 
@@ -153,7 +159,9 @@ export async function syncOfflineCheckIns(): Promise<number> {
         // before losing wifi still lands as 'attended' on replay. The BE
         // day-of trigger is BEFORE UPDATE - INSERTs bypass it, UPDATEs
         // still get the day-of guard. Per Tate 2026-05-23 Co-Exist.
-        const { error, count } = await supabase
+        // Status is read back: on a sign-ups-closed event this replay used to
+        // land as 'waitlisted' and count as synced (board 7fc10cdb).
+        const { data, error } = await supabase
           .from('event_registrations')
           .upsert(
             {
@@ -165,14 +173,19 @@ export async function syncOfflineCheckIns(): Promise<number> {
             },
             { onConflict: 'event_id,user_id' },
           )
-        return { item, error, count }
+          .select('status')
+        return { item, error, status: data?.[0]?.status }
       }),
     )
     for (const r of results) {
       if (r.status === 'rejected') {
         remaining.push(batch[results.indexOf(r)])
       } else if (r.value.error) {
-        remaining.push(r.value.item)
+        // 23514 is the database refusing the check-in for the day: final.
+        if (r.value.error.code === '23514') conflicts?.push(CHECK_IN_ERROR_MESSAGES.not_recorded)
+        else remaining.push(r.value.item)
+      } else if (r.value.status !== 'attended') {
+        conflicts?.push(CHECK_IN_ERROR_MESSAGES.not_recorded)
       } else {
         synced++
       }
@@ -344,7 +357,7 @@ async function processCheckIn(action: OfflineAction): Promise<{ ok: boolean; con
   // online useCheckIn / useCodeCheckIn upsert path. Per Tate 2026-05-23
   // Co-Exist incident.
   if (isSelf) {
-    const { error } = await (supabase as any)
+    const { data: written, error } = await (supabase as any)
       .from('event_registrations')
       .upsert(
         {
@@ -357,9 +370,17 @@ async function processCheckIn(action: OfflineAction): Promise<{ ok: boolean; con
         },
         { onConflict: 'event_id,user_id' },
       )
+      .select('status')
     if (error) {
       if (error.code === '23505') return { ok: true }
+      // The database refused it for the day (replayed after the event, or
+      // before it). Retrying cannot change that, so report it once.
+      if (error.code === '23514') return { ok: false, conflict: CHECK_IN_ERROR_MESSAGES.not_recorded }
       return { ok: false, conflict: 'Check-in sync failed. Please try again.' }
+    }
+    // Read back: anything but 'attended' is a check-in that did not land.
+    if (written?.[0]?.status !== 'attended') {
+      return { ok: false, conflict: CHECK_IN_ERROR_MESSAGES.not_recorded }
     }
     return { ok: true }
   }
@@ -1093,7 +1114,7 @@ export async function syncAllOfflineActions(): Promise<SyncResult> {
   onSyncIssue?.(null)
 
   // Sync legacy check-in queue first
-  const checkinsSynced = await syncOfflineCheckIns()
+  const checkinsSynced = await syncOfflineCheckIns(result.conflicts)
   result.synced += checkinsSynced
 
   // Sync generic action queue (batched to avoid blocking UI)

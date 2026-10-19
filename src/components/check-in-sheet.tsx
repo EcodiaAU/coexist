@@ -13,7 +13,7 @@ import { useCheckIn } from '@/hooks/use-events'
 import { useCodeCheckIn } from '@/hooks/use-event-tickets'
 import { useOffline } from '@/hooks/use-offline'
 import { useCheckInValidation } from '@/hooks/use-check-in-validation'
-import { CHECK_IN_ERROR_MESSAGES, type CheckInErrorKind } from '@/lib/constants/check-in'
+import { CHECK_IN_ERROR_MESSAGES, selfCheckInErrorKind, type CheckInErrorKind } from '@/lib/constants/check-in'
 import { queueOfflineCheckIn } from '@/lib/offline-sync'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { Button } from '@/components/button'
@@ -93,8 +93,8 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
             setStep('success')
             setTimeout(() => setShowCelebration(true), 600)
           },
-          onError: () => {
-            setErrorKind('generic')
+          onError: (err) => {
+            setErrorKind(selfCheckInErrorKind(err instanceof Error ? err.message : ''))
             setStep('error')
           },
         },
@@ -135,7 +135,7 @@ export function CheckInSheet({ open, onClose, eventId, eventTitle, collectiveNam
           } else if (msg.includes('not registered')) {
             setErrorKind('not_registered')
           } else {
-            setErrorKind('generic')
+            setErrorKind(selfCheckInErrorKind(msg))
           }
           setStep('error')
         },

@@ -19,7 +19,7 @@ import { useCodeCheckIn } from '@/hooks/use-event-tickets'
 import { useCollectiveRole } from '@/hooks/use-collective-role'
 import { useOffline } from '@/hooks/use-offline'
 import { useCheckInValidation } from '@/hooks/use-check-in-validation'
-import { CHECK_IN_ERROR_MESSAGES, type CheckInErrorKind } from '@/lib/constants/check-in'
+import { CHECK_IN_ERROR_MESSAGES, isCheckInWindowError, selfCheckInErrorKind, type CheckInErrorKind } from '@/lib/constants/check-in'
 import { queueOfflineCheckIn } from '@/lib/offline-sync'
 import { supabase } from '@/lib/supabase'
 import {
@@ -282,6 +282,10 @@ export default function CheckInPage() {
       }
       if (msg.includes('Already checked in') || msg.includes('already checked in')) {
         setErrorKind('already_checked_in')
+      } else if (msg === CHECK_IN_ERROR_MESSAGES.not_recorded) {
+        // The write went through but the database did not record it as
+        // attended (read back in useCodeCheckIn). Never shown as success.
+        setErrorKind('not_recorded')
       } else if (msg.includes('not found') || msg.includes('No event')) {
         setErrorKind('invalid_qr')
       } else if (msg.includes('not registered')) {
@@ -313,10 +317,7 @@ export default function CheckInPage() {
         // Post-event backfill window guards (leaders only / impact logged /
         // before the day) raised by the BE check-in trigger. Participants
         // self-checking-in outside the day-of window land here.
-        msg.includes('Check-in is closed') ||
-        msg.includes('Post-event check-in') ||
-        msg.includes('not available before the day') ||
-        msg.includes('leaders only')
+        isCheckInWindowError(msg)
       ) {
         setErrorKind('event_not_active')
       } else {
@@ -346,8 +347,8 @@ export default function CheckInPage() {
             setState('success')
             setTimeout(() => setShowCelebration(true), 600)
           },
-          onError: () => {
-            setErrorKind('generic')
+          onError: (err) => {
+            setErrorKind(selfCheckInErrorKind(err instanceof Error ? err.message : ''))
             setState('error')
           },
         },

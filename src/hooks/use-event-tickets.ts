@@ -7,6 +7,7 @@ import { queueOfflineAction } from '@/lib/offline-sync'
 import { DIETARY_GATE_QUERY_KEY } from '@/lib/dietary'
 import { SPOT_TAKING_TICKET_STATUSES, isResolvingTicketStatus, summariseTicketSales } from '@/lib/event-capacity'
 import { MY_TICKETS_OR_FILTER } from '@/lib/ticket-release'
+import { CHECK_IN_ERROR_MESSAGES } from '@/lib/constants/check-in'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -469,8 +470,12 @@ export function useCodeCheckIn() {
       // (existing registered / waitlisted / cancelled rows being flipped
       // to attended) still hit the trigger and are rejected on the wrong
       // day. Per Tate 2026-05-23 Co-Exist incident.
+      //
+      // Select the status back: the database is the authority on whether the
+      // check-in landed. A sign-ups-closed event used to write this as
+      // 'waitlisted' behind "You're checked in!" (board 7fc10cdb, 2026-10-19).
       const nowIso = new Date().toISOString()
-      const { error: upsertErr } = await supabase
+      const { data: written, error: upsertErr } = await supabase
         .from('event_registrations')
         .upsert(
           {
@@ -482,8 +487,12 @@ export function useCodeCheckIn() {
           },
           { onConflict: 'event_id,user_id' },
         )
+        .select('status')
 
       if (upsertErr) throw upsertErr
+      if (written?.[0]?.status !== 'attended') {
+        throw new Error(CHECK_IN_ERROR_MESSAGES.not_recorded)
+      }
 
       return { eventId: event.id, userId: user.id }
     },
