@@ -177,3 +177,50 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
         )
     }
 }
+
+// MARK: - App shell plugins
+
+/// The storyboard's root view controller (Base.lproj/Main.storyboard). Capacitor
+/// registers the npm plugins itself; plugins that live in this target register here,
+/// before the page loads, so their JS headers are in place on the first frame.
+class MainViewController: CAPBridgeViewController {
+    override open func capacitorDidLoad() {
+        bridge?.registerPluginInstance(AccessibilityPrefsPlugin())
+    }
+}
+
+/// Reports Reduce Transparency to the web layer (src/lib/native-tab-bar.ts).
+/// Under that setting iOS 26 drops Liquid Glass and draws the system tab bar
+/// opaque over the native-navigation plugin's .systemBackground hosts: the solid
+/// black strip store build 2.3.56 (96) showed in Dark Mode. JS keeps those phones
+/// on the web tab bar. WebKit has no prefers-reduced-transparency media query, so
+/// this is the only way the web layer can know.
+@objc(AccessibilityPrefsPlugin)
+public class AccessibilityPrefsPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "AccessibilityPrefsPlugin"
+    public let jsName = "AccessibilityPrefs"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "getReduceTransparency", returnType: CAPPluginReturnPromise)
+    ]
+
+    override public func load() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reduceTransparencyChanged),
+            name: UIAccessibility.reduceTransparencyStatusDidChangeNotification,
+            object: nil
+        )
+    }
+
+    @objc func getReduceTransparency(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            call.resolve(["enabled": UIAccessibility.isReduceTransparencyEnabled])
+        }
+    }
+
+    @objc private func reduceTransparencyChanged() {
+        DispatchQueue.main.async {
+            self.notifyListeners("reduceTransparencyChange", data: ["enabled": UIAccessibility.isReduceTransparencyEnabled])
+        }
+    }
+}

@@ -204,7 +204,9 @@ async function readStaticEnv(): Promise<StaticEnv | null> {
 /**
  * Reads Reduce Transparency from the app shell and follows it while the app
  * runs, so turning it on in Settings swaps the glass bar for the web bar on
- * return. Only asked on a build that ships the plugin; any failure stays null.
+ * return. Two triggers: the shell's change event, and a re-read on resume,
+ * because the system notification is not promised to reach a suspended app.
+ * Only asked on a build that ships the plugin; any failure stays null.
  */
 async function readReduceTransparency(): Promise<void> {
   const AccessibilityPrefs = getAccessibilityPrefs()
@@ -215,16 +217,25 @@ async function readReduceTransparency(): Promise<void> {
     reduceTransparency = null
     return
   }
+  const apply = (enabled: unknown) => {
+    reduceTransparency = typeof enabled === 'boolean' ? enabled : null
+    const ok = decide()
+    if (ok === supportResolved) return
+    supportResolved = ok
+    supportListeners.forEach((l) => l(ok))
+  }
   try {
-    await AccessibilityPrefs.addListener('reduceTransparencyChange', ({ enabled }) => {
-      reduceTransparency = typeof enabled === 'boolean' ? enabled : null
-      const ok = decide()
-      if (ok === supportResolved) return
-      supportResolved = ok
-      supportListeners.forEach((l) => l(ok))
+    await AccessibilityPrefs.addListener('reduceTransparencyChange', ({ enabled }) => apply(enabled))
+  } catch {
+    // No change events; the resume re-read below still follows the setting.
+  }
+  try {
+    const { App } = await import('@capacitor/app')
+    await App.addListener('resume', () => {
+      AccessibilityPrefs.getReduceTransparency().then(({ enabled }) => apply(enabled), () => apply(null))
     })
   } catch {
-    // No live updates; the launch reading stands.
+    // No resume hook; the launch reading stands.
   }
 }
 
