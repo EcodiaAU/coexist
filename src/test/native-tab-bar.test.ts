@@ -5,6 +5,8 @@ import {
   formatNativeBadge,
   iosMajorVersion,
   isBlockingOverlayOpen,
+  nativeBuildNumber,
+  NATIVE_TAB_BAR_MIN_NATIVE_BUILD,
   isNativeTabActive,
   shouldUseNativeTabBar,
   type NativeTabBarEnv,
@@ -17,6 +19,8 @@ const iphone26: NativeTabBarEnv = {
   hasDevicePlugin: true,
   osVersion: '26.5',
   model: 'iPhone17,1',
+  nativeBuild: '97',
+  reduceTransparency: false,
 }
 
 describe('shouldUseNativeTabBar', () => {
@@ -48,10 +52,37 @@ describe('shouldUseNativeTabBar', () => {
     expect(shouldUseNativeTabBar({ ...iphone26, model: 'iPad16,3' })).toBe(false)
   })
 
+  it('keeps the web bar on store build 96 (2.3.56), which drew the black strip, whatever OTA it runs', () => {
+    expect(NATIVE_TAB_BAR_MIN_NATIVE_BUILD).toBe(97)
+    expect(shouldUseNativeTabBar({ ...iphone26, nativeBuild: '96' })).toBe(false)
+    expect(shouldUseNativeTabBar({ ...iphone26, nativeBuild: 96 })).toBe(false)
+    expect(shouldUseNativeTabBar({ ...iphone26, nativeBuild: '97' })).toBe(true)
+    expect(shouldUseNativeTabBar({ ...iphone26, nativeBuild: '120' })).toBe(true)
+  })
+
+  it('keeps the web bar under Reduce Transparency, where iOS draws the bar opaque over a black host', () => {
+    expect(shouldUseNativeTabBar({ ...iphone26, reduceTransparency: true })).toBe(false)
+  })
+
+  it('fails closed when Reduce Transparency or the build cannot be read', () => {
+    expect(shouldUseNativeTabBar({ ...iphone26, reduceTransparency: null })).toBe(false)
+    expect(shouldUseNativeTabBar({ ...iphone26, nativeBuild: null })).toBe(false)
+    expect(shouldUseNativeTabBar({ ...iphone26, nativeBuild: '' })).toBe(false)
+  })
+
   it('fails closed on an unreadable version or model', () => {
     expect(shouldUseNativeTabBar({ ...iphone26, osVersion: '' })).toBe(false)
     expect(shouldUseNativeTabBar({ ...iphone26, osVersion: null })).toBe(false)
     expect(shouldUseNativeTabBar({ ...iphone26, model: undefined })).toBe(false)
+  })
+})
+
+describe('nativeBuildNumber', () => {
+  it('reads CFBundleVersion as an integer', () => {
+    expect(nativeBuildNumber('97')).toBe(97)
+    expect(nativeBuildNumber(97)).toBe(97)
+    expect(nativeBuildNumber('garbage')).toBe(0)
+    expect(nativeBuildNumber(undefined)).toBe(0)
   })
 })
 

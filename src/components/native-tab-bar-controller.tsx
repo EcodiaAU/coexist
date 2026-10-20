@@ -9,6 +9,7 @@ import {
   isBlockingOverlayOpen,
   nativeGlassTabBarSupported,
   nativeGlassTabBarSupportedSync,
+  onNativeGlassTabBarSupportChange,
   setNativeTabBarSpace,
   type NativeTabKey,
 } from '@/lib/native-tab-bar'
@@ -27,6 +28,8 @@ export function useNativeGlassTabBar(): boolean | null {
     void nativeGlassTabBarSupported().then((ok) => { if (alive) setSupported(ok) })
     return () => { alive = false }
   }, [supported])
+  // Reduce Transparency toggled in Settings while the app runs: swap bars on return.
+  useEffect(() => onNativeGlassTabBarSupportChange(setSupported), [])
   return supported
 }
 
