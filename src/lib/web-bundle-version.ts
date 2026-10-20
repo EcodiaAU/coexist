@@ -17,4 +17,4 @@
 // 2026-10-19: store build 2.3.56 (96) embeds this bundle at 2.3.56, the same
 // number as its native version, so the next ship-web-ota.sh run (2.3.57)
 // clears the native floor guard with no hand edit.
-export const WEB_BUNDLE_VERSION = '2.3.56'
+export const WEB_BUNDLE_VERSION = '2.3.57'
