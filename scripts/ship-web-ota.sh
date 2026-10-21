@@ -188,8 +188,14 @@ if ! grep -qF "$EXPECT_SUPABASE_HOST" "$APP_ROOT/dist/index.html"; then
 fi
 echo "==> artifact gate OK: no %VITE_ placeholder in dist, Supabase host $EXPECT_SUPABASE_HOST present"
 
-echo "==> uploading to Capgo channel '$CHANNEL' as $VERSION"
-(cd "$APP_ROOT" && npx @capgo/cli@latest bundle upload "$APP_ID" \
+# CLI PIN. @latest is not a version. On 2026-10-21 @latest moved to 8.90.1, whose
+# pre-upload access check answers "Cannot verify access: not_found" for this
+# key, while 8.53.2 lists and uploads with the SAME key. The 2.3.59 upload
+# failed on it and passed on the pin. Raise the pin deliberately, after a
+# `bundle list` with the new version succeeds; override with CAPGO_CLI_VERSION.
+CAPGO_CLI_VERSION="${CAPGO_CLI_VERSION:-8.53.2}"
+echo "==> uploading to Capgo channel '$CHANNEL' as $VERSION (cli $CAPGO_CLI_VERSION)"
+(cd "$APP_ROOT" && npx -y "@capgo/cli@$CAPGO_CLI_VERSION" bundle upload "$APP_ID" \
   --path dist --channel "$CHANNEL" --bundle "$VERSION" --apikey "$CAPGO_APIKEY")
 
 if [ -z "${SKIP_BUMP:-}" ]; then
