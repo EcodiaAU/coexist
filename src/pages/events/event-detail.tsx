@@ -2096,6 +2096,7 @@ export default function EventDetailPage() {
               address: event.address ?? null,
               activity_type: event.activity_type ?? null,
               collective_name: event.collectives?.name ?? null,
+              is_ticketed: isTicketed,
             }}
           />
         )}

@@ -11,7 +11,17 @@ import type { EventTicketQuestion, TicketAnswers } from './use-event-ticket-ques
  *
  * "Going" means the person holds a confirmed (or checked-in) ticket, which is
  * the app's own attendance definition; someone who registered interest but
- * never completed a ticket reads as "Registered (no ticket)", not Going.
+ * never completed a ticket reads as "Registered (no ticket)", not Going. On a
+ * FREE event there is no ticket to complete, so a registration IS the seat and
+ * reads as Going.
+ *
+ * The RPC also returns every `invited` registration. Since the collective
+ * invite engine (2026-08-19) and the Invite button write one of those for EVERY
+ * active member of the host collective, an invite-only row is an audience
+ * member, not an attendee: they never said yes. Those rows get the `invited`
+ * category and are left out of every filter, All included. Before this, All on
+ * Yarra Bend (Melbourne City, 899 members) exported 873 rows, 815 of them
+ * people who had only been invited (organiser report via Tate, 2026-10-21).
  */
 
 export interface AttendeeExportRow {
@@ -36,6 +46,9 @@ export interface AttendeeExportRow {
 
 export interface EventDetailsForExport {
   title: string
+  /** Ticketed events count a confirmed ticket as Going; free events count the
+   *  registration itself. Omitted means ticketed, the stricter reading. */
+  is_ticketed?: boolean
   date_start: string
   date_end: string | null
   address: string | null
@@ -52,14 +65,21 @@ export const STATUS_FILTERS: { value: AttendeeStatusFilter; label: string }[] = 
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
-type StatusCategory = 'going' | 'waitlisted' | 'cancelled' | 'registered' | 'other'
+type StatusCategory = 'going' | 'waitlisted' | 'cancelled' | 'registered' | 'invited' | 'other'
+
+/** Shown under the filter so a leader can see the invite-only rows were left
+ *  out on purpose rather than lost. Also the Capgo delivery needle. */
+export const INVITED_EXCLUDED_NOTE = 'invited but never registered, so left out'
 
 /**
  * Collapse the registration + ticket state into one human status label + a
  * filter category. Confirmed/checked-in ticket wins ("Going"); this is the
  * distinction that caused the Charli/Max "no ticket" confusion.
+ *
+ * `ticketed` defaults to true so a caller that does not know reads the
+ * stricter ticketed semantics.
  */
-export function deriveStatus(r: AttendeeExportRow): { label: string; category: StatusCategory } {
+export function deriveStatus(r: AttendeeExportRow, ticketed = true): { label: string; category: StatusCategory } {
   const t = r.ticket_status
   const reg = r.registration_status
   if (t === 'confirmed' || t === 'checked_in') {
@@ -69,15 +89,36 @@ export function deriveStatus(r: AttendeeExportRow): { label: string; category: S
   if (t === 'cancelled' || t === 'refunded' || reg === 'cancelled') {
     return { label: 'Cancelled', category: 'cancelled' }
   }
+  // An organiser hold (reserve-event-spot) is a real seat whose registration
+  // sits at 'invited' until payment lands, so the ticket is checked before the
+  // invite-only branch below or every hold-holder would vanish from the export.
+  if (t === 'reserved') return { label: 'Spot held (unpaid)', category: 'registered' }
+  if (t === 'pending') return { label: 'Checkout pending', category: 'registered' }
   if (reg === 'registered' || reg === 'attended') {
+    if (!ticketed) {
+      return { label: reg === 'attended' || r.checked_in_at ? 'Checked in' : 'Going', category: 'going' }
+    }
     return { label: 'Registered (no ticket)', category: 'registered' }
   }
+  if (reg === 'invited') return { label: 'Invited', category: 'invited' }
   return { label: reg ?? t ?? 'Unknown', category: 'other' }
 }
 
-export function filterByStatus(rows: AttendeeExportRow[], filter: AttendeeStatusFilter): AttendeeExportRow[] {
-  if (filter === 'all') return rows
-  return rows.filter((r) => deriveStatus(r).category === filter)
+export function filterByStatus(
+  rows: AttendeeExportRow[],
+  filter: AttendeeStatusFilter,
+  ticketed = true,
+): AttendeeExportRow[] {
+  return rows.filter((r) => {
+    const category = deriveStatus(r, ticketed).category
+    if (category === 'invited') return false
+    return filter === 'all' || category === filter
+  })
+}
+
+/** How many returned rows are invite-only, i.e. excluded from every filter. */
+export function countInvitedOnly(rows: AttendeeExportRow[], ticketed = true): number {
+  return rows.filter((r) => deriveStatus(r, ticketed).category === 'invited').length
 }
 
 export function useEventAttendeesExport(eventId: string | undefined, enabled = true) {
@@ -166,7 +207,7 @@ export function buildAttendeesCsv(
       const ans = r.custom_answers ?? {}
       return [
         nameOf(r),
-        deriveStatus(r).label,
+        deriveStatus(r, details.is_ticketed ?? true).label,
         r.email ?? '',
         r.phone ?? '',
         r.postcode ?? '',
@@ -201,7 +242,7 @@ export function buildAttendeesPlainText(
   for (const r of rows) {
     const name = nameOf(r) || 'Unknown'
     const ans = r.custom_answers ?? {}
-    const parts = [`${name} [${deriveStatus(r).label}]`]
+    const parts = [`${name} [${deriveStatus(r, details.is_ticketed ?? true).label}]`]
     if (r.email) parts.push(`<${r.email}>`)
     if (r.phone) parts.push(r.phone)
     if (r.postcode) parts.push(`postcode ${r.postcode}`)

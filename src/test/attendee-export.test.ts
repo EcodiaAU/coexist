@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   deriveStatus,
   filterByStatus,
+  countInvitedOnly,
   buildAttendeesCsv,
   buildPhoneList,
   answerCell,
@@ -76,6 +77,54 @@ describe('filterByStatus', () => {
   it('waitlisted filters correctly', () => expect(filterByStatus(rows, 'waitlisted')).toHaveLength(1))
   it('registered-no-ticket is excluded from going', () =>
     expect(filterByStatus(rows, 'going').every((r) => r.registration_status !== 'registered' || r.ticket_status === 'confirmed')).toBe(true))
+})
+
+describe('invite-only rows (organiser report 2026-10-21: All exported the whole collective)', () => {
+  // The collective invite engine and the Invite button write an 'invited'
+  // registration for every active member of the host collective. Those people
+  // never said yes, so no filter, All included, may export them.
+  function yarraBend(): AttendeeExportRow[] {
+    const out: AttendeeExportRow[] = []
+    for (let i = 0; i < 815; i++) out.push(row({ user_id: `inv${i}`, registration_status: 'invited' }))
+    for (let i = 0; i < 22; i++) out.push(row({ user_id: `reg${i}`, registration_status: 'registered' }))
+    for (let i = 0; i < 20; i++) out.push(row({ user_id: `att${i}`, registration_status: 'attended' }))
+    for (let i = 0; i < 16; i++) out.push(row({ user_id: `can${i}`, registration_status: 'cancelled' }))
+    return out
+  }
+
+  it('the live Yarra Bend shape: All is 58, not 873', () => {
+    const rows = yarraBend()
+    expect(rows).toHaveLength(873)
+    expect(filterByStatus(rows, 'all', false)).toHaveLength(58)
+    expect(countInvitedOnly(rows, false)).toBe(815)
+  })
+  it('on a free event, registered and attended are Going', () => {
+    const rows = yarraBend()
+    expect(filterByStatus(rows, 'going', false)).toHaveLength(42)
+    expect(deriveStatus(row({ registration_status: 'registered' }), false)).toEqual({ label: 'Going', category: 'going' })
+    expect(deriveStatus(row({ registration_status: 'attended' }), false)).toEqual({ label: 'Checked in', category: 'going' })
+  })
+  it('invited with no ticket is excluded from every filter', () => {
+    const rows = [row({ registration_status: 'invited' })]
+    for (const f of ['all', 'going', 'waitlisted', 'cancelled'] as const) {
+      expect(filterByStatus(rows, f)).toHaveLength(0)
+      expect(filterByStatus(rows, f, false)).toHaveLength(0)
+    }
+  })
+  it('an organiser hold (invited + reserved ticket) is a real seat and stays in All', () => {
+    const hold = row({ registration_status: 'invited', ticket_status: 'reserved' })
+    expect(deriveStatus(hold)).toEqual({ label: 'Spot held (unpaid)', category: 'registered' })
+    expect(filterByStatus([hold], 'all')).toHaveLength(1)
+    expect(countInvitedOnly([hold])).toBe(0)
+  })
+  it('invited who then bought a ticket is Going', () => {
+    const paid = row({ registration_status: 'invited', ticket_status: 'confirmed' })
+    expect(filterByStatus([paid], 'going')).toHaveLength(1)
+  })
+  it('a ticketed event keeps the stricter reading: registered without a ticket is not Going', () => {
+    expect(filterByStatus([row({ registration_status: 'registered' })], 'going', true)).toHaveLength(0)
+    expect(filterByStatus([row({ registration_status: 'registered' })], 'all', true)).toHaveLength(1)
+  })
 })
 
 describe('answerCell', () => {

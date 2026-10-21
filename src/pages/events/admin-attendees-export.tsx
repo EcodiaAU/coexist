@@ -7,6 +7,8 @@ import {
   buildAttendeesPlainText,
   buildPhoneList,
   filterByStatus,
+  countInvitedOnly,
+  INVITED_EXCLUDED_NOTE,
   downloadCsv,
   STATUS_FILTERS,
   type AttendeeStatusFilter,
@@ -28,6 +30,8 @@ interface Props {
  * registration or ticket, across all states, with full contact + dietary +
  * medical + emergency contact + a column per custom question. The status
  * filter (All / Going / Waitlisted / Cancelled) scopes the same fetched set.
+ * Invite-only rows (the whole host collective, written by the invite engine)
+ * are left out of every filter, All included, and counted in a note instead.
  * Buttons: Download .csv, Copy as text, Copy phone list, Preview.
  */
 export function AdminAttendeesExport({ eventId, details }: Props) {
@@ -40,7 +44,9 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
 
   const filenameBase =
     details.title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'event'
-  const rows = filterByStatus(data ?? [], statusFilter)
+  const ticketed = details.is_ticketed ?? true
+  const rows = filterByStatus(data ?? [], statusFilter, ticketed)
+  const invitedOnly = countInvitedOnly(data ?? [], ticketed)
 
   function handleDownload() {
     if (!rows.length) return
@@ -148,6 +154,8 @@ export function AdminAttendeesExport({ eventId, details }: Props) {
                   <p className="text-xs text-neutral-500">
                     {rows.length} attendee{rows.length !== 1 ? 's' : ''}
                     {statusFilter !== 'all' ? ` (${statusFilter})` : ''}.
+                    {invitedOnly > 0 &&
+                      ` ${invitedOnly} ${invitedOnly === 1 ? 'person was' : 'people were'} ${INVITED_EXCLUDED_NOTE}.`}
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
