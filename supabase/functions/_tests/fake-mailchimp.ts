@@ -105,6 +105,9 @@ export function createFakeMailchimp(opts: { listId: string; apiKey?: string } ) 
           members.set(h, m)
         } else if (body.status) {
           if (m.status === 'cleaned') return reply(400, { title: 'Invalid Resource', detail: 'cleaned member status cannot change' })
+          if (m.status === 'unsubscribed' && body.status === 'subscribed') {
+            return reply(400, { title: 'Member In Compliance State', detail: `${m.email_address} is in a compliance state due to unsubscribe, bounce, or compliance review and cannot be subscribed.` })
+          }
           m.status = body.status
         }
         if (body.merge_fields) m.merge_fields = { ...m.merge_fields, ...body.merge_fields }

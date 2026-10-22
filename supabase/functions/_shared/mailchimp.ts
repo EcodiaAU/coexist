@@ -121,6 +121,7 @@ export function toDesiredMember(c: CoexistContact): DesiredMember {
   // typed into Mailchimp by hand.
   if (c.first_name && c.first_name.trim()) merge.FNAME = c.first_name.trim()
   if (c.last_name && c.last_name.trim()) merge.LNAME = c.last_name.trim()
+
   return {
     email: normaliseEmail(c.email),
     status: c.status === 'unsubscribed' ? 'unsubscribed' : 'subscribed',
@@ -267,6 +268,24 @@ export function createMailchimpClient(opts: ClientOptions) {
     return `/lists/${encodeURIComponent(listId)}/members/${await subscriberHash(email)}`
   }
 
+  /**
+   * PUT by subscriber hash. Mailchimp will not let an API put back someone who
+   * unsubscribed ("Member In Compliance State"). When the member opted back in
+   * inside Co-Exist, `pending` is the route it allows: Mailchimp emails them a
+   * confirmation and they are subscribed once they click it.
+   */
+  async function putMember(listId: string, m: DesiredMember, allowResubscribe: boolean, statusLocked = false): Promise<MailchimpMember | null> {
+    const path = await memberPath(listId, m.email)
+    const body = upsertBody(m, allowResubscribe, statusLocked)
+    try {
+      return await request<MailchimpMember>('PUT', path, body)
+    } catch (e) {
+      if (body.status === 'subscribed' && e instanceof MailchimpApiError && e.status === 400 && /compliance state/i.test(`${e.title} ${e.detail}`)) {
+        return await request<MailchimpMember>('PUT', path, { ...body, status: 'pending' })
+      }
+      throw e
+    }
+  }
   return {
     request,
     ping: () => request<{ health_status: string }>('GET', '/ping'),
@@ -306,6 +325,7 @@ export function createMailchimpClient(opts: ClientOptions) {
     async addOrUpsert(
       listId: string,
       m: DesiredMember,
+      allowResubscribe = false,
     ): Promise<{ path: 'created' | 'updated'; member: MailchimpMember | null }> {
       try {
         const member = await request<MailchimpMember>('POST', `/lists/${encodeURIComponent(listId)}/members`, {
@@ -317,16 +337,16 @@ export function createMailchimpClient(opts: ClientOptions) {
         return { path: 'created', member }
       } catch (e) {
         if (!(e instanceof MailchimpApiError) || e.status !== 400 || !/member exists/i.test(e.title)) throw e
-        // Existing member we have no state for: never force a re-subscribe (rule 2).
-        const member = await request<MailchimpMember>('PUT', await memberPath(listId, m.email), upsertBody(m, false))
+        // Existing member we have no state for: never force a re-subscribe
+        // (rule 2) unless this change IS the member opting in.
+        const member = await putMember(listId, m, allowResubscribe)
         return { path: 'updated', member }
       }
     },
 
     /** Idempotent add-or-update by subscriber hash. */
-    async upsert(listId: string, m: DesiredMember, allowResubscribe: boolean, statusLocked = false): Promise<MailchimpMember | null> {
-      return await request<MailchimpMember>('PUT', await memberPath(listId, m.email), upsertBody(m, allowResubscribe, statusLocked))
-    },
+    upsert: (listId: string, m: DesiredMember, allowResubscribe: boolean, statusLocked = false) =>
+      putMember(listId, m, allowResubscribe, statusLocked),
 
     /** POST .../tags. Active adds, inactive removes. 204 on success. */
     async setTags(listId: string, email: string, add: string[], remove: string[]): Promise<void> {

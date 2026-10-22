@@ -176,7 +176,7 @@ export async function syncOne(args: {
           },
         }
       }
-      const res = await client.addOrUpsert(audienceId, desired)
+      const res = await client.addOrUpsert(audienceId, desired, args.allowResubscribe)
       outcome = res.path === 'created' ? 'created' : 'updated'
       mcStatus = res.member?.status ?? desired.status
       // On the Member Exists path we never pushed tags for this address, so we

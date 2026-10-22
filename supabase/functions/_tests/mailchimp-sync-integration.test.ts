@@ -117,6 +117,12 @@ Deno.test('consent: a member who never opted in is NOT created in Mailchimp; one
   assertEquals(imp?.tags.sort(), ['Leader', 'Old Import'], 'the import tag is Mailchimp-native and survives')
   assertEquals(store.state.get(`${LIST}|imported@x.org`)?.synced_tags, ['Leader'], 'the pushed tag is owned, the import tag is not')
   assertEquals(store.state.get(`${LIST}|never@x.org`)?.last_action, 'not_pushed')
+  // imported@ opts in inside Co-Exist with no prior push of ours: the consent
+  // row must reach the Member Exists path too, and go to pending.
+  store.contacts.get('imported@x.org')!.status = 'subscribed'
+  store.enqueue('imported@x.org', true)
+  await runSync({ client, db: store.db, audienceId: LIST, config: store.cfg as SyncConfig, mode: 'queue' })
+  assertEquals((await fake.member('imported@x.org'))?.status, 'pending')
   // They opt in later: the consent row creates them, subscribed.
   store.contacts.get('never@x.org')!.status = 'subscribed'
   store.enqueue('never@x.org', true)
@@ -166,10 +172,15 @@ Deno.test('queue: an opt-out is pushed; an opt-back-in re-subscribes ONLY when t
   await runSync({ client, db: store.db, audienceId: LIST, config: store.cfg as SyncConfig, mode: 'queue' })
   assertEquals((await fake.member('m@x.org'))?.status, 'unsubscribed')
   assertEquals((await fake.member('m@x.org'))?.merge_fields.FNAME, 'Renamed')
-  // The member ticks marketing back on in Co-Exist: consent row.
+  // The member ticks marketing back on in Co-Exist: consent row. Mailchimp
+  // refuses an API re-subscribe after an unsubscribe, so it goes to pending
+  // (Mailchimp emails them to confirm) instead of failing.
   store.enqueue('m@x.org', true)
-  await runSync({ client, db: store.db, audienceId: LIST, config: store.cfg as SyncConfig, mode: 'queue' })
-  assertEquals((await fake.member('m@x.org'))?.status, 'subscribed')
+  const back = await runSync({ client, db: store.db, audienceId: LIST, config: store.cfg as SyncConfig, mode: 'queue' })
+  assertEquals([back.updated, back.failed], [1, 0])
+  assertEquals((await fake.member('m@x.org'))?.status, 'pending')
+  const puts = fake.calls.filter((c) => c.method === 'PUT').slice(-2).map((c) => (c.body as { status?: string }).status)
+  assertEquals(puts, ['subscribed', 'pending'], 'tries subscribed first, then the route Mailchimp allows')
   assertEquals(store.queue.size, 0)
 })
 
