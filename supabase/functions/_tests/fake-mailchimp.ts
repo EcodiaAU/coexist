@@ -58,10 +58,11 @@ export function createFakeMailchimp(opts: { listId: string; apiKey?: string } ) 
     if (failNext) { const f = failNext; failNext = null; return reply(f.status, { title: f.title, detail: 'injected' }) }
 
     if (path === '/ping') return reply(200, { health_status: "Everything's Chimpy!" })
+    if (path === '/' || path === '') return reply(200, { account_name: 'Fake Org', pricing_plan_type: 'forever_free', total_subscribers: members.size })
     const L = `/lists/${opts.listId}`
     if (method === 'GET' && path === '/lists') return reply(200, { lists: [{ id: opts.listId, name: 'Fake', stats: { member_count: members.size } }], total_items: 1 })
     if (method === 'GET' && path === L) {
-      return reply(200, { id: opts.listId, name: 'Fake', stats: { member_count: [...members.values()].filter((m) => m.status === 'subscribed').length, unsubscribe_count: 0, cleaned_count: 0 } })
+      return reply(200, { id: opts.listId, name: 'Fake', subscribe_url_long: `https://fake.us9.list-manage.com/subscribe?u=u123&id=${opts.listId}`, stats: { member_count: [...members.values()].filter((m) => m.status === 'subscribed').length, unsubscribe_count: 0, cleaned_count: 0 } })
     }
     if (!path.startsWith(L)) return reply(404, { title: 'Resource Not Found', detail: 'no such list' })
     const rest = path.slice(L.length)

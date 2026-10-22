@@ -270,10 +270,16 @@ export function createMailchimpClient(opts: ClientOptions) {
   return {
     request,
     ping: () => request<{ health_status: string }>('GET', '/ping'),
-    getList: (listId: string) =>
-      request<{ id: string; name: string; stats: { member_count: number; unsubscribe_count: number; cleaned_count: number } }>(
+    /** Account plan and contact total: plans are priced by contact count, so this is what a scope change costs. */
+    account: () =>
+      request<{ account_name: string; pricing_plan_type: string; total_subscribers: number }>(
         'GET',
-        `/lists/${encodeURIComponent(listId)}?fields=id,name,stats.member_count,stats.unsubscribe_count,stats.cleaned_count`,
+        '/?fields=account_name,pricing_plan_type,total_subscribers',
+      ),
+    getList: (listId: string) =>
+      request<{ id: string; name: string; subscribe_url_long?: string; stats: { member_count: number; unsubscribe_count: number; cleaned_count: number } }>(
+        'GET',
+        `/lists/${encodeURIComponent(listId)}?fields=id,name,subscribe_url_long,stats.member_count,stats.unsubscribe_count,stats.cleaned_count`,
       ),
     listAudiences: () =>
       request<{ lists: { id: string; name: string }[] }>('GET', '/lists?fields=lists.id,lists.name&count=100'),

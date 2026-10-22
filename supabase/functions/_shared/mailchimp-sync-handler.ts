@@ -151,13 +151,20 @@ export function createSyncHandler(deps: HandlerDeps) {
       if (problems.length) return json(base)
       const client = deps.makeClient(env.apiKey, resolveServerPrefix(env.apiKey, env.serverPrefix))
       try {
-        const [ping, list] = await Promise.all([client.ping(), client.getList(env.audienceId)])
+        const [ping, list, account] = await Promise.all([
+          client.ping(),
+          client.getList(env.audienceId),
+          client.account().catch(() => null),
+        ])
         return json({
           ...base,
           mailchimp: {
             reachable: ping?.health_status === "Everything's Chimpy!" || !!ping,
             server: resolveServerPrefix(env.apiKey, env.serverPrefix),
-            audience: list ? { id: list.id, name: list.name, ...list.stats } : null,
+            audience: list ? { id: list.id, name: list.name, ...list.stats, signup_url: list.subscribe_url_long ?? null } : null,
+            account: account
+              ? { name: account.account_name, plan: account.pricing_plan_type, total_contacts: account.total_subscribers }
+              : null,
           },
         })
       } catch (e) {

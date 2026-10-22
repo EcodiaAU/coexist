@@ -115,6 +115,7 @@ Deno.test('consent: a member who never opted in is NOT created in Mailchimp; one
   assertEquals(imp?.status, 'unsubscribed')
   assertEquals(imp?.merge_fields.FNAME, 'Imp')
   assertEquals(imp?.tags.sort(), ['Leader', 'Old Import'], 'the import tag is Mailchimp-native and survives')
+  assertEquals(store.state.get(`${LIST}|imported@x.org`)?.synced_tags, ['Leader'], 'the pushed tag is owned, the import tag is not')
   assertEquals(store.state.get(`${LIST}|never@x.org`)?.last_action, 'not_pushed')
   // They opt in later: the consent row creates them, subscribed.
   store.contacts.get('never@x.org')!.status = 'subscribed'
@@ -299,6 +300,10 @@ Deno.test('sync handler: admin full sync records a run; members reads them back 
   assertEquals(m.members[0].member.status, 'subscribed')
   assertEquals(m.members[0].member.merge_fields, { FNAME: 'EOS', LNAME: 'Test' })
   assertEquals(m.members[1].member, null, 'opted-out and never pushed')
+  const st = await (await h(post({ action: 'status' }))).json()
+  assertEquals(st.mailchimp.audience.name, 'Fake')
+  assertEquals(st.mailchimp.audience.signup_url, `https://fake.us9.list-manage.com/subscribe?u=u123&id=${LIST}`)
+  assertEquals(st.mailchimp.account, { name: 'Fake Org', plan: 'forever_free', total_contacts: 3 })
 })
 
 Deno.test('sync handler: configure validates scope and normalises the allowlist', async () => {

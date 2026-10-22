@@ -170,7 +170,8 @@ export async function syncOne(args: {
           outcome: 'updated',
           state: {
             audience_id: audienceId, email, profile_id: contact.profile_id, source: contact.source,
-            fingerprint: fp, synced_tags: [], mc_status: member?.status ?? existing.status,
+            // The tags were just pushed, so Co-Exist owns them from here on.
+            fingerprint: fp, synced_tags: desired.tags, mc_status: member?.status ?? existing.status,
             last_action: 'updated', last_synced_at: now(), last_error: null,
           },
         }

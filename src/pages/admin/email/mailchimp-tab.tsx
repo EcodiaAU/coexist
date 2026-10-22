@@ -61,7 +61,14 @@ interface MailchimpStatus {
     error?: string
     audience?: { id: string; name: string; member_count: number; unsubscribe_count: number; cleaned_count: number } | null
     audiences?: { id: string; name: string }[]
+    account?: { name: string; plan: string; total_contacts: number } | null
   }
+}
+
+const PLAN_LABEL: Record<string, string> = {
+  forever_free: 'Free plan',
+  monthly: 'Monthly plan',
+  pay_as_you_go: 'Pay-as-you-go',
 }
 
 async function callSync<T = Record<string, unknown>>(body: Record<string, unknown>): Promise<T> {
@@ -195,7 +202,13 @@ export function MailchimpTab() {
               <p data-eos-id="src/pages/admin/email/mailchimp-tab.tsx#10" className="text-xs text-neutral-500 mt-0.5">
                 {audience!.member_count} subscribed &middot; {audience!.unsubscribe_count} unsubscribed &middot; {audience!.cleaned_count} bounced &middot; server {mailchimp!.server}
               </p>
-            ) : (
+            ) : null}
+            {connected && mailchimp?.account ? (
+              <p data-eos-id="src/pages/admin/email/mailchimp-tab.tsx#46" className="text-xs text-neutral-500 mt-0.5">
+                {mailchimp.account.name} &middot; {PLAN_LABEL[mailchimp.account.plan] ?? mailchimp.account.plan} &middot; {mailchimp.account.total_contacts} contacts across the account
+              </p>
+            ) : null}
+            {connected ? null : (
               <ul data-eos-id="src/pages/admin/email/mailchimp-tab.tsx#11" className="text-xs text-neutral-500 mt-1 space-y-0.5">
                 {[...data.problems, ...(mailchimp?.error ? [mailchimp.error] : [])].map((p) => (
                   <li data-eos-id="src/pages/admin/email/mailchimp-tab.tsx#12" key={p}>{p}</li>
@@ -228,7 +241,7 @@ export function MailchimpTab() {
           <div data-eos-id="src/pages/admin/email/mailchimp-tab.tsx#21" className="min-w-0">
             <p data-eos-id="src/pages/admin/email/mailchimp-tab.tsx#22" className="text-sm font-semibold text-neutral-900">Member sync</p>
             <p data-eos-id="src/pages/admin/email/mailchimp-tab.tsx#23" className="text-xs text-neutral-500 mt-0.5">
-              Email, first and last name, subscribe status and tags. Members who opted out of marketing, or whose address bounced, go across as unsubscribed.
+              Email, first and last name, subscribe status and tags. A member who opted out of marketing is never added, and is marked unsubscribed if Mailchimp already has them. Someone who unsubscribes in Mailchimp is opted out here too.
             </p>
           </div>
           <Button data-eos-id="src/pages/admin/email/mailchimp-tab.tsx#24" variant="primary" size="sm" icon={<RefreshCw data-eos-id="src/pages/admin/email/mailchimp-tab.tsx#25" size={14} />} loading={syncing} disabled={!connected || syncing} onClick={syncNow}>
@@ -294,7 +307,7 @@ export function MailchimpTab() {
         onClose={() => setConfirmAll(false)}
         onConfirm={() => { setConfirmAll(false); configure({ scope: 'all' }, 'Now syncing every member. Press Sync now to send them.') }}
         title="Sync every member to Mailchimp?"
-        description={`This sends every member's email, name, subscribe status and tags to ${audience?.name ?? 'the connected audience'}. Mailchimp plans are priced by contact count, so check the plan has room first.`}
+        description={`This sends every member's email, name, subscribe status and tags to ${audience?.name ?? 'the connected audience'}. Mailchimp plans are priced by contact count${mailchimp?.account ? ` (this account: ${PLAN_LABEL[mailchimp.account.plan] ?? mailchimp.account.plan}, ${mailchimp.account.total_contacts} contacts now)` : ''}, so check the plan has room first.`}
         confirmLabel="Sync everyone"
         variant="warning"
       />
