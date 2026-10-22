@@ -6,17 +6,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
 import { createWebhookHandler } from '../_shared/mailchimp-webhook-handler.ts'
+import { optOutEverywhere } from '../_shared/mailchimp-optout.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
 const audienceId = Deno.env.get('MAILCHIMP_AUDIENCE_ID') ?? ''
-
-// ilike with the address escaped: an unescaped '_' or '%' in an email is a LIKE
-// wildcard, and "a_b@x.org" would also match "axb@x.org".
-function exactInsensitive(email: string): string {
-  return email.replace(/[\\%_]/g, (c) => '\\' + c)
-}
 
 function must<T>(r: { data: T; error: any }, what: string): T {
   if (r.error) throw new Error(`${what}: ${r.error.message}`)
@@ -52,18 +47,7 @@ const handler = createWebhookHandler({
     must(await admin.from('mailchimp_webhook_events').update({ outcome }).eq('dedupe_key', key), 'setEventOutcome')
   },
   async unsubscribe(email) {
-    // The same RPC the Unsubscribe link in Co-Exist's own emails calls, so the
-    // two opt-out paths cannot drift apart.
-    must(await admin.rpc('unsubscribe_by_email', { p_email: email }), 'unsubscribe_by_email')
-    const profiles = must(
-      await admin.from('profiles').select('id', { count: 'exact' }).ilike('email', exactInsensitive(email)).eq('marketing_opt_in', false),
-      'count profiles',
-    ) as any[]
-    const nl = must(
-      await admin.from('newsletter_subscribers').update({ status: 'unsubscribed' }).ilike('email', exactInsensitive(email)).select('id'),
-      'newsletter unsubscribe',
-    ) as any[]
-    return { profiles: profiles.length, newsletter: nl.length }
+    return await optOutEverywhere(admin, email)
   },
   async suppressBounce(email) {
     const r = await admin.from('email_suppressions').insert({ email, reason: 'bounce' })

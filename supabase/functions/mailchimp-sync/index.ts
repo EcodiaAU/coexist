@@ -12,6 +12,7 @@ import { withSentry } from '../_shared/sentry.ts'
 import { createMailchimpClient, timingSafeEqualStr } from '../_shared/mailchimp.ts'
 import { ADMIN_ROLES, createSyncHandler, type Caller } from '../_shared/mailchimp-sync-handler.ts'
 import type { StateWrite, SyncState } from '../_shared/mailchimp-sync-core.ts'
+import { optOutEverywhere } from '../_shared/mailchimp-optout.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -96,6 +97,9 @@ const handler = createSyncHandler({
           .eq('email', email).eq('version', version),
         'releaseQueue',
       )
+    },
+    async optOut(email) {
+      await optOutEverywhere(admin, email)
     },
     async loadConfig() {
       return must(await admin.from('mailchimp_sync_config').select('*').eq('id', true).maybeSingle(), 'loadConfig') as any

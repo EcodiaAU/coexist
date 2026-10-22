@@ -24,6 +24,7 @@ function makeDb(initial: CoexistContact[], config: SyncConfig) {
   const state = new Map<string, StateWrite>()
   const queue = new Map<string, QueueRow & { claimed: boolean; last_error?: string }>()
   const runs: Record<string, unknown>[] = []
+  const optedOut: string[] = []
   let cfg: SyncConfig & Record<string, unknown> = { ...config }
   let secrets = { cron_token: 'cron-tok', webhook_token: null as string | null, webhook_signing_secret: null as string | null }
   const db = {
@@ -57,10 +58,14 @@ function makeDb(initial: CoexistContact[], config: SyncConfig) {
     queueDepth: async () => ({ pending: queue.size, failing: [...queue.values()].filter((q) => q.last_error).length }),
     recentRuns: async () => runs.slice(-10).reverse(),
     saveWebhookSecrets: async (token: string, sig: string | null) => { secrets = { ...secrets, webhook_token: token, webhook_signing_secret: sig } },
+    optOut: async (email: string) => {
+      optedOut.push(email)
+      const c = contacts.get(normaliseEmail(email)); if (c) c.status = 'unsubscribed'
+    },
   }
   return {
     db: db as unknown as SyncDb & typeof db,
-    contacts, state, queue, runs,
+    contacts, state, queue, runs, optedOut,
     get cfg() { return cfg },
     get secrets() { return secrets },
     enqueue(email: string, consent = false) {
@@ -172,6 +177,8 @@ Deno.test('queue: an opt-out is pushed; an opt-back-in re-subscribes ONLY when t
   await runSync({ client, db: store.db, audienceId: LIST, config: store.cfg as SyncConfig, mode: 'queue' })
   assertEquals((await fake.member('m@x.org'))?.status, 'unsubscribed')
   assertEquals((await fake.member('m@x.org'))?.merge_fields.FNAME, 'Renamed')
+  assertEquals(store.optedOut, ['m@x.org'], 'Mailchimp says unsubscribed and this was no opt-in: Co-Exist follows')
+  store.contacts.get('m@x.org')!.status = 'subscribed'
   // The member ticks marketing back on in Co-Exist: consent row. Mailchimp
   // refuses an API re-subscribe after an unsubscribe, so it goes to pending
   // (Mailchimp emails them to confirm) instead of failing.
@@ -182,6 +189,20 @@ Deno.test('queue: an opt-out is pushed; an opt-back-in re-subscribes ONLY when t
   const puts = fake.calls.filter((c) => c.method === 'PUT').slice(-2).map((c) => (c.body as { status?: string }).status)
   assertEquals(puts, ['subscribed', 'pending'], 'tries subscribed first, then the route Mailchimp allows')
   assertEquals(store.queue.size, 0)
+})
+
+Deno.test('two-way: an unsubscribe Mailchimp already holds (no webhook ever came) opts the member out in Co-Exist on a full sync', async () => {
+  const { fake, client, store } = setup([contact('left-before@x.org', { first_name: 'L' }), contact('stays@x.org')])
+  await fake.seed({ email_address: 'left-before@x.org', status: 'unsubscribed', merge_fields: {}, tags: [] })
+  await fake.seed({ email_address: 'stays@x.org', status: 'subscribed', merge_fields: {}, tags: [] })
+  const t = await runSync({ client, db: store.db, audienceId: LIST, config: store.cfg as SyncConfig, mode: 'full' })
+  assertEquals(t.failed, 0)
+  assertEquals(store.optedOut, ['left-before@x.org'], 'only the one Mailchimp holds unsubscribed')
+  assertEquals((await fake.member('left-before@x.org'))?.status, 'unsubscribed', 'never re-subscribed')
+  assertEquals(store.state.get(`${LIST}|left-before@x.org`)?.last_action, 'opted_out_from_mailchimp')
+  // The next pass sees Co-Exist and Mailchimp agree: no second opt-out.
+  await runSync({ client, db: store.db, audienceId: LIST, config: store.cfg as SyncConfig, mode: 'full' })
+  assertEquals(store.optedOut.length, 1)
 })
 
 Deno.test('deletion: a member who stops being a contact is archived, by queue and by the full-sync sweep', async () => {

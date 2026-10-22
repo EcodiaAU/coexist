@@ -65,6 +65,13 @@ export interface SyncDb {
   finishQueue(email: string, version: number): Promise<void>
   /** Release for a later retry, recording why. */
   releaseQueue(email: string, version: number, error: string): Promise<void>
+  /**
+   * Opt this address out of Co-Exist marketing, the same way the webhook does.
+   * Called when Mailchimp already holds someone as unsubscribed whom Co-Exist
+   * still has opted in: an unsubscribe the webhook never delivered (it predates
+   * the webhook, or Mailchimp gave up retrying) is still an unsubscribe.
+   */
+  optOut?(email: string): Promise<void>
 }
 
 export type Outcome = 'created' | 'updated' | 'unchanged' | 'archived' | 'skipped' | 'failed'
@@ -76,6 +83,8 @@ export interface MemberResult {
   /** A failure Mailchimp would answer the same way next time (bad address, compliance hold). */
   permanent?: boolean
   state?: StateWrite
+  /** Mailchimp holds them unsubscribed while Co-Exist has them opted in: opt them out here. */
+  mailchimpOptOut?: boolean
 }
 
 export function allowedByScope(email: string, cfg: SyncConfig): boolean {
@@ -197,13 +206,18 @@ export async function syncOne(args: {
       if (toAdd.length || toRemove.length) await client.setTags(audienceId, email, toAdd, toRemove)
     }
 
+    // Two-way on unsubscribe: Mailchimp says unsubscribed, Co-Exist says opted
+    // in, and this change is not the member opting back in. Honour Mailchimp.
+    const mailchimpOptOut = desired.status === 'subscribed' && mcStatus === 'unsubscribed' && !args.allowResubscribe
+
     return {
       email,
       outcome,
+      mailchimpOptOut,
       state: {
         audience_id: audienceId, email, profile_id: contact.profile_id, source: contact.source,
         fingerprint: fp, synced_tags: desired.tags, mc_status: mcStatus,
-        last_action: outcome, last_synced_at: now(), last_error: null,
+        last_action: mailchimpOptOut ? 'opted_out_from_mailchimp' : outcome, last_synced_at: now(), last_error: null,
       },
     }
   } catch (e) {
@@ -222,6 +236,12 @@ export async function syncOne(args: {
       },
     }
   }
+}
+
+/** Opt out, in Co-Exist, everyone Mailchimp already holds as unsubscribed. */
+async function applyOptOuts(db: SyncDb, results: MemberResult[]): Promise<void> {
+  if (!db.optOut) return
+  for (const r of results) if (r.mailchimpOptOut) await db.optOut(r.email)
 }
 
 /** Small promise pool. Mailchimp allows 10 concurrent connections per account; we use 5. */
@@ -315,6 +335,7 @@ export async function runSync(o: RunOptions): Promise<RunTotals> {
           skipUnchanged: false, allowResubscribe: r.consent,
         }))
       await o.db.saveStates(results.flatMap((r) => (r.state ? [r.state] : [])))
+      await applyOptOuts(o.db, results)
       for (let i = 0; i < inScope.length; i++) {
         const r = inScope[i]
         const res = results[i]
@@ -351,6 +372,7 @@ export async function runSync(o: RunOptions): Promise<RunTotals> {
         state: states.get(normaliseEmail(c.email)) ?? null, skipUnchanged: true, allowResubscribe: false,
       }))
     await o.db.saveStates(results.flatMap((r) => (r.state ? [r.state] : [])))
+    await applyOptOuts(o.db, results)
     tally(t, results)
     if (contacts.length < pageSize) { done = true; break }
     cursor = normaliseEmail(contacts[contacts.length - 1].email)

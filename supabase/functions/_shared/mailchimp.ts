@@ -202,6 +202,8 @@ export class MailchimpApiError extends Error {
 export interface MailchimpMember {
   id?: string
   email_address: string
+  /** Hashed member id Mailchimp puts in its own unsubscribe and profile links (`e=`). */
+  unique_email_id?: string
   status: string
   merge_fields?: Record<string, unknown>
   tags?: { id?: number; name: string }[]
@@ -308,7 +310,7 @@ export function createMailchimpClient(opts: ClientOptions) {
       try {
         return await request<MailchimpMember>(
           'GET',
-          (await memberPath(listId, email)) + '?fields=email_address,status,merge_fields,tags,last_changed',
+          (await memberPath(listId, email)) + '?fields=email_address,unique_email_id,status,merge_fields,tags,last_changed',
         )
       } catch (e) {
         if (e instanceof MailchimpApiError && e.status === 404) return null
