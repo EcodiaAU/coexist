@@ -2,17 +2,15 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { PluginListenerHandle } from '@capacitor/core'
 import {
-  NATIVE_TABS,
   NATIVE_TAB_TINT,
-  activeNativeTabKey,
   formatNativeBadge,
   isBlockingOverlayOpen,
   nativeGlassTabBarSupported,
   nativeGlassTabBarSupportedSync,
   onNativeGlassTabBarSupportChange,
   setNativeTabBarSpace,
-  type NativeTabKey,
 } from '@/lib/native-tab-bar'
+import { activeTabKey, selectedTabKey, type TabSpec } from '@/lib/tab-suites'
 
 /**
  * true = drive the native Liquid Glass bar, false = render the web BottomTabBar,
@@ -78,7 +76,9 @@ function useBlockingOverlayOpen(): boolean {
 }
 
 interface NativeTabBarControllerProps {
-  /** The shell's own rule: false on admin and leader routes and while the keyboard is up. */
+  /** The current suite's four tabs (src/lib/tab-suites.ts): member, leader or admin. */
+  tabs: readonly TabSpec[]
+  /** The shell's own rule: false while the keyboard is up. */
   visible: boolean
   chatBadge: number
   onMorePress: () => void
@@ -89,24 +89,27 @@ interface NativeTabBarControllerProps {
  * a UIKit view above the WebView. Routing stays in React Router; the bar only
  * reports taps (tabSelect) and mirrors the current route.
  */
-export function NativeTabBarController({ visible, chatBadge, onMorePress }: NativeTabBarControllerProps) {
+export function NativeTabBarController({ tabs, visible, chatBadge, onMorePress }: NativeTabBarControllerProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const overlay = useBlockingOverlayOpen()
 
-  // A route outside every tab (an event page, settings) keeps the last tab
-  // selected, because a UITabBar always has one; the web bar shows none there.
-  const routeTab = activeNativeTabKey(location.pathname)
-  const lastTabRef = useRef<NativeTabKey>('home')
+  // A route outside every tab (an event page, /admin itself) keeps the last tab
+  // selected when this suite has it, because a UITabBar always has one; the web
+  // bar shows none there.
+  const lastTabRef = useRef<string | null>(null)
+  const selectedId = selectedTabKey(tabs, location.pathname, lastTabRef.current)
+  const routeTab = activeTabKey(tabs, location.pathname)
   if (routeTab) lastTabRef.current = routeTab
-  const selectedId = routeTab ?? lastTabRef.current
 
   const shown = visible && !overlay
   const badge = formatNativeBadge(chatBadge)
 
-  // Latest values for the tabSelect listener, which is registered once.
-  const latest = useRef({ navigate, onMorePress, selectedId, pathname: location.pathname })
-  latest.current = { navigate, onMorePress, selectedId, pathname: location.pathname }
+  // Latest values for the tabSelect listener, which is registered once. It
+  // must resolve a tap against the CURRENT suite's tabs, or Dashboard, Events
+  // and Collectives would be ignored.
+  const latest = useRef({ navigate, onMorePress, selectedId, tabs, pathname: location.pathname })
+  latest.current = { navigate, onMorePress, selectedId, tabs, pathname: location.pathname }
   const pushStateRef = useRef<() => void>(() => {})
 
   useEffect(() => {
@@ -117,7 +120,7 @@ export function NativeTabBarController({ visible, chatBadge, onMorePress }: Nati
       if (disposed) return
       await NativeNavigation.configure({ contentInsetMode: 'css' }).catch(() => {})
       const h = await NativeNavigation.addListener('tabSelect', ({ id }) => {
-        const tab = NATIVE_TABS.find((t) => t.key === id)
+        const tab = latest.current.tabs.find((t) => t.key === id)
         if (!tab) return
         if (tab.isMore) {
           latest.current.onMorePress()
@@ -152,7 +155,7 @@ export function NativeTabBarController({ visible, chatBadge, onMorePress }: Nati
           labelVisibilityMode: 'labeled',
           icons: true,
           colors: { tint: NATIVE_TAB_TINT },
-          tabs: NATIVE_TABS.map((t) => ({
+          tabs: tabs.map((t) => ({
             id: t.key,
             title: t.label,
             icon: { ios: { sfSymbol: t.sfSymbol } },
@@ -165,7 +168,7 @@ export function NativeTabBarController({ visible, chatBadge, onMorePress }: Nati
     pushStateRef.current = push
     setNativeTabBarSpace(shown)
     push()
-  }, [shown, selectedId, badge])
+  }, [shown, selectedId, badge, tabs])
 
   return null
 }

@@ -9,15 +9,13 @@ import { WAVE_PATHS } from '@/components/wave-paths'
 import {
     Users,
     CalendarDays,
-    MapPin,
     ClipboardList, ClipboardCheck, FileText,
     Settings,
     Download,
     Heart,
     Bug,
-    Image, Home,
+    Image,
     ShoppingBag,
-    MoreHorizontal,
     Handshake,
     Mail,
     Megaphone,
@@ -26,12 +24,9 @@ import {
     BarChart3,
     Leaf,
     GraduationCap,
-    MessageCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
-import { BottomTabBar, type Tab } from '@/components/bottom-tab-bar'
-import { useMenuSheet } from '@/hooks/use-menu-sheet'
 import type { NavItem, NavCategory } from '@/components/sidebar/types'
 
 /* ------------------------------------------------------------------ */
@@ -157,61 +152,6 @@ const DEFAULT_HERO: HeroCfg = { hue: BRAND_HERO_DEEP, tall: true, w: 3 }
 export function useIsAdminLayout() {
   return useContext(AdminHeaderContext) !== null
 }
-
-/* ------------------------------------------------------------------ */
-/*  Mobile bottom tab bar tabs for admin suite                         */
-/* ------------------------------------------------------------------ */
-
-const adminBottomTabs: Tab[] = [
-  {
-    key: 'back',
-    label: 'App',
-    path: '/',
-    exact: true,
-    icon: <Home data-eos-id="src/components/admin-layout.tsx#0" data-eos-v="2" size={21} strokeWidth={1.5} />,
-    activeIcon: <Home data-eos-id="src/components/admin-layout.tsx#1" size={21} strokeWidth={2.2} />,
-  },
-  {
-    key: 'chat',
-    label: 'Chat',
-    path: '/chat',
-    icon: <MessageCircle data-eos-id="src/components/admin-layout.tsx#2" size={21} strokeWidth={1.5} />,
-    activeIcon: <MessageCircle data-eos-id="src/components/admin-layout.tsx#3" size={21} strokeWidth={2.2} />,
-  },
-  {
-    key: 'admin-collectives',
-    label: 'Collectives',
-    path: '/admin/collectives',
-    icon: <MapPin data-eos-id="src/components/admin-layout.tsx#4" size={21} strokeWidth={1.5} />,
-    activeIcon: <MapPin data-eos-id="src/components/admin-layout.tsx#5" size={21} strokeWidth={2.2} />,
-  },
-  {
-    key: 'more',
-    label: 'More',
-    path: '/more',
-    exact: true,
-    isMore: true,
-    icon: <MoreHorizontal data-eos-id="src/components/admin-layout.tsx#6" size={21} strokeWidth={1.5} />,
-    activeIcon: <MoreHorizontal data-eos-id="src/components/admin-layout.tsx#7" size={21} strokeWidth={2.2} />,
-  },
-]
-
-/* ------------------------------------------------------------------ */
-/*  Admin bottom tabs - wires More to sidebar                          */
-/* ------------------------------------------------------------------ */
-
-function AdminBottomTabs() {
-  const { openMenu } = useMenuSheet()
-  return (
-    <BottomTabBar data-eos-id="src/components/admin-layout.tsx#8"
-      tabs={adminBottomTabs}
-      layoutPrefix="admin-tab"
-      accent="primary"
-      onMorePress={openMenu}
-    />
-  )
-}
-
 
 /* ------------------------------------------------------------------ */
 /*  AdminLayout  route-level layout, renders <Outlet />              */
@@ -417,17 +357,17 @@ export function AdminLayout() {
             !header.fullBleed && 'overflow-x-clip',
             header.fullBleed ? 'p-0 bg-white' : 'p-4 sm:p-6 lg:p-8',
             !header.fullBleed && 'bg-neutral-50',
-            showBottomTabs && 'pb-[calc(5rem+var(--safe-bottom))]',
+            // Clear the shell's tab bar: 3.5rem for the web bar, 0 under the glass bar (whose height is already in --safe-bottom).
+            showBottomTabs && 'pb-[calc(var(--tab-bar-space,3.5rem)+1.5rem+var(--safe-bottom))]',
           )}>
 
             <AnimatedOutlet data-eos-id="src/components/admin-layout.tsx#25" />
           </div>
         </div>
 
-        {/* Admin bottom tab bar - mobile only */}
-        {showBottomTabs && (
-          <AdminBottomTabs data-eos-id="src/components/admin-layout.tsx#26" />
-        )}
+        {/* The bottom tab bar is the app shell's (LocationAwareChrome), the same
+            bar as every other page with the admin suite's tabs, so it is Liquid
+            Glass wherever the member bar is (src/lib/tab-suites.ts). */}
       </div>
     </AdminHeaderContext.Provider>
     </AdminCollectiveScopeContext.Provider>

@@ -1,94 +1,33 @@
-import { type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import {
-    Home,
-    MessageCircle,
-    User,
-    MoreHorizontal,
-} from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { usePlatform } from '@/hooks/use-platform'
-
-export interface Tab {
-  key: string
-  label: string
-  path: string
-  icon: ReactNode
-  activeIcon: ReactNode
-  /** If true, match only exact path (no prefix matching) */
-  exact?: boolean
-  /** If true, this tab triggers onMorePress instead of navigating */
-  isMore?: boolean
-}
-
-const baseTabs: Tab[] = [
-  {
-    key: 'home',
-    label: 'Home',
-    path: '/',
-    exact: true,
-    icon: <Home data-eos-id="src/components/bottom-tab-bar.tsx#0" data-eos-v="2" size={21} strokeWidth={1.5} />,
-    activeIcon: <Home data-eos-id="src/components/bottom-tab-bar.tsx#1" size={21} strokeWidth={2.2} />,
-  },
-  {
-    key: 'chat',
-    label: 'Chat',
-    path: '/chat',
-    icon: <MessageCircle data-eos-id="src/components/bottom-tab-bar.tsx#2" size={21} strokeWidth={1.5} />,
-    activeIcon: <MessageCircle data-eos-id="src/components/bottom-tab-bar.tsx#3" size={21} strokeWidth={2.2} />,
-  },
-  {
-    key: 'profile',
-    label: 'Profile',
-    path: '/profile',
-    icon: <User data-eos-id="src/components/bottom-tab-bar.tsx#4" size={21} strokeWidth={1.5} />,
-    activeIcon: <User data-eos-id="src/components/bottom-tab-bar.tsx#5" size={21} strokeWidth={2.2} />,
-  },
-  {
-    key: 'more',
-    label: 'More',
-    path: '/more',
-    exact: true,
-    isMore: true,
-    icon: <MoreHorizontal data-eos-id="src/components/bottom-tab-bar.tsx#6" size={21} strokeWidth={1.5} />,
-    activeIcon: <MoreHorizontal data-eos-id="src/components/bottom-tab-bar.tsx#7" size={21} strokeWidth={2.2} />,
-  },
-]
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const MORE_TAB: Tab = {
-  key: 'more',
-  label: 'More',
-  path: '/more',
-  exact: true,
-  isMore: true,
-  icon: <MoreHorizontal data-eos-id="src/components/bottom-tab-bar.tsx#8" size={21} strokeWidth={1.5} />,
-  activeIcon: <MoreHorizontal data-eos-id="src/components/bottom-tab-bar.tsx#9" size={21} strokeWidth={2.2} />,
-}
+import { TAB_SUITES, isTabActive, type TabSpec } from '@/lib/tab-suites'
 
 interface BottomTabBarProps {
   /** Badge count for the chat tab (unread messages) */
   chatBadge?: number
   /** Show a warning dot on the Home tab when sync is paused */
   syncWarning?: boolean
-  /** Override tab set (for leader/admin layouts) */
-  tabs?: Tab[]
-  /** layoutId prefix for animations - use unique value per tab bar instance */
+  /** The current suite's tabs (src/lib/tab-suites.ts). Defaults to the member app's. */
+  tabs?: readonly TabSpec[]
+  /** layoutId prefix for the active pill: one per suite, so the pill never slides across a suite change */
   layoutPrefix?: string
-  /** Accent color for active states */
-  accent?: 'primary' | 'moss'
   /** Called when the "More" tab is pressed instead of navigating */
   onMorePress?: () => void
   className?: string
 }
 
+/**
+ * The web tab bar: Android, the web, iPad, and any iPhone without the Liquid
+ * Glass bar. ONE style for the member app, the leader suite and the admin
+ * suite; only the tabs differ. Mounted once, by the app shell.
+ */
 export function BottomTabBar({
   chatBadge = 0,
   syncWarning = false,
-  tabs: customTabs,
+  tabs = TAB_SUITES.main,
   layoutPrefix = 'tab',
-  accent = 'primary',
   onMorePress,
   className,
 }: BottomTabBarProps) {
@@ -97,9 +36,7 @@ export function BottomTabBar({
   const shouldReduceMotion = useReducedMotion()
   const { isAndroid } = usePlatform()
 
-  const tabs = customTabs ?? baseTabs
-
-  const handleTabPress = (tab: Tab) => {
+  const handleTabPress = (tab: TabSpec) => {
     if (tab.isMore && onMorePress) {
       onMorePress()
       return
@@ -107,16 +44,6 @@ export function BottomTabBar({
 
     navigate(tab.path)
   }
-
-  const isActive = (tab: Tab) => {
-    if (tab.isMore) return false // More tab never shows "active" state
-    if (tab.exact || tab.path === '/') return location.pathname === tab.path
-    return location.pathname.startsWith(tab.path)
-  }
-
-  const activeText = accent === 'moss' ? 'text-moss-700' : 'text-primary-800'
-  const inactiveText = accent === 'moss' ? 'text-moss-400/70' : 'text-neutral-400/70'
-  const activePill = accent === 'moss' ? 'bg-moss-100' : 'bg-primary-100'
 
   // Android gesture/button nav bars don't reliably populate env(safe-area-inset-bottom).
   // Apply a 16px minimum so the bar always clears the system UI on Android.
@@ -144,7 +71,8 @@ export function BottomTabBar({
       >
         <div data-eos-id="src/components/bottom-tab-bar.tsx#12" className="flex items-center justify-around h-[56px] px-1">
           {tabs.map((tab) => {
-            const active = isActive(tab)
+            const active = isTabActive(tab, location.pathname)
+            const Icon = tab.icon
 
             return (
               <button data-eos-id="src/components/bottom-tab-bar.tsx#13"
@@ -159,7 +87,7 @@ export function BottomTabBar({
                   'flex-1 h-full',
                   'cursor-pointer select-none',
                   'transition-colors duration-150',
-                  active ? activeText : inactiveText,
+                  active ? 'text-primary-800' : 'text-neutral-400/70',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-400',
                 )}
               >
@@ -167,14 +95,14 @@ export function BottomTabBar({
                 {active && (
                   <motion.span data-eos-id="src/components/bottom-tab-bar.tsx#14"
                     layoutId={shouldReduceMotion ? undefined : `${layoutPrefix}-pill`}
-                    className={cn('absolute inset-x-1.5 inset-y-1 rounded-md', activePill)}
+                    className="absolute inset-x-1.5 inset-y-1 rounded-md bg-primary-100"
                     transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.7 }}
                   />
                 )}
 
                 {/* Icon */}
-                <span data-eos-id="src/components/bottom-tab-bar.tsx#15" data-eos-var="tab.activeIcon" data-eos-var-label="Active icon" data-eos-var-scope="item" className="relative flex items-center justify-center z-10">
-                  {active ? tab.activeIcon : tab.icon}
+                <span data-eos-id="src/components/bottom-tab-bar.tsx#15" className="relative flex items-center justify-center z-10">
+                  <Icon size={21} strokeWidth={active ? 2.2 : 1.5} />
 
                   {/* Sync warning dot on Home tab */}
                   {tab.key === 'home' && syncWarning && (

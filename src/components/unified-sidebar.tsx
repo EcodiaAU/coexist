@@ -33,6 +33,7 @@ import {
     memberNavCategories,
 } from '@/components/sidebar'
 import type { Suite, NavItem, NavCategory } from '@/components/sidebar'
+import { resolveSuite } from '@/lib/tab-suites'
 
 /* ------------------------------------------------------------------ */
 /*  Suite identity config                                              */
@@ -381,11 +382,7 @@ export function UnifiedSidebar({ mobileOpen, onMobileClose }: UnifiedSidebarProp
     !!user?.email &&
     (import.meta.env.VITE_DEV_EMAILS ?? '').split(',').map((e: string) => e.trim().toLowerCase()).includes(user.email.toLowerCase())
 
-  const suite: Suite = location.pathname.startsWith('/admin')
-    ? 'admin'
-    : location.pathname.startsWith('/leader') && !location.pathname.startsWith('/leaderboard') && !location.pathname.startsWith('/leadership')
-      ? 'leader'
-      : 'main'
+  const suite: Suite = resolveSuite(location.pathname)
 
   const leaderCollectiveId = useMemo(() => {
     const membership = collectiveRoles.find(

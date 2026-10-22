@@ -1,11 +1,12 @@
 // Native iOS 26 Liquid Glass tab bar.
 //
 // On an iPhone running iOS 26 or later, inside a store build that carries
-// @capgo/capacitor-native-navigation, the member tab bar (Home, Chat, Profile,
-// More) is a real UIKit UITabBar hosted by a UITabBarController, so iOS draws
-// it in Apple's own Liquid Glass material. Everywhere else (Android, the web,
-// iOS 25 and older, and any phone still on a store build without the plugin)
-// the web BottomTabBar renders exactly as before.
+// @capgo/capacitor-native-navigation, the bottom tab bar on every page (the
+// member app, the leader suite and the admin suite, each with its own four
+// tabs from src/lib/tab-suites.ts) is a real UIKit UITabBar hosted by a
+// UITabBarController, so iOS draws it in Apple's own Liquid Glass material.
+// Everywhere else (Android, the web, iOS 25 and older, and any phone still on
+// a store build without the plugin) the web BottomTabBar renders the same tabs.
 //
 // The plugin is inert in the binary until JS calls it, so this file is the
 // only switch: set NATIVE_GLASS_TAB_BAR to false and ship an OTA to put every
@@ -73,38 +74,6 @@ export function setNativeTabBarSpace(shown: boolean, root: HTMLElement = documen
 
 /** Brand tint for the selected tab (--color-primary-800). iOS 26 ignores the inactive tint by design. */
 export const NATIVE_TAB_TINT = '#3d4d33'
-
-export type NativeTabKey = 'home' | 'chat' | 'profile' | 'more'
-
-export interface NativeTabSpec {
-  key: NativeTabKey
-  label: string
-  path: string
-  exact?: boolean
-  isMore?: boolean
-  sfSymbol: string
-  sfSymbolSelected: string
-}
-
-/** Mirrors baseTabs in bottom-tab-bar.tsx, with SF Symbols in place of the lucide icons. */
-export const NATIVE_TABS: readonly NativeTabSpec[] = [
-  { key: 'home', label: 'Home', path: '/', exact: true, sfSymbol: 'house', sfSymbolSelected: 'house.fill' },
-  { key: 'chat', label: 'Chat', path: '/chat', sfSymbol: 'message', sfSymbolSelected: 'message.fill' },
-  { key: 'profile', label: 'Profile', path: '/profile', sfSymbol: 'person', sfSymbolSelected: 'person.fill' },
-  { key: 'more', label: 'More', path: '/more', exact: true, isMore: true, sfSymbol: 'ellipsis', sfSymbolSelected: 'ellipsis' },
-]
-
-/** Same rule as BottomTabBar.isActive: More never reads active, '/' and exact tabs match exactly, the rest by prefix. */
-export function isNativeTabActive(tab: Pick<NativeTabSpec, 'path' | 'exact' | 'isMore'>, pathname: string): boolean {
-  if (tab.isMore) return false
-  if (tab.exact || tab.path === '/') return pathname === tab.path
-  return pathname.startsWith(tab.path)
-}
-
-/** The tab a route belongs to, or null for a route outside every tab (an event page, settings). */
-export function activeNativeTabKey(pathname: string): NativeTabKey | null {
-  return NATIVE_TABS.find((t) => isNativeTabActive(t, pathname))?.key ?? null
-}
 
 export function formatNativeBadge(count: number): string | undefined {
   if (!Number.isFinite(count) || count <= 0) return undefined

@@ -1600,7 +1600,7 @@ export default function CreateSurveyPage() {
       </AnimatePresence>
 
       {/* Submit bar - fixed above bottom tab bar */}
-      <div data-eos-id="src/pages/admin/create-survey.tsx#249" className="fixed bottom-[calc(56px+var(--safe-bottom)+0.75rem)] sm:bottom-4 inset-x-0 z-30 pointer-events-none px-4 sm:px-6">
+      <div data-eos-id="src/pages/admin/create-survey.tsx#249" className="fixed bottom-[calc(var(--tab-bar-space,3.5rem)+var(--safe-bottom)+0.75rem)] sm:bottom-4 inset-x-0 z-30 pointer-events-none px-4 sm:px-6">
         <div data-eos-id="src/pages/admin/create-survey.tsx#250" className="max-w-4xl mx-auto pointer-events-auto">
           <div data-eos-id="src/pages/admin/create-survey.tsx#251" className="rounded-md bg-white/95 backdrop-blur-sm border border-neutral-100 shadow-sm px-4 py-3">
             {/* Status line - mobile only */}

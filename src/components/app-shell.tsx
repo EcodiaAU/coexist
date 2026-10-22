@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn'
 import { useLayout } from '@/hooks/use-layout'
 import { BottomTabBar } from '@/components/bottom-tab-bar'
 import { NativeTabBarController, useNativeGlassTabBar } from '@/components/native-tab-bar-controller'
+import { TAB_SUITES, resolveSuite } from '@/lib/tab-suites'
 import { UnifiedSidebar } from '@/components/unified-sidebar'
 import { WebFooter } from '@/components/web-footer'
 import { OfflineBanner } from '@/components/offline-banner'
@@ -110,8 +111,10 @@ function LocationAwareChrome({ showBottomTabs, syncWarning }: { showBottomTabs: 
   // UIKit's own, drawn in Liquid Glass (src/lib/native-tab-bar.ts). null while
   // the one Device check resolves, during which no bar renders.
   const nativeTabs = useNativeGlassTabBar()
-  const isAdminRoute = location.pathname.startsWith('/admin')
-  const isLeaderRoute = location.pathname.startsWith('/leader') && !location.pathname.startsWith('/leaderboard') && !location.pathname.startsWith('/leadership')
+  // One bar for the whole app; only its tabs follow the suite (member, leader, admin).
+  const suite = resolveSuite(location.pathname)
+  const tabs = TAB_SUITES[suite]
+  const isInternalSuite = suite !== 'main'
   const isChatRoute = location.pathname.startsWith('/chat/')
 
   // Compute total unread chat messages for the badge. Sum BOTH the collective
@@ -131,19 +134,30 @@ function LocationAwareChrome({ showBottomTabs, syncWarning }: { showBottomTabs: 
       {/* Web footer - public marketing surface only. The admin and leader
           shells are internal tools and should not carry the consumer-facing
           footer (Co-Exist links, app-store badges, acknowledgment). */}
-      {isWeb && !isMobile && !isChatRoute && !isAdminRoute && !isLeaderRoute && <WebFooter data-eos-id="src/components/app-shell.tsx#9" />}
+      {isWeb && !isMobile && !isChatRoute && !isInternalSuite && <WebFooter data-eos-id="src/components/app-shell.tsx#9" />}
 
-      {/* Bottom tab bar (mobile + native) - hidden on admin/leader pages and when keyboard is open.
+      {/* Bottom tab bar (mobile + native): the SAME bar on every page, member,
+          leader and admin, hidden only while the keyboard is open. Its tabs
+          come from the route's suite (src/lib/tab-suites.ts). The leader and
+          admin layouts used to mount their own web bars, which is why an
+          iPhone lost the Liquid Glass bar on those pages.
           Chat detail (/chat/<id>) keeps the tab bar visible so users can navigate out without back-button hunt. */}
       {showBottomTabs && nativeTabs === true && (
         <NativeTabBarController
-          visible={!isAdminRoute && !isLeaderRoute && !keyboardOpen}
+          tabs={tabs}
+          visible={!keyboardOpen}
           chatBadge={totalUnread}
           onMorePress={openMenu}
         />
       )}
-      {showBottomTabs && nativeTabs === false && !isAdminRoute && !isLeaderRoute && !keyboardOpen && (
-        <BottomTabBar data-eos-id="src/components/app-shell.tsx#10" onMorePress={openMenu} chatBadge={totalUnread} syncWarning={syncWarning} />
+      {showBottomTabs && nativeTabs === false && !keyboardOpen && (
+        <BottomTabBar data-eos-id="src/components/app-shell.tsx#10"
+          tabs={tabs}
+          layoutPrefix={`${suite}-tab`}
+          onMorePress={openMenu}
+          chatBadge={totalUnread}
+          syncWarning={syncWarning}
+        />
       )}
     </>
   )

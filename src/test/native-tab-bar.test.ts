@@ -1,13 +1,10 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import {
-  NATIVE_TABS,
-  activeNativeTabKey,
   formatNativeBadge,
   iosMajorVersion,
   isBlockingOverlayOpen,
   nativeBuildNumber,
   NATIVE_TAB_BAR_MIN_NATIVE_BUILD,
-  isNativeTabActive,
   shouldUseNativeTabBar,
   type NativeTabBarEnv,
 } from '@/lib/native-tab-bar'
@@ -91,27 +88,6 @@ describe('iosMajorVersion', () => {
     expect(iosMajorVersion('26.0.1')).toBe(26)
     expect(iosMajorVersion('18')).toBe(18)
     expect(iosMajorVersion('garbage')).toBe(0)
-  })
-})
-
-describe('tab selection mirrors the web BottomTabBar', () => {
-  it('matches Home exactly and the rest by prefix', () => {
-    expect(activeNativeTabKey('/')).toBe('home')
-    expect(activeNativeTabKey('/chat')).toBe('chat')
-    expect(activeNativeTabKey('/chat/abc')).toBe('chat')
-    expect(activeNativeTabKey('/profile/donations')).toBe('profile')
-  })
-
-  it('selects no tab for a route outside every tab, and never More', () => {
-    expect(activeNativeTabKey('/events/123')).toBeNull()
-    expect(activeNativeTabKey('/more')).toBeNull()
-    const more = NATIVE_TABS.find((t) => t.key === 'more')!
-    expect(isNativeTabActive(more, '/more')).toBe(false)
-  })
-
-  it('carries the same four tabs, in order, as the web bar', () => {
-    expect(NATIVE_TABS.map((t) => t.key)).toEqual(['home', 'chat', 'profile', 'more'])
-    expect(NATIVE_TABS.every((t) => t.sfSymbol && t.sfSymbolSelected)).toBe(true)
   })
 })
 

@@ -2,18 +2,10 @@ import { type ReactNode, useState, useEffect, useRef, createContext, useContext,
 import { useLocation } from 'react-router-dom'
 import { AnimatedOutlet } from '@/components/animated-outlet'
 
-import {
-    LayoutDashboard,
-    CalendarDays,
-    MoreHorizontal,
-    Home,
-} from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { WAVE_PATHS } from '@/components/wave-paths'
 import { useCollective } from '@/hooks/use-collective'
 import { useLayout } from '@/hooks/use-layout'
-import { BottomTabBar, type Tab } from '@/components/bottom-tab-bar'
-import { useMenuSheet } from '@/hooks/use-menu-sheet'
 import {
     LeaderCollectiveScopeContext,
     useLeaderCollectiveScopeProvider,
@@ -119,63 +111,8 @@ const DEFAULT_HERO: LeaderHeroCfg = { hue: LEADER_HERO_MOSS, defaultSubtitle: ''
 /* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
-/*  Mobile bottom tab bar tabs for leader suite                        */
-/* ------------------------------------------------------------------ */
-
-const leaderBottomTabs: Tab[] = [
-  {
-    key: 'back',
-    label: 'App',
-    path: '/',
-    exact: true,
-    icon: <Home data-eos-id="src/components/leader-layout.tsx#0" data-eos-v="2" size={22} strokeWidth={1.5} />,
-    activeIcon: <Home data-eos-id="src/components/leader-layout.tsx#1" size={22} strokeWidth={2} fill="currentColor" />,
-  },
-  {
-    key: 'leader-home',
-    label: 'Dashboard',
-    path: '/leader',
-    exact: true,
-    icon: <LayoutDashboard data-eos-id="src/components/leader-layout.tsx#2" size={22} strokeWidth={1.5} />,
-    activeIcon: <LayoutDashboard data-eos-id="src/components/leader-layout.tsx#3" size={22} strokeWidth={2} fill="currentColor" />,
-  },
-  {
-    key: 'leader-events',
-    label: 'Events',
-    path: '/leader/events',
-    icon: <CalendarDays data-eos-id="src/components/leader-layout.tsx#4" size={22} strokeWidth={1.5} />,
-    activeIcon: <CalendarDays data-eos-id="src/components/leader-layout.tsx#5" size={22} strokeWidth={2} fill="currentColor" />,
-  },
-  {
-    key: 'more',
-    label: 'More',
-    path: '/more',
-    exact: true,
-    isMore: true,
-    icon: <MoreHorizontal data-eos-id="src/components/leader-layout.tsx#6" size={22} strokeWidth={1.5} />,
-    activeIcon: <MoreHorizontal data-eos-id="src/components/leader-layout.tsx#7" size={22} strokeWidth={2} />,
-  },
-]
-
-/* ------------------------------------------------------------------ */
 /*  Shared nav link component                                          */
 /* ------------------------------------------------------------------ */
-
-/* ------------------------------------------------------------------ */
-/*  Leader bottom tabs - wires More to sidebar                         */
-/* ------------------------------------------------------------------ */
-
-function LeaderBottomTabs() {
-  const { openMenu } = useMenuSheet()
-  return (
-    <BottomTabBar data-eos-id="src/components/leader-layout.tsx#8"
-      tabs={leaderBottomTabs}
-      layoutPrefix="leader-tab"
-      accent="moss"
-      onMorePress={openMenu}
-    />
-  )
-}
 
 /* ------------------------------------------------------------------ */
 /*  LeaderLayout  route-level layout, renders <Outlet />              */
@@ -287,17 +224,17 @@ export function LeaderLayout() {
             'relative flex-1',
             header.fullBleed ? 'p-0 bg-white' : 'p-4 sm:p-6 lg:p-8',
             !header.fullBleed && 'bg-neutral-50',
-            showBottomTabs && 'pb-[calc(5rem+var(--safe-bottom))]',
+            // Clear the shell's tab bar: 3.5rem for the web bar, 0 under the glass bar (whose height is already in --safe-bottom).
+            showBottomTabs && 'pb-[calc(var(--tab-bar-space,3.5rem)+1.5rem+var(--safe-bottom))]',
           )}>
 
             <AnimatedOutlet data-eos-id="src/components/leader-layout.tsx#25" />
           </div>
         </div>
 
-        {/* Leader bottom tab bar - mobile only */}
-        {showBottomTabs && (
-          <LeaderBottomTabs data-eos-id="src/components/leader-layout.tsx#26" />
-        )}
+        {/* The bottom tab bar is the app shell's (LocationAwareChrome), the same
+            bar as every other page with the leader suite's tabs, so it is Liquid
+            Glass wherever the member bar is (src/lib/tab-suites.ts). */}
       </div>
     </LeaderHeaderContext.Provider>
     </LeaderCollectiveScopeContext.Provider>
