@@ -80,6 +80,16 @@ verify_jwt = true
 [functions.guest-ticket-checkout]
 verify_jwt = true
 
+[functions.mailchimp-sync]
+# Admin "Sync now" (ES256 user JWT the gateway cannot verify, so the function
+# checks GoTrue + profiles.role itself, exactly like send-campaign) and pg_cron
+# (cron_mailchimp_sync_drain, authenticated by the per-install token in
+# mailchimp_sync_secrets via x-mailchimp-cron). Added 2026-10-22.
+verify_jwt = false
+
+[functions.mailchimp-webhook]
+verify_jwt = false  # third-party callback: Mailchimp authenticates by URL token + HMAC signature, never JWT
+
 [functions.notify-application]
 verify_jwt = true
 

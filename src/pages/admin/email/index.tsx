@@ -10,6 +10,7 @@ import {
   XCircle,
   AlertTriangle,
   Sparkles,
+  RefreshCw,
 } from 'lucide-react'
 import { useAdminHeader } from '@/components/admin-layout'
 import { AdminHeroStat, AdminHeroStatRow } from '@/components/admin-hero-stat'
@@ -24,6 +25,7 @@ import { SystemTemplatesTab } from './system-templates-tab'
 import { SubscribersTab } from './subscribers-tab'
 import { TagsTab } from './tags-tab'
 import { DeliveryTab } from './delivery-tab'
+import { MailchimpTab } from './mailchimp-tab'
 
 const tabs = [
   { id: 'quick-send', label: 'Quick Send', icon: <Sparkles data-eos-id="src/pages/admin/email/index.tsx#0" data-eos-v="2" size={14} /> },
@@ -33,6 +35,7 @@ const tabs = [
   { id: 'subscribers', label: 'Subscribers', icon: <Users data-eos-id="src/pages/admin/email/index.tsx#4" size={14} /> },
   { id: 'tags', label: 'Tags', icon: <Tag data-eos-id="src/pages/admin/email/index.tsx#5" size={14} /> },
   { id: 'delivery', label: 'Delivery', icon: <BarChart3 data-eos-id="src/pages/admin/email/index.tsx#6" size={14} /> },
+  { id: 'mailchimp', label: 'Mailchimp', icon: <RefreshCw data-eos-id="src/pages/admin/email/index.tsx#37" size={14} /> },
 ]
 
 export default function AdminEmailPage() {
@@ -96,6 +99,7 @@ export default function AdminEmailPage() {
         {activeTab === 'subscribers' && <SubscribersTab data-eos-id="src/pages/admin/email/index.tsx#34" />}
         {activeTab === 'tags' && <TagsTab data-eos-id="src/pages/admin/email/index.tsx#35" />}
         {activeTab === 'delivery' && <DeliveryTab data-eos-id="src/pages/admin/email/index.tsx#36" />}
+        {activeTab === 'mailchimp' && <MailchimpTab data-eos-id="src/pages/admin/email/index.tsx#38" />}
       </motion.div>
     </div>
   )
