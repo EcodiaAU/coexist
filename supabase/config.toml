@@ -14,6 +14,9 @@
 
 project_id = "tjutlbzekfouwsiaplbr"
 
+[functions.admin-fix-member-email]
+verify_jwt = false
+
 [functions.cancel-event]
 verify_jwt = true
 

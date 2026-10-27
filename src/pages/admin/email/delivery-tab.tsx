@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { XCircle, AlertTriangle, UserX, MailX } from 'lucide-react'
+import { XCircle, AlertTriangle, UserX, MailX, PencilLine } from 'lucide-react'
 import { Skeleton } from '@/components/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
@@ -12,7 +12,9 @@ import {
   unreachableReasonLabel,
   formatDate,
   type UnreachableReason,
+  type UnreachableMember,
 } from './shared'
+import { FixMemberEmailSheet } from './fix-member-email-sheet'
 
 type SubTab = 'unreachable' | 'bounces' | 'complaints'
 
@@ -36,6 +38,7 @@ function subTabClass(active: boolean) {
 
 export function DeliveryTab() {
   const [subTab, setSubTab] = useState<SubTab>('unreachable')
+  const [fixing, setFixing] = useState<UnreachableMember | null>(null)
   const { data: bounces, isLoading: bouncesLoading } = useEmailBounces()
   const { data: complaints, isLoading: complaintsLoading } = useEmailComplaints()
   const { data: unreachable, isLoading: unreachableLoading, error: unreachableError } = useUnreachableMembers()
@@ -82,7 +85,7 @@ export function DeliveryTab() {
                   {unreachable.length} {unreachable.length === 1 ? 'member gets' : 'members get'} no Co-Exist email
                 </p>
                 <p data-eos-id="src/pages/admin/email/delivery-tab.tsx#32" className="text-xs text-neutral-500 mt-1 leading-relaxed">
-                  Their address is wrong or blocked, so invites, tickets and reminders never reach them. Ask them for the right address (their collective leader can check at the next event) and send it to Ecodia to update. They can't change it in the app themselves, because the app asks them to confirm from the old address first. A suggested address is only a guess, so check it with the member before anything changes.
+                  Their address is wrong or blocked, so invites, tickets and reminders never reach them. Ask them for the right address (their collective leader can check at the next event), then tap Fix email to change it here. They can't change it in the app themselves, because the app asks them to confirm from the old address first. A suggested address is only a guess, so check it with the member before you save it.
                 </p>
               </div>
               <StaggeredList data-eos-id="src/pages/admin/email/delivery-tab.tsx#33" className="space-y-1">
@@ -119,6 +122,14 @@ export function DeliveryTab() {
                           </span>
                         )}
                       </div>
+                      <button data-eos-id="src/pages/admin/email/delivery-tab.tsx#46"
+                        type="button"
+                        onClick={() => setFixing(member)}
+                        className="mt-2 inline-flex items-center gap-1.5 min-h-9 px-3 rounded-full text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 active:scale-[0.97] transition-colors duration-150 cursor-pointer"
+                      >
+                        <PencilLine data-eos-id="src/pages/admin/email/delivery-tab.tsx#47" size={13} />
+                        {member.suggested_email ? 'Fix email' : member.judged_email ? 'Change email' : 'Add email'}
+                      </button>
                     </div>
                   </StaggeredItem>
                 ))}
@@ -127,6 +138,8 @@ export function DeliveryTab() {
           )}
         </>
       )}
+
+      <FixMemberEmailSheet data-eos-id="src/pages/admin/email/delivery-tab.tsx#48" member={fixing} onClose={() => setFixing(null)} />
 
       {subTab === 'bounces' && (
         <>

@@ -293,7 +293,7 @@ export interface UnreachableMember {
   reasons: UnreachableReason[]
   suppression_reason: string | null
   suppressed_at: string | null
-  /** A likely intended address. A hint for a human to confirm, never applied. */
+  /** A likely intended address. A hint to confirm with the member; only an admin's Fix email applies it. */
   suggested_email: string | null
   collectives: string[]
   member_since: string
@@ -311,13 +311,17 @@ export const unreachableReasonLabel: Record<UnreachableReason, string> = {
 }
 
 /**
- * Members who cannot receive Co-Exist email. Read-only: the RPC never changes an
- * address, and neither does this page. Gated in the database on
- * is_admin_or_staff + has_cap('manage_email'), the same gate as this route.
+ * Members who cannot receive Co-Exist email. The RPC is read-only. The page's
+ * Fix email action changes an address through the admin-fix-member-email edge
+ * function, which calls this same RPC under the admin's own JWT and refuses any
+ * member not on it. Gated in the database on is_admin_or_staff +
+ * has_cap('manage_email'), the same gate as this route.
  */
+export const UNREACHABLE_MEMBERS_KEY = ['admin-email-unreachable-members'] as const
+
 export function useUnreachableMembers() {
   return useQuery({
-    queryKey: ['admin-email-unreachable-members'],
+    queryKey: UNREACHABLE_MEMBERS_KEY,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('admin_unreachable_members')
       if (error) throw error
