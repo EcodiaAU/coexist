@@ -47,6 +47,9 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
+/** Shown to the passenger, so it reads as an answer, not an error code. */
+const OFFER_REMOVED = 'This carpool offer was removed by the driver.'
+
 function bad(status: number, message: string) {
   return new Response(
     JSON.stringify({ success: false, error: message }),
@@ -97,6 +100,28 @@ Deno.serve(withSentry('carpool-save-seat', async (req: Request) => {
   if (userErr || !userRes?.user) return bad(401, 'invalid JWT')
   const passengerId = userRes.user.id
 
+  // 0. A carpool offer is withdrawn when its chat post is deleted. Refuse a
+  //    seat on one here as well as in save_carpool_seat, so every installed
+  //    bundle (they all call this function) is refused the moment this
+  //    deploys, whatever state the widget row is in. Reported 2026-10-27: a
+  //    member booked a deleted Grampians Campout offer the day after it went.
+  {
+    const guard = createClient(supabaseUrl, serviceKey)
+    const { data: offer } = await guard
+      .from('carpool_widgets')
+      .select('id, status, message:chat_messages!carpool_widgets_message_id_fkey(is_deleted)')
+      .eq('id', carpool_id)
+      .maybeSingle()
+    const msg = offer
+      ? (Array.isArray(offer.message) ? offer.message[0] : offer.message) as
+          | { is_deleted: boolean | null }
+          | null
+      : null
+    if (offer && (offer.status === 'cancelled' || msg?.is_deleted === true)) {
+      return bad(409, OFFER_REMOVED)
+    }
+  }
+
   // 1. Atomic seat claim via RPC (SELECT FOR UPDATE inside)
   const { data: seat, error: seatErr } = await userClient.rpc('save_carpool_seat', {
     p_carpool_id: carpool_id,
@@ -110,6 +135,7 @@ Deno.serve(withSentry('carpool-save-seat', async (req: Request) => {
     // Map common cases to clean HTTP codes
     const msg = seatErr.message || 'seat save failed'
     if (msg.includes('no seats remaining')) return bad(409, msg)
+    if (msg.includes('offer was removed')) return bad(409, OFFER_REMOVED)
     if (msg.includes('not accepting seats')) return bad(409, msg)
     if (msg.includes('not a member')) return bad(403, msg)
     if (msg.includes('driver cannot claim')) return bad(409, msg)

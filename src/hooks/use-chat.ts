@@ -652,6 +652,9 @@ export function useDeleteMessage() {
     },
     onSettled: (collectiveId) => {
       queryClient.invalidateQueries({ queryKey: ['chat-messages', collectiveId] })
+      // Deleting a carpool post withdraws the offer (migration 20261027120000),
+      // so any event page listing carpools must re-read.
+      queryClient.invalidateQueries({ queryKey: ['event-carpools'] })
     },
   })
 }

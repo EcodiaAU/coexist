@@ -13,11 +13,37 @@
  * (carpool-save-seat), so a freshly-posted "3 seats" offer had no breakout and
  * was dropped entirely. It now surfaces so a passenger can claim the first seat.
  *
- * Excludes archived/deleted breakouts and archived widgets.
+ * Excludes archived/deleted breakouts, and lists an offer only while it is
+ * still on offer (see isListedCarpoolOffer).
  */
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+
+/** Statuses an offer can still be joined or opened in. `cancelled` and
+ *  `archived` offers are gone and never listed. */
+export const LISTED_CARPOOL_STATUSES = ['open', 'full'] as const
+
+/**
+ * Whether a carpool offer still belongs on the event page.
+ *
+ * An offer is withdrawn when its driver (or a leader) deletes the chat post
+ * that offered it. Until 2026-10-27 that delete only flagged the message, the
+ * widget stayed 'open', and the event page kept listing it as bookable: a
+ * member saved a seat on a deleted Grampians Campout offer the day after it
+ * was removed (Yee Zhao, via Tate). The database now cancels the widget when
+ * its message is deleted (migration 20261027120000); this check is the client
+ * half, so a deleted post never lists even where that has not caught up.
+ * A message RLS hides from the viewer (null) is not treated as deleted.
+ */
+export function isListedCarpoolOffer(w: {
+  status: string
+  message?: { is_deleted: boolean | null } | { is_deleted: boolean | null }[] | null
+}): boolean {
+  if (!(LISTED_CARPOOL_STATUSES as readonly string[]).includes(w.status)) return false
+  const msg = Array.isArray(w.message) ? w.message[0] : w.message
+  return msg?.is_deleted !== true
+}
 
 export interface EventCarpoolBreakout {
   carpool_id: string
@@ -49,10 +75,10 @@ export function useEventCarpools(eventId: string | undefined) {
       const { data: widgets, error: widgetsErr } = await supabase
         .from('carpool_widgets')
         .select(
-          'id, driver_id, departure_point_text, departure_time, seats_total, status, driver:public_profiles!carpool_widgets_driver_id_fkey(display_name)',
+          'id, driver_id, departure_point_text, departure_time, seats_total, status, driver:public_profiles!carpool_widgets_driver_id_fkey(display_name), message:chat_messages!carpool_widgets_message_id_fkey(is_deleted)',
         )
         .eq('event_id', eventId)
-        .neq('status', 'archived')
+        .in('status', [...LISTED_CARPOOL_STATUSES])
 
       if (widgetsErr) {
         // Tables may not exist yet (Worker 1 lands the migration separately).
@@ -61,7 +87,12 @@ export function useEventCarpools(eventId: string | undefined) {
         throw widgetsErr
       }
 
-      const widgetIds = (widgets ?? []).map((w: { id: string }) => w.id)
+      const listed = ((widgets ?? []) as Array<{
+        id: string
+        status: string
+        message?: { is_deleted: boolean | null } | { is_deleted: boolean | null }[] | null
+      }>).filter(isListedCarpoolOffer)
+      const widgetIds = listed.map((w) => w.id)
       if (widgetIds.length === 0) return []
 
       const [breakoutsRes, seatsRes] = await Promise.all([
@@ -108,7 +139,7 @@ export function useEventCarpools(eventId: string | undefined) {
       }
 
       const out: EventCarpoolBreakout[] = []
-      for (const w of (widgets ?? []) as Array<{
+      for (const w of listed as unknown as Array<{
         id: string
         driver_id: string
         departure_point_text: string

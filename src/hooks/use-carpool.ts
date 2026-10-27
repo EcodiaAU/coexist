@@ -53,6 +53,25 @@ export interface CarpoolSeat {
   passenger?: CarpoolDriverProfile | null
 }
 
+/**
+ * The edge function's own `{ error }` text, which supabase-js hides behind a
+ * generic "Edge Function returned a non-2xx status code". carpool-save-seat
+ * answers 409 "This carpool offer was removed by the driver." for a withdrawn
+ * offer, and the passenger should read that, not a generic failure.
+ */
+export async function edgeErrorMessage(err: unknown, fallback: string): Promise<string> {
+  const ctx = (err as { context?: Response } | null)?.context
+  if (ctx && typeof ctx.clone === 'function') {
+    try {
+      const body = (await ctx.clone().json()) as { error?: unknown }
+      if (typeof body?.error === 'string' && body.error.trim()) return body.error
+    } catch {
+      // not JSON; fall through
+    }
+  }
+  return fallback
+}
+
 /* ------------------------------------------------------------------ */
 /*  Queries                                                            */
 /* ------------------------------------------------------------------ */
@@ -306,7 +325,7 @@ export function useSaveSeat() {
         },
       )
 
-      if (error) throw error
+      if (error) throw new Error(await edgeErrorMessage(error, 'Failed to save seat'))
       return data as { id: string; carpool_id: string }
     },
     onSuccess: (_, input) => {
@@ -317,6 +336,9 @@ export function useSaveSeat() {
     onError: (err) => {
       const msg = err instanceof Error ? err.message : 'Failed to save seat'
       toast.error(msg)
+      // A refusal usually means the offer changed under the viewer (withdrawn
+      // or filled), so re-read the event page's list rather than leave it up.
+      queryClient.invalidateQueries({ queryKey: ['event-carpools'] })
     },
   })
 }
