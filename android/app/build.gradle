@@ -25,14 +25,14 @@ android {
         applicationId "org.coexistaus.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // Play production holds versionCode 70 / 2.2.9 (probed via androidpublisher
-        // 2026-08-29). This file sat at 69/2.2.8 because the 2.2.9 Android release
-        // was cut without committing the bump, so the next build would have emitted
-        // a duplicate 70 and Play would have rejected it. Record what is LIVE here;
-        // the next release bumps to 71. This file is also the OTA floor guard's
-        // "repo is the ceiling of what can be live" input (scripts/ship-web-ota.sh).
-        versionCode 70
-        versionName "2.2.9"
+        // Play production held versionCode 70 / 2.2.9 from 2026-08-29 until this
+        // release. 71 / 2.3.62 (2026-10-27) carries the carpool-offer fix and the
+        // web bundle 2.3.62 embedded, so a fresh install starts on current code.
+        // Record what is LIVE here and bump from it; this file is also the OTA
+        // floor guard's "repo is the ceiling of what can be live" input
+        // (scripts/ship-web-ota.sh), so the next OTA must be above 2.3.62.
+        versionCode 71
+        versionName "2.3.62"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
