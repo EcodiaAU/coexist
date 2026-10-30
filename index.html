@@ -98,6 +98,10 @@
         // (Do not write a percent-wrapped VITE_ name in this comment: the
         // build guard and the OTA artifact gate both fail on any that
         // survives into dist, and a comment would trip them.)
+        // Console/devtools diagnostics ONLY: the overlay below must never paint
+        // these fields. Keep the url line: the OTA artifact gate in
+        // scripts/ship-web-ota.sh greps dist/index.html for the Supabase host,
+        // and this is the line that puts it there.
         window.__DEBUG_BOOT = {
           url: '%VITE_SUPABASE_URL%',
           keyPrefix: '%VITE_SUPABASE_ANON_KEY%'.slice(0, 24),
@@ -139,6 +143,18 @@
         // failure: log it, never paint. Sentry drops it at beforeSend too
         // (src/lib/sentry.tsx LOCK_SIGNATURE). Sentry issue 7616268242.
         var BENIGN_LOCK = /Navigator LockManager|navigatorLock|LockAcquireTimeout|another request stole it|Lock broken by another request/i;
+        // Meta in-app browser (Instagram / Facebook) injected-script errors. The
+        // IAB injects its own inline script into OUR document and that script reads
+        // window._META.IABInnerFrame without checking _META exists. It throws inside
+        // the boot window, so on 2026-10-31 an event invite link shared on an
+        // Instagram story opened to a full-screen white overlay instead of the event,
+        // with the event page fully rendered underneath it. The throw is attributed
+        // to our own page URL (line 1), so a "not our origin" filename check cannot
+        // catch it; the Meta-only symbol names are the signature. The frame names
+        // mirror INJECTED_BRIDGE_FRAMES in src/lib/sentry.tsx (Meta's native bridge
+        // script). None of these symbols exist in Co-Exist source or in Capacitor's
+        // native bridge. Not ours, not a boot failure: log it, never paint.
+        var FOREIGN_IAB = /IABInnerFrame|\b_META\b|sendDataToNative|sendPageHideMessage|_AutofillCallbackHandler/;
         function chunkRecover(payload) {
           try {
             var msg = typeof payload === 'string' ? payload : (payload && payload.message) || '';
@@ -154,6 +170,8 @@
           try {
             var lockMsg = typeof payload === 'string' ? payload : (payload && (payload.message || payload.name)) || '';
             if (BENIGN_LOCK.test(lockMsg)) { try { console.error('[boot-error:benign-lock-skip]', label, lockMsg); } catch (e) { /* ignore */ } return; }
+            var iabText = lockMsg + ' ' + ((payload && typeof payload !== 'string' && payload.stack) || '');
+            if (FOREIGN_IAB.test(iabText)) { try { console.error('[boot-error:foreign-iab-skip]', label, lockMsg); } catch (e) { /* ignore */ } return; }
           } catch (e) { /* fall through to normal handling */ }
           var headForLog = '';
           try {
@@ -168,7 +186,10 @@
               div = document.createElement('div');
               div.id = 'boot-error';
               div.style.cssText = 'position:fixed;inset:0;background:#fff;color:#000;padding:20px;font:13px ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow:auto;z-index:99999;line-height:1.4';
-              div.textContent = 'BOOT ENV\n url: ' + window.__DEBUG_BOOT.url + '\n key: ' + window.__DEBUG_BOOT.keyPrefix + '...\n mode: ' + window.__DEBUG_BOOT.mode + '\n time: ' + window.__DEBUG_BOOT.time + '\n---\n';
+              // Never print window.__DEBUG_BOOT here. The env block it used to dump
+              // (Supabase url + anon key prefix) read to a user as a credential leak
+              // on 2026-10-31. It stays readable from devtools, which is enough.
+              div.textContent = 'Co-Exist could not start. Reload the page to try again.\n---\n';
               document.body.appendChild(div);
             }
             var head = '';
