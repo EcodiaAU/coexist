@@ -746,7 +746,8 @@ export default function ProductDetailPage() {
                 You might also like
               </h2>
               <div className="-mx-4 lg:-mx-0">
-                <div className="flex gap-3 overflow-x-auto px-4 lg:px-0 scrollbar-none pb-2">
+                {/* pb-8 -mb-4: room for the raised cards' 26px drop tail (src/styles/depth.css) inside the scroller's clip */}
+                <div className="flex gap-3 overflow-x-auto px-4 lg:px-0 scrollbar-none pb-8 -mb-4">
                   {related.map((p, i) => (
                     <motion.button
                       key={p.id}
