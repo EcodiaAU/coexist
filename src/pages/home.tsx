@@ -109,9 +109,9 @@ function HScroll({
     <div className="relative -mx-6">
       <div
         className={cn(
-          // pb-6 -mb-2: room for the cards' 3D drop shadow inside the scroller's clip
+          // pb-8 -mb-4: room for the cards' 3D drop shadow (26px tail, home-3d.css) inside the scroller's clip
           // (overflow-x forces overflow-y too) with the section's spacing unchanged.
-          'flex gap-3 overflow-x-auto pl-8 pr-6 pb-6 -mb-2',
+          'flex gap-3 overflow-x-auto pl-8 pr-6 pb-8 -mb-4',
           'pretty-scrollbar snap-x snap-proximity',
           'scroll-smooth',
           className,
