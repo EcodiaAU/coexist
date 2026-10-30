@@ -106,7 +106,7 @@ export function Modal({
           onInteractOutside={dismissible ? undefined : (e) => e.preventDefault()}
           className={cn(
             // Olive shell: surface-0 card, neutral border, own scroller, no default grid/padding.
-            'flex max-h-[88vh] flex-col overflow-hidden border-neutral-200 bg-surface-0 p-0 sm:max-w-md',
+            'd3-float flex max-h-[88vh] flex-col overflow-hidden border-neutral-200 bg-surface-0 p-0 sm:max-w-md',
             className,
           )}
         >
@@ -138,7 +138,7 @@ export function Modal({
           data-eos-id="src/components/modal.tsx#mobile"
           aria-label={ariaLabel}
           className={cn(
-            'fixed inset-x-0 bottom-0 z-[201] flex max-h-[92vh] flex-col rounded-t-2xl bg-surface-0 shadow-sm outline-none ring-1 ring-primary-400/10',
+            'fixed inset-x-0 bottom-0 z-[201] flex max-h-[92vh] flex-col rounded-t-2xl bg-surface-0 d3-sheet outline-none ring-1 ring-primary-400/10',
             className,
           )}
           // Lift the whole sheet above the keypad. Vaul positions Content with a

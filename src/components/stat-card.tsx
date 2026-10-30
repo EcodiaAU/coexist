@@ -91,7 +91,7 @@ export function StatCard({
       }
       aria-label={ariaLabel ?? `${label}: ${value}`}
       className={cn(
-        'rounded-md bg-white shadow-sm border border-neutral-100',
+        'd3-surface d3-light rounded-md bg-white border border-neutral-100',
         compact ? 'p-3' : 'p-4',
         className,
       )}

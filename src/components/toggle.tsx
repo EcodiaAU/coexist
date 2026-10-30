@@ -95,7 +95,7 @@ export function Toggle({
       >
         <span data-eos-id="src/components/toggle.tsx#5"
           className={cn(
-            'relative inline-flex shrink-0 rounded-full',
+            'd3-well d3-light relative inline-flex shrink-0 rounded-full',
             // track colour flips on the shared motion contract; thumb spring stays framer-driven
             'transition-colors [transition-timing-function:var(--ease-out)] [transition-duration:var(--dur-fast)]',
             config.track,
@@ -105,7 +105,7 @@ export function Toggle({
           <motion.span data-eos-id="src/components/toggle.tsx#6"
             aria-hidden="true"
             className={cn(
-              'absolute top-1/2 block rounded-full bg-white shadow-sm',
+              'd3-chip d3-light absolute top-1/2 block rounded-full bg-white',
               config.thumb,
             )}
             initial={false}

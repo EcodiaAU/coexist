@@ -61,6 +61,8 @@ import { SplashScreen } from '@capacitor/splash-screen'
 import { clearChunkReloadGuard } from '@/lib/lazy-with-retry'
 import App from './App'
 import './styles/globals.css'
+// 3D depth system, unlayered so it outranks Tailwind's layered shadow utilities
+import './styles/depth.css'
 
 // WebView capability gate. The es2019 build.target + polyfills fix (2026-07-05)
 // removed the JS *crash* class on old Android WebViews, but the app's TRUE

@@ -33,7 +33,7 @@ export function ProximityCheckInBanner() {
           className={cn(
             'mx-4 mt-2 rounded-md overflow-hidden',
             'bg-primary-500',
-            'shadow-sm',
+            'd3-surface',
           )}
         >
           <div data-eos-id="src/components/proximity-check-in-banner.tsx#2" className="p-4">

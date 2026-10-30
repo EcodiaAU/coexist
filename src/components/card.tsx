@@ -1,7 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import {
     type ReactNode,
+    Children,
     createContext,
+    isValidElement,
     useContext,
     forwardRef,
 } from 'react'
@@ -96,7 +98,32 @@ interface CardRootProps {
   'aria-pressed'?: boolean
   /** Activity type for nature watermark decoration */
   watermark?: string | boolean
+  /**
+   * 3D depth ground (src/styles/depth.css). Default: 'dark' when a
+   * Card.Overlay cover image fills the card, 'media' when a Card.Image sits on
+   * top of a white body, else 'light'. Pass 'dark' for a card whose own fill is
+   * a dark colour, or 'flat' to opt out (a card nested inside a raised panel).
+   */
+  depth?: 'light' | 'dark' | 'media' | 'flat'
 }
+
+/** Pick the depth ground from the card's direct children. */
+function cardGround(children: ReactNode): 'light' | 'dark' | 'media' {
+  let ground: 'light' | 'dark' | 'media' = 'light'
+  Children.forEach(children, (child) => {
+    if (!isValidElement(child)) return
+    if (child.type === CardOverlay) ground = 'dark'
+    else if (child.type === CardImage && ground === 'light') ground = 'media'
+  })
+  return ground
+}
+
+const depthClass = {
+  light: 'd3-surface d3-light',
+  dark: 'd3-surface',
+  media: 'd3-surface d3-media',
+  flat: 'shadow-sm',
+} as const
 
 const CardRoot = forwardRef<HTMLDivElement, CardRootProps>(function CardRoot(
   {
@@ -107,6 +134,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardRootProps>(function CardRoot(
     'aria-label': ariaLabel,
     'aria-pressed': ariaPressed,
     watermark,
+    depth,
   },
   ref,
 ) {
@@ -144,7 +172,8 @@ const CardRoot = forwardRef<HTMLDivElement, CardRootProps>(function CardRoot(
         }
         transition={{ type: 'spring', stiffness: 400, damping: 26, mass: 0.7 }}
         className={cn(
-          'relative rounded-md shadow-sm overflow-hidden',
+          'relative rounded-md overflow-hidden',
+          depthClass[depth ?? cardGround(children)],
           isInteractive && 'cursor-pointer select-none',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
           variantWrapper[variant],

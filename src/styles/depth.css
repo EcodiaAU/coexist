@@ -1,0 +1,258 @@
+/* Co-Exist 3D depth system (Tate, iMessage 2026-10-31).
+
+   Born on the homepage in two passes (a white top edge, bevelled sides with a
+   darker bottom lip, and a soft heavy drop; 2.3.64 builds 98 and 99), then
+   rolled out to the whole app the same day ("THE WHOLE APP"). This file is the
+   ONE home of every 3D recipe; pages and components only attach classes.
+
+   TWO TIERS, so the hierarchy still reads:
+
+   1. Ambient tier. The app's own elevation tokens, --shadow-sm / -md / -lg in
+      globals.css @theme, are olive-tinted and carry a faint bottom lip, so the
+      ~600 elements the app already marked as raised (panels, list cards, icon
+      tiles, selected pills) gain depth with no per-call edit. Deliberately
+      lighter than tier 2 and with no white highlight: Tailwind v4 rewrites
+      every colour in a theme shadow through --tw-shadow-color, so a
+      shadow-<colour> utility would turn a white edge into a coloured one.
+
+   2. Raised tier. The explicit d3-* classes below, at full homepage strength,
+      attached at the SOURCE of shared components (Card, Button, StatCard,
+      BentoStatCard, Chip, Dropdown, SegmentedControl, Toggle, Input,
+      SearchBar, sheets, the web tab bar, the check-in banner) and on the
+      homepage's own sections. Flat chrome (ghost buttons, list rows, badges,
+      underline tabs, text) stays flat on purpose.
+
+   Grounds: a white edge needs far more alpha to show on near-white, and a
+   white wash would haze a cover image, so each recipe has a ground variant:
+     d3-surface            dark ground (cover images, coloured cards)
+     d3-surface d3-light   light ground (white or pale tiles)
+     d3-surface d3-media   image on top, white body (Card.Image cards)
+
+   UNLAYERED ON PURPOSE: Tailwind v4 emits utilities inside @layer utilities,
+   and unlayered rules beat layered ones, so these override shadow-sm/md
+   without !important. Every list starts with Tailwind's ring shadows so
+   focus-visible and state rings still draw. The ring var() reads sit INSIDE
+   each rule, never in a custom property set on an ancestor: a custom property
+   resolves its var() where it is declared, so a ring var set on the page root
+   would freeze the root's empty ring onto every child (the homepage-only pass
+   had that shape).
+
+   Shadow tint is an olive black from the primary ramp, never neutral grey, so
+   the depth reads as part of the Co-Exist palette.
+
+   The raised drop reaches 26px below a card (offset 14 + blur 22 - spread 10);
+   a horizontal scroller holding raised cards pads pb-8 -mb-4 so the clip that
+   overflow-x forces does not cut the tail (see HScroll in home.tsx). */
+
+:root {
+  --d3-ink: 24 32 16;
+  --d3-drop:
+    0 1px 2px rgb(var(--d3-ink) / 0.14),
+    0 4px 8px -2px rgb(var(--d3-ink) / 0.20),
+    0 14px 22px -10px rgb(var(--d3-ink) / 0.46);
+  --d3-drop-pressed:
+    0 1px 2px rgb(var(--d3-ink) / 0.16),
+    0 3px 6px -2px rgb(var(--d3-ink) / 0.22);
+}
+
+/* ---- Raised surface: cards, tiles, sections --------------------------------
+   The drop shadow sits on the element. The bevel lines sit on ::after, laid
+   OVER the content, because Card.Overlay paints its cover image and gradient
+   as absolute children that would hide an inset shadow on the element itself.
+   isolation:isolate keeps the overlay's z-index inside this card. */
+
+.d3-surface {
+  position: relative;
+  isolation: isolate;
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--d3-drop);
+  transition-property: transform, box-shadow;
+  transition-duration: 150ms;
+}
+
+.d3-surface:active {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--d3-drop-pressed);
+}
+
+.d3-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.48),
+    inset 1px 0 0 rgb(255 255 255 / 0.12),
+    inset -1px 0 0 rgb(var(--d3-ink) / 0.16),
+    inset 0 -3px 0 rgb(var(--d3-ink) / 0.26);
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.12) 0%,
+    rgb(255 255 255 / 0) 24%,
+    rgb(var(--d3-ink) / 0) 78%,
+    rgb(var(--d3-ink) / 0.08) 100%
+  );
+}
+
+/* Light ground: the top is already full white, so the bevel comes from the
+   hairline and the bottom lip. */
+.d3-surface.d3-light::after {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 0 0 1px rgb(var(--d3-ink) / 0.07),
+    inset 0 -3px 0 rgb(var(--d3-ink) / 0.11);
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.55) 0%,
+    rgb(255 255 255 / 0) 30%,
+    rgb(var(--d3-ink) / 0) 82%,
+    rgb(var(--d3-ink) / 0.04) 100%
+  );
+}
+
+/* Image on top, white body: a glossy top edge on the photo, the light-ground
+   lip on the white body, and no wash, which would haze the photo. */
+.d3-surface.d3-media::after {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.48),
+    inset 0 0 0 1px rgb(var(--d3-ink) / 0.07),
+    inset 0 -3px 0 rgb(var(--d3-ink) / 0.11);
+  background: linear-gradient(
+    180deg,
+    rgb(var(--d3-ink) / 0) 82%,
+    rgb(var(--d3-ink) / 0.04) 100%
+  );
+}
+
+/* ---- Raised button ---------------------------------------------------------
+   Buttons carry no full-cover children, so the bevel goes straight onto the
+   element. Press depth is shadow only: Button's press scale is a framer-driven
+   inline transform, which a CSS transform here would fight. */
+
+.d3-button {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 1px 0 rgb(255 255 255 / 0.34),
+    inset 0 -3px 0 rgb(0 0 0 / 0.24),
+    0 1px 2px rgb(var(--d3-ink) / 0.20),
+    0 6px 14px -5px rgb(var(--d3-ink) / 0.52);
+}
+
+.d3-button.d3-light {
+  background-image: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0) 40%,
+    rgb(var(--d3-ink) / 0.08) 100%
+  );
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 -3px 0 rgb(var(--d3-ink) / 0.14),
+    0 1px 2px rgb(var(--d3-ink) / 0.22),
+    0 6px 14px -5px rgb(var(--d3-ink) / 0.55);
+}
+
+.d3-button:active {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 1px 0 rgb(255 255 255 / 0.20),
+    inset 0 -1px 0 rgb(0 0 0 / 0.18),
+    0 1px 3px rgb(var(--d3-ink) / 0.28);
+}
+
+.d3-button.d3-light:active {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    inset 0 -1px 0 rgb(var(--d3-ink) / 0.10),
+    0 1px 3px rgb(var(--d3-ink) / 0.30);
+}
+
+.d3-button:disabled,
+.d3-button[aria-disabled='true'] {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 1px 0 rgb(255 255 255 / 0.20),
+    0 1px 2px rgb(var(--d3-ink) / 0.12);
+}
+
+/* ---- Small raised chips: icon tiles, dropdown triggers, selected pills,
+   segmented indicators, toggle thumbs. */
+
+.d3-chip {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 1px 0 rgb(255 255 255 / 0.48),
+    inset 0 -2px 0 rgb(var(--d3-ink) / 0.20),
+    0 3px 6px -1px rgb(var(--d3-ink) / 0.36);
+}
+
+.d3-chip.d3-light {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 -2px 0 rgb(var(--d3-ink) / 0.16),
+    0 3px 7px -1px rgb(var(--d3-ink) / 0.40);
+}
+
+/* ---- Recessed: tracks and fields read pressed IN, so the raised thing riding
+   inside (a segmented pill, a toggle thumb, typed text) stands proud. The dark
+   ground is the homepage's glass toggle; the light ground is every grey field
+   and track. */
+
+.d3-well {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 2px 3px rgb(var(--d3-ink) / 0.40),
+    inset 0 -1px 0 rgb(255 255 255 / 0.20);
+}
+
+.d3-well.d3-light {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 2px 3px rgb(var(--d3-ink) / 0.13),
+    inset 0 1px 1px rgb(var(--d3-ink) / 0.06),
+    inset 0 -1px 0 rgb(255 255 255 / 0.85);
+}
+
+/* ---- Floating light panels: the web tab bar, dropdown menus, centred
+   dialogs. These are often fixed or absolute, so the light-ground bevel goes
+   straight onto the element (no ::after, no position change). */
+
+.d3-float {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 0 0 1px rgb(var(--d3-ink) / 0.07),
+    inset 0 -3px 0 rgb(var(--d3-ink) / 0.10),
+    var(--d3-drop);
+}
+
+/* ---- Bottom sheets: anchored to the bottom edge, so the shadow is cast
+   UPWARD onto the scrim and the bevel is a bright top lip. */
+
+.d3-sheet {
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 2px 0 rgb(var(--d3-ink) / 0.05),
+    0 -2px 6px rgb(var(--d3-ink) / 0.14),
+    0 -14px 30px -10px rgb(var(--d3-ink) / 0.40);
+}

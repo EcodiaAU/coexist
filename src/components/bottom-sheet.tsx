@@ -257,7 +257,7 @@ function MobileSheet({
         aria-label="Bottom sheet"
         onKeyDown={handleKeyDown}
         className={cn(
-          'fixed inset-x-0 bottom-0 z-10 bg-surface-0 rounded-t-md shadow-sm flex flex-col',
+          'fixed inset-x-0 bottom-0 z-10 bg-surface-0 rounded-t-md d3-sheet flex flex-col',
           // Bare hosts a full <Page> whose hero image should bleed to the very
           // top of the sheet; clip it to the rounded top corners.
           bare && 'overflow-hidden',
@@ -507,7 +507,7 @@ function DesktopModal({
               aria-modal="true"
               aria-label="Dialog"
               className={cn(
-                'relative w-full bg-surface-0 rounded-md shadow-sm pointer-events-auto gpu-panel',
+                'relative w-full bg-surface-0 rounded-md d3-float pointer-events-auto gpu-panel',
                 // Bare hosts a full detail <Page>: wider + capped height + clip to
                 // rounded corners; the content div below is the scroller (the
                 // desktop <Page> itself uses overflow-clip, so it never scrolls).

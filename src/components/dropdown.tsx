@@ -202,12 +202,12 @@ export function Dropdown({
           : 'h-11 px-4 w-full text-[16px] sm:text-sm',
         active
           // Applied-filter fill. Wins over tone/default grounds.
-          ? 'bg-primary-600 border border-primary-600 text-white hover:bg-primary-700'
+          ? 'd3-chip bg-primary-600 border border-primary-600 text-white hover:bg-primary-700'
           : tone === 'dark'
-            ? 'bg-white/20 backdrop-blur-md border border-white/20'
+            ? 'd3-chip bg-white/20 backdrop-blur-md border border-white/20'
             // White ground + hairline border reads as a finished control; the old
             // bg-surface-3 grey fill read as a wireframe placeholder (review #9).
-            : 'bg-white border border-neutral-200 hover:border-neutral-300',
+            : 'd3-chip d3-light bg-white border border-neutral-200 hover:border-neutral-300',
         error
           ? 'ring-2 ring-error'
           : open
@@ -354,7 +354,7 @@ export function Dropdown({
                       }
                     }}
                     className={cn(
-                      'bg-white rounded-md shadow-sm border border-neutral-100',
+                      'd3-float bg-white rounded-md border border-neutral-100',
                       'max-h-60 overflow-y-auto',
                       'py-1.5',
                     )}

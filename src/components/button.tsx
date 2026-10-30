@@ -15,13 +15,15 @@ const variantStyles = {
     'bg-primary-800 text-white hover:bg-primary-950 focus-visible:ring-primary-400 rounded-md h-[54px] text-[15px] font-bold',
 } as const
 
-// The elevation ladder from the shared @ecodia/motion contract. Applied only to
-// the raised variants so a card is a hairline at rest and lifts to a whisper on
-// hover, never a drop-shadowed slab. Ghost/danger stay flat.
+// 3D depth (src/styles/depth.css, Tate 2026-10-31 "THE WHOLE APP"): every
+// filled button is a raised key with a bright top edge, a bottom lip and a soft
+// drop, pressing flatter on tap. The pale secondary uses the light-ground
+// recipe. Ghost stays flat: it is inline chrome, not a key.
 const variantShadow: Partial<Record<ButtonVariant, string>> = {
-  primary: 'shadow-[var(--ec-sh-1)] hover:shadow-[var(--ec-sh-2)]',
-  secondary: 'shadow-[var(--ec-sh-1)] hover:shadow-[var(--ec-sh-2)]',
-  auth: 'shadow-[var(--ec-sh-1)] hover:shadow-[var(--ec-sh-2)]',
+  primary: 'd3-button',
+  secondary: 'd3-button d3-light',
+  danger: 'd3-button',
+  auth: 'd3-button',
 }
 
 const sizeStyles = {

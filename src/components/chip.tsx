@@ -16,11 +16,11 @@ interface ChipProps {
 
 const variantStyles = {
   default: {
-    selected: 'bg-primary-600 text-white ring-2 ring-primary-300 shadow-sm',
+    selected: 'd3-chip bg-primary-600 text-white ring-2 ring-primary-300',
     unselected: 'bg-white text-neutral-700 border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 shadow-sm',
   },
   activity: {
-    selected: 'bg-primary-600 text-white ring-2 ring-primary-300 shadow-sm',
+    selected: 'd3-chip bg-primary-600 text-white ring-2 ring-primary-300',
     unselected: 'bg-white text-neutral-700 border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 shadow-sm',
   },
 } as const

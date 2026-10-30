@@ -39,15 +39,15 @@ const VARIANT_STYLES: Record<
   { track: string; indicator: string; active: string; inactive: string }
 > = {
   filled: {
-    track: 'bg-surface-3 rounded-full shadow-sm p-1',
+    track: 'd3-well d3-light bg-surface-3 rounded-full p-1',
     // white pill + the search-bar primary-ring accent (the approved A+B blend)
-    indicator: 'bg-white shadow-sm ring-1 ring-primary-200',
+    indicator: 'd3-chip d3-light bg-white ring-1 ring-primary-200',
     active: 'text-primary-800',
     inactive: 'text-neutral-500 hover:text-neutral-700',
   },
   pill: {
-    track: 'bg-primary-50 rounded-full p-1 ring-1 ring-primary-100',
-    indicator: 'bg-primary-600 shadow-sm',
+    track: 'd3-well d3-light bg-primary-50 rounded-full p-1 ring-1 ring-primary-100',
+    indicator: 'd3-chip bg-primary-600',
     active: 'text-white',
     inactive: 'text-primary-700 hover:text-primary-800',
   },
@@ -55,8 +55,8 @@ const VARIANT_STYLES: Record<
   // modals). Translucent-white track + solid-white sliding pill; dark active text
   // on the pill, translucent-white inactive text on the surface.
   dark: {
-    track: 'bg-white/15 rounded-full p-1',
-    indicator: 'bg-white shadow-sm',
+    track: 'd3-well bg-white/15 rounded-full p-1',
+    indicator: 'd3-chip d3-light bg-white',
     active: 'text-primary-900',
     inactive: 'text-white/70 hover:text-white',
   },

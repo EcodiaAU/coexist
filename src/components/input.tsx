@@ -220,7 +220,7 @@ export const Input = forwardRef<
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type
 
   const sharedClasses = cn(
-    'peer w-full rounded-sm px-4 box-border',
+    'd3-well d3-light peer w-full rounded-sm px-4 box-border',
     // Native date/time inputs on iOS+Android render their picker button at
     // intrinsic width, which can push the field past its container.
     // appearance-none strips the platform chrome so the field obeys w-full

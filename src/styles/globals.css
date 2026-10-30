@@ -304,10 +304,16 @@ html {
   --color-surface-3: #ebebeb;
   --color-surface-warm: #f0ede6;
 
-  /* Shadows - neutral */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  /* Shadows - the AMBIENT tier of the 3D depth system (src/styles/depth.css).
+     Olive-tinted from the primary ramp, with a faint bottom lip on sm/md so
+     every element the app already marks as raised reads bevelled. Lighter than
+     the d3-* raised tier on purpose, so primary cards and buttons still stand
+     proudest. No white highlight here: Tailwind rewrites every colour in these
+     values through --tw-shadow-color, so a shadow-<colour> utility would tint
+     it. Literal rgb() because that rewrite does not resolve var() channels. */
+  --shadow-sm: 0 1px 2px rgb(24 32 16 / 0.12), 0 3px 8px -2px rgb(24 32 16 / 0.20), inset 0 -2px 0 rgb(24 32 16 / 0.07);
+  --shadow-md: 0 1px 2px rgb(24 32 16 / 0.12), 0 4px 10px -2px rgb(24 32 16 / 0.20), 0 12px 22px -10px rgb(24 32 16 / 0.30), inset 0 -2px 0 rgb(24 32 16 / 0.08);
+  --shadow-lg: 0 2px 4px rgb(24 32 16 / 0.10), 0 10px 20px -6px rgb(24 32 16 / 0.24), 0 18px 32px -14px rgb(24 32 16 / 0.32);
 
   /* Typography - Eau Sans is the Co-Exist app brand face (Tate's Canva font),
      self-hosted and bundled, for titles AND body. Montserrat / system sans is

@@ -50,7 +50,6 @@ import { SegmentedControl } from '@/components/segmented-control'
 import { isSignInButtonVisible, wallClockNow } from '@/lib/date-format'
 import { ProximityCheckInBanner } from '@/components/proximity-check-in-banner'
 import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
-import './home-3d.css'
 
 
 /* ------------------------------------------------------------------ */
@@ -109,7 +108,7 @@ function HScroll({
     <div className="relative -mx-6">
       <div
         className={cn(
-          // pb-8 -mb-4: room for the cards' 3D drop shadow (26px tail, home-3d.css) inside the scroller's clip
+          // pb-8 -mb-4: room for the cards' 3D drop shadow (26px tail, src/styles/depth.css) inside the scroller's clip
           // (overflow-x forces overflow-y too) with the section's spacing unchanged.
           'flex gap-3 overflow-x-auto pl-8 pr-6 pb-8 -mb-4',
           'pretty-scrollbar snap-x snap-proximity',
@@ -398,7 +397,7 @@ function NextEventCard({
       <motion.div variants={rm ? undefined : fadeUp}>
         <Section title="You're going">
           <div className="sm:max-w-lg">
-            <div className="h3d-surface relative rounded-md overflow-hidden bg-primary-700 px-6 py-12 flex flex-col items-center text-center">
+            <div className="d3-surface relative rounded-md overflow-hidden bg-primary-700 px-6 py-12 flex flex-col items-center text-center">
               {!rm && (
                 <motion.span
                   className="absolute w-24 h-24 rounded-full bg-white/15"
@@ -494,7 +493,7 @@ function NextEventCard({
               size="lg"
               fullWidth
               disabled={registerMutation.isPending}
-              className="h3d-button h3d-light relative bg-white text-primary-700 hover:bg-white/90 font-bold text-base disabled:opacity-70"
+              className="d3-button d3-light relative bg-white text-primary-700 hover:bg-white/90 font-bold text-base disabled:opacity-70"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation()
                 // Ticketed events are joined via Stripe checkout on the detail
@@ -551,7 +550,6 @@ function NextEventCard({
                 <Card
                   variant="event"
                   watermark={fallbackEvent.activity_type}
-                  className="h3d-surface"
                   onClick={() => navigate(`/events/${fallbackEvent.id}`)}
                   aria-label={fallbackEvent.title}
                 >
@@ -567,7 +565,7 @@ function NextEventCard({
                 </Card>
               ) : (
                 <div
-                  className="h3d-surface relative rounded-md overflow-hidden active:scale-[0.98] cursor-pointer bg-primary-800 p-6"
+                  className="d3-surface relative rounded-md overflow-hidden active:scale-[0.98] cursor-pointer bg-primary-800 p-6"
                   onClick={() => navigate(`/events/${fallbackEvent.id}`)}
                   role="button"
                   tabIndex={0}
@@ -595,7 +593,7 @@ function NextEventCard({
           <Button
             variant="primary"
             size="md"
-            className="h3d-button"
+            className="d3-button"
             onClick={() => navigate('/events')}
           >
             See what's on
@@ -673,7 +671,7 @@ function NextEventCard({
             size="lg"
             fullWidth
             icon={<Camera size={20} />}
-            className="h3d-button h3d-light relative bg-white text-primary-700 hover:bg-white/90 font-bold text-base"
+            className="d3-button d3-light relative bg-white text-primary-700 hover:bg-white/90 font-bold text-base"
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation()
               navigate(`/chat/${nextEvent.collective_id}`)
@@ -694,7 +692,7 @@ function NextEventCard({
             size="lg"
             fullWidth
             icon={<Hash size={20} />}
-            className="h3d-button h3d-light relative bg-white text-primary-700 hover:bg-white/90 font-bold text-base"
+            className="d3-button d3-light relative bg-white text-primary-700 hover:bg-white/90 font-bold text-base"
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation()
               setCheckIn({
@@ -725,10 +723,7 @@ function NextEventCard({
           <Card
             variant="event"
             watermark={nextEvent.activity_type}
-            className={cn(
-              'h3d-surface',
-              happeningNow && 'ring-2 ring-primary-400/60',
-            )}
+            className={cn(happeningNow && 'ring-2 ring-primary-400/60')}
             onClick={() => navigate(`/events/${nextEvent.id}`)}
             aria-label={nextEvent.title}
           >
@@ -746,7 +741,7 @@ function NextEventCard({
           /* Gradient card when no cover image */
           <div
             className={cn(
-              'h3d-surface relative rounded-md overflow-hidden',
+              'd3-surface relative rounded-md overflow-hidden',
               'active:scale-[0.98] cursor-pointer',
               happeningNow
                 ? 'bg-primary-700 ring-2 ring-primary-400/60'
@@ -823,7 +818,8 @@ function UpcomingEventsCarousel({ rm }: { rm: boolean }) {
                 key={event.id}
                 variant="event"
                 watermark={event.activity_type}
-                className="h3d-surface shrink-0 w-56 snap-start"
+                depth="dark"
+                className="shrink-0 w-56 snap-start"
                 onClick={() => navigate(`/events/${event.id}`)}
                 aria-label={event.title}
               >
@@ -936,7 +932,8 @@ function NationalEventsSection({ rm }: { rm: boolean }) {
                 key={event.id}
                 variant="event"
                 watermark={event.activity_type}
-                className="h3d-surface shrink-0 w-64 snap-start"
+                depth="dark"
+                className="shrink-0 w-64 snap-start"
                 onClick={() => navigate(`/events/${event.id}`)}
                 aria-label={event.title}
               >
@@ -1028,7 +1025,7 @@ function UpdatesSection({ rm }: { rm: boolean }) {
               type="button"
               onClick={() => navigate('/updates')}
               aria-label={item.title}
-              className="h3d-surface h3d-light shrink-0 w-56 snap-start text-left rounded-md overflow-hidden bg-bark-50 active:scale-[0.98] flex flex-col"
+              className="d3-surface d3-light shrink-0 w-56 snap-start text-left rounded-md overflow-hidden bg-bark-50 active:scale-[0.98] flex flex-col"
             >
               {/* Image - fixed 4/3 ratio, only rendered when present */}
               {item.image_url && (
@@ -1136,7 +1133,7 @@ function HomeImpactSection({
 
   return (
     <motion.div variants={rm ? undefined : fadeUp} className="-mx-2 sm:-mx-3">
-      <div ref={sectionRef} className="h3d-surface relative overflow-hidden bg-[#5a6e40] rounded-md">
+      <div ref={sectionRef} className="d3-surface relative overflow-hidden bg-[#5a6e40] rounded-md">
 
         <div className="relative px-5 sm:px-7 pt-14 pb-16 sm:pt-16 sm:pb-20">
           {/* Header - editorial style */}
@@ -1188,13 +1185,13 @@ function HomeImpactSection({
                 tone="dark"
                 size="sm"
                 className="w-auto"
-                triggerClassName="h3d-chip h-11 max-w-[200px]"
+                triggerClassName="h-11 max-w-[200px]"
               />
             ) : (
               /* No collectives to scope to: a static National pill, matching the
                  prior no-collective look exactly. */
-              <div className="h3d-well flex rounded-full bg-[#f4f2ec]/15 p-0.5">
-                <span className="h3d-chip h3d-light px-3.5 min-h-11 flex items-center rounded-full text-[11px] font-semibold bg-white/90 text-primary-900 select-none whitespace-nowrap">
+              <div className="d3-well flex rounded-full bg-[#f4f2ec]/15 p-0.5">
+                <span className="d3-chip d3-light px-3.5 min-h-11 flex items-center rounded-full text-[11px] font-semibold bg-white/90 text-primary-900 select-none whitespace-nowrap">
                   <Globe size={11} className="inline mr-1 -mt-0.5" />
                   National
                 </span>
@@ -1213,7 +1210,7 @@ function HomeImpactSection({
               value={timeRange}
               onChange={setTimeRange}
               aria-label="Impact time range"
-              className="h3d-well w-[176px] shrink-0"
+              className="w-[176px] shrink-0"
             />
           </div>
 
@@ -1242,7 +1239,7 @@ function HomeImpactSection({
               const treesCard = (
                 <BentoStatCard
                   key="trees"
-                  className="h3d-surface h3d-light"
+                 
                   value={treesValue}
                   label="Trees Planted"
                   icon={<TreePine size={20} />}
@@ -1252,7 +1249,7 @@ function HomeImpactSection({
               const litterCard = (
                 <BentoStatCard
                   key="litter"
-                  className="h3d-surface h3d-light"
+                 
                   value={litterValue}
                   label="Litter Removed"
                   icon={<Trash2 size={18} />}
@@ -1265,12 +1262,12 @@ function HomeImpactSection({
               return (
                 <BentoStatGrid>
                   {heroFirst}
-                  <BentoStatCard className="h3d-surface h3d-light" value={data?.eventsAttended ?? 0} label="Attendees" icon={<Users size={18} />} />
-                  <BentoStatCard className="h3d-surface h3d-light" value={totalEvents} label="Events" icon={<Calendar size={18} />} />
-                  <BentoStatCard className="h3d-surface h3d-light" value={data?.volunteerHours ?? 0} label="Vol. Hours" icon={<Clock size={18} />} unit="hrs" />
+                  <BentoStatCard value={data?.eventsAttended ?? 0} label="Attendees" icon={<Users size={18} />} />
+                  <BentoStatCard value={totalEvents} label="Events" icon={<Calendar size={18} />} />
+                  <BentoStatCard value={data?.volunteerHours ?? 0} label="Vol. Hours" icon={<Clock size={18} />} unit="hrs" />
                   {heroSecond}
-                  <BentoStatCard className="h3d-surface h3d-light" value={data?.leadersEmpowered ?? 0} label="Leaders Empowered" icon={<GraduationCap size={18} />} />
-                  <BentoStatCard className="h3d-surface h3d-light" value={data?.collectivesCount ?? 0} label="Collectives" icon={<MapPin size={18} />} />
+                  <BentoStatCard value={data?.leadersEmpowered ?? 0} label="Leaders Empowered" icon={<GraduationCap size={18} />} />
+                  <BentoStatCard value={data?.collectivesCount ?? 0} label="Collectives" icon={<MapPin size={18} />} />
                 </BentoStatGrid>
               )
             })()
@@ -1296,11 +1293,11 @@ function CtaCards({ rm }: { rm: boolean }) {
       {/* Donate */}
       <button
         onClick={() => navigate('/donate')}
-        className="h3d-surface relative h-44 rounded-md overflow-hidden active:scale-[0.97] bg-primary-600"
+        className="d3-surface relative h-44 rounded-md overflow-hidden active:scale-[0.97] bg-primary-600"
         aria-label="Donate"
       >
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
-          <span className="h3d-chip flex items-center justify-center w-11 h-11 rounded-md bg-white/20 text-white">
+          <span className="d3-chip flex items-center justify-center w-11 h-11 rounded-md bg-white/20 text-white">
             <Heart size={20} strokeWidth={2.4} />
           </span>
           <div>
@@ -1316,11 +1313,11 @@ function CtaCards({ rm }: { rm: boolean }) {
       {/* Shop merch */}
       <button
         onClick={() => navigate('/shop')}
-        className="h3d-surface relative h-44 rounded-md overflow-hidden active:scale-[0.97] bg-bark-600"
+        className="d3-surface relative h-44 rounded-md overflow-hidden active:scale-[0.97] bg-bark-600"
         aria-label="Shop merch"
       >
         <div className="relative h-full flex flex-col justify-between p-4 text-left">
-          <span className="h3d-chip flex items-center justify-center w-11 h-11 rounded-md bg-white/20 text-white">
+          <span className="d3-chip flex items-center justify-center w-11 h-11 rounded-md bg-white/20 text-white">
             <ShoppingBag size={20} strokeWidth={2.4} />
           </span>
           <div>
@@ -1366,7 +1363,7 @@ export default function HomePage() {
   const firstName = profile?.display_name?.split(' ')[0]
 
   return (
-    <Page noBackground className="home-3d !px-0 bg-white">
+    <Page noBackground className="!px-0 bg-white">
       <div className={cn('relative', 'min-h-full')}>
         <div className="pointer-events-none sticky top-0 h-[100dvh] -mb-[100dvh] overflow-hidden">
           <div className="absolute inset-0 bg-white" />
@@ -1420,13 +1417,13 @@ export default function HomePage() {
                 {pendingSurveys.data.map((survey) => (
                   <div
                     key={survey.event_id}
-                    className="h3d-surface flex items-center gap-3 rounded-md bg-bark-700 p-4 active:scale-[0.98] cursor-pointer"
+                    className="d3-surface flex items-center gap-3 rounded-md bg-bark-700 p-4 active:scale-[0.98] cursor-pointer"
                     onClick={() => navigate(`/events/${survey.event_id}/survey`)}
                     role="button"
                     tabIndex={0}
                     aria-label={`Complete survey for ${survey.event_title}`}
                   >
-                    <span className="h3d-chip flex items-center justify-center w-9 h-9 rounded-full bg-white/15 text-white shrink-0">
+                    <span className="d3-chip flex items-center justify-center w-9 h-9 rounded-full bg-white/15 text-white shrink-0">
                       <Calendar size={16} />
                     </span>
                     <div className="flex-1 min-w-0">

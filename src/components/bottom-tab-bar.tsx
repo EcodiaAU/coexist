@@ -63,7 +63,7 @@ export function BottomTabBar({
         className={cn(
           'pointer-events-auto',
           'mx-4 mb-[var(--safe-bottom,0px)] rounded-[20px]',
-          'bg-white shadow-sm',
+          'bg-white d3-float',
         )}
         style={navStyle}
         aria-label="Navigation"
