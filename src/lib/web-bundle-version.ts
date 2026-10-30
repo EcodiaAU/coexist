@@ -20,4 +20,7 @@
 // 2026-10-20: OTA 2.3.57 moved build 96 back to the web tab bar; store build
 // 2.3.58 (97) embeds this bundle at 2.3.58, so the next OTA run (2.3.59) clears
 // the native floor guard unaided.
-export const WEB_BUNDLE_VERSION = '2.3.63'
+// 2026-10-31: TestFlight build 2.3.64 (98) embeds this bundle at 2.3.64 (homepage
+// slight-3D preview for Tate), so the next OTA run (2.3.65) clears the native floor
+// guard unaided.
+export const WEB_BUNDLE_VERSION = '2.3.64'
