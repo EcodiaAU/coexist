@@ -51,8 +51,44 @@ describe('isInjectedThirdPartyBridgeError', () => {
     expect(isInjectedThirdPartyBridgeError(event)).toBe(true)
   })
 
+  it('drops the Instagram in-app browser _META.IABInnerFrame error (anonymous frames)', () => {
+    const webkit: Event = {
+      exception: {
+        values: [
+          {
+            type: 'TypeError',
+            value: "undefined is not an object (evaluating 'window._META.IABInnerFrame')",
+            stacktrace: { frames: [{ function: '?', filename: '/event/86efd6fa', lineno: 1, colno: 51 }] },
+          },
+        ],
+      },
+    }
+    const chromium: Event = {
+      exception: {
+        values: [{ type: 'TypeError', value: "Cannot read properties of undefined (reading 'IABInnerFrame')" }],
+      },
+    }
+    expect(isInjectedThirdPartyBridgeError(webkit)).toBe(true)
+    expect(isInjectedThirdPartyBridgeError(chromium)).toBe(true)
+  })
+
   /* Negative controls. These MUST survive the filter, or the fix has traded
    * recurring noise for silent blindness to real regressions. */
+  it('keeps an app error that merely contains _META inside a longer identifier', () => {
+    const event: Event = {
+      exception: {
+        values: [
+          {
+            type: 'TypeError',
+            value: "Cannot read properties of undefined (reading 'TYPE_META')",
+            stacktrace: { frames: [{ function: 'ChatBubble', filename: '/assets/index-DfNlx-rA.js' }] },
+          },
+        ],
+      },
+    }
+    expect(isInjectedThirdPartyBridgeError(event)).toBe(false)
+  })
+
   it('keeps a genuine Co-Exist application error', () => {
     const event: Event = {
       exception: {

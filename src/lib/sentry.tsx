@@ -49,7 +49,18 @@ const INJECTED_BRIDGE_FRAMES = new Set([
   '_AutofillCallbackHandler',
 ])
 
+// The same in-app browser also injects an inline script that reads
+// window._META.IABInnerFrame without checking _META exists. Its frames are
+// anonymous, so the frame-name match below cannot see it; the Meta-only symbol
+// in the message is the signature. Seen 2026-10-31 on an event invite link
+// opened from an Instagram story. index.html FOREIGN_IAB mirrors this so the
+// boot overlay never paints for it either.
+const INJECTED_IAB_MESSAGE = /IABInnerFrame|\b_META\b/
+
 export function isInjectedThirdPartyBridgeError(event: Sentry.Event): boolean {
+  if (event.exception?.values?.some((value) => INJECTED_IAB_MESSAGE.test(value.value ?? ''))) {
+    return true
+  }
   const frames = event.exception?.values?.flatMap(
     (value) => value.stacktrace?.frames ?? [],
   )
