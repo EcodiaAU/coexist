@@ -89,6 +89,7 @@ import { parseLocationPoint } from '@/lib/geo'
 import { getMediumUrl } from '@/lib/image-utils'
 import { isEventSoldOut } from '@/lib/event-sold-out'
 import { WaitlistJoin } from '@/components/waitlist-join'
+import { LinkifiedText } from '@/components/linkified-text'
 import { computeSpotsTaken, isExternallyBooked, ticketStatusBadge } from '@/lib/event-capacity'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
@@ -2010,7 +2011,7 @@ export default function EventDetailPage() {
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] uppercase tracking-wider font-semibold text-neutral-400">Meeting point</p>
                       {ext.meeting_point && (
-                        <p className="text-sm font-medium text-neutral-700">{ext.meeting_point}</p>
+                        <LinkifiedText text={ext.meeting_point} className="text-sm font-medium text-neutral-700" />
                       )}
                       {ext.meeting_spot_photo_url && (
                         <img
@@ -2029,7 +2030,7 @@ export default function EventDetailPage() {
                     <Backpack size={15} className={cn('shrink-0 mt-0.5', accent.text)} />
                     <div>
                       <p className="text-[11px] uppercase tracking-wider font-semibold text-neutral-400">What to bring</p>
-                      <p className="text-sm font-medium text-neutral-700">{ext.what_to_bring}</p>
+                      <LinkifiedText text={ext.what_to_bring} className="text-sm font-medium text-neutral-700" />
                     </div>
                   </div>
                 )}
@@ -2038,7 +2039,7 @@ export default function EventDetailPage() {
                     <Shirt size={15} className={cn('shrink-0 mt-0.5', accent.text)} />
                     <div>
                       <p className="text-[11px] uppercase tracking-wider font-semibold text-neutral-400">What to wear</p>
-                      <p className="text-sm font-medium text-neutral-700">{ext.what_to_wear}</p>
+                      <LinkifiedText text={ext.what_to_wear} className="text-sm font-medium text-neutral-700" />
                     </div>
                   </div>
                 )}
