@@ -46,7 +46,9 @@ export default function AcceptTermsPage() {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col bg-white">
+    // Header renders nothing here (no back button), so this page owns the top
+    // safe area itself; without it the title sat under the Dynamic Island.
+    <div className="min-h-dvh flex flex-col bg-white" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <Header title={firstTime ? 'Terms of Service' : 'Updated Terms'} />
 
       <motion.div
