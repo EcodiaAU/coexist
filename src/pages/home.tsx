@@ -219,6 +219,16 @@ const HERO_PAIRS: Array<{ bg: string; fg: string; alt: string; fgLayout: HeroFgL
 
 const HERO_ROTATE_MS = 6000
 
+// Phone hero height (below sm). The whole composition is sized off this one
+// value so it scales as a unit: the 'bottom' fg and the wordmark keep the same
+// size relative to the hero, and the bg is object-cover (it crops, never
+// stretches). At 82vw "Your Next Event" sits fully above the tab bar on a
+// 390x844 iPhone; the hero was max(110vw, 480px), which pushed that card under
+// the tab bar (Tate, 2026-10-31). The multipliers below reproduce the old
+// 480px layout exactly, so changing this one value is the only lever. sm and up
+// (iPad, desktop) keep the old 480px floor and are unchanged.
+const HERO_MOBILE_H = '82vw'
+
 function HomeHero({ rm }: { rm: boolean }) {
   const isTouchDevice = useIsCoarsePointer()
   const disableParallax = rm || isTouchDevice
@@ -261,7 +271,10 @@ function HomeHero({ rm }: { rm: boolean }) {
 
   return (
     <div className="relative">
-      <div className="relative w-full h-[110vw] min-h-[480px] sm:h-auto overflow-hidden">
+      <div
+        className="relative w-full h-[var(--hero-h)] sm:h-auto sm:min-h-[480px] overflow-hidden"
+        style={{ '--hero-h': HERO_MOBILE_H } as React.CSSProperties}
+      >
         {/* Layer 0: Background landscape - slowest parallax. Each pair gets a
             stacked <img>; opacity crossfades the active one in. */}
         <div
@@ -306,7 +319,10 @@ function HomeHero({ rm }: { rm: boolean }) {
                   key={`fg-${i}`}
                   className={cn('absolute bottom-0 inset-x-0 flex justify-center pointer-events-none', fadeCls)}
                 >
-                  <div className="w-[120%] -ml-[10%] sm:w-[70%] sm:ml-0">
+                  {/* Width and offset are fractions of the hero height (0.894H
+                      wide, nudged 0.0406H left), so the figures shrink with the
+                      hero instead of rising into the wordmark. */}
+                  <div className="shrink-0 w-[calc(var(--hero-h)*0.894)] -translate-x-[calc(var(--hero-h)*0.0406)] sm:w-[70%] sm:translate-x-0">
                     <img
                       src={pair.fg}
                       alt=""
@@ -343,7 +359,7 @@ function HomeHero({ rm }: { rm: boolean }) {
           <img
             src="/logos/white-wordmark.webp"
             alt="Co-Exist"
-            className="h-24 sm:h-32 w-auto object-contain"
+            className="h-[calc(var(--hero-h)*0.2)] sm:h-32 w-auto object-contain"
             style={{
               // Layered drop shadow so the white wordmark stays legible across
               // every carousel pair (some have light skies / sand).
