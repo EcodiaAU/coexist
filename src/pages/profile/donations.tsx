@@ -26,6 +26,7 @@ import { StaggeredList, StaggeredItem } from '@/components/scroll-reveal'
 import { useToast } from '@/components/toast'
 import { useDelayedLoading } from '@/hooks/use-delayed-loading'
 import { cn } from '@/lib/cn'
+import { donationsOpenWebsite, openInSystemBrowser } from '@/lib/donate-external'
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -235,7 +236,10 @@ export default function DonationsPage() {
   const handleUpdateCard = async (subId: string) => {
     try {
       const { url } = await portalMutation.mutateAsync(subId)
-      window.location.href = url
+      // iOS: card details are entered in Safari, never inside the app
+      // (App Review 3.2.2(iv)). See lib/donate-external.ts.
+      if (donationsOpenWebsite()) openInSystemBrowser(url)
+      else window.location.href = url
     } catch {
       toast.error('Card management is not available right now. You can restart your recurring gift instead.')
     }

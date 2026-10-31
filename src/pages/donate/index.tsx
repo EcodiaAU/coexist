@@ -7,7 +7,9 @@ import {
     Loader2,
     Shield, ChevronRight,
     Leaf, Sprout, TreePine, Waves, MessageCircle,
+    ExternalLink,
 } from 'lucide-react'
+import { donationsOpenWebsite, openWebsiteDonate } from '@/lib/donate-external'
 import { Page } from '@/components/page'
 import { Header } from '@/components/header'
 import { Button } from '@/components/button'
@@ -82,6 +84,51 @@ function DonateHero({ rm }: { rm: boolean }) {
       </div>
 
       <WaveTransition />
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  iOS: donate on the Co-Exist website                                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The iOS app takes no payment for a donation (App Review 3.2.2(iv)). The
+ * whole in-app form is replaced, not just its button, and the button hands the
+ * donor to Safari. See lib/donate-external.ts.
+ */
+function WebsiteDonateCard() {
+  return (
+    <div
+      data-testid="donate-website-card"
+      className="relative overflow-hidden rounded-md bg-white border border-neutral-100 shadow-[0_8px_40px_-12px_rgba(61,77,51,0.18)] p-6"
+    >
+      <Leaf className="pointer-events-none absolute -top-5 -right-5 text-primary-600/[0.06]" size={120} strokeWidth={1.5} />
+
+      <div className="relative flex items-center gap-3 mb-4">
+        <div className="w-11 h-11 rounded-md bg-primary-50 flex items-center justify-center shrink-0">
+          <Heart size={19} className="text-primary-600" />
+        </div>
+        <h2 className="font-heading text-xl sm:text-2xl font-bold text-neutral-900">Donate on our website</h2>
+      </div>
+
+      <p className="relative text-[15px] text-neutral-700 leading-relaxed mb-6">
+        Donations to Co-Exist Australia are made on our website. Tap below to open
+        coexistaus.org in Safari, choose an amount and give there.
+      </p>
+
+      <Button
+        variant="primary"
+        size="lg"
+        fullWidth
+        icon={<ExternalLink size={18} />}
+        onClick={openWebsiteDonate}
+        className="shadow-[0_8px_24px_-8px_rgba(61,77,51,0.5)] !rounded-md"
+      >
+        Donate on coexistaus.org
+      </Button>
+
+      <p className="text-xs text-neutral-400 text-center mt-3">Opens in Safari</p>
     </div>
   )
 }
@@ -307,6 +354,7 @@ function DonationForm({ rm }: { rm: boolean }) {
 export default function DonatePage() {
   const shouldReduceMotion = useReducedMotion()
   const rm = !!shouldReduceMotion
+  const viaWebsite = donationsOpenWebsite()
 
   return (
     <Page
@@ -326,9 +374,10 @@ export default function DonatePage() {
               animate="visible"
               className="space-y-5 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-7 lg:items-start"
             >
-              {/* Donation form (left column on laptop) */}
+              {/* Donation form (left column on laptop). The iOS app sends the
+                  donor to the website instead (App Review 3.2.2(iv)). */}
               <motion.div variants={fadeUp}>
-                <DonationForm rm={rm} />
+                {viaWebsite ? <WebsiteDonateCard /> : <DonationForm rm={rm} />}
               </motion.div>
 
               {/* Supporting cards (right column on laptop, stacked on mobile) */}

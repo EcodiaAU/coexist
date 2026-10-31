@@ -9,6 +9,7 @@ import { OGMeta } from '@/components/og-meta'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { cn } from '@/lib/cn'
+import { SocialTermsNote } from '@/components/social-terms-note'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -201,6 +202,8 @@ export default function LoginPage() {
                 Apple
               </button>
             </div>
+
+            <SocialTermsNote />
 
             {/* Divider */}
             <div className="flex items-center gap-4 my-7">

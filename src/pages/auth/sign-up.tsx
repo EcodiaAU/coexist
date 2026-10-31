@@ -15,6 +15,7 @@ import { calculateAge } from '@/lib/date-format'
 import { CommunityAgeNotice } from '@/components/community-age-notice'
 import { isAtOrOverCommunityAge } from '@/lib/community-age'
 import { adminStagger as stagger, fadeOnly } from '@/lib/admin-motion'
+import { SocialTermsNote } from '@/components/social-terms-note'
 
 /* ------------------------------------------------------------------ */
 /*  Password strength                                                  */
@@ -256,6 +257,8 @@ export default function SignUpPage() {
                 Apple
               </button>
             </motion.div>
+
+            <SocialTermsNote />
 
             {/* Divider */}
             <motion.div variants={childVariants} className="flex items-center gap-4 my-5">

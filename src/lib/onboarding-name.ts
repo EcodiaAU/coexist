@@ -35,8 +35,37 @@ export function isPlaceholderDisplayName(displayName: string | null | undefined,
   return !!local && dn.toLowerCase() === local.toLowerCase()
 }
 
-/** Onboarding asks for a name unless the profile already holds both halves. */
-export function needsNameStep(profile: NameProfile | null | undefined): boolean {
+/** The slice of a Supabase auth user that says how the account signs in. */
+export interface SignInIdentity {
+  app_metadata?: { provider?: string; providers?: unknown } | null
+  identities?: { provider?: string }[] | null
+}
+
+/**
+ * True when the account signs in with Apple. App Review Guideline 4.0 (cited
+ * on 2.3.58, 2026-10-22): after Sign in with Apple the app must not ask for
+ * the name or email again, because Apple already supplied them. Apple sends the
+ * name only on the first authorisation, so a returning Apple ID arrives with
+ * none, and the mandatory-last-name rule of 2026-10-19 cannot apply to these
+ * accounts. The name Apple did send is saved at sign-in (lib/apple-signin-name).
+ */
+export function isAppleSignInAccount(user: SignInIdentity | null | undefined): boolean {
+  if (!user) return false
+  if (user.app_metadata?.provider === 'apple') return true
+  const providers = user.app_metadata?.providers
+  if (Array.isArray(providers) && providers.includes('apple')) return true
+  return (user.identities ?? []).some((i) => i?.provider === 'apple')
+}
+
+/**
+ * Onboarding asks for a name unless the profile already holds both halves.
+ * Never for a Sign in with Apple account (see isAppleSignInAccount).
+ */
+export function needsNameStep(
+  profile: NameProfile | null | undefined,
+  opts: { appleSignIn?: boolean } = {},
+): boolean {
+  if (opts.appleSignIn) return false
   return !clean(profile?.first_name) || !clean(profile?.last_name)
 }
 

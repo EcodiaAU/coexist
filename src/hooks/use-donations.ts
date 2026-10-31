@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { donationsOpenWebsite } from '@/lib/donate-external'
 import type {
   Donation,
   DonationFrequency,
@@ -47,6 +48,12 @@ export function useCreateDonation() {
 
   return useMutation({
     mutationFn: async (params: CreateDonationParams) => {
+      // The iOS app takes no donation payment (App Review 3.2.2(iv)); the
+      // donate page sends the donor to the website. This is the backstop so no
+      // future screen can start an in-app checkout on iOS.
+      if (donationsOpenWebsite()) {
+        throw new Error('Donations in the iOS app are made on the Co-Exist website')
+      }
       const res = await supabase.functions.invoke('create-checkout', {
         body: {
           type: 'donation',

@@ -11,7 +11,11 @@ import { adminStagger as stagger, fadeUp } from '@/lib/admin-motion'
 
 export default function AcceptTermsPage() {
   const navigate = useNavigate()
-  const { acceptTos, signOut, isSuspended, user, needsTosAcceptance } = useAuth()
+  const { acceptTos, signOut, isSuspended, user, profile, needsTosAcceptance } = useAuth()
+  // A Google or Apple sign-up lands here before anything else, holding no
+  // accepted version yet: that is a first agreement, not an update (App Review
+  // 1.2 wants the terms agreed before the member reaches any shared content).
+  const firstTime = !profile?.tos_accepted_version
   const shouldReduceMotion = useReducedMotion()
   const [agreed, setAgreed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -43,7 +47,7 @@ export default function AcceptTermsPage() {
 
   return (
     <div className="min-h-dvh flex flex-col bg-white">
-      <Header title="Updated Terms" />
+      <Header title={firstTime ? 'Terms of Service' : 'Updated Terms'} />
 
       <motion.div
         className="flex-1 flex flex-col px-6 pt-6"
@@ -57,18 +61,21 @@ export default function AcceptTermsPage() {
           </div>
           <div>
             <h1 className="font-heading text-xl font-bold text-neutral-900">
-              Terms & Conditions Updated
+              {firstTime ? 'Before you start' : 'Terms & Conditions Updated'}
             </h1>
             <p className="text-sm text-neutral-500">Version {CURRENT_TOS_VERSION}</p>
           </div>
         </motion.div>
 
         <motion.p variants={shouldReduceMotion ? undefined : fadeUp} className="text-sm text-neutral-500 leading-relaxed mb-4">
-          We've updated our Terms of Service and Privacy Policy. Please review and accept
-          the updated terms to continue using Co-Exist.
+          {firstTime
+            ? 'Please review and accept the Co-Exist Terms of Service and Privacy Policy to start using Co-Exist.'
+            : "We've updated our Terms of Service and Privacy Policy. Please review and accept the updated terms to continue using Co-Exist."}
         </motion.p>
 
         <motion.div variants={shouldReduceMotion ? undefined : fadeUp} className="flex-1 overflow-y-auto rounded-sm border border-neutral-100 bg-white p-4 mb-4 max-h-[50vh]">
+          {!firstTime && (
+            <>
           <h2 className="font-heading text-sm font-semibold text-neutral-900 mb-2">
             Summary of Changes
           </h2>
@@ -80,8 +87,10 @@ export default function AcceptTermsPage() {
               <li key={h.label}><strong className="text-neutral-900">{h.label}</strong> &mdash; {h.detail}</li>
             ))}
           </ul>
+            </>
+          )}
 
-          <h2 className="font-heading text-sm font-semibold text-neutral-900 mt-4 mb-2">
+          <h2 className={firstTime ? 'font-heading text-sm font-semibold text-neutral-900 mb-2' : 'font-heading text-sm font-semibold text-neutral-900 mt-4 mb-2'}>
             Community Standards
           </h2>
           <p className="text-xs text-neutral-500 leading-relaxed">
@@ -93,7 +102,9 @@ export default function AcceptTermsPage() {
           <Checkbox
             checked={agreed}
             onChange={setAgreed}
-            label="I have read and agree to the updated Terms of Service and Privacy Policy"
+            label={firstTime
+              ? 'I have read and agree to the Terms of Service and Privacy Policy, including the Community Standards above'
+              : 'I have read and agree to the updated Terms of Service and Privacy Policy'}
           />
           <p className="mt-2 pl-8 text-xs text-neutral-500">
             Read the full{' '}

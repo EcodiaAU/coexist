@@ -11,7 +11,7 @@ import { Button } from '@/components/button'
 import { takePendingClaim } from '@/lib/pending-claim'
 import { hasEmergencyContact, hasFourWheelDriveAnswer } from '@/lib/dietary'
 import { toggleCollectiveSelection, collectivesToJoin } from '@/lib/onboarding-collectives'
-import { initialNameParts, isPlaceholderDisplayName, needsNameStep } from '@/lib/onboarding-name'
+import { initialNameParts, isAppleSignInAccount, isPlaceholderDisplayName, needsNameStep } from '@/lib/onboarding-name'
 
 import { StepNameHandle } from './steps/step-name-handle'
 import { StepLocation } from './steps/step-location'
@@ -48,7 +48,9 @@ export default function OnboardingPage() {
   // mandatory for a new account (2026-10-19). See lib/onboarding-name.ts.
   const existingName = (profile?.display_name ?? '').trim()
   const hasRealDisplayName = !isPlaceholderDisplayName(existingName, user?.email)
-  const askName = needsNameStep(profile)
+  // Never after Sign in with Apple (App Review 4.0): Apple already gave us the
+  // name, and a returning Apple ID gives none that we may then demand.
+  const askName = needsNameStep(profile, { appleSignIn: isAppleSignInAccount(user) })
   const initialName = initialNameParts(profile, user?.email)
   const existingPhone = (profile?.phone ?? '').trim()
   // The combined safety intake (Tate 2026-08-30). Shown unless the profile

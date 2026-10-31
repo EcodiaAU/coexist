@@ -5,6 +5,7 @@ import { Preferences } from '@capacitor/preferences'
 import { SocialLogin } from '@capgo/capacitor-social-login'
 import { supabase } from '@/lib/supabase'
 import { invokeAndReport } from '@/lib/invoke-report'
+import { readAppleCredentialName, saveAppleCredentialName } from '@/lib/apple-signin-name'
 import { removeCurrentDeviceToken } from '@/hooks/use-push'
 import { resolveCapabilities } from '@/lib/capabilities'
 import { CURRENT_TOS_VERSION, GLOBAL_ROLE_RANK, COLLECTIVE_ROLE_RANK } from '@/lib/constants'
@@ -880,10 +881,24 @@ export function useAuthProvider(): AuthContextValue {
       try {
         await ensureSocialLogin('apple')
         const result = await SocialLogin.login({ provider: 'apple', options: { scopes: ['email', 'name'] } })
-        const idToken = (result?.result as unknown as Record<string, unknown>)?.idToken as string | undefined
+        const appleResult = result?.result as unknown as Record<string, unknown> | undefined
+        const idToken = appleResult?.idToken as string | undefined
         if (!idToken) return { error: { message: 'No ID token received from Apple', status: 400 } as unknown as AuthError }
-        const { error } = await withAuthTimeout(supabase.auth.signInWithIdToken({ provider: 'apple', token: idToken }))
-        return { error: error ? toFriendlyAuthError(error) : null }
+        const { data: signedIn, error } = await withAuthTimeout(supabase.auth.signInWithIdToken({ provider: 'apple', token: idToken }))
+        if (error) return { error: toFriendlyAuthError(error) }
+        // App Review 4.0: Sign in with Apple already gives us the name, so the
+        // app must not ask for it again. Apple sends it only on the FIRST
+        // authorisation (the ID token never carries it), so save it now, and
+        // onboarding skips the name step for an Apple account either way.
+        const appleName = readAppleCredentialName(appleResult?.profile)
+        const uid = signedIn?.user?.id
+        if (uid && appleName) {
+          try {
+            await saveAppleCredentialName(uid, appleName, signedIn.user?.email ?? null)
+            await refreshProfile()
+          } catch { /* best-effort: never fail a sign-in on the name write */ }
+        }
+        return { error: null }
       } catch (err: unknown) {
         // User cancelled = not an error
         const e = err as { message?: string; code?: string }
@@ -897,7 +912,7 @@ export function useAuthProvider(): AuthContextValue {
       options: { redirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback` },
     })
     return { error: error ? toFriendlyAuthError(error) : null }
-  }, [])
+  }, [refreshProfile])
 
   const signInWithMagicLink = useCallback(async (email: string, nextPath?: string | null) => {
     try {
