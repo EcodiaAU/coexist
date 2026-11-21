@@ -50,6 +50,7 @@ const inputCls = cn(
  * Plain-language reason the server gave for refusing an action. When release is
  * on offer, the closed refund window is not a dead end, so it says what to do.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function blockedCopy(
   reason: string | null | undefined,
   refundEnabled: boolean,

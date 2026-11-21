@@ -18,6 +18,7 @@ import { activeTabKey, selectedTabKey, type TabSpec } from '@/lib/tab-suites'
  * version (one call per session, a few ms). Render no bar while null so the web
  * bar never flashes before the glass one.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useNativeGlassTabBar(): boolean | null {
   const [supported, setSupported] = useState<boolean | null>(() => nativeGlassTabBarSupportedSync())
   useEffect(() => {
