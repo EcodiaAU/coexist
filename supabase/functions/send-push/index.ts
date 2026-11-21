@@ -2,6 +2,23 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
 import { selectInChunks } from '../_shared/select-in-chunks.ts'
+import { mapWithConcurrency } from '../_shared/batch-lookup.ts'
+
+/**
+ * Largest `userIds` list accepted. It was 500, which is smaller than three
+ * collectives (Melbourne City 1,274, Brisbane 611, Perth 602 active members on
+ * 2026-11-22), so invite-all and collective chat push to those collectives were
+ * refused whole: 400, sent 0, Sentry COEXIST-1X (inviteAll) and COEXIST-20
+ * (sendChatMessage). Every lookup below is already chunked, and the collectiveId
+ * path has always resolved a whole collective with no cap, so the 500 was a
+ * guard on nothing that could still overflow. 5,000 sits above every active
+ * member in the app (3,950 distinct) and bounds the request body near 200KB.
+ * Participant callers stay scoped to their own collectives by the check below.
+ */
+const MAX_USER_IDS = 5000
+
+/** FCM sends in flight per invocation. */
+const FCM_SEND_CONCURRENCY = 50
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -80,13 +97,25 @@ function base64url(input: string | ArrayBuffer): string {
 // Cache the OAuth token to avoid requesting a new one per push send
 let cachedAccessToken: string | null = null
 let tokenExpiresAt = 0
+// The IN-FLIGHT mint is shared too, not just the finished token. Every send is
+// started before the first mint resolves, so on a cold isolate caching only the
+// result meant each of N parallel sends signed and posted its own JWT: one push
+// to Melbourne City was a burst of ~1,000 token requests to Google. Cleared on
+// failure so the next send retries instead of awaiting a dead promise.
+let pendingAccessToken: Promise<string> | null = null
 
-async function getAccessToken(): Promise<string> {
+function getAccessToken(): Promise<string> {
   // Return cached token if still valid (with 5-minute safety margin)
   if (cachedAccessToken && Date.now() < tokenExpiresAt - 5 * 60 * 1000) {
-    return cachedAccessToken
+    return Promise.resolve(cachedAccessToken)
   }
+  if (!pendingAccessToken) {
+    pendingAccessToken = mintAccessToken().finally(() => { pendingAccessToken = null })
+  }
+  return pendingAccessToken
+}
 
+async function mintAccessToken(): Promise<string> {
   // Use service account key to get OAuth2 token for FCM v1 API
   const key = JSON.parse(FCM_SERVICE_ACCOUNT_KEY)
   const now = Math.floor(Date.now() / 1000)
@@ -288,8 +317,8 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
       })
     }
     if (payload.userIds) {
-      if (!Array.isArray(payload.userIds) || payload.userIds.length > 500) {
-        return new Response(JSON.stringify({ error: 'userIds must be array (max 500)', sent: 0 }), {
+      if (!Array.isArray(payload.userIds) || payload.userIds.length > MAX_USER_IDS) {
+        return new Response(JSON.stringify({ error: `userIds must be array (max ${MAX_USER_IDS})`, sent: 0 }), {
           status: 400, headers: JSON_HEADERS,
         })
       }
@@ -633,17 +662,24 @@ Deno.serve(withSentry('send-push', async (req: Request) => {
       )
     }
 
-    // Send to all deliverable tokens in parallel
-    const results = await Promise.allSettled(
-      deliverableTokens.map((t) =>
+    // Send to deliverable tokens with a bounded number in flight. This was an
+    // unbounded Promise.allSettled, safe only while the 500-id cap held the burst
+    // down; with the cap at MAX_USER_IDS one Melbourne City send is ~1,000 FCM
+    // calls. Settled results keep the exact shape the counting below reads.
+    const results = await mapWithConcurrency(
+      deliverableTokens,
+      FCM_SEND_CONCURRENCY,
+      (t): Promise<PromiseSettledResult<'sent' | 'invalid' | 'transient'>> =>
         sendFcmMessage(
           t.token,
           payload.title,
           payload.body,
           payload.data ?? {},
           payload.silent ?? false,
+        ).then(
+          (value) => ({ status: 'fulfilled' as const, value }),
+          (reason) => ({ status: 'rejected' as const, reason }),
         ),
-      ),
     )
 
     const sent = results.filter(
