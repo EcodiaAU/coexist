@@ -1,6 +1,7 @@
 // Deno Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { withSentry } from '../_shared/sentry.ts'
+import { chunkValues, selectInChunks } from '../_shared/select-in-chunks.ts'
 
 /**
  * carpool-archive-sweep
@@ -34,6 +35,24 @@ import { withSentry } from '../_shared/sentry.ts'
  *   This is intentionally write-only because there is no reasonable read
  *   path - the caller is always the cron, which wants to apply the sweep.
  */
+
+/** Run a write once per chunk of ids and return the first error, or null.
+ *  An unbounded `.in()` on a write fails the same way a read does (the filter
+ *  is echoed back in a response header), so writes are chunked too. */
+async function updateInChunks(
+  ids: readonly string[],
+  write: (chunk: string[]) => PromiseLike<{ error: unknown }>,
+): Promise<unknown> {
+  for (const batch of chunkValues(ids)) {
+    try {
+      const { error } = await write(batch)
+      if (error) return error
+    } catch (err) {
+      return err
+    }
+  }
+  return null
+}
 
 Deno.serve(withSentry('carpool-archive-sweep', async (req: Request) => {
   try {
@@ -83,17 +102,25 @@ Deno.serve(withSentry('carpool-archive-sweep', async (req: Request) => {
     if (warnableBreakouts?.length) {
       // Need event_end for each breakout via the carpool widget
       const breakoutCarpoolIds = warnableBreakouts.map((b: { carpool_id: string }) => b.carpool_id)
-      const { data: widgetsForWarning } = await supabase
-        .from('carpool_widgets')
-        .select('id, event_id')
-        .in('id', breakoutCarpoolIds)
+      const { rows: widgetsForWarning, error: warnWidgetsErr } = await selectInChunks<{ id: string; event_id: string }>(
+        breakoutCarpoolIds,
+        (batch) => supabase.from('carpool_widgets').select('id, event_id').in('id', batch),
+      )
+      if (warnWidgetsErr) {
+        console.error('[carpool-archive-sweep] warning widget query failed:', (warnWidgetsErr as Error).message)
+        results.errors++
+      }
 
-      if (widgetsForWarning?.length) {
+      if (widgetsForWarning.length) {
         const eventIds = [...new Set(widgetsForWarning.map((w: { event_id: string }) => w.event_id))]
-        const { data: warnEvents } = await supabase
-          .from('events')
-          .select('id, title, date_start, date_end')
-          .in('id', eventIds)
+        const { rows: warnEvents, error: warnEventsErr } = await selectInChunks<{ id: string; title: string; date_start: string; date_end: string | null }>(
+          eventIds,
+          (batch) => supabase.from('events').select('id, title, date_start, date_end').in('id', batch),
+        )
+        if (warnEventsErr) {
+          console.error('[carpool-archive-sweep] warning events query failed:', (warnEventsErr as Error).message)
+          results.errors++
+        }
 
         const eventById = new Map<string, { title: string; date_start: string; date_end: string | null }>()
         for (const e of (warnEvents ?? []) as Array<{ id: string; title: string; date_start: string; date_end: string | null }>) {
@@ -178,98 +205,102 @@ Deno.serve(withSentry('carpool-archive-sweep', async (req: Request) => {
 
     // ── (1) Archive widgets for events that ended >24h ago ──
     //
-    // We need carpool_widgets rows joined to events where event.date_end
-    // (or date_start if date_end IS NULL) + 24h < now() AND status NOT IN
-    // ('archived','cancelled').
+    // A widget qualifies when it is still open or full and its event's
+    // (date_end ?? date_start) is before archiveCutoff.
     //
-    // PostgREST join filtering is awkward; pull the event ids we care about
-    // first, then update widgets in a single statement.
-    const { data: pastEvents, error: eventsErr } = await supabase
-      .from('events')
-      .select('id, date_start, date_end')
-      .lte('date_start', archiveCutoff.toISOString())
+    // WIDGET-FIRST, and that is the fix (board d994a891, 2026-11-22). This used
+    // to pull EVERY event older than the cutoff and pass all of their ids to one
+    // .in('event_id', ...). That list only grows (523 events on 2026-11-22),
+    // PostgREST echoes the whole filter back in a content-location response
+    // header, and once the header passed Deno's 16KiB cap the fetch threw on
+    // every hourly run: nothing archived after events ending about 27 Jun 2026
+    // while pg_cron kept reporting "succeeded" (it only enqueues the request).
+    // Live open/full widgets are few, and this sweep is what keeps them few, so
+    // every id list below is bounded by the live widget count, not by history.
+    // The lists are still chunked and their errors read, so a failure is
+    // counted instead of reading as "nothing to archive".
+    const { data: liveWidgets, error: liveWidgetsErr } = await supabase
+      .from('carpool_widgets')
+      .select('id, event_id')
+      .in('status', ['open', 'full'])
 
-    if (eventsErr) {
-      console.error('[carpool-archive-sweep] events query failed:', eventsErr.message)
+    if (liveWidgetsErr) {
+      console.error('[carpool-archive-sweep] widget query failed:', liveWidgetsErr.message)
       results.errors++
     }
 
-    if (pastEvents?.length) {
-      // Filter in code: event qualifies if (date_end ?? date_start) + 24h < now
-      const qualifyingIds = pastEvents
-        .filter((e: { id: string; date_start: string; date_end: string | null }) => {
-          const endIso = e.date_end ?? e.date_start
-          return new Date(endIso).getTime() + 24 * 60 * 60 * 1000 < now.getTime()
-        })
-        .map((e: { id: string }) => e.id)
+    if (liveWidgets?.length) {
+      const liveEventIds = [...new Set(
+        (liveWidgets as Array<{ id: string; event_id: string | null }>)
+          .map((w) => w.event_id)
+          .filter((id): id is string => !!id),
+      )]
+      const { rows: liveEvents, error: liveEventsErr } = await selectInChunks<{ id: string; date_start: string; date_end: string | null }>(
+        liveEventIds,
+        (batch) => supabase.from('events').select('id, date_start, date_end').in('id', batch),
+      )
+      if (liveEventsErr) {
+        console.error('[carpool-archive-sweep] events query failed:', (liveEventsErr as Error).message)
+        results.errors++
+      }
 
-      if (qualifyingIds.length) {
-        // Find the carpool_widgets to archive (open or full only)
-        const { data: widgetsToArchive, error: widgetsErr } = await supabase
-          .from('carpool_widgets')
-          .select('id')
-          .in('event_id', qualifyingIds)
-          .in('status', ['open', 'full'])
+      const endedEventIds = new Set(
+        liveEvents
+          .filter((e) => new Date(e.date_end ?? e.date_start).getTime() < archiveCutoff.getTime())
+          .map((e) => e.id),
+      )
+      const widgetIds = (liveWidgets as Array<{ id: string; event_id: string | null }>)
+        .filter((w) => !!w.event_id && endedEventIds.has(w.event_id))
+        .map((w) => w.id)
 
-        if (widgetsErr) {
-          console.error('[carpool-archive-sweep] widget query failed:', widgetsErr.message)
+      if (widgetIds.length) {
+        // Archive widgets
+        const updWidgetsErr = await updateInChunks(widgetIds, (batch) =>
+          supabase.from('carpool_widgets').update({ status: 'archived' }).in('id', batch))
+        if (updWidgetsErr) {
+          console.error('[carpool-archive-sweep] widget archive failed:', (updWidgetsErr as Error).message)
+          results.errors++
+        } else {
+          results.archived += widgetIds.length
+        }
+
+        // Mark breakout chats archived
+        const { rows: breakouts, error: breakoutsErr } = await selectInChunks<{ carpool_id: string; channel_id: string; archived_at: string | null; deleted_at: string | null }>(
+          widgetIds,
+          (batch) => supabase
+            .from('carpool_breakout_chats')
+            .select('carpool_id, channel_id, archived_at, deleted_at')
+            .in('carpool_id', batch),
+        )
+        if (breakoutsErr) {
+          console.error('[carpool-archive-sweep] breakout query failed:', (breakoutsErr as Error).message)
           results.errors++
         }
 
-        if (widgetsToArchive?.length) {
-          const widgetIds = widgetsToArchive.map((w: { id: string }) => w.id)
+        if (breakouts.length) {
+          const breakoutCarpoolIds = breakouts
+            .filter((b) => b.archived_at === null && b.deleted_at === null)
+            .map((b) => b.carpool_id)
 
-          // Archive widgets
-          const { error: updWidgetsErr } = await supabase
-            .from('carpool_widgets')
-            .update({ status: 'archived' })
-            .in('id', widgetIds)
-          if (updWidgetsErr) {
-            console.error('[carpool-archive-sweep] widget archive failed:', updWidgetsErr.message)
-            results.errors++
-          } else {
-            results.archived += widgetIds.length
+          if (breakoutCarpoolIds.length) {
+            const archChatsErr = await updateInChunks(breakoutCarpoolIds, (batch) =>
+              supabase.from('carpool_breakout_chats').update({ archived_at: now.toISOString() }).in('carpool_id', batch))
+            if (archChatsErr) {
+              console.error('[carpool-archive-sweep] breakout archive failed:', (archChatsErr as Error).message)
+              results.errors++
+            }
           }
 
-          // Mark breakout chats archived
-          const { data: breakouts } = await supabase
-            .from('carpool_breakout_chats')
-            .select('carpool_id, channel_id, archived_at, deleted_at')
-            .in('carpool_id', widgetIds)
+          const channelIds = breakouts
+            .filter((b) => b.deleted_at === null)
+            .map((b) => b.channel_id)
 
-          if (breakouts?.length) {
-            const breakoutCarpoolIds = breakouts
-              .filter((b: { archived_at: string | null; deleted_at: string | null }) =>
-                b.archived_at === null && b.deleted_at === null,
-              )
-              .map((b: { carpool_id: string }) => b.carpool_id)
-
-            if (breakoutCarpoolIds.length) {
-              const { error: archChatsErr } = await supabase
-                .from('carpool_breakout_chats')
-                .update({ archived_at: now.toISOString() })
-                .in('carpool_id', breakoutCarpoolIds)
-              if (archChatsErr) {
-                console.error('[carpool-archive-sweep] breakout archive failed:', archChatsErr.message)
-                results.errors++
-              }
-            }
-
-            const channelIds = breakouts
-              .filter((b: { archived_at: string | null; deleted_at: string | null }) =>
-                b.deleted_at === null,
-              )
-              .map((b: { channel_id: string }) => b.channel_id)
-
-            if (channelIds.length) {
-              const { error: chanArchErr } = await supabase
-                .from('chat_channels')
-                .update({ lifecycle_status: 'archived' })
-                .in('id', channelIds)
-              if (chanArchErr) {
-                console.error('[carpool-archive-sweep] channel archive failed:', chanArchErr.message)
-                results.errors++
-              }
+          if (channelIds.length) {
+            const chanArchErr = await updateInChunks(channelIds, (batch) =>
+              supabase.from('chat_channels').update({ lifecycle_status: 'archived' }).in('id', batch))
+            if (chanArchErr) {
+              console.error('[carpool-archive-sweep] channel archive failed:', (chanArchErr as Error).message)
+              results.errors++
             }
           }
         }
